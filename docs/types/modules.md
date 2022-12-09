@@ -639,7 +639,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
+[packages/types/src/runner-config.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L32)
 
 ___
 
@@ -1138,7 +1138,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L49)
+[packages/types/src/runner-config.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L50)
 
 ___
 
@@ -1344,7 +1344,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L43)
+[packages/types/src/runner-config.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L44)
 
 ___
 
@@ -1503,9 +1503,10 @@ Manager configuration type definition.
 | `apiBase` | `string` | MultiManager api base. |
 | `id` | [`IdString`](modules.md#idstring) | Manager id. |
 | `logColors` | `boolean` | Enables/disables colorized logs. |
-| `s3?` | { `accessKey`: `string` ; `bucket`: `string` ; `endPoint`: `string` ; `port`: `number` ; `region`: `string` ; `secretKey`: `string` ; `useSSL`: `boolean`  } | - |
+| `s3?` | { `accessKey`: `string` ; `bucket`: `string` ; `bucketLimit`: `number` ; `endPoint`: `string` ; `port`: `number` ; `region`: `string` ; `secretKey`: `string` ; `useSSL`: `boolean`  } | - |
 | `s3.accessKey` | `string` | - |
 | `s3.bucket` | `string` | - |
+| `s3.bucketLimit` | `number` | - |
 | `s3.endPoint` | `string` | - |
 | `s3.port` | `number` | - |
 | `s3.region` | `string` | - |
@@ -2028,7 +2029,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L39)
+[packages/types/src/runner-config.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L40)
 
 ___
 
@@ -2348,7 +2349,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L47)
+[packages/types/src/runner-config.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L48)
 
 ___
 
