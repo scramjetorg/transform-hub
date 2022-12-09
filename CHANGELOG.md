@@ -2,7 +2,14 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [0.30.4] - 2022-12-1
+## [0.31.0] - 2022-12-09
+
+## Features
+
+* Get package size information by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/752
+
+## [0.30.4] - 2022-12-01
+
 ## Fixed
 
 * Unhealthy bug by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/745
