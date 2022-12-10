@@ -7,10 +7,10 @@ import { ObjLogger } from "@scramjet/obj-logger";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
-    MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket
+    MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket
 ]
 type RunnerOpenConnections = [
-    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
+    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
 
 type Events = {
@@ -52,7 +52,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 let runner = this.runnerConnectionsInProgress.get(id);
 
                 if (!runner) {
-                    runner = [null, null, null, null, null, null, null, null];
+                    runner = [null, null, null, null, null, null, null, null, null];
                     this.runnerConnectionsInProgress.set(id, runner);
                 }
 

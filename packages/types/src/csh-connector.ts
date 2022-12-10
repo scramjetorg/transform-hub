@@ -2,6 +2,7 @@ import { MaybePromise } from "./utils";
 import { IComponent } from "./component";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { UpstreamStreamsConfig } from "./message-streams";
+import { Agent } from "http";
 
 export interface IHostClient extends IComponent {
     /**
@@ -14,6 +15,7 @@ export interface IHostClient extends IComponent {
      * Disconnects from a host server.
      */
     disconnect(): Promise<void>;
+    getAgent(): Agent;
 
     stdinStream: UpstreamStreamsConfig[CC.STDIN]
 

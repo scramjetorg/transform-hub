@@ -1,3 +1,4 @@
+import { HostClient } from "@scramjet/api-client";
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
     EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
@@ -19,6 +20,7 @@ export interface RunnerProxy {
     sendStop(error?: AppError | Error): void;
     sendEvent(ev: EventMessageData): void;
     keepAliveIssued(): void;
+    hostClient: HostClient;
 }
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>

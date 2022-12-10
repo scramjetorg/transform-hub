@@ -35,6 +35,7 @@ export * from "./instance-limits";
 export * from "./instance-stats";
 export * from "./sth-command-options";
 export * from "./telemetry-config";
+export * from "./host-proxy";
 
 export { MRestAPI };
 export { MWRestAPI };
