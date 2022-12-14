@@ -344,7 +344,7 @@ export class CSIController extends TypedEmitter<Events> {
             }
             case RunnerExitCode.PODS_LIMIT_REACHED: {
                 return Promise.reject({
-                    message: "Pods limit reached",
+                    message: "Instance limit reached",
                     exitcode: RunnerExitCode.PODS_LIMIT_REACHED,
                     status: InstanceStatus.ERRORED
                 });
