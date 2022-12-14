@@ -94,7 +94,7 @@ export class CSIController extends TypedEmitter<Events> {
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    instancePromise?: Promise<{ exitcode: number; reason: TerminateReason }>;
+    instancePromise?: Promise<{ message: string, exitcode: number; reason: TerminateReason, status: InstanceStatus }>;
     args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
@@ -223,27 +223,28 @@ export class CSIController extends TypedEmitter<Events> {
         this.status = InstanceStatus.RUNNING;
         this.logger.trace("Instance started");
 
-        let code = 0;
-        let errored = false;
+        let code = -1;
 
         const interval = setInterval(() => this.emit("hourChime"), 3600e3);
 
         try {
             const stopResult = await this.instanceStopped();
 
-            code = stopResult?.exitcode!;
-            this.logger.trace("Instance ended with code", code);
-            this.setExitInfo(code, stopResult?.reason!);
+            if (stopResult) {
+                code = stopResult.exitcode;
+                this.logger.trace("Instance ended with code", code);
+                this.status = stopResult.status;
+                this.setExitInfo(code, stopResult.reason);
+            }
         } catch (e: any) {
-            this.setExitInfo(e.exitcode, e.reason);
             code = e.exitcode;
-            errored = true;
+            this.status = e.status || InstanceStatus.ERRORED;
+            this.setExitInfo(code, e.reason);
+
             this.logger.error("Instance caused error", e.message, code);
         } finally {
             clearInterval(interval);
         }
-
-        this.status = !errored ? InstanceStatus.COMPLETED : InstanceStatus.ERRORED;
 
         this.info.ended = new Date();
         this.emit("terminated", code);
@@ -323,55 +324,71 @@ export class CSIController extends TypedEmitter<Events> {
         });
     }
 
-    private mapRunnerExitCode(exitcode: number) {
+    private mapRunnerExitCode(exitcode: number): Promise<
+        { message: string, exitcode: number, reason: TerminateReason}
+    > {
         // eslint-disable-next-line default-case
         switch (exitcode) {
             case RunnerExitCode.INVALID_ENV_VARS: {
                 return Promise.reject({
                     message: "Runner was started with invalid configuration. This is probably a bug in STH.",
-                    exitcode: RunnerExitCode.INVALID_ENV_VARS
+                    exitcode: RunnerExitCode.INVALID_ENV_VARS,
+                    status: InstanceStatus.ERRORED
                 });
             }
             case RunnerExitCode.PODS_LIMIT_REACHED: {
                 return Promise.reject({
                     message: "Pods limit reached",
-                    exitcode: RunnerExitCode.PODS_LIMIT_REACHED
+                    exitcode: RunnerExitCode.PODS_LIMIT_REACHED,
+                    status: InstanceStatus.ERRORED
                 });
             }
             case RunnerExitCode.INVALID_SEQUENCE_PATH: {
                 return Promise.reject({
                     message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
                         "Check `main` field in Sequence package.json",
-                    exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH
+                    exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH,
+                    status: InstanceStatus.ERRORED
                 });
             }
             case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
                 return Promise.reject({
-                    message: "Sequence failed on start", exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START
+                    message: "Sequence failed on start",
+                    exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START,
+                    status: InstanceStatus.ERRORED
+                });
+            }
+            case RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION: {
+                return Promise.reject({
+                    message: "Sequence failed during execution",
+                    exitcode: RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION,
+                    status: InstanceStatus.ERRORED
                 });
             }
             case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
                 return Promise.reject({
-                    message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
+                    message: "Sequence unpack failed",
+                    exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED,
+                    status: InstanceStatus.ERRORED
                 });
             }
             case RunnerExitCode.KILLED: {
                 return Promise.resolve({
-                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, reason: TerminateReason.KILLED
+                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, reason: TerminateReason.KILLED, status: InstanceStatus.COMPLETED
                 });
             }
             case RunnerExitCode.STOPPED: {
                 return Promise.resolve({
-                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, reason: TerminateReason.STOPPED
+                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, reason: TerminateReason.STOPPED, status: InstanceStatus.COMPLETED
                 });
             }
         }
 
         if (exitcode > 0) {
-            return Promise.reject({ message: "Runner failed", exitcode });
+            return Promise.reject({ message: "Runner failed", exitcode, reason: TerminateReason.ERRORED, status: InstanceStatus.ERRORED });
         }
 
-        return Promise.resolve({ exitcode });
+        return Promise.resolve({ message: "Instance completed", exitcode, reason: TerminateReason.COMPLETED, status: InstanceStatus.COMPLETED });
     }
 
     async cleanup() {
@@ -828,6 +845,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     setExitInfo(exitcode: number, reason: TerminateReason) {
-        this.terminated ||= { exitcode, reason };
+        this.terminated = { exitcode, reason };
     }
 }
