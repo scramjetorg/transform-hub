@@ -137,7 +137,7 @@ class KubernetesClientAdapter {
         return response.body.status?.containerStatuses?.[0].state?.terminated?.reason;
     }
 
-    async isPodsLimitReached(quotaName: string) {
+    async getPodsLimit(quotaName: string) {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         try {
@@ -152,13 +152,19 @@ class KubernetesClientAdapter {
 
                 this.logger.info("Pods limit quota", used, hard);
 
-                return used >= hard;
+                return { used, hard };
             }
         } catch (e) {
             this.logger.warn("Can't get quota object. ");
         }
 
-        return false;
+        return { used: 0, hard: 0 }; // quota failed - no pods!
+    }
+
+    async isPodsLimitReached(quotaName: string) {
+        const { used, hard } = await this.getPodsLimit(quotaName);
+
+        return used >= hard;
     }
 
     private async runWithRetries(retries: number, name: string, callback: any) {
