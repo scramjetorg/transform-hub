@@ -88,6 +88,16 @@ IComponent {
         };
     }
 
+    async getPodsLimit() {
+        if (this.adapterConfig.quotaName) {
+            return this.kubeClient.getPodsLimit(this.adapterConfig.quotaName);
+        }
+
+        this.logger.warn("Quota name not provided");
+
+        return undefined;
+    }
+
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);

@@ -40,7 +40,7 @@ import { EventEmitter, once } from "events";
 import { ServerResponse } from "http";
 import { DuplexStream, getRouter } from "@scramjet/api-server";
 
-import { getInstanceAdapter } from "@scramjet/adapters";
+import { getInstanceAdapter, KubernetesInstanceAdapter } from "@scramjet/adapters";
 import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
@@ -330,71 +330,90 @@ export class CSIController extends TypedEmitter<Events> {
         });
     }
 
-    private mapRunnerExitCode(exitcode: number): Promise<
+    async handlePodsLimitError(): Promise<never> {
+        let msg = "Instance limit reached";
+
+        if (this.instanceAdapter instanceof KubernetesInstanceAdapter) {
+            const limit = await this.instanceAdapter.getPodsLimit();
+
+            msg += limit ? ` (${limit.used}/${limit.hard})` : "";
+
+            return Promise.reject({
+                message: msg,
+                exitcode: RunnerExitCode.PODS_LIMIT_REACHED,
+                status: InstanceStatus.ERRORED
+            });
+        }
+
+        this.logger.warn("Incorrect Adapter exitcode");
+
+        return Promise.reject({
+            message: msg,
+            exitcode: RunnerExitCode.PODS_LIMIT_REACHED,
+            status: InstanceStatus.ERRORED
+        });
+    }
+
+    // eslint-disable-next-line complexity
+    private async mapRunnerExitCode(exitcode: number): Promise<
         { message: string, exitcode: number, reason: TerminateReason}
     > {
-        // eslint-disable-next-line default-case
         switch (exitcode) {
-            case RunnerExitCode.INVALID_ENV_VARS: {
+            case RunnerExitCode.SUCCESS:
+                return Promise.resolve({ message: "Instance completed", exitcode, reason: TerminateReason.COMPLETED, status: InstanceStatus.COMPLETED });
+
+            case RunnerExitCode.INVALID_ENV_VARS:
                 return Promise.reject({
                     message: "Runner was started with invalid configuration. This is probably a bug in STH.",
                     exitcode: RunnerExitCode.INVALID_ENV_VARS,
                     status: InstanceStatus.ERRORED
                 });
-            }
-            case RunnerExitCode.PODS_LIMIT_REACHED: {
-                return Promise.reject({
-                    message: "Instance limit reached",
-                    exitcode: RunnerExitCode.PODS_LIMIT_REACHED,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.INVALID_SEQUENCE_PATH: {
+
+            case RunnerExitCode.PODS_LIMIT_REACHED:
+                return this.handlePodsLimitError();
+
+            case RunnerExitCode.INVALID_SEQUENCE_PATH:
                 return Promise.reject({
                     message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
                         "Check `main` field in Sequence package.json",
                     exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH,
                     status: InstanceStatus.ERRORED
                 });
-            }
-            case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
+
+            case RunnerExitCode.SEQUENCE_FAILED_ON_START:
                 return Promise.reject({
                     message: "Sequence failed on start",
                     exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START,
                     status: InstanceStatus.ERRORED
                 });
-            }
-            case RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION: {
+
+            case RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION:
                 return Promise.reject({
                     message: "Sequence failed during execution",
                     exitcode: RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION,
                     status: InstanceStatus.ERRORED
                 });
-            }
-            case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
+
+            case RunnerExitCode.SEQUENCE_UNPACK_FAILED:
                 return Promise.reject({
                     message: "Sequence unpack failed",
                     exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED,
                     status: InstanceStatus.ERRORED
                 });
-            }
-            case RunnerExitCode.KILLED: {
+
+            case RunnerExitCode.KILLED:
                 return Promise.resolve({
                     message: "Instance killed", exitcode: RunnerExitCode.KILLED, reason: TerminateReason.KILLED, status: InstanceStatus.COMPLETED
                 });
-            }
-            case RunnerExitCode.STOPPED: {
+
+            case RunnerExitCode.STOPPED:
                 return Promise.resolve({
                     message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, reason: TerminateReason.STOPPED, status: InstanceStatus.COMPLETED
                 });
-            }
-        }
 
-        if (exitcode > 0) {
-            return Promise.reject({ message: "Runner failed", exitcode, reason: TerminateReason.ERRORED, status: InstanceStatus.ERRORED });
+            default:
+                return Promise.reject({ message: "Runner failed", exitcode, reason: TerminateReason.ERRORED, status: InstanceStatus.ERRORED });
         }
-
-        return Promise.resolve({ message: "Instance completed", exitcode, reason: TerminateReason.COMPLETED, status: InstanceStatus.COMPLETED });
     }
 
     async cleanup() {
