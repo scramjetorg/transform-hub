@@ -211,8 +211,14 @@ export class CSIController extends TypedEmitter<Events> {
 
         i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
-            this.status = InstanceStatus.ERRORED;
+            this.status ||= InstanceStatus.ERRORED;
+            this.setExitInfo(e.exitcode, e.message);
+
             this.emit("error", e);
+            this.emit("terminated", e.exitcode);
+
+            await defer(runnerExitDelay);
+
             this.emit("end", e.exitcode);
         });
 
