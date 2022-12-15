@@ -61,13 +61,6 @@ type Events = {
     terminated: (code: number) => void;
 };
 
-enum TerminateReason {
-    STOPPED = "stopped",
-    ERRORED = "errored",
-    KILLED = "killed",
-    COMPLETED = "completed"
-}
-
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  */
@@ -94,7 +87,7 @@ export class CSIController extends TypedEmitter<Events> {
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    instancePromise?: Promise<{ message: string, exitcode: number; reason: TerminateReason, status: InstanceStatus }>;
+    instancePromise?: Promise<{ message: string, exitcode: number; status: InstanceStatus }>;
     args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
@@ -240,7 +233,7 @@ export class CSIController extends TypedEmitter<Events> {
                 code = stopResult.exitcode;
                 this.logger.trace("Instance ended with code", code);
                 this.status = stopResult.status;
-                this.setExitInfo(code, stopResult.reason);
+                this.setExitInfo(code, stopResult.message);
             }
         } catch (e: any) {
             code = e.exitcode;
@@ -331,7 +324,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private mapRunnerExitCode(exitcode: number): Promise<
-        { message: string, exitcode: number, reason: TerminateReason}
+        { message: string, exitcode: number, status: InstanceStatus }
     > {
         // eslint-disable-next-line default-case
         switch (exitcode) {
@@ -380,21 +373,21 @@ export class CSIController extends TypedEmitter<Events> {
             }
             case RunnerExitCode.KILLED: {
                 return Promise.resolve({
-                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, reason: TerminateReason.KILLED, status: InstanceStatus.COMPLETED
+                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, status: InstanceStatus.COMPLETED
                 });
             }
             case RunnerExitCode.STOPPED: {
                 return Promise.resolve({
-                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, reason: TerminateReason.STOPPED, status: InstanceStatus.COMPLETED
+                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, status: InstanceStatus.COMPLETED
                 });
             }
         }
 
         if (exitcode > 0) {
-            return Promise.reject({ message: "Runner failed", exitcode, reason: TerminateReason.ERRORED, status: InstanceStatus.ERRORED });
+            return Promise.reject({ message: "Runner failed", exitcode, status: InstanceStatus.ERRORED });
         }
 
-        return Promise.resolve({ message: "Instance completed", exitcode, reason: TerminateReason.COMPLETED, status: InstanceStatus.COMPLETED });
+        return Promise.resolve({ message: "Instance completed", exitcode, status: InstanceStatus.COMPLETED });
     }
 
     async cleanup() {
@@ -850,7 +843,7 @@ export class CSIController extends TypedEmitter<Events> {
         return message;
     }
 
-    setExitInfo(exitcode: number, reason: TerminateReason) {
+    setExitInfo(exitcode: number, reason: string) {
         this.terminated = { exitcode, reason };
     }
 }
