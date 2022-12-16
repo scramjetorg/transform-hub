@@ -2,7 +2,15 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [0.31.1] - 2022-12-17
+## [0.31.2] - 2022-12-16
+
+## Fixed
+
+* Keep instance failed to start long as other errored instances by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/760>
+* Change instance limit error message by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/761>
+* Fix missing error reason by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/762>
+
+## [0.31.1] - 2022-12-14
 
 ## Fixed
 
