@@ -5,6 +5,7 @@ import { ServerResponse } from "http";
 import { AuditedRequest, Auditor } from "../auditor";
 
 const ACTIVE_REQUEST_AUDIT_INTERVAL = 1000;
+const ACTIVE_REQUEST_AUDIT_MIN_X_DELTA = 65536;
 
 export const logger = new ObjLogger("AuditMiddleware");
 export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {
@@ -43,7 +44,7 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
     };
 
     const interval = setInterval(() => {
-        if (request.auditData.rx !== rx || request.auditData.tx !== tx) {
+        if (request.auditData.rx - rx + request.auditData.tx - tx >= ACTIVE_REQUEST_AUDIT_MIN_X_DELTA) {
             auditor.auditRequest(request, "ACTIVE");
 
             rx = request.auditData.rx;

@@ -634,7 +634,7 @@ export class CSIController extends TypedEmitter<Events> {
             localEmitter.lastEvents[event.eventName] = event;
             localEmitter.emit(event.eventName, event);
         });
-        this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
+        this.router.upstreamCancel("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
             const name = req.params?.name;
 
             if (!name) {
@@ -653,6 +653,7 @@ export class CSIController extends TypedEmitter<Events> {
 
             localEmitter.on(name, handler);
 
+            res.on("close", clean);
             res.on("error", clean);
             res.on("end", clean);
 

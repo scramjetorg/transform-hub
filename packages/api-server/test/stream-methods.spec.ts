@@ -31,7 +31,7 @@ test("Upstream works with stream", async t => {
     const done = response.fullBody?.then(() => { ended = true; });
     const up = new StringStream();
 
-    api.upstream("/api/up", up as unknown as Readable, { end: false, text: true });
+    api.upstreamCancel("/api/up", up as unknown as Readable, { end: false, text: true });
 
     request.headers.accept = "text/plain";
     server.request(request, response);

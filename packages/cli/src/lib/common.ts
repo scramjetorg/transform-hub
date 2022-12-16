@@ -36,6 +36,9 @@ export const getHostClient = (): HostClient => {
 
     if (debug) {
         hostClient.client.addLogger({
+            request(url) {
+                displayMessage(`Request running: ${url.toString()}`);
+            },
             ok(result) {
                 const { status, statusText, url } = result;
 

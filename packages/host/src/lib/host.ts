@@ -434,7 +434,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
 
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
-        this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
+        this.api.upstream(`${this.apiBase}/log`, this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (stream, headers) =>
             this.cpmConnector?.handleCommunicationRequest(stream, headers)
         );
@@ -480,6 +480,9 @@ export class Host implements IComponent {
     }
 
     topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
+        if (req.socket?.setTimeout) req.socket.setTimeout(0);
+        if (req.socket?.setNoDelay) req.socket.setNoDelay(true);
+
         req.url = req.url?.substring(this.topicsBase.length);
 
         return this.serviceDiscovery.router.lookup(req, res, next);

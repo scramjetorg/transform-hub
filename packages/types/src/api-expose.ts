@@ -9,8 +9,10 @@ import { MaybePromise } from "./utils";
 export type ParsedMessage = IncomingMessage & { body?: any; params: { [key: string]: any } | undefined };
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
+export type StreamInputFunction = (req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>;
+
 export type StreamInput =
-    | ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>)
+    | StreamInputFunction
     | MaybePromise<Readable>;
 export type StreamOutput = ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
@@ -121,6 +123,16 @@ export interface APIBase {
     upstream(path: string | RegExp, stream: StreamInput, config?: StreamConfig): void;
 
     /**
+     * A method that allows to pass a stream to the specified path on the API server
+     *
+     * @param path the request path as string or regex
+     * @param stream the stream that will be sent in reposnse body or a method to be called then
+     * @param cancel called when the stream does cancel
+     * @param config configuration of the stream
+     */
+     upstreamCancel(path: string | RegExp, stream: StreamInput, cancel?: () => void , config?: StreamConfig): void;
+
+     /**
      * A method that allows to consume incoming stream from the specified path on the API server
      *
      * @param path the request path as string or regex

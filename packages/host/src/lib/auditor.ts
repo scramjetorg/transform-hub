@@ -93,9 +93,8 @@ export class Auditor {
         const opCode = this.getOpCode(req);
         const requestorId = this.getRequestorId(req);
 
-        this.logger.trace("Requestor, tx, rx", requestorId, req.auditData.rx, req.auditData.tx);
-
         if (opCode) {
+            this.logger.trace("Requestor, tx, rx", status, requestorId, req.auditData.rx, req.auditData.tx);
             this.write({
                 opState: status,
                 opCode,

@@ -202,7 +202,7 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+        const agent = this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
                 const socket = this.bpmux!.multiplex() as Socket;
@@ -211,10 +211,13 @@ export class VerserConnection {
                     this.logger.error("Muxed stream error");
                 });
 
-                // some libs call it but it is not here, in BPMux.
-                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                const hadKeepAlive = (socket as any).setKeepAlive ? "had keepalive function" : "had no keepalive function";
 
-                this.logger.debug("Created new muxed stream");
+                // some libs call it but it is not here, in BPMux.
+                socket.setKeepAlive = (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+
+                this.logger.debug(`Created new muxed stream that ${hadKeepAlive}, free sockets: ${agent.freeSockets}`);
+                this.logger.debug(`Created new muxed stream, sockets sockets: ${Object.entries(agent.sockets).map(([k,v]) => `${k}: ${v?.length}`)}`);
                 return socket;
             } catch (e) {
                 const ret = new Socket();

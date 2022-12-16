@@ -110,7 +110,7 @@ export class ServiceDiscovery {
             return {};
         }, { checkContentType: false });
 
-        this.router.upstream("/:topic", async (req) => {
+        this.router.upstream("/:topic", async (req, res) => {
             //TODO: what should be the default content type and where to store this information?
             const contentType = req.headers["content-type"] || "application/x-ndjson";
             const { topic } = req.params || {};
@@ -171,7 +171,13 @@ export class ServiceDiscovery {
         return Array.from(this.dataMap, ([key, value]) => ({
             contentType: value.contentType,
             localProvider: value.localProvider,
-            topic: key
+            topic: key,
+            stats: {
+                bytes: value.stream.readableLength + value.stream.writableLength,
+                pipes: (value.stream as any)?._readableState?.pipes?.length || 0,
+                paused: value.stream.isPaused(),
+                ended: value.stream.writableEnded
+            }
         }));
     }
 
@@ -250,7 +256,13 @@ export class ServiceDiscovery {
     }
 
     public async routeTopicToStream(topicData: dataType, target: Writable) {
-        this.getData(topicData).pipe(target);
+        const topic = this.getData(topicData);
+
+        topic.pipe(target);
+        topic.once("close", () => {
+            this.logger.debug(`Topic ${topicData.topic} unpiped`);
+            topic.unpipe(target)
+        });
 
         await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, contentType: topicData.contentType });
     }

@@ -68,16 +68,14 @@ export function getRouter(): APIRoute {
     const router = sequentialRouter({});
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
-    const { duplex, upstream, downstream } = createStreamHandlers(router);
+    const streamHandlers = createStreamHandlers(router);
     const use = router.use;
 
     return {
         lookup: (...args) => router.lookup(...args),
         get,
         op,
-        duplex,
-        upstream,
-        downstream,
+        ...streamHandlers,
         use
     };
 }
@@ -106,7 +104,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
 
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
-    const { duplex, upstream, downstream } = createStreamHandlers(router);
+    const streamHandlers = createStreamHandlers(router);
 
     log.resume(); // if log is not read.
 
@@ -115,9 +113,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
         get,
         opLogger,
         op,
-        duplex,
-        downstream,
-        upstream,
+        ...streamHandlers,
         get log() {
             return log.pause(); // if log is accessed then it should be read
         },

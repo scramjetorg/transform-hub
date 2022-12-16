@@ -59,7 +59,8 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         data: Readable,
         type: string,
         encoding: BufferEncoding,
-        res: ServerResponse
+        res: ServerResponse,
+        onDisconnect?: () => void,
     ) => {
         try {
             const out = data;
@@ -75,9 +76,15 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             res.flushHeaders();
 
             // Error handling on disconnect!
-            const disconnect = () => out.unpipe(res);
+            const disconnect = () => {
+                logger.warn("unpipe", res.writableLength);
+
+                out.unpipe(res);
+                onDisconnect?.call(null);
+            }
 
             res
+                .on("close", disconnect)
                 .on("error", disconnect)
                 .on("unpipe", disconnect)
                 .socket?.on("end", disconnect);
@@ -87,6 +94,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             throw new CeroError("ERR_FAILED_TO_SERIALIZE", e);
         }
     };
+
     const upstream = (
         path: string | RegExp,
         stream: StreamInput,
@@ -103,6 +111,25 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             }
         });
     };
+
+    const upstreamCancel = (
+        path: string | RegExp,
+        stream: StreamInput,
+        close: () => void = () => 0,
+        { json = false, text = false, encoding = "utf-8" }: StreamConfig = {}
+    ): void => {
+        router.get(path, async (req, res, next) => {
+            try {
+                const type = checkAccepts(req.headers.accept, text, json);
+                const data = await getStream(req, res, stream);
+
+                return decorator(data, type, encoding, res, close);
+            } catch (e: any) {
+                return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
+            }
+        });
+    };
+
     const downstream = (
         path: string | RegExp,
         stream: StreamOutput,
@@ -202,6 +229,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     return {
         downstream,
         duplex,
-        upstream
+        upstream,
+        upstreamCancel
     };
 }

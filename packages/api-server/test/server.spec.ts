@@ -17,7 +17,7 @@ beforeEach(() => sandbox.restore());
 test("Creates an API by default and exports methods", (t) => {
     const api = createServer();
 
-    t.is(typeof api.upstream, "function", "Exposes upstream");
+    t.is(typeof api.upstreamCancel, "function", "Exposes upstream");
     t.is(typeof api.downstream, "function", "Exposes downstream");
     t.is(typeof api.get, "function", "Exposes get");
     t.is(typeof api.op, "function", "Exposes op");
@@ -36,7 +36,7 @@ test("Methods don't throw", async t => {
     api.get("/api/get", RunnerMessageCode.MONITORING, comm);
     api.op("post", "/api/kill", RunnerMessageCode.KILL, comm);
     api.downstream("/api/send", new DataStream() as unknown as Writable);
-    api.upstream("/api/send", new DataStream() as unknown as Readable);
+    api.upstreamCancel("/api/send", new DataStream() as unknown as Readable);
 });
 
 after(() => sandbox.restore());

@@ -54,6 +54,8 @@ export abstract class ClientUtilsBase implements HttpClient {
 
         options.throwOnErrorHttpCode ??= true;
 
+        this.log?.request(input);
+
         try {
             const response = await this.fetch(input, fetchInit)
                 .then(async (result: any) => {
@@ -148,8 +150,10 @@ export abstract class ClientUtilsBase implements HttpClient {
             data = JSON.stringify(data);
         }
 
+        const theUrl = this.normalizeUrlFn(`${this.apiBase}/${url}`);
+
         return this.safeRequest<T>(
-            this.normalizeUrlFn(`${this.apiBase}/${url}`),
+            theUrl,
             {
                 ...requestInit,
                 method: "post",
