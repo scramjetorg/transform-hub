@@ -155,10 +155,13 @@ export class VerserClient extends TypedEmitter<Events> {
                     this.logger.error("Muxed stream error");
                 });
 
-                // some libs call it but it is not here, in BPMux.
+                // this socket is to be used as net.Socket but it is not one
+                // and it lacks of following net.Socket methods:
                 socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                socket.unref ||= () => socket;
+                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
-                this.logger.info("Creating connection to verser server");
+                this.logger.info("Creating muxed channel in verser connection");
 
                 return socket;
             } catch (error) {
