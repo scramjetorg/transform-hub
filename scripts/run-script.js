@@ -172,6 +172,9 @@ console.time(BUILD_NAME);
             error = true;
         })
         .run()
+        .then(() => {
+            if (error) throw new Error("One of the builds failed...");
+        })
     ;
 })()
     .catch(e => {

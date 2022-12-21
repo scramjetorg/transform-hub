@@ -24,18 +24,24 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 [ -z "$TARGET" ] && display_help
-[ -w "$TARGET" && -d "$TARGET" ] || show_error "Erorr: Target must be a writable directory..."
+[ -w "$TARGET" ] && [ -d "$TARGET" ] || show_error "Erorr: Target must be a writable directory..."
 
-echo "Copying files..." >&2
+echo "Copying scripts..." >&2
 
-cp -v -t "$TARGET" \
+cp -pvt "$TARGET" \
     $WD/add-to-packages-json.js \
     $WD/build-all.js \
-    $WD/run-script.js \
-    $WD/build-utils.js \
-    $WD/get-deep-deps.js \
-    $WD/opts.js
+    $WD/deps-update.js \
+    $WD/run-script.js
+
+echo "Copying libs..." >&2
+
+mkdir -p "${TARGET%/}/lib"
+cp -pvt "${TARGET%/}/lib" \
+    $WD/lib/build-utils.js \
+    $WD/lib/get-deep-deps.js \
+    $WD/lib/opts.js
 
 echo "Scripts copied" >&2
 echo >&2
-echo "Remember to add dependencies: npm i -D glob globrex minimist scramjet @npmcli/run-script" >&2
+echo "Remember to add dependencies: npm i -D glob globrex minimist semver scramjet @npmcli/run-script" >&2
