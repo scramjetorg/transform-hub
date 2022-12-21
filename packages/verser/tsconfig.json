@@ -4,9 +4,11 @@
   },
   "extends": "../../tsconfig.base.json",
   "include": [
+    "./types.ts",
     "./src/**/*.ts",
-    "./test/**/*.ts"
-, "src/types"  ],
+    "./test/**/*.ts",
+    "src/types"
+  ],
   "exclude": [
     "node_modules"
   ],
