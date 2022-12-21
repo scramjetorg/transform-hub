@@ -49,7 +49,6 @@ It currently supports Node.js based apps, but Python and other languages are com
   - [Docker commands :whale:](#docker-commands-whale)
   - [Build Hub on Docker :building_construction:](#build-hub-on-docker-building_construction)
   - [Run Transform Hub in Docker :robot:](#run-transform-hub-in-docker-robot)
-  - [Lerna commands :pencil:](#lerna-commands-pencil)
   - [Autocomplete :zap:](#autocomplete-zap)
   - [Git branching workflow](#git-branching-workflow)
 - [Sample usage :sunglasses:](#sample-usage-sunglasses)
@@ -151,7 +150,6 @@ There are several installations you need to perform to get STH up and running, a
 
 - nvm
 - node.js
-- lerna
 - yarn
 - typescript
 - ts-node
@@ -168,7 +166,7 @@ npm -v
 
 If none of the above commands is found, **you must proceed with the installation.**
 
-It is recommended to use a **Node version manager** like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using either of the commands bellow. 
+It is recommended to use a **Node version manager** like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using either of the commands bellow.
 > Note: Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script).
 
 ```bash
@@ -216,12 +214,11 @@ $ npm -v
 8.15.0
 ```
 
-**OK!** It looks like you have successfully installed node.js and npm. 
+**OK!** It looks like you have successfully installed node.js and npm.
 
 There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g lerna   # lerna is a tool that we use for publishing multiple packages to npm.
 npm install -g yarn   # yarn is a package manager
 ```
 
@@ -230,9 +227,6 @@ npm install -g yarn   # yarn is a package manager
 The same as before the installations can be confirmed by checking the installed versions:
 
 ```bash
-$ lerna -v
-4.0.0
-
 $ yarn -v
 1.22.17
 ```
@@ -301,7 +295,7 @@ In the meantime let me describe for you what is happening in the command you hav
 
 When both the package installation and build are complete, STH should be ready to run.
 
- 
+
 
 ---
 
@@ -489,24 +483,6 @@ docker run \
   -v /tmp/:/tmp/ \
   -v /var/run/docker.sock:/var/run/docker.sock \
   scramjetorg/sth:$(jq -r .version package.json)
-```
-
-## Lerna commands :pencil:
-
-We use Lerna to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
-
-```bash
-lerna create package_name # Add new package:
-lerna ls                  # List all of the public packages in the current Lerna repo:
-lerna run [script]        # Run an npm script in each package that contains that script.
-lerna run --ignore @scramjet/<package_name> <script-name>
-    # Run script in all packages excluding one package:
-lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
-    # ... or run script excluding more packages
-lerna run --scope @scramjet/<package_name> <script-name>
-    # Run script only in one package
-lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
-    # Run script in more packages
 ```
 
 ## Autocomplete :zap:
@@ -700,7 +676,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with yarn or npm. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
