@@ -79,7 +79,7 @@ test.before(t => {
     return;
 });
 
-test("Default file returned on invalid file path", (t) => {
+test.skip("Default file returned on invalid file path", (t) => {
     const testConfig = new TestConfigFileDefault("");
     const defaultConfig = testConfig.getDefault();
     const config = testConfig.get();
