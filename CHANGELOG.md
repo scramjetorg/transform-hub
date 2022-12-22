@@ -2,6 +2,14 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.31.3] - 2022-12-22
+
+## Fixed
+
+* Fix missing socket methods by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/766
+* Update banner by @S4adam in https://github.com/scramjetorg/transform-hub/pull/765
+* New banner button text by @S4adam in https://github.com/scramjetorg/transform-hub/pull/767
+
 ## [0.31.2] - 2022-12-16
 
 ## Fixed
