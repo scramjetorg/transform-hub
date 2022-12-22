@@ -427,7 +427,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             },
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev]),
-            hostClient: new HostApiClient("http://scramjet-host/api/v1", hostClientUtils)
+            hub: new HostApiClient("http://scramjet-host/api/v1", hostClientUtils)
         };
 
         this._context = new RunnerAppContext(config, this.hostClient.monitorStream, this.emitter, runner);

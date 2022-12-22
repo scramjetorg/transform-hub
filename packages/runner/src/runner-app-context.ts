@@ -20,7 +20,7 @@ export interface RunnerProxy {
     sendStop(error?: AppError | Error): void;
     sendEvent(ev: EventMessageData): void;
     keepAliveIssued(): void;
-    hostClient: HostClient;
+    hub: HostClient;
 }
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
