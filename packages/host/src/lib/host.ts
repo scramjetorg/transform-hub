@@ -653,7 +653,7 @@ export class Host implements IComponent {
 
             const config = await sequenceAdapter.identify(stream, id);
 
-            config.packageSize = stream.socket.bytesRead;
+            config.packageSize = stream.socket?.bytesRead;
 
             this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
 
@@ -746,37 +746,33 @@ export class Host implements IComponent {
     }
 
     async getExternalSequence(id: string): Promise<SequenceInfo> {
-        if (this.cpmConnector?.connected) {
-            let packageStream: IncomingMessage | undefined;
+        let packageStream: IncomingMessage | undefined;
 
-            try {
-                this.logger.info("Retrieving sequence", id);
+        try {
+            this.logger.info("Retrieving sequence", id);
 
-                const response = await this.s3Client?.getObject({ filename: id + ".tar.gz" });
+            const response = await this.s3Client?.getObject({ filename: id + ".tar.gz" });
 
-                this.logger.info("Sequence package retrieved");
+            this.logger.info("Sequence package retrieved");
 
-                if (!response) {
-                    throw new Error(ReasonPhrases.NOT_FOUND);
-                }
-
-                packageStream = response.data as IncomingMessage;
-                packageStream.headers = response.headers;
-
-                const result = (await this.handleNewSequence(
-                    packageStream as ParsedMessage,
-                    id
-                )) as STHRestAPI.SendSequenceResponse;
-
-                return this.sequencesStore.get(result.id)!;
-            } catch (e: any) {
-                this.logger.error("Error requesting sequence", e.message);
-
-                throw new Error(ReasonPhrases.SERVICE_UNAVAILABLE);
+            if (!response) {
+                throw new Error(ReasonPhrases.NOT_FOUND);
             }
-        }
 
-        throw new Error(ReasonPhrases.NOT_FOUND);
+            packageStream = response.data as IncomingMessage;
+            packageStream.headers = response.headers;
+
+            const result = (await this.handleNewSequence(
+                packageStream as ParsedMessage,
+                id
+            )) as STHRestAPI.SendSequenceResponse;
+
+            return this.sequencesStore.get(result.id)!;
+        } catch (e: any) {
+            this.logger.error("Error requesting sequence", e.message);
+
+            throw new Error(ReasonPhrases.NOT_FOUND);
+        }
     }
 
     /**
@@ -803,10 +799,12 @@ export class Host implements IComponent {
             this.sequencesStore.get(id) ||
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
-        sequence ||= await this.getExternalSequence(id).catch((error: ReasonPhrases) => {
-            this.logger.error("Error getting sequence from external sources", error);
-            return undefined;
-        });
+        if (this.cpmConnector?.connected) {
+            sequence ||= await this.getExternalSequence(id).catch((error: ReasonPhrases) => {
+                this.logger.error("Error getting sequence from external sources", error);
+                return undefined;
+            });
+        }
 
         if (!sequence) {
             return { opStatus: ReasonPhrases.NOT_FOUND };
