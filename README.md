@@ -57,7 +57,7 @@ It currently supports Node.js based apps, but Python and other languages are com
   - [More samples :books:](#more-samples-books)
   - [Configure your own sample :pencil:](#configure-your-own-sample-pencil)
 - [Troubleshooting :collision:](#troubleshooting-collision)
-- [Cloud Platform Beta is coming 🥳](#cloud-platform-beta-is-coming-)
+- [Start your 30 day trial :partying_face:](#start-your-30-days-trial-now-partying_face)
 - [License and contributions :page_with_curl:](#license-and-contributions-page_with_curl)
 - [Help wanted :information_desk_person:](#help-wanted-information_desk_person)
 - [Donation :money_with_wings:](#donation-money_with_wings)
@@ -709,9 +709,9 @@ Log an issue/bug every time you encounter a problem or find a bug. Maybe you wil
 
 ---
 
-# Cloud Platform Beta is coming 🥳
+# Start your 30 days trial now! :partying_face:
 
-[![Beta program](https://scramjet.org/images/join-scramjet-cloud-beta.png)](https://scramjet.org/#join-beta)
+[![Register](https://user-images.githubusercontent.com/63969229/208955381-676702f3-2af1-4f50-bd0c-f6b3660c26f0.png)](https://scramjet.org/)
 
 ---
 
