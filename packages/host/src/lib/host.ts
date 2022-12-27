@@ -204,6 +204,7 @@ export class Host implements IComponent {
         const { safeOperationLimit, instanceRequirements } = this.config;
 
         this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
+        this.loadCheck.logger.pipe(this.logger);
 
         this.socketServer = socketServer;
         this.socketServer.logger.pipe(this.logger);
