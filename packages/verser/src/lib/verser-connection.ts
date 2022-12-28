@@ -165,7 +165,7 @@ export class VerserConnection {
     public async makeRequest(options: RequestOptions): Promise<VerserRequestResult> {
         if (!this.connected) throw new Error("Not connected");
 
-        this.logger.error("making request", options);
+        this.logger.debug("making request", options);
         return new Promise((resolve, reject) => {
             const clientRequest = httpRequest({ ...options, agent: this.agent })
                 .on("response", (incomingMessage: IncomingMessage) => {
@@ -216,6 +216,8 @@ export class VerserConnection {
 
                 // some libs call it but it is not here, in BPMux.
                 socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                socket.unref ||= () => socket;
+                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
                 this.logger.debug("Created new muxed stream");
                 return socket;
