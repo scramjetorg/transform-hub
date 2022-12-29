@@ -51,7 +51,7 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("send")
-        .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and send.")
+        .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
         .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Hub")
         .action(
