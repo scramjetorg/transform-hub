@@ -33,7 +33,7 @@ export const store: CommandDefinition = (program) => {
 
     storeCmd
         .command("send")
-        .argument("<package>", "The file or directory to upload. If directory, it will be packed and send.")
+        .argument("<package>", "The file or directory to upload. If directory, it will be packed and sent.")
         .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Store")
         .action(async (sequencePackage: string, { name }) => {
