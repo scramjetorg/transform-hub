@@ -36,6 +36,15 @@ export class HostClient implements ClientProvider {
     }
 
     /**
+     * Returns list of all entities on Host.
+     *
+     * @returns {Promise<STHRestAPI.GetEntitiesResponse>} Promise resolving to list of entities.
+     */
+    async listEntities() {
+        return this.client.get<STHRestAPI.GetEntitiesResponse>("entities");
+    }
+
+    /**
      * Returns Host log stream.
      *
      * @param {RequestInit} requestInit RequestInit object to be passed to fetch.

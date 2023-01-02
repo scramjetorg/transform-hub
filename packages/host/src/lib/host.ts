@@ -421,7 +421,10 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
-
+        this.api.get(`${this.apiBase}/entities`, () => ({
+            sequences: this.getSequences(),
+            instances: this.getInstances()
+        }));
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(
             `${this.apiBase}/version`,
