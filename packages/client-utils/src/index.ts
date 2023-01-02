@@ -35,6 +35,24 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
     }
 }
 
+export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClient {
+    constructor(
+        apiBase: string,
+        agent: http.Agent
+    ) {
+        super(
+            apiBase,
+            (req: nodefetch.RequestInfo, init?: nodefetch.RequestInit): Promise<nodefetch.Response> => {
+                return nodefetch.default(req, {
+                    ...init,
+                    agent
+                });
+            },
+            normalizeUrl
+        );
+    }
+}
+
 export { ClientError, ClientErrorCode } from "./client-error";
 export { RequestLogger } from "./types";
 
