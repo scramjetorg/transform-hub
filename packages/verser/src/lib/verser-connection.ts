@@ -204,7 +204,7 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        this.agent = new Agent({ keepAlive: true }) as Agent & { createConnection: typeof createConnection }; // lack of types?
+        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
                 const socket = this.bpmux!.multiplex() as Socket;
@@ -215,6 +215,8 @@ export class VerserConnection {
 
                 // some libs call it but it is not here, in BPMux.
                 socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                socket.unref ||= () => socket;
+                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
                 this.logger.debug("Created new muxed stream");
                 return socket;
@@ -247,5 +249,9 @@ export class VerserConnection {
                 res();
             });
         });
+    }
+
+    getAgent() {
+        return this.agent as Agent;
     }
 }
