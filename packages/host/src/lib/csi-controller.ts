@@ -125,6 +125,9 @@ export class CSIController extends TypedEmitter<Events> {
      */
     public inputTopic?: string;
 
+    public outputRouted = false;
+    public inputRouted = false;
+
     /**
      * Logger.
      *
@@ -470,17 +473,18 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
             const pangData = message[1];
 
-            if (pangData.provides) {
-                this.provides ||= pangData.provides;
-            } else if (pangData.requires) {
-                this.requires ||= pangData.requires;
+            this.provides ||= this.outputTopic || pangData.provides;
+            this.requires ||= this.inputTopic || pangData.requires;
 
-                if (pangData.requires !== "") {
-                    this.apiInputEnabled = false;
-                }
+            if (this.requires) {
+                this.apiInputEnabled = false;
             }
 
-            this.emit("pang", message[1]);
+            this.emit("pang", {
+                provides: this.provides,
+                requires: this.requires,
+                contentType: pangData.contentType
+            });
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {

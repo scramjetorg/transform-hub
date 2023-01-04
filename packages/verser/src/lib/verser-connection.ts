@@ -29,7 +29,7 @@ export class VerserConnection {
     private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
     get connected() {
-        return !this._socket.destroyed && this.bpmux;
+        return !(this._socket.destroyed && this.bpmux);
     }
 
     get socket(): Duplex {
@@ -163,8 +163,9 @@ export class VerserConnection {
      * @returns {Promise<VerserRequestResult>} Promise resolving to Response and Request objects.
      */
     public async makeRequest(options: RequestOptions): Promise<VerserRequestResult> {
-        if (!this.connected) throw new Error("BPMux not connected");
+        if (!this.connected) throw new Error("Not connected");
 
+        this.logger.debug("making request", options);
         return new Promise((resolve, reject) => {
             const clientRequest = httpRequest({ ...options, agent: this.agent })
                 .on("response", (incomingMessage: IncomingMessage) => {
@@ -172,7 +173,7 @@ export class VerserConnection {
                     resolve({ incomingMessage, clientRequest });
                 })
                 .on("error", (error: Error) => {
-                    this.logger.error("Error making request", options);
+                    this.logger.error("Request error", options, error);
                     reject(error);
                 });
 
