@@ -24,6 +24,7 @@ Provides methods to interact with Host.
 
 - [deleteSequence](HostClient.md#deletesequence)
 - [getConfig](HostClient.md#getconfig)
+- [getEntities](HostClient.md#getentities)
 - [getInstanceClient](HostClient.md#getinstanceclient)
 - [getInstanceInfo](HostClient.md#getinstanceinfo)
 - [getLoadCheck](HostClient.md#getloadcheck)
@@ -34,6 +35,7 @@ Provides methods to interact with Host.
 - [getStatus](HostClient.md#getstatus)
 - [getTopics](HostClient.md#gettopics)
 - [getVersion](HostClient.md#getversion)
+- [listEntities](HostClient.md#listentities)
 - [listInstances](HostClient.md#listinstances)
 - [listSequences](HostClient.md#listsequences)
 - [sendNamedData](HostClient.md#sendnameddata)
@@ -102,7 +104,7 @@ Promise resolving to delete Sequence result.
 
 #### Defined in
 
-[api-client/src/host-client.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L84)
+[api-client/src/host-client.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L93)
 
 ___
 
@@ -120,7 +122,21 @@ Promise resolving to Host configuration (public part).
 
 #### Defined in
 
-[api-client/src/host-client.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L129)
+[api-client/src/host-client.ts:138](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L138)
+
+___
+
+### getEntities
+
+▸ **getEntities**(): `Promise`<`GetEntitiesResponse`\>
+
+#### Returns
+
+`Promise`<`GetEntitiesResponse`\>
+
+#### Defined in
+
+[api-client/src/host-client.ts:198](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L198)
 
 ___
 
@@ -144,7 +160,7 @@ InstanceClient instance.
 
 #### Defined in
 
-[api-client/src/host-client.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L175)
+[api-client/src/host-client.ts:184](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L184)
 
 ___
 
@@ -168,7 +184,7 @@ Promise resolving to Instance details.
 
 #### Defined in
 
-[api-client/src/host-client.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L95)
+[api-client/src/host-client.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L104)
 
 ___
 
@@ -186,7 +202,7 @@ Promise resolving to Host load check data.
 
 #### Defined in
 
-[api-client/src/host-client.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L104)
+[api-client/src/host-client.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L113)
 
 ___
 
@@ -210,7 +226,7 @@ Promise resolving to response with log stream.
 
 #### Defined in
 
-[api-client/src/host-client.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L44)
+[api-client/src/host-client.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L53)
 
 ___
 
@@ -235,7 +251,7 @@ Promise resolving to readable stream.
 
 #### Defined in
 
-[api-client/src/host-client.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L161)
+[api-client/src/host-client.ts:170](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L170)
 
 ___
 
@@ -259,7 +275,7 @@ Promise resolving to Sequence details.
 
 #### Defined in
 
-[api-client/src/host-client.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L74)
+[api-client/src/host-client.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L83)
 
 ___
 
@@ -283,7 +299,7 @@ SequenceClient instance.
 
 #### Defined in
 
-[api-client/src/host-client.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L185)
+[api-client/src/host-client.ts:194](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L194)
 
 ___
 
@@ -299,7 +315,7 @@ Returns Host status.
 
 #### Defined in
 
-[api-client/src/host-client.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L120)
+[api-client/src/host-client.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L129)
 
 ___
 
@@ -313,7 +329,7 @@ ___
 
 #### Defined in
 
-[api-client/src/host-client.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L165)
+[api-client/src/host-client.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L174)
 
 ___
 
@@ -331,7 +347,25 @@ Promise resolving to Host version.
 
 #### Defined in
 
-[api-client/src/host-client.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L113)
+[api-client/src/host-client.ts:122](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L122)
+
+___
+
+### listEntities
+
+▸ **listEntities**(): `Promise`<`GetEntitiesResponse`\>
+
+Returns list of all entities on Host.
+
+#### Returns
+
+`Promise`<`GetEntitiesResponse`\>
+
+Promise resolving to list of entities.
+
+#### Defined in
+
+[api-client/src/host-client.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L43)
 
 ___
 
@@ -402,7 +436,7 @@ TODO: comment.
 
 #### Defined in
 
-[api-client/src/host-client.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L144)
+[api-client/src/host-client.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L153)
 
 ___
 
@@ -428,4 +462,4 @@ Sequence client.
 
 #### Defined in
 
-[api-client/src/host-client.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L56)
+[api-client/src/host-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L65)

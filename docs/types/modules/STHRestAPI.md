@@ -9,6 +9,7 @@
 - [ControlMessageResponse](STHRestAPI.md#controlmessageresponse)
 - [DeleteSequenceResponse](STHRestAPI.md#deletesequenceresponse)
 - [GetConfigResponse](STHRestAPI.md#getconfigresponse)
+- [GetEntitiesResponse](STHRestAPI.md#getentitiesresponse)
 - [GetEventResponse](STHRestAPI.md#geteventresponse)
 - [GetHealthResponse](STHRestAPI.md#gethealthresponse)
 - [GetInstanceResponse](STHRestAPI.md#getinstanceresponse)
@@ -75,13 +76,31 @@ ___
 
 ___
 
+### GetEntitiesResponse
+
+Ƭ **GetEntitiesResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `instances` | [`GetInstancesResponse`](STHRestAPI.md#getinstancesresponse) |
+| `sequences` | [`GetSequencesResponse`](STHRestAPI.md#getsequencesresponse) |
+| `topics` | [`GetTopicsResponse`](STHRestAPI.md#gettopicsresponse) |
+
+#### Defined in
+
+[packages/types/src/rest-api-sth/get-entities.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-entities.ts#L5)
+
+___
+
 ### GetEventResponse
 
 Ƭ **GetEventResponse**: `any`
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L21)
+[packages/types/src/rest-api-sth/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L22)
 
 ___
 
@@ -135,7 +154,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L22)
+[packages/types/src/rest-api-sth/index.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L23)
 
 ___
 
@@ -263,6 +282,7 @@ ___
 | `appConfig` | [`AppConfig`](../modules.md#appconfig) |
 | `args?` | `any`[] |
 | `inputTopic?` | `string` |
+| `instanceId?` | `string` |
 | `limits?` | [`InstanceLimits`](../modules.md#instancelimits) |
 | `outputTopic?` | `string` |
 
