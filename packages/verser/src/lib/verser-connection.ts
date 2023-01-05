@@ -29,7 +29,7 @@ export class VerserConnection {
     private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
     get connected() {
-        return !this._socket.destroyed && this.bpmux;
+        return !(this._socket.destroyed && this.bpmux);
     }
 
     get socket(): Duplex {
@@ -163,8 +163,9 @@ export class VerserConnection {
      * @returns {Promise<VerserRequestResult>} Promise resolving to Response and Request objects.
      */
     public async makeRequest(options: RequestOptions): Promise<VerserRequestResult> {
-        if (!this.connected) throw new Error("BPMux not connected");
+        if (!this.connected) throw new Error("Not connected");
 
+        this.logger.debug("making request", options);
         return new Promise((resolve, reject) => {
             const clientRequest = httpRequest({ ...options, agent: this.agent })
                 .on("response", (incomingMessage: IncomingMessage) => {
@@ -172,7 +173,7 @@ export class VerserConnection {
                     resolve({ incomingMessage, clientRequest });
                 })
                 .on("error", (error: Error) => {
-                    this.logger.error("Error making request", options);
+                    this.logger.error("Request error", options, error);
                     reject(error);
                 });
 
@@ -204,7 +205,7 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        this.agent = new Agent({ keepAlive: true }) as Agent & { createConnection: typeof createConnection }; // lack of types?
+        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
                 const socket = this.bpmux!.multiplex() as Socket;
@@ -215,6 +216,8 @@ export class VerserConnection {
 
                 // some libs call it but it is not here, in BPMux.
                 socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                socket.unref ||= () => socket;
+                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
                 this.logger.debug("Created new muxed stream");
                 return socket;
@@ -247,5 +250,9 @@ export class VerserConnection {
                 res();
             });
         });
+    }
+
+    getAgent() {
+        return this.agent as Agent;
     }
 }

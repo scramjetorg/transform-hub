@@ -11,3 +11,4 @@ export * from "./get-instances";
 export * from "./get-topics";
 export * from "./get-store-items";
 export * from "./put-store-item";
+export * from "./get-entities";

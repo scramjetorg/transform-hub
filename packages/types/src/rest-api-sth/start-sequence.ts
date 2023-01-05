@@ -8,5 +8,6 @@ export type StartSequencePayload = {
     args?: any[],
     outputTopic?: string,
     inputTopic?: string,
-    limits?: InstanceLimits
+    limits?: InstanceLimits,
+    instanceId?: string
 }

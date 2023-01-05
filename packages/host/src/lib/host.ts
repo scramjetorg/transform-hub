@@ -204,6 +204,7 @@ export class Host implements IComponent {
         const { safeOperationLimit, instanceRequirements } = this.config;
 
         this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
+        this.loadCheck.logger.pipe(this.logger);
 
         this.socketServer = socketServer;
         this.socketServer.logger.pipe(this.logger);
@@ -359,6 +360,7 @@ export class Host implements IComponent {
                 await this.startCSIController(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
+                    instanceId: seqenceConfig.instanceId
                 });
                 this.logger.debug("Starting sequence based on config", seqenceConfig);
             })
@@ -420,7 +422,10 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
-
+        this.api.get(`${this.apiBase}/entities`, () => ({
+            sequences: this.getSequences(),
+            instances: this.getInstances()
+        }));
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(
             `${this.apiBase}/version`,
@@ -484,9 +489,6 @@ export class Host implements IComponent {
     }
 
     topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        req.socket?.setTimeout(0);
-        req.socket?.setNoDelay(true);
-
         req.url = req.url?.substring(this.topicsBase.length);
 
         return this.serviceDiscovery.router.lookup(req, res, next);
@@ -857,7 +859,7 @@ export class Host implements IComponent {
      */
     async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
-        const id = IDProvider.generate();
+        const id = payload.instanceId || IDProvider.generate();
 
         this.logger.debug("CSIC start payload", payload);
 
@@ -876,63 +878,32 @@ export class Host implements IComponent {
         });
 
         csic.on("pang", async (data) => {
-            // @TODO REFACTOR possibly send only one PANG in Runner and throw on more pangs
             this.logger.trace("PANG received", data);
 
-            // On First empty PANG
-            if (!data.requires && !data.provides) {
-                if (csic.inputTopic) {
-                    this.logger.trace("Routing topic to Sequence input, name from API:", csic.inputTopic);
-
-                    csic.requires = csic.inputTopic;
-
-                    await this.serviceDiscovery.routeTopicToStream(
-                        { topic: csic.inputTopic, contentType: "" },
-                        csic.getInputStream()
-                    );
-                }
-
-                if (csic.outputTopic) {
-                    this.logger.trace("Routing Sequence output to topic, name from API", csic.outputTopic);
-
-                    csic.provides = csic.outputTopic;
-
-                    // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
-                    await this.serviceDiscovery.routeStreamToTopic(
-                        csic.getOutputStream(),
-                        { topic: csic.outputTopic, contentType: "" },
-                        csic.id
-                    );
-                }
-            }
-
-            // Do not route original topic to input stream, if --input-topic is specified
-            if (!csic.inputTopic && data.requires) {
-                this.logger.trace("Routing topic to sequence input, name from Sequence:", data.requires);
-
-                csic.requires = data.requires;
+            if (data.requires && !csic.inputRouted) {
+                this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
                     { topic: data.requires, contentType: data.contentType! },
                     csic.getInputStream()
                 );
 
+                csic.inputRouted = true;
+
                 await this.serviceDiscovery.update({
                     requires: data.requires, contentType: data.contentType!, topicName: data.requires
                 });
             }
 
-            // Do not route output stream to original topic if --output-topic is specified
-            if (!csic.outputTopic && data.provides) {
-                this.logger.trace("Routing sequence output to topic, name from Sequence", data.provides);
-
-                csic.provides = data.provides;
-
+            if (data.provides && !csic.outputRouted) {
+                this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
-                    { topic: data.provides, contentType: "" },
+                    { topic: data.provides, contentType: data.contentType! },
                     csic.id
                 );
+
+                csic.outputRouted = true;
 
                 await this.serviceDiscovery.update({
                     provides: data.provides, contentType: data.contentType!, topicName: data.provides
@@ -1035,6 +1006,8 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetSequencesResponse} List of Sequences.
      */
     getSequences(): STHRestAPI.GetSequencesResponse {
+        this.logger.info("List Sequences");
+
         return Array.from(this.sequencesStore.values()).map((sequence) => ({
             id: sequence.id,
             name: sequence.name,
@@ -1063,10 +1036,9 @@ export class Host implements IComponent {
     }
 
     getTopics() {
-        return this.serviceDiscovery.getTopics().map((topic) => ({
-            name: topic.topic,
-            contentType: topic.contentType,
-        }));
+        this.logger.info("List topics");
+
+        return this.serviceDiscovery.getTopics();
     }
 
     getStatus(): STHRestAPI.GetStatusResponse {
