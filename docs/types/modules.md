@@ -2513,6 +2513,7 @@ ___
 | `appConfig?` | [`AppConfig`](modules.md#appconfig) |
 | `args?` | `string`[] |
 | `id` | `string` |
+| `instanceId?` | `string` |
 
 #### Defined in
 

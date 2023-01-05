@@ -9,6 +9,7 @@
 - [ConnectedSTHInfo](MRestAPI.md#connectedsthinfo)
 - [ConnectedSTHInfoDetails](MRestAPI.md#connectedsthinfodetails)
 - [GetConfigResponse](MRestAPI.md#getconfigresponse)
+- [GetEntitiesResponse](MRestAPI.md#getentitiesresponse)
 - [GetHealthCheckResponse](MRestAPI.md#gethealthcheckresponse)
 - [GetHostInfoResponse](MRestAPI.md#gethostinforesponse)
 - [GetInstanceResponse](MRestAPI.md#getinstanceresponse)
@@ -74,6 +75,16 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-manager/get-config.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-config.ts#L3)
+
+___
+
+### GetEntitiesResponse
+
+Ƭ **GetEntitiesResponse**: [`GetEntitiesResponse`](STHRestAPI.md#getentitiesresponse) & { `hostId`: `string`  }[]
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/get-entities.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-entities.ts#L3)
 
 ___
 

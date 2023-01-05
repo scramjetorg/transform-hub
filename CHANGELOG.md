@@ -2,6 +2,17 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.31.4] - 2023-01-05
+
+## Fixed
+
+* Fix typo in CLI description by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/773
+* Generate api-client docs by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/774
+* Add logs from loadcheck by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/772
+* Add apibase/entites endpoint by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/771
+* Entities, verser missing methods, types by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/775
+* Fix/topics by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/748
+
 ## [0.31.3] - 2022-12-22
 
 ## Fixed

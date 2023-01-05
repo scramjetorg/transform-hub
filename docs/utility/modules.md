@@ -549,7 +549,7 @@ arg is StartSequenceDTO
 
 #### Defined in
 
-[packages/utility/src/typeguards/dto/sequence-start.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/dto/sequence-start.ts#L3)
+[packages/utility/src/typeguards/dto/sequence-start.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/dto/sequence-start.ts#L4)
 
 ___
 
