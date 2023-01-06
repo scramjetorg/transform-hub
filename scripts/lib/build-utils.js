@@ -9,6 +9,10 @@ const { access } = require("fs/promises");
 const { cwd } = require("process");
 const globrex = require("globrex");
 
+function extractWorkspaces(pkg) {
+    return { ...pkg.workspaces, ...pkg.workspacesExtra };
+}
+
 function getDirectoriesFromGlobs(wd, globs, configName) {
     const matches = globs
         .map((pattern) => {
@@ -63,7 +67,9 @@ function makeTypescriptSolutionForPackageList(packages, configName) {
 function getTSDirectoriesFromPackage(_cwd = ".", pkg, workspaceFilter = [], tsConfigName = "tsconfig.json") {
     if (!pkg.workspaces) return [_cwd];
 
-    const workspaces = Array.isArray(pkg.workspaces) ? { default: pkg.workspaces } : pkg.workspaces;
+    const workspaces = Array.isArray(pkg.workspaces)
+        ? { default: pkg.workspaces, ...pkg.workspacesExtra }
+        : pkg.workspaces;
     const globs = Object.entries(workspaces)
         .flatMap(([key, entries]) => {
             if (workspaceFilter.length)
@@ -131,7 +137,7 @@ function getPackagesInWorkspace(pkgLocation, workspaces = []) {
                 yre.push((x) => `${x}`.match(re));
         });
 
-        workspaces = Object.entries(pkg.workspaces)
+        workspaces = Object.entries(extractWorkspaces(pkg))
             .filter(([x]) => {
                 if (nre.some(re => re(x))) return false;
 

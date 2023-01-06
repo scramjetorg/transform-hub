@@ -3,7 +3,7 @@
 
 const semver = require("semver");
 const { resolve, relative, dirname, join } = require("path");
-const { readFile, writeFile, mkdir } = require("fs/promises");
+const { readFile, writeFile, mkdir, unlink } = require("fs/promises");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const { findClosestPackageJSONLocation, getPackagesInWorkspace } = require("./lib/build-utils");
@@ -18,18 +18,21 @@ const opts = minimist(process.argv.slice(2), {
     alias: {
         list: "l",
         help: ["h", "?"],
+        clean: "c",
         workspace: "w",
         range: "R",
+        "override-zero-caret": "o",
         fix: "f",
         verbose: "v",
         root: "r",
     },
     default: {
         range: "^",
+        "override-zero-caret": "@scramjet",
         root: env.WORKSPACE_ROOT || cwd(),
     },
     boolean: [
-        "list", "long-help", "help", "verbose", "fix"
+        "list", "long-help", "help", "verbose", "fix", "clean"
     ]
 });
 
@@ -41,6 +44,7 @@ if (opts.help || opts["long-help"]) {
     console.error(`Usage: ${pName} [options]`);
     console.error(`       ${spaces} -f,--fix - write changes to packages`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
+    console.error(`       ${spaces} -o,--override-zero-carret <name|scope> - scopes or packages that should be updated in 0.x`);
     console.error(`       ${spaces} -l,--list - prints list of dirs and exits`);
     console.error(`       ${spaces} -r,--root <root> - main directory (default is cwd, env: WORKSPACE_ROOT)`);
     console.error(`       ${spaces} -v,--verbose - show verbose output`);
@@ -58,6 +62,11 @@ if (opts.help || opts["long-help"]) {
     const outFile = resolve(wd, "./.all-deps/package.json");
     const outFileCopy = outFile.replace(/\.json$/, ".previous.json");
     const outDir = dirname(outFile);
+
+    const overrideZeroCaret = Array.isArray(opts["override-zero-caret"]) ? opts["override-zero-caret"] : [opts["override-zero-caret"]];
+
+    const shouldCaretOverride = (dep) => overrideZeroCaret.find(
+        override => override.startsWith("@") ? dep.startsWith(`${override}/`) : override === dep);
 
     const allDeps = {
         dependencies: {},
@@ -145,13 +154,19 @@ if (opts.help || opts["long-help"]) {
         for (const dep of Object.keys(allDeps[depType])) {
             allDeps[depType][dep] = Array.from(new Set(allDeps[depType][dep])).sort(older);
 
-            packageTpl[depType][dep] = allDeps[depType][dep][0];
+            if (shouldCaretOverride(dep))
+                packageTpl[depType][dep] = allDeps[depType][dep][0].replace(/^\^(\d+)\..*/, "$1.*");
+            else
+                packageTpl[depType][dep] = allDeps[depType][dep][0];
         }
     }
 
     // Write to package.json and package.previous.json.
+    const lockFilePath = resolve(outDir, "package-lock.json");
+
     await writeFile(outFile, `${JSON.stringify(packageTpl, null, 2)}\n`, "utf-8");
     await writeFile(outFileCopy, `${JSON.stringify(packageTpl, null, 2)}\n`, "utf-8");
+    if (opts.clean) await unlink(lockFilePath);
 
     console.log("Generating package-lock.json file. This may take a while...");
 
@@ -159,17 +174,21 @@ if (opts.help || opts["long-help"]) {
     try {
         await promisify(exec)(`cd ${outDir} && npm install --package-lock-only --force`);
 
-        const lockFile = JSON.parse(await readFile(resolve(outDir, "package-lock.json"), { encoding: "utf-8" }));
+        const lockFile = JSON.parse(await readFile(lockFilePath, { encoding: "utf-8" }));
         const newDeps = JSON.parse(await readFile(resolve(wd, outFile), { encoding: "utf-8" }));
 
         for (const depType of depTypes) {
             if (newDeps[depType]) {
                 for (const dep of Object.entries(newDeps[depType])) {
-                    if (dep in localVersions) continue;
-
                     const [name, version] = dep;
-                    const newVersion = version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.dependencies[dep[0]].version);
 
+                    if (name in localVersions) continue;
+
+                    const newVersion = shouldCaretOverride(name)
+                        ? `^${lockFile.dependencies[name].version}`
+                        : version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.dependencies[name].version);
+
+                    console.error(`${depType}/${name}: ${version} -> ${newVersion}`);
                     newDeps[depType][name] = newVersion;
                 }
             }
@@ -234,3 +253,4 @@ if (opts.help || opts["long-help"]) {
 })().catch(e => {
     console.error(e.stack);
 });
+
