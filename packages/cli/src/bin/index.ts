@@ -63,8 +63,8 @@ const initPlatform = async () => {
     program
         .description("This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
         .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
-        .option("--config <name>", "Set global configuration profile")
-        .option("--config-path <path>", "Set global configuration from file")
+        .option("--config <profile-name>", "Use configuration from profile")
+        .option("--config-path <path>", "Use configuration from file")
         .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command")
         .addHelpCommand(false)
         .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
