@@ -453,7 +453,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         const nInterfaces = await networkInterfaces();
 
-        return (Array.isArray(nInterfaces) ? nInterfaces : [nInterfaces]).map((iface: any) => {
+        return [nInterfaces].flat().map((iface: any) => {
             const info: any = {};
 
             for (const field of fields) {
