@@ -26,12 +26,12 @@ import { DuplexStream } from "@scramjet/api-server";
 
 type STHInformation = {
     id?: string;
-}
+};
 
 type Events = {
-    connect: () => void,
-    "log_connect": (logStream: NodeJS.WritableStream) => void;
-}
+    connect: () => void;
+    log_connect: (logStream: NodeJS.WritableStream) => void;
+};
 
 /**
  * Provides communication with Manager.
@@ -153,10 +153,10 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.verserClient = new VerserClient({
             verserUrl: `${this.cpmUrl}/verser`,
             headers: {
-                "x-manager-id": cpmId,
+                "x-manager-id": cpmId
             },
             server,
-            https: this.isHttps ? { ca: [this.cpmSslCa] } : undefined,
+            https: this.isHttps ? { ca: [this.cpmSslCa] } : undefined
         });
 
         this.verserClient.logger.pipe(this.logger);
@@ -186,7 +186,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
     private get cpmUrl() {
         return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, {
-            defaultProtocol: this.isHttps ? "https:" : "http:",
+            defaultProtocol: this.isHttps ? "https:" : "http:"
         });
     }
 
@@ -498,7 +498,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             currentLoad: load.currentLoad,
             memFree: load.memFree,
             memUsed: load.memUsed,
-            fsSize: load.fsSize,
+            fsSize: load.fsSize
         };
     }
 
@@ -593,7 +593,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         return http.request(`${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`, {
             method,
             agent: this.verserClient.verserAgent,
-            headers,
+            headers
         });
     }
 
