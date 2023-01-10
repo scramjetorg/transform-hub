@@ -1,10 +1,13 @@
 /*eslint no-unused-vars: ["error", { "args": "none" }]*/
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable no-console */
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { IncomingMessage, ServerResponse, createServer, request } from "http";
+import { IncomingMessage, createServer, request } from "http";
 import { DataStream } from "scramjet";
 import { FrameTarget } from "./utils";
 import { FrameDecoder, FrameEncoder } from "./codecs";
+import { Socket } from "net";
 
 (async () => {
     const logger = new ObjLogger("Sandbox");
@@ -17,60 +20,61 @@ import { FrameDecoder, FrameEncoder } from "./codecs";
     server.setTimeout(0);
     server.requestTimeout = 0;
 
-    server.on("request", (req: IncomingMessage, res: ServerResponse) => {
-        res.socket!.setNoDelay(true);
+    server.on("connect", (req: IncomingMessage, socket: Socket) => {
+        socket.setNoDelay(true);
+        socket.write(`HTTP/1.1 ${200} \r\n\r\n`);
 
-        res.writeHead(200, { "Content-Type": "application/octet-stream", "Transfer-Encoding" : "chunked" });
-        res.flushHeaders();
+        logger.debug("on connect");
 
-        logger.debug("on request");
+        const serverFrameEncoder = new FrameEncoder(FrameTarget.API, { encoding: undefined }, { name: "ServerEncoder" });
 
-        const serverFrameEncoder = new FrameEncoder(FrameTarget.API, { encoding: undefined }, { name: "ServerEncoder"});
         serverFrameEncoder.logger.pipe(logger);
 
-        serverFrameEncoder.pipe(res);
+        serverFrameEncoder.pipe(socket);
         let i = 0;
 
-        req.on("pause", () => { logger.warn("Request paused") });
+        req.on("pause", () => { logger.warn("Request paused"); });
 
-        const serverFrameDecoder = new FrameDecoder({ highWaterMark: 60 * 1024, encoding: undefined, emitClose: false }, { name: "ServerDecoder"});
+        const serverFrameDecoder = new FrameDecoder({ highWaterMark: 60 * 1024, encoding: undefined, emitClose: false }, { name: "ServerDecoder" });
+
         serverFrameDecoder.logger.pipe(logger);
 
-        req.pipe(serverFrameDecoder).pipe(process.stdout);
+        socket.pipe(serverFrameDecoder).pipe(process.stdout);
 
         serverFrameDecoder.on("data", (d: any) => {
             logger.debug(`Server on request data [${i++}]`, JSON.parse(d).chunk, d.length);
             serverFrameEncoder.write(Buffer.from(new Uint8Array([255, 255, 255, 255])));
-        })
+        });
     });
 
     server.listen(PORT);
 
     const req = request({
         hostname: "0.0.0.0",
+        method: "connect",
         port: PORT,
         headers: { "Content-Type": "application/octet-stream", "Transfer-Encoding": "chunked" }
     });
 
+    req.on("connect", (response, socket, head) => {
+        socket.setNoDelay(true);
 
-    req.on("response", (response) => {
-        req.socket!.setNoDelay(true);
-
-        logger.debug("Response");
+        logger.debug("Response. Head:", head.toString());
 
         let i = 0;
         let m = 0;
 
-        const frameEncoder = new FrameEncoder(FrameTarget.API, { encoding: undefined, emitClose: false }, { name: "RequestEncoder"});
+        const frameEncoder = new FrameEncoder(FrameTarget.API, { encoding: undefined, emitClose: false }, { name: "RequestEncoder" });
+
         frameEncoder.logger.pipe(logger);
 
-        frameEncoder.pipe(req);
+        frameEncoder.pipe(socket);
 
-        const responseFrameDecoder = new FrameDecoder({ highWaterMark: 60 * 1024, encoding: undefined, emitClose: false }, { name: "RequestDecoder"});
+        const responseFrameDecoder = new FrameDecoder({ highWaterMark: 60 * 1024, encoding: undefined, emitClose: false }, { name: "RequestDecoder" });
 
         responseFrameDecoder.logger.pipe(logger);
 
-        response.pipe(
+        socket.pipe(
             responseFrameDecoder
         ).on("data", (d) => {
             logger.debug(`Echo from server [${i++}]`, JSON.parse(d).chunk, d.length);
