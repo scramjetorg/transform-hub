@@ -366,7 +366,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connected = true;
         this.connectionAttempts = 0;
 
-        connection.res.once("error", async (error: any) => {
+        connection.response.once("error", async (error: any) => {
             this.logger.error("Request error", error);
 
             try {

@@ -9,7 +9,7 @@ export class FrameDecoder extends Transform {
 
     _streams = new Map<number, Duplex>();
 
-    constructor(opts?: TransformOptions, params: { name: string } = { name: "FrameDecoder"}) {
+    constructor(opts?: TransformOptions, params: { name: string } = { name: "FrameDecoder" }) {
         super(opts);
         this.buff = Buffer.alloc(64 * 1024, 0, undefined); //@TODO: optimize
         this.logger = new ObjLogger(params.name);
@@ -23,7 +23,7 @@ export class FrameDecoder extends Transform {
         this.logger.trace("Decoding frame...", toHex(chunk), "Size:", chunk.length);
 
         if (!Buffer.isBuffer(chunk)) {
-            this.push(JSON.stringify({ error: "not a buffer"}), undefined);
+            this.push(JSON.stringify({ error: "not a buffer" }), undefined);
             callback();
 
             return;

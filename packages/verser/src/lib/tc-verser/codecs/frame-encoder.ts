@@ -6,9 +6,9 @@ export class FrameEncoder extends Transform {
     sequenceNumber = 0;
     logger = new ObjLogger("FrameEncoder",);
 
-    constructor(private frameTarget: FrameTarget, opts?: TransformOptions, params: { name: string } = { name: "FrameEncoder"}) {
+    constructor(private frameTarget: FrameTarget, opts?: TransformOptions, params: { name: string } = { name: "FrameEncoder" }) {
         super(opts);
-        this.logger = new ObjLogger(params.name,  { id: this.frameTarget.toString() });
+        this.logger = new ObjLogger(params.name, { id: this.frameTarget.toString() });
 
         this.on("pipe", () => {
             this.logger.debug("onPipe");
@@ -36,7 +36,7 @@ export class FrameEncoder extends Transform {
             new Uint8Array(new Uint32Array([this.sequenceNumber++]).buffer),
 
             // 160: Acknowledgement number 20-23
-            new Uint8Array([0,0,0,0]),
+            new Uint8Array([0, 0, 0, 0]),
 
             // 192: data offset (4bit), reserved (4bit), 24
             new Uint8Array([0b00000000]),
@@ -64,5 +64,5 @@ export class FrameEncoder extends Transform {
 
         this.push(buffer, undefined);
         callback(null);
-    };
+    }
 }
