@@ -153,12 +153,10 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.verserClient = new VerserClient({
             verserUrl: `${this.cpmUrl}/verser`,
             headers: {
-                "x-manager-id": cpmId
+                "x-manager-id": cpmId,
             },
             server,
-            https: this.isHttps
-                ? { ca: [this.cpmSslCa] }
-                : undefined
+            https: this.isHttps ? { ca: [this.cpmSslCa] } : undefined,
         });
 
         this.verserClient.logger.pipe(this.logger);
@@ -187,7 +185,9 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     private get cpmUrl() {
-        return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, { defaultProtocol: this.isHttps ? "https:" : "http:" });
+        return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, {
+            defaultProtocol: this.isHttps ? "https:" : "http:",
+        });
     }
 
     /**
@@ -278,14 +278,12 @@ export class CPMConnector extends TypedEmitter<Events> {
 
                     this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
 
-                    fs.writeFileSync(
-                        this.config.infoFilePath,
-                        JSON.stringify(this.info)
-                    );
+                    fs.writeFileSync(this.config.infoFilePath, JSON.stringify(this.info));
                 }
 
                 return message;
-            }).catch((e: any) => {
+            })
+            .catch((e: any) => {
                 this.logger.error("communicationChannel error", e.message);
             });
 
@@ -355,16 +353,15 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.logger.info("Connected to Manager");
 
-        connection.socket
-            .once("close", async () => {
-                await this.handleConnectionClose();
-            });
+        connection.socket.once("close", async () => {
+            await this.handleConnectionClose();
+        });
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
          * and made requests to it).
          * @TODO: Provide detailed communication status.
-        */
+         */
 
         this.connected = true;
         this.connectionAttempts = 0;
@@ -453,17 +450,15 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         const nInterfaces = await networkInterfaces();
 
-        return Array.isArray(nInterfaces)
-            ? nInterfaces
-            : [nInterfaces].map((iface: any) => {
-                  const info: any = {};
+        return (Array.isArray(nInterfaces) ? nInterfaces : [nInterfaces]).map((iface: any) => {
+            const info: any = {};
 
-                  for (const field of fields) {
-                      info[field] = iface[field];
-                  }
+            for (const field of fields) {
+                info[field] = iface[field];
+            }
 
-                  return info;
-              });
+            return info;
+        });
     }
 
     async sendLoad() {
@@ -503,7 +498,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             currentLoad: load.currentLoad,
             memFree: load.memFree,
             memUsed: load.memUsed,
-            fsSize: load.fsSize
+            fsSize: load.fsSize,
         };
     }
 
@@ -575,15 +570,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @param data Topic information.
      */
-    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string }) {
+    async sendTopicInfo(data: { provides?: string; requires?: string; contentType?: string }) {
         await this.communicationStream?.whenWrote(
             [CPMMessageCode.TOPIC, { ...data, status: "add" }]
         );
     }
 
-    async sendTopicsInfo(topics: { provides?: string, requires?: string, contentType?: string }[]) {
+    async sendTopicsInfo(topics: { provides?: string; requires?: string; contentType?: string }[]) {
         this.logger.debug("Sending topics information", topics);
-        topics.forEach(async topic => {
+        topics.forEach(async (topic) => {
             await this.sendTopicInfo(topic);
         });
 
@@ -595,10 +590,11 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
-        return http.request(
-            `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`,
-            { method, agent: this.verserClient.verserAgent, headers }
-        );
+        return http.request(`${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`, {
+            method,
+            agent: this.verserClient.verserAgent,
+            headers,
+        });
     }
 
     /**
@@ -612,9 +608,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.makeHttpRequestToCpm("GET", `topic/${topic}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
-                }).on("error", (err: Error) => {
+                })
+                .on("error", (err: Error) => {
                     this.logger.error("Topic request error:", err);
-                }).end();
+                })
+                .end();
         });
     }
 
@@ -623,9 +621,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.makeHttpRequestToCpm("GET", `sequence-store/${id}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
-                }).on("error", (err: Error) => {
+                })
+                .on("error", (err: Error) => {
                     this.logger.error("Sequence request error:", err);
-                }).end();
+                })
+                .end();
         });
     }
 }
