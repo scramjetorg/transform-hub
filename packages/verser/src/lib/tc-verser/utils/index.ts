@@ -1,5 +1,5 @@
 export function toHex(chunk: Buffer) {
-    return chunk.toString('hex').match(/../g)?.join(' ');
+    return chunk.toString("hex").match(/../g)?.join(" ");
 }
 
 export const HEADER_LENGTH = 32;
