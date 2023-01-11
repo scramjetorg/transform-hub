@@ -5,7 +5,7 @@
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { IncomingMessage, createServer, request } from "http";
 import { DataStream } from "scramjet";
-import { FrameTarget } from "./utils";
+import { DecodedFrame, FrameTarget } from "./utils";
 import { FrameDecoder, FrameEncoder } from "./codecs";
 import { Socket } from "net";
 
@@ -42,7 +42,9 @@ import { Socket } from "net";
         socket.pipe(serverFrameDecoder).pipe(process.stdout);
 
         serverFrameDecoder.on("data", (d: any) => {
-            logger.debug(`Server on request data [${i++}]`, JSON.parse(d).chunk, d.length);
+            const parsed = JSON.parse(d) as DecodedFrame;
+
+            logger.debug(`Server on request data [${i++}]`, parsed.chunk, parsed.dataLength);
             serverFrameEncoder.write(Buffer.from(new Uint8Array([255, 255, 255, 255])));
         });
     });
@@ -77,7 +79,9 @@ import { Socket } from "net";
         socket.pipe(
             responseFrameDecoder
         ).on("data", (d) => {
-            logger.debug(`Echo from server [${i++}]`, JSON.parse(d).chunk, d.length);
+            const parsed = JSON.parse(d) as DecodedFrame;
+
+            logger.debug(`Echo from server [${i++}]`, parsed.chunk, parsed.chunkLength);
         });
 
         response.on("data", (d) => console.log("plain response", d));
