@@ -53,7 +53,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("info")
         .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Display the info about the Instance")
+        .description("Display a basic information about the Instance")
         .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
             profileManager.getProfileConfig().format));
 

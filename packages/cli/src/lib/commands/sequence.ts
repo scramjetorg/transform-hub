@@ -170,9 +170,9 @@ export const sequence: CommandDefinition = (program) => {
         });
 
     sequenceCmd
-        .command("get")
+        .command("info")
         .argument("<id>", "Sequence id to start or '-' for the last uploaded")
-        .description("Obtain a basic information about the Sequence")
+        .description("Display a basic information about the Sequence")
         .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
             profileManager.getProfileConfig().format));
 
