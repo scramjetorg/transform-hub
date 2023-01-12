@@ -22,6 +22,7 @@ export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
         .description("Manage data flow through topics operations");
 

@@ -25,7 +25,7 @@
     "@scramjet/obj-logger": "^0.31.4",
     "@scramjet/utility": "^0.31.4",
     "chalk": "^4.1.2",
-    "commander": "^8.3.0",
+    "commander": "^9.5.0",
     "commander-completion": "^1.0.1",
     "find-package-json": "^1.2.0",
     "minimatch": "^3.1.2",

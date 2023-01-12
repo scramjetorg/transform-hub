@@ -17,6 +17,7 @@ export const store: CommandDefinition = (program) => {
     const storeCmd = program
         .command("store")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
         .description("Operations on a Store");
 
