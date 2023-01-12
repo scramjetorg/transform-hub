@@ -81,7 +81,7 @@ import { Socket } from "net";
         ).on("data", (d) => {
             const parsed = JSON.parse(d) as DecodedFrame;
 
-            logger.debug(`Echo from server [${i++}]`, parsed.chunk, parsed.chunkLength);
+            logger.debug(`Echo from server [${i++}]`, parsed.chunk, parsed.dataLength, parsed.chunkLength);
         });
 
         response.on("data", (d) => console.log("plain response", d));
