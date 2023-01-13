@@ -9,7 +9,7 @@ class CommunicationChannels(Enum):
     MONITORING = "4"
     IN = "5"
     OUT = "6"
-    LOG = "7",
+    LOG = "7"
     HOST = "8"
 
 # See packages/symbols/src/runner-message-code.ts
