@@ -19,3 +19,19 @@ export const binaryFlags = {
     ECE: 0b01000000,
     CWR: 0b10000000
 }
+
+export type flagsObjectType = Partial<{
+    FIN: boolean,
+    SYN: boolean,
+    RST: boolean,
+    PSH: boolean,
+    ACK: boolean,
+    URG: boolean,
+    ECE: boolean,
+    CWR: boolean
+}>
+
+export const parseFlags = (byte: number): flagsObjectType => {
+    return frameFlags.filter((_flag, index) => byte >>> index & 1)
+        .reduce((p, c) => ({ ...p, [c]: true }), {});
+}

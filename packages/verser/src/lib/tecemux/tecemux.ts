@@ -2,6 +2,8 @@ import { TypedEmitter } from "@scramjet/utility";
 import { FrameDecoder, FrameEncoder, TeceMuxEvents } from "./codecs";
 import { Duplex } from "stream";
 import { Socket } from "net";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { FrameData } from "./utils";
 
 export type TeceMuxChannel = Duplex & { _id: number };
 
@@ -11,6 +13,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     decoder = new FrameDecoder();
 
     channels: Duplex[] = [];
+
+    logger = new ObjLogger(this);
+    commonEncoder = new FrameEncoder(0);
 
     private createChannel(): TeceMuxChannel {
         const channel: TeceMuxChannel = Object.assign(new Duplex({ }), { _id: this.channelCount });
@@ -40,21 +45,36 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
 
     async main() {
         for await (const chunk of this.decoder) {
-            const frame = JSON.parse(chunk);
-            const channel = frame.destinationPort;
+            const frame = JSON.parse(chunk) as FrameData;
+            const { flags, sequenceNumber, dataLength, destinationPort } = frame;
 
-            if (!this.channels[channel]) {
-                const channel = this.createChannel();
-
-                this.addChannel(channel);
+            if (flags.ACK) {
+                this.logger.trace("ACKNOWLEDGE", sequenceNumber);
+                // acknowledge received (confirm packet)
+                return;
             }
 
-            this.channels[channel].write(frame.chunk.data);
+            if (flags.PSH) {
+                if (!this.channels[destinationPort]) {
+                    const channel = this.createChannel();
+
+                    this.addChannel(channel);
+                    this.commonEncoder.createFrame(undefined, {
+                        flagsArray: ["ACK"],
+                        destinationPort,
+                        acknowledgeNumber: sequenceNumber
+                    })
+                }
+
+                if (dataLength) {
+                    this.channels[destinationPort].write(frame.chunk);
+                }
+            }
         }
     }
 
     addChannel(channel: TeceMuxChannel) {
-        this.channels[this.channelCount] = channel;
+        this.channels[this.channelCount] = channel; // wait for SYN reply?
         this.channelCount++;
 
         this.emit("channel", channel);
