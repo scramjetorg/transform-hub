@@ -1,3 +1,5 @@
+import { frameFlags, binaryFlags, flagsObjectType } from "../codecs";
+
 export function toHex(chunk: Buffer) {
     return chunk.toString("hex").match(/../g)?.join(" ");
 }
@@ -9,15 +11,16 @@ export enum FrameTarget {
     INPUT = 1001
 }
 
-export type DecodedFrame = {
+export type FrameData = {
     sourceAddress: [number, number, number, number];
     destinationAddress: [number, number, number, number];
     destinationPort: number;
-    chunk: {
-        type: string;
-        data: any;
-    };
+    sequenceNumber: number;
+    acknowledgeNumber: number;
+    chunk: Buffer;
     dataLength: number;
     chunkLength: number;
     stringified: string;
+    flags: flagsObjectType;
+    flagsArray: (keyof typeof binaryFlags)[];
 };
