@@ -55,7 +55,7 @@ const _defaultConfig: STHConfiguration = {
             python3: "",
             node: "",
         },
-        sequencesRoot: path.join(homedir(), ".scramjet_k8s_sequences"),
+        sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
         timeout: "0"
     },
     startupConfig: "",
