@@ -2611,7 +2611,7 @@ boxen@^5.0.0:
     widest-line "^3.1.0"
     wrap-ansi "^7.0.0"
 
-bpmux@^8.2.0, bpmux@^8.2.1:
+bpmux@^8.2.1:
   version "8.2.1"
   resolved "https://registry.npmjs.org/bpmux/-/bpmux-8.2.1.tgz"
   integrity sha512-inUpRFzaSsbzyjb4XSZKKcv7u6CQXkMcb/ST5Klf1DFBl3p6GXar+COr9I3rCy32gbFpqnfdiMdPFxEQweMjeA==
