@@ -1,7 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Duplex, Transform, TransformCallback, TransformOptions } from "stream";
-import { HEADER_LENGTH, toHex } from "../utils";
-import { frameFlags, parseFlags } from ".";
+import { FrameData, HEADER_LENGTH, toHex } from "../utils";
+import { parseFlags } from ".";
 
 export class FrameDecoder extends Transform {
     buff: Buffer;
@@ -9,7 +9,6 @@ export class FrameDecoder extends Transform {
     logger: ObjLogger;
 
     _streams = new Map<number, Duplex>();
-
 
     constructor(opts: TransformOptions = {}, params: { name: string } = { name: "FrameDecoder" }) {
         super(Object.assign({}, { readableObjectMode: true, emitClose: false }, opts));
@@ -49,7 +48,7 @@ export class FrameDecoder extends Transform {
                 dataLength: frameSize - HEADER_LENGTH,
                 chunkLength: frameSize,
                 stringified: this.buff.subarray(32, frameSize).toString()
-            };
+            } as Partial<FrameData>;
 
             this.push(JSON.stringify(payload) + "\n");
 
