@@ -96,7 +96,7 @@ spec:
         {{- end }}
         volumeMounts:
           - name: scramjet-sequences
-            mountPath: /root/.scramjet_k8s_sequences
+            mountPath: {{ .Values.sequencesRoot }}
           {{- if .Values.config }}
           {{- $configDir := .Values.configDir -}}
           {{- range $path, $config := .Values.config }}
