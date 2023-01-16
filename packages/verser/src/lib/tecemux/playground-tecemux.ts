@@ -30,10 +30,24 @@ import { FrameData } from "./utils";
 
         logger.info("Incoming request", req.method, req.headers);
 
-        const tcmux = new TeceMux(socket, "Server Side")
+        socket
+            .on("data", (data) => {
+                console.log("SERVER socket ondata", data);
+                console.log("SOCKET TX RX", socket.bytesWritten, socket.bytesRead)
+            })
+            .on("pause", () => {
+                logger.info("Socket paused");
+            })
+            .on("resume", () => {
+                logger.info("Socket resumed");
+            })
+
+        const tcmux = new TeceMux(socket, "Server")
             .on("error", (err) => {
                 logger.error("TCMUX err", err);
             });
+
+
 
         tcmux.logger.pipe(logger);
 
@@ -41,12 +55,13 @@ import { FrameData } from "./utils";
 
         req.on("pause", () => { logger.warn("Request paused"); });
 
-        logger.warn("writing to server response")
-        //channel.write("som\n");
+        logger.warn("Waiting for stdin...");
 
+        process.stdin.pipe(channel);
 
-        process.stdout.pipe(channel);
-
+        const somePayload = "smth\n";
+        logger.info("writing some payload to channel", somePayload);
+        channel.write(somePayload);
 
         for await (const chunk of channel) {
             const parsed = JSON.parse(chunk) as FrameData;
@@ -64,9 +79,8 @@ import { FrameData } from "./utils";
 
     socket.setNoDelay(true);
 
-    const reqLogger = new ObjLogger("Req", { id: "Client Side"});
+    const reqLogger = new ObjLogger("Req", { id: "Client"});
     reqLogger.pipe(logger);
-
 
     socket.write("CONNECT HTTP/1.1\r\n\r\n\r\n");
 
@@ -78,16 +92,34 @@ import { FrameData } from "./utils";
 
     const tcmux = new TeceMux(socket, "Request");
 
-    tcmux.logger.updateBaseLog({ id: "Client side"});
+    tcmux.logger.updateBaseLog({ id: reqLogger.baseLog.id });
 
     tcmux.logger.pipe(logger);
 
     tcmux.on("channel", async (channel: TeceMuxChannel) => {
         reqLogger.debug("New channel", channel._id);
 
-        for await (const chunk of channel) {
-            reqLogger.info("Data from server", chunk.toString());
-        }
+        // for await (const chunk of channel) {
+        //     reqLogger.info("Data from server", chunk.toString());
+
+        //     await new Promise<void>((resolve, reject) => {
+        //         setTimeout(() => {
+        //             //channel.encoder.write("Echo\n");
+        //             resolve();
+        //         }, 2000);
+        //     });
+        // }
+
+        channel.on("data", async (chunk) => {
+            reqLogger.info("SERVER->CLIENT->CHANNEL", chunk.toString());
+
+            await new Promise<void>((resolve, reject) => {
+                setTimeout(() => {
+                    //channel.encoder.write("Echo\n");
+                    resolve();
+                }, 2000);
+            });
+        })
     });
 
     socket.on("error", (err) => {
