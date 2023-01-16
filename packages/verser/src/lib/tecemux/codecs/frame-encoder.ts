@@ -1,11 +1,14 @@
-import { Transform, TransformCallback, TransformOptions } from "stream";
-import { FrameData, FrameTarget, HEADER_LENGTH, toHex as getHexString } from "../utils";
+import { PassThrough, Transform, TransformCallback, TransformOptions } from "stream";
+import { FrameData, FrameTarget, HEADER_LENGTH, toHex as getHexString, toHex } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { binaryFlags, frameFlags } from ".";
 
 export class FrameEncoder extends Transform {
     sequenceNumber = 0;
     logger = new ObjLogger("FrameEncoder",);
+    out = new PassThrough({ readableObjectMode: true }).on("data", (data) => {
+        this.logger.trace("outcome", toHex(data), data.length);
+    });
 
     constructor(private frameTarget: FrameTarget, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
         opts.emitClose = false;
@@ -18,20 +21,15 @@ export class FrameEncoder extends Transform {
             this.logger.debug("onPipe");
         });
 
-        /*const orgPush = this.push;
-        this.push = (chunk: any, encoding: BufferEncoding | undefined) => {
-            this.logger.debug("Pushing", chunk)
-            //return orgPush.call(this, chunk, encoding);
-            return true;
-        }
-        */
+        this.pipe(this.out);
     }
 
     setFlags(flag: (keyof typeof binaryFlags)[] = [], flags: Uint8Array = new Uint8Array([0])) {
         for (const f in flag) {
-            this.logger.debug("settingFlag", flag);
             flags[0] |= 1 << frameFlags.indexOf(flag[f]);
         }
+
+        this.logger.debug("settingFlag", flag, flags[0].toString(2).padStart(8, "0"));
 
         return flags;
     }
@@ -41,7 +39,7 @@ export class FrameEncoder extends Transform {
 
         //const checksum = this.getChecksum();
 
-        this.push(this.createFrame([], {
+        this.out.write(this.createFrame([], {
             flagsArray: ["PSH"],
             destinationPort: channelCount
         }));
@@ -137,14 +135,12 @@ export class FrameEncoder extends Transform {
 
     _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
         //const buffer = this.createChunkFrame(chunk);
-        this.logger.debug("TRANSFORM IN", chunk, chunk.length);
+        this.logger.debug("TRANSFORM IN", toHex(chunk), chunk.length);
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
 
-        this.logger.trace("Encoded frame", getHexString(buffer), "Size: ", buffer.length, "Pushing");
-
         //this.push(buffer, undefined);
-        this.logger.debug("TRANSFORM OUT", getHexString(buffer), buffer.length);
-        this.push(buffer);
+        this.logger.debug("TRANSFORM OUT", getHexString(buffer), "Size: ", buffer.length);
+        this.push(buffer, undefined);
         callback();
     }
 }
