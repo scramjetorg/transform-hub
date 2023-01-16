@@ -60,6 +60,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         this.logger = new ObjLogger(this, { id: this.id })
         this.carrierSocket = socket;
 
+        this.decoder.logger.updateBaseLog({ id: this.id });
         this.decoder.logger.pipe(this.logger);
 
         this.carrierSocket.pipe(this.decoder);
@@ -92,7 +93,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
                 let channel = this.channels[destinationPort]
 
                 if (!channel) {
-                    this.logger.warn("NEW CHANNEL");
+                    this.logger.warn("Unknown channel");
                     channel = this.createChannel(destinationPort);
 
                     this.addChannel(channel);
@@ -122,11 +123,13 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     }
 
     multiplex(): TeceMuxChannel {
+        this.logger.trace("Multiplex");
+
         const channel = this.createChannel(this.channelCount);
-        this.logger.trace("Multiplex", channel._id);
 
         this.addChannel(channel);
 
+        this.logger.trace("Multiplex ready", channel._id);
         this.channelCount++;
         return channel;
     }
