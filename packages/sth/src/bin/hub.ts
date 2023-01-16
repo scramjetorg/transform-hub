@@ -113,7 +113,8 @@ const options: OptionValues & STHCommandOptions = program
                 node: options.k8sRunnerImage,
                 python3: options.k8sRunnerPyImage
             },
-            sequencesRoot: resolveFile(options.k8sSequencesRoot),
+            sequencesRoot:
+                options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
             timeout: options.k8sRunnerCleanupTimeout,
             runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
             runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
