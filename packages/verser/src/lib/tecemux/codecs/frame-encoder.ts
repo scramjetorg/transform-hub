@@ -6,9 +6,19 @@ import { binaryFlags, frameFlags } from ".";
 export class FrameEncoder extends Transform {
     sequenceNumber = 0;
     logger = new ObjLogger("FrameEncoder",);
-    out = new PassThrough({ readableObjectMode: true }).on("data", (data) => {
-        this.logger.trace("outcome", toHex(data), data.length);
-    });
+    out = new PassThrough({ readableObjectMode: true })
+        .on("data", (data) => {
+            this.logger.trace("output to socket:", toHex(data), data.length, this.readableFlowing);
+        })
+        .on("pause", () => {
+            this.logger.trace("output to socket paused");
+        })
+        .on("end", () => {
+            this.logger.trace("output to socket ended");
+        })
+        .on("resume", () => {
+            this.logger.trace("output to socket resumed");
+        })
 
     constructor(private frameTarget: FrameTarget, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
         opts.emitClose = false;
