@@ -42,22 +42,16 @@ import { FrameData } from "./utils";
         req.on("pause", () => { logger.warn("Request paused"); });
 
         logger.warn("writing to server response")
-        channel.write("som\n");
+        //channel.write("som\n");
+
+
+        process.stdout.pipe(channel);
+
 
         for await (const chunk of channel) {
             const parsed = JSON.parse(chunk) as FrameData;
             logger.debug(`Server on request data [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
-
-            //channel.write(new Uint8Array([1,2,3,4]));
-            //channel.write(Buffer.from(new Uint8Array([255, 255, 255, 255])));
         };
-        /*
-        channel.on("data", (d) => {
-            logger.error("Server on request data", d);
-        });
-        */
-
-        //channel.pipe(process.stdout);
     });
 
     server.listen(PORT, "0.0.0.0");
@@ -70,7 +64,7 @@ import { FrameData } from "./utils";
 
     socket.setNoDelay(true);
 
-    const reqLogger = new ObjLogger("Req", { id: "Request"});
+    const reqLogger = new ObjLogger("Req", { id: "Client Side"});
     reqLogger.pipe(logger);
 
 
@@ -82,7 +76,7 @@ import { FrameData } from "./utils";
 
     reqLogger.info('connected to server!');
 
-    const tcmux = new TeceMux(socket);
+    const tcmux = new TeceMux(socket, "Request");
 
     tcmux.logger.updateBaseLog({ id: "Client side"});
 
@@ -91,23 +85,14 @@ import { FrameData } from "./utils";
     tcmux.on("channel", async (channel: TeceMuxChannel) => {
         reqLogger.debug("New channel", channel._id);
 
-        //channel.write(Buffer.from(new Uint8Array([0x61, 0x62, 0x63, 0x64])));
-        channel.pipe(process.stdout);
-
         for await (const chunk of channel) {
-            reqLogger.info("request on response data", chunk);
+            reqLogger.info("Data from server", chunk.toString());
         }
     });
-    /*setInterval(async () => {
-        reqLogger.debug(`Writing [${++m}]..`);
-        tcmux.multiplex().write(Buffer.from(new Uint8Array([0x61, 0x62, 0x63, 0x64])));
-    }, 250);*/
+
     socket.on("error", (err) => {
         console.error(err);
     });
-
-
-    //socket.flushHeaders();
 
     await new Promise((_res, _rej) => {});
 })();
