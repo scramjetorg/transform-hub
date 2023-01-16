@@ -11,7 +11,7 @@ export class FrameDecoder extends Transform {
     _streams = new Map<number, Duplex>();
 
     constructor(opts: TransformOptions = {}, params: { name: string } = { name: "FrameDecoder" }) {
-        super(Object.assign({}, { readableObjectMode: true, emitClose: false }, opts));
+        super(Object.assign({}, { writableObjectMode: true, readableObjectMode: true, emitClose: false }, opts));
 
         this.buff = Buffer.alloc(64 * 1024, 0, undefined); //@TODO: optimize
         this.logger = new ObjLogger(params.name);
