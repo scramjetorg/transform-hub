@@ -1,6 +1,6 @@
 import { TypedEmitter } from "@scramjet/utility";
 import { FrameDecoder, FrameEncoder, TeceMuxEvents } from "./codecs";
-import { Duplex, PassThrough, pipeline } from "stream";
+import { Duplex, PassThrough } from "stream";
 import { Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { FrameData } from "./utils";
@@ -11,16 +11,16 @@ export type TeceMuxChannel = Duplex & { _id: number };
 export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     id: string;
     carrierSocket: Duplex;
-    channelCount = 0;
+    channelCount = 1;
     decoder = new FrameDecoder();
 
-    channels: Duplex[] = [];
+    channels: TeceMuxChannel[] = [];
 
     logger: IObjectLogger;
     commonEncoder = new FrameEncoder(0);
 
-    private createChannel(): TeceMuxChannel {
-        this.logger.debug("Create Channel", this.channelCount);
+    private createChannel(destinationPort?: number): TeceMuxChannel {
+        this.logger.debug("Create Channel", destinationPort || this.channelCount);
 
         const encoder = new FrameEncoder(this.channelCount);
         encoder.logger.updateBaseLog({ id: this.id });
@@ -33,12 +33,11 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
 
         const channel: TeceMuxChannel = Object.assign(
             Duplex.from({
-                readable: new PassThrough().on("data", (d) => { this.logger.warn("readable DATA", d); }).pause(),
+                readable: new PassThrough().on("data", (d) => { this.logger.warn("readable DATA", d); }),
                 writable: w,
             } as unknown as Iterable<any>) as TeceMuxChannel,
-            { _id: this.channelCount }
+            { _id: destinationPort || this.channelCount }
         );
-
 
         //channel.pipe(encoder).pipe(this.carrierSocket);
         //channel.pipe(process.stdout);
@@ -47,10 +46,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             this.emit("error", { error, source: channel })
         });
 
-        encoder.setChannel(this.channelCount);
+        encoder.setChannel(destinationPort || this.channelCount);
         //channel.pipe(w);
         //channel.pipe(this.carrierSocket);
-        encoder.pipe(this.carrierSocket);
+        encoder.out.pipe(this.carrierSocket);
 
         return channel;
     }
@@ -64,15 +63,12 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         this.decoder.logger.pipe(this.logger);
 
         this.carrierSocket.pipe(this.decoder);
-        this.commonEncoder.pipe(this.carrierSocket);
+        this.commonEncoder.out.pipe(this.carrierSocket);
 
-        this.carrierSocket.on("data", (d) => { console.warn("carrier socket ", d); });
-        this.commonEncoder.on("data", (d) => { this.logger.warn("to socket", d); });
 
-        this.main();//.catch((error) => {
-            //this.emit("error", error);
-        //});
-        //this.carrierSocket.pipe(process.stdout);
+        this.main().catch((error) => {
+            this.emit("error", error);
+        });
     }
 
     async main() {
@@ -92,41 +88,46 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             }
 
             if (flags.PSH) {
-                if (!this.channels[destinationPort]) {
-                    const channel = this.createChannel();
+                this.logger.trace(`Received PSH command [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort]);
+                let channel = this.channels[destinationPort]
+
+                if (!channel) {
+                    this.logger.warn("NEW CHANNEL");
+                    channel = this.createChannel(destinationPort);
 
                     this.addChannel(channel);
-                    this.commonEncoder.createFrame(undefined, {
-                        flagsArray: ["ACK"],
-                        destinationPort,
-                        acknowledgeNumber: sequenceNumber
-                    })
                 }
 
                 if (dataLength) {
-                    this.channels[destinationPort].write(new Uint8Array((frame.chunk) as any));
+                    this.logger.warn("writing DATA LENGHT REC", dataLength);
+                    channel.push(new Uint8Array(((frame.chunk as any).data) as any));
                 }
             }
+
+            this.commonEncoder.out.write(
+                this.commonEncoder.createFrame(undefined, {
+                    flagsArray: ["ACK"],
+                    sequenceNumber,
+                    destinationPort
+                })
+            );
         }
     }
 
     addChannel(channel: TeceMuxChannel) {
-        this.logger.debug("adding channel", channel._id);
-        this.channels[this.channelCount] = channel; // wait for SYN reply?
-        this.channelCount++;
-        this.commonEncoder.createFrame(undefined, {
-            flagsArray: ["PSH"],
-            destinationPort: channel._id
-        })
-        //this.emit("channel", channel);
+        this.logger.debug("adding channel", );
+        this.channels[channel._id] = channel; // wait for SYN reply?
+
+        this.emit("channel", channel);
     }
 
     multiplex(): TeceMuxChannel {
-        this.logger.trace("Multiplex")
-        const channel = this.createChannel();
+        const channel = this.createChannel(this.channelCount);
+        this.logger.trace("Multiplex", channel._id);
 
         this.addChannel(channel);
 
+        this.channelCount++;
         return channel;
     }
 }

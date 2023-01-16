@@ -35,7 +35,7 @@ export class FrameDecoder extends Transform {
 
         this.size += chunk.length;
 
-        if (this.size >= 10 && this.buff.readInt32LE(10) === this.size) {
+        if (this.size >= 10 ) {//&& this.buff.readInt32LE(10) === this.size) {
             const frameSize = this.buff.readInt32LE(10);
 
             const payload = {
@@ -47,6 +47,7 @@ export class FrameDecoder extends Transform {
                 destinationPort: this.buff.readInt16LE(14),
                 dataLength: frameSize - HEADER_LENGTH,
                 chunkLength: frameSize,
+                sequenceNumber: this.buff.readInt32LE(16),
                 stringified: this.buff.subarray(32, frameSize).toString()
             } as Partial<FrameData>;
 
