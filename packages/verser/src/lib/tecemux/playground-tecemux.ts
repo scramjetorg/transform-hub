@@ -22,7 +22,9 @@ import { FrameData } from "./utils";
     const PORT = 6660;
     const server = createServer();
 
-    server.setTimeout(0);
+    server.on("timeout", (socket) => {
+        logger.warn("Server on timeout");
+    });
     server.requestTimeout = 0;
 
     server.on("connect", async (req: IncomingMessage, socket: Socket) => {
@@ -32,22 +34,37 @@ import { FrameData } from "./utils";
 
         socket
             .on("data", (data) => {
-                console.log("SERVER socket ondata", data);
-                console.log("SOCKET TX RX", socket.bytesWritten, socket.bytesRead)
+                logger.info("SERVER Carrier socket ondata", data);
+                logger.info("SOCKET Carrier TX RX", socket.bytesWritten, socket.bytesRead)
+            })
+            .on("pipe", () => {
+                logger.info("Carrier Socket piped");
+            })
+            .on("unpipe", () => {
+                logger.info("Carrier Socket unpiped");
             })
             .on("pause", () => {
-                logger.info("Socket paused");
+                //socket.resume();
+                logger.fatal("Carrier Socket paused");
+                //debugger;
             })
             .on("resume", () => {
-                logger.info("Socket resumed");
+                logger.info("Carrier Socket resumed");
+            })
+            .on("error", (error) => {
+                logger.error("Carrier Socket error", error);
+            })
+            .on("close", () => {
+                logger.info("Carrier Socket closed");
+            })
+            .on("timeout", () => {
+                logger.info("Carrier Socket timeout");
             })
 
         const tcmux = new TeceMux(socket, "Server")
             .on("error", (err) => {
                 logger.error("TCMUX err", err);
             });
-
-
 
         tcmux.logger.pipe(logger);
 
@@ -59,9 +76,9 @@ import { FrameData } from "./utils";
 
         process.stdin.pipe(channel);
 
-        const somePayload = "smth\n";
-        logger.info("writing some payload to channel", somePayload);
-        channel.write(somePayload);
+        // const somePayload = "smth\n";
+        // logger.info("writing some payload to channel", somePayload);
+        // channel.write(somePayload);
 
         for await (const chunk of channel) {
             const parsed = JSON.parse(chunk) as FrameData;
@@ -76,6 +93,12 @@ import { FrameData } from "./utils";
     /**********************************************/
 
     const socket = createConnection({ port: PORT, allowHalfOpen: true, host: "0.0.0.0" }, () => {});
+
+    await new Promise((resolve, reject) => {
+        socket
+            .on("connect", resolve)
+            .on("error", reject);
+    });
 
     socket.setNoDelay(true);
 
@@ -111,7 +134,7 @@ import { FrameData } from "./utils";
         // }
 
         channel.on("data", async (chunk) => {
-            reqLogger.info("SERVER->CLIENT->CHANNEL", chunk.toString());
+            reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
             await new Promise<void>((resolve, reject) => {
                 setTimeout(() => {
