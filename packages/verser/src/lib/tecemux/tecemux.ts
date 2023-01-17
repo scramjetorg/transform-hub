@@ -12,7 +12,20 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     id: string;
     carrierSocket: Duplex;
     channelCount = 1;
-    decoder = new FrameDecoder().resume();
+    decoder = new FrameDecoder({ emitClose: false })
+        .on("pause", () => {
+            this.logger.warn("Decoder paused");
+        })
+        .on("close", () => {
+            this.logger.warn("Decoder closed");
+        })
+        .on("end", () => {
+            this.logger.warn("Decoder ended");
+        })
+        .on("error", (error) => {
+            this.logger.error("Decoder error", error);
+            //debugger;
+        })
 
     channels: TeceMuxChannel[] = [];
 
@@ -27,10 +40,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         encoder.logger.updateBaseLog({ id: this.id });
         encoder.logger.pipe(this.logger);
 
-        const w = new PassThrough({ encoding: undefined }).on("data", (d) => { this.logger.warn("channel writeable on DATA", d); });
-        //w.pipe(process.stdout).pause()
+        const w = new PassThrough({ encoding: undefined, readableObjectMode: true }).on("data", (d) => { this.logger.warn("channel writeable on DATA", d); });
 
-        w.pipe(encoder);
+        w.pipe(encoder).out.pipe(this.carrierSocket);
 
         const channel: TeceMuxChannel = Object.assign(
             Duplex.from({
@@ -43,9 +55,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             }
         );
 
-        //channel.pipe(encoder).pipe(this.carrierSocket);
-        //channel.pipe(process.stdout);
-
         channel.on("error", (error) => {
             this.emit("error", { error, source: channel })
         });
@@ -53,10 +62,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         if (emit) {
             encoder.setChannel(destinationPort || this.channelCount);
         }
-
-        //channel.pipe(w);
-        //channel.pipe(this.carrierSocket);
-        encoder.out.pipe(this.carrierSocket);
 
         return channel;
     }
@@ -70,8 +75,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         this.decoder.logger.updateBaseLog({ id: this.id });
         this.decoder.logger.pipe(this.logger);
 
-        this.carrierSocket.pipe(this.decoder);
-        this.commonEncoder.out.pipe(this.carrierSocket);
+        this.carrierSocket.pipe(this.decoder, { end: false });
+        this.carrierSocket.on("data", (data) => { this.logger.info("CARRIER DATA", data); })
+        this.commonEncoder.out.pipe(this.carrierSocket, { end: false });
 
         this.main().catch((error) => {
             this.emit("error", error);
@@ -79,7 +85,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     }
 
     async main() {
-        this.commonEncoder.logger.updateBaseLog({ id: "Commn" + this.commonEncoder.logger.baseLog.id })
+        this.commonEncoder.logger.updateBaseLog({ id: "Comm" + this.commonEncoder.logger.baseLog.id })
         this.commonEncoder.logger.pipe(this.logger);
 
         for await (const chunk of this.decoder) {
@@ -129,8 +135,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         if (emit) {
             this.emit("channel", channel);
             this.logger.debug("channel event emitted", channel._id);
-            this.channelCount++;
         }
+
+        this.channelCount++;
     }
 
     multiplex(): TeceMuxChannel {
