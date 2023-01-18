@@ -25,8 +25,12 @@ export class FrameEncoder extends Transform {
 
     constructor(private frameTarget: FrameTarget, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
         //opts.emitClose = false;
-
-        super(opts);
+        //opts.readableObjectMode = true;
+        super(Object.assign(opts, {
+            writableObjectMode: true,
+            readableObjectMode: true,
+            readableHighWaterMark: 0
+        }));
 
         this.logger = new ObjLogger(params.name, { id: this.frameTarget.toString() });
 
@@ -111,7 +115,16 @@ export class FrameEncoder extends Transform {
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
 
         this.logger.debug("TRANSFORM OUT", getHexString(buffer), "Size: ", buffer.length);
-        this.push(buffer, undefined);
+
+        if (!this.push(buffer, undefined)) {
+            this.once("drain", () => {
+                this.push(buffer, undefined);
+            });
+        };
+        this.read(0);
+
         callback();
     }
+
+
 }
