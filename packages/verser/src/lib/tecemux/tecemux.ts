@@ -157,13 +157,13 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             }
 
             this.logger.debug("OFF Write acknowledge frame for sequenceNumber", sequenceNumber);
-            /*this.commonEncoder.push(
+            this.commonEncoder.push(
                 this.commonEncoder.createFrame(undefined, {
                     flagsArray: ["ACK"],
                     sequenceNumber,
                     destinationPort
                 })
-            );*/
+            );
         }
     }
 
