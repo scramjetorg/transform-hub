@@ -13,7 +13,7 @@ export class FrameDecoder extends Transform {
     constructor(opts: TransformOptions = {}, params: { name: string } = { name: "FrameDecoder" }) {
         super(Object.assign({}, opts, { writableObjectMode: true, readableObjectMode: true, readableHighWaterMark: 2 }));
 
-        this.buff = Buffer.alloc(64 * 1024, 0, undefined); //@TODO: optimize
+        this.buff = Buffer.alloc(0);// Buffer.alloc(64 * 1024, 0, undefined); //@TODO: optimize
         this.logger = new ObjLogger(params.name);
 
         this.on("pipe", () => {
@@ -25,7 +25,6 @@ export class FrameDecoder extends Transform {
 
     _transform(chunk: Buffer, encoding: BufferEncoding, callback: TransformCallback): void {
         try {
-            this.logger.trace("Decoding frame...", toHex(chunk), "Size:", chunk.length);
 
             if (!Buffer.isBuffer(chunk)) {
                 this.push(JSON.stringify({ error: "not a buffer" }), undefined);
@@ -35,15 +34,24 @@ export class FrameDecoder extends Transform {
             }
 
             if (Buffer.isBuffer(chunk)) {
-                chunk.copy(this.buff, this.size, 0, chunk.length);
+                this.buff = Buffer.concat([this.buff, chunk]);
+                //chunk.copy(this.buff, this.size, 0, chunk.length);
             } else {
+                this.logger.error("Decoding buffer...", chunk);
                 this.emit("error", "Chunk is not a buffer");
                 callback();
             }
 
-            this.size += chunk.length;
+            this.logger.trace("Decoding buffer...", toHex(this.buff), "Size:", this.buff.length);
 
-            const frameSize = this.buff.readInt32LE(10);
+            let frameSize = 0;
+
+            if (this.buff.length >= HEADER_LENGTH) {
+                frameSize = this.buff.readInt32LE(10);
+            } else {
+                this.logger.trace("To few data");
+                callback();
+            }
 
             const payload = {
                 sourceAddress: [this.buff.readInt8(0), this.buff.readInt8(1), this.buff.readInt8(2), this.buff.readInt8(3)],
@@ -60,11 +68,16 @@ export class FrameDecoder extends Transform {
 
             this.push(JSON.stringify(payload) + "\n");
 
-            this.size = 0;
-            this.buff.fill(0);
+            this.buff = this.buff.subarray(frameSize);
 
+            if (this.buff.length === 0)  {
+                this.logger.info("No remaining data!")
+                callback();
+                return;
+            }
 
-            callback();
+            this.logger.trace("More than one frame in chunk. processing", this.buff.length);
+            this._transform(Buffer.alloc(0), encoding, callback);
         } catch(err) {
             this.logger.error("ERROR", err)
         }
