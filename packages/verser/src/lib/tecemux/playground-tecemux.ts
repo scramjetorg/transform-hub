@@ -75,7 +75,7 @@ import { FrameData } from "./utils";
 
         logger.warn("Waiting for stdin...");
 
-        process.stdin.pipe(channel);
+        DataStream.from(process.stdin).filter((x: Buffer) => (x[0] % 2 !== 0)).pipe(channel);
 
         // const somePayload = "smth\n";
         // logger.info("writing some payload to channel", somePayload);
@@ -133,16 +133,18 @@ import { FrameData } from "./utils";
         //     });
         // }
 
+        DataStream.from(process.stdin).filter((x: Buffer) => (x[0] % 2 !== 1)).pipe(channel);
+
         //for await (const chunk of channel) {
         channel.on("data", async (chunk) => {
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
-            await new Promise<void>((resolve, reject) => {
-                setTimeout(() => {
-                    channel.write("XEcho\n");
-                    resolve();
-                }, 2000);
-            });
+            // await new Promise<void>((resolve, reject) => {
+            //     setTimeout(() => {
+            //         channel.write("abcde\n");
+            //         resolve();
+            //     }, 2000);
+            // });
         })
     });
 
