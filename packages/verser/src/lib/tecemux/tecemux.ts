@@ -108,16 +108,11 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
 
         this.carrierSocket.pipe(this.decoder, { end: false });
 
-
-        process.nextTick(() => {
-            //this.carrierSocket.on("data", (data) => { this.logger.info("CARRIER DATA", data); })
-        });
-
         this.commonEncoder.out.pipe(this.carrierSocket, { end: false });
 
-        this.main().then(() => 1);/*.catch((error) => {
+        this.main().catch((error) => {
             this.emit("error", error);
-        });*/
+        });
     }
 
     async main() {
@@ -133,7 +128,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             if (flags.ACK) {
                 this.logger.trace("ACKNOWLEDGE frame received for sequenceNumber", sequenceNumber);
                 // acknowledge received (confirm packet)
-                return;
+                continue;
             }
 
             if (flags.PSH) {
@@ -156,7 +151,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
                 }
             }
 
-            this.logger.debug("OFF Write acknowledge frame for sequenceNumber", sequenceNumber);
+            this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber);
             this.commonEncoder.push(
                 this.commonEncoder.createFrame(undefined, {
                     flagsArray: ["ACK"],
@@ -187,7 +182,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         this.addChannel(channel, false);
 
         this.logger.trace("Multiplex ready", channel._id);
-        this.channelCount++;
         return channel;
     }
 }
