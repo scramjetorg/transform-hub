@@ -20,7 +20,7 @@ import { FrameData } from "./utils";
     /**********************************************/
 
     const PORT = 6660;
-    const server = createServer();
+    const server = createServer({});
 
     server.on("timeout", (socket) => {
         logger.warn("Server on timeout");
@@ -33,10 +33,10 @@ import { FrameData } from "./utils";
         logger.info("Incoming request", req.method, req.headers);
 
         socket
-            .on("data", (data) => {
-                logger.info("SERVER Carrier socket ondata", data);
-                logger.info("SOCKET Carrier TX RX", socket.bytesWritten, socket.bytesRead)
-            })
+            // .on("data", (data) => {
+            //     logger.info("SERVER Carrier socket ondata", data);
+            //     logger.info("SOCKET Carrier TX RX", socket.bytesWritten, socket.bytesRead)
+            // })
             .on("pipe", () => {
                 logger.info("Carrier Socket piped");
             })
@@ -60,6 +60,7 @@ import { FrameData } from "./utils";
             .on("timeout", () => {
                 logger.info("Carrier Socket timeout");
             })
+            .pause()
 
         const tcmux = new TeceMux(socket, "Server")
             .on("error", (err) => {
@@ -81,8 +82,7 @@ import { FrameData } from "./utils";
         // channel.write(somePayload);
 
         for await (const chunk of channel) {
-            const parsed = JSON.parse(chunk) as FrameData;
-            logger.debug(`Server on request data [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
+            logger.debug(`reading CHANNEL chunk`, chunk.toString());// [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
         };
     });
 
@@ -133,12 +133,13 @@ import { FrameData } from "./utils";
         //     });
         // }
 
+        //for await (const chunk of channel) {
         channel.on("data", async (chunk) => {
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
             await new Promise<void>((resolve, reject) => {
                 setTimeout(() => {
-                    //channel.encoder.write("Echo\n");
+                    channel.write("XEcho\n");
                     resolve();
                 }, 2000);
             });
