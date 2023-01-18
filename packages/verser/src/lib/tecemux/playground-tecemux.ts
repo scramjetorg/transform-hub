@@ -69,21 +69,30 @@ import { FrameData } from "./utils";
 
         tcmux.logger.pipe(logger);
 
-        const channel = tcmux.multiplex();
+        const channel1 = tcmux.multiplex();
+        const channel2 = tcmux.multiplex();
 
         req.on("pause", () => { logger.warn("Request paused"); });
 
         logger.warn("Waiting for stdin...");
 
-        DataStream.from(process.stdin).filter((x: Buffer) => (x[0] % 2 !== 0)).pipe(channel);
-
+        process.stdin.pipe(channel1);
+        process.stdin.pipe(channel2);
         // const somePayload = "smth\n";
         // logger.info("writing some payload to channel", somePayload);
         // channel.write(somePayload);
 
-        for await (const chunk of channel) {
-            logger.debug(`reading CHANNEL chunk`, chunk.toString());// [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
-        };
+        (async () => {
+            for await (const chunk of channel1) {
+                logger.debug(`reading CHANNEL1 chunk`, chunk.toString());// [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
+            };
+        })();
+
+        (async () => {
+            for await (const chunk of channel2) {
+                logger.debug(`reading CHANNEL2 chunk`, chunk.toString());// [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
+            };
+        })();
     });
 
     server.listen(PORT, "0.0.0.0");
@@ -133,19 +142,18 @@ import { FrameData } from "./utils";
         //     });
         // }
 
-        DataStream.from(process.stdin).filter((x: Buffer) => (x[0] % 2 !== 1)).pipe(channel);
+        //DataStream.from(process.stdin).filter((x: Buffer) => (x[0] % 2 !== 1)).pipe(channel);
 
-        //for await (const chunk of channel) {
-        channel.on("data", async (chunk) => {
+        for await (const chunk of channel) {
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
-            // await new Promise<void>((resolve, reject) => {
-            //     setTimeout(() => {
-            //         channel.write("abcde\n");
-            //         resolve();
-            //     }, 2000);
-            // });
-        })
+            await new Promise<void>((resolve, reject) => {
+                setTimeout(() => {
+                    channel.write("abcde\n");
+                    resolve();
+                }, 2000);
+            });
+        }
     });
 
     socket.on("error", (err) => {
