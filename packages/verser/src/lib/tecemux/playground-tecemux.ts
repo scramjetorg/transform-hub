@@ -12,7 +12,18 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
 (async () => {
     const logger = new ObjLogger("Sandbox");
 
-    logger.pipe(new DataStream().map(prettyPrint({ colors: true }))).pipe(process.stdout);
+    logger
+        .pipe(
+            new DataStream()
+                .map(prettyPrint({ colors: true }))
+                .map((chunk: string) => (
+                    chunk.replace(
+                        /(:?FIN|SYN|RST|PSH|ACK|URG|ECE|CWR)|^$]/,
+                        "\x1b[41m" + "$&" + "\x1b[0m"
+                    )
+                ))
+        )
+        .pipe(process.stdout);
 
     /**********************************************/
     /* SERVER
@@ -35,8 +46,8 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
             .on("pipe", () => {
                 logger.info("Carrier Socket piped");
             })
-            .on("unpipe", () => {
-                logger.info("Carrier Socket unpiped");
+            .on("unpipe", (c: any) => {
+                logger.info("Carrier Socket unpiped", c);
             })
             .on("pause", () => {
                 //socket.resume();
@@ -75,16 +86,37 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
         DataStream.from(process.stdin).filter((x: Buffer) => !!(parseInt(x[0].toString()) % 2)).pipe(channel2);
 
         (async () => {
-            for await (const chunk of channel1) {
-                logger.debug(`reading CHANNEL1 chunk`, chunk.toString());
-            };
+            try {
+                for await (const chunk of channel1) {
+                    console.log("CHHUNK", chunk);
+                    logger.debug(`reading CHANNEL1 chunk`, chunk.toString());
+                };
+            } catch (error) {
+                logger.error(`reading CHANNEL1 ERROR`, error);
+            }
+
+            logger.debug(`reading CHANNEL1 END`);
         })();
 
         (async () => {
-            for await (const chunk of channel2) {
-                logger.debug(`reading CHANNEL2 chunk`, chunk.toString());
-            };
+            try {
+                for await (const chunk of channel2) {
+                    logger.debug(`reading CHANNEL2 chunk`, chunk.toString());
+                };
+            } catch (error) {
+                logger.error(`reading CHANNEL2 ERROR`, error);
+            }
+
+            logger.debug(`reading CHANNEL2 END`);
         })();
+
+
+        setTimeout(() => {
+            console.log("\n\n\n\n");
+            logger.trace("Ending channels");
+            channel1.push(null);
+            //channel2.end();
+        }, 4000);
     });
 
     server.listen(PORT, "0.0.0.0");
@@ -123,12 +155,24 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
     tcmux.on("channel", async (channel: TeceMuxChannel) => {
         reqLogger.debug("New channel", channel._id);
 
+        channel
+            .on("finish", () => {
+                tcmux.logger.info("Channel finish", channel._id)
+            })
+            .on("end", () => {
+                tcmux.logger.info("Channel end", channel._id)
+            });
+
         for await (const chunk of channel) {
+            console.log(chunk);
+            if (chunk === null) {
+                break;
+            }
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
             await new Promise<void>((resolve, reject) => {
                 setTimeout(() => {
-                    channel.write("abcde\n");
+                    //channel.write("abcde\n");
                     resolve();
                 }, 2000);
             });
