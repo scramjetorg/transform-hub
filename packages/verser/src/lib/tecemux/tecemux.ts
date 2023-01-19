@@ -12,16 +12,16 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     carrierSocket: Duplex;
     channelCount = 1;
     decoder: FrameDecoder;
-
+    sequenceNumber = 0;
     channels: TeceMuxChannel[] = [];
 
     logger: ObjLogger;
-    commonEncoder = new FrameEncoder(0);
+    commonEncoder = new FrameEncoder(0, this);
 
     private createChannel(destinationPort?: number, emit?: boolean): TeceMuxChannel {
         this.logger.debug("Create Channel", destinationPort || this.channelCount);
 
-        const encoder = new FrameEncoder(this.channelCount, { encoding: undefined });
+        const encoder = new FrameEncoder(this.channelCount, this, { encoding: undefined });
 
         encoder.logger.updateBaseLog({ id: this.id });
         encoder.logger.pipe(this.logger);
@@ -42,14 +42,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             },
             read: (size) => {
                 this.logger.trace("READ channel", channel._id );
-                //setTimeout(() => (channel as unknown as Duplex).write("a"), 1000);
             }
         });
         const channel: TeceMuxChannel = Object.assign(
-            // Duplex.from({
-            //     readable: new PassThrough({ encoding: undefined }).on("data", (d) => { this.logger.warn("channel readable on DATA", d); }),
-            //     writable: w,
-            // } as unknown as Iterable<any>) as TeceMuxChannel,
             duplex,
             {
                 _id: destinationPort || this.channelCount,
@@ -59,7 +54,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
 
         channel.on("error", (error) => {
             this.logger.error("CHANNEL ERROR", error)
-            //this.emit("error", { error, source: channel })
+            this.emit("error", { error, source: channel })
         }).on("destroy", () => {
                 this.logger.trace("channel on DESTROY ", channel._id );
             })
@@ -92,15 +87,12 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
             })
             .on("error", (error) => {
                 this.logger.error("Decoder error", error);
-                //debugger;
             })
             .on("abort", (error) => {
                 this.logger.error("Decoder abort", error);
-                //debugger;
             })
             .on("destroy", (error) => {
                 this.logger.error("Decoder destroy", error);
-                //debugger;
             });
 
         this.decoder.logger.updateBaseLog({ id: this.id });
@@ -127,7 +119,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
 
             if (flags.ACK) {
                 this.logger.trace("ACKNOWLEDGE frame received for sequenceNumber", sequenceNumber);
-                // acknowledge received (confirm packet)
                 continue;
             }
 

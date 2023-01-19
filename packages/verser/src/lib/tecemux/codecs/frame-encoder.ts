@@ -2,9 +2,10 @@ import { PassThrough, Transform, TransformCallback, TransformOptions } from "str
 import { FrameData, FrameTarget, HEADER_LENGTH, toHex as getHexString, toHex } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { binaryFlags, frameFlags } from ".";
+import { TeceMux } from "../tecemux";
 
 export class FrameEncoder extends Transform {
-    sequenceNumber = 0;
+    tecemux: TeceMux;
     logger = new ObjLogger("FrameEncoder",);
     out = new PassThrough({ readableObjectMode: true })
         .on("data", (data) => {
@@ -21,9 +22,9 @@ export class FrameEncoder extends Transform {
         })
         .on("error", (error) => {
             this.logger.error("output to socket paused", error);
-        })
+        }).pause();
 
-    constructor(private frameTarget: FrameTarget, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
+    constructor(private frameTarget: FrameTarget, tecemux: TeceMux, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
         //opts.emitClose = false;
         //opts.readableObjectMode = true;
         super(Object.assign(opts, {
@@ -32,6 +33,7 @@ export class FrameEncoder extends Transform {
             readableHighWaterMark: 0
         }));
 
+        this.tecemux = tecemux;
         this.logger = new ObjLogger(params.name, { id: this.frameTarget.toString() });
 
         this.on("pipe", () => {
@@ -84,7 +86,7 @@ export class FrameEncoder extends Transform {
             new Uint8Array(new Uint16Array([0, frame.destinationPort || this.frameTarget]).buffer),
 
             // 128: sequenceNumber(32 bit, acnowledge number) 16 - 19
-            new Uint8Array(new Uint32Array([frame.sequenceNumber || this.sequenceNumber++]).buffer),
+            new Uint8Array(new Uint32Array([this.tecemux.sequenceNumber++]).buffer),
 
             // 160: Acknowledgement number 20-23
             new Uint8Array(new Uint32Array([frame.acknowledgeNumber || 0]).buffer),
