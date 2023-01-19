@@ -8,7 +8,6 @@ import { DataStream } from "scramjet";
 
 import { Socket, createConnection } from "net";
 import { TeceMux, TeceMuxChannel } from "./tecemux";
-import { FrameData } from "./utils";
 
 (async () => {
     const logger = new ObjLogger("Sandbox");
@@ -33,10 +32,6 @@ import { FrameData } from "./utils";
         logger.info("Incoming request", req.method, req.headers);
 
         socket
-            // .on("data", (data) => {
-            //     logger.info("SERVER Carrier socket ondata", data);
-            //     logger.info("SOCKET Carrier TX RX", socket.bytesWritten, socket.bytesRead)
-            // })
             .on("pipe", () => {
                 logger.info("Carrier Socket piped");
             })
@@ -76,21 +71,18 @@ import { FrameData } from "./utils";
 
         logger.warn("Waiting for stdin...");
 
-        process.stdin.pipe(channel1);
-        process.stdin.pipe(channel2);
-        // const somePayload = "smth\n";
-        // logger.info("writing some payload to channel", somePayload);
-        // channel.write(somePayload);
+        DataStream.from(process.stdin).filter((x: Buffer) => !(parseInt(x[0].toString()) % 2)).pipe(channel1);
+        DataStream.from(process.stdin).filter((x: Buffer) => !!(parseInt(x[0].toString()) % 2)).pipe(channel2);
 
         (async () => {
             for await (const chunk of channel1) {
-                logger.debug(`reading CHANNEL1 chunk`, chunk.toString());// [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
+                logger.debug(`reading CHANNEL1 chunk`, chunk.toString());
             };
         })();
 
         (async () => {
             for await (const chunk of channel2) {
-                logger.debug(`reading CHANNEL2 chunk`, chunk.toString());// [C: ${parsed.sequenceNumber}, SN: ${parsed.sequenceNumber}]`, parsed.chunk, parsed.dataLength);
+                logger.debug(`reading CHANNEL2 chunk`, chunk.toString());
             };
         })();
     });
@@ -130,19 +122,6 @@ import { FrameData } from "./utils";
 
     tcmux.on("channel", async (channel: TeceMuxChannel) => {
         reqLogger.debug("New channel", channel._id);
-
-        // for await (const chunk of channel) {
-        //     reqLogger.info("Data from server", chunk.toString());
-
-        //     await new Promise<void>((resolve, reject) => {
-        //         setTimeout(() => {
-        //             //channel.encoder.write("Echo\n");
-        //             resolve();
-        //         }, 2000);
-        //     });
-        // }
-
-        //DataStream.from(process.stdin).filter((x: Buffer) => (x[0] % 2 !== 1)).pipe(channel);
 
         for await (const chunk of channel) {
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
