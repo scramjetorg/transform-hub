@@ -8,7 +8,6 @@ export type TeceMuxEvents = {
     error(error: any): void;
 }
 
-export const frameFlags = ["FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"];
 export const binaryFlags = {
     FIN: 0b00000001,
     SYN: 0b00000010,
@@ -19,6 +18,8 @@ export const binaryFlags = {
     ECE: 0b01000000,
     CWR: 0b10000000
 }
+
+export const frameFlags = Object.keys(binaryFlags);
 
 export type flagsObjectType = Partial<{
     FIN: boolean,
