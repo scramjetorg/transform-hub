@@ -7,22 +7,26 @@ import { TeceMux } from "../tecemux";
 export class FrameEncoder extends Transform {
     tecemux: TeceMux;
     logger = new ObjLogger("FrameEncoder",);
-    out = new PassThrough({ readableObjectMode: true })
+    out = Object.assign(new PassThrough({ readableObjectMode: true })
         .on("data", (data) => {
             this.logger.trace("output to socket: " + (data.length == HEADER_LENGTH ? "HEADER ONLY" : ""), toHex(data), data.length, this.readableFlowing);
         })
         .on("pause", () => {
-            this.logger.trace("output to socket paused");
+            this.logger.trace("output to socket paused!");
         })
         .on("end", () => {
-            this.logger.trace("output to socket ended");
+            this.logger.trace("output to socket ended!", this.frameTarget);
+            //this.tecemux.sendFIN(this.frameTarget);
         })
         .on("resume", () => {
             this.logger.trace("output to socket resumed");
         })
         .on("error", (error) => {
-            this.logger.error("output to socket paused", error);
-        }).pause();
+            this.logger.error("output to socket error", error);
+        }).pause()
+    ,{
+        _id: this.frameTarget
+    });
 
     constructor(private frameTarget: FrameTarget, tecemux: TeceMux, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
         //opts.emitClose = false;
@@ -36,9 +40,14 @@ export class FrameEncoder extends Transform {
         this.tecemux = tecemux;
         this.logger = new ObjLogger(params.name, { id: this.frameTarget.toString() });
 
-        this.on("pipe", () => {
-            this.logger.debug("onPipe");
-        });
+        this
+            .on("pipe", () => {
+                this.logger.debug("onPipe");
+            })
+            .on("end", () => {
+                this.logger.debug("onEnd");
+            })
+
 
         this.pipe(this.out);
     }
@@ -61,6 +70,14 @@ export class FrameEncoder extends Transform {
         this.out.write(this.createFrame([], {
             flagsArray: ["PSH"],
             destinationPort: channelCount
+        }));
+    }
+
+    onChannelEnd(channelId: number) {
+        this.logger.debug("sending FIN for channel", channelId);
+        this.out.write(this.createFrame([], {
+            flagsArray: ["FIN"],
+            destinationPort: channelId
         }));
     }
 
