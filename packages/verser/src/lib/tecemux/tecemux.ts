@@ -5,7 +5,11 @@ import { Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { FrameData } from "./utils";
 
-export type TeceMuxChannel = Duplex & { _id: number, encoder: FrameEncoder };
+export type TeceMuxChannel = Duplex & {
+    _id: number,
+    encoder: FrameEncoder,
+    closedByFIN: boolean
+};
 
 export class TeceMux extends TypedEmitter<TeceMuxEvents>{
     id: string;
@@ -26,41 +30,55 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         encoder.logger.updateBaseLog({ id: this.id });
         encoder.logger.pipe(this.logger);
 
-        const w = new PassThrough({ encoding: undefined })
+        const w = new PassThrough({ encoding: undefined, allowHalfOpen: true });
 
-        process.nextTick(() => {
-            w.on("data", (d) => { this.logger.warn("channel writeable on DATA", d); });
-        });
-
-        w.pipe(encoder).out.pipe(this.carrierSocket);
+        w.pipe(encoder, { end: false }).out.pipe(this.carrierSocket, { end: false });
 
         const duplex = new Duplex({
             write: (chunk, encoding, next) => {
-                this.logger.trace("WRITE channel", channel._id, chunk );
-                w.write(chunk);
-                next();
+                this.logger.trace("WRITE channel", channel._id, chunk, chunk.toString() );
+
+                if (!w.push(chunk)) {
+                    w.once("drain", next);
+                } else {
+                    next();
+                }
             },
             read: (size) => {
                 this.logger.trace("READ channel", channel._id );
-            }
+            },
+            allowHalfOpen: true
         });
         const channel: TeceMuxChannel = Object.assign(
             duplex,
             {
                 _id: destinationPort || this.channelCount,
-                encoder
+                encoder,
+                closedByFIN: false
             }
         );
 
-        channel.on("error", (error) => {
-            this.logger.error("CHANNEL ERROR", error)
-            this.emit("error", { error, source: channel })
-        }).on("destroy", () => {
+        process.nextTick(() => {
+            w.on("data", (d) => { this.logger.warn("channel writeable on DATA", d); });
+        });
+
+        channel
+            .on("error", (error) => {
+                this.logger.error("CHANNEL ERROR", error)
+                //this.emit("error", { error, source: channel })
+            })
+            .on("destroy", () => {
                 this.logger.trace("channel on DESTROY ", channel._id );
             })
             .on("abort", () => {
-                this.logger.trace("channel on DESTROY ", channel._id );
+                this.logger.trace("channel on ABORT ", channel._id );
             })
+            .on("end", () => {
+                this.logger.info("CHANNEL end", channel._id);
+                if (!channel.closedByFIN) {
+                    this.sendFIN(channel._id);
+                }
+            });
 
         if (emit) {
             encoder.setChannel(destinationPort || this.channelCount);
@@ -102,29 +120,42 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
 
         this.commonEncoder.out.pipe(this.carrierSocket, { end: false });
 
+        this.commonEncoder.logger.updateBaseLog({ id })
+        this.commonEncoder.logger.pipe(this.logger);
+
         this.main().catch((error) => {
             this.emit("error", error);
         });
     }
 
     async main() {
-        this.commonEncoder.logger.updateBaseLog({ id: "CMN " + this.logger.baseLog.id })
-        this.commonEncoder.logger.pipe(this.logger);
-
         for await (const chunk of this.decoder) {
             this.logger.debug("Decoded", JSON.parse(chunk));
 
             const frame = JSON.parse(chunk) as FrameData;
             const { flags, sequenceNumber, dataLength, destinationPort } = frame;
 
+            let channel = this.channels[destinationPort]
+
             if (flags.ACK) {
-                this.logger.trace("ACKNOWLEDGE frame received for sequenceNumber", sequenceNumber);
+                this.logger.trace("ACK frame received for sequenceNumber", sequenceNumber);
                 continue;
+            }
+
+            if (flags.FIN) {
+                this.logger.trace(`Received FIN command [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort]);
+
+                if (channel) {
+                    //channel.end();
+                    channel.closedByFIN = true;
+                    channel.push(null)
+                } else {
+                    this.logger.error("FIN for unknown channel");
+                }
             }
 
             if (flags.PSH) {
                 this.logger.trace(`Received PSH command [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort]);
-                let channel = this.channels[destinationPort]
 
                 if (!channel) {
                     this.logger.warn("Unknown channel");
@@ -142,15 +173,19 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
                 }
             }
 
-            this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber);
-            this.commonEncoder.push(
-                this.commonEncoder.createFrame(undefined, {
-                    flagsArray: ["ACK"],
-                    sequenceNumber,
-                    destinationPort
-                })
-            );
+            this.sendACK(sequenceNumber, destinationPort);
         }
+    }
+
+    sendACK(sequenceNumber: number, channel: number) {
+        this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber);
+        this.commonEncoder.push(
+            this.commonEncoder.createFrame(undefined, {
+                flagsArray: ["ACK"],
+                sequenceNumber,
+                destinationPort: channel
+            })
+        );
     }
 
     addChannel(channel: TeceMuxChannel, emit: boolean) {
@@ -163,6 +198,16 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         }
 
         this.channelCount++;
+    }
+
+    sendFIN(channel: number) {
+        this.logger.debug("Write acknowledge frame for sequenceNumber");
+        this.commonEncoder.push(
+            this.commonEncoder.createFrame(undefined, {
+                flagsArray: ["FIN"],
+                destinationPort: channel
+            })
+        );
     }
 
     multiplex(): TeceMuxChannel {
