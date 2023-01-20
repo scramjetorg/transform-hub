@@ -8,8 +8,7 @@ import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-
-const BPMux = require("bpmux").BPMux;
+import { TeceMux } from "./tecemux/tecemux";
 
 type Events = {
     error: (err: Error) => void;
@@ -25,7 +24,7 @@ export class VerserClient extends TypedEmitter<Events> {
     /**
      * BPMux instance.
      */
-    private bpmux: any;
+    private teceMux: any;
 
     /**
      * VerserClient options.
@@ -131,8 +130,8 @@ export class VerserClient extends TypedEmitter<Events> {
      * otherwise stream will be passed to the server.
      */
     private mux() {
-        this.bpmux = new BPMux(this.socket)
-            .on("peer_multiplex", async (mSocket: Duplex & { _chan: number }) => {
+        this.teceMux = new TeceMux(this.socket!)
+            .on("channel", async (mSocket: Duplex & { _chan: number }) => {
                 const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
 
                 if (registeredChannelCallback) {
@@ -145,13 +144,15 @@ export class VerserClient extends TypedEmitter<Events> {
                 this.emit("error", err);
             });
 
+        this.teceMux.logger.pipe(this.logger);
+
         this._verserAgent = new HttpAgent() as HttpAgent & {
             createConnection: typeof createConnection
         }; // lack of types?
 
         this._verserAgent.createConnection = () => {
             try {
-                const socket = this.bpmux!.multiplex() as Socket;
+                const socket = this.teceMux!.multiplex() as Socket;
 
                 socket.on("error", () => {
                     this.logger.error("Muxed stream error");
