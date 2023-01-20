@@ -1,15 +1,16 @@
 import { PassThrough, Transform, TransformCallback, TransformOptions } from "stream";
-import { FrameData, FrameTarget, HEADER_LENGTH, toHex as getHexString, toHex } from "../utils";
+import { FrameData, toHex as getHexString, toHex } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { binaryFlags, frameFlags } from ".";
-import { TeceMux } from "../tecemux";
+
+import { FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
+import { ITeCeMux } from "../types";
 
 export class FrameEncoder extends Transform {
-    tecemux: TeceMux;
+    tecemux: ITeCeMux;
     logger = new ObjLogger("FrameEncoder",);
     out = Object.assign(new PassThrough({ readableObjectMode: true })
         .on("data", (data) => {
-            this.logger.trace("output to socket: " + (data.length == HEADER_LENGTH ? "HEADER ONLY" : ""), toHex(data), data.length, this.readableFlowing);
+            this.logger.trace("output to socket: " + (data.length === HEADER_LENGTH ? "HEADER ONLY" : ""), toHex(data), data.length, this.readableFlowing);
         })
         .on("pause", () => {
             this.logger.trace("output to socket paused!");
@@ -24,11 +25,11 @@ export class FrameEncoder extends Transform {
         .on("error", (error) => {
             this.logger.error("output to socket error", error);
         }).pause()
-    ,{
+    , {
         _id: this.frameTarget
     });
 
-    constructor(private frameTarget: FrameTarget, tecemux: TeceMux, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
+    constructor(private frameTarget: FrameTarget, tecemux: ITeCeMux, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
         //opts.emitClose = false;
         //opts.readableObjectMode = true;
         super(Object.assign(opts, {
@@ -46,8 +47,7 @@ export class FrameEncoder extends Transform {
             })
             .on("end", () => {
                 this.logger.debug("onEnd");
-            })
-
+            });
 
         this.pipe(this.out);
     }
@@ -96,10 +96,10 @@ export class FrameEncoder extends Transform {
             // 64: zeroes (8bit), protocol (8bit), 8 - 9
             new Uint8Array([0, 1]),
 
-             // tcp length (16bit) 10 - 11
+            // tcp length (16bit) 10 - 11
             new Uint8Array(new Uint16Array([chunk.length + HEADER_LENGTH]).buffer),
 
-             // 96: Source port,	destination port 12 - 15
+            // 96: Source port,	destination port 12 - 15
             new Uint8Array(new Uint16Array([0, frame.destinationPort || this.frameTarget]).buffer),
 
             // 128: sequenceNumber(32 bit, acnowledge number) 16 - 19
@@ -139,11 +139,9 @@ export class FrameEncoder extends Transform {
             this.once("drain", () => {
                 this.push(buffer, undefined);
             });
-        };
+        }
         this.read(0);
 
         callback();
     }
-
-
 }
