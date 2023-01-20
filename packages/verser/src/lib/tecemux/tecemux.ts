@@ -210,10 +210,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents>{
         );
     }
 
-    multiplex(): TeceMuxChannel {
+    multiplex(opts: { channel?: number } = {} ): TeceMuxChannel {
         this.logger.trace("Multiplex");
 
-        const channel = this.createChannel(this.channelCount, true);
+        const channel = this.createChannel(opts.channel || this.channelCount, true);
 
         this.addChannel(channel, false);
 
