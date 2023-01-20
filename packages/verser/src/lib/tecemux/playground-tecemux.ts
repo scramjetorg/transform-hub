@@ -7,7 +7,8 @@ import { IncomingMessage, createServer } from "http";
 import { DataStream } from "scramjet";
 
 import { Socket, createConnection } from "net";
-import { TeceMux, TeceMuxChannel } from "./tecemux";
+import { TeceMux } from "./tecemux";
+import { TeceMuxChannel } from "./types";
 
 (async () => {
     const logger = new ObjLogger("Sandbox");
@@ -16,12 +17,12 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
         .pipe(
             new DataStream()
                 .map(prettyPrint({ colors: true }))
-                .map((chunk: string) => (
+                .map((chunk: string) =>
                     chunk.replace(
                         /(:?FIN|SYN|RST|PSH|ACK|URG|ECE|CWR)|^$]/,
-                        "\x1b[41m" + "$&" + "\x1b[0m"
+                        "\x1b[41m\$&\x1b[0m"
                     )
-                ))
+                )
         )
         .pipe(process.stdout);
 
@@ -32,7 +33,7 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
     const PORT = 6660;
     const server = createServer({});
 
-    server.on("timeout", (socket) => {
+    server.on("timeout", (_socket) => {
         logger.warn("Server on timeout");
     });
     server.requestTimeout = 0;
@@ -66,7 +67,7 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
             .on("timeout", () => {
                 logger.info("Carrier Socket timeout");
             })
-            .pause()
+            .pause();
 
         const tcmux = new TeceMux(socket, "Server")
             .on("error", (err) => {
@@ -82,34 +83,33 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
 
         logger.warn("Waiting for stdin...");
 
-        DataStream.from(process.stdin).filter((x: Buffer) => !(parseInt(x[0].toString()) % 2)).pipe(channel1);
-        DataStream.from(process.stdin).filter((x: Buffer) => !!(parseInt(x[0].toString()) % 2)).pipe(channel2);
+        //DataStream.from(process.stdin).filter((x: Buffer) => !(parseInt(x[0].toString(), 10) % 2)).pipe(channel1);
+        //DataStream.from(process.stdin).filter((x: Buffer) => !!(parseInt(x[0].toString(), 10) % 2)).pipe(channel2);
 
         (async () => {
             try {
                 for await (const chunk of channel1) {
                     console.log("CHHUNK", chunk);
-                    logger.debug(`reading CHANNEL1 chunk`, chunk.toString());
-                };
+                    logger.debug("reading CHANNEL1 chunk", chunk.toString());
+                }
             } catch (error) {
-                logger.error(`reading CHANNEL1 ERROR`, error);
+                logger.error("reading CHANNEL1 ERROR", error);
             }
 
-            logger.debug(`reading CHANNEL1 END`);
+            logger.debug("reading CHANNEL1 END");
         })();
 
         (async () => {
             try {
                 for await (const chunk of channel2) {
-                    logger.debug(`reading CHANNEL2 chunk`, chunk.toString());
-                };
+                    logger.debug("reading CHANNEL2 chunk", chunk.toString());
+                }
             } catch (error) {
-                logger.error(`reading CHANNEL2 ERROR`, error);
+                logger.error("reading CHANNEL2 ERROR", error);
             }
 
-            logger.debug(`reading CHANNEL2 END`);
+            logger.debug("reading CHANNEL2 END");
         })();
-
 
         setTimeout(() => {
             console.log("\n\n\n\n");
@@ -135,7 +135,8 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
 
     socket.setNoDelay(true);
 
-    const reqLogger = new ObjLogger("Req", { id: "Client"});
+    const reqLogger = new ObjLogger("Req", { id: "Client" });
+
     reqLogger.pipe(logger);
 
     socket.write("CONNECT HTTP/1.1\r\n\r\n\r\n");
@@ -144,7 +145,7 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
         reqLogger.error("ERROR", error);
     });
 
-    reqLogger.info('connected to server!');
+    reqLogger.info("connected to server!");
 
     const tcmux = new TeceMux(socket, "Request");
 
@@ -157,10 +158,10 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
 
         channel
             .on("finish", () => {
-                tcmux.logger.info("Channel finish", channel._id)
+                tcmux.logger.info("Channel finish", channel._id);
             })
             .on("end", () => {
-                tcmux.logger.info("Channel end", channel._id)
+                tcmux.logger.info("Channel end", channel._id);
             });
 
         for await (const chunk of channel) {
@@ -170,12 +171,12 @@ import { TeceMux, TeceMuxChannel } from "./tecemux";
             }
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
-            await new Promise<void>((resolve, reject) => {
+            /*await new Promise<void>((resolve, _reject) => {
                 setTimeout(() => {
                     //channel.write("abcde\n");
                     resolve();
                 }, 2000);
-            });
+            });*/
         }
     });
 

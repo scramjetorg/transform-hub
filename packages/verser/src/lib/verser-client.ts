@@ -3,12 +3,11 @@ import { Agent as HttpsAgent, request } from "https";
 import { merge, TypedEmitter } from "@scramjet/utility";
 import { IObjectLogger } from "@scramjet/types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
-import { Duplex } from "stream";
 import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-import { TeceMux } from "./tecemux/tecemux";
+import { TeceMux, TeceMuxChannel } from "./tecemux/tecemux";
 
 type Events = {
     error: (err: Error) => void;
@@ -125,14 +124,14 @@ export class VerserClient extends TypedEmitter<Events> {
      * otherwise stream will be passed to the server.
      */
     private mux() {
-        this.teceMux = new TeceMux(this.socket!)
-            .on("channel", async (mSocket: Duplex & { _chan: number }) => {
-                const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
+        this.teceMux = new TeceMux(this.socket!, "client")
+            .on("channel", async (channel: TeceMuxChannel) => {
+                const registeredChannelCallback = this.registeredChannels.get(channel._id);
 
                 if (registeredChannelCallback) {
-                    await registeredChannelCallback(mSocket);
+                    await registeredChannelCallback(channel);
                 } else {
-                    this.opts.server?.emit("connection", mSocket);
+                    this.opts.server?.emit("connection", channel);
                 }
             })
             .on("error", (err: Error) => {
