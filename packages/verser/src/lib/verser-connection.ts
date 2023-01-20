@@ -204,8 +204,6 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        //this.teceMux.logger.pipe(this.logger);
-
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
