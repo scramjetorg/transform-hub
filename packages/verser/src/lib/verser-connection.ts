@@ -199,8 +199,8 @@ export class VerserConnection {
 
     reconnect() {
         this.logger.debug("Reconnecting...");
-        this.teceMux = new TeceMux(this.socket).on("error", (error: Error) => {
-            this.logger.error("BPMux Error", error.message);
+        this.teceMux = new TeceMux(this.socket, "client").on("error", (error: Error) => {
+            this.logger.error("TeCeMux Error", error.message);
             // TODO: Error handling?
         });
 

@@ -1,7 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Duplex, Transform, TransformCallback, TransformOptions } from "stream";
-import { FrameData, HEADER_LENGTH, toHex } from "../utils";
-import { parseFlags } from ".";
+import { FrameData, parseFlags, toHex } from "../utils";
+import { HEADER_LENGTH } from "../constants";
 
 export class FrameDecoder extends Transform {
     buffer: Buffer;
@@ -10,7 +10,11 @@ export class FrameDecoder extends Transform {
     _streams = new Map<number, Duplex>();
 
     constructor(opts: TransformOptions = {}, params: { name: string } = { name: "FrameDecoder" }) {
-        super(Object.assign({}, opts, { writableObjectMode: true, readableObjectMode: true, readableHighWaterMark: 2 }));
+        super(Object.assign({}, opts, {
+            writableObjectMode: true,
+            readableObjectMode: true,
+            readableHighWaterMark: 2
+        }));
 
         this.buffer = Buffer.alloc(0);
         this.logger = new ObjLogger(params.name);
@@ -19,7 +23,7 @@ export class FrameDecoder extends Transform {
             this.logger.debug("onPipe");
         }).on("close", () => {
             this.logger.debug("onClose");
-        })
+        });
     }
 
     _transform(chunk: Buffer, encoding: BufferEncoding, callback: TransformCallback): void {
@@ -51,8 +55,12 @@ export class FrameDecoder extends Transform {
             }
 
             const payload = {
-                sourceAddress: [this.buffer.readInt8(0), this.buffer.readInt8(1), this.buffer.readInt8(2), this.buffer.readInt8(3)],
-                destinationAddress: [this.buffer.readInt8(4), this.buffer.readInt8(5), this.buffer.readInt8(6), this.buffer.readInt8(7)],
+                sourceAddress: [
+                    this.buffer.readInt8(0), this.buffer.readInt8(1), this.buffer.readInt8(2), this.buffer.readInt8(3)
+                ],
+                destinationAddress: [
+                    this.buffer.readInt8(4), this.buffer.readInt8(5), this.buffer.readInt8(6), this.buffer.readInt8(7)
+                ],
                 chunk: this.buffer.subarray(32, this.buffer.readInt32LE(10)),
                 flags: parseFlags(this.buffer.readInt8(25)),
                 sourcePort: this.buffer.readInt16LE(12),
@@ -67,15 +75,15 @@ export class FrameDecoder extends Transform {
 
             this.buffer = this.buffer.subarray(frameSize);
 
-            if (this.buffer.length === 0)  {
-                this.logger.info("No remaining data!")
+            if (this.buffer.length === 0) {
+                this.logger.info("No remaining data!");
                 callback();
                 return;
             }
 
             this.logger.trace("More than one frame in chunk. processing", this.buffer.length);
             this._transform(Buffer.alloc(0), encoding, callback);
-        } catch(error) {
+        } catch (error) {
             this.logger.error("ERROR", error);
             this.emit("error", error);
         }
