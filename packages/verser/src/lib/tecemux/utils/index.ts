@@ -1,4 +1,4 @@
-import { frameFlags, binaryFlags, flagsObjectType } from "../codecs";
+import { binaryFlags, flagsObjectType } from "../codecs";
 
 export function toHex(chunk: Buffer) {
     return chunk.toString("hex").match(/../g)?.join(" ");
