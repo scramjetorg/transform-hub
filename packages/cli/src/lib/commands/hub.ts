@@ -17,6 +17,7 @@ export const hub: CommandDefinition = (program) => {
     const hubCmd = program
         .command("hub")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
         /* TODO: for future implementation
             .option("--driver", "", "scp")

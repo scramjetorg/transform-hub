@@ -20,7 +20,7 @@ export const scope: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .alias("s")
         .usage("[command] [options...]")
-        .description("Manage scopes that store pairs of spaces and Hubs used when working");
+        .description("/This functionality is under development./ Manage scopes that store pairs of spaces and Hubs used when working");
 
     scopeCmd.command("list").alias("ls").description("List all created scopes").action(listScopes);
 
@@ -37,6 +37,17 @@ export const scope: CommandDefinition = (program) => {
 
             displayObject(scopeConfig, profileManager.getProfileConfig().format);
         });
+
+    if (isDevelopment()) {
+        scopeCmd
+            .command("create")
+            .argument("<scope-name>")
+            .description("TO BE IMPLEMENTED / Create scope")
+            .action(() => {
+            // TODO: implement me
+                throw new Error("Implement me");
+            });
+    }
 
     if (isDevelopment())
         scopeCmd
