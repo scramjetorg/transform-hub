@@ -92,9 +92,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<SequenceConfig[]>} Promise resolving to array of identified sequences.
      */
     async list(): Promise<SequenceConfig[]> {
-
         this.logger.info(`Loading Sequences from ${this.adapterConfig.sequencesRoot}`);
-
         const storedSequencesIds = await fs.readdir(this.adapterConfig.sequencesRoot);
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
