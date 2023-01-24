@@ -1,5 +1,5 @@
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
-import { STHRestAPI } from "@scramjet/types";
+import { IHostApiClient, ISequenceClient, STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 
@@ -7,7 +7,7 @@ import { SequenceClient } from "./sequence-client";
  * Host client.
  * Provides methods to interact with Host.
  */
-export class HostClient implements ClientProvider {
+export class HostClient implements ClientProvider, IHostApiClient {
     apiBase: string;
     client: ClientUtils;
 
@@ -66,7 +66,7 @@ export class HostClient implements ClientProvider {
         sequencePackage: Parameters<HttpClient["sendStream"]>[1],
         requestInit?: RequestInit,
         update?: boolean
-    ): Promise<SequenceClient> {
+    ): Promise<ISequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
             parseResponse: "json", put: update
         });

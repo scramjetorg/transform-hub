@@ -1,5 +1,5 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/types";
+import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData, IInstanceClient, IClientProvider } from "@scramjet/types";
 import { ClientProvider, HttpClient, SendStreamOptions } from "@scramjet/client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
@@ -9,7 +9,7 @@ export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
  * Instance client.
  * Provides methods to interact with Instance.
  */
-export class InstanceClient {
+export class InstanceClient implements IInstanceClient {
     private _id: string;
     private instanceURL: string;
     private host: ClientProvider;
@@ -29,8 +29,12 @@ export class InstanceClient {
      * @param {Clienthost} host Host client.
      * @returns {InstanceClient} Instance client.
      */
-    static from(id: string, host: ClientProvider): InstanceClient {
+    static from(id: string, host: ClientProvider): IInstanceClient {
         return new this(id, host);
+    }
+
+    from(id: string, host: IClientProvider): IInstanceClient {
+        return new InstanceClient(id, host);
     }
 
     private constructor(id: string, host: ClientProvider) {
