@@ -1,6 +1,6 @@
 import { TypedEmitter } from "@scramjet/utility";
 import { FrameDecoder, FrameEncoder } from "./codecs";
-import { Duplex, PassThrough, Readable, ReadableOptions } from "stream";
+import { Duplex } from "stream";
 import { Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { FrameData } from "./utils";
@@ -56,9 +56,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         channel
             .on("error", (error) => {
                 this.logger.error("CHANNEL ERROR", error);
-
-                debugger;
-                //this.emit("error", { error, source: channel })
+                this.emit("error", { error, source: channel });
             })
             .on("destroy", () => {
                 this.logger.trace("channel on DESTROY ", channel._id);
@@ -125,19 +123,16 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     async main() {
         let t = 0;
+
         for await (const chunk of this.decoder) {
-            //console.log(chunk);
             let frame: FrameData;
 
             try {
                 frame = JSON.parse(chunk) as FrameData;
             } catch (error) {
-                console.debug( chunk.toString())
                 this.logger.error("error Parsing data from decoder", error, chunk, chunk.length, chunk.toString());
                 continue;
             }
-
-            //this.logger.debug("Decoded", { ...frame, stringified: "--not-displayed--" });
 
             const { flags, sequenceNumber, dataLength, destinationPort, acknowledgeNumber } = frame;
 
@@ -178,26 +173,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                     this.logger.warn("writing to channel [channel, length]", channel._id, dataLength);
                     this.logger.warn("writing to channel [flowing, isPaused]", channel.readableFlowing, channel.isPaused());
 
-                    //Readable.from(chunk).pipe(channel, { end: false });//channel.write(new Uint8Array(((frame.chunk as any).data) as any));
-                    //channel.push(frame.chunk, undefined);
                     channel.push(new Uint8Array((frame.chunk as any).data), undefined);
 
                     t += (frame.chunk as any).data.length;
-                    this.logger.info("Writen", t)
-
-
-                    /*
-                        await new Promise<void>((resolve, reject) => {
-                            this.logger.debug("waiting for drain!")
-                            channel.on("drain", () => {
-                                //channel.push(new Uint8Array(((frame.chunk as any).data) as any));
-                                this.logger.debug("Drained!")
-                                resolve();
-                            });
-                        });
-                    }*/
-
-                    //this.logger.info("Bytes written to channel [writeResult, channel, length]", written, destinationPort, dataLength);
+                    this.logger.info("Writen", t);
                 }
 
                 this.sendACK(sequenceNumber, destinationPort);

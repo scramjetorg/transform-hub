@@ -1,5 +1,5 @@
 import { PassThrough, Transform, TransformCallback, TransformOptions } from "stream";
-import { FrameData, toHex as getHexString, toHex } from "../utils";
+import { FrameData } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
 
 import { FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
@@ -140,10 +140,6 @@ export class FrameEncoder extends Transform {
     _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
         const MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
 
-        if (chunk) {
-
-        }
-
         this.total += chunk.length;
 
         this.logger.debug("TRANSFORM IN", /* toHex(chunk), */ chunk.length, this.total);
@@ -152,12 +148,15 @@ export class FrameEncoder extends Transform {
 
         if (chunk.length > MAX_CHUNK_SIZE) {
             this.logger.debug("TRANSFORM big chunk, splitting", chunk.length);
+
             remaining = (chunk as Buffer).subarray(MAX_CHUNK_SIZE);
             chunk = chunk.subarray(0, MAX_CHUNK_SIZE);
+
             this.logger.debug("TRANSFORM processing part/remaining", chunk.length, remaining.length);
         }
 
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
+
         this.tecemux.sequenceNumber++;
 
         this.logger.debug("TRANSFORM OUT", /*getHexString(buffer),  */ "Size: ", buffer.length);
