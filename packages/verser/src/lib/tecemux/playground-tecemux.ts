@@ -9,6 +9,9 @@ import { DataStream } from "scramjet";
 import { Socket, createConnection } from "net";
 import { TeceMux } from "./tecemux";
 import { TeceMuxChannel } from "./types";
+import { createReadStream, createWriteStream } from "fs";
+import path from "path";
+import { Readable } from "stream";
 
 (async () => {
     const logger = new ObjLogger("Sandbox");
@@ -67,7 +70,7 @@ import { TeceMuxChannel } from "./types";
             .on("timeout", () => {
                 logger.info("Carrier Socket timeout");
             })
-            .pause();
+
 
         const tcmux = new TeceMux(socket, "Server")
             .on("error", (err) => {
@@ -77,19 +80,22 @@ import { TeceMuxChannel } from "./types";
         tcmux.logger.pipe(logger);
 
         const channel1 = tcmux.multiplex();
-        const channel2 = tcmux.multiplex();
+        //const channel2 = tcmux.multiplex();
+
+        createReadStream(path.join(__dirname, "../../../../forever.tar.gz")).pipe(channel1);
+        //Readable.from(Buffer.alloc(1024 * 100)).pipe(channel1, { end: false });
 
         req.on("pause", () => { logger.warn("Request paused"); });
 
-        logger.warn("Waiting for stdin...");
+        //logger.warn("Waiting for stdin...");
 
         //DataStream.from(process.stdin).filter((x: Buffer) => !(parseInt(x[0].toString(), 10) % 2)).pipe(channel1);
         //DataStream.from(process.stdin).filter((x: Buffer) => !!(parseInt(x[0].toString(), 10) % 2)).pipe(channel2);
-
+            /*
         (async () => {
             try {
                 for await (const chunk of channel1) {
-                    console.log("CHHUNK", chunk);
+                    console.log("CHUNK", chunk);
                     logger.debug("reading CHANNEL1 chunk", chunk.toString());
                 }
             } catch (error) {
@@ -98,25 +104,27 @@ import { TeceMuxChannel } from "./types";
 
             logger.debug("reading CHANNEL1 END");
         })();
+*/
+        // (async () => {
+        //     try {
+        //         for await (const chunk of channel2) {
+        //             logger.debug("reading CHANNEL2 chunk", chunk.toString());
+        //         }
+        //     } catch (error) {
+        //         logger.error("reading CHANNEL2 ERROR", error);
+        //     }
 
-        (async () => {
-            try {
-                for await (const chunk of channel2) {
-                    logger.debug("reading CHANNEL2 chunk", chunk.toString());
-                }
-            } catch (error) {
-                logger.error("reading CHANNEL2 ERROR", error);
-            }
+        //     logger.debug("reading CHANNEL2 END");
+        // })();
 
-            logger.debug("reading CHANNEL2 END");
-        })();
-
+        /*
         setTimeout(() => {
             console.log("\n\n\n\n");
             logger.trace("Ending channels");
             channel1.push(null);
             //channel2.end();
         }, 4000);
+        */
     });
 
     server.listen(PORT, "0.0.0.0");
@@ -164,20 +172,38 @@ import { TeceMuxChannel } from "./types";
                 tcmux.logger.info("Channel end", channel._id);
             });
 
-        for await (const chunk of channel) {
+        channel
+            //.pipe(process.stdout);
+            .pipe(createWriteStream(path.join(__dirname, "output.tar.gz")));
+
+        let total = 0;
+        channel
+            .on("data", (d) => {
+                total += d.length;
+                tcmux.logger.info("-------------------- data", channel._id, d.length, total);
+
+            })
+            .on("pause", () => {
+                tcmux.logger.info("-------------------- paused", channel._id);
+            })
+            .on("resume", () => {
+                tcmux.logger.info("-------------------- resumed", channel._id);
+            })
+        /*for await (const chunk of channel) {
             console.log(chunk);
             if (chunk === null) {
                 break;
             }
             reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
 
-            /*await new Promise<void>((resolve, _reject) => {
-                setTimeout(() => {
-                    //channel.write("abcde\n");
-                    resolve();
-                }, 2000);
-            });*/
-        }
+            // await new Promise<void>((resolve, _reject) => {
+            //     setTimeout(() => {
+            //         //channel.write("abcde\n");
+            //         resolve();
+            //     }, 2000);
+            // });
+        }*/
+
     });
 
     socket.on("error", (err) => {
