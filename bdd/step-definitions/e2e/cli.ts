@@ -55,6 +55,16 @@ When("I execute CLI with {string} without waiting for the end", { timeout: 30000
     this.cliResources.commandInProgress = cmdProcess;
 });
 
+Then("I confirm data received", async function(this: CustomWorld) {
+    const expected = "";
+    const { stdout } = this.cliResources!.commandInProgress!;
+    const response = await waitUntilStreamContains(stdout, expected);
+
+    assert.ok(response);
+
+    await this.cliResources!.commandInProgress!.kill();
+});
+
 Then("I get location {string} of compressed directory", function(filepath: string) {
     assert.equal(fs.existsSync(filepath), true);
 });
