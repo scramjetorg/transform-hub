@@ -173,6 +173,23 @@ Then("I confirm {string} list is empty", async function(this: CustomWorld, entit
     assert.equal(emptyList.trim(), "[]");
 });
 
+Then("I confirm {string} list is not empty", async function(this: CustomWorld, entity: string) {
+    const res = this.cliResources!;
+
+    if (entity === "Sequence") {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls"]);
+    }
+    if (entity === "Instance") {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls"]);
+    } else {
+        throw new Error(`Unknown ${entity} list name`);
+    }
+    const emptyList = res.stdio[0];
+    const array = JSON.parse(emptyList);
+
+    assert.ok(array.length !== 0);
+});
+
 Then("I confirm instance logs received", async function(this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
 

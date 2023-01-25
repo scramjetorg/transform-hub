@@ -1,8 +1,11 @@
 {
-  "name": "@scramjet/hostclient-topics",
+  "name": "@scramjet/hostclient-start-seq",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
+  "assets": [
+    "hostclient-basic.tar.gz"
+  ],
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "repository": {
