@@ -17,8 +17,8 @@
     "@scramjet/utility": "^0.31.4"
   },
   "devDependencies": {
-    "@scramjet/api-server": "^0.32.1",
-    "@scramjet/types": "^0.32.1",
+    "@scramjet/api-server": "^0.31.4",
+    "@scramjet/types": "^0.31.4",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",

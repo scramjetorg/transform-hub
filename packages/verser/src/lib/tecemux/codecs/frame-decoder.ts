@@ -10,11 +10,7 @@ export class FrameDecoder extends Transform {
     _streams = new Map<number, Duplex>();
 
     constructor(opts: TransformOptions = {}, params: { name: string } = { name: "FrameDecoder" }) {
-        super(Object.assign({}, opts, {
-            writableObjectMode: true,
-            readableObjectMode: true,
-            readableHighWaterMark: 2
-        }));
+        super(Object.assign({}, opts, { readableObjectMode: true}));
 
         this.buffer = Buffer.alloc(0);
         this.logger = new ObjLogger(params.name);
@@ -29,9 +25,9 @@ export class FrameDecoder extends Transform {
     _transform(chunk: Buffer, encoding: BufferEncoding, callback: TransformCallback): void {
         try {
             if (!Buffer.isBuffer(chunk)) {
-                this.push(JSON.stringify({ error: "not a buffer" }), undefined);
-                callback();
+                this.push(JSON.stringify({ error: "not  a buffer" }), undefined);
 
+                callback();
                 return;
             }
 
@@ -40,18 +36,32 @@ export class FrameDecoder extends Transform {
             } else {
                 this.logger.error("Decoding buffer...", chunk);
                 this.emit("error", "Chunk is not a buffer");
+
                 callback();
+                return;
             }
 
-            this.logger.trace("Decoding buffer...", toHex(this.buffer), "Size:", this.buffer.length);
-
             let frameSize = 0;
+
+            this.logger.trace("Decoding buffer...", /* toHex(this.buffer) */ "Size:", this.buffer.length);
+
+            if (this.buffer.length === 0) {
+                callback(null);
+                return;
+            }
 
             if (this.buffer.length >= HEADER_LENGTH) {
                 frameSize = this.buffer.readInt32LE(10);
             } else {
                 this.logger.trace("To few data");
-                callback();
+                callback(null);
+                return;
+            }
+
+            if (this.buffer.length < frameSize) {
+                this.logger.trace("To few data");
+                callback(null);
+                return;
             }
 
             const payload = {
@@ -68,12 +78,20 @@ export class FrameDecoder extends Transform {
                 dataLength: frameSize - HEADER_LENGTH,
                 chunkLength: frameSize,
                 sequenceNumber: this.buffer.readInt32LE(16),
-                stringified: this.buffer.subarray(32, frameSize).toString()
+                acknowledgeNumber: this.buffer.readInt32LE(20),
+                //stringified: this.buffer.subarray(32, frameSize).toString()
             } as Partial<FrameData>;
 
-            this.push(JSON.stringify(payload) + "\n");
+            if (payload.dataLength && payload.dataLength < 0) {
+                this.emit("error", "Data length incorrect");
+                return;
+            }
+
+            this.push(JSON.stringify(payload), "utf-8")
 
             this.buffer = this.buffer.subarray(frameSize);
+
+            this.logger.trace("Decoded", { ...payload, stringified: "--not-displayed--" });
 
             if (this.buffer.length === 0) {
                 this.logger.info("No remaining data!");
