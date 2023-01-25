@@ -138,7 +138,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 this.emit("error", err);
             });
 
-        this.teceMux.logger.pipe(this.logger);
+        //this.teceMux.logger.pipe(this.logger);
 
         this._verserAgent = new HttpAgent() as HttpAgent & {
             createConnection: typeof createConnection
