@@ -72,7 +72,7 @@ If you don't have a server ready or want to run something from the cloud itself,
 
 This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
-This repository contains the source code for <https://docs.scramjet.org/platform/>.
+This repository contains the source code for [Scramjet Transform Hub](https://docs.scramjet.org/platform/transform-hub).
 
 If you want to read more about the usage please go to [Quick Start](https://github.com/scramjetorg/platform-docs) repo.
 
