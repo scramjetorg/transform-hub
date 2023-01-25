@@ -130,6 +130,13 @@ class KubernetesClientAdapter {
         }
     }
 
+    async getPodLog(podName: string): Promise<string[]> {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+        const response = await kubeApi.readNamespacedPodLog(podName, this._namespace);
+
+        return [response.body];
+    }
+
     async getPodTerminatedContainerReason(podName: string): Promise<string | undefined> {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
         const response = await kubeApi.readNamespacedPod(podName, this._namespace);

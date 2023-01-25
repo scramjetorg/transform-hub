@@ -207,7 +207,11 @@ IComponent {
     }
 
     async getCrashLog(): Promise<string[]> {
-        return ["Crashlog not implemented"];
+        if (this._kubeClient && this._runnerName) {
+            return this._kubeClient.getPodLog(this._runnerName);
+        }
+
+        return ["Crashlog cannot be fetched"]
     }
 }
 
