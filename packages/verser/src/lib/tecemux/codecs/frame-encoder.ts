@@ -7,35 +7,38 @@ import { ITeCeMux } from "../types";
 
 export class FrameEncoder extends Transform {
     tecemux: ITeCeMux;
-    logger = new ObjLogger("FrameEncoder",);
+    total = 0;
+    logger = new ObjLogger("FrameEncoder");
     out = Object.assign(new PassThrough({ readableObjectMode: true })
-        .on("data", (data) => {
+        /*.on("data", (data) => {
             this.logger.trace("output to socket: " + (data.length === HEADER_LENGTH ? "HEADER ONLY" : ""), toHex(data), data.length, this.readableFlowing);
-        })
+        })*/
         .on("pause", () => {
-            this.logger.trace("output to socket paused!");
+            this.logger.trace("OUT paused!");
         })
         .on("end", () => {
-            this.logger.trace("output to socket ended!", this.frameTarget);
+            this.logger.trace("OUT ended!", this.frameTarget);
             //this.tecemux.sendFIN(this.frameTarget);
         })
         .on("resume", () => {
-            this.logger.trace("output to socket resumed");
+            this.logger.trace("OUT resumed");
         })
         .on("error", (error) => {
-            this.logger.error("output to socket error", error);
-        }).pause()
+            this.logger.error("OUT error", error);
+        })//.pause()
     , {
         _id: this.frameTarget
     });
 
-    constructor(private frameTarget: FrameTarget, tecemux: ITeCeMux, opts: TransformOptions = {}, params: { name: string } = { name: "FrameEncoder" }) {
-        //opts.emitClose = false;
-        //opts.readableObjectMode = true;
+    constructor(
+        private frameTarget: FrameTarget,
+        tecemux: ITeCeMux,
+        opts: TransformOptions = {},
+        params: { name: string } = { name: "FrameEncoder"
+    }) {
         super(Object.assign(opts, {
-            writableObjectMode: true,
             readableObjectMode: true,
-            readableHighWaterMark: 0
+            writableObjectMode: true
         }));
 
         this.tecemux = tecemux;
@@ -47,6 +50,12 @@ export class FrameEncoder extends Transform {
             })
             .on("end", () => {
                 this.logger.debug("onEnd");
+            })
+            .on("pause", () => {
+                this.logger.debug("onPause");
+            })
+            .on("resume", () => {
+                this.logger.debug("onResume");
             });
 
         this.pipe(this.out);
@@ -103,7 +112,7 @@ export class FrameEncoder extends Transform {
             new Uint8Array(new Uint16Array([0, frame.destinationPort || this.frameTarget]).buffer),
 
             // 128: sequenceNumber(32 bit, acnowledge number) 16 - 19
-            new Uint8Array(new Uint32Array([this.tecemux.sequenceNumber++]).buffer),
+            new Uint8Array(new Uint32Array([this.tecemux.sequenceNumber]).buffer),
 
             // 160: Acknowledgement number 20-23
             new Uint8Array(new Uint32Array([frame.acknowledgeNumber || 0]).buffer),
@@ -129,19 +138,35 @@ export class FrameEncoder extends Transform {
     }
 
     _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
-        //const buffer = this.createChunkFrame(chunk);
-        this.logger.debug("TRANSFORM IN", toHex(chunk), chunk.length);
-        const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
+        const MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
 
-        this.logger.debug("TRANSFORM OUT", getHexString(buffer), "Size: ", buffer.length);
+        if (chunk) {
 
-        if (!this.push(buffer, undefined)) {
-            this.once("drain", () => {
-                this.push(buffer, undefined);
-            });
         }
-        this.read(0);
 
-        callback();
+        this.total += chunk.length;
+
+        this.logger.debug("TRANSFORM IN", /* toHex(chunk), */ chunk.length, this.total);
+
+        let remaining = Buffer.alloc(0);
+
+        if (chunk.length > MAX_CHUNK_SIZE) {
+            this.logger.debug("TRANSFORM big chunk, splitting", chunk.length);
+            remaining = (chunk as Buffer).subarray(MAX_CHUNK_SIZE);
+            chunk = chunk.subarray(0, MAX_CHUNK_SIZE);
+            this.logger.debug("TRANSFORM processing part/remaining", chunk.length, remaining.length);
+        }
+
+        const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
+        this.tecemux.sequenceNumber++;
+
+        this.logger.debug("TRANSFORM OUT", /*getHexString(buffer),  */ "Size: ", buffer.length);
+
+        if (remaining.length) {
+            this.push(buffer);
+            this._transform(remaining, encoding, callback);
+        } else {
+            callback(null, buffer);
+        }
     }
 }
