@@ -8,6 +8,7 @@ export class FramesKeeper extends PassThrough {
 
     _write(chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void) | undefined) {
         const sequenceNumber = chunk.readInt32LE(16);
+
         this.archive.set(sequenceNumber, chunk);
         this.logger.debug(`sequenceNumber ${sequenceNumber} stored, size: ${chunk.length}`);
 
@@ -23,10 +24,10 @@ export class FramesKeeper extends PassThrough {
         //     resolve();
         // });
 
-        return true
+        return true;
     }
 
-    _read(size: number) {
+    _read(_size: number) {
     }
 
     onACK(sequenceNumber: number) {
