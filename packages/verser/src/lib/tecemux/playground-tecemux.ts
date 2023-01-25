@@ -11,7 +11,6 @@ import { TeceMux } from "./tecemux";
 import { TeceMuxChannel } from "./types";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
-import { Readable } from "stream";
 
 (async () => {
     const logger = new ObjLogger("Sandbox");
@@ -69,8 +68,7 @@ import { Readable } from "stream";
             })
             .on("timeout", () => {
                 logger.info("Carrier Socket timeout");
-            })
-
+            });
 
         const tcmux = new TeceMux(socket, "Server")
             .on("error", (err) => {
@@ -173,37 +171,21 @@ import { Readable } from "stream";
             });
 
         channel
-            //.pipe(process.stdout);
             .pipe(createWriteStream(path.join(__dirname, "output.tar.gz")));
 
         let total = 0;
+
         channel
             .on("data", (d) => {
                 total += d.length;
                 tcmux.logger.info("-------------------- data", channel._id, d.length, total);
-
             })
             .on("pause", () => {
                 tcmux.logger.info("-------------------- paused", channel._id);
             })
             .on("resume", () => {
                 tcmux.logger.info("-------------------- resumed", channel._id);
-            })
-        /*for await (const chunk of channel) {
-            console.log(chunk);
-            if (chunk === null) {
-                break;
-            }
-            reqLogger.info("SERVER->CLIENT->CHANNEL", channel._id, chunk.toString());
-
-            // await new Promise<void>((resolve, _reject) => {
-            //     setTimeout(() => {
-            //         //channel.write("abcde\n");
-            //         resolve();
-            //     }, 2000);
-            // });
-        }*/
-
+            });
     });
 
     socket.on("error", (err) => {
