@@ -2,12 +2,14 @@
 const { PassThrough } = require("stream");
 
 /**
- * Sequence that uses some basic hostClient's methods:
+ * Sequence that uses some basic hostClient's methods, like:
  * - getVersion()
  * - getStatus()
- * @param {*} _input - dummy input
+ * - getLoadCheck()
+ * - ...
+ * @param {*} _input - dummy input, it takes no params
  *
- * @returns output stream with some data written
+ * @returns output stream with some data
  */
 
 module.exports = async function(_input) {
