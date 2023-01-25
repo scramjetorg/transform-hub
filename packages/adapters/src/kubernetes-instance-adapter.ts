@@ -211,7 +211,7 @@ IComponent {
             return this._kubeClient.getPodLog(this._runnerName);
         }
 
-        return ["Crashlog cannot be fetched"]
+        return ["Crashlog cannot be fetched"];
     }
 }
 
