@@ -9,12 +9,17 @@ import { SequenceClient } from "./sequence-client";
  */
 export class HostClient implements ClientProvider {
     apiBase: string;
-    client: ClientUtils;
+
+    #_client: ClientUtils;
+
+    get client(): ClientUtils {
+        return this.#_client;
+    }
 
     constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
-        this.client = utils;
+        this.#_client = utils;
     }
 
     /**
