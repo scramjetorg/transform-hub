@@ -2,7 +2,7 @@
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { profileManager, sessionConfig } from "../config";
-import { displayObject } from "../output";
+import { displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -71,6 +71,34 @@ export const space: CommandDefinition = (program) => {
 
             displayObject({ name, ...await managerClient.getVersion() }, profileManager.getProfileConfig().format);
             sessionConfig.setLastSpaceId(name);
+        });
+
+    spaceCmd
+        .command("audit")
+        .description("Fetch all audit messages from space")
+        .argument("[<space_name>]", "The name of the space (defaults to all spaces)")
+        .action(async (spaceName: string) => {
+            const mwClient = getMiddlewareClient();
+
+            if (typeof spaceName === "undefined")
+                return displayStream(await mwClient.getAuditStream());
+
+            const managerClient = mwClient.getManagerClient(spaceName);
+
+            return displayStream(await managerClient.getAuditStream());
+        });
+
+    spaceCmd
+        .command("logs")
+        .description("Fetch all logs from space")
+        .argument("[<space_name>]", "The name of the space (defaults to current space)")
+        .action(async (spaceName: string) => {
+            if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
+
+            const mwClient = getMiddlewareClient();
+            const managerClient = mwClient.getManagerClient(spaceName);
+
+            await displayStream(await managerClient.getLogStream());
         });
 
     if (isDevelopment())

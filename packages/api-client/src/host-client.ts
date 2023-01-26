@@ -50,6 +50,16 @@ export class HostClient implements ClientProvider {
      * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns Promise resolving to response with log stream.
      */
+    async getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]> {
+        return this.client.getStream("audit", requestInit);
+    }
+
+    /**
+     * Returns Host log stream.
+     *
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
+     * @returns Promise resolving to response with log stream.
+     */
     async getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream("log", requestInit);
     }

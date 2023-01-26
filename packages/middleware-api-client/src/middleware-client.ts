@@ -45,4 +45,13 @@ export class MiddlewareClient implements ClientProvider {
     async getVersion(): Promise<MWRestAPI.GetVersionResponse> {
         return this.client.get("version");
     }
+
+    /**
+     * Requests API for version of various API components
+     *
+     * @returns {Promise<MMRestAPI.GetManagersResponse>} List of manager ids
+     */
+    async getAuditStream(): Promise<ReadableStream<any>> {
+        return this.client.getStream("audit");
+    }
 }
