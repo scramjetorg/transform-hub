@@ -18,14 +18,12 @@
 
 Scramjet Transform Hub is a cool way to run programs on your computer or in the cloud. It's easy to use, and it supports lots of different types of programs.
 
-The Hub is the heart of Scramjet Cloud Platform, a serverless data processing system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to processes, Docker containers or Kubernetes clusters just as easily... Oh, and the app is incredibly simple too:
+The Hub is the heart of Scramjet Cloud Platform, a serverless data processing system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to processes, Docker containers or Kubernetes clusters just as easily... Oh, and the apps are incredibly simple to write too, here's a slack posting sample:
 
 ```js
 export (input: Readable) => async function*() {
      for (const post of input) {
-         if (!cache.has(post.id)) {
-             yield await slack.note(`New post titled "${post.title}" from ${post.author}`);
-         }
+        yield await slack.note(`New post titled "${post.title}" from ${post.author}`);
      }
 }
 ```
@@ -99,18 +97,21 @@ For developers who would like to simply use Scramjet Transform Hub to run data p
 
 # Usage :bulb:
 
+The easiest way to start Transform Hub is to run the follow (you'll need node.js and npm installed):
+
+```bash
+npx @scramjet/sth --runtime-adapter=<docker|process|kubernetes>
+```
+
 Scramjet Transform Hub is a platform that helps you run programs on local and remote machines. You can start programs in the background or connect to them and see their output. You can also pipe your data to the program even if it is running on a different machine. You can install this platform in different places like AWS, Google Cloud, Azure or even your own computer.
 
 There's no limit to what you can use it for. Do you want a stock checker? A chatbot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real-time? Or perhaps you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) 📧 or hop on our [Scramjet Discord ![discord](./images/discord.png)](https://scr.je/join-community-mg1) and we'll be happy to talk with you.
-
-[Check our proposition of sample architecture for use cases in different industries.](https://scramjet.org/#use-cases)
-
 
 ---
 
 # The basics :abcd:
 
-**NOTE:** This is the STH development repo and in order to use it, you need to have **Unix/linux** based operating system, for example [Ubuntu](https://ubuntu.com/download/server). We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
+**NOTE:** This is the STH development repo and in order to use it, you need to have **Unix/Linux** based operating system, for example [Ubuntu](https://ubuntu.com/download/server) or [Windows with WSL2](https://learn.microsoft.com/en-us/windows/wsl/install). We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
@@ -153,7 +154,6 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 > **Reminder:** This is a development guide. In order to use it, you need to have a Unix/Linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
 
 ### Environment setup
-
 
 There are several installations you need to perform to get STH up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
