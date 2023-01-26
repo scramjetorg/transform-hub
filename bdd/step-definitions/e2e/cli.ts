@@ -45,6 +45,35 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function(this: Cus
     assert.equal(res.stdio[2], 0);
 });
 
+When("I get first sequence id", { timeout: 30000 }, async function(this: CustomWorld) {
+    const res = this.cliResources;
+    const stdio: string[] = res.stdio || [];
+    const seqList = JSON.parse(stdio[0]);
+
+    this.cliResources.sequenceId = seqList[0].id;
+
+    logger.log("Sequence id: ", this.cliResources.sequenceId);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        logger.debug(res.stdio);
+    }
+
+    assert.ok(this.cliResources.sequenceId !== undefined);
+});
+
+When("I start {string} with the first sequence id", { timeout: 30000 }, async function(this: CustomWorld, sequenceName :string) {
+    const res = this.cliResources;
+    const seqId = this.cliResources.sequenceId;
+
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", `data/sequences/${sequenceName}`, "--args", `[\"${seqId}\"]`]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        logger.debug(res.stdio);
+    }
+
+    assert.equal(res.stdio[2], 0);
+});
+
 When("I execute CLI with {string} without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
     const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
 

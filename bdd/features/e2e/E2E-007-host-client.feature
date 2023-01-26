@@ -18,9 +18,10 @@ Feature: Test for host client used by sequences
         Given I set config for local Hub
         And I execute CLI with "inst list"
         And I confirm "Instance" list is empty
-        When I execute CLI with "seq pack data/sequences/hostclient-basic"
-        When I execute CLI with "seq send data/sequences/hostclient-basic.tar.gz"
-        When I execute CLI with "seq deploy data/sequences/hostclient-start-seq"
+        When I execute CLI with "seq deploy data/sequences/hostclient-basic"
+        And I execute CLI with "seq list"
+        And I get first sequence id
+        Then I start "hostclient-start-seq" with the first sequence id
         And wait for "3000" ms
         And I execute CLI with "inst list"
         And I confirm "Instance" list is not empty
