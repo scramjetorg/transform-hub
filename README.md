@@ -699,7 +699,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with yarn. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
