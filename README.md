@@ -53,7 +53,7 @@ If you don't have a server ready or want to run something from the cloud itself,
   - [Docker commands :whale:](#docker-commands-whale)
   - [Build Hub on Docker :building_construction:](#build-hub-on-docker-building_construction)
   - [Run Transform Hub in Docker :robot:](#run-transform-hub-in-docker-robot)
-  - [Lerna commands :pencil:](#lerna-commands-pencil)
+  - [Monorepo commands :pencil:](#monorepo-commands-pencil)
   - [Autocomplete :zap:](#autocomplete-zap)
   - [Git branching workflow](#git-branching-workflow)
 - [Sample usage :sunglasses:](#sample-usage-sunglasses)
@@ -226,7 +226,6 @@ $ npm -v
 There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g lerna   # lerna is a tool that we use for publishing multiple packages to npm.
 npm install -g yarn   # yarn is a package manager
 ```
 
@@ -235,9 +234,6 @@ npm install -g yarn   # yarn is a package manager
 The same as before the installations can be confirmed by checking the installed versions:
 
 ```bash
-$ lerna -v
-4.0.0
-
 $ yarn -v
 1.22.17
 ```
@@ -496,22 +492,20 @@ docker run \
   scramjetorg/sth:$(jq -r .version package.json)
 ```
 
-## Lerna commands :pencil:
+## Monorepo commands :pencil:
 
-We use Lerna to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
+We use our own scripts to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
 
 ```bash
-lerna create package_name # Add new package:
-lerna ls                  # List all of the public packages in the current Lerna repo:
-lerna run [script]        # Run an npm script in each package that contains that script.
-lerna run --ignore @scramjet/<package_name> <script-name>
-    # Run script in all packages excluding one package:
-lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
-    # ... or run script excluding more packages
-lerna run --scope @scramjet/<package_name> <script-name>
+./scripts/run-script.js [script]
+    # Run an npm script in each package that contains that script.
+./scripts/run-script.js --scope @scramjet/<package_name> <script-name> 
     # Run script only in one package
-lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
-    # Run script in more packages
+./scripts/run-script.js --workspace packages <script-name>
+    # Run script in all packages in workspace
+
+./scripts/run-script.js --help
+    # Check this out for additional information
 ```
 
 ## Autocomplete :zap:
