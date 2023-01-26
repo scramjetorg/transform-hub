@@ -1,6 +1,7 @@
 export * from "./dockerode-docker-helper";
 export * from "./docker-instance-adapter";
 export * from "./docker-sequence-adapter";
+export * from "./initialize-runtime-adapters";
 export * from "./types";
 
 export * from "./get-instance-adapter";

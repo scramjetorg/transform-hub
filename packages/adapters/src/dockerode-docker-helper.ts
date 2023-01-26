@@ -38,6 +38,19 @@ type DockerodeVolumeMountConfig = {
     ReadOnly: boolean
 }
 
+let _isDockerConfigured: boolean|undefined;
+
+async function isDockerConfigured() {
+    try {
+        await new Dockerode().info();
+        _isDockerConfigured = true;
+    } catch (e) {
+        _isDockerConfigured = false;
+    }
+
+    return _isDockerConfigured;
+}
+
 /**
  * Communicates with Docker using Dockerode library.
  */
@@ -377,5 +390,9 @@ export class DockerodeDockerHelper implements IDockerHelper {
             Driver:config.driver,
             Options: config.options
         });
+    }
+
+    static async isDockerConfigured() {
+        return isDockerConfigured();
     }
 }

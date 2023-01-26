@@ -24,7 +24,7 @@ import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@sc
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
-import { getSequenceAdapter, initializeSequenceAdapter } from "@scramjet/adapters";
+import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
@@ -311,7 +311,7 @@ export class Host implements IComponent {
             await this.identifyExistingSequences();
         }
 
-        const adapter = await initializeSequenceAdapter(this.config);
+        const adapter = await initializeRuntimeAdapters(this.config);
 
         this.adapterName = adapter;
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
@@ -587,7 +587,7 @@ export class Host implements IComponent {
         }
 
         try {
-            const sequenceAdapter = getSequenceAdapter(this.config);
+            const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
             await sequenceAdapter.remove(sequenceInfo.config);
             this.sequencesStore.delete(id);
@@ -651,7 +651,7 @@ export class Host implements IComponent {
      * Used to recover Sequences information after restart.
      */
     async identifyExistingSequences() {
-        const sequenceAdapter = getSequenceAdapter(this.config);
+        const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
         try {
             await sequenceAdapter.init();
@@ -680,7 +680,7 @@ export class Host implements IComponent {
         this.logger.info("New Sequence incoming", { name: sequenceName });
 
         try {
-            const sequenceAdapter = getSequenceAdapter(this.config);
+            const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
             sequenceAdapter.logger.updateBaseLog({ id });
             sequenceAdapter.logger.pipe(this.logger);
