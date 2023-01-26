@@ -5,7 +5,7 @@ This feature checks topic functionalities over CLI
     @ci-topic @cli
     Scenario: E2E-011 TC-001 API to API
         Given I set config for local Hub
-        When I execute CLI with "topic send cities features/e2e/cities.json"
+        When I execute CLI with "topic send cities data/cities.json"
         Then I execute CLI with "topic get cities" without waiting for the end
         Then I confirm data named "nyc-city-nl" will be received
 
@@ -19,7 +19,7 @@ This feature checks topic functionalities over CLI
 
     @ci-topic @cli
     Scenario: E2E-011 TC-003 API to Instance
-        When I execute CLI with "topic send avengers features/e2e/data.json"
+        When I execute CLI with "topic send avengers data/data.json"
         When I execute CLI with "seq send ../packages/hello-input-out.tar.gz"
         When I execute CLI with "seq start - --input-topic avengers "
         And wait for "10000" ms
