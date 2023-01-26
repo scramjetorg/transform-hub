@@ -68,7 +68,12 @@ config: {}
     #   }
 
 
-## The storage volume used by each Pod in the StatefulSet.
+# -- Sequence root directory
+# -- '~/.scramjet_k8s_sequences' before STH v0.34.1,
+# -- '~/.scramjet_sequences' after STH v0.34.1
+sequencesRoot: "/root/.scramjet_sequences"
+
+## The storage volume used by each Pod in the StatefulSet. Dedicated for sequence root directory (sequencesRoot)
 persistentVolume:
   enabled: false
   accessModes:
@@ -83,9 +88,9 @@ initContainers: []
   #   image: alpine:3.8
   #   command: [sh, -c]
   #   args:
-  #     - mkdir -p /root/.scramjet_k8s_sequences/default && wget -qO- https://github.com/scramjetorg/reference-apps/releases/download/v0.24.12/hello-alice-out.tar.gz | tar -C /root/.scramjet_k8s_sequences/default -xzf- && echo 'Done'
+  #     - mkdir -p /root/.scramjet_sequences/default && wget -qO- https://github.com/scramjetorg/reference-apps/releases/download/v0.24.12/hello-alice-out.tar.gz | tar -C /root/.scramjet_sequences/default -xzf- && echo 'Done'
   #   volumeMounts:
-  #     - mountPath: /root/.scramjet_k8s_sequences
+  #     - mountPath: /root/.scramjet_sequences
   #       name: scramjet-sequences
 
 

@@ -1,4 +1,4 @@
 apiVersion: v1
 description: A Helm chart to deploy STH
 name: sth
-version: 0.0.4
+version: 0.0.5
