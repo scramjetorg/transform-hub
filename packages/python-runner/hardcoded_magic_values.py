@@ -10,7 +10,7 @@ class CommunicationChannels(Enum):
     IN = "5"
     OUT = "6"
     LOG = "7"
-
+    HOST = "8"
 
 # See packages/symbols/src/runner-message-code.ts
 class RunnerMessageCodes(Enum):

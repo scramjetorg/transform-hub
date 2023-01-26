@@ -18,6 +18,9 @@ FROM node:lts-bullseye-slim AS builder
 
 WORKDIR /app/
 
+COPY ./dist/sth-config ./dist/sth-config
+COPY ./dist/api-client ./dist/api-client
+COPY ./dist/client-utils ./dist/client-utils
 COPY ./dist/utility ./dist/utility
 COPY ./dist/symbols ./dist/symbols
 COPY ./dist/obj-logger ./dist/obj-logger
