@@ -75,17 +75,17 @@ export const space: CommandDefinition = (program) => {
 
     spaceCmd
         .command("audit")
-        .description("Fetch all audit messages from space")
-        .argument("[<space_name>]", "The name of the space (defaults to all spaces)")
-        .action(async (spaceName: string) => {
+        .description("Fetch all audit messages from spaces")
+        // .argument("[<spacename>]", "The name of the space (defaults to all spaces)")
+        .action(async () => {
             const mwClient = getMiddlewareClient();
 
-            if (typeof spaceName === "undefined")
-                return displayStream(await mwClient.getAuditStream());
+            // if (typeof spacename === "undefined")
+            return displayStream(await mwClient.getAuditStream());
 
-            const managerClient = mwClient.getManagerClient(spaceName);
+            // const managerClient = mwClient.getManagerClient(spacename);
 
-            return displayStream(await managerClient.getAuditStream());
+            // return displayStream(await managerClient.getAuditStream());
         });
 
     spaceCmd
