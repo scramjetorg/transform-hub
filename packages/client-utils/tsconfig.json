@@ -2,7 +2,6 @@
   "compilerOptions": {
     "outDir": "./dist"
   },
-  "target": "browser",
   "extends": "../../tsconfig.base.json",
   "include": [
     "./src",

@@ -51,4 +51,3 @@ export * from "./sequence-adapter";
 export * from "./dto/index";
 
 export * from "./rest-api-error/rest-api-error";
-

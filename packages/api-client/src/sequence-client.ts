@@ -1,5 +1,5 @@
 import { ClientProvider, HttpClient } from "@scramjet/client-utils";
-import { IClientProvider, IInstanceClient, ISequenceClient, STHRestAPI } from "@scramjet/types";
+import { STHRestAPI } from "@scramjet/types";
 import { Readable } from "stream";
 
 import { InstanceClient } from "./instance-client";
@@ -8,10 +8,10 @@ import { InstanceClient } from "./instance-client";
  * Sequence client.
  * Provides methods to interact with Sequence.
  */
-export class SequenceClient implements ISequenceClient {
+export class SequenceClient {
     private _id: string;
     private sequenceURL: string;
-    private host: IClientProvider;
+    private host: ClientProvider;
 
     /**
      * Sequence id.
@@ -31,12 +31,8 @@ export class SequenceClient implements ISequenceClient {
      * @param {ClientProvider} host Host client
      * @returns Sequence client
      */
-    static from(id: string, host: ClientProvider): ISequenceClient {
+    static from(id: string, host: ClientProvider): SequenceClient {
         return new this(id, host);
-    }
-
-    from(id: string, host: ClientProvider): ISequenceClient {
-        return new SequenceClient(id, host);
     }
 
     private constructor(id: string, host: ClientProvider) {
@@ -55,7 +51,7 @@ export class SequenceClient implements ISequenceClient {
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      * @returns {Promise<InstanceClient>} Promise resolving to Instance Client.
      */
-    async start(payload: STHRestAPI.StartSequencePayload): Promise<IInstanceClient> {
+    async start(payload: STHRestAPI.StartSequencePayload): Promise<InstanceClient> {
         try {
             const response = await this.clientUtils.post<STHRestAPI.StartSequenceResponse>(
                 `${this.sequenceURL}/start`,

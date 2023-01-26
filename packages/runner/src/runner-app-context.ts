@@ -3,7 +3,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import {
     EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
     AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
-    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, IHostApiClient
+    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient
 } from "@scramjet/types";
 import { EventEmitter } from "events";
 
@@ -32,10 +32,10 @@ implements AppContext<AppConfigType, State> {
     initialState?: State;
     exitTimeout: number = 10000;
     logger: IObjectLogger = new ObjLogger("Sequence");
-    hub: IHostApiClient;
+    hub: HostClient;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: RunnerProxy, hostClient: IHostApiClient) {
+        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
