@@ -15,5 +15,11 @@ export async function initializeRuntimeAdapters(config: STHConfiguration): Promi
         await setupDockerNetworking(new DockerodeDockerHelper());
     }
 
+    if (config.runtimeAdapter === "kubernetes") {
+        if (!config.kubernetes.sthPodHost) {
+            throw new Error("Kubernetes pod host url is not set in kubernetes.sthPodHost config.");
+        }
+    }
+
     return config.runtimeAdapter;
 }
