@@ -27,6 +27,7 @@
 ### Methods
 
 - [disconnect](IHostClient.md#disconnect)
+- [getAgent](IHostClient.md#getagent)
 - [init](IHostClient.md#init)
 
 ## Properties
@@ -37,7 +38,7 @@
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L24)
+[packages/types/src/csh-connector.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L26)
 
 ___
 
@@ -61,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L28)
+[packages/types/src/csh-connector.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L30)
 
 ___
 
@@ -71,7 +72,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L32)
+[packages/types/src/csh-connector.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L34)
 
 ___
 
@@ -95,7 +96,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L26)
+[packages/types/src/csh-connector.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L28)
 
 ___
 
@@ -105,7 +106,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L30)
+[packages/types/src/csh-connector.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L32)
 
 ___
 
@@ -115,7 +116,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L34)
+[packages/types/src/csh-connector.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L36)
 
 ___
 
@@ -125,7 +126,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L22)
+[packages/types/src/csh-connector.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L24)
 
 ___
 
@@ -135,7 +136,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L18)
+[packages/types/src/csh-connector.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L20)
 
 ___
 
@@ -145,7 +146,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L20)
+[packages/types/src/csh-connector.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L22)
 
 ## Methods
 
@@ -161,7 +162,21 @@ Disconnects from a host server.
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L16)
+[packages/types/src/csh-connector.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L17)
+
+___
+
+### getAgent
+
+▸ **getAgent**(): `Agent`
+
+#### Returns
+
+`Agent`
+
+#### Defined in
+
+[packages/types/src/csh-connector.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L18)
 
 ___
 
@@ -183,4 +198,4 @@ Interface used by Runner to communicate with Host.
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L11)
+[packages/types/src/csh-connector.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L12)

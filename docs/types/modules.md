@@ -74,6 +74,7 @@
 - [HasTopicInformation](modules.md#hastopicinformation)
 - [HostConfig](modules.md#hostconfig)
 - [HostErrorCode](modules.md#hosterrorcode)
+- [HostProxy](modules.md#hostproxy)
 - [HttpMethod](modules.md#httpmethod)
 - [IdString](modules.md#idstring)
 - [InertApp](modules.md#inertapp)
@@ -1000,6 +1001,22 @@ ___
 #### Defined in
 
 [packages/types/src/error-codes/host-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/error-codes/host-error.ts#L1)
+
+___
+
+### HostProxy
+
+Ƭ **HostProxy**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `onInstanceRequest` | (`socket`: `Duplex`) => `void` |
+
+#### Defined in
+
+[packages/types/src/host-proxy.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/host-proxy.ts#L3)
 
 ___
 
