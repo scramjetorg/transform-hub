@@ -85,9 +85,11 @@
 - [InstanceBulkMessage](modules.md#instancebulkmessage)
 - [InstanceConfig](modules.md#instanceconfig)
 - [InstanceId](modules.md#instanceid)
+- [InstanceInputStream](modules.md#instanceinputstream)
 - [InstanceLimits](modules.md#instancelimits)
 - [InstanceMessage](modules.md#instancemessage)
 - [InstanceMessageData](modules.md#instancemessagedata)
+- [InstanceOutputStream](modules.md#instanceoutputstream)
 - [InstanceRequirements](modules.md#instancerequirements)
 - [InstanceStats](modules.md#instancestats)
 - [K8SAdapterConfiguration](modules.md#k8sadapterconfiguration)
@@ -192,6 +194,13 @@
 - [WritableApp](modules.md#writableapp)
 - [WriteFunction](modules.md#writefunction)
 - [WriteSequence](modules.md#writesequence)
+
+### Classes
+
+- [ClientProvider](classes/ClientProvider.md)
+- [HostClient](classes/HostClient.md)
+- [InstanceClient](classes/InstanceClient.md)
+- [SequenceClient](classes/SequenceClient.md)
 
 ### Enumerations
 
@@ -1169,6 +1178,16 @@ ___
 
 ___
 
+### InstanceInputStream
+
+Ƭ **InstanceInputStream**: ``"stdin"`` \| ``"input"``
+
+#### Defined in
+
+[packages/types/src/api-client/host-client.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L10)
+
+___
+
 ### InstanceLimits
 
 Ƭ **InstanceLimits**: `Object`
@@ -1210,6 +1229,16 @@ ___
 #### Defined in
 
 [packages/types/src/messages/instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L3)
+
+___
+
+### InstanceOutputStream
+
+Ƭ **InstanceOutputStream**: ``"stdout"`` \| ``"stderr"`` \| ``"output"`` \| ``"log"``
+
+#### Defined in
+
+[packages/types/src/api-client/host-client.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L11)
 
 ___
 
@@ -1321,7 +1350,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/app-context.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L20)
+[packages/types/src/app-context.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L21)
 
 ___
 
@@ -1651,7 +1680,7 @@ the monitoring information
 
 #### Defined in
 
-[packages/types/src/app-context.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L28)
+[packages/types/src/app-context.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L29)
 
 ___
 
@@ -2594,7 +2623,7 @@ the returned value can be a promise, once it's resolved the system will
 
 #### Defined in
 
-[packages/types/src/app-context.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L18)
+[packages/types/src/app-context.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L19)
 
 ___
 

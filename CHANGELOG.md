@@ -2,6 +2,13 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.32.1] - 2023-01-27
+
+## Fixed
+
+* Clear host in test E2E-007 TC-002 by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/797>
+* HostClient declarations for AppContext by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/790>
+
 ## [0.32.0] - 2023-01-27
 
 ## Features

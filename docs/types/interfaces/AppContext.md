@@ -21,6 +21,7 @@ interruption.
 - [config](AppContext.md#config)
 - [definition](AppContext.md#definition)
 - [exitTimeout](AppContext.md#exittimeout)
+- [hub](AppContext.md#hub)
 - [initialState](AppContext.md#initialstate)
 - [logger](AppContext.md#logger)
 
@@ -45,7 +46,7 @@ interruption.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L178)
+[packages/types/src/app-context.ts:179](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L179)
 
 ___
 
@@ -55,7 +56,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/app-context.ts:177](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L177)
+[packages/types/src/app-context.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L178)
 
 ___
 
@@ -67,7 +68,7 @@ Provides automated definition as understood by the system
 
 #### Defined in
 
-[packages/types/src/app-context.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L168)
+[packages/types/src/app-context.ts:169](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L169)
 
 ___
 
@@ -79,7 +80,19 @@ Allows setting timeout in millis to exit the sequence after exit called (default
 
 #### Defined in
 
-[packages/types/src/app-context.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L181)
+[packages/types/src/app-context.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L182)
+
+___
+
+### hub
+
+• `Optional` **hub**: [`HostClient`](../classes/HostClient.md)
+
+Allows to access Hub
+
+#### Defined in
+
+[packages/types/src/app-context.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L185)
 
 ___
 
@@ -92,7 +105,7 @@ this#save.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L144)
+[packages/types/src/app-context.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L145)
 
 ___
 
@@ -102,7 +115,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/app-context.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L37)
+[packages/types/src/app-context.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L38)
 
 ## Methods
 
@@ -132,7 +145,7 @@ and the data will be lost.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L80)
+[packages/types/src/app-context.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L81)
 
 ___
 
@@ -161,7 +174,7 @@ return value from the Sequence.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L49)
+[packages/types/src/app-context.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L50)
 
 ___
 
@@ -192,7 +205,7 @@ last call will be made sure to be saved before the process will be terminated.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L65)
+[packages/types/src/app-context.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L66)
 
 ___
 
@@ -214,7 +227,7 @@ Allows overriding the function definition from within the code
 
 #### Defined in
 
-[packages/types/src/app-context.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L175)
+[packages/types/src/app-context.ts:176](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L176)
 
 ___
 
@@ -245,7 +258,7 @@ out.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:127](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L127)
+[packages/types/src/app-context.ts:128](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L128)
 
 ___
 
@@ -268,7 +281,7 @@ Sends event from the Instance that can be received by CLI and configured actions
 
 #### Defined in
 
-[packages/types/src/app-context.ts:162](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L162)
+[packages/types/src/app-context.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L163)
 
 ▸ **emit**(`ev`, `message`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
@@ -285,7 +298,7 @@ Sends event from the Instance that can be received by CLI and configured actions
 
 #### Defined in
 
-[packages/types/src/app-context.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L163)
+[packages/types/src/app-context.ts:164](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L164)
 
 ___
 
@@ -308,7 +321,7 @@ This method will be called automatically when the readable side of the Sequence 
 
 #### Defined in
 
-[packages/types/src/app-context.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L111)
+[packages/types/src/app-context.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L112)
 
 ___
 
@@ -337,7 +350,7 @@ stop it.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L99)
+[packages/types/src/app-context.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L100)
 
 ___
 
@@ -361,7 +374,7 @@ actions.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L153)
+[packages/types/src/app-context.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L154)
 
 ▸ **on**(`ev`, `handler`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
@@ -378,7 +391,7 @@ actions.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L154)
+[packages/types/src/app-context.ts:155](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L155)
 
 ___
 
@@ -404,4 +417,4 @@ passed to the process that will take over after this one is terminated.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:138](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L138)
+[packages/types/src/app-context.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L139)
