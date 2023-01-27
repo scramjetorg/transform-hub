@@ -16,6 +16,8 @@ Feature: Test for host client used by sequences
     @ci-api @cli
     Scenario: E2E-007 TC-002 Test Sequence that starts another Sequence
         Given I set config for local Hub
+        And I execute CLI with "seq prune --force"
+        Then I wait for "Sequence" list to be empty
         And I execute CLI with "inst list"
         And I confirm "Instance" list is empty
         When I execute CLI with "seq deploy data/sequences/hostclient-basic"
