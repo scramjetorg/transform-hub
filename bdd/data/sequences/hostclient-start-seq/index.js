@@ -13,7 +13,7 @@ module.exports = async function(_input, sequenceId) {
     const out = new PassThrough();
 
     try {
-        const seqClient = await this.runner.hub.getSequenceClient(sequenceId);
+        const seqClient = await this.hub.getSequenceClient(sequenceId);
 
         this.logger.info("Sequence client called:", seqClient);
         const seqStart = await seqClient.start(sequenceId);
