@@ -2,24 +2,39 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.32.0] - 2023-01-27
+
+## Features
+
+* Feature runnerjs hostclient by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/789>
+* Tests for runnerjs hostclient by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/791>
+
+## Fixed
+
+* Add missing description for `--progress` flag by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/779>
+* Fixed missing check for array in the network interfaces by @kociolekscramjet in <https://github.com/scramjetorg/transform-hub/pull/782>
+* Edit CLI descriptions by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/780>
+* chore(helm): sequencesRoot path as variable by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/785>
+* Align Sequences root dir name for all Adapters by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/784>
+
 ## [0.31.4] - 2023-01-05
 
 ## Fixed
 
-* Fix typo in CLI description by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/773
-* Generate api-client docs by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/774
-* Add logs from loadcheck by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/772
-* Add apibase/entites endpoint by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/771
-* Entities, verser missing methods, types by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/775
-* Fix/topics by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/748
+* Fix typo in CLI description by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/773>
+* Generate api-client docs by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/774>
+* Add logs from loadcheck by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/772>
+* Add apibase/entities endpoint by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/771>
+* Entities, verser missing methods, types by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/775>
+* Fix/topics by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/748>
 
 ## [0.31.3] - 2022-12-22
 
 ## Fixed
 
-* Fix missing socket methods by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/766
-* Update banner by @S4adam in https://github.com/scramjetorg/transform-hub/pull/765
-* New banner button text by @S4adam in https://github.com/scramjetorg/transform-hub/pull/767
+* Fix missing socket methods by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/766>
+* Update banner by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/765>
+* New banner button text by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/767>
 
 ## [0.31.2] - 2022-12-16
 

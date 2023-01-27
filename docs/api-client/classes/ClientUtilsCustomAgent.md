@@ -1,0 +1,385 @@
+[@scramjet/client-utils](../README.md) / [Exports](../modules.md) / ClientUtilsCustomAgent
+
+# Class: ClientUtilsCustomAgent
+
+Nodejs HttpClient interface.
+
+## Hierarchy
+
+- `ClientUtilsBase`
+
+  ↳ **`ClientUtilsCustomAgent`**
+
+## Implements
+
+- [`HttpClient`](../interfaces/HttpClient.md)
+
+## Table of contents
+
+### Methods
+
+- [addLogger](ClientUtilsCustomAgent.md#addlogger)
+- [delete](ClientUtilsCustomAgent.md#delete)
+- [get](ClientUtilsCustomAgent.md#get)
+- [getStream](ClientUtilsCustomAgent.md#getstream)
+- [post](ClientUtilsCustomAgent.md#post)
+- [put](ClientUtilsCustomAgent.md#put)
+- [sendStream](ClientUtilsCustomAgent.md#sendstream)
+- [setDefaultHeaders](ClientUtilsCustomAgent.md#setdefaultheaders)
+
+### Properties
+
+- [agent](ClientUtilsCustomAgent.md#agent)
+- [apiBase](ClientUtilsCustomAgent.md#apibase)
+- [headers](ClientUtilsCustomAgent.md#headers)
+
+### Constructors
+
+- [constructor](ClientUtilsCustomAgent.md#constructor)
+
+## Methods
+
+### addLogger
+
+▸ **addLogger**(`logger`): `void`
+
+Sets given logger.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `logger` | `Partial`<[`RequestLogger`](../modules.md#requestlogger)\> | Logger to set. |
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+[HttpClient](../interfaces/HttpClient.md).[addLogger](../interfaces/HttpClient.md#addlogger)
+
+#### Inherited from
+
+ClientUtilsBase.addLogger
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L29)
+
+___
+
+### delete
+
+▸ **delete**<`T`\>(`url`, `requestInit?`): `Promise`<`T`\>
+
+Performs DELETE request.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+
+#### Returns
+
+`Promise`<`T`\>
+
+Promise resolving to given type.
+
+#### Implementation of
+
+[HttpClient](../interfaces/HttpClient.md).[delete](../interfaces/HttpClient.md#delete)
+
+#### Inherited from
+
+ClientUtilsBase.delete
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L205)
+
+___
+
+### get
+
+▸ **get**<`T`\>(`url`, `requestInit?`): `Promise`<`T`\>
+
+Performs get using request wrapper.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+
+#### Returns
+
+`Promise`<`T`\>
+
+Promise resolving to given type.
+
+#### Implementation of
+
+[HttpClient](../interfaces/HttpClient.md).[get](../interfaces/HttpClient.md#get)
+
+#### Inherited from
+
+ClientUtilsBase.get
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L119)
+
+___
+
+### getStream
+
+▸ **getStream**(`url`, `requestInit?`): `Promise`<`any`\>
+
+Performs get request for streamed data.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+
+#### Returns
+
+`Promise`<`any`\>
+
+Readable stream.
+
+#### Implementation of
+
+[HttpClient](../interfaces/HttpClient.md).[getStream](../interfaces/HttpClient.md#getstream)
+
+#### Inherited from
+
+ClientUtilsBase.getStream
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L130)
+
+___
+
+### post
+
+▸ **post**<`T`\>(`url`, `data`, `requestInit?`, `config?`): `Promise`<`T`\>
+
+Performs POST request and returns response in given type.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `data` | `any` | Data to be send. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+| `config` | `RequestConfig` | Request config. |
+
+#### Returns
+
+`Promise`<`T`\>
+
+Promise resolving to given type.
+
+#### Implementation of
+
+[HttpClient](../interfaces/HttpClient.md).[post](../interfaces/HttpClient.md#post)
+
+#### Inherited from
+
+ClientUtilsBase.post
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L143)
+
+___
+
+### put
+
+▸ **put**<`T`\>(`url`, `data`, `requestInit?`, `config?`): `Promise`<`T`\>
+
+Performs PUT request and returns response in given type.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `data` | `any` | Data to be send. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+| `config` | `RequestConfig` | Request config. |
+
+#### Returns
+
+`Promise`<`T`\>
+
+Promise resolving to given type.
+
+#### Inherited from
+
+ClientUtilsBase.put
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L175)
+
+___
+
+### sendStream
+
+▸ **sendStream**<`T`\>(`url`, `stream`, `requestInit?`, `options?`): `Promise`<`T`\>
+
+Performs POST request for streamed data.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request url. |
+| `stream` | `any` | stream to be send. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+| `options` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> | send stream options. |
+
+#### Returns
+
+`Promise`<`T`\>
+
+Promise resolving to response of given type.
+
+#### Implementation of
+
+[HttpClient](../interfaces/HttpClient.md).[sendStream](../interfaces/HttpClient.md#sendstream)
+
+#### Inherited from
+
+ClientUtilsBase.sendStream
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L228)
+
+___
+
+### setDefaultHeaders
+
+▸ `Static` **setDefaultHeaders**(`headers`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `headers` | `Headers` |
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+ClientUtilsBase.setDefaultHeaders
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L39)
+
+## Properties
+
+### agent
+
+• **agent**: `Agent` \| `Agent`
+
+#### Inherited from
+
+ClientUtilsBase.agent
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L14)
+
+___
+
+### apiBase
+
+• **apiBase**: `string`
+
+#### Inherited from
+
+ClientUtilsBase.apiBase
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L17)
+
+___
+
+### headers
+
+▪ `Static` **headers**: `Headers` = `{}`
+
+#### Inherited from
+
+ClientUtilsBase.headers
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L13)
+
+## Constructors
+
+### constructor
+
+• **new ClientUtilsCustomAgent**(`apiBase`, `agent`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `apiBase` | `string` |
+| `agent` | `Agent` |
+
+#### Overrides
+
+ClientUtilsBase.constructor
+
+#### Defined in
+
+[packages/client-utils/src/index.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/index.ts#L39)
