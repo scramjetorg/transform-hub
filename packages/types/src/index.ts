@@ -36,6 +36,7 @@ export * from "./instance-stats";
 export * from "./sth-command-options";
 export * from "./telemetry-config";
 export * from "./host-proxy";
+export * from "./api-client";
 
 export { MRestAPI };
 export { MWRestAPI };
@@ -50,4 +51,3 @@ export * from "./sequence-adapter";
 export * from "./dto/index";
 
 export * from "./rest-api-error/rest-api-error";
-

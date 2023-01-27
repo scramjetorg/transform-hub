@@ -1,9 +1,9 @@
-import { HostClient } from "@scramjet/api-client";
+
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
     EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
     AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
-    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger
+    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient
 } from "@scramjet/types";
 import { EventEmitter } from "events";
 
@@ -20,7 +20,6 @@ export interface RunnerProxy {
     sendStop(error?: AppError | Error): void;
     sendEvent(ev: EventMessageData): void;
     keepAliveIssued(): void;
-    hub: HostClient;
 }
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
@@ -33,13 +32,15 @@ implements AppContext<AppConfigType, State> {
     initialState?: State;
     exitTimeout: number = 10000;
     logger: IObjectLogger = new ObjLogger("Sequence");
+    hub: HostClient;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: RunnerProxy) {
+        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
+        this.hub = hostClient;
     }
 
     private handleSave(_state: any): void {

@@ -14,7 +14,8 @@ import {
     Streamable,
     SynchronousStreamable,
     HasTopicInformation,
-    IObjectLogger
+    IObjectLogger,
+    HostClient
 } from "@scramjet/types";
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -419,6 +420,7 @@ export class Runner<X extends AppConfig> implements IComponent {
      */
     initAppContext(config: X) {
         const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
+        const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
@@ -426,11 +428,16 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: err }]);
             },
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
-            sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev]),
-            hub: new HostApiClient("http://scramjet-host/api/v1", hostClientUtils)
+            sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };
 
-        this._context = new RunnerAppContext(config, this.hostClient.monitorStream, this.emitter, runner);
+        this._context = new RunnerAppContext(
+            config,
+            this.hostClient.monitorStream,
+            this.emitter,
+            runner,
+            hostApiClient as HostClient
+        );
         this._context.logger.pipe(this.logger);
 
         this.handleSequenceEvents();
