@@ -1,10 +1,12 @@
+/// <reference lib="dom" />
+
 import { Readable } from "stream";
 import { LoadCheckStat } from "../load-check-stat";
 import { KillMessageData } from "../messages";
 import * as STHRestAPI from "../rest-api-sth";
 import { PublicSTHConfiguration } from "../sth-configuration";
 import { ClientUtils, HttpClient, SendStreamOptions } from "./client-utils";
-import * as nodeFetch from "node-fetch";
+
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
 
@@ -25,8 +27,8 @@ export declare class InstanceClient {
     getHealth(): Promise<STHRestAPI.GetHealthResponse>;
     getInfo(): Promise<STHRestAPI.GetInstanceResponse>;
     getStream(streamId: InstanceOutputStream): ReturnType<HttpClient["getStream"]>;
-    sendStream(streamId: InstanceInputStream, stream: Parameters<HttpClient["sendStream"]>[1] | string, requestInit?: nodeFetch.RequestInit, options?: SendStreamOptions): Promise<any>;
-    sendInput(stream: Parameters<HttpClient["sendStream"]>[1] | string, requestInit?: nodeFetch.RequestInit, options?: SendStreamOptions): Promise<any>;
+    sendStream(streamId: InstanceInputStream, stream: Parameters<HttpClient["sendStream"]>[1] | string, requestInit?: RequestInit, options?: SendStreamOptions): Promise<any>;
+    sendInput(stream: Parameters<HttpClient["sendStream"]>[1] | string, requestInit?: RequestInit, options?: SendStreamOptions): Promise<any>;
     sendStdin(stream: Parameters<HttpClient["sendStream"]>[1] | string): Promise<any>;
 }
 
@@ -53,8 +55,8 @@ export declare class HostClient {
     listSequences(): Promise<STHRestAPI.GetSequencesResponse>;
     listInstances(): Promise<STHRestAPI.GetInstancesResponse>;
     listEntities(): Promise<STHRestAPI.GetEntitiesResponse>;
-    getLogStream(requestInit?: nodeFetch.RequestInit): ReturnType<HttpClient["getStream"]>;
-    sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: nodeFetch.RequestInit, update?: boolean): Promise<SequenceClient>;
+    getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
+    sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, update?: boolean): Promise<SequenceClient>;
     getSequence(sequenceId: string): Promise<STHRestAPI.GetSequenceResponse>;
     deleteSequence(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse>;
     getInstanceInfo(instanceId: string): Promise<STHRestAPI.GetInstanceResponse>;
@@ -62,8 +64,8 @@ export declare class HostClient {
     getVersion(): Promise<STHRestAPI.GetVersionResponse>;
     getStatus(): Promise<STHRestAPI.GetStatusResponse>;
     getConfig(): Promise<PublicSTHConfiguration>;
-    sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: nodeFetch.RequestInit, contentType?: string, end?: boolean): Promise<T>;
-    getNamedData(topic: string, requestInit?: nodeFetch.RequestInit): ReturnType<HttpClient["getStream"]>;
+    sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;
+    getNamedData(topic: string, requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getTopics(): Promise<STHRestAPI.GetTopicsResponse>;
     getInstanceClient(id: string): InstanceClient;
     getSequenceClient(id: string): SequenceClient;
