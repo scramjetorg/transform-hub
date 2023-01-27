@@ -45,6 +45,35 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function(this: Cus
     assert.equal(res.stdio[2], 0);
 });
 
+When("I get first sequence id", { timeout: 30000 }, async function(this: CustomWorld) {
+    const res = this.cliResources;
+    const stdio: string[] = res.stdio || [];
+    const seqList = JSON.parse(stdio[0]);
+
+    this.cliResources.sequenceId = seqList[0].id;
+
+    logger.log("Sequence id: ", this.cliResources.sequenceId);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        logger.debug(res.stdio);
+    }
+
+    assert.ok(this.cliResources.sequenceId !== undefined);
+});
+
+When("I start {string} with the first sequence id", { timeout: 30000 }, async function(this: CustomWorld, sequenceName :string) {
+    const res = this.cliResources;
+    const seqId = this.cliResources.sequenceId;
+
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", `data/sequences/${sequenceName}`, "--args", `[\"${seqId}\"]`]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        logger.debug(res.stdio);
+    }
+
+    assert.equal(res.stdio[2], 0);
+});
+
 When("I execute CLI with {string} without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
     const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
 
@@ -53,6 +82,16 @@ When("I execute CLI with {string} without waiting for the end", { timeout: 30000
         cmdProcess.stderr.pipe(process.stdout);
     }
     this.cliResources.commandInProgress = cmdProcess;
+});
+
+Then("I confirm data received", async function(this: CustomWorld) {
+    const expected = "";
+    const { stdout } = this.cliResources!.commandInProgress!;
+    const response = await waitUntilStreamContains(stdout, expected);
+
+    assert.ok(response);
+
+    await this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {
@@ -161,6 +200,23 @@ Then("I confirm {string} list is empty", async function(this: CustomWorld, entit
     const emptyList = res.stdio[0];
 
     assert.equal(emptyList.trim(), "[]");
+});
+
+Then("I confirm {string} list is not empty", async function(this: CustomWorld, entity: string) {
+    const res = this.cliResources!;
+
+    if (entity === "Sequence") {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls"]);
+    }
+    if (entity === "Instance") {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls"]);
+    } else {
+        throw new Error(`Unknown ${entity} list name`);
+    }
+    const emptyList = res.stdio[0];
+    const array = JSON.parse(emptyList);
+
+    assert.ok(array.length !== 0);
 });
 
 Then("I confirm instance logs received", async function(this: CustomWorld) {

@@ -4,6 +4,7 @@ export const init: CommandDefinition = (program) => {
     const initCmd = program
         .command("init")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .alias("i")
         .usage("[command] [options...]");
 

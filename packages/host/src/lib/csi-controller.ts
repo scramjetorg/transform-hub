@@ -22,6 +22,7 @@ import {
     InstanceStats,
     OpResponse,
     StopSequenceMessageData,
+    HostProxy,
 } from "@scramjet/types";
 import {
     AppError,
@@ -32,7 +33,7 @@ import {
     InstanceAdapterError,
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
-import { PassThrough, Readable } from "stream";
+import { Duplex, PassThrough, Readable } from "stream";
 import { development } from "@scramjet/sth-config";
 
 import { DataStream } from "scramjet";
@@ -61,6 +62,8 @@ type Events = {
     terminated: (code: number) => void;
 };
 
+const BPMux = require("bpmux").BPMux;
+
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  */
@@ -71,6 +74,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
+    private bpmux: any;
 
     get lastStats(): InstanceStats {
         return {
@@ -82,7 +86,7 @@ export class CSIController extends TypedEmitter<Events> {
             }
         };
     }
-
+    hostProxy: HostProxy;
     sthConfig: STHConfiguration;
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
@@ -173,7 +177,8 @@ export class CSIController extends TypedEmitter<Events> {
         sequence: SequenceInfo,
         payload: STHRestAPI.StartSequencePayload,
         communicationHandler: CommunicationHandler,
-        sthConfig: STHConfiguration
+        sthConfig: STHConfiguration,
+        hostProxy: HostProxy
     ) {
         super();
 
@@ -184,7 +189,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.args = payload.args;
         this.outputTopic = payload.outputTopic;
         this.inputTopic = payload.inputTopic;
-
+        this.hostProxy = hostProxy;
         this.limits = {
             memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
@@ -546,6 +551,8 @@ export class CSIController extends TypedEmitter<Events> {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
+            this.bpmux = new BPMux(streams[8]);
+            this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
             await once(this, "pang");
             this.initResolver?.res();
         } catch (e: any) {

@@ -1,7 +1,7 @@
-import { ClientError, QueryError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
+import { ClientError, QueryError } from "./client-error";
+import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
 
 /**
  * Provides HTTP communication methods.
@@ -11,7 +11,6 @@ export abstract class ClientUtilsBase implements HttpClient {
     private normalizeUrlFn: (url: string) => string;
 
     static headers: Headers = {};
-
     public agent: HTTPAgent | HTTPSAgent = new HTTPAgent();
 
     constructor(
@@ -55,6 +54,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         const fetchInit: RequestInit & { agent?: HTTPAgent } = { signal: abortController.signal, ...init };
 
         fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
+        fetchInit.agent ||= new HTTPAgent();
 
         options.throwOnErrorHttpCode ??= true;
 

@@ -30,7 +30,7 @@ export const validateProfileKeysSize = (config: Object) => {
     }
     for (const key in config) {
         if (!(key in profileConfigDefault &&
-             typeof config[key as keyof Object] === typeof profileConfigDefault[key as keyof ProfileConfigEntity]))
+            typeof config[key as keyof Object] === typeof profileConfigDefault[key as keyof ProfileConfigEntity]))
             return false;
     }
     return true;
@@ -39,7 +39,7 @@ export const validateProfileKeysSize = (config: Object) => {
 const validateConfigLogValue = (key: string, value: any): boolean | null => {
     type logConfigKey = keyof typeof profileConfigDefault.log;
     if (!(key in profileConfigDefault.log) ||
-     typeof value !== typeof profileConfigDefault.log[key as logConfigKey])
+        typeof value !== typeof profileConfigDefault.log[key as logConfigKey])
         return false;
     if (key === "format") return isConfigFormat(value);
     return true;

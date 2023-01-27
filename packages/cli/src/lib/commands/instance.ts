@@ -15,6 +15,7 @@ export const instance: CommandDefinition = (program) => {
     const instanceCmd = program
         .command("instance [command]")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .alias("inst")
         .usage("[command] [options...]")
         .description("Operations on the running Sequence");
@@ -22,7 +23,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("list")
         .alias("ls")
-        .description("List the Instances")
+        .description("List all Instances")
         .action(async () => displayEntity(getHostClient().listInstances(), profileManager.getProfileConfig().format));
 
     instanceCmd
@@ -44,17 +45,17 @@ export const instance: CommandDefinition = (program) => {
         });
 
     instanceCmd
+        .command("info")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Display a basic information about the Instance")
+        .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
+            profileManager.getProfileConfig().format));
+
+    instanceCmd
         .command("health")
         .argument("<id>", "Instance id or '-' for the last one started")
         .description("Display Instance health status")
         .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth(),
-            profileManager.getProfileConfig().format));
-
-    instanceCmd
-        .command("info")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Display the info about the Instance")
-        .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
             profileManager.getProfileConfig().format));
 
     instanceCmd

@@ -139,6 +139,12 @@ export class Host implements IComponent {
      */
     s3Client?: S3Client;
 
+    private instanceProxy = {
+        onInstanceRequest: (socket: Duplex) => {
+            this.api.server.emit("connection", socket);
+        }
+    };
+
     /**
      * Sets listener for connections to socket server.
      */
@@ -146,7 +152,9 @@ export class Host implements IComponent {
         this.socketServer.on("connect", async (id, streams) => {
             this.logger.debug("Instance connected", id);
 
-            await this.instancesStore[id].handleInstanceConnect(streams);
+            await this.instancesStore[id].handleInstanceConnect(
+                streams
+            );
         });
     }
 
@@ -610,7 +618,7 @@ export class Host implements IComponent {
             for (const config of configs) {
                 this.sequencesStore.set(config.id, { id: config.id, config: config, instances: new Set() });
             }
-            this.logger.trace(`${configs.length} sequences identified`);
+            this.logger.trace(` ${configs.length} sequences identified`);
         } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences.", e);
         }
@@ -863,7 +871,7 @@ export class Host implements IComponent {
 
         this.logger.debug("CSIC start payload", payload);
 
-        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config);
+        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
 
         csic.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });

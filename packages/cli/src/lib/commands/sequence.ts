@@ -23,6 +23,7 @@ export const sequence: CommandDefinition = (program) => {
     const sequenceCmd = program
         .command("sequence")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .alias("seq")
         .usage("[command] [options...]")
         .description("Operations on a Sequence package, consisting of one or more functions executed one after another");
@@ -30,8 +31,34 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd
         .command("list")
         .alias("ls")
-        .description("Lists all available Sequences")
+        .description("List all Sequences available on Hub")
         .action(async () => displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format));
+
+    sequenceCmd
+        .command("use")
+        .alias("select")
+        .description("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
+        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.lastSequenceId}`)
+        .argument("<id>", "Sequence id")
+        .action(async (id: string) => {
+            try {
+                await getHostClient().getSequence(id);
+            } catch (error) {
+                if (error instanceof ClientError && error.code === "NOT_FOUND") {
+                    error.message = `Unable to find sequence ${id}`;
+                }
+                throw error;
+            }
+
+            sessionConfig.setLastSequenceId(id);
+        });
+
+    sequenceCmd
+        .command("info")
+        .argument("<id>", "Sequence id to start or '-' for the last uploaded")
+        .description("Display a basic information about the Sequence")
+        .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
+            profileManager.getProfileConfig().format));
 
     sequenceCmd
         .command("pack")
@@ -66,7 +93,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("update")
         .argument("<query>", "Sequence id or name to be overwritten")
         .argument("<package>", "The file to upload")
-        .description("Updates sequence with given name")
+        .description("Update Sequence with given name")
         .action(
             async (query: string, sequencePackage: string) => {
                 const sequenceClient = await sequenceSendPackage(sequencePackage, { name: query }, true);
@@ -74,25 +101,6 @@ export const sequence: CommandDefinition = (program) => {
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
         );
-
-    sequenceCmd
-        .command("use")
-        .alias("select")
-        .description("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
-        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.lastSequenceId}`)
-        .argument("<id>", "Sequence id")
-        .action(async (id: string) => {
-            try {
-                await getHostClient().getSequence(id);
-            } catch (error) {
-                if (error instanceof ClientError && error.code === "NOT_FOUND") {
-                    error.message = `Unable to find sequence ${id}`;
-                }
-                throw error;
-            }
-
-            sessionConfig.setLastSequenceId(id);
-        });
 
     sequenceCmd
         .command("start")
@@ -170,13 +178,6 @@ export const sequence: CommandDefinition = (program) => {
         });
 
     sequenceCmd
-        .command("get")
-        .argument("<id>", "Sequence id to start or '-' for the last uploaded")
-        .description("Obtain a basic information about the Sequence")
-        .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
-            profileManager.getProfileConfig().format));
-
-    sequenceCmd
         .command("delete")
         .alias("rm")
         .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
@@ -199,7 +200,7 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--all")
         // .option("--filter")
         .option("-f,--force", "Removes also active Sequences (with its running Instances)")
-        .description("Remove all Sequences from the current scope (use with caution)")
+        .description("Remove all Sequences from the Hub (use with caution)")
         .action(async ({ force }) => {
             let seqs = await getHostClient().listSequences();
             const { lastSequenceId, lastInstanceId } = sessionConfig.get();

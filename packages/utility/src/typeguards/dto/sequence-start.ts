@@ -7,6 +7,9 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
 
     if (typeof id !== "string") throw new Error("DTO id is not string");
     if (!["object", "undefined"].includes(typeof appConfig)) throw new Error(`DTO appConfig is ${typeof appConfig}, not an object`);
+    if (instanceId && (typeof instanceId !== "string" || instanceId.length !== 36)) {
+        throw new Error("DTO instanceId is not valid string");
+    }
     if (typeof args !== "undefined") {
         if (!Array.isArray(args)) throw new Error("DTO args are not an array");
         if ((args as string[]).some(x => typeof x !== "string")) throw new Error("DTO args are all strings");

@@ -28,6 +28,7 @@ export const config: CommandDefinition = (program) => {
     const configCmd = program
         .command("config")
         .addHelpCommand(false)
+        .configureHelp({ showGlobalOptions: true })
         .alias("c")
         .usage("[command] ")
         .description("Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");

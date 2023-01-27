@@ -25,7 +25,7 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/args-to-output.tar.gz"
         When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "seq send ../packages/hello-alice-out.tar.gz"
-        When I execute CLI with "seq get -"
+        When I execute CLI with "seq info -"
         When I execute CLI with "seq list"
         When I execute CLI with "seq delete -"
         When I execute CLI with "seq list"

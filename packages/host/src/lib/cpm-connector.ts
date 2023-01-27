@@ -451,7 +451,9 @@ export class CPMConnector extends TypedEmitter<Events> {
     async getNetworkInfo(): Promise<NetworkInfo[]> {
         const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
 
-        return (await networkInterfaces()).map((iface: any) => {
+        const nInterfaces = await networkInterfaces();
+
+        return [nInterfaces].flat().map((iface: any) => {
             const info: any = {};
 
             for (const field of fields) {
