@@ -129,12 +129,17 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
             try {
                 frame = JSON.parse(chunk) as FrameData;
-            } catch (error) {
-                this.logger.error("error Parsing data from decoder", error, chunk, chunk.length, chunk.toString());
+            } catch (err) {
+                this.logger.error("error Parsing data from decoder", err, chunk, chunk.length, chunk.toString());
                 continue;
             }
 
-            const { flags, sequenceNumber, dataLength, destinationPort, acknowledgeNumber } = frame;
+            const { flags, sequenceNumber, dataLength, destinationPort, acknowledgeNumber, error } = frame;
+
+            if (error) {
+                this.emit("error", frame);
+                continue;
+            }
 
             let channel = this.channels[destinationPort];
 

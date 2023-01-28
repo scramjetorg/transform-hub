@@ -808,6 +808,29 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
+"@scramjet/api-server@^0.31.4":
+  version "0.31.4"
+  resolved "https://registry.yarnpkg.com/@scramjet/api-server/-/api-server-0.31.4.tgz#a2855de120c1093d6cfd96b50447babd62116823"
+  integrity sha512-ghhKbK6omrTJIT4xgRhT5bLUE/Hk+ShmM3/J9XwcVwxGgltqtEC10k1G6Dm42vqYnUxLgW3iIsmW9OMCNh2jfw==
+  dependencies:
+    "0http" "^3.4.1"
+    "@scramjet/model" "^0.31.4"
+    "@scramjet/obj-logger" "^0.31.4"
+    "@scramjet/symbols" "^0.31.4"
+    "@scramjet/utility" "^0.31.4"
+    http-status-codes "^2.2.0"
+    scramjet "^4.36.9"
+
+"@scramjet/model@^0.31.4":
+  version "0.31.4"
+  resolved "https://registry.yarnpkg.com/@scramjet/model/-/model-0.31.4.tgz#2cc4e9a9855abeee0e450c7a9d66525bfdb03301"
+  integrity sha512-NkM/6DhVpN0tsE/1aCY9v2EOSxq3IecBtwtnaz9EYEAb0XTt78hkseALevzvOLDvc4G+F0BqmZKeqHWxbAJFgg==
+  dependencies:
+    "@scramjet/obj-logger" "^0.31.4"
+    "@scramjet/symbols" "^0.31.4"
+    scramjet "^4.36.9"
+    uuid "^8.3.2"
+
 "@scramjet/obj-logger@^0.31.4":
   version "0.31.4"
   resolved "https://registry.yarnpkg.com/@scramjet/obj-logger/-/obj-logger-0.31.4.tgz#9c755403afa544afa31cc30dbca58913b95c8388"
@@ -815,6 +838,19 @@
   dependencies:
     "@scramjet/utility" "^0.31.4"
     scramjet "^4.36.9"
+
+"@scramjet/symbols@^0.31.4":
+  version "0.31.4"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.31.4.tgz#f1ccaeee59b26530caf47fe021bf45727f6da4f0"
+  integrity sha512-dJWBd7VgMU627SlXVg27n3F/aBzvUHTEGMCTq5N46W91OeU/YhjRT+dO5NyJhAxpyTHdlMFCHKAFC9FrGzdoMw==
+
+"@scramjet/types@^0.31.4":
+  version "0.31.4"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.31.4.tgz#73e298bbcf01abf7a378b26fa0da9a9093d45341"
+  integrity sha512-RxJzbRD+q4w5RrlaT5cg6GdlMzlXnDrqBSKaAeDdzu/2OgApHJOBE4roP1hqtwQkgtQvXMNeF8uUJM0IFCsjSQ==
+  dependencies:
+    "@scramjet/symbols" "^0.31.4"
+    http-status-codes "^2.2.0"
 
 "@scramjet/utility@^0.31.4":
   version "0.31.4"

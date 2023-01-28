@@ -2,6 +2,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { Duplex, Transform, TransformCallback, TransformOptions } from "stream";
 import { FrameData, parseFlags } from "../utils";
 import { HEADER_LENGTH } from "../constants";
+import { calculateChecksum, getChecksum } from "./utils";
 
 export class FrameDecoder extends Transform {
     buffer: Buffer;
@@ -64,6 +65,10 @@ export class FrameDecoder extends Transform {
                 return;
             }
 
+            const checksum = getChecksum(this.buffer.subarray(0, frameSize));
+
+            this.logger.debug("getChecksum", checksum.toString());
+
             const payload = {
                 sourceAddress: [
                     this.buffer.readInt8(0), this.buffer.readInt8(1), this.buffer.readInt8(2), this.buffer.readInt8(3)
@@ -79,8 +84,18 @@ export class FrameDecoder extends Transform {
                 chunkLength: frameSize,
                 sequenceNumber: this.buffer.readInt32LE(16),
                 acknowledgeNumber: this.buffer.readInt32LE(20),
+                checksum
                 //stringified: this.buffer.subarray(32, frameSize).toString()
             } as Partial<FrameData>;
+
+            const expectedChecksum = calculateChecksum(this.buffer.subarray(0, frameSize));
+
+            if (checksum !== expectedChecksum) {
+                this.emit("error", { code: "INVALID_CHECKSUM", payload, expectedChecksum });
+                payload.error = "checksum";
+            } else {
+                this.logger.info("Checksum match!", expectedChecksum);
+            }
 
             if (payload.dataLength && payload.dataLength < 0) {
                 this.emit("error", "Data length incorrect");
