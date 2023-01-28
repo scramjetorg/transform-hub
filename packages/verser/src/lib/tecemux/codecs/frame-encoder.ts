@@ -4,6 +4,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 
 import { FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
 import { ITeCeMux } from "../types";
+import { calculateChecksum } from "./utils";
 
 export class FrameEncoder extends Transform {
     tecemux: ITeCeMux;
@@ -34,8 +35,8 @@ export class FrameEncoder extends Transform {
         private frameTarget: FrameTarget,
         tecemux: ITeCeMux,
         opts: TransformOptions = {},
-        params: { name: string } = { name: "FrameEncoder"
-    }) {
+        params: { name: string } = { name: "FrameEncoder" }
+    ) {
         super(Object.assign(opts, {
             readableObjectMode: true,
             writableObjectMode: true
@@ -95,7 +96,6 @@ export class FrameEncoder extends Transform {
     }
 
     createFrame(chunk: any = new Uint8Array([]), frame: Partial<FrameData>) {
-        const checksum = this.getChecksum();
         const buffer = Buffer.concat([
             // 0: source address 0 - 3
             new Uint8Array([10, 0, 0, 1]),
@@ -122,17 +122,21 @@ export class FrameEncoder extends Transform {
 
             // 224: flags (8bit), 25
             this.setFlags(frame.flagsArray, new Uint8Array([0b00000000])),
-            // window(16bit) 26 - 27
+            // window(16bit) 26 - 27, ZEROes before calculation
             new Uint8Array(new Uint16Array([0]).buffer),
 
             // checksum(16bit) 28 - 29
-            new Uint8Array(new Uint16Array([checksum]).buffer),
+            new Uint8Array(new Uint16Array([0]).buffer),
             // pointer (16bit) 30 - 31
-            new Uint8Array(new Uint16Array([checksum]).buffer),
+            new Uint8Array(new Uint16Array([0]).buffer),
 
             // 256: data 32 -
             new Uint8Array(chunk)
         ]);
+
+        buffer.writeUInt16LE(
+            calculateChecksum(buffer), 28
+        );
 
         return buffer;
     }

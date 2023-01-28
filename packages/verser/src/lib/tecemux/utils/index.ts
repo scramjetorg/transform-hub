@@ -17,6 +17,7 @@ export type FrameData = {
     stringified: string;
     flags: flagsObjectType;
     flagsArray: (keyof typeof binaryFlags)[];
+    error?: "checksum"
 };
 
 export const parseFlags = (byte: number): flagsObjectType => {
