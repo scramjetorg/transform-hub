@@ -11,7 +11,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     id: string;
     carrierSocket: Duplex;
     channelCount = 1;
-    decoder: FrameDecoder;
+    carrierDecoder: FrameDecoder;
     framesKeeper = new FramesKeeper();
     sequenceNumber = 0;
     channels: TeceMuxChannel[] = [];
@@ -26,10 +26,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
         encoder.logger.updateBaseLog({ id: this.id });
         encoder.logger.pipe(this.logger);
-
-        //const w = new PassThrough().on("error", (error) => { this.logger.error("W error", error)});
-
-        //w.pipe(encoder)
 
         const channel: TeceMuxChannel = Object.assign(
             new Duplex({
@@ -49,6 +45,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 closedByFIN: false
             }
         );
+
+        encoder.out
+            .pipe(this.framesKeeper);
 
         encoder.out
             .pipe(this.carrierSocket, { end: false });
@@ -84,7 +83,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         this.logger = new ObjLogger(this, { id: this.id });
         this.carrierSocket = socket;
 
-        this.decoder = new FrameDecoder({ emitClose: false })
+        this.carrierDecoder = new FrameDecoder({ emitClose: false })
             .on("pause", () => {
                 this.logger.warn("Decoder paused");
             })
@@ -104,10 +103,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.error("Decoder destroy", error);
             });
 
-        this.decoder.logger.updateBaseLog({ id: this.id });
-        this.decoder.logger.pipe(this.logger);
+        this.carrierDecoder.logger.updateBaseLog({ id: this.id });
+        this.carrierDecoder.logger.pipe(this.logger);
 
-        this.carrierSocket.pipe(this.decoder, { end: false });
+        this.carrierSocket.pipe(this.carrierDecoder, { end: false });
 
         this.commonEncoder.out.pipe(this.carrierSocket, { end: false });
 
@@ -124,7 +123,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     async main() {
         let t = 0;
 
-        for await (const chunk of this.decoder) {
+        //this.carrierDecoder.pipe(this.framesKeeper);
+
+        for await (const chunk of this.carrierDecoder) {
             let frame: FrameData;
 
             try {
@@ -145,7 +146,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
             if (flags.ACK) {
                 this.logger.trace("ACK frame received for sequenceNumber", acknowledgeNumber);
-                //this.framesKeeper.onACK(sequenceNumber);
+                this.framesKeeper.onACK(acknowledgeNumber);
                 continue;
             }
 

@@ -89,7 +89,7 @@ import path from "path";
 
         //DataStream.from(process.stdin).filter((x: Buffer) => !(parseInt(x[0].toString(), 10) % 2)).pipe(channel1);
         //DataStream.from(process.stdin).filter((x: Buffer) => !!(parseInt(x[0].toString(), 10) % 2)).pipe(channel2);
-            /*
+        /*
         (async () => {
             try {
                 for await (const chunk of channel1) {
