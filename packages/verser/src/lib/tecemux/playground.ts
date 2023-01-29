@@ -1,6 +1,5 @@
 import { DataStream } from "scramjet";
-import { FrameEncoder } from "./codecs";
-import { FrameDecoder } from "./codecs";
+import { FrameDecoder, FrameEncoder } from "./codecs";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
@@ -22,7 +21,7 @@ logger.pipe(
             )
         )
 )
-.pipe(process.stdout);
+    .pipe(process.stdout);
 
 const encoder = new FrameEncoder(0, tcm);
 const decoder = new FrameDecoder();
@@ -40,7 +39,7 @@ const ws = createWriteStream(path.join(__dirname, "output.tar.gz"));
 
 const delayedPassThrough = () => new PassThrough({
     async transform(chunk, encoding, callback) {
-        await new Promise((res,_rej) => {
+        await new Promise((res, _rej) => {
             setTimeout(res, 1000);
         });
 

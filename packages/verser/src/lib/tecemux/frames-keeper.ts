@@ -1,37 +1,46 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { PassThrough } from "stream";
+import { TransformOptions, Writable } from "stream";
+import { IObjectLogger } from "@scramjet/types";
 
-export class FramesKeeper extends PassThrough {
-    logger = new ObjLogger(this);
-    archive = new Map<number, Buffer>();
-    lastSequenceNumberSent: number = -1;
+export class FramesKeeper extends Writable {
+    logger: IObjectLogger;
+    framesSent = new Map<number, { buffer: Buffer, received: boolean, sequenceNumber: number }>();
+    lastSequenceSent: number = -1;
+    lastSequenceReceived: number = -1;
 
-    _write(chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void) | undefined) {
-        const sequenceNumber = chunk.readInt32LE(16);
+    constructor(
+        opts: TransformOptions = {},
+        params: { name: string } = { name: "Keeper" }
+    ) {
+        super(Object.assign(opts, {
+            readableObjectMode: true,
+            writableObjectMode: true
+        }));
 
-        this.archive.set(sequenceNumber, chunk);
-        this.logger.debug(`sequenceNumber ${sequenceNumber} stored, size: ${chunk.length}`);
-
-        this.push(chunk, encoding);
-        if (cb) cb(undefined);
-
-        this.lastSequenceNumberSent = sequenceNumber;
-
-        // await new Promise<void>((resolve, reject) => {
-        //     while (this.archive.get(sequenceNumber)) {
-        //         this.logger.debug("wait for ack for", sequenceNumber)
-        //     }
-        //     resolve();
-        // });
-
-        return true;
+        this.logger = new ObjLogger(params.name);
     }
 
-    _read(_size: number) {
+    _write(chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void)) {
+        if (Buffer.isBuffer(chunk)) {
+            this.logger.info("transform buffer");
+            const sequenceNumber = chunk.readInt32LE(16);
+
+            this.framesSent.set(sequenceNumber, { buffer: chunk, received: false, sequenceNumber });
+
+            this.lastSequenceSent = sequenceNumber;
+            this.logger.debug(`lastSequenceSent ${sequenceNumber}, size: ${chunk.length}`);
+        }
+
+        cb(undefined);
     }
 
-    onACK(sequenceNumber: number) {
-        this.logger.debug("onACK", sequenceNumber);
-        this.archive.delete(sequenceNumber);
+    onACK(acknowledgeNumber: number,) {
+        this.logger.debug("onACK", acknowledgeNumber);
+
+        const storedFrame = this.framesSent.get(acknowledgeNumber);
+
+        if (storedFrame) {
+            this.framesSent.set(acknowledgeNumber, { ...storedFrame, received: true });
+        }
     }
 }
