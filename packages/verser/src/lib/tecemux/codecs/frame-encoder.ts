@@ -12,7 +12,9 @@ export class FrameEncoder extends Transform {
     logger = new ObjLogger("FrameEncoder");
     out = Object.assign(new PassThrough({ readableObjectMode: true })
         /*.on("data", (data) => {
-            this.logger.trace("output to socket: " + (data.length === HEADER_LENGTH ? "HEADER ONLY" : ""), toHex(data), data.length, this.readableFlowing);
+            this.logger.trace(
+                "output to socket: " + (data.length === HEADER_LENGTH ? "HEADER ONLY" : ""),
+                toHex(data), data.length, this.readableFlowing);
         })*/
         .on("pause", () => {
             this.logger.trace("OUT paused!");
@@ -64,7 +66,9 @@ export class FrameEncoder extends Transform {
 
     setFlags(flag: (keyof typeof binaryFlags)[] = [], flags: Uint8Array = new Uint8Array([0])) {
         for (const f in flag) {
-            flags[0] |= 1 << frameFlags.indexOf(flag[f]);
+            if (Object.prototype.hasOwnProperty.call(flag, f)) {
+                flags[0] |= 1 << frameFlags.indexOf(flag[f]);
+            }
         }
 
         this.logger.debug("settingFlag", flag, flags[0].toString(2).padStart(8, "0"));
@@ -75,20 +79,22 @@ export class FrameEncoder extends Transform {
     setChannel(channelCount: number) {
         this.logger.debug("Set channel command", channelCount);
 
-        //const checksum = this.getChecksum();
-
-        this.out.write(this.createFrame([], {
-            flagsArray: ["PSH"],
-            destinationPort: channelCount
-        }));
+        this.out.write(
+            this.createFrame([], {
+                flagsArray: ["PSH"],
+                destinationPort: channelCount
+            })
+        );
     }
 
     onChannelEnd(channelId: number) {
         this.logger.debug("sending FIN for channel", channelId);
-        this.out.write(this.createFrame([], {
-            flagsArray: ["FIN"],
-            destinationPort: channelId
-        }));
+        this.out.write(
+            this.createFrame([], {
+                flagsArray: ["FIN"],
+                destinationPort: channelId
+            })
+        );
     }
 
     getChecksum() {
