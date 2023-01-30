@@ -17,3 +17,5 @@ export enum FrameTarget {
     API,
     INPUT = 1001
 }
+
+export const ACK_FRAME_DELTA = -5;

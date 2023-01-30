@@ -1,10 +1,13 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { TransformOptions, Writable } from "stream";
 import { IObjectLogger } from "@scramjet/types";
 
-export class FramesKeeper extends Writable {
+import { TransformOptions, Writable } from "stream";
+import { parseFlags } from "./utils";
+import { IFramesKeeper, FramesKeeperFrame } from "./types";
+
+export class FramesKeeper extends Writable implements IFramesKeeper {
     logger: IObjectLogger;
-    framesSent = new Map<number, { buffer: Buffer, received: boolean, sequenceNumber: number }>();
+    framesSent = new Map<number, FramesKeeperFrame>();
     lastSequenceSent: number = -1;
     lastSequenceReceived: number = -1;
 
@@ -24,8 +27,13 @@ export class FramesKeeper extends Writable {
         if (Buffer.isBuffer(chunk)) {
             this.logger.info("transform buffer");
             const sequenceNumber = chunk.readInt32LE(16);
+            const destinationPort = chunk.readInt16LE(14);
+            const flags = parseFlags(chunk.readInt8(25));
 
-            this.framesSent.set(sequenceNumber, { buffer: chunk, received: false, sequenceNumber });
+            this.framesSent.set(
+                sequenceNumber, {
+                    buffer: chunk, received: false, sequenceNumber, destinationPort, flags
+                });
 
             this.lastSequenceSent = sequenceNumber;
             this.logger.debug(`lastSequenceSent ${sequenceNumber}, size: ${chunk.length}`);
@@ -42,5 +50,20 @@ export class FramesKeeper extends Writable {
         if (storedFrame) {
             this.framesSent.set(acknowledgeNumber, { ...storedFrame, received: true });
         }
+    }
+
+    isReceived(sequenceNumber: number) {
+        const frame = this.framesSent.get(sequenceNumber);
+
+        // received or not stored
+        return frame === undefined || !!this.framesSent.get(sequenceNumber)?.received;
+    }
+
+    getFrame(sequenceNumber: number) {
+        return this.framesSent.get(sequenceNumber);
+    }
+
+    getDestinationPort(sequenceNumber: number) {
+        return this.framesSent.get(sequenceNumber)?.received;
     }
 }
