@@ -4,10 +4,13 @@ import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
 import { PassThrough, Transform } from "stream";
+import { FramesKeeper } from "./frames-keeper";
+import { ITeCeMux } from "./types";
 
 const tcm = {
-    sequenceNumber: 0
-};
+    sequenceNumber: 0,
+    framesKeeper: new FramesKeeper()
+} as ITeCeMux;
 
 const logger = new ObjLogger("Sandbox");
 
@@ -29,12 +32,6 @@ const decoder = new FrameDecoder();
 encoder.logger.pipe(logger);
 decoder.logger.pipe(logger);
 
-/*
-process.stdin
-    .pipe(encoder).out
-    .pipe(decoder)
-    //.pipe(process.stdout);
-*/
 const ws = createWriteStream(path.join(__dirname, "output.tar.gz"));
 
 const delayedPassThrough = () => new PassThrough({
