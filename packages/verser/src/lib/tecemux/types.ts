@@ -16,8 +16,23 @@ export type flagsObjectType = Partial<{
     CWR: boolean
 }>
 
+export type FramesKeeperFrame = {
+    buffer: Buffer;
+    received: boolean;
+    sequenceNumber: number;
+    destinationPort: number;
+    flags: any
+};
+
+export interface IFramesKeeper {
+    onACK(acknowledgeNumber: number): void;
+    isReceived(sequenceNumber: number): boolean;
+    getFrame(sequenceNumber: number): FramesKeeperFrame | undefined
+}
+
 export interface ITeCeMux {
     sequenceNumber: number;
+    framesKeeper: IFramesKeeper;
 }
 
 export interface IFrameEncoder {
