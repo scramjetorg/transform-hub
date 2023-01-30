@@ -2,7 +2,7 @@ import { PassThrough, Transform, TransformCallback, TransformOptions } from "str
 import { FrameData } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
 
-import { FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
+import { ACK_FRAME_DELTA, FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
 import { ITeCeMux } from "../types";
 import { calculateChecksum } from "./utils";
 
@@ -147,7 +147,7 @@ export class FrameEncoder extends Transform {
         return buffer;
     }
 
-    _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
+    async _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): Promise<void> {
         const MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
 
         this.total += chunk.length;
@@ -167,13 +167,31 @@ export class FrameEncoder extends Transform {
 
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
 
-        this.tecemux.sequenceNumber++;
+        if (this.tecemux.sequenceNumber > -ACK_FRAME_DELTA) {
+            // eslint-disable-next-line no-loop-func
+            while (!await new Promise<boolean>((res, _rej) => {
+                setImmediate(() => {
+                    const frame = this.tecemux.framesKeeper.getFrame(this.tecemux.sequenceNumber + ACK_FRAME_DELTA);
 
+                    if (frame) {
+                        const rec = frame?.received || frame?.flags.ACK;
+
+                        this.logger.info(`Sending ${this.tecemux.sequenceNumber}, ${frame?.sequenceNumber} ${frame?.received}`);
+
+                        res(!!rec);
+                    } else {
+                        _rej("frame not exists");
+                    }
+                });
+            }));
+        }
+
+        this.tecemux.sequenceNumber++;
         this.logger.debug("TRANSFORM OUT", /*getHexString(buffer),  */ "Size: ", buffer.length);
 
         if (remaining.length) {
             this.push(buffer);
-            this._transform(remaining, encoding, callback);
+            await this._transform(remaining, encoding, callback);
         } else {
             callback(null, buffer);
         }
