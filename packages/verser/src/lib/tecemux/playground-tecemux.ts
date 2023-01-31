@@ -80,9 +80,13 @@ import path from "path";
         const channel1 = tcmux.multiplex();
         //const channel2 = tcmux.multiplex();
 
-        createReadStream(path.join(__dirname, "../../../../forever.tar.gz")).on("end", () => {
-            logger.info("FILE END");
-        }).pipe(channel1);
+        channel1.pipe(createWriteStream(path.join(__dirname, "output-server.tar.gz")));
+
+        createReadStream(path.join(__dirname, "../../../../forever.tar.gz"))
+            .on("end", () => {
+                logger.info("FILE END");
+            })
+            .pipe(channel1);
 
         //Readable.from(Buffer.alloc(1024 * 100)).pipe(channel1, { end: false });
 
@@ -170,11 +174,11 @@ import path from "path";
                 tcmux.logger.info("Channel finish", channel._id);
             })
             .on("end", () => {
-                tcmux.logger.info("Channel end", channel._id);
+                tcmux.logger.info("Channel readable end", channel._id, channel.readableEnded, channel.writableEnded);
             });
 
-        channel
-            .pipe(createWriteStream(path.join(__dirname, "output.tar.gz")));
+        createReadStream(path.join(__dirname, "../../../../forever.tar.gz")).pipe(channel, { end: false });
+        channel.pipe(createWriteStream(path.join(__dirname, "output-client.tar.gz")));
 
         let total = 0;
 
