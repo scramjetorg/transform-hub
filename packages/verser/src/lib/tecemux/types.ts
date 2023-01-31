@@ -32,6 +32,7 @@ export interface IFramesKeeper {
 
 export interface ITeCeMux {
     sequenceNumber: number;
+    framesSent: number;
     framesKeeper: IFramesKeeper;
 }
 
