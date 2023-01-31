@@ -176,7 +176,7 @@ let error = false;
     .then(() => {
         if (opts.strict && error) {
             console.timeLog(BUILD_NAME, "One or more scripts failed.");
-            process.exitCode = e.exitCode || 11;
+            process.exitCode = 11;
         }
     })
     .catch(e => {
