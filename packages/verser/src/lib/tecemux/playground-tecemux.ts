@@ -80,7 +80,10 @@ import path from "path";
         const channel1 = tcmux.multiplex();
         //const channel2 = tcmux.multiplex();
 
-        createReadStream(path.join(__dirname, "../../../../forever.tar.gz")).pipe(channel1);
+        createReadStream(path.join(__dirname, "../../../../forever.tar.gz")).on("end", () => {
+            logger.info("FILE END");
+        }).pipe(channel1);
+
         //Readable.from(Buffer.alloc(1024 * 100)).pipe(channel1, { end: false });
 
         req.on("pause", () => { logger.warn("Request paused"); });

@@ -32,10 +32,19 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 write: (chunk, encoding, next) => {
                     this.logger.trace("WRITE channel", channel._id, chunk);
 
+                    if (chunk === null) {
+                        this.logger.info("NULL ON CHANNEL");
+                        channel.end();
+                        return false;
+                    }
+
                     return encoder.write(chunk, encoding, next);
                 },
                 read: (_size) => {
                     this.logger.trace("READ channel", channel._id);
+                },
+                final() {
+                    //channel.emit("end");
                 },
                 allowHalfOpen: true
             }),
@@ -65,6 +74,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             })
             .on("end", () => {
                 this.logger.info("CHANNEL end", channel._id);
+
                 if (!channel.closedByFIN) {
                     this.sendFIN(channel._id);
                 }
@@ -154,8 +164,14 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.trace(`Received FIN command [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort]);
 
                 if (channel) {
-                    //channel.end();
                     channel.closedByFIN = true;
+
+                    if (channel.readableEnded) {
+                        channel.once("end", () => {
+                            this.logger.info("channel --------- ENDED");
+                        });
+                    }
+
                     channel.push(null);
                 } else {
                     this.logger.error("FIN for unknown channel");
