@@ -11,9 +11,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     id: string;
     carrierSocket: Duplex;
     channelCount = 1;
+    framesSent = 0;
     carrierDecoder: FrameDecoder;
     framesKeeper = new FramesKeeper();
-    sequenceNumber = 0;
+    sequenceNumber = Math.abs((Math.random() * (2 ** 32)) | 0);
     channels: TeceMuxChannel[] = [];
 
     logger: ObjLogger;
@@ -34,6 +35,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
                     if (chunk === null) {
                         this.logger.info("NULL ON CHANNEL");
+
                         channel.end();
                         return false;
                     }
@@ -74,10 +76,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             })
             .on("end", () => {
                 this.logger.info("CHANNEL end", channel._id);
-
-                if (!channel.closedByFIN) {
-                    this.sendFIN(channel._id);
-                }
+                this.sendFIN(channel._id);
             });
 
         if (emit) {
@@ -149,30 +148,30 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
             if (error) {
                 this.emit("error", frame);
-                continue;
+                break;
             }
 
             let channel = this.channels[destinationPort];
 
             if (flags.ACK) {
-                this.logger.trace("ACK frame received for sequenceNumber", acknowledgeNumber);
+                this.logger.trace("Received ACK flag for sequenceNumber", acknowledgeNumber);
                 this.framesKeeper.onACK(acknowledgeNumber);
                 continue;
             }
 
             if (flags.FIN) {
-                this.logger.trace(`Received FIN command [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort]);
+                this.logger.trace(`Received FIN flag [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort], channel._id);
 
                 if (channel) {
                     channel.closedByFIN = true;
-
-                    if (channel.readableEnded) {
-                        channel.once("end", () => {
-                            this.logger.info("channel --------- ENDED");
-                        });
+                    if (!channel.writableEnded) {
+                        channel.push(null);
                     }
 
-                    channel.push(null);
+                    if (channel.writableEnded && channel.readableEnded) {
+                        channel.destroy();
+                        this.logger.info("Channel destroy");
+                    }
                 } else {
                     this.logger.error("FIN for unknown channel");
                 }
