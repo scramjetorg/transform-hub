@@ -9,7 +9,8 @@ import { ITeCeMux } from "./types";
 
 const tcm = {
     sequenceNumber: 0,
-    framesKeeper: new FramesKeeper()
+    framesKeeper: new FramesKeeper(),
+    framesSent: 0
 } as ITeCeMux;
 
 const logger = new ObjLogger("Sandbox");

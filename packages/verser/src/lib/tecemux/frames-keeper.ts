@@ -36,7 +36,7 @@ export class FramesKeeper extends Writable implements IFramesKeeper {
                 });
 
             this.lastSequenceSent = sequenceNumber;
-            this.logger.debug(`lastSequenceSent ${sequenceNumber}, size: ${chunk.length}`);
+            this.logger.debug(`lastSequenceSent ${sequenceNumber}, size: ${chunk.length} total frames sent ${this.framesSent.size}`,);
         }
 
         cb(undefined);
