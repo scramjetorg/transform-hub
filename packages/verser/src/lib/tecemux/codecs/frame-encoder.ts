@@ -167,7 +167,7 @@ export class FrameEncoder extends Transform {
 
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
 
-        if (this.tecemux.sequenceNumber > -ACK_FRAME_DELTA) {
+        if (this.tecemux.framesSent > -ACK_FRAME_DELTA) {
             // eslint-disable-next-line no-loop-func
             while (!await new Promise<boolean>((res, _rej) => {
                 setImmediate(() => {
@@ -186,6 +186,7 @@ export class FrameEncoder extends Transform {
             }));
         }
 
+        this.tecemux.framesSent++;
         this.tecemux.sequenceNumber++;
         this.logger.debug("TRANSFORM OUT", /*getHexString(buffer),  */ "Size: ", buffer.length);
 
