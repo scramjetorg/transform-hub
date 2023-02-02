@@ -106,7 +106,7 @@ export class FrameDecoder extends Transform {
 
             this.buffer = this.buffer.subarray(frameSize);
 
-            this.logger.trace("Decoded", { ...payload, stringified: "--not-displayed--" });
+            this.logger.trace("Decoded", { ...payload, stringified: payload.chunk?.toString() });
 
             if (this.buffer.length === 0) {
                 this.logger.info("No remaining data!");

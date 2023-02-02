@@ -17,7 +17,8 @@ export class FramesKeeper extends Writable implements IFramesKeeper {
     ) {
         super(Object.assign(opts, {
             readableObjectMode: true,
-            writableObjectMode: true
+            writableObjectMode: true,
+            writableHighWaterMark: 0
         }));
 
         this.logger = new ObjLogger(params.name);
@@ -25,11 +26,11 @@ export class FramesKeeper extends Writable implements IFramesKeeper {
 
     _write(chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void)) {
         if (Buffer.isBuffer(chunk)) {
-            this.logger.info("transform buffer");
             const sequenceNumber = chunk.readInt32LE(16);
             const destinationPort = chunk.readInt16LE(14);
             const flags = parseFlags(chunk.readInt8(25));
 
+            this.logger.info("transform buffer", sequenceNumber);
             this.framesSent.set(
                 sequenceNumber, {
                     buffer: chunk, received: false, sequenceNumber, destinationPort, flags
