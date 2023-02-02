@@ -117,6 +117,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
         this.carrierSocket.pipe(this.carrierDecoder, { end: false });
 
+        this.commonEncoder.out.pipe(this.framesKeeper);
         this.commonEncoder.out.pipe(this.carrierSocket, { end: false });
 
         this.commonEncoder.logger.updateBaseLog({ id });
@@ -204,9 +205,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             }
         }
     }
-
+    i = 0;
     sendACK(sequenceNumber: number, channel: number) {
-        this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber);
+        this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber, this.i++);
         this.commonEncoder.push(
             this.commonEncoder.createFrame(undefined, {
                 flagsArray: ["ACK"],

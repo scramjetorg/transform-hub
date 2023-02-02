@@ -2,7 +2,7 @@ import { PassThrough, Transform, TransformCallback, TransformOptions } from "str
 import { FrameData } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
 
-import { ACK_FRAME_DELTA, FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
+import { FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
 import { ITeCeMux } from "../types";
 import { calculateChecksum } from "./utils";
 
@@ -167,7 +167,7 @@ export class FrameEncoder extends Transform {
 
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
 
-        if (this.tecemux.framesSent > -ACK_FRAME_DELTA) {
+        /*if (this.tecemux.framesSent > -ACK_FRAME_DELTA) {
             // eslint-disable-next-line no-loop-func
             while (!await new Promise<boolean>((res, _rej) => {
                 setImmediate(() => {
@@ -180,11 +180,12 @@ export class FrameEncoder extends Transform {
 
                         res(!!rec);
                     } else {
-                        _rej("frame not exists");
+                        console.log((this.tecemux.framesKeeper as any)["framesSent"])
+                        _rej("frame not exists" + (this.tecemux.sequenceNumber + ACK_FRAME_DELTA));
                     }
                 });
             }));
-        }
+        }*/
 
         this.tecemux.framesSent++;
         this.tecemux.sequenceNumber++;
