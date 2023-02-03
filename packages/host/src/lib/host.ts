@@ -45,6 +45,7 @@ import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
+import { readFileSync } from "fs";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -190,7 +191,7 @@ export class Host implements IComponent {
 
         this.logger = new ObjLogger(
             this,
-            { id: sthConfig.host.id },
+            {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
             ObjLogger.levels[ObjLogger.levels.length - 1]
         );
@@ -201,6 +202,8 @@ export class Host implements IComponent {
 
         prettyLog.pipe(process.stdout);
 
+        this.config.host.id ||= this.getId();
+        this.logger.updateBaseLog({ id: this.config.host.id });
         this.serviceDiscovery.logger.pipe(this.logger);
 
         if (sthConfig.telemetry.environment)
@@ -235,6 +238,44 @@ export class Host implements IComponent {
 
         if (!!this.config.cpmUrl !== !!this.config.cpmId) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
+        }
+    }
+
+    getId() {
+        let id = this.config.host.id;
+
+        if (id) {
+            this.logger.info("Initialized with custom id", id);
+        } else {
+            id = this.readInfoFile().id;
+            this.logger.info("Initialized with id", id);
+        }
+
+        return id;
+    }
+
+    /**
+     * Reads configuration from file.
+     *
+     * @returns {object} Configuration object.
+     */
+    readInfoFile() {
+        let fileContents = "";
+
+        try {
+            fileContents = readFileSync(this.config.host.infoFilePath, { encoding: "utf-8" });
+        } catch (err) {
+            this.logger.warn("Can not read id file", err);
+
+            return {};
+        }
+
+        try {
+            return JSON.parse(fileContents);
+        } catch (err) {
+            this.logger.error("Can not parse id file", err);
+
+            return {};
         }
     }
 
@@ -301,6 +342,10 @@ export class Host implements IComponent {
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
+            this.cpmConnector.on("id", (id) => {
+                this.config.host.id = id;
+                this.logger.updateBaseLog({ id });
+            });
 
             this.serviceDiscovery.setConnector(this.cpmConnector);
             await this.connectToCPM();
