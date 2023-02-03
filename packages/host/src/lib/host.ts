@@ -190,7 +190,7 @@ export class Host implements IComponent {
 
         this.logger = new ObjLogger(
             this,
-            {},
+            { id: sthConfig.host.id },
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
             ObjLogger.levels[ObjLogger.levels.length - 1]
         );
