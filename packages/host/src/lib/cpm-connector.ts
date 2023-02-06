@@ -31,6 +31,7 @@ type STHInformation = {
 type Events = {
     connect: () => void,
     "log_connect": (logStream: NodeJS.WritableStream) => void;
+    id: (id: string) => void;
 }
 
 /**
@@ -153,7 +154,8 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.verserClient = new VerserClient({
             verserUrl: `${this.cpmUrl}/verser`,
             headers: {
-                "x-manager-id": cpmId
+                "x-manager-id": cpmId,
+                "x-sth-id": this.config.id || ""
             },
             server,
             https: this.isHttps
@@ -212,40 +214,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Initializes connector.
      */
     init() {
-        this.info.id = this.config.id;
-
-        if (this.info.id) {
-            this.logger.info("Initialized with custom id", this.info.id);
-            this.customId = true;
-        } else {
-            this.info.id = this.readInfoFile().id;
-            this.logger.info("Initialized with id", this.info.id);
-        }
-    }
-
-    /**
-     * Reads configuration from file.
-     *
-     * @returns {object} Configuration object.
-     */
-    readInfoFile() {
-        let fileContents = "";
-
-        try {
-            fileContents = fs.readFileSync(this.config.infoFilePath, { encoding: "utf-8" });
-        } catch (err) {
-            this.logger.warn("Can not read id file", err);
-
-            return {};
-        }
-
-        try {
-            return JSON.parse(fileContents);
-        } catch (err) {
-            this.logger.error("Can not parse id file", err);
-
-            return {};
-        }
     }
 
     handleCommunicationRequestEnd() {
@@ -282,6 +250,9 @@ export class CPMConnector extends TypedEmitter<Events> {
                         this.config.infoFilePath,
                         JSON.stringify(this.info)
                     );
+
+                    this.emit("id", this.info.id);
+                    this.logger.updateBaseLog({ id: this.info.id });
                 }
 
                 return message;

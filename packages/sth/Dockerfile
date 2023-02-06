@@ -36,6 +36,6 @@ RUN apt-get update \
 
 COPY --from=builder /build/dist ./dist
 
-RUN npm install -g ./dist/sth
+RUN npx npm@8 install -g ./dist/sth
 
 CMD [ "scramjet-transform-hub" ]
