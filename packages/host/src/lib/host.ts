@@ -265,7 +265,7 @@ export class Host implements IComponent {
         try {
             fileContents = readFileSync(this.config.host.infoFilePath, { encoding: "utf-8" });
         } catch (err) {
-            this.logger.warn("Can not read id file", err);
+            this.logger.warn("Can not read id file");
 
             return {};
         }
