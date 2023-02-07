@@ -101,6 +101,11 @@ export const hub: CommandDefinition = (program) => {
         .action(async () => displayStream(getHostClient().getLogStream()));
 
     hubCmd
+        .command("audit")
+        .description("Pipe running Hub audit information to stdout")
+        .action(async () => displayStream(getHostClient().getAuditStream()));
+
+    hubCmd
         .command("load")
         .description("Monitor CPU, memory and disk usage on the Hub")
         .action(async () => displayEntity(getHostClient().getLoadCheck(), profileConfig.format));
