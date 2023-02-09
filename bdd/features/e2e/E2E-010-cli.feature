@@ -22,6 +22,9 @@ Feature: CLI tests
     @ci-api @cli
     Scenario: E2E-010 TC-004 Test Sequence options
         When I execute CLI with "seq --help"
+        When I execute CLI with "seq prune --force"
+        Then I wait for "Instance" list to be empty
+        Then I wait for "Sequence" list to be empty
         When I execute CLI with "seq send ../packages/args-to-output.tar.gz"
         When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "seq send ../packages/hello-alice-out.tar.gz"
