@@ -1,70 +1,62 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { IObjectLogger } from "@scramjet/types";
+import { EventEmitter } from "stream";
+import { FramesKeeperFrame, IFramesKeeper } from "./types";
 
-import { TransformOptions, Writable } from "stream";
-import { parseFlags } from "./utils";
-import { IFramesKeeper, FramesKeeperFrame } from "./types";
+export class FramesKeeper extends EventEmitter implements IFramesKeeper {
+    #MAX_FRAMES_DIFFERENCE = 5;
 
-export class FramesKeeper extends Writable implements IFramesKeeper {
-    logger: IObjectLogger;
-    framesSent = new Map<number, FramesKeeperFrame>();
+    #framesSent = new Map<number, FramesKeeperFrame>();
+
     lastSequenceSent: number = -1;
     lastSequenceReceived: number = -1;
 
-    constructor(
-        opts: TransformOptions = {},
-        params: { name: string } = { name: "Keeper" }
-    ) {
-        super(Object.assign(opts, {
-            readableObjectMode: true,
-            writableObjectMode: true,
-            writableHighWaterMark: 0
-        }));
+    logger = new ObjLogger(this);
 
-        this.logger = new ObjLogger(params.name);
-    }
+    generator: AsyncGenerator<number, never, unknown> = (async function* (this: FramesKeeper) {
+        while (true) {
+            if (this.lastSequenceSent - this.lastSequenceReceived < this.#MAX_FRAMES_DIFFERENCE) {
+                this.logger.info("Write allowed");
+                yield Promise.resolve(this.lastSequenceReceived);
+                continue;
+            }
 
-    _write(chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void)) {
-        if (Buffer.isBuffer(chunk)) {
-            const sequenceNumber = chunk.readInt32LE(16);
-            const destinationPort = chunk.readInt16LE(14);
-            const flags = parseFlags(chunk.readInt8(25));
-
-            this.logger.info("transform buffer", sequenceNumber);
-            this.framesSent.set(
-                sequenceNumber, {
-                    buffer: chunk, received: false, sequenceNumber, destinationPort, flags
+            this.logger.warn("Write NOT allowed");
+            yield new Promise<number>((res) => {
+                this.logger.info("waiting for ACK...");
+                this.once("ack", (acknowledgeNumber: number) => {
+                    this.logger.info("ACK processed");
+                    res(acknowledgeNumber);
                 });
-
-            this.lastSequenceSent = sequenceNumber;
-            this.logger.debug(`lastSequenceSent ${sequenceNumber}, size: ${chunk.length} total frames sent ${this.framesSent.size}`,);
+            });
         }
+    }).apply(this);
 
-        cb(undefined);
+    handlePSH(sequenceNumber: number) {
+        this.lastSequenceSent = sequenceNumber;
     }
 
-    onACK(acknowledgeNumber: number,) {
+    handleACK(acknowledgeNumber: number) {
         this.logger.debug("onACK", acknowledgeNumber);
 
-        const storedFrame = this.framesSent.get(acknowledgeNumber);
+        const storedFrame = this.#framesSent.get(acknowledgeNumber);
 
         if (storedFrame) {
-            this.framesSent.set(acknowledgeNumber, { ...storedFrame, received: true });
+            this.#framesSent.set(acknowledgeNumber, { ...storedFrame, received: true });
         }
+
+        this.lastSequenceReceived = acknowledgeNumber;
+        this.emit("ack", acknowledgeNumber);
     }
 
     isReceived(sequenceNumber: number) {
-        const frame = this.framesSent.get(sequenceNumber);
+        const frame = this.#framesSent.get(sequenceNumber);
 
         // received or not stored
-        return frame === undefined || !!this.framesSent.get(sequenceNumber)?.received;
+        return frame === undefined || !!this.#framesSent.get(sequenceNumber)?.received;
     }
 
     getFrame(sequenceNumber: number) {
-        return this.framesSent.get(sequenceNumber);
-    }
-
-    getDestinationPort(sequenceNumber: number) {
-        return this.framesSent.get(sequenceNumber)?.received;
+        return this.#framesSent.get(sequenceNumber);
     }
 }
+
