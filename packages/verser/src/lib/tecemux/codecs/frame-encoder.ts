@@ -167,25 +167,11 @@ export class FrameEncoder extends Transform {
 
         const buffer = this.createFrame(chunk, { destinationPort: this.frameTarget, flagsArray: ["PSH"] });
 
-        /*if (this.tecemux.framesSent > -ACK_FRAME_DELTA) {
-            // eslint-disable-next-line no-loop-func
-            while (!await new Promise<boolean>((res, _rej) => {
-                setImmediate(() => {
-                    const frame = this.tecemux.framesKeeper.getFrame(this.tecemux.sequenceNumber + ACK_FRAME_DELTA);
+        this.logger.debug("Awaiting keeper");
+        await this.tecemux.framesKeeper.generator.next(this.tecemux.sequenceNumber);
+        this.logger.debug("Awaiting keeper DONE");
 
-                    if (frame) {
-                        const rec = frame?.received || frame?.flags.ACK;
-
-                        this.logger.info(`Sending ${this.tecemux.sequenceNumber}, ${frame?.sequenceNumber} ${frame?.received}`);
-
-                        res(!!rec);
-                    } else {
-                        console.log((this.tecemux.framesKeeper as any)["framesSent"])
-                        _rej("frame not exists" + (this.tecemux.sequenceNumber + ACK_FRAME_DELTA));
-                    }
-                });
-            }));
-        }*/
+        this.tecemux.framesKeeper.handlePSH(this.tecemux.sequenceNumber);
 
         this.tecemux.framesSent++;
         this.tecemux.sequenceNumber++;
