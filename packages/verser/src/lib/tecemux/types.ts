@@ -1,4 +1,4 @@
-import { Duplex } from "stream";
+import { Duplex, Transform } from "stream";
 
 export type TeceMuxEvents = {
     channel(socket: Duplex): void;
@@ -25,9 +25,11 @@ export type FramesKeeperFrame = {
 };
 
 export interface IFramesKeeper {
-    onACK(acknowledgeNumber: number): void;
+    handleACK(acknowledgeNumber: number): void;
     isReceived(sequenceNumber: number): boolean;
-    getFrame(sequenceNumber: number): FramesKeeperFrame | undefined
+    handlePSH(sequenceNumber: number): void;
+    getFrame(sequenceNumber: number): FramesKeeperFrame | undefined;
+    generator: AsyncGenerator<number, never, unknown>;
 }
 
 export interface ITeCeMux {
@@ -36,12 +38,12 @@ export interface ITeCeMux {
     framesKeeper: IFramesKeeper;
 }
 
-export interface IFrameEncoder {
+export interface IFrameEncoder extends Transform {
 
 }
 
 export type TeceMuxChannel = Duplex & {
-    _id: number,
-    encoder: IFrameEncoder,
-    closedByFIN: boolean
+    _id: number;
+    encoder: IFrameEncoder;
+    closedByFIN: boolean;
 };
