@@ -4,8 +4,8 @@ import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
 import { PassThrough, Transform } from "stream";
-import { FramesKeeper } from "./frames-keeper";
 import { ITeCeMux } from "./types";
+import { FramesKeeper } from "./frames-keeper";
 
 const tcm = {
     sequenceNumber: 0,

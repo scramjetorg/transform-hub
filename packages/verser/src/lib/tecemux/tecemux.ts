@@ -15,7 +15,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     carrierDecoder: FrameDecoder;
     framesKeeper = new FramesKeeper();
     sequenceNumber = Math.abs((Math.random() * (2 ** 32)) | 0);
-    channels: TeceMuxChannel[] = [];
+    channels = new Map<number, TeceMuxChannel>();
 
     logger: ObjLogger;
     commonEncoder = new FrameEncoder(0, this);
@@ -56,9 +56,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 closedByFIN: false
             }
         );
-
-        encoder.out
-            .pipe(this.framesKeeper);
 
         encoder.out
             .pipe(this.carrierSocket, { end: false });
@@ -117,7 +114,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
         this.carrierSocket.pipe(this.carrierDecoder, { end: false });
 
-        this.commonEncoder.out.pipe(this.framesKeeper);
         this.commonEncoder.out.pipe(this.carrierSocket, { end: false });
 
         this.commonEncoder.logger.updateBaseLog({ id });
@@ -152,16 +148,16 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 break;
             }
 
-            let channel = this.channels[destinationPort];
+            let channel = this.channels.get(destinationPort);
 
             if (flags.ACK) {
                 this.logger.trace("Received ACK flag for sequenceNumber", acknowledgeNumber);
-                this.framesKeeper.onACK(acknowledgeNumber);
+                this.framesKeeper.handleACK(acknowledgeNumber);
                 continue;
             }
 
             if (flags.FIN) {
-                this.logger.trace(`Received FIN flag [C: ${destinationPort}]`, dataLength, frame.chunk, !!this.channels[destinationPort], channel._id);
+                this.logger.trace(`Received FIN flag [C: ${destinationPort}]`, dataLength, frame.chunk, !!channel, channel?._id);
 
                 if (channel) {
                     channel.closedByFIN = true;
@@ -205,10 +201,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             }
         }
     }
-    i = 0;
+
     sendACK(sequenceNumber: number, channel: number) {
-        this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber, this.i++);
-        this.commonEncoder.push(
+        this.logger.debug("Write acknowledge frame for sequenceNumber", sequenceNumber);
+        this.channels.get(channel)?.encoder?.push(
             this.commonEncoder.createFrame(undefined, {
                 flagsArray: ["ACK"],
                 acknowledgeNumber: sequenceNumber,
@@ -219,7 +215,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     addChannel(channel: TeceMuxChannel, emit: boolean) {
         this.logger.debug("adding channel", channel._id);
-        this.channels[channel._id] = channel; // wait for SYN reply?
+        this.channels.set(channel._id, channel); // wait for SYN reply?
 
         if (emit) {
             this.emit("channel", channel);
@@ -231,6 +227,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     sendFIN(channel: number) {
         this.logger.debug("Write FIN frame for channel", channel);
+
         this.commonEncoder.push(
             this.commonEncoder.createFrame(undefined, {
                 flagsArray: ["FIN"],
