@@ -65,7 +65,7 @@ When("I start {string} with the first sequence id", { timeout: 30000 }, async fu
     const res = this.cliResources;
     const seqId = this.cliResources.sequenceId;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", `data/sequences/${sequenceName}`, "--args", `[\"${seqId}\"]`]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", `../packages/${sequenceName}.tar.gz`, "--args", `[\"${seqId}\"]`]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);
