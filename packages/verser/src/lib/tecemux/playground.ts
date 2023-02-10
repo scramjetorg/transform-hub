@@ -65,8 +65,6 @@ const dh = new Transform({
                     callback(null);
                 }
             }
-
-            //callback(null);
         } catch (e) {
             logger.error("dh error", e);
         }

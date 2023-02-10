@@ -5,6 +5,10 @@ export type TeceMuxEvents = {
     error(error: any): void;
 }
 
+export type FramesKeeperEvents = {
+    ack: (acknowledgeNumber: number) => void;
+}
+
 export type flagsObjectType = Partial<{
     FIN: boolean,
     SYN: boolean,
