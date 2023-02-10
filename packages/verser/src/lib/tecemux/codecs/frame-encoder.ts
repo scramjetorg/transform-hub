@@ -7,6 +7,8 @@ import { ITeCeMux } from "../types";
 import { calculateChecksum } from "./utils";
 
 export class FrameEncoder extends Transform {
+    MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
+
     tecemux: ITeCeMux;
     total = 0;
     logger = new ObjLogger("FrameEncoder");
@@ -148,19 +150,17 @@ export class FrameEncoder extends Transform {
     }
 
     async _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): Promise<void> {
-        const MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
-
         this.total += chunk.length;
 
         this.logger.debug("TRANSFORM IN", /* toHex(chunk), */ chunk.length, this.total);
 
         let remaining = Buffer.alloc(0);
 
-        if (chunk.length > MAX_CHUNK_SIZE) {
+        if (chunk.length > this.MAX_CHUNK_SIZE) {
             this.logger.debug("TRANSFORM big chunk, splitting", chunk.length);
 
-            remaining = (chunk as Buffer).subarray(MAX_CHUNK_SIZE);
-            chunk = chunk.subarray(0, MAX_CHUNK_SIZE);
+            remaining = (chunk as Buffer).subarray(this.MAX_CHUNK_SIZE);
+            chunk = chunk.subarray(0, this.MAX_CHUNK_SIZE);
 
             this.logger.debug("TRANSFORM processing part/remaining", chunk.length, remaining.length);
         }
