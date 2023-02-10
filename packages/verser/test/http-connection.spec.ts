@@ -45,7 +45,7 @@ function getJSONResponseFromRequest(request: http.ClientRequest): Promise<any> {
 
 test("Connect VerserClient A to Verser B and send HTTP GET Request to VerserClient A", async (t) => {
     const SERVER_B_PORT = 1999;
-    const apiB = createServer();
+    const apiB = createServer({ });
 
     apiB.server.listen(SERVER_B_PORT);
 
@@ -56,7 +56,7 @@ test("Connect VerserClient A to Verser B and send HTTP GET Request to VerserClie
 
     const verserClientA = new VerserClient({
         headers: { city: "Valencia" },
-        verserUrl: `http://127.0.0.1:${SERVER_B_PORT}`,
+        verserUrl: `http://0.0.0.0:${SERVER_B_PORT}`,
         server: apiA.server
     });
 
@@ -123,7 +123,7 @@ test("Connect VerserClient A to Verser B over SSL and send HTTPS GET Request to 
         ca: [readFileSync(path.join(certDir, "myCA.pem"))]
     });
 
-    requestToAThroughB.end();
+    requestToAThroughB.flushHeaders();
 
     const responseFromAToB = await getJSONResponseFromRequest(requestToAThroughB);
 
@@ -132,3 +132,4 @@ test("Connect VerserClient A to Verser B over SSL and send HTTPS GET Request to 
 
     spawnSync("./cleanup-localhost-cert.sh", { cwd: certDir });
 });
+
