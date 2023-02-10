@@ -45,9 +45,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 read: (_size) => {
                     this.logger.trace("READ channel", channel._id);
                 },
-                final() {
-                    //channel.emit("end");
-                },
                 allowHalfOpen: true
             }),
             {
@@ -71,10 +68,22 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             .on("abort", () => {
                 this.logger.trace("channel on ABORT ", channel._id);
             })
+            .on("close", () => {
+                this.logger.info("CHANNEL close", channel._id);
+                this.sendFIN(channel._id);
+            })
             .on("end", () => {
                 this.logger.info("CHANNEL end", channel._id);
+            })
+            .on("finish", () => {
+                this.logger.info("CHANNEL finish", channel._id);
                 this.sendFIN(channel._id);
-            });
+            })
+            .on("data", (d) => {
+                if (d === null) {
+                    this.logger.info("CHANNEL end", channel._id);
+                }
+            });//.pause();
 
         if (emit) {
             encoder.setChannel(destinationPort || this.channelCount);
@@ -99,9 +108,9 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             .on("end", () => {
                 this.logger.warn("Decoder ended");
             })
-            /*.on("error", (error) => {
+            .on("error", (error) => {
                 this.logger.error("Decoder error", error);
-            })*/
+            })
             .on("abort", (error) => {
                 this.logger.error("Decoder abort", error);
             })

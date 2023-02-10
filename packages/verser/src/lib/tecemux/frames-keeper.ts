@@ -1,8 +1,8 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { EventEmitter } from "stream";
-import { FramesKeeperFrame, IFramesKeeper } from "./types";
+import { TypedEmitter } from "@scramjet/utility";
+import { FramesKeeperEvents, FramesKeeperFrame, IFramesKeeper } from "./types";
 
-export class FramesKeeper extends EventEmitter implements IFramesKeeper {
+export class FramesKeeper extends TypedEmitter<FramesKeeperEvents> implements IFramesKeeper {
     #MAX_FRAMES_DIFFERENCE = 5;
 
     #framesSent = new Map<number, FramesKeeperFrame>();
@@ -23,6 +23,7 @@ export class FramesKeeper extends EventEmitter implements IFramesKeeper {
             this.logger.warn("Write NOT allowed");
             yield new Promise<number>((res) => {
                 this.logger.info("waiting for ACK...");
+
                 this.once("ack", (acknowledgeNumber: number) => {
                     this.logger.info("ACK processed");
                     res(acknowledgeNumber);
