@@ -1,11 +1,11 @@
 import { DataStream } from "scramjet";
-import { FrameDecoder, FrameEncoder } from "./codecs";
+import { FrameDecoder, FrameEncoder } from "../../src/lib/tecemux/codecs";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
 import { PassThrough, Transform } from "stream";
-import { ITeCeMux } from "./types";
-import { FramesKeeper } from "./frames-keeper";
+import { ITeCeMux } from "../../src/lib/tecemux/types";
+import { FramesKeeper } from "../../src/lib/tecemux/frames-keeper";
 
 const tcm = {
     sequenceNumber: 0,
