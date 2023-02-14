@@ -7,8 +7,8 @@ import { IncomingMessage, createServer } from "http";
 import { DataStream } from "scramjet";
 
 import { Socket, createConnection } from "net";
-import { TeceMux } from "./tecemux";
-import { TeceMuxChannel } from "./types";
+import { TeceMux } from "../../src/lib/tecemux/tecemux";
+import { TeceMuxChannel } from "../../src/lib/tecemux/types";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
 
@@ -79,7 +79,7 @@ import path from "path";
 
         channel1.pipe(createWriteStream(path.join(__dirname, "output-server.tar.gz")));
 
-        createReadStream(path.join(__dirname, "../../../../forever.tar.gz"))
+        createReadStream(path.join(__dirname, "../../../forever.tar.gz"))
             .on("end", () => {
                 logger.info("FILE END");
             })
@@ -144,7 +144,7 @@ import path from "path";
             })
             .pause();
 
-        createReadStream(path.join(__dirname, "../../../../forever.tar.gz")).pipe(channel);
+        createReadStream(path.join(__dirname, "../../../forever.tar.gz")).pipe(channel);
         channel.pipe(createWriteStream(path.join(__dirname, "output-client.tar.gz")));
     });
 
