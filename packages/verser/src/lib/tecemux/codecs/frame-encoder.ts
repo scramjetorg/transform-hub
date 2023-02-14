@@ -1,9 +1,8 @@
 import { PassThrough, Transform, TransformCallback, TransformOptions } from "stream";
-import { FrameData } from "../utils";
 import { ObjLogger } from "@scramjet/obj-logger";
 
 import { FrameTarget, HEADER_LENGTH, binaryFlags, frameFlags } from "../constants";
-import { ITeCeMux } from "../types";
+import { FrameData, ITeCeMux } from "../types";
 import { calculateChecksum } from "./utils";
 
 export class FrameEncoder extends Transform {
@@ -23,7 +22,6 @@ export class FrameEncoder extends Transform {
         })
         .on("end", () => {
             this.logger.trace("OUT ended!", this.frameTarget);
-            //this.tecemux.sendFIN(this.frameTarget);
         })
         .on("resume", () => {
             this.logger.trace("OUT resumed");

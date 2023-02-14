@@ -1,8 +1,9 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Duplex, Transform, TransformCallback, TransformOptions } from "stream";
-import { FrameData, parseFlags } from "../utils";
+import { parseFlags } from "../utils";
 import { HEADER_LENGTH } from "../constants";
 import { calculateChecksum, getChecksum } from "./utils";
+import { FrameData } from "../types";
 
 export class FrameDecoder extends Transform {
     buffer: Buffer;
