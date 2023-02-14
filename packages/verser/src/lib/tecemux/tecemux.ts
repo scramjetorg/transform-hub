@@ -3,8 +3,7 @@ import { FrameDecoder, FrameEncoder } from "./codecs";
 import { Duplex } from "stream";
 import { Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { FrameData } from "./utils";
-import { TeceMuxChannel, TeceMuxEvents } from "./types";
+import { FrameData, TeceMuxChannel, TeceMuxEvents } from "./types";
 import { FramesKeeper } from "./frames-keeper";
 
 export class TeceMux extends TypedEmitter<TeceMuxEvents> {
@@ -83,7 +82,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 if (d === null) {
                     this.logger.info("CHANNEL end", channel._id);
                 }
-            });//.pause();
+            });
 
         if (emit) {
             encoder.setChannel(destinationPort || this.channelCount);
@@ -144,7 +143,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             let frame: FrameData;
 
             try {
-                frame = JSON.parse(chunk) as FrameData;
+                frame = JSON.parse(chunk);
             } catch (err) {
                 this.logger.error("error Parsing data from decoder", err, chunk, chunk.length, chunk.toString());
                 continue;

@@ -9,6 +9,8 @@ export type FramesKeeperEvents = {
     ack: (acknowledgeNumber: number) => void;
 }
 
+export type BinaryFlags = "FIN" | "SYN" | "RST" | "PSH" | "ACK" | "URG" | "ECE" | "CWR";
+
 export type flagsObjectType = Partial<{
     FIN: boolean,
     SYN: boolean,
@@ -50,4 +52,20 @@ export type TeceMuxChannel = Duplex & {
     _id: number;
     encoder: IFrameEncoder;
     closedByFIN: boolean;
+};
+
+export type FrameData = {
+    sourceAddress: [number, number, number, number];
+    destinationAddress: [number, number, number, number];
+    destinationPort: number;
+    sequenceNumber: number;
+    acknowledgeNumber: number;
+    chunk: Buffer;
+    dataLength: number;
+    chunkLength: number;
+    stringified: string;
+    flags: flagsObjectType;
+    flagsArray: BinaryFlags[];
+    error?: "checksum";
+    received: boolean;
 };
