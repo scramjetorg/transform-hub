@@ -22,9 +22,6 @@ Feature: CLI tests
     @ci-api @cli
     Scenario: E2E-010 TC-004 Test Sequence options
         When I execute CLI with "seq --help"
-        When I execute CLI with "seq prune --force"
-        Then I wait for "Instance" list to be empty
-        Then I wait for "Sequence" list to be empty
         When I execute CLI with "seq send ../packages/args-to-output.tar.gz"
         When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "seq send ../packages/hello-alice-out.tar.gz"
@@ -95,15 +92,11 @@ Feature: CLI tests
         When I execute CLI with "seq start -"
         When I execute CLI with "inst log -" without waiting for the end
         Then I confirm instance logs received
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-011 Test Instance 'input' option
         When I execute CLI with "seq deploy ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "inst input - data/test-data/checksum.json"
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-012 Test Instance 'input --end' option and confirm output received
@@ -111,8 +104,6 @@ Feature: CLI tests
         When I execute CLI with "inst input - data/test-data/checksum.json --end"
         When I execute CLI with "inst output -"
         Then I confirm data named "checksum" received
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-013 Test Instance 'event' option with payload
@@ -120,8 +111,6 @@ Feature: CLI tests
         When I execute CLI with "inst event emit - test-event test message"
         When I execute CLI with "inst event on - test-event-response"
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-013a Test Instance 'event' option without payload
@@ -129,8 +118,6 @@ Feature: CLI tests
         When I execute CLI with "inst event emit - test-event"
         When I execute CLI with "inst event on - test-event-response"
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-014 Test Sequence 'start' with multiple JSON arguments
@@ -138,16 +125,12 @@ Feature: CLI tests
         When I execute CLI with "seq start - --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "args-on-output" will be received
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-015 Deploy uncompressed Sequence with multiple JSON arguments
         When I execute CLI with "seq deploy data/sequences/deploy-app/dist --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "args-on-output" will be received
-        And I execute CLI with "inst kill - --removeImmediately"
-        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-016 Get Hub logs

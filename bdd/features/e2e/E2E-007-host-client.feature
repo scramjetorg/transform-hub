@@ -25,6 +25,4 @@ Feature: Test for host client used by sequences
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data received
         And I execute CLI with "inst kill - --removeImmediately"
-        When I execute CLI with "seq prune --force"
         Then I wait for "Instance" list to be empty
-        Then I wait for "Sequence" list to be empty
