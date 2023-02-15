@@ -262,6 +262,10 @@ export class ServiceDiscovery {
         await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, contentType: topicData.contentType });
     }
 
+
+    // Need to add persistency sequences here.
+    // public async setTopicPersistency(config: dataType, localProviderCallback?: () => ) {
+
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
         this.logger.trace("Topic update. Send topic info to CPM", data);
 

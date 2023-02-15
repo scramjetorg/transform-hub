@@ -1,0 +1,12 @@
+{
+  "name": "@scramjet/persistency-sequence-spill-to-disk",
+  "version": "0.1.0",
+  "description": "",
+  "main": "storage.ts",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
