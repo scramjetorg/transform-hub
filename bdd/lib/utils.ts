@@ -175,6 +175,8 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
         (async () => {
             for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
                 response = `${response}${chunk}`;
+                // eslint-disable-next-line no-console
+                console.log("\nData received: ", response);
                 if (response.includes(expected)) return true;
             }
             throw new Error("End of stream reached");
