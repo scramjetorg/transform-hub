@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
-import { isDevelopment } from "../../utils/envs";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { profileManager } from "../config";
 import { displayEntity, displayStream } from "../output";
@@ -26,17 +25,6 @@ export const topic: CommandDefinition = (program) => {
         .usage("[command] [options...]")
         .description("Manage data flow through topics operations");
 
-    if (isDevelopment()) {
-        topicCmd
-            .command("create")
-            .argument("<topic-name>")
-            .description("TO BE IMPLEMENTED / Create topic")
-            .action(() => {
-            // FIXME: implement me
-                throw new Error("Implement me");
-            });
-    }
-
     topicCmd
         .command("get")
         .argument("<topic-name>")
@@ -47,18 +35,6 @@ export const topic: CommandDefinition = (program) => {
         .description("Get data from topic")
         .hook("preAction", (command) => { validateTopicName(command.args[0]); })
         .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
-
-    if (isDevelopment()) {
-        topicCmd
-            .command("delete")
-            .alias("rm")
-            .argument("<topic-name>")
-            .description("TO BE IMPLEMENTED / Delete data from topic")
-            .action(() => {
-            // FIXME: implement me
-                throw new Error("Implement me");
-            });
-    }
 
     topicCmd
         .command("send")

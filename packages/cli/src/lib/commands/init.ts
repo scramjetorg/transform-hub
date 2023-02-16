@@ -1,10 +1,10 @@
-import { CommandDefinition } from "../../types";
+import { CommandDefinition, ExtendedHelpConfiguration } from "../../types";
 
 export const init: CommandDefinition = (program) => {
     const initCmd = program
         .command("init")
         .addHelpCommand(false)
-        .configureHelp({ showGlobalOptions: true })
+        .configureHelp({ showGlobalOptions: true, developersOnly: true } as ExtendedHelpConfiguration)
         .alias("i")
         .usage("[command] [options...]");
 
