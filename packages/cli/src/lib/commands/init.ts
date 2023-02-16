@@ -1,3 +1,5 @@
+import { Argument } from "commander";
+import { spawnSync } from "child_process";
 import { CommandDefinition, ExtendedHelpConfiguration } from "../../types";
 
 export const init: CommandDefinition = (program) => {
@@ -9,13 +11,14 @@ export const init: CommandDefinition = (program) => {
         .usage("[command] [options...]");
 
     initCmd
-        .command("template")
-        .alias("tmpl")
-        .argument("<projectName>")
-        .option("--lang <ts|js|py>", "Choose the language to develop the Sequence")
+        .command("sequence")
+        .alias("seq")
+        .addArgument(new Argument("[language]", "Choose the language to develop the sequence").choices(["ts", "js", "py"]).default("js"))
+        .addArgument(new Argument("[type]", "Choose transformation type of the sequence").choices(["generator", "transformer", "consumer"]).default("transformer"))
         .description("Create all the necessary files and start working on your Sequence")
-        .action((/* projectName, { lang } */) => {
-            // FIXME: implement me
-            throw new Error("Implement me");
+        .action(async (language: string, type: string) => {
+            const args = `init scramjetorg/sequence ${language}-${type}`;
+
+            spawnSync("npm", args.split(" "), { stdio: "inherit" });
         });
 };
