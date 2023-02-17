@@ -79,6 +79,9 @@ export class VerserClient extends TypedEmitter<Events> {
         super();
 
         this.opts = opts;
+        this.opts.https ||= (this.opts.verserUrl instanceof URL
+            ? this.opts.verserUrl : new URL(this.opts.verserUrl)).protocol === "https:";
+
         this.httpAgent = this.opts.https ? new HttpsAgent() : new HttpAgent();
     }
 
