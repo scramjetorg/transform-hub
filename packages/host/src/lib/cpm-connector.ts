@@ -171,8 +171,8 @@ export class CPMConnector extends TypedEmitter<Events> {
             headers: {
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
-                "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
+                "x-manager-id": cpmId,
                 ...(orgId ? { "x-org-id": orgId } : {}),
                 ...(sthKey ? { "Authorization": `Digest cnonce="${sthKey}"` } : {})
             },
