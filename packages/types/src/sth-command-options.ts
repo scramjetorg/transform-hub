@@ -7,7 +7,7 @@ export type STHCommandOptions = {
     tags: string;
     selfHosted: boolean;
     logLevel: LogLevel;
-    colors: boolean,
+    colors: boolean;
     port: number;
     hostname: string;
     identifyExisting: boolean;
@@ -15,9 +15,11 @@ export type STHCommandOptions = {
     cpmUrl?: string;
     cpmId?: string;
     cpmSslCaPath?: string;
-    cpmMaxReconnections: number,
-    cpmReconnectionDelay: number,
-    platformToken?: string;
+    cpmMaxReconnections: number;
+    cpmReconnectionDelay: number;
+    platformApi: string;
+    platformApiKey: string;
+    platformSpace: string;
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;
@@ -33,12 +35,12 @@ export type STHCommandOptions = {
     k8sQuotaName: string;
     k8sAuthConfigPath: string;
     k8sSthPodHost: string;
-    k8sRunnerImage: string,
+    k8sRunnerImage: string;
     k8sRunnerPyImage: string
     k8sSequencesRoot: string;
     debug: boolean;
     docker: boolean;
-    k8sRunnerCleanupTimeout: string,
+    k8sRunnerCleanupTimeout: string;
     k8sRunnerResourcesRequestsCpu: string;
     k8sRunnerResourcesRequestsMemory: string;
     k8sRunnerResourcesLimitsCpu: string;

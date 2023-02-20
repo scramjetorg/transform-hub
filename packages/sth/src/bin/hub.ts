@@ -32,6 +32,10 @@ const options: OptionValues & STHCommandOptions = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
+    .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
+    .option("--platform-apikey <string>", "Platform API Key")
+    .option("--platform-space <string>", "Target Platform Space")
+    .option("--platform-organisation <string>", "Platform Organisation")
     .option("-I, --id <id>", "The id assigned to this server")
     .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
     .option("-X, --exit-with-last-instance", "Exits host when no more instances exist.")
@@ -101,7 +105,12 @@ const options: OptionValues & STHCommandOptions = program
             maxReconnections: options.cpmMaxReconnections
         },
         debug: options.debug,
-        platform: (options.platformToken ? { token: options.platformToken } : undefined),
+        platform: {
+            apiKey: options.platformApikey,
+            api: options.platformApi,
+            space: options.platformSpace,
+            organisation: options.platformOrganisation
+        },
         docker: {
             prerunner: {
                 image: options.prerunnerImage,
