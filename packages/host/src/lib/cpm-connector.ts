@@ -144,7 +144,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
-    constructor(private cpmHostname: string, cpmId: string, config: CPMConnectorOptions, server: http.Server) {
+    constructor(private cpmHostname: string, cpmId: string, org: string = "", config: CPMConnectorOptions, server: http.Server) {
         super();
         this.cpmId = cpmId;
         this.config = config;
@@ -153,8 +153,13 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.verserClient = new VerserClient({
             verserUrl: `${this.cpmUrl}/verser`,
             headers: {
+<<<<<<< HEAD
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
+||||||| constructed merge base
+=======
+                ...(org ? { "x-org-id": org } : {}),
+>>>>>>> Add platform args to STH
                 "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
                 ...(config.token ? { "Authorization": `Bearer ${config.token}` } : {})

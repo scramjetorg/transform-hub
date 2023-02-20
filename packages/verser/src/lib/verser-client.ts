@@ -93,7 +93,6 @@ export class VerserClient extends TypedEmitter<Events> {
             const { hostname, port, pathname, href } = this.opts.verserUrl instanceof URL
                 ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
-            this.logger.info("------", { hostname, port, pathname, href });
             const connectRequest = request({
                 agent: this.httpAgent,
                 headers: this.opts.headers,
