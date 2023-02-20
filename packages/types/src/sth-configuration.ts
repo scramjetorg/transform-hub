@@ -133,11 +133,14 @@ export type STHConfiguration = {
     cpm: {
         maxReconnections: number,
         reconnectionDelay: number
-    }
+    };
 
     platform?: {
-        token?: string;
-    }
+        apiKey: string;
+        api: string;
+        space: string;
+        organisation: string;
+    };
 
     /**
      * Add debugging flags to runner.
