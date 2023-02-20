@@ -25,7 +25,7 @@ export const commands: CommandDefinition[] = [
     topic,
     // waiting for working implementation
     isDevelopment() ? init : () => { },
-    isDevelopment() ? store : () => { },
+    store,
     completion,
     util,
     isDevelopment() ? developerTools : () => { },
