@@ -26,16 +26,16 @@ declare module "commander-completion" {
   export type CompleteFunction = (
     params: { line: string, cursor: number | string },
     cb?: CompletionCallback
-  ) => Command; // eslint-disable-line no-use-before-define
-  export type CompletionFunction = (info: LineInfo, cb?: CompletionCallback) => Command; // eslint-disable-line no-use-before-define
+  ) => ComplitingCommand; // eslint-disable-line no-use-before-define
+  export type CompletionFunction = (info: LineInfo, cb?: CompletionCallback) => ComplitingCommand; // eslint-disable-line no-use-before-define
 
-  export class Command extends commander.Command {
+  export class ComplitingCommand extends commander.Command {
       complete: CompleteFunction;
       completion: CompletionFunction;
   }
 
   type CommanderDefaultExport = typeof commander;
 
-  export default function (c: CommanderDefaultExport) : CommanderDefaultExport & { Command: Command };
+  export default function (c: CommanderDefaultExport) : CommanderDefaultExport & { Command: ComplitingCommand };
 }
 

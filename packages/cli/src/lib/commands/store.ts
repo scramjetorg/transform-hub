@@ -1,4 +1,4 @@
-import { CommandDefinition, isProductionEnv } from "../../types";
+import { CommandDefinition, ExtendedHelpConfiguration, isProductionEnv } from "../../types";
 import { getReadStreamFromFile } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayObject } from "../output";
@@ -17,7 +17,7 @@ export const store: CommandDefinition = (program) => {
     const storeCmd = program
         .command("store")
         .addHelpCommand(false)
-        .configureHelp({ showGlobalOptions: true })
+        .configureHelp({ showGlobalOptions: true, developersOnly: true } as ExtendedHelpConfiguration)
         .usage("[command] [options...]")
         .description("Operations on a Store");
 

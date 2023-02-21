@@ -1,11 +1,17 @@
-import { Command } from "commander-completion";
+import { HelpConfiguration } from "commander";
+import { ComplitingCommand } from "commander-completion";
 
 /**
  * CommandDefinition is an object from commander.js
  * program.opts() - show options
  * program.args - show arguments passed by user
  */
-export type CommandDefinition = (program: Command) => void;
+export type CommandDefinition = (program: ComplitingCommand) => void;
+
+/**
+ * ExtendedHelpConfiguration is used to pass context options throughout commands
+ */
+export type ExtendedHelpConfiguration = HelpConfiguration & { developersOnly?: boolean }
 
 export type configEnv = "development" | "production";
 export const isConfigEnv = (env: string) => ["development", "production"].includes(env);
@@ -14,8 +20,8 @@ export const isProductionEnv = (env: configEnv): boolean => { return env === "pr
 
 export type displayFormat = "pretty" | "json";
 export const isConfigFormat = (format: string) => ["pretty", "json"].includes(format);
-export const isJsonFormat = (format: displayFormat):boolean => { return format === "json"; };
-export const isPrettyFormat = (format: displayFormat):boolean => { return format === "pretty"; };
+export const isJsonFormat = (format: displayFormat): boolean => { return format === "json"; };
+export const isPrettyFormat = (format: displayFormat): boolean => { return format === "pretty"; };
 
 export interface SiConfigEntity {
     profile: string;
