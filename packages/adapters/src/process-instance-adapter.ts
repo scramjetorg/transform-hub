@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { streamToString } from "@scramjet/utility";
+import { STHConfiguration } from "@scramjet/types";
 import {
     ExitCode,
     IComponent,
@@ -27,6 +28,7 @@ class ProcessInstanceAdapter implements
     ILifeCycleAdapterRun,
     IComponent {
     logger: IObjectLogger;
+    sthConfig: STHConfiguration;
 
     private runnerProcess?: ChildProcess;
     private crashLogStreams?: Promise<string[]>;
@@ -38,8 +40,9 @@ class ProcessInstanceAdapter implements
         this.logger.warn("Limits are not yet supported in process runner");
     }
 
-    constructor() {
+    constructor(config: STHConfiguration) {
         this.logger = new ObjLogger(this);
+        this.sthConfig = config;
     }
 
     async init(): Promise<void> {
@@ -62,6 +65,7 @@ class ProcessInstanceAdapter implements
 
     getRunnerCmd(config: SequenceConfig) {
         const engines = Object.keys(config.engines);
+        let debugFlags: string[] = [];
 
         if (engines.length > 1) {
             throw new Error("Incorrect config passed to SequenceConfig," +
@@ -72,15 +76,23 @@ class ProcessInstanceAdapter implements
             this.logger.trace(gotPython);
             const runnerPath = path.resolve(__dirname, require.resolve("@scramjet/python-runner"));
 
+            if (this.sthConfig.debug)
+                debugFlags = ["-m", "pdb", "-c", "continue"];
+
             return [
                 "/usr/bin/env",
-                "python3",
+                "python3", 
+                ...debugFlags,
                 path.resolve(__dirname, runnerPath),
                 "./python-runner-startup.log",
             ];
         }
+        if (this.sthConfig.debug)
+            debugFlags = ["--inspect=9229", "--inspect-brk"];
+        
         return [
             isTSNode ? "ts-node" : process.execPath,
+            ...debugFlags,
             path.resolve(__dirname,
                 process.env.ESBUILD
                     ? "../../runner/bin/start-runner.js"

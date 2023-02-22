@@ -136,6 +136,12 @@ export type STHConfiguration = {
     }
 
     /**
+     * Add debugging flags to runner.
+     */
+    debug: boolean;
+
+
+    /**
      * Docker related configuration.
      */
     docker: {
