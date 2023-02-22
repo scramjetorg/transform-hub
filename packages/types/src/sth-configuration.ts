@@ -140,7 +140,6 @@ export type STHConfiguration = {
      */
     debug: boolean;
 
-
     /**
      * Docker related configuration.
      */

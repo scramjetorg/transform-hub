@@ -1,7 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { streamToString } from "@scramjet/utility";
-import { STHConfiguration } from "@scramjet/types";
-import {
+import { STHConfiguration,
     ExitCode,
     IComponent,
     ILifeCycleAdapterMain,
@@ -81,7 +80,7 @@ class ProcessInstanceAdapter implements
 
             return [
                 "/usr/bin/env",
-                "python3", 
+                "python3",
                 ...debugFlags,
                 path.resolve(__dirname, runnerPath),
                 "./python-runner-startup.log",
@@ -89,7 +88,7 @@ class ProcessInstanceAdapter implements
         }
         if (this.sthConfig.debug)
             debugFlags = ["--inspect=9229", "--inspect-brk"];
-        
+
         return [
             isTSNode ? "ts-node" : process.execPath,
             ...debugFlags,
