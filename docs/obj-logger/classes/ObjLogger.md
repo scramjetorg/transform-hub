@@ -247,7 +247,7 @@ IObjectLogger.addObjectLoggerSource
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L173)
+[obj-logger/src/obj-logger.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L174)
 
 ___
 
@@ -295,13 +295,13 @@ IObjectLogger.addSerializedLoggerSource
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L180)
+[obj-logger/src/obj-logger.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L181)
 
 ___
 
 ### debug
 
-▸ **debug**(`entry`, ...`optionalParams`): `void`
+▸ **debug**(`entry`, `...optionalParams`): `void`
 
 #### Parameters
 
@@ -338,13 +338,13 @@ IObjectLogger.end
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L245)
+[obj-logger/src/obj-logger.ts:246](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L246)
 
 ___
 
 ### error
 
-▸ **error**(`entry`, ...`optionalParams`): `void`
+▸ **error**(`entry`, `...optionalParams`): `void`
 
 #### Parameters
 
@@ -369,7 +369,7 @@ ___
 
 ### fatal
 
-▸ **fatal**(`entry`, ...`optionalParams`): `void`
+▸ **fatal**(`entry`, `...optionalParams`): `void`
 
 #### Parameters
 
@@ -394,7 +394,7 @@ ___
 
 ### info
 
-▸ **info**(`entry`, ...`optionalParams`): `void`
+▸ **info**(`entry`, `...optionalParams`): `void`
 
 #### Parameters
 
@@ -445,13 +445,13 @@ IObjectLogger.pipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L195)
+[obj-logger/src/obj-logger.ts:196](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L196)
 
 ___
 
 ### trace
 
-▸ **trace**(`entry`, ...`optionalParams`): `void`
+▸ **trace**(`entry`, `...optionalParams`): `void`
 
 #### Parameters
 
@@ -504,7 +504,7 @@ IObjectLogger.unpipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L223)
+[obj-logger/src/obj-logger.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L224)
 
 ___
 
@@ -534,7 +534,7 @@ ___
 
 ### warn
 
-▸ **warn**(`entry`, ...`optionalParams`): `void`
+▸ **warn**(`entry`, `...optionalParams`): `void`
 
 #### Parameters
 
@@ -559,7 +559,7 @@ ___
 
 ### write
 
-▸ **write**(`level`, `entry`, ...`optionalParams`): `void`
+▸ **write**(`level`, `entry`, `...optionalParams`): `void`
 
 #### Parameters
 

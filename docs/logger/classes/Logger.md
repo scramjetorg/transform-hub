@@ -65,7 +65,7 @@ ___
 
 #### Type declaration
 
-▸ (...`args`): `void`
+▸ (`...args`): `void`
 
 ##### Parameters
 
@@ -93,7 +93,7 @@ ___
 
 #### Type declaration
 
-▸ (...`_label`): `void`
+▸ (`..._label`): `void`
 
 ##### Parameters
 
@@ -117,7 +117,7 @@ Console.groupCollapsed
 
 ### assert
 
-▸ **assert**(`_value`, `_message?`, ...`_optionalParams`): `void`
+▸ **assert**(`_value`, `_message?`, `..._optionalParams`): `void`
 
 #### Parameters
 
@@ -209,7 +209,7 @@ ___
 
 ### debug
 
-▸ **debug**(...`args`): `void`
+▸ **debug**(`...args`): `void`
 
 #### Parameters
 
@@ -258,7 +258,7 @@ ___
 
 ### error
 
-▸ **error**(...`args`): `void`
+▸ **error**(`...args`): `void`
 
 #### Parameters
 
@@ -296,7 +296,7 @@ ___
 
 ### group
 
-▸ **group**(...`_label`): `void`
+▸ **group**(`..._label`): `void`
 
 #### Parameters
 
@@ -338,7 +338,7 @@ ___
 
 ### info
 
-▸ **info**(...`args`): `void`
+▸ **info**(`...args`): `void`
 
 #### Parameters
 
@@ -362,7 +362,7 @@ ___
 
 ### log
 
-▸ **log**(...`args`): `void`
+▸ **log**(`...args`): `void`
 
 #### Parameters
 
@@ -521,7 +521,7 @@ ___
 
 ### timeLog
 
-▸ **timeLog**(`_label?`, ...`_data`): `void`
+▸ **timeLog**(`_label?`, `..._data`): `void`
 
 #### Parameters
 
@@ -570,7 +570,7 @@ ___
 
 ### trace
 
-▸ **trace**(`_message?`, ...`_optionalParams`): `void`
+▸ **trace**(`_message?`, `..._optionalParams`): `void`
 
 #### Parameters
 
@@ -595,7 +595,7 @@ ___
 
 ### warn
 
-▸ **warn**(...`args`): `void`
+▸ **warn**(`...args`): `void`
 
 #### Parameters
 

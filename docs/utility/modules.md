@@ -754,7 +754,7 @@ ___
 
 ### readJsonFile
 
-▸ **readJsonFile**(`fileNameCandidate`, ...`path`): `Object`
+▸ **readJsonFile**(`fileNameCandidate`, `...path`): `Object`
 
 #### Parameters
 

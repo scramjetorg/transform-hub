@@ -22,6 +22,7 @@ Client for the Middleware interaction.
 
 ### Methods
 
+- [getAuditStream](MiddlewareClient.md#getauditstream)
 - [getManagerClient](MiddlewareClient.md#getmanagerclient)
 - [getManagers](MiddlewareClient.md#getmanagers)
 - [getVersion](MiddlewareClient.md#getversion)
@@ -68,6 +69,24 @@ ClientProvider.client
 [middleware-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L14)
 
 ## Methods
+
+### getAuditStream
+
+▸ **getAuditStream**(): `Promise`<`ReadableStream`<`any`\>\>
+
+Requests API for version of various API components
+
+#### Returns
+
+`Promise`<`ReadableStream`<`any`\>\>
+
+List of manager ids
+
+#### Defined in
+
+[middleware-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L54)
+
+___
 
 ### getManagerClient
 

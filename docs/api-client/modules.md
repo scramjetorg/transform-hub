@@ -1,36 +1,65 @@
-[@scramjet/api-client](README.md) / Exports
+[@scramjet/client-utils](README.md) / Exports
 
-# @scramjet/api-client
+# @scramjet/client-utils
 
 ## Table of contents
 
 ### Classes
 
-- [HostClient](classes/HostClient.md)
-- [InstanceClient](classes/InstanceClient.md)
-- [SequenceClient](classes/SequenceClient.md)
+- [ClientError](classes/ClientError.md)
+- [ClientUtils](classes/ClientUtils.md)
+- [ClientUtilsCustomAgent](classes/ClientUtilsCustomAgent.md)
 
 ### Type Aliases
 
-- [InstanceInputStream](modules.md#instanceinputstream)
-- [InstanceOutputStream](modules.md#instanceoutputstream)
+- [ClientErrorCode](modules.md#clienterrorcode)
+- [RequestLogger](modules.md#requestlogger)
+- [SendStreamOptions](modules.md#sendstreamoptions)
+
+### Interfaces
+
+- [ClientProvider](interfaces/ClientProvider.md)
+- [HttpClient](interfaces/HttpClient.md)
 
 ## Type Aliases
 
-### InstanceInputStream
+### ClientErrorCode
 
-Ƭ **InstanceInputStream**: ``"stdin"`` \| ``"input"``
+Ƭ **ClientErrorCode**: ``"GENERAL_ERROR"`` \| ``"BAD_PARAMETERS"`` \| ``"NEED_AUTHENTICATION"`` \| ``"NOT_AUTHORIZED"`` \| ``"NOT_FOUND"`` \| ``"GONE"`` \| ``"SERVER_ERROR"`` \| ``"REQUEST_ERROR"`` \| ``"UNKNOWN_ERROR"`` \| ``"CANNOT_CONNECT"`` \| ``"INVALID_RESPONSE"`` \| ``"INSUFFICIENT_RESOURCES"`` \| ``"UNPROCESSABLE_ENTITY"``
 
 #### Defined in
 
-[api-client/src/instance-client.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L5)
+[packages/client-utils/src/client-error.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-error.ts#L32)
 
 ___
 
-### InstanceOutputStream
+### RequestLogger
 
-Ƭ **InstanceOutputStream**: ``"stdout"`` \| ``"stderr"`` \| ``"output"`` \| ``"log"``
+Ƭ **RequestLogger**: `Object`
+
+Request logger.
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `end` | (...`req`: `any`) => `void` |
+| `error` | (`res`: [`ClientError`](classes/ClientError.md)) => `void` |
+| `ok` | (`res`: `any`) => `void` |
+| `request` | (...`req`: `any`) => `void` |
 
 #### Defined in
 
-[api-client/src/instance-client.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L6)
+[packages/client-utils/src/types/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L22)
+
+___
+
+### SendStreamOptions
+
+Ƭ **SendStreamOptions**: `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\>
+
+Options for sending sending stream.
+
+#### Defined in
+
+[packages/client-utils/src/types/index.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L7)
