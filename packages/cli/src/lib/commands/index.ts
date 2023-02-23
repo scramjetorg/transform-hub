@@ -16,17 +16,17 @@ import { si } from "./si";
 
 export const commands: CommandDefinition[] = [
     si,
-    hub,
+    completion,
     config,
     scope,
     space,
+    hub,
     sequence,
     instance,
     topic,
     // waiting for working implementation
     isDevelopment() ? init : () => { },
     store,
-    completion,
     util,
     isDevelopment() ? developerTools : () => { },
 ];
