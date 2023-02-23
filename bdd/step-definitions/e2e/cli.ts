@@ -45,12 +45,12 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function(this: Cus
     assert.equal(res.stdio[2], 0);
 });
 
-When("I get first sequence id", { timeout: 30000 }, async function(this: CustomWorld) {
+When("I get sequence id", { timeout: 30000 }, async function(this: CustomWorld) {
     const res = this.cliResources;
-    const stdio: string[] = res.stdio || [];
-    const seqList = JSON.parse(stdio[0]);
+    const stdio = res.stdio![0].split("\n");
+    const seqInfo = JSON.parse(stdio[0]);
 
-    this.cliResources.sequenceId = seqList[0].id;
+    this.cliResources.sequenceId = seqInfo.id;
 
     logger.log("Sequence id: ", this.cliResources.sequenceId);
 
@@ -65,7 +65,7 @@ When("I start {string} with the first sequence id", { timeout: 30000 }, async fu
     const res = this.cliResources;
     const seqId = this.cliResources.sequenceId;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", `data/sequences/${sequenceName}`, "--args", `[\"${seqId}\"]`]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", `../packages/${sequenceName}.tar.gz`, "--args", `[\"${seqId}\"]`]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);

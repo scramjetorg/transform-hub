@@ -11,8 +11,11 @@ import { util } from "./util";
 import { init } from "./init";
 import { isDevelopment } from "../../utils/envs";
 import { store } from "./store";
+import { developerTools } from "./developerTools";
+import { si } from "./si";
 
 export const commands: CommandDefinition[] = [
+    si,
     hub,
     config,
     scope,
@@ -21,8 +24,9 @@ export const commands: CommandDefinition[] = [
     instance,
     topic,
     // waiting for working implementation
-    isDevelopment() ? init : () => {},
+    isDevelopment() ? init : () => { },
     store,
     completion,
-    util
+    util,
+    isDevelopment() ? developerTools : () => { },
 ];

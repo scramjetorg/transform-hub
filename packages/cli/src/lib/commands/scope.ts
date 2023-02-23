@@ -3,7 +3,6 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";
 import { displayObject } from "../output";
 import { isProfileConfig, ProfileConfig, profileManager } from "../config";
-import { isDevelopment } from "../../utils/envs";
 
 /**
  * Initializes `scope` command.
@@ -37,39 +36,6 @@ export const scope: CommandDefinition = (program) => {
 
             displayObject(scopeConfig, profileManager.getProfileConfig().format);
         });
-
-    if (isDevelopment()) {
-        scopeCmd
-            .command("create")
-            .argument("<scope-name>")
-            .description("TO BE IMPLEMENTED / Create scope")
-            .action(() => {
-            // TODO: implement me
-                throw new Error("Implement me");
-            });
-    }
-
-    if (isDevelopment())
-        scopeCmd
-            .command("add")
-            .argument("<name>")
-            .option("--hub <name> <id>", "Add a Hub to specified scope")
-            .option("--space <name> <apiUrl>", "Add space to specified scope")
-            .description("TO BE IMPLEMENTED / Add a Hub or space to specified scope")
-            .action(() => {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            });
-
-    if (isDevelopment())
-        scopeCmd
-            .command("save")
-            .argument("<name>")
-            .description("TO BE IMPLEMENTED / Save current chosen space and Hub under a scope name")
-            .action(() => {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            });
 
     scopeCmd
         .command("use")

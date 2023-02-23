@@ -22,11 +22,9 @@ const { exec } = require("child_process");
 const opts = minimist(process.argv.slice(2), {
     alias: {
         list: "l",
-        install: "i",
-        build: "b",
-        dist: "d",
+        strict: "S",
+        scope: "s",
         verbose: "v",
-        fast: "f",
         help: ["h", "?"],
         workspace: "w",
         dependencies: "d",
@@ -45,7 +43,7 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC,
     },
-    boolean: ["list", "verbose", "install", "build", "dist", "fast", "help", "exec"]
+    boolean: ["list", "strict", "verbose", "help", "exec"]
 });
 
 if (opts.help || !opts._.length && !opts.list) {
@@ -55,6 +53,7 @@ if (opts.help || !opts._.length && !opts.list) {
     console.error("Runs scripts in workspaces");
     console.error(`Usage: ${pName} [options] <script> [...args]`);
     console.error(`       ${spaces} -v,--verbose - verbose output`);
+    console.error(`       ${spaces} -S,--strict - returns error level if any of script fails`);
     console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
@@ -69,6 +68,8 @@ if (opts.help || !opts._.length && !opts.list) {
 const BUILD_NAME = "run-script";
 
 console.time(BUILD_NAME);
+
+let error = false;
 
 // eslint-disable-next-line complexity
 (async function() {
@@ -104,8 +105,6 @@ console.time(BUILD_NAME);
         console.log(packages.join("\n"));
         process.exit();
     }
-
-    let error = false;
 
     await DataStream.from(packages)
         .setOptions({ maxParallel: cpus().length })
@@ -174,6 +173,12 @@ console.time(BUILD_NAME);
         .run()
     ;
 })()
+    .then(() => {
+        if (opts.strict && error) {
+            console.timeLog(BUILD_NAME, "One or more scripts failed.");
+            process.exitCode = 11;
+        }
+    })
     .catch(e => {
         console.timeLog(BUILD_NAME, "Error occured.");
         console.error(e.stack);

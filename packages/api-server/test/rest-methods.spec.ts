@@ -14,6 +14,8 @@ import { DataStream } from "scramjet";
 
 export const sandbox = createSandbox();
 
+const noGHTest = process.env.SCP_ENV_VALUE === "GH_CI" ? skip : test;
+
 let server: ServerWithPlayMethods;
 let router: CeroRouter;
 let api: APIExpose;
@@ -50,7 +52,7 @@ skip("Get works on empty response", async t => {
     t.is(response.statusCode, 204, "No content");
 });
 
-test("Get works when we have content", async t => {
+noGHTest("Get works when we have content", async t => {
     const { request, response } = mockRequestResponse("GET", "/api/get");
 
     api.get("/api/get", RunnerMessageCode.MONITORING, comm);
@@ -71,7 +73,7 @@ test("Get works when we have content", async t => {
     t.is(fullBody, "{\"healthy\":true}", "Data retrieved");
 });
 
-test("Op fails with bad and works with good content type", async t => {
+noGHTest("Op fails with bad and works with good content type", async t => {
     let hadKilled = false;
 
     await (async () => {

@@ -9,12 +9,17 @@ import { SequenceClient } from "./sequence-client";
  */
 export class HostClient implements ClientProvider {
     apiBase: string;
-    client: ClientUtils;
+
+    #_client: ClientUtils;
+
+    get client(): ClientUtils {
+        return this.#_client;
+    }
 
     constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
-        this.client = utils;
+        this.#_client = utils;
     }
 
     /**
@@ -42,6 +47,16 @@ export class HostClient implements ClientProvider {
      */
     async listEntities() {
         return this.client.get<STHRestAPI.GetEntitiesResponse>("entities");
+    }
+
+    /**
+     * Returns Host log stream.
+     *
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
+     * @returns Promise resolving to response with log stream.
+     */
+    async getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]> {
+        return this.client.getStream("audit", requestInit);
     }
 
     /**

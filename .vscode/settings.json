@@ -5,5 +5,13 @@
   "cucumberautocomplete.strictGherkinCompletion": true,
   "python.analysis.extraPaths": [
     "./packages/python-runner/__pypackages__"
+  ],
+  "spellright.language": [
+    "en"
+  ],
+  "spellright.documentTypes": [
+    "markdown",
+    "latex",
+    "plaintext"
   ]
 }

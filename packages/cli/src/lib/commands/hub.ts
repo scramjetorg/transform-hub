@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { CommandDefinition, isProductionEnv } from "../../types";
-import { isDevelopment } from "../../utils/envs";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
@@ -19,25 +18,7 @@ export const hub: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
-        /* TODO: for future implementation
-            .option("--driver", "", "scp")
-            .option("--provider <value>", "specify provider: aws|cpm")
-            .option("--region <value>", "i.e.: us-east-1")
-    */
         .description("Allows to run programs in different data centers, computers or devices in local network");
-
-    if (isDevelopment() && isProductionEnv(profileConfig.env)) {
-        hubCmd
-            .command("create")
-            .argument("<name>")
-            .option("--json <json>")
-            .option("--file <pathToFile>")
-            .description("TO BE IMPLEMENTED / Create a Hub with parameters")
-            .action(() => {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            });
-    }
 
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
@@ -80,10 +61,6 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
-            /* TODO for future use
-            .argument("[name|id]")
-            .description("display chosen hub version if a name is not provided it displays a version of a current hub")
-            */
             .description("Display info about the default Hub")
             .action(async () => {
                 const { lastSpaceId: space, lastHubId: id } = sessionConfig.get();
@@ -99,6 +76,11 @@ export const hub: CommandDefinition = (program) => {
         .command("logs")
         .description("Pipe running Hub log to stdout")
         .action(async () => displayStream(getHostClient().getLogStream()));
+
+    hubCmd
+        .command("audit")
+        .description("Pipe running Hub audit information to stdout")
+        .action(async () => displayStream(getHostClient().getAuditStream()));
 
     hubCmd
         .command("load")

@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
 import { CommandDefinition, isProductionEnv } from "../../types";
-import { isDevelopment } from "../../utils/envs";
 import { profileManager, sessionConfig } from "../config";
-import { displayObject } from "../output";
+import { displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -24,23 +23,8 @@ export const space: CommandDefinition = (program) => {
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .description("Operations on grouped and separated runtime environments that allow sharing the data within them");
 
-    if (isDevelopment())
-        spaceCmd
-            .command("create")
-            .argument("<name>")
-            .description("TO BE IMPLEMENTED / Create the space/workspace if name not provided will be generated")
-            .action(() => {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            });
-
     spaceCmd
         .command("info")
-        /* TODO for future use
-    .argument("[<name>|<id>]")
-    // eslint-disable-next-line max-len
-    .description("display chosen space version if a name|id is not provided it displays a version of a current space")
-    */
         .description("Display info about the default space")
         .action(async () => {
             const spaceId = sessionConfig.lastSpaceId;
@@ -73,26 +57,25 @@ export const space: CommandDefinition = (program) => {
             sessionConfig.setLastSpaceId(name);
         });
 
-    if (isDevelopment())
-        spaceCmd
-            .command("delete")
-            .alias("rm")
-            .argument("<name|id>")
-            .description("TO BE IMPLEMENTED / User can only delete empty space")
-            .action(() => {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            });
+    spaceCmd
+        .command("audit")
+        .description("Fetch all audit messages from spaces")
+        .action(async () => {
+            const mwClient = getMiddlewareClient();
 
-    if (isDevelopment())
-        spaceCmd
-            .command("update")
-            .alias("up")
-            .argument("<id>", "id of space to update")
-            .option("--name", "")
-            .description("TO BE IMPLEMENTED / Update space parameters")
-            .action(() => {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            });
+            return displayStream(await mwClient.getAuditStream());
+        });
+
+    spaceCmd
+        .command("logs")
+        .description("Fetch all logs from space")
+        .argument("[<space_name>]", "The name of the space (defaults to current space)")
+        .action(async (spaceName: string) => {
+            if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
+
+            const mwClient = getMiddlewareClient();
+            const managerClient = mwClient.getManagerClient(spaceName);
+
+            await displayStream(await managerClient.getLogStream());
+        });
 };

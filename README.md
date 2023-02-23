@@ -16,21 +16,23 @@
 
 # The Idea <!-- omit in toc -->
 
-Scramjet Transform Hub is a serverless system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to the cloud just as easily... Oh, and the app is incredibly simple too:
+Scramjet Transform Hub is a cool way to run programs on your computer or in the cloud. It's easy to use, and it supports lots of different types of programs.
+
+The Hub is the heart of Scramjet Cloud Platform, a serverless data processing system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to processes, Docker containers or Kubernetes clusters just as easily... Oh, and the apps are incredibly simple to write too, here's a slack posting sample:
 
 ```js
 export (input: Readable) => async function*() {
      for (const post of input) {
-         if (!cache.has(post.id)) {
-             yield await slack.note(`New post titled "${post.title}" from ${post.author}`);
-         }
+        yield await slack.note(`New post titled "${post.title}" from ${post.author}`);
      }
 }
 ```
 
-It currently supports Node.js based apps, but Python and other languages are coming.
+It currently supports Node.js and Python based apps, but Java and other languages are coming.
 
 [Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
+
+If you don't have a server ready or want to run something from the cloud itself, do check out our website and try the hosted version of [Scramjet Cloud Platform](https://scramjet.org/).
 
 ---
 
@@ -49,7 +51,7 @@ It currently supports Node.js based apps, but Python and other languages are com
   - [Docker commands :whale:](#docker-commands-whale)
   - [Build Hub on Docker :building_construction:](#build-hub-on-docker-building_construction)
   - [Run Transform Hub in Docker :robot:](#run-transform-hub-in-docker-robot)
-  - [Lerna commands :pencil:](#lerna-commands-pencil)
+  - [Monorepo commands :pencil:](#monorepo-commands-pencil)
   - [Autocomplete :zap:](#autocomplete-zap)
   - [Git branching workflow](#git-branching-workflow)
 - [Sample usage :sunglasses:](#sample-usage-sunglasses)
@@ -68,7 +70,7 @@ It currently supports Node.js based apps, but Python and other languages are com
 
 This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
-This repository contains the source code for <https://hub.scramjet.org>.
+This repository contains the source code for [Scramjet Transform Hub](https://docs.scramjet.org/platform/transform-hub).
 
 If you want to read more about the usage please go to [Quick Start](https://github.com/scramjetorg/platform-docs) repo.
 
@@ -95,18 +97,21 @@ For developers who would like to simply use Scramjet Transform Hub to run data p
 
 # Usage :bulb:
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
+The easiest way to start Transform Hub is to run the follow (you'll need node.js and npm installed):
+
+```bash
+npx @scramjet/sth --runtime-adapter=<docker|process|kubernetes>
+```
+
+Scramjet Transform Hub is a platform that helps you run programs on local and remote machines. You can start programs in the background or connect to them and see their output. You can also pipe your data to the program even if it is running on a different machine. You can install this platform in different places like AWS, Google Cloud, Azure or even your own computer.
 
 There's no limit to what you can use it for. Do you want a stock checker? A chatbot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real-time? Or perhaps you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) 📧 or hop on our [Scramjet Discord ![discord](./images/discord.png)](https://scr.je/join-community-mg1) and we'll be happy to talk with you.
-
-[Check our proposition of sample architecture for use cases in different industries.](https://scramjet.org/#use-cases)
-
 
 ---
 
 # The basics :abcd:
 
-**NOTE:** This is the STH development repo and in order to use it, you need to have **Unix/linux** based operating system, for example [Ubuntu](https://ubuntu.com/download/server). We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
+**NOTE:** This is the STH development repo and in order to use it, you need to have **Unix/Linux** based operating system, for example [Ubuntu](https://ubuntu.com/download/server) or [Windows with WSL2](https://learn.microsoft.com/en-us/windows/wsl/install). We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
@@ -114,16 +119,20 @@ Scramjet Transform Hub allows you to deploy and execute programs that you build 
 - The Sequence will be executed within a separate docker instance (🔜 we're working on other execution environment integrations - help will be appreciated 🦾).
 - The Sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
 - If your Sequence contains more than one function, then the output from the first function is passed to the next one. Also, the first function in Sequence receives the input from API.
+- The functions can also be Generators and iterate over input data in `node` and `python` versions. This is the simplest way to process data, but it won't leverage asynchronous processing. Check out our frameworks to run your transforms faster [Scramjet Framework](https://github.com/scramjetorg/scramjet#scramjet-framework)
 - The last (or the only) function in Sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
-- Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the Sequence and remove its container.
+- Once the returned `Promise` or `future` is resolved, or the `Stream` is ended, STH will gracefully stop the Sequence and remove its container.
 - You can communicate with the server via API, command line client `si` which we wrote for your convenience.
-- The Sequence is called with an AppContext as `this`, a class that allows you to communicate back from the Sequence: send logs, provide health info, send and receive events from the API or CLI.
+- The Sequence is called with an AppContext as `this` or `self`, a class that allows you to communicate back from the Sequence: send logs, provide health info, send and receive events from the API or CLI.
 - You can run your Sequence multiple times with different arguments (like for instance currency tickers with different symbols or sensor data readers for each sensor)
 - The program does not leave your server and doesn't use any external systems. It runs on the server you install the host on.
-- Currently STH supports node.js runner only, we're working on bringing you runners for other languages, with Python and C++ as the first ones.
+- Currently STH supports node.js and Python runners only, we're working on bringing you runners for other languages, with Java and C++ as the first ones.
+
+We hope this helps you understand the basics of STH and get started with it. If you have any questions or need help, please don't hesitate to contact us!
 
 Some important links 👀:
 
+- All the documentation can be found on our documentation portal [docs.scramjet.org](https://docs.scramjet.org).
 - Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
 - You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
 - You can see the [CLI documentation here](./docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
@@ -142,16 +151,14 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 
 ## Installation :clamp:
 
-> **Reminder:** This is a development guide. In order to use it, you need to have a Unix/linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
+> **Reminder:** This is a development guide. In order to use it, you need to have a Unix/Linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
 
 ### Environment setup
-
 
 There are several installations you need to perform to get STH up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
 - nvm
 - node.js
-- lerna
 - yarn
 - typescript
 - ts-node
@@ -191,8 +198,6 @@ export NVM_DIR="$HOME/.nvm"
 
 Export lines from above will be saved in your ~/.bashrc file so that you won't need to run it with every session start.
 
-
-
 Now you are ready to **install node.js**, simply type in your console:
 
 ```bash
@@ -221,7 +226,6 @@ $ npm -v
 There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g lerna   # lerna is a tool that we use for publishing multiple packages to npm.
 npm install -g yarn   # yarn is a package manager
 ```
 
@@ -230,9 +234,6 @@ npm install -g yarn   # yarn is a package manager
 The same as before the installations can be confirmed by checking the installed versions:
 
 ```bash
-$ lerna -v
-4.0.0
-
 $ yarn -v
 1.22.17
 ```
@@ -491,22 +492,20 @@ docker run \
   scramjetorg/sth:$(jq -r .version package.json)
 ```
 
-## Lerna commands :pencil:
+## Monorepo commands :pencil:
 
-We use Lerna to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
+We use our own scripts to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
 
 ```bash
-lerna create package_name # Add new package:
-lerna ls                  # List all of the public packages in the current Lerna repo:
-lerna run [script]        # Run an npm script in each package that contains that script.
-lerna run --ignore @scramjet/<package_name> <script-name>
-    # Run script in all packages excluding one package:
-lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
-    # ... or run script excluding more packages
-lerna run --scope @scramjet/<package_name> <script-name>
+./scripts/run-script.js [script]
+    # Run an npm script in each package that contains that script.
+./scripts/run-script.js --scope @scramjet/<package_name> <script-name> 
     # Run script only in one package
-lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
-    # Run script in more packages
+./scripts/run-script.js --workspace packages <script-name>
+    # Run script in all packages in workspace
+
+./scripts/run-script.js --help
+    # Check this out for additional information
 ```
 
 ## Autocomplete :zap:
@@ -700,7 +699,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with yarn. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 

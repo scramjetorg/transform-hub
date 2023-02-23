@@ -116,41 +116,34 @@ With the command below you will run all the unit tests in a whole project:
 
     yarn test
 
-This command runs `test` script defined in the main `package.json` [file](../package.json). The script executes lerna command: `lerna run test`. In a result, lerna goes through all the packages and runs unit tests in every package.
+This command runs `test` script defined in the main `package.json` [file](../package.json). The script executes yarn command: `yarn test`. In a result, yarn goes through all the packages and runs unit tests in every package.
 
 If you see the error along the way, that means some tests were not passed.
 
 Below you can see an example, which shows the result of all passed unit test in all the packages:
 
 ```bash
-lerna success run Ran npm script 'test' in 17 packages in 40.2s:
-lerna success - @scramjet/adapters
-lerna success - @scramjet/api-client
-lerna success - @scramjet/api-server
-lerna success - @scramjet/cli
-lerna success - @scramjet/host
-lerna success - @scramjet/load-check
-lerna success - @scramjet/logger
-lerna success - @scramjet/model
-lerna success - @scramjet/pre-runner
-lerna success - @scramjet/runner
-lerna success - @scramjet/sth-config
-lerna success - @scramjet/sth
-lerna success - @scramjet/symbols
-lerna success - @scramjet/test-ava-ts-node
-lerna success - @scramjet/types
-lerna success - @scramjet/utility
-Done in 40.76s.
+run-script: 8.428s packages/api-client: script test executed in 8407ms.
+run-script: 8.661s packages/load-check: script test executed in 8640ms.
+run-script: 9.339s packages/client-utils: script test executed in 9318ms.
+run-script: 10.158s packages/adapters: script test executed in 10137ms.
+run-script: 10.501s packages/cli: script test executed in 10480ms.
+run-script: 11.077s packages/logger: script test executed in 11055ms.
+run-script: 11.689s packages/host: script test executed in 11668ms.
+run-script: 12.068s packages/api-server: script test executed in 12048ms.
+run-script: 12.100s packages/pre-runner: script test executed in 30ms.
+(...)
+Done in 44.90s.
 ```
 
 If you want to run a particular test file, go to directory where the test file is and run command:
 
-    npx ava
+    npm test
 
 For example if you want to run unit test for the Runner package, go to runner's test directory and run the test:
 
     cd packages/runner/test
-    npx ava
+    npm test
 
 and you will see the results in the console:
 

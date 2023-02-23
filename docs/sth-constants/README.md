@@ -51,7 +51,6 @@ It currently supports Node.js based apps, but Python and other languages are com
   - [Docker commands :whale:](#docker-commands-whale)
   - [Build Hub on Docker :building_construction:](#build-hub-on-docker-building_construction)
   - [Run Transform Hub in Docker :robot:](#run-transform-hub-in-docker-robot)
-  - [Lerna commands :pencil:](#lerna-commands-pencil)
   - [Autocomplete :zap:](#autocomplete-zap)
 - [Sample usage :sunglasses:](#sample-usage-sunglasses)
   - ["Hello Alice" sample :wave:](#hello-alice-sample-wave)
@@ -149,7 +148,6 @@ There are several installations you need to perform to get STH up and running, a
 
 - nvm
 - node.js
-- lerna
 - yarn
 - typescript
 - ts-node
@@ -219,7 +217,6 @@ output: `8.1.0`
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g lerna
 npm install -g yarn
 ```
 
@@ -463,24 +460,6 @@ docker run \
   scramjetorg/sth:$(jq -r .version package.json)
 ```
 
-## Lerna commands :pencil:
-
-We use Lerna to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
-
-```bash
-lerna create package_name # Add new package:
-lerna ls                  # List all of the public packages in the current Lerna repo:
-lerna run [script]        # Run an npm script in each package that contains that script.
-lerna run --ignore @scramjet/<package_name> <script-name>
-    # Run script in all packages excluding one package:
-lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
-    # ... or run script excluding more packages
-lerna run --scope @scramjet/<package_name> <script-name>
-    # Run script only in one package
-lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
-    # Run script in more packages
-```
-
 ## Autocomplete :zap:
 
 Completion script depends on bash-completion so make sure it's already installed by running `type _init_completion`.
@@ -526,7 +505,7 @@ yarn build:refapps    # this builds all the refapps in the 'reference-apps' pack
 When the host is not running you can use a script:
 
 ```bash
-lerna run prepare-sample-tar
+yarn prepare-sample-tar
 ```
 
 To compress specific package use linux tar command:
@@ -703,7 +682,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with yarn. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
