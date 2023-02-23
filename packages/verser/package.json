@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/verser",
-  "version": "0.32.1",
+  "version": "0.33.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides a reverse server functionality used among Scramjet modules.",
   "main": "./src/index.ts",
   "scripts": {

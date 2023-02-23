@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/api-client",
-  "version": "0.32.1",
+  "version": "0.33.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides the API Client for use with Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "scripts": {
