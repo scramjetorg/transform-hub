@@ -87,7 +87,7 @@ class ProcessInstanceAdapter implements
             ];
         }
         if (this.sthConfig.debug)
-            debugFlags = ["--inspect=9229", "--inspect-brk"];
+            debugFlags = ["--inspect-brk=9229"];
 
         return [
             isTSNode ? "ts-node" : process.execPath,
