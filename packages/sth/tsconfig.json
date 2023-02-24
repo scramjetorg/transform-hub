@@ -12,7 +12,7 @@
   ],
   "typedocOptions": {
     "entryPoints": [
-      "src/bin/index.ts"
+      "src/index.ts"
     ],
     "out": "../../docs/sth",
     "plugin": "typedoc-plugin-markdown",

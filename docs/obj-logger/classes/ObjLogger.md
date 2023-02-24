@@ -247,7 +247,7 @@ IObjectLogger.addObjectLoggerSource
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L173)
+[obj-logger/src/obj-logger.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L174)
 
 ___
 
@@ -295,7 +295,7 @@ IObjectLogger.addSerializedLoggerSource
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L180)
+[obj-logger/src/obj-logger.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L181)
 
 ___
 
@@ -338,7 +338,7 @@ IObjectLogger.end
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L245)
+[obj-logger/src/obj-logger.ts:246](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L246)
 
 ___
 
@@ -445,7 +445,7 @@ IObjectLogger.pipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L195)
+[obj-logger/src/obj-logger.ts:196](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L196)
 
 ___
 
@@ -504,7 +504,7 @@ IObjectLogger.unpipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L223)
+[obj-logger/src/obj-logger.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L224)
 
 ___
 

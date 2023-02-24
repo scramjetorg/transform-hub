@@ -4,16 +4,23 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [CommandDefinition](modules.md#commanddefinition)
+- [ExtendedHelpConfiguration](modules.md#extendedhelpconfiguration)
 - [configEnv](modules.md#configenv)
-- [configFormat](modules.md#configformat)
+- [displayFormat](modules.md#displayformat)
+
+### Classes
+
+- [ProfileConfig](classes/ProfileConfig.md)
+- [ReadOnlyProfileConfig](classes/ReadOnlyProfileConfig.md)
 
 ### Interfaces
 
-- [GlobalConfigEntity](interfaces/GlobalConfigEntity.md)
+- [ProfileConfigEntity](interfaces/ProfileConfigEntity.md)
 - [SessionConfigEntity](interfaces/SessionConfigEntity.md)
+- [SiConfigEntity](interfaces/SiConfigEntity.md)
 
 ### Functions
 
@@ -21,20 +28,26 @@
 - [completion](modules.md#completion)
 - [config](modules.md#config)
 - [displayEntity](modules.md#displayentity)
+- [displayError](modules.md#displayerror)
+- [displayMessage](modules.md#displaymessage)
 - [displayObject](modules.md#displayobject)
 - [displayStream](modules.md#displaystream)
 - [getHostClient](modules.md#gethostclient)
-- [getIgnoreFunction](modules.md#getignorefunction)
 - [getInstance](modules.md#getinstance)
 - [getInstanceId](modules.md#getinstanceid)
 - [getPackagePath](modules.md#getpackagepath)
 - [getReadStreamFromFile](modules.md#getreadstreamfromfile)
 - [getSequenceId](modules.md#getsequenceid)
 - [init](modules.md#init)
+- [initConfig](modules.md#initconfig)
 - [instance](modules.md#instance)
 - [isConfigEnv](modules.md#isconfigenv)
 - [isConfigFormat](modules.md#isconfigformat)
-- [packAction](modules.md#packaction)
+- [isDevelopmentEnv](modules.md#isdevelopmentenv)
+- [isJsonFormat](modules.md#isjsonformat)
+- [isPrettyFormat](modules.md#isprettyformat)
+- [isProductionEnv](modules.md#isproductionenv)
+- [isProfileConfig](modules.md#isprofileconfig)
 - [scope](modules.md#scope)
 - [sequence](modules.md#sequence)
 - [space](modules.md#space)
@@ -43,14 +56,15 @@
 
 ### Variables
 
-- [globalConfig](modules.md#globalconfig)
+- [profileManager](modules.md#profilemanager)
 - [sessionConfig](modules.md#sessionconfig)
+- [siConfig](modules.md#siconfig)
 
-## Type aliases
+## Type Aliases
 
 ### CommandDefinition
 
-Ƭ **CommandDefinition**: (`program`: `Command`) => `void`
+Ƭ **CommandDefinition**: (`program`: `ComplitingCommand`) => `void`
 
 #### Type declaration
 
@@ -64,7 +78,7 @@ program.args - show arguments passed by user
 
 | Name | Type |
 | :------ | :------ |
-| `program` | `Command` |
+| `program` | `ComplitingCommand` |
 
 ##### Returns
 
@@ -72,7 +86,19 @@ program.args - show arguments passed by user
 
 #### Defined in
 
-[types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+
+___
+
+### ExtendedHelpConfiguration
+
+Ƭ **ExtendedHelpConfiguration**: `HelpConfiguration` & { `developersOnly?`: `boolean`  }
+
+ExtendedHelpConfiguration is used to pass context options throughout commands
+
+#### Defined in
+
+[cli/src/types/index.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L14)
 
 ___
 
@@ -82,17 +108,17 @@ ___
 
 #### Defined in
 
-[types/index.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L10)
+[cli/src/types/index.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L16)
 
 ___
 
-### configFormat
+### displayFormat
 
-Ƭ **configFormat**: ``"pretty"`` \| ``"json"``
+Ƭ **displayFormat**: ``"pretty"`` \| ``"json"``
 
 #### Defined in
 
-[types/index.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L12)
+[cli/src/types/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L21)
 
 ## Functions
 
@@ -116,7 +142,7 @@ Promise resolving when all stdio streams finish.
 
 #### Defined in
 
-[lib/common.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L71)
+[cli/src/lib/common.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L75)
 
 ___
 
@@ -130,7 +156,7 @@ Initializes `completion` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -138,7 +164,7 @@ Initializes `completion` command.
 
 #### Defined in
 
-[lib/commands/completion.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/completion.ts#L14)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
@@ -152,7 +178,7 @@ Initializes `config` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -160,13 +186,13 @@ Initializes `config` command.
 
 #### Defined in
 
-[lib/commands/config.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/config.ts#L11)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
 ### displayEntity
 
-▸ **displayEntity**(`response`): `Promise`<`void`\>
+▸ **displayEntity**(`response`, `format`): `Promise`<`void`\>
 
 Displays response data.
 
@@ -175,6 +201,7 @@ Displays response data.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `response` | `any` | Response object with data to be displayed. |
+| `format` | [`displayFormat`](modules.md#displayformat) | format of displayed data: pretty\|json |
 
 #### Returns
 
@@ -182,13 +209,55 @@ Displays response data.
 
 #### Defined in
 
-[lib/output.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L53)
+[cli/src/lib/output.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L54)
+
+___
+
+### displayError
+
+▸ **displayError**(`error`, `showStack?`): `void`
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `error` | `string` \| `Error` | `undefined` |
+| `showStack` | `boolean` | `false` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[cli/src/lib/output.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L74)
+
+___
+
+### displayMessage
+
+▸ **displayMessage**(`message`, ...`args`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `string` |
+| `...args` | `any`[] |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[cli/src/lib/output.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L67)
 
 ___
 
 ### displayObject
 
-▸ **displayObject**(`object`): `void`
+▸ **displayObject**(`object`, `format`): `void`
 
 Displays object.
 
@@ -197,6 +266,7 @@ Displays object.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `object` | `any` | returned object form |
+| `format` | [`displayFormat`](modules.md#displayformat) | format of displayed data: pretty\|json |
 
 #### Returns
 
@@ -204,7 +274,7 @@ Displays object.
 
 #### Defined in
 
-[lib/output.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L11)
+[cli/src/lib/output.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L13)
 
 ___
 
@@ -218,7 +288,7 @@ Displays stream.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `response` | `Stream` \| `ReadableStream`<`any`\> \| `Promise`<`Stream` \| `ReadableStream`<`any`\>\> | `undefined` | Response object with stream to be displayed. |
+| `response` | `ReadableStream`<`any`\> \| `Stream` \| `Promise`<`ReadableStream`<`any`\> \| `Stream`\> | `undefined` | Response object with stream to be displayed. |
 | `output` | `Writable` | `process.stdout` | Output stream. |
 
 #### Returns
@@ -229,7 +299,7 @@ Promise resolving on stream finish or rejecting on error.
 
 #### Defined in
 
-[lib/output.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L28)
+[cli/src/lib/output.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/output.ts#L28)
 
 ___
 
@@ -247,31 +317,7 @@ Host client.
 
 #### Defined in
 
-[lib/common.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L22)
-
-___
-
-### getIgnoreFunction
-
-▸ **getIgnoreFunction**(`file`): `Promise`<(`f`: `string`) => `boolean`\>
-
-TODO: Comment.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `file` | `PathLike` | Filepath to read rules from. |
-
-#### Returns
-
-`Promise`<(`f`: `string`) => `boolean`\>
-
-TODO: Comment.
-
-#### Defined in
-
-[lib/common.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L87)
+[cli/src/lib/common.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L21)
 
 ___
 
@@ -295,7 +341,7 @@ Instance client.
 
 #### Defined in
 
-[lib/common.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L63)
+[cli/src/lib/common.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L67)
 
 ___
 
@@ -319,7 +365,7 @@ the correct id
 
 #### Defined in
 
-[lib/config.ts:290](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config.ts#L290)
+[cli/src/lib/config/index.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L86)
 
 ___
 
@@ -343,7 +389,7 @@ the correct id
 
 #### Defined in
 
-[lib/config.ts:298](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config.ts#L298)
+[cli/src/lib/config/index.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L94)
 
 ___
 
@@ -367,7 +413,7 @@ Promise resolving to stream with file contents.
 
 #### Defined in
 
-[lib/common.ts:150](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L150)
+[cli/src/lib/common.ts:90](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L90)
 
 ___
 
@@ -391,7 +437,7 @@ the correct id
 
 #### Defined in
 
-[lib/config.ts:282](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config.ts#L282)
+[cli/src/lib/config/index.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L78)
 
 ___
 
@@ -399,11 +445,15 @@ ___
 
 ▸ **init**(`program`): `void`
 
+CommandDefinition is an object from commander.js
+program.opts() - show options
+program.args - show arguments passed by user
+
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `program` | `Command` |
+| `program` | `ComplitingCommand` |
 
 #### Returns
 
@@ -411,7 +461,21 @@ ___
 
 #### Defined in
 
-[lib/commands/init.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/init.ts#L3)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+
+___
+
+### initConfig
+
+▸ **initConfig**(): `void`
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[cli/src/lib/config/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L21)
 
 ___
 
@@ -425,7 +489,7 @@ Initializes `instance` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -433,7 +497,7 @@ Initializes `instance` command.
 
 #### Defined in
 
-[lib/commands/instance.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/instance.ts#L13)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
@@ -453,7 +517,7 @@ ___
 
 #### Defined in
 
-[types/index.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L11)
+[cli/src/types/index.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L17)
 
 ___
 
@@ -473,32 +537,107 @@ ___
 
 #### Defined in
 
-[types/index.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L13)
+[cli/src/types/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L22)
 
 ___
 
-### packAction
+### isDevelopmentEnv
 
-▸ **packAction**(`directory`, `__namedParameters`): `Promise`<`void`\>
-
-Creates package with contents of given directory.
+▸ **isDevelopmentEnv**(`env`): `boolean`
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `directory` | `string` | Directory to be packaged. |
-| `__namedParameters` | `Object` | - |
-| `__namedParameters.output` | `string` | - |
-| `__namedParameters.stdout` | `boolean` | - |
+| Name | Type |
+| :------ | :------ |
+| `env` | [`configEnv`](modules.md#configenv) |
 
 #### Returns
 
-`Promise`<`void`\>
+`boolean`
 
 #### Defined in
 
-[lib/common.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/common.ts#L112)
+[cli/src/types/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L18)
+
+___
+
+### isJsonFormat
+
+▸ **isJsonFormat**(`format`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `format` | [`displayFormat`](modules.md#displayformat) |
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+[cli/src/types/index.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L23)
+
+___
+
+### isPrettyFormat
+
+▸ **isPrettyFormat**(`format`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `format` | [`displayFormat`](modules.md#displayformat) |
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+[cli/src/types/index.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L24)
+
+___
+
+### isProductionEnv
+
+▸ **isProductionEnv**(`env`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `env` | [`configEnv`](modules.md#configenv) |
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+[cli/src/types/index.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L19)
+
+___
+
+### isProfileConfig
+
+▸ **isProfileConfig**(`profile`): profile is ProfileConfig
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `profile` | [`ProfileConfig`](classes/ProfileConfig.md) \| [`ReadOnlyProfileConfig`](classes/ReadOnlyProfileConfig.md) |
+
+#### Returns
+
+profile is ProfileConfig
+
+#### Defined in
+
+[cli/src/lib/config/profileManager.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/profileManager.ts#L15)
 
 ___
 
@@ -512,7 +651,7 @@ Initializes `scope` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -520,7 +659,7 @@ Initializes `scope` command.
 
 #### Defined in
 
-[lib/commands/scope.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/scope.ts#L12)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
@@ -534,7 +673,7 @@ Initializes `sequence` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -542,7 +681,7 @@ Initializes `sequence` command.
 
 #### Defined in
 
-[lib/commands/sequence.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/sequence.ts#L50)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
@@ -556,7 +695,7 @@ Initializes `space` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -564,7 +703,7 @@ Initializes `space` command.
 
 #### Defined in
 
-[lib/commands/space.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/space.ts#L11)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
@@ -578,7 +717,7 @@ Initializes `topic` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -586,7 +725,7 @@ Initializes `topic` command.
 
 #### Defined in
 
-[lib/commands/topic.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/topic.ts#L11)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ___
 
@@ -600,7 +739,7 @@ Initializes `config` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `Command` | Commander object. |
+| `program` | `ComplitingCommand` | Commander object. |
 
 #### Returns
 
@@ -608,17 +747,17 @@ Initializes `config` command.
 
 #### Defined in
 
-[lib/commands/util.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/commands/util.ts#L11)
+[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
 
 ## Variables
 
-### globalConfig
+### profileManager
 
-• `Const` **globalConfig**: `GlobalConfig`
+• `Const` **profileManager**: `ProfileManager`
 
 #### Defined in
 
-[lib/config.ts:266](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config.ts#L266)
+[cli/src/lib/config/index.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L13)
 
 ___
 
@@ -628,4 +767,14 @@ ___
 
 #### Defined in
 
-[lib/config.ts:267](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config.ts#L267)
+[cli/src/lib/config/index.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L15)
+
+___
+
+### siConfig
+
+• `Const` **siConfig**: `SiConfig`
+
+#### Defined in
+
+[cli/src/lib/config/index.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/lib/config/index.ts#L14)
