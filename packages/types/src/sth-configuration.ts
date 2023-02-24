@@ -191,14 +191,14 @@ export type STHConfiguration = {
 
     /**
      * Which sequence and instance adapters should STH use.
-     * One of 'docker', 'process', 'kubernetes'
+     * One of 'docker', 'process', 'kubernetes', 'detect'
      */
     runtimeAdapter: string,
 
     /**
      * Kubernetes adapter configuration
      */
-    kubernetes: Partial<K8SAdapterConfiguration>
+    kubernetes: Partial<K8SAdapterConfiguration>,
 
     /**
      * Only used when `noDocker` is true

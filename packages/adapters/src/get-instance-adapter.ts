@@ -11,21 +11,23 @@ InstanceAdapterClass
 > = {
     docker: DockerInstanceAdapter,
     process: ProcessInstanceAdapter,
-    kubernetes: KubernetesInstanceAdapter,
+    kubernetes: KubernetesInstanceAdapter
 };
 
 /**
  * Provides Instance adapter.
  *
- * @param {STHConfiguration} config STH config.
- * @param {string} id Instance id.
+ * @param runtimeAdapter STH runtime adapter.
+ * @param config STH config.
+ * @param id Instance id.
  *
  * @returns Instance adapter.
  */
-export function getInstanceAdapter(config: STHConfiguration, id: string): ILifeCycleAdapterMain & ILifeCycleAdapterRun {
-    if (!(config.runtimeAdapter in instanceAdapters)) {
-        throw new Error(`Invalid runtimeAdapter ${config.runtimeAdapter}`);
+export function getInstanceAdapter(runtimeAdapter: STHConfiguration["runtimeAdapter"], config: STHConfiguration, id: string):
+    ILifeCycleAdapterMain & ILifeCycleAdapterRun {
+    if (!(runtimeAdapter in instanceAdapters)) {
+        throw new Error(`Invalid runtimeAdapter ${runtimeAdapter}`);
     }
 
-    return new instanceAdapters[config.runtimeAdapter](config, id);
+    return new instanceAdapters[runtimeAdapter](config, id);
 }
