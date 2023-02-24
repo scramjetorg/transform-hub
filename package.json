@@ -28,7 +28,7 @@
     "build:packages": "scripts/build-all.js -v -w modules --ts-config tsconfig.build.json",
     "build:docker": "scripts/run-script.js -w modules build:docker",
     "build:readme": "node ./scripts/mk-readme",
-    "build:docs": "scripts/run-script.js -w modules build:docs",
+    "build:docs": "scripts/run-script.js -w modules build:docs && NODE_ENV=development yarn run start:dev:cli dev cmdToMd -o docs/cli/commands-description.md",
     "build:all-docs": "yarn build:readme && yarn build:docs",
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
