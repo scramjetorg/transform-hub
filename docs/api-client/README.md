@@ -1,4 +1,4 @@
-@scramjet/api-client / [Exports](modules.md)
+@scramjet/client-utils / [Exports](modules.md)
 
 <h1 align="center"><strong>Scramjet Transform Hub API Client</strong></h1>
 
@@ -51,11 +51,11 @@ There's no limit what you can use it for. You want a stock checker? A chat bot? 
 
 ## Quick guide
 
-- [Host operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#host-operations)
-- [Sequence operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#sequence-operations)
-- [Instance basic operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#instance-basic-operations)
-- [Instance advanced operation](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#instance-advanced-operation)
-- [Service Discovery: Topics](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#service-discovery-topics)
+- [Host operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#host-operations)
+- [Sequence operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#sequence-operations)
+- [Instance basic operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#instance-basic-operations)
+- [Instance advanced operation](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#instance-advanced-operation)
+- [Service Discovery: Topics](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#service-discovery-topics)
 
 ___
 
@@ -63,16 +63,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/version</code> <small>- show the Host version</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/version</code> <small>- show the Host version</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 { "version" : "0.12.2" }
@@ -82,16 +82,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/sequences</code> <small>- show all Sequences saved on the Host</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/sequences</code> <small>- show all Sequences saved on the Host</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 [
@@ -148,16 +148,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instances</code> <small>- show all Instances running on the Host</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instances</code> <small>- show all Instances running on the Host</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 [
@@ -176,16 +176,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/load-check</code> <small>- monitor CPU, memory and disk usage metrics on the Host machine</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/load-check</code> <small>- monitor CPU, memory and disk usage metrics on the Host machine</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 {
@@ -221,18 +221,18 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/log</code> <small>- monitor CPU, memory and disk usage metrics on the Host machine</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/log</code> <small>- monitor CPU, memory and disk usage metrics on the Host machine</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```bash
 2021-11-19T16:04:47.094Z log (object:Host) Host main called.
@@ -271,19 +271,19 @@ ___
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong> <code>/api/v1/sequence</code> <small>- add new sequence</small>
+    <strong>[ POST ]</strong> <code>/api/v1/sequence</code> <small>- add new sequence</small>
 </summary>
 
-<br><strong>Parameters</strong>
+<br><strong>**Parameters**</strong>
 
-| Name        | Type     | Description                         | Required |
-| ----------- | -------- | ----------------------------------- | -------- |
-| `file`      | `binary` | compressed package in tar.gz format | yes      |
-| `appConfig` | `json`   | additional package.json config file | no       |
+| Name      | Description                         | Type   | Required |
+| --------- | ----------------------------------- | ------ | -------- |
+| file      | compressed package in tar.gz format | binary | yes      |
+| appConfig | additional package.json config file | json   | no       |
 
 <strong>Responses</strong>
 
-<small>Accepted operation code: `202`</small>
+<small>Status: 202 Accepted</small>
 
 ```json
 {
@@ -295,16 +295,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/sequences</code> <small>- show list of sequences</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/sequences</code> <small>- show list of sequences</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 [
@@ -333,19 +333,19 @@ ___
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong> <code>/api/v1/sequence/:id/start</code> <small>- start chosen sequence</small>
+    <strong>[ POST ]</strong> <code>/api/v1/sequence/:id/start</code> <small>- start chosen sequence</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-| Name        | Type   | Description                                           | Required |
-| ----------- | ------ | ----------------------------------------------------- | -------- |
-| `appConfig` | `json` | additional package.json config file                   | no       |
-| `args`      | `json` | additional arguments that instance should starts with | no       |
+| Name      | Description                                           | Type | Required |
+| --------- | ----------------------------------------------------- | ---- | -------- |
+| appConfig | additional package.json config file                   | json | no       |
+| args      | additional arguments that instance should starts with | json | no       |
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 {
@@ -357,16 +357,16 @@ ___
 
 <details>
 <summary>
-    <strong class="delete">[ DELETE ]</strong> <code>/api/v1/sequence/:id</code> <small>- delete a sequence by id</small>
+    <strong>[ DELETE ]</strong> <code>/api/v1/sequence/:id</code> <small>- delete a sequence by id</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>*Status*: 200 Success</small>
 
 ```json
 {
@@ -374,7 +374,7 @@ ___
 }
 ```
 
-<small>Conflict operation code: `409` - the instance is still running</small>
+<small>*Status*: 409 Conflict - the instance is still running</small>
 
 ```json
 {
@@ -390,16 +390,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong> <code>/api/v1/instances</code> <small>- list all instances</small>
+    <strong>[ GET ]</strong> <code>/api/v1/instances</code> <small>- list all instances</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 [
@@ -422,19 +422,16 @@ ___
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong> <code>/api/v1/instance/:id</code> <small>- show data of chosen instance</small>
+    <strong>[ GET ]</strong> <code>/api/v1/instance/:id</code> <small>- show data of chosen instance</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-| Name                 | Code  | Description                                 |
-| :------------------- | :---- | :------------------------------------------ |
-| Successful operation | `200` | Returns JSON data                           |
-| Not Found operation  | `404` | For example if instance was already stopped |
+<small>*Status*: 200 Accepted</small>
 
 ```json
 {
@@ -444,23 +441,25 @@ ___
 }
 ```
 
+<small>*Status*: 404 Not Found</small>  <small>- when the Instance is not found, for example: the Instance was already stopped.</small>
+
 </details>
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong> <code>/api/v1/instance/:id/_stop</code> <small>- end instance gracefully and prolong operations or not for task completion​</small>
+    <strong>[ POST ]</strong> <code>/api/v1/instance/:id/_stop</code> <small>- end instance gracefully and prolong operations or not for task completion​</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-| Name               | Type      | Description                                                                     | Required |
-| ------------------ | --------- | ------------------------------------------------------------------------------- | -------- |
-| `timeout`          | `number`  | The number of milliseconds before the Instance will be killed. Default: 7000ms. | no       |
-| `canCallKeepalive` | `boolean` | If set to true, the instance will prolong the running. Default: false.          | no       |
+| Name             | Description                                                                     | Type    | Required |
+| ---------------- | ------------------------------------------------------------------------------- | ------- | -------- |
+| timeout          | The number of milliseconds before the Instance will be killed. Default: 7000ms. | number  | no       |
+| canCallKeepalive | If set to true, the instance will prolong the running. Default: false.          | boolean | no       |
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 {
@@ -474,16 +473,16 @@ ___
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong>  <code>api/v1/instance/:id/_kill</code> <small>- end instance gracefully waiting for unfinished tasks</small>
+    <strong>[ POST ]</strong>  <code>api/v1/instance/:id/_kill</code> <small>- end instance gracefully waiting for unfinished tasks</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Accepted operation code: `202`</small>
+<small>*Status*: 202 Accepted</small>
 
 ```text
 No body returned
@@ -493,16 +492,16 @@ No body returned
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/health</code> <small>- check status about instance health</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/health</code> <small>- check status about instance health</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 {
@@ -523,12 +522,16 @@ ___
 
 ### Instance advanced operation
 
+STH allows you to interact (communicate) with an instance by sending events with or without any information defined in the object​. As well as providing and receiving stream with all kinds of data files.
+
+Event contains <eventName>, <handler> with optional <message> of any type: string, num, json obj, array, etc..
+
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong>  <code>/api/v1/instance/:id/_event</code> <small>- send event to the Instance</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/_event</code> <small>- send event to the Instance</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
 | Name        | Type     | Description                  | Required |
 | :---------- | :------- | ---------------------------- | -------- |
@@ -537,149 +540,131 @@ ___
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get the data stream with the events from the Instance</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get the data stream with the events from the Instance</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/once</code> <small>- get the last event sent by the Instance</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/once</code> <small>- get the last event sent by the Instance</small>
 </summary>
+<!-- ToDo: think about the name -->
+<br> <strong>**Parameters**</strong>
 
-<br> <strong>Parameters</strong>
-
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong>  <code>/api/v1/instance/:id/input</code> <small>- send data to the input stream of the Instance to consume it</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/input</code> <small>- send data to the Instance. The data is sent to the input stream of the Instance where it can be consumed.</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-| Name                     | Code  | Description                                                  |
-| :----------------------- | :---- | :----------------------------------------------------------- |
-| Successful operation     | `200` | -                                                            |
-| Not Acceptable operation | `406` | Instance expects the input to be provided from the Topic API |
+<small>Successful operation code: **200**</small>
+
+<small>Operation code: **406 Not Acceptable**</small> <small>- with an error message "Input provided in other way." This status code is returned when the Instance expects the input to be provided from the Topic API.</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/output</code> <small>- get stream data from an instance and consume it through the endpoint</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/output</code> <small>- get the output stream from the Instance. Everything the Instance writes to its output stream can be consumed through this endpoint.</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong>  <code>/api/v1/instance/:id/inout</code> <small>- Experimental. Send data to the input stream of the Instance to consume it. Get stream data from instance.</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- process.stdin</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-| Name                     | Code  | Description                                                  |
-| :----------------------- | :---- | :----------------------------------------------------------- |
-| Successful operation     | `200` | -                                                            |
+<small>Successful operation code: **200**</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- process.stdin</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stdout</code> <small>- process.stdout</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Successful operation code: `200`</small>
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/stdout</code> <small>- process.stdout</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stderr</code> <small>- process.stderr</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/stderr</code> <small>- process.stderr</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/log</code> <small>- stream all instance logs</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: `application/octet-stream`</small>
+<small>Content-type: application/octet-stream</small>
 
-</details>
-
-<details>
-<summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/instance/:id/log</code> <small>- stream all instance logs</small>
-</summary>
-
-<br> <strong>Parameters</strong>
-
-<small>No parameters</small>
-
-<strong>Responses</strong>
-
-<small>Content-type: `application/octet-stream`</small>
-
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```bash
 2021-11-19T16:12:22.948Z log (Sequence) 42
@@ -698,49 +683,45 @@ ___
 
 ### Service Discovery: Topics
 
-If a given topic does not exist, Transform-Hub creates it and stores the sent data in the newly created topic. The data is stored in the topic until the data is not consumed (either by the Topic API or by the Instances subscribing to this topic). When the data are sent to the topic they are written to the returned stream.
-
 <details>
 <summary>
-    <strong class="post">[ POST ]</strong>  <code>/api/v1/topics/:name​</code> <small>- sends data to the topic</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/topics/:name​</code> <small>- sends data to the topic</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<small>If a given topic does not exist, Transform-Hub creates it and stores the sent data in the newly created topic. The data is stored in the topic until the data is not consumed (either by the Topic API or by the Instances subscribing to this topic).​</small>
+<br> <strong>**Parameters**</strong>
 
-<small><small>No parameters</small></small>
+No parameters
 
 <strong>Request Headers</strong>
 
-| Header         | Type                  | Description                                                             | Default                | Required |
-| -------------- | --------------------- | ----------------------------------------------------------------------- | ---------------------- | -------- |
-| `x-end-stream` | `boolean`             | If set to `true`, then close topic stream after processing the request. | false                  | no       |
-| `content-type` | `text`, `application` | Specifies data type of this topic                                       | `application/x-ndjson` | no       |
+<small>"x-end-stream"</small> <small>- close topic stream [optional, boolean]. If x-end-stream header value is true, the topic stream is closed after processing this request. The default value is false. </small>
 
-<small> Supported types: `text/x-ndjson`, `application/x-ndjson`, `application/x-ndjson`, `text/plain`, `application/octet-stream`</small>
+<small>"content-type"</small> <small>-specify stream content type [optional, boolean]. The content-type header specifies data type of this topic.
+The recognized values are: text/x-ndjson, application/x-ndjson, application/x-ndjson, text/plain, application/octet-stream. The default value is application/x-ndjson.​ </small>
 
 <strong>Responses</strong>
 
-| Name                 | Code  | Description                                                           |
-| :------------------- | :---- | :-------------------------------------------------------------------- |
-| Successful operation | `200` | data was sent with the header indicating the end of data              |
-| Successful operation | `202` | data was sent without the header indicating the end of data (default) |
+<small>Successful operation code: **200**</small> <small>- when data to topic is sent with the header indicating the end of data</small>
+<br> <small>Successful operation code: **202**</small> <small>- when data to topic is sent without the header indicating the end of data (default)</small>
 
 </details>
 
 <details>
 <summary>
-    <strong class="get">[ GET ]</strong>  <code>/api/v1/topics/:name​</code> <small>- get data from the topic</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/topics/:name​</code> <small>- get data from the topic</small>
 </summary>
 
-<br> <strong>Parameters</strong>
+<small>If a given topic does not exist, Transform-Hub creates it and returns a new stream. When the data are sent to the topic they are written to the returned stream.</small>
+<br> <strong>**Parameters**</strong>
 
-<small>No parameters</small>
+No parameters
 
 <strong>Responses</strong>
 
 <small>Topic data stream.</small>
 
-<small>Successful operation code: `200`</small>
+<small>Successful operation code: **200**</small>
 
 ```json
 {
