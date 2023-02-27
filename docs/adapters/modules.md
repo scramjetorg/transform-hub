@@ -46,7 +46,7 @@
 - [getHostname](modules.md#gethostname)
 - [getInstanceAdapter](modules.md#getinstanceadapter)
 - [getSequenceAdapter](modules.md#getsequenceadapter)
-- [initializeSequenceAdapter](modules.md#initializesequenceadapter)
+- [initializeRuntimeAdapters](modules.md#initializeruntimeadapters)
 - [isHostSpawnedInDockerContainer](modules.md#ishostspawnedindockercontainer)
 - [setupDockerNetworking](modules.md#setupdockernetworking)
 
@@ -343,7 +343,7 @@ ___
 
 ### getInstanceAdapter
 
-▸ **getInstanceAdapter**(`config`, `id`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
+▸ **getInstanceAdapter**(`runtimeAdapter`, `config`, `id`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
 
 Provides Instance adapter.
 
@@ -351,6 +351,7 @@ Provides Instance adapter.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `runtimeAdapter` | `string` | STH runtime adapter. |
 | `config` | `STHConfiguration` | STH config. |
 | `id` | `string` | Instance id. |
 
@@ -362,13 +363,13 @@ Instance adapter.
 
 #### Defined in
 
-[get-instance-adapter.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L25)
+[get-instance-adapter.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L26)
 
 ___
 
 ### getSequenceAdapter
 
-▸ **getSequenceAdapter**(`config`): `ISequenceAdapter`
+▸ **getSequenceAdapter**(`adapter`, `config`): `ISequenceAdapter`
 
 Provides Sequence adapter basing on Host configuration.
 
@@ -376,6 +377,7 @@ Provides Sequence adapter basing on Host configuration.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `adapter` | `string` | The adapter name |
 | `config` | `STHConfiguration` | Host configuration. |
 
 #### Returns
@@ -386,13 +388,13 @@ Sequence adapter.
 
 #### Defined in
 
-[get-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L33)
+[get-sequence-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L24)
 
 ___
 
-### initializeSequenceAdapter
+### initializeRuntimeAdapters
 
-▸ **initializeSequenceAdapter**(`config`): `Promise`<`string`\>
+▸ **initializeRuntimeAdapters**(`config`): `Promise`<`string`\>
 
 #### Parameters
 
@@ -406,7 +408,7 @@ ___
 
 #### Defined in
 
-[get-sequence-adapter.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L19)
+[initialize-runtime-adapters.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/initialize-runtime-adapters.ts#L5)
 
 ___
 

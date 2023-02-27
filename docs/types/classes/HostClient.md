@@ -16,6 +16,7 @@
 ### Methods
 
 - [deleteSequence](HostClient.md#deletesequence)
+- [getAuditStream](HostClient.md#getauditstream)
 - [getConfig](HostClient.md#getconfig)
 - [getEntities](HostClient.md#getentities)
 - [getInstanceClient](HostClient.md#getinstanceclient)
@@ -48,7 +49,7 @@ ___
 
 ### client
 
-• **client**: `ClientUtils`
+• **client**: [`ClientUtils`](ClientUtils.md)
 
 #### Defined in
 
@@ -65,7 +66,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `apiBase` | `string` |
-| `utils` | `undefined` \| `ClientUtils` |
+| `utils` | `undefined` \| [`ClientUtils`](ClientUtils.md) |
 
 #### Defined in
 
@@ -89,7 +90,27 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L61)
+[packages/types/src/api-client/host-client.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L62)
+
+___
+
+### getAuditStream
+
+▸ **getAuditStream**(`requestInit?`): `Promise`<`any`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `requestInit?` | `RequestInit` |
+
+#### Returns
+
+`Promise`<`any`\>
+
+#### Defined in
+
+[packages/types/src/api-client/host-client.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L58)
 
 ___
 
@@ -103,7 +124,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L66)
+[packages/types/src/api-client/host-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L67)
 
 ___
 
@@ -117,7 +138,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L72)
+[packages/types/src/api-client/host-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L73)
 
 ___
 
@@ -137,7 +158,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L70)
+[packages/types/src/api-client/host-client.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L71)
 
 ___
 
@@ -157,7 +178,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L62)
+[packages/types/src/api-client/host-client.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L63)
 
 ___
 
@@ -171,7 +192,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L63)
+[packages/types/src/api-client/host-client.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L64)
 
 ___
 
@@ -191,7 +212,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L58)
+[packages/types/src/api-client/host-client.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L59)
 
 ___
 
@@ -212,7 +233,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L68)
+[packages/types/src/api-client/host-client.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L69)
 
 ___
 
@@ -232,7 +253,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L60)
+[packages/types/src/api-client/host-client.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L61)
 
 ___
 
@@ -252,7 +273,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L71)
+[packages/types/src/api-client/host-client.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L72)
 
 ___
 
@@ -266,7 +287,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L65)
+[packages/types/src/api-client/host-client.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L66)
 
 ___
 
@@ -280,7 +301,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L69)
+[packages/types/src/api-client/host-client.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L70)
 
 ___
 
@@ -294,7 +315,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L64)
+[packages/types/src/api-client/host-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L65)
 
 ___
 
@@ -366,7 +387,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L67)
+[packages/types/src/api-client/host-client.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L68)
 
 ___
 
@@ -388,4 +409,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-client/host-client.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L59)
+[packages/types/src/api-client/host-client.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L60)
