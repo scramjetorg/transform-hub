@@ -32,7 +32,7 @@
 | Name | Type |
 | :------ | :------ |
 | `apiBase` | `string` |
-| `utils` | `undefined` \| `ClientUtils` |
+| `utils` | `undefined` \| [`ClientUtils`](ClientUtils.md) |
 
 #### Defined in
 

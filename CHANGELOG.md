@@ -2,19 +2,29 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.33.1] - 2023-02-27
+
+## Fixed
+
+* Autodetect runtime adapter when not specifically set by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/795>
+* Add CLI docs by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/812>
+* Add missing build:docs script by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/813>
+* Fixed setting max memory from cli by @mcdominik in <https://github.com/scramjetorg/transform-hub/pull/817>
+* Fixed audit stream type by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/819>
+
 ## [0.33.0] - 2023-02-23
 
 ## Fixed
 
-* Change sequence paths in HostClient tests by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/804
-* Hide `client` field in `HostClient` class. by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/793
-* Readme update by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/794
-* Add host id to logs by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/802
+* Change sequence paths in HostClient tests by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/804>
+* Hide `client` field in `HostClient` class. by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/793>
+* Readme update by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/794>
+* Add host id to logs by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/802>
 
 ## Features
 
-* Add audit and log endpoints to cli by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/801
-* cli_docs_generator by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/806
+* Add audit and log endpoints to cli by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/801>
+* cli_docs_generator by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/806>
 
 ## [0.32.1] - 2023-01-27
 

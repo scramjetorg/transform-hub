@@ -131,7 +131,7 @@ ___
 
 ▸ **getAuditStream**(`requestInit?`): `Promise`<`Readable`\>
 
-Returns Host log stream.
+Returns Host audit stream.
 
 #### Parameters
 

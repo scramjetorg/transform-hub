@@ -236,7 +236,7 @@ ___
 
 ### displayMessage
 
-▸ **displayMessage**(`message`, ...`args`): `void`
+▸ **displayMessage**(`message`, `...args`): `void`
 
 #### Parameters
 
