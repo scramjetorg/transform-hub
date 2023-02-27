@@ -25,7 +25,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("-D, --sequences-root <path>", "Works with --runtime-adapter='process' or --runtime-adapter='kubernetes' options. Specifies a location where the Sequence Adapter saves new Sequences.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instance-lifetime-extension-delay <ms>", "Instance lifetime extension delay in ms")
-    .addOption(new Option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation").argParser(setOperationLimit => { return parseInt(setOperationLimit) }))
+    .addOption(new Option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation").argParser(safeOperationLimit => { console.log('JEDEN:', safeOperationLimit); return parseInt(safeOperationLimit) }))
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--isp, --instances-server-port <port>", "Port on which server that instances connect to should run.")
     .option("--runner-image <image name>", "Image used by docker runner for Node.js")
