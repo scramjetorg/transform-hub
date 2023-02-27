@@ -13,7 +13,7 @@ const stringToIntSanitizer = (str : string) => {
     const parsedValue = parseInt(str, 10);
 
     if (Number.isNaN(parsedValue)) {
-        throw new Error(`Unable to parse string: ${str} to integer` );
+        throw new Error(`Unable to parse string: ${str} to integer`);
     }
     return parsedValue;
 };
