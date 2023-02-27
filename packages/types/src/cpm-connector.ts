@@ -9,5 +9,5 @@ export type CPMConnectorOptions = {
     cpmSslCaPath?: STHConfiguration["cpmSslCaPath"];
     maxReconnections: STHConfiguration["cpm"]["maxReconnections"];
     reconnectionDelay: STHConfiguration["cpm"]["reconnectionDelay"];
-    token?: string;
+    apiKey?: string;
 }

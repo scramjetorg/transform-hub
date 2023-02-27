@@ -19,7 +19,7 @@ import {
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
 import { VerserClient } from "@scramjet/verser";
-import { TypedEmitter, normalizeUrl } from "@scramjet/utility";
+import { TypedEmitter, generateSTHKey, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
@@ -150,19 +150,22 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.config = config;
 
         this.logger = new ObjLogger(this);
+
+        let sthKey;
+
+        if (config.apiKey) {
+            sthKey = generateSTHKey(config.apiKey);
+        }
+
         this.verserClient = new VerserClient({
-            verserUrl: `${this.cpmUrl}/verser`,
+            verserUrl: `${this.cpmUrl}/addHub/${org}/${cpmId}`,
             headers: {
-<<<<<<< HEAD
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
-||||||| constructed merge base
-=======
                 ...(org ? { "x-org-id": org } : {}),
->>>>>>> Add platform args to STH
                 "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
-                ...(config.token ? { "Authorization": `Bearer ${config.token}` } : {})
+                ...(sthKey ? { "Authorization": `Digest cnonce="${sthKey}"` } : {})
             },
             server,
             https: this.isHttps
