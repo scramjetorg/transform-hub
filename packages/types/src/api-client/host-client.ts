@@ -55,6 +55,7 @@ export declare class HostClient {
     listSequences(): Promise<STHRestAPI.GetSequencesResponse>;
     listInstances(): Promise<STHRestAPI.GetInstancesResponse>;
     listEntities(): Promise<STHRestAPI.GetEntitiesResponse>;
+    getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, update?: boolean): Promise<SequenceClient>;
     getSequence(sequenceId: string): Promise<STHRestAPI.GetSequenceResponse>;
