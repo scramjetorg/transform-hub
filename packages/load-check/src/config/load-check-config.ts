@@ -13,10 +13,7 @@ export class LoadCheckConfig extends ReadOnlyConfig<LoadCheckRequirements> {
     static validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "safeOperationLimit": {
-                if (!Number.isInteger(value)) {
-                    try { parseInt(value); return true }
-                    catch { return false }
-                }
+                if (!Number.isInteger(value)) return false;
                 if (value < 0) return false;
                 return true;
             }
