@@ -81,17 +81,17 @@ Configuration used to run command in container.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `autoRemove?` | `boolean` | **`Property`**  If true container will be removed after container's process exit. |
-| `binds?` | `string`[] | **`Property`**  Directories mount configuration. |
-| `command?` | `string`[] | Command with optional parameters.  **`Property`**  Command to be executed. |
-| `envs?` | `string`[] | **`Property`**  A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
-| `imageName` | `string` | **`Property`**  Image name. |
+| `autoRemove?` | `boolean` | **`Property`** If true container will be removed after container's process exit. |
+| `binds?` | `string`[] | **`Property`** Directories mount configuration. |
+| `command?` | `string`[] | Command with optional parameters. **`Property`** Command to be executed. |
+| `envs?` | `string`[] | **`Property`** A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
+| `imageName` | `string` | **`Property`** Image name. |
 | `labels?` | { `[key: string]`: `string`;  } | - |
-| `maxMem?` | `number` | **`Property`**  Container memory limit (bytes). |
+| `maxMem?` | `number` | **`Property`** Container memory limit (bytes). |
 | `networkMode?` | `string` | - |
-| `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) | **`Property`**  Docker ports configuration |
+| `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) | **`Property`** Docker ports configuration |
 | `publishAllPorts?` | `boolean` | - |
-| `volumes?` | [`DockerAdapterVolumeConfig`](modules.md#dockeradaptervolumeconfig)[] | **`Property`**  Volumes configuration. |
+| `volumes?` | [`DockerAdapterVolumeConfig`](modules.md#dockeradaptervolumeconfig)[] | **`Property`** Volumes configuration. |
 
 #### Defined in
 

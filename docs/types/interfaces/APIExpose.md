@@ -30,7 +30,7 @@
 
 ### decorate
 
-▸ **decorate**(`path`, ...`decorators`): `void`
+▸ **decorate**(`path`, `...decorators`): `void`
 
 #### Parameters
 
@@ -235,7 +235,7 @@ ___
 
 ### use
 
-▸ **use**(`path`, ...`middlewares`): `void`
+▸ **use**(`path`, `...middlewares`): `void`
 
 Allows to register middlewares for specific paths, for all HTTP methods.
 

@@ -94,7 +94,7 @@ ___
 
 ### emit
 
-▸ **emit**<`E`\>(`event`, ...`args`): `boolean`
+▸ **emit**<`E`\>(`event`, `...args`): `boolean`
 
 #### Type parameters
 
