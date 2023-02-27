@@ -13,13 +13,13 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/obj-logger": "^0.32.1",
-    "@scramjet/utility": "^0.32.1",
+    "@scramjet/obj-logger": "^0.33.0",
+    "@scramjet/utility": "^0.33.0",
     "bpmux": "^8.2.1"
   },
   "devDependencies": {
-    "@scramjet/api-server": "^0.32.1",
-    "@scramjet/types": "^0.32.1",
+    "@scramjet/api-server": "^0.33.0",
+    "@scramjet/types": "^0.33.0",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",

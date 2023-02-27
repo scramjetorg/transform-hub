@@ -39,10 +39,10 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "dependencies": {
-    "@scramjet/utility": "^0.32.1"
+    "@scramjet/utility": "^0.33.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.32.1",
+    "@scramjet/types": "^0.33.0",
     "ava": "^3.15.0",
     "typedoc": "^0.23.17",
     "typedoc-plugin-markdown": "^3.13.6"
