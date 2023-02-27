@@ -13,10 +13,8 @@ export class LoadCheckConfig extends ReadOnlyConfig<LoadCheckRequirements> {
     static validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "safeOperationLimit": {
-                console.log('DWA:', typeof(value), value)
                 if (!Number.isInteger(value)) return false;
-                if (value < 0) return false;
-                return true;
+                return value >= 0;
             }
             case "instanceRequirements":
                 return new InstanceRequirementsConfig(value).isValid();
