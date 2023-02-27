@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "ts-node ./src/index",
+    "build:docs": "typedoc",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/sth --ts-config tsconfig.build.json",
     "build:docker": "docker build -t scramjetorg/sth:$(git rev-parse HEAD) -f Dockerfile ../../",

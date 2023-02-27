@@ -6,25 +6,14 @@
 
 ### Properties
 
-- [apiUrl](SessionConfigEntity.md#apiurl)
 - [lastHubId](SessionConfigEntity.md#lasthubid)
 - [lastInstanceId](SessionConfigEntity.md#lastinstanceid)
 - [lastPackagePath](SessionConfigEntity.md#lastpackagepath)
 - [lastSequenceId](SessionConfigEntity.md#lastsequenceid)
 - [lastSpaceId](SessionConfigEntity.md#lastspaceid)
-- [scope](SessionConfigEntity.md#scope)
+- [sessionId](SessionConfigEntity.md#sessionid)
 
 ## Properties
-
-### apiUrl
-
-• **apiUrl**: `string`
-
-#### Defined in
-
-[types/index.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L27)
-
-___
 
 ### lastHubId
 
@@ -32,7 +21,7 @@ ___
 
 #### Defined in
 
-[types/index.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L32)
+[cli/src/types/index.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L48)
 
 ___
 
@@ -42,7 +31,7 @@ ___
 
 #### Defined in
 
-[types/index.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L29)
+[cli/src/types/index.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L45)
 
 ___
 
@@ -52,7 +41,7 @@ ___
 
 #### Defined in
 
-[types/index.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L28)
+[cli/src/types/index.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L44)
 
 ___
 
@@ -62,7 +51,7 @@ ___
 
 #### Defined in
 
-[types/index.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L30)
+[cli/src/types/index.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L46)
 
 ___
 
@@ -72,14 +61,14 @@ ___
 
 #### Defined in
 
-[types/index.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L31)
+[cli/src/types/index.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L47)
 
 ___
 
-### scope
+### sessionId
 
-• **scope**: `string`
+• **sessionId**: `string`
 
 #### Defined in
 
-[types/index.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L33)
+[cli/src/types/index.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L49)

@@ -69,28 +69,28 @@ const parseHelp = (command: Command) => {
 };
 
 export const cmdToMdFormat = (command: Command, stream: NodeJS.WritableStream) => {
-    const alias = command.alias() ? `|${command.alias()}` : "";
+    const alias = command.alias() ? ` | ${command.alias()}` : "";
     const cmdName = getCmdFullName(command);
     const { args, opts } = parseHelp(command);
 
     stream.write(`## $ ${cmdName}${alias}\n\n`);
 
     stream.write("**Description**\n\n");
-    stream.write(`\`${command.description()}\`\n\n`);
+    stream.write(`${command.description()}\n\n`);
 
     stream.write("**Usage**\n\n");
     stream.write(`\`${cmdName} ${command.usage()}\`\n\n`);
 
     if (args.length) {
         stream.write("**Arguments**\n\n");
-        args.forEach(arg => stream.write(`* ${arg}\n`));
+        args.forEach(arg => stream.write(`*${arg}\n`));
         // stream.write(args);
         stream.write("\n");
     }
 
     if (opts.length) {
         stream.write("**Options**\n\n");
-        opts.forEach(opt => stream.write(`* ${opt}\n`));
+        opts.forEach(opt => stream.write(`*${opt}\n`));
         stream.write("\n");
     }
     stream.write("---\n\n");

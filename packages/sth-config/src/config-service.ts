@@ -45,7 +45,7 @@ const _defaultConfig: STHConfiguration = {
         freeSpace: 128
     },
     safeOperationLimit: 512,
-    runtimeAdapter: "docker",
+    runtimeAdapter: "detect",
     sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
     kubernetes: {
         namespace: "default",

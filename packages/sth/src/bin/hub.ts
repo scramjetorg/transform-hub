@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { Command, OptionValues } from "commander";
+import { Command, Option, OptionValues } from "commander";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
 import { DeepPartial, STHCommandOptions, STHConfiguration } from "@scramjet/types";
 import { resolve } from "path";
@@ -8,6 +8,15 @@ import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { Host } from "@scramjet/host";
 import { FileBuilder } from "@scramjet/utility";
+
+const stringToIntSanitizer = (str : string) => {
+    const parsedValue = parseInt(str, 10);
+
+    if (Number.isNaN(parsedValue)) {
+        throw new Error(`Unable to parse string: ${str} to integer`);
+    }
+    return parsedValue;
+};
 
 const program = new Command();
 const options: OptionValues & STHCommandOptions = program
@@ -25,7 +34,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("-D, --sequences-root <path>", "Works with --runtime-adapter='process' or --runtime-adapter='kubernetes' options. Specifies a location where the Sequence Adapter saves new Sequences.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instance-lifetime-extension-delay <ms>", "Instance lifetime extension delay in ms")
-    .option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation")
+    .addOption(new Option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation").argParser(stringToIntSanitizer))
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--isp, --instances-server-port <port>", "Port on which server that instances connect to should run.")
     .option("--runner-image <image name>", "Image used by docker runner for Node.js")

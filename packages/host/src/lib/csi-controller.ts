@@ -75,6 +75,7 @@ export class CSIController extends TypedEmitter<Events> {
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
+    private adapter: string;
 
     get lastStats(): InstanceStats {
         return {
@@ -178,11 +179,13 @@ export class CSIController extends TypedEmitter<Events> {
         payload: STHRestAPI.StartSequencePayload,
         communicationHandler: CommunicationHandler,
         sthConfig: STHConfiguration,
-        hostProxy: HostProxy
+        hostProxy: HostProxy,
+        chosenAdapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
     ) {
         super();
 
         this.id = id;
+        this.adapter = chosenAdapter;
         this.sequence = sequence;
         this.appConfig = payload.appConfig;
         this.sthConfig = sthConfig;
@@ -264,7 +267,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     startInstance() {
-        this._instanceAdapter = getInstanceAdapter(this.sthConfig, this.id);
+        this._instanceAdapter = getInstanceAdapter(this.adapter, this.sthConfig, this.id);
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
@@ -331,6 +334,7 @@ export class CSIController extends TypedEmitter<Events> {
         });
     }
 
+    // eslint-disable-next-line complexity
     private mapRunnerExitCode(exitcode: number): Promise<
         { message: string, exitcode: number, status: InstanceStatus }
     > {
