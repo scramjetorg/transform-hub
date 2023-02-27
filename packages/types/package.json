@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/types",
-  "version": "0.33.0",
+  "version": "0.33.1",
   "description": "This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces.",
   "main": "./src/index.ts",
   "scripts": {

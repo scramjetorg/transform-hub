@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/middleware-api-client",
-  "version": "0.33.0",
+  "version": "0.33.1",
   "description": "Scramjet Middleware API Client",
   "main": "src/index.ts",
   "scripts": {
