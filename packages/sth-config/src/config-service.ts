@@ -15,6 +15,7 @@ const _defaultConfig: STHConfiguration = {
         maxReconnections: 100,
         reconnectionDelay: 2000,
     },
+    debug: false,
     docker: {
         prerunner: {
             image: "",
