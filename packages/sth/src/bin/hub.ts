@@ -33,9 +33,9 @@ const options: OptionValues & STHCommandOptions = program
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
     .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
-    .option("--platform-apikey <string>", "Platform API Key")
-    .option("--platform-space <string>", "Target Platform Space")
-    .option("--platform-organisation <string>", "Platform Organisation")
+    .option("--platform-api-version", "Platform API version", "v1")
+    .option("--platform-api-key <string>", "Platform API Key")
+    .option("--platform-space <orgId:spaceId>", "Target Platform Space")
     .option("-I, --id <id>", "The id assigned to this server")
     .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
     .option("-X, --exit-with-last-instance", "Exits host when no more instances exist.")
@@ -106,10 +106,10 @@ const options: OptionValues & STHCommandOptions = program
         },
         debug: options.debug,
         platform: {
-            apiKey: options.platformApikey,
+            apiKey: options.platformApiKey,
             api: options.platformApi,
             space: options.platformSpace,
-            organisation: options.platformOrganisation
+            apiVersion: options.platformApiVersion
         },
         docker: {
             prerunner: {

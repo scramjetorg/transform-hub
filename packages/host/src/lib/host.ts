@@ -342,6 +342,7 @@ export class Host implements IComponent {
                     maxReconnections: this.config.cpm.maxReconnections,
                     reconnectionDelay: this.config.cpm.reconnectionDelay,
                     apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,
+                    apiVersion: this.config.platform?.apiVersion || "v1",
                     hostType: this.config.platform?.hostType
                 },
                 this.api.server
