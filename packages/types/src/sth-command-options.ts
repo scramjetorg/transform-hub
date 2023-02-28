@@ -16,6 +16,7 @@ export type STHCommandOptions = {
     platformApi: string;
     platformApiKey: string;
     platformSpace: string;
+    platformApiVersion: string;
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;

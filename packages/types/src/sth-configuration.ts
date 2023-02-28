@@ -137,9 +137,9 @@ export type STHConfiguration = {
 
     platform?: {
         apiKey: string;
+        apiVersion: string;
         api: string;
         space: string;
-        organisation: string;
         hostType: "hub" | "federation"
     };
 
