@@ -1,3 +1,5 @@
+@scramjet/client-utils / [Exports](modules.md)
+
 <h1 align="center"><strong>Scramjet Transform Hub API Client</strong></h1>
 
 <p align="center">
@@ -14,7 +16,6 @@
 <p align="center">
     <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
 </p>
-
 
 This package is part of Scramjet Transform Hub. The package provides the API Client Utils for use with Scramjet Transform Hub.
 
@@ -73,6 +74,3 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 * There's also a Paypal donation link if you prefer that:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-

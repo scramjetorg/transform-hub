@@ -40,7 +40,6 @@
 - [CPMMessage](modules.md#cpmmessage)
 - [CPMMessageSTHID](modules.md#cpmmessagesthid)
 - [CSIControllerErrorCode](modules.md#csicontrollererrorcode)
-- [ClientErrorCode](modules.md#clienterrorcode)
 - [ContainerConfiguration](modules.md#containerconfiguration)
 - [ContainerConfigurationWithExposedPorts](modules.md#containerconfigurationwithexposedports)
 - [ControlMessageCode](modules.md#controlmessagecode)
@@ -77,7 +76,6 @@
 - [HostErrorCode](modules.md#hosterrorcode)
 - [HostProxy](modules.md#hostproxy)
 - [HttpMethod](modules.md#httpmethod)
-- [IHeaders](modules.md#iheaders)
 - [IdString](modules.md#idstring)
 - [InertApp](modules.md#inertapp)
 - [InertSequence](modules.md#inertsequence)
@@ -147,7 +145,6 @@
 - [ReadFunction](modules.md#readfunction)
 - [ReadSequence](modules.md#readsequence)
 - [ReadableApp](modules.md#readableapp)
-- [RequestConfig](modules.md#requestconfig)
 - [RunnerContainerConfiguration](modules.md#runnercontainerconfiguration)
 - [RunnerErrorCode](modules.md#runnererrorcode)
 - [RunnerMessage](modules.md#runnermessage)
@@ -155,7 +152,6 @@
 - [STHCommandOptions](modules.md#sthcommandoptions)
 - [STHConfiguration](modules.md#sthconfiguration)
 - [STHIDMessageData](modules.md#sthidmessagedata)
-- [SendStreamOptions](modules.md#sendstreamoptions)
 - [SequenceAdapterErrorCode](modules.md#sequenceadaptererrorcode)
 - [SequenceBulkMessage](modules.md#sequencebulkmessage)
 - [SequenceCompleteMessage](modules.md#sequencecompletemessage)
@@ -201,16 +197,9 @@
 
 ### Classes
 
-- [ClientError](classes/ClientError.md)
 - [ClientProvider](classes/ClientProvider.md)
-- [ClientUtils](classes/ClientUtils.md)
-- [ClientUtilsBase](classes/ClientUtilsBase.md)
-- [ClientUtilsCustomAgent](classes/ClientUtilsCustomAgent.md)
 - [HostClient](classes/HostClient.md)
-- [HttpClient](classes/HttpClient.md)
 - [InstanceClient](classes/InstanceClient.md)
-- [QueryError](classes/QueryError.md)
-- [RequestLogger](classes/RequestLogger.md)
 - [SequenceClient](classes/SequenceClient.md)
 
 ### Enumerations
@@ -485,16 +474,6 @@ ___
 #### Defined in
 
 [packages/types/src/error-codes/csi-controller-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/error-codes/csi-controller-error.ts#L1)
-
-___
-
-### ClientErrorCode
-
-Ƭ **ClientErrorCode**: ``"GENERAL_ERROR"`` \| ``"BAD_PARAMETERS"`` \| ``"NEED_AUTHENTICATION"`` \| ``"NOT_AUTHORIZED"`` \| ``"NOT_FOUND"`` \| ``"GONE"`` \| ``"SERVER_ERROR"`` \| ``"REQUEST_ERROR"`` \| ``"UNKNOWN_ERROR"`` \| ``"CANNOT_CONNECT"`` \| ``"INVALID_RESPONSE"`` \| ``"INSUFFICIENT_RESOURCES"`` \| ``"UNPROCESSABLE_ENTITY"``
-
-#### Defined in
-
-[packages/types/src/api-client/client-utils.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/client-utils.ts#L15)
 
 ___
 
@@ -1057,16 +1036,6 @@ ___
 #### Defined in
 
 [packages/types/src/api-expose.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L10)
-
-___
-
-### IHeaders
-
-Ƭ **IHeaders**: `Record`<`string`, `string`\>
-
-#### Defined in
-
-[packages/types/src/api-client/client-utils.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/client-utils.ts#L36)
 
 ___
 
@@ -2215,24 +2184,6 @@ A Readable App is an app that obtains the data by it's own means and preforms
 
 ___
 
-### RequestConfig
-
-Ƭ **RequestConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `json?` | `boolean` |
-| `parse` | ``"json"`` \| ``"text"`` \| ``"stream"`` |
-| `throwOnErrorHttpCode?` | `boolean` |
-
-#### Defined in
-
-[packages/types/src/api-client/client-utils.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/client-utils.ts#L44)
-
-___
-
 ### RunnerContainerConfiguration
 
 Ƭ **RunnerContainerConfiguration**: [`ContainerConfiguration`](modules.md#containerconfiguration) & [`ContainerConfigurationWithExposedPorts`](modules.md#containerconfigurationwithexposedports)
@@ -2395,16 +2346,6 @@ ___
 #### Defined in
 
 [packages/types/src/messages/sth-id.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-id.ts#L3)
-
-___
-
-### SendStreamOptions
-
-Ƭ **SendStreamOptions**: `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\>
-
-#### Defined in
-
-[packages/types/src/api-client/client-utils.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/client-utils.ts#L29)
 
 ___
 
