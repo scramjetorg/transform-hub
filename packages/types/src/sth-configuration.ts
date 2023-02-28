@@ -159,6 +159,7 @@ export type STHConfiguration = {
         api: string;
         space: string;
         organisation: string;
+        hostType: "hub" | "federation"
     };
 
     /**

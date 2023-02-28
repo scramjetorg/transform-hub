@@ -144,8 +144,11 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
-    constructor(private cpmHostname: string, cpmId: string, org: string = "", config: CPMConnectorOptions, server: http.Server) {
+    constructor(private cpmHostname: string, cpm: string, config: CPMConnectorOptions, server: http.Server) {
         super();
+
+        const [orgId, cpmId] = cpm.split(":");
+
         this.cpmId = cpmId;
         this.config = config;
 
@@ -158,13 +161,13 @@ export class CPMConnector extends TypedEmitter<Events> {
         }
 
         this.verserClient = new VerserClient({
-            verserUrl: `${this.cpmUrl}/addHub/${org}/${cpmId}`,
+            verserUrl: `${this.cpmUrl}/${orgId}/${cpmId}/`,
             headers: {
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
-                ...(org ? { "x-org-id": org } : {}),
                 "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
+                ...(orgId ? { "x-org-id": orgId } : {}),
                 ...(sthKey ? { "Authorization": `Digest cnonce="${sthKey}"` } : {})
             },
             server,
