@@ -7,4 +7,5 @@ export type CPMConnectorOptions = {
     maxReconnections: STHConfiguration["cpm"]["maxReconnections"];
     reconnectionDelay: STHConfiguration["cpm"]["reconnectionDelay"];
     apiKey?: string;
+    hostType?: NonNullable<STHConfiguration["platform"]>["hostType"];
 }
