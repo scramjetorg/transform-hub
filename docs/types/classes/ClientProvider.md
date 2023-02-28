@@ -16,7 +16,7 @@
 
 ### client
 
-• **client**: [`HttpClient`](HttpClient.md)
+• **client**: `HttpClient`
 
 #### Defined in
 
