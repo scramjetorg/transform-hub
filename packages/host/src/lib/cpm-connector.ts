@@ -140,7 +140,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * @constructor
      * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
-     * @param {string} cpmId CPM id to connect to. (e.g. "CPM1").
+     * @param {string} cpm CPM id to connect to. (format: "org:manager").
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
@@ -161,7 +161,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         }
 
         this.verserClient = new VerserClient({
-            verserUrl: `${this.cpmUrl}/${orgId}/${cpmId}/`,
+            verserUrl: `${this.cpmUrl}/api/${config.apiVersion}/${orgId}/${cpmId}/`,
             headers: {
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
