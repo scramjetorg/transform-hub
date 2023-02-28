@@ -331,8 +331,7 @@ export class Host implements IComponent {
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
             this.cpmConnector = new CPMConnector(
                 this.config.platform?.api || this.config.cpmUrl,
-                this.config.platform?.space || this.config.cpmId,
-                this.config.platform?.organisation,
+                this.config.platform?.space || (":" + this.config.cpmId),
                 {
                     selfHosted: this.config.selfHosted,
                     description: this.config.description,
@@ -342,7 +341,8 @@ export class Host implements IComponent {
                     cpmSslCaPath: this.config.cpmSslCaPath,
                     maxReconnections: this.config.cpm.maxReconnections,
                     reconnectionDelay: this.config.cpm.reconnectionDelay,
-                    apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined
+                    apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,
+                    hostType: this.config.platform?.hostType
                 },
                 this.api.server
             );
