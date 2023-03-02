@@ -78,4 +78,16 @@ export const space: CommandDefinition = (program) => {
 
             await displayStream(await managerClient.getLogStream());
         });
+
+    spaceCmd
+        .command("accessKey")
+        .description("Create access key for adding Hub to Space")
+        .argument("[<space_name>]", "The name of the space (defaults to current space)")
+        .action(async (spaceName: string) => {
+            if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
+
+            const mwClient = getMiddlewareClient();
+
+            displayObject(await mwClient.createAccessKey(spaceName), "json");
+        });
 };
