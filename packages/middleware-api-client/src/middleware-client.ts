@@ -54,4 +54,12 @@ export class MiddlewareClient implements ClientProvider {
     async getAuditStream(): Promise<ReadableStream<any>> {
         return this.client.getStream("audit");
     }
+
+    async createAccessKey(spaceId: string): Promise<any> {
+        return this.client.post(`space/${spaceId}/apikey`, {},
+        {
+            headers: { "content-type": "application/json" },
+        },
+        { json: true, parse: "json" });
+    }
 }
