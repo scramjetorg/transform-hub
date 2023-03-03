@@ -15,9 +15,9 @@ export type ConnectedSTHInfo = {
 };
 
 export type HealthCheckInfo = {
-    uptime: number,
-    timestamp: number,
+    uptime: number;
+    timestamp: number;
     modules: {
-        [key: string]: boolean
-    }
+        [key: string]: boolean;
+    };
 }
