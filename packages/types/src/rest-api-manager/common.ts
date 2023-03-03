@@ -5,16 +5,17 @@ export type ConnectedSTHInfoDetails = {
 }
 
 export type ConnectedSTHInfo = {
-    id: string,
-    info: ConnectedSTHInfoDetails,
-    healthy: boolean,
-    isConnectionActive: boolean
+    id: string;
+    info: ConnectedSTHInfoDetails;
+    healthy: boolean;
+    isConnectionActive: boolean;
+    selfHosted: boolean;
 };
 
 export type HealthCheckInfo = {
-    uptime: number,
-    timestamp: number,
+    uptime: number;
+    timestamp: number;
     modules: {
-        [key: string]: boolean
-    }
+        [key: string]: boolean;
+    };
 }
