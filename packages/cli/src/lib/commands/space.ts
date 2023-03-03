@@ -106,9 +106,9 @@ export const space: CommandDefinition = (program) => {
             displayObject(await managerClient.disconnectHubs(opts), profileManager.getProfileConfig().format);
         });
 
-    const accessKeyCmd = spaceCmd
-            .command("access")
-            .description("Manages Access Keys for active Space");
+        const accessKeyCmd = spaceCmd
+        .command("access")
+        .description("Manages Access Keys for active Space");
 
     accessKeyCmd.command("create")
         .argument("<description>", "Key description")
