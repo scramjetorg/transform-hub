@@ -33,7 +33,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
     .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
-    .option("--platform-api-version", "Platform API version", "v1")
+    .option("--platform-api-version <version>", "Platform API version", "v1")
     .option("--platform-api-key <string>", "Platform API Key")
     .option("--platform-space <orgId:spaceId>", "Target Platform Space")
     .option("-I, --id <id>", "The id assigned to this server")

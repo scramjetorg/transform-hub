@@ -56,10 +56,18 @@ export class MiddlewareClient implements ClientProvider {
     }
 
     async createAccessKey(spaceId: string): Promise<any> {
-        return this.client.post(`space/${spaceId}/apikey`, {},
-        {
+        return this.client.post(`space/${spaceId}/apikey`, {}, {
             headers: { "content-type": "application/json" },
         },
         { json: true, parse: "json" });
+    }
+
+    async revokeAccessKey(spaceId: string, accessKey: string): Promise<any> {
+        return this.client.delete(`space/${spaceId}/apikey`, {
+            headers: {
+                "content-type": "application/json",
+                "x-accesskey": accessKey
+            }
+        });
     }
 }
