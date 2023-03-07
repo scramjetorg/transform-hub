@@ -83,4 +83,8 @@ export class ManagerClient implements ClientProvider {
     async deleteStoreItem(id: string) {
         await this.client.delete<any>(`s3/${id}`);
     }
+
+    async disconnectHubs(opts: any) {
+        await this.client.post<any>(`disconnect`, opts, {});
+    }
 }
