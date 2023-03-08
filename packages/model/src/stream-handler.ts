@@ -54,6 +54,7 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
+    [CPMMessageCode.KEY_REVOKED]: ConfiguredMessageHandler<CPMMessageCode.KEY_REVOKED>[];
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -87,7 +88,8 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
             [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
-            [CPMMessageCode.STH_ID]: []
+            [CPMMessageCode.STH_ID]: [],
+            [CPMMessageCode.KEY_REVOKED]: [],
         };
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],
