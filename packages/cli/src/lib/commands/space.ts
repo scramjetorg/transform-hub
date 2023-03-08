@@ -79,27 +79,47 @@ export const space: CommandDefinition = (program) => {
             await displayStream(await managerClient.getLogStream());
         });
 
-    const accessKeyCmd = spaceCmd.command("accessKey");
+    const accessKeyCmd = spaceCmd
+            .command("access")
+            .description("Manages Access Keys for active Space");
 
-    accessKeyCmd.command("generate")
-        .description("Create access key for adding Hub to Space")
-        .argument("[<space_name>]", "The name of the space (defaults to current space)")
-        .action(async (spaceName: string) => {
-            if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
-
+    accessKeyCmd.command("create")
+        .description("Create Access key for adding Hub to active Space")
+        .action(async () => {
+            const spaceName = sessionConfig.lastSpaceId;
             const mwClient = getMiddlewareClient();
+
+            if (!spaceName) {
+                throw new Error("No Space set");
+            }
 
             displayObject(await mwClient.createAccessKey(spaceName), "json");
         });
 
-    accessKeyCmd.command("revoke")
-        .description("Revokes accessKey for space")
-        .argument("[<space_name>]", "The name of the space (defaults to current space)")
-        .argument("<access_key>", "Access key")
-        .action(async (spaceName: string, accessKey: string) => {
-            if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
-
+    accessKeyCmd.command("list")
+        .alias("ls")
+        .description("List Access Keys metadata in active Space")
+        .action(async () => {
+            const spaceName = sessionConfig.lastSpaceId;
             const mwClient = getMiddlewareClient();
+
+            if (!spaceName) {
+                throw new Error("No Space set");
+            }
+
+            displayObject(await mwClient.listAccessKeys(spaceName), "json");
+        });
+
+    accessKeyCmd.command("revoke")
+        .description("Revokes Access Key in active Space")
+        .argument("<access_key>", "Access Key id")
+        .action(async (accessKey: string) => {
+            const spaceName = sessionConfig.lastSpaceId;
+            const mwClient = getMiddlewareClient();
+
+            if (!spaceName) {
+                throw new Error("No Space set");
+            }
 
             displayObject(await mwClient.revokeAccessKey(spaceName, accessKey), "json");
         });
