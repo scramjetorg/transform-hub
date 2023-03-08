@@ -55,6 +55,12 @@ export class MiddlewareClient implements ClientProvider {
         return this.client.getStream("audit");
     }
 
+    async listAccessKeys(spaceId: string): Promise<MMRestAPI.GetAccessKeysResponse> {
+        return this.client.get(`space/${spaceId}/apikey`, {
+            headers: { "content-type": "application/json" },
+        });
+    }
+
     async createAccessKey(spaceId: string): Promise<any> {
         return this.client.post(`space/${spaceId}/apikey`, {}, {
             headers: { "content-type": "application/json" },
@@ -66,7 +72,7 @@ export class MiddlewareClient implements ClientProvider {
         return this.client.delete(`space/${spaceId}/apikey`, {
             headers: {
                 "content-type": "application/json",
-                "x-accesskey": accessKey
+                "x-revoke": accessKey
             }
         });
     }
