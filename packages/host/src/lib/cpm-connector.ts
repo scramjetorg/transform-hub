@@ -105,11 +105,16 @@ export class CPMConnector extends TypedEmitter<Events> {
     wasConnected: boolean = false;
 
     /**
-     * Connection attempts counter
+     * Connection attempts counter.
      *
      * @type {number}
      */
     connectionAttempts = 0;
+
+    /**
+     * Message of impending abandonment received.
+     */
+    isAbandoned = false;
 
     /**
      * Id of Manager (e.g. "cpm-1").
@@ -266,6 +271,11 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
+                if (message[0] === CPMMessageCode.KEY_REVOKED) {
+                    this.logger.trace("Received pre drop message");
+                    this.isAbandoned = true;
+                }
+
                 return message;
             }).catch((e: any) => {
                 this.logger.error("communicationChannel error", e.message);
@@ -399,7 +409,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {void}
      */
     async reconnect(): Promise<void> {
-        if (this.isReconnecting) {
+        if (this.isReconnecting || this.isAbandoned) {
             return;
         }
 
