@@ -180,6 +180,10 @@ export class InstanceClient {
         return this.sendStream("input", stream, requestInit, options);
     }
 
+    async inout(stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, options?: SendStreamOptions) {
+        return this.clientUtils.post<any>(`${this.instanceURL}/inout`, stream, requestInit, { ...options, json: false, parse: "stream" });
+    }
+
     /**
      * Pipes given stream to Instance "stdin".
      *
