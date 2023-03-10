@@ -84,8 +84,9 @@ export const space: CommandDefinition = (program) => {
             .description("Manages Access Keys for active Space");
 
     accessKeyCmd.command("create")
-        .description("Create Access key for adding Hub to active Space")
-        .action(async () => {
+        .argument("<description>", "Key description")
+        .description("Create Access key for adding Hubs to active Space, i.e \"Army of Darkness\"")
+        .action(async (description: string) => {
             const spaceName = sessionConfig.lastSpaceId;
             const mwClient = getMiddlewareClient();
 
@@ -93,7 +94,7 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.createAccessKey(spaceName), "json");
+            displayObject(await mwClient.createAccessKey(spaceName, { description }), "json");
         });
 
     accessKeyCmd.command("list")
