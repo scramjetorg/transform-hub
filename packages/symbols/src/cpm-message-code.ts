@@ -13,5 +13,6 @@ export enum CPMMessageCode {
 
     CONFIRM_MSG = 8000,
 
-    KEY_REVOKED = 9001
+    KEY_REVOKED = 9001,
+    LIMIT_EXCEEDED = 9002
 }
