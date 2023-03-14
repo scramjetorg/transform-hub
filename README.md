@@ -164,6 +164,8 @@ There are several installations you need to perform to get STH up and running, a
 - ts-node
 - docker
 - pip
+- wget
+- jq
 
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 To check if you already have Node.js(v16.xx.x) and npm installed, run the following commands in your console:
@@ -175,7 +177,7 @@ npm -v
 
 If none of the above commands is found, **you must proceed with the installation.**
 
-It is recommended to use a **Node version manager** like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using either of the commands bellow. 
+It is recommended to use a **Node version manager** like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using either of the commands bellow.
 > Note: Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script).
 
 ```bash
@@ -221,7 +223,7 @@ $ npm -v
 8.15.0
 ```
 
-**OK!** It looks like you have successfully installed node.js and npm. 
+**OK!** It looks like you have successfully installed node.js and npm.
 
 There are two more installations you need to perform, run the following commands in your console one after another:
 
@@ -249,9 +251,21 @@ pip --version
 
 If they are not present, refer to the official installation guide for [Python](https://wiki.python.org/moin/BeginnersGuide/Download) and [Pip](https://pip.pypa.io/en/stable/installation/).
 
+Additionally you have to have `wget` and `jq` installed:
+
+```bash
+# Debian based distributions:
+apt install wget jq
+
+# Mac
+brew install wget jq
+```
+
 > **If you don't want to use Docker, please skip this step!**
 
 We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you want to use Docker, you can install it by running the following commands in your console:
+
+*On Mac u can use [Docker-Desktop](https://www.docker.com/products/docker-desktop/)*
 
 ```bash
 # Install docker and docker-compose
@@ -302,7 +316,7 @@ In the meantime let me describe for you what is happening in the command you hav
 
 When both the package installation and build are complete, STH should be ready to run.
 
- 
+
 
 ---
 
@@ -499,7 +513,7 @@ We use our own scripts to control our monorepo. Here's a couple of helpful comma
 ```bash
 ./scripts/run-script.js [script]
     # Run an npm script in each package that contains that script.
-./scripts/run-script.js --scope @scramjet/<package_name> <script-name> 
+./scripts/run-script.js --scope @scramjet/<package_name> <script-name>
     # Run script only in one package
 ./scripts/run-script.js --workspace packages <script-name>
     # Run script in all packages in workspace
