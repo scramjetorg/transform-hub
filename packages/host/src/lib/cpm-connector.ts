@@ -271,7 +271,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
-                if (message[0] === CPMMessageCode.KEY_REVOKED) {
+                if (message[0] === CPMMessageCode.KEY_REVOKED || message[0] === CPMMessageCode.LIMIT_EXCEEDED) {
                     this.logger.trace("Received pre drop message");
                     this.isAbandoned = true;
                 }
