@@ -5,7 +5,7 @@ import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "
 import { getInstanceId, profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { ClientError } from "@scramjet/client-utils";
-
+import { Option } from "commander";
 /**
  * Initializes `instance` command.
  *
@@ -104,6 +104,26 @@ export const instance: CommandDefinition = (program) => {
 
             await instanceClient.sendInput(filename ? await getReadStreamFromFile(filename) : process.stdin, {},
                 { type: contentType, end });
+        });
+
+    instanceCmd
+        .command("inout")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .argument("[file]", "File with data")
+        .addOption(new Option("-t,--content-type <content-type>", "Content-Type").choices(["text/plain", "application/octet-stream", "application/x-ndjson"]))
+        .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
+        .description("See input and output")
+        .action(async (id: string, filename: string, { contentType, end }) => {
+            const instanceClient = getInstance(getInstanceId(id));
+
+            return displayStream(
+                await instanceClient.inout(
+                    filename ? await getReadStreamFromFile(filename) : process.stdin, {
+                        headers: { "content-type": contentType },
+                    },
+                    { type: contentType, end }
+                )
+            );
         });
 
     instanceCmd
