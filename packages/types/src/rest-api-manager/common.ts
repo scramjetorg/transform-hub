@@ -10,6 +10,7 @@ export type ConnectedSTHInfo = {
     healthy: boolean;
     isConnectionActive: boolean;
     selfHosted: boolean;
+    disconnectReason?: string;
 };
 
 export type HealthCheckInfo = {

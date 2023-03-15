@@ -85,6 +85,6 @@ export class ManagerClient implements ClientProvider {
     }
 
     async disconnectHubs(opts: any) {
-        await this.client.post<any>("disconnect", opts, {}, { json: true, parse: "json" });
+        return this.client.post<MRestAPI.PostDisconnectResponse>("disconnect", opts, {}, { json: true, parse: "json" });
     }
 }
