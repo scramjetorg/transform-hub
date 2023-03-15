@@ -12,6 +12,7 @@ export type ConnectedSTHInfo = {
     isConnectionActive: boolean,
     description?: string,
     tags?: Array<string> ,
+    disconnectReason?: string;
 };
 
 export type HealthCheckInfo = {
