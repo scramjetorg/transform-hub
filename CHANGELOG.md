@@ -2,6 +2,15 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.33.3] - 2023-03-16
+
+## Fixed
+
+* Add --debug flag to attach debugger to runner by @S4adam in https://github.com/scramjetorg/transform-hub/pull/808
+* Fix/Typedoc settings for client-utils docs generation by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/823
+* cli init sequence by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/807
+* si inst inout by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/826
+
 ## [0.33.1] - 2023-02-27
 
 ## Fixed

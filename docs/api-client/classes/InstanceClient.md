@@ -31,6 +31,7 @@ Provides methods to interact with Instance.
 - [getInfo](InstanceClient.md#getinfo)
 - [getNextEvent](InstanceClient.md#getnextevent)
 - [getStream](InstanceClient.md#getstream)
+- [inout](InstanceClient.md#inout)
 - [kill](InstanceClient.md#kill)
 - [sendEvent](InstanceClient.md#sendevent)
 - [sendInput](InstanceClient.md#sendinput)
@@ -274,6 +275,28 @@ Promise resolving to readable stream.
 
 ___
 
+### inout
+
+▸ **inout**(`stream`, `requestInit?`, `options?`): `Promise`<`any`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `stream` | `string` \| `Readable` |
+| `requestInit?` | `RequestInit` |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> |
+
+#### Returns
+
+`Promise`<`any`\>
+
+#### Defined in
+
+[api-client/src/instance-client.ts:183](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L183)
+
+___
+
 ### kill
 
 ▸ **kill**(`opts?`): `Promise`<`Instance`\>
@@ -369,7 +392,7 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:189](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L189)
+[api-client/src/instance-client.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L193)
 
 ___
 

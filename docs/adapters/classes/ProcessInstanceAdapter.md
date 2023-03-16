@@ -18,6 +18,7 @@ Adapter for running Instance by Runner executed in separate process.
 - [crashLogStreams](ProcessInstanceAdapter.md#crashlogstreams)
 - [logger](ProcessInstanceAdapter.md#logger)
 - [runnerProcess](ProcessInstanceAdapter.md#runnerprocess)
+- [sthConfig](ProcessInstanceAdapter.md#sthconfig)
 
 ### Methods
 
@@ -47,7 +48,7 @@ Adapter for running Instance by Runner executed in separate process.
 
 #### Defined in
 
-[process-instance-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L33)
+[process-instance-adapter.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L34)
 
 ___
 
@@ -57,7 +58,7 @@ ___
 
 #### Defined in
 
-[process-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L32)
+[process-instance-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L33)
 
 ___
 
@@ -81,7 +82,17 @@ ___
 
 #### Defined in
 
-[process-instance-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L31)
+[process-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L32)
+
+___
+
+### sthConfig
+
+• **sthConfig**: `STHConfiguration`
+
+#### Defined in
+
+[process-instance-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L30)
 
 ## Methods
 
@@ -102,7 +113,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[process-instance-adapter.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L166)
+[process-instance-adapter.ts:177](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L177)
 
 ___
 
@@ -120,7 +131,7 @@ ILifeCycleAdapterMain.getCrashLog
 
 #### Defined in
 
-[process-instance-adapter.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L182)
+[process-instance-adapter.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L193)
 
 ___
 
@@ -140,7 +151,7 @@ ___
 
 #### Defined in
 
-[process-instance-adapter.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L92)
+[process-instance-adapter.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L103)
 
 ___
 
@@ -160,7 +171,7 @@ ___
 
 #### Defined in
 
-[process-instance-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L63)
+[process-instance-adapter.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L65)
 
 ___
 
@@ -178,7 +189,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[process-instance-adapter.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L45)
+[process-instance-adapter.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L47)
 
 ___
 
@@ -202,7 +213,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[process-instance-adapter.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L171)
+[process-instance-adapter.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L182)
 
 ___
 
@@ -222,7 +233,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[process-instance-adapter.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L178)
+[process-instance-adapter.ts:189](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L189)
 
 ___
 
@@ -248,7 +259,7 @@ ILifeCycleAdapterRun.run
 
 #### Defined in
 
-[process-instance-adapter.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L107)
+[process-instance-adapter.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L118)
 
 ___
 
@@ -272,17 +283,23 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[process-instance-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L48)
+[process-instance-adapter.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L50)
 
 ## Constructors
 
 ### constructor
 
-• **new ProcessInstanceAdapter**()
+• **new ProcessInstanceAdapter**(`config`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `STHConfiguration` |
 
 #### Defined in
 
-[process-instance-adapter.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L41)
+[process-instance-adapter.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L42)
 
 ## Accessors
 
@@ -300,7 +317,7 @@ ILifeCycleAdapterRun.limits
 
 #### Defined in
 
-[process-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L35)
+[process-instance-adapter.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L36)
 
 • `set` **limits**(`value`): `void`
 
@@ -320,4 +337,4 @@ ILifeCycleAdapterRun.limits
 
 #### Defined in
 
-[process-instance-adapter.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L36)
+[process-instance-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L37)
