@@ -32,6 +32,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("-X, --exit-with-last-instance", "Exits host when no more instances exist.")
     .option("-S, --startup-config <path>", "Only works with process adapter. The configuration of startup sequences.")
     .option("-D, --sequences-root <path>", "Works with --runtime-adapter='process' or --runtime-adapter='kubernetes' options. Specifies a location where the Sequence Adapter saves new Sequences.")
+    .option("--debug", "Runners are spawned with debuggers", false)
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instance-lifetime-extension-delay <ms>", "Instance lifetime extension delay in ms")
     .addOption(new Option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation").argParser(stringToIntSanitizer))
@@ -84,6 +85,7 @@ const options: OptionValues & STHCommandOptions = program
             reconnectionDelay: options.cpmReconnectionDelay,
             maxReconnections: options.cpmMaxReconnections
         },
+        debug: options.debug,
         docker: {
             prerunner: {
                 image: options.prerunnerImage,

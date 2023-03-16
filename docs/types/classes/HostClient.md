@@ -49,7 +49,7 @@ ___
 
 ### client
 
-• **client**: [`ClientUtils`](ClientUtils.md)
+• **client**: `ClientUtils`
 
 #### Defined in
 
@@ -66,7 +66,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `apiBase` | `string` |
-| `utils` | `undefined` \| [`ClientUtils`](ClientUtils.md) |
+| `utils` | `undefined` \| `ClientUtils` |
 
 #### Defined in
 
