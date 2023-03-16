@@ -1118,6 +1118,29 @@ Send a file to input, if no file given the data will be read directly from the c
 
 ---
 
+## $ si instance inout
+
+**Description**
+
+See input and output
+
+**Usage**
+
+`si instance inout [options] <id> [file]`
+
+**Arguments**
+
+*  id                                Instance id or '-' for the last one started or selected
+*  file                              File with data
+
+**Options**
+
+*  -t,--content-type <content-type>  Content-Type (choices: "text/plain", "application/octet-stream", "application/x-ndjson")
+*  -e, --end                         Close the input stream of the Instance when this stream ends, "x-end-stream" header (default: false)
+*  -h, --help                        Display help for command
+
+---
+
 ## $ si instance output
 
 **Description**

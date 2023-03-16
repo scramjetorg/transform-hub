@@ -2085,7 +2085,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:244](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L244)
+[packages/types/src/sth-configuration.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L249)
 
 ___
 
@@ -2247,6 +2247,7 @@ ___
 | `cpmReconnectionDelay` | `number` |
 | `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
+| `debug` | `boolean` |
 | `docker` | `boolean` |
 | `environmentName?` | `string` |
 | `exitWithLastInstance` | `boolean` |
@@ -2301,6 +2302,7 @@ ___
 | `cpmId` | `string` | CPM id. |
 | `cpmSslCaPath?` | `string` | Path to the certificate authority file for verifying self-signed CPM certs |
 | `cpmUrl` | `string` | CPM url. |
+| `debug` | `boolean` | Add debugging flags to runner. |
 | `docker` | { `prerunner`: [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) ; `runner`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `runnerImages`: { `node`: `string` ; `python3`: `string`  }  } | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |
 | `docker.runner` | [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) | Runner container configuration. |
