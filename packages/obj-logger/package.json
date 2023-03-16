@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/obj-logger",
-  "version": "0.33.1",
+  "version": "0.33.2",
   "description": "This package is part of Scramjet Transform Hub. The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.",
   "main": "./src/index.ts",
   "scripts": {

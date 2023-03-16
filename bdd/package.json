@@ -1,6 +1,6 @@
 {
   "name": "scramjet-bdd",
-  "version": "0.33.1",
+  "version": "0.33.2",
   "description": "",
   "main": "_cucumber.js",
   "dependencies": {

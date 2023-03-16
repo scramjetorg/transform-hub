@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/multi-manager-api-client",
-  "version": "0.33.1",
+  "version": "0.33.2",
   "description": "Scramjet MultiManager API Client",
   "main": "src/index.ts",
   "scripts": {
