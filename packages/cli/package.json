@@ -20,11 +20,11 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/api-client": "^0.33.1",
-    "@scramjet/client-utils": "^0.33.1",
-    "@scramjet/middleware-api-client": "^0.33.1",
-    "@scramjet/obj-logger": "^0.33.1",
-    "@scramjet/utility": "^0.33.1",
+    "@scramjet/api-client": "^0.33.2",
+    "@scramjet/client-utils": "^0.33.2",
+    "@scramjet/middleware-api-client": "^0.33.2",
+    "@scramjet/obj-logger": "^0.33.2",
+    "@scramjet/utility": "^0.33.2",
     "chalk": "^4.1.2",
     "commander": "^9.5.0",
     "commander-completion": "^1.0.1",
@@ -35,7 +35,7 @@
     "validator": "^13.7.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.33.1",
+    "@scramjet/types": "^0.33.2",
     "@types/find-package-json": "^1.2.3",
     "@types/minimatch": "^3.0.5",
     "@types/node": "15.12.5",

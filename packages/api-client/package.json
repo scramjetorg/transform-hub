@@ -13,14 +13,14 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/client-utils": "^0.33.1",
-    "@scramjet/sth-config": "^0.33.1",
-    "@scramjet/symbols": "^0.33.1",
+    "@scramjet/client-utils": "^0.33.2",
+    "@scramjet/sth-config": "^0.33.2",
+    "@scramjet/symbols": "^0.33.2",
     "n-readlines": "^1.0.1",
     "scramjet": "^4.36.9"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.33.1",
+    "@scramjet/types": "^0.33.2",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
