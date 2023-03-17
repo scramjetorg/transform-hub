@@ -46,6 +46,8 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
+import TopicName from "./topicName";
+import TopicRouter from "./topicRouter";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -493,9 +495,10 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
-        this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
 
-        this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
+        const topicRouter = new TopicRouter(this.api, this.apiBase, this.serviceDiscovery);
+        topicRouter.logger.pipe(this.logger);
+
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
             this.logger.debug("Platform request");
@@ -540,12 +543,6 @@ export class Host implements IComponent {
         res.end();
 
         return next();
-    }
-
-    topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        req.url = req.url?.substring(this.topicsBase.length);
-
-        return this.serviceDiscovery.router.lookup(req, res, next);
     }
 
     /**
@@ -940,7 +937,7 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
-                    { topic: data.requires, contentType: data.contentType! },
+                    { topic: new TopicName(data.requires), contentType: data.contentType! },
                     csic.getInputStream()
                 );
 
@@ -955,7 +952,7 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
-                    { topic: data.provides, contentType: data.contentType! },
+                    { topic: new TopicName(data.provides), contentType: data.contentType! },
                     csic.id
                 );
 
@@ -973,7 +970,7 @@ export class Host implements IComponent {
             if (csic.provides && csic.provides !== "") {
                 csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
                     {
-                        topic: csic.provides,
+                        topic: new TopicName(csic.provides),
                         contentType: ""
                     }
                 ) as Writable);
@@ -996,7 +993,7 @@ export class Host implements IComponent {
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
                 (this.serviceDiscovery.getData({
-                    topic: csic.requires,
+                    topic: new TopicName(csic.requires),
                     contentType: "",
                 }) as Readable
                 ).unpipe(csic.getInputStream()!);

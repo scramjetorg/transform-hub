@@ -1,19 +1,20 @@
 
-import { APIRoute, ReadableStream } from "@scramjet/types";
 import { Duplex, PassThrough, Readable, Writable } from "stream";
 
 import { CPMConnector } from "./cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { getRouter } from "@scramjet/api-server";
-import { ReasonPhrases } from "http-status-codes";
+import TopicName from "./topicName";
+import TopicsController, { DataType, TopicDataType } from "./topicsController";
 
-/**
- * TODO: Refactor types below.
- */
-export type dataType = {
-    topic: string;
-    contentType: string;
-}
+// class Topic {
+//     private name: TopicName;
+//     private contentType: ContentType;
+
+//     constructor() {
+//         this.name = new TopicName("");
+//         this.contentType = "";
+//     }
+// }
 
 /**
  * Topic stream type definition.
@@ -23,19 +24,9 @@ export type streamType = {
     stream: Duplex;
 }
 
-/**
- * Topic details type definition.
- */
-export type topicDataType = {
-    contentType: string,
-    stream: Duplex,
-    localProvider?: string,
-    cpmRequest?: boolean
-}
-
 const NEWLINE_BYTE = "\n".charCodeAt(0);
 
-function pipeToTopic(source: Readable, target: topicDataType) {
+export function pipeToTopic(source: Readable, target: TopicDataType) {
     source.pipe(target.stream, { end: false });
 
     // for json streams, make sure that the last message will be ended with newline
@@ -62,69 +53,14 @@ function pipeToTopic(source: Readable, target: topicDataType) {
  * and requesting Manager when Instance requires data but data is not available locally.
  */
 export class ServiceDiscovery {
-    dataMap = new Map<
-        string,
-        topicDataType
-    >();
-
     logger = new ObjLogger(this);
 
     cpmConnector?: CPMConnector;
 
-    public router: APIRoute = getRouter();
+    private topicsController: TopicsController;
 
     constructor() {
-        this.createTopicsRouter();
-    }
-
-    createTopicsRouter() {
-        this.router.downstream("/:topic", async (req) => {
-            const contentType = req.headers["content-type"] || "";
-            const { topic } = req.params || {};
-            const { cpm } = req.headers;
-
-            this.logger.debug(`Incoming topic '${topic}' request`);
-            let target = this.getByTopic(topic);
-
-            req.on("close", () => {
-                //@TODO: Should remove this actor"
-            });
-
-            if (!target) {
-                target = this.addData(
-                    { contentType, topic },
-                    "api"
-                );
-            } else if (contentType !== target.contentType) {
-                return { opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE, error: `Acceptable Content-Type for ${topic.name} is ${topic.contentType}` };
-            }
-
-            pipeToTopic(req, target);
-
-            if (!cpm) {
-                await this.update({
-                    provides: topic, contentType: contentType, topicName: topic });
-            } else {
-                this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
-            }
-            return {};
-        }, { checkContentType: false });
-
-        this.router.upstream("/:topic", async (req) => {
-            //TODO: what should be the default content type and where to store this information?
-            const contentType = req.headers["content-type"] || "application/x-ndjson";
-            const { topic } = req.params || {};
-            const { cpm } = req.headers;
-
-            if (!cpm) {
-                await this.update({
-                    requires: topic, contentType, topicName: topic });
-            } else {
-                this.logger.debug(`Incoming Upstream CPM request for topic '${topic}'`);
-            }
-
-            return this.getData({ topic, contentType });
-        });
+        this.topicsController = new TopicsController();
     }
 
     /**
@@ -137,43 +73,41 @@ export class ServiceDiscovery {
     }
 
     /**
-     * Stores given topic.
+     * Returns topic with given configuration, if not exists creates new one.
      *
-     * @param {dataType} config Topic configuration.
+     * @param {DataType} config Topic configuration.
      * @param {string} [localProvider] Provider identifier. It not set topic will be considered as external.
      * @returns added topic data.
      */
-    addData(config: dataType, localProvider?: string) {
-        if (!this.dataMap.has(config.topic)) {
-            this.logger.trace("Adding data:", config, localProvider);
-
-            const topicStream = new PassThrough();
-
-            this.dataMap.set(config.topic, {
-                contentType: config.contentType,
-                stream: topicStream,
-                localProvider
-
-            });
+    createTopicIfNotExist(config: DataType, localProvider?: string) {
+        const topicName = config.topic;
+        let topic = this.topicsController.get(topicName);
+        const topicExist = topic !== undefined;
+        if (topicExist) {
+            this.logger.trace("Routing topic:", config);
         } else {
-            this.logger.trace("Routing data:", config);
+            this.logger.trace("Adding topic:", config, localProvider);
+            topic = {
+                contentType: config.contentType,
+                stream: new PassThrough(),
+                localProvider
+            }
+            this.topicsController.set(topicName, topic);
         }
-
-        return this.dataMap.get(config.topic)!;
+        return topic!;
     }
 
     /**
-     * @TODO: implement.
-
      * @returns All topics.
      */
     getTopics() {
-        return Array.from(this.dataMap, ([key, value]) => ({
-            contentType: value.contentType,
-            localProvider: value.localProvider,
-            topic: key,
-            topicName: key
-        }));
+        // return Array.from(this.dataMap, ([key, value]) => ({
+        //     contentType: value.contentType,
+        //     localProvider: value.localProvider,
+        //     topic: key,
+        //     topicName: key
+        // }));
+        return this.topicsController.topics;
     }
 
     /**
@@ -182,25 +116,8 @@ export class ServiceDiscovery {
      * @param {string} topic Topic name.
      * @returns {streamType|undefined} Topic details.
      */
-    getByTopic(topic: string): streamType | undefined {
-        if (this.dataMap.has(topic)) {
-            return this.dataMap.get(topic);
-        }
-
-        return undefined;
-    }
-
-    /**
-     * Unsets local provider for given topic.
-     *
-     * @param {string} topic Topic name.
-     */
-    removeLocalProvider(topic: string) {
-        const d = this.dataMap.get(topic);
-
-        if (d) {
-            this.dataMap.set(topic, { ...d, localProvider: undefined });
-        }
+    getByTopic(topic: TopicName): streamType | undefined {
+        return this.topicsController.get(topic);
     }
 
     /**
@@ -208,33 +125,20 @@ export class ServiceDiscovery {
      * If topic does not exist it will be created.
      * If topic exists but is not local, data will be requested from Manager.
      *
-     * @param {dataType} dataType Topic configuration.
+     * @param {DataType} dataType Topic configuration.
      * @returns Topic stream.
      */
-    getData(dataType: dataType): Duplex {
+    getData(dataType: DataType): Duplex {
         this.logger.debug("Get data:", dataType);
 
-        if (this.dataMap.has(dataType.topic)) {
-            const topicData = this.dataMap.get(dataType.topic)!;
+        const topic = this.createTopicIfNotExist(dataType);
 
-            this.logger.debug("Topic exists", dataType.topic);
-
-            if (topicData?.localProvider) {
-                this.logger.trace("LocalProvider found topic, provider", dataType.topic, topicData.localProvider);
-            } else {
-                this.logger.trace("Local topic provider not found for:", dataType.topic);
-
-                if (this.cpmConnector) {
-                    this.dataMap.set(dataType.topic, topicData);
-                }
-            }
-
-            return topicData?.stream.on("end", () => this.logger.debug("Topic ended", dataType));
+        if (topic?.localProvider) {
+            this.logger.trace("LocalProvider found topic, provider", dataType.topic, topic.localProvider);
+        } else {
+            this.logger.trace("Local topic provider not found for:", dataType.topic);
         }
-
-        this.addData(dataType);
-
-        return this.getData(dataType);
+        return topic.stream.on("end", () => this.logger.debug("Topic ended", dataType));
     }
 
     /**
@@ -242,25 +146,21 @@ export class ServiceDiscovery {
      *
      * @param {string} topic Topic name.
      */
-    removeData(topic: string) {
-        if (this.dataMap.has(topic)) {
-            // eslint-disable-next-line no-extra-parens
-            (this.dataMap.get(topic)?.stream as ReadableStream<any>).unpipe();
-            this.dataMap.delete(topic);
-        }
+    removeData(topic: TopicName) {
+        this.topicsController.delete(topic);
     }
 
-    public async routeTopicToStream(topicData: dataType, target: Writable) {
+    public async routeTopicToStream(topicData: DataType, target: Writable) {
         this.getData(topicData).pipe(target);
 
-        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
     }
 
-    public async routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
-        const topic = this.addData(topicData, localProvider);
+    public async routeStreamToTopic(source: Readable, topicData: DataType, localProvider?: string) {
+        const topic = this.createTopicIfNotExist(topicData, localProvider);
 
         pipeToTopic(source, topic);
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {

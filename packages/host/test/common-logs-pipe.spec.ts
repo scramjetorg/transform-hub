@@ -2,14 +2,13 @@
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
 import { CommonLogsPipe } from "../src/lib/common-logs-pipe";
-import test from "ava";
 
 const lineLength = 20;
 const numberOfLogs = 1e4;
 const highWaterMark = lineLength * numberOfLogs / 1000;
 const commonLogsBufferLength = numberOfLogs / 1000;
 
-test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", async (t) => {
+test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", async () => {
     const commonLogsPipe = { outStream: new PassThrough({ highWaterMark }) };
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -33,10 +32,10 @@ test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", asy
         })
         .run();
 
-    t.assert(instances.every(instance => instance.isPaused() === true));
+    expect(instances.every(instance => instance.isPaused() === true));
 });
 
-test("10k logs does not pause instances streams", async (t) => {
+test("10k logs does not pause instances streams", async () => {
     const commonLogsPipe = new CommonLogsPipe(commonLogsBufferLength);
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -60,10 +59,10 @@ test("10k logs does not pause instances streams", async (t) => {
         })
         .run();
 
-    t.assert(instances.every(instance => instance.isPaused() === false));
+    expect(instances.every(instance => instance.isPaused() === false));
 });
 
-test("instances streams will automatically resume after a pause", async (t) => {
+test("instances streams will automatically resume after a pause", async () => {
     const commonLogsPipe = new CommonLogsPipe(1e3);
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -91,6 +90,6 @@ test("instances streams will automatically resume after a pause", async (t) => {
         })
         .run();
 
-    t.assert(instances.every(instance => instance.isPaused() === false));
-    t.assert(areStreamsPaused.every(isPaused => isPaused === false));
+    expect(instances.every(instance => instance.isPaused() === false));
+    expect(areStreamsPaused.every(isPaused => isPaused === false));
 });
