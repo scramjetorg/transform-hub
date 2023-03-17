@@ -7,12 +7,14 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { getRouter } from "@scramjet/api-server";
 import { ReasonPhrases } from "http-status-codes";
 
+type ContentType = "text/plain" | "application/x-ndjson" | string
+type TopicId = string //match(/^[\\a-zA-Z0-9_+-]+$/) wg CLI
 /**
  * TODO: Refactor types below.
  */
 export type dataType = {
-    topic: string;
-    contentType: string;
+    topic: TopicId; 
+    contentType: ContentType;
 }
 
 /**
@@ -22,14 +24,13 @@ export type streamType = {
     contentType: string;
     stream: Duplex;
 }
-
 /**
  * Topic details type definition.
  */
 export type topicDataType = {
-    contentType: string,
+    contentType: ContentType,
     stream: Duplex,
-    localProvider?: string,
+    localProvider?: "api" | TopicId,
     cpmRequest?: boolean
 }
 
@@ -96,6 +97,7 @@ export class ServiceDiscovery {
                     "api"
                 );
             } else if (contentType !== target.contentType) {
+                // FIXME: this comment have no sense: topic.contentType
                 return { opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE, error: `Acceptable Content-Type for ${topic.name} is ${topic.contentType}` };
             }
 
@@ -186,7 +188,7 @@ export class ServiceDiscovery {
         if (this.dataMap.has(topic)) {
             return this.dataMap.get(topic);
         }
-
+        // TODO: return same as .get above....
         return undefined;
     }
 
