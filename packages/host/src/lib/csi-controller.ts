@@ -803,7 +803,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getLogStream(): Readable {
-        return this.upStreams![CC.LOG];
+        return this.upStreams![CC.LOG] as Duplex;
     }
 
     // @TODO discuss this
