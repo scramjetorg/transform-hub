@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-loop-func */
 import fs from "fs";
 import { strict as assert } from "assert";
@@ -95,7 +96,6 @@ export async function streamToString(_stream: Readable): Promise<string> {
 
 export async function getOccurenceNumber(searchedValue: any, filePath: any) {
     try {
-        // eslint-disable-next-line no-console
         console.log(`${JSON.stringify(searchedValue)}`);
         return Number((await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout);
     } catch {
@@ -123,7 +123,6 @@ export async function getStreamsFromSpawn(
     command: string, options: string[], env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string, any]> {
     if (process.env.SCRAMJET_TEST_LOG) {
-        // eslint-disable-next-line no-console
         console.error("Spawning command", command, ...options);
     }
 
@@ -152,7 +151,6 @@ export async function getStreamsFromSpawnSuccess(
     const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
 
     if (process.env.SCRAMJET_TEST_LOG) {
-        // eslint-disable-next-line no-console
         console.error("Results", { stdout, stderr });
     }
 
@@ -168,16 +166,16 @@ export function removeBoundaryQuotes(str: string) {
     return str;
 }
 
-export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 10000): Promise<boolean> {
+export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
     return Promise.race([
         (async () => {
             for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
                 response = `${response}${chunk}`;
-                // eslint-disable-next-line no-console
-                console.log("\nData received: ", response);
-                if (response.includes(expected)) return true;
+                console.log(response);
+                if (response.includes(expected))
+                    return response;
             }
             throw new Error("End of stream reached");
         })(),

@@ -6,7 +6,7 @@ import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
 import * as dns from "dns";
 
-const DEFAULT_TIMEOUT = 20000;
+const DEFAULT_TIMEOUT = 864e5;
 
 export class CustomWorld implements World {
     readonly attach: ICreateAttachment;
@@ -38,6 +38,7 @@ export class CustomWorld implements World {
         sequences?: STHRestAPI.GetSequencesResponse;
         instances?: STHRestAPI.GetInstancesResponse;
         commandInProgress?: ChildProcessWithoutNullStreams;
+        topic?: string;
     } = {};
 
     constructor({ attach, log, parameters }: any) {

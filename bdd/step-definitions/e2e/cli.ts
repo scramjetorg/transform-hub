@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable quote-props */
 /* eslint-disable quotes */
@@ -50,7 +51,7 @@ When("I get sequence id", { timeout: 30000 }, async function(this: CustomWorld) 
     const stdio = res.stdio![0].split("\n");
     const seqInfo = JSON.parse(stdio[0]);
 
-    this.cliResources.sequenceId = seqInfo.id;
+    this.cliResources.sequenceId = seqInfo._id;
 
     logger.log("Sequence id: ", this.cliResources.sequenceId);
 
@@ -262,4 +263,107 @@ Then("I confirm I switched to {string} profile", async function(this: CustomWorl
     const defaultConfig = stdio.includes(`-> ${profileName}`);
 
     assert.equal(defaultConfig, true);
+});
+
+// -----------------------------KM 1------------------------------------
+
+// const rht = require("./real-hrtime.node");
+
+// When("send {int} timestamps to topic {string}", async function(this:CustomWorld, timesOfExecution: number, topicName: string) {
+//     logger.trace(`Sending ${timesOfExecution} timestamps to topic ${topicName}`);
+
+//     return Object.assign(
+//         DataStream.from(
+//             async function* () {
+//                 let x = 0;
+
+//                 while (++x <= timesOfExecution) {
+//                     // eslint-disable-next-line no-loop-func
+//                     await new Promise(res => setTimeout(res, 10));
+//                     yield { i: x };
+//                 }
+
+//                 logger.log("Done", x);
+//             })
+//             .map(
+//                 () => rht.stringified() + "\n"
+//             )
+//             .on("error", (e) => { logger.error("ERR", e.message); }),
+//         { topic: "delay-test", contentType: "application/x-ndjson" }
+//     );
+// });
+
+When("I start sequence topic consumer {int} times", { timeout: 10000000 }, async function(this: CustomWorld, timesOfExecution: number) {
+    const res = this.cliResources;
+    const seqId = this.cliResources.sequenceId;
+    let i = 1;
+
+    for (; i <= timesOfExecution; i++) {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", `${seqId}`, "--input-topic", `topic${i}`]);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            logger.debug(res.stdio);
+        }
+
+        assert.equal(res.stdio[2], 0);
+    }
+});
+
+When("I start sequence topic producer {int} times", { timeout: 10000000 }, async function(this: CustomWorld, timesOfExecution: number) {
+    const res = this.cliResources;
+    const seqId = this.cliResources.sequenceId;
+    let i = 1;
+
+    for (; i <= timesOfExecution; i++) {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", `${seqId}`, "--output-topic", `topic${i}`]);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            logger.debug(res.stdio);
+        }
+
+        assert.equal(res.stdio[2], 0);
+    }
+});
+
+Then("I confirm topic {string} received", async function(this: CustomWorld, _topic: string) {
+    const expected = "";
+    const { stdout } = this.cliResources!.commandInProgress!;
+
+    this.cliResources.topic = await waitUntilStreamContains(stdout, expected);
+
+    assert.ok(this.cliResources.topic);
+
+    await this.cliResources!.commandInProgress!.kill();
+});
+
+Then("calculate average from topic diffs", async function(this: CustomWorld) {
+    const topics = this.cliResources.topic!.toString();
+
+    console.log(topics);
+    const diffsArrayStr: string[] = topics.split("\n");
+
+    console.log(diffsArrayStr);
+
+    const diffsArrayNr: number[] = diffsArrayStr
+        .map(str => {
+            const num = parseInt(str, 10);
+
+            return isNaN(num) ? 0 : num;
+        })
+        .filter(num => num !== 0);
+
+    console.log(diffsArrayNr);
+
+    const result = diffsArrayNr
+        .reduce((a, b) => {
+            return a + b;
+        }, 0);
+
+    console.log(result);
+
+    const averageInNs = result / diffsArrayNr.length;
+    const averageInMs = averageInNs / 1e6;
+    const average = averageInMs / 2;
+
+    console.log(`Average delay time in milliseconds: ${average}, from ${diffsArrayNr.length} channels.`);
 });

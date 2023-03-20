@@ -1,0 +1,31 @@
+{
+  "name": "@scramjet/sequence-timestamps-consumer",
+  "version": "0.22.0",
+  "description": "",
+  "main": "index.js",
+  "assets": [
+    "real-hrtime.node"
+  ],
+  "scripts": {
+    "prebuild": "tsc -p tsconfig.json",
+    "build": "cp -r package.json dist && cp -r real-hrtime.node dist/ && (cd dist && npm i --only=production)",
+    "postbuild": "si seq pack ./dist/ -o ../sequence-timestamps-consumer.tar.gz",
+    "clean": "rm -rf ./dist ./*.tar.gz"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.33.0",
+    "@types/node": "15.12.5"
+  },
+  "dependencies": {
+    "scramjet": "^4.36.6"
+  },
+  "scramjet": {
+    "image": "node"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
