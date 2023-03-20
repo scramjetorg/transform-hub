@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { PostDisconnectPayload } from "@scramjet/types/src/rest-api-manager";
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { profileManager, sessionConfig } from "../config";
 import { displayObject, displayStream } from "../output";
@@ -79,6 +80,32 @@ export const space: CommandDefinition = (program) => {
             await displayStream(await managerClient.getLogStream());
         });
 
+    spaceCmd
+        .command("disconnect")
+        .description("Disconnect self hosted Hubs from space")
+        .argument("<space_name>", "The name of the Space")
+        .option("--id <id>", "Hub Id")
+        .option("--all", "Disconnects all self-hosted Hubs connected to Space", false)
+        .action(async (spaceName: string, id: string, all: string) => {
+            const mwClient = getMiddlewareClient();
+            const managerClient = mwClient.getManagerClient(spaceName);
+            let opts = { } as PostDisconnectPayload;
+
+            if (typeof id === "string") {
+                opts = { id };
+            }
+
+            if (all) {
+                opts = { limit: 0 };
+            }
+
+            if (!Object.keys(opts).length) {
+                throw new Error("Missing --id or --all");
+            }
+
+            displayObject(await managerClient.disconnectHubs(opts), profileManager.getProfileConfig().format);
+        });
+
     const accessKeyCmd = spaceCmd
             .command("access")
             .description("Manages Access Keys for active Space");
@@ -94,7 +121,7 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.createAccessKey(spaceName, { description }), "json");
+            displayObject(await mwClient.createAccessKey(spaceName, { description }), profileManager.getProfileConfig().format);
         });
 
     accessKeyCmd.command("list")
@@ -108,7 +135,7 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.listAccessKeys(spaceName), "json");
+            displayObject(await mwClient.listAccessKeys(spaceName), profileManager.getProfileConfig().format);
         });
 
     accessKeyCmd.command("revoke")
@@ -122,6 +149,6 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.revokeAccessKey(spaceName, accessKey), "json");
+            displayObject(await mwClient.revokeAccessKey(spaceName, accessKey), profileManager.getProfileConfig().format);
         });
 };
