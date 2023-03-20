@@ -1,6 +1,7 @@
 import { OpResponse } from "../rest-api-multi-manager";
 
 export type PostDisconnectPayload = {
+    id?: string;
     limit?: number;
     accessKey?: string;
 }
