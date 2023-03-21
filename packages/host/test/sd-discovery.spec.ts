@@ -1,10 +1,12 @@
-import { dataType, ServiceDiscovery } from "../src/lib/sd-adapter";
+import { ServiceDiscovery } from "../src/lib/sd-adapter";
 import { CPMConnector } from "../src/lib/cpm-connector";
 import { PassThrough } from "stream";
+import TopicName from "../src/lib/topicName";
+import { DataType } from "../src/lib/topicsController";
 
 let serviceDiscovery: ServiceDiscovery;
-const testUUID = "4fb4230f-5481-487d-a055-a99d20740e96"
-const testConfig: dataType = {
+const testUUID = new TopicName("4fb4230f-5481-487d-a055-a99d20740e96")
+const testConfig: DataType = {
     topic: testUUID,
     contentType: "text/plain"
 }
@@ -26,7 +28,7 @@ beforeEach(() => {
 describe("Store topic", () => {
 
     test("Without provider", () => {
-        const topic = serviceDiscovery.addData(testConfig);
+        const topic = serviceDiscovery.createTopicIfNotExist(testConfig);
         const topics = serviceDiscovery.getTopics();
         expect(topics.length === 1);
         expect(topics[0].topic).toEqual(testConfig.topic);
@@ -35,7 +37,7 @@ describe("Store topic", () => {
     })
     test("With provider", () => {
         const localProvider = "api";
-        const topic = serviceDiscovery.addData(testConfig, localProvider);
+        const topic = serviceDiscovery.createTopicIfNotExist(testConfig, localProvider);
         const topics = serviceDiscovery.getTopics();
         expect(topics.length === 1);
         expect(topics[0].topic).toEqual(testConfig.topic);
@@ -53,21 +55,21 @@ describe("Return list of topics in SD", () => {
 
     test("List with 5 elements", () => {
         const topicsId = [
-            "1fb4230f-5481-487d-a055-a99d20740e96",
-            "2fb4230f-5481-487d-a055-a99d20740e96",
-            "3fb4230f-5481-487d-a055-a99d20740e96",
-            "4fb4230f-5481-487d-a055-a99d20740e96",
-            "5fb4230f-5481-487d-a055-a99d20740e96",
+            new TopicName("1fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicName("2fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicName("3fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicName("4fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicName("5fb4230f-5481-487d-a055-a99d20740e96"),
         ]
         topicsId.forEach((topicId) =>
-            serviceDiscovery.addData({ topic: topicId, contentType: "text/plain" }))
+            serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType: "text/plain" }))
         const topics = serviceDiscovery.getTopics();
         expect(topics.length === 5);
     })
 
     test("List with only unique elements", () => {
         for (let i = 0; i < 10; i++)
-            serviceDiscovery.addData({ topic: "1fb4230f-5481-487d-a055-a99d20740e00", contentType: "text/plain" });
+            serviceDiscovery.createTopicIfNotExist({ topic: new TopicName("1fb4230f-5481-487d-a055-a99d20740e00"), contentType: "text/plain" });
 
         const topics = serviceDiscovery.getTopics();
         expect(topics.length === 1);
@@ -77,7 +79,7 @@ describe("Return list of topics in SD", () => {
 // getByTopic(topic: string)
 describe("Get topic details for given topic", () => {
     test("Get existing topic", () => {
-        serviceDiscovery.addData(testConfig);
+        serviceDiscovery.createTopicIfNotExist(testConfig);
         const returnedTopic = serviceDiscovery.getByTopic(testUUID);
         expect(returnedTopic).not.toBeUndefined();
         expect(returnedTopic!.contentType).toEqual(testConfig.contentType);
@@ -86,18 +88,6 @@ describe("Get topic details for given topic", () => {
         const returnedTopic = serviceDiscovery.getByTopic(testUUID);
         expect(returnedTopic).toBeUndefined();
     });
-})
-
-// removeLocalProvider(topic: string)
-test("Unsets local provider for given topic", () => {
-    const localProvider = "api";
-    const topic = serviceDiscovery.addData(testConfig, localProvider);
-    expect(topic.localProvider).toEqual(localProvider);
-
-    serviceDiscovery.removeLocalProvider(testUUID);
-    const returnedTopic = serviceDiscovery.getTopics().filter((topic) => topic.topic === testUUID);
-    expect(returnedTopic.length).toEqual(1);
-    expect(returnedTopic[0].localProvider).toBeUndefined();
 })
 
 // getData(dataType: dataType)
@@ -109,7 +99,7 @@ test("Get topic details", () => {
 
 // removeData(topic: string)
 test("Remove stored topic with given id", () => {
-    serviceDiscovery.addData(testConfig);
+    serviceDiscovery.createTopicIfNotExist(testConfig);
     expect(serviceDiscovery.getTopics().length === 1);
     serviceDiscovery.removeData(testUUID);
     expect(serviceDiscovery.getTopics().length === 0);
@@ -120,7 +110,7 @@ test("Route topic to stream", () => {
     const testTarget = new PassThrough();
     serviceDiscovery.routeTopicToStream(testConfig, testTarget);
     expect(topicInfo!).not.toBeUndefined();
-    expect(topicInfo!.requires).toEqual(testConfig.topic);
+    expect(topicInfo!.requires).toEqual(testConfig.topic.toString());
     expect(topicInfo!.contentType).toEqual(testConfig.contentType);
 })
 
@@ -129,7 +119,7 @@ test("Route stream to topic", () => {
     const testSource = new PassThrough();
     serviceDiscovery.routeStreamToTopic(testSource, testConfig);
     expect(topicInfo!).not.toBeUndefined();
-    expect(topicInfo!.provides).toEqual(testConfig.topic);
+    expect(topicInfo!.provides).toEqual(testConfig.topic.toString());
     expect(topicInfo!.contentType).toEqual(testConfig.contentType);
 })
 
