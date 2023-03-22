@@ -11,7 +11,6 @@ import { pipeToTopic, ServiceDiscovery } from "./sd-adapter";
 // type TopicDownstreamResponse = {}
 
 
-
 class TopicRouter {
     private serviceDiscovery: ServiceDiscovery
     logger = new ObjLogger(this);

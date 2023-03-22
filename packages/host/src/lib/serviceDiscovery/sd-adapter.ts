@@ -1,20 +1,17 @@
 
 import { Duplex, PassThrough, Readable, Writable } from "stream";
 
-import { CPMConnector } from "./cpm-connector";
+import { CPMConnector } from "../cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
 import TopicName from "./topicName";
-import TopicsController, { DataType, TopicDataType } from "./topicsController";
+import TopicsMap from "./topicsController";
+import Consumer from "./serviceDiscovery/consumer";
+import Provider from "./serviceDiscovery/provider";
 
-// class Topic {
-//     private name: TopicName;
-//     private contentType: ContentType;
-
-//     constructor() {
-//         this.name = new TopicName("");
-//         this.contentType = "";
-//     }
-// }
+export type DataType = {
+    topic: TopicName,
+    contentType: string
+}
 
 /**
  * Topic stream type definition.
@@ -47,6 +44,32 @@ export function pipeToTopic(source: Readable, target: TopicDataType) {
     }
 }
 
+class TopicFacade {
+    logger = new ObjLogger(this);
+    private topicsController: TopicsMap;
+    constructor() {
+        this.topicsController = new TopicsMap();
+    }
+
+    getTopics() {
+        return this.topicsController.topics;
+    }
+    addTopicProvider(name: TopicName, provider: Provider){
+
+    }
+    addTopicConsumer(name: TopicName, consumer: Consumer){
+        
+    }
+}
+
+class CpmReportingTopicFacade extends TopicFacade{
+    private cpmConnector: CPMConnector;
+    constructor(cpmConnector: CPMConnector){
+        super();
+        this.cpmConnector = cpmConnector;
+    }
+}
+
 /**
  * Service Discovery provides methods to manage topics.
  * Its functionality covers creating, storing, removing topics
@@ -57,10 +80,10 @@ export class ServiceDiscovery {
 
     cpmConnector?: CPMConnector;
 
-    private topicsController: TopicsController;
+    private topicsController: TopicsMap;
 
     constructor() {
-        this.topicsController = new TopicsController();
+        this.topicsController = new TopicsMap();
     }
 
     /**
@@ -146,9 +169,9 @@ export class ServiceDiscovery {
      *
      * @param {string} topic Topic name.
      */
-    removeData(topic: TopicName) {
-        this.topicsController.delete(topic);
-    }
+    // removeData(topic: TopicName) {
+    //     this.topicsController.delete(topic);
+    // }
 
     public async routeTopicToStream(topicData: DataType, target: Writable) {
         this.getData(topicData).pipe(target);

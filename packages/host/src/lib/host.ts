@@ -31,7 +31,7 @@ import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 
-import { ServiceDiscovery } from "./sd-adapter";
+import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
@@ -46,8 +46,8 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
-import TopicName from "./topicName";
-import TopicRouter from "./topicRouter";
+import TopicName from "./serviceDiscovery/topicName";
+import TopicRouter from "./serviceDiscovery/topicRouter";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
