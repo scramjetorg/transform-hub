@@ -1,7 +1,7 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Duplex, Readable, Writable } from "stream";
+import { Duplex, Writable } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
@@ -31,7 +31,7 @@ import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 
-import { ServiceDiscovery } from "./sd-adapter";
+import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
@@ -46,8 +46,9 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
-import TopicName from "./topicName";
-import TopicRouter from "./topicRouter";
+import TopicName from "./serviceDiscovery/topicName";
+import TopicRouter from "./serviceDiscovery/topicRouter";
+import { ContentType } from "./serviceDiscovery/contentType";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -937,7 +938,7 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
-                    { topic: new TopicName(data.requires), contentType: data.contentType! },
+                    { topic: new TopicName(data.requires), contentType: data.contentType as ContentType },
                     csic.getInputStream()
                 );
 
@@ -952,8 +953,8 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
-                    { topic: new TopicName(data.provides), contentType: data.contentType! },
-                    csic.id
+                    { topic: new TopicName(data.provides), contentType: data.contentType as ContentType },
+                    // csic.id
                 );
 
                 csic.outputRouted = true;
@@ -968,12 +969,8 @@ export class Host implements IComponent {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
-                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
-                    {
-                        topic: new TopicName(csic.provides),
-                        contentType: ""
-                    }
-                ) as Writable);
+                const topic = this.serviceDiscovery.topicsController.get(new TopicName(csic.provides));
+                if (topic) csic.getOutputStream()!.unpipe(topic);
             }
 
             csic.logger.unpipe(this.logger);
@@ -992,11 +989,8 @@ export class Host implements IComponent {
 
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
-                (this.serviceDiscovery.getData({
-                    topic: new TopicName(csic.requires),
-                    contentType: "",
-                }) as Readable
-                ).unpipe(csic.getInputStream()!);
+                const topic = this.serviceDiscovery.topicsController.get(new TopicName(csic.requires));
+                if (topic) topic.unpipe(csic.getInputStream()! as Writable);
             }
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
