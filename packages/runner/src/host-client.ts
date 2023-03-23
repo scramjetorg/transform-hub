@@ -4,9 +4,10 @@ import { CommunicationChannel as CC } from "@scramjet/symbols";
 import net, { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Agent } from "http";
+import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
 
 type HostOpenConnections = [
-    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
 ]
 
 const BPMux = require("bpmux").BPMux;
@@ -40,29 +41,41 @@ class HostClient implements IHostClient {
     }
 
     async init(id: string): Promise<void> {
+        const tunnel = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+        const protocol = new TeceMux(tunnel);
+
         const openConnections = await Promise.all(
             Array.from(Array(9))
-                .map(() => {
+                .map((_c, index) => {
                     // Error handling for each connection is process crash for now
-                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+                    const channel = protocol.multiplex({ channel: index });//net.createConnection(this.instancesServerPort, this.instancesServerHost);
 
-                    return new Promise<net.Socket>(res => {
-                        connection.on("connect", () => res(connection));
-                    });
+                    // return new Promise<TeceMuxChannel>(res => {
+                    //     channel.on("connect", () => res(channel));
+                    // });
+
+                    return Promise.resolve(channel);
                 })
-                .map((connPromised, index) => {
-                    return connPromised.then((connection) => {
-                        // Assuming id is exactly 36 bytes
-                        connection.write(id);
-                        // Assuming number is from 0-7, sending 1 byte
-                        connection.write(index.toString());
+        ).then(async res => {
+            return Promise.all(
+                res.map(async (channel, index) => {
+                    // Assuming id is exactly 36 bytes
+                    channel.write(id + "" + index);
+                    // eslint-disable-next-line no-console
+                    console.log(channel._id);
+                    // Assuming number is from 0-8, sending 1 byte
+                    //channel.write(index.toString());
 
-                        return connection;
-                    });
+                    //await defer(500);
+
+                    return channel;
                 })
-        );
+            );
+        });
 
-        this._streams = openConnections as HostOpenConnections;
+        //await defer(500);
+
+        this._streams = await openConnections as HostOpenConnections;
 
         try {
             this.bpmux = new BPMux(this._streams[CC.PACKAGE]);

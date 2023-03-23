@@ -20,9 +20,11 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     commonEncoder = new FrameEncoder(0, this);
 
     private createChannel(destinationPort?: number, emit?: boolean): TeceMuxChannel {
-        this.logger.debug("Create Channel", destinationPort || this.channelCount);
+        const port = destinationPort !== undefined ? destinationPort : this.channelCount;
 
-        const encoder = new FrameEncoder(this.channelCount, this, { encoding: undefined });
+        this.logger.debug("Create Channel", port);
+
+        const encoder = new FrameEncoder(port, this, { encoding: undefined });
 
         encoder.logger.updateBaseLog({ id: this.id });
         encoder.logger.pipe(this.logger);
@@ -47,7 +49,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 allowHalfOpen: true
             }),
             {
-                _id: destinationPort || this.channelCount,
+                _id: port || this.channelCount,
                 encoder,
                 closedByFIN: false
             }
@@ -193,6 +195,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                     channel = this.createChannel(destinationPort, false);
 
                     this.addChannel(channel, true);
+                    //this.emit("peer", { channelId: destinationPort})
                 }
 
                 if (dataLength) {
@@ -247,7 +250,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     multiplex(opts: { channel?: number } = {}): TeceMuxChannel {
         this.logger.trace("Multiplex");
 
-        const channel = this.createChannel(opts.channel || this.channelCount, true);
+        const channel = this.createChannel(opts.channel !== undefined ? opts.channel : this.channelCount, true);
 
         this.addChannel(channel, false);
 
@@ -255,5 +258,5 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         return channel;
     }
 }
-export { TeceMuxChannel };
 
+export { TeceMuxChannel };

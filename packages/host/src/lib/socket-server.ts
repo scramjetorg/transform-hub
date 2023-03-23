@@ -1,21 +1,24 @@
-import { IComponent, DownstreamStreamsConfig, IObjectLogger } from "@scramjet/types";
+import { IComponent, IObjectLogger } from "@scramjet/types";
 
-import net from "net";
+import net, { Socket } from "net";
 
 import { isDefined, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
 
-type MaybeSocket = net.Socket | null
+type MaybeChannel = TeceMuxChannel | Socket | null;
+
+type RunnerChannels = [
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
+];
+
 type RunnerConnectionsInProgress = [
-    MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket
-]
-type RunnerOpenConnections = [
-    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
-]
+    MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel
+];
 
 type Events = {
-    connect: (id: string, streams: DownstreamStreamsConfig) => void
-}
+    connect: (id: string, streams: RunnerChannels) => void
+};
 
 /**
  * Server for incoming connections from Runners
@@ -37,36 +40,47 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
     async start(): Promise<void> {
         this.server = net.createServer();
 
-        this.server
-            .on("connection", async (connection) => {
-                connection.on("error", (err) => {
-                    this.logger.error("Error on connection from runner", err);
-                });
+        let protocol: TeceMux;
 
-                const id = await new Promise<string>((resolve) => {
-                    connection.once("readable", () => {
-                        resolve(connection.read(36).toString());
+        this.server.on("connection", async (connection: net.Socket) => {
+            connection.on("error", (err) => {
+                this.logger.error("Error on connection from runner", err);
+            });
+
+            protocol = new TeceMux(connection);
+
+            protocol.on("channel", async (channel: TeceMuxChannel) => {
+                const { instanceId, channelId } =
+                    await new Promise<{ instanceId: string, channelId: number }>((resolve) => {
+                        channel.pause();
+                        channel.once("readable", () => {
+                            const payload = channel.read(37).toString();
+                            const instId = payload.substring(0, 36);
+                            const chanId = parseInt(payload.substring(36, 37), 10);
+
+                            resolve({
+                                instanceId: instId,
+                                channelId: chanId
+                            });
+                        });
                     });
-                });
 
-                const channel = await new Promise<number>((resolve) => {
-                    connection.once("readable", () => {
-                        resolve(parseInt(connection.read(1).toString(), 10));
-                    });
-                });
 
-                connection
-                    .on("error", (err) => this.logger.error("Error on Instance in stream", id, channel, err))
-                    .on("end", () => this.logger.debug(`Channel [${id}:${channel}] ended`));
+                channel
+                    .on("error", (err: any) => this.logger.error("Error on Instance in stream", instanceId, channelId, err))
+                    .on("end", () => this.logger.debug(`Channel [${instanceId}:${channelId}] ended`));
+
 
                 try {
-                    await this.handleConnection(id, channel, connection);
+                    await this.handleConnection(instanceId, channelId, connection as Socket);
                 } catch (err: any) {
                     connection.destroy();
                 }
-            });
+            })
 
-        return new Promise((res, rej) => {
+        });
+
+        return new Promise<void>((res, rej) => {
             this.server!
                 .listen(this.port, this.hostname, () => {
                     this.logger.info("SocketServer on", this.server?.address());
@@ -91,9 +105,10 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
         }
         if (runner.every(isDefined)) {
             this.runnerConnectionsInProgress.delete(id);
-            this.emit("connect", id, runner as RunnerOpenConnections);
+            this.emit("connect", id, runner as RunnerChannels);
         }
     }
+
     close() {
         this.server?.close((err: any) => {
             if (err) {
