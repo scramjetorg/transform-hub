@@ -3,6 +3,7 @@ import { Duplex, Transform } from "stream";
 export type TeceMuxEvents = {
     channel(socket: Duplex): void;
     error(error: any): void;
+    peer(payload: { channelId: number }): void;
 }
 
 export type FramesKeeperEvents = {

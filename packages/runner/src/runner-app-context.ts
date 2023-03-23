@@ -44,7 +44,6 @@ implements AppContext<AppConfigType, State> {
         this.hub = hostClient;
         this.instanceId = id;
     }
-
     private handleSave(_state: any): void {
         throw new Error("Method not implemented.");
     }

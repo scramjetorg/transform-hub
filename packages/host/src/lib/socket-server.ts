@@ -1,21 +1,24 @@
-import { IComponent, DownstreamStreamsConfig, IObjectLogger } from "@scramjet/types";
+import { IComponent, IObjectLogger } from "@scramjet/types";
 
 import net from "net";
 
 import { isDefined, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
 
-type MaybeSocket = net.Socket | null
+type MaybeChannel = TeceMuxChannel | null;
+
+type RunnerChannels = [
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
+];
+
 type RunnerConnectionsInProgress = [
-    MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket
-]
-type RunnerOpenConnections = [
-    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
-]
+    MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel
+];
 
 type Events = {
-    connect: (id: string, streams: DownstreamStreamsConfig) => void
-}
+    connect: (id: string, streams: RunnerChannels) => void
+};
 
 /**
  * Server for incoming connections from Runners
@@ -37,48 +40,72 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
     async start(): Promise<void> {
         this.server = net.createServer();
 
-        this.server
-            .on("connection", async (connection) => {
-                connection.on("error", (err) => {
-                    this.logger.error("Error on connection from runner", err);
-                });
+        let protocol: TeceMux;
 
-                const id = await new Promise<string>((resolve) => {
-                    connection.once("readable", () => {
-                        resolve(connection.read(36).toString());
+        this.server.on("connection", async (connection: net.Socket) => {
+            connection.on("error", (err) => {
+                this.logger.error("Error on connection from runner", err);
+            });
+
+            protocol = new TeceMux(connection);
+
+            protocol.on("channel", async (channel: TeceMuxChannel) => {
+                const { instanceId, channelId } =
+                    await new Promise<{ instanceId: string, channelId: number }>((resolve) => {
+                        channel.pause();
+                        channel.once("readable", () => {
+                            const payload = channel.read(37).toString();
+                            const instId = payload.substring(0, 36);
+                            const chanId = parseInt(payload.substring(36, 37), 10);
+
+                            // eslint-disable-next-line max-nested-callbacks
+                            channel.on("data", (chunk) => {
+                                // eslint-disable-next-line no-console
+                                this.logger.info("DATA", chanId, channel._id, chunk.toString());
+                            }).pause();
+                            //channel.pipe(process.stdout);
+                            //this.logger.info("payload", payload, instanceId, channelId);
+
+                            resolve({
+                                instanceId: instId,
+                                channelId: chanId
+                            });
+                        });
                     });
-                });
 
-                let runner = this.runnerConnectionsInProgress.get(id);
+                // const channelId = await new Promise<number>((resolve) => {
+                //     channel.once("readable", () => {
+                //         resolve(parseInt(channel.read(1).toString(), 10));
+                //     });
+                // });
+
+                this.logger.info("new channel", instanceId, channelId);
+
+                let runner = this.runnerConnectionsInProgress.get(instanceId);
 
                 if (!runner) {
                     runner = [null, null, null, null, null, null, null, null, null];
-                    this.runnerConnectionsInProgress.set(id, runner);
+                    this.runnerConnectionsInProgress.set(instanceId, runner);
                 }
 
-                const channel = await new Promise<number>((resolve) => {
-                    connection.once("readable", () => {
-                        resolve(parseInt(connection.read(1).toString(), 10));
-                    });
-                });
+                channel
+                    .on("error", (err: any) => this.logger.error("Error on Instance in stream", instanceId, channelId, err))
+                    .on("end", () => this.logger.debug(`Channel [${instanceId}:${channelId}] ended`));
 
-                connection
-                    .on("error", (err) => this.logger.error("Error on Instance in stream", id, channel, err))
-                    .on("end", () => this.logger.debug(`Channel [${id}:${channel}] ended`));
-
-                if (runner[channel] === null) {
-                    runner[channel] = connection;
+                if (runner[channelId] === null) {
+                    runner[channelId] = channel;
                 } else {
-                    throw new Error(`Runner(${id}) wanted to connect on already initialized channel ${channel}`);
+                    throw new Error(`Runner(${instanceId}) wanted to connect on already initialized channel ${channelId}`);
                 }
 
                 if (runner.every(isDefined)) {
-                    this.runnerConnectionsInProgress.delete(id);
-                    this.emit("connect", id, runner as RunnerOpenConnections);
+                    this.runnerConnectionsInProgress.delete(instanceId);
+                    this.emit("connect", instanceId, runner as RunnerChannels);
                 }
             });
+        });
 
-        return new Promise((res, rej) => {
+        return new Promise<void>((res, rej) => {
             this.server!
                 .listen(this.port, this.hostname, () => {
                     this.logger.info("SocketServer on", this.server?.address());
