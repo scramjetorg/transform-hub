@@ -23,6 +23,7 @@ import { TypedEmitter, generateSTHKey, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
+import { VerserClientConnection } from "@scramjet/verser/src/types";
 
 type STHInformation = {
     id?: string;
@@ -223,7 +224,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {string} Host id.
      */
     getId(): string | undefined {
-        return this.info.id;
+        return this.config.id;
     }
 
     /**
@@ -248,6 +249,8 @@ export class CPMConnector extends TypedEmitter<Events> {
                 opStatus: ReasonPhrases.CONFLICT
             };
         }
+
+        await this.setLoadCheckMessageSender();
 
         StringStream.from(duplex.input as Readable)
             .JSONParse()
@@ -292,9 +295,10 @@ export class CPMConnector extends TypedEmitter<Events> {
             [CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]
         );
 
-        this.emit("connect");
 
-        await this.setLoadCheckMessageSender();
+
+
+        this.emit("connect");
 
         return new Promise((resolve, reject) => {
             duplex.on("end", () => {
@@ -332,11 +336,17 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
         }
 
-        let connection;
+        let connection: VerserClientConnection;
 
         try {
             this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
             connection = await this.verserClient.connect();
+
+            connection.socket
+                .once("close", async () => {
+                    this.logger.warn("CLOSE STATUS", connection.res.statusCode)
+                    await this.handleConnectionClose(connection.res.statusCode || -1);
+                });
         } catch (error: any) {
             this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
 
@@ -345,12 +355,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             return;
         }
 
-        this.logger.info("Connected to Manager");
-
-        connection.socket
-            .once("close", async () => {
-                await this.handleConnectionClose();
-            });
+        this.logger.info("Connected...");
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
@@ -361,7 +366,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connected = true;
         this.connectionAttempts = 0;
 
-        connection.req.once("error", async (error: any) => {
+        connection.res.once("error", async (error: any) => {
             this.logger.error("Request error", error);
 
             try {
@@ -386,7 +391,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Handles connection close.
      * Tries to reconnect.
      */
-    async handleConnectionClose() {
+    async handleConnectionClose(connectionStatusCode: number) {
         this.handleCommunicationRequestEnd();
 
         this.connection?.removeAllListeners();
@@ -398,6 +403,10 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
+        }
+
+        if (connectionStatusCode === 403) {
+            this.isAbandoned = true;
         }
 
         await this.reconnect();
@@ -426,9 +435,9 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.isReconnecting = true;
 
             await new Promise<void>((resolve, reject) => {
-                setTimeout(async () => {
-                    this.logger.info("Connection lost, retrying", this.connectionAttempts);
+                this.logger.info("Connection lost, retrying", this.connectionAttempts);
 
+                setTimeout(async () => {
                     await this.connect().then(resolve, reject);
                 }, this.config.reconnectionDelay);
             });

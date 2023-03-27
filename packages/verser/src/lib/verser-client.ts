@@ -13,6 +13,7 @@ const BPMux = require("bpmux").BPMux;
 
 type Events = {
     error: (err: Error) => void;
+    close: (reason: string) => void;
 };
 
 /**
@@ -112,11 +113,12 @@ export class VerserClient extends TypedEmitter<Events> {
                 reject(err);
             });
 
-            connectRequest.on("connect", (req, socket) => {
+            connectRequest.once("connect", (res, socket, head) => {
+                this.logger.info("HEAD", head.toString());
                 this.socket = socket;
                 this.mux();
 
-                resolve({ req, socket });
+                resolve({ res, socket });
             });
 
             connectRequest.flushHeaders();
