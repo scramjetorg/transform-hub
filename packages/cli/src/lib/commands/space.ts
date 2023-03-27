@@ -86,16 +86,16 @@ export const space: CommandDefinition = (program) => {
         .argument("<space_name>", "The name of the Space")
         .option("--id <id>", "Hub Id")
         .option("--all", "Disconnects all self-hosted Hubs connected to Space", false)
-        .action(async (spaceName: string, id: string, all: string) => {
+        .action(async (spaceName: string, options: { id: string, all: boolean }) => {
             const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(spaceName);
             let opts = { } as PostDisconnectPayload;
 
-            if (typeof id === "string") {
-                opts = { id };
+            if (typeof options.id === "string") {
+                opts = { id: options.id };
             }
 
-            if (all) {
+            if (options.all) {
                 opts = { limit: 0 };
             }
 

@@ -297,9 +297,6 @@ export class CPMConnector extends TypedEmitter<Events> {
             [CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]
         );
 
-
-
-
         this.emit("connect");
 
         return new Promise((resolve, reject) => {
@@ -346,7 +343,8 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             connection.socket
                 .once("close", async () => {
-                    this.logger.warn("CLOSE STATUS", connection.res.statusCode)
+                    this.logger.warn("CLOSE STATUS", connection.res.statusCode);
+
                     await this.handleConnectionClose(connection.res.statusCode || -1);
                 });
         } catch (error: any) {
