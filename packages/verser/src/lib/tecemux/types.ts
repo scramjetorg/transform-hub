@@ -37,6 +37,8 @@ export interface IFramesKeeper {
     handlePSH(sequenceNumber: number): void;
     getFrame(sequenceNumber: number): FramesKeeperFrame | undefined;
     generator: AsyncGenerator<number, never, unknown>;
+    on(event: string, handler: (sequenceNumber: number) => void): void;
+    off(event: string, handler: (sequenceNumber: number) => void): void;
 }
 
 export interface ITeCeMux {

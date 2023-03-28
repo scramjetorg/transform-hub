@@ -52,12 +52,6 @@ class HostClient implements IHostClient {
                 res.map(async (channel, index) => {
                     // Assuming id is exactly 36 bytes
                     channel.write(id + "" + index);
-                    // eslint-disable-next-line no-console
-                    console.log(channel._id);
-                    // Assuming number is from 0-8, sending 1 byte
-                    //channel.write(index.toString());
-
-                    //await defer(500);
 
                     return channel;
                 })
