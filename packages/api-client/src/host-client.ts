@@ -209,8 +209,4 @@ export class HostClient implements ClientProvider {
     getSequenceClient(id: string) {
         return SequenceClient.from(id, this);
     }
-
-    getEntities(): Promise<STHRestAPI.GetEntitiesResponse> {
-        return this.client.get("entities");
-    }
 }
