@@ -300,6 +300,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.debug("Streams initialized");
 
+        //await defer(15);
+
         this.sendHandshakeMessage();
 
         const { appConfig, args } = await this.waitForHandshakeResponse();
