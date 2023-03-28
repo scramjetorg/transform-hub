@@ -101,7 +101,7 @@ export class VerserConnection {
     async forward(req: IncomingMessage, res: ServerResponse) {
         if (!this.connected) throw new Error("BPMux not connected");
 
-        const channel = this.teceMux?.multiplex() as Duplex;
+        const channel = await this.teceMux?.multiplex() as Duplex;
 
         channel
             .on("error", (error: Error) => {
@@ -191,10 +191,10 @@ export class VerserConnection {
      * @param id {number} Channel id.
      * @returns Duplex stream.
      */
-    createChannel(id: number): Duplex {
+    async createChannel(id: number): Promise<Duplex> {
         if (!this.teceMux) throw new Error("TeCeMux not connected");
 
-        return this.teceMux.multiplex({ channel: id });
+        return await this.teceMux.multiplex({ channel: id });
     }
 
     reconnect() {
