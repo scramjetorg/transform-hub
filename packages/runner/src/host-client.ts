@@ -45,6 +45,7 @@ class HostClient implements IHostClient {
         const protocol = new TeceMux(tunnel);
 
         const openConnections = await Promise.all(
+<<<<<<< HEAD
             Array.from(Array(9))
                 .map((_c, index) => {
                     // Error handling for each connection is process crash for now
@@ -63,6 +64,21 @@ class HostClient implements IHostClient {
 
                     return Promise.resolve(channel);
                 })
+||||||| constructed merge base
+            Array.from(Array(9))
+                .map((_c, index) => {
+                    // Error handling for each connection is process crash for now
+                    const channel = protocol.multiplex({ channel: index });//net.createConnection(this.instancesServerPort, this.instancesServerHost);
+
+                    // return new Promise<TeceMuxChannel>(res => {
+                    //     channel.on("connect", () => res(channel));
+                    // });
+
+                    return Promise.resolve(channel);
+                })
+=======
+            Array.from(Array(9)).map((_c, index) => protocol.multiplex({ channel: index }))
+>>>>>>> R<->STH
         ).then(async res => {
             return Promise.all(
                 res.map(async (channel, index) => {

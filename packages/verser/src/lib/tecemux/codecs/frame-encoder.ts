@@ -76,15 +76,28 @@ export class FrameEncoder extends Transform {
         return flags;
     }
 
-    setChannel(channelCount: number) {
+    async setChannel(channelCount: number) {
         this.logger.debug("Set channel command", channelCount);
 
-        this.out.write(
-            this.createFrame([], {
-                flagsArray: ["PSH"],
-                destinationPort: channelCount
-            })
-        );
+        const frame = this.createFrame([], {
+            flagsArray: ["PSH"],
+            destinationPort: channelCount
+        });
+
+        this.out.write(frame);
+
+        const sn = +this.tecemux.sequenceNumber;
+
+        return await new Promise<void>((resolve, _reject) => {
+            const waiter = (sequenceNumber: number) => {
+                if (sequenceNumber === sn) {
+                    this.tecemux.framesKeeper.off("ack", waiter);
+                    resolve();
+                }
+            };
+
+            this.tecemux.framesKeeper.on("ack", waiter);
+        });
     }
 
     onChannelEnd(channelId: number) {
