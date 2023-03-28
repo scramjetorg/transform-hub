@@ -194,7 +194,7 @@ export class VerserConnection {
     createChannel(id: number) {
         if (!this.teceMux) throw new Error("TeCeMux not connected");
 
-        return this.teceMux.multiplex({ channel: id });
+        return await this.teceMux.multiplex({ channel: id });
     }
 
     reconnect() {
