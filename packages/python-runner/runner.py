@@ -3,7 +3,7 @@ import sys
 import os
 import codecs
 import json
-from pyee.asyncio import AsyncIOEventEmitter
+from pyee._asyncio import AsyncIOEventEmitter
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 import types
