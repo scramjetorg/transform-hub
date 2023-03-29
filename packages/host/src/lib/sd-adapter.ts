@@ -252,14 +252,14 @@ export class ServiceDiscovery {
     public async routeTopicToStream(topicData: dataType, target: Writable) {
         this.getData(topicData).pipe(target);
 
-        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ ...topicData, requires: topicData.topic });
     }
 
     public async routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
         const topic = this.addData(topicData, localProvider);
 
         pipeToTopic(source, topic);
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ ...topicData, provides: topicData.topic });
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
