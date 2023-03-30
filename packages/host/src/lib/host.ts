@@ -935,8 +935,8 @@ export class Host implements IComponent {
             this.logger.trace("PANG received", data);
 
             if (!data.contentType) {
-                data.contentType = "application/x-ndjson"
-            };
+                data.contentType = "application/x-ndjson";
+            }
 
             if (data.requires && !csic.inputRouted) {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
