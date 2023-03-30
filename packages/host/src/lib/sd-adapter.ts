@@ -140,10 +140,14 @@ export class ServiceDiscovery {
      * Stores given topic.
      *
      * @param {dataType} config Topic configuration.
-     * @param {string} [localProvider] Provider identifier. It not set topic will be considered as external.
+     * @param {string} [localProvider] Provider identifier. If not set topic will be considered as external.
      * @returns added topic data.
      */
     addData(config: dataType, localProvider?: string) {
+        if (!config.contentType || config.contentType==="undefined") {
+            config.contentType = "application/x-ndjson";
+        }
+
         if (!this.dataMap.has(config.topic)) {
             this.logger.trace("Adding data:", config, localProvider);
 

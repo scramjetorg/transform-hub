@@ -934,6 +934,10 @@ export class Host implements IComponent {
         csic.on("pang", async (data) => {
             this.logger.trace("PANG received", data);
 
+            if (!data.contentType) {
+                data.contentType = "application/x-ndjson"
+            };
+
             if (data.requires && !csic.inputRouted) {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
@@ -950,7 +954,7 @@ export class Host implements IComponent {
             }
 
             if (data.provides && !csic.outputRouted) {
-                this.logger.trace("Routing Sequence output to topic", data.requires);
+                this.logger.trace("Routing Sequence output to topic", data.provides);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
                     { topic: data.provides, contentType: data.contentType! },
