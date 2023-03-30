@@ -144,7 +144,7 @@ export class ServiceDiscovery {
      * @returns added topic data.
      */
     addData(config: dataType, localProvider?: string) {
-        if (!config.contentType || config.contentType==="undefined") {
+        if (!config.contentType) {
             config.contentType = "application/x-ndjson";
         }
 
