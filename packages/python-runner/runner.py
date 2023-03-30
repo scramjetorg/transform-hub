@@ -3,11 +3,10 @@ import sys
 import os
 import codecs
 import json
-from pyee import EventEmitter
+from pyee.asyncio import AsyncIOEventEmitter
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 import types
-
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
@@ -33,7 +32,7 @@ class Runner:
         self.logger = log_setup.logger
         self.stop_handlers = []
         self.health_check = lambda: {'healthy': True}
-        self.emitter = EventEmitter()
+        self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
 
 
