@@ -48,7 +48,7 @@ export interface ITeCeMux {
 }
 
 export interface IFrameEncoder extends Transform {
-
+    establishChannel(id: number): Promise<void>;
 }
 
 export type TeceMuxChannel = Duplex & {
