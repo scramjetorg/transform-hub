@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { PassThrough, Transform, TransformCallback, TransformOptions } from "stream";
 import { ObjLogger } from "@scramjet/obj-logger";
 
@@ -76,8 +78,10 @@ export class FrameEncoder extends Transform {
         return flags;
     }
 
-    async setChannel(channelCount: number) {
+    async establishChannel(channelCount: number) {
         this.logger.debug("Set channel command", channelCount);
+
+        console.log("Set channel command", channelCount);
 
         const frame = this.createFrame([], {
             flagsArray: ["PSH"],
@@ -88,15 +92,17 @@ export class FrameEncoder extends Transform {
 
         const sn = +this.tecemux.sequenceNumber;
 
-        return await new Promise<void>((resolve, _reject) => {
-            const waiter = (sequenceNumber: number) => {
+        return new Promise<void>((resolve, _reject) => {
+            const ackTempHandler = (sequenceNumber: number) => {
+                console.log("ACK RECEIVED", sequenceNumber, sn);
+
                 if (sequenceNumber === sn) {
-                    this.tecemux.framesKeeper.off("ack", waiter);
+                    this.tecemux.framesKeeper.off("ack", ackTempHandler);
                     resolve();
                 }
             };
 
-            this.tecemux.framesKeeper.on("ack", waiter);
+            this.tecemux.framesKeeper.on("ack", ackTempHandler);
         });
     }
 
