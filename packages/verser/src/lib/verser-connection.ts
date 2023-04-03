@@ -99,7 +99,7 @@ export class VerserConnection {
      * @param res {ServerResponse} Response object.
      */
     async forward(req: IncomingMessage, res: ServerResponse) {
-        if (!this.connected) throw new Error("BPMux not connected");
+        if (!this.connected) throw new Error("Not connected");
 
         const channel = await this.teceMux?.multiplex() as Duplex;
 
