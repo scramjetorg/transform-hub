@@ -52,7 +52,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             protocol.on("channel", async (channel: TeceMuxChannel) => {
                 const { instanceId, channelId } =
                     await new Promise<{ instanceId: string, channelId: number }>((resolve) => {
-                        channel.pause();
                         channel.once("readable", () => {
                             const payload = channel.read(37).toString();
                             const instId = payload.substring(0, 36);

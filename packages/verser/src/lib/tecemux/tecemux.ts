@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { TypedEmitter } from "@scramjet/utility";
 import { FrameDecoder, FrameEncoder } from "./codecs";
 import { Duplex } from "stream";
@@ -13,7 +15,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     framesSent = 0;
     carrierDecoder: FrameDecoder;
     framesKeeper = new FramesKeeper();
-    sequenceNumber = Math.abs((Math.random() * (2 ** 32)) | 0);
+    sequenceNumber = Math.abs((Math.random() * (2 ** 32)) / 2 | 0);
     channels = new Map<number, TeceMuxChannel>();
 
     logger: ObjLogger;
@@ -87,7 +89,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             });
 
         if (emit) {
-            await encoder.setChannel(destinationPort || this.channelCount);
+            await encoder.establishChannel(port || this.channelCount);
         }
 
         return channel;
@@ -249,10 +251,14 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     async multiplex(opts: { channel?: number } = {}): Promise<TeceMuxChannel> {
         this.logger.trace("Multiplex");
+        console.log("Multiplex", opts.channel);
 
-        const channel = await this.createChannel(opts.channel !== undefined ? opts.channel : this.channelCount, true);
+        const id = opts.channel !== undefined ? opts.channel : this.channelCount;
+        const channel = await this.createChannel(id, true);
 
-        this.addChannel(channel, false);
+        await channel.encoder.establishChannel(id);
+
+        this.addChannel(channel, true);
 
         this.logger.trace("Multiplex ready", channel._id);
         return channel;
