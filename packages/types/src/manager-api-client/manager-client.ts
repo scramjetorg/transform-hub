@@ -1,7 +1,6 @@
 /// <reference lib="dom" />
 
 import { MRestAPI } from "..";
-import { HostClient } from "../api-client";
 
 import * as STHRestAPI from "../rest-api-sth";
 import { PublicSTHConfiguration } from "../sth-configuration";
@@ -11,9 +10,9 @@ export declare class ManagerClient {
     apiBase: string;
     client: ClientUtils;
 
-    constructor(apiBase: string, utils: ClientUtils | undefined)
+    constructor(apiBase: string, utils: ClientUtils | undefined);
 
-    getHostClient(id: string, hostApiBase: string): HostClient;
+    getHostClient(id: string, hostApiBase: string): import("../api-client/host-client").HostClient;
     getHosts(): Promise<MRestAPI.GetHostInfoResponse[]>;
     getVersion(): Promise<STHRestAPI.GetVersionResponse>;
     sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;

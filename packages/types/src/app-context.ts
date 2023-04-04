@@ -5,7 +5,6 @@ import { FunctionDefinition } from "./messages/describe-sequence";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 import { MonitoringMessageFromRunnerData } from "./messages";
-import { HostClient } from "./api-client/host-client";
 
 /**
  * A callback that will be called when the Sequence is being stopped gracefully.
@@ -182,7 +181,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     exitTimeout: number;
 
     /** Allows to access Hub */
-    hub?: HostClient;
+    hub: import("./api-client/host-client").HostClient;
 
     /** Instance Id */
     instanceId: string;
