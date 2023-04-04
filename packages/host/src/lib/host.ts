@@ -509,6 +509,8 @@ export class Host implements IComponent {
             this.logger.debug("Platform request");
             return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
         });
+
+        this.api.use(`${this.apiBase}/cpm`, (req, res,next) => this.spaceMiddleware(req, res, next));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -556,6 +558,20 @@ export class Host implements IComponent {
         return this.serviceDiscovery.router.lookup(req, res, next);
     }
 
+    spaceMiddleware(req: ParsedMessage, _res: ServerResponse, next: NextCallback) {
+        const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
+
+        this.logger.info("SPACE REQUEST", req.url, url);
+
+        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
+
+        clientRequest?.on("response", (response: IncomingMessage) => {
+            response.pipe(_res);
+        });
+
+        clientRequest?.flushHeaders();
+        req.pipe(clientRequest!);
+    }
     /**
      * Handles delete Sequence request.
      * Removes Sequence from the store and sends notification to Manager if connected.

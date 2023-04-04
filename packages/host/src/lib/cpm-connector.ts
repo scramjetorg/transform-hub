@@ -598,11 +598,12 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Topics information sent");
     }
 
-    private makeHttpRequestToCpm(
+    public makeHttpRequestToCpm(
         method: string,
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
+        this.logger.info("make HTTP Req to CPM", `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`);
         return http.request(
             `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`,
             { method, agent: this.verserClient.verserAgent, headers }
