@@ -436,7 +436,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.hostClient.monitorStream,
             this.emitter,
             runner,
-            hostApiClient as HostClient
+            hostApiClient as HostClient,
+            this.instanceId
         );
         this._context.logger.pipe(this.logger);
 
