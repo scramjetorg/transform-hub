@@ -40,7 +40,7 @@
     "typedoc-plugin-markdown": "^3.13.6"
   },
   "dependencies": {
-    "normalize-url": "^8.0.0",
+    "normalize-url": "4",
     "yaml": "^2.1.3"
   }
 }

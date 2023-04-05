@@ -189,7 +189,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     private get cpmUrl() {
-        return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, { defaultProtocol: this.isHttps ? "https" : "http" });
+        return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, { defaultProtocol: this.isHttps ? "https:" : "http:" });
     }
 
     /**
