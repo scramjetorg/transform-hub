@@ -182,5 +182,8 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     exitTimeout: number;
 
     /** Allows to access Hub */
-    hub?: HostClient
+    hub?: HostClient;
+
+    /** Instance Id */
+    instanceId: string;
 }
