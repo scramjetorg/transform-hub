@@ -33,14 +33,16 @@ implements AppContext<AppConfigType, State> {
     exitTimeout: number = 10000;
     logger: IObjectLogger = new ObjLogger("Sequence");
     hub: HostClient;
+    instanceId: string;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient) {
+        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient, id: string) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
         this.hub = hostClient;
+        this.instanceId = id;
     }
 
     private handleSave(_state: any): void {
