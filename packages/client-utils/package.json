@@ -22,7 +22,7 @@
     "abort-controller": "^3.0.0",
     "n-readlines": "^1.0.1",
     "node-fetch": "^2.6.7",
-    "normalize-url": "^5.3.1",
+    "normalize-url": "^8.0.0",
     "scramjet": "^4.36.9"
   },
   "devDependencies": {
