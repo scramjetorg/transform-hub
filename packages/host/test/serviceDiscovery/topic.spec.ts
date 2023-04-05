@@ -1,20 +1,22 @@
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import { ReadableState, StreamType, WorkState } from "../../src/lib/serviceDiscovery/StreamHandler";
-import StreamWrapper from "../../src/lib/serviceDiscovery/StreamWrapper";
+import { ReadableState, StreamOrigin, StreamType, WorkState } from "../../src/lib/serviceDiscovery/streamHandler";
 import Topic, { TopicEvent } from "../../src/lib/serviceDiscovery/topic";
 import TopicName from "../../src/lib/serviceDiscovery/topicName";
+import ReadableStreamWrapper from "../../src/lib/streamWrapper/readableStreamWrapper";
+import WritableStreamWrapper from "../../src/lib/streamWrapper/writableStreamWrapper";
 
 let testTopic: Topic;
+const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
 
 beforeEach(() => {
-    testTopic = new Topic(new TopicName("TestTopic"), "test content", { encoding: "ascii" });
+    testTopic = new Topic(new TopicName("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
 })
 
 describe("Provider management", () => {
-    let testProvider: StreamWrapper<Readable>;
+    let testProvider: ReadableStreamWrapper<Readable>;
 
     beforeEach(() => {
-        testProvider = StreamWrapper.create(new Readable({ read: () => { } }), "testReadStream", StreamType.Instance, {});
+        testProvider = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream", StreamType.Instance, testOrigin, {});
     })
 
     test("Automaticly add provider on pipe", () => {
@@ -31,9 +33,9 @@ describe("Provider management", () => {
     })
 
     test("Add multiple providers on pipe", () => {
-        const testProvider1 = StreamWrapper.create(new Readable({ read: () => { } }), "testReadStream1", StreamType.Instance, {});
-        const testProvider2 = StreamWrapper.create(new Readable({ read: () => { } }), "testReadStream2", StreamType.Instance, {});
-        const testProvider3 = StreamWrapper.create(new Readable({ read: () => { } }), "testReadStream3", StreamType.Instance, {});
+        const testProvider1 = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream1", StreamType.Instance, testOrigin, {});
+        const testProvider2 = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream2", StreamType.Instance, testOrigin, {});
+        const testProvider3 = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream3", StreamType.Instance, testOrigin, {});
 
         testProvider1.stream().pipe(testTopic);
         testProvider2.stream().pipe(testTopic);
@@ -43,7 +45,7 @@ describe("Provider management", () => {
     })
 
     test("Add other topic as provider", () => {
-        const otherTopic = new Topic(new TopicName("TestTopic"), "test content");
+        const otherTopic = new Topic(new TopicName("TestTopic"), "text/plain", testOrigin);
         otherTopic.pipe(testTopic);
         expect(testTopic.providers.size).toBe(1);
     })
@@ -57,10 +59,10 @@ describe("Provider management", () => {
 })
 
 describe("Consumer management", () => {
-    let testConsumer: StreamWrapper<Writable>;
+    let testConsumer: WritableStreamWrapper<Writable>;
 
     beforeEach(() => {
-        testConsumer = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream", StreamType.Instance, {});
+        testConsumer = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream", StreamType.Instance, testOrigin, {});
     })
 
     test("Automaticly add consumer on pipe", () => {
@@ -77,9 +79,9 @@ describe("Consumer management", () => {
     })
 
     test("Add multiple consumer on pipe", () => {
-        const testConsumer1 = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream1", StreamType.Instance, {});
-        const testConsumer2 = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream2", StreamType.Instance, {});
-        const testConsumer3 = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream3", StreamType.Instance, {});
+        const testConsumer1 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream1", StreamType.Instance, testOrigin, {});
+        const testConsumer2 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream2", StreamType.Instance, testOrigin, {});
+        const testConsumer3 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream3", StreamType.Instance, testOrigin, {});
 
         testTopic.pipe(testConsumer1);
         testTopic.pipe(testConsumer2);
@@ -89,7 +91,7 @@ describe("Consumer management", () => {
     })
 
     test("Add other topic as consumer", () => {
-        const otherTopic = new Topic(new TopicName("TestTopic"), "test content");
+        const otherTopic = new Topic(new TopicName("TestTopic"), "text/plain", testOrigin);
         testTopic.pipe(otherTopic);
         expect(testTopic.consumers.size).toBe(1);
     })
@@ -102,9 +104,9 @@ describe("Consumer management", () => {
     })
 
     test("Automaticly remove all consumers on unpipe()", () => {
-        const testConsumer1 = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream1", StreamType.Instance, {});
-        const testConsumer2 = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream2", StreamType.Instance, {});
-        const testConsumer3 = StreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream3", StreamType.Instance, {});
+        const testConsumer1 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream1", StreamType.Instance, testOrigin, {});
+        const testConsumer2 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream2", StreamType.Instance, testOrigin, {});
+        const testConsumer3 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream3", StreamType.Instance, testOrigin, {});
 
         testTopic.pipe(testConsumer1);
         testTopic.pipe(testConsumer2);
@@ -130,12 +132,13 @@ describe("Event flow", () => {
     describe("Duplex events", () => {
         test("Data event", async () => {
             const eventOccured = waitForEvent("data", testTopic);
-            testTopic.write("some text");
+            testTopic.on("readable", () => { testTopic.read() })
+            testTopic.write("some text123");
             await expect(eventOccured).resolves.toBe(true);
         });
         test("Error event", async () => {
             const eventOccured = waitForEvent("error", testTopic);
-            testTopic["inReadStream"].destroy(new Error("Test Error"));
+            testTopic.destroy(new Error("Test Error"));
             await expect(eventOccured).resolves.toBe(true);
         });
         test("Pause event", async () => {
@@ -155,31 +158,24 @@ describe("Event flow", () => {
         });
     })
     describe("Topic events", () => {
-        let testProvider: StreamWrapper<Readable>;
-        let testConsumer: StreamWrapper<Writable>;
+        let testProvider: ReadableStreamWrapper<Readable>;
+        let testConsumer: WritableStreamWrapper<Writable>;
 
         beforeEach(() => {
-            testProvider = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testReadStream", StreamType.Instance, {});
-            testConsumer = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testWriteStream", StreamType.Instance, {});
+            testProvider = ReadableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testReadStream", StreamType.Instance, testOrigin, {});
+            testConsumer = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testWriteStream", StreamType.Instance, testOrigin, {});
         })
 
         test("State when error", async () => {
             const eventOccured = waitForEvent("error", testTopic);
-            testTopic["inReadStream"].destroy(new Error("Test Error"));
+            testTopic.destroy(new Error("Test Error"));
             await eventOccured;
             expect(testTopic.state()).toBe(WorkState.Error);
         })
 
-        test("State waiting", async () => {
-            let eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testProvider.stream().pipe(testTopic)
-            await eventPromise;
-            expect(testTopic.state()).toBe(WorkState.Waiting);
-        })
-
         test("State flowing", async () => {
             testProvider.stream().pipe(testTopic)
-            expect(testTopic.state()).toBe(WorkState.Waiting);
+            expect(testTopic.state()).toBe(ReadableState.Pause);
             const eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
             testTopic.pipe(testConsumer);
             await eventPromise
@@ -187,40 +183,6 @@ describe("Event flow", () => {
 
         })
 
-        test("State pause on pause()", async () => {
-            const eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testTopic.pause();
-            await eventPromise;
-            expect(testTopic.state()).toBe(ReadableState.Paused);
-        })
-
-        test("State waiting after resume()", async () => {
-            let eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testTopic.pause();
-            await eventPromise;
-            expect(testTopic.state()).toBe(ReadableState.Paused);
-            eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testTopic.resume();
-            await eventPromise;
-            expect(testTopic.state()).toBe(WorkState.Waiting);
-        })
-
-        test("State flowing after resume()", async () => {
-            let eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testProvider.stream().pipe(testTopic).pipe(testConsumer);
-            await eventPromise;
-            expect(testTopic.state()).toBe(WorkState.Flowing);
-
-            eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testTopic.pause();
-            await eventPromise;
-            expect(testTopic.state()).toBe(ReadableState.Paused);
-
-            eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
-            testTopic.resume();
-            await eventPromise;
-            expect(testTopic.state()).toBe(WorkState.Flowing);
-        })
         test("ProvidersChanged on add", async () => {
             const eventPromise = waitForEvent(TopicEvent.ProvidersChanged, testTopic);
             testProvider.stream().pipe(testTopic)
@@ -270,10 +232,9 @@ describe("Data flow", () => {
         const result = await topicFinished
         expect(result).toBe(testText);
     });
-
     test("Piped flow", async () => {
-        const testProvider = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testReadStream", StreamType.Instance, {});
-        const testConsumer = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testWriteStream", StreamType.Instance, {});
+        const testProvider = ReadableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testReadStream", StreamType.Instance, testOrigin, {});
+        const testConsumer = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testWriteStream", StreamType.Instance, testOrigin, {});
 
         testProvider.stream().pipe(testTopic).pipe(testConsumer);
 
@@ -291,13 +252,13 @@ describe("Data flow", () => {
             let i = from;
             while (i <= to) {
                 await startGeneratingPromise;
-                yield Number(i++).toString()
+                yield Number(i++).toString();
             }
         }
 
-        const createStreamProvider = (name: string, from: number, to: number): [StreamWrapper<Readable>, Promise<void>] => {
+        const createStreamProvider = (name: string, from: number, to: number): [ReadableStreamWrapper<Readable>, Promise<void>] => {
             const gen = generator(from, to);
-            const provider = StreamWrapper.create(Readable.from(gen).setEncoding("ascii"), name, StreamType.Instance, {});
+            const provider = ReadableStreamWrapper.create(Readable.from(gen).setEncoding("ascii"), name, StreamType.Instance, testOrigin, {});
             const [streamEndPromise, streamEnd, streamError] = createWaitingPromise();
             provider.stream().on("close", streamEnd).on("error", streamError)
             return [provider, streamEndPromise];
@@ -312,7 +273,7 @@ describe("Data flow", () => {
         provider3.stream().pipe(testTopic, { end: false });
 
         const result: number[] = [];
-        testTopic.on("readable", () => { result.push(Number(testTopic.read())) })
+        testTopic.on("data", (chunk) => { result.push(Number(chunk)) })
 
         startGenerating();
         await Promise.all([provider1End, provider2End, provider3End]);
@@ -322,15 +283,15 @@ describe("Data flow", () => {
         expect(match).toBe(true);
     })
     test("Many Consumers reading", async () => {
-        const consumer1 = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, {});
-        const consumer2 = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, {});
-        const consumer3 = StreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, {});
-        
+        const consumer1 = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
+        const consumer2 = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
+        const consumer3 = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
+
         let result = ["", "", ""];
         const [readed1Promise, readed1] = createWaitingPromise();
         const [readed2Promise, readed2] = createWaitingPromise();
         const [readed3Promise, readed3] = createWaitingPromise();
-        
+
         consumer1.stream().on("readable", () => {
             result[0] = consumer1.stream().read();
             readed1();
@@ -348,7 +309,7 @@ describe("Data flow", () => {
         testTopic.pipe(consumer2);
         testTopic.pipe(consumer3);
         testTopic.write(testText);
-        
+
         await Promise.all([readed1Promise, readed2Promise, readed3Promise]);
         expect(result[0]).toBe(testText);
         expect(result[1]).toBe(testText);

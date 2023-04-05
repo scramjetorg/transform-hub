@@ -1,74 +1,64 @@
 
-import { Duplex, PassThrough, Readable, Writable } from "stream";
+import { Duplex, Readable, Writable } from "stream";
 
 import { CPMConnector } from "../cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
 import TopicName from "./topicName";
 import TopicsMap from "./topicsController";
-import Consumer from "./serviceDiscovery/consumer";
-import Provider from "./serviceDiscovery/provider";
+import Topic from "./topic";
+import { ContentType } from "./contentType";
+import { StreamOrigin } from "./streamHandler";
+// import Consumer from "./serviceDiscovery/consumer";
+// import Provider from "./serviceDiscovery/provider";
 
 export type DataType = {
     topic: TopicName,
-    contentType: string
+    contentType: ContentType
 }
 
 /**
  * Topic stream type definition.
  */
-export type streamType = {
+export type StreamType = {
     contentType: string;
     stream: Duplex;
 }
 
-const NEWLINE_BYTE = "\n".charCodeAt(0);
-
-export function pipeToTopic(source: Readable, target: TopicDataType) {
-    source.pipe(target.stream, { end: false });
-
-    // for json streams, make sure that the last message will be ended with newline
-    if (target.contentType === "application/x-ndjson") {
-        let lastChunk = Buffer.from([]);
-
-        source
-            .on("data", (chunk) => {
-                lastChunk = chunk as Buffer;
-            })
-            .on("end", () => {
-                const lastByte = lastChunk[lastChunk.length - 1];
-
-                if (lastByte !== NEWLINE_BYTE) {
-                    target.stream.write("\n");
-                }
-            });
-    }
+/**
+ * Topic details type definition.
+ */
+export type TopicDataType = {
+    contentType: string,
+    stream: Duplex,
+    localProvider?: string,
+    cpmRequest?: boolean
 }
 
-class TopicFacade {
-    logger = new ObjLogger(this);
-    private topicsController: TopicsMap;
-    constructor() {
-        this.topicsController = new TopicsMap();
-    }
+// class TopicFacade {
+//     logger = new ObjLogger(this);
+//     private topicsController: TopicsMap;
+//     constructor() {
+//         this.topicsController = new TopicsMap();
+//     }
 
-    getTopics() {
-        return this.topicsController.topics;
-    }
-    addTopicProvider(name: TopicName, provider: Provider){
+//     getTopics() {
+//         return this.topicsController.topics;
+//     }
+//     addTopicProvider(name: TopicName, provider: Provider){
 
-    }
-    addTopicConsumer(name: TopicName, consumer: Consumer){
-        
-    }
-}
+//     }
+//     addTopicConsumer(name: TopicName, consumer: Consumer){
 
-class CpmReportingTopicFacade extends TopicFacade{
-    private cpmConnector: CPMConnector;
-    constructor(cpmConnector: CPMConnector){
-        super();
-        this.cpmConnector = cpmConnector;
-    }
-}
+//     }
+// }
+
+// class CpmReportingTopicFacade extends TopicFacade{
+//     private cpmConnector: CPMConnector;
+//     constructor(cpmConnector: CPMConnector){
+//         super();
+//         this.cpmConnector = cpmConnector;
+//     }
+// }
 
 /**
  * Service Discovery provides methods to manage topics.
@@ -80,7 +70,8 @@ export class ServiceDiscovery {
 
     cpmConnector?: CPMConnector;
 
-    private topicsController: TopicsMap;
+    // change to private
+    topicsController: TopicsMap;
 
     constructor() {
         this.topicsController = new TopicsMap();
@@ -102,27 +93,24 @@ export class ServiceDiscovery {
      * @param {string} [localProvider] Provider identifier. It not set topic will be considered as external.
      * @returns added topic data.
      */
-    createTopicIfNotExist(config: DataType, localProvider?: string) {
+    createTopicIfNotExist(config: DataType) {
         const topicName = config.topic;
-        let topic = this.topicsController.get(topicName);
-        const topicExist = topic !== undefined;
-        if (topicExist) {
+        let topic = this.topicsController.get(topicName); // TODO: sprawdzanie content Type
+        if (topic) {
             this.logger.trace("Routing topic:", config);
-        } else {
-            this.logger.trace("Adding topic:", config, localProvider);
-            topic = {
-                contentType: config.contentType,
-                stream: new PassThrough(),
-                localProvider
-            }
-            this.topicsController.set(topicName, topic);
+            return topic;
         }
-        return topic!;
+        this.logger.trace("Adding topic:", config);
+        const origin: StreamOrigin = { id: "XXXX", type: "hub" }
+        const newTopic = new Topic(topicName, config.contentType, origin);
+        this.topicsController.set(topicName, newTopic);
+        return newTopic;
     }
 
     /**
      * @returns All topics.
      */
+<<<<<<< HEAD
     getTopics() {
         // return Array.from(this.dataMap, ([key, value]) => ({
         //     contentType: value.contentType,
@@ -132,15 +120,24 @@ export class ServiceDiscovery {
         // }));
         return this.topicsController.topics;
     }
+=======
+    getTopics() { return this.topicsController.topics; }
+>>>>>>> Topic class and tests
 
     /**
      * Returns topic details for given topic.
      *
      * @param {string} topic Topic name.
-     * @returns {streamType|undefined} Topic details.
+     * @returns {StreamType|undefined} Topic details.
      */
-    getByTopic(topic: TopicName): streamType | undefined {
-        return this.topicsController.get(topic);
+    getByTopic(topic: TopicName): StreamType | undefined {
+        const foundTopic = this.topicsController.get(topic);
+        if (!foundTopic) return;
+
+        return {
+            contentType: foundTopic.options().contentType,
+            stream: foundTopic
+        };
     }
 
     /**
@@ -155,13 +152,7 @@ export class ServiceDiscovery {
         this.logger.debug("Get data:", dataType);
 
         const topic = this.createTopicIfNotExist(dataType);
-
-        if (topic?.localProvider) {
-            this.logger.trace("LocalProvider found topic, provider", dataType.topic, topic.localProvider);
-        } else {
-            this.logger.trace("Local topic provider not found for:", dataType.topic);
-        }
-        return topic.stream.on("end", () => this.logger.debug("Topic ended", dataType));
+        return topic;
     }
 
     /**
@@ -174,16 +165,24 @@ export class ServiceDiscovery {
     // }
 
     public async routeTopicToStream(topicData: DataType, target: Writable) {
-        this.getData(topicData).pipe(target);
+        const topic = this.createTopicIfNotExist(topicData);
+
+        //FIXME: Writable wrapper for target
+        topic.pipe(target);
 
         await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
     }
 
-    public async routeStreamToTopic(source: Readable, topicData: DataType, localProvider?: string) {
-        const topic = this.createTopicIfNotExist(topicData, localProvider);
+    public async routeStreamToTopic(source: Readable, topicData: DataType) {
+        const topic = this.createTopicIfNotExist(topicData);
 
+<<<<<<< HEAD
         pipeToTopic(source, topic);
         await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
+=======
+        source.pipe(topic, { end: false });
+        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), contentType: topicData.contentType });
+>>>>>>> Topic class and tests
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {

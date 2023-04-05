@@ -1,7 +1,10 @@
-import { Duplex, DuplexOptions, PassThrough, Readable, Stream, Writable } from "stream";
-import { WorkState, StreamHandler, StreamType, TopicOptions, ReadableState } from "./StreamHandler";
-import StreamWrapper from "./StreamWrapper";
+import { Duplex, DuplexOptions, Readable, Writable } from "stream";
+import { WorkState, StreamHandler, ReadableState, WritableState, StreamType, StreamOrigin } from "./streamHandler";
 import TopicName from "./topicName";
+import WritableStreamWrapper from "../streamWrapper/writableStreamWrapper";
+import ReadableStreamWrapper from "../streamWrapper/readableStreamWrapper";
+import TopicHandler, { Consumers, Providers, TopicOptions, TopicState } from "./topicHandler";
+import { ContentType } from "./contentType";
 
 export enum TopicEvent {
     StateChanged = "stateChanged",
@@ -9,76 +12,51 @@ export enum TopicEvent {
     ConsumersChanged = "consumersChanged"
 }
 
-type Providers = Map<Stream, StreamHandler>
-type Consumers = Map<Stream, StreamHandler>
-type Options = Pick<DuplexOptions, "encoding">
+export type TopicStreamOptions = Pick<DuplexOptions, "encoding">
 
-export type TopicState = WorkState.Initialized | WorkState.Waiting | WorkState.Flowing | WorkState.Error | ReadableState.Paused;
-
-class Topic extends Duplex implements StreamHandler {
+export class Topic extends Duplex implements TopicHandler {
+    protected _id: TopicName
     protected _options: TopicOptions;
-    protected _state: TopicState = WorkState.Initialized;
+    protected _origin: StreamOrigin;
+    protected _state: TopicState;
     providers: Providers
     consumers: Consumers
-    protected inReadStream: PassThrough
-    protected outWriteStream: PassThrough
-    error?: Error
 
-    name() { return this._options.name.toString() };
-    options() { return this._options }
-    type() { return StreamType.Topic }
-    state() { return this._state }
+    constructor(id: TopicName, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
+        super({ ...options, highWaterMark: 0 });
 
-    constructor(name: TopicName, contentType: string, options?: Options) {
-        super(options);
-        this._options = { name, contentType }
+        this._id = id;
+        this._origin = origin;
+        this._state = ReadableState.Pause;
+        this._options = { contentType }
         this.providers = new Map();
         this.consumers = new Map();
 
-        this.inReadStream = new PassThrough({ ...options, highWaterMark: 0 });
-        this.outWriteStream = new PassThrough({ ...options, highWaterMark: 0 });
-        this.setState(WorkState.Initialized);
-
-        this.inReadStream.pipe(this.outWriteStream)
-
-        this.inReadStream
-            .on("error", (err: Error) => { this.setError(err); })
-            .on("pause", () => { this.updateState() })
-            .on("resume", () => { this.updateState() })
-
-        this.outWriteStream
-            .on("error", (err: Error) => { this.setError(err); })
-            .on("readable", () => this.pushFromOutStream())
-            .on("finish", () => {
-                throw new Error(`Unexpected error: topic ${this.name()} finished on outWriteStream`)
-            })
-
-        this.on("pipe", this.addProvider)
-        this.on("unpipe", this.removeProvider)
+        this.attachEventListeners();
     }
 
-    setState(state: TopicState) {
-        if (this._state === state) return;
-        this._state = state;
-        this.emit(TopicEvent.StateChanged, state);
+    id() { return this._id.toString() };
+    options() { return this._options }
+    type() { return StreamType.Topic }
+    state(): TopicState {
+        if (this.errored) return WorkState.Error;
+        if (this.isPaused() || this.providers.size === 0 || this.consumers.size === 0) return ReadableState.Pause;
+        if (this.writableNeedDrain) return WritableState.Drain;
+        return WorkState.Flowing;
+    }
+    origin() { return this._origin }
+
+    _read(size: number): void { }
+    _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
+        this.push(chunk, encoding);
+        callback();
     }
 
-    updateState() {
-        if (this._state === WorkState.Error) return;
-        else if (this.inReadStream.isPaused())
-            this.setState(ReadableState.Paused)
-        else if (this.providers.size === 0 || this.consumers.size === 0)
-            this.setState(WorkState.Waiting)
-        else
-            this.setState(WorkState.Flowing)
-    }
-
-    pipe<T extends StreamWrapper<Writable>>(destination: T, options?: { end?: boolean; }): T
+    pipe<T extends WritableStreamWrapper<Writable>>(destination: T, options?: { end?: boolean; }): T
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T
-    pipe(destination: StreamWrapper<Writable> | NodeJS.WritableStream, options?: { end?: boolean; }): typeof destination {
-        if (destination instanceof StreamWrapper<Writable>)
+    pipe(destination: WritableStreamWrapper<Writable> | NodeJS.WritableStream, options?: { end?: boolean; }): typeof destination {
+        if (destination instanceof WritableStreamWrapper<Writable>)
             destination = destination.stream();
-
         if (!(destination instanceof Writable))
             throw new Error("Streams not extending Writable are not supported");
 
@@ -86,9 +64,9 @@ class Topic extends Duplex implements StreamHandler {
         return super.pipe(destination, options);
     };
 
-    unpipe(destination?: StreamWrapper<Writable> | NodeJS.WritableStream): this {
+    unpipe(destination?: WritableStreamWrapper<Writable> | NodeJS.WritableStream): this {
         if (destination) {
-            if (destination instanceof StreamWrapper<Writable>)
+            if (destination instanceof WritableStreamWrapper<Writable>)
                 destination = destination.stream();
             if (!(destination instanceof Writable))
                 throw new Error("Streams not extending Writable are not supported");
@@ -99,112 +77,101 @@ class Topic extends Duplex implements StreamHandler {
         return super.unpipe(destination);
     };
 
-    _read(size: number): void {
-        this.pushFromOutStream(size);
-    }
-    setEncoding(encoding: BufferEncoding): this {
-        this.inReadStream.setEncoding(encoding);
-        this.outWriteStream.setEncoding(encoding);
-        return this;
-    }
-
-    _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        this.inReadStream.write(chunk, encoding, callback)
-    }
-    setDefaultEncoding(encoding: BufferEncoding): this {
-        this.inReadStream.setDefaultEncoding(encoding);
-        this.outWriteStream.setDefaultEncoding(encoding);
-        return this;
-    }
-    end(cb?: (() => void) | undefined): void;
-    end(chunk: any, cb?: (() => void) | undefined): void;
-    end(chunk: any, encoding?: BufferEncoding | undefined, cb?: (() => void) | undefined): void;
-    end(chunk?: unknown, encoding?: unknown, cb?: unknown): void {
+    end(cb?: (() => void) | undefined): this;
+    end(chunk: any, cb?: (() => void) | undefined): this;
+    end(chunk: any, encoding?: BufferEncoding | undefined, cb?: (() => void) | undefined): this;
+    end(chunk?: unknown, encoding?: unknown, cb?: unknown): this {
         throw new Error(`Topics are not supporting end() method`)
     }
 
-    cork(): void {
-        this.inReadStream.cork();
-        super.cork();
-    }
-    uncork(): void {
-        this.inReadStream.uncork();
-        super.uncork();
-    }
-    destroy(error?: Error | undefined): void { throw new Error(`Topics are not supporting destroy() method`); }
+    protected attachEventListeners() {
+        this.on("pipe", this.addProvider)
+        this.on("unpipe", this.removeProvider)
+        this.on("drain", () => this.updateState())
+        this.on("pause", () => this.updateState())
+        this.on("resume", () => this.updateState())
+        this.on("error", () => this.updateState())
+        this.on(TopicEvent.ProvidersChanged, () => this.updateState())
+        this.on(TopicEvent.ConsumersChanged, () => this.updateState())
 
 
-    pause(): this {
-        this.inReadStream.pause();
-        super.pause();
-        return this;
-    }
-    resume(): this {
-        this.inReadStream.resume();
-        super.resume();
-        return this;
     }
 
-    protected setError(error: Error) {
-        this.error = error;
-        this.emit("error", error);
-        this.setState(WorkState.Error);
+    protected updateState() {
+        const currentState = this.state();
+        if (this._state === currentState) return;
+        this._state = currentState;
+        this.emit(TopicEvent.StateChanged, currentState);
     }
+    protected emitProvidersChange() { this.emit(TopicEvent.ProvidersChanged); }
+    protected emitConsumersChange() { this.emit(TopicEvent.ConsumersChanged); }
 
     protected addProvider<T extends NodeJS.ReadableStream>(source: T) {
         if (!(source instanceof Readable))
             throw new Error("Streams not extending Readable are not supported");
 
-        if (!this.addStream(source, this.providers)) return
-        this.updateState();
-        this.emit(TopicEvent.ProvidersChanged);
+        this.addXndjsonException(source);
+
+        if (!this.addStream(source, this.providers)) return;
+        this.emitProvidersChange()
     }
+
+    protected addXndjsonException(source: Readable) {
+        if (this._options.contentType === "application/x-ndjson") {
+            const NEWLINE_BYTE = "\n".charCodeAt(0);
+
+            let lastChunk = Buffer.from([]);
+            source
+                .on("data", (chunk) => { lastChunk = chunk as Buffer; })
+                .on("end", () => {
+                    const lastByte = lastChunk[lastChunk.length - 1];
+                    if (lastByte !== NEWLINE_BYTE) {
+                        this.write("\n");
+                    }
+                });
+        }
+    }
+
     protected removeProvider<T extends NodeJS.ReadableStream>(source: T) {
         if (!(source instanceof Readable))
             throw new Error("Streams not extending Readable are not supported");
 
         if (!this.removeStream(source, this.providers)) return;
-        this.updateState()
-        this.emit(TopicEvent.ProvidersChanged);
+        this.emitProvidersChange()
     }
 
     protected addConsumer<T extends Writable>(destination: T) {
-        if (!this.addStream(destination, this.consumers)) return
-        this.updateState();
-        this.emit(TopicEvent.ConsumersChanged);
+        if (!this.addStream(destination, this.consumers)) return;
+        this.emitConsumersChange()
     }
     protected removeConsumer<T extends Writable>(destination: T) {
         if (!this.removeStream(destination, this.consumers)) return;
-        this.updateState()
-        this.emit(TopicEvent.ConsumersChanged);
+        this.emitConsumersChange()
     }
     protected removeAllConsumers() { this.consumers.clear(); }
 
     private addStream(stream: Writable, destination: Consumers): boolean
     private addStream(stream: Readable, destination: Providers): boolean
-    private addStream(stream: Writable | Readable, destination: any) {
+    private addStream(stream: Writable | Readable, destination: Consumers | Providers) {
         let streamHandler: StreamHandler;
         if (stream instanceof Topic) streamHandler = stream;
-        else streamHandler = StreamWrapper.retrive(stream);
+        else if (stream instanceof Readable) streamHandler = ReadableStreamWrapper.retrive(stream);
+        else if (stream instanceof Writable) streamHandler = WritableStreamWrapper.retrive(stream);
+        else throw new Error("Unsupported stream type");
 
         const streamExist = destination.has(stream);
         if (streamExist) return false;
         destination.set(stream, streamHandler);
+        this.updateState();
         return true;
     }
 
     private removeStream(stream: Writable, destination: Consumers): boolean
     private removeStream(stream: Readable, destination: Providers): boolean
     private removeStream(stream: Writable | Readable, destination: Consumers | Providers) {
-        return destination.delete(stream)
-    }
-
-    private pushFromOutStream(size?: number) {
-        let chunk;
-        while (null !==
-            (chunk = this.outWriteStream.read(size))) {
-            if (!this.push(chunk)) break;
-        }
+        const removed = destination.delete(stream);
+        if (removed) this.updateState();
+        return removed;
     }
 }
 

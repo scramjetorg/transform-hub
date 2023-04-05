@@ -968,12 +968,8 @@ export class Host implements IComponent {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
-                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
-                    {
-                        topic: new TopicName(csic.provides),
-                        contentType: ""
-                    }
-                ) as Writable);
+                const topic = this.serviceDiscovery.topicsController.get(new TopicName(csic.provides));
+                if (topic) csic.getOutputStream()!.unpipe(topic);
             }
 
             csic.logger.unpipe(this.logger);
