@@ -23,6 +23,7 @@ interruption.
 - [exitTimeout](AppContext.md#exittimeout)
 - [hub](AppContext.md#hub)
 - [initialState](AppContext.md#initialstate)
+- [instanceId](AppContext.md#instanceid)
 - [logger](AppContext.md#logger)
 
 ### Methods
@@ -106,6 +107,18 @@ this#save.
 #### Defined in
 
 [packages/types/src/app-context.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L145)
+
+___
+
+### instanceId
+
+• **instanceId**: `string`
+
+Instance Id
+
+#### Defined in
+
+[packages/types/src/app-context.ts:188](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L188)
 
 ___
 

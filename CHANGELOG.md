@@ -2,6 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.33.4] - 2023-04-06
+
+## Fixed
+
+## What's Changed
+
+* Update dependencies v0.33.3 by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/829>
+* Remove duplicated method for listing entities by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/831>
+* Fix sending topic info by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/833>
+* python-runner: replace classic EventEmitter with asynchronous one by @mcdominik in <https://github.com/scramjetorg/transform-hub/pull/832>
+* Expose Instance Id in AppContext. by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/837>
+* Fix normalize-url for Safari by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/838>
+
+**Full Changelog**: <https://github.com/scramjetorg/transform-hub/compare/v0.33.3...v0.33.4>
+
 ## [0.33.3] - 2023-03-16
 
 ## Fixed

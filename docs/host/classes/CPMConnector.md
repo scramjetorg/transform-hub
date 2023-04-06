@@ -995,6 +995,7 @@ Topic information is send via communication channel.
 | `data.contentType?` | `string` | - |
 | `data.provides?` | `string` | - |
 | `data.requires?` | `string` | - |
+| `data.topicName` | `string` | - |
 
 #### Returns
 
@@ -1014,7 +1015,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `topics` | { `contentType?`: `string` ; `provides?`: `string` ; `requires?`: `string`  }[] |
+| `topics` | { `contentType?`: `string` ; `provides?`: `string` ; `requires?`: `string` ; `topicName`: `string`  }[] |
 
 #### Returns
 

@@ -18,7 +18,6 @@
 - [deleteSequence](HostClient.md#deletesequence)
 - [getAuditStream](HostClient.md#getauditstream)
 - [getConfig](HostClient.md#getconfig)
-- [getEntities](HostClient.md#getentities)
 - [getInstanceClient](HostClient.md#getinstanceclient)
 - [getInstanceInfo](HostClient.md#getinstanceinfo)
 - [getLoadCheck](HostClient.md#getloadcheck)
@@ -125,20 +124,6 @@ ___
 #### Defined in
 
 [packages/types/src/api-client/host-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L67)
-
-___
-
-### getEntities
-
-▸ **getEntities**(): `Promise`<[`GetEntitiesResponse`](../modules/STHRestAPI.md#getentitiesresponse)\>
-
-#### Returns
-
-`Promise`<[`GetEntitiesResponse`](../modules/STHRestAPI.md#getentitiesresponse)\>
-
-#### Defined in
-
-[packages/types/src/api-client/host-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L73)
 
 ___
 
