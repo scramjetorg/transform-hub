@@ -94,7 +94,7 @@ Topic details.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:184](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L184)
+[packages/host/src/lib/sd-adapter.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L185)
 
 ___
 
@@ -120,19 +120,19 @@ Topic stream.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:213](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L213)
+[packages/host/src/lib/sd-adapter.ts:214](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L214)
 
 ___
 
 ### getTopics
 
-▸ **getTopics**(): { `contentType`: `string` = value.contentType; `localProvider`: `undefined` \| `string` = value.localProvider; `topic`: `string` = key }[]
+▸ **getTopics**(): { `contentType`: `string` = value.contentType; `localProvider`: `undefined` \| `string` = value.localProvider; `topic`: `string` = key; `topicName`: `string` = key }[]
 
 @TODO: implement.
 
 #### Returns
 
-{ `contentType`: `string` = value.contentType; `localProvider`: `undefined` \| `string` = value.localProvider; `topic`: `string` = key }[]
+{ `contentType`: `string` = value.contentType; `localProvider`: `undefined` \| `string` = value.localProvider; `topic`: `string` = key; `topicName`: `string` = key }[]
 
 All topics.
 
@@ -160,7 +160,7 @@ Removes store topic with given id.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:244](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L244)
+[packages/host/src/lib/sd-adapter.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L245)
 
 ___
 
@@ -182,7 +182,7 @@ Unsets local provider for given topic.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:197](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L197)
+[packages/host/src/lib/sd-adapter.ts:198](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L198)
 
 ___
 
@@ -204,7 +204,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:258](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L258)
+[packages/host/src/lib/sd-adapter.ts:259](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L259)
 
 ___
 
@@ -225,7 +225,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:252](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L252)
+[packages/host/src/lib/sd-adapter.ts:253](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L253)
 
 ___
 
@@ -271,7 +271,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L265)
+[packages/host/src/lib/sd-adapter.ts:266](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L266)
 
 ## Constructors
 
