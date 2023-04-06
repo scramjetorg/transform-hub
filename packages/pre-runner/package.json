@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/pre-runner",
-  "version": "0.33.3",
+  "version": "0.33.4",
   "description": "This package is part of Scramjet Transform Hub. The package identifies the sequences and returns the information to back STH.",
   "scripts": {
     "build:docker": "docker build -t scramjetorg/pre-runner:$(git rev-parse HEAD) .",
