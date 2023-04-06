@@ -302,7 +302,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         //await defer(15);
 
-        this.sendHandshakeMessage();
+        await this.sendHandshakeMessage();
 
         const { appConfig, args } = await this.waitForHandshakeResponse();
 
@@ -451,7 +451,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         // TODO: what if it fails?
     }
 
-    sendHandshakeMessage() {
+    async sendHandshakeMessage() {
+        await defer(1000);
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
