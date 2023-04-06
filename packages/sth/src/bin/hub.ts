@@ -70,6 +70,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .option("--environment-name <name>", "Sets the environment name for telemetry reporting (defaults to SCP_ENV_VALUE env var or 'not-set')")
     .option("--no-telemetry", "Disables telemetry", false)
+    .option("--enable-federation-control", "Enables federation control", false)
     .parse(process.argv)
     .opts() as STHCommandOptions;
 
@@ -130,7 +131,8 @@ const options: OptionValues & STHCommandOptions = program
             instancesServerPort: options.instancesServerPort ? parseInt(options.instancesServerPort, 10) : undefined,
             port: options.port,
             hostname: options.hostname,
-            id: options.id
+            id: options.id,
+            federationControl: options.enableFederationControl
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
         sequencesRoot: resolveFile(options.sequencesRoot),

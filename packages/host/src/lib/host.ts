@@ -206,6 +206,7 @@ export class Host implements IComponent {
 
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
+
         this.serviceDiscovery.logger.pipe(this.logger);
 
         if (sthConfig.telemetry.environment)
@@ -565,18 +566,29 @@ export class Host implements IComponent {
      * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
      */
     spaceMiddleware(req: ParsedMessage, res: ServerResponse, _next: NextCallback) {
+        if (!this.config.host.federationControl) {
+            res.statusCode = 403;
+            res.end();
+            return;
+        }
+
         const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
 
         this.logger.info("SPACE REQUEST", req.url, url);
 
         const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
 
-        clientRequest?.on("response", (response: IncomingMessage) => {
-            response.pipe(res);
-        });
+        if (clientRequest) {
+            clientRequest?.on("response", (response: IncomingMessage) => {
+                response.pipe(res);
+            });
 
-        clientRequest?.flushHeaders();
-        req.pipe(clientRequest!);
+            clientRequest.flushHeaders();
+            req.pipe(clientRequest);
+        } else {
+            res.statusCode = 404;
+            res.end();
+        }
     }
 
     /**
