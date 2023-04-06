@@ -171,7 +171,8 @@ export class ServiceDiscovery {
         return Array.from(this.dataMap, ([key, value]) => ({
             contentType: value.contentType,
             localProvider: value.localProvider,
-            topic: key
+            topic: key,
+            topicName: key
         }));
     }
 
@@ -252,14 +253,14 @@ export class ServiceDiscovery {
     public async routeTopicToStream(topicData: dataType, target: Writable) {
         this.getData(topicData).pipe(target);
 
-        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType });
     }
 
     public async routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
         const topic = this.addData(topicData, localProvider);
 
         pipeToTopic(source, topic);
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType });
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {

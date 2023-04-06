@@ -544,13 +544,13 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @param data Topic information.
      */
-    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string }) {
+    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string, topicName: string }) {
         await this.communicationStream?.whenWrote(
             [CPMMessageCode.TOPIC, { ...data, status: "add" }]
         );
     }
 
-    async sendTopicsInfo(topics: { provides?: string, requires?: string, contentType?: string }[]) {
+    async sendTopicsInfo(topics: { provides?: string, requires?: string, contentType?: string, topicName: string }[]) {
         this.logger.debug("Sending topics information", topics);
         topics.forEach(async topic => {
             await this.sendTopicInfo(topic);
