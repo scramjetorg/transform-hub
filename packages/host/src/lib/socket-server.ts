@@ -48,6 +48,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             });
 
             protocol = new TeceMux(connection);
+            //protocol.logger.pipe(this.logger);
 
             protocol.on("channel", async (channel: TeceMuxChannel) => {
                 const { instanceId, channelId } =
@@ -79,7 +80,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 //     });
                 // });
 
-                this.logger.info("new channel", instanceId, channelId);
+                this.logger.info("new channel", instanceId, channelId, channel._id);
 
                 let runner = this.runnerConnectionsInProgress.get(instanceId);
 
@@ -99,6 +100,8 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 }
 
                 if (runner.every(isDefined)) {
+                    // eslint-disable-next-line no-console
+                    console.log(runner.map(r => r!._id));
                     this.runnerConnectionsInProgress.delete(instanceId);
                     this.emit("connect", instanceId, runner as RunnerChannels);
                 }
