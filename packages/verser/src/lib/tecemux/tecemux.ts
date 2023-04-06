@@ -34,7 +34,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         const channel: TeceMuxChannel = Object.assign(
             new Duplex({
                 write: (chunk, encoding, next) => {
-                    this.logger.trace("WRITE channel", channel._id, chunk);
+                    this.logger.debug("WRITE channel", channel._id, chunk);
 
                     if (chunk === null) {
                         this.logger.info("NULL ON CHANNEL");
@@ -46,12 +46,12 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                     return encoder.write(chunk, encoding, next);
                 },
                 read: (_size) => {
-                    this.logger.trace("READ channel", channel._id);
+                    this.logger.debug("READ channel", channel._id);
                 },
                 allowHalfOpen: true
             }),
             {
-                _id: port || this.channelCount,
+                _id: port,
                 encoder,
                 closedByFIN: false
             }
@@ -89,7 +89,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             });
 
         if (emit) {
-            await encoder.establishChannel(port || this.channelCount);
+            await encoder.establishChannel(channel._id);
         }
 
         return channel;
@@ -140,8 +140,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     async main() {
         let t = 0;
-
-        //this.carrierDecoder.pipe(this.framesKeeper);
 
         for await (const chunk of this.carrierDecoder) {
             let frame: FrameData;
@@ -228,7 +226,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     addChannel(channel: TeceMuxChannel, emit: boolean) {
         this.logger.debug("adding channel", channel._id);
-        this.channels.set(channel._id, channel); // wait for SYN reply?
+        this.channels.set(channel._id, channel);
 
         if (emit) {
             this.emit("channel", channel);
