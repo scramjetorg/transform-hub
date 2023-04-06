@@ -29,7 +29,6 @@ Provides methods to interact with Host.
 - [deleteSequence](HostClient.md#deletesequence)
 - [getAuditStream](HostClient.md#getauditstream)
 - [getConfig](HostClient.md#getconfig)
-- [getEntities](HostClient.md#getentities)
 - [getInstanceClient](HostClient.md#getinstanceclient)
 - [getInstanceInfo](HostClient.md#getinstanceinfo)
 - [getLoadCheck](HostClient.md#getloadcheck)
@@ -166,20 +165,6 @@ Promise resolving to Host configuration (public part).
 #### Defined in
 
 [api-client/src/host-client.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L153)
-
-___
-
-### getEntities
-
-▸ **getEntities**(): `Promise`<`GetEntitiesResponse`\>
-
-#### Returns
-
-`Promise`<`GetEntitiesResponse`\>
-
-#### Defined in
-
-[api-client/src/host-client.ts:213](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L213)
 
 ___
 
