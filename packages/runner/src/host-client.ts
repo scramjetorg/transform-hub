@@ -44,6 +44,8 @@ class HostClient implements IHostClient {
         const tunnel = net.createConnection(this.instancesServerPort, this.instancesServerHost);
         const protocol = new TeceMux(tunnel);
 
+        //protocol.logger.pipe(this.logger);
+
         const openConnections = await Promise.all(
 <<<<<<< HEAD
             Array.from(Array(9))
@@ -85,7 +87,7 @@ class HostClient implements IHostClient {
                     // Assuming id is exactly 36 bytes
                     channel.write(id + "" + index);
                     // eslint-disable-next-line no-console
-                    console.log(channel._id);
+                    console.log(id, index, channel._id);
                     // Assuming number is from 0-8, sending 1 byte
                     //channel.write(index.toString());
 
