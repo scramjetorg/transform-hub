@@ -15,7 +15,7 @@ export class FramesKeeper extends TypedEmitter<FramesKeeperEvents> implements IF
     generator: AsyncGenerator<number, never, unknown> = (async function* (this: FramesKeeper) {
         while (true) {
             if (this.lastSequenceSent - this.lastSequenceReceived < this.#MAX_FRAMES_DIFFERENCE) {
-                this.logger.info("Write allowed");
+                this.logger.debug("Write allowed");
                 yield Promise.resolve(this.lastSequenceReceived);
                 continue;
             }
@@ -53,7 +53,7 @@ export class FramesKeeper extends TypedEmitter<FramesKeeperEvents> implements IF
         const frame = this.#framesSent.get(sequenceNumber);
 
         // received or not stored
-        return frame === undefined || !!this.#framesSent.get(sequenceNumber)?.received;
+        return frame === undefined || !!frame.received;
     }
 
     getFrame(sequenceNumber: number) {
