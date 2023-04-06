@@ -63,7 +63,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .description("Pipe the running Instance log to stdout")
         .action((id: string) => {
-            return displayStream(getInstance(getInstanceId(id)).getStream("log"));
+            return displayStream(getInstance(getInstanceId(id)).getLogStream());
         });
 
     instanceCmd
