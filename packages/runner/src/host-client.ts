@@ -44,6 +44,8 @@ class HostClient implements IHostClient {
         const tunnel = net.createConnection(this.instancesServerPort, this.instancesServerHost);
         const protocol = new TeceMux(tunnel);
 
+        //protocol.logger.pipe(this.logger);
+
         const openConnections = await Promise.all(
             Array.from(Array(9))
                 .map((_c, index) => protocol.multiplex({ channel: index }))
