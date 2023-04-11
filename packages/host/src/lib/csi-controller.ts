@@ -539,8 +539,7 @@ export class CSIController extends TypedEmitter<Events> {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                args: this.args,
-                b: Buffer.from(new Uint8Array(1024 * 1024).fill(2)).toString("hex")
+                args: this.args
             } as HandshakeAcknowledgeMessage;
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));

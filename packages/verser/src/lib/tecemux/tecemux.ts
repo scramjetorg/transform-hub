@@ -65,28 +65,28 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.error("CHANNEL ERROR", error);
                 this.emit("error", { error, source: channel });
             })
-            .on("destroy", () => {
-                this.logger.trace("channel on DESTROY ", channel._id);
-            })
-            .on("abort", () => {
-                this.logger.trace("channel on ABORT ", channel._id);
-            })
+            // .on("destroy", () => {
+            //     this.logger.trace("channel on DESTROY ", channel._id);
+            // })
+            // .on("abort", () => {
+            //     this.logger.trace("channel on ABORT ", channel._id);
+            // })
             .on("close", () => {
                 this.logger.info("CHANNEL close", channel._id);
                 this.sendFIN(channel._id);
             })
-            .on("end", () => {
-                this.logger.info("CHANNEL end", channel._id);
-            })
+            // .on("end", () => {
+            //     this.logger.info("CHANNEL end", channel._id);
+            // })
             .on("finish", () => {
                 this.logger.info("CHANNEL finish", channel._id);
                 this.sendFIN(channel._id);
-            })
-            .on("data", (d) => {
-                if (d === null) {
-                    this.logger.info("CHANNEL end", channel._id);
-                }
             });
+            // .on("data", (d) => {
+            //     if (d === null) {
+            //         this.logger.info("CHANNEL end", channel._id);
+            //     }
+            // });
 
         if (emit) {
             await encoder.establishChannel(channel._id);
@@ -102,24 +102,24 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         this.carrierSocket = socket;
 
         this.carrierDecoder = new FrameDecoder({ emitClose: false })
-            .on("pause", () => {
-                this.logger.warn("Decoder paused");
-            })
-            .on("close", () => {
-                this.logger.warn("Decoder closed");
-            })
-            .on("end", () => {
-                this.logger.warn("Decoder ended");
-            })
             .on("error", (error) => {
                 this.logger.error("Decoder error", error);
-            })
-            .on("abort", (error) => {
-                this.logger.error("Decoder abort", error);
-            })
-            .on("destroy", (error) => {
-                this.logger.error("Decoder destroy", error);
             });
+            // .on("pause", () => {
+            //     this.logger.warn("Decoder paused");
+            // })
+            // .on("close", () => {
+            //     this.logger.warn("Decoder closed");
+            // })
+            // .on("end", () => {
+            //     this.logger.warn("Decoder ended");
+            // })
+            // .on("abort", (error) => {
+            //     this.logger.error("Decoder abort", error);
+            // })
+            // .on("destroy", (error) => {
+            //     this.logger.error("Decoder destroy", error);
+            // });
 
         this.carrierDecoder.logger.updateBaseLog({ id: this.id });
         this.carrierDecoder.logger.pipe(this.logger);
