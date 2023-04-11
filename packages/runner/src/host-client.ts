@@ -52,15 +52,13 @@ class HostClient implements IHostClient {
         ).then(async res => {
             return Promise.all(
                 res.map(async (channel, index) => {
-                    // Assuming id is exactly 36 bytes
+                    // Assuming id is exactly 36 bytes + Assuming number is from 0-8, sending 1 byte
                     channel.write(id + "" + index);
 
                     return channel;
                 })
             );
         });
-
-        //await defer(500);
 
         this._streams = await openConnections as HostOpenConnections;
 
