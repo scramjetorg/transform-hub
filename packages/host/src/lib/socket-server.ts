@@ -100,8 +100,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 }
 
                 if (runner.every(isDefined)) {
-                    // eslint-disable-next-line no-console
-                    console.log(runner.map(r => r!._id));
                     this.runnerConnectionsInProgress.delete(instanceId);
                     this.emit("connect", instanceId, runner as RunnerChannels);
                 }
