@@ -11,7 +11,7 @@ class TopicsMap {
 
     get topics() {
         return Array.from(this.topicsMap, ([, topic]) => ({
-            name: topic.id(),
+            id: topic.id(),
             contentType: topic.options().contentType,
             state: topic.state(),
             providers: Array.from(topic.providers, ([, provider]) => ({

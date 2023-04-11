@@ -73,7 +73,7 @@ export class Topic extends Duplex implements TopicHandler {
             this.removeConsumer(destination)
         }
         else this.removeAllConsumers();
-
+        // TODO: emit consumers change should go after unpipe
         return super.unpipe(destination);
     };
 
@@ -148,7 +148,11 @@ export class Topic extends Duplex implements TopicHandler {
         if (!this.removeStream(destination, this.consumers)) return;
         this.emitConsumersChange()
     }
-    protected removeAllConsumers() { this.consumers.clear(); }
+    protected removeAllConsumers() {
+        if (this.consumers.size == 0) return
+        this.consumers.clear();
+        this.emitConsumersChange()
+    }
 
     private addStream(stream: Writable, destination: Consumers): boolean
     private addStream(stream: Readable, destination: Providers): boolean

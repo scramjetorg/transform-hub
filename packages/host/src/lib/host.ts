@@ -1,7 +1,7 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Duplex, Readable, Writable } from "stream";
+import { Duplex, Writable } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
@@ -48,6 +48,7 @@ import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
 import TopicName from "./serviceDiscovery/topicName";
 import TopicRouter from "./serviceDiscovery/topicRouter";
+import { ContentType } from "./serviceDiscovery/contentType";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -937,7 +938,7 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
-                    { topic: new TopicName(data.requires), contentType: data.contentType! },
+                    { topic: new TopicName(data.requires), contentType: data.contentType as ContentType },
                     csic.getInputStream()
                 );
 
@@ -952,8 +953,8 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
-                    { topic: new TopicName(data.provides), contentType: data.contentType! },
-                    csic.id
+                    { topic: new TopicName(data.provides), contentType: data.contentType as ContentType },
+                    // csic.id
                 );
 
                 csic.outputRouted = true;
@@ -988,11 +989,8 @@ export class Host implements IComponent {
 
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
-                (this.serviceDiscovery.getData({
-                    topic: new TopicName(csic.requires),
-                    contentType: "",
-                }) as Readable
-                ).unpipe(csic.getInputStream()!);
+                const topic = this.serviceDiscovery.topicsController.get(new TopicName(csic.requires));
+                if (topic) topic.unpipe(csic.getInputStream()! as Writable);
             }
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);

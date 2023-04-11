@@ -110,19 +110,22 @@ export class ServiceDiscovery {
     /**
      * @returns All topics.
      */
-<<<<<<< HEAD
     getTopics() {
+        return this.topicsController.topics.map((value) => ({
+            contentType: value.contentType,
+            localProvider: "",
+            topic: value.id,
+            topicName: value.id
+        }));
+        // return this.topicsController.topics;
+        // TODO: map to this
         // return Array.from(this.dataMap, ([key, value]) => ({
         //     contentType: value.contentType,
         //     localProvider: value.localProvider,
         //     topic: key,
         //     topicName: key
         // }));
-        return this.topicsController.topics;
     }
-=======
-    getTopics() { return this.topicsController.topics; }
->>>>>>> Topic class and tests
 
     /**
      * Returns topic details for given topic.
@@ -176,13 +179,8 @@ export class ServiceDiscovery {
     public async routeStreamToTopic(source: Readable, topicData: DataType) {
         const topic = this.createTopicIfNotExist(topicData);
 
-<<<<<<< HEAD
-        pipeToTopic(source, topic);
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
-=======
         source.pipe(topic, { end: false });
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), contentType: topicData.contentType });
->>>>>>> Topic class and tests
+        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
