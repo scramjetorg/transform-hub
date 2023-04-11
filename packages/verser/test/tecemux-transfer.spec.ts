@@ -18,7 +18,7 @@ async function startServer() {
     });
 }
 
-test("Protocol send file over http connection", async (t) => {
+test.serial("Protocol send file over http connection", async (t) => {
     const server = await startServer();
 
     const hashReceived = crypto.createHash("md5");
@@ -26,14 +26,15 @@ test("Protocol send file over http connection", async (t) => {
 
     const serverSideChannelPromise = new Promise<TeceMuxChannel>((resolve) => {
         server.on("connect", async (req: IncomingMessage, socket: Socket) => {
+            console.log("server on connect!");
             socket.setNoDelay(true);
 
             serverTeceMux = new TeceMux(socket, "Server")
                 .on("error", (error) => {
-                    console.error("TeceMux error", error);
+                    console.error("TeceMux error", error.code);
                 });
 
-            resolve(serverTeceMux.multiplex());
+            resolve(serverTeceMux.multiplex({ channel: 1 }));
         });
     });
 
@@ -51,6 +52,7 @@ test("Protocol send file over http connection", async (t) => {
 
     await new Promise<TeceMuxChannel>(resolve => {
         clientTeceMux.on("channel", async (clientSideChannel: TeceMuxChannel) => {
+            console.log("TEST: on channel", clientSideChannel._id);
             function* gen() {
                 for (let i = 0; i < 1e3; i++) {
                     const str = crypto.randomBytes(1024).toString("hex");
@@ -67,14 +69,18 @@ test("Protocol send file over http connection", async (t) => {
 
     const serverSideChannel = await serverSideChannelPromise;
 
+    console.log("Serverside channel", serverSideChannel._id);
+
     for await (const d of serverSideChannel) {
         hashReceived.update(d);
     }
 
-    console.dir({
-        hashSent,
-        hashReceived
-    });
+    const res = {
+        txHash: hashSent.digest("hex"),
+        rxHash: hashReceived.digest("hex")
+    };
 
-    t.assert(hashReceived.digest("hex") === hashSent.digest("hex"), "Unequal hashes");
+    console.dir(res);
+
+    t.assert(res.txHash === res.rxHash, "Unequal hashes");
 });

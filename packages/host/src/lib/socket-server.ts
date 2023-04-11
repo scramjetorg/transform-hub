@@ -59,10 +59,10 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                             const chanId = parseInt(payload.substring(36, 37), 10);
 
                             // eslint-disable-next-line max-nested-callbacks
-                            //channel.on("data", (chunk) => {
-                                // eslint-disable-next-line no-console
-                            //    this.logger.info("DATA", chanId, channel._id, chunk.toString());
-                            //})
+                            // channel.on("data", (chunk) => {
+                            //     // eslint-disable-next-line no-console
+                            //     this.logger.info("DATA", chanId, channel._id, chunk.toString());
+                            // }).pause();
                             //channel.pause();
                             //channel.pipe(process.stdout);
                             //this.logger.info("payload", payload, instanceId, channelId);
