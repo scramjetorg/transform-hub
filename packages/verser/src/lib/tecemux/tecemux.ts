@@ -58,6 +58,21 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             .on("error", (error) => {
                 this.logger.error("Decoder error", error);
             });
+            // .on("pause", () => {
+            //     this.logger.warn("Decoder paused");
+            // })
+            // .on("close", () => {
+            //     this.logger.warn("Decoder closed");
+            // })
+            // .on("end", () => {
+            //     this.logger.warn("Decoder ended");
+            // })
+            // .on("abort", (error) => {
+            //     this.logger.error("Decoder abort", error);
+            // })
+            // .on("destroy", (error) => {
+            //     this.logger.error("Decoder destroy", error);
+            // });
 
         this.carrierDecoder.logger.updateBaseLog({ id: this.id });
         this.carrierDecoder.logger.pipe(this.logger);
