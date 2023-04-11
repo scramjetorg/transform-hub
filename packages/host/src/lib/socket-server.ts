@@ -48,7 +48,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             });
 
             protocol = new TeceMux(connection);
-            //protocol.logger.pipe(this.logger);
 
             protocol.on("channel", async (channel: TeceMuxChannel) => {
                 const { instanceId, channelId } =
@@ -65,63 +64,16 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                         });
                     });
 
-<<<<<<< HEAD
-||||||| constructed merge base
-                // const channelId = await new Promise<number>((resolve) => {
-                //     channel.once("readable", () => {
-                //         resolve(parseInt(channel.read(1).toString(), 10));
-                //     });
-                // });
-
-                this.logger.info("new channel", instanceId, channelId);
-
-                let runner = this.runnerConnectionsInProgress.get(instanceId);
-
-                if (!runner) {
-                    runner = [null, null, null, null, null, null, null, null, null];
-                    this.runnerConnectionsInProgress.set(instanceId, runner);
-                }
-=======
-                // const channelId = await new Promise<number>((resolve) => {
-                //     channel.once("readable", () => {
-                //         resolve(parseInt(channel.read(1).toString(), 10));
-                //     });
-                // });
-
-                this.logger.info("new channel", instanceId, channelId, channel._id);
-
-                let runner = this.runnerConnectionsInProgress.get(instanceId);
-
-                if (!runner) {
-                    runner = [null, null, null, null, null, null, null, null, null];
-                    this.runnerConnectionsInProgress.set(instanceId, runner);
-                }
->>>>>>> fix channels _id
-
                 channel
                     .on("error", (err: any) => this.logger.error("Error on Instance in stream", instanceId, channelId, err))
                     .on("end", () => this.logger.debug(`Channel [${instanceId}:${channelId}] ended`));
 
-
-<<<<<<< HEAD
                 try {
                     await this.handleConnection(instanceId, channelId, connection as Socket);
                 } catch (err: any) {
                     connection.destroy();
-||||||| constructed merge base
-                if (runner.every(isDefined)) {
-                    this.runnerConnectionsInProgress.delete(instanceId);
-                    this.emit("connect", instanceId, runner as RunnerChannels);
-=======
-                if (runner.every(isDefined)) {
-                    // eslint-disable-next-line no-console
-                    console.log(runner.map(r => r!._id));
-                    this.runnerConnectionsInProgress.delete(instanceId);
-                    this.emit("connect", instanceId, runner as RunnerChannels);
->>>>>>> fix channels _id
                 }
-            })
-
+            });
         });
 
         return new Promise<void>((res, rej) => {

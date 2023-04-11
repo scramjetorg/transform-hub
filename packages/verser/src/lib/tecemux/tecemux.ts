@@ -248,11 +248,10 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     }
 
     async multiplex(opts: { channel?: number } = {}): Promise<TeceMuxChannel> {
-        this.logger.trace("Multiplex");
-        console.log("Multiplex", opts.channel);
-
         const id = opts.channel !== undefined ? opts.channel : this.channelCount;
-        const channel = await this.createChannel(id, true);
+        const channel = await this.createChannel(id);
+
+        this.logger.trace("Multiplex", id);
 
         await channel.encoder.establishChannel(id);
 
