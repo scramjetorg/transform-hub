@@ -78,14 +78,12 @@ export class FrameEncoder extends Transform {
         return flags;
     }
 
-    async establishChannel(channelCount: number) {
-        this.logger.debug("Set channel command", channelCount);
-
-        console.log("Set channel command", channelCount);
+    async establishChannel(channelId: number) {
+        this.logger.debug("Establishing channel", channelId);
 
         const frame = this.createFrame([], {
             flagsArray: ["PSH"],
-            destinationPort: channelCount
+            destinationPort: channelId
         });
 
         this.out.write(frame);
@@ -94,10 +92,11 @@ export class FrameEncoder extends Transform {
 
         return new Promise<void>((resolve, _reject) => {
             const ackTempHandler = (sequenceNumber: number) => {
-                console.log("ACK RECEIVED", sequenceNumber, sn);
+                this.logger.debug("ACK RECEIVED", sequenceNumber, sn);
 
                 if (sequenceNumber === sn) {
                     this.tecemux.framesKeeper.off("ack", ackTempHandler);
+                    this.logger.debug("channel established", channelId);
                     resolve();
                 }
             };
