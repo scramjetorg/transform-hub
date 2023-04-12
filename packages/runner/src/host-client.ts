@@ -60,7 +60,7 @@ class HostClient implements IHostClient {
             );
         });
 
-        this._streams = await openConnections as HostOpenConnections;
+        this._streams = openConnections as HostOpenConnections;
 
         try {
             this.bpmux = new BPMux(this._streams[CC.PACKAGE]);
@@ -103,22 +103,12 @@ class HostClient implements IHostClient {
     async disconnect() {
         this.logger.trace("Disconnecting from host");
 
-        const streamsExitedPromised: Promise<void>[] = this.streams.map((stream, i) =>
+        const streamsExitedPromised: Promise<void>[] = this.streams.map((stream, _i) =>
             new Promise(
                 (res) => {
-                    if ("writable" in stream!) {
-                        stream
-                            .on("error", (e) => {
-                                console.error("Error on stream", i, e.stack);
-                            })
-                            .on("close", () => {
-                                res();
-                            })
-                            .end();
-                    } else {
-                        stream!.destroy();
-                        res();
-                    }
+                    // now we have readable and writable always
+                    stream!.destroy();
+                    res();
                 }
             ));
 
