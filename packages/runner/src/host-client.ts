@@ -59,7 +59,7 @@ class HostClient implements IHostClient {
             );
         });
 
-        this._streams = openConnections as HostOpenConnections;
+        this._streams = await openConnections as HostOpenConnections;
 
         try {
             this.bpmux = new BPMux(this._streams[CC.PACKAGE]);
