@@ -9,11 +9,13 @@ import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
 type MaybeChannel = TeceMuxChannel | Socket | null;
 
 type RunnerChannels = [
-    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel,
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
 ];
 
 type RunnerConnectionsInProgress = [
-    MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel
+    MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel,
+    MaybeChannel, MaybeChannel, MaybeChannel, MaybeChannel
 ];
 
 type Events = {

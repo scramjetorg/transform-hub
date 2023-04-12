@@ -504,12 +504,16 @@ export class Runner<X extends AppConfig> implements IComponent {
             try {
                 this.logger.debug("Processing function on index", sequence.length - itemsLeftInSequence - 1);
 
+                // eslint-disable-next-line no-loop-func
+                await new Promise((res) => {
+                    process.nextTick(res);
+                });
+
                 out = func.call(
                     this.context,
                     stream,
                     ...args
                 );
-
                 this.logger.debug("Function called", sequence.length - itemsLeftInSequence - 1);
             } catch (error: any) {
                 this.logger.error("Function errored", sequence.length - itemsLeftInSequence, error.stack);
