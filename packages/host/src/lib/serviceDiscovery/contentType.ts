@@ -7,4 +7,4 @@ export const isContentType = (contentType: string): contentType is ContentType =
         "text/plain",
         "application/octet-stream"
     ].includes(contentType);
-}
+};
