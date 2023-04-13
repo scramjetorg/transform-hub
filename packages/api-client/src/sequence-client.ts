@@ -82,7 +82,7 @@ export class SequenceClient {
      * @param {ClientProvider} host Host client.
      * @returns {InstanceClient} Instance client.
      */
-    async getInstance(id: string, host: ClientProvider) {
+    async getInstance(id: string, host: ClientProvider = this.host) {
         return InstanceClient.from(id, host);
     }
 
