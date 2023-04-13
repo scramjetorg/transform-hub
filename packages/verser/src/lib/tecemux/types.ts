@@ -1,4 +1,4 @@
-import { Duplex, Transform } from "stream";
+import { Duplex, Readable, Transform } from "stream";
 
 export type TeceMuxEvents = {
     channel(socket: Duplex): void;
@@ -49,12 +49,16 @@ export interface ITeCeMux {
 
 export interface IFrameEncoder extends Transform {
     establishChannel(id: number): Promise<void>;
+    createFrame(chunk: any, frame: Partial<FrameData>): Buffer;
+    out: Readable;
 }
 
 export type TeceMuxChannel = Duplex & {
     _id: number;
     encoder: IFrameEncoder;
     closedByFIN: boolean;
+    sendACK(sequenceNumber: number): void;
+    handlerFIN(): void;
 };
 
 export type FrameData = {

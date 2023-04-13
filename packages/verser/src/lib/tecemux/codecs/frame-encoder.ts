@@ -8,7 +8,7 @@ import { FrameData, ITeCeMux } from "../types";
 import { calculateChecksum } from "./utils";
 
 export class FrameEncoder extends Transform {
-    MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
+    MAX_CHUNK_SIZE = 64 * 1024 - HEADER_LENGTH;
 
     tecemux: ITeCeMux;
     total = 0;
