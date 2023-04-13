@@ -44,12 +44,13 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
         let protocol: TeceMux;
 
-        this.server.on("connection", async (connection: net.Socket) => {
-            connection.on("error", (err) => {
+        this.server.on("connection", async (runnerConnection: net.Socket) => {
+            runnerConnection.setNoDelay(true);
+            runnerConnection.on("error", (err) => {
                 this.logger.error("Error on connection from runner", err);
             });
 
-            protocol = new TeceMux(connection);
+            protocol = new TeceMux(runnerConnection);
 
             protocol.on("channel", async (channel: TeceMuxChannel) => {
                 const { instanceId, channelId } =
@@ -71,9 +72,9 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     .on("end", () => this.logger.debug(`Channel [${instanceId}:${channelId}] ended`));
 
                 try {
-                    await this.handleConnection(instanceId, channelId, connection as Socket);
+                    await this.handleConnection(instanceId, channelId, channel as unknown as Socket);
                 } catch (err: any) {
-                    connection.destroy();
+                    channel.destroy();
                 }
             });
         });
