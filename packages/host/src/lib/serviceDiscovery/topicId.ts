@@ -1,5 +1,5 @@
-class TopicName {
-    private topicName: string
+class TopicId {
+    private topicName: string;
 
     constructor(name: string) {
         this.topicName = name;
@@ -8,7 +8,7 @@ class TopicName {
         return this.topicName;
     }
     isValid() {
-        return TopicName.validate(this.topicName);
+        return TopicId.validate(this.topicName);
     }
     static validate(topicName: string) {
         if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) return true;
@@ -16,4 +16,4 @@ class TopicName {
     }
 }
 
-export default TopicName;
+export default TopicId;

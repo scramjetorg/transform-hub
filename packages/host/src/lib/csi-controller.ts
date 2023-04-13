@@ -33,7 +33,7 @@ import {
     InstanceAdapterError,
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
-import { Duplex, PassThrough, Readable } from "stream";
+import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { development } from "@scramjet/sth-config";
 
 import { DataStream } from "scramjet";
@@ -449,7 +449,7 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
-            this.logger.addSerializedLoggerSource(streams[CC.LOG]);
+            this.logger.addSerializedLoggerSource(streams[CC.LOG] as Readable);
         }
 
         this.upStreams = [
@@ -471,7 +471,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.controlDataStream = new DataStream();
         this.controlDataStream
             .JSONStringify()
-            .pipe(this.upStreams[CC.CONTROL]);
+            .pipe(this.upStreams[CC.CONTROL] as Duplex);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             await this.handleHandshake(message);
@@ -590,13 +590,13 @@ export class CSIController extends TypedEmitter<Events> {
                 inputHeadersSent = true;
             }
 
-            (duplex as unknown as DuplexStream).input.pipe(this.downStreams![CC.IN], { end: false });
+            (duplex as unknown as DuplexStream).input.pipe(this.downStreams![CC.IN] as Writable, { end: false });
             this.upStreams![CC.OUT]?.pipe((duplex as unknown as DuplexStream).output, { end: false });
         });
 
-        this.router.upstream("/stdout", this.upStreams[CC.STDOUT]);
-        this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
-        this.router.downstream("/stdin", this.upStreams[CC.STDIN], { end: true });
+        this.router.upstream("/stdout", this.upStreams[CC.STDOUT] as Duplex);
+        this.router.upstream("/stderr", this.upStreams[CC.STDERR] as Duplex);
+        this.router.downstream("/stdin", this.upStreams[CC.STDIN] as Duplex, { end: true });
 
         const logStream = this.upStreams[CC.LOG];
 
@@ -619,9 +619,9 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.upstream("/log", mux);
 
         if (development()) {
-            this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
+            this.router.upstream("/monitoring", this.upStreams[CC.MONITORING] as Duplex);
         }
-        this.router.upstream("/output", this.upStreams[CC.OUT]);
+        this.router.upstream("/output", this.upStreams[CC.OUT] as Duplex);
 
         this.router.downstream("/input", (req) => {
             if (this.apiInputEnabled) {
@@ -804,7 +804,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getLogStream(): Readable {
-        return this.upStreams![CC.LOG];
+        return this.upStreams![CC.LOG] as Duplex;
     }
 
     // @TODO discuss this

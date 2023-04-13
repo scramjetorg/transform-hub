@@ -1,10 +1,10 @@
 import { DataType, ServiceDiscovery } from "../../src/lib/serviceDiscovery/sd-adapter";
 import { CPMConnector } from "../../src/lib/cpm-connector";
 import { PassThrough } from "stream";
-import TopicName from "../../src/lib/serviceDiscovery/topicName";
+import TopicId from "../../src/lib/serviceDiscovery/topicId";
 
 let serviceDiscovery: ServiceDiscovery;
-const testUUID = new TopicName("4fb4230f-5481-487d-a055-a99d20740e96")
+const testUUID = new TopicId("4fb4230f-5481-487d-a055-a99d20740e96")
 const testConfig: DataType = {
     topic: testUUID,
     contentType: "text/plain"
@@ -54,11 +54,11 @@ describe("Return list of topics in SD", () => {
 
     test("List with 5 elements", () => {
         const topicsId = [
-            new TopicName("1fb4230f-5481-487d-a055-a99d20740e96"),
-            new TopicName("2fb4230f-5481-487d-a055-a99d20740e96"),
-            new TopicName("3fb4230f-5481-487d-a055-a99d20740e96"),
-            new TopicName("4fb4230f-5481-487d-a055-a99d20740e96"),
-            new TopicName("5fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicId("1fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicId("2fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicId("3fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicId("4fb4230f-5481-487d-a055-a99d20740e96"),
+            new TopicId("5fb4230f-5481-487d-a055-a99d20740e96"),
         ]
         topicsId.forEach((topicId) =>
             serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType: "text/plain" }))
@@ -68,7 +68,7 @@ describe("Return list of topics in SD", () => {
 
     test("List with only unique elements", () => {
         for (let i = 0; i < 10; i++)
-            serviceDiscovery.createTopicIfNotExist({ topic: new TopicName("1fb4230f-5481-487d-a055-a99d20740e00"), contentType: "text/plain" });
+            serviceDiscovery.createTopicIfNotExist({ topic: new TopicId("1fb4230f-5481-487d-a055-a99d20740e00"), contentType: "text/plain" });
 
         const topics = serviceDiscovery.getTopics();
         expect(topics.length === 1);

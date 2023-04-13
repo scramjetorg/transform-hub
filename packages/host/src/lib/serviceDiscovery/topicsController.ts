@@ -1,12 +1,11 @@
-import Topic from "./topic";
-import TopicName from "./topicName";
-
+import { Topic } from "./topic";
+import TopicId from "./topicId";
 
 class TopicsMap {
-    private topicsMap: Map<string, Topic>
+    private topicsMap: Map<string, Topic>;
 
     constructor() {
-        this.topicsMap = new Map()
+        this.topicsMap = new Map();
     }
 
     get topics() {
@@ -29,23 +28,23 @@ class TopicsMap {
         }));
     }
 
-    set(name: TopicName, topic: Topic) {
-        this.topicsMap.set(name.toString(), topic);
+    set(id: TopicId, topic: Topic) {
+        this.topicsMap.set(id.toString(), topic);
     }
-    has(name: TopicName) {
-        return this.topicsMap.has(name.toString());
+    has(id: TopicId) {
+        return this.topicsMap.has(id.toString());
     }
-    get(name: TopicName) {
-        return this.topicsMap.get(name.toString());
+    get(id: TopicId) {
+        return this.topicsMap.get(id.toString());
     }
-    delete(name: TopicName) {
-        const topic = this.topicsMap.get(name.toString());
+    delete(id: TopicId) {
+        const topic = this.topicsMap.get(id.toString());
+
         if (!topic) return false;
         // TODO: should be something like topic.disconnect() (both providers and consumers)
         topic.unpipe();
-        return this.topicsMap.delete(name.toString());
+        return this.topicsMap.delete(id.toString());
     }
-
 }
 
 export default TopicsMap;

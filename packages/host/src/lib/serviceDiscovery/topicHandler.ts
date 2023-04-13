@@ -1,6 +1,6 @@
-import { Duplex, Stream } from "stream"
-import { ReadableState, StreamHandler, WorkState, WritableState } from "./streamHandler"
-import { ContentType } from "./contentType"
+import { Duplex, Stream } from "stream";
+import { ReadableState, StreamHandler, WorkState, WritableState } from "./streamHandler";
+import { ContentType } from "./contentType";
 
 export type Providers = Map<Stream, StreamHandler>
 export type Consumers = Map<Stream, StreamHandler>

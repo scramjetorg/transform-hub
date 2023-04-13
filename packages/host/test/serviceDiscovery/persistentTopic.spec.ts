@@ -1,6 +1,6 @@
 import { Duplex, PassThrough, Readable, Stream } from "stream";
 import { StreamOrigin, StreamType } from "../../src/lib/serviceDiscovery/streamHandler";
-import TopicName from "../../src/lib/serviceDiscovery/topicName";
+import TopicId from "../../src/lib/serviceDiscovery/topicId";
 import ReadableStreamWrapper from "../../src/lib/streamWrapper/readableStreamWrapper";
 import WritableStreamWrapper from "../../src/lib/streamWrapper/writableStreamWrapper";
 import PersistentTopic from "../../src/lib/serviceDiscovery/persistentTopic";
@@ -10,7 +10,7 @@ let testPersistentTopic: PersistentTopic;
 const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
 
 beforeEach(() => {
-    testPersistentTopic = new PersistentTopic(new TopicName("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    testPersistentTopic = new PersistentTopic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
     persistentSequence = testPersistentTopic.persistentSequence;
 })
 

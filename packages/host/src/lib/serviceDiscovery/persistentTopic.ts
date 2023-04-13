@@ -1,8 +1,8 @@
 import { Duplex, PassThrough } from "stream";
 import { ContentType } from "./contentType";
 import { ReadableState, StreamOrigin, WorkState, WritableState } from "./streamHandler";
-import Topic, { TopicEvent, TopicStreamOptions } from "./topic";
-import TopicName from "./topicName";
+import { Topic, TopicEvent, TopicStreamOptions } from "./topic";
+import TopicId from "./topicId";
 import { TopicState } from "./topicHandler";
 
 class PersistentTopic extends Topic {
@@ -10,7 +10,7 @@ class PersistentTopic extends Topic {
     persistentSequence: Duplex;
     // outWriteStream: Duplex
 
-    constructor(id: TopicName, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
+    constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
         super(id, contentType, origin, options);
 
         // this.inReadStream = new PassThrough({ highWaterMark: 0 })
@@ -19,22 +19,23 @@ class PersistentTopic extends Topic {
 
         // this.inReadStream.pipe(this.persistentSequence).pipe(this.outWriteStream)
 
-        this.persistentSequence.on("readable", () => { this.pushFromOutStream() })
+        this.persistentSequence.on("readable", () => { this.pushFromOutStream(); });
 
-        this.persistentSequence.on("drain", () => this.updateState())
-        this.persistentSequence.on("pause", () => this.updateState())
-        this.persistentSequence.on("resume", () => this.updateState())
-        this.persistentSequence.on("error", () => this.updateState())
+        this.persistentSequence.on("drain", () => this.updateState());
+        this.persistentSequence.on("pause", () => this.updateState());
+        this.persistentSequence.on("resume", () => this.updateState());
+        this.persistentSequence.on("error", () => this.updateState());
     }
     protected attachEventListeners() {
-        this.on("pipe", this.addProvider)
-        this.on("unpipe", this.removeProvider)
-        this.on(TopicEvent.ProvidersChanged, () => this.updateState())
-        this.on(TopicEvent.ConsumersChanged, () => this.updateState())
+        this.on("pipe", this.addProvider);
+        this.on("unpipe", this.removeProvider);
+        this.on(TopicEvent.ProvidersChanged, () => this.updateState());
+        this.on(TopicEvent.ConsumersChanged, () => this.updateState());
     }
     state(): TopicState {
         if (this.persistentSequence.errored) return WorkState.Error;
-        if (this.persistentSequence.isPaused() || this.providers.size === 0 || this.consumers.size === 0) return ReadableState.Pause;
+        if (this.persistentSequence.isPaused() || this.providers.size === 0 || this.consumers.size === 0)
+            return ReadableState.Pause;
         if (this.persistentSequence.writableNeedDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
@@ -47,15 +48,14 @@ class PersistentTopic extends Topic {
     }
     private pushFromOutStream(size?: number) {
         let chunk;
-        while (null !==
-            (chunk = this.persistentSequence.read(size))) {
+
+        while ((chunk = this.persistentSequence.read(size)) !== null) {
             if (!this.push(chunk)) break;
         }
     }
 }
 
 export default PersistentTopic;
-
 
 // class Topic extends Duplex implements TopicBase {
 //     protected _options: TopicOptions;

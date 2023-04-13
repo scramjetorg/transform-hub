@@ -1,7 +1,7 @@
 import { PassThrough, Readable, Stream, Writable } from "stream";
 import { ReadableState, StreamOrigin, StreamType, WorkState } from "../../src/lib/serviceDiscovery/streamHandler";
 import Topic, { TopicEvent } from "../../src/lib/serviceDiscovery/topic";
-import TopicName from "../../src/lib/serviceDiscovery/topicName";
+import TopicId from "../../src/lib/serviceDiscovery/topicId";
 import ReadableStreamWrapper from "../../src/lib/streamWrapper/readableStreamWrapper";
 import WritableStreamWrapper from "../../src/lib/streamWrapper/writableStreamWrapper";
 
@@ -9,7 +9,7 @@ let testTopic: Topic;
 const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
 
 beforeEach(() => {
-    testTopic = new Topic(new TopicName("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
 })
 
 describe("Provider management", () => {
@@ -45,7 +45,7 @@ describe("Provider management", () => {
     })
 
     test("Add other topic as provider", () => {
-        const otherTopic = new Topic(new TopicName("TestTopic"), "text/plain", testOrigin);
+        const otherTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin);
         otherTopic.pipe(testTopic);
         expect(testTopic.providers.size).toBe(1);
     })
@@ -91,7 +91,7 @@ describe("Consumer management", () => {
     })
 
     test("Add other topic as consumer", () => {
-        const otherTopic = new Topic(new TopicName("TestTopic"), "text/plain", testOrigin);
+        const otherTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin);
         testTopic.pipe(otherTopic);
         expect(testTopic.consumers.size).toBe(1);
     })

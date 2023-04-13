@@ -1,25 +1,34 @@
+/* eslint-disable complexity */
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, OpResponse } from "@scramjet/types";
+import { APIExpose, IObjectLogger, OpResponse } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
-import {  IncomingMessage } from "http";
-import { StreamOrigin } from "./streamHandler";
+import { IncomingMessage, ServerResponse } from "http";
 import { TopicState } from "./topicHandler";
-import { WorkState } from "./streamHandler";
-import { isContentType } from "./contentType";
-import TopicName from "./topicName";
-import Topic from "./topic";
+import { StreamOrigin } from "./streamHandler";
+import { ContentType, isContentType } from "./contentType";
+import TopicId from "./topicId";
+import { Topic } from "./topic";
+import { PassThrough } from "stream";
 
-type TopicsPostReq = IncomingMessage & { body?: any; params: {} | undefined };
+type TopicsPostReq = IncomingMessage & {
+    body?: {
+        id?: string,
+        "content-type"?: string,
+        persistent?: string
+    };
+};
 type TopicsPostRes = {
     id: string
     origin: StreamOrigin
     state: TopicState
+    contentType: ContentType
     consumers: [] //TODO: fill type
     providers: [] //TODO: fill type
 }
-type TopicDeleteReq = {}
-
+type TopicDeleteReq = IncomingMessage & {
+    params?: { topic?: string }
+}
 type TopicStreamReq = IncomingMessage & {
     headers?: {
         "content-type"?: string,
@@ -28,62 +37,102 @@ type TopicStreamReq = IncomingMessage & {
     params?: { topic?: string }
 }
 
+const missingBodyId = "Missing body param: id";
+const invalidContentTypeMsg = "Unsupported content-type";
+const invalidTopicIdMsg = "Topic id incorrect format";
+
 class TopicRouter {
-    private serviceDiscovery: ServiceDiscovery
+    private serviceDiscovery: ServiceDiscovery;
     logger = new ObjLogger(this);
 
-    constructor(apiServer: APIExpose, apiBaseUrl: string, serviceDiscovery: ServiceDiscovery) {
+    constructor(logger: IObjectLogger, apiServer: APIExpose, apiBaseUrl: string, serviceDiscovery: ServiceDiscovery) {
         this.serviceDiscovery = serviceDiscovery;
+        this.logger.pipe(logger);
+
         apiServer.get(`${apiBaseUrl}/topics`, () => this.serviceDiscovery.getTopics());
-        apiServer.op("post", `${apiBaseUrl}/topics`, this.topicsPost)
-        apiServer.op("delete", `${apiBaseUrl}/topic/:topic`, () => this.deleteTopic);
-        apiServer.downstream(`${apiBaseUrl}/topic/:topic`, this.topicDownstream, { checkContentType: false });
-        apiServer.upstream(`${apiBaseUrl}/topic/:topic`, this.topicUpstream);
+        apiServer.op("post", `${apiBaseUrl}/topics`, (req) => this.topicsPost(req));
+        apiServer.op("delete", `${apiBaseUrl}/topics/:topic`, (req) => this.deleteTopic(req));
+        apiServer.downstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicDownstream(req), { checkContentType: false });
+        apiServer.upstream(`${apiBaseUrl}/topic/:topic`, (req, res) => this.topicUpstream(req, res));
     }
 
     async topicsPost(req: TopicsPostReq): Promise<OpResponse<TopicsPostRes>> {
+        if (!req.body?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: missingBodyId };
+        if (!req.body?.["content-type"]) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing body param: content-type" };
+        const { "content-type": contentType, id } = req.body;
+        const persistent = this.persistentToBoolean(req.body.persistent);
+
+        if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg };
+        if (!TopicId.validate(id)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidTopicIdMsg };
+        if (persistent === null) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Persistent incorrect format" };
+
+        const topicId = new TopicId(id);
+        const topicExist = this.serviceDiscovery.getTopic(topicId) !== undefined;
+
+        if (topicExist) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic with given id already exist" };
+
+        let topic: Topic;
+
+        if (persistent)
+            topic = this.serviceDiscovery.createPersistentTopic(topicId, contentType);
+        else
+            topic = this.serviceDiscovery.createTopic(topicId, contentType);
+
         return {
             opStatus: ReasonPhrases.OK,
-            id: "",
-            origin: {
-                id: "",
-                type: "hub"
-            },
-            state: WorkState.Flowing,
+            id: topic.id(),
+            origin: topic.origin(),
+            state: topic.state(),
+            contentType: topic.options().contentType,
             consumers: [],
             providers: [],
         };
     }
 
-    async deleteTopic(req: TopicDeleteReq): Promise<OpResponse<{}>> {
-        const topicName = "test name"
+    async deleteTopic(req: TopicDeleteReq) {
+        const { topic: id = "" } = req.params || {};
+
+        if (!TopicId.validate(id)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidTopicIdMsg };
+
+        const topicId = new TopicId(id);
+        const removed = this.serviceDiscovery.deleteTopic(topicId);
+
+        if (!removed)
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `Topic ${topicId} not found`
+            };
         return {
             opStatus: ReasonPhrases.OK,
-            message: `Topic ${topicName} removed`
-        }
+            message: `Topic ${topicId} removed`
+        };
     }
 
     async topicDownstream(req: TopicStreamReq) {
         const { "content-type": contentType = "", cpm } = req.headers;
-        const { topic: name = "" } = req.params || {};
-        if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Unsupported content-type" }
-        if (!TopicName.validate(name)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic name incorrect format" }
+        const { topic: id = "" } = req.params || {};
 
-        const topicName = new TopicName(name);
-        this.logger.debug(`Incoming topic '${name}' request`);
+        if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg };
+        if (!TopicId.validate(id)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidTopicIdMsg };
 
-        let topic = this.serviceDiscovery.topicsController.get(topicName);
+        const topicId = new TopicId(id);
+
+        this.logger.debug(`Incoming topic '${id}' request`);
+
+        let topic = this.serviceDiscovery.topicsController.get(topicId);
+
         if (topic) {
             const topicContentType = topic.options().contentType;
+
             if (contentType !== topicContentType) {
                 return {
                     opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE,
-                    error: `Acceptable Content-Type for ${name} is ${topicContentType}`
+                    error: `Acceptable Content-Type for ${id} is ${topicContentType}`
                 };
             }
         } else {
             // FIXME: Single responsibility rule validation
-            topic = new Topic(topicName, contentType, { id: "TopicDownstream", type: "hub" });
+            topic = new Topic(topicId, contentType, { id: "TopicDownstream", type: "hub" });
         }
         req.pipe(topic, { end: false });
 
@@ -97,24 +146,38 @@ class TopicRouter {
         return { opStatus: ReasonPhrases.OK };
     }
 
-    async topicUpstream(req: TopicStreamReq) {
-        const { "content-type": contentType = "", cpm } = req.headers;
-        const { topic: name = "" } = req.params || {};
-        if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Unsupported content-type" }
-        if (!TopicName.validate(name)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic name incorrect format" }
+    async topicUpstream(req: TopicStreamReq, res: ServerResponse) {
+        const { "content-type": contentType = "application/x-ndjson", cpm } = req.headers;
+        const { topic: id = "" } = req.params || {};
 
-        const topicName = new TopicName(name);
+        // FIXME: fix types to make it work properly:
+        if (!isContentType(contentType)) {
+            res.end({ opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg });
+            return new PassThrough();
+        }
+        if (!TopicId.validate(id)) {
+            res.end({ opStatus: ReasonPhrases.BAD_REQUEST, error: invalidTopicIdMsg });
+            return new PassThrough();
+        }
+
+        const topicId = new TopicId(id);
         //TODO: what should be the default content type and where to store this information?
 
         if (!cpm) {
             await this.serviceDiscovery.update({
-                requires: name, contentType, topicName: topicName.toString()
+                requires: id, contentType, topicName: topicId.toString()
             });
         } else {
-            this.logger.debug(`Incoming Upstream CPM request for topic '${name}'`);
+            this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
         }
 
-        return this.serviceDiscovery.createTopicIfNotExist({ topic: topicName, contentType });
+        return this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
+    }
+
+    protected persistentToBoolean(persistenString: string | undefined) {
+        if (persistenString === "true") return true;
+        if (persistenString !== "false") return null;
+        return false;
     }
 }
 

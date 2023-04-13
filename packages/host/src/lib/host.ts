@@ -1,7 +1,7 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Duplex, Writable } from "stream";
+import { Duplex, Readable, Writable } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
@@ -46,7 +46,7 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
-import TopicName from "./serviceDiscovery/topicName";
+import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 
@@ -128,7 +128,7 @@ export class Host implements IComponent {
     /**
      * Service to handle topics.
      */
-    serviceDiscovery = new ServiceDiscovery();
+    serviceDiscovery: ServiceDiscovery;
 
     commonLogsPipe = new CommonLogsPipe();
 
@@ -143,11 +143,7 @@ export class Host implements IComponent {
      */
     s3Client?: S3Client;
 
-    private instanceProxy = {
-        onInstanceRequest: (socket: Duplex) => {
-            this.api.server.emit("connection", socket);
-        }
-    };
+    private instanceProxy = { onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); } };
 
     /**
      * Sets listener for connections to socket server.
@@ -207,6 +203,8 @@ export class Host implements IComponent {
 
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
+
+        this.serviceDiscovery = new ServiceDiscovery(this.config.host.hostname);
         this.serviceDiscovery.logger.pipe(this.logger);
 
         if (sthConfig.telemetry.environment)
@@ -497,8 +495,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
 
-        const topicRouter = new TopicRouter(this.api, this.apiBase, this.serviceDiscovery);
-        topicRouter.logger.pipe(this.logger);
+        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery);
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
@@ -938,8 +935,8 @@ export class Host implements IComponent {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
-                    { topic: new TopicName(data.requires), contentType: data.contentType as ContentType },
-                    csic.getInputStream()
+                    { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
+                    csic.getInputStream() as Writable
                 );
 
                 csic.inputRouted = true;
@@ -952,8 +949,8 @@ export class Host implements IComponent {
             if (data.provides && !csic.outputRouted) {
                 this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
-                    csic.getOutputStream(),
-                    { topic: new TopicName(data.provides), contentType: data.contentType as ContentType },
+                    csic.getOutputStream() as Readable,
+                    { topic: new TopicId(data.provides), contentType: data.contentType as ContentType },
                     // csic.id
                 );
 
@@ -969,7 +966,8 @@ export class Host implements IComponent {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
-                const topic = this.serviceDiscovery.topicsController.get(new TopicName(csic.provides));
+                const topic = this.serviceDiscovery.getTopic(new TopicId(csic.provides));
+
                 if (topic) csic.getOutputStream()!.unpipe(topic);
             }
 
@@ -989,7 +987,8 @@ export class Host implements IComponent {
 
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
-                const topic = this.serviceDiscovery.topicsController.get(new TopicName(csic.requires));
+                const topic = this.serviceDiscovery.getTopic(new TopicId(csic.requires));
+
                 if (topic) topic.unpipe(csic.getInputStream()! as Writable);
             }
 

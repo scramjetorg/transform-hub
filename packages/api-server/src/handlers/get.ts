@@ -27,7 +27,6 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      * @param {object} data Output data.
      * @param {ServerResponse} res Response object.
      * @param {NextCallback} next Next callback.
-     * @returns Unused.
      */
     const output = (data: any, res: ServerResponse, next: NextCallback): void => {
         try {
@@ -36,7 +35,8 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                     "content-type": "application/json"
                 });
 
-                return res.end();
+                res.end();
+                return;
             }
 
             let statusCode = 200;
@@ -59,9 +59,9 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                 "content-type": "application/json"
             });
 
-            return res.end(out);
+            res.end(out);
         } catch (e: any) {
-            return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
+            next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
     /**

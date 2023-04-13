@@ -1,15 +1,17 @@
 import { Writable } from "stream";
-import BaseStreamWrapper from "./baseStreamWrapper";
+import { BaseStreamWrapper } from "./baseStreamWrapper";
 import { StreamOptions, StreamOrigin, StreamType, WorkState, WritableState } from "../serviceDiscovery/streamHandler";
 
 type WritableStreamState = WorkState | WritableState
 
 class WritableStreamWrapper<W extends Writable> extends BaseStreamWrapper<W> {
-    static create<WrappedStream extends Writable>(stream: WrappedStream, id: string, type: StreamType, origin: StreamOrigin, options: StreamOptions) {
+    static create<WrappedStream extends Writable>(stream: WrappedStream, id: string,
+        type: StreamType, origin: StreamOrigin, options: StreamOptions) {
         return new WritableStreamWrapper(stream, { id, type, origin, options });
     }
     static retrive<WrappedStream extends Writable>(stream: WrappedStream) {
         const wrappedData = BaseStreamWrapper.retriveWrapperData(stream);
+
         return new WritableStreamWrapper(stream, wrappedData);
     }
     state(): WritableStreamState {
@@ -22,4 +24,4 @@ class WritableStreamWrapper<W extends Writable> extends BaseStreamWrapper<W> {
     }
 }
 
-export default WritableStreamWrapper
+export default WritableStreamWrapper;
