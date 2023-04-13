@@ -50,7 +50,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             });
 
             protocol = new TeceMux(connection);
-            //protocol.logger.pipe(this.logger);
 
             protocol.on("channel", async (channel: TeceMuxChannel) => {
                 const { instanceId, channelId } =
@@ -60,27 +59,12 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                             const instId = payload.substring(0, 36);
                             const chanId = parseInt(payload.substring(36, 37), 10);
 
-                            // eslint-disable-next-line max-nested-callbacks
-                            // channel.on("data", (chunk) => {
-                            //     // eslint-disable-next-line no-console
-                            //     this.logger.info("DATA", chanId, channel._id, chunk.toString());
-                            // }).pause();
-                            //channel.pause();
-                            //channel.pipe(process.stdout);
-                            //this.logger.info("payload", payload, instanceId, channelId);
-
                             resolve({
                                 instanceId: instId,
                                 channelId: chanId
                             });
                         });
                     });
-
-                // const channelId = await new Promise<number>((resolve) => {
-                //     channel.once("readable", () => {
-                //         resolve(parseInt(channel.read(1).toString(), 10));
-                //     });
-                // });
 
                 this.logger.info("new channel", instanceId, channelId, channel._id);
 
