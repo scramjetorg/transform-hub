@@ -383,6 +383,7 @@ export class Host implements IComponent {
             _config = configFile.read();
             this.logger.debug("Sequence config loaded", _config);
         } catch {
+            this.logger.error("Sequence config cannot be loaded", this.config.startupConfig);
             throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
         }
 

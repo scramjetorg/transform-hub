@@ -413,6 +413,17 @@ When(
     }
 );
 
+When("send kill message to instances of sequence {string}", async function(id) {
+    const seqClient = hostClient.getSequenceClient(id);
+    const instances = await seqClient.listInstances();
+
+    for (const instanceId of instances) {
+        const instance = await seqClient.getInstance(instanceId);
+
+        await instance.kill();
+    }
+});
+
 When("send kill message to instance", async function(this: CustomWorld) {
     const resp = await this.resources.instance?.kill();
 
