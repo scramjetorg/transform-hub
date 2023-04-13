@@ -2,6 +2,7 @@
 
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
+import { Readable } from "stream";
 
 export declare class QueryError extends Error {
     readonly url: string;
@@ -50,7 +51,7 @@ export declare type RequestConfig = {
 export declare class HttpClient {
     addLogger(logger: RequestLogger): void;
     get<T>(url: string, requestInit?: RequestInit): Promise<T>;
-    getStream(url: string, requestInit?: RequestInit): Promise<any>;
+    getStream(url: string, requestInit?: RequestInit): Promise<Readable>;
     post<T>(url: string, data: any, requestInit?: RequestInit, options?: {
         json: boolean;
     } & RequestConfig): Promise<T>;
