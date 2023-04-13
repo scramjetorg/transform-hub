@@ -41,10 +41,11 @@ class HostClient implements IHostClient {
     }
 
     async init(id: string): Promise<void> {
-        const tunnel = net.createConnection(this.instancesServerPort, this.instancesServerHost);
-        const protocol = new TeceMux(tunnel);
+        const hostSocket = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+        const protocol = new TeceMux(hostSocket);
 
         //protocol.logger.pipe(this.logger);
+        hostSocket.setNoDelay(true);
 
         const openConnections = await Promise.all(
 <<<<<<< HEAD
