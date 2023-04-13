@@ -663,9 +663,10 @@ export class Host implements IComponent {
             sequenceAdapter.logger.pipe(this.logger);
 
             for (const config of configs) {
+                this.logger.trace(`Sequence identified: ${config.id}`);
                 this.sequencesStore.set(config.id, { id: config.id, config: config, instances: new Set() });
             }
-            this.logger.trace(` ${configs.length} sequences identified`);
+            this.logger.info(` ${configs.length} sequences identified`);
         } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences.", e);
         }

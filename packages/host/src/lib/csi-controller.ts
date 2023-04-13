@@ -556,6 +556,9 @@ export class CSIController extends TypedEmitter<Events> {
             this.createInstanceAPIRouter();
 
             this.bpmux = new BPMux(streams[8]);
+            this.bpmux.on("error", (e: any) => {
+                throw new Error("BPMux Carrier Error:" + e.message);
+            });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
             await once(this, "pang");
             this.initResolver?.res();
