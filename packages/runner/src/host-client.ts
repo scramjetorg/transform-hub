@@ -48,6 +48,7 @@ class HostClient implements IHostClient {
         hostSocket.setNoDelay(true);
 
         //protocol.logger.pipe(this.logger);
+        hostSocket.setNoDelay(true);
 
         const openConnections = await Promise.all(
             Array.from(Array(9)).map((_c, index) => protocol.multiplex({ channel: index }))
