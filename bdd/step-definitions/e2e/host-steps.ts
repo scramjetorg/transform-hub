@@ -4,7 +4,7 @@
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer, waitUntilStreamEquals } from "../../lib/utils";
-import fs, { createReadStream, existsSync, ReadStream } from "fs";
+import fs, { createReadStream, createWriteStream, existsSync, ReadStream, accessSync, constants } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
@@ -14,10 +14,11 @@ import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
 import findPackage from "find-package-json";
-import { readFile } from "fs/promises";
+import { FileHandle, open, readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
 import { exec } from "child_process";
+import { resolve } from "path";
 
 let hostClient: HostClient;
 let actualHealthResponse: any;
@@ -792,4 +793,108 @@ Then("confirm json {string} will be received", async function(this: CustomWorld,
     const response = await waitUntilStreamEquals(this.resources.outStream!, data);
 
     assert.equal(response, data);
+});
+
+Given("topic {string} is created", async function(this: CustomWorld, topicId: string) {
+    await hostClient.createTopic(topicId, "text/plain");
+});
+
+Given("persisting topic {string} is created with sequence {string}", async function(this: CustomWorld, topicId: string, sequenceName: string) {
+    await hostClient.createTopic(topicId, "text/plain", sequenceName);
+});
+
+Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
+    const topics = await hostClient.getTopics();
+
+    const topic = topics.find(topicElement => topicElement.topicName === topicId);
+
+    assert.notEqual(topic, undefined);
+});
+
+Then("remove topic {string}", async function(this: CustomWorld, topicId: string) {
+    await hostClient.deleteTopic(topicId);
+});
+
+Then("confirm topics are empty", async function(this: CustomWorld) {
+    const topics = await hostClient.getTopics();
+
+    assert.equal(topics.length, 0);
+});
+
+Given("sequence {string} named {string} is send to host", async function(this: CustomWorld, sequencePackagePath: string, sequenceName: string) {
+    if (!sequencePackagePath || !sequenceName) throw new Error("Missing params");
+    const resolvedSequencePath = resolve(process.cwd(), sequencePackagePath);
+
+    accessSync(resolvedSequencePath, constants.F_OK);
+    const sequenceStream = createReadStream(resolvedSequencePath);
+    const sendSequence = await hostClient.sendSequence(sequenceStream, { headers: { "x-name": sequenceName } });
+    const sequences = await hostClient.listSequences();
+    const sequence = sequences.find(seq => seq.id === sendSequence.id);
+
+    assert.notEqual(sequence, undefined);
+});
+
+Then("confirm instances are not empty", async function() {
+    const instances = await hostClient.listInstances();
+
+    assert.notEqual(instances.length, 0);
+});
+
+Then("confirm instances are empty", async function() {
+    const instances = await hostClient.listInstances();
+
+    assert.equal(instances.length, 0);
+});
+
+const waitForFileToReachSize = async (file: FileHandle, size: number, timeout: number) => {
+    let timeoutOccured = false;
+    const timeoutFn = setTimeout(() => { timeoutOccured = true; }, timeout);
+
+    while (!timeoutOccured) {
+        const stats = await file.stat();
+
+        if (stats.size === size) break;
+    }
+    clearTimeout(timeoutFn);
+};
+
+Then("send data from file {string} to topic {string} and pipe-unpipe every one fifth of data read", async function(this: CustomWorld, path: string, topicId: string) {
+    const sourcePath = resolve(process.cwd(), path);
+    const outputPath = resolve(process.cwd(), "./data/test-data/topicOutput.txt");
+    const [source, output] = await Promise.all([open(sourcePath, "r"), open(outputPath, "w+")]);
+    const sourceSize = (await source.stat()).size;
+
+    const provider = createReadStream(sourcePath, { highWaterMark: 50 });
+    const consumer = createWriteStream(outputPath, { flags: "w+" });
+
+    const topicOutStream = await hostClient.getNamedData(topicId);
+
+    // let readLen = 0;
+    // let piped = true;
+    // let switchLenght = sourceSize / 5;
+
+    // provider.on("data", (chunk) => {
+    //     readLen += chunk.length;
+
+    //     if (readLen > switchLenght) {
+    //         // eslint-disable-next-line no-unused-expressions
+    //         piped ? topicOutStream.unpipe() : topicOutStream.pipe(consumer);
+    //         piped = !piped;
+    //         switchLenght += sourceSize / 5;
+    //     }
+    // });
+    // provider.pause();
+
+    topicOutStream.pipe(consumer);
+    await hostClient.sendNamedData<Writable>(topicId, provider, {}, "text/plain", false);
+
+    await waitForFileToReachSize(output, sourceSize, 1000);
+
+    const [sourceBuff, outputBuff] = await Promise.all([source.readFile(), output.readFile()]);
+
+    const equals = sourceBuff.equals(outputBuff);
+
+    assert.equal(equals, true);
+
+    await Promise.all([source.close(), output.close()]);
 });

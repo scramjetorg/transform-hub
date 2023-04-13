@@ -1,18 +1,20 @@
 
 import { Duplex, Readable, Writable } from "stream";
-
 import { CPMConnector } from "../cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
-import TopicName from "./topicName";
+import TopicId from "./topicId";
 import TopicsMap from "./topicsController";
-import Topic from "./topic";
+import { Topic } from "./topic";
 import { ContentType } from "./contentType";
 import { StreamOrigin } from "./streamHandler";
+import PersistentTopic from "./persistentTopic";
+import { IObjectLogger, SequenceInfo } from "@scramjet/types";
+import { CSIController } from "../csi-controller";
 // import Consumer from "./serviceDiscovery/consumer";
 // import Provider from "./serviceDiscovery/provider";
 
 export type DataType = {
-    topic: TopicName,
+    topic: TopicId,
     contentType: ContentType
 }
 
@@ -34,48 +36,59 @@ export type TopicDataType = {
     cpmRequest?: boolean
 }
 
-// class TopicFacade {
-//     logger = new ObjLogger(this);
-//     private topicsController: TopicsMap;
-//     constructor() {
-//         this.topicsController = new TopicsMap();
-//     }
-
-//     getTopics() {
-//         return this.topicsController.topics;
-//     }
-//     addTopicProvider(name: TopicName, provider: Provider){
-
-//     }
-//     addTopicConsumer(name: TopicName, consumer: Consumer){
-
-//     }
-// }
-
-// class CpmReportingTopicFacade extends TopicFacade{
-//     private cpmConnector: CPMConnector;
-//     constructor(cpmConnector: CPMConnector){
-//         super();
-//         this.cpmConnector = cpmConnector;
-//     }
-// }
-
+type StartSequenceCb = (seq: SequenceInfo) => Promise<CSIController>;
 /**
  * Service Discovery provides methods to manage topics.
  * Its functionality covers creating, storing, removing topics
  * and requesting Manager when Instance requires data but data is not available locally.
  */
 export class ServiceDiscovery {
-    logger = new ObjLogger(this);
-
+    private logger = new ObjLogger(this);
+    private hostName: string;
+    private startSequenceCb: StartSequenceCb;
     cpmConnector?: CPMConnector;
 
     // change to private
     topicsController: TopicsMap;
 
-    constructor() {
+    //FIXME: Get rid of startSequenceCb to avoid Circular Reference
+    constructor(logger: IObjectLogger, hostName: string, startSequenceCb: StartSequenceCb) {
         this.topicsController = new TopicsMap();
+        this.hostName = hostName;
+        this.logger.pipe(logger);
+        this.startSequenceCb = startSequenceCb;
     }
+
+    getTopic(id: TopicId): Topic | undefined {
+        return this.topicsController.get(id);
+    }
+
+    createTopic(id: TopicId, contentType: ContentType) {
+        const topic = new Topic(id, contentType, { id: this.hostName, type: "hub" });
+
+        this.topicsController.set(id, topic);
+        return topic;
+    }
+
+    async createPersistentTopic(id: TopicId, contentType: ContentType, sequence: SequenceInfo) {
+        const csic = await this.startSequenceCb(sequence);
+
+        const input = csic.getInputStream();
+        const output = csic.getOutputStream();
+
+        input.write(`Content-Type: ${contentType}\r\n`);
+        input.write("\r\n");
+
+        const origin: StreamOrigin = { id: this.hostName, type: "hub" };
+        const topic = new PersistentTopic(input, output, id, contentType, origin);
+
+        this.topicsController.set(id, topic);
+        return topic;
+    }
+
+    deleteTopic(id: TopicId) { return this.topicsController.delete(id); }
+
+    topics() { return this.topicsController.topics; }
 
     /**
      * Sets the CPM connector.
@@ -95,14 +108,16 @@ export class ServiceDiscovery {
      */
     createTopicIfNotExist(config: DataType) {
         const topicName = config.topic;
-        let topic = this.topicsController.get(topicName); // TODO: sprawdzanie content Type
+        const topic = this.topicsController.get(topicName); // TODO: sprawdzanie content Type
+
         if (topic) {
             this.logger.trace("Routing topic:", config);
             return topic;
         }
         this.logger.trace("Adding topic:", config);
-        const origin: StreamOrigin = { id: "XXXX", type: "hub" }
+        const origin: StreamOrigin = { id: "XXXX", type: "hub" };
         const newTopic = new Topic(topicName, config.contentType, origin);
+
         this.topicsController.set(topicName, newTopic);
         return newTopic;
     }
@@ -118,13 +133,6 @@ export class ServiceDiscovery {
             topicName: value.id
         }));
         // return this.topicsController.topics;
-        // TODO: map to this
-        // return Array.from(this.dataMap, ([key, value]) => ({
-        //     contentType: value.contentType,
-        //     localProvider: value.localProvider,
-        //     topic: key,
-        //     topicName: key
-        // }));
     }
 
     /**
@@ -133,10 +141,12 @@ export class ServiceDiscovery {
      * @param {string} topic Topic name.
      * @returns {StreamType|undefined} Topic details.
      */
-    getByTopic(topic: TopicName): StreamType | undefined {
+    getByTopic(topic: TopicId): StreamType | undefined {
         const foundTopic = this.topicsController.get(topic);
+
         if (!foundTopic) return;
 
+        // eslint-disable-next-line consistent-return
         return {
             contentType: foundTopic.options().contentType,
             stream: foundTopic
@@ -155,17 +165,9 @@ export class ServiceDiscovery {
         this.logger.debug("Get data:", dataType);
 
         const topic = this.createTopicIfNotExist(dataType);
+
         return topic;
     }
-
-    /**
-     * Removes store topic with given id.
-     *
-     * @param {string} topic Topic name.
-     */
-    // removeData(topic: TopicName) {
-    //     this.topicsController.delete(topic);
-    // }
 
     public async routeTopicToStream(topicData: DataType, target: Writable) {
         const topic = this.createTopicIfNotExist(topicData);
@@ -173,14 +175,22 @@ export class ServiceDiscovery {
         //FIXME: Writable wrapper for target
         topic.pipe(target);
 
-        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({
+            requires: topicData.topic.toString(),
+            topicName: topicData.topic.toString(),
+            contentType: topicData.contentType
+        });
     }
 
     public async routeStreamToTopic(source: Readable, topicData: DataType) {
         const topic = this.createTopicIfNotExist(topicData);
 
         source.pipe(topic, { end: false });
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic.toString(), topicName: topicData.topic.toString(), contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({
+            provides: topicData.topic.toString(),
+            topicName: topicData.topic.toString(),
+            contentType: topicData.contentType
+        });
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
