@@ -151,4 +151,33 @@ export const space: CommandDefinition = (program) => {
 
             displayObject(await mwClient.revokeAccessKey(spaceName, accessKey), profileManager.getProfileConfig().format);
         });
+
+    const topicCmd = spaceCmd
+        .command("topic")
+        .description("Manages topic on space level");
+
+    topicCmd
+    .command("get")
+    .argument("<topic-name>")
+    .option(
+        "-t, --content-type <content-type>",
+        "Specifies data type of <topic-name> (default: application/x-ndjson)"
+    )
+    .description("Get data from topic")
+    .hook("preAction", (command) => { validateTopicName(command.args[0]); })
+    .action(async (topicName: string) => {
+        const spaceName = sessionConfig.lastSpaceId;
+        const mwClient = getMiddlewareClient();
+        const managerClient = mwClient.getManagerClient(spaceName);
+
+        await displayStream(await managerClient.getNamedData(topicName))
+    })
+};
+
+const validateTopicName = (topicName: string) => {
+    if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) {
+        return;
+    }
+
+    throw new Error("Invalid topic name");
 };
