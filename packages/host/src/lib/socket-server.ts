@@ -50,13 +50,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     });
                 });
 
-                let runner = this.runnerConnectionsInProgress.get(id);
-
-                if (!runner) {
-                    runner = [null, null, null, null, null, null, null, null, null];
-                    this.runnerConnectionsInProgress.set(id, runner);
-                }
-
                 const channel = await new Promise<number>((resolve) => {
                     connection.once("readable", () => {
                         resolve(parseInt(connection.read(1).toString(), 10));
@@ -67,15 +60,10 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     .on("error", (err) => this.logger.error("Error on Instance in stream", id, channel, err))
                     .on("end", () => this.logger.debug(`Channel [${id}:${channel}] ended`));
 
-                if (runner[channel] === null) {
-                    runner[channel] = connection;
-                } else {
-                    throw new Error(`Runner(${id}) wanted to connect on already initialized channel ${channel}`);
-                }
-
-                if (runner.every(isDefined)) {
-                    this.runnerConnectionsInProgress.delete(id);
-                    this.emit("connect", id, runner as RunnerOpenConnections);
+                try {
+                    await this.handleConnection(id, channel, connection);
+                } catch (err: any) {
+                    connection.destroy();
                 }
             });
 
@@ -89,6 +77,24 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
         });
     }
 
+    async handleConnection(id: string, channel: number, connection: net.Socket) {
+        let runner = this.runnerConnectionsInProgress.get(id);
+
+        if (!runner) {
+            runner = [null, null, null, null, null, null, null, null, null];
+            this.runnerConnectionsInProgress.set(id, runner);
+        }
+
+        if (runner[channel] === null) {
+            runner[channel] = connection;
+        } else {
+            throw new Error(`Runner(${id}) wanted to connect on already initialized channel ${channel}`);
+        }
+        if (runner.every(isDefined)) {
+            this.runnerConnectionsInProgress.delete(id);
+            this.emit("connect", id, runner as RunnerOpenConnections);
+        }
+    }
     close() {
         this.server?.close((err: any) => {
             if (err) {
