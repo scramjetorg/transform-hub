@@ -5,11 +5,15 @@ import { Readable } from "stream";
 type ReadableStreamState = WorkState | ReadableState
 
 class ReadableStreamWrapper<R extends Readable> extends BaseStreamWrapper<R> {
-    static create<WrappedStream extends Readable>(stream: WrappedStream, id: string, type: StreamType, origin: StreamOrigin, options: StreamOptions) {
+    static create<WrappedStream extends Readable>(
+        stream: WrappedStream, id: string, type: StreamType,
+        origin: StreamOrigin, options: StreamOptions
+    ) {
         return new ReadableStreamWrapper(stream, { id, type, origin, options });
     }
     static retrive<WrappedStream extends Readable>(stream: WrappedStream) {
         const wrappedData = BaseStreamWrapper.retriveWrapperData(stream);
+
         return new ReadableStreamWrapper(stream, wrappedData);
     }
 

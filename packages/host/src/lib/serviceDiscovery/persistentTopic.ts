@@ -1,4 +1,4 @@
-import { Duplex, PassThrough } from "stream";
+import { Duplex } from "stream";
 import { ContentType } from "./contentType";
 import { ReadableState, StreamOrigin, WorkState, WritableState } from "./streamHandler";
 import { Topic, TopicEvent, TopicStreamOptions } from "./topic";
@@ -6,25 +6,20 @@ import TopicId from "./topicId";
 import { TopicState } from "./topicHandler";
 
 class PersistentTopic extends Topic {
-    // inReadStream: Duplex
-    persistentSequence: Duplex;
-    // outWriteStream: Duplex
+    persistingStream: Duplex;
 
-    constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
+    constructor(persistingStream: Duplex, id: TopicId,
+        contentType: ContentType, origin: StreamOrigin,
+        options?: TopicStreamOptions) {
         super(id, contentType, origin, options);
 
-        // this.inReadStream = new PassThrough({ highWaterMark: 0 })
-        this.persistentSequence = new PassThrough();
-        // this.outWriteStream = new PassThrough({ highWaterMark: 0 })
+        this.persistingStream = persistingStream;
+        this.persistingStream.on("readable", () => { this.pushFromOutStream(); });
 
-        // this.inReadStream.pipe(this.persistentSequence).pipe(this.outWriteStream)
-
-        this.persistentSequence.on("readable", () => { this.pushFromOutStream(); });
-
-        this.persistentSequence.on("drain", () => this.updateState());
-        this.persistentSequence.on("pause", () => this.updateState());
-        this.persistentSequence.on("resume", () => this.updateState());
-        this.persistentSequence.on("error", () => this.updateState());
+        this.persistingStream.on("drain", () => this.updateState());
+        this.persistingStream.on("pause", () => this.updateState());
+        this.persistingStream.on("resume", () => this.updateState());
+        this.persistingStream.on("error", () => this.updateState());
     }
     protected attachEventListeners() {
         this.on("pipe", this.addProvider);
@@ -33,15 +28,15 @@ class PersistentTopic extends Topic {
         this.on(TopicEvent.ConsumersChanged, () => this.updateState());
     }
     state(): TopicState {
-        if (this.persistentSequence.errored) return WorkState.Error;
-        if (this.persistentSequence.isPaused() || this.providers.size === 0 || this.consumers.size === 0)
+        if (this.persistingStream.errored) return WorkState.Error;
+        if (this.persistingStream.isPaused() || this.providers.size === 0 || this.consumers.size === 0)
             return ReadableState.Pause;
-        if (this.persistentSequence.writableNeedDrain) return WritableState.Drain;
+        if (this.persistingStream.writableNeedDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
 
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        this.persistentSequence.write(chunk, encoding, callback)
+        this.persistingStream.write(chunk, encoding, callback)
     }
     _read(size: number): void {
         this.pushFromOutStream(size);
@@ -49,7 +44,7 @@ class PersistentTopic extends Topic {
     private pushFromOutStream(size?: number) {
         let chunk;
 
-        while ((chunk = this.persistentSequence.read(size)) !== null) {
+        while ((chunk = this.persistingStream.read(size)) !== null) {
             if (!this.push(chunk)) break;
         }
     }

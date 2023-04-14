@@ -49,6 +49,7 @@ import { readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
+import SequenceStore from "./sequenceStore";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -113,7 +114,7 @@ export class Host implements IComponent {
     /**
      * Sequences store.
      */
-    sequencesStore = new Map<string, SequenceInfo>();
+    sequenceStore = new SequenceStore();
 
     /**
      * Instance of class providing logging utilities.
@@ -204,8 +205,10 @@ export class Host implements IComponent {
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
 
-        this.serviceDiscovery = new ServiceDiscovery(this.config.host.hostname);
-        this.serviceDiscovery.logger.pipe(this.logger);
+        const startSequenceCb =
+            async (seqence: SequenceInfo) => { return this.startCSIController(seqence, { appConfig: {} }); };
+
+        this.serviceDiscovery = new ServiceDiscovery(this.logger, this.config.host.hostname, startSequenceCb);
 
         if (sthConfig.telemetry.environment)
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
@@ -405,7 +408,7 @@ export class Host implements IComponent {
         await DataStream.from(startupConfig)
             .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
             .map(async (seqenceConfig: StartSequenceDTO) => {
-                const sequence = this.sequencesStore.get(seqenceConfig.id);
+                const sequence = this.sequenceStore.getById(seqenceConfig.id);
 
                 if (!sequence) {
                     this.logger.warn("Sequence id not found for startup config", seqenceConfig);
@@ -495,7 +498,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
 
-        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery);
+        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery, this.sequenceStore);
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
@@ -557,7 +560,7 @@ export class Host implements IComponent {
 
         this.logger.trace("Deleting Sequence...", id);
 
-        const sequenceInfo = this.sequencesStore.get(id) || this.getSequenceByName(id);
+        const sequenceInfo = this.sequenceStore.getByNameOrId(id);
 
         if (!sequenceInfo) {
             return {
@@ -586,7 +589,7 @@ export class Host implements IComponent {
             const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
             await sequenceAdapter.remove(sequenceInfo.config);
-            this.sequencesStore.delete(id);
+            this.sequenceStore.delete(id);
 
             this.logger.trace("Sequence removed:", id);
 
@@ -659,7 +662,7 @@ export class Host implements IComponent {
 
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
-                this.sequencesStore.set(config.id, { id: config.id, config: config, instances: new Set() });
+                this.sequenceStore.set({ id: config.id, config: config, instances: new Set() });
             }
             this.logger.info(` ${configs.length} sequences identified`);
         } catch (e: any) {
@@ -688,7 +691,7 @@ export class Host implements IComponent {
             await sequenceAdapter.init();
 
             if (sequenceName) {
-                const existingSequence = this.getSequenceByName(sequenceName as string);
+                const existingSequence = this.sequenceStore.getByName(sequenceName as string);
 
                 if (existingSequence) {
                     if (stream.method === "post") {
@@ -708,7 +711,7 @@ export class Host implements IComponent {
 
             config.packageSize = stream.socket?.bytesRead;
 
-            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
+            this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName });
 
             this.logger.info("Sequence identified", config);
 
@@ -735,25 +738,19 @@ export class Host implements IComponent {
         stream.params ||= {};
 
         const seqQuery = stream.params.id_name as string;
-        const existingSequence = this.sequencesStore.get(seqQuery) || this.getSequenceByName(seqQuery);
+        const existingSequence = this.sequenceStore.getByNameOrId(seqQuery);
 
-        if (existingSequence) {
-            if (existingSequence.instances.size) {
-                return {
-                    opStatus: ReasonPhrases.CONFLICT,
-                    error: `Sequence with name ${seqQuery} already exists`
-                };
-            }
-
-            this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
-
-            return this.handleIncomingSequence(stream, existingSequence.id);
+        if (!existingSequence) {
+            return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with name ${seqQuery} not found` };
         }
 
-        return {
-            opStatus: ReasonPhrases.NOT_FOUND,
-            error: `Sequence with name ${seqQuery} not found`
-        };
+        if (existingSequence.instances.size) {
+            return { opStatus: ReasonPhrases.CONFLICT, error: "Can't update sequence with instances" };
+        }
+
+        this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
+
+        return this.handleIncomingSequence(stream, existingSequence.id);
     }
 
     /**
@@ -770,7 +767,7 @@ export class Host implements IComponent {
         const sequenceName = stream.headers["x-name"] as string;
 
         if (sequenceName) {
-            const existingSequence = this.getSequenceByName(sequenceName);
+            const existingSequence = this.sequenceStore.getByNameOrId(sequenceName);
 
             if (existingSequence) {
                 this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
@@ -783,19 +780,6 @@ export class Host implements IComponent {
         }
 
         return this.handleIncomingSequence(stream, id);
-    }
-
-    getSequenceByName(sequenceName: string): SequenceInfo | undefined {
-        let seq;
-
-        for (const i of this.sequencesStore.values()) {
-            if (sequenceName === this.sequencesStore.get(i.id)?.name) {
-                seq = i;
-                break;
-            }
-        }
-
-        return seq;
     }
 
     async getExternalSequence(id: string): Promise<SequenceInfo> {
@@ -820,7 +804,7 @@ export class Host implements IComponent {
                 id
             )) as STHRestAPI.SendSequenceResponse;
 
-            return this.sequencesStore.get(result.id)!;
+            return this.sequenceStore.getById(result.id)!;
         } catch (e: any) {
             this.logger.error("Error requesting sequence", e.message);
 
@@ -848,9 +832,7 @@ export class Host implements IComponent {
         const id = req.params?.id as string;
         const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
 
-        let sequence =
-            this.sequencesStore.get(id) ||
-            Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
+        let sequence = this.sequenceStore.getByNameOrId(id);
 
         if (this.cpmConnector?.connected) {
             sequence ||= await this.getExternalSequence(id).catch((error: ReasonPhrases) => {
@@ -1028,7 +1010,7 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
      */
     getSequence(id: string): OpResponse<STHRestAPI.GetSequenceResponse> {
-        const sequence = this.sequencesStore.get(id);
+        const sequence = this.sequenceStore.getById(id);
 
         if (!sequence) {
             return {
@@ -1054,12 +1036,7 @@ export class Host implements IComponent {
     getSequences(): STHRestAPI.GetSequencesResponse {
         this.logger.info("List Sequences");
 
-        return Array.from(this.sequencesStore.values()).map((sequence) => ({
-            id: sequence.id,
-            name: sequence.name,
-            config: sequence.config,
-            instances: Array.from(sequence.instances.values()),
-        }));
+        return this.sequenceStore.sequences;
     }
 
     /**
@@ -1069,7 +1046,7 @@ export class Host implements IComponent {
      * @returns List of Instances.
      */
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
-        const sequence = this.sequencesStore.get(sequenceId);
+        const sequence = this.sequenceStore.getById(sequenceId);
 
         if (!sequence) {
             return {
@@ -1125,7 +1102,7 @@ export class Host implements IComponent {
         await Promise.all(Object.values(instancesStore).map((csi) => csi.finalize()));
 
         this.instancesStore = {};
-        this.sequencesStore = new Map();
+        this.sequenceStore.clear();
 
         this.logger.trace("Stopping API server");
 

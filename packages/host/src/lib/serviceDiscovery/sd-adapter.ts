@@ -9,6 +9,8 @@ import { Topic } from "./topic";
 import { ContentType } from "./contentType";
 import { StreamOrigin } from "./streamHandler";
 import PersistentTopic from "./persistentTopic";
+import { IObjectLogger, SequenceInfo } from "@scramjet/types";
+import { CSIController } from "../csi-controller";
 // import Consumer from "./serviceDiscovery/consumer";
 // import Provider from "./serviceDiscovery/provider";
 
@@ -35,49 +37,27 @@ export type TopicDataType = {
     cpmRequest?: boolean
 }
 
-// class TopicFacade {
-//     logger = new ObjLogger(this);
-//     private topicsController: TopicsMap;
-//     constructor() {
-//         this.topicsController = new TopicsMap();
-//     }
-
-//     getTopics() {
-//         return this.topicsController.topics;
-//     }
-//     addTopicProvider(name: TopicName, provider: Provider){
-
-//     }
-//     addTopicConsumer(name: TopicName, consumer: Consumer){
-
-//     }
-// }
-
-// class CpmReportingTopicFacade extends TopicFacade{
-//     private cpmConnector: CPMConnector;
-//     constructor(cpmConnector: CPMConnector){
-//         super();
-//         this.cpmConnector = cpmConnector;
-//     }
-// }
-
+type StartSequenceCb = (seq: SequenceInfo) => Promise<CSIController>;
 /**
  * Service Discovery provides methods to manage topics.
  * Its functionality covers creating, storing, removing topics
  * and requesting Manager when Instance requires data but data is not available locally.
  */
 export class ServiceDiscovery {
-    logger = new ObjLogger(this);
-    hostName: string;
-
+    private logger = new ObjLogger(this);
+    private hostName: string;
+    private startSequenceCb: StartSequenceCb;
     cpmConnector?: CPMConnector;
 
     // change to private
     topicsController: TopicsMap;
 
-    constructor(hostName: string) {
+    //FIXME: Get rid of startSequenceCb to avoid Circular Reference
+    constructor(logger: IObjectLogger, hostName: string, startSequenceCb: StartSequenceCb) {
         this.topicsController = new TopicsMap();
         this.hostName = hostName;
+        this.logger.pipe(logger);
+        this.startSequenceCb = startSequenceCb;
     }
 
     getTopic(id: TopicId): Topic | undefined {
@@ -91,8 +71,16 @@ export class ServiceDiscovery {
         return topic;
     }
 
-    createPersistentTopic(id: TopicId, contentType: ContentType) {
-        const topic = new PersistentTopic(id, contentType, { id: this.hostName, type: "hub" });
+    async createPersistentTopic(id: TopicId, contentType: ContentType, sequence: SequenceInfo) {
+        const csic = await this.startSequenceCb(sequence);
+        const input = csic.getInputStream() as Writable;
+        const output = csic.getOutputStream() as Readable;
+        const instance = new Duplex({
+            read(size: number) { output.read(size); },
+            write(chunk, encoding, callback) { input.write(chunk, encoding, callback); },
+        });
+        const origin: StreamOrigin = { id: this.hostName, type: "hub" };
+        const topic = new PersistentTopic(instance, id, contentType, origin);
 
         this.topicsController.set(id, topic);
         return topic;
