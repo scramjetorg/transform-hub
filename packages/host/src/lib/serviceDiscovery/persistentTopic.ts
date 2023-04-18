@@ -36,7 +36,7 @@ class PersistentTopic extends Topic {
     }
 
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        this.persistingStream.write(chunk, encoding, callback)
+        this.persistingStream.write(chunk, encoding, callback);
     }
     _read(size: number): void {
         this.pushFromOutStream(size);

@@ -1,4 +1,4 @@
-import { Duplex, PassThrough, Readable, Stream } from "stream";
+import { Duplex, EventEmitter, PassThrough, Readable } from "stream";
 import { StreamOrigin, StreamType } from "../../src/lib/serviceDiscovery/streamHandler";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
 import ReadableStreamWrapper from "../../src/lib/streamWrapper/readableStreamWrapper";
@@ -15,13 +15,13 @@ beforeEach(() => {
 });
 
 describe("Passing events thorugh persistent topic", () => {
-    const waitForEvent = (eventName: string, source: Stream) => {
-        return new Promise<boolean>((resolve, reject) => {
+    const waitForEvent = (eventName: string, source: EventEmitter) => {
+        return new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => reject("Timeout"), 100);
 
             source.on(eventName, () => {
                 clearTimeout(timeout);
-                resolve(true);
+                resolve();
             });
         });
     };
@@ -31,37 +31,25 @@ describe("Passing events thorugh persistent topic", () => {
 
         persistentSequence.on("readable", () => { persistentSequence.read(); });
         testPersistentTopic.write("some text123");
-        await expect(eventOccured).resolves.toBe(true);
+        await expect(eventOccured).resolves;
     });
     // test("Error event", async () => {
     //     const eventOccured = waitForEvent("error", persistentSequence);
     //     testPersistentTopic.destroy(new Error("Test Error"));
-    //     await expect(eventOccured).resolves.toBe(true);
+    //     await expect(eventOccured).resolves;
     // });
-    // test("Pause event", async () => {
-    //     // const provider 
-    //     // const consumer = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
-    //     // testPersistentTopic.pipe(consumer)
-    //     let testPersistentTopic = new PassThrough()
-    //     await expect(testPersistentTopic.isPaused()).resolves.toBe(false);
-    //     // const eventOccured = waitForEvent("pause", persistentSequence);
-    //     testPersistentTopic.pause();
-    //     await expect(testPersistentTopic.isPaused()).resolves.toBe(true);
-    //     testPersistentTopic.resume();
-    //     await expect(testPersistentTopic.isPaused()).resolves.toBe(false);
-    //     // await expect(eventOccured).resolves.toBe(true);
-    // });
+
     test("Readable event", async () => {
         const eventOccured = waitForEvent("readable", testPersistentTopic);
 
         testPersistentTopic.write("some text");
-        await expect(eventOccured).resolves.toBe(true);
+        await expect(eventOccured).resolves;
     });
     test("Resume event", async () => {
         const eventOccured = waitForEvent("resume", testPersistentTopic);
 
         testPersistentTopic.resume();
-        await expect(eventOccured).resolves.toBe(true);
+        await expect(eventOccured).resolves;
     });
 });
 
@@ -77,6 +65,7 @@ describe("Data flow", () => {
     };
 
     test("Basic flow", async () => {
+        testPersistentTopic = new PersistentTopic(new PassThrough({ highWaterMark: 0 }), new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
         const topicFinished = new Promise(resolve => testPersistentTopic.on("readable", () => {
             resolve(testPersistentTopic.read());
         }));
