@@ -556,6 +556,10 @@ export class CSIController extends TypedEmitter<Events> {
             this.createInstanceAPIRouter();
 
             this.bpmux = new BPMux(streams[8]);
+            this.bpmux.on("error", (e: any) => {
+                this.logger.warn("Instance client multiplex connection errored", e.message);
+                streams[8]?.end();
+            });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
             await once(this, "pang");
             this.initResolver?.res();
