@@ -95,7 +95,7 @@ ___
 
 ### getAuditStream
 
-▸ **getAuditStream**(`requestInit?`): `Promise`<`any`\>
+▸ **getAuditStream**(`requestInit?`): `Promise`<`Readable`\>
 
 #### Parameters
 
@@ -105,7 +105,7 @@ ___
 
 #### Returns
 
-`Promise`<`any`\>
+`Promise`<`Readable`\>
 
 #### Defined in
 
@@ -183,7 +183,7 @@ ___
 
 ### getLogStream
 
-▸ **getLogStream**(`requestInit?`): `Promise`<`any`\>
+▸ **getLogStream**(`requestInit?`): `Promise`<`Readable`\>
 
 #### Parameters
 
@@ -193,7 +193,7 @@ ___
 
 #### Returns
 
-`Promise`<`any`\>
+`Promise`<`Readable`\>
 
 #### Defined in
 
@@ -203,7 +203,7 @@ ___
 
 ### getNamedData
 
-▸ **getNamedData**(`topic`, `requestInit?`): `Promise`<`any`\>
+▸ **getNamedData**(`topic`, `requestInit?`): `Promise`<`Readable`\>
 
 #### Parameters
 
@@ -214,7 +214,7 @@ ___
 
 #### Returns
 
-`Promise`<`any`\>
+`Promise`<`Readable`\>
 
 #### Defined in
 

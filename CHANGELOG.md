@@ -2,7 +2,18 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [0.33.4] - 2023-04-06
+## [0.33.5] - 2023-04-19
+
+## Fixed
+
+## What's Changed
+* Add missing getLogStream to InstanceClient by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/840
+* Catch channel error in SocketServer by @S4adam in https://github.com/scramjetorg/transform-hub/pull/842
+* Fix for Hub Client error on Broken Streams by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/843
+
+**Full Changelog**: https://github.com/scramjetorg/transform-hub/compare/v0.33.5...v0.33.5
+
+## [0.33.5] - 2023-04-06
 
 ## Fixed
 
@@ -15,7 +26,7 @@ This is the changelog for Scramjet Transform Hub. It holds only notable commits,
 * Expose Instance Id in AppContext. by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/837>
 * Fix normalize-url for Safari by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/838>
 
-**Full Changelog**: <https://github.com/scramjetorg/transform-hub/compare/v0.33.3...v0.33.4>
+**Full Changelog**: <https://github.com/scramjetorg/transform-hub/compare/v0.33.3...v0.33.5>
 
 ## [0.33.3] - 2023-03-16
 

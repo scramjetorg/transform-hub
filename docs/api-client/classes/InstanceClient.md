@@ -29,6 +29,7 @@ Provides methods to interact with Instance.
 - [getEventStream](InstanceClient.md#geteventstream)
 - [getHealth](InstanceClient.md#gethealth)
 - [getInfo](InstanceClient.md#getinfo)
+- [getLogStream](InstanceClient.md#getlogstream)
 - [getNextEvent](InstanceClient.md#getnextevent)
 - [getStream](InstanceClient.md#getstream)
 - [inout](InstanceClient.md#inout)
@@ -223,6 +224,24 @@ Promise resolving to Instance info.
 #### Defined in
 
 [api-client/src/instance-client.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L143)
+
+___
+
+### getLogStream
+
+▸ **getLogStream**(): `Promise`<`Readable`\>
+
+Returns Instance log stream.
+
+#### Returns
+
+`Promise`<`Readable`\>
+
+Log stream.
+
+#### Defined in
+
+[api-client/src/instance-client.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L201)
 
 ___
 

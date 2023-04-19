@@ -155,7 +155,7 @@ ___
 
 ### getInstance
 
-▸ **getInstance**(`id`, `host`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
+▸ **getInstance**(`id`, `host?`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
 
 Return Instance Client for given Instance id.
 
