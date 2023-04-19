@@ -21,69 +21,19 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
     logger: ObjLogger;
 
-    private async createChannel(destinationPort?: number, establish?: boolean): Promise<TeceMuxChannel> {
+    private createChannel(destinationPort?: number): TeceMuxChannel {
         const port = destinationPort !== undefined ? destinationPort : this.channelCount;
 
         this.logger.debug("Create Channel", port);
 
-        //const encoder = new FrameEncoder(port, this, { encoding: undefined });
-
-        //encoder.logger.updateBaseLog({ id: this.id });
-        //encoder.logger.pipe(this.logger);
-
         const channel = new TeceMuxChannel({ allowHalfOpen: true }, port, this);
-        // const channel: TeceMuxChannel = Object.assign(
-        //     new Duplex({
-        //         write: (chunk, encoding, next) => {
-        //             this.logger.debug("WRITE channel", channel._id, chunk);
 
-        //             if (chunk === null) {
-        //                 this.logger.info("NULL ON CHANNEL");
-
-        //                 channel.end();
-        //                 return false;
-        //             }
-
-        //             return encoder.write(chunk, encoding, next);
-        //         },
-        //         read: (_size) => {
-        //             this.logger.debug("READ channel", channel._id);
-        //         },
-        //         allowHalfOpen: true
-        //     }),
-        //     {
-        //         _id: port,
-        //         encoder,
-        //         closedByFIN: false,
-        //         sendACK: (sequenceNumber: number) => {
-        //             channel.encoder.push(
-        //                 channel.encoder.createFrame(undefined, {
-        //                     flagsArray: ["ACK"],
-        //                     acknowledgeNumber: sequenceNumber,
-        //                     destinationPort: port
-        //                 })
-        //             );
-        //         },
-        //         handlerFIN: () => {
-        //             channel.closedByFIN = true;
-
-        //             if (!channel.writableEnded) {
-        //                 channel.push(null);
-        //             }
-
-        //             if (channel.writableEnded && channel.readableEnded) {
-        //                 channel.destroy();
-        //                 this.logger.info("Channel destroy");
-        //             }
-        //         }
-        //     }
-        // );
 
         channel.encoder.out
             .pipe(this.carrierSocket, { end: false });
 
         channel
-            .on("error", (error) => {
+            .on("error", (error: any) => {
                 this.logger.error("CHANNEL ERROR", error);
                 this.emit("error", { error, source: channel });
             })
@@ -95,10 +45,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.info("CHANNEL finish", channel._id);
                 this.sendFIN(channel._id);
             });
-
-        if (establish) {
-            await channel.encoder.establishChannel(channel._id);
-        }
 
         return channel;
     }
@@ -113,21 +59,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             .on("error", (error) => {
                 this.logger.error("Decoder error", error);
             });
-            // .on("pause", () => {
-            //     this.logger.warn("Decoder paused");
-            // })
-            // .on("close", () => {
-            //     this.logger.warn("Decoder closed");
-            // })
-            // .on("end", () => {
-            //     this.logger.warn("Decoder ended");
-            // })
-            // .on("abort", (error) => {
-            //     this.logger.error("Decoder abort", error);
-            // })
-            // .on("destroy", (error) => {
-            //     this.logger.error("Decoder destroy", error);
-            // });
 
         this.carrierDecoder.logger.updateBaseLog({ id: this.id });
         this.carrierDecoder.logger.pipe(this.logger);
@@ -192,7 +123,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
             if (!channel) {
                 this.logger.warn("Unknown channel");
-                channel = await this.createChannel(destinationPort, false);
+                channel = this.createChannel(destinationPort);
 
                 this.addChannel(channel, true);
             }
@@ -201,7 +132,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.warn("writing to channel [channel, length]", channel._id, dataLength);
                 this.logger.warn("writing to channel [flowing, isPaused]", channel.readableFlowing, channel.isPaused());
 
-                channel.push(new Uint8Array((frame.chunk as any).data), undefined);
+                channel.__readable.push(new Uint8Array((frame.chunk as any).data), undefined);
             }
 
             channel.sendACK(sequenceNumber);
@@ -248,15 +179,14 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         );
     }
 
-    async multiplex(opts: { channel?: number } = {}): Promise<TeceMuxChannel> {
+    multiplex(opts: { channel?: number } = {}): TeceMuxChannel {
         const id = opts.channel !== undefined ? opts.channel : this.channelCount;
-        const channel = await this.createChannel(id);
+        const channel = this.createChannel(id);
 
         this.logger.trace("Multiplex", id);
 
-        await channel.encoder.establishChannel(id);
-
         this.addChannel(channel, true);
+        channel.encoder.establishChannel(id);
 
         this.logger.trace("Multiplex ready", channel._id);
         return channel;

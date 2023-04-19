@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { Duplex } from "stream";
+import { Duplex, PassThrough } from "stream";
 import { IFrameEncoder, ITeCeMux } from "./types";
 import { FrameEncoder } from "./codecs";
 
@@ -10,30 +10,8 @@ export class TeceMuxChannel extends Duplex {
     encoder: IFrameEncoder;
     closedByFIN = false;
 
-    constructor(duplexOptions: ConstructorParameters<typeof Duplex>[0], id: number, teceMux: ITeCeMux) {
-        super(duplexOptions);
-        this.logger = new ObjLogger(this);
-        this.allowHalfOpen = true;
-        this._id = id;
-        this.encoder = new FrameEncoder(id, teceMux, { encoding: undefined });
-    }
-
-    _write(chunk: any, encoding: BufferEncoding, next: (error?: Error | null | undefined) => void) {
-        this.logger.debug("WRITE channel", this._id, chunk);
-
-        if (chunk === null) {
-            this.logger.info("NULL ON CHANNEL");
-
-            this.end();
-            return false;
-        }
-
-        return this.encoder.write(chunk, encoding, next);
-    }
-
-    _read(_size?: number) {
-        this.logger.debug("READ channel", this._id);
-    }
+    private __writable = new PassThrough();
+    public __readable = new PassThrough();
 
     sendACK(sequenceNumber: number) {
         this.encoder.push(
@@ -56,5 +34,27 @@ export class TeceMuxChannel extends Duplex {
             this.destroy();
             this.logger.info("Channel destroy");
         }
+    }
+
+    constructor(duplexOptions: ConstructorParameters<typeof Duplex>[0], id: number, teceMux: ITeCeMux) {
+        super(duplexOptions);
+
+        this.logger = new ObjLogger(this);
+        this.allowHalfOpen = true;
+        this._id = id;
+        this.encoder = new FrameEncoder(id, teceMux, { encoding: undefined });
+
+        this.__writable.pipe(this.encoder);
+
+        return Object.assign(
+            Duplex.from({
+                readable: this.__readable,
+                writable: this.__writable
+            } as unknown as AsyncIterable<any>, duplexOptions), {
+                ...this,
+                sendACK: this.sendACK,
+                handlerFIN: this.handlerFIN
+            }
+        );
     }
 }

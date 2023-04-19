@@ -194,7 +194,7 @@ export class VerserConnection {
     async createChannel(id: number): Promise<Duplex> {
         if (!this.teceMux) throw new Error("TeCeMux not connected");
 
-        return await this.teceMux.multiplex({ channel: id });
+        return this.teceMux.multiplex({ channel: id });
     }
 
     reconnect() {
@@ -207,6 +207,7 @@ export class VerserConnection {
         //this.teceMux.logger.pipe(this.logger);
 
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+
         this.agent.createConnection = () => {
             try {
                 const socket = this.teceMux!.multiplex() as unknown as Socket;
@@ -221,8 +222,10 @@ export class VerserConnection {
                 socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
                 this.logger.debug("Created new muxed stream");
+
                 return socket;
             } catch (e) {
+                this.logger.error("Create connection error", e);
                 const ret = new Socket();
 
                 setImmediate(() => ret.emit("error", e));
