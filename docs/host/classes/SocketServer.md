@@ -23,6 +23,7 @@ Server for incoming connections from Runners
 - [emit](SocketServer.md#emit)
 - [eventNames](SocketServer.md#eventnames)
 - [getMaxListeners](SocketServer.md#getmaxlisteners)
+- [handleConnection](SocketServer.md#handleconnection)
 - [listenerCount](SocketServer.md#listenercount)
 - [listeners](SocketServer.md#listeners)
 - [off](SocketServer.md#off)
@@ -88,7 +89,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L91)
+[packages/host/src/lib/socket-server.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L97)
 
 ___
 
@@ -156,6 +157,28 @@ TypedEmitter.getMaxListeners
 #### Defined in
 
 node_modules/typed-emitter/index.d.ts:40
+
+___
+
+### handleConnection
+
+▸ **handleConnection**(`id`, `channel`, `connection`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+| `channel` | `number` |
+| `connection` | `Socket` |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/socket-server.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L79)
 
 ___
 
