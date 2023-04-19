@@ -193,4 +193,12 @@ export class InstanceClient {
     async sendStdin(stream: Parameters<HttpClient["sendStream"]>[1] | string) {
         return this.sendStream("stdin", stream);
     }
+
+    /**
+     * Returns Instance log stream.
+     * @returns {Promise<Readable>} Log stream.
+     */
+    async getLogStream() {
+        return this.getStream("log");
+    }
 }
