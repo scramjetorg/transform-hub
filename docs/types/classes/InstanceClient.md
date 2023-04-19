@@ -147,7 +147,7 @@ ___
 
 ### getStream
 
-▸ **getStream**(`streamId`): `Promise`<`any`\>
+▸ **getStream**(`streamId`): `Promise`<`Readable`\>
 
 #### Parameters
 
@@ -157,7 +157,7 @@ ___
 
 #### Returns
 
-`Promise`<`any`\>
+`Promise`<`Readable`\>
 
 #### Defined in
 
