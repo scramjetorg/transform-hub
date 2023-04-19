@@ -4,9 +4,10 @@ import { CommunicationChannel as CC } from "@scramjet/symbols";
 import net, { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Agent } from "http";
+import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
 
 type HostOpenConnections = [
-    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
 ]
 
 const BPMux = require("bpmux").BPMux;
@@ -40,29 +41,26 @@ class HostClient implements IHostClient {
     }
 
     async init(id: string): Promise<void> {
+        const hostSocket = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+        const protocol = new TeceMux(hostSocket);
+
+        //protocol.logger.pipe(this.logger);
+        hostSocket.setNoDelay(true);
+
         const openConnections = await Promise.all(
-            Array.from(Array(9))
-                .map(() => {
-                    // Error handling for each connection is process crash for now
-                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+            Array.from(Array(9)).map((_c, index) => protocol.multiplex({ channel: index }))
+        ).then(async res => {
+            return Promise.all(
+                res.map(async (channel, index) => {
+                    // Assuming id is exactly 36 bytes + Assuming number is from 0-8, sending 1 byte
+                    channel.write(id + "" + index);
 
-                    return new Promise<net.Socket>(res => {
-                        connection.on("connect", () => res(connection));
-                    });
+                    return channel;
                 })
-                .map((connPromised, index) => {
-                    return connPromised.then((connection) => {
-                        // Assuming id is exactly 36 bytes
-                        connection.write(id);
-                        // Assuming number is from 0-7, sending 1 byte
-                        connection.write(index.toString());
+            );
+        });
 
-                        return connection;
-                    });
-                })
-        );
-
-        this._streams = openConnections as HostOpenConnections;
+        this._streams = await openConnections as HostOpenConnections;
 
         try {
             this.bpmux = new BPMux(this._streams[CC.PACKAGE]);
@@ -105,22 +103,12 @@ class HostClient implements IHostClient {
     async disconnect() {
         this.logger.trace("Disconnecting from host");
 
-        const streamsExitedPromised: Promise<void>[] = this.streams.map((stream, i) =>
+        const streamsExitedPromised: Promise<void>[] = this.streams.map((stream, _i) =>
             new Promise(
                 (res) => {
-                    if ("writable" in stream!) {
-                        stream
-                            .on("error", (e) => {
-                                console.error("Error on stream", i, e.stack);
-                            })
-                            .on("close", () => {
-                                res();
-                            })
-                            .end();
-                    } else {
-                        stream!.destroy();
-                        res();
-                    }
+                    // now we have readable and writable always
+                    stream!.destroy();
+                    res();
                 }
             ));
 

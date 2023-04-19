@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { PassThrough, Transform, TransformCallback, TransformOptions } from "stream";
 import { ObjLogger } from "@scramjet/obj-logger";
 
@@ -6,7 +8,7 @@ import { FrameData, ITeCeMux } from "../types";
 import { calculateChecksum } from "./utils";
 
 export class FrameEncoder extends Transform {
-    MAX_CHUNK_SIZE = 10 * 1024 - HEADER_LENGTH;
+    MAX_CHUNK_SIZE = 64 * 1024 - HEADER_LENGTH;
 
     tecemux: ITeCeMux;
     total = 0;
@@ -76,15 +78,31 @@ export class FrameEncoder extends Transform {
         return flags;
     }
 
-    setChannel(channelCount: number) {
-        this.logger.debug("Set channel command", channelCount);
+    async establishChannel(channelId: number) {
+        this.logger.debug("Establishing channel", channelId);
 
-        this.out.write(
-            this.createFrame([], {
-                flagsArray: ["PSH"],
-                destinationPort: channelCount
-            })
-        );
+        const frame = this.createFrame([], {
+            flagsArray: ["PSH"],
+            destinationPort: channelId
+        });
+
+        this.out.write(frame);
+
+        const sn = +this.tecemux.sequenceNumber;
+
+        return new Promise<void>((resolve, _reject) => {
+            const ackTempHandler = (sequenceNumber: number) => {
+                this.logger.debug("ACK RECEIVED", sequenceNumber, sn);
+
+                if (sequenceNumber === sn) {
+                    this.tecemux.framesKeeper.off("ack", ackTempHandler);
+                    this.logger.debug("channel established", channelId);
+                    resolve();
+                }
+            };
+
+            this.tecemux.framesKeeper.on("ack", ackTempHandler);
+        });
     }
 
     onChannelEnd(channelId: number) {

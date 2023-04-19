@@ -480,6 +480,7 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
+            this.logger.info("PANG");
             const pangData = message[1];
 
             this.provides ||= this.outputTopic || pangData.provides;
@@ -539,7 +540,7 @@ export class CSIController extends TypedEmitter<Events> {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
                 args: this.args
-            };
+            } as HandshakeAcknowledgeMessage;
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
         } else {

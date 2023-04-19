@@ -99,9 +99,9 @@ export class VerserConnection {
      * @param res {ServerResponse} Response object.
      */
     async forward(req: IncomingMessage, res: ServerResponse) {
-        if (!this.connected) throw new Error("BPMux not connected");
+        if (!this.connected) throw new Error("Not connected");
 
-        const channel = this.teceMux?.multiplex() as Duplex;
+        const channel = await this.teceMux?.multiplex() as Duplex;
 
         channel
             .on("error", (error: Error) => {
@@ -191,7 +191,7 @@ export class VerserConnection {
      * @param id {number} Channel id.
      * @returns Duplex stream.
      */
-    createChannel(id: number): Duplex {
+    async createChannel(id: number): Promise<Duplex> {
         if (!this.teceMux) throw new Error("TeCeMux not connected");
 
         return this.teceMux.multiplex({ channel: id });
@@ -204,9 +204,8 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        //this.teceMux.logger.pipe(this.logger);
-
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+
         this.agent.createConnection = () => {
             try {
                 const socket = this.teceMux!.multiplex() as unknown as Socket;
@@ -221,8 +220,10 @@ export class VerserConnection {
                 socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
                 this.logger.debug("Created new muxed stream");
+
                 return socket;
             } catch (e) {
+                this.logger.error("Create connection error", e);
                 const ret = new Socket();
 
                 setImmediate(() => ret.emit("error", e));
