@@ -28,7 +28,6 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
 
         const channel = new TeceMuxChannel({ allowHalfOpen: true }, port, this);
 
-
         channel.encoder.out
             .pipe(this.carrierSocket, { end: false });
 
@@ -186,7 +185,12 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         this.logger.trace("Multiplex", id);
 
         this.addChannel(channel, true);
-        channel.encoder.establishChannel(id);
+
+        channel.encoder.establishChannel(id).then(() => {
+            this.logger.debug("Channel established", id);
+        }, (err) => {
+            this.logger.error("Channel establish error", err);
+        });
 
         this.logger.trace("Multiplex ready", channel._id);
         return channel;
