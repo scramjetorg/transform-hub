@@ -131,7 +131,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.warn("writing to channel [channel, length]", channel._id, dataLength);
                 this.logger.warn("writing to channel [flowing, isPaused]", channel.readableFlowing, channel.isPaused());
 
-                channel.__readable.push(new Uint8Array((frame.chunk as any).data), undefined);
+                channel.push(new Uint8Array((frame.chunk as any).data), undefined);
             }
 
             channel.sendACK(sequenceNumber);

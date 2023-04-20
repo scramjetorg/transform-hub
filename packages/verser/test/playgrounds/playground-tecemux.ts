@@ -2,9 +2,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable no-console */
 
-import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { IncomingMessage, createServer } from "http";
-import { DataStream } from "scramjet";
 
 import { Socket, createConnection } from "net";
 import { TeceMux } from "../../src/lib/tecemux/tecemux";
@@ -15,18 +14,7 @@ import path from "path";
 (async () => {
     const logger = new ObjLogger("Sandbox");
 
-    logger
-        .pipe(
-            new DataStream()
-                .map(prettyPrint({ colors: true }))
-                .map((chunk: string) =>
-                    chunk.replace(
-                        /(:?FIN|SYN|RST|PSH|ACK|URG|ECE|CWR)|^$]/,
-                        "\x1b[41m\$&\x1b[0m"
-                    )
-                )
-        )
-        .pipe(process.stdout);
+    logger.pipe(process.stdout);
 
     /**********************************************/
     /* SERVER
