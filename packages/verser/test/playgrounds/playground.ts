@@ -1,6 +1,5 @@
-import { DataStream } from "scramjet";
 import { FrameDecoder, FrameEncoder } from "../../src/lib/tecemux/codecs";
-import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";
 import { PassThrough, Transform } from "stream";
@@ -15,17 +14,7 @@ const tcm = {
 
 const logger = new ObjLogger("Sandbox");
 
-logger.pipe(
-    new DataStream()
-        .map(prettyPrint({ colors: true }))
-        .map((chunk: string) =>
-            chunk.replace(
-                /(:?FIN|SYN|RST|PSH|ACK|URG|ECE|CWR)|^$]/,
-                "\x1b[41m\$&\x1b[0m"
-            )
-        )
-)
-    .pipe(process.stdout);
+logger.pipe(process.stdout);
 
 const encoder = new FrameEncoder(0, tcm);
 const decoder = new FrameDecoder();
