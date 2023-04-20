@@ -39,6 +39,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
         this.server
             .on("connection", async (connection) => {
+                connection.setNoDelay(true);
                 connection.on("error", (err) => {
                     this.logger.error("Error on connection from runner", err);
                 });
