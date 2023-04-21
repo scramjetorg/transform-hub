@@ -1,69 +1,73 @@
-import { createReadStream, Stats, fstat, fstatSync, Dir, WriteStream, createWriteStream, openSync, watch } from "fs";
+import { FileHandle, open } from "fs/promises";
 import { Duplex, DuplexOptions } from "stream";
 
-type BackupingStreamOptions = Pick<DuplexOptions, "encoding">
+type BackupingStreamOptions = Pick<DuplexOptions, "encoding" | "highWaterMark">
 
 class BackupingStream extends Duplex {
-    readonly backupDir: Dir;
-    private writeStream: WriteStream;
-    private bytesRead;
-    private size: number;
-    private fd: number;
-    // private readStream: ReadStream;
+    private writeHandle: FileHandle;
+    private readHandle: FileHandle;
+    bytesWritten: number;
+    bytesRead: number;
+    readonly backupFile: string;
 
-    constructor(backupDir: Dir, opts?: BackupingStreamOptions) {
-        super({ ...opts, highWaterMark: 0 });
-        const backupFilePath = `${backupDir.path}/tmp1`;
-
-        this.backupDir = backupDir;
-        this.fd = openSync(backupFilePath, "w+");
+    private constructor(backupFile: string, writeHandle: FileHandle,
+        readHandle: FileHandle, opts?: BackupingStreamOptions) {
+        super({ ...opts });
+        this.backupFile = backupFile;
+        this.writeHandle = writeHandle;
+        this.bytesWritten = 0;
         this.bytesRead = 0;
-        this.size = fstatSync(this.fd).size;
-        this.writeStream = createWriteStream("", { fd: this.fd, encoding: opts?.encoding, autoClose: false });
-        this.attachBackupReadableEvent(this.fd, backupFilePath);
-
-        this.on("backupReadable", async () => {
-            this.pushFromBackup();
-        });
+        this.readHandle = readHandle;
     }
-    _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
-        if (this.canSkipBackup()) {
+
+    static async create(backupDir: string, opts?: BackupingStreamOptions) {
+        const backupFile = `${backupDir}/tmp1`;
+        const backupWrite = await open(backupFile, "w");
+        const backupRead = await open(backupFile, "r");
+
+        return new BackupingStream(backupFile, backupWrite, backupRead, opts);
+    }
+
+    async _write(chunk: any, encoding: BufferEncoding,
+        callback: (error?: Error | null | undefined) => void): Promise<void> {
+        if (this.bytesInBackup() <= 0 && this.readableLength < this.readableHighWaterMark) {
             this.push(chunk, encoding);
             callback();
             return;
         }
-        this.createBackup(chunk, callback);
+        try {
+            const { bytesWritten } = await this.writeBuckup(chunk, encoding);
+
+            this.bytesWritten += bytesWritten;
+            callback();
+        } catch (err: any) {
+            callback(err);
+        }
     }
-    _read(_size: number) { }
+    async _read(size: number): Promise<void> {
+        if (this.bytesInBackup() <= 0) return;
 
-    canSkipBackup() { return this.readableFlowing === true && this.backupIsEmpty(); }
-    bytesInBackup() { return this.writeStream.bytesWritten - this.bytesRead; }
-    backupIsEmpty() { return this.bytesInBackup() <= 0; }
-
-    createBackup(chunk: any, callback: (error?: Error | null | undefined) => void) {
-        this.writeStream.write(chunk, callback);
-    }
-
-    private attachBackupReadableEvent(fd: number, backupFilePath: string) {
-        watch(backupFilePath, { persistent: false }, (event) => {
-            if (event !== "change") return;
-            fstat(fd, (err, stats: Stats) => {
-                if (this.size === stats.size) return;
-                this.size = stats.size;
-                this.emit("backupReadable");
-            });
+        const { bytesRead, buffer } = await this.readHandle.read({
+            buffer: Buffer.alloc(size),
+            position: this.bytesRead,
+            length: size,
         });
+
+        this.bytesRead += bytesRead;
+        this.push(buffer.subarray(0, bytesRead));
     }
 
-    private pushFromBackup(size?: number) {
-        const readStream = createReadStream("", { fd: this.fd, autoClose: false, start: this.bytesRead })
-            .on("readable", () => {
-                let chunk;
+    bytesInBackup() { return this.bytesWritten - this.bytesRead; }
 
-                while ((chunk = readStream.read(size)) !== null) {
-                    if (!this.push(chunk)) break;
-                }
-            });
+    writeBuckup(chunk: any, encoding: BufferEncoding) {
+        if (typeof chunk === "string") {
+            return this.writeHandle.write(chunk, this.bytesWritten, encoding);
+        }
+        return this.writeHandle.write(chunk, 0, undefined, this.bytesWritten);
+    }
+
+    async close() {
+        return Promise.all([this.writeHandle.close(), this.readHandle.close()]);
     }
 }
 
