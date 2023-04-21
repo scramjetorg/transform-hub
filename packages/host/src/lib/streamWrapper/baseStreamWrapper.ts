@@ -30,10 +30,10 @@ export abstract class BaseStreamWrapper<WrappedStream extends Stream> implements
         const wrappedData: WrapperData = (stream as any).wrapperData;
 
         return {
-            id: wrappedData.id || "",
-            type: wrappedData.type || "instance",
-            origin: wrappedData.origin || { id: "", type: "hub" },
-            options: wrappedData.options || {},
+            id: wrappedData?.id || "",
+            type: wrappedData?.type || "instance",
+            origin: wrappedData?.origin || { id: "", type: "hub" },
+            options: wrappedData?.options || {},
         };
     }
 

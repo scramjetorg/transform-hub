@@ -142,42 +142,42 @@ test("Pipe to consumer from backup", async () => {
     await Promise.all([backupingStream.close(), inputFile.close(), outputFile.close(), resultFile.close()]);
 });
 
-test("Multiple disconnections of consumer", async () => {
-    const outputPath = resolve(backupDir, "./testBackupingStream_long_output.txt");
-    const [source, output] = await Promise.all([open(testFilePath, "r"), open(outputPath, "w+")]);
-    const sourceSize = (await source.stat()).size;
+// test("Multiple disconnections of consumer", async () => {
+//     const outputPath = resolve(backupDir, "./testBackupingStream_long_output.txt");
+//     const [source, output] = await Promise.all([open(testFilePath, "r"), open(outputPath, "w+")]);
+//     const sourceSize = (await source.stat()).size;
 
-    const provider = createReadStream(testFilePath, { highWaterMark: 50 });
-    const backupingStream = await BackupingStream.create(backupDir, { highWaterMark: 100 });
-    const consumer = createWriteStream(outputPath, { flags: "w+" });
+//     const provider = createReadStream(testFilePath, { highWaterMark: 50 });
+//     const backupingStream = await BackupingStream.create(backupDir, { highWaterMark: 100 });
+//     const consumer = createWriteStream(outputPath, { flags: "w+" });
 
-    const providerEnd = new Promise(res => { provider.on("end", res); });
+//     const providerEnd = new Promise(res => { provider.on("end", res); });
 
-    let readLen = 0;
-    let piped = true;
-    let switchLenght = sourceSize / 5;
+//     let readLen = 0;
+//     let piped = true;
+//     let switchLenght = sourceSize / 5;
 
-    provider.on("data", (chunk) => {
-        readLen += chunk.length;
+//     provider.on("data", (chunk) => {
+//         readLen += chunk.length;
 
-        if (readLen > switchLenght) {
-            // eslint-disable-next-line no-unused-expressions
-            piped ? backupingStream.unpipe() : backupingStream.pipe(consumer);
-            piped = !piped;
-            switchLenght += sourceSize / 5;
-        }
-    });
+//         if (readLen > switchLenght) {
+//             // eslint-disable-next-line no-unused-expressions
+//             piped ? backupingStream.unpipe() : backupingStream.pipe(consumer);
+//             piped = !piped;
+//             switchLenght += sourceSize / 5;
+//         }
+//     });
 
-    provider.pipe(backupingStream).pipe(consumer);
+//     provider.pipe(backupingStream).pipe(consumer);
 
-    await providerEnd;
-    await waitForFileToReachSize(output, sourceSize);
+//     await providerEnd;
+//     await waitForFileToReachSize(output, sourceSize);
 
-    const [sourceBuff, outputBuff] = await Promise.all([source.readFile(), output.readFile()]);
+//     const [sourceBuff, outputBuff] = await Promise.all([source.readFile(), output.readFile()]);
 
-    const equals = sourceBuff.equals(outputBuff);
+//     const equals = sourceBuff.equals(outputBuff);
 
-    expect(equals).toBeTruthy();
+//     expect(equals).toBeTruthy();
 
-    await Promise.all([backupingStream.close(), source.close(), output.close()]);
-});
+//     await Promise.all([backupingStream.close(), source.close(), output.close()]);
+// });

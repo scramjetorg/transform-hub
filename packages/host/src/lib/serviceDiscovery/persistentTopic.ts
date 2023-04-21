@@ -37,12 +37,12 @@ class PersistentTopic extends Topic {
         if (this.errored) return WorkState.Error;
         if (this.persistingStream.isPaused() || this.providers.size === 0 || this.consumers.size === 0)
             return ReadableState.Pause;
-        if (this.writableNeedDrain) return WritableState.Drain;
+        if (this.needDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
 
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        this.writableNeedDrain = !this.persistingStream.write(chunk, encoding, callback);
+        this.needDrain = !this.persistingStream.write(chunk, encoding, callback);
     }
     _read(size: number): void {
         this.pushFromOutStream(size);
