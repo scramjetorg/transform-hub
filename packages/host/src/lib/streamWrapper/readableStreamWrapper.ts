@@ -1,4 +1,4 @@
-import BaseStreamWrapper from "./baseStreamWrapper";
+import { BaseStreamWrapper } from "./baseStreamWrapper";
 import { ReadableState, StreamOptions, StreamOrigin, StreamType, WorkState } from "../serviceDiscovery/streamHandler";
 import { Readable } from "stream";
 

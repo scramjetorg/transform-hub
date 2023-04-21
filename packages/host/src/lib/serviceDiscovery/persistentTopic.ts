@@ -1,7 +1,7 @@
 import { Duplex } from "stream";
 import { ContentType } from "./contentType";
 import { ReadableState, StreamOrigin, WorkState, WritableState } from "./streamHandler";
-import { Topic, TopicEvent, TopicStreamOptions } from "./topic";
+import { Topic, TopicStreamOptions } from "./topic";
 import TopicId from "./topicId";
 import { TopicState } from "./topicHandler";
 
@@ -28,14 +28,16 @@ class PersistentTopic extends Topic {
         this.on("error", errorCb);
     }
     protected attachEventListeners() {
-        this.on("pipe", this.addProvider);
-        this.on("unpipe", this.removeProvider);
-        this.on(TopicEvent.ProvidersChanged, () => this.updateState());
-        this.on(TopicEvent.ConsumersChanged, () => this.updateState());
+        // this.on("pipe", this.addProvider);
+        // this.on("unpipe", this.removeProvider);
+        // this.on(TopicEvent.ProvidersChanged, () => this.updateState());
+        // this.on(TopicEvent.ConsumersChanged, () => this.updateState());
     }
     state(): TopicState {
         if (this.errored) return WorkState.Error;
-        if (this.persistingStream.isPaused() || this.providers.size === 0 || this.consumers.size === 0)
+        if (this.persistingStream.isPaused()
+        //  || this.providers.size === 0 || this.consumers.size === 0
+        )
             return ReadableState.Pause;
         if (this.needDrain) return WritableState.Drain;
         return WorkState.Flowing;

@@ -125,7 +125,7 @@ class TopicRouter {
 
         this.logger.debug(`Incoming topic '${id}' request`);
 
-        let topic = this.serviceDiscovery.topicsController.get(topicId);
+        let topic = this.serviceDiscovery.getTopic(topicId);
 
         if (topic) {
             const topicContentType = topic.options().contentType;
@@ -138,7 +138,8 @@ class TopicRouter {
             }
         } else {
             // FIXME: Single responsibility rule validation
-            topic = new Topic(topicId, contentType, { id: "TopicDownstream", type: "hub" });
+            // topic = new Topic(topicId, contentType, { id: "TopicDownstream", type: "hub" }, { encoding: "ascii" });
+            topic = this.serviceDiscovery.createTopic(topicId, contentType);
         }
         req.pipe(topic, { end: false });
 
@@ -153,6 +154,7 @@ class TopicRouter {
     }
 
     async topicUpstream(req: TopicStreamReq, res: ServerResponse) {
+        // FIXME: this shuoldn't be default
         const { "content-type": contentType = "application/x-ndjson", cpm } = req.headers;
         const { topic: id = "" } = req.params || {};
 

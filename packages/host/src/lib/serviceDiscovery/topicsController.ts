@@ -13,18 +13,18 @@ class TopicsMap {
             id: topic.id(),
             contentType: topic.options().contentType,
             state: topic.state(),
-            providers: Array.from(topic.providers, ([, provider]) => ({
-                type: provider.type(),
-                id: provider.id(),
-                state: provider.state(),
-                origin: provider.origin(),
-            })),
-            consumers: Array.from(topic.providers, ([, consumer]) => ({
-                type: consumer.type(),
-                id: consumer.id(),
-                state: consumer.state(),
-                origin: consumer.origin()
-            }))
+            // providers: Array.from(topic.providers, ([, provider]) => ({
+            //     type: provider.type(),
+            //     id: provider.id(),
+            //     state: provider.state(),
+            //     origin: provider.origin(),
+            // })),
+            // consumers: Array.from(topic.providers, ([, consumer]) => ({
+            //     type: consumer.type(),
+            //     id: consumer.id(),
+            //     state: consumer.state(),
+            //     origin: consumer.origin()
+            // }))
         }));
     }
 
