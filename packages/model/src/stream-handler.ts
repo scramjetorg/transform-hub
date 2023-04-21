@@ -20,7 +20,7 @@ import {
 import { ObjLogger } from "@scramjet/obj-logger";
 
 import { DataStream, StringStream } from "scramjet";
-import { Duplex, PassThrough, Readable, Writable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 
 export type ConfiguredMessageHandler<T extends RunnerMessageCode | CPMMessageCode> = {
     handler: MutatingMonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
@@ -184,7 +184,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             .pipe(this.monitoringPassThrough)
             .JSONStringify();
 
-        monitoringOutput.pipe(this.upstreams[CC.MONITORING] as Duplex);
+        monitoringOutput.pipe(this.upstreams[CC.MONITORING]);
 
         StringStream.from(this.upstreams[CC.CONTROL] as Readable)
             .JSONParse()
@@ -214,7 +214,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             })
             .pipe(this.controlPassThrough)
             .JSONStringify()
-            .pipe(this.downstreams[CC.CONTROL] as Duplex);
+            .pipe(this.downstreams[CC.CONTROL]);
 
         return this;
     }
