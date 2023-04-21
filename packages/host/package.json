@@ -42,7 +42,7 @@
     "@scramjet/types": "^0.33.5",
     "@types/find-package-json": "^1.2.3",
     "@types/jest": "^29.4.4",
-    "@types/node": "18.15.11",
+    "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "jest": "^29.5.0",
     "ts-jest": "^29.0.5",

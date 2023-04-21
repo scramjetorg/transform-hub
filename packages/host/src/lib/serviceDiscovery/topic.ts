@@ -19,6 +19,8 @@ export class Topic extends Duplex implements TopicHandler {
     protected _options: TopicOptions;
     protected _origin: StreamOrigin;
     protected _state: TopicState;
+    protected errored?: Error;
+    protected writableNeedDrain: boolean;
     providers: Providers;
     consumers: Consumers;
 
@@ -29,6 +31,7 @@ export class Topic extends Duplex implements TopicHandler {
         this._origin = origin;
         this._state = ReadableState.Pause;
         this._options = { contentType };
+        this.writableNeedDrain = false;
         this.providers = new Map();
         this.consumers = new Map();
 
@@ -48,7 +51,7 @@ export class Topic extends Duplex implements TopicHandler {
 
     _read(_size: number): void { }
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        this.push(chunk, encoding);
+        this.writableNeedDrain = !this.push(chunk, encoding);
         callback();
     }
 
@@ -90,7 +93,10 @@ export class Topic extends Duplex implements TopicHandler {
         this.on("drain", () => this.updateState());
         this.on("pause", () => this.updateState());
         this.on("resume", () => this.updateState());
-        this.on("error", () => this.updateState());
+        this.on("error", (err: Error) => {
+            this.errored = err;
+            this.updateState();
+        });
         this.on(TopicEvent.ProvidersChanged, () => this.updateState());
         this.on(TopicEvent.ConsumersChanged, () => this.updateState());
     }

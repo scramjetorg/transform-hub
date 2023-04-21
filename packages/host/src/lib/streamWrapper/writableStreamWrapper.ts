@@ -15,11 +15,11 @@ class WritableStreamWrapper<W extends Writable> extends BaseStreamWrapper<W> {
         return new WritableStreamWrapper(stream, wrappedData);
     }
     state(): WritableStreamState {
-        if (this._stream.errored) return WorkState.Error;
-        if (this._stream.closed) return WorkState.Close;
+        // if (this._stream.errored) return WorkState.Error;
+        // if (this._stream.closed) return WorkState.Close;
         if (this._stream.writableFinished) return WritableState.Finish;
         if (this._stream.writable) return WritableState.Writable;
-        if (this._stream.writableNeedDrain) return WritableState.Drain;
+        // if (this._stream.writableNeedDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
 }

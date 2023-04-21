@@ -19,7 +19,13 @@ class PersistentTopic extends Topic {
         this.persistingStream.on("drain", () => this.updateState());
         this.persistingStream.on("pause", () => this.updateState());
         this.persistingStream.on("resume", () => this.updateState());
-        this.persistingStream.on("error", () => this.updateState());
+        const errorCb = (err: Error) => {
+            this.errored = err;
+            this.updateState();
+        };
+
+        this.persistingStream.on("error", errorCb);
+        this.on("error", errorCb);
     }
     protected attachEventListeners() {
         this.on("pipe", this.addProvider);
@@ -28,15 +34,15 @@ class PersistentTopic extends Topic {
         this.on(TopicEvent.ConsumersChanged, () => this.updateState());
     }
     state(): TopicState {
-        if (this.persistingStream.errored) return WorkState.Error;
+        if (this.errored) return WorkState.Error;
         if (this.persistingStream.isPaused() || this.providers.size === 0 || this.consumers.size === 0)
             return ReadableState.Pause;
-        if (this.persistingStream.writableNeedDrain) return WritableState.Drain;
+        if (this.writableNeedDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
 
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        this.persistingStream.write(chunk, encoding, callback);
+        this.writableNeedDrain = !this.persistingStream.write(chunk, encoding, callback);
     }
     _read(size: number): void {
         this.pushFromOutStream(size);

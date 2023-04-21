@@ -18,8 +18,8 @@ class ReadableStreamWrapper<R extends Readable> extends BaseStreamWrapper<R> {
     }
 
     state(): ReadableStreamState {
-        if (this._stream.errored) return WorkState.Error;
-        if (this._stream.closed) return WorkState.Close;
+        // if (this._stream.errored) return WorkState.Error;
+        // if (this._stream.closed) return WorkState.Close;
         if (this._stream.readableEnded) return ReadableState.End;
         if (this._stream.isPaused()) return ReadableState.Pause;
         if (this._stream.readable) return ReadableState.Readable;
@@ -27,4 +27,4 @@ class ReadableStreamWrapper<R extends Readable> extends BaseStreamWrapper<R> {
     }
 }
 
-export default ReadableStreamWrapper
+export default ReadableStreamWrapper;

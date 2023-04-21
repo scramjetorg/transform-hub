@@ -47,11 +47,7 @@ class BackupingStream extends Duplex {
     async _read(size: number): Promise<void> {
         if (this.bytesInBackup() <= 0) return;
 
-        const { bytesRead, buffer } = await this.readHandle.read({
-            buffer: Buffer.alloc(size),
-            position: this.bytesRead,
-            length: size,
-        });
+        const { bytesRead, buffer } = await this.readHandle.read(Buffer.alloc(size), 0, size, this.bytesRead);
 
         this.bytesRead += bytesRead;
         this.push(buffer.subarray(0, bytesRead));

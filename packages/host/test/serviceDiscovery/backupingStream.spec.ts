@@ -1,4 +1,4 @@
-import { createReadStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import BackupingStream from "../../src/lib/serviceDiscovery/backupingStream";
 import { FileHandle, mkdir, open } from "fs/promises";
 import { resolve } from "path";
@@ -78,7 +78,7 @@ test("Write to backup", async () => {
     await inputFinished;
     await lastLineWritten;
 
-    const [inputFile, backupFile] = await Promise.all([open(testFilePath), open(backupingStream.backupFile)]);
+    const [inputFile, backupFile] = await Promise.all([open(testFilePath, "r"), open(backupingStream.backupFile, "r")]);
     const [inputBuff, outputBuff] = await Promise.all([inputFile.readFile(), backupFile.readFile()]);
 
     const equals = inputBuff.equals(outputBuff);
@@ -123,11 +123,11 @@ test("Pipe to consumer from backup", async () => {
 
     const outputFilePath = resolve(backupDir, "./testBackupingStream_output.txt");
     const outputFile = await open(outputFilePath, "w+");
-    const consumer = outputFile.createWriteStream();
+    const consumer = createWriteStream(outputFilePath, { flags: "w+" });
 
     backupingStream.pipe(consumer);
 
-    const [inputFile, resultFile] = await Promise.all([open(testFilePath), open(outputFilePath)]);
+    const [inputFile, resultFile] = await Promise.all([open(testFilePath, "r"), open(outputFilePath, "r")]);
 
     const inputFileStat = await inputFile.stat();
 
@@ -147,9 +147,9 @@ test("Multiple disconnections of consumer", async () => {
     const [source, output] = await Promise.all([open(testFilePath, "r"), open(outputPath, "w+")]);
     const sourceSize = (await source.stat()).size;
 
-    const provider = source.createReadStream({ highWaterMark: 50 });
+    const provider = createReadStream(testFilePath, { highWaterMark: 50 });
     const backupingStream = await BackupingStream.create(backupDir, { highWaterMark: 100 });
-    const consumer = output.createWriteStream();
+    const consumer = createWriteStream(outputPath, { flags: "w+" });
 
     const providerEnd = new Promise(res => { provider.on("end", res); });
 
