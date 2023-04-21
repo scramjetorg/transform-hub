@@ -25,14 +25,15 @@ export abstract class BaseStreamWrapper<WrappedStream extends Stream> implements
 
     static hasWrapperData<WrappedStream extends Stream>(stream: WrappedStream) { return "wrapperData" in stream; }
     static retriveWrapperData<WrappedStream extends Stream>(stream: WrappedStream): WrapperData {
-        if (!this.hasWrapperData) throw new Error("Stream doesn't contain wrapper data");
+        // TODO: Add after KM, remove return || default values
+        // if (!this.hasWrapperData) throw new Error("Stream doesn't contain wrapper data");
         const wrappedData: WrapperData = (stream as any).wrapperData;
 
         return {
-            id: wrappedData.id,
-            type: wrappedData.type,
-            origin: wrappedData.origin,
-            options: wrappedData.options,
+            id: wrappedData.id || "",
+            type: wrappedData.type || "instance",
+            origin: wrappedData.origin || { id: "", type: "hub" },
+            options: wrappedData.options || {},
         };
     }
 
