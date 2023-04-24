@@ -40,7 +40,7 @@ jobs:
         run: pigz *-docker-image.tar
 
       - name: Upload image as an artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: runner-python-image
           path: '*.tar.gz'

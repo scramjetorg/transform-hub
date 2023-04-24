@@ -118,7 +118,7 @@ jobs:
           ref: v${{ inputs.version }}
 
       - name: Setup Nodejs 16
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           cache: 'yarn'
           node-version: 16
