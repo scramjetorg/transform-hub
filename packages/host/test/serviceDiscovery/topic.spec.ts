@@ -1,9 +1,7 @@
-import { PassThrough, Readable, Stream } from "stream";
-import { StreamOrigin, StreamType } from "../../src/lib/serviceDiscovery/streamHandler";
-import { Topic } from "../../src/lib/serviceDiscovery/topic";
+import { PassThrough, Readable, Stream, Writable } from "stream";
+import { ReadableState, StreamOrigin, WorkState } from "../../src/lib/serviceDiscovery/streamHandler";
+import { Topic, TopicEvent } from "../../src/lib/serviceDiscovery/topic";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
-import ReadableStreamWrapper from "../../src/lib/streamWrapper/readableStreamWrapper";
-// import WritableStreamWrapper from "../../src/lib/streamWrapper/writableStreamWrapper";
 
 let testTopic: Topic;
 const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
@@ -11,114 +9,6 @@ const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
 beforeEach(() => {
     testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
 });
-
-// describe("Provider management", () => {
-//     let testProvider: ReadableStreamWrapper<Readable>;
-
-//     beforeEach(() => {
-//         testProvider = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream", StreamType.Instance, testOrigin, {});
-//     });
-
-//     test("Automaticly add provider on pipe", () => {
-//         expect(testTopic.providers.size).toBe(0);
-//         testProvider.stream().pipe(testTopic);
-//         expect(testTopic.providers.size).toBe(1);
-//     });
-
-//     test("Add only unique streams on pipe", () => {
-//         testProvider.stream().pipe(testTopic);
-//         testProvider.stream().pipe(testTopic);
-//         testProvider.stream().pipe(testTopic);
-//         expect(testTopic.providers.size).toBe(1);
-//     });
-
-//     test("Add multiple providers on pipe", () => {
-//         const testProvider1 = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream1", StreamType.Instance, testOrigin, {});
-//         const testProvider2 = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream2", StreamType.Instance, testOrigin, {});
-//         const testProvider3 = ReadableStreamWrapper.create(new Readable({ read: () => { } }), "testReadStream3", StreamType.Instance, testOrigin, {});
-
-//         testProvider1.stream().pipe(testTopic);
-//         testProvider2.stream().pipe(testTopic);
-//         testProvider3.stream().pipe(testTopic);
-
-//         expect(testTopic.providers.size).toBe(3);
-//     });
-
-//     test("Add other topic as provider", () => {
-//         const otherTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin);
-
-//         otherTopic.pipe(testTopic);
-//         expect(testTopic.providers.size).toBe(1);
-//     });
-
-//     test("Automaticly remove provider on unpipe(source)", () => {
-//         testProvider.stream().pipe(testTopic);
-//         expect(testTopic.providers.size).toBe(1);
-//         testProvider.stream().unpipe(testTopic);
-//         expect(testTopic.providers.size).toBe(0);
-//     });
-// });
-
-// describe("Consumer management", () => {
-//     let testConsumer: WritableStreamWrapper<Writable>;
-
-//     beforeEach(() => {
-//         testConsumer = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream", StreamType.Instance, testOrigin, {});
-//     });
-
-//     test("Automaticly add consumer on pipe", () => {
-//         expect(testTopic.consumers.size).toBe(0);
-//         testTopic.pipe(testConsumer);
-//         expect(testTopic.consumers.size).toBe(1);
-//     });
-
-//     test("Add only unique streams on pipe", () => {
-//         testTopic.pipe(testConsumer);
-//         testTopic.pipe(testConsumer);
-//         testTopic.pipe(testConsumer);
-//         expect(testTopic.consumers.size).toBe(1);
-//     });
-
-//     test("Add multiple consumer on pipe", () => {
-//         const testConsumer1 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream1", StreamType.Instance, testOrigin, {});
-//         const testConsumer2 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream2", StreamType.Instance, testOrigin, {});
-//         const testConsumer3 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream3", StreamType.Instance, testOrigin, {});
-
-//         testTopic.pipe(testConsumer1);
-//         testTopic.pipe(testConsumer2);
-//         testTopic.pipe(testConsumer3);
-
-//         expect(testTopic.consumers.size).toBe(3);
-//     });
-
-//     test("Add other topic as consumer", () => {
-//         const otherTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin);
-
-//         testTopic.pipe(otherTopic);
-//         expect(testTopic.consumers.size).toBe(1);
-//     });
-
-//     test("Automaticly remove consumer on unpipe(source)", () => {
-//         testTopic.pipe(testConsumer.stream());
-//         expect(testTopic.consumers.size).toBe(1);
-//         testTopic.unpipe(testConsumer.stream());
-//         expect(testTopic.consumers.size).toBe(0);
-//     });
-
-//     test("Automaticly remove all consumers on unpipe()", () => {
-//         const testConsumer1 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream1", StreamType.Instance, testOrigin, {});
-//         const testConsumer2 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream2", StreamType.Instance, testOrigin, {});
-//         const testConsumer3 = WritableStreamWrapper.create(new Writable({ write: () => { } }), "testWriteStream3", StreamType.Instance, testOrigin, {});
-
-//         testTopic.pipe(testConsumer1);
-//         testTopic.pipe(testConsumer2);
-//         testTopic.pipe(testConsumer3);
-
-//         expect(testTopic.consumers.size).toBe(3);
-//         testTopic.unpipe();
-//         expect(testTopic.consumers.size).toBe(0);
-//     });
-// });
 
 describe("Event flow", () => {
     const waitForEvent = (eventName: string, source: Stream) => {
@@ -134,18 +24,17 @@ describe("Event flow", () => {
 
     describe("Duplex events", () => {
         test("Data event", async () => {
+            const provider = new PassThrough();
+            const consumer = new PassThrough();
             const eventOccured = waitForEvent("data", testTopic);
 
-            testTopic.on("readable", () => { testTopic.read(); });
-            testTopic.write("some text123");
+            provider.pipe(testTopic).pipe(consumer);
+
+            consumer.on("readable", () => { consumer.read(); });
+            provider.write("some text123");
+
             await expect(eventOccured).resolves.toBe(true);
         });
-        // test("Error event", async () => {
-        //     const eventOccured = waitForEvent("error", testTopic);
-
-        //     testTopic.destroy(new Error("Test Error"));
-        //     await expect(eventOccured).resolves.toBe(true);
-        // });
         test("Pause event", async () => {
             const eventOccured = waitForEvent("pause", testTopic);
 
@@ -165,66 +54,34 @@ describe("Event flow", () => {
             await expect(eventOccured).resolves.toBe(true);
         });
     });
-    // describe("Topic events", () => {
-    //     let testProvider: ReadableStreamWrapper<Readable>;
-    //     let testConsumer: WritableStreamWrapper<Writable>;
+    describe("Topic events", () => {
+        let testProvider: Readable;
+        let testConsumer: Writable;
 
-    //     beforeEach(() => {
-    //         testProvider = ReadableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testReadStream", StreamType.Instance, testOrigin, {});
-    //         testConsumer = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testWriteStream", StreamType.Instance, testOrigin, {});
-    //     });
+        beforeEach(() => {
+            testProvider = new PassThrough({ encoding: "ascii" });
+            testConsumer = new PassThrough({ encoding: "ascii" });
+        });
 
-    //     test("State when error", async () => {
-    //         const eventOccured = waitForEvent("error", testTopic);
+        test("State when error", async () => {
+            const eventOccured = waitForEvent("error", testTopic);
 
-    //         testTopic.destroy(new Error("Test Error"));
-    //         await eventOccured;
-    //         expect(testTopic.state()).toBe(WorkState.Error);
-    //     });
+            testTopic.destroy(new Error("Test Error"));
+            await eventOccured;
+            expect(testTopic.state()).toBe(WorkState.Error);
+        });
 
-    // test("State flowing", async () => {
-    //     testProvider.stream().pipe(testTopic);
-    //     expect(testTopic.state()).toBe(ReadableState.Pause);
-    //     const eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
+        test("State flowing", async () => {
+            testProvider.pipe(testTopic);
+            testTopic.pause();
+            expect(testTopic.state()).toBe(ReadableState.Pause);
+            const eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
 
-    //     testTopic.pipe(testConsumer);
-    //     await eventPromise;
-    //     expect(testTopic.state()).toBe(WorkState.Flowing);
-    // });
-
-    // test("ProvidersChanged on add", async () => {
-    //     const eventPromise = waitForEvent(TopicEvent.ProvidersChanged, testTopic);
-
-    //     testProvider.stream().pipe(testTopic);
-    //     await eventPromise;
-    //     expect(testTopic.providers.size).toBe(1);
-    // });
-    // test("ProvidersChanged on remove", async () => {
-    //     let eventPromise = waitForEvent(TopicEvent.ProvidersChanged, testTopic);
-
-    //     testProvider.stream().pipe(testTopic);
-    //     await eventPromise;
-    //     eventPromise = waitForEvent(TopicEvent.ProvidersChanged, testTopic);
-    //     testProvider.stream().unpipe(testTopic);
-    //     expect(testTopic.providers.size).toBe(0);
-    // });
-    // test("ConsumersChanged on add", async () => {
-    //     const eventPromise = waitForEvent(TopicEvent.ConsumersChanged, testTopic);
-
-    //     testTopic.pipe(testConsumer);
-    //     await eventPromise;
-    //     expect(testTopic.consumers.size).toBe(1);
-    // });
-    // test("ConsumersChanged on remove", async () => {
-    //     let eventPromise = waitForEvent(TopicEvent.ConsumersChanged, testTopic);
-
-    //     testTopic.pipe(testConsumer);
-    //     await eventPromise;
-    //     eventPromise = waitForEvent(TopicEvent.ConsumersChanged, testTopic);
-    //     testTopic.unpipe(testConsumer);
-    //     expect(testTopic.consumers.size).toBe(0);
-    // });
-    // });
+            testTopic.pipe(testConsumer);
+            await eventPromise;
+            expect(testTopic.state()).toBe(WorkState.Flowing);
+        });
+    });
 });
 
 describe("Data flow", () => {
@@ -249,9 +106,6 @@ describe("Data flow", () => {
         expect(result).toBe(testText);
     });
     test("Piped flow", async () => {
-        // const testProvider = ReadableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testReadStream", StreamType.Instance, testOrigin, {});
-        // const testConsumer = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "testWriteStream", StreamType.Instance, testOrigin, {});
-
         const testProvider = new PassThrough();
         const testConsumer = new PassThrough({ encoding: "utf-8" });
 
@@ -279,12 +133,12 @@ describe("Data flow", () => {
         }
 
         const createStreamProvider =
-            (name: string, from: number, to: number): [ReadableStreamWrapper<Readable>, Promise<void>] => {
+            (name: string, from: number, to: number): [Readable, Promise<void>] => {
                 const gen = generator(from, to);
-                const provider = ReadableStreamWrapper.create(Readable.from(gen).setEncoding("ascii"), name, StreamType.Instance, testOrigin, {});
+                const provider = Readable.from(gen).setEncoding("ascii");
                 const [streamEndPromise, streamEnd, streamError] = createWaitingPromise();
 
-                provider.stream().on("close", streamEnd).on("error", streamError);
+                provider.on("close", streamEnd).on("error", streamError);
                 return [provider, streamEndPromise];
             };
 
@@ -292,9 +146,9 @@ describe("Data flow", () => {
         const [provider2, provider2End] = createStreamProvider("TestReadStream2", 11, 20);
         const [provider3, provider3End] = createStreamProvider("TestReadStream3", 21, 30);
 
-        provider1.stream().pipe(testTopic, { end: false });
-        provider2.stream().pipe(testTopic, { end: false });
-        provider3.stream().pipe(testTopic, { end: false });
+        provider1.pipe(testTopic, { end: false });
+        provider2.pipe(testTopic, { end: false });
+        provider3.pipe(testTopic, { end: false });
 
         const result: number[] = [];
 
@@ -310,9 +164,6 @@ describe("Data flow", () => {
         expect(match).toBe(true);
     });
     test("Many Consumers reading", async () => {
-        // const consumer1 = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
-        // const consumer2 = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
-        // const consumer3 = WritableStreamWrapper.create(new PassThrough({ encoding: "ascii" }), "TestWriteStream1", StreamType.Instance, testOrigin, {});
         const consumer1 = new PassThrough({ encoding: "ascii" });
         const consumer2 = new PassThrough({ encoding: "ascii" });
         const consumer3 = new PassThrough({ encoding: "ascii" });

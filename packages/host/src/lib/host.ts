@@ -1,7 +1,7 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Duplex, Readable, Writable } from "stream";
+import { Duplex } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
@@ -985,7 +985,7 @@ export class Host implements IComponent {
 
                 await this.serviceDiscovery.routeTopicToStream(
                     { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
-                    csic.getInputStream() as Writable
+                    csic.getInputStream()
                 );
 
                 csic.inputRouted = true;
@@ -998,7 +998,7 @@ export class Host implements IComponent {
             if (data.provides && !csic.outputRouted) {
                 this.logger.trace("Routing Sequence output to topic", data.provides);
                 await this.serviceDiscovery.routeStreamToTopic(
-                    csic.getOutputStream() as Readable,
+                    csic.getOutputStream(),
                     { topic: new TopicId(data.provides), contentType: data.contentType as ContentType },
                     // csic.id
                 );
@@ -1012,7 +1012,7 @@ export class Host implements IComponent {
         });
 
         csic.on("end", async (code) => {
-            this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
+            this.logger.trace("CSIController ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
                 const topic = this.serviceDiscovery.getTopic(new TopicId(csic.provides));
@@ -1038,7 +1038,7 @@ export class Host implements IComponent {
             if (csic.requires && csic.requires !== "") {
                 const topic = this.serviceDiscovery.getTopic(new TopicId(csic.requires));
 
-                if (topic) topic.unpipe(csic.getInputStream()! as Writable);
+                if (topic) topic.unpipe(csic.getInputStream());
             }
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);

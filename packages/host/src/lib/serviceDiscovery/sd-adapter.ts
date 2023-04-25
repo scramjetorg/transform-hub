@@ -10,8 +10,6 @@ import { StreamOrigin } from "./streamHandler";
 import PersistentTopic from "./persistentTopic";
 import { IObjectLogger, SequenceInfo } from "@scramjet/types";
 import { CSIController } from "../csi-controller";
-// import Consumer from "./serviceDiscovery/consumer";
-// import Provider from "./serviceDiscovery/provider";
 
 export type DataType = {
     topic: TopicId,
@@ -46,12 +44,9 @@ export class ServiceDiscovery {
     private logger = new ObjLogger(this);
     private hostName: string;
     private startSequenceCb: StartSequenceCb;
+    protected topicsController: TopicsMap;
     cpmConnector?: CPMConnector;
 
-    // change to private
-    topicsController: TopicsMap;
-
-    //FIXME: Get rid of startSequenceCb to avoid Circular Reference
     constructor(logger: IObjectLogger, hostName: string, startSequenceCb: StartSequenceCb) {
         this.topicsController = new TopicsMap();
         this.hostName = hostName;
@@ -132,7 +127,6 @@ export class ServiceDiscovery {
             topic: value.id,
             topicName: value.id
         }));
-        // return this.topicsController.topics;
     }
 
     /**

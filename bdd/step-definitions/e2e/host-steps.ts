@@ -864,26 +864,25 @@ Then("send data from file {string} to topic {string} and pipe-unpipe every one f
     const [source, output] = await Promise.all([open(sourcePath, "r"), open(outputPath, "w+")]);
     const sourceSize = (await source.stat()).size;
 
-    const provider = createReadStream(sourcePath, { highWaterMark: 50 });
+    const provider = createReadStream(sourcePath, { highWaterMark: 50, emitClose: false });
     const consumer = createWriteStream(outputPath, { flags: "w+" });
 
     const topicOutStream = await hostClient.getNamedData(topicId);
 
-    // let readLen = 0;
-    // let piped = true;
-    // let switchLenght = sourceSize / 5;
+    let readLen = 0;
+    let piped = true;
+    let switchLenght = sourceSize / 5;
 
-    // provider.on("data", (chunk) => {
-    //     readLen += chunk.length;
+    provider.on("data", (chunk) => {
+        readLen += chunk.length;
 
-    //     if (readLen > switchLenght) {
-    //         // eslint-disable-next-line no-unused-expressions
-    //         piped ? topicOutStream.unpipe() : topicOutStream.pipe(consumer);
-    //         piped = !piped;
-    //         switchLenght += sourceSize / 5;
-    //     }
-    // });
-    // provider.pause();
+        if (readLen > switchLenght) {
+            // eslint-disable-next-line no-unused-expressions
+            piped ? topicOutStream.unpipe() : topicOutStream.pipe(consumer);
+            piped = !piped;
+            switchLenght += sourceSize / 5;
+        }
+    });
 
     topicOutStream.pipe(consumer);
     await hostClient.sendNamedData<Writable>(topicId, provider, {}, "text/plain", false);
