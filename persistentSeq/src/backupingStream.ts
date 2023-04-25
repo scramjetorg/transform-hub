@@ -30,13 +30,13 @@ class BackupingStream extends Duplex {
 
     async _write(chunk: any, encoding: BufferEncoding,
         callback: (error?: Error | null | undefined) => void): Promise<void> {
-        if (this.bytesInBackup() <= 0 && this.readableLength < this.readableHighWaterMark) {
+        if (this.bytesInBackup <= 0 && this.readableLength < this.readableHighWaterMark) {
             this.push(chunk, encoding);
             callback();
             return;
         }
         try {
-            const { bytesWritten } = await this.writeBuckup(chunk, encoding);
+            const { bytesWritten } = await this.writeBackup(chunk, encoding);
 
             this.bytesWritten += bytesWritten;
             callback();
@@ -45,7 +45,7 @@ class BackupingStream extends Duplex {
         }
     }
     async _read(size: number): Promise<void> {
-        if (this.bytesInBackup() <= 0) return;
+        if (this.bytesInBackup <= 0) return;
 
         const { bytesRead, buffer } = await this.readHandle.read(Buffer.alloc(size), 0, size, this.bytesRead);
 
@@ -53,9 +53,9 @@ class BackupingStream extends Duplex {
         this.push(buffer.subarray(0, bytesRead));
     }
 
-    bytesInBackup() { return this.bytesWritten - this.bytesRead; }
+    get bytesInBackup() { return this.bytesWritten - this.bytesRead; }
 
-    writeBuckup(chunk: any, encoding: BufferEncoding) {
+    writeBackup(chunk: any, encoding: BufferEncoding) {
         if (typeof chunk === "string") {
             return this.writeHandle.write(chunk, this.bytesWritten, encoding);
         }

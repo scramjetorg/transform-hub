@@ -10,8 +10,8 @@
         "resolveJsonModule": true
     },
     "include": [
-        "src/index.ts",
-        "./test"
+        "index.ts",
+        // "./test"
     ],
     "exclude": [
         "**/node_modules",

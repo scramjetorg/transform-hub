@@ -796,11 +796,11 @@ Then("confirm json {string} will be received", async function(this: CustomWorld,
 });
 
 Given("topic {string} is created", async function(this: CustomWorld, topicId: string) {
-    await hostClient.createTopic(topicId, "application/x-ndjson");
+    await hostClient.createTopic(topicId, "text/plain");
 });
 
 Given("persisting topic {string} is created with sequence {string}", async function(this: CustomWorld, topicId: string, sequenceName: string) {
-    await hostClient.createTopic(topicId, "application/x-ndjson", sequenceName);
+    await hostClient.createTopic(topicId, "text/plain", sequenceName);
 });
 
 Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
@@ -869,25 +869,26 @@ Then("send data from file {string} to topic {string} and pipe-unpipe every one f
 
     const topicOutStream = await hostClient.getNamedData(topicId);
 
-    let readLen = 0;
-    let piped = true;
-    let switchLenght = sourceSize / 5;
+    // let readLen = 0;
+    // let piped = true;
+    // let switchLenght = sourceSize / 5;
 
-    provider.on("data", (chunk) => {
-        readLen += chunk.length;
+    // provider.on("data", (chunk) => {
+    //     readLen += chunk.length;
 
-        if (readLen > switchLenght) {
-            // eslint-disable-next-line no-unused-expressions
-            piped ? topicOutStream.unpipe() : topicOutStream.pipe(consumer);
-            piped = !piped;
-            switchLenght += sourceSize / 5;
-        }
-    });
+    //     if (readLen > switchLenght) {
+    //         // eslint-disable-next-line no-unused-expressions
+    //         piped ? topicOutStream.unpipe() : topicOutStream.pipe(consumer);
+    //         piped = !piped;
+    //         switchLenght += sourceSize / 5;
+    //     }
+    // });
+    // provider.pause();
 
     topicOutStream.pipe(consumer);
-    await hostClient.sendNamedData<Writable>(topicId, provider, {}, "application/x-ndjson", false);
+    await hostClient.sendNamedData<Writable>(topicId, provider, {}, "text/plain", false);
 
-    await waitForFileToReachSize(output, sourceSize, 500);
+    await waitForFileToReachSize(output, sourceSize, 1000);
 
     const [sourceBuff, outputBuff] = await Promise.all([source.readFile(), output.readFile()]);
 

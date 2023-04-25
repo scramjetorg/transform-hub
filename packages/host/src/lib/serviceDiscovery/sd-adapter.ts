@@ -72,8 +72,12 @@ export class ServiceDiscovery {
 
     async createPersistentTopic(id: TopicId, contentType: ContentType, sequence: SequenceInfo) {
         const csic = await this.startSequenceCb(sequence);
+
         const input = csic.getInputStream();
         const output = csic.getOutputStream();
+
+        input.write(`Content-Type: ${contentType}\r\n`);
+        input.write("\r\n");
 
         const origin: StreamOrigin = { id: this.hostName, type: "hub" };
         const topic = new PersistentTopic(input, output, id, contentType, origin);

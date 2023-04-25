@@ -167,7 +167,7 @@ export class ObjLogger implements IObjectLogger {
     get stringifiedOutput(): StringStream {
         if (!this._stringifiedOutput)
             // eslint-disable-next-line no-console
-            this._stringifiedOutput = this.output.JSONStringify().catch((e: any) => { console.error(e); });
+            this._stringifiedOutput = this.output.JSONStringify().catch((e: any) => { console.error(e?.cause); });
         return this._stringifiedOutput;
     }
 
