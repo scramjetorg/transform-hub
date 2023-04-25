@@ -945,7 +945,7 @@ export class Host implements IComponent {
         });
 
         csic.on("end", async (code) => {
-            this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
+            this.logger.trace("CSIController ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
                 const topic = this.serviceDiscovery.getTopic(new TopicId(csic.provides));
