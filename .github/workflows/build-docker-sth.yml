@@ -24,7 +24,7 @@ jobs:
           ref: ${{ inputs.git-revision }}
 
       - name: Setup Nodejs ${{ inputs.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           cache: 'yarn'
           node-version: ${{ inputs.node-version }}
@@ -51,7 +51,7 @@ jobs:
         run: pigz *-docker-image.tar
 
       - name: Upload image as an artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: sth-image
           path: '*.tar.gz'
