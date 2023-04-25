@@ -2,4 +2,4 @@
 
 set -e
 
-tar zxf - -C /package 2>&2 && touch /package/.ready || touch $PACKAGE_DIR/.fail
+tar zxf - -C /package && touch /package/.ready || touch $PACKAGE_DIR/.fail
