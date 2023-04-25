@@ -1,6 +1,5 @@
 
 import { Duplex, Readable, Writable } from "stream";
-
 import { CPMConnector } from "../cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
 import TopicId from "./topicId";
@@ -73,14 +72,11 @@ export class ServiceDiscovery {
 
     async createPersistentTopic(id: TopicId, contentType: ContentType, sequence: SequenceInfo) {
         const csic = await this.startSequenceCb(sequence);
-        const input = csic.getInputStream() as Writable;
-        const output = csic.getOutputStream() as Readable;
-        const instance = new Duplex({
-            read(size: number) { output.read(size); },
-            write(chunk, encoding, callback) { input.write(chunk, encoding, callback); },
-        });
+        const input = csic.getInputStream();
+        const output = csic.getOutputStream();
+
         const origin: StreamOrigin = { id: this.hostName, type: "hub" };
-        const topic = new PersistentTopic(instance, id, contentType, origin);
+        const topic = new PersistentTopic(input, output, id, contentType, origin);
 
         this.topicsController.set(id, topic);
         return topic;

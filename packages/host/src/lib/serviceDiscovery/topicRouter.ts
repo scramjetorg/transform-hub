@@ -24,8 +24,8 @@ type TopicsPostRes = {
     origin: StreamOrigin
     state: TopicState
     contentType: ContentType
-    consumers: [] //TODO: fill type
-    providers: [] //TODO: fill type
+    // consumers: [] //TODO: fill type
+    // providers: [] //TODO: fill type
 }
 type TopicDeleteReq = IncomingMessage & {
     params?: { topic?: string }
@@ -90,8 +90,8 @@ class TopicRouter {
             origin: topic.origin(),
             state: topic.state(),
             contentType: topic.options().contentType,
-            consumers: [],
-            providers: [],
+            // consumers: [],
+            // providers: [],
         };
     }
 
@@ -138,7 +138,6 @@ class TopicRouter {
             }
         } else {
             // FIXME: Single responsibility rule validation
-            // topic = new Topic(topicId, contentType, { id: "TopicDownstream", type: "hub" }, { encoding: "ascii" });
             topic = this.serviceDiscovery.createTopic(topicId, contentType);
         }
         req.pipe(topic, { end: false });
