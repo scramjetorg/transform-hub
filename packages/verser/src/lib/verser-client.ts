@@ -110,7 +110,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 this.socket = socket;
                 this.mux();
 
-                resolve({ req: response, socket });
+                resolve({ response, socket });
             });
 
             connectRequest.flushHeaders();
