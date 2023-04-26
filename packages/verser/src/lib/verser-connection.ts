@@ -191,7 +191,7 @@ export class VerserConnection {
      * @param id {number} Channel id.
      * @returns Duplex stream.
      */
-    async createChannel(id: number): Promise<Duplex> {
+    createChannel(id: number) {
         if (!this.teceMux) throw new Error("TeCeMux not connected");
 
         return this.teceMux.multiplex({ channel: id });
