@@ -13,18 +13,6 @@ class TopicsMap {
             id: topic.id(),
             contentType: topic.options().contentType,
             state: topic.state(),
-            // providers: Array.from(topic.providers, ([, provider]) => ({
-            //     type: provider.type(),
-            //     id: provider.id(),
-            //     state: provider.state(),
-            //     origin: provider.origin(),
-            // })),
-            // consumers: Array.from(topic.providers, ([, consumer]) => ({
-            //     type: consumer.type(),
-            //     id: consumer.id(),
-            //     state: consumer.state(),
-            //     origin: consumer.origin()
-            // }))
         }));
     }
 
@@ -41,7 +29,6 @@ class TopicsMap {
         const topic = this.topicsMap.get(id.toString());
 
         if (!topic) return false;
-        // TODO: should be something like topic.disconnect() (both providers and consumers)
         topic.unpipe();
         return this.topicsMap.delete(id.toString());
     }
