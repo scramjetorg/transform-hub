@@ -27,7 +27,6 @@ beforeEach(() => {
     } as CPMConnector;
 });
 
-// getTopics()
 describe("Return list of topics in SD", () => {
     test("Empty list", () => {
         const topics = serviceDiscovery.getTopics();
@@ -45,7 +44,7 @@ describe("Return list of topics in SD", () => {
         ];
 
         topicsId.forEach((topicId) =>
-            serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType: "text/plain" }))
+            serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType: "text/plain" }));
         const topics = serviceDiscovery.getTopics();
 
         expect(topics.length === 5);
@@ -61,7 +60,6 @@ describe("Return list of topics in SD", () => {
     });
 });
 
-// getByTopic(topic: string)
 describe("Get topic details for given topic", () => {
     test("Get existing topic", () => {
         serviceDiscovery.createTopicIfNotExist(testConfig);
@@ -84,15 +82,13 @@ test("Get topic details", () => {
     expect(true).toBeTruthy();
 });
 
-// removeData(topic: string)
 test("Remove stored topic with given id", () => {
     serviceDiscovery.createTopicIfNotExist(testConfig);
     expect(serviceDiscovery.getTopics().length === 1);
-    // serviceDiscovery.removeData(testUUID);
-    // expect(serviceDiscovery.getTopics().length === 0);
+    serviceDiscovery.deleteTopic(testUUID);
+    expect(serviceDiscovery.getTopics().length === 0);
 });
 
-// routeTopicToStream(topicData: dataType, target: Writable)
 test("Route topic to stream", async () => {
     const testTarget = new PassThrough();
 
@@ -102,7 +98,6 @@ test("Route topic to stream", async () => {
     expect(topicInfo!.contentType).toEqual(testConfig.contentType);
 });
 
-// routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string)
 test("Route stream to topic", async () => {
     const testSource = new PassThrough();
 
@@ -112,7 +107,6 @@ test("Route stream to topic", async () => {
     expect(topicInfo!.contentType).toEqual(testConfig.contentType);
 });
 
-// update(data: { provides?: string, requires?: string, topicName: string, contentType: string })
 test("Update", async () => {
     serviceDiscovery.cpmConnector!.connected = true;
     await serviceDiscovery.update({ provides: "dummyProvides", requires: "dummyRequires", topicName: "dummyTopicName", contentType: "dummyContentType" });

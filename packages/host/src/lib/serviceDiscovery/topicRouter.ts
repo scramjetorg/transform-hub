@@ -24,8 +24,6 @@ type TopicsPostRes = {
     origin: StreamOrigin
     state: TopicState
     contentType: ContentType
-    // consumers: [] //TODO: fill type
-    // providers: [] //TODO: fill type
 }
 type TopicDeleteReq = IncomingMessage & {
     params?: { topic?: string }
@@ -90,8 +88,6 @@ class TopicRouter {
             origin: topic.origin(),
             state: topic.state(),
             contentType: topic.options().contentType,
-            // consumers: [],
-            // providers: [],
         };
     }
 
@@ -137,7 +133,6 @@ class TopicRouter {
                 };
             }
         } else {
-            // FIXME: Single responsibility rule validation
             topic = this.serviceDiscovery.createTopic(topicId, contentType);
         }
         req.pipe(topic, { end: false });
@@ -153,11 +148,9 @@ class TopicRouter {
     }
 
     async topicUpstream(req: TopicStreamReq, res: ServerResponse) {
-        // FIXME: this shuoldn't be default
         const { "content-type": contentType = "application/x-ndjson", cpm } = req.headers;
         const { topic: id = "" } = req.params || {};
 
-        // FIXME: fix types to make it work properly:
         if (!isContentType(contentType)) {
             res.end({ opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg });
             return new PassThrough();
@@ -168,7 +161,6 @@ class TopicRouter {
         }
 
         const topicId = new TopicId(id);
-        //TODO: what should be the default content type and where to store this information?
 
         if (!cpm) {
             await this.serviceDiscovery.update({

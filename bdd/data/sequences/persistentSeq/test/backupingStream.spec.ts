@@ -17,17 +17,19 @@ Vestibulum bibendum est a massa porta, vitae tempus enim malesuada. Pellentesque
 Ut congue purus ac lorem scelerisque, id congue eros venenatis. Sed rutrum vitae odio vel malesuada. Aliquam vel nibh at ipsum sodales ultricies. Quisque facilisis neque sem, id accumsan leo gravida vel. Vestibulum eros libero, tempus ac arcu vel, tincidunt pulvinar magna. Aliquam dictum ornare magna sed iaculis. Integer vulputate metus at iaculis eleifend. Aenean vestibulum ut sapien id malesuada. Sed eu faucibus lectus, vitae gravida metus. Mauris et iaculis felis, vitae egestas metus. Integer semper, erat in gravida vehicula, justo neque suscipit est, porta dapibus est magna ac metus.`;
 
 let backupDir: string;
+let backupFile: string;
 let testFilePath: string;
 
 beforeAll(async () => {
     backupDir = resolve(process.cwd(), "./dist/test/");
+    backupFile = resolve(backupDir, "./tmp1");
     await mkdir(backupDir, { recursive: true });
 
-    testFilePath = resolve(process.cwd(), "./testFile.txt");
+    testFilePath = resolve(process.cwd(), "./test/testFile.txt");
 });
 
 test("Basic read/write", async () => {
-    const backupingStream = await BackupingStream.create(backupDir, { encoding: "ascii" });
+    const backupingStream = new BackupingStream(backupFile, { encoding: "ascii" });
 
     const readingFinished = new Promise(res => { backupingStream.on("readable", () => { res(backupingStream.read()); }); });
 
@@ -35,13 +37,12 @@ test("Basic read/write", async () => {
     const result = await readingFinished;
 
     expect(result).toBe(testText);
-    await backupingStream.close();
 });
 
 test("Simple piped read/write", async () => {
     const provider = new PassThrough({ encoding: "ascii" });
     const consumer = new PassThrough({ encoding: "ascii" });
-    const backupingStream = await BackupingStream.create(backupDir, { encoding: "ascii" });
+    const backupingStream = new BackupingStream(backupFile, { encoding: "ascii" });
 
     provider.pipe(backupingStream).pipe(consumer);
 
@@ -53,11 +54,10 @@ test("Simple piped read/write", async () => {
     const consumerRead = await readPromise;
 
     expect(consumerRead).toBe(testText);
-    await backupingStream.close();
 });
 
 test("Write to backup", async () => {
-    const backupingStream = await BackupingStream.create(backupDir, { highWaterMark: 0 });
+    const backupingStream = new BackupingStream(backupFile, { highWaterMark: 0 });
 
     const source = createReadStream(testFilePath);
     const readLine = createInterface({ input: source });
@@ -78,18 +78,19 @@ test("Write to backup", async () => {
     await inputFinished;
     await lastLineWritten;
 
-    const [inputFile, backupFile] = await Promise.all([open(testFilePath, "r"), open(backupingStream.backupFile, "r")]);
-    const [inputBuff, outputBuff] = await Promise.all([inputFile.readFile(), backupFile.readFile()]);
+    const [inputFile, backupingFile] = await Promise.all([open(testFilePath, "r"), open(backupingStream.backupFile, "r")]);
+    const [inputBuff, outputBuff] = await Promise.all([inputFile.readFile(), backupingFile.readFile()]);
 
     const equals = inputBuff.equals(outputBuff);
 
+    await Promise.all([inputFile.close(), backupingFile.close()]);
     expect(equals).toBeTruthy();
-    await Promise.all([backupingStream.close(), inputFile.close(), backupFile.close()]);
 });
 
-const waitForFileToReachSize = async (file: FileHandle, size: number) => {
+const waitForFileToReachSize = async (file: FileHandle, size: number, timeLimit = 200) => {
+
     let timeoutOccured = false;
-    const timeout = setTimeout(() => { timeoutOccured = true; }, 200);
+    const timeout = setTimeout(() => { timeoutOccured = true; }, timeLimit);
 
     while (!timeoutOccured) {
         const stats = await file.stat();
@@ -97,10 +98,11 @@ const waitForFileToReachSize = async (file: FileHandle, size: number) => {
         if (stats.size === size) break;
     }
     clearTimeout(timeout);
+    return timeoutOccured;
 };
 
 test("Pipe to consumer from backup", async () => {
-    const backupingStream = await BackupingStream.create(backupDir);
+    const backupingStream = new BackupingStream(backupFile);
 
     const source = createReadStream(testFilePath);
     const readLine = createInterface({ input: source });
@@ -137,9 +139,8 @@ test("Pipe to consumer from backup", async () => {
 
     const equals = inputBuff.equals(resultBuff);
 
+    await Promise.all([inputFile.close(), outputFile.close(), resultFile.close()]);
     expect(equals).toBeTruthy();
-
-    await Promise.all([backupingStream.close(), inputFile.close(), outputFile.close(), resultFile.close()]);
 });
 
 test("Multiple disconnections of consumer", async () => {
@@ -147,8 +148,8 @@ test("Multiple disconnections of consumer", async () => {
     const [source, output] = await Promise.all([open(testFilePath, "r"), open(outputPath, "w+")]);
     const sourceSize = (await source.stat()).size;
 
-    const provider = createReadStream(testFilePath, { highWaterMark: 50 });
-    const backupingStream = await BackupingStream.create(backupDir, { highWaterMark: 100 });
+    const provider = createReadStream(testFilePath, { highWaterMark: 100 });
+    const backupingStream = new BackupingStream(backupFile, { writableHighWaterMark: 100, readableHighWaterMark: 200 });
     const consumer = createWriteStream(outputPath, { flags: "w+" });
 
     const providerEnd = new Promise(res => { provider.on("end", res); });
@@ -157,27 +158,27 @@ test("Multiple disconnections of consumer", async () => {
     let piped = true;
     let switchLenght = sourceSize / 5;
 
-    provider.on("data", (chunk) => {
+    provider.on("data", async (chunk) => {
         readLen += chunk.length;
-
         if (readLen > switchLenght) {
             // eslint-disable-next-line no-unused-expressions
             piped ? backupingStream.unpipe() : backupingStream.pipe(consumer);
             piped = !piped;
             switchLenght += sourceSize / 5;
         }
-    });
-
-    provider.pipe(backupingStream).pipe(consumer);
+    }).pipe(backupingStream).pipe(consumer);
 
     await providerEnd;
-    await waitForFileToReachSize(output, sourceSize);
+    const timeout = await waitForFileToReachSize(output, sourceSize, 200);
+
+    expect(timeout).toBeFalsy();
 
     const [sourceBuff, outputBuff] = await Promise.all([source.readFile(), output.readFile()]);
 
+    expect(sourceBuff.length).toEqual(outputBuff.length);
     const equals = sourceBuff.equals(outputBuff);
 
     expect(equals).toBeTruthy();
 
-    await Promise.all([backupingStream.close(), source.close(), output.close()]);
+    await Promise.all([source.close(), output.close()]);
 });

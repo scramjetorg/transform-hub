@@ -25,7 +25,7 @@ class PersistentTopic extends Topic {
         this.instanceOutput.on("pause", () => this.updateState());
         this.instanceOutput.on("resume", () => this.updateState());
         const errorCb = (err: Error) => {
-            this.errored = err;
+            this._errored = err;
             this.updateState();
         };
 
@@ -33,18 +33,10 @@ class PersistentTopic extends Topic {
         this.instanceOutput.on("error", errorCb);
         this.on("error", errorCb);
     }
-    // protected attachEventListeners() {
-    // this.on("pipe", this.addProvider);
-    // this.on("unpipe", this.removeProvider);
-    // this.on(TopicEvent.ProvidersChanged, () => this.updateState());
-    // this.on(TopicEvent.ConsumersChanged, () => this.updateState());
-    // }
+
     state(): TopicState {
-        if (this.errored) return WorkState.Error;
-        if (this.instanceOutput.isPaused()
-        //  || this.providers.size === 0 || this.consumers.size === 0
-        )
-            return ReadableState.Pause;
+        if (this._errored) return WorkState.Error;
+        if (this.instanceOutput.isPaused()) return ReadableState.Pause;
         if (this.needDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
@@ -52,14 +44,15 @@ class PersistentTopic extends Topic {
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
         this.needDrain = !this.instanceInput.write(chunk, encoding, callback);
     }
+
     _read(size: number): void {
         this.instanceOutput.read(size);
     }
+
     private pushFromOutStream(size?: number) {
         let chunk;
 
         while ((chunk = this.instanceOutput.read(size)) !== null) {
-            // console.log("READ", chunk.toString());
             if (!this.push(chunk)) break;
         }
     }
