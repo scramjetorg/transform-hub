@@ -17,6 +17,8 @@ module.exports = async function* (_input, chunkSize = 3 << 20, chunkFrequency = 
 
     let n = 0;
 
+    await new Promise(res => this.once("start", res));
+
     while (!end) {
         const chunkPayload = `${Date.now()}|${n++}`;
         const chunk = `${chunkPayload}${" ".repeat(chunkSize - chunkPayload.length)}`;
