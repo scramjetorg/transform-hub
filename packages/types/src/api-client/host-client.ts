@@ -70,4 +70,5 @@ export declare class HostClient {
     getTopics(): Promise<STHRestAPI.GetTopicsResponse>;
     getInstanceClient(id: string): InstanceClient;
     getSequenceClient(id: string): SequenceClient;
+    createTopic(id: string, contentType: string, persistentSequence?: string): Promise<{ topicName: string }>
 }
