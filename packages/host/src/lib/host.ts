@@ -329,7 +329,7 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        await this.performStartup();
+
         await this.startListening();
 
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
@@ -360,11 +360,15 @@ export class Host implements IComponent {
             await this.connectToCPM();
         }
 
+
         this.s3Client = new S3Client({
             host: `${this.config.cpmUrl}/api/v1`,
             bucket: `cpm/${this.config.cpmId}/api/v1/s3`,
         });
+
         this.s3Client.logger.pipe(this.logger);
+
+        await this.performStartup();
     }
 
     private async startListening() {
