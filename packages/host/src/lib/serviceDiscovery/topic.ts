@@ -19,7 +19,7 @@ export class Topic extends Duplex implements TopicHandler {
     protected _options: TopicOptions;
     protected _origin: StreamOrigin;
     protected _state: TopicState;
-    protected errored?: Error;
+    protected _errored?: Error;
     protected needDrain: boolean;
     // providers: Providers;
     // consumers: Consumers;
@@ -42,7 +42,7 @@ export class Topic extends Duplex implements TopicHandler {
     options() { return this._options; }
     type() { return StreamType.Topic; }
     state(): TopicState {
-        if (this.errored) return WorkState.Error;
+        if (this._errored) return WorkState.Error;
         if (this.isPaused()
             // || this.providers.size === 0 || this.consumers.size === 0
         ) return ReadableState.Pause;
@@ -99,7 +99,7 @@ export class Topic extends Duplex implements TopicHandler {
         this.on("pause", () => this.updateState());
         this.on("resume", () => this.updateState());
         this.on("error", (err: Error) => {
-            this.errored = err;
+            this._errored = err;
             this.updateState();
         });
         // this.on(TopicEvent.ProvidersChanged, () => this.updateState());

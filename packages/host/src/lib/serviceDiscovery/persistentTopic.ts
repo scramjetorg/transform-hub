@@ -25,7 +25,7 @@ class PersistentTopic extends Topic {
         this.instanceOutput.on("pause", () => this.updateState());
         this.instanceOutput.on("resume", () => this.updateState());
         const errorCb = (err: Error) => {
-            this.errored = err;
+            this._errored = err;
             this.updateState();
         };
 
@@ -40,7 +40,7 @@ class PersistentTopic extends Topic {
     // this.on(TopicEvent.ConsumersChanged, () => this.updateState());
     // }
     state(): TopicState {
-        if (this.errored) return WorkState.Error;
+        if (this._errored) return WorkState.Error;
         if (this.instanceOutput.isPaused()
         //  || this.providers.size === 0 || this.consumers.size === 0
         )
