@@ -1,9 +1,8 @@
 import { Readable, Writable } from "stream";
 import { ContentType } from "./contentType";
-import { ReadableState, StreamOrigin, WorkState, WritableState } from "./streamHandler";
+import { StreamOrigin } from "./streamHandler";
 import { Topic, TopicStreamOptions } from "./topic";
 import TopicId from "./topicId";
-import { TopicState } from "./topicHandler";
 
 class PersistentTopic extends Topic {
     instanceInput: Writable;
@@ -17,13 +16,6 @@ class PersistentTopic extends Topic {
         this.instanceInput = instanceInput;
         this.instanceOutput = instanceOutput;
 
-        this.instanceOutput.on("readable", () => {
-            this.pushFromOutStream();
-        });
-
-        this.instanceInput.on("drain", () => this.updateState());
-        this.instanceOutput.on("pause", () => this.updateState());
-        this.instanceOutput.on("resume", () => this.updateState());
         const errorCb = (err: Error) => {
             this._errored = err;
             this.updateState();
@@ -31,30 +23,33 @@ class PersistentTopic extends Topic {
 
         this.instanceInput.on("error", errorCb);
         this.instanceOutput.on("error", errorCb);
-        this.on("error", errorCb);
-    }
-
-    state(): TopicState {
-        if (this._errored) return WorkState.Error;
-        if (this.instanceOutput.isPaused()) return ReadableState.Pause;
-        if (this.needDrain) return WritableState.Drain;
-        return WorkState.Flowing;
     }
 
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
         this.needDrain = !this.instanceInput.write(chunk, encoding, callback);
+        this.updateState();
     }
 
     _read(size: number): void {
-        this.instanceOutput.read(size);
+        const chunk = this.instanceOutput.read();
+
+        if (chunk !== null)
+            this.push(chunk);
+        else this.instanceOutput.once("readable", () => {
+            this._read(size);
+        });
     }
 
-    private pushFromOutStream(size?: number) {
-        let chunk;
+    resume(): this {
+        super.resume();
+        this.instanceOutput.resume();
+        return this;
+    }
 
-        while ((chunk = this.instanceOutput.read(size)) !== null) {
-            if (!this.push(chunk)) break;
-        }
+    pause(): this {
+        super.pause();
+        this.instanceOutput.pause();
+        return this;
     }
 }
 

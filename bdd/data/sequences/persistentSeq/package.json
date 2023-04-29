@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "predeploy": "tsc -p tsconfig.json && cp package.json dist/ && (cd dist && npm i --omit=dev)",
+    "deploy": "si seq pack ./dist -o ./persistentSeq && si seq send persistentSeq --name persistentSeq",
     "test": "jest --verbose"
   },
   "engines": {

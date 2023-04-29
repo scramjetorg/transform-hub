@@ -24,10 +24,15 @@ describe("Event flow", () => {
 
     describe("Duplex events", () => {
         test("Data event", async () => {
+            const provider = new PassThrough();
+            const consumer = new PassThrough();
             const eventOccured = waitForEvent("data", testTopic);
 
-            testTopic.on("readable", () => { testTopic.read(); });
-            testTopic.write("some text123");
+            provider.pipe(testTopic).pipe(consumer);
+
+            consumer.on("readable", () => { consumer.read(); });
+            provider.write("some text123");
+
             await expect(eventOccured).resolves.toBe(true);
         });
         test("Pause event", async () => {
