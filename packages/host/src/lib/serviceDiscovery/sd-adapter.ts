@@ -109,11 +109,14 @@ export class ServiceDiscovery {
             this.logger.trace("Routing topic:", config);
             return topic;
         }
+
         this.logger.trace("Adding topic:", config);
+
         const origin: StreamOrigin = { id: "XXXX", type: "hub" };
         const newTopic = new Topic(topicName, config.contentType, origin);
 
         this.topicsController.set(topicName, newTopic);
+
         return newTopic;
     }
 

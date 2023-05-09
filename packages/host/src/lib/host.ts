@@ -329,7 +329,6 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-
         await this.startListening();
 
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
@@ -351,15 +350,31 @@ export class Host implements IComponent {
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
-            this.cpmConnector.on("id", (id) => {
-                this.config.host.id = id;
-                this.logger.updateBaseLog({ id });
-            });
 
             this.serviceDiscovery.setConnector(this.cpmConnector);
+
+            this.cpmConnector
+                .on("id", (id) => {
+                    this.config.host.id = id;
+                    this.logger.updateBaseLog({ id });
+                })
+
+            this.cpmConnector.on("connect", () => {
+                console.log("connected to cpm");
+
+                Object.values(this.instancesStore).forEach(instance => {
+                    instance.sendEvent("connected", []);
+                });
+            }).on("disconnect", () => {
+                console.log("discconnected from cpm");
+
+                Object.values(this.instancesStore).forEach(instance => {
+                    instance.sendEvent("disconnected", []);
+                });
+            });
+
             await this.connectToCPM();
         }
-
 
         this.s3Client = new S3Client({
             host: `${this.config.cpmUrl}/api/v1`,

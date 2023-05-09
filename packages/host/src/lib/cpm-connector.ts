@@ -31,6 +31,7 @@ type STHInformation = {
 
 type Events = {
     connect: () => void,
+    disconnect: () => void;
     "log_connect": (logStream: NodeJS.WritableStream) => void;
     id: (id: string) => void;
 }
@@ -406,6 +407,8 @@ export class CPMConnector extends TypedEmitter<Events> {
         if (connectionStatusCode === 403) {
             this.isAbandoned = true;
         }
+
+        this.emit("disconnect");
 
         await this.reconnect();
     }

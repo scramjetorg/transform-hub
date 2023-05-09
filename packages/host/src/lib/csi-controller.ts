@@ -871,4 +871,8 @@ export class CSIController extends TypedEmitter<Events> {
     setExitInfo(exitcode: number, reason: string) {
         this.terminated = { exitcode, reason };
     }
+
+    async sendEvent(eventName: string, payload: any) {
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.EVENT, { eventName, message: payload });
+    }
 }
