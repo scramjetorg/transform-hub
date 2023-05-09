@@ -45,23 +45,35 @@ export class Topic extends Duplex implements TopicHandler {
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
         this.needDrain = !this.push(chunk, encoding);
         callback();
+        this.updateState();
     }
-
     end(cb?: (() => void) | undefined): this;
     end(chunk: any, cb?: (() => void) | undefined): this;
     end(chunk: any, encoding?: BufferEncoding | undefined, cb?: (() => void) | undefined): this;
     end(_chunk?: unknown, _encoding?: unknown, _cb?: unknown): this {
         throw new Error("Topics are not supporting end() method");
     }
+    resume(): this {
+        super.resume();
+        this.updateState();
+        return this;
+    }
 
+    pause(): this {
+        super.pause();
+        this.updateState();
+        return this;
+    }
+
+    destroy(error?: Error | undefined): void {
+        this._errored = error;
+        super.destroy(error);
+        this.updateState();
+    }
     protected attachEventListeners() {
-        this.on("pipe", this.addXndjsonException);
-        this.on("drain", () => this.updateState());
-        this.on("pause", () => this.updateState());
-        this.on("resume", () => this.updateState());
-        this.on("error", (err: Error) => {
-            this._errored = err;
-            this.updateState();
+        this.on("pipe", (source: Readable) => {
+            if (this._options.contentType !== "application/x-ndjson") return;
+            this.addXndjsonException(source);
         });
     }
 
@@ -74,21 +86,19 @@ export class Topic extends Duplex implements TopicHandler {
     }
 
     protected addXndjsonException(source: Readable) {
-        if (this._options.contentType === "application/x-ndjson") {
-            const NEWLINE_BYTE = "\n".charCodeAt(0);
+        const NEWLINE_BYTE = "\n".charCodeAt(0);
 
-            let lastChunk = Buffer.from([]);
+        let lastChunk = Buffer.from([]);
 
-            source
-                .on("data", (chunk) => { lastChunk = chunk as Buffer; })
-                .on("end", () => {
-                    const lastByte = lastChunk[lastChunk.length - 1];
+        source
+            .on("data", (chunk) => { lastChunk = chunk as Buffer; })
+            .on("end", () => {
+                const lastByte = lastChunk[lastChunk.length - 1];
 
-                    if (lastByte !== NEWLINE_BYTE) {
-                        this.write("\n");
-                    }
-                });
-        }
+                if (lastByte !== NEWLINE_BYTE) {
+                    this.write("\n");
+                }
+            });
     }
 }
 

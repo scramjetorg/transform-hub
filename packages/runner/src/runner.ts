@@ -140,7 +140,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             throw e;
         });
 
-        this.outputDataStream = new DataStream().catch((e: any) => {
+        this.outputDataStream = new DataStream({ highWaterMark: 0 }).catch((e: any) => {
             this.logger.error("Error during input data stream", e);
 
             throw e;

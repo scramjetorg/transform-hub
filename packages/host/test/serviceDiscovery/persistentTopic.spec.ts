@@ -3,7 +3,6 @@ import { StreamOrigin } from "../../src/lib/serviceDiscovery/streamHandler";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
 import PersistentTopic from "../../src/lib/serviceDiscovery/persistentTopic";
 
-let persistentSequence: Readable;
 let testPersistentTopic: PersistentTopic;
 const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
 
@@ -11,7 +10,6 @@ beforeEach(() => {
     const mockInstance = new PassThrough();
 
     testPersistentTopic = new PersistentTopic(mockInstance, mockInstance, new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
-    persistentSequence = testPersistentTopic.instanceOutput;
 });
 
 describe("Passing events thorugh persistent topic", () => {
@@ -27,10 +25,14 @@ describe("Passing events thorugh persistent topic", () => {
     };
 
     test("Data event", async () => {
-        const eventOccured = waitForEvent("data", persistentSequence);
+        const provider = new PassThrough();
+        const consumer = new PassThrough();
+        const eventOccured = waitForEvent("data", testPersistentTopic);
 
-        persistentSequence.on("readable", () => { persistentSequence.read(); });
-        testPersistentTopic.write("some text123");
+        provider.pipe(testPersistentTopic).pipe(consumer);
+
+        consumer.on("readable", () => { consumer.read(); });
+        provider.write("some text123");
         await expect(eventOccured).resolves;
     });
 
@@ -44,6 +46,12 @@ describe("Passing events thorugh persistent topic", () => {
         const eventOccured = waitForEvent("resume", testPersistentTopic);
 
         testPersistentTopic.resume();
+        await expect(eventOccured).resolves;
+    });
+    test("Pause event", async () => {
+        const eventOccured = waitForEvent("pause", testPersistentTopic);
+
+        testPersistentTopic.pause();
         await expect(eventOccured).resolves;
     });
 });
@@ -77,13 +85,13 @@ describe("Data flow", () => {
         const testProvider = new PassThrough({ encoding: "ascii" });
         const testConsumer = new PassThrough({ encoding: "ascii" });
 
-        testProvider.pipe(testPersistentTopic).pipe(testConsumer);
+        testProvider.pipe(testPersistentTopic, { end: false }).pipe(testConsumer);
 
         const readPromise = new Promise(resolve => testConsumer.on("readable", () => {
             resolve(testConsumer.read());
         }));
 
-        testProvider.push(testText);
+        testProvider.write(testText);
         const readValue = await readPromise;
 
         expect(readValue).toBe(testText);
