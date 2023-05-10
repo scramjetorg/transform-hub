@@ -247,6 +247,7 @@ export class VerserConnection {
         return new Promise<void>((res) => {
             this.socket.end(() => {
                 this.logger.trace("VerserConnection closed");
+                this.socket.destroy();
                 res();
             });
         });

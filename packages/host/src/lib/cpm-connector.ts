@@ -94,7 +94,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Connection object.
      */
-    connection?: http.ClientRequest;
+    connection?: VerserClientConnection;
 
     /**
      * Indicator for reconnection state.
@@ -143,6 +143,8 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Loaded certificate authority file for connecting to CPM via HTTPS
      */
     _cpmSslCa?: string | Buffer;
+
+    confirmTimeout?: NodeJS.Timer;
 
     /**
      * @constructor
@@ -280,6 +282,20 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.isAbandoned = true;
                 }
 
+                if (message[0] === CPMMessageCode.CONFIRM) {
+                    this.logger.trace("LoadCheck confirmed");
+                    if (this.confirmTimeout) {
+                        clearInterval(this.confirmTimeout);
+                    }
+
+                    this.confirmTimeout = setTimeout(async () => {
+                        this.logger.warn("LoadCheck confirm missing!");
+
+                        this.connection?.socket.destroy();
+                        this.handleConnectionClose(0);
+                    }, 6000);
+                }
+
                 return message;
             }).catch((e: any) => {
                 this.logger.error("communicationChannel error", e.message);
@@ -393,7 +409,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async handleConnectionClose(connectionStatusCode: number) {
         this.handleCommunicationRequestEnd();
 
-        this.connection?.removeAllListeners();
+        //this.connection?.removeAllListeners();
         this.connected = false;
 
         this.logger.trace("Tunnel closed", this.getId());

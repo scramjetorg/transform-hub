@@ -1,4 +1,6 @@
 export enum CPMMessageCode {
+    CONFIRM = 3000,
+
     STH_ID = 7000,
     LOAD = 7001,
 

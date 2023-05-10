@@ -36,7 +36,8 @@ import {
     PingMessageData,
     SequenceStoppedMessageData,
     PangMessageData,
-    EventMessageData
+    EventMessageData,
+    ConfirmMessage
 } from "./messages";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
@@ -59,6 +60,7 @@ export type MessageType<T> =
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
     T extends CPMMessageCode.NETWORK_INFO ? NetworkInfoMessage :
+    T extends CPMMessageCode.CONFIRM ? ConfirmMessage :
     never
     ;
 
@@ -85,6 +87,7 @@ export type MessageDataType<T> =
     T extends CPMMessageCode.INSTANCE ? InstanceMessage :
     T extends CPMMessageCode.SEQUENCES ? SequenceBulkMessage :
     T extends CPMMessageCode.SEQUENCE ? SequenceMessage :
+    T extends CPMMessageCode.CONFIRM ? ConfirmMessage :
     never
     ;
 
@@ -95,7 +98,7 @@ export type EncodedMessage<
 export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
-    CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
+    CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP | CPMMessageCode.CONFIRM |
     RunnerMessageCode.INPUT_CONTENT_TYPE;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
@@ -105,7 +108,7 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.PANG |
     RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD |
-    CPMMessageCode.NETWORK_INFO;
+    CPMMessageCode.NETWORK_INFO | CPMMessageCode.CONFIRM;
 
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;
