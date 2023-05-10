@@ -2,6 +2,10 @@ import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
 
 export type STHCommandOptions = {
+    description: string;
+    customName: string;
+    tags: string;
+    selfHosted:boolean;
     logLevel: LogLevel;
     colors: boolean,
     port: number;

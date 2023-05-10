@@ -106,6 +106,22 @@ export type K8SAdapterConfiguration = {
 
 export type STHConfiguration = {
     /**
+     * Description set by user
+     */
+    description?:string;
+    /**
+     * User assigned tags
+     */
+    tags?:Array<string>;
+    /**
+     * Custom name to help identify sth
+     */
+    customName?:string;
+    /**
+     *  Is sth self hosted?
+     */
+    selfHosted?:boolean;
+    /**
      * Logging level.
      */
     logLevel: LogLevel

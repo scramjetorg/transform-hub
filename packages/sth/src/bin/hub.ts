@@ -1,4 +1,5 @@
 #!/usr/bin/env ts-node
+/* eslint-disable complexity */
 
 import { Command, Option, OptionValues } from "commander";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
@@ -20,6 +21,10 @@ const stringToIntSanitizer = (str : string) => {
 
 const program = new Command();
 const options: OptionValues & STHCommandOptions = program
+    .option("-desc, --description <description>", "Specify sth description")
+    .option("--custom-name <customName>", "Specify custom name")
+    .option("--tags <tags>", "Specifies tags", "")
+    .option("-sh, --self-hosted", "Specifies if the hub is self hosted", true)
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
     .option("--no-colors", "Disable colors in output", false)
@@ -67,7 +72,11 @@ const options: OptionValues & STHCommandOptions = program
 (async () => {
     const configService = new ConfigService();
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
+    const tags = options.tags.length ? options.tags.split(",") : [];
 
+    if (!tags.every((t:string) => t.length)) {
+        throw new Error("Tags cannot be empty");
+    }
     if (options.config) {
         const configFile = FileBuilder(options.config);
 
@@ -78,6 +87,10 @@ const options: OptionValues & STHCommandOptions = program
     }
 
     configService.update({
+        description: options.description,
+        customName: options.customName,
+        tags: tags,
+        selfHosted: options.selfHosted,
         cpmUrl: options.cpmUrl,
         cpmId: options.cpmId,
         cpmSslCaPath: options.cpmSslCaPath,
