@@ -126,7 +126,7 @@ export class ServiceDiscovery {
     getTopics() {
         return this.topicsController.topics.map((value) => ({
             contentType: value.contentType,
-            localProvider: "",
+            localProvider: "aa",
             topic: value.id,
             topicName: value.id
         }));
