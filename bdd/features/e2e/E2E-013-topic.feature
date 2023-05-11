@@ -105,21 +105,3 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then remove topic "RegularTopic"
         Then confirm topics are empty
 
-    @ci_api
-    Scenario: E2E-013 TC-010 Create and delete persisting topic
-        Given host is running
-        And sequence "../packages/csv-transform.tar.gz" named "TestSequence" is send to host
-        And persisting topic "PersistingTopic" is created with sequence "TestSequence"
-        Then confirm topics contain "PersistingTopic"
-        Then confirm instances are not empty
-        Then remove topic "PersistingTopic"
-        Then confirm topics are empty
-        # TODO: Then confirm instances are empty
-
-    @ci_api
-    Scenario: E2E-013 TC-011 Persistent topic keeps data on disconnections
-        Given host is running
-        And sequence "../bdd/data/sequences/persistentSeq.tar.gz" named "backupingSequence" is send to host
-        And persisting topic "PersistingTopic" is created with sequence "backupingSequence"
-        Then send data from file "../bdd/data/test-data/loremIpsum.txt" to topic "PersistingTopic" and pipe-unpipe every one fifth of data read
-        And host is still running

@@ -192,8 +192,8 @@ export class HostClient implements ClientProvider {
         return this.client.getStream(`topic/${topic}`, requestInit);
     }
 
-    async createTopic(id: string, contentType: string, persistentSequence?: string): Promise<{ topicName: string }> {
-        return this.client.post("topics", { id, "content-type": contentType, persistentSequence }, undefined, { json: true, parse: "json" });
+    async createTopic(id: string, contentType: string): Promise<{ topicName: string }> {
+        return this.client.post("topics", { id, "content-type": contentType }, undefined, { json: true, parse: "json" });
     }
 
     async deleteTopic(id: string): Promise<{ message: string }> {

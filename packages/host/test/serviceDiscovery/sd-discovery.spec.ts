@@ -16,9 +16,8 @@ let topicInfo: sendTopicInfoArg;
 
 beforeEach(() => {
     const mockLogger = new ObjLogger(this);
-    const mockCallback = () => { throw new Error("Mocked callback"); };
 
-    serviceDiscovery = new ServiceDiscovery(mockLogger, "MockHost", mockCallback);
+    serviceDiscovery = new ServiceDiscovery(mockLogger, "MockHost");
     serviceDiscovery.cpmConnector = {
         sendTopicInfo: (data: sendTopicInfoArg): Promise<void> => {
             topicInfo = data;

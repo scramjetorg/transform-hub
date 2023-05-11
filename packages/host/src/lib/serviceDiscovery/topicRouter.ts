@@ -1,6 +1,6 @@
 /* eslint-disable complexity */
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, IObjectLogger, OpResponse, SequenceInfo } from "@scramjet/types";
+import { APIExpose, IObjectLogger, OpResponse } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
 import { IncomingMessage, ServerResponse } from "http";
@@ -8,15 +8,12 @@ import { TopicState } from "./topicHandler";
 import { StreamOrigin } from "./streamHandler";
 import { ContentType, isContentType } from "./contentType";
 import TopicId from "./topicId";
-import { Topic } from "./topic";
 import { PassThrough } from "stream";
-import SequenceStore from "../sequenceStore";
 
 type TopicsPostReq = IncomingMessage & {
     body?: {
         id?: string,
         "content-type"?: string,
-        persistentSequence?: string
     };
 };
 type TopicsPostRes = {
@@ -43,14 +40,10 @@ const invalidTopicIdMsg = "Topic id incorrect format";
 class TopicRouter {
     private logger = new ObjLogger(this);
     private serviceDiscovery: ServiceDiscovery;
-    private sequenceStore: SequenceStore;
 
-    constructor(logger: IObjectLogger, apiServer: APIExpose,
-        apiBaseUrl: string, serviceDiscovery: ServiceDiscovery,
-        sequenceStore: SequenceStore) {
+    constructor(logger: IObjectLogger, apiServer: APIExpose, apiBaseUrl: string, serviceDiscovery: ServiceDiscovery) {
         this.serviceDiscovery = serviceDiscovery;
         this.logger.pipe(logger);
-        this.sequenceStore = sequenceStore;
 
         apiServer.get(`${apiBaseUrl}/topics`, () => this.serviceDiscovery.getTopics());
         apiServer.op("post", `${apiBaseUrl}/topics`, (req) => this.topicsPost(req));
@@ -62,7 +55,7 @@ class TopicRouter {
     async topicsPost(req: TopicsPostReq): Promise<OpResponse<TopicsPostRes>> {
         if (!req.body?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: missingBodyId };
         if (!req.body?.["content-type"]) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing body param: content-type" };
-        const { "content-type": contentType, id, persistentSequence } = req.body;
+        const { "content-type": contentType, id } = req.body;
 
         if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg };
         if (!TopicId.validate(id)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidTopicIdMsg };
@@ -72,15 +65,7 @@ class TopicRouter {
 
         if (topicExist) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic with given id already exist" };
 
-        let topic: Topic;
-        let sequence: SequenceInfo | undefined;
-
-        if (persistentSequence) {
-            sequence = this.sequenceStore.getByNameOrId(persistentSequence);
-            if (!sequence) return { opStatus: ReasonPhrases.NOT_FOUND, error: `Couldn't find sequence ${persistentSequence}` };
-            topic = await this.serviceDiscovery.createPersistentTopic(topicId, contentType, sequence);
-        } else
-            topic = this.serviceDiscovery.createTopic(topicId, contentType);
+        const topic = this.serviceDiscovery.createTopic(topicId, contentType);
 
         return {
             opStatus: ReasonPhrases.OK,
@@ -171,12 +156,6 @@ class TopicRouter {
         }
 
         return this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
-    }
-
-    protected persistentToBoolean(persistenString: string | undefined) {
-        if (persistenString === "true") return true;
-        if (persistenString !== "false") return null;
-        return false;
     }
 }
 

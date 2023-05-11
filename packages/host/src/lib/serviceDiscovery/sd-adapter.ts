@@ -7,9 +7,7 @@ import TopicsMap from "./topicsController";
 import { Topic } from "./topic";
 import { ContentType } from "./contentType";
 import { StreamOrigin } from "./streamHandler";
-import PersistentTopic from "./persistentTopic";
-import { IObjectLogger, SequenceInfo } from "@scramjet/types";
-import { CSIController } from "../csi-controller";
+import { IObjectLogger } from "@scramjet/types";
 
 export type DataType = {
     topic: TopicId,
@@ -34,7 +32,6 @@ export type TopicDataType = {
     cpmRequest?: boolean
 }
 
-type StartSequenceCb = (seq: SequenceInfo) => Promise<CSIController>;
 /**
  * Service Discovery provides methods to manage topics.
  * Its functionality covers creating, storing, removing topics
@@ -43,15 +40,13 @@ type StartSequenceCb = (seq: SequenceInfo) => Promise<CSIController>;
 export class ServiceDiscovery {
     private logger = new ObjLogger(this);
     private hostName: string;
-    private startSequenceCb: StartSequenceCb;
     protected topicsController: TopicsMap;
     cpmConnector?: CPMConnector;
 
-    constructor(logger: IObjectLogger, hostName: string, startSequenceCb: StartSequenceCb) {
+    constructor(logger: IObjectLogger, hostName: string) {
         this.topicsController = new TopicsMap();
         this.hostName = hostName;
         this.logger.pipe(logger);
-        this.startSequenceCb = startSequenceCb;
     }
 
     getTopic(id: TopicId): Topic | undefined {
@@ -65,25 +60,7 @@ export class ServiceDiscovery {
         return topic;
     }
 
-    async createPersistentTopic(id: TopicId, contentType: ContentType, sequence: SequenceInfo) {
-        const csic = await this.startSequenceCb(sequence);
-
-        const input = csic.getInputStream();
-        const output = csic.getOutputStream();
-
-        input.write(`Content-Type: ${contentType}\r\n`);
-        input.write("\r\n");
-
-        const origin: StreamOrigin = { id: this.hostName, type: "hub" };
-        const topic = new PersistentTopic(input, output, id, contentType, origin);
-
-        this.topicsController.set(id, topic);
-        return topic;
-    }
-
     deleteTopic(id: TopicId) { return this.topicsController.delete(id); }
-
-    topics() { return this.topicsController.topics; }
 
     /**
      * Sets the CPM connector.

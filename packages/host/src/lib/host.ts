@@ -211,10 +211,7 @@ export class Host implements IComponent {
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
 
-        const startSequenceCb =
-            async (seqence: SequenceInfo) => { return this.startCSIController(seqence, { appConfig: {} }); };
-
-        this.serviceDiscovery = new ServiceDiscovery(this.logger, this.config.host.hostname, startSequenceCb);
+        this.serviceDiscovery = new ServiceDiscovery(this.logger, this.config.host.hostname);
 
         if (sthConfig.telemetry.environment)
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
@@ -510,7 +507,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
 
-        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery, this.sequenceStore);
+        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery);
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
