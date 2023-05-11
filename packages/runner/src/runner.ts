@@ -32,6 +32,7 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { Socket } from "net";
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -577,6 +578,19 @@ export class Runner<X extends AppConfig> implements IComponent {
                 res();
             } else if (stream && this.hostClient.outputStream) {
                 this.logger.trace("Piping Sequence output", typeof stream);
+
+                stream
+                    // .on("readable", () => { console.log("readable from runner"); })
+                    .on("pause", () => { console.log("pause from runner"); })
+                    .on("resume", () => { console.log("resume from runner"); });
+
+                const socket = this.hostClient.outputStream as Socket;
+
+                this.hostClient.outputStream
+                    // .on("data", () => { console.log("pause from runner hostClient.outputStream", stream?.readableLength); })
+                    .on("pause", () => { console.log("pause from runner hostClient.outputStream", stream?.readableLength); })
+                    .on("resume", () => { console.log("resume from runner hostClient.outputStream", stream?.readableLength); })
+                    .on("drain", () => { console.log("drain from runner hostClient.outputStream", socket.isPaused(), socket.readable); });
 
                 const shouldSerialize = stream.contentType &&
                 ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||

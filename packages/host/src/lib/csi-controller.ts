@@ -463,6 +463,15 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.addSerializedLoggerSource(streams[CC.LOG]);
         }
 
+        console.log("---->CSI_CONTROLLER", this.downStreams[CC.OUT].readableHighWaterMark);
+        this.downStreams[CC.OUT]
+            .on("drain", () => { console.log("drain from downStreams[CC.OUT]", this.downStreams![CC.OUT].readableLength); })
+            .on("pause", () => { console.log("pause from downStreams[CC.OUT]", this.downStreams![CC.OUT].isPaused(), this.upStreams[CC.OUT].isPaused()); })
+            .on("resume", () => { console.log("resume from downStreams[CC.OUT]", this.downStreams![CC.OUT].isPaused(), this.upStreams[CC.OUT].isPaused()); });
+        // .on("data", (chunk: any) => { console.log(chunk.toString()); });
+        this.upStreams[CC.OUT]
+            .on("pause", () => { console.log("pause from upStreams[CC.OUT]"); })
+            .on("resume", () => { console.log("resume from upStreams[CC.OUT]"); });
 
         this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
             this.logger.error("Downstream error on channel", i, err);

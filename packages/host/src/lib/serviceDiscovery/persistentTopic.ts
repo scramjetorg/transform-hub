@@ -26,6 +26,7 @@ class PersistentTopic extends Topic {
 
         this.instanceOutput.on("data", (chunk:any) => {
             if (chunk === null) return;
+            console.log(chunk.toString());
             if (!this.push(chunk))
                 this.instanceOutput.pause();
         });
@@ -37,18 +38,22 @@ class PersistentTopic extends Topic {
     }
 
     _read(_size: number): void {
+        console.log("PersistentTopic _read");
         if (this.instanceOutput.isPaused()) this.instanceOutput.resume();
     }
 
     resume(): this {
         super.resume();
         this.instanceOutput.resume();
+        console.log("PersistentTopic resume", this.instanceOutput.readableFlowing);
         return this;
     }
 
     pause(): this {
+        console.log("PersistentTopic pause", this.instanceOutput.isPaused(), this.instanceOutput.readableFlowing);
         super.pause();
         this.instanceOutput.pause();
+        console.log("PersistentTopic pause2", this.instanceOutput.isPaused(), this.instanceOutput.readableFlowing);
         return this;
     }
 }

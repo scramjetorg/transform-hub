@@ -80,7 +80,10 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             res
                 .on("error", disconnect)
                 .on("unpipe", disconnect)
-                .socket?.on("end", disconnect);
+                .socket?.on("end", () => {
+                    console.log("createStreamHandlers socket.on(end)");
+                    disconnect();
+                });
 
             return out.pipe(res);
         } catch (e: any) {

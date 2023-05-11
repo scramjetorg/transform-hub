@@ -6,12 +6,26 @@ import { PassThrough } from "stream";
 const mod: TransformApp = async (input) => {
     // const backupFile = resolve(process.cwd(), "./backupingFile");
     // const backupingStream = new BackupingStream(backupFile);
-    const backupingStream = new PassThrough();
+    console.log("instance running");
+    const backupingStream = new PassThrough({ highWaterMark: 0 });
+
+    // setTimeout(() => () => {
+    //     console.log("WRITE from instance");
+    //     backupingStream.write("1234");
+    // }, 6000);
 
     input.pipe(backupingStream);
 
-    backupingStream.on("pause", () => { console.log("inn isntance pause"); });
-    backupingStream.on("resume", () => { console.log("inn isntance resume"); });
+    // backupingStream.on("data", (chunk: any) => {
+    //     console.log(chunk.toString());
+    // }).pause();
+
+    // setInterval(() => {
+    //     console.log("isPaused:", backupingStream.isPaused());
+    // }, 100);
+
+    backupingStream.on("pause", () => { console.log("pause from instance"); });
+    backupingStream.on("resume", () => { console.log("resume from instance"); });
     return backupingStream;
 };
 
