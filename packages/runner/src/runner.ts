@@ -140,7 +140,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             throw e;
         });
 
-        this.outputDataStream = new DataStream().catch((e: any) => {
+        this.outputDataStream = new DataStream({ highWaterMark: 0 }).catch((e: any) => {
             this.logger.error("Error during input data stream", e);
 
             throw e;
@@ -539,7 +539,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 if (intermediate instanceof Readable) {
                     stream = intermediate;
                 } else if (intermediate !== undefined && isSynchronousStreamable(intermediate)) {
-                    stream = Object.assign(DataStream.from(intermediate as Readable), {
+                    stream = Object.assign(DataStream.from(intermediate as Readable, { highWaterMark: 0 }), {
                         topic: intermediate.topic,
                         contentType: intermediate.contentType
                     });

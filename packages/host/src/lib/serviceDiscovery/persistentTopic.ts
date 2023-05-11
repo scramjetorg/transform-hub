@@ -23,6 +23,12 @@ class PersistentTopic extends Topic {
 
         this.instanceInput.on("error", errorCb);
         this.instanceOutput.on("error", errorCb);
+
+        this.instanceOutput.on("data", (chunk:any) => {
+            if (chunk === null) return;
+            if (!this.push(chunk))
+                this.instanceOutput.pause();
+        });
     }
 
     _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
@@ -30,14 +36,8 @@ class PersistentTopic extends Topic {
         this.updateState();
     }
 
-    _read(size: number): void {
-        const chunk = this.instanceOutput.read();
-
-        if (chunk !== null)
-            this.push(chunk);
-        else this.instanceOutput.once("readable", () => {
-            this._read(size);
-        });
+    _read(_size: number): void {
+        if (this.instanceOutput.isPaused()) this.instanceOutput.resume();
     }
 
     resume(): this {
