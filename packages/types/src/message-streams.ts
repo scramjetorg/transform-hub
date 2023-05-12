@@ -44,6 +44,7 @@ import { LoadCheckStat } from "./load-check-stat";
 import { NetworkInfo } from "./network-info";
 import { SequenceCompleteMessageData } from "./messages/sequence-complete";
 import { KillMessageData } from "./messages/kill-sequence";
+import { CPMMessageConfirm } from "./messages/confirm";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -60,7 +61,7 @@ export type MessageType<T> =
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
     T extends CPMMessageCode.NETWORK_INFO ? NetworkInfoMessage :
-    T extends CPMMessageCode.CONFIRM ? ConfirmMessage :
+    T extends CPMMessageCode.CONFIRM ? CPMMessageConfirm :
     never
     ;
 

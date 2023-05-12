@@ -20,3 +20,4 @@ export { InstanceBulkMessage, InstanceMessage, InstanceMessageData } from "./ins
 export { SequenceBulkMessage, SequenceMessage, SequenceMessageData } from "./sequence";
 export { SequenceStoppedMessageData } from "./sequence-stopped";
 export { OpRecord } from "./op-record";
+export { ConfirmMessage } from "./confirm";

@@ -1,7 +1,8 @@
 import { CPMMessageCode } from "@scramjet/symbols";
 
 export type ConfirmMessage = {
+
     id: string;
 }
 
-export type CPMMessageSTHID = { msgCode: CPMMessageCode.STH_ID } & ConfirmMessage;
+export type CPMMessageConfirm = { msgCode: CPMMessageCode.STH_ID } & ConfirmMessage;
