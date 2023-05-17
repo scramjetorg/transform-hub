@@ -3,7 +3,6 @@ import { getHostClient, getInstance } from "../common";
 import { getInstanceId, sessionConfig } from "../config";
 import { SequenceClient } from "@scramjet/api-client";
 import { defer } from "@scramjet/utility";
-//import { ConfigFileDefault } from "@scramjet/utility";
 
 /**
  * Wraper for kill instance method with config safety checks.
