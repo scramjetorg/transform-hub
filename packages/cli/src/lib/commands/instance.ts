@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { instanceKill } from "../helpers/instance";
+import { instanceKill, instanceRestart } from "../helpers/instance";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { getInstanceId, profileManager, sessionConfig } from "../config";
@@ -205,5 +205,14 @@ export const instance: CommandDefinition = (program) => {
         .description("Pipe the running Instance stdout stream to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
+        });
+    instanceCmd
+        .command("restart")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Kills the instance and start the new one from root sequence")
+        .action(async (id: string) => {
+            const instanceRestartResponse = await instanceRestart(id);
+
+            displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
         });
 };
