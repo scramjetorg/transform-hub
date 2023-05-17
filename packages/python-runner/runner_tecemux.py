@@ -4,6 +4,7 @@ import codecs
 import socket
 from attrs import define, field
 
+from inet import TCPSegment,IPPacket
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -30,6 +31,12 @@ class Tecemux:
         _task_reader: asyncio.coroutine = None
         _task_writer: asyncio.coroutine = None
 
+        
+        def encode(data):
+            pass
+
+        def decode(data):
+            pass
 
         def get_name(self):
             return self._name.name
@@ -155,6 +162,6 @@ class Runner:
         
         await self.protocol.loop()
 
-
-runner = Runner(instance_id, sequence_path, get_logger())
-asyncio.run(runner.main(server_host, server_port))
+if __name__ == '__main__':
+    runner = Runner(instance_id, sequence_path, get_logger())
+    asyncio.run(runner.main(server_host, server_port))
