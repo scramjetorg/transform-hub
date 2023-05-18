@@ -93,6 +93,16 @@ export const instance: CommandDefinition = (program) => {
                 profileManager.getProfileConfig().format));
 
     instanceCmd
+        .command("restart")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Kills the instance and start the new one from root sequence")
+        .action(async (id: string) => {
+            const instanceRestartResponse = await instanceRestart(id);
+
+            displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
+        });
+
+    instanceCmd
         .command("input")
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .argument("[file]", "File with data")
@@ -205,14 +215,5 @@ export const instance: CommandDefinition = (program) => {
         .description("Pipe the running Instance stdout stream to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
-        });
-    instanceCmd
-        .command("restart")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Kills the instance and start the new one from root sequence")
-        .action(async (id: string) => {
-            const instanceRestartResponse = await instanceRestart(id);
-
-            displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
         });
 };

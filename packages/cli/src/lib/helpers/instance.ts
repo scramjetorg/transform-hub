@@ -48,6 +48,7 @@ export const instanceRestart = async (
             }
         }
     }
+
     if (typeof sequenceId === "string") {
         seqStartResponse = await sequenceClient.start({
             instanceId,
