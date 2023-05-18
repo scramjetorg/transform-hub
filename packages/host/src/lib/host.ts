@@ -843,6 +843,7 @@ export class Host implements IComponent {
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
+    // eslint-disable-next-line complexity
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
         if (await this.loadCheck.overloaded()) {
             return {
@@ -869,6 +870,13 @@ export class Host implements IComponent {
         }
 
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
+
+        if (payload.instanceId && this.instancesStore[payload.instanceId]) {
+            return {
+                opStatus: ReasonPhrases.CONFLICT,
+                error: "Instance with a given ID already exists"
+            };
+        }
 
         try {
             const csic = await this.startCSIController(sequence, payload);
