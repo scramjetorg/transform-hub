@@ -31,7 +31,7 @@ export const instanceRestart = async (
     const instanceInfo = await getInstance(instanceId).getInfo();
     const sequenceId = instanceInfo.sequence;
     const sequenceClient = SequenceClient.from(sequenceId, getHostClient());
-    const args = instanceInfo.args;
+    const { provides, requires, args } = instanceInfo;
     const appConfig = instanceInfo.appConfig || {};
     const killResponse: STHRestAPI.SendKillInstanceResponse = await instanceKill(instanceId, true);
     let seqStartResponse: STHRestAPI.StartSequenceResponse = { id: "" };
@@ -49,7 +49,13 @@ export const instanceRestart = async (
         }
     }
     if (typeof sequenceId === "string") {
-        seqStartResponse = await sequenceClient.start({ instanceId, appConfig, args });
+        seqStartResponse = await sequenceClient.start({
+            instanceId,
+            appConfig,
+            args,
+            inputTopic: requires,
+            outputTopic: provides
+        });
     }
 
     return { killResponse, seqStartResponse };
