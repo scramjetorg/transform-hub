@@ -44,12 +44,18 @@ class Tecemux:
     _queue: asyncio.Queue = asyncio.Queue()
     _reader: asyncio.StreamReader = field(default=None)
     _writer: asyncio.StreamWriter = field(default=None)
+
+    _incoming_data_forwarder: asyncio.coroutine = field(default=None)
+    _outcoming_data_forwarder: asyncio.coroutine = field(default=None)
+    
     _logger = field(default=get_logger())
     _channels = field(default={})
+    _stop_event = asyncio.Event()
 
     async def connect(self, reader, writer):
         self._reader = reader
         self._writer = writer
+        self._stop_event.clear()
 
 
     @staticmethod
@@ -69,62 +75,89 @@ class Tecemux:
     def get_channel(self, channel):
         return self._channels[channel]
     
-    async def sandbox(self):
-        self._logger.debug("Begin sandbox")
-
-        await self._queue.put(b'test')
-        await asyncio.sleep(0)
-
-        self._writer.write(b'test 2')
+    async def stop(self):
         await self._writer.drain()
+        self._writer.close()
+        await self._writer.wait_closed()
+        self._stop_event.set()        
 
-        self._logger.debug("End sandbox")
+    async def wait_until_end(self):
+        await self._stop_event.wait()
+
+        await asyncio.gather(*[ channel._task_reader for channel in self._channels.values()])
+        await asyncio.gather(*[ channel._task_writer for channel in self._channels.values()])
+        await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
+        
+        get_logger().debug(f'Tecemux/MAIN: [-] Finished')
+
     async def loop(self):
        
         loop = asyncio.get_event_loop()
         for channel in CC:
-            self._channels[channel]._task_reader = loop.create_task(Tecemux.channel_reader(self._channels[channel]))
-            self._channels[channel]._task_writer = loop.create_task(Tecemux.channel_writer(self._channels[channel]))
+            self._channels[channel]._task_reader = loop.create_task(Tecemux.channel_reader(self._channels[channel], self._stop_event))
+            self._channels[channel]._task_writer = loop.create_task(Tecemux.channel_writer(self._channels[channel], self._stop_event))
 
-        channel_readers  = asyncio.gather(*[ channel._task_reader for channel in self._channels.values()])
+        self._incoming_data_forwarder = loop.create_task(self.incoming_data_forward())
+        self._outcoming_data_forwarder = loop.create_task(self.outcoming_data_forward())
 
+    async def incoming_data_forward(self):
+        while not self._reader.at_eof():
+            buf = await self._reader.read(1024)
 
-        protocol_reader = loop.create_task(Tecemux.protocol_reader(self._reader, self._queue))
-        protocol_writer = loop.create_task(Tecemux.protocol_writer(self._writer, self._queue))
-        sandbox = loop.create_task(self.sandbox())
+            if not buf:
+                break
 
-        await asyncio.gather(*[protocol_reader, protocol_writer, sandbox])
-        print('End main loop')
-    
+            if len(buf) < 20:
+                get_logger().warning(f'Tecemux/MAIN: [<] Too few data from Transform Hub received')
+                continue
+
+            get_logger().debug(f'Tecemux/MAIN: [<] Incomming chunk from Transform Hub was received')
+
+            pkt = TCPSegment().from_buffer(buf)
+            channel = CC(pkt.dst_port)
+            await self._channels[channel]._queue.put(pkt.data)
+            get_logger().debug(f'Tecemux/MAIN: [<] Chunk forwarded to {channel} steam')
+
+        get_logger().debug(f'Tecemux/MAIN: Incomming data forwarder finished')
+
+    async def outcoming_data_forward(self):
+        
+        while not self._reader.at_eof():
+
+            try:
+                chunk = await self._queue.get_nowait()
+                get_logger().debug(f'Tecemux/MAIN: [>] Outcoming chunk "{chunk}" is waiting to send to Transform Hub')
+                self._writer.write(chunk)
+                await self._writer.drain()
+                await self._queue.task_done()
+                get_logger().debug(f'Tecemux/MAIN: [>] Chunk "{chunk}" was sent to Transform Hub')
+            except asyncio.QueueEmpty:
+                await asyncio.sleep(0)
+
+        get_logger().debug(f'Tecemux/MAIN: Outcoming data forwarder finished')
 
     @staticmethod
-    async def protocol_reader(reader, queue):
-        while True:
-            chunk = await reader.read(100)
-            get_logger().debug(f'Chunk received: {chunk}')
-            await queue.put(chunk)
-            get_logger().debug(f'Chunk redirected: {chunk}')
+    async def channel_reader(channel_context, stop_event):
 
-    @staticmethod
-    async def protocol_writer(writer, queue):
-        while True:
-            chunk = await queue.get()
-            get_logger().debug(f'PROTOCOL: Chunk waiting: {chunk}')
-            #writer.write(chunk)
-            queue.task_done()
-            get_logger().debug(f'PROTOCOL: Chunk consumed: {chunk}')
+        get_logger().debug(f'Tecemux/{channel_context.get_name()}: Channel reader started.')
 
-    @staticmethod
-    async def channel_reader(channel_context):
-        while True:
-            #print(f'{channel_context.get_name()}: READ!')
+        while not stop_event.is_set():
+            #get_logger().debug(f'Tecemux/{channel_context.get_name()}: READ!')
             await asyncio.sleep(0)
+
+        get_logger().debug(f'Tecemux/{channel_context.get_name()}: Channel writer finished.')
     
     @staticmethod
-    async def channel_writer(channel_context):
-        while True:
-            #print(f'{channel_context.get_name()}: WRITE!')
+    async def channel_writer(channel_context, stop_event):
+        
+        get_logger().debug(f'Tecemux/{channel_context.get_name()}: Channel writer started.')
+
+        while not stop_event.is_set():
+            #get_logger().debug(f'Tecemux/{channel_context.get_name()}: WRITE!')
             await asyncio.sleep(0)
+
+        get_logger().debug(f'Tecemux/{channel_context.get_name()}: Channel writer finished.')
+
     
 class Runner:
     def __init__(self, instance_id, sequence_path, logger) -> None:
@@ -161,6 +194,14 @@ class Runner:
         #self.connect_stdio()
         
         await self.protocol.loop()
+
+        self.logger.debug("Run sequence")
+        
+        await self.protocol.stop()
+
+        await self.protocol.wait_until_end()
+
+        self.logger.debug("End main")
 
 if __name__ == '__main__':
     runner = Runner(instance_id, sequence_path, get_logger())
