@@ -1,6 +1,7 @@
 import asyncio
 import pytest
-from runner_tecemux import Tecemux
+from tecemux import Tecemux
+from runner_tecemux import get_logger
 
 
 @pytest.fixture()
