@@ -12,12 +12,13 @@ export type ConnectedSTHInfo = {
     isConnectionActive: boolean,
     description?: string,
     tags?: Array<string> ,
+    disconnectReason?: string;
 };
 
 export type HealthCheckInfo = {
-    uptime: number,
-    timestamp: number,
+    uptime: number;
+    timestamp: number;
     modules: {
-        [key: string]: boolean
-    }
+        [key: string]: boolean;
+    };
 }

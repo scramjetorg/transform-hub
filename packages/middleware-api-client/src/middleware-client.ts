@@ -54,4 +54,28 @@ export class MiddlewareClient implements ClientProvider {
     async getAuditStream(): Promise<ReadableStream<any>> {
         return this.client.getStream("audit");
     }
+
+    async listAccessKeys(spaceId: string): Promise<MMRestAPI.GetAccessKeysResponse> {
+        return this.client.get(`space/${spaceId}/apikey`, {
+            headers: { "content-type": "application/json" },
+        });
+    }
+
+    async createAccessKey(spaceId: string, opts: { description?: string }): Promise<any> {
+        return this.client.post(`space/${spaceId}/apikey`, {
+            description: opts.description?.trim()
+        }, {
+            headers: { "content-type": "application/json" },
+        },
+        { json: true, parse: "json" });
+    }
+
+    async revokeAccessKey(spaceId: string, accessKey: string): Promise<any> {
+        return this.client.delete(`space/${spaceId}/apikey`, {
+            headers: {
+                "content-type": "application/json",
+                "x-revoke": accessKey
+            }
+        });
+    }
 }

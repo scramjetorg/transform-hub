@@ -54,6 +54,9 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
+    [CPMMessageCode.KEY_REVOKED]: ConfiguredMessageHandler<CPMMessageCode.KEY_REVOKED>[];
+    [CPMMessageCode.LIMIT_EXCEEDED]: ConfiguredMessageHandler<CPMMessageCode.LIMIT_EXCEEDED>[];
+    [CPMMessageCode.ID_DROP]: ConfiguredMessageHandler<CPMMessageCode.ID_DROP>[];
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -87,7 +90,10 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
             [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
-            [CPMMessageCode.STH_ID]: []
+            [CPMMessageCode.STH_ID]: [],
+            [CPMMessageCode.KEY_REVOKED]: [],
+            [CPMMessageCode.LIMIT_EXCEEDED]: [],
+            [CPMMessageCode.ID_DROP]: [],
         };
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],

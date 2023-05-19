@@ -32,6 +32,10 @@ const options: OptionValues & STHCommandOptions = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
+    .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
+    .option("--platform-api-version <version>", "Platform API version", "v1")
+    .option("--platform-api-key <string>", "Platform API Key")
+    .option("--platform-space <orgId:spaceId>", "Target Platform Space")
     .option("-I, --id <id>", "The id assigned to this server")
     .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
     .option("-X, --exit-with-last-instance", "Exits host when no more instances exist.")
@@ -48,6 +52,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
+    .option("--platform-token <token>", "Platform authorization token")
     .option("--cpm-ssl-ca-path <path>", "Certificate Authority for self-signed CPM SSL certificates")
     .option("--cpm-id <id>")
     .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")
@@ -100,6 +105,12 @@ const options: OptionValues & STHCommandOptions = program
             maxReconnections: options.cpmMaxReconnections
         },
         debug: options.debug,
+        platform: {
+            apiKey: options.platformApiKey,
+            api: options.platformApi,
+            space: options.platformSpace,
+            apiVersion: options.platformApiVersion
+        },
         docker: {
             prerunner: {
                 image: options.prerunnerImage,
