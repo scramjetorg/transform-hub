@@ -16,7 +16,6 @@ async def local_socket_connection():
 class TestTecemux:
     def test_default_init(self):
         protocol = Tecemux()
-        protocol.set_logger(get_logger())
         assert isinstance(protocol, Tecemux)
 
     @pytest.mark.asyncio
@@ -42,9 +41,8 @@ class TestTecemux:
 
         assert await protocol._reader.read(100) == b'dnkrozz'
 
-
     @pytest.mark.asyncio
-    async def test_tecemux_specific_channel(self, local_socket_connection):
+    async def test_tecemux_forward_on_channel(self, local_socket_connection):
         protocol = local_socket_connection
         data_to_send ="{'foo':'bar'}"
         destination_channel = CC.CONTROL
@@ -56,8 +54,27 @@ class TestTecemux:
         await protocol._writer.drain()
 
         assert (await protocol.get_channel(destination_channel).read(len(data_to_send)))
-        # # await self.protocol._channels[CC.CONTROL].write(b'ala ma kota')
-        # # await self.protocol._channels[CC.CONTROL].drain()    
-        # data = await self.protocol._channels[CC.CONTROL].read(5)
+
+    @pytest.mark.asyncio
+    async def test_tecemux_forward_from_channel(self, local_socket_connection):
+        protocol = local_socket_connection
+        
+        data_to_send ="{'foo':'bar'}"
+        source_channel = CC.CONTROL
+
+        await protocol.prepare()
+        
+        channel = protocol.get_channel(source_channel)
+
+        await protocol.loop()
+        await channel.write(data_to_send)
+        await channel.drain()
+
+        data = await protocol._reader.read(100)
+        pkt = IPPacket.from_buffer(data).get_segment()
+
+        assert pkt.data == data_to_send.encode('utf-8')
+        assert pkt.dst_port == int(source_channel.value)
+        
 
 

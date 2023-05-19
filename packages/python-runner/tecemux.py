@@ -2,7 +2,7 @@ import asyncio
 import socket
 from attrs import define, field
 
-from inet import IPPacket
+from inet import IPPacket, TCPSegment
 from hardcoded_magic_values import CommunicationChannels as CC
 
 @define
@@ -14,23 +14,30 @@ class Tecemux:
         _reader: asyncio.StreamReader
         _writer: asyncio.StreamWriter
         _queue: asyncio.Queue
+        _global_writer: asyncio.StreamWriter
 
         _channel_paused: bool = False
 
         async def queue_up(self, data):
-            
+
+            def wrap(channel_enum, buf):
+                channel_id = int(channel_enum.value)
+                return IPPacket(src_addr='0.0.0.0',dst_addr='0.0.0.0',segment=TCPSegment(dst_port=channel_id,data=buf)).build().to_buffer()
+
             if self._channel_paused:
                 self._queue.put(data)
             else:
                 while not self._queue.empty():
                     try:
                         buf = await self._queue.get()
-                        self._writer.write(buf)
+
+                        self._global_writer.write(wrap(self._name,data))
                         self._queue.task_done()
                     except asyncio.QueueEmpty:
-                        await self._writer.drain()
+                        await self._global_writer.drain()
                         break
-            self._writer.write(data)
+            self._global_writer.write(wrap(self._name,data))
+            
 
         async def read(self, len):
             return await self._reader.read(len)
@@ -40,7 +47,8 @@ class Tecemux:
 
         async def drain(self):
             if not self._channel_paused:
-                return await self._writer.drain()
+                await self._writer.drain()
+                return await self._global_writer.drain()
             return True
 
         def set_pause(self, state):
@@ -78,7 +86,7 @@ class Tecemux:
     
 
     async def prepare(self):
-        self._channels = {channel : Tecemux.ChannelContext(channel, *await Tecemux.prepare_socket_connection(), asyncio.Queue()) for channel in CC }
+        self._channels = {channel : Tecemux.ChannelContext(channel, *await Tecemux.prepare_socket_connection(), asyncio.Queue(), self._writer) for channel in CC }
         self._queue = asyncio.Queue()
     
     
@@ -129,7 +137,7 @@ class Tecemux:
             pkt = IPPacket().from_buffer(buf)
             channel = CC(str(pkt.get_segment().dst_port))
             await self._channels[channel].write(pkt.get_segment().data)
-            #self._logger.debug(f'Tecemux/MAIN: [<] Chunk forwarded to {channel.name} steam')
+            self._logger.debug(f'Tecemux/MAIN: [<] Chunk forwarded to {channel.name} steam')
 
         self._logger.debug(f'Tecemux/MAIN: Incomming data forwarder finished')
 

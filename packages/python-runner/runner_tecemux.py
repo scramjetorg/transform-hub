@@ -2,7 +2,6 @@ import asyncio
 import sys
 import codecs
 from tecemux import Tecemux
-from inet import TCPSegment, IPPacket
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -54,17 +53,6 @@ class Runner:
         await self.protocol.loop()
 
         self.logger.debug("Run sequence")
-
-        pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=int(CC.CONTROL.value),flags=['ACK'],data="ala ma kota"))
-        self.protocol._writer.write(pkt.to_buffer())
-        await self.protocol._writer.drain()
-
-        # await self.protocol._channels[CC.CONTROL].write(b'ala ma kota')
-        # await self.protocol._channels[CC.CONTROL].drain()    
-        data = await self.protocol._channels[CC.CONTROL].read(5)
-        print('x')
-        #assert self.protocol._channels[CC.CONTROL]._queue.qsize() == 1
-
         
         await self.protocol.stop()
 
