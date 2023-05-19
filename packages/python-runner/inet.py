@@ -81,7 +81,7 @@ class TCPSegment:
             self.flags,\
             self.win,\
             self.checksum,\
-            self.urp) + self.data.encode("utf-8")
+            self.urp) + (self.data.encode("utf-8") if isinstance(self.data,str) else self.data)
     
     def set_flags(self, list_of_flags):
         self.flags = list_of_flags

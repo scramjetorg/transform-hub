@@ -14,41 +14,44 @@ class Tecemux:
         _reader: asyncio.StreamReader
         _writer: asyncio.StreamWriter
         _queue: asyncio.Queue
-        _global_writer: asyncio.StreamWriter
+        _global_queue: asyncio.Queue
 
         _channel_paused: bool = False
 
-        async def queue_up(self, data):
+
+        async def queue_up_incoming(self,buf):
+            pkt = IPPacket().from_buffer(buf)
+            self._writer.write(pkt.get_segment().data)
+            await self._writer.drain()
+
+        async def queue_up_outcoming(self, data):
 
             def wrap(channel_enum, buf):
                 channel_id = int(channel_enum.value)
                 return IPPacket(src_addr='0.0.0.0',dst_addr='0.0.0.0',segment=TCPSegment(dst_port=channel_id,data=buf)).build().to_buffer()
 
             if self._channel_paused:
-                self._queue.put(data)
+                await self._queue.put(data)
             else:
                 while not self._queue.empty():
                     try:
                         buf = await self._queue.get()
-
-                        self._global_writer.write(wrap(self._name,data))
-                        self._queue.task_done()
+                        await self._global_queue.put(wrap(self._name,data))
                     except asyncio.QueueEmpty:
-                        await self._global_writer.drain()
                         break
-            self._global_writer.write(wrap(self._name,data))
+            await self._global_queue.put(wrap(self._name,data))
+
             
 
         async def read(self, len):
             return await self._reader.read(len)
         
         async def write(self, data):
-            await self.queue_up(data)
+            await self.queue_up_outcoming(data)
 
         async def drain(self):
             if not self._channel_paused:
                 await self._writer.drain()
-                return await self._global_writer.drain()
             return True
 
         def set_pause(self, state):
@@ -86,9 +89,9 @@ class Tecemux:
     
 
     async def prepare(self):
-        self._channels = {channel : Tecemux.ChannelContext(channel, *await Tecemux.prepare_socket_connection(), asyncio.Queue(), self._writer) for channel in CC }
         self._queue = asyncio.Queue()
-    
+        self._channels = {channel : Tecemux.ChannelContext(channel, *await Tecemux.prepare_socket_connection(), asyncio.Queue(), self._queue) for channel in CC }
+
     
     def set_logger(self,logger):
         self._logger = logger
@@ -122,7 +125,7 @@ class Tecemux:
         self._outcoming_data_forwarder = loop.create_task(self.outcoming_data_forward())
 
     async def incoming_data_forward(self):
-        while not self._reader.at_eof():
+        while not self._stop_event.is_set():
             buf = await self._reader.read(1024)
 
             if not buf:
@@ -136,20 +139,20 @@ class Tecemux:
 
             pkt = IPPacket().from_buffer(buf)
             channel = CC(str(pkt.get_segment().dst_port))
-            await self._channels[channel].write(pkt.get_segment().data)
+            await self._channels[channel].queue_up_incoming(buf)
             self._logger.debug(f'Tecemux/MAIN: [<] Chunk forwarded to {channel.name} steam')
 
         self._logger.debug(f'Tecemux/MAIN: Incomming data forwarder finished')
 
     async def outcoming_data_forward(self):
         
-        while not self._reader.at_eof():
+        while not self._stop_event.is_set():
             try:
-                chunk = await self._queue.get_nowait()
+                chunk = self._queue.get_nowait()
                 self._logger.debug(f'Tecemux/MAIN: [>] Outcoming chunk "{chunk}" is waiting to send to Transform Hub')
                 self._writer.write(chunk)
                 await self._writer.drain()
-                await self._queue.task_done()
+                self._queue.task_done()
                 self._logger.debug(f'Tecemux/MAIN: [>] Chunk "{chunk}" was sent to Transform Hub')
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0)

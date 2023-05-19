@@ -8,10 +8,27 @@ from runner_tecemux import get_logger
 
 @pytest.fixture()
 async def local_socket_connection():
-    protocol = Tecemux()
-    protocol.set_logger(get_logger())
-    await protocol.connect(*await Tecemux.prepare_socket_connection())
-    return protocol
+    client_a = Tecemux()
+    client_a.set_logger(get_logger())
+
+    client_b = Tecemux()
+    client_b.set_logger(get_logger())
+
+
+    rsock_a, wsock_a = await Tecemux.prepare_socket_connection()
+    rsock_b, wsock_b = await Tecemux.prepare_socket_connection()
+
+    await client_a.connect(rsock_a,wsock_b)
+    await client_b.connect(rsock_b,wsock_a)
+
+    await client_a.prepare()
+    await client_b.prepare()
+
+    await client_a.loop()
+    await client_b.loop()
+        
+    
+    return client_a, client_b
 
 class TestTecemux:
     def test_default_init(self):
@@ -30,51 +47,42 @@ class TestTecemux:
 
         assert isinstance(protocol._reader,asyncio.StreamReader)
         assert isinstance(protocol._writer,asyncio.StreamWriter)
-        
-        assert True
+
 
     @pytest.mark.asyncio
-    async def test_tecemux_pipe(self, local_socket_connection):
-        protocol = local_socket_connection
-        protocol._writer.write(b'dnkrozz')
-        await protocol._writer.drain()
+    async def test_forward_from_main_to_channel(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
 
-        assert await protocol._reader.read(100) == b'dnkrozz'
-
-    @pytest.mark.asyncio
-    async def test_tecemux_forward_on_channel(self, local_socket_connection):
-        protocol = local_socket_connection
         data_to_send ="{'foo':'bar'}"
         destination_channel = CC.CONTROL
-        await protocol.prepare()
-        await protocol.loop()
-
+        
         pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=int(destination_channel.value),flags=['ACK'],data=data_to_send))
-        protocol._writer.write(pkt.to_buffer())
-        await protocol._writer.drain()
+        
+        client_a._writer.write(pkt.to_buffer())
+        await client_a._writer.drain()
 
-        assert (await protocol.get_channel(destination_channel).read(len(data_to_send)))
+        assert (await client_b.get_channel(destination_channel).read(100)).decode() == data_to_send
+
+        await client_a.stop()
+        await client_b.stop()
+
+        await client_a.wait_until_end()
+        await client_a.wait_until_end()
 
     @pytest.mark.asyncio
-    async def test_tecemux_forward_from_channel(self, local_socket_connection):
-        protocol = local_socket_connection
-        
+    async def test_forward_channel_between_a_b(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+
         data_to_send ="{'foo':'bar'}"
         source_channel = CC.CONTROL
+               
+        await client_a.get_channel(source_channel).write(data_to_send)
+        await client_a.get_channel(source_channel).drain()
 
-        await protocol.prepare()
-        
-        channel = protocol.get_channel(source_channel)
+        assert (await client_b.get_channel(source_channel).read(100)).decode() == data_to_send
 
-        await protocol.loop()
-        await channel.write(data_to_send)
-        await channel.drain()
+        await client_a.stop()
+        await client_b.stop()
 
-        data = await protocol._reader.read(100)
-        pkt = IPPacket.from_buffer(data).get_segment()
-
-        assert pkt.data == data_to_send.encode('utf-8')
-        assert pkt.dst_port == int(source_channel.value)
-        
-
-
+        await client_a.wait_until_end()
+        await client_a.wait_until_end()
