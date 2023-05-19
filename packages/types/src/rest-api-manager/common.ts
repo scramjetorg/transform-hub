@@ -8,7 +8,10 @@ export type ConnectedSTHInfo = {
     id: string,
     info: ConnectedSTHInfoDetails,
     healthy: boolean,
-    isConnectionActive: boolean
+    selfHosted: boolean,
+    isConnectionActive: boolean,
+    description?: string,
+    tags?: Array<string> ,
 };
 
 export type HealthCheckInfo = {

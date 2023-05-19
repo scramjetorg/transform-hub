@@ -331,6 +331,9 @@ export class Host implements IComponent {
                 this.config.cpmUrl,
                 this.config.cpmId,
                 {
+                    selfHosted: this.config.selfHosted,
+                    description: this.config.description,
+                    tags: this.config.tags,
                     id: this.config.host.id,
                     infoFilePath: this.config.host.infoFilePath,
                     cpmSslCaPath: this.config.cpmSslCaPath,
