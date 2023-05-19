@@ -2,6 +2,7 @@ import asyncio
 import sys
 import codecs
 from tecemux import Tecemux
+from inet import TCPSegment, IPPacket
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -35,7 +36,8 @@ class Runner:
     async def main(self, server_host, server_port):
         self.logger.info('Connecting to host...')
 
-        self.protocol = Tecemux(logger=self.logger)
+        self.protocol = Tecemux()
+        self.protocol.set_logger(get_logger())
 
         # self.logger.debug(f'Connecting to {server_host}:{server_port}...')
         # await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
@@ -52,6 +54,17 @@ class Runner:
         await self.protocol.loop()
 
         self.logger.debug("Run sequence")
+
+        pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=int(CC.CONTROL.value),flags=['ACK'],data="ala ma kota"))
+        self.protocol._writer.write(pkt.to_buffer())
+        await self.protocol._writer.drain()
+
+        # await self.protocol._channels[CC.CONTROL].write(b'ala ma kota')
+        # await self.protocol._channels[CC.CONTROL].drain()    
+        data = await self.protocol._channels[CC.CONTROL].read(5)
+        print('x')
+        #assert self.protocol._channels[CC.CONTROL]._queue.qsize() == 1
+
         
         await self.protocol.stop()
 

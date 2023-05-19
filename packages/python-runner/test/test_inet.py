@@ -51,6 +51,15 @@ class TestIP:
 
         assert pkt.checksum == checksum
 
+    def test_packet_creation(self):
+           
+        pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=3,flags=['ACK']))
+
+        assert pkt.src_addr == '172.25.44.3'
+        assert pkt.dst_addr == '172.25.44.254'
+
+        #data = pkt.build().to_buffer()
+        
 class TestTCP:
     def test_tcp_offset(self):
         data = b'\x01\xbb\xc0\xd7\xb6\x56\xa8\xb9\xd1\xac\xaa\xb1\x50\x18\x40\x00\x56\xf8\x00\x00'

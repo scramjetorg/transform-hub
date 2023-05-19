@@ -81,7 +81,7 @@ class TCPSegment:
             self.flags,\
             self.win,\
             self.checksum,\
-            self.urp) + self.data
+            self.urp) + self.data.encode("utf-8")
     
     def set_flags(self, list_of_flags):
         self.flags = list_of_flags
@@ -127,8 +127,8 @@ class IPPacket:
     ihl: int = 5
     version: int = field( default=4, converter = lambda value: value >> 4)
     tos: int = field(default=0)
-    len: int = field(default=None)
-    ids: int = field(default=None)
+    len: int = field(default=0)
+    ids: int = field(default=0)
     flags_offset: int = field(default = 0)
     flags: int = field(default = 0, init= False, repr = lambda value: IPPacket.Flags.flags_to_str(value), \
                        converter = lambda value: IPPacket.Flags.parse_flags(value))
@@ -136,8 +136,8 @@ class IPPacket:
     ttl: int = field(default=255)
     protocol: int = field(default=6)
     checksum: int = field(default = 0, repr = lambda value: hex(value))
-    src_addr: str = field(default='', converter = lambda value: inet_ntoa(value))
-    dst_addr: str = field(default='', converter = lambda value: inet_ntoa(value))
+    src_addr: str = field(default='', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
+    dst_addr: str = field(default='', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
     segment: TCPSegment = None
 
     def __attrs_post_init__(self):
