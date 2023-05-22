@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from tecemux import Tecemux
+from tecemux import Tecemux, TecemuxStreamReader,TecemuxStreamWriter
 from inet import IPPacket,TCPSegment
 from hardcoded_magic_values import CommunicationChannels as CC
 from runner_tecemux import get_logger
@@ -45,8 +45,8 @@ class TestTecemux:
         
         await protocol.connect(*await Tecemux.prepare_socket_connection())
 
-        assert isinstance(protocol._reader,asyncio.StreamReader)
-        assert isinstance(protocol._writer,asyncio.StreamWriter)
+        assert isinstance(protocol._reader,TecemuxStreamReader)
+        assert isinstance(protocol._writer,TecemuxStreamWriter)
 
 
     @pytest.mark.asyncio

@@ -5,14 +5,49 @@ from attrs import define, field
 from inet import IPPacket, TCPSegment
 from hardcoded_magic_values import CommunicationChannels as CC
 
+
+class TecemuxStreamReader:
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+    
+    async def readline(self):
+        return await self._stream.readline()
+  
+    async def readuntil(self, separator=b'\n'):
+        return await self._stream.readuntil(separator)
+
+    async def read(self, n=-1):
+        return await self._stream.read(n)
+    
+    async def readexactly(self, n):
+        return await self._stream.readexactly(n)
+    
+class TecemuxStreamWriter:
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    async def wait_closed(self):
+        return await self._stream.wait_closed()
+
+    async def drain(self):
+        return await self._stream.drain()
+    
 @define
 class Tecemux:
     @define
     class ChannelContext:
         _name: str
         
-        _reader: asyncio.StreamReader
-        _writer: asyncio.StreamWriter
+        _reader: TecemuxStreamReader
+        _writer: TecemuxStreamWriter
         _queue: asyncio.Queue
         _global_queue: asyncio.Queue
 
@@ -85,7 +120,7 @@ class Tecemux:
         rsock, wsock = socket.socketpair()
         reader, _ = await asyncio.open_unix_connection(sock=rsock)
         _, writer = await asyncio.open_unix_connection(sock=wsock)
-        return reader,writer
+        return TecemuxStreamReader(reader),TecemuxStreamWriter(writer)
     
 
     async def prepare(self):
