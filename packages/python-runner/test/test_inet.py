@@ -1,14 +1,12 @@
 import pytest
 from inet import TCPSegment, IPPacket, EthernetFrame
 
-
 class TestIP:
     def test_mf_df_flags(self):
 
         data = b'E\x00\x00\x14\x00\x01`\x00@\x00\x1c\xe7\x7f\x00\x00\x01\x7f\x00\x00\x01'
         pkt = IPPacket.from_buffer(data)
-        assert pkt.flags == (IPPacket.Flags.MF |
-                             IPPacket.Flags.DF) & ~IPPacket.Flags.RF
+        assert pkt.flags == (IPPacket.Flags.MF | IPPacket.Flags.DF) & ~IPPacket.Flags.RF
         assert pkt.is_flag('MF') == True
         assert pkt.is_flag('DF') == True
         assert pkt.is_flag('RF') == False
@@ -32,8 +30,7 @@ class TestIP:
         pkt = EthernetFrame.from_buffer(data).get_packet()
 
         assert pkt.flags == IPPacket.Flags.DF
-        assert pkt.flags == (IPPacket.Flags.DF & (
-            ~IPPacket.Flags.MF & ~IPPacket.Flags.RF))
+        assert pkt.flags == (IPPacket.Flags.DF & (~IPPacket.Flags.MF & ~IPPacket.Flags.RF))
 
         assert pkt.is_flag('DF') == True
         assert pkt.is_flag('MF') == False
@@ -61,9 +58,6 @@ class TestIP:
 
         assert pkt.src_addr == '172.25.44.3'
         assert pkt.dst_addr == '172.25.44.254'
-
-        # data = pkt.build().to_buffer()
-
 
 class TestTCP:
     def test_tcp_offset(self):
@@ -144,7 +138,7 @@ class TestTCP:
                 b"\x00{'bar':'foo2'}")
 
         pkt = IPPacket.from_buffer(data)
-        
+
         assert pkt.len == 53
         assert pkt.get_segment().data == b"{'foo':'bar'}"
 

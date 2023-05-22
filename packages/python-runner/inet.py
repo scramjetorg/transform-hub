@@ -127,7 +127,7 @@ class IPPacket:
     ihl: int = 5
     version: int = field( default=4, converter = lambda value: value >> 4)
     tos: int = field(default=0)
-    len: int = field(default=None)
+    len: int = field(default=0)
     ids: int = field(default=0)
     flags_offset: int = field(default = 0)
     flags: int = field(default = 0, init= False, repr = lambda value: IPPacket.Flags.flags_to_str(value), \
@@ -145,7 +145,8 @@ class IPPacket:
         self.flags = self.flags_offset >> 13 
 
         #Cut data buffer to IP packet length
-        self.get_segment().data=self.get_segment().data[:self.len-(self.ihl*4)-20]
+        if self.len > 0 and self.segment:
+            self.get_segment().data=self.get_segment().data[:self.len-(self.ihl*4)-20]
 
     @staticmethod
     def calc_checksum(pkt: bytes) -> int:
@@ -161,7 +162,13 @@ class IPPacket:
     @classmethod
     def from_buffer(cls,buffer):   
         ihl = (buffer[0] & 0xf)
-        return cls(ihl, *struct.unpack("!BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
+        pkt = cls(ihl, *struct.unpack("!BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
+
+        #Cut data buffer to IP packet length
+        if pkt.segment:
+            pkt.get_segment().data=pkt.get_segment().data[:pkt.len-(ihl*4)-20]
+            
+        return pkt
     
     def is_flag(self,flag):
         return (self.flags & getattr(IPPacket.Flags, flag)) > 0
