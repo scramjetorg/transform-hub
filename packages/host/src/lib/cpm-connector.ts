@@ -343,9 +343,9 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             connection.socket
                 .once("close", async () => {
-                    this.logger.warn("CLOSE STATUS", connection.res.statusCode);
+                    this.logger.warn("CLOSE STATUS", connection.response.statusCode);
 
-                    await this.handleConnectionClose(connection.res.statusCode || -1);
+                    await this.handleConnectionClose(connection.response.statusCode || -1);
                 });
         } catch (error: any) {
             this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
