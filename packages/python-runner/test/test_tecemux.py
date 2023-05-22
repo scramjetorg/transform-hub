@@ -73,14 +73,19 @@ class TestTecemux:
     async def test_forward_channel_between_a_b(self, local_socket_connection):
         client_a, client_b = local_socket_connection
 
-        data_to_send ="{'foo':'bar'}"
-        source_channel = CC.CONTROL
-               
-        await client_a.get_channel(source_channel).write(data_to_send)
-        await client_a.get_channel(source_channel).drain()
 
-        assert (await client_b.get_channel(source_channel).read(100)).decode() == data_to_send
+        channel_alpha = CC.CONTROL
+        channel_beta = CC.IN       
+        
+        await client_a.get_channel(channel_alpha).write("{'foo':'bar'}")
+        await client_a._writer.drain()
+      
+        await client_a.get_channel(channel_beta).write("{'bar':'foo2'}")
+        await client_a._writer.drain()
 
+        assert (await client_b.get_channel(channel_alpha).read(100)).decode() == "{'foo':'bar'}"
+        assert (await client_b.get_channel(channel_beta).read(100)).decode() == "{'bar':'foo2'}"
+    
         await client_a.stop()
         await client_b.stop()
 

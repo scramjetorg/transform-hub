@@ -127,7 +127,7 @@ class IPPacket:
     ihl: int = 5
     version: int = field( default=4, converter = lambda value: value >> 4)
     tos: int = field(default=0)
-    len: int = field(default=0)
+    len: int = field(default=None)
     ids: int = field(default=0)
     flags_offset: int = field(default = 0)
     flags: int = field(default = 0, init= False, repr = lambda value: IPPacket.Flags.flags_to_str(value), \
@@ -143,6 +143,9 @@ class IPPacket:
     def __attrs_post_init__(self):
         self.offset = self.flags_offset & 0x1FFF
         self.flags = self.flags_offset >> 13 
+
+        #Cut data buffer to IP packet length
+        self.get_segment().data=self.get_segment().data[:self.len-(self.ihl*4)-20]
 
     @staticmethod
     def calc_checksum(pkt: bytes) -> int:
@@ -166,6 +169,8 @@ class IPPacket:
     def to_buffer(self):
         ihl_ver = (int(self.version) << 4) + int(self.ihl)
 
+        data = self.get_segment().to_buffer() if self.segment else b''
+        self.len = 20 + len(data)
         return struct.pack('!BBHHHBBH4s4s', \
                             ihl_ver, \
                             self.tos, \
@@ -176,7 +181,7 @@ class IPPacket:
                             self.protocol, \
                             self.checksum, \
                             inet_aton(self.src_addr), \
-                            inet_aton(self.dst_addr)) + (self.get_segment().to_buffer() if self.segment else b'')
+                            inet_aton(self.dst_addr)) + data
     
     def _validate_tcp(self):
 

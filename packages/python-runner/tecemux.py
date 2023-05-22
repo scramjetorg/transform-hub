@@ -69,12 +69,12 @@ class Tecemux:
     
     _channels = field(default={})
     _logger = field(default=None)
-    _stop_event = asyncio.Event()
+    _global_stop_event = asyncio.Event()
 
     async def connect(self, reader, writer):
         self._reader = reader
         self._writer = writer
-        self._stop_event.clear()
+        self._global_stop_event.clear()
 
     @staticmethod
     async def prepare_tcp_connection(server_host, server_port):
@@ -103,7 +103,7 @@ class Tecemux:
         await self._writer.drain()
         self._writer.close()
         await self._writer.wait_closed()
-        self._stop_event.set()        
+        self._global_stop_event.set()        
 
         for channel in self._channels.values():            
             await channel._writer.drain()
@@ -112,7 +112,7 @@ class Tecemux:
 
 
     async def wait_until_end(self):
-        await self._stop_event.wait()
+        await self._global_stop_event.wait()
         await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
         
         self._logger.debug(f'Tecemux/MAIN: [-] Finished')
@@ -125,28 +125,52 @@ class Tecemux:
         self._outcoming_data_forwarder = loop.create_task(self.outcoming_data_forward())
 
     async def incoming_data_forward(self):
-        while not self._stop_event.is_set():
-            buf = await self._reader.read(1024)
+        buffer = b''
+        
+        incoming_parser_finish_loop = asyncio.Event()
+        
+        MINIMAL_IP_PACKET_LENGTH = 20
+        READ_CHUNK_SIZE = 1024
 
-            if not buf:
+        while not self._global_stop_event.is_set():
+
+            chunk = await self._reader.read(READ_CHUNK_SIZE)
+
+            if not chunk:
+                incoming_parser_finish_loop.set()
+
+            buffer = buffer + chunk
+
+            if incoming_parser_finish_loop.is_set() and len(buffer) < MINIMAL_IP_PACKET_LENGTH:
+                self._logger.warning(f'Tecemux/MAIN: [<] Too few data is waiting in global buffer but stream finished')
                 break
+            
+            while not (len(buffer) < MINIMAL_IP_PACKET_LENGTH):
+            
+                current_packet_size = IPPacket().from_buffer(buffer).len
 
-            if len(buf) < 20:
-                self._logger.warning(f'Tecemux/MAIN: [<] Too few data from Transform Hub received')
-                continue
+                if len(buffer) >= current_packet_size:
+                    
+                    self._logger.debug(f'Tecemux/MAIN: [<] Full incomming packet from Transform Hub was received')
 
-            self._logger.debug(f'Tecemux/MAIN: [<] Incomming chunk from Transform Hub was received')
-
-            pkt = IPPacket().from_buffer(buf)
-            channel = CC(str(pkt.get_segment().dst_port))
-            await self._channels[channel].queue_up_incoming(buf)
-            self._logger.debug(f'Tecemux/MAIN: [<] Chunk forwarded to {channel.name} steam')
+                    single_packet_buffer = buffer[:current_packet_size]
+                    pkt = IPPacket().from_buffer(single_packet_buffer)
+                    channel = CC(str(pkt.get_segment().dst_port))
+                    
+                    await self._channels[channel].queue_up_incoming(single_packet_buffer)
+                    
+                    self._logger.debug(f'Tecemux/MAIN: [<] Packet forwarded to {channel.name} steam')
+                    buffer = buffer[current_packet_size:]
+                else:
+                    self._logger.warning(f'Tecemux/MAIN: [<] Not full packet received. Getting additional data chunk')
+                    break
 
         self._logger.debug(f'Tecemux/MAIN: Incomming data forwarder finished')
+           
 
     async def outcoming_data_forward(self):
         
-        while not self._stop_event.is_set():
+        while not self._global_stop_event.is_set():
             try:
                 chunk = self._queue.get_nowait()
                 self._logger.debug(f'Tecemux/MAIN: [>] Outcoming chunk "{chunk}" is waiting to send to Transform Hub')
