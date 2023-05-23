@@ -258,8 +258,9 @@ export class CPMConnector extends TypedEmitter<Events> {
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
                 this.logger.trace("Received message", message);
+                const messageCode = message[0] as CPMMessageCode;
 
-                if (message[0] === CPMMessageCode.STH_ID) {
+                if (messageCode === CPMMessageCode.STH_ID) {
                     // eslint-disable-next-line no-extra-parens
                     this.info.id = (message[1] as STHIDMessageData).id;
 
@@ -276,7 +277,9 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
-                if (message[0] === CPMMessageCode.KEY_REVOKED || message[0] === CPMMessageCode.LIMIT_EXCEEDED) {
+                const dropMessageCodes = [CPMMessageCode.KEY_REVOKED, CPMMessageCode.LIMIT_EXCEEDED, CPMMessageCode.ID_DROP];
+
+                if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
                     this.isAbandoned = true;
                 }
