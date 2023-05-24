@@ -1,4 +1,6 @@
 export type GetTopicsResponse = {
-    name: string;
     contentType: string;
+    localProvider: string,
+    topic: string,
+    topicName: string,
 }[];

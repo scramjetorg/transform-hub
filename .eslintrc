@@ -202,7 +202,7 @@
         "import/no-relative-packages": 2, // Prevent importing packages through relative paths ()
 
         "import/no-deprecated": 1, // Report imported names marked with @deprecated documentation tag ()
-        "import/no-extraneous-dependencies": 1, // Forbid the use of extraneous packages ()
+        "import/no-extraneous-dependencies": [ "error", { "devDependencies": true } ], // Forbid the use of extraneous packages ()
         "import/no-mutable-exports": 1, // Forbid the use of mutable exports with var or let. ()
         "import/no-unused-modules": 1, // Report modules without exports, or exports without matching import in another module ()
 
