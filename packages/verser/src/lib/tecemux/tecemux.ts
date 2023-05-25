@@ -95,14 +95,26 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
             return 2;
         }
 
-        if (flags.ACK) {
-            this.logger.trace("Received ACK flag for sequenceNumber", acknowledgeNumber);
-            this.framesKeeper.handleACK(acknowledgeNumber);
+        let channel = this.channels.get(destinationPort);
 
+        if (flags.ACK && flags.SYN) {
+            channel?.encoder.pause();
+            this.framesKeeper.handleACK(acknowledgeNumber);
+            console.log("Pause channel command received", channel?._id);
             return 0;
         }
 
-        let channel = this.channels.get(destinationPort);
+        if (flags.ACK) {
+            if (channel?.encoder.isPaused()) {
+                console.log("Pause and receive ack", channel._id);
+            }
+            this.logger.trace("Received ACK flag for sequenceNumber", acknowledgeNumber);
+            this.framesKeeper.handleACK(acknowledgeNumber);
+            channel?.encoder.resume();
+            channel?.resume();
+
+            return 0;
+        }
 
         if (flags.FIN) {
             this.logger.trace(`Received FIN flag [C: ${destinationPort}]`, dataLength, frame.chunk, !!channel, channel?._id);
@@ -131,7 +143,24 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 this.logger.warn("writing to channel [channel, length]", channel._id, dataLength);
                 this.logger.warn("writing to channel [flowing, isPaused]", channel.readableFlowing, channel.isPaused());
 
-                channel.push(new Uint8Array((frame.chunk as any).data), undefined);
+                const canWrite = channel.push(new Uint8Array((frame.chunk as any).data), undefined);
+
+                if (!canWrite) {
+                    console.log("cant write", channel._id);
+                    channel.sendPauseACK(sequenceNumber);
+
+                    channel.once("resume", () => {
+                        console.log("resumed, send ack to resume");
+                        //channel?.encoder.resume();
+                        channel?.sendACK(sequenceNumber);
+                    });
+                    channel.once("drain", () => {
+                        console.log("drained, send ack to resume");
+                        //channel?.encoder.resume();
+                        channel?.sendACK(sequenceNumber);
+                    });
+                    return 0;
+                }
             }
 
             channel.sendACK(sequenceNumber);
