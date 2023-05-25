@@ -45,6 +45,17 @@ export class TeceMuxChannel extends Duplex {
         );
     }
 
+    sendPauseACK(sequenceNumber: number) {
+        //console.log("Cant write more. Send pause command");
+        this.encoder.push(
+            this.encoder.createFrame(undefined, {
+                flagsArray: ["ACK", "SYN"],
+                acknowledgeNumber: sequenceNumber,
+                destinationPort: this._id
+            })
+        );
+    }
+
     handlerFIN() {
         this.closedByFIN = true;
 

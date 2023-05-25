@@ -3,7 +3,7 @@ import { TypedEmitter } from "@scramjet/utility";
 import { FramesKeeperEvents, FramesKeeperFrame, IFramesKeeper } from "./types";
 
 export class FramesKeeper extends TypedEmitter<FramesKeeperEvents> implements IFramesKeeper {
-    #MAX_FRAMES_DIFFERENCE = 5;
+    #MAX_FRAMES_DIFFERENCE = 3;
 
     #framesSent = new Map<number, FramesKeeperFrame>();
 
