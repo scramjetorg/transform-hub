@@ -1,0 +1,16 @@
+{
+  "host": {
+    "hostname": "0.0.0.0",
+    "port": 9002,
+    "instancesServerPort": 9003,
+    "id": "SELF_HUB-1"
+    },
+  "timings": {
+    "instanceLifetimeExtensionDelay": 10000
+    },
+  "platform": {
+    "api": "127.0.0.1:11000",
+    "space": "org-08adf0d1-190d-4320-b4d2-9f339f8f725a:org-08adf0d1-190d-4320-b4d2-9f339f8f725a-manager",
+    "hostType": "hub"
+    }
+}
