@@ -21,6 +21,8 @@
 - [GetTopicsResponse](MRestAPI.md#gettopicsresponse)
 - [GetVersionResponse](MRestAPI.md#getversionresponse)
 - [HealthCheckInfo](MRestAPI.md#healthcheckinfo)
+- [PostDisconnectPayload](MRestAPI.md#postdisconnectpayload)
+- [PostDisconnectResponse](MRestAPI.md#postdisconnectresponse)
 - [PutStoreItemResponse](MRestAPI.md#putstoreitemresponse)
 
 ## Type Aliases
@@ -33,10 +35,14 @@
 
 | Name | Type |
 | :------ | :------ |
+| `description?` | `string` |
+| `disconnectReason?` | `string` |
 | `healthy` | `boolean` |
 | `id` | `string` |
 | `info` | [`ConnectedSTHInfoDetails`](MRestAPI.md#connectedsthinfodetails) |
 | `isConnectionActive` | `boolean` |
+| `selfHosted` | `boolean` |
+| `tags?` | `string`[] |
 
 #### Defined in
 
@@ -211,7 +217,35 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/common.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L14)
+[packages/types/src/rest-api-manager/common.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L18)
+
+___
+
+### PostDisconnectPayload
+
+Ƭ **PostDisconnectPayload**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `accessKey?` | `string` |
+| `id?` | `string` |
+| `limit?` | `number` |
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/post-disconnect.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/post-disconnect.ts#L3)
+
+___
+
+### PostDisconnectResponse
+
+Ƭ **PostDisconnectResponse**: [`OpResponse`](MMRestAPI.md#opresponse)<{ `disconnected`: { `reason`: `string` ; `sthId`: `string`  }[] ; `managerId`: `string`  }\>
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/post-disconnect.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/post-disconnect.ts#L9)
 
 ___
 

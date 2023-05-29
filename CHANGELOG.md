@@ -2,6 +2,25 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.35.0] - 2023-05-29
+
+## Fixed
+
+* Fix/workflow warnings by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/847
+* Fix "sequence unpack failed" error with kubernetes by @S4adam in https://github.com/scramjetorg/transform-hub/pull/852
+* Fix KeyError on event emit by @gierwialo in https://github.com/scramjetorg/transform-hub/pull/851
+* Fix: README help command by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/859
+* STH identifiers by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/858
+* Bump packages version in bdd directory by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/864
+* Missing handling of disconnect on Id drop by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/866
+* Add Patch method to api server by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/867
+
+
+## Features
+
+* Connect Scramjet Transform Hub to Scramjet Cloud Platform by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/824
+
+
 ## [0.33.5] - 2023-04-19
 
 ## Fixed

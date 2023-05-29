@@ -374,19 +374,19 @@ CLI installation was already done at the end of the [Installation](#installation
 
 ```bash
 npm i -g ./dist/cli # install CLI globally from the source folder
-si help             # show CLI commands
+si --help             # show CLI commands
 ```
 
 - from [npm](https://www.npmjs.com/package/@scramjet/cli):
 
 ```bash
 npm i -g @scramjet/cli # install CLI globally from npm
-si help                # show CLI commands
+si --help                # show CLI commands
 ```
 
 ![cli_npm](./images/cli_npm.png)
 
-Running `si help` command will confirm that the installation went properly and also to see the list of available commands:
+Running `si --help` command will confirm that the installation went properly and also to see the list of available commands:
 
 ```bash
 $ si --help

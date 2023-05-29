@@ -435,11 +435,17 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `apiKey?` | `string` |
+| `apiVersion` | `string` |
 | `cpmSslCaPath?` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpmSslCaPath"``] |
+| `description` | [`STHConfiguration`](modules.md#sthconfiguration)[``"description"``] |
+| `hostType?` | `NonNullable`<[`STHConfiguration`](modules.md#sthconfiguration)[``"platform"``]\>[``"hostType"``] |
 | `id` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"id"``] |
 | `infoFilePath` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"infoFilePath"``] |
 | `maxReconnections` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpm"``][``"maxReconnections"``] |
 | `reconnectionDelay` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpm"``][``"reconnectionDelay"``] |
+| `selfHosted` | [`STHConfiguration`](modules.md#sthconfiguration)[``"selfHosted"``] |
+| `tags` | [`STHConfiguration`](modules.md#sthconfiguration)[``"tags"``] |
 
 #### Defined in
 
@@ -513,7 +519,7 @@ ___
 
 ### ControlMessageCode
 
-Ƭ **ControlMessageCode**: `RunnerMessageCode.KILL` \| `RunnerMessageCode.MONITORING_RATE` \| `RunnerMessageCode.STOP` \| `RunnerMessageCode.EVENT` \| `RunnerMessageCode.PONG` \| `CPMMessageCode.STH_ID` \| `RunnerMessageCode.INPUT_CONTENT_TYPE`
+Ƭ **ControlMessageCode**: `RunnerMessageCode.KILL` \| `RunnerMessageCode.MONITORING_RATE` \| `RunnerMessageCode.STOP` \| `RunnerMessageCode.EVENT` \| `RunnerMessageCode.PONG` \| `CPMMessageCode.STH_ID` \| `CPMMessageCode.KEY_REVOKED` \| `CPMMessageCode.LIMIT_EXCEEDED` \| `CPMMessageCode.ID_DROP` \| `RunnerMessageCode.INPUT_CONTENT_TYPE`
 
 #### Defined in
 
@@ -553,11 +559,11 @@ ___
 
 ### Decorator
 
-Ƭ **Decorator**: (`req`: `IncomingMessage`) => `void`
+Ƭ **Decorator**: (`req`: `IncomingMessage`) => `MaybePromise`<`void`\>
 
 #### Type declaration
 
-▸ (`req`): `void`
+▸ (`req`): `MaybePromise`<`void`\>
 
 ##### Parameters
 
@@ -567,7 +573,7 @@ ___
 
 ##### Returns
 
-`void`
+`MaybePromise`<`void`\>
 
 #### Defined in
 
@@ -2085,7 +2091,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L249)
+[packages/types/src/sth-configuration.ts:276](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L276)
 
 ___
 
@@ -2247,7 +2253,9 @@ ___
 | `cpmReconnectionDelay` | `number` |
 | `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
+| `customName` | `string` |
 | `debug` | `boolean` |
+| `description` | `string` |
 | `docker` | `boolean` |
 | `environmentName?` | `string` |
 | `exitWithLastInstance` | `boolean` |
@@ -2270,6 +2278,10 @@ ___
 | `k8sSequencesRoot` | `string` |
 | `k8sSthPodHost` | `string` |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) |
+| `platformApi` | `string` |
+| `platformApiKey` | `string` |
+| `platformApiVersion` | `string` |
+| `platformSpace` | `string` |
 | `port` | `number` |
 | `prerunnerImage` | `string` |
 | `prerunnerMaxMem` | `number` |
@@ -2278,8 +2290,10 @@ ___
 | `runnerPyImage` | `string` |
 | `runtimeAdapter` | `string` |
 | `safeOperationLimit` | `number` |
+| `selfHosted` | `boolean` |
 | `sequencesRoot` | `string` |
 | `startupConfig` | `string` |
+| `tags` | `string` |
 | `telemetry` | [`TelemetryConfig`](modules.md#telemetryconfig)[``"status"``] |
 
 #### Defined in
@@ -2302,7 +2316,9 @@ ___
 | `cpmId` | `string` | CPM id. |
 | `cpmSslCaPath?` | `string` | Path to the certificate authority file for verifying self-signed CPM certs |
 | `cpmUrl` | `string` | CPM url. |
+| `customName?` | `string` | Custom name to help identify sth |
 | `debug` | `boolean` | Add debugging flags to runner. |
+| `description?` | `string` | Description set by user |
 | `docker` | { `prerunner`: [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) ; `runner`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `runnerImages`: { `node`: `string` ; `python3`: `string`  }  } | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |
 | `docker.runner` | [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) | Runner container configuration. |
@@ -2319,10 +2335,18 @@ ___
 | `kubernetes` | `Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\> | Kubernetes adapter configuration |
 | `logColors` | `boolean` | Enable colors in logging. |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
+| `platform?` | { `api`: `string` ; `apiKey`: `string` ; `apiVersion`: `string` ; `hostType`: ``"hub"`` \| ``"federation"`` ; `space`: `string`  } | - |
+| `platform.api` | `string` | - |
+| `platform.apiKey` | `string` | - |
+| `platform.apiVersion` | `string` | - |
+| `platform.hostType` | ``"hub"`` \| ``"federation"`` | - |
+| `platform.space` | `string` | - |
 | `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes', 'detect' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. In megabytes. |
+| `selfHosted?` | `boolean` | Is STH self hosted? |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
 | `startupConfig` | `string` | Provides the location of a config file with the list of sequences to be started along with the host |
+| `tags?` | `string`[] | User assigned tags |
 | `telemetry` | [`TelemetryConfig`](modules.md#telemetryconfig) | - |
 | `timings` | { `heartBeatInterval`: `number` ; `instanceAdapterExitDelay`: `number` ; `instanceLifetimeExtensionDelay`: `number`  } | Various timeout and interval configurations |
 | `timings.heartBeatInterval` | `number` | Heartbeat interval in miliseconds |
