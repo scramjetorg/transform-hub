@@ -20,6 +20,7 @@
 ### Methods
 
 - [deleteStoreItem](ManagerClient.md#deletestoreitem)
+- [disconnectHubs](ManagerClient.md#disconnecthubs)
 - [getAuditStream](ManagerClient.md#getauditstream)
 - [getConfig](ManagerClient.md#getconfig)
 - [getHostClient](ManagerClient.md#gethostclient)
@@ -95,6 +96,26 @@ ClientProvider.client
 #### Defined in
 
 [manager-client.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L83)
+
+___
+
+### disconnectHubs
+
+▸ **disconnectHubs**(`opts`): `Promise`<`PostDisconnectResponse`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `opts` | `any` |
+
+#### Returns
+
+`Promise`<`PostDisconnectResponse`\>
+
+#### Defined in
+
+[manager-client.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L87)
 
 ___
 

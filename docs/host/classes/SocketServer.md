@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L97)
+[packages/host/src/lib/socket-server.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L98)
 
 ___
 
@@ -178,7 +178,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L79)
+[packages/host/src/lib/socket-server.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L80)
 
 ___
 
