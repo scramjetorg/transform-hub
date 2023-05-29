@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/transform-hub",
-  "version": "0.33.5",
+  "version": "0.34.0",
   "private": true,
   "description": "A development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
