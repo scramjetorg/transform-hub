@@ -95,7 +95,7 @@ export type EncodedMessage<
 export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
-    CPMMessageCode.STH_ID |
+    CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
     RunnerMessageCode.INPUT_CONTENT_TYPE;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;

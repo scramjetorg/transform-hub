@@ -142,7 +142,7 @@ class Runner:
             if code == msg_codes.STOP.value:
                 await self.handle_stop(data)
             if code == msg_codes.EVENT.value:
-                self.emitter.emit(data['eventName'], data['message'])
+                self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
 
 
     async def handle_stop(self, data):

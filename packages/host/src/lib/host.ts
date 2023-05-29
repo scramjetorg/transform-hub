@@ -202,6 +202,8 @@ export class Host implements IComponent {
 
         prettyLog.pipe(process.stdout);
 
+        this.logger.info("config", this.config);
+
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
         this.serviceDiscovery.logger.pipe(this.logger);
@@ -236,7 +238,7 @@ export class Host implements IComponent {
         this.api.server.timeout = 0;
         this.api.server.requestTimeout = 0;
 
-        if (!!this.config.cpmUrl !== !!this.config.cpmId) {
+        if (!!this.config.cpmId !== !!this.config.cpmUrl && !!this.config.cpmId !== !!this.config.platform?.api) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
         }
     }
@@ -326,16 +328,22 @@ export class Host implements IComponent {
         await this.performStartup();
         await this.startListening();
 
-        if (this.config.cpmUrl && this.config.cpmId) {
+        if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
             this.cpmConnector = new CPMConnector(
-                this.config.cpmUrl,
-                this.config.cpmId,
+                this.config.platform?.api || this.config.cpmUrl,
+                this.config.platform?.space || (":" + this.config.cpmId),
                 {
+                    selfHosted: this.config.selfHosted,
+                    description: this.config.description,
+                    tags: this.config.tags,
                     id: this.config.host.id,
                     infoFilePath: this.config.host.infoFilePath,
                     cpmSslCaPath: this.config.cpmSslCaPath,
                     maxReconnections: this.config.cpm.maxReconnections,
                     reconnectionDelay: this.config.cpm.reconnectionDelay,
+                    apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,
+                    apiVersion: this.config.platform?.apiVersion || "v1",
+                    hostType: this.config.platform?.hostType
                 },
                 this.api.server
             );

@@ -2,8 +2,12 @@ import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
 
 export type STHCommandOptions = {
+    description: string;
+    customName: string;
+    tags: string;
+    selfHosted: boolean;
     logLevel: LogLevel;
-    colors: boolean,
+    colors: boolean;
     port: number;
     hostname: string;
     identifyExisting: boolean;
@@ -11,8 +15,12 @@ export type STHCommandOptions = {
     cpmUrl?: string;
     cpmId?: string;
     cpmSslCaPath?: string;
-    cpmMaxReconnections: number,
-    cpmReconnectionDelay: number,
+    cpmMaxReconnections: number;
+    cpmReconnectionDelay: number;
+    platformApi: string;
+    platformApiKey: string;
+    platformSpace: string;
+    platformApiVersion: string;
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;
@@ -28,12 +36,12 @@ export type STHCommandOptions = {
     k8sQuotaName: string;
     k8sAuthConfigPath: string;
     k8sSthPodHost: string;
-    k8sRunnerImage: string,
+    k8sRunnerImage: string;
     k8sRunnerPyImage: string
     k8sSequencesRoot: string;
     debug: boolean;
     docker: boolean;
-    k8sRunnerCleanupTimeout: string,
+    k8sRunnerCleanupTimeout: string;
     k8sRunnerResourcesRequestsCpu: string;
     k8sRunnerResourcesRequestsMemory: string;
     k8sRunnerResourcesLimitsCpu: string;

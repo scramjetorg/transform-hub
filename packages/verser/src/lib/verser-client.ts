@@ -13,6 +13,7 @@ const BPMux = require("bpmux").BPMux;
 
 type Events = {
     error: (err: Error) => void;
+    close: (reason: string) => void;
 };
 
 /**
@@ -79,6 +80,9 @@ export class VerserClient extends TypedEmitter<Events> {
         super();
 
         this.opts = opts;
+        this.opts.https ||= (this.opts.verserUrl instanceof URL
+            ? this.opts.verserUrl : new URL(this.opts.verserUrl)).protocol === "https:";
+
         this.httpAgent = this.opts.https ? new HttpsAgent() : new HttpAgent();
     }
 
@@ -89,8 +93,8 @@ export class VerserClient extends TypedEmitter<Events> {
      */
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
-            const { hostname, port, pathname } =
-                this.opts.verserUrl instanceof URL ? this.opts.verserUrl : new URL(this.opts.verserUrl);
+            const { hostname, port, pathname, href } = this.opts.verserUrl instanceof URL
+                ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
             const connectRequest = request({
                 agent: this.httpAgent,
@@ -98,6 +102,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 hostname,
                 method: "connect",
                 path: pathname,
+                href,
                 port,
                 protocol: this.opts.https ? "https:" : "http:",
                 ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
@@ -108,11 +113,12 @@ export class VerserClient extends TypedEmitter<Events> {
                 reject(err);
             });
 
-            connectRequest.on("connect", (req, socket) => {
+            connectRequest.once("connect", (res, socket, head) => {
+                this.logger.info("HEAD", head.toString());
                 this.socket = socket;
                 this.mux();
 
-                resolve({ req, socket });
+                resolve({ res, socket });
             });
 
             connectRequest.flushHeaders();

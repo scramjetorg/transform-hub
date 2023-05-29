@@ -19,7 +19,7 @@ export type OpOptions = { rawBody?: boolean };
 
 export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: ParsedMessage, res: ServerResponse, next: NextCallback) => void;
-export type Decorator = (req: IncomingMessage) => void;
+export type Decorator = (req: IncomingMessage) => MaybePromise<void>;
 
 /**
  * Configuration options for streaming endpoints

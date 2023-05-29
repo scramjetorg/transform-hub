@@ -1,0 +1,15 @@
+{
+    "host": {
+        "hostname": "0.0.0.0",
+        "port": 9000,
+        "instancesServerPort": 9001
+    },
+    "timings": {
+        "instanceLifetimeExtensionDelay": 10000
+    },
+    "cpmId": "",
+    "cpmUrl": "localhost:11000",
+    "platform": {
+        "token": ""
+    }
+}
