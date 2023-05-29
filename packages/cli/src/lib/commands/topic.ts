@@ -23,7 +23,7 @@ export const topic: CommandDefinition = (program) => {
     const topicNameArgument = new Argument("<topic-name>").argParser(validateTopicName);
     const contentTypeOption = new Option("-t, --content-type [content-type]", "Specifies type of data in topic")
         .choices(["text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream"])
-        .default("application/x-ndjson");
+        .default("text/plain");
 
     const topicCmd = program
         .command("topic")
@@ -59,7 +59,7 @@ export const topic: CommandDefinition = (program) => {
         .command("send")
         .addArgument(topicNameArgument)
         .argument("[file]")
-        .addOption(contentTypeOption.default("text/plain"))
+        .addOption(contentTypeOption)
         .description("Send data on topic from file, directory or directly through the console")
         .action(async (topicName, filename, { contentType }) => {
             await getHostClient().sendNamedData(

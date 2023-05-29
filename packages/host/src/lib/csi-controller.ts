@@ -455,7 +455,6 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.addSerializedLoggerSource(streams[CC.LOG]);
         }
 
-
         this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
             this.logger.error("Downstream error on channel", i, err);
         }));
