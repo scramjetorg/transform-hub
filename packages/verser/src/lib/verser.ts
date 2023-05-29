@@ -41,7 +41,7 @@ export class Verser extends TypedEmitter<Events> {
     }
 
     async disconnect() {
-        await Promise.all(this.connections.map(connection => connection.close()));
+        this.connections.map(connection => connection.close());
 
         this.connections = [];
     }
