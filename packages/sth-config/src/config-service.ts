@@ -9,6 +9,9 @@ const imageConfig = require("./image-config.json");
 const _defaultConfig: STHConfiguration = {
     logLevel: "TRACE",
     logColors: true,
+    customName: "",
+    description: "",
+    tags: [],
     cpmUrl: "",
     cpmId: "",
     cpm: {
