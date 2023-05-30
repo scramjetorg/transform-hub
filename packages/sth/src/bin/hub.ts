@@ -77,7 +77,6 @@ const options: OptionValues & STHCommandOptions = program
 (async () => {
     const configService = new ConfigService();
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
-    let tags: string[] = [];
 
     if (options.config) {
         const configFile = FileBuilder(options.config);
@@ -86,18 +85,19 @@ const options: OptionValues & STHCommandOptions = program
         const configContents = configFile.read() as DeepPartial<STHConfiguration>;
 
         configService.update(configContents);
-        tags = configContents.tags as string[];
     }
-    tags = options.tags.length ? options.tags.split(",") : [];
 
-    if (!tags.every((t:string) => t.length)) {
+    if (options.tags.length) {
+        configService.update({ tags: options.tags.split(",") });
+    }
+
+    if (!configService.getConfig().tags?.every((t:string) => t.length)) {
         throw new Error("Tags cannot be empty");
     }
 
     configService.update({
         description: options.description,
         customName: options.customName,
-        tags: tags,
         selfHosted: options.selfHosted,
         cpmUrl: options.cpmUrl,
         cpmId: options.cpmId,

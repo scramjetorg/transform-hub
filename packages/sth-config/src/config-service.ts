@@ -11,7 +11,7 @@ const _defaultConfig: STHConfiguration = {
     logColors: true,
     customName: "",
     description: "",
-    tags: [],
+    tags: ["e", "f"],
     cpmUrl: "",
     cpmId: "",
     cpm: {
