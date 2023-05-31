@@ -2,7 +2,20 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [0.35.0] - 2023-05-29
+## [0.34.1] - 2023-05-31
+
+## Fixed
+
+* Fix prerunner, runner image versions by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/871
+* Destroy verser connection by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/869
+* Check instance id by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/863
+* Fixed tags when starting sth with config file by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/872
+
+## Features
+
+* New Cli command that allows restarting instance by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/861
+
+## [0.34.0] - 2023-05-29
 
 ## Fixed
 

@@ -1114,6 +1114,8 @@ ___
 | `ended?` | `Date` |
 | `id` | [`InstanceId`](modules.md#instanceid) |
 | `ports?` | `Record`<`string`, `number`\> |
+| `provides?` | `string` |
+| `requires?` | `string` |
 | `sequence` | `string` |
 | `started?` | `Date` |
 | `status?` | [`InstanceStatus`](enums/InstanceStatus.md) |
