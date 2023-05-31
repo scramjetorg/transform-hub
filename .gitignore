@@ -157,5 +157,5 @@ bdd/timing-log.ndjson
 timing-log.ndjson
 .all-deps
 
-# sth config
-packages/sth/sth-config.json
+# private working directories
+/temp

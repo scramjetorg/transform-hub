@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { instanceKill } from "../helpers/instance";
+import { instanceKill, instanceRestart } from "../helpers/instance";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { getInstanceId, profileManager, sessionConfig } from "../config";
@@ -91,6 +91,16 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, timeout: string) =>
             displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true),
                 profileManager.getProfileConfig().format));
+
+    instanceCmd
+        .command("restart")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Kills the instance and start the new one from root sequence")
+        .action(async (id: string) => {
+            const instanceRestartResponse = await instanceRestart(id);
+
+            displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
+        });
 
     instanceCmd
         .command("input")

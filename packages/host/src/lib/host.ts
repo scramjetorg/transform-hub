@@ -851,6 +851,7 @@ export class Host implements IComponent {
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
+    // eslint-disable-next-line complexity
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
         if (await this.loadCheck.overloaded()) {
             return {
@@ -858,15 +859,28 @@ export class Host implements IComponent {
             };
         }
 
-        const id = req.params?.id as string;
+        const sequenceId = req.params?.id as string;
         const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
 
+        if (payload.instanceId) {
+            if (!IDProvider.isValid(payload.instanceId)) {
+                return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
+            }
+
+            if (this.instancesStore[payload.instanceId]) {
+                return {
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Instance with a given ID already exists"
+                };
+            }
+        }
+
         let sequence =
-            this.sequencesStore.get(id) ||
-            Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
+            this.sequencesStore.get(sequenceId) ||
+            Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === sequenceId);
 
         if (this.cpmConnector?.connected) {
-            sequence ||= await this.getExternalSequence(id).catch((error: ReasonPhrases) => {
+            sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
                 this.logger.error("Error getting sequence from external sources", error);
                 return undefined;
             });
@@ -885,7 +899,7 @@ export class Host implements IComponent {
                 id: csic.id,
                 appConfig: csic.appConfig,
                 args: csic.args,
-                sequence: id,
+                sequence: sequenceId,
                 ports: csic.info.ports,
                 created: csic.info.created,
                 started: csic.info.started,
