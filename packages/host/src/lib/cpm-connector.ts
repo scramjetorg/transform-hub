@@ -24,6 +24,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser/src/types";
+import { EOL } from "os";
 
 type STHInformation = {
     id?: string;
@@ -277,7 +278,11 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
-                const dropMessageCodes = [CPMMessageCode.KEY_REVOKED, CPMMessageCode.LIMIT_EXCEEDED, CPMMessageCode.ID_DROP];
+                const dropMessageCodes = [
+                    CPMMessageCode.KEY_REVOKED,
+                    CPMMessageCode.LIMIT_EXCEEDED,
+                    CPMMessageCode.ID_DROP
+                ];
 
                 if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
@@ -357,8 +362,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             return;
         }
-
-        this.logger.info("Connected...");
+        this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
