@@ -59,19 +59,17 @@ ___
 
 ### close
 
-▸ **close**(): `Promise`<`void`\>
+▸ **close**(): `void`
 
 Closes the connection by sending FIN packet.
 
 #### Returns
 
-`Promise`<`void`\>
-
-Promise resolving when connection is ended.
+`void`
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:244](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L244)
+[packages/verser/src/lib/verser-connection.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L242)
 
 ___
 
@@ -160,7 +158,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:255](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L255)
+[packages/verser/src/lib/verser-connection.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L249)
 
 ___
 
