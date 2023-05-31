@@ -24,7 +24,6 @@ const options: OptionValues & STHCommandOptions = program
     .option("-desc, --description <description>", "Specify sth description")
     .option("--custom-name <customName>", "Specify custom name")
     .option("--tags <tags>", "Specifies tags in the format \"tag1, tag2\"", "")
-    .option("-sh, --self-hosted", "Specifies if the hub is self hosted", true)
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
     .option("--no-colors", "Disable colors in output", false)
@@ -98,7 +97,6 @@ const options: OptionValues & STHCommandOptions = program
     configService.update({
         description: options.description,
         customName: options.customName,
-        selfHosted: options.selfHosted,
         cpmUrl: options.cpmUrl,
         cpmId: options.cpmId,
         cpmSslCaPath: options.cpmSslCaPath,

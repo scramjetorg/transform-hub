@@ -333,7 +333,6 @@ export class Host implements IComponent {
             const cpmHostName = this.config.platform?.api || this.config.cpmUrl;
             const cpmId = this.config.platform?.space || `:${this.config.cpmId}`;
             const cpmConnectorConfig : CPMConnectorOptions = {
-                selfHosted: this.config.selfHosted,
                 description: this.config.description,
                 tags: this.config.tags,
                 id: this.config.host.id,
@@ -361,8 +360,9 @@ export class Host implements IComponent {
 
         this.s3Client = new S3Client({
             host: `${this.config.cpmUrl}/api/v1`,
-            bucket: `cpm/${this.config.cpmId}/api/v1/s3`,
+            bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`,
         });
+
         this.s3Client.logger.pipe(this.logger);
     }
 
