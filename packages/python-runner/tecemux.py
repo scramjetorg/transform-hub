@@ -52,6 +52,20 @@ class Tecemux:
         _global_queue: asyncio.Queue
 
         _channel_paused: bool = False
+        _channel_opened: bool = False
+       
+        async def open(self):
+            channel_id = int(self._name.value)
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=channel_id,flags=['PSH'])).build().to_buffer())
+
+        async def close(self):
+            channel_id = int(self._name.value)
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=channel_id,flags=['FIN'])).build().to_buffer())
+
+        async def pause(self):
+            self._channel_paused = True
+            #channel_id = int(self._name.value)
+            #await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=channel_id,flags=['FIN'])).build().to_buffer())
 
 
         async def queue_up_incoming(self,buf):
@@ -60,10 +74,9 @@ class Tecemux:
             await self._writer.drain()
 
         async def queue_up_outcoming(self, data):
-
             def wrap(channel_enum, buf):
                 channel_id = int(channel_enum.value)
-                return IPPacket(src_addr='0.0.0.0',dst_addr='0.0.0.0',segment=TCPSegment(dst_port=channel_id,data=buf)).build().to_buffer()
+                return IPPacket(segment=TCPSegment(dst_port=channel_id,data=buf)).build().to_buffer()
 
             if self._channel_paused:
                 await self._queue.put(data)
@@ -82,6 +95,10 @@ class Tecemux:
             return await self._reader.read(len)
         
         async def write(self, data):
+
+            if not self._channel_opened:
+                await self.open()
+
             await self.queue_up_outcoming(data)
 
         async def drain(self):
@@ -135,15 +152,18 @@ class Tecemux:
         return self._channels[channel]
     
     async def stop(self):
+        for channel in self._channels.values():
+            await channel.close()
+            await channel._writer.drain()
+            channel._writer.close()
+            await channel._writer.wait_closed()
+
+
         await self._writer.drain()
         self._writer.close()
         await self._writer.wait_closed()
         self._global_stop_event.set()        
 
-        for channel in self._channels.values():            
-            await channel._writer.drain()
-            channel._writer.close()
-            await channel._writer.wait_closed()
 
 
     async def wait_until_end(self):
@@ -176,7 +196,8 @@ class Tecemux:
 
             buffer = buffer + chunk
 
-            if incoming_parser_finish_loop.is_set() and len(buffer) < MINIMAL_IP_PACKET_LENGTH:
+            buffer_len = len(buffer)
+            if incoming_parser_finish_loop.is_set() and buffer_len > 0 and buffer_len < MINIMAL_IP_PACKET_LENGTH:
                 self._logger.warning(f'Tecemux/MAIN: [<] Too few data is waiting in global buffer but stream finished')
                 break
             

@@ -136,8 +136,8 @@ class IPPacket:
     ttl: int = field(default=255)
     protocol: int = field(default=6)
     checksum: int = field(default = 0, repr = lambda value: hex(value))
-    src_addr: str = field(default='', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
-    dst_addr: str = field(default='', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
+    src_addr: str = field(default='0.0.0.0', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
+    dst_addr: str = field(default='0.0.0.0', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
     segment: TCPSegment = None
 
     def __attrs_post_init__(self):
