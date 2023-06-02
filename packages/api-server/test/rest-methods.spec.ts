@@ -52,7 +52,7 @@ skip("Get works on empty response", async t => {
     t.is(response.statusCode, 204, "No content");
 });
 
-noGHTest("Get works when we have content", async t => {
+test("Get works when we have content", async t => {
     const { request, response } = mockRequestResponse("GET", "/api/get");
 
     api.get("/api/get", RunnerMessageCode.MONITORING, comm);
