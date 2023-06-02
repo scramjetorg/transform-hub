@@ -5,7 +5,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 class Runner {
     options: RunnerOptions;
 
-    private readonly MOCK_MESSAGE: RunnerMessage = [ RunnerMessageCode.ALIVE, { healthy: true } ];
+    private readonly MOCK_MESSAGE: RunnerMessage = [RunnerMessageCode.ALIVE, { healthy: true }];
 
     private statusIntervalHandle: any;
 
