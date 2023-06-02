@@ -174,7 +174,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
                 ...(orgId ? { "x-org-id": orgId } : {}),
-                ...(sthKey ? { "Authorization": `Digest cnonce="${sthKey}"` } : {})
+                ...(sthKey ? { Authorization: `Digest cnonce="${sthKey}"` } : {})
             },
             server,
             https: this.isHttps
@@ -277,7 +277,11 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
-                const dropMessageCodes = [CPMMessageCode.KEY_REVOKED, CPMMessageCode.LIMIT_EXCEEDED, CPMMessageCode.ID_DROP];
+                const dropMessageCodes = [
+                    CPMMessageCode.KEY_REVOKED,
+                    CPMMessageCode.LIMIT_EXCEEDED,
+                    CPMMessageCode.ID_DROP
+                ];
 
                 if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
@@ -393,6 +397,8 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Handles connection close.
      * Tries to reconnect.
+     * 
+     * @param {number} connectionStatusCode - status code
      */
     async handleConnectionClose(connectionStatusCode: number) {
         this.handleCommunicationRequestEnd();

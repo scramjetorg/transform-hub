@@ -7,6 +7,7 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    HostProxy,
     IComponent,
     IObjectLogger,
     LogLevel,
@@ -140,10 +141,8 @@ export class Host implements IComponent {
      */
     s3Client?: S3Client;
 
-    private instanceProxy = {
-        onInstanceRequest: (socket: Duplex) => {
-            this.api.server.emit("connection", socket);
-        }
+    private instanceProxy: HostProxy = {
+        onInstanceRequest: (socket: Duplex) => {this.api.server.emit("connection", socket);},
     };
 
     /**

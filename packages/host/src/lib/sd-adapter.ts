@@ -62,10 +62,7 @@ function pipeToTopic(source: Readable, target: topicDataType) {
  * and requesting Manager when Instance requires data but data is not available locally.
  */
 export class ServiceDiscovery {
-    dataMap = new Map<
-        string,
-        topicDataType
-    >();
+    dataMap = new Map< string, topicDataType >();
 
     logger = new ObjLogger(this);
 
@@ -252,15 +249,18 @@ export class ServiceDiscovery {
 
     public async routeTopicToStream(topicData: dataType, target: Writable) {
         this.getData(topicData).pipe(target);
+        const data = { requires: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType };
 
-        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo(data);
     }
 
     public async routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
         const topic = this.addData(topicData, localProvider);
 
         pipeToTopic(source, topic);
-        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType });
+        const data = { provides: topicData.topic, topicName: topicData.topic, contentType: topicData.contentType };
+
+        await this.cpmConnector?.sendTopicInfo(data);
     }
 
     async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
