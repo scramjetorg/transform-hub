@@ -111,13 +111,10 @@ export class VerserClient extends TypedEmitter<Events> {
                 reject(err);
             });
 
-            connectRequest.once("connect", (res, socket, head) => {
-                this.logger.info("HEAD", head.toString());
             connectRequest.on("connect", (response, socket) => {
                 this.socket = socket;
                 this.mux();
 
-                resolve({ res, socket });
                 resolve({ response, socket });
             });
 
