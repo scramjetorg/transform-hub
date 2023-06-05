@@ -174,8 +174,8 @@ export class CPMConnector extends TypedEmitter<Events> {
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
                 "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
-                ...(orgId ? { "x-org-id": orgId } : {}),
-                ...(sthKey ? { "Authorization": `Digest cnonce="${sthKey}"` } : {})
+                ...orgId && { "x-org-id": orgId },
+                ...sthKey && { Authorization: `Digest cnonce="${sthKey}"` }
             },
             server,
             https: this.isHttps
@@ -397,6 +397,8 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Handles connection close.
      * Tries to reconnect.
+     * 
+     * @param {number} connectionStatusCode - status code
      */
     async handleConnectionClose(connectionStatusCode: number) {
         this.handleCommunicationRequestEnd();

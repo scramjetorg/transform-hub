@@ -96,17 +96,9 @@ export class CSIController extends TypedEmitter<Events> {
     args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
-    info: {
-        ports?: any;
-        created?: Date;
-        started?: Date;
-        ended?: Date;
-    } = {};
+    info: { ports?: any; created?: Date; started?: Date; ended?: Date; } = {};
     status: InstanceStatus;
-    terminated?: {
-        exitcode: number;
-        reason: string;
-    };
+    terminated?: { exitcode: number; reason: string; };
     provides?: string;
     requires?: string;
 
