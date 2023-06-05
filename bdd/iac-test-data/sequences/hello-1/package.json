@@ -2,7 +2,9 @@
   "name": "hello-1",
   "version": "1.0.0",
   "main": "index.js",
-  "engines": {"node": ">=16"},
+  "engines": {
+    "node": ">=16"
+  },
   "scripts": {
     "build": "si pack -o ../hello-1.tar.gz ."
   }

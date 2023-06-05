@@ -2,7 +2,8 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [0.34.2] - 2023-06-05
+
+## [0.34.3] and [0.34.2] - 2023-06-05
 
 ## ## Fixed
 
