@@ -3,7 +3,6 @@ import { STHConfiguration } from "./sth-configuration";
 export type CPMConnectorOptions = {
     id: STHConfiguration["host"]["id"];
     description: STHConfiguration["description"];
-    selfHosted: STHConfiguration["selfHosted"];
     tags: STHConfiguration["tags"];
     infoFilePath: STHConfiguration["host"]["infoFilePath"];
     cpmSslCaPath?: STHConfiguration["cpmSslCaPath"];
