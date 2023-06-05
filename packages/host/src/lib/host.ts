@@ -7,6 +7,8 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    CPMConnectorOptions,
+    HostProxy,
     IComponent,
     IObjectLogger,
     LogLevel,
@@ -140,10 +142,8 @@ export class Host implements IComponent {
      */
     s3Client?: S3Client;
 
-    private instanceProxy = {
-        onInstanceRequest: (socket: Duplex) => {
-            this.api.server.emit("connection", socket);
-        }
+    private instanceProxy: HostProxy = {
+        onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
     };
 
     /**
@@ -289,6 +289,7 @@ export class Host implements IComponent {
      * @param {HostOptions} identifyExisting Indicates if existing Instances should be identified.
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
+    // eslint-disable-next-line complexity
     async main(): Promise<void> {
         await this.setTelemetry().catch(() => {
             this.logger.error("Setting telemetry failed");
@@ -329,24 +330,22 @@ export class Host implements IComponent {
         await this.startListening();
 
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
-            this.cpmConnector = new CPMConnector(
-                this.config.platform?.api || this.config.cpmUrl,
-                this.config.platform?.space || (":" + this.config.cpmId),
-                {
-                    selfHosted: this.config.selfHosted,
-                    description: this.config.description,
-                    tags: this.config.tags,
-                    id: this.config.host.id,
-                    infoFilePath: this.config.host.infoFilePath,
-                    cpmSslCaPath: this.config.cpmSslCaPath,
-                    maxReconnections: this.config.cpm.maxReconnections,
-                    reconnectionDelay: this.config.cpm.reconnectionDelay,
-                    apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,
-                    apiVersion: this.config.platform?.apiVersion || "v1",
-                    hostType: this.config.platform?.hostType
-                },
-                this.api.server
-            );
+            const cpmHostName = this.config.platform?.api || this.config.cpmUrl;
+            const cpmId = this.config.platform?.space || `:${this.config.cpmId}`;
+            const cpmConnectorConfig : CPMConnectorOptions = {
+                description: this.config.description,
+                tags: this.config.tags,
+                id: this.config.host.id,
+                infoFilePath: this.config.host.infoFilePath,
+                cpmSslCaPath: this.config.cpmSslCaPath,
+                maxReconnections: this.config.cpm.maxReconnections,
+                reconnectionDelay: this.config.cpm.reconnectionDelay,
+                apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,
+                apiVersion: this.config.platform?.apiVersion || "v1",
+                hostType: this.config.platform?.hostType
+            };
+
+            this.cpmConnector = new CPMConnector(cpmHostName, cpmId, cpmConnectorConfig, this.api.server);
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
@@ -361,8 +360,9 @@ export class Host implements IComponent {
 
         this.s3Client = new S3Client({
             host: `${this.config.cpmUrl}/api/v1`,
-            bucket: `cpm/${this.config.cpmId}/api/v1/s3`,
+            bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`,
         });
+
         this.s3Client.logger.pipe(this.logger);
     }
 
