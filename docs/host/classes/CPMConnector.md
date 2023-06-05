@@ -84,7 +84,7 @@ Loaded certificate authority file for connecting to CPM via HTTPS
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L144)
+[packages/host/src/lib/cpm-connector.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L145)
 
 ___
 
@@ -96,7 +96,7 @@ Stream used to write data to Manager.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L70)
+[packages/host/src/lib/cpm-connector.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L71)
 
 ___
 
@@ -108,7 +108,7 @@ Connector options.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L56)
+[packages/host/src/lib/cpm-connector.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L57)
 
 ___
 
@@ -120,7 +120,7 @@ Connection status indicator.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L63)
+[packages/host/src/lib/cpm-connector.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L64)
 
 ___
 
@@ -132,7 +132,7 @@ Connection object.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L96)
+[packages/host/src/lib/cpm-connector.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L97)
 
 ___
 
@@ -144,7 +144,7 @@ Connection attempts counter.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L113)
+[packages/host/src/lib/cpm-connector.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L114)
 
 ___
 
@@ -156,7 +156,7 @@ Id of Manager (e.g. "cpm-1").
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L125)
+[packages/host/src/lib/cpm-connector.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L126)
 
 ___
 
@@ -168,7 +168,7 @@ Custom id indicator.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L84)
+[packages/host/src/lib/cpm-connector.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L85)
 
 ___
 
@@ -180,7 +180,7 @@ Host info object containing host id.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L91)
+[packages/host/src/lib/cpm-connector.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L92)
 
 ___
 
@@ -192,7 +192,7 @@ Message of impending abandonment received.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L118)
+[packages/host/src/lib/cpm-connector.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L119)
 
 ___
 
@@ -204,7 +204,7 @@ Indicator for reconnection state.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L101)
+[packages/host/src/lib/cpm-connector.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L102)
 
 ___
 
@@ -216,7 +216,7 @@ Load check instance to be used to get load check data.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L49)
+[packages/host/src/lib/cpm-connector.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L50)
 
 ___
 
@@ -228,7 +228,7 @@ Reference for method called in interval and sending load check data to the Manag
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L139)
+[packages/host/src/lib/cpm-connector.ts:140](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L140)
 
 ___
 
@@ -240,7 +240,7 @@ Logger.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L77)
+[packages/host/src/lib/cpm-connector.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L78)
 
 ___
 
@@ -252,7 +252,7 @@ VerserClient Instance used for connecting with Verser.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L132)
+[packages/host/src/lib/cpm-connector.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L133)
 
 ___
 
@@ -264,7 +264,7 @@ True if connection to Manager has been established at least once.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L106)
+[packages/host/src/lib/cpm-connector.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L107)
 
 ## Methods
 
@@ -316,7 +316,7 @@ Promise that resolves when connection is established.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:334](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L334)
+[packages/host/src/lib/cpm-connector.ts:339](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L339)
 
 ___
 
@@ -379,7 +379,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:322](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L322)
+[packages/host/src/lib/cpm-connector.ts:327](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L327)
 
 ___
 
@@ -397,7 +397,7 @@ Host id.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L228)
+[packages/host/src/lib/cpm-connector.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L229)
 
 ___
 
@@ -415,7 +415,7 @@ Promise<LoadCheckStatMessage> Promise resolving to LoadCheckStatMessage object.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:499](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L499)
+[packages/host/src/lib/cpm-connector.ts:505](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L505)
 
 ___
 
@@ -451,7 +451,7 @@ Promise resolving to NetworkInfo object.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:455](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L455)
+[packages/host/src/lib/cpm-connector.ts:461](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L461)
 
 ___
 
@@ -471,7 +471,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:623](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L623)
+[packages/host/src/lib/cpm-connector.ts:629](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L629)
 
 ___
 
@@ -495,7 +495,7 @@ Promise resolving to `ReadableStream<any>` with topic data.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:612](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L612)
+[packages/host/src/lib/cpm-connector.ts:618](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L618)
 
 ___
 
@@ -516,7 +516,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:248](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L248)
+[packages/host/src/lib/cpm-connector.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L249)
 
 ___
 
@@ -530,7 +530,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L238)
+[packages/host/src/lib/cpm-connector.ts:239](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L239)
 
 ___
 
@@ -543,9 +543,9 @@ Tries to reconnect.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `connectionStatusCode` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `connectionStatusCode` | `number` | status code |
 
 #### Returns
 
@@ -553,7 +553,7 @@ Tries to reconnect.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:397](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L397)
+[packages/host/src/lib/cpm-connector.ts:403](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L403)
 
 ___
 
@@ -569,7 +569,7 @@ Initializes connector.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:235](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L235)
+[packages/host/src/lib/cpm-connector.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L236)
 
 ___
 
@@ -830,7 +830,7 @@ Reconnects to Manager if maximum number of connection attempts is not reached.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:423](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L423)
+[packages/host/src/lib/cpm-connector.ts:429](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L429)
 
 ___
 
@@ -914,7 +914,7 @@ Sends Instance information to Manager via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:564](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L564)
+[packages/host/src/lib/cpm-connector.ts:570](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L570)
 
 ___
 
@@ -936,7 +936,7 @@ Sends list of Sequences to Manager via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:532](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L532)
+[packages/host/src/lib/cpm-connector.ts:538](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L538)
 
 ___
 
@@ -950,7 +950,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:471](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L471)
+[packages/host/src/lib/cpm-connector.ts:477](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L477)
 
 ___
 
@@ -973,7 +973,7 @@ Sends Sequence status to Manager via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:548](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L548)
+[packages/host/src/lib/cpm-connector.ts:554](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L554)
 
 ___
 
@@ -995,7 +995,7 @@ Sends list of sequence to Manager via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:517](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L517)
+[packages/host/src/lib/cpm-connector.ts:523](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L523)
 
 ___
 
@@ -1022,7 +1022,7 @@ Topic information is send via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:580](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L580)
+[packages/host/src/lib/cpm-connector.ts:586](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L586)
 
 ___
 
@@ -1042,7 +1042,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:586](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L586)
+[packages/host/src/lib/cpm-connector.ts:592](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L592)
 
 ___
 
@@ -1064,7 +1064,7 @@ Sets up load check object to be used to get load check data.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:219](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L219)
+[packages/host/src/lib/cpm-connector.ts:220](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L220)
 
 ___
 
@@ -1080,7 +1080,7 @@ Sets up a method sending load check data and to be called with interval
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:486](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L486)
+[packages/host/src/lib/cpm-connector.ts:492](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L492)
 
 ___
 
@@ -1127,4 +1127,4 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L153)
+[packages/host/src/lib/cpm-connector.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L154)

@@ -444,7 +444,6 @@ ___
 | `infoFilePath` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"infoFilePath"``] |
 | `maxReconnections` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpm"``][``"maxReconnections"``] |
 | `reconnectionDelay` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpm"``][``"reconnectionDelay"``] |
-| `selfHosted` | [`STHConfiguration`](modules.md#sthconfiguration)[``"selfHosted"``] |
 | `tags` | [`STHConfiguration`](modules.md#sthconfiguration)[``"tags"``] |
 
 #### Defined in
@@ -2093,7 +2092,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:276](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L276)
+[packages/types/src/sth-configuration.ts:272](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L272)
 
 ___
 
@@ -2345,7 +2344,6 @@ ___
 | `platform.space` | `string` | - |
 | `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes', 'detect' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. In megabytes. |
-| `selfHosted?` | `boolean` | Is STH self hosted? |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
 | `startupConfig` | `string` | Provides the location of a config file with the list of sequences to be started along with the host |
 | `tags?` | `string`[] | User assigned tags |

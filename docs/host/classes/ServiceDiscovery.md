@@ -56,7 +56,7 @@ added topic data.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:146](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L146)
+[packages/host/src/lib/sd-adapter.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L143)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L80)
+[packages/host/src/lib/sd-adapter.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L77)
 
 ___
 
@@ -94,7 +94,7 @@ Topic details.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L185)
+[packages/host/src/lib/sd-adapter.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L182)
 
 ___
 
@@ -120,7 +120,7 @@ Topic stream.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:214](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L214)
+[packages/host/src/lib/sd-adapter.ts:211](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L211)
 
 ___
 
@@ -138,7 +138,7 @@ All topics.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:170](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L170)
+[packages/host/src/lib/sd-adapter.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L167)
 
 ___
 
@@ -160,7 +160,7 @@ Removes store topic with given id.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L245)
+[packages/host/src/lib/sd-adapter.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L242)
 
 ___
 
@@ -182,7 +182,7 @@ Unsets local provider for given topic.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:198](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L198)
+[packages/host/src/lib/sd-adapter.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L195)
 
 ___
 
@@ -204,7 +204,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:259](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L259)
+[packages/host/src/lib/sd-adapter.ts:257](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L257)
 
 ___
 
@@ -225,7 +225,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:253](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L253)
+[packages/host/src/lib/sd-adapter.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L250)
 
 ___
 
@@ -247,7 +247,7 @@ Sets the CPM connector.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L135)
+[packages/host/src/lib/sd-adapter.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L132)
 
 ___
 
@@ -281,7 +281,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L76)
+[packages/host/src/lib/sd-adapter.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L73)
 
 ## Properties
 
@@ -291,7 +291,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L72)
+[packages/host/src/lib/sd-adapter.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L69)
 
 ___
 
@@ -311,7 +311,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L70)
+[packages/host/src/lib/sd-adapter.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L67)
 
 ___
 
@@ -321,4 +321,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L74)
+[packages/host/src/lib/sd-adapter.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L71)
