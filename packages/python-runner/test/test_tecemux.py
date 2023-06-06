@@ -33,6 +33,7 @@ class TestTecemux:
     def test_default_init(self):
         protocol = Tecemux()
         assert isinstance(protocol, Tecemux)
+        assert protocol._sequence_number == 0
 
     @pytest.mark.asyncio
     async def test_socket_connection(self):
@@ -46,7 +47,7 @@ class TestTecemux:
 
         assert isinstance(protocol._reader,_StreamReader)
         assert isinstance(protocol._writer,_StreamWriter)
-
+        assert protocol._sequence_number > 0
 
     @pytest.mark.asyncio
     async def test_forward_from_main_to_channel(self, local_socket_connection):
@@ -55,7 +56,7 @@ class TestTecemux:
         data_to_send ="{'foo':'bar'}"
         destination_channel = CC.CONTROL
         
-        pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=int(destination_channel.value),flags=['ACK'],data=data_to_send))
+        pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=int(destination_channel.value),flags=['PSH'],data=data_to_send))
         
         client_a._writer.write(pkt.to_buffer())
         await client_a._writer.drain()

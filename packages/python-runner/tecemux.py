@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 import socket
 
 from attrs import define, field
@@ -64,33 +65,38 @@ class _ChannelContext:
 
     def _get_channel_id(self):
         return int(self._channel_enum.value)
+    
+    async def send_ACK(self, sequence_number):
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'], ack=sequence_number)))
+    
+    async def _send_pause_ACK(self, sequence_number):
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK','SYN'], ack=sequence_number)))
 
     async def open(self):
         self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel opening request is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['PSH'])).build().to_buffer())
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['PSH'])))
 
     async def close(self):
         self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['FIN'])).build().to_buffer())
-
-    async def pause(self):
-        self._channel_paused = True
-        self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel pause confirmation is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'])).build().to_buffer())
-
-    async def resume(self):
-        self._channel_paused = False
-        self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel resume confirmation is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'])).build().to_buffer())
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['FIN'])))
 
     async def queue_up_incoming(self, buf):
         pkt = IPPacket().from_buffer(buf)
 
+        #if SYN & ACK flag is up, pause channel
         if pkt.segment.is_flag('SYN') and pkt.segment.is_flag('ACK'):
             self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel pause request received')
-            await self.pause()
+            self.set_pause(True)
+            await self.send_ACK(pkt.segment.seq)
             return
-
+        
+        #if SYN is down & ACK flag is up, reasume channel
+        if not pkt.segment.is_flag('SYN') and pkt.segment.is_flag('ACK'):
+            self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel reasume request received')
+            self.set_pause(False)
+            await self.send_ACK(pkt.segment.seq)
+            return
+        
         self._writer.write(pkt.get_segment().data)
         await self._writer.drain()
 
@@ -98,7 +104,7 @@ class _ChannelContext:
 
         def wrap(channel_enum, buf):
             channel_id = int(channel_enum.value)
-            return IPPacket(segment=TCPSegment(dst_port=channel_id, data=buf)).build().to_buffer()
+            return IPPacket(segment=TCPSegment(dst_port=channel_id, data=buf))
 
         if self._channel_paused:
             self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel paused. Data queued up internally for future')
@@ -145,10 +151,14 @@ class Tecemux:
     _channels: dict = field(default={})
     _logger: logging.Logger = field(default=None)
     _global_stop_event: asyncio.Event = asyncio.Event()
+    _sequence_number: int  = field(default=0)
+    _last_sequence_received: int = field(default=0)
+    
 
     async def connect(self, reader, writer):
         self._reader = reader
         self._writer = writer
+        self._sequence_number = abs(int((random.random() * (2 ** 32)) / 2))
         self._global_stop_event.clear()
 
     @staticmethod
@@ -171,6 +181,12 @@ class Tecemux:
 
     def get_channel(self, channel):
         return self._channels[channel]
+    
+    def get_channel_reader(self, channel):
+        return self.get_channel(channel).reader
+
+    def get_channel_writer(self, channel):
+        return self.get_channel(channel).writer
     
     @staticmethod
     def _chunk_preview(value):
@@ -230,12 +246,13 @@ class Tecemux:
 
                 if len(buffer) >= current_packet_size:
 
-                    self._logger.debug(f'Tecemux/MAIN: [<] Full incomming packet from Transform Hub was received')
-
                     single_packet_buffer = buffer[:current_packet_size]
                     pkt = IPPacket().from_buffer(single_packet_buffer)
-                    channel = CC(str(pkt.get_segment().dst_port))
+                    self._last_sequence_received = pkt.get_segment().seq                    
+                    self._logger.debug(f'Tecemux/MAIN: [<] Full incomming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
 
+                    channel = CC(str(pkt.get_segment().dst_port))
+                    
                     await self._channels[channel].queue_up_incoming(single_packet_buffer)
 
                     self._logger.debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel.name} stream')
@@ -249,12 +266,21 @@ class Tecemux:
     async def outcoming_data_forward(self):
         while not self._global_stop_event.is_set():
             try:
-                chunk = self._queue.get_nowait()
+                pkt = self._queue.get_nowait()
+
+                #inject sequence number
+                if pkt.segment.seq == 0:
+                    pkt.segment.seq = self._sequence_number
+                    self._sequence_number += 1
+
+                #calc cheksum
+                chunk = pkt.build().to_buffer()
+
                 self._logger.debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)} is waiting to send to Transform Hub')
                 self._writer.write(chunk)
                 await self._writer.drain()
                 self._queue.task_done()
-                self._logger.debug(f'Tecemux/MAIN: [>] Chunk {Tecemux._chunk_preview(chunk)} was sent to Transform Hub')
+                self._logger.debug(f'Tecemux/MAIN: [>] Chunk {Tecemux._chunk_preview(chunk)} with sequence number: {pkt.segment.seq} was sent to Transform Hub')
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0)
 
