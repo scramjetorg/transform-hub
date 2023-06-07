@@ -17,17 +17,26 @@ class _StreamReader:
     def __getattr__(self, name):
         return getattr(self._stream, name)
 
-    async def readline(self):
-        return await self._stream.readline()
+    def readline(self):
+        return self._stream.readline()
 
-    async def readuntil(self, separator=b'\n'):
-        return await self._stream.readuntil(separator)
+    def readuntil(self, separator=b'\n'):
+        return self._stream.readuntil(separator)
 
-    async def read(self, n=-1):
-        return await self._stream.read(n)
+    def read(self, n=-1):
+        return self._stream.read(n)
 
-    async def readexactly(self, n):
-        return await self._stream.readexactly(n)
+    def readexactly(self, n):
+        return self._stream.readexactly(n)
+    
+    def __aiter__(self):
+        return self._stream.__aiter__
+
+    async def __anext__(self):
+        val = await self._readline()
+        if val == b'':
+            raise StopAsyncIteration
+        return val
 
 
 class _StreamWriter:
@@ -38,11 +47,11 @@ class _StreamWriter:
     def __getattr__(self, name):
         return getattr(self._stream, name)
 
-    async def wait_closed(self):
-        return await self._stream.wait_closed()
+    def wait_closed(self):
+        return self._stream.wait_closed()
 
-    async def drain(self):
-        return await self._stream.drain()
+    def drain(self):
+        return self._stream.drain()
 
 
 @define

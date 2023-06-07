@@ -3,6 +3,7 @@ import sys
 import os
 import codecs
 import json
+import pydevd
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -13,7 +14,16 @@ from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
-USE_TECEMUX = os.getenv('USE_TECEMUX') or True
+
+if bool(os.environ.get('DEVELOPMENT')):
+    import time
+    while pydevd.get_global_debugger() is None or not pydevd.get_global_debugger().ready_to_run:
+        time.sleep(0.3)
+
+def debugger():
+    pydevd.settrace()
+
+USE_TECEMUX = True
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -25,6 +35,7 @@ def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
     stream.write(f'{message}\r\n'.encode())
 
+debugger()
 
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
@@ -64,9 +75,10 @@ class Runner:
         self.logger.info('Connecting to host with TeceMux...')
         self.protocol = Tecemux()
         await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
+        await self.protocol.prepare()
 
         self.streams = {
-            channel: self.protocol.get_channel_reader(channel) if Runner.is_incoming(channel) else self.protocol.get_channel_writer(channel)
+            channel: self.protocol._channels[channel]._reader if Runner.is_incoming(channel) else self.protocol._channels[channel]._writer 
             for channel in self.protocol._channels
         }
 
@@ -257,6 +269,7 @@ class Runner:
         elif input_type == 'application/octet-stream':
             self.logger.debug('Opening input in binary mode...')
             input = Stream.read_from(self.streams[CC.IN], chunk_size=CHUNK_SIZE)
+
         else:
             raise TypeError(f'Unsupported input type: {repr(input_type)}')
 

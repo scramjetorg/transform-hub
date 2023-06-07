@@ -1,8 +1,14 @@
 import pytest
+import sys
 from tecemux import Tecemux, _StreamReader,_StreamWriter
 from inet import IPPacket,TCPSegment
+from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
-from runner_tecemux import get_logger
+
+def get_logger():
+    if not hasattr(get_logger, "log_setup"):
+        get_logger.log_setup = LoggingSetup(sys.stdout)
+    return get_logger.log_setup.logger
 
 
 @pytest.fixture()
