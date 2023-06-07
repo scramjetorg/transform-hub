@@ -4,6 +4,7 @@ import os
 import codecs
 import json
 from pyee.asyncio import AsyncIOEventEmitter
+from tecemux import Tecemux
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 import types
@@ -12,6 +13,7 @@ from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
+USE_TECEMUX = os.getenv('USE_TECEMUX') or True
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -34,11 +36,17 @@ class Runner:
         self.health_check = lambda: {'healthy': True}
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
-
-
+        self.protocol = None
+        self.streams = {}
+    @staticmethod
+    def is_incoming(channel):
+        return channel in [CC.STDIN, CC.IN, CC.CONTROL]
+            
     async def main(self, server_host, server_port):
-        self.logger.info('Connecting to host...')
-        await self.init_connections(server_host, server_port)
+        if USE_TECEMUX:
+            await self.init_tecemux(server_host, server_port)
+        else:
+            await self.init_legacy_connections(server_host, server_port)
 
         # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
@@ -52,8 +60,18 @@ class Runner:
         self.load_sequence()
         await self.run_instance(config, args)
 
+    async def init_tecemux(self, server_host, server_port):
+        self.logger.info('Connecting to host with TeceMux...')
+        self.protocol = Tecemux()
+        await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
 
-    async def init_connections(self, host, port):
+        self.streams = {
+            channel: self.protocol.get_channel_reader(channel) if Runner.is_incoming(channel) else self.protocol.get_channel_writer(channel)
+            for channel in self.protocol._channels
+        }
+
+    async def init_legacy_connections(self, host, port):
+        self.logger.info('Connecting to host with legacy method...')
         async def connect(channel):
             self.logger.debug(f'Connecting to {host}:{port}...')
             reader, writer = await asyncio.open_connection(host, port)
@@ -69,12 +87,9 @@ class Runner:
         conn_futures = [connect(channel) for channel in CC]
         connections = await asyncio.gather(*conn_futures)
 
-        def is_incoming(channel):
-            return channel in [CC.STDIN, CC.IN, CC.CONTROL]
-
         # Pick read or write stream depending on channel.
         self.streams = {
-            channel: reader if is_incoming(channel) else writer
+            channel: reader if Runner.is_incoming(channel) else writer
             for channel, reader, writer in connections
         }
 
