@@ -23,17 +23,16 @@ if bool(os.environ.get('DEVELOPMENT')):
 def debugger():
     pydevd.settrace()
 
-USE_TECEMUX = True
-
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 instance_id = os.getenv('INSTANCE_ID')
 
 
-def send_encoded_msg(stream, msg_code, data={}):
+async def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
-    stream.write(f'{message}\r\n'.encode())
+    await stream.write(f'{message}\r\n'.encode())
+    await stream.drain()
 
 debugger()
 
@@ -54,10 +53,8 @@ class Runner:
         return channel in [CC.STDIN, CC.IN, CC.CONTROL]
             
     async def main(self, server_host, server_port):
-        if USE_TECEMUX:
-            await self.init_tecemux(server_host, server_port)
-        else:
-            await self.init_legacy_connections(server_host, server_port)
+
+        await self.init_tecemux(server_host, server_port)
 
         # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
@@ -76,35 +73,9 @@ class Runner:
         self.protocol = Tecemux()
         await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
         await self.protocol.prepare()
+        await self.protocol.loop()
 
-        self.streams = {
-            channel: self.protocol._channels[channel]._reader if Runner.is_incoming(channel) else self.protocol._channels[channel]._writer 
-            for channel in self.protocol._channels
-        }
-
-    async def init_legacy_connections(self, host, port):
-        self.logger.info('Connecting to host with legacy method...')
-        async def connect(channel):
-            self.logger.debug(f'Connecting to {host}:{port}...')
-            reader, writer = await asyncio.open_connection(host, port)
-            self.logger.debug('Connected.')
-
-            writer.write(self.instance_id.encode())
-            writer.write(channel.value.encode())
-            await writer.drain()
-            self.logger.debug(f'Sent ID {self.instance_id} on {channel.name}.')
-
-            return (channel, reader, writer)
-
-        conn_futures = [connect(channel) for channel in CC]
-        connections = await asyncio.gather(*conn_futures)
-
-        # Pick read or write stream depending on channel.
-        self.streams = {
-            channel: reader if Runner.is_incoming(channel) else writer
-            for channel, reader, writer in connections
-        }
-
+        self.streams = self.protocol._channels
 
     def connect_stdio(self):
         sys.stdout = codecs.getwriter('utf-8')(self.streams[CC.STDOUT])
@@ -121,17 +92,22 @@ class Runner:
         log_stream = codecs.getwriter('utf-8')(self.streams[CC.LOG])
         self._logging_setup.switch_target(log_stream)
         self._logging_setup.flush_temp_handler()
-        self.logger.info('Log stream connected.')
 
+        self.protocol.set_logger(self.logger)
+        
+        for channel in self.protocol._channels.values():
+            channel._set_logger(self.logger)
+
+        self.logger.info('Log stream connected.')
 
     async def handshake(self):
         monitoring = self.streams[CC.MONITORING]
         control = self.streams[CC.CONTROL]
 
         self.logger.info(f'Sending PING')
-        send_encoded_msg(monitoring, msg_codes.PING)
+        await send_encoded_msg(monitoring, msg_codes.PING)
 
-        message = await control.readuntil(b'\n')
+        message = await control.read(8)
         self.logger.info(f'Got message: {message}')
         code, data = json.loads(message.decode())
 
@@ -147,7 +123,7 @@ class Runner:
             'requires': '',
             'contentType': ''
         }
-        send_encoded_msg(monitoring, msg_codes.PANG, pang_requires_data)
+        await send_encoded_msg(monitoring, msg_codes.PANG, pang_requires_data)
 
         if code == msg_codes.PONG.value:
             self.logger.info(f'Got configuration: {data}')
@@ -169,7 +145,7 @@ class Runner:
             if code == msg_codes.STOP.value:
                 await self.handle_stop(data)
             if code == msg_codes.EVENT.value:
-                self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
+                await self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
 
 
     async def handle_stop(self, data):
@@ -182,10 +158,10 @@ class Runner:
                 await handler(timeout, can_keep_alive)
         except Exception as e:
             self.logger.error('Error stopping sequence', e)
-            send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
+            await send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
 
         if not can_keep_alive or not self.keep_alive_requested:
-            send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
+            await send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
             self.exit_immediately()
 
         await self.cleanup()
@@ -193,7 +169,7 @@ class Runner:
 
     async def setup_heartbeat(self):
         while True:
-            send_encoded_msg(
+            await send_encoded_msg(
                 self.streams[CC.MONITORING],
                 msg_codes.MONITORING,
                 self.health_check(),
@@ -228,12 +204,12 @@ class Runner:
         produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
-            send_encoded_msg(monitoring, msg_codes.PANG, produces)
+            await send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
         consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
-            send_encoded_msg(monitoring, msg_codes.PANG, consumes)
+            await send_encoded_msg(monitoring, msg_codes.PANG, consumes)
 
         if isinstance(result, types.AsyncGeneratorType):
             result = Stream.read_from(result)
@@ -301,7 +277,7 @@ class Runner:
     
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
         monitoring = self.streams[CC.MONITORING]
-        send_encoded_msg(monitoring, msg_codes.ALIVE)
+        await send_encoded_msg(monitoring, msg_codes.ALIVE)
         self.keep_alive_requested = True
         await asyncio.sleep(timeout)
 
@@ -327,8 +303,8 @@ class AppContext:
     def on(self, event_name, callback):
         self.emitter.on(event_name, callback)
 
-    def emit(self, event_name, message=''):
-        send_encoded_msg(
+    async def emit(self, event_name, message=''):
+        await send_encoded_msg(
             self.monitoring,
             msg_codes.EVENT,
             {'eventName': event_name, 'message': message}

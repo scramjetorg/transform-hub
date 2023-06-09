@@ -28,15 +28,6 @@ class _StreamReader:
 
     def readexactly(self, n):
         return self._stream.readexactly(n)
-    
-    def __aiter__(self):
-        return self._stream.__aiter__
-
-    async def __anext__(self):
-        val = await self._readline()
-        if val == b'':
-            raise StopAsyncIteration
-        return val
 
 
 class _StreamWriter:
@@ -66,6 +57,15 @@ class _ChannelContext:
     _channel_paused: bool = field(default=False, init=False)
     _channel_opened: bool = field(default=False, init=False)
 
+    def __aiter__(self):
+        return self._reader._stream.__aiter__
+
+    async def __anext__(self):
+        val = await self._reader._stream.readline()
+        if val == b'':
+            raise StopAsyncIteration
+        return val
+    
     def __attrs_post_init__(self):
         self._internal_queue = asyncio.Queue()
 
@@ -74,6 +74,9 @@ class _ChannelContext:
 
     def _get_channel_id(self):
         return int(self._channel_enum.value)
+
+    def _set_logger(self, logger):
+        self._logger = logger
     
     async def send_ACK(self, sequence_number):
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'], ack=sequence_number)))
@@ -82,7 +85,7 @@ class _ChannelContext:
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK','SYN'], ack=sequence_number)))
 
     async def open(self):
-        self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel opening request is send')
+        #self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel opening request is send')
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['PSH'])))
 
     async def close(self):
@@ -128,8 +131,11 @@ class _ChannelContext:
                     break
         await self._global_queue.put(wrap(self._channel_enum, data))
 
-    async def read(self, len):
-        return await self._reader.read(len)
+    def read(self, len):
+        return self._reader.read(len)
+    
+    def readuntil(self, separator=b'\n'):
+        return self._reader.readuntil(separator)
 
     async def write(self, data):
 

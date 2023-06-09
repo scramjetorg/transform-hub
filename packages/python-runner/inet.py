@@ -6,6 +6,20 @@ from attrs import define,field
 
 @define
 class TCPSegment:
+    class Options:
+        EOL = 0
+        NOP = 1
+        MSS = 2
+        WSOPT= 3
+        SACKPERM = 4
+        SACK = 5
+        TSOPT = 8
+
+        @staticmethod
+        def parse_options(val):
+            return val
+        
+        
     class Flags:
         FIN = 0x01 # end of data
         SYN = 0x02 # synchronize sequence numbers
@@ -66,10 +80,20 @@ class TCPSegment:
     data: bytes = field(default=b'', repr = lambda value: f'{value[0:5]}... <len:{len(value)}>' \
                         if len(value)>5 else f'{value}')
 
+    opt: bytes = field(default=b'', converter = lambda value: TCPSegment.Options.parse_options(value))
+
     @classmethod
     def from_buffer(cls,buffer):
-        return cls(*struct.unpack("!HHIIBBHHH", buffer[0:20]), buffer[20:])
-    
+        TCP_MIN = 20
+        src_port, dst_port, seq, ack, offres, flags, win, checksum, urp = struct.unpack("!HHIIBBHHH", buffer[0:TCP_MIN])
+        hdr_len = (offres >> 4) * 4
+
+        if hdr_len <= TCP_MIN: 
+            return cls(src_port, dst_port, seq, ack, offres, flags, win, checksum, urp, buffer[TCP_MIN:], b'')
+
+        if hdr_len > TCP_MIN:
+            return cls(src_port, dst_port, seq, ack, offres, flags, win, checksum, urp, buffer[hdr_len:],buffer[TCP_MIN:hdr_len])
+
         
     def to_buffer(self):
         return struct.pack('!HHIIBBHHH', \
@@ -136,8 +160,8 @@ class IPPacket:
     ttl: int = field(default=255)
     protocol: int = field(default=6)
     checksum: int = field(default = 0, repr = lambda value: hex(value))
-    src_addr: str = field(default='0.0.0.0', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
-    dst_addr: str = field(default='0.0.0.0', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
+    src_addr: str = field(default='10.0.0.1', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
+    dst_addr: str = field(default='10.0.0.2', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
     segment: TCPSegment = None
 
     def __attrs_post_init__(self):
