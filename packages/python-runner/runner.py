@@ -70,7 +70,7 @@ class Runner:
 
     async def init_tecemux(self, server_host, server_port):
         self.logger.info('Connecting to host with TeceMux...')
-        self.protocol = Tecemux()
+        self.protocol = Tecemux(instance_id=self.instance_id)
         await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
         await self.protocol.prepare()
         await self.protocol.loop()

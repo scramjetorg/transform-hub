@@ -48,11 +48,14 @@ class _StreamWriter:
 @define
 class _ChannelContext:
     _channel_enum: CC
+    
     _reader: _StreamReader
     _writer: _StreamWriter
+    
     _global_queue: asyncio.Queue
-    _logger: logging.Logger = field(default=None)
+    _global_instance_id: str
 
+    _logger: logging.Logger = field(default=None)
     _internal_queue: asyncio.Queue = field(init=False)
     _channel_paused: bool = field(default=False, init=False)
     _channel_opened: bool = field(default=False, init=False)
@@ -86,11 +89,11 @@ class _ChannelContext:
 
     async def open(self):
         #self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel opening request is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['PSH'])))
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['PSH'])))
 
     async def close(self):
         self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['FIN'])))
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['FIN'])))
 
     async def queue_up_incoming(self, buf):
         pkt = IPPacket().from_buffer(buf)
@@ -163,13 +166,13 @@ class Tecemux:
     _incoming_data_forwarder: asyncio.coroutine = field(default=None)
     _outcoming_data_forwarder: asyncio.coroutine = field(default=None)
 
+    _instance_id: str = field(default=None)
     _channels: dict = field(default={})
     _logger: logging.Logger = field(default=None)
     _global_stop_event: asyncio.Event = asyncio.Event()
     _sequence_number: int  = field(default=0)
     _last_sequence_received: int = field(default=0)
     
-
     async def connect(self, reader, writer):
         self._reader = reader
         self._writer = writer
@@ -189,7 +192,7 @@ class Tecemux:
 
     async def prepare(self):
         self._queue = asyncio.Queue()
-        self._channels = {channel: _ChannelContext(channel, *await Tecemux.prepare_socket_connection(), self._queue, self._logger) for channel in CC}
+        self._channels = {channel: _ChannelContext(channel, *await Tecemux.prepare_socket_connection(), self._queue, self._instance_id ,self._logger) for channel in CC}
 
     def set_logger(self, logger):
         self._logger = logger

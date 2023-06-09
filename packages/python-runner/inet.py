@@ -149,15 +149,15 @@ class IPPacket:
             return res
         
     ihl: int = 5
-    version: int = field( default=4, converter = lambda value: value >> 4)
+    version: int = field( default=69, converter = lambda value: value >> 4)
     tos: int = field(default=0)
     len: int = field(default=0)
-    ids: int = field(default=0)
+    ids: int = field(default=1)
     flags_offset: int = field(default = 0)
     flags: int = field(default = 0, init= False, repr = lambda value: IPPacket.Flags.flags_to_str(value), \
                        converter = lambda value: IPPacket.Flags.parse_flags(value))
     offset: int = field(default = 0, init=False)
-    ttl: int = field(default=255)
+    ttl: int = field(default=64)
     protocol: int = field(default=6)
     checksum: int = field(default = 0, repr = lambda value: hex(value))
     src_addr: str = field(default='10.0.0.1', converter = lambda value: inet_ntoa(value) if isinstance(value,bytes) else value)
