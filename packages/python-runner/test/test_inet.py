@@ -1,5 +1,8 @@
 import pytest
-from inet import TCPSegment, IPPacket, EthernetFrame
+from inet import TCPSegment, IPPacket, EthernetFrame, USE_BIGENDIAN
+
+
+USE_BIGENDIAN()
 
 class TestIP:
     def test_mf_df_flags(self):
@@ -142,3 +145,18 @@ class TestTCP:
         assert pkt.len == 53
         assert pkt.get_segment().data == b"{'foo':'bar'}"
 
+    def test_prepare_valid_tcp_with_PSH(self):
+        pkt = IPPacket()
+        pkt.segment = TCPSegment(flags=['PSH'],src_port=0, dst_port=3)
+
+        a = pkt.build()
+        a_raw = a.to_buffer()
+        from scapy.all import TCP, IP
+        b = IP((IP(src='10.0.0.1', dst='10.0.0.2')/TCP(sport=0,dport=3, flags=['P'])).build())
+        b_raw = b.build()
+        #b.build()
+
+        c = IPPacket.from_buffer(b_raw)
+
+
+        a =5

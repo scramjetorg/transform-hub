@@ -4,6 +4,16 @@ from binascii import hexlify, unhexlify
 from socket import inet_ntoa, inet_aton
 from attrs import define,field
 
+ENDIANESS = '<'
+
+def USE_BIGENDIAN():
+    global ENDIANESS
+    ENDIANESS = '>'
+
+def USE_LITTLENDIAN():
+    global ENDIANESS
+    ENDIANESS = '<'
+
 @define
 class TCPSegment:
     class Options:
@@ -85,7 +95,7 @@ class TCPSegment:
     @classmethod
     def from_buffer(cls,buffer):
         TCP_MIN = 20
-        src_port, dst_port, seq, ack, offres, flags, win, checksum, urp = struct.unpack("!HHIIBBHHH", buffer[0:TCP_MIN])
+        src_port, dst_port, seq, ack, offres, flags, win, checksum, urp = struct.unpack(ENDIANESS +"HHIIBBHHH", buffer[0:TCP_MIN])
         hdr_len = (offres >> 4) * 4
 
         if hdr_len <= TCP_MIN: 
@@ -96,7 +106,7 @@ class TCPSegment:
 
         
     def to_buffer(self):
-        return struct.pack('!HHIIBBHHH', \
+        return struct.pack(ENDIANESS+'HHIIBBHHH', \
             self.src_port,\
             self.dst_port,\
             self.seq,\
@@ -186,14 +196,14 @@ class IPPacket:
     @classmethod
     def from_buffer(cls,buffer):   
         ihl = (buffer[0] & 0xf)
-        pkt = cls(ihl, *struct.unpack("!BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
+        pkt = cls(ihl, *struct.unpack(ENDIANESS+"BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
 
         #Cut data buffer to IP packet length
         if pkt.segment:
             pkt.get_segment().data=pkt.get_segment().data[:pkt.len-(ihl*4)-20]
             
         return pkt
-    
+
     def is_flag(self,flag):
         return (self.flags & getattr(IPPacket.Flags, flag)) > 0
 
@@ -202,7 +212,7 @@ class IPPacket:
 
         data = self.get_segment().to_buffer() if self.segment else b''
         self.len = 20 + len(data)
-        return struct.pack('!BBHHHBBH4s4s', \
+        return struct.pack(ENDIANESS+'BBHHHBBH4s4s', \
                             ihl_ver, \
                             self.tos, \
                             self.len, \
@@ -222,7 +232,7 @@ class IPPacket:
 
         tcp_segment = self.segment.to_buffer()
         
-        pseudo_hdr = struct.pack("!4s4sHH", inet_aton(self.src_addr), inet_aton(self.dst_addr), self.protocol, len(tcp_segment))
+        pseudo_hdr = struct.pack(ENDIANESS+"4s4sHH", inet_aton(self.src_addr), inet_aton(self.dst_addr), self.protocol, len(tcp_segment))
 
         self.segment.checksum = IPPacket.calc_checksum(pseudo_hdr + tcp_segment)
 
@@ -260,10 +270,10 @@ class EthernetFrame:
 
     @classmethod
     def from_buffer(cls,buffer):
-        return cls(*struct.unpack("!6s6s2s", buffer[0:14]),IPPacket.from_buffer(buffer[14:]))
+        return cls(*struct.unpack(ENDIANESS+"6s6s2s", buffer[0:14]),IPPacket.from_buffer(buffer[14:]))
 
     def to_buffer(self):
-        return struct.pack("!6s6s2s", unhexlify(self.src_mac), unhexlify(self.dst_mac),self.eth_type) + self.get_packet().to_buffer()
+        return struct.pack(ENDIANESS+"6s6s2s", unhexlify(self.src_mac), unhexlify(self.dst_mac),self.eth_type) + self.get_packet().to_buffer()
     
     def get_packet(self):
         return self.packet
