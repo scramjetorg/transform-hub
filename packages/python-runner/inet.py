@@ -74,7 +74,7 @@ class TCPSegment:
     offset: int = field(default = 0, converter = lambda value: value >> 4)
     flags: int = field(default = 0, repr = lambda value: TCPSegment.Flags.flags_to_str(value), \
                         converter = lambda value: TCPSegment.Flags.parse_flags(value))
-    win: int = field(default = 0)
+    win: int = field(default = 8192)
     checksum: int = field(default = 0, repr = lambda value: hex(value))
     urp: int = field(default = 0)
     data: bytes = field(default=b'', repr = lambda value: f'{value[0:5]}... <len:{len(value)}>' \
@@ -215,7 +215,9 @@ class IPPacket:
                             inet_aton(self.dst_addr)) + data
     
     def _validate_tcp(self):
-
+        
+        tcp_hdr_len = 5 
+        self.segment.offset = tcp_hdr_len << 4
         self.segment.checksum = 0
 
         tcp_segment = self.segment.to_buffer()
