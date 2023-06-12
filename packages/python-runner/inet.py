@@ -194,6 +194,12 @@ class IPPacket:
         return (((s >> 8) & 0xff) | s << 8) & 0xffff
     
     @classmethod
+    def from_buffer_with_pseudoheader(cls,buffer):
+        src_addr, dst_addr, _, proto, length = struct.unpack(ENDIANESS+"4s4sBBH",bytes(buffer[0:12]))
+        pkt = cls(0, 0, 0, length, 0, 0, 0, proto, 0, src_addr, dst_addr, TCPSegment.from_buffer(buffer[12:]) if len(buffer) > 12 else None)
+        return pkt
+                
+    @classmethod
     def from_buffer(cls,buffer):   
         ihl = (buffer[0] & 0xf)
         pkt = cls(ihl, *struct.unpack(ENDIANESS+"BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
@@ -207,6 +213,16 @@ class IPPacket:
     def is_flag(self,flag):
         return (self.flags & getattr(IPPacket.Flags, flag)) > 0
 
+
+    def build_pseudoheader(self):
+        return struct.pack(ENDIANESS+"4s4sBBH", \
+                           inet_aton(self.src_addr),\
+                           inet_aton(self.dst_addr), \
+                           0,\
+                           self.protocol, \
+                           self.len)
+
+        
     def to_buffer(self):
         ihl_ver = (int(self.version) << 4) + int(self.ihl)
 
