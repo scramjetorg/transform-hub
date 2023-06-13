@@ -2,13 +2,14 @@ import asyncio
 import logging
 import random
 import socket
-
+import struct
 from attrs import define, field
-
-from inet import IPPacket, TCPSegment
+from socket import inet_ntoa, inet_aton
+from inet import IPPacket, TCPSegment, USE_LITTLENDIAN
 from hardcoded_magic_values import CommunicationChannels as CC
 
 
+USE_LITTLENDIAN()
 class _StreamReader:
 
     def __init__(self, stream):
@@ -95,9 +96,7 @@ class _ChannelContext:
         self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['FIN'])))
 
-    async def queue_up_incoming(self, buf):
-        pkt = IPPacket().from_buffer(buf)
-
+    async def queue_up_incoming(self, pkt):
         #if SYN & ACK flag is up, pause channel
         if pkt.segment.is_flag('SYN') and pkt.segment.is_flag('ACK'):
             self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel pause request received')
@@ -109,8 +108,6 @@ class _ChannelContext:
         if not pkt.segment.is_flag('SYN') and pkt.segment.is_flag('ACK'):
             self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel reasume request received')
             self.set_pause(False)
-            await self.send_ACK(pkt.segment.seq)
-            return
         
         self._writer.write(pkt.get_segment().data)
         await self._writer.drain()
@@ -260,18 +257,18 @@ class Tecemux:
 
             while not (len(buffer) < MINIMAL_IP_PACKET_LENGTH):
 
-                current_packet_size = IPPacket().from_buffer(buffer).len
+                current_packet_size = IPPacket().from_buffer_with_pseudoheader(buffer).len
 
                 if len(buffer) >= current_packet_size:
 
                     single_packet_buffer = buffer[:current_packet_size]
-                    pkt = IPPacket().from_buffer(single_packet_buffer)
+                    pkt = IPPacket().from_buffer_with_pseudoheader(single_packet_buffer)
                     self._last_sequence_received = pkt.get_segment().seq                    
                     self._logger.debug(f'Tecemux/MAIN: [<] Full incomming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
 
                     channel = CC(str(pkt.get_segment().dst_port))
                     
-                    await self._channels[channel].queue_up_incoming(single_packet_buffer)
+                    await self._channels[channel].queue_up_incoming(pkt)
 
                     self._logger.debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel.name} stream')
                     buffer = buffer[current_packet_size:]
@@ -291,9 +288,8 @@ class Tecemux:
                     pkt.segment.seq = self._sequence_number
                     self._sequence_number += 1
 
-                #calc cheksum
-                chunk = pkt.build().to_buffer()
-
+                chunk = pkt._validate_tcp().to_buffer_with_tcp_pseudoheader()
+                             
                 self._logger.debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)} is waiting to send to Transform Hub')
                 self._writer.write(chunk)
                 await self._writer.drain()

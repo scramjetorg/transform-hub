@@ -214,15 +214,20 @@ class IPPacket:
         return (self.flags & getattr(IPPacket.Flags, flag)) > 0
 
 
-    def build_pseudoheader(self):
+    def prepare_pseudoheader(self, protocol, len):
         return struct.pack(ENDIANESS+"4s4sBBH", \
                            inet_aton(self.src_addr),\
                            inet_aton(self.dst_addr), \
                            0,\
-                           self.protocol, \
-                           self.len)
+                           protocol, \
+                           len)
 
+    def to_buffer_with_tcp_pseudoheader(self):
         
+        data = self.get_segment().to_buffer() if self.segment else b''
+        
+        return self.prepare_pseudoheader(1, 12+len(data)) + data
+            
     def to_buffer(self):
         ihl_ver = (int(self.version) << 4) + int(self.ihl)
 
@@ -246,10 +251,10 @@ class IPPacket:
         self.segment.offset = tcp_hdr_len << 4
         self.segment.checksum = 0
 
-        tcp_segment = self.segment.to_buffer()
+        tcp_segment = self.segment.to_buffer()      
         
-        pseudo_hdr = struct.pack(ENDIANESS+"4s4sHH", inet_aton(self.src_addr), inet_aton(self.dst_addr), self.protocol, len(tcp_segment))
-
+        pseudo_hdr = self.prepare_pseudoheader(self.protocol, len(tcp_segment))
+        
         self.segment.checksum = IPPacket.calc_checksum(pseudo_hdr + tcp_segment)
 
         return self

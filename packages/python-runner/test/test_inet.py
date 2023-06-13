@@ -87,7 +87,7 @@ class TestIP:
         assert res.segment.ack == 0 
 
 
-        psh = res.build_pseudoheader()
+        psh = res.prepare_pseudoheader(1,12 + len(data[12:]))
 
         assert psh == data[0:12]
 

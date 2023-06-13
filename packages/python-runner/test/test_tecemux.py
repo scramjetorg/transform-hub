@@ -64,7 +64,7 @@ class TestTecemux:
         
         pkt = IPPacket(src_addr='172.25.44.3',dst_addr='172.25.44.254',segment=TCPSegment(dst_port=int(destination_channel.value),flags=['PSH'],data=data_to_send))
         
-        client_a._writer.write(pkt.to_buffer())
+        client_a._writer.write(pkt.to_buffer_with_tcp_pseudoheader())
         await client_a._writer.drain()
 
         assert (await client_b.get_channel(destination_channel).read(100)).decode() == data_to_send
