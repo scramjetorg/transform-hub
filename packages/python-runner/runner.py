@@ -72,15 +72,16 @@ class Runner:
         self.logger.info('Connecting to host with TeceMux...')
         self.protocol = Tecemux(instance_id=self.instance_id)
         await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
-        await self.protocol.prepare()
+        await self.protocol.prepare(force_open=True)
         await self.protocol.loop()
 
         self.streams = self.protocol._channels
 
     def connect_stdio(self):
-        sys.stdout = codecs.getwriter('utf-8')(self.streams[CC.STDOUT])
-        sys.stderr = codecs.getwriter('utf-8')(self.streams[CC.STDERR])
-        sys.stdin = Stream.read_from(self.streams[CC.STDIN]).decode('utf-8')
+        sys.stdout = codecs.getwriter('utf-8')(self.protocol.get_channel(CC.STDOUT))
+        sys.stderr = codecs.getwriter('utf-8')(self.protocol.get_channel(CC.STDERR))
+        sys.stdin = Stream.read_from(self.protocol.get_channel(CC.STDIN)).decode('utf-8')
+        
         # pretend to have API compatibiliy
         sys.stdout.flush = lambda: True
         sys.stderr.flush = lambda: True
@@ -89,25 +90,23 @@ class Runner:
 
     def connect_log_stream(self):
         self.logger.info('Switching to main log stream...')
-        log_stream = codecs.getwriter('utf-8')(self.streams[CC.LOG])
+        log_stream = codecs.getwriter('utf-8')(self.protocol.get_channel(CC.LOG))
         self._logging_setup.switch_target(log_stream)
         self._logging_setup.flush_temp_handler()
 
         self.protocol.set_logger(self.logger)
-        
-        for channel in self.protocol._channels.values():
-            channel._set_logger(self.logger)
+        [channel._set_logger(self.logger) for channel in self.protocol.get_channels()]
 
         self.logger.info('Log stream connected.')
 
     async def handshake(self):
-        monitoring = self.streams[CC.MONITORING]
-        control = self.streams[CC.CONTROL]
+        monitoring = self.protocol.get_channel(CC.MONITORING)
+        control = self.protocol.get_channel(CC.CONTROL)
 
         self.logger.info(f'Sending PING')
         await send_encoded_msg(monitoring, msg_codes.PING)
 
-        message = await control.read(8)
+        message = await control.readuntil(b'\n')
         self.logger.info(f'Got message: {message}')
         code, data = json.loads(message.decode())
 
@@ -135,7 +134,7 @@ class Runner:
         control_messages = (
             Stream
                 # 128 kB is the typical size of TCP buffer.
-                .read_from(self.streams[CC.CONTROL], chunk_size=131072)
+                .read_from(self.protocol.get_channel(CC.CONTROL), chunk_size=131072)
                 .decode('utf-8').split('\n').map(json.loads)
         )
         async for code, data in control_messages:
@@ -158,10 +157,10 @@ class Runner:
                 await handler(timeout, can_keep_alive)
         except Exception as e:
             self.logger.error('Error stopping sequence', e)
-            await send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
+            await send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, e)
 
         if not can_keep_alive or not self.keep_alive_requested:
-            await send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
+            await send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, {})
             self.exit_immediately()
 
         await self.cleanup()
@@ -170,7 +169,7 @@ class Runner:
     async def setup_heartbeat(self):
         while True:
             await send_encoded_msg(
-                self.streams[CC.MONITORING],
+                self.protocol.get_channel(CC.MONITORING),
                 msg_codes.MONITORING,
                 self.health_check(),
             )
@@ -199,7 +198,7 @@ class Runner:
         result = self.sequence.run(context, input_stream, *args)
 
         self.logger.info(f'Sending PANG')
-        monitoring = self.streams[CC.MONITORING]
+        monitoring = self.protocol.get_channel(CC.MONITORING)
 
         produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
         if produces:
@@ -224,13 +223,15 @@ class Runner:
         await self.cleanup()
 
     async def cleanup(self):
-        self.streams[CC.LOG].write_eof()
+        #TODO
+        #self.streams[CC.LOG].write_eof()
+        pass
 
     async def connect_input_stream(self, input_stream):
         if hasattr(self.sequence, "requires"):
             input_type = self.sequence.requires.get('contentType')
         else:
-            raw_headers = await self.streams[CC.IN].readuntil(b'\r\n\r\n')
+            raw_headers = await self.protocol.get_channel(CC.IN).readuntil(b'\r\n\r\n')
             header_list = raw_headers.decode().rstrip().split('\r\n')
             headers = {
                 key.lower(): val for key, val in [el.split(': ') for el in header_list]
@@ -239,12 +240,12 @@ class Runner:
             input_type = headers.get('content-type')
 
         if input_type == 'text/plain':
-            input = Stream.read_from(self.streams[CC.IN])
+            input = Stream.read_from(self.protocol.get_channel(CC.IN))
             self.logger.debug('Decoding input stream...')
             input = input.decode('utf-8')
         elif input_type == 'application/octet-stream':
             self.logger.debug('Opening input in binary mode...')
-            input = Stream.read_from(self.streams[CC.IN], chunk_size=CHUNK_SIZE)
+            input = Stream.read_from(self.protocol.get_channel(CC.IN), chunk_size=CHUNK_SIZE)
 
         else:
             raise TypeError(f'Unsupported input type: {repr(input_type)}')
@@ -272,11 +273,11 @@ class Runner:
             self.logger.debug('Output will be converted to JSON')
             output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
-        await output.write_to(self.streams[CC.OUT])
+        await output.write_to(self.protocol.get_channel(CC.OUT))
 
     
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
-        monitoring = self.streams[CC.MONITORING]
+        monitoring =self.protocol.get_channel(CC.MONITORING)
         await send_encoded_msg(monitoring, msg_codes.ALIVE)
         self.keep_alive_requested = True
         await asyncio.sleep(timeout)
@@ -290,7 +291,7 @@ class AppContext:
     def __init__(self, runner, config) -> None:
         self.logger = runner.logger
         self.config = config
-        self.monitoring = runner.streams[CC.MONITORING]
+        self.monitoring = runner.protocol.get_channel(CC.MONITORING)
         self.runner = runner
         self.emitter = runner.emitter
 

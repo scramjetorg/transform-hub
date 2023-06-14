@@ -2,9 +2,7 @@ import asyncio
 import logging
 import random
 import socket
-import struct
 from attrs import define, field
-from socket import inet_ntoa, inet_aton
 from inet import IPPacket, TCPSegment, USE_LITTLENDIAN
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -18,19 +16,6 @@ class _StreamReader:
     def __getattr__(self, name):
         return getattr(self._stream, name)
 
-    def readline(self):
-        return self._stream.readline()
-
-    def readuntil(self, separator=b'\n'):
-        return self._stream.readuntil(separator)
-
-    def read(self, n=-1):
-        return self._stream.read(n)
-
-    def readexactly(self, n):
-        return self._stream.readexactly(n)
-
-
 class _StreamWriter:
 
     def __init__(self, stream):
@@ -38,14 +23,7 @@ class _StreamWriter:
 
     def __getattr__(self, name):
         return getattr(self._stream, name)
-
-    def wait_closed(self):
-        return self._stream.wait_closed()
-
-    def drain(self):
-        return self._stream.drain()
-
-
+    
 @define
 class _ChannelContext:
     _channel_enum: CC
@@ -60,15 +38,6 @@ class _ChannelContext:
     _internal_queue: asyncio.Queue = field(init=False)
     _channel_paused: bool = field(default=False, init=False)
     _channel_opened: bool = field(default=False, init=False)
-
-    def __aiter__(self):
-        return self._reader._stream.__aiter__
-
-    async def __anext__(self):
-        val = await self._reader._stream.readline()
-        if val == b'':
-            raise StopAsyncIteration
-        return val
     
     def __attrs_post_init__(self):
         self._internal_queue = asyncio.Queue()
@@ -82,6 +51,32 @@ class _ChannelContext:
     def _set_logger(self, logger):
         self._logger = logger
     
+    def readline(self):
+        return self._reader._stream.readline()
+
+    def readuntil(self, separator=b'\n'):
+        return self._reader._stream.readuntil(separator)
+
+    def read(self, n=-1):
+        return self._reader._stream.read(n)
+
+    def readexactly(self, n):
+        return self._reader._stream.readexactly(n)
+    
+    def __aiter__(self):
+        return self._reader._stream.__aiter__
+
+    async def __anext__(self):
+        val = await self._reader._stream.readline()
+        if val == b'':
+            raise StopAsyncIteration
+        return val
+
+
+
+
+
+
     async def send_ACK(self, sequence_number):
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'], ack=sequence_number)))
     
@@ -90,7 +85,16 @@ class _ChannelContext:
 
     async def open(self):
         #self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel opening request is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['PSH'])))
+        
+        if not self._channel_opened:
+
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
+            
+            buf = b'' if self._global_instance_id is None else (self._global_instance_id.encode() + str(self._get_channel_id()).encode())
+
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=buf, flags=['PSH'])))
+
+            self._channel_opened = True
 
     async def close(self):
         self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
@@ -116,7 +120,7 @@ class _ChannelContext:
 
         def wrap(channel_enum, buf):
             channel_id = int(channel_enum.value)
-            return IPPacket(segment=TCPSegment(dst_port=channel_id, data=buf))
+            return IPPacket(segment=TCPSegment(dst_port=channel_id, flags=['PSH'],data=buf))
 
         if self._channel_paused:
             self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel paused. Data queued up internally for future')
@@ -131,12 +135,6 @@ class _ChannelContext:
                     break
         await self._global_queue.put(wrap(self._channel_enum, data))
 
-    def read(self, len):
-        return self._reader.read(len)
-    
-    def readuntil(self, separator=b'\n'):
-        return self._reader.readuntil(separator)
-
     async def write(self, data):
 
         if not self._channel_opened:
@@ -146,8 +144,11 @@ class _ChannelContext:
 
     async def drain(self):
         if not self._channel_paused:
-            await self._writer.drain()
+            await self._writer._stream.drain()
         return True
+
+    def wait_closed(self):
+         return self._writer._stream.wait_closed()
 
     def set_pause(self, state):
         self._channel_paused = state
@@ -187,9 +188,12 @@ class Tecemux:
         _, writer = await asyncio.open_unix_connection(sock=wsock)
         return _StreamReader(reader), _StreamWriter(writer)
 
-    async def prepare(self):
+    async def prepare(self, force_open=False):
         self._queue = asyncio.Queue()
-        self._channels = {channel: _ChannelContext(channel, *await Tecemux.prepare_socket_connection(), self._queue, self._instance_id ,self._logger) for channel in CC}
+        self._channels = {channel: _ChannelContext(channel, *await Tecemux.prepare_socket_connection(), self._queue, self._instance_id ,self._logger) for channel in CC}    
+        
+        if force_open:
+            [await channel.open() for channel in self.get_channels()]
 
     def set_logger(self, logger):
         self._logger = logger
@@ -197,12 +201,9 @@ class Tecemux:
     def get_channel(self, channel):
         return self._channels[channel]
     
-    def get_channel_reader(self, channel):
-        return self.get_channel(channel).reader
-
-    def get_channel_writer(self, channel):
-        return self.get_channel(channel).writer
-    
+    def get_channels(self):
+        return self._channels.values()
+        
     @staticmethod
     def _chunk_preview(value):
         return f'{value[0:5]}... <len:{len(value)}>' if len(value)>5 else f'{value}'
