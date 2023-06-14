@@ -7,29 +7,13 @@ from inet import IPPacket, TCPSegment, USE_LITTLENDIAN
 from hardcoded_magic_values import CommunicationChannels as CC
 
 
-USE_LITTLENDIAN()
-class _StreamReader:
-
-    def __init__(self, stream):
-        self._stream = stream
-
-    def __getattr__(self, name):
-        return getattr(self._stream, name)
-
-class _StreamWriter:
-
-    def __init__(self, stream):
-        self._stream = stream
-
-    def __getattr__(self, name):
-        return getattr(self._stream, name)
-    
+USE_LITTLENDIAN()   
 @define
 class _ChannelContext:
     _channel_enum: CC
     
-    _reader: _StreamReader
-    _writer: _StreamWriter
+    _reader: asyncio.StreamReader
+    _writer: asyncio.StreamWriter
     
     _global_queue: asyncio.Queue
     _global_instance_id: str
@@ -52,30 +36,25 @@ class _ChannelContext:
         self._logger = logger
     
     def readline(self):
-        return self._reader._stream.readline()
+        return self._reader.readline()
 
     def readuntil(self, separator=b'\n'):
-        return self._reader._stream.readuntil(separator)
+        return self._reader.readuntil(separator)
 
     def read(self, n=-1):
-        return self._reader._stream.read(n)
+        return self._reader.read(n)
 
     def readexactly(self, n):
-        return self._reader._stream.readexactly(n)
+        return self._reader.readexactly(n)
     
     def __aiter__(self):
-        return self._reader._stream.__aiter__
+        return self._reader.__aiter__
 
     async def __anext__(self):
-        val = await self._reader._stream.readline()
+        val = await self._reader.readline()
         if val == b'':
             raise StopAsyncIteration
         return val
-
-
-
-
-
 
     async def send_ACK(self, sequence_number):
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'], ack=sequence_number)))
@@ -144,11 +123,11 @@ class _ChannelContext:
 
     async def drain(self):
         if not self._channel_paused:
-            await self._writer._stream.drain()
+            await self._writer.drain()
         return True
 
     def wait_closed(self):
-         return self._writer._stream.wait_closed()
+         return self._writer.wait_closed()
 
     def set_pause(self, state):
         self._channel_paused = state
@@ -186,7 +165,7 @@ class Tecemux:
         rsock, wsock = socket.socketpair()
         reader, _ = await asyncio.open_unix_connection(sock=rsock)
         _, writer = await asyncio.open_unix_connection(sock=wsock)
-        return _StreamReader(reader), _StreamWriter(writer)
+        return reader, writer
 
     async def prepare(self, force_open=False):
         self._queue = asyncio.Queue()
@@ -207,8 +186,9 @@ class Tecemux:
     @staticmethod
     def _chunk_preview(value):
         return f'{value[0:5]}... <len:{len(value)}>' if len(value)>5 else f'{value}'
+    
     async def stop(self):
-        for channel in self._channels.values():
+        for channel in self.get_channels():
             await channel.close()
             await channel._writer.drain()
             channel._writer.close()
