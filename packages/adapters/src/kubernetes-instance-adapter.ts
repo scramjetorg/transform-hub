@@ -180,7 +180,7 @@ IComponent {
     }
 
     async cleanup(): Promise<void> {
-        //noop
+        await this.remove(this.adapterConfig.timeout);
     }
 
     // @ts-ignore
@@ -206,11 +206,7 @@ IComponent {
 
     async getCrashLog(): Promise<string[]> {
         if (this._kubeClient && this._runnerName) {
-            const podLogs = this._kubeClient.getPodLog(this._runnerName);
-
-            await this.remove(this.adapterConfig.timeout);
-
-            return podLogs;
+            return this._kubeClient.getPodLog(this._runnerName);
         }
 
         return ["Crashlog cannot be fetched"];
