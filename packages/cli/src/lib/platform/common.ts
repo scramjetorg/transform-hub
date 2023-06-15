@@ -36,13 +36,16 @@ export const getMiddlewareClient = (): MiddlewareClient => {
 };
 
 export const setPlatformDefaults = async () => {
+    const middlewareClient = getMiddlewareClient();
+    const middlewareManager = await middlewareClient.getManagers();
+
     const { lastSpaceId, lastHubId } = sessionConfig.get();
 
     if (lastSpaceId || lastHubId) {
-        return false;
+        if (middlewareManager[0]?.id === lastSpaceId) {
+            return false;
+        }
     }
-
-    const middlewareClient = getMiddlewareClient();
 
     try {
         const managers = await middlewareClient.getManagers();
