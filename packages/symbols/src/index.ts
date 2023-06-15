@@ -8,3 +8,4 @@ export { SequenceMessageCode } from "./sequence-status-code";
 export { OpRecordCode } from "./op-record-code";
 export { APIErrorCode } from "./api-error-codes";
 
+export * from "./headers";

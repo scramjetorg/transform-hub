@@ -1,1 +1,3 @@
-export type DeleteSequenceResponse = {id: string}
+export type DeleteSequenceResponse = {
+    id: string
+}
