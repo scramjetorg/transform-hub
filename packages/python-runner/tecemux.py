@@ -3,13 +3,13 @@ import logging
 import random
 import socket
 from attrs import define, field
-from inet import IPPacket, TCPSegment, USE_LITTLENDIAN
+from inet import IPPacket, TCPSegment, SequenceOrder
 from hardcoded_magic_values import CommunicationChannels as CC
 
 
-USE_LITTLENDIAN()   
+SequenceOrder().use_little_endian()   
 @define
-class _ChannelContext:
+class _ChannelContext:    
     _channel_enum: CC
     
     _reader: asyncio.StreamReader

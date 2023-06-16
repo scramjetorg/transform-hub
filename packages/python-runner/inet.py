@@ -1,18 +1,31 @@
-import array
 import struct
 from binascii import hexlify, unhexlify
 from socket import inet_ntoa, inet_aton
 from attrs import define,field
 
-ENDIANESS = '<'
+class _Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+        
+class SequenceOrder(metaclass=_Singleton):
+    class _Order:
+        LITTLE_ENDIAN = '<'
+        BIG_ENDIAN = '>'
 
-def USE_BIGENDIAN():
-    global ENDIANESS
-    ENDIANESS = '>'
+    endianess = _Order.LITTLE_ENDIAN
 
-def USE_LITTLENDIAN():
-    global ENDIANESS
-    ENDIANESS = '<'
+    def use_big_endian(self):
+        self.endianess = SequenceOrder._Order.BIG_ENDIAN
+
+    def use_little_endian(self):
+        self.endianess = SequenceOrder._Order.LITTLE_ENDIAN
+
+    def get(self):
+        return self.endianess
+    
 
 @define
 class TCPSegment:
@@ -95,7 +108,7 @@ class TCPSegment:
     @classmethod
     def from_buffer(cls,buffer):
         TCP_MIN = 20
-        src_port, dst_port, seq, ack, offres, flags, win, checksum, urp = struct.unpack(ENDIANESS +"HHIIBBHHH", buffer[0:TCP_MIN])
+        src_port, dst_port, seq, ack, offres, flags, win, checksum, urp = struct.unpack(SequenceOrder().get() +"HHIIBBHHH", buffer[0:TCP_MIN])
         hdr_len = (offres >> 4) * 4
 
         if hdr_len <= TCP_MIN: 
@@ -106,7 +119,7 @@ class TCPSegment:
 
         
     def to_buffer(self):
-        return struct.pack(ENDIANESS+'HHIIBBHHH', \
+        return struct.pack(SequenceOrder().get()+'HHIIBBHHH', \
             self.src_port,\
             self.dst_port,\
             self.seq,\
@@ -186,7 +199,7 @@ class IPPacket:
     def calc_checksum(pkt: bytes) -> int:
         if len(pkt) % 2 == 1:
             pkt += b"\0"
-        s = sum(struct.unpack(('<' if ENDIANESS is '>' else '>')+str(len(pkt)//2)+'H',pkt))
+        s = sum(struct.unpack(('<' if SequenceOrder().get() is '>' else '>')+str(len(pkt)//2)+'H',pkt))
         
         #source: https://github.com/secdev/scapy
         s = (s >> 16) + (s & 0xffff)
@@ -197,21 +210,21 @@ class IPPacket:
     def calc_checksum_for_STH(pkt):
         if len(pkt) % 2 == 1:
             pkt += b"\0"
-        elements = list(struct.unpack(ENDIANESS+str(len(pkt)//2)+'H',pkt))
+        elements = list(struct.unpack(SequenceOrder().get()+str(len(pkt)//2)+'H',pkt))
         elements = elements[:14] + elements[15:]
         s = sum(elements)
         return s % 0x10000
     
     @classmethod
     def from_buffer_with_pseudoheader(cls,buffer):
-        src_addr, dst_addr, _, proto, length = struct.unpack(ENDIANESS+"4s4sBBH",bytes(buffer[0:12]))
+        src_addr, dst_addr, _, proto, length = struct.unpack(SequenceOrder().get()+"4s4sBBH",bytes(buffer[0:12]))
         pkt = cls(0, 0, 0, length, 0, 0, 0, proto, 0, src_addr, dst_addr, TCPSegment.from_buffer(buffer[12:]) if len(buffer) > 12 else None)
         return pkt
                 
     @classmethod
     def from_buffer(cls,buffer):   
         ihl = (buffer[0] & 0xf)
-        pkt = cls(ihl, *struct.unpack(ENDIANESS+"BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
+        pkt = cls(ihl, *struct.unpack(SequenceOrder().get()+"BBHHHBBH4s4s", buffer[0:ihl*4]),TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
 
         #Cut data buffer to IP packet length
         if pkt.segment:
@@ -224,7 +237,7 @@ class IPPacket:
 
 
     def prepare_pseudoheader(self, protocol, len):
-        return struct.pack(ENDIANESS+"4s4sBBH", \
+        return struct.pack(SequenceOrder().get()+"4s4sBBH", \
                            inet_aton(self.src_addr),\
                            inet_aton(self.dst_addr), \
                            0,\
@@ -242,7 +255,7 @@ class IPPacket:
 
         data = self.get_segment().to_buffer() if self.segment else b''
         self.len = 20 + len(data)
-        return struct.pack(ENDIANESS+'BBHHHBBH4s4s', \
+        return struct.pack(SequenceOrder().get()+'BBHHHBBH4s4s', \
                             ihl_ver, \
                             self.tos, \
                             self.len, \
@@ -318,10 +331,10 @@ class EthernetFrame:
 
     @classmethod
     def from_buffer(cls,buffer):
-        return cls(*struct.unpack(ENDIANESS+"6s6s2s", buffer[0:14]),IPPacket.from_buffer(buffer[14:]))
+        return cls(*struct.unpack(SequenceOrder().get()+"6s6s2s", buffer[0:14]),IPPacket.from_buffer(buffer[14:]))
 
     def to_buffer(self):
-        return struct.pack(ENDIANESS+"6s6s2s", unhexlify(self.src_mac), unhexlify(self.dst_mac),self.eth_type) + self.get_packet().to_buffer()
+        return struct.pack(SequenceOrder().get()+"6s6s2s", unhexlify(self.src_mac), unhexlify(self.dst_mac),self.eth_type) + self.get_packet().to_buffer()
     
     def get_packet(self):
         return self.packet

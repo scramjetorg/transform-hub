@@ -34,7 +34,7 @@ async def send_encoded_msg(stream, msg_code, data={}):
     await stream.write(f'{message}\r\n'.encode())
     await stream.drain()
 
-debugger()
+#debugger()
 
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
