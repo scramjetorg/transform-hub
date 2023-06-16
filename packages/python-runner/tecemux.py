@@ -63,8 +63,6 @@ class _ChannelContext:
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK','SYN'], ack=sequence_number)))
 
     async def open(self):
-        #self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel opening request is send')
-        
         if not self._channel_opened:
 
             await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
@@ -130,6 +128,9 @@ class _ChannelContext:
             await self._writer.drain()
         return True
 
+    def write_eof(self):
+        return self._writer.write_eof()
+    
     def wait_closed(self):
          return self._writer.wait_closed()
 

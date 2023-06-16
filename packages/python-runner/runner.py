@@ -223,9 +223,7 @@ class Runner:
         await self.cleanup()
 
     async def cleanup(self):
-        #TODO
-        #self.streams[CC.LOG].write_eof()
-        pass
+        self.protocol.get_channel(CC.LOG).write_eof()
 
     async def connect_input_stream(self, input_stream):
         if hasattr(self.sequence, "requires"):
