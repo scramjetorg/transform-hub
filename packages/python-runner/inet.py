@@ -202,19 +202,6 @@ class IPPacket:
         s = sum(elements)
         return s % 0x10000
     
-        # checksum = 0
-        # i = 0
-
-        # if len(pkt) % 2 == 1:
-        #      pkt += b'\0'
-
-        # while (i <= len(pkt)-2):
-        #     if i != 28:
-        #         val = struct.unpack_from('<H',pkt,i)[0]
-        #         print(val)
-        #         checksum += val
-        #     i += 2
-        # return checksum % 0x10000
     @classmethod
     def from_buffer_with_pseudoheader(cls,buffer):
         src_addr, dst_addr, _, proto, length = struct.unpack(ENDIANESS+"4s4sBBH",bytes(buffer[0:12]))

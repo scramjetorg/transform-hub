@@ -81,16 +81,20 @@ class _ChannelContext:
 
     async def queue_up_incoming(self, pkt):
         #if SYN & ACK flag is up, pause channel
-        if pkt.segment.is_flag('SYN') and pkt.segment.is_flag('ACK'):
+        if pkt.get_segment().is_flag('SYN') and pkt.get_segment().is_flag('ACK'):
             self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel pause request received')
             self.set_pause(True)
-            await self.send_ACK(pkt.segment.seq)
+            await self.send_ACK(pkt.get_segment().seq)
             return
         
-        #if SYN is down & ACK flag is up, reasume channel
-        if not pkt.segment.is_flag('SYN') and pkt.segment.is_flag('ACK'):
-            self._logger.debug(f'Tecemux/{self._get_channel_name()}: [-] Channel reasume request received')
+        #if ACK flag is up, reasume channel
+        if not pkt.get_segment().is_flag('SYN') and pkt.get_segment().is_flag('ACK'):
             self.set_pause(False)
+            return
+
+        #if PSH flag is up, confirm
+        if pkt.segment.is_flag('PSH'):
+            await self.send_ACK(pkt.get_segment().seq)
         
         self._writer.write(pkt.get_segment().data)
         await self._writer.drain()
@@ -269,7 +273,7 @@ class Tecemux:
                     pkt.segment.seq = self._sequence_number
                     self._sequence_number += 1
 
-                chunk = pkt._validate_tcp().to_buffer_with_tcp_pseudoheader()
+                    chunk = pkt.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
                              
                 self._logger.debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)} is waiting to send to Transform Hub')
                 self._writer.write(chunk)
