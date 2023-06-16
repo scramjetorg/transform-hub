@@ -60,6 +60,21 @@ class TestIP:
 
         assert pkt.checksum == checksum
 
+    def test_checksum_calc_as_sth_expected(self):
+        checksum_from_sth = 64434
+        data =bytes([10, 0, 0, 1, 10, 0, 0, 2, 0, 1, 69, 0, 0, 0, 0, 0, 32, 89, 3, 38, 0, 0, 0, 0, 0, 8, 0, 32, 178, 251, 0, 0, 97, 102, 54, 98, 50, 51, 52, 56, 45, 102, 51, 56, 56, 45, 52, 54, 56, 48, 45, 98, 54, 48, 97, 45, 97, 53, 102, 98, 50, 102, 98, 100, 100, 102, 50, 97, 48])
+
+        USE_LITTLENDIAN()
+
+        pkt = IPPacket.from_buffer_with_pseudoheader(data)
+        assert pkt.to_buffer_with_tcp_pseudoheader() == data
+
+        pkt.segment.checksum = 0
+        assert pkt.segment.checksum == 0
+        
+        new_pkt = pkt.build(for_STH=True)
+        assert new_pkt.segment.checksum == checksum_from_sth
+
     def test_packet_creation(self):
 
         USE_BIGENDIAN()
@@ -87,7 +102,7 @@ class TestIP:
         assert res.segment.ack == 0 
 
 
-        psh = res.prepare_pseudoheader(1,12 + len(data[12:]))
+        psh = res.prepare_pseudoheader(1,len(data[12:]))
 
         assert psh == data[0:12]
 

@@ -184,15 +184,37 @@ class IPPacket:
 
     @staticmethod
     def calc_checksum(pkt: bytes) -> int:
-        #source: https://github.com/secdev/scapy
         if len(pkt) % 2 == 1:
             pkt += b"\0"
-        s = sum(array.array("H", pkt))
+        s = sum(struct.unpack(('<' if ENDIANESS is '>' else '>')+str(len(pkt)//2)+'H',pkt))
+        
+        #source: https://github.com/secdev/scapy
         s = (s >> 16) + (s & 0xffff)
         s += s >> 16
         s = ~s
         return (((s >> 8) & 0xff) | s << 8) & 0xffff
     
+    def calc_checksum_for_STH(pkt):
+        if len(pkt) % 2 == 1:
+            pkt += b"\0"
+        elements = list(struct.unpack(ENDIANESS+str(len(pkt)//2)+'H',pkt))
+        elements = elements[:14] + elements[15:]
+        s = sum(elements)
+        return s % 0x10000
+    
+        # checksum = 0
+        # i = 0
+
+        # if len(pkt) % 2 == 1:
+        #      pkt += b'\0'
+
+        # while (i <= len(pkt)-2):
+        #     if i != 28:
+        #         val = struct.unpack_from('<H',pkt,i)[0]
+        #         print(val)
+        #         checksum += val
+        #     i += 2
+        # return checksum % 0x10000
     @classmethod
     def from_buffer_with_pseudoheader(cls,buffer):
         src_addr, dst_addr, _, proto, length = struct.unpack(ENDIANESS+"4s4sBBH",bytes(buffer[0:12]))
@@ -220,13 +242,13 @@ class IPPacket:
                            inet_aton(self.dst_addr), \
                            0,\
                            protocol, \
-                           len)
+                           len+12)
 
     def to_buffer_with_tcp_pseudoheader(self):
         
         data = self.get_segment().to_buffer() if self.segment else b''
         
-        return self.prepare_pseudoheader(1, 12+len(data)) + data
+        return self.prepare_pseudoheader(self.protocol, len(data)) + data
             
     def to_buffer(self):
         ihl_ver = (int(self.version) << 4) + int(self.ihl)
@@ -259,6 +281,21 @@ class IPPacket:
 
         return self
     
+    def _validate_tcp_for_STH(self):
+        
+        tcp_hdr_len = 5 
+        self.segment.offset = tcp_hdr_len << 4       
+        self.segment.checksum = 0
+        self.protocol = 1
+
+        tcp_segment = self.segment.to_buffer()      
+        
+        pseudo_hdr = self.prepare_pseudoheader(self.protocol, len(tcp_segment))
+        
+        self.segment.checksum = IPPacket.calc_checksum_for_STH(pseudo_hdr + tcp_segment)
+
+        return self
+    
     def _validate_ip(self):
 
         self.checksum = 0
@@ -267,12 +304,15 @@ class IPPacket:
 
         return self
     
-    def build(self):
+    def build(self, for_STH=False):
 
-        if self.segment:
-            self._validate_tcp()
-
-        self._validate_ip()
+        if for_STH:
+            if self.segment:
+                self._validate_tcp_for_STH()
+        else:
+            if self.segment:
+                self._validate_tcp()
+            self._validate_ip()
         
         return self
     
