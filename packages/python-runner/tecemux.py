@@ -273,7 +273,7 @@ class Tecemux:
                     pkt.segment.seq = self._sequence_number
                     self._sequence_number += 1
 
-                    chunk = pkt.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+                chunk = pkt.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
                              
                 self._logger.debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)} is waiting to send to Transform Hub')
                 self._writer.write(chunk)
