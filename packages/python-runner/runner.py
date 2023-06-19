@@ -3,7 +3,6 @@ import sys
 import os
 import codecs
 import json
-import pydevd
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -15,14 +14,6 @@ from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
 
-if bool(os.environ.get('DEVELOPMENT')):
-    import time
-    while pydevd.get_global_debugger() is None or not pydevd.get_global_debugger().ready_to_run:
-        time.sleep(0.3)
-
-def debugger():
-    pydevd.settrace()
-
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
@@ -33,8 +24,6 @@ async def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
     await stream.write(f'{message}\r\n'.encode())
     await stream.drain()
-
-#debugger()
 
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
