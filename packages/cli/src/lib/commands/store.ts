@@ -1,6 +1,7 @@
 import { CommandDefinition, ExtendedHelpConfiguration, isProductionEnv } from "../../types";
 import { getReadStreamFromFile } from "../common";
 import { profileManager, sessionConfig } from "../config";
+import { displayProdOnlyMsg } from "../helpers/messages";
 import { displayObject } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -12,7 +13,12 @@ import { getMiddlewareClient } from "../platform";
 export const store: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
-    if (!isProdEnv) return;
+    if (!isProdEnv) {
+        program.command("store", { hidden:true })
+            .action(() => displayProdOnlyMsg("store"));
+
+        return;
+    }
 
     const storeCmd = program
         .command("store")

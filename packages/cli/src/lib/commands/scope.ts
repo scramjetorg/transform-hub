@@ -3,6 +3,7 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";
 import { displayObject } from "../output";
 import { isProfileConfig, ProfileConfig, profileManager } from "../config";
+import { displayProdOnlyMsg } from "../helpers/messages";
 
 /**
  * Initializes `scope` command.
@@ -12,7 +13,12 @@ import { isProfileConfig, ProfileConfig, profileManager } from "../config";
 export const scope: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
-    if (!isProdEnv) return;
+    if (!isProdEnv) {
+        program.command("scope", { hidden:true })
+            .action(() => displayProdOnlyMsg("scope"));
+
+        return;
+    }
 
     const scopeCmd = program
         .command("scope")
