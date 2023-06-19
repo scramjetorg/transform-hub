@@ -147,6 +147,7 @@ class Runner:
                 await self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
 
 
+
     async def handle_stop(self, data):
         self.logger.info(f'Gracefully shutting down...{data}')
         self.keep_alive_requested = False
