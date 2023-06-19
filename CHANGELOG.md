@@ -2,22 +2,56 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+
+## [0.34.3] and [0.34.2] - 2023-06-05
+
+## ## Fixed
+
+* Visible log on connect to SCP by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/875>
+* Fix/linter erorrs by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/878>
+* Fix space id for seq store in self-hosted hub by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/876>
+
+## [0.34.1] - 2023-05-31
+
+## Fixed
+
+* Fix prerunner, runner image versions by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/871>
+* Destroy verser connection by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/869>
+* Check instance id by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/863>
+* Fixed tags when starting sth with config file by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/872>
+
+## Features
+
+* New Cli command that allows restarting instance by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/861>
+
+## [0.34.0] - 2023-05-29
+
+## Fixed
+
+* Fix/workflow warnings by @tomekcrm in <https://github.com/scramjetorg/transform-hub/pull/847>
+* Fix "sequence unpack failed" error with kubernetes by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/852>
+* Fix KeyError on event emit by @gierwialo in <https://github.com/scramjetorg/transform-hub/pull/851>
+* Fix: README help command by @tomekcrm in <https://github.com/scramjetorg/transform-hub/pull/859>
+* STH identifiers by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/858>
+* Bump packages version in bdd directory by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/864>
+* Missing handling of disconnect on Id drop by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/866>
+* Add Patch method to api server by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/867>
+
+## Features
+
+* Connect Scramjet Transform Hub to Scramjet Cloud Platform by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/824>
+
 ## [0.33.5] - 2023-04-19
 
 ## Fixed
 
-## What's Changed
-* Add missing getLogStream to InstanceClient by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/840
-* Catch channel error in SocketServer by @S4adam in https://github.com/scramjetorg/transform-hub/pull/842
-* Fix for Hub Client error on Broken Streams by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/843
-
-**Full Changelog**: https://github.com/scramjetorg/transform-hub/compare/v0.33.5...v0.33.5
+* Add missing getLogStream to InstanceClient by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/840>
+* Catch channel error in SocketServer by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/842>
+* Fix for Hub Client error on Broken Streams by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/843>
 
 ## [0.33.5] - 2023-04-06
 
 ## Fixed
-
-## What's Changed
 
 * Update dependencies v0.33.3 by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/829>
 * Remove duplicated method for listing entities by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/831>
@@ -26,16 +60,14 @@ This is the changelog for Scramjet Transform Hub. It holds only notable commits,
 * Expose Instance Id in AppContext. by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/837>
 * Fix normalize-url for Safari by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/838>
 
-**Full Changelog**: <https://github.com/scramjetorg/transform-hub/compare/v0.33.3...v0.33.5>
-
 ## [0.33.3] - 2023-03-16
 
 ## Fixed
 
-* Add --debug flag to attach debugger to runner by @S4adam in https://github.com/scramjetorg/transform-hub/pull/808
-* Fix/Typedoc settings for client-utils docs generation by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/823
-* cli init sequence by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/807
-* si inst inout by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/826
+* Add --debug flag to attach debugger to runner by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/808>
+* Fix/Typedoc settings for client-utils docs generation by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/823>
+* cli init sequence by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/807>
+* si inst inout by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/826>
 
 ## [0.33.1] - 2023-02-27
 

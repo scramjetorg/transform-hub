@@ -205,6 +205,9 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             case "put":
                 router.put(path, handler);
                 break;
+            case "patch":
+                router.patch(path, handler);
+                break;
             default:
                 throw new Error("ERR_UNSUPPORTED_METHOD");
         }

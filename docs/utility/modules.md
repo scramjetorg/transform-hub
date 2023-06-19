@@ -36,6 +36,7 @@
 - [defer](modules.md#defer)
 - [definedValidator](modules.md#definedvalidator)
 - [fileExistsValidator](modules.md#fileexistsvalidator)
+- [generateSTHKey](modules.md#generatesthkey)
 - [httpUrlValidator](modules.md#httpurlvalidator)
 - [idStringValidator](modules.md#idstringvalidator)
 - [isApiVersion](modules.md#isapiversion)
@@ -272,6 +273,26 @@ ___
 #### Defined in
 
 [packages/types/src/utils.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L119)
+
+___
+
+### generateSTHKey
+
+▸ **generateSTHKey**(`daughterKey`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `daughterKey` | `string` |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[packages/utility/src/keygen.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/keygen.ts#L3)
 
 ___
 

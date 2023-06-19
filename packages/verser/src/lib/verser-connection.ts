@@ -240,18 +240,12 @@ export class VerserConnection {
 
     /**
      * Closes the connection by sending FIN packet.
-     *
-     * @returns Promise resolving when connection is ended.
      */
-    async close() {
-        this.logger.trace("Closing VerserConnection");
+    close() {
+        this.logger.trace("Closing VerserConnection...");
 
-        return new Promise<void>((res) => {
-            this.socket.end(() => {
-                this.logger.trace("VerserConnection closed");
-                res();
-            });
-        });
+        this.socket.destroy();
+        this.logger.trace("VerserConnection closed");
     }
 
     getAgent() {

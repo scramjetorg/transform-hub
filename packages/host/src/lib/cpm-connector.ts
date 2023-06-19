@@ -24,6 +24,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser/src/types";
+import { EOL } from "os";
 
 type STHInformation = {
     id?: string;
@@ -258,8 +259,9 @@ export class CPMConnector extends TypedEmitter<Events> {
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
                 this.logger.trace("Received message", message);
+                const messageCode = message[0] as CPMMessageCode;
 
-                if (message[0] === CPMMessageCode.STH_ID) {
+                if (messageCode === CPMMessageCode.STH_ID) {
                     // eslint-disable-next-line no-extra-parens
                     this.info.id = (message[1] as STHIDMessageData).id;
 
@@ -276,7 +278,13 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
-                if (message[0] === CPMMessageCode.KEY_REVOKED || message[0] === CPMMessageCode.LIMIT_EXCEEDED) {
+                const dropMessageCodes = [
+                    CPMMessageCode.KEY_REVOKED,
+                    CPMMessageCode.LIMIT_EXCEEDED,
+                    CPMMessageCode.ID_DROP
+                ];
+
+                if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
                     this.isAbandoned = true;
                 }
@@ -354,8 +362,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             return;
         }
-
-        this.logger.info("Connected...");
+        this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
@@ -390,6 +397,8 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Handles connection close.
      * Tries to reconnect.
+     * 
+     * @param {number} connectionStatusCode - status code
      */
     async handleConnectionClose(connectionStatusCode: number) {
         this.handleCommunicationRequestEnd();

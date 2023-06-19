@@ -2,4 +2,4 @@
 
 set -e
 
-tar zxf - -C /package && touch /package/.ready || touch $PACKAGE_DIR/.fail
+tar zxf - -C /package && chown -R 1200:1200 $PACKAGE_DIR && touch /package/.ready || touch $PACKAGE_DIR/.fail

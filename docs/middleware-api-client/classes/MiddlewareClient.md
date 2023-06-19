@@ -22,10 +22,13 @@ Client for the Middleware interaction.
 
 ### Methods
 
+- [createAccessKey](MiddlewareClient.md#createaccesskey)
 - [getAuditStream](MiddlewareClient.md#getauditstream)
 - [getManagerClient](MiddlewareClient.md#getmanagerclient)
 - [getManagers](MiddlewareClient.md#getmanagers)
 - [getVersion](MiddlewareClient.md#getversion)
+- [listAccessKeys](MiddlewareClient.md#listaccesskeys)
+- [revokeAccessKey](MiddlewareClient.md#revokeaccesskey)
 
 ## Properties
 
@@ -69,6 +72,28 @@ ClientProvider.client
 [middleware-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L14)
 
 ## Methods
+
+### createAccessKey
+
+▸ **createAccessKey**(`spaceId`, `opts`): `Promise`<`any`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `spaceId` | `string` |
+| `opts` | `Object` |
+| `opts.description?` | `string` |
+
+#### Returns
+
+`Promise`<`any`\>
+
+#### Defined in
+
+[middleware-client.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L64)
+
+___
 
 ### getAuditStream
 
@@ -146,3 +171,44 @@ List of manager ids
 #### Defined in
 
 [middleware-client.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L45)
+
+___
+
+### listAccessKeys
+
+▸ **listAccessKeys**(`spaceId`): `Promise`<`GetAccessKeysResponse`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `spaceId` | `string` |
+
+#### Returns
+
+`Promise`<`GetAccessKeysResponse`\>
+
+#### Defined in
+
+[middleware-client.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L58)
+
+___
+
+### revokeAccessKey
+
+▸ **revokeAccessKey**(`spaceId`, `accessKey`): `Promise`<`any`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `spaceId` | `string` |
+| `accessKey` | `string` |
+
+#### Returns
+
+`Promise`<`any`\>
+
+#### Defined in
+
+[middleware-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L73)

@@ -7,6 +7,7 @@
 ### Type Aliases
 
 - [ControlMessageResponse](MMRestAPI.md#controlmessageresponse)
+- [GetAccessKeysResponse](MMRestAPI.md#getaccesskeysresponse)
 - [GetInfoReposnse](MMRestAPI.md#getinforeposnse)
 - [GetLoadCheckResponse](MMRestAPI.md#getloadcheckresponse)
 - [GetManagerResponse](MMRestAPI.md#getmanagerresponse)
@@ -34,6 +35,16 @@
 #### Defined in
 
 [packages/types/src/rest-api-multi-manager/common.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-multi-manager/common.ts#L7)
+
+___
+
+### GetAccessKeysResponse
+
+Ƭ **GetAccessKeysResponse**: { `created`: `number` ; `description?`: `string`  }[]
+
+#### Defined in
+
+[packages/types/src/rest-api-multi-manager/access-key.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-multi-manager/access-key.ts#L1)
 
 ___
 

@@ -111,12 +111,12 @@ export class ProfileManager {
         return true;
     }
 
-    protected setProfileFromFile = (path: string): boolean => {
+    protected setProfileFromFile(path: string): boolean {
         const userProfileConfigFile = new ReadOnlyProfileConfig(path);
 
         if (!userProfileConfigFile.isValid()) throw Error("Invalid config file");
         this.profileConfig = userProfileConfigFile;
         return true;
-    };
+    }
 }
 

@@ -121,10 +121,6 @@ export type STHConfiguration = {
     customName?: string;
 
     /**
-     * Is STH self hosted?
-     */
-    selfHosted?: boolean;
-    /**
      * Logging level.
      */
     logLevel: LogLevel

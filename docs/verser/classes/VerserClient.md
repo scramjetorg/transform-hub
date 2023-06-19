@@ -58,7 +58,7 @@ Provides methods for connecting to Verser server and handling of incoming muxed 
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -95,7 +95,7 @@ Promise that resolves to the connection object.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:90](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L90)
+[packages/verser/src/lib/verser-client.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L94)
 
 ___
 
@@ -107,7 +107,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -174,7 +174,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -204,7 +204,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -234,7 +234,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -265,7 +265,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -296,7 +296,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -327,7 +327,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -358,7 +358,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -389,7 +389,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -432,7 +432,7 @@ Registers a channel on the client.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:189](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L189)
+[packages/verser/src/lib/verser-client.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L195)
 
 ___
 
@@ -444,7 +444,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -474,7 +474,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `E` | extends ``"error"`` |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
@@ -539,7 +539,7 @@ Sets up headers.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L178)
+[packages/verser/src/lib/verser-client.ts:184](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L184)
 
 ## Accessors
 
@@ -553,7 +553,7 @@ Sets up headers.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L74)
+[packages/verser/src/lib/verser-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L75)
 
 ___
 
@@ -569,7 +569,7 @@ Return BPMux instance.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L70)
+[packages/verser/src/lib/verser-client.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L71)
 
 ## Constructors
 
@@ -589,7 +589,7 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L78)
+[packages/verser/src/lib/verser-client.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L79)
 
 ## Properties
 
@@ -601,4 +601,4 @@ Logger instance.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L65)
+[packages/verser/src/lib/verser-client.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L66)

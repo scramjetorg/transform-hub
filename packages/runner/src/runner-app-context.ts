@@ -104,10 +104,7 @@ implements AppContext<AppConfigType, State> {
         return this;
     }
 
-    private _definition: FunctionDefinition = {
-        mode: "buffer",
-        name: "anonymous function"
-    };
+    private _definition: FunctionDefinition = { mode: "buffer", name: "anonymous function" };
 
     get definition(): FunctionDefinition {
         return this._definition;

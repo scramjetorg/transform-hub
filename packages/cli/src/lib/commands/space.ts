@@ -106,7 +106,7 @@ export const space: CommandDefinition = (program) => {
             displayObject(await managerClient.disconnectHubs(opts), profileManager.getProfileConfig().format);
         });
 
-        const accessKeyCmd = spaceCmd
+    const accessKeyCmd = spaceCmd
         .command("access")
         .description("Manages Access Keys for active Space");
 
@@ -121,7 +121,9 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.createAccessKey(spaceName, { description }), profileManager.getProfileConfig().format);
+            const accessKey = await mwClient.createAccessKey(spaceName, { description });
+
+            displayObject(accessKey, profileManager.getProfileConfig().format);
         });
 
     accessKeyCmd.command("list")
@@ -149,6 +151,8 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.revokeAccessKey(spaceName, accessKey), profileManager.getProfileConfig().format);
+            const revokedAccessKey = await mwClient.revokeAccessKey(spaceName, accessKey);
+
+            displayObject(revokedAccessKey, profileManager.getProfileConfig().format);
         });
 };

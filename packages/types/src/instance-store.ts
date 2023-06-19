@@ -7,6 +7,8 @@ export type Instance = {
     id: InstanceId,
     appConfig?: AppConfig,
     args?: InstanceArgs,
+    provides?: string,
+    requires?: string,
     sequence: string,
     ports?: Record<string, number>
     created?: Date,
