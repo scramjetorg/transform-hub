@@ -180,8 +180,11 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     /** Allows setting timeout in millis to exit the sequence after exit called (default 10000) */
     exitTimeout: number;
 
-    /** Allows to access Hub */
+    /** Allows to access Hub, for datails please refer to @scramjet/api-client */
     hub: import("./api-client/host-client").HostClient;
+
+    /** Allows to access Space, for datails please refer to @scramjet/manager-api-client */
+    space: import("./manager-api-client/manager-client").ManagerClient;
 
     /** Instance Id */
     instanceId: string;

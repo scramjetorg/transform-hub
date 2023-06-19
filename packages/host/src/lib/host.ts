@@ -566,12 +566,6 @@ export class Host implements IComponent {
      * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
      */
     spaceMiddleware(req: ParsedMessage, res: ServerResponse, _next: NextCallback) {
-        if (!this.config.host.federationControl) {
-            res.statusCode = 403;
-            res.end();
-            return;
-        }
-
         const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
 
         this.logger.info("SPACE REQUEST", req.url, url);
@@ -579,9 +573,12 @@ export class Host implements IComponent {
         const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
 
         if (clientRequest) {
-            clientRequest?.on("response", (response: IncomingMessage) => {
-                response.pipe(res);
-            });
+            clientRequest
+                ?.on("response", (response: IncomingMessage) => {
+                    response.pipe(res);
+                }).on("error", (error) => {
+                    this.logger.error("Error requesting CPM", error);
+                });
 
             clientRequest.flushHeaders();
             req.pipe(clientRequest);

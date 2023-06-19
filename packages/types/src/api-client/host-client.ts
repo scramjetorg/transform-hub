@@ -70,5 +70,4 @@ export declare class HostClient {
     getTopics(): Promise<STHRestAPI.GetTopicsResponse>;
     getInstanceClient(id: string): InstanceClient;
     getSequenceClient(id: string): SequenceClient;
-    getSpaceClient(): import("../manager-api-client/manager-client").ManagerClient;
 }
