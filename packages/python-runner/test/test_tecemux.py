@@ -82,17 +82,17 @@ class TestTecemux:
 
 
         channel_alpha = CC.CONTROL
-        channel_beta = CC.IN       
-        
+        channel_beta = CC.IN
+
         await client_a.get_channel(channel_alpha).write("{'foo':'bar'}")
         await client_a._writer.drain()
-      
+
         await client_a.get_channel(channel_beta).write("{'bar':'foo2'}")
         await client_a._writer.drain()
 
         assert (await client_b.get_channel(channel_alpha).read(100)).decode() == "{'foo':'bar'}"
         assert (await client_b.get_channel(channel_beta).read(100)).decode() == "{'bar':'foo2'}"
-    
+
         await client_a.stop()
         await client_b.stop()
 
