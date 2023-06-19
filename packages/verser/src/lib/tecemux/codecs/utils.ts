@@ -2,7 +2,6 @@ export const calculateChecksum = (buffer: Buffer) => {
     let tempFrame = Buffer.concat([buffer, Buffer.alloc(0)]);
 
     if (buffer.length % 2) {
-
         tempFrame = Buffer.concat([buffer, Buffer.alloc(1, 0)]);
     }
 
