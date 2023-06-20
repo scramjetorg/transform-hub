@@ -22,7 +22,7 @@ import {
     STHRestAPI,
 } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
@@ -567,8 +567,9 @@ export class Host implements IComponent {
      */
     async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
         const id = req.params?.id;
+        const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 
-        this.logger.trace("Deleting Sequence...", id);
+        this.logger.trace("Deleting Sequence...", id, { force });
 
         const sequenceInfo = this.sequencesStore.get(id) || this.getSequenceByName(id);
 
@@ -581,17 +582,27 @@ export class Host implements IComponent {
 
         if (sequenceInfo.instances.size > 0) {
             const instances = [...sequenceInfo.instances].every((instanceId) => {
-                this.instancesStore[instanceId]?.finalizingPromise?.cancel();
+                // ?
+                // this.instancesStore[instanceId]?.finalizingPromise?.cancel();
                 return this.instancesStore[instanceId]?.isRunning;
             });
 
-            if (instances) {
+            if (instances && !force) {
                 this.logger.warn("Can't remove Sequence in use:", id);
 
                 return {
                     opStatus: ReasonPhrases.CONFLICT,
                     error: "Can't remove- Sequence in use"
                 };
+            }
+
+            if (instances) {
+                this.logger.info(`Killing Instances from Sequence ${id}...`);
+                await Promise.all([...sequenceInfo.instances].map(async (instanceId) => {
+                    await this.instancesStore[instanceId]?.kill({ removeImmediately: true });
+
+                    return new Promise((res) => this.instancesStore[instanceId]?.once("end", res));
+                }));
             }
         }
 
@@ -974,7 +985,7 @@ export class Host implements IComponent {
             }
 
             if (data.provides && !csic.outputRouted) {
-                this.logger.trace("Routing Sequence output to topic", data.requires);
+                this.logger.trace("Routing Sequence output to topic", data.provides);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
                     { topic: data.provides, contentType: data.contentType! },

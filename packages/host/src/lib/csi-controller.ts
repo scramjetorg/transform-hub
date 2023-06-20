@@ -742,9 +742,19 @@ export class CSIController extends TypedEmitter<Events> {
         if (typeof removeImmediately !== "boolean")
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid removeImmediately format" };
 
+        await this.kill({ removeImmediately });
+
+        return {
+            opStatus: ReasonPhrases.ACCEPTED,
+            ...this.getInfo()
+        };
+    }
+
+    async kill(opts = { removeImmediately: false }) {
         if (this.status === InstanceStatus.KILLING) {
             await this.instanceAdapter.remove();
         }
+
         this.status = InstanceStatus.KILLING;
 
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
@@ -753,18 +763,13 @@ export class CSIController extends TypedEmitter<Events> {
         promiseTimeout(this.endOfSequence, runnerExitDelay)
             .catch(() => this.instanceAdapter.remove());
 
-        if (removeImmediately) {
+        if (opts.removeImmediately) {
             this.instanceLifetimeExtensionDelay = 0;
 
             if (this.finalizingPromise) {
                 this.finalizingPromise.cancel();
             }
         }
-
-        return {
-            opStatus: ReasonPhrases.ACCEPTED,
-            ...this.getInfo()
-        };
     }
 
     getInfo(): STHRestAPI.GetInstanceResponse {

@@ -1,7 +1,6 @@
 import { CommandDefinition } from "../../types";
 import { createWriteStream, lstatSync } from "fs";
-import { defer } from "@scramjet/utility";
-import { displayEntity, displayMessage, displayObject } from "../output";
+import { displayEntity, displayError, displayMessage, displayObject } from "../output";
 import { getHostClient } from "../common";
 import { getSequenceId, profileManager, sessionConfig } from "../config";
 
@@ -10,9 +9,8 @@ import { PassThrough, Writable } from "stream";
 import { isDevelopment } from "../../utils/envs";
 
 import { resolve } from "path";
-import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceSendPackage, sequenceStart, waitForInstanceKills } from "../helpers/sequence";
+import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
-import { instanceKill } from "../helpers/instance";
 
 /**
  * Initializes `sequence` command.
@@ -181,18 +179,17 @@ export const sequence: CommandDefinition = (program) => {
         .command("delete")
         .alias("rm")
         .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
-        .description("Delete the Sequence from the Hub")
-        .action(async (id: string) => {
-            try {
-                const sequenceDeleteResponse = await sequenceDelete(id);
-
-                displayObject(sequenceDeleteResponse, profileManager.getProfileConfig().format);
-            } catch (error) {
-                if (error instanceof ClientError && error.code === "NOT_FOUND") {
-                    error.message = `Unable to find sequence ${id}`;
-                }
-                throw error;
-            }
+        .option("-f, --force", "Forcefully removes The Sequence by killing its Instances")
+        .description("Removes the Sequence from the Hub")
+        .action(async (id: string, { force }) => {
+            await sequenceDelete(id, { force }).then(
+                (res => { displayObject(res, profileManager.getProfileConfig().format); }),
+                (error => {
+                    displayError(
+                        JSON.parse(error?.body || { body: "Unknown error" })
+                    );
+                })
+            );
         });
 
     sequenceCmd
@@ -203,7 +200,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("Remove all Sequences from the Hub (use with caution)")
         .action(async ({ force }) => {
             let seqs = await getHostClient().listSequences();
-            const { lastSequenceId, lastInstanceId } = sessionConfig.get();
+            const { lastSequenceId } = sessionConfig.get();
 
             if (!seqs.length) {
                 displayMessage("Sequence list is empty, nothing to delete.");
@@ -213,26 +210,7 @@ export const sequence: CommandDefinition = (program) => {
             let fullSuccess = true;
 
             await Promise.all(
-                seqs.map(async seq => {
-                    const timeout = seq.instances.length * 5e3;
-
-                    if (seq.instances.length) {
-                        if (!force) {
-                            displayMessage(`Sequence ${seq.id} has instances. Use --force to kill those.`);
-                            return Promise.resolve();
-                        }
-
-                        await Promise.all(
-                            seq.instances.map(async instanceId => instanceKill(instanceId, true, lastInstanceId))
-                        );
-
-                        displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
-
-                        await defer(15000);
-                        await waitForInstanceKills(seq, timeout);
-                    }
-                    return sequenceDelete(seq.id, lastSequenceId);
-                })
+                seqs.map(async seq => sequenceDelete(seq.id, { force }, lastSequenceId))
             ).catch(error => {
                 fullSuccess = false;
 
@@ -246,6 +224,7 @@ export const sequence: CommandDefinition = (program) => {
             }
 
             seqs = await getHostClient().listSequences();
+            sessionConfig.setLastInstanceId("");
 
             if (seqs.length) {
                 throw new Error("Some Sequences may have not been deleted.");
