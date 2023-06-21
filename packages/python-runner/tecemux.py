@@ -24,15 +24,19 @@ class _ChannelContext:
     _global_instance_id: str
 
     _logger: logging.Logger = field(default=None)
+    _event_loop:asyncio.unix_events._UnixSelectorEventLoop = field(init=False)
     _internal_queue: asyncio.Queue = field(init=False)
     _channel_paused: bool = field(default=False, init=False)
     _channel_opened: bool = field(default=False, init=False)
+
 
     def __attrs_post_init__(self) -> None:
         """Internal function executes after constructor
         """
 
         self._internal_queue = asyncio.Queue()
+        self._event_loop = asyncio.get_running_loop()
+        a = 5
 
     def _get_channel_name(self) -> str:
         """Returns channel name
@@ -80,7 +84,7 @@ class _ChannelContext:
 
         return self._reader.readuntil(separator)
 
-    def read(self, n: int = -1) -> Coroutine:
+    def read(self, n: int = 1) -> Coroutine:
         """asyncio.StreamReader API. Reads up to `n` bytes from the stream.
 
         Args:
@@ -105,16 +109,11 @@ class _ChannelContext:
     def __aiter__(self):
         """asyncio.StreamReader API
         """
-        return self._reader.__aiter__
+        return self._reader.__aiter__()
 
-    async def __anext__(self):
-        """asyncio.StreamReader API
-        """
-        val = await self._reader.readline()
-        if val == b'':
-            raise StopAsyncIteration
-        return val
-
+    def __anext__(self):
+        return self._reader.__anext__()
+    
     async def send_ACK(self, sequence_number: int) -> None:
         """Adds to global queue an ACK packet to send.
 
@@ -204,23 +203,24 @@ class _ChannelContext:
                     break
         await self._global_queue.put(wrap(self._channel_enum, data))
 
-    async def write(self, data: bytes) -> None:
+    def write(self, data: bytes) -> None:
         """Writes data to channel
 
         Args:
             data (bytes): Buffer to send to channel
         """
+        async def _async_write(data):
+            if not self._channel_opened:
+                await self.open()
 
-        if not self._channel_opened:
-            await self.open()
+            await self._queue_up_outcoming(data)
 
-        await self._queue_up_outcoming(data)
+        self._event_loop.create_task(_async_write(data))
 
-    async def drain(self) -> bool:
+    def drain(self) -> bool:
         """Drain channel
         """
-        if not self._channel_paused:
-            await self._writer.drain()
+        return self._writer.drain()
 
     def write_eof(self) -> None:
         """asyncio.StreamWriter API
