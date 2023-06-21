@@ -66,6 +66,7 @@ Handles all Instance lifecycle, exposes instance's HTTP API.
 - [heartBeatTick](CSIController.md#heartbeattick)
 - [hookupStreams](CSIController.md#hookupstreams)
 - [instanceStopped](CSIController.md#instancestopped)
+- [kill](CSIController.md#kill)
 - [listenerCount](CSIController.md#listenercount)
 - [listeners](CSIController.md#listeners)
 - [main](CSIController.md#main)
@@ -563,7 +564,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:770](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L770)
+[packages/host/src/lib/csi-controller.ts:775](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L775)
 
 ___
 
@@ -577,7 +578,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:796](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L796)
+[packages/host/src/lib/csi-controller.ts:801](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L801)
 
 ___
 
@@ -591,7 +592,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:800](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L800)
+[packages/host/src/lib/csi-controller.ts:805](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L805)
 
 ___
 
@@ -623,7 +624,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:792](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L792)
+[packages/host/src/lib/csi-controller.ts:797](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L797)
 
 ___
 
@@ -683,7 +684,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:851](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L851)
+[packages/host/src/lib/csi-controller.ts:856](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L856)
 
 ___
 
@@ -703,7 +704,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:805](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L805)
+[packages/host/src/lib/csi-controller.ts:810](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L810)
 
 ___
 
@@ -723,7 +724,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:824](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L824)
+[packages/host/src/lib/csi-controller.ts:829](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L829)
 
 ___
 
@@ -772,6 +773,27 @@ ___
 #### Defined in
 
 [packages/host/src/lib/csi-controller.ts:428](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L428)
+
+___
+
+### kill
+
+▸ **kill**(`opts?`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `opts` | `Object` | `undefined` |
+| `opts.removeImmediately` | `boolean` | `false` |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:753](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L753)
 
 ___
 
@@ -1112,7 +1134,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:859](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L859)
+[packages/host/src/lib/csi-controller.ts:864](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L864)
 
 ___
 

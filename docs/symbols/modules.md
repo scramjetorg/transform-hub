@@ -9,6 +9,7 @@
 - [APIErrorCode](enums/APIErrorCode.md)
 - [CPMMessageCode](enums/CPMMessageCode.md)
 - [CommunicationChannel](enums/CommunicationChannel.md)
+- [HostHeaders](enums/HostHeaders.md)
 - [InstanceMessageCode](enums/InstanceMessageCode.md)
 - [OpRecordCode](enums/OpRecordCode.md)
 - [RunnerExitCode](enums/RunnerExitCode.md)

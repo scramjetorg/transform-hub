@@ -75,13 +75,15 @@ ___
 
 ### deleteSequence
 
-▸ **deleteSequence**(`sequenceId`): `Promise`<[`DeleteSequenceResponse`](../modules/STHRestAPI.md#deletesequenceresponse)\>
+▸ **deleteSequence**(`sequenceId`, `opts?`): `Promise`<[`DeleteSequenceResponse`](../modules/STHRestAPI.md#deletesequenceresponse)\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `sequenceId` | `string` |
+| `opts?` | `Object` |
+| `opts.force` | `boolean` |
 
 #### Returns
 
