@@ -168,8 +168,6 @@ IComponent {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
             this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(runnerName));
 
-            await this.remove(this.adapterConfig.timeout);
-
             return exitPodStatus.code || 137;
         }
 
@@ -182,7 +180,7 @@ IComponent {
     }
 
     async cleanup(): Promise<void> {
-        //noop
+        await this.remove(this.adapterConfig.timeout);
     }
 
     // @ts-ignore
@@ -207,7 +205,11 @@ IComponent {
     }
 
     async getCrashLog(): Promise<string[]> {
-        return ["Crashlog not implemented"];
+        if (this._kubeClient && this._runnerName) {
+            return this._kubeClient.getPodLog(this._runnerName);
+        }
+
+        return ["Crashlog cannot be fetched"];
     }
 }
 

@@ -197,8 +197,10 @@ export function sequenceParseArgs(argsStr: string): any[] {
     return args;
 }
 
-export const sequenceDelete = async (id: string, lastSequenceId = sessionConfig.lastSequenceId) => {
-    const deleteSequenceResponse = await getHostClient().deleteSequence(getSequenceId(id));
+export const sequenceDelete = async (
+    id: string, opts = { force: false }, lastSequenceId = sessionConfig.lastSequenceId
+) => {
+    const deleteSequenceResponse = await getHostClient().deleteSequence(getSequenceId(id), opts);
 
     if (lastSequenceId === id) {
         sessionConfig.setLastSequenceId("");

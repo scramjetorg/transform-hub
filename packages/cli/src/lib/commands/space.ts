@@ -4,6 +4,7 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { profileManager, sessionConfig } from "../config";
 import { displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
+import { displayProdOnlyMsg } from "../helpers/messages";
 
 /**
  * Initializes `space` command.
@@ -13,7 +14,12 @@ import { getMiddlewareClient } from "../platform";
 export const space: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
-    if (!isProdEnv) return;
+    if (!isProdEnv) {
+        program.command("space", { hidden: true })
+            .action(() => displayProdOnlyMsg("space"));
+
+        return;
+    }
 
     const spaceCmd = program
         .command("space")
