@@ -28,6 +28,7 @@ class _ChannelContext:
     _internal_queue: asyncio.Queue = field(init=False)
     _channel_paused: bool = field(default=False, init=False)
     _channel_opened: bool = field(default=False, init=False)
+    _waiting_tasks: list = field(init=False)
 
 
     def __attrs_post_init__(self) -> None:
@@ -36,7 +37,7 @@ class _ChannelContext:
 
         self._internal_queue = asyncio.Queue()
         self._event_loop = asyncio.get_running_loop()
-        a = 5
+        self._waiting_tasks = []
 
     def _get_channel_name(self) -> str:
         """Returns channel name
@@ -215,7 +216,7 @@ class _ChannelContext:
 
             await self._queue_up_outcoming(data)
 
-        self._event_loop.create_task(_async_write(data))
+        self._waiting_tasks.append(self._event_loop.create_task(_async_write(data)))
 
     def drain(self) -> bool:
         """Drain channel
@@ -328,6 +329,13 @@ class Tecemux:
             _ChannelContext: Channel context
         """
         return self._channels[channel]
+
+    async def sync(self):
+        """Waits until all write tasks will be done
+        """        
+        for ch in self.get_channels():
+            if len(ch._waiting_tasks) > 0:
+                await asyncio.wait(ch._waiting_tasks, return_when=asyncio.ALL_COMPLETED)
 
     def get_channels(self) -> dict:
         """Returns all initiated channels

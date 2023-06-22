@@ -3,6 +3,8 @@ import sys
 import os
 import codecs
 import json
+import logging
+#import debugpy
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -19,10 +21,13 @@ server_port = os.getenv('INSTANCES_SERVER_PORT')
 server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 instance_id = os.getenv('INSTANCE_ID')
 
+#debugpy.listen(5678)
+#debugpy.wait_for_client()
+#debugpy.breakpoint()
 
 async def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
-    await stream.write(f'{message}\r\n'.encode())
+    stream.write(f'{message}\r\n'.encode())
     await stream.drain()
 
 class Runner:
@@ -55,6 +60,7 @@ class Runner:
         asyncio.create_task(self.setup_heartbeat())
 
         self.load_sequence()
+        await self.protocol.sync()
         await self.run_instance(config, args)
 
     async def init_tecemux(self, server_host, server_port):
@@ -185,7 +191,13 @@ class Runner:
         asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.logger.info('Running instance...')
-        result = self.sequence.run(context, input_stream, *args)
+        try:
+            result = self.sequence.run(context, input_stream, *args)
+        except Exception as e:
+            self.protocol.get_channel(CC.STDERR).write(str(e)+'\n')
+            await self.protocol.sync()
+            await self.protocol._writer.drain()
+            raise e
 
         self.logger.info(f'Sending PANG')
         monitoring = self.protocol.get_channel(CC.MONITORING)
@@ -303,7 +315,7 @@ class AppContext:
         await self.runner.send_keep_alive(timeout)
 
 log_target = open(sys.argv[1], 'a+') if len(sys.argv) > 1 else sys.stdout
-log_setup = LoggingSetup(log_target)
+log_setup = LoggingSetup(log_target, min_loglevel=logging.INFO)
 
 log_setup.logger.info('Starting up...')
 log_setup.logger.debug(f'server_host: {server_host}')
