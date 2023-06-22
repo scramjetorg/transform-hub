@@ -397,7 +397,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Handles connection close.
      * Tries to reconnect.
-     * 
+     *
      * @param {number} connectionStatusCode - status code
      */
     async handleConnectionClose(connectionStatusCode: number) {
@@ -604,8 +604,9 @@ export class CPMConnector extends TypedEmitter<Events> {
         headers: Record<string, string> = {}
     ): http.ClientRequest {
         this.logger.info("make HTTP Req to CPM", `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`);
+
         return http.request(
-            `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`,
+            `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`,
             { method, agent: this.verserClient.verserAgent, headers }
         );
     }

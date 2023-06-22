@@ -573,15 +573,14 @@ export class Host implements IComponent {
         const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
 
         if (clientRequest) {
-            clientRequest
-                ?.on("response", (response: IncomingMessage) => {
-                    response.pipe(res);
-                }).on("error", (error) => {
-                    this.logger.error("Error requesting CPM", error);
-                });
+            clientRequest.on("response", (response: IncomingMessage) => {
+                response.pipe(res);
+                req.pipe(clientRequest);
+            }).on("error", (error) => {
+                this.logger.error("Error requesting CPM", error);
+            });
 
             clientRequest.flushHeaders();
-            req.pipe(clientRequest);
         } else {
             res.statusCode = 404;
             res.end();
