@@ -16,13 +16,13 @@ from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
 
-sequence_path = os.getenv('SEQUENCE_PATH')
-server_port = os.getenv('INSTANCES_SERVER_PORT')
-server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
-instance_id = os.getenv('INSTANCE_ID')
+SEQUENCE_PATH = os.getenv('SEQUENCE_PATH')
+SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
+SERVER_HOST = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
+INSTANCE_ID = os.getenv('INSTANCE_ID')
 
 #debugpy.listen(5678)
-#debugpy.wait_for_client()
+#debugpy.wait_for_client() 
 #debugpy.breakpoint()
 
 async def send_encoded_msg(stream, msg_code, data={}):
@@ -41,7 +41,6 @@ class Runner:
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
         self.protocol = None
-        self.streams = {}
     @staticmethod
     def is_incoming(channel):
         return channel in [CC.STDIN, CC.IN, CC.CONTROL]
@@ -62,6 +61,7 @@ class Runner:
         self.load_sequence()
         await self.protocol.sync()
         await self.run_instance(config, args)
+        await self.protocol.sync()
 
     async def init_tecemux(self, server_host, server_port):
         self.logger.info('Connecting to host with TeceMux...')
@@ -69,8 +69,6 @@ class Runner:
         await self.protocol.connect(*await Tecemux.prepare_tcp_connection(server_host, server_port))
         await self.protocol.prepare(force_open=True)
         await self.protocol.loop()
-
-        self.streams = self.protocol._channels
 
     def connect_stdio(self):
         sys.stdout = codecs.getwriter('utf-8')(self.protocol.get_channel(CC.STDOUT))
@@ -98,7 +96,7 @@ class Runner:
         monitoring = self.protocol.get_channel(CC.MONITORING)
         control = self.protocol.get_channel(CC.CONTROL)
 
-        self.logger.info(f'Sending PING')
+        self.logger.info('Sending PING')
         await send_encoded_msg(monitoring, msg_codes.PING)
 
         message = await control.readuntil(b'\n')
@@ -112,7 +110,7 @@ class Runner:
         if 'args' not in data:
             data['args'] = []
 
-        self.logger.info(f'Sending PANG')
+        self.logger.info('Sending PANG')
         pang_requires_data = {
             'requires': '',
             'contentType': ''
@@ -193,12 +191,12 @@ class Runner:
         self.logger.info('Running instance...')
         try:
             result = self.sequence.run(context, input_stream, *args)
-        except Exception as e:
-            self.protocol.get_channel(CC.STDERR).write(str(e)+'\n')
+        except Exception:
+            import traceback
+            self.protocol.get_channel(CC.STDERR).write(traceback.format_exc())
             await self.protocol.sync()
-            await self.protocol._writer.drain()
-            raise e
-
+            self.exit_immediately()
+        
         self.logger.info(f'Sending PANG')
         monitoring = self.protocol.get_channel(CC.MONITORING)
 
@@ -314,18 +312,18 @@ class AppContext:
     async def keep_alive(self, timeout: int = 0):
         await self.runner.send_keep_alive(timeout)
 
-log_target = open(sys.argv[1], 'a+') if len(sys.argv) > 1 else sys.stdout
-log_setup = LoggingSetup(log_target, min_loglevel=logging.INFO)
+LOG_TARGET = open(sys.argv[1], 'a+',encoding='utf-8') if len(sys.argv) > 1 else sys.stdout
+LOG_SETUP = LoggingSetup(LOG_TARGET, min_loglevel=logging.DEBUG)
 
-log_setup.logger.info('Starting up...')
-log_setup.logger.debug(f'server_host: {server_host}')
-log_setup.logger.debug(f'server_port: {server_port}')
-log_setup.logger.debug(f'instance_id: {instance_id}')
-log_setup.logger.debug(f'sequence_path: {sequence_path}')
+LOG_SETUP.logger.info('Starting up...')
+LOG_SETUP.logger.debug(f'server_host: {SERVER_HOST}')
+LOG_SETUP.logger.debug(f'server_port: {SERVER_PORT}')
+LOG_SETUP.logger.debug(f'instance_id: {INSTANCE_ID}')
+LOG_SETUP.logger.debug(f'sequence_path: {SEQUENCE_PATH}')
 
-if not sequence_path or not server_port or not instance_id:
-    log_setup.logger.error('Undefined config variable! <blows raspberry>')
+if not SEQUENCE_PATH or not SERVER_PORT or not INSTANCE_ID:
+    LOG_SETUP.logger.error('Undefined config variable! <blows raspberry>')
     sys.exit(2)
 
-runner = Runner(instance_id, sequence_path, log_setup)
-asyncio.run(runner.main(server_host, server_port))
+runner = Runner(INSTANCE_ID, SEQUENCE_PATH, LOG_SETUP)
+asyncio.run(runner.main(SERVER_HOST, SERVER_PORT))
