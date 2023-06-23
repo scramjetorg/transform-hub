@@ -4,7 +4,7 @@ import os
 import codecs
 import json
 import logging
-#import debugpy
+import debugpy
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -21,9 +21,9 @@ SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
 SERVER_HOST = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 INSTANCE_ID = os.getenv('INSTANCE_ID')
 
-#debugpy.listen(5678)
-#debugpy.wait_for_client() 
-#debugpy.breakpoint()
+debugpy.listen(5678)
+debugpy.wait_for_client() 
+debugpy.breakpoint()
 
 async def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
@@ -59,9 +59,14 @@ class Runner:
         asyncio.create_task(self.setup_heartbeat())
 
         self.load_sequence()
+
         await self.protocol.sync()
         await self.run_instance(config, args)
         await self.protocol.sync()
+
+        await self.protocol.stop()
+        await self.protocol.wait_until_end()
+
 
     async def init_tecemux(self, server_host, server_port):
         self.logger.info('Connecting to host with TeceMux...')

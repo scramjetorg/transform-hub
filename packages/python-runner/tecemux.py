@@ -40,7 +40,7 @@ class _ChannelContext:
         self._internal_queue = asyncio.Queue()
         self._event_loop = asyncio.get_running_loop()
 
-    def _debug(self,msg):
+    def _debug(self, msg):
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
             self._logger.debug(msg)
 
@@ -91,7 +91,7 @@ class _ChannelContext:
 
         return self._reader.readuntil(separator)
 
-    def read(self, n: int = 1) -> Coroutine:
+    def read(self, n: int = 64) -> Coroutine:
         """asyncio.StreamReader API. Reads up to `n` bytes from the stream.
 
         Args:

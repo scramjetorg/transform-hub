@@ -79,6 +79,7 @@ class TestTecemux:
 
         assert (await client_b.get_channel(destination_channel).read(100)).decode() == data_to_send
 
+        await self._close_clients(client_a, client_b)
 
     @pytest.mark.asyncio
     async def test_forward_channel_between_a_b(self, local_socket_connection):
