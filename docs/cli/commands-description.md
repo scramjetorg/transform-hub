@@ -416,31 +416,15 @@ Remove existing profile configuration
 
 ---
 
-## $ si scope | s
+## $ si scope
 
 **Description**
 
-/This functionality is under development./ Manage scopes that store pairs of spaces and Hubs used when working
+
 
 **Usage**
 
-`si scope [command] [options...]`
-
-**Options**
-
-*  -h, --help     Display help for command
-
----
-
-## $ si scope list | ls
-
-**Description**
-
-List all created scopes
-
-**Usage**
-
-`si scope list [options]`
+`si scope [options]`
 
 **Options**
 
@@ -448,243 +432,15 @@ List all created scopes
 
 ---
 
-## $ si scope print
+## $ si space
 
 **Description**
 
-See json file under the scope
+
 
 **Usage**
 
-`si scope print [options] <name>`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si scope use
-
-**Description**
-
-Work on the selected scope
-
-**Usage**
-
-`si scope use [options] <name>`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si scope delete
-
-**Description**
-
-Delete specific scope
-
-**Usage**
-
-`si scope delete [options] <name>`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si space | spc
-
-**Description**
-
-Operations on grouped and separated runtime environments that allow sharing the data within them
-
-**Usage**
-
-`si space [command] [options...]`
-
-**Options**
-
-*  -c, --stdout                       Output to stdout (ignores -o)
-*  -o, --output <file.tar.gz>         Output path - defaults to dirname
-*  -h, --help                         Display help for command
-
----
-
-## $ si space info
-
-**Description**
-
-Display info about the default space
-
-**Usage**
-
-`si space info [options]`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si space list | ls
-
-**Description**
-
-List all existing spaces
-
-**Usage**
-
-`si space list [options]`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si space use
-
-**Description**
-
-Use the space
-
-**Usage**
-
-`si space use [options] <name>`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si space audit
-
-**Description**
-
-Fetch all audit messages from spaces
-
-**Usage**
-
-`si space audit [options]`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si space logs
-
-**Description**
-
-Fetch all logs from space
-
-**Usage**
-
-`si space logs [options] [<space_name>]`
-
-**Arguments**
-
-*  <space_name>  The name of the space (defaults to current space)
-
-**Options**
-
-*  -h, --help    Display help for command
-
----
-
-## $ si space disconnect
-
-**Description**
-
-Disconnect self hosted Hubs from space
-
-**Usage**
-
-`si space disconnect [options] <space_name>`
-
-**Arguments**
-
-*  space_name  The name of the Space
-
-**Options**
-
-*  --id <id>   Hub Id
-*  --all       Disconnects all self-hosted Hubs connected to Space (default: false)
-*  -h, --help  Display help for command
-
----
-
-## $ si space access
-
-**Description**
-
-Manages Access Keys for active Space
-
-**Usage**
-
-`si space access [options] [command]`
-
-**Options**
-
-*  -h, --help            Display help for command
-
----
-
-## $ si space access create
-
-**Description**
-
-Create Access key for adding Hubs to active Space, i.e "Army of Darkness"
-
-**Usage**
-
-`si space access create [options] <description>`
-
-**Arguments**
-
-*  description  Key description
-
-**Options**
-
-*  -h, --help   Display help for command
-
----
-
-## $ si space access list | ls
-
-**Description**
-
-List Access Keys metadata in active Space
-
-**Usage**
-
-`si space access list [options]`
-
-**Options**
-
-*  -h, --help  Display help for command
-
----
-
-## $ si space access revoke
-
-**Description**
-
-Revokes Access Key in active Space
-
-**Usage**
-
-`si space access revoke [options] <access_key>`
-
-**Arguments**
-
-*  access_key  Access Key id
+`si space [options]`
 
 **Options**
 
@@ -701,54 +457,6 @@ Allows to run programs in different data centers, computers or devices in local 
 **Usage**
 
 `si hub [command] [options...]`
-
-**Options**
-
-*  -h, --help               Display help for command
-
----
-
-## $ si hub use
-
-**Description**
-
-Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub
-
-**Usage**
-
-`si hub use [options] <name|id>`
-
-**Options**
-
-*  -h, --help               Display help for command
-
----
-
-## $ si hub list | ls
-
-**Description**
-
-List all the Hubs in the default space
-
-**Usage**
-
-`si hub list [options]`
-
-**Options**
-
-*  -h, --help               Display help for command
-
----
-
-## $ si hub info
-
-**Description**
-
-Display info about the default Hub
-
-**Usage**
-
-`si hub info [options]`
 
 **Options**
 
@@ -1002,7 +710,7 @@ Pack (if needed), send and start the Sequence
 
 **Description**
 
-Delete the Sequence from the Hub
+Removes the Sequence from the Hub
 
 **Usage**
 
@@ -1014,6 +722,7 @@ Delete the Sequence from the Hub
 
 **Options**
 
+*  -f, --force              Forcefully removes The Sequence by killing its Instances
 *  -h, --help               Display help for command
 
 ---
@@ -1480,6 +1189,22 @@ List information about topics
 **Options**
 
 *  -h, --help               Display help for command
+
+---
+
+## $ si store
+
+**Description**
+
+
+
+**Usage**
+
+`si store [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
 
 ---
 
