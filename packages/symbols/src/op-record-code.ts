@@ -53,12 +53,14 @@ export enum OpRecordCode {
     HOST_HEARTBEAT = 13010,
     INSTANCE_HEARTBEAT = 13012,
     MANAGER_HEARTBEAT = 13020,
+
     /**
      * Message codes related to STH connection states
      * Inticates whether the hub has been connected or disconnected
      */
     HUB_CONNECTED = 14000,
     HUB_DISCONNECTED = 14001,
+
     /**
      * The INSTANCE_STOPPED message is sent when an Instance terminated not
      * in response to the API request but gracefully by itself or by throwing an error.
