@@ -5,6 +5,7 @@ import socket
 from typing import Any, Coroutine
 
 from attrs import define, field
+from barrier import Barrier
 from inet import IPPacket, TCPSegment, SequenceOrder
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -26,19 +27,45 @@ class _ChannelContext:
     _global_queue: asyncio.Queue
     _global_instance_id: str
 
-    _logger: logging.Logger = field(default=None)
-    _event_loop: asyncio.unix_events._UnixSelectorEventLoop = field(init=False)
-    _internal_queue: asyncio.Queue = field(init=False)
-    _channel_paused: bool = field(default=False, init=False)
-    _channel_opened: bool = field(default=False, init=False)
-    _waiting_tasks: list = field(default=[], init=False)
+    _logger: logging.Logger
+    _event_loop: asyncio.unix_events._UnixSelectorEventLoop
+    _internal_queue: asyncio.Queue
+    _channel_paused: bool
+    _channel_opened: bool
+    _stop_event: asyncio.Event
+    _sync_event: asyncio.Event
+    _sync_barrier: Barrier
+    _process_task: Any
 
-
-    def __attrs_post_init__(self) -> None:
-        """Internal function executes after constructor
-        """
-        self._internal_queue = asyncio.Queue()
+    def __init__(self, channel: CC,
+                 reader: asyncio.StreamReader,
+                 writer: asyncio.StreamWriter,
+                 queue: asyncio.Queue,
+                 instance_id: str, 
+                 logger: logging.Logger,
+                 stop_event: asyncio.Event,
+                 sync_event: asyncio.Event,
+                 sync_barrier: Barrier):
+        
+        self._channel_enum = channel
+        self._reader = reader
+        self._writer = writer
+        self._global_queue = queue
+        self._global_instance_id = instance_id
+        self._logger = logger
         self._event_loop = asyncio.get_running_loop()
+        self._internal_queue = asyncio.Queue()
+        self._channel_opened = False
+        self._channel_paused = False
+        self._stop_event = stop_event
+        self._sync_event = sync_event
+        self._sync_barrier = sync_barrier
+        self._process_task = asyncio.create_task(self._process_tasks())
+
+    async def _process_tasks(self):
+        while not self._stop_event.is_set():
+            await self._queue_up_outcoming()
+
 
     def _debug(self, msg):
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
@@ -183,7 +210,7 @@ class _ChannelContext:
         self._writer.write(pkt.get_segment().data)
         await self._writer.drain()
 
-    async def _queue_up_outcoming(self, data: bytes) -> None:
+    async def _queue_up_outcoming(self) -> None:
         """Redirects raw data from currect channel to global queue.
 
         Args:
@@ -193,18 +220,22 @@ class _ChannelContext:
             channel_id = int(channel_enum.value)
             return IPPacket(segment=TCPSegment(dst_port=channel_id, flags=['PSH'], data=buf))
 
-        if self._channel_paused:
-            self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel paused. Data queued up internally for future')
-            await self._internal_queue.put(data)
-        else:
+        if not self._channel_paused:
             while not self._internal_queue.empty():
                 try:
                     buf = await self._internal_queue.get()
                     await self._global_queue.put(wrap(self._channel_enum, buf))
+                    self._internal_queue.task_done()
                 except asyncio.QueueEmpty:
                     self._debug(f'Tecemux/{self._get_channel_name()}: [-] All data stored during pause were redirected to global queue')
                     break
-        await self._global_queue.put(wrap(self._channel_enum, data))
+        else:
+            self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel paused. Data queued up internally for future')
+        
+        if self._sync_event.is_set():
+            await self._sync_barrier.wait()
+
+        await asyncio.sleep(0)
 
     def write(self, data: bytes) -> None:
         """Writes data to channel
@@ -212,13 +243,7 @@ class _ChannelContext:
         Args:
             data (bytes): Buffer to send to channel
         """
-        async def _async_write(data):
-            if not self._channel_opened:
-                await self.open()
-
-            await self._queue_up_outcoming(data)
-
-        self._waiting_tasks.append(self._event_loop.create_task(_async_write(data))) #pylint:disable=E1101
+        self._internal_queue.put_nowait(data)
 
     def drain(self) -> bool:
         """Drain channel
@@ -260,14 +285,16 @@ class Tecemux:
     _channels: dict = field(default={})
     _logger: logging.Logger = field(default=None)
     _global_stop_event: asyncio.Event = asyncio.Event()
+    _global_sync_event: asyncio.Event = asyncio.Event()
+    _global_sync_barrier: Barrier = field(default=None, init=False)
     _sequence_number: int = field(default=0)
     _last_sequence_received: int = field(default=0)
 
-    def _debug(self,msg):
+    def _debug(self, msg):
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
             self._logger.debug(msg)
 
-    def _warning(self,msg):
+    def _warning(self, msg):
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
             self._logger.warning(msg)
 
@@ -317,8 +344,15 @@ class Tecemux:
         """
 
         self._queue = asyncio.Queue()
-        self._channels = {channel: _ChannelContext(channel, *await Tecemux.prepare_socket_connection(), self._queue, self._instance_id, self._logger) for channel in CC}
-
+        self._global_sync_barrier = Barrier(len(CC))
+        self._channels = {channel: _ChannelContext(channel,
+                                                   *await Tecemux.prepare_socket_connection(),
+                                                   self._queue,
+                                                   self._instance_id,
+                                                   self._logger,
+                                                   self._global_stop_event,
+                                                   self._global_sync_event,
+                                                   self._global_sync_barrier) for channel in CC}
         if force_open:
             [await channel.open() for channel in self.get_channels()]
 
@@ -344,12 +378,12 @@ class Tecemux:
     async def sync(self):
         """Waits until all write tasks will be done
         """
-        for channel in self.get_channels():
-            if len(channel._waiting_tasks) > 0:
-                await asyncio.wait(channel._waiting_tasks, return_when=asyncio.ALL_COMPLETED)
-
+        self._global_sync_event.set()
+        await self._global_sync_barrier.wait()
+        self._global_sync_event.clear()
+        
         if not self._queue.empty():
-            await self._queue.join()
+            await self._queue.join()       
 
     def get_channels(self) -> dict:
         """Returns all initiated channels
@@ -377,20 +411,24 @@ class Tecemux:
         for channel in self.get_channels():
             await channel.close()
             await channel.drain()
-            channel._writer.close()
-            await channel.wait_closed()
-
-        await self._writer.drain()
-        self._writer.close()
-        await self._writer.wait_closed()
+        self.sync()
         self._global_stop_event.set()
-
     async def wait_until_end(self) -> None:
         """Waits until forwarders finished work.
         """
         await self._global_stop_event.wait()
-        await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
+        for channel in self.get_channels():
+            channel._process_task.cancel()
 
+        self._incoming_data_forwarder.cancel()
+        self._outcoming_data_forwarder.cancel()
+
+        #await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
+        await asyncio.sleep(1)
+        self._writer.write_eof()
+        await self._writer.drain()
+        self._writer.close()
+ 
         self._debug('Tecemux/MAIN: [-] Finished')
 
     async def loop(self) -> None:
@@ -414,42 +452,47 @@ class Tecemux:
         READ_CHUNK_SIZE = 1024
 
         while not self._global_stop_event.is_set():
+            try:
+                chunk = await asyncio.wait_for(self._reader.read(READ_CHUNK_SIZE),1)
 
-            chunk = await self._reader.read(READ_CHUNK_SIZE)
+                if not chunk:
+                    incoming_parser_finish_loop.set()
 
-            if not chunk:
-                incoming_parser_finish_loop.set()
+                buffer = buffer + chunk
 
-            buffer = buffer + chunk
+                buffer_len = len(buffer)
 
-            buffer_len = len(buffer)
+                if incoming_parser_finish_loop.is_set() and buffer_len > 0 and buffer_len < MINIMAL_IP_PACKET_LENGTH:
 
-            if incoming_parser_finish_loop.is_set() and buffer_len > 0 and buffer_len < MINIMAL_IP_PACKET_LENGTH:
-
-                self._warning('Tecemux/MAIN: [<] Too few data is waiting in global buffer but stream finished')
-                break
-
-            while not (len(buffer) < MINIMAL_IP_PACKET_LENGTH):
-
-                current_packet_size = IPPacket().from_buffer_with_pseudoheader(buffer).len
-
-                if len(buffer) >= current_packet_size:
-
-                    single_packet_buffer = buffer[:current_packet_size]
-                    pkt = IPPacket().from_buffer_with_pseudoheader(single_packet_buffer)
-                    self._last_sequence_received = pkt.get_segment().seq
-                    self._debug(f'Tecemux/MAIN: [<] Full incomming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
-
-                    channel = CC(str(pkt.get_segment().dst_port))
-
-                    await self._channels[channel].queue_up_incoming(pkt)
-
-                    self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel.name} stream')
-                    buffer = buffer[current_packet_size:]
-                else:
-                    self._warning('Tecemux/MAIN: [<] Not full packet received. Getting additional data chunk')
+                    self._warning('Tecemux/MAIN: [<] Too few data is waiting in global buffer but stream finished')
                     break
 
+                while not (len(buffer) < MINIMAL_IP_PACKET_LENGTH):
+
+                    current_packet_size = IPPacket().from_buffer_with_pseudoheader(buffer).len
+
+                    if len(buffer) >= current_packet_size:
+
+                        single_packet_buffer = buffer[:current_packet_size]
+                        pkt = IPPacket().from_buffer_with_pseudoheader(single_packet_buffer)
+                        self._last_sequence_received = pkt.get_segment().seq
+                        self._debug(f'Tecemux/MAIN: [<] Full incomming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
+
+                        channel = CC(str(pkt.get_segment().dst_port))
+
+                        await self._channels[channel].queue_up_incoming(pkt)
+
+                        self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel.name} stream')
+                        buffer = buffer[current_packet_size:]
+                    else:
+                        self._warning('Tecemux/MAIN: [<] Not full packet received. Getting additional data chunk')
+                        break
+            except TimeoutError:
+                await asyncio.sleep(0)
+
+            except asyncio.CancelledError:
+                break
+            
         self._debug('Tecemux/MAIN: Incomming data forwarder finished')
 
     async def outcoming_data_forward(self) -> None:

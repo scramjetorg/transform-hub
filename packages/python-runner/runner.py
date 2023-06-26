@@ -60,9 +60,8 @@ class Runner:
 
         self.load_sequence()
 
-        await self.protocol.sync()
+        await self.protocol.sync()     
         await self.run_instance(config, args)
-        await self.protocol.sync()
 
         await self.protocol.stop()
         await self.protocol.wait_until_end()
@@ -192,7 +191,7 @@ class Runner:
         context = AppContext(self, config)
         input_stream = Stream()
         asyncio.create_task(self.connect_input_stream(input_stream))
-
+        await self.protocol.sync()      
         self.logger.info('Running instance...')
         try:
             result = self.sequence.run(context, input_stream, *args)
@@ -201,7 +200,7 @@ class Runner:
             self.protocol.get_channel(CC.STDERR).write(traceback.format_exc())
             await self.protocol.sync()
             self.exit_immediately()
-        
+  
         self.logger.info(f'Sending PANG')
         monitoring = self.protocol.get_channel(CC.MONITORING)
 
@@ -220,11 +219,13 @@ class Runner:
         elif asyncio.iscoroutine(result):
             result = await result
         if result:
+            await self.protocol.sync()
             await self.forward_output_stream(result)
         else:
             self.logger.debug('Sequence returned no output.')
 
         self.logger.info('Finished.')
+        await self.protocol.sync()
         await self.cleanup()
 
     async def cleanup(self):
@@ -243,7 +244,9 @@ class Runner:
             input_type = headers.get('content-type')
 
         if input_type == 'text/plain':
-            input = Stream.read_from(self.protocol.get_channel(CC.IN))
+            await self.protocol.sync()
+            input = await Stream.read_from(self.protocol.get_channel(CC.IN)).to_list()
+
             self.logger.debug('Decoding input stream...')
             input = input.decode('utf-8')
         elif input_type == 'application/octet-stream':
@@ -276,6 +279,7 @@ class Runner:
             self.logger.debug('Output will be converted to JSON')
             output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
+        await self.protocol.sync()
         await output.write_to(self.protocol.get_channel(CC.OUT))
 
     
