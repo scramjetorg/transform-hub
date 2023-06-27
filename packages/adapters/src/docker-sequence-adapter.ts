@@ -29,6 +29,7 @@ const PACKAGE_DIR = "/package";
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
     private resources: DockerAdapterResources = {};
+    private config: STHConfiguration;
 
     public name = "DockerSequenceAdapter";
 
@@ -37,7 +38,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     logger: IObjectLogger;
 
-    constructor(private config: STHConfiguration) {
+    constructor(config: STHConfiguration) {
+        this.config = config;
         this.logger = new ObjLogger(this.name);
 
         this.dockerHelper = new DockerodeDockerHelper();

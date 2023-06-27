@@ -50,6 +50,8 @@ export * from "./sequence-package-json";
 
 export * from "./sequence-adapter";
 export * from "./runtime-adapter";
+export * from "./instance-adapter";
+
 export * from "./dto/index";
 
 export * from "./rest-api-error/rest-api-error";

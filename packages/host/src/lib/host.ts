@@ -26,7 +26,7 @@ import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCod
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
-import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
+//import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
@@ -329,11 +329,14 @@ export class Host implements IComponent {
         this.adapterManager.logger.pipe(this.logger);
 
         await this.adapterManager.init();
+        const adapterInitStatus = this.adapterManager.initAdapter(this.config.runtimeAdapter);
 
-        const adapter = await initializeRuntimeAdapters(this.config);
+        if (adapterInitStatus.error) {
+            throw new Error(`Failed to initialize "${this.config.runtimeAdapter}" Adapter: ${adapterInitStatus.error}`);
+        }
 
-        this.adapterName = adapter;
-        this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
+        this.adapterName = this.config.runtimeAdapter;
+        this.logger.info(`Will use the "${this.adapterName}" adapter for running Sequences`);
 
         this.pushTelemetry("Host started");
 
@@ -647,7 +650,16 @@ export class Host implements IComponent {
         }
 
         try {
-            const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
+            const adapter = this.adapterManager.getAvailableAdapter();
+
+            if (!adapter) {
+                return {
+                    opStatus: ReasonPhrases.FAILED_DEPENDENCY,
+                    error: "Can't use adapter"
+                };
+            }
+
+            const sequenceAdapter = new adapter.SequenceAdapter(this.config);
 
             await sequenceAdapter.remove(sequenceInfo.config);
             this.sequenceStore.delete(id);
@@ -711,8 +723,17 @@ export class Host implements IComponent {
      * Used to recover Sequences information after restart.
      */
     async identifyExistingSequences() {
-        const adapter = await initializeRuntimeAdapters(this.config);
-        const sequenceAdapter = getSequenceAdapter(adapter, this.config);
+        //const adapter = await initializeRuntimeAdapters(this.config);
+        const adapter = this.adapterManager.getAvailableAdapter();
+
+        if (!adapter) {
+            return {
+                opStatus: ReasonPhrases.FAILED_DEPENDENCY,
+                error: "Can't use adapter"
+            };
+        }
+
+        const sequenceAdapter = new adapter!.SequenceAdapter(this.config);
 
         try {
             await sequenceAdapter.init();
@@ -742,7 +763,16 @@ export class Host implements IComponent {
         this.logger.info("New Sequence incoming", { name: sequenceName });
 
         try {
-            const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
+            const adapter = this.adapterManager.getAvailableAdapter();
+
+            if (!adapter) {
+                return {
+                    opStatus: ReasonPhrases.FAILED_DEPENDENCY,
+                    error: "Can't initialize Adapter"
+                }
+            }
+
+            const sequenceAdapter = new adapter.SequenceAdapter(this.config);
 
             sequenceAdapter.logger.updateBaseLog({ id });
             sequenceAdapter.logger.pipe(this.logger);
@@ -966,12 +996,20 @@ export class Host implements IComponent {
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      */
     async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
+        const adapter = this.adapterManager.getAvailableAdapter();
+
+        if (!adapter) {
+            throw new Error("Failed to use adapter");
+        }
+
+        const instanceAdapter = new adapter.InstanceAdapter(this.config);
+
         const communicationHandler = new CommunicationHandler();
         const id = payload.instanceId || IDProvider.generate();
 
         this.logger.debug("CSIC start payload", payload);
 
-        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
+        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy, instanceAdapter);
 
         csic.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });

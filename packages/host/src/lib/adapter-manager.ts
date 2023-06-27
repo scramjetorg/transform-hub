@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { IRuntimeAdapter, STHConfiguration } from "@scramjet/types";
+import { IRuntimeAdapter, InstanceRequirements, STHConfiguration } from "@scramjet/types";
 
 export class AdapterManager {
     adapters: { [key: string]: IRuntimeAdapter } = {};
@@ -41,7 +41,30 @@ export class AdapterManager {
         return !!(adapter.name.trim() && ["SequenceAdapter", "InstanceAdapter"].every((className: string) => className in adapter));
     }
 
+    initAdapter(name: string): { error?: string } {
+        const adapter = this.getAdapterByName(name);
+
+        if (!adapter) {
+            return { error: "Adapter not found."};
+        }
+
+        return adapter.init();
+    }
+
     getAdapterByName(name: string): IRuntimeAdapter | undefined {
         return Object.values(this.adapters).find(a => a.name === name);
+    }
+
+    /**
+     * Returns available adapter for desired prerequesities.
+     * @param _prerequesities Prerequesities
+     * @returns IRuntimeAdapter
+     */
+    getAvailableAdapter(_prerequesities: { requirements?: InstanceRequirements, adapterName?: string } = {}): IRuntimeAdapter | undefined {
+        if (_prerequesities.adapterName) {
+            return this.getAdapterByName(_prerequesities.adapterName);
+        }
+
+        return Object.values(this.adapters)[0];
     }
 }
