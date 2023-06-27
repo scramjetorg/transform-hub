@@ -181,7 +181,6 @@ class Runner:
             sys.path.append(module_dir)
         self.logger.debug(f'Loading sequence from {self.seq_path}...')
         spec = importlib.util.spec_from_file_location('sequence', self.seq_path)
-        self.logger.info(f"spec: {spec}")
         self.sequence = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.sequence)
         self.logger.info(f'Sequence loaded: {self.sequence}')
@@ -199,7 +198,6 @@ class Runner:
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
         produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
-        content_type = getattr(result, 'contentType', None) or getattr(self.sequence, 'provides', None)
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
