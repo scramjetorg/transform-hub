@@ -124,7 +124,7 @@ class TestTecemux:
         assert await output_stream.read() == 'Test\n'
         
         await self._close_clients(client_a,client_b)
-        
+
     async def test_stderr_write_redirection(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         
@@ -135,7 +135,45 @@ class TestTecemux:
 
         sys.stderr = sys.__stderr__
     
-        assert (await client_b.get_channel(CC.STDERR).read(100)).decode() == "Error\n"
+        assert (await client_b.get_channel(CC.STDERR).read(100)).decode() == "Error"
 
         await self._close_clients(client_a,client_b)
 
+
+    async def test_readuntil(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+
+        channel = CC.CONTROL
+        separator = '\r\n\r\n'
+
+        client_a.get_channel(channel).write("{'foo':'bar'}")
+        await client_a._writer.drain()
+
+        client_a.get_channel(channel).write("{'foo':'bar'}")
+        await client_a._writer.drain()
+
+        client_a.get_channel(channel).write(separator + "{'should-not-be-returned'}")
+        await client_a._writer.drain()
+
+        data = (await client_b.get_channel(channel).readuntil(separator.encode())).decode()
+
+        assert data == "{'foo':'bar'}{'foo':'bar'}\r\n\r\n"
+ 
+        await self._close_clients(client_a,client_b)
+    
+    async def test_wih_scramjet_framework_to_list(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+        channel = CC.CONTROL
+    
+        from scramjet.streams import Stream
+    
+        client_a.get_channel(channel).write("foo\n")
+        client_a.get_channel(channel).write("bar\n")
+        client_a.get_channel(channel).write("baz\n")
+        await client_a.get_channel(channel).close()
+
+        output_list = await Stream.read_from(client_b.get_channel(channel)).to_list()
+
+        assert output_list == [b'foo\n', b'bar\n', b'baz\n']
+
+        await self._close_clients(client_a,client_b)
