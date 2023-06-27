@@ -48,10 +48,15 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
+<<<<<<< HEAD
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
+||||||| constructed merge base
+=======
+import { AdapterManager } from "./adapter-manager";
+>>>>>>> Extract process adapter, introduce AdapterManager
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -107,6 +112,7 @@ export class Host implements IComponent {
      * Instance of CPMConnector used to communicate with Manager.
      */
     cpmConnector?: CPMConnector;
+    adapterManager!: AdapterManager;
 
     /**
      * Object to store CSIControllers.
@@ -318,6 +324,11 @@ export class Host implements IComponent {
         if (this.config.identifyExisting) {
             await this.identifyExistingSequences();
         }
+
+        this.adapterManager = new AdapterManager(this.config);
+        this.adapterManager.logger.pipe(this.logger);
+
+        await this.adapterManager.init();
 
         const adapter = await initializeRuntimeAdapters(this.config);
 

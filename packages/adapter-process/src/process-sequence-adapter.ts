@@ -1,4 +1,3 @@
-import { ObjLogger } from "@scramjet/obj-logger";
 import {
     ProcessSequenceConfig,
     ISequenceAdapter,
@@ -6,15 +5,16 @@ import {
     SequenceConfig,
     IObjectLogger,
 } from "@scramjet/types";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { isDefined, readStreamedJSON } from "@scramjet/utility";
+import { detectLanguage, sequencePackageJSONDecoder } from "@scramjet/adapters-utils";
+import { SequenceAdapterError } from "@scramjet/model";
+
 import { Readable } from "stream";
 import { createReadStream } from "fs";
 import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
-import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
-import { SequenceAdapterError } from "@scramjet/model";
-import { detectLanguage } from "./utils";
 
 /**
  * Returns existing Sequence configuration.

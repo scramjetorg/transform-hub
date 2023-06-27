@@ -51,7 +51,6 @@ const _defaultConfig: STHConfiguration = {
     },
     safeOperationLimit: 512,
     runtimeAdapter: "detect",
-    sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
     kubernetes: {
         namespace: "default",
         authConfigPath: undefined,
@@ -78,6 +77,11 @@ const _defaultConfig: STHConfiguration = {
             host: "https://analytics.scramjet.org/sth-usage",
             replaceTimestamp: true,
             labels: { module: "host", job: "telemetry" }
+        }
+    },
+    adapters: {
+        "@scramjet/adapter-process": {
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
         }
     }
 };
@@ -120,7 +124,6 @@ export class ConfigService {
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
         const {
             kubernetes: kubeFull,
-            sequencesRoot: optionsSequencesRoot2,
             cpmSslCaPath: optionsCpmSslCaPath,
             ...safe
         } = config;

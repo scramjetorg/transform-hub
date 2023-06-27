@@ -1,0 +1,60 @@
+{
+  "name": "@scramjet/adapter-process",
+  "version": "0.34.4",
+  "description": "This package is part of Scramjet Transform Hub. This module holds the docker adapters utilized by Scramjet Transform Hub",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "ts-node ./src/index",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build:docs": "typedoc",
+    "clean": "rm -rf ./dist .bic_cache",
+    "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
+    "test": "nyc ava",
+    "prepack": "node ../../scripts/publish.js"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "@scramjet/model": "^0.34.4",
+    "@scramjet/obj-logger": "^0.34.4",
+    "@scramjet/pre-runner": "^0.34.4",
+    "@scramjet/python-runner": "^0.34.4",
+    "@scramjet/runner": "^0.34.4",
+    "@scramjet/sth-config": "^0.34.4",
+    "@scramjet/symbols": "^0.34.4",
+    "@scramjet/utility": "^0.34.4",
+    "@scramjet/adapters-utils": "^0.34.4",
+    "scramjet": "^4.36.9",
+    "shell-escape": "^0.2.0",
+    "systeminformation": "^5.12.7",
+    "ts.data.json": "^2.2.0"
+  },
+  "devDependencies": {
+    "@scramjet/types": "^0.34.4",
+    "@types/js-yaml": "4.0.5",
+    "@types/node": "15.12.5",
+    "@types/request": "2.48.8",
+    "@types/shell-escape": "^0.2.1",
+    "@types/ws": "8.5.3",
+    "ava": "^3.15.0",
+    "ts-node": "^10.9.1",
+    "typedoc": "^0.23.17",
+    "typedoc-plugin-markdown": "^3.13.6",
+    "typescript": "~4.7.4"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "**/*.spec.ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}

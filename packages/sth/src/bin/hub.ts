@@ -135,7 +135,6 @@ const options: OptionValues & STHCommandOptions = program
             federationControl: options.enableFederationControl
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
-        sequencesRoot: resolveFile(options.sequencesRoot),
         startupConfig: resolveFile(options.startupConfig),
         identifyExisting: options.identifyExisting,
         exitWithLastInstance: options.exitWithLastInstance,
