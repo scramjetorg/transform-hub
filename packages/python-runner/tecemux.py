@@ -122,39 +122,35 @@ class _ChannelContext:
 
                 offset = buflen + 1 - seplen
 
-            if(not await self._get_data()):
+            if (not await self._get_data()):
                 break
 
         chunk = self._read_buffer[:isep + seplen]
         del self._read_buffer[:isep + seplen]
         return bytes(chunk)
 
-
-    async def _get_data(self,force_get=False):
+    async def _get_data(self):
 
         if self._eof and self._internal_incoming_queue.empty():
             return False
 
         while True:
-            try:                        
+            try:
                 buf = self._internal_incoming_queue.get_nowait()
                 self._read_buffer.extend(buf)
                 break
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0)
         await asyncio.sleep(0)
-        return True         
+        return True       
         
-
-
-
     async def read(self, n: int = -1):
 
         if n == 0:
             return b''
         
         if not self._read_buffer:
-            await self._get_data(force_get=True)
+            await self._get_data()
 
         data = bytes(memoryview(self._read_buffer)[:n])
         del self._read_buffer[:n]
