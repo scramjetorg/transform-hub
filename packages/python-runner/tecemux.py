@@ -141,6 +141,8 @@ class _ChannelContext:
                 break
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0)
+            except asyncio.CancelledError:
+                return False
         await asyncio.sleep(0)
         return True       
         
@@ -441,10 +443,11 @@ class Tecemux:
         self._incoming_data_forwarder.cancel()
         self._outcoming_data_forwarder.cancel()
 
-        #await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
+        await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
         self._writer.write_eof()
         await self._writer.drain()
         self._writer.close()
+        await self._writer.wait_closed()
  
         self._debug('Tecemux/MAIN: [-] Finished')
 
@@ -470,7 +473,7 @@ class Tecemux:
 
         while not self._global_stop_event.is_set():
             try:
-                chunk = await self._reader.read(READ_CHUNK_SIZE)
+                chunk = await asyncio.wait_for(self._reader.read(READ_CHUNK_SIZE),1)
 
                 if not chunk:
                     incoming_parser_finish_loop.set()

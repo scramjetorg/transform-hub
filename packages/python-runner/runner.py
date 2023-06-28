@@ -25,10 +25,9 @@ debugpy.listen(5678)
 debugpy.wait_for_client() 
 debugpy.breakpoint()
 
-async def send_encoded_msg(stream, msg_code, data={}):
+def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
     stream.write(f'{message}\r\n'.encode())
-    await stream.drain()
 
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
@@ -52,7 +51,7 @@ class Runner:
         # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
         self.connect_log_stream()
-
+        await self.protocol.sync()  
         config, args = await self.handshake()
         self.logger.info('Communication established.')
         asyncio.create_task(self.connect_control_stream())
@@ -101,7 +100,7 @@ class Runner:
         control = self.protocol.get_channel(CC.CONTROL)
 
         self.logger.info('Sending PING')
-        await send_encoded_msg(monitoring, msg_codes.PING)
+        send_encoded_msg(monitoring, msg_codes.PING)
 
         message = await control.readuntil(b'\n')
         self.logger.info(f'Got message: {message}')
@@ -119,7 +118,7 @@ class Runner:
             'requires': '',
             'contentType': ''
         }
-        await send_encoded_msg(monitoring, msg_codes.PANG, pang_requires_data)
+        send_encoded_msg(monitoring, msg_codes.PANG, pang_requires_data)
 
         if code == msg_codes.PONG.value:
             self.logger.info(f'Got configuration: {data}')
@@ -155,10 +154,10 @@ class Runner:
                 await handler(timeout, can_keep_alive)
         except Exception as e:
             self.logger.error('Error stopping sequence', e)
-            await send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, e)
+            send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, e)
 
         if not can_keep_alive or not self.keep_alive_requested:
-            await send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, {})
+            send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, {})
             self.exit_immediately()
 
         await self.cleanup()
@@ -166,7 +165,7 @@ class Runner:
 
     async def setup_heartbeat(self):
         while True:
-            await send_encoded_msg(
+            send_encoded_msg(
                 self.protocol.get_channel(CC.MONITORING),
                 msg_codes.MONITORING,
                 self.health_check(),
@@ -207,12 +206,12 @@ class Runner:
         produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
-            await send_encoded_msg(monitoring, msg_codes.PANG, produces)
+            send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
         consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
-            await send_encoded_msg(monitoring, msg_codes.PANG, consumes)
+            send_encoded_msg(monitoring, msg_codes.PANG, consumes)
 
         if isinstance(result, types.AsyncGeneratorType):
             result = Stream.read_from(result)
@@ -285,7 +284,7 @@ class Runner:
     
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
         monitoring =self.protocol.get_channel(CC.MONITORING)
-        await send_encoded_msg(monitoring, msg_codes.ALIVE)
+        send_encoded_msg(monitoring, msg_codes.ALIVE)
         self.keep_alive_requested = True
         await asyncio.sleep(timeout)
 
@@ -312,7 +311,7 @@ class AppContext:
         self.emitter.on(event_name, callback)
 
     async def emit(self, event_name, message=''):
-        await send_encoded_msg(
+        send_encoded_msg(
             self.monitoring,
             msg_codes.EVENT,
             {'eventName': event_name, 'message': message}
@@ -335,4 +334,4 @@ if not SEQUENCE_PATH or not SERVER_PORT or not INSTANCE_ID:
     sys.exit(2)
 
 runner = Runner(INSTANCE_ID, SEQUENCE_PATH, LOG_SETUP)
-asyncio.run(runner.main(SERVER_HOST, SERVER_PORT))
+asyncio.run(runner.main(SERVER_HOST, SERVER_PORT), debug=False)
