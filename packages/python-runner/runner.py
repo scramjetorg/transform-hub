@@ -197,7 +197,6 @@ class Runner:
 
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
-
         produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
@@ -250,17 +249,19 @@ class Runner:
 
 
     async def forward_output_stream(self, output):
-        if hasattr(output, 'content_type'):
-            content_type = output.content_type
+
+        if hasattr(output, 'provides'):
+            attribute = getattr(self.sequence, 'provides', None)
+            content_type = attribute['contentType']
         else:
-            # Deprecated
-            if hasattr(self.sequence, 'output_type'):
-                content_type = self.sequence.output_type
+            if hasattr(self.sequence, 'provides'):
+                attribute = getattr(self.sequence, 'provides', None)
+                content_type = attribute['contentType']
             else:
                 self.logger.debug('Output type not set, using default')
                 content_type = 'text/plain'
+
         self.logger.info(f'Content-type: {content_type}')
-        
         if content_type == 'text/plain':
             self.logger.debug('Output stream will be treated as text and encoded')
             output = output.map(lambda s: s.encode())
