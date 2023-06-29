@@ -112,20 +112,20 @@ const options: OptionValues & STHCommandOptions = program
             space: options.platformSpace,
             apiVersion: options.platformApiVersion
         },
-        docker: {
-            prerunner: {
-                image: options.prerunnerImage,
-                maxMem: options.prerunnerMaxMem
-            },
-            runner: {
-                maxMem: options.runnerMaxMem,
-                hostIp: options.exposeHostIp
-            },
-            runnerImages: {
-                node: options.runnerImage,
-                python3: options.runnerPyImage
-            }
-        },
+        // docker: {
+        //     prerunner: {
+        //         image: options.prerunnerImage,
+        //         maxMem: options.prerunnerMaxMem
+        //     },
+        //     runner: {
+        //         maxMem: options.runnerMaxMem,
+        //         hostIp: options.exposeHostIp
+        //     },
+        //     runnerImages: {
+        //         node: options.runnerImage,
+        //         python3: options.runnerPyImage
+        //     }
+        // },
         host: {
             apiBase: "/api/v1",
             instancesServerPort: options.instancesServerPort ? parseInt(options.instancesServerPort, 10) : undefined,

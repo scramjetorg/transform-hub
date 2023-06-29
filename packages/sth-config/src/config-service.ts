@@ -19,22 +19,6 @@ const _defaultConfig: STHConfiguration = {
         reconnectionDelay: 2000,
     },
     debug: false,
-    docker: {
-        prerunner: {
-            image: "",
-            maxMem: 128,
-        },
-        runner: {
-            image: "",
-            maxMem: 512,
-            exposePortsRange: [30000, 32767],
-            hostIp: "0.0.0.0"
-        },
-        runnerImages: {
-            python3: "",
-            node: "",
-        },
-    },
     identifyExisting: false,
     host: {
         apiBase: "/api/v1",
@@ -82,15 +66,27 @@ const _defaultConfig: STHConfiguration = {
     adapters: {
         "@scramjet/adapter-process": {
             sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+        },
+        "@scramjet/adapter-docker": {
+            prerunner: {
+                image: imageConfig.prerunner,
+                maxMem: 128
+            },
+            runner: {
+                image: "",
+                maxMem: 512,
+                exposePortsRange: [30000, 32767],
+                hostIp: "0.0.0.0"
+            },
+            runnerImages: {
+                python3: imageConfig.runner.python,
+                node: imageConfig.runner.node
+            }
         }
     }
 };
 
 merge(_defaultConfig, {
-    docker: {
-        prerunner: { image: imageConfig.prerunner },
-        runnerImages: imageConfig.runner,
-    },
     kubernetes: {
         runnerImages: imageConfig.runner,
     }
@@ -114,7 +110,7 @@ export class ConfigService {
     }
 
     getDockerConfig() {
-        return this.config.docker;
+        return this.config.adapters["@scramjet/adapter-docker"];
     }
 
     update(config: DeepPartial<STHConfiguration>) {

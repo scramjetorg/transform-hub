@@ -18,8 +18,7 @@ import {
 } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
-import { detectLanguage } from "./utils";
+import { detectLanguage, sequencePackageJSONDecoder } from "@scramjet/adapters-utils";
 
 const PACKAGE_DIR = "/package";
 

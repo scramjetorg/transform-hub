@@ -79,6 +79,22 @@ export type ProcessAdapterConfiguration = {
     sequencesRoot: string;
 };
 
+export type DockerAdapterConfiguration = {
+    /**
+     * PreRunner container configuration.
+     */
+    prerunner: PreRunnerContainerConfiguration;
+
+    /**
+     * Runner container configuration.
+     */
+    runner: RunnerContainerConfiguration;
+    runnerImages: {
+        python3: string;
+        node: string;
+    }
+}
+
 export type K8SAdapterConfiguration = {
     /**
      * The Kubernetes namespace to use for running sequences
@@ -173,25 +189,6 @@ export type STHConfiguration = {
     debug: boolean;
 
     /**
-     * Docker related configuration.
-     */
-    docker: {
-        /**
-         * PreRunner container configuration.
-         */
-        prerunner: PreRunnerContainerConfiguration;
-
-        /**
-         * Runner container configuration.
-         */
-        runner: RunnerContainerConfiguration;
-        runnerImages: {
-            python3: string;
-            node: string;
-        }
-    };
-
-    /**
      * Host configuration.
      */
     host: HostConfig;
@@ -274,6 +271,7 @@ export type STHConfiguration = {
     adapters: {
         "@scramjet/adapter-k8s"?: K8SAdapterConfiguration;
         "@scramjet/adapter-process"?: ProcessAdapterConfiguration;
+        "@scramjet/adapter-docker"?: DockerAdapterConfiguration;
     }
 }
 

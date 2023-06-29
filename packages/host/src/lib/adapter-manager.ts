@@ -15,11 +15,13 @@ export class AdapterManager {
         this.logger.info("Loading adapters...", Object.keys(this.sthConfig.adapters));
 
         this.adapters = (await Promise.all(
-            Object.keys(this.sthConfig.adapters).map(async (pkgName: string) => ({ name: pkgName, pkg: await import(pkgName) })
-        ))).reduce((acc, pkg) => {
+            Object.keys(this.sthConfig.adapters).map(
+                async (pkgName: string) => ({ name: pkgName, pkg: await import(pkgName) })
+            )
+        )).reduce((acc, pkg) => {
             if (!AdapterManager.validateAdapter(pkg.pkg)) {
                 throw new Error(`Invalid adapter provided ${pkg.name}`);
-            };
+            }
 
             if (acc[pkg.name]) throw new Error("Invalid adapters configuration, duplicated adapter name");
 
@@ -45,7 +47,7 @@ export class AdapterManager {
         const adapter = this.getAdapterByName(name);
 
         if (!adapter) {
-            return { error: "Adapter not found."};
+            return { error: "Adapter not found." };
         }
 
         return adapter.init();

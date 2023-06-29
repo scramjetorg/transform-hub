@@ -727,10 +727,7 @@ export class Host implements IComponent {
         const adapter = this.adapterManager.getAvailableAdapter();
 
         if (!adapter) {
-            return {
-                opStatus: ReasonPhrases.FAILED_DEPENDENCY,
-                error: "Can't use adapter"
-            };
+            throw new Error("Error identifying existing sequences. Adapter unavailable");
         }
 
         const sequenceAdapter = new adapter!.SequenceAdapter(this.config);
@@ -746,6 +743,7 @@ export class Host implements IComponent {
                 this.logger.trace(`Sequence identified: ${config.id}`);
                 this.sequenceStore.set({ id: config.id, config: config, instances: new Set() });
             }
+
             this.logger.info(` ${configs.length} sequences identified`);
         } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences.", e);
@@ -769,7 +767,7 @@ export class Host implements IComponent {
                 return {
                     opStatus: ReasonPhrases.FAILED_DEPENDENCY,
                     error: "Can't initialize Adapter"
-                }
+                };
             }
 
             const sequenceAdapter = new adapter.SequenceAdapter(this.config);
@@ -810,19 +808,19 @@ export class Host implements IComponent {
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
             this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
-
-            return {
-                id: config.id,
-                opStatus: ReasonPhrases.OK,
-            };
         } catch (error: any) {
             this.logger.error("Error processing sequence", error);
 
             return {
                 opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
-                error,
+                error
             };
         }
+
+        return {
+            id,
+            opStatus: ReasonPhrases.OK,
+        };
     }
 
     async handleSequenceUpdate(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {

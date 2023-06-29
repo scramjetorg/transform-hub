@@ -198,4 +198,4 @@ class ProcessInstanceAdapter implements
     }
 }
 
-export { ProcessInstanceAdapter  };
+export { ProcessInstanceAdapter };
