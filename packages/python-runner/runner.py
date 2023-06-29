@@ -21,9 +21,9 @@ SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
 SERVER_HOST = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 INSTANCE_ID = os.getenv('INSTANCE_ID')
 
-debugpy.listen(5678)
-debugpy.wait_for_client() 
-debugpy.breakpoint()
+# debugpy.listen(5678)
+# debugpy.wait_for_client() 
+# debugpy.breakpoint()
 
 def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
@@ -244,7 +244,7 @@ class Runner:
 
         if input_type == 'text/plain':
             await self.protocol.sync()
-            input = await Stream.read_from(self.protocol.get_channel(CC.IN)).to_list()
+            input = Stream.read_from(self.protocol.get_channel(CC.IN))
 
             self.logger.debug('Decoding input stream...')
             input = input.decode('utf-8')
@@ -278,7 +278,6 @@ class Runner:
             self.logger.debug('Output will be converted to JSON')
             output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
-        await self.protocol.sync()
         await output.write_to(self.protocol.get_channel(CC.OUT))
 
     

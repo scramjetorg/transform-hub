@@ -196,3 +196,20 @@ class TestTecemux:
         assert output_list == [b'foobar\n', b'fozbaz\n']
 
         await self._close_clients(client_a, client_b)
+
+
+    async def test_wih_scramjet_framework_write_to(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+        channel = CC.CONTROL
+    
+        data = [b'foo\n',b'bar\n',b'baz\n']
+
+        from scramjet.streams import Stream
+
+        await Stream.read_from(data).write_to(client_a.get_channel(channel))
+        await client_a.get_channel(channel).close()
+
+        output = Stream.read_from(client_b.get_channel(channel))
+        assert await output.to_list() == data
+        
+        await self._close_clients(client_a, client_b)

@@ -8,6 +8,7 @@ from attrs import define, field
 from barrier import Barrier
 from inet import IPPacket, TCPSegment, SequenceOrder
 from hardcoded_magic_values import CommunicationChannels as CC
+from threading import Lock
 
 TECEMUX_INTERNAL_VERBOSE_DEBUG = False
 
@@ -38,8 +39,8 @@ class _ChannelContext:
 
     _read_buffer: bytearray
 
-    _eof: bool
-
+    _ended: bool
+    _lock: Lock
     _outcoming_process_task: Any
 
     def __init__(self, channel: CC,
@@ -63,7 +64,8 @@ class _ChannelContext:
         self._sync_event = sync_event
         self._sync_barrier = sync_barrier
         self._outcoming_process_task = asyncio.create_task(self._outcomming_process_tasks())
-        self._eof = None
+        self._ended = None
+        self._lock = Lock()
         self._read_buffer = bytearray()
 
     async def _outcomming_process_tasks(self):
@@ -131,7 +133,7 @@ class _ChannelContext:
 
     async def _get_data(self):
 
-        if self._eof and self._internal_incoming_queue.empty():
+        if self._ended and self._internal_incoming_queue.empty():
             return False
 
         while True:
@@ -198,7 +200,7 @@ class _ChannelContext:
             await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=buf, flags=['PSH'])))
 
             self._channel_opened = True
-            self._eof = False
+            self._ended = False
 
     async def close(self) -> None:
         """Close channel
@@ -229,7 +231,8 @@ class _ChannelContext:
             await self.send_ACK(pkt.get_segment().seq)
 
         if pkt.segment.is_flag('FIN'):
-            self._eof = True
+            self._ended = True
+            return
 
         self._internal_incoming_queue.put_nowait(pkt.get_segment().data)
 
@@ -266,6 +269,10 @@ class _ChannelContext:
         Args:
             data (bytes): Buffer to send to channel
         """
+        if data == b'':
+            return
+        
+        #with self._lock:
         self._internal_outcoming_queue.put_nowait(data)
 
     def drain(self) -> bool:
@@ -405,7 +412,7 @@ class Tecemux:
         self._global_sync_event.clear()
         
         if not self._queue.empty():
-            await self._queue.join()       
+            await self._queue.join()
 
     def get_channels(self) -> dict:
         """Returns all initiated channels
@@ -473,7 +480,7 @@ class Tecemux:
 
         while not self._global_stop_event.is_set():
             try:
-                chunk = await asyncio.wait_for(self._reader.read(READ_CHUNK_SIZE),1)
+                chunk = await self._reader.read(READ_CHUNK_SIZE)
 
                 if not chunk:
                     incoming_parser_finish_loop.set()
