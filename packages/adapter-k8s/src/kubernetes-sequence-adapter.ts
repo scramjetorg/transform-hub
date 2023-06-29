@@ -1,20 +1,20 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
-    ProcessSequenceConfig,
     ISequenceAdapter,
     STHConfiguration,
     SequenceConfig,
     IObjectLogger,
+    KubernetesSequenceConfig,
+    K8SAdapterConfiguration,
 } from "@scramjet/types";
 import { Readable } from "stream";
-import { createReadStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
-import { SequenceAdapterError } from "@scramjet/model";
-import { detectLanguage } from "./utils";
+import { detectLanguage, sequencePackageJSONDecoder } from "@scramjet/adapters-utils";
+import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 
 /**
  * Returns existing Sequence configuration.
@@ -23,8 +23,7 @@ import { detectLanguage } from "./utils";
  * @param {string} id Sequence Id.
  * @returns {ProcessSequenceConfig} Sequence configuration.
  */
-// eslint-disable-next-line complexity
-async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
+async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<KubernetesSequenceConfig> {
     const sequenceDir = path.join(sequencesRoot, id);
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
@@ -33,13 +32,13 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
     const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
 
     return {
-        type: "process",
-        engines,
+        type: "kubernetes",
         entrypointPath: validPackageJson.main,
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
         id,
         sequenceDir,
+        engines,
         description: validPackageJson.description,
         author: validPackageJson.author,
         keywords: validPackageJson.keywords,
@@ -52,15 +51,22 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
 /**
  * Adapter for preparing Sequence to be run in process.
  */
-class ProcessSequenceAdapter implements ISequenceAdapter {
+class KubernetesSequenceAdapter implements ISequenceAdapter {
     logger: IObjectLogger;
 
-    name = "ProcessSequenceAdapter";
-    config: NonNullable<STHConfiguration["adapters"]["@scramjet/adapter-process"]>;
+    name = "KubernetesSequenceAdapter";
 
-    constructor(config: STHConfiguration) {
+    private adapterConfig: K8SAdapterConfiguration;
+
+    constructor(sthConfig: STHConfiguration) {
+        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+
+        if (!decodedAdapterConfig.isOk()) {
+            throw new Error("Invalid Kubernetes Adapter configuration");
+        }
+
+        this.adapterConfig = decodedAdapterConfig.value;
         this.logger = new ObjLogger(this);
-        this.config = config.adapters["@scramjet/adapter-process"]!;
     }
 
     /**
@@ -69,11 +75,13 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<void>} Promise resolving after initialization.
      */
     async init(): Promise<void> {
-        await fs.access(this.config.sequencesRoot)
-            .catch(() => fs.mkdir(this.config.sequencesRoot));
+        await fs.access(this.adapterConfig.sequencesRoot)
+            .catch(() => fs.mkdir(this.adapterConfig.sequencesRoot));
 
-        this.logger.info("Proces adapter initialized with options", {
-            "sequence root": this.config.sequencesRoot
+        this.logger.info("Kubernetes adapter initialized with options", {
+            "runner images": this.adapterConfig.runnerImages,
+            "sequences root": this.adapterConfig.sequencesRoot,
+            timeout: this.adapterConfig.timeout
         });
     }
 
@@ -83,10 +91,10 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<SequenceConfig[]>} Promise resolving to array of identified sequences.
      */
     async list(): Promise<SequenceConfig[]> {
-        const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
+        const storedSequencesIds = await fs.readdir(this.adapterConfig.sequencesRoot);
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
-                .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
+                .map((id) => getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id))
                 .map((configPromised) => configPromised.catch(() => null))
         ))
             .filter(isDefined);
@@ -105,44 +113,27 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
     async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
-        const sequenceDir = path.join(this.config.sequencesRoot, id);
+        // 1. Unpack package.json to stdout and map to config
+        // 2. Create compressed package on the disk
+        const sequenceDir = path.join(this.adapterConfig.sequencesRoot, id);
 
         if (override) {
             await fs.rm(sequenceDir, { recursive: true, force: true });
         }
 
-        await fs.mkdir(sequenceDir, { recursive: true });
+        await fs.mkdir(sequenceDir);
 
-        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir} >/dev/null 2>&1 || echo >&2 '{"error":"Invalid pkg tar.gz archive"}' && exit 1`);
+        const compressedOut = createWriteStream(path.join(sequenceDir, "compressed.tar.gz"));
+
+        // @TODO unpack only package.json
+        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir}`);
 
         stream.pipe(uncompressingProc.stdin!);
-
-        const stderrChunks: string[] = [];
-
-        uncompressingProc.stderr!.on("data", (chunk: Buffer) => {
-            stderrChunks.push(chunk.toString());
-        });
+        stream.pipe(compressedOut);
 
         await new Promise(res => uncompressingProc.on("close", res));
 
-        const stderrOutput = stderrChunks.join("");
-
-        if (stderrOutput) {
-            let preRunnenrError;
-
-            try {
-                preRunnenrError = JSON.parse(stderrOutput);
-                this.logger.error("Unpacking sequence failed", stderrOutput);
-            } catch (e) {
-                throw new SequenceAdapterError("PRERUNNER_ERROR", `Error parsing ${stderrOutput}`);
-            }
-
-            throw new SequenceAdapterError("PRERUNNER_ERROR", preRunnenrError.error);
-        }
-
-        this.logger.debug("Unpacking sequence succeeded", stderrOutput);
-
-        return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id);
+        return getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id);
     }
 
     /**
@@ -152,14 +143,16 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<void>} Promise resolving after directory deletion.
      */
     async remove(config: SequenceConfig) {
-        if (config.type !== "process") {
-            throw new Error(`Incorrect SequenceConfig passed to ProcessSequenceAdapter: ${config.type}`);
+        if (config.type !== "kubernetes") {
+            throw new Error(`Incorrect SequenceConfig passed to KubernetesSequenceAdapter: ${config.type}`);
         }
 
-        const sequenceDir = path.join(this.config.sequencesRoot, config.id);
+        const sequenceDir = path.join(this.adapterConfig.sequencesRoot, config.id);
+
+        this.logger.debug("Removing sequence directory...", sequenceDir);
 
         return fs.rm(sequenceDir, { recursive: true });
     }
 }
 
-export { ProcessSequenceAdapter };
+export { KubernetesSequenceAdapter };

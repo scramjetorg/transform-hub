@@ -1007,7 +1007,9 @@ export class Host implements IComponent {
 
         this.logger.debug("CSIC start payload", payload);
 
-        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy, instanceAdapter);
+        const csic = new CSIController(
+            id, sequence, payload, communicationHandler, this.config, this.instanceProxy, instanceAdapter
+        );
 
         csic.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });

@@ -2,7 +2,9 @@ FROM node:lts-bullseye-slim as builder
 
 WORKDIR /build
 
-COPY ./dist/adapters ./dist/adapters
+COPY ./dist/adapter-docker ./dist/adapter-docker
+COPY ./dist/adapter-k8s ./dist/adapter-k8s
+COPY ./dist/adapter-process ./dist/adapter-process
 COPY ./dist/api-server ./dist/api-server
 COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host

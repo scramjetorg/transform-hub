@@ -62,7 +62,9 @@ export class AdapterManager {
      * @param _prerequesities Prerequesities
      * @returns IRuntimeAdapter
      */
-    getAvailableAdapter(_prerequesities: { requirements?: InstanceRequirements, adapterName?: string } = {}): IRuntimeAdapter | undefined {
+    getAvailableAdapter(_prerequesities: {
+        requirements?: InstanceRequirements, adapterName?: string
+    } = {}): IRuntimeAdapter | undefined {
         if (_prerequesities.adapterName) {
             return this.getAdapterByName(_prerequesities.adapterName);
         }

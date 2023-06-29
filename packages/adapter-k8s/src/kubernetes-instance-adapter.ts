@@ -17,7 +17,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { createReadStream } from "fs";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { getRunnerEnvEntries } from "./get-runner-env";
+import { getRunnerEnvEntries } from "@scramjet/adapters-utils";
 import { PassThrough } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
 
