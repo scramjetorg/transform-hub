@@ -450,7 +450,8 @@ class Tecemux:
         self._incoming_data_forwarder.cancel()
         self._outcoming_data_forwarder.cancel()
 
-        await asyncio.gather(*[self._incoming_data_forwarder, self._outcoming_data_forwarder])
+        await asyncio.gather(*[self._incoming_data_forwarder])
+        await asyncio.gather(*[self._outcoming_data_forwarder])
         self._writer.write_eof()
         await self._writer.drain()
         self._writer.close()

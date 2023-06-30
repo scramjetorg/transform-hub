@@ -21,9 +21,8 @@ SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
 SERVER_HOST = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 INSTANCE_ID = os.getenv('INSTANCE_ID')
 
-# debugpy.listen(5678)
-# debugpy.wait_for_client() 
-# debugpy.breakpoint()
+debugpy.listen(5678)
+debugpy.wait_for_client() 
 
 def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
@@ -45,26 +44,36 @@ class Runner:
         return channel in [CC.STDIN, CC.IN, CC.CONTROL]
             
     async def main(self, server_host, server_port):
-
+        input_stream = Stream()
         await self.init_tecemux(server_host, server_port)
-
+        debugpy.breakpoint()
         # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
         self.connect_log_stream()
         await self.protocol.sync()  
         config, args = await self.handshake()
         self.logger.info('Communication established.')
-        asyncio.create_task(self.connect_control_stream())
-        asyncio.create_task(self.setup_heartbeat())
+        
+        control_stream_task = asyncio.create_task(self.connect_control_stream())
+        heartbeat_task = asyncio.create_task(self.setup_heartbeat())
+        connect_input_stream_task = asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.load_sequence()
-
+        
         await self.protocol.sync()     
-        await self.run_instance(config, args)
+        await self.run_instance(config, input_stream, args)
 
+        await self.protocol.sync()
+        heartbeat_task.cancel()
+        connect_input_stream_task.cancel()
+        control_stream_task.cancel()
+
+        await asyncio.gather(*[heartbeat_task,
+                               connect_input_stream_task,
+                               control_stream_task])
+      
         await self.protocol.stop()
         await self.protocol.wait_until_end()
-
 
     async def init_tecemux(self, server_host, server_port):
         self.logger.info('Connecting to host with TeceMux...')
@@ -133,15 +142,17 @@ class Runner:
                 .read_from(self.protocol.get_channel(CC.CONTROL), chunk_size=131072)
                 .decode('utf-8').split('\n').map(json.loads)
         )
-        async for code, data in control_messages:
-            self.logger.debug(f'Control message received: {code} {data}')
-            if code == msg_codes.KILL.value:
-                self.exit_immediately()
-            if code == msg_codes.STOP.value:
-                await self.handle_stop(data)
-            if code == msg_codes.EVENT.value:
-                await self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
-
+        try:
+            async for code, data in control_messages:
+                self.logger.debug(f'Control message received: {code} {data}')
+                if code == msg_codes.KILL.value:
+                    self.exit_immediately()
+                if code == msg_codes.STOP.value:
+                    await self.handle_stop(data)
+                if code == msg_codes.EVENT.value:
+                    await self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
+        except asyncio.CancelledError:
+            return
 
 
     async def handle_stop(self, data):
@@ -165,12 +176,15 @@ class Runner:
 
     async def setup_heartbeat(self):
         while True:
-            send_encoded_msg(
-                self.protocol.get_channel(CC.MONITORING),
-                msg_codes.MONITORING,
-                self.health_check(),
-            )
-            await asyncio.sleep(1)
+            try:
+                send_encoded_msg(
+                    self.protocol.get_channel(CC.MONITORING),
+                    msg_codes.MONITORING,
+                    self.health_check(),
+                )
+                await asyncio.sleep(1)
+            except asyncio.CancelledError:
+                return
 
 
     def load_sequence(self):
@@ -186,14 +200,12 @@ class Runner:
         # switch to sequence dir so that relative paths will work
         os.chdir(os.path.dirname(self.seq_path))
 
-    async def run_instance(self, config, args):
+    async def run_instance(self, config, input, args):
         context = AppContext(self, config)
-        input_stream = Stream()
-        asyncio.create_task(self.connect_input_stream(input_stream))
         await self.protocol.sync()      
         self.logger.info('Running instance...')
         try:
-            result = self.sequence.run(context, input_stream, *args)
+            result = self.sequence.run(context, input, *args)
         except Exception:
             import traceback
             self.protocol.get_channel(CC.STDERR).write(traceback.format_exc())
@@ -229,6 +241,7 @@ class Runner:
 
     async def cleanup(self):
         self.protocol.get_channel(CC.LOG).write_eof()
+        
 
     async def connect_input_stream(self, input_stream):
         if hasattr(self.sequence, "requires"):
