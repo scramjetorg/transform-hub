@@ -8,7 +8,7 @@ from attrs import define, field
 from barrier import Barrier
 from inet import IPPacket, TCPSegment, SequenceOrder
 from hardcoded_magic_values import CommunicationChannels as CC
-from threading import Lock
+
 
 TECEMUX_INTERNAL_VERBOSE_DEBUG = False
 
@@ -38,10 +38,8 @@ class _ChannelContext:
     _sync_barrier: Barrier
 
     _read_buffer: bytearray
-
     _ended: bool
-    _lock: Lock
-    _outcoming_process_task: Any
+    _outcoming_process_task: asyncio.Task
 
     def __init__(self, channel: CC,
                  queue: asyncio.Queue,
@@ -65,7 +63,6 @@ class _ChannelContext:
         self._sync_barrier = sync_barrier
         self._outcoming_process_task = asyncio.create_task(self._outcomming_process_tasks())
         self._ended = None
-        self._lock = Lock()
         self._read_buffer = bytearray()
 
     async def _outcomming_process_tasks(self):
@@ -107,7 +104,7 @@ class _ChannelContext:
         sep = b'\n'
         line = await self.readuntil(sep)
         return line
-    
+
     async def readuntil(self, separator=b'\n'):
         seplen = len(separator)
        
@@ -202,6 +199,9 @@ class _ChannelContext:
             self._channel_opened = True
             self._ended = False
 
+    async def end(self) -> None:
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
+
     async def close(self) -> None:
         """Close channel
         """
@@ -271,8 +271,7 @@ class _ChannelContext:
         """
         if data == b'':
             return
-        
-        #with self._lock:
+
         self._internal_outcoming_queue.put_nowait(data)
 
     def drain(self) -> bool:
@@ -439,6 +438,7 @@ class Tecemux:
         """
         for channel in self.get_channels():
             await channel.close()
+        await self.sync()
         self._global_stop_event.set()
     async def wait_until_end(self) -> None:
         """Waits until forwarders finished work.
@@ -446,7 +446,7 @@ class Tecemux:
         await self._global_stop_event.wait()
         for channel in self.get_channels():
             channel._outcoming_process_task.cancel()
-
+        await self._queue.join()
         self._incoming_data_forwarder.cancel()
         self._outcoming_data_forwarder.cancel()
 

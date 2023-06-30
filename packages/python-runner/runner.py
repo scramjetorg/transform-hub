@@ -4,7 +4,7 @@ import os
 import codecs
 import json
 import logging
-import debugpy
+#import debugpy
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -21,8 +21,9 @@ SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
 SERVER_HOST = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 INSTANCE_ID = os.getenv('INSTANCE_ID')
 
-debugpy.listen(5678)
-debugpy.wait_for_client() 
+# debugpy.listen(5678)
+# debugpy.wait_for_client() 
+# debugpy.breakpoint()
 
 def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
@@ -46,7 +47,6 @@ class Runner:
     async def main(self, server_host, server_port):
         input_stream = Stream()
         await self.init_tecemux(server_host, server_port)
-        debugpy.breakpoint()
         # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
         self.connect_log_stream()
@@ -292,6 +292,7 @@ class Runner:
             output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
         await output.write_to(self.protocol.get_channel(CC.OUT))
+        await self.protocol.get_channel(CC.OUT).end()
 
     
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
