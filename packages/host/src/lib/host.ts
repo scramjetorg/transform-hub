@@ -329,7 +329,7 @@ export class Host implements IComponent {
         this.adapterManager.logger.pipe(this.logger);
 
         await this.adapterManager.init();
-        const adapterInitStatus = this.adapterManager.initAdapter(this.config.runtimeAdapter);
+        const adapterInitStatus = await this.adapterManager.initAdapter(this.config.runtimeAdapter);
 
         if (adapterInitStatus.error) {
             throw new Error(`Failed to initialize "${this.config.runtimeAdapter}" Adapter: ${adapterInitStatus.error}`);

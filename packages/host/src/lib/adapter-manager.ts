@@ -43,14 +43,14 @@ export class AdapterManager {
         return !!(adapter.name.trim() && ["SequenceAdapter", "InstanceAdapter"].every((className: string) => className in adapter));
     }
 
-    initAdapter(name: string): { error?: string } {
+    async initAdapter(name: string): Promise<{ error?: string }> {
         const adapter = this.getAdapterByName(name);
 
         if (!adapter) {
             return { error: "Adapter not found." };
         }
 
-        return adapter.init();
+        return await adapter.init();
     }
 
     getAdapterByName(name: string): IRuntimeAdapter | undefined {
