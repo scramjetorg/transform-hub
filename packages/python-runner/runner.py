@@ -4,7 +4,7 @@ import os
 import codecs
 import json
 import logging
-#import debugpy
+# import debugpy
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -237,10 +237,6 @@ class Runner:
 
         self.logger.info('Finished.')
         await self.protocol.sync()
-        await self.cleanup()
-
-    async def cleanup(self):
-        self.protocol.get_channel(CC.LOG).write_eof()
         
 
     async def connect_input_stream(self, input_stream):
@@ -292,7 +288,6 @@ class Runner:
             output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
         await output.write_to(self.protocol.get_channel(CC.OUT))
-        await self.protocol.get_channel(CC.OUT).end()
 
     
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):

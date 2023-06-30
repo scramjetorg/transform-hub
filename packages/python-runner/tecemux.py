@@ -437,26 +437,37 @@ class Tecemux:
         """Stops protocol
         """
         for channel in self.get_channels():
+            await channel.end()
             await channel.close()
         await self.sync()
-        self._global_stop_event.set()
     async def wait_until_end(self) -> None:
         """Waits until forwarders finished work.
         """
-        await self._global_stop_event.wait()
         for channel in self.get_channels():
             channel._outcoming_process_task.cancel()
-        await self._queue.join()
-        self._incoming_data_forwarder.cancel()
-        self._outcoming_data_forwarder.cancel()
 
-        await asyncio.gather(*[self._incoming_data_forwarder])
-        await asyncio.gather(*[self._outcoming_data_forwarder])
+        self._global_stop_event.set()
+        await asyncio.sleep(0.1) # to refactor
+        await self._global_stop_event.wait()
+        self._outcoming_data_forwarder.cancel()
+        await asyncio.gather(*[self._outcoming_data_forwarder])        
         self._writer.write_eof()
         await self._writer.drain()
         self._writer.close()
         await self._writer.wait_closed()
- 
+        self._incoming_data_forwarder.cancel()
+        await asyncio.gather(*[self._incoming_data_forwarder])
+
+        # flush commucation from STH
+        
+        while True:
+            try:
+                data = await asyncio.wait_for(self._reader.read(),1)
+                if not data:
+                    break
+            except Exception as e:
+                break
+
         self._debug('Tecemux/MAIN: [-] Finished')
 
     async def loop(self) -> None:
@@ -493,6 +504,8 @@ class Tecemux:
                 if incoming_parser_finish_loop.is_set() and buffer_len > 0 and buffer_len < MINIMAL_IP_PACKET_LENGTH:
 
                     self._warning('Tecemux/MAIN: [<] Too few data is waiting in global buffer but stream finished')
+                    break
+                elif incoming_parser_finish_loop.is_set() and buffer_len == 0:
                     break
 
                 while not (len(buffer) < MINIMAL_IP_PACKET_LENGTH):
