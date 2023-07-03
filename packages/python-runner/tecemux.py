@@ -230,7 +230,6 @@ class _ChannelContext:
         # if ACK flag is up, reasume channel
         if not pkt.get_segment().is_flag('SYN') and pkt.get_segment().is_flag('ACK'):
             self.set_pause(False)
-            self._ended = False
             return
 
         # if PSH flag is up, confirm
@@ -319,7 +318,7 @@ class Tecemux:
     _instance_id: str = field(default=None)
     _channels: dict = field(default={})
     _logger: logging.Logger = field(default=None)
-    
+
     _global_stop_channel_event: asyncio.Event = asyncio.Event()
     
     _global_sync_channel_event: asyncio.Event = asyncio.Event()
@@ -353,7 +352,6 @@ class Tecemux:
         self._global_stop_channel_event.clear()
         self._global_stop_incoming_event.clear()
         self._global_stop_outcoming_event.clear()
-        
 
     @staticmethod
     async def prepare_tcp_connection(server_host: str, server_port: str) -> tuple:
@@ -450,13 +448,11 @@ class Tecemux:
         return f'{value[0:5]}... <len:{len(value)}>' if len(value) > 5 else f'{value}'
 
     async def stop(self) -> None:
-        
         await self._finish_channels()
         await self._finish_incoming()
         await self._finish_outcoming()
         await self._read_eof()
-
-        
+     
         self._debug('Tecemux/MAIN: [-] Finished')
 
     async def _finish_channels(self) -> None:
@@ -465,14 +461,16 @@ class Tecemux:
         for channel in self.get_channels():
             await channel.end()
             await channel.close()
-        
+
         for channel in self.get_channels():
             await channel._internal_outcoming_queue.join()
     
         self._global_stop_channel_event.set()
         await self._global_stop_channel_event.wait()
 
-        await asyncio.gather(*[channel._outcoming_process_task for channel in self.get_channels()])
+        tasks = asyncio.gather(*[channel._outcoming_process_task for channel in self.get_channels()])
+        tasks.cancel()
+        await tasks 
 
 
     async def _finish_outcoming(self):
