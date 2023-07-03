@@ -155,19 +155,6 @@ export class Host implements IComponent {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
     };
 
-    /**
-     * Sets listener for connections to socket server.
-     */
-    private attachListeners() {
-        this.socketServer.on("connect", async (id, streams) => {
-            this.logger.debug("Instance connected", id);
-
-            await this.instancesStore[id].handleInstanceConnect(
-                streams
-            );
-        });
-    }
-
     public get service(): string {
         return name;
     }
@@ -954,6 +941,7 @@ export class Host implements IComponent {
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
         try {
+            // @todo - this line should be done by CSIDispatcher
             const csic = await this.startCSIController(sequence, payload);
 
             await this.cpmConnector?.sendInstanceInfo({
@@ -996,10 +984,27 @@ export class Host implements IComponent {
     }
 
     /**
+     * Sets listener for connections to socket server.
+     */
+    private attachListeners() {
+        this.socketServer.on("connect", async (id, streams) => {
+            this.logger.debug("Instance connected", id);
+
+            // @todo this should be a call to CSIDispatcher
+            // @todo CSIDispatcher should receive a reference to instanceStore.
+            await this.instancesStore[id].handleInstanceConnect(
+                streams
+            );
+        });
+    }
+
+    /**
      * Creates new CSIController {@link CSIController} object and handles its events.
      *
      * @param {SequenceInfo} sequence Sequence info object.
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
+     * @todo This should be started by onConnect from `this..attachListeners`
+     * @todo Move this to CSI Dispatcher
      */
     async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();

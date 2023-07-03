@@ -66,6 +66,8 @@ const BPMux = require("bpmux").BPMux;
 
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
+ * 
+ * @todo write interface for CSIController and CSIDispatcher
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
@@ -269,6 +271,10 @@ export class CSIController extends TypedEmitter<Events> {
         this.emit("end", code);
     }
 
+    /**
+     * @todo add comment
+     * @todo move this to CSIDispatcher - that would be one for all sequences
+     */
     startInstance() {
         this._instanceAdapter = getInstanceAdapter(this.adapter, this.sthConfig, this.id);
 
@@ -280,6 +286,7 @@ export class CSIController extends TypedEmitter<Events> {
             instanceAdapterExitDelay: this.sthConfig.timings.instanceAdapterExitDelay
         };
 
+        // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {
             try {
                 this.status = InstanceStatus.STARTING;
@@ -324,7 +331,8 @@ export class CSIController extends TypedEmitter<Events> {
 
                 return error;
             });
-
+        
+        // @todo - this should be checked by CSIController, but Dispatcher should know about this via event listener.
         this.instancePromise.finally(() => {
             this.heartBeatResolver?.res(this.id);
         });

@@ -45,9 +45,15 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 });
 
                 const id = await new Promise<string>((resolve) => {
-                    connection.once("readable", () => {
-                        resolve(connection.read(36).toString());
-                    });
+                    const immediateData = connection.read(36);
+                    
+                    if (!immediateData) {
+                        connection.once("readable", () => {
+                            resolve(connection.read(36).toString());
+                        });
+                    } else {
+                        resolve(immediateData);
+                    }
                 });
 
                 const channel = await new Promise<number>((resolve) => {

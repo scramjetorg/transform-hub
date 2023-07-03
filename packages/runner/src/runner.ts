@@ -455,6 +455,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     sendHandshakeMessage() {
+        // TODO: send connection info
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
