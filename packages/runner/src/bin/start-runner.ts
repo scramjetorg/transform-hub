@@ -10,12 +10,13 @@ const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
 const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
-const instanceConnectJSON = process.env.INSTANCE_CONNECT_JSON;
+const connectInfoJSON = process.env.INSTANCE_CONNECT_JSON;
 
 let connectInfo;
 
 try {
-    connectInfo = JSON.parse(instanceConnectJSON);
+    if (!connectInfoJSON) throw new Error("Connection JSON is required.");
+    connectInfo = JSON.parse(connectInfoJSON);
 } catch {
     console.error("Error while parsing connection information.");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
@@ -53,7 +54,7 @@ const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
  * @param fifosPath - fifo files path
  */
 
-const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId, connectInfo);
+const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId, connectInfo, connectInfoJSON);
 
 runner.main()
     .catch(e => {
