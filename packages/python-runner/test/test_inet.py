@@ -85,6 +85,15 @@ class TestIP:
         assert pkt.src_addr == '172.25.44.3'
         assert pkt.dst_addr == '172.25.44.254'
 
+    def test_pakcet_creation_with_endstring(self):
+        buf = IPPacket(src_addr='172.25.44.3', dst_addr='172.25.44.254',
+                       segment=TCPSegment(dst_port=6, flags=['PSH'],data=b'\0')).build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+        
+        pkt = IPPacket.from_buffer_with_pseudoheader(buf)
+
+        assert pkt.src_addr == '172.25.44.3'
+        assert pkt.segment.data == b'\0'
+        assert pkt.dst_addr == '172.25.44.254'
 
     def test_pseudoheader(self):
         

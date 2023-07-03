@@ -41,9 +41,6 @@ class TestTecemux:
         await a.stop()
         await b.stop()
 
-        await a.wait_until_end()
-        await b.wait_until_end()
-
     def test_default_init(self):
         protocol = Tecemux()
         assert isinstance(protocol, Tecemux)
@@ -167,7 +164,7 @@ class TestTecemux:
         client_a.get_channel(channel).write("foo\n")
         client_a.get_channel(channel).write("bar\n")
         client_a.get_channel(channel).write("baz\n")
-        await client_a.get_channel(channel).close()
+        await  client_a.get_channel(channel).end()
 
         output_list = await Stream.read_from(client_b.get_channel(channel)).to_list()
 
@@ -185,7 +182,7 @@ class TestTecemux:
         client_a.get_channel(channel).write("bar\n")
         client_a.get_channel(channel).write("foz")
         client_a.get_channel(channel).write("baz\n")
-        await client_a.get_channel(channel).close()
+        await  client_a.get_channel(channel).end()
 
         final_stream = Stream()
 
@@ -207,7 +204,7 @@ class TestTecemux:
         from scramjet.streams import Stream
 
         await Stream.read_from(data).write_to(client_a.get_channel(channel))
-        await client_a.get_channel(channel).close()
+        await  client_a.get_channel(channel).end()
 
         output = Stream.read_from(client_b.get_channel(channel))
         assert await output.to_list() == data

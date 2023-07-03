@@ -73,7 +73,7 @@ class Runner:
                                control_stream_task])
       
         await self.protocol.stop()
-        await self.protocol.wait_until_end()
+
 
     async def init_tecemux(self, server_host, server_port):
         self.logger.info('Connecting to host with TeceMux...')
@@ -171,8 +171,6 @@ class Runner:
             send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, {})
             self.exit_immediately()
 
-        await self.cleanup()
-
 
     async def setup_heartbeat(self):
         while True:
@@ -251,8 +249,9 @@ class Runner:
             self.logger.info(f'Input headers: {repr(headers)}')
             input_type = headers.get('content-type')
 
+        await self.protocol.sync()
+
         if input_type == 'text/plain':
-            await self.protocol.sync()
             input = Stream.read_from(self.protocol.get_channel(CC.IN))
 
             self.logger.debug('Decoding input stream...')
