@@ -66,7 +66,7 @@ const BPMux = require("bpmux").BPMux;
 
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
- * 
+ *
  * @todo write interface for CSIController and CSIDispatcher
  */
 export class CSIController extends TypedEmitter<Events> {
@@ -331,7 +331,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 return error;
             });
-        
+
         // @todo - this should be checked by CSIController, but Dispatcher should know about this via event listener.
         this.instancePromise.finally(() => {
             this.heartBeatResolver?.res(this.id);
