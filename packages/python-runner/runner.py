@@ -24,6 +24,20 @@ def send_encoded_msg(stream, msg_code, data={}):
     stream.write(f'{message}\r\n'.encode())
 
 
+class StderrRedirector:
+    """A workaround class to write to both sys.stderr and the Instance stderr endpoint."""
+    def __init__(self, stream):
+        self.stream = stream
+
+    def write(self, message):
+        self.stream.write(message)
+        sys.__stderr__.write(message)
+
+    def flush(self):
+        self.stream.flush()
+        sys.__stderr__.flush()
+
+
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
         self.instance_id = instance_id
@@ -81,7 +95,7 @@ class Runner:
 
     def connect_stdio(self):
         sys.stdout = codecs.getwriter('utf-8')(self.streams[CC.STDOUT])
-        sys.stderr = codecs.getwriter('utf-8')(self.streams[CC.STDERR])
+        sys.stderr = StderrRedirector(codecs.getwriter('utf-8')(self.streams[CC.STDERR]))
         sys.stdin = Stream.read_from(self.streams[CC.STDIN]).decode('utf-8')
         # pretend to have API compatibiliy
         sys.stdout.flush = lambda: True
