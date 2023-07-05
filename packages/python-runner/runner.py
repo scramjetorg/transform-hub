@@ -24,6 +24,20 @@ def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
     stream.write(f'{message}\r\n'.encode())
 
+class StderrRedirector:
+    """A workaround class to write to both sys.stderr and the Instance stderr endpoint."""
+    def __init__(self, stream):
+        self.stream = stream
+
+    def write(self, message):
+        self.stream.write(message)
+        sys.__stderr__.write(message)
+
+    def flush(self):
+        self.stream.flush()
+        sys.__stderr__.flush()
+
+
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
         self.instance_id = instance_id
@@ -77,7 +91,7 @@ class Runner:
 
     def connect_stdio(self):
         sys.stdout = codecs.getwriter('utf-8')(self.protocol.get_channel(CC.STDOUT))
-        sys.stderr = codecs.getwriter('utf-8')(self.protocol.get_channel(CC.STDERR))
+        sys.stderr = StderrRedirector(codecs.getwriter('utf-8')(self.protocol.get_channel(CC.STDERR)))
         sys.stdin = Stream.read_from(self.protocol.get_channel(CC.STDIN)).decode('utf-8')
         
         # pretend to have API compatibiliy
@@ -208,6 +222,7 @@ class Runner:
             self.exit_immediately()
   
         self.logger.info(f'Sending PANG')
+
         monitoring = self.protocol.get_channel(CC.MONITORING)
 
         produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
@@ -260,17 +275,19 @@ class Runner:
         self.logger.debug('Input stream forwarded to the instance.')
 
     async def forward_output_stream(self, output):
-        if hasattr(output, 'content_type'):
-            content_type = output.content_type
+
+        if hasattr(output, 'provides'):
+            attribute = getattr(self.sequence, 'provides', None)
+            content_type = attribute['contentType']
         else:
-            # Deprecated
-            if hasattr(self.sequence, 'output_type'):
-                content_type = self.sequence.output_type
+            if hasattr(self.sequence, 'provides'):
+                attribute = getattr(self.sequence, 'provides', None)
+                content_type = attribute['contentType']
             else:
                 self.logger.debug('Output type not set, using default')
                 content_type = 'text/plain'
+
         self.logger.info(f'Content-type: {content_type}')
-        
         if content_type == 'text/plain':
             self.logger.debug('Output stream will be treated as text and encoded')
             output = output.map(lambda s: s.encode())

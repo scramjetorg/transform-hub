@@ -59,7 +59,7 @@ export declare class HostClient {
     getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, update?: boolean): Promise<SequenceClient>;
     getSequence(sequenceId: string): Promise<STHRestAPI.GetSequenceResponse>;
-    deleteSequence(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse>;
+    deleteSequence(sequenceId: string, opts?: { force: boolean }): Promise<STHRestAPI.DeleteSequenceResponse>;
     getInstanceInfo(instanceId: string): Promise<STHRestAPI.GetInstanceResponse>;
     getLoadCheck(): Promise<LoadCheckStat>;
     getVersion(): Promise<STHRestAPI.GetVersionResponse>;

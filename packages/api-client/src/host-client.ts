@@ -2,6 +2,7 @@ import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils"
 import { STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
+import { HostHeaders } from "@scramjet/symbols";
 
 /**
  * Host client.
@@ -74,7 +75,7 @@ export class HostClient implements ClientProvider {
      *
      * @param sequencePackage Stream with packed Sequence.
      * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
-     * @param {boolean} update Send request with post or put method
+     * @param {boolean} update Send request with post or put method.
      * @returns {SequenceClient} Sequence client.
      */
     async sendSequence(
@@ -102,11 +103,16 @@ export class HostClient implements ClientProvider {
     /**
      * Deletes Sequence with given id.
      *
-     * @param {string} sequenceId Sequence id
+     * @param {string} sequenceId Sequence id.
+     * @param {any} opts Additional sequence delete options.
      * @returns {STHRestAPI.Promise<DeleteSequenceResponse>} Promise resolving to delete Sequence result.
      */
-    async deleteSequence(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse> {
-        return this.client.delete<STHRestAPI.DeleteSequenceResponse>(`sequence/${sequenceId}`);
+    async deleteSequence(sequenceId: string, opts?: { force: boolean }): Promise<STHRestAPI.DeleteSequenceResponse> {
+        const headers: HeadersInit = {};
+
+        if (opts?.force) headers[HostHeaders.SEQUENCE_FORCE_REMOVE] = "true";
+
+        return this.client.delete<STHRestAPI.DeleteSequenceResponse>(`sequence/${sequenceId}`, { headers });
     }
 
     // REVIEW: move this to InstanceClient..getInfo()?

@@ -2,6 +2,15 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.34.4] - 2023-06-21
+
+## ## Fixed
+
+* fix/proper-permissions-after-unpack by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/881
+* Add crash log feature to Kube Adapter by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/792
+* si seq delete SEQ_ID --force by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/884
+* Fix: Unable to set platform defaults by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/883
+* Fix/prod only messages by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/886
 
 ## [0.34.3] and [0.34.2] - 2023-06-05
 
