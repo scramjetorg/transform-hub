@@ -55,19 +55,14 @@ class Runner:
 
         await self.protocol.sync()
         await self.run_instance(config, input_stream, args)
-
         await self.protocol.sync()
+
         heartbeat_task.cancel()
-        await asyncio.gather(*[heartbeat_task])
+        control_stream_task.cancel()    
+        await asyncio.gather(*[connect_input_stream_task,
+                               heartbeat_task,
+                               control_stream_task])
         
-        await asyncio.gather(*[connect_input_stream_task])
-
-        await self.protocol.get_channel(CC.IN).sync()
-        await self.protocol.get_channel(CC.CONTROL).sync()
-
-        control_stream_task.cancel()
-        await asyncio.gather(*[control_stream_task])
-
         await self.protocol.stop()
 
         [ task.cancel() if task.get_name() != 'RUNNER_MAIN' else None for task in asyncio.all_tasks()]

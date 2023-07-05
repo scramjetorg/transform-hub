@@ -2,7 +2,6 @@ import asyncio
 import logging
 import random
 import socket
-from typing import Any, Coroutine
 
 from attrs import define, field
 from barrier import Barrier
@@ -61,23 +60,30 @@ class _ChannelContext:
         self._stop_channel_event = stop_event
         self._sync_channel_event = sync_event
         self._sync_barrier = sync_barrier
-        self._outcoming_process_task = asyncio.create_task(self._outcomming_process_tasks(), name=f'{self._get_channel_name()}_PROCESS_TASK')
+        self._outcoming_process_task = asyncio.create_task(self._outcoming_process_tasks(), name=f'{self._get_channel_name()}_PROCESS_TASK')
         self._ended = None
         self._read_buffer = bytearray()
 
-    async def sync(self):
+    async def sync(self) -> None:
+        """Waits until internal queues will be empty (packets will be processed)
+        """
 
         if self._is_incoming():
             await self._internal_incoming_queue.join()
 
         await self._internal_outcoming_queue.join()
 
+    def _is_incoming(self) -> bool:
+        """Returns whether channel is mostly read by Tememux
 
-
-    def _is_incoming(self):
+        Returns:
+            bool: True is mostly read by Runner, False otherwise
+        """
         return self._channel_enum in [CC.STDIN, CC.IN, CC.CONTROL]
-    
-    async def _outcomming_process_tasks(self):
+
+    async def _outcoming_process_tasks(self) -> None:
+        """ Internal loop for outcoming data from channel
+        """
         while True:
             try:
                 await self._queue_up_outcoming()
@@ -88,13 +94,14 @@ class _ChannelContext:
             except asyncio.CancelledError:
                 return
 
-    
-
-
     def _debug(self, msg):
+        """Wrapper for printing debug messages
+
+        Args:
+            msg (str): Debug message
+        """
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
             self._logger.debug(msg)
-
 
     def _get_channel_name(self) -> str:
         """Returns channel name
@@ -121,12 +128,25 @@ class _ChannelContext:
         """
         self._logger = logger
 
-    async def readline(self) -> str:
+    async def readline(self) -> bytes:
+        """Reads data from current channel until '\n' appears
+
+        Returns:
+            bytes: Bufer data from channel
+        """
         sep = b'\n'
         line = await self.readuntil(sep)
         return line
 
-    async def readuntil(self, separator=b'\n'):
+    async def readuntil(self, separator=b'\n') -> bytes:
+        """Reads data from current channel until provided separator appears
+
+        Args:
+            separator (bytes, optional): Defaults to b'\n'.
+
+        Returns:
+            bytes: Buffer data from channel
+        """
         seplen = len(separator)
        
         offset = 0
@@ -149,8 +169,12 @@ class _ChannelContext:
         del self._read_buffer[:isep + seplen]
         return bytes(chunk)
 
-    async def _get_data(self):
+    async def _get_data(self) -> bool:
+        """Internal method, returns True if data are moved from queue to _read_buffer, false otherwise
 
+        Returns:
+            bool: True if data are moved from queue to _read_buffer, false otherwise
+        """
         if self._ended and self._internal_incoming_queue.empty():
             return False
 
@@ -176,8 +200,15 @@ class _ChannelContext:
         await asyncio.sleep(0)
         return True       
         
-    async def read(self, n: int = -1):
+    async def read(self, n: int = -1) -> bytes:
+        """Reads up to 'n' bytes of data from current channel
 
+        Args:
+            n (int, optional): Number of bytes. Defaults to -1.
+
+        Returns:
+            bytes: Buffer data from channel
+        """
         if n == 0:
             return b''
         
@@ -204,6 +235,7 @@ class _ChannelContext:
         Args:
             sequence_number (int): Value for Acknowledge field
         """
+
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'], ack=sequence_number)))
 
     async def _send_pause_ACK(self, sequence_number: int) -> None:
@@ -212,10 +244,11 @@ class _ChannelContext:
         Args:
             sequence_number (int): Value for Acknowledge field
         """
+
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK', 'SYN'], ack=sequence_number)))
 
     async def open(self) -> None:
-        """Open channel.
+        """Open channel
         """
 
         if not self._channel_opened:
@@ -229,19 +262,22 @@ class _ChannelContext:
             self._ended = False
 
     async def end(self) -> None:
+        """Send EOF on current channel
+        """
 
         await self._internal_outcoming_queue.join()
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
         self._ended = True
 
     async def close(self) -> None:
-        """Close channel
+        """Close current channel
         """
+
         self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['FIN'])))
 
     async def queue_up_incoming(self, pkt: IPPacket) -> None:
-        """Redirects incomming data from provided packet to current channel
+        """Redirects incoming data from provided packet to current channel
 
         Args:
             pkt (IPPacket): Redirected packet from outside
@@ -307,21 +343,6 @@ class _ChannelContext:
             return
 
         self._internal_outcoming_queue.put_nowait(data)
-
-    def drain(self) -> bool:
-        """Drain channel
-        """
-        return
-
-    def write_eof(self) -> None:
-        """asyncio.StreamWriter API
-        """
-        return
-
-    def wait_closed(self) -> Coroutine:
-        """asyncio.StreamWriter API
-        """
-        return
 
     def set_pause(self, state: bool) -> None:
         """Sets pause state for current channel
@@ -445,7 +466,7 @@ class Tecemux:
         """
         return self._channels[channel]
 
-    async def sync(self):
+    async def sync(self) -> None:
         """Waits until all write tasks will be done
         """
         self._global_sync_channel_event.set()
@@ -477,13 +498,17 @@ class Tecemux:
         return f'{value[0:5]}... <len:{len(value)}>' if len(value) > 5 else f'{value}'
 
     async def stop(self) -> None:
+        """ Stops protocol
+        """        
+
         await self._finish_channels()
         await self._finish_incoming()
         await self._finish_outcoming()
 
     async def _finish_channels(self) -> None:
-        """Stops protocol
+        """ Close all channels
         """
+
         for channel in self.get_channels():
             await channel.end()
             await channel.close()
@@ -498,9 +523,11 @@ class Tecemux:
                 await asyncio.wait_for(channel._outcoming_process_task, timeout=1)
             except asyncio.TimeoutError:
                 pass
- 
-    async def _finish_outcoming(self):
-        
+
+    async def _finish_outcoming(self) -> None:
+        """ Finish outcoming forwarder and main writer to STH
+        """
+
         self._global_stop_outcoming_event.set()
         await asyncio.sleep(0)
         await self._global_stop_outcoming_event.wait()
@@ -509,21 +536,13 @@ class Tecemux:
         self._writer.close()
         await self._writer.wait_closed()
 
+    async def _finish_incoming(self) -> None:
+        """ Finish incoming forwarder
+        """
 
-    async def _finish_incoming(self):
         self._global_stop_incoming_event.set()
         await self._global_stop_incoming_event.wait()
         await asyncio.gather(*[self._incoming_data_forwarder])
-
-
-    async def _read_eof(self):
-        while True:
-            try:
-                data = await asyncio.wait_for(self._reader.read(),0.5)
-                if not data:
-                    break
-            except asyncio.TimeoutError as e:
-                break
 
     async def loop(self) -> None:
         """Main loop of Tecemux protocol. Starts forwarders tasks
@@ -572,7 +591,7 @@ class Tecemux:
                         single_packet_buffer = buffer[:current_packet_size]
                         pkt = IPPacket().from_buffer_with_pseudoheader(single_packet_buffer)
                         self._last_sequence_received = pkt.get_segment().seq
-                        self._debug(f'Tecemux/MAIN: [<] Full incomming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
+                        self._debug(f'Tecemux/MAIN: [<] Full incoming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
 
                         channel = CC(str(pkt.get_segment().dst_port))
 
@@ -591,7 +610,7 @@ class Tecemux:
             except asyncio.CancelledError:
                 break
             
-        self._debug('Tecemux/MAIN: Incomming data forwarder finished')
+        self._debug('Tecemux/MAIN: Incoming data forwarder finished')
 
     async def outcoming_data_forward(self) -> None:
         """Loop for outcoming data to Transform Hub
@@ -626,6 +645,5 @@ class Tecemux:
 
             except asyncio.CancelledError:
                     break
-
 
         self._debug('Tecemux/MAIN: Outcoming data forwarder finished')
