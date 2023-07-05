@@ -4,8 +4,8 @@
 export { KubernetesSequenceAdapter as SequenceAdapter } from "./kubernetes-sequence-adapter";
 export { KubernetesInstanceAdapter as InstanceAdapter } from "./kubernetes-instance-adapter";
 
-export const init = (..._args: any[]) => {
-    return true;
+export const init = async (..._args: any[]) => {
+    return Promise.resolve({ });
 };
 
 export const name = "kubernetes";

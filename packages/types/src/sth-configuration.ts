@@ -113,7 +113,7 @@ export type K8SAdapterConfiguration = {
     /**
      * The host where to start STH Pods
      */
-    sthPodHost: string,
+    sthPodHost?: string,
     /**
      * Runner images to use
      */
@@ -228,11 +228,6 @@ export type STHConfiguration = {
      * One of 'docker', 'process', 'kubernetes', 'detect'
      */
     runtimeAdapter: string;
-
-    /**
-     * Kubernetes adapter configuration
-     */
-    kubernetes: Partial<K8SAdapterConfiguration>;
 
     /**
      * Provides the location of a config file with the list of sequences

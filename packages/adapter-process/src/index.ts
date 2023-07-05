@@ -4,8 +4,8 @@
 export { ProcessSequenceAdapter as SequenceAdapter } from "./process-sequence-adapter";
 export { ProcessInstanceAdapter as InstanceAdapter } from "./process-instance-adapter";
 
-export const init = (..._args: any[]) => {
-    return true;
+export const init = async (..._args: any[]) => {
+    return Promise.resolve({});
 };
 
 export const name = "process";

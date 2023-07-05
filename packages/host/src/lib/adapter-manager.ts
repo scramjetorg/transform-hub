@@ -14,21 +14,28 @@ export class AdapterManager {
     async init() {
         this.logger.info("Loading adapters...", Object.keys(this.sthConfig.adapters));
 
-        this.adapters = (await Promise.all(
+        await Promise.all(
             Object.keys(this.sthConfig.adapters).map(
-                async (pkgName: string) => ({ name: pkgName, pkg: await import(pkgName) })
+                async (pkgName: string) => {
+                    const adapter = Object.assign(await import(pkgName), { pkgName }) as IRuntimeAdapter;
+
+                    if (!AdapterManager.validateAdapter(adapter)) {
+                        throw new Error(`Invalid adapter provided ${adapter.pkgName}`);
+                    }
+
+                    console.log(adapter);
+
+                    adapter.status = await this.initAdapter(adapter);
+
+                    if (adapter.status !== "ready") {
+                        this.logger.warn(`Failed to initialize "${adapter.pkgName}" Adapter: ${adapter.status.error}`);
+                    }
+
+                    if (this.adapters[adapter.pkgName]) throw new Error("Invalid adapters configuration, duplicated adapter name");
+                    this.adapters[adapter.pkgName] = adapter;
+                }
             )
-        )).reduce((acc, pkg) => {
-            if (!AdapterManager.validateAdapter(pkg.pkg)) {
-                throw new Error(`Invalid adapter provided ${pkg.name}`);
-            }
-
-            if (acc[pkg.name]) throw new Error("Invalid adapters configuration, duplicated adapter name");
-
-            acc[pkg.name] = pkg.pkg;
-
-            return acc;
-        }, {} as { [key: string]: IRuntimeAdapter });
+        );
 
         const adaptersCount = Object.keys(this.adapters).length;
 
@@ -40,21 +47,24 @@ export class AdapterManager {
     }
 
     static validateAdapter(adapter: IRuntimeAdapter): boolean {
-        return !!(adapter.name.trim() && ["SequenceAdapter", "InstanceAdapter"].every((className: string) => className in adapter));
+        return !!(adapter.name.trim() && ["SequenceAdapter", "InstanceAdapter", "init"].every((className: string) => className in adapter));
     }
 
-    async initAdapter(name: string): Promise<{ error?: string }> {
-        const adapter = this.getAdapterByName(name);
+    async initAdapter(adapter: IRuntimeAdapter): Promise<{ error?: string } | "ready"> {
+        const initResult = await adapter.init();
+        return initResult.error ? initResult : Promise.resolve("ready");
+    }
 
-        if (!adapter) {
-            return { error: "Adapter not found." };
+    getAdapterByName(pkgName: string): IRuntimeAdapter | undefined {
+        return Object.values(this.adapters).find(a => a.pkgName === pkgName);
+    }
+
+    getDefaultAdapter(prefferedAdapter: string) {
+        if (prefferedAdapter === "detect") {
+            return Object.values(this.adapters).filter(adapter => adapter.status === "ready")[0];
         }
 
-        return await adapter.init();
-    }
-
-    getAdapterByName(name: string): IRuntimeAdapter | undefined {
-        return Object.values(this.adapters).find(a => a.name === name);
+        return Object.values(this.adapters).find(a => a.name === prefferedAdapter);
     }
 
     /**

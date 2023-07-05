@@ -1,7 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
     ISequenceAdapter,
-    STHConfiguration,
     SequenceConfig,
     IObjectLogger,
     KubernetesSequenceConfig,
@@ -58,8 +57,8 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
 
     private adapterConfig: K8SAdapterConfiguration;
 
-    constructor(sthConfig: STHConfiguration) {
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+    constructor(config: KubernetesSequenceAdapter) {
+        const decodedAdapterConfig = adapterConfigDecoder.decode(config);
 
         if (!decodedAdapterConfig.isOk()) {
             throw new Error("Invalid Kubernetes Adapter configuration");

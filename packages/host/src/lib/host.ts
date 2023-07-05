@@ -329,14 +329,15 @@ export class Host implements IComponent {
         this.adapterManager.logger.pipe(this.logger);
 
         await this.adapterManager.init();
-        const adapterInitStatus = await this.adapterManager.initAdapter(this.config.runtimeAdapter);
-
-        if (adapterInitStatus.error) {
-            throw new Error(`Failed to initialize "${this.config.runtimeAdapter}" Adapter: ${adapterInitStatus.error}`);
-        }
 
         this.adapterName = this.config.runtimeAdapter;
-        this.logger.info(`Will use the "${this.adapterName}" adapter for running Sequences`);
+        const defaultAdapter = this.adapterManager.getDefaultAdapter(this.adapterName);
+
+        if (!defaultAdapter) {
+            throw new Error("Can't set default adapter");
+        }
+
+        this.logger.info(`Default adapter for running Sequences: "${this.adapterName}" (${defaultAdapter?.name})`);
 
         this.pushTelemetry("Host started");
 

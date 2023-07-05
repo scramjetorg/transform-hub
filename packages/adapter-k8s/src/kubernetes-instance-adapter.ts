@@ -8,8 +8,7 @@ import {
     InstanceLimits,
     IObjectLogger,
     K8SAdapterConfiguration,
-    MonitoringMessageData,
-    STHConfiguration,
+    MonitoringMessageData
 } from "@scramjet/types";
 
 import path from "path";
@@ -40,10 +39,10 @@ IComponent {
     get limits() { return this._limits || {} as InstanceLimits; }
     private set limits(value: InstanceLimits) { this._limits = value; }
 
-    constructor(sthConfig: STHConfiguration) {
+    constructor(config: K8SAdapterConfiguration) {
         // @TODO this is a redundant check (it was already checked in sequence adapter)
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+        const decodedAdapterConfig = adapterConfigDecoder.decode(config);
 
         if (!decodedAdapterConfig.isOk()) {
             throw new Error("Invalid Kubernetes Adapter configuration");
@@ -107,7 +106,7 @@ IComponent {
             getRunnerEnvEntries({
                 sequencePath: path.join("/package", config.entrypointPath),
                 instancesServerPort,
-                instancesServerHost: this.adapterConfig.sthPodHost,
+                instancesServerHost: this.adapterConfig.sthPodHost!,
                 instanceId,
                 pipesPath: ""
             }).map(([name, value]) => ({ name, value }));

@@ -7,7 +7,7 @@ export { DockerSequenceAdapter as SequenceAdapter } from "./docker-sequence-adap
 export { DockerInstanceAdapter as InstanceAdapter } from "./docker-instance-adapter";
 
 export const init = async (..._args: any[]) => {
-    return await DockerodeDockerHelper.isDockerConfigured() || { error: "Docker initialization failed"};
+    return await DockerodeDockerHelper.isDockerConfigured() ? {} : { error: "Docker initialization failed"};
 };
 
 export const name = "docker";

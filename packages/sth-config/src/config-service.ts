@@ -35,17 +35,6 @@ const _defaultConfig: STHConfiguration = {
     },
     safeOperationLimit: 512,
     runtimeAdapter: "detect",
-    kubernetes: {
-        namespace: "default",
-        authConfigPath: undefined,
-        sthPodHost: undefined,
-        runnerImages: {
-            python3: "",
-            node: "",
-        },
-        sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
-        timeout: "0"
-    },
     startupConfig: "",
     exitWithLastInstance: false,
     timings: {
@@ -82,15 +71,30 @@ const _defaultConfig: STHConfiguration = {
                 python3: imageConfig.runner.python,
                 node: imageConfig.runner.node
             }
+        },
+        "@scramjet/adapter-k8s": {
+            namespace: "default",
+            authConfigPath: undefined,
+            sthPodHost: undefined,
+            runnerImages: {
+                python3: "",
+                node: "",
+            },
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+            timeout: "0"
         }
     }
 };
 
-merge(_defaultConfig, {
-    kubernetes: {
-        runnerImages: imageConfig.runner,
-    }
-});
+if (_defaultConfig.adapters && _defaultConfig.adapters["@scramjet/adapter-k8s"]) {
+    merge(_defaultConfig, {
+        adapters: {
+            "@scramjet/adapter-k8s": {
+                runnerImages: imageConfig.runner
+            }
+        }
+    });
+}
 
 export const defaultConfig = _defaultConfig;
 
@@ -118,12 +122,11 @@ export class ConfigService {
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
+        const kubeFull = config.adapters["@scramjet/adapter-k8s"]!;
         const {
-            kubernetes: kubeFull,
             cpmSslCaPath: optionsCpmSslCaPath,
             ...safe
         } = config;
-
         const { authConfigPath: optionsAuthConfigPath, sequencesRoot: optionsSequencesRoot, ...kubernetes } = kubeFull;
 
         return { ...safe, kubernetes };

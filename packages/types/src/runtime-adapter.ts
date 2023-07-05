@@ -8,5 +8,7 @@ export interface IRuntimeAdapter {
     SequenceAdapter: ISequenceAdapter & { new (config: STHConfiguration): ISequenceAdapter };
     InstanceAdapter: ILifeCycleAdapterMain & ILifeCycleAdapterRun & IComponent & { new (config: STHConfiguration): IInstanceAdapter };
     name: string;
-    init(): { error?: string };
+    pkgName: string;
+    init(): Promise<{ error?: string }>;
+    status: "ready" | { error?: string};
 }
