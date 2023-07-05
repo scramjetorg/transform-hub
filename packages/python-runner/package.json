@@ -15,6 +15,7 @@
     "logging_setup.py",
     "tecemux.py",
     "inet.py",
+    "barrier.py",
     "runner.py"
   ],
   "author": "Scramjet <opensource@scramjet.org>",
