@@ -61,14 +61,33 @@ class _ChannelContext:
         self._stop_channel_event = stop_event
         self._sync_channel_event = sync_event
         self._sync_barrier = sync_barrier
-        self._outcoming_process_task = asyncio.create_task(self._outcomming_process_tasks())
+        self._outcoming_process_task = asyncio.create_task(self._outcomming_process_tasks(), name=f'{self._get_channel_name()}_PROCESS_TASK')
         self._ended = None
         self._read_buffer = bytearray()
 
+    async def sync(self):
+
+        if self._is_incoming():
+            await self._internal_incoming_queue.join()
+
+        await self._internal_outcoming_queue.join()
+
+
+
+    def _is_incoming(self):
+        return self._channel_enum in [CC.STDIN, CC.IN, CC.CONTROL]
+    
     async def _outcomming_process_tasks(self):
-        while not self._stop_channel_event.is_set():
-            await self._queue_up_outcoming()
-        await asyncio.sleep(0)
+        while True:
+            try:
+                await self._queue_up_outcoming()
+                await asyncio.sleep(0)
+
+                if self._stop_channel_event.is_set():
+                    return
+            except asyncio.CancelledError:
+                return
+
     
 
 
@@ -145,9 +164,15 @@ class _ChannelContext:
                 self._read_buffer.extend(buf)
                 break
             except asyncio.QueueEmpty:
+
                 await asyncio.sleep(0)
+
+                if self._ended:
+                    return False
+
             except asyncio.CancelledError:
                 return False
+            
         await asyncio.sleep(0)
         return True       
         
@@ -207,6 +232,7 @@ class _ChannelContext:
 
         await self._internal_outcoming_queue.join()
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
+        self._ended = True
 
     async def close(self) -> None:
         """Close channel
@@ -239,7 +265,8 @@ class _ChannelContext:
         if pkt.segment.is_flag('FIN'):
             self._ended = True
             return
-        self._internal_incoming_queue.put_nowait(pkt.get_segment().data)
+        await self._internal_incoming_queue.put(pkt.get_segment().data)
+        self._internal_incoming_queue.task_done()
 
     async def _queue_up_outcoming(self) -> None:
         """Redirects raw data from currect channel to global queue.
@@ -254,12 +281,14 @@ class _ChannelContext:
         if not self._channel_paused:
             while not self._internal_outcoming_queue.empty():
                 try:
-                    buf = await self._internal_outcoming_queue.get()
+                    buf = await asyncio.wait_for(self._internal_outcoming_queue.get(),1)
                     await self._global_queue.put(wrap(self._channel_enum, buf))
                     self._internal_outcoming_queue.task_done()
                 except asyncio.QueueEmpty:
                     self._debug(f'Tecemux/{self._get_channel_name()}: [-] All data stored during pause were redirected to global queue')
                     break
+                except asyncio.TimeoutError:
+                    pass
         else:
             self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel paused. Data queued up internally for future')
         
@@ -451,9 +480,6 @@ class Tecemux:
         await self._finish_channels()
         await self._finish_incoming()
         await self._finish_outcoming()
-        await self._read_eof()
-     
-        self._debug('Tecemux/MAIN: [-] Finished')
 
     async def _finish_channels(self) -> None:
         """Stops protocol
@@ -464,22 +490,21 @@ class Tecemux:
 
         for channel in self.get_channels():
             await channel._internal_outcoming_queue.join()
-    
+
         self._global_stop_channel_event.set()
         await self._global_stop_channel_event.wait()
-
-        tasks = asyncio.gather(*[channel._outcoming_process_task for channel in self.get_channels()])
-        tasks.cancel()
-        await tasks 
-
-
+        for channel in self.get_channels():
+            try:
+                await asyncio.wait_for(channel._outcoming_process_task, timeout=1)
+            except asyncio.TimeoutError:
+                pass
+ 
     async def _finish_outcoming(self):
         
         self._global_stop_outcoming_event.set()
+        await asyncio.sleep(0)
         await self._global_stop_outcoming_event.wait()
-        
         await asyncio.gather(*[self._outcoming_data_forwarder])        
-        self._writer.write_eof()
         await self._writer.drain()
         self._writer.close()
         await self._writer.wait_closed()
@@ -575,6 +600,7 @@ class Tecemux:
         while True:
             try:
                 pkt = await asyncio.wait_for(self._queue.get(),1)
+                self._queue.task_done()
 
                 # inject sequence number
                 if pkt.segment.seq == 0:
@@ -587,7 +613,6 @@ class Tecemux:
                 self._debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)} is waiting to send to Transform Hub')
                 self._writer.write(chunk)
                 await self._writer.drain()
-                self._queue.task_done()
                 self._debug(f'Tecemux/MAIN: [>] Chunk {Tecemux._chunk_preview(chunk)} with sequence number: {pkt.segment.seq} was sent to Transform Hub')
             except asyncio.QueueEmpty:
                 if self._global_stop_outcoming_event.is_set():

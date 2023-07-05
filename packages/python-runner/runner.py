@@ -4,7 +4,6 @@ import os
 import codecs
 import json
 import logging
-# import debugpy
 from pyee.asyncio import AsyncIOEventEmitter
 from tecemux import Tecemux
 import importlib.util
@@ -21,10 +20,6 @@ SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
 SERVER_HOST = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 INSTANCE_ID = os.getenv('INSTANCE_ID')
 
-# debugpy.listen(5678)
-# debugpy.wait_for_client() 
-# debugpy.breakpoint()
-
 def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
     stream.write(f'{message}\r\n'.encode())
@@ -40,11 +35,9 @@ class Runner:
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
         self.protocol = None
-    @staticmethod
-    def is_incoming(channel):
-        return channel in [CC.STDIN, CC.IN, CC.CONTROL]
             
     async def main(self, server_host, server_port):
+        asyncio.current_task().set_name('RUNNER_MAIN')
         input_stream = Stream()
         await self.init_tecemux(server_host, server_port)
         # Do this early to have access to any thrown exceptions and logs.
@@ -59,20 +52,25 @@ class Runner:
         connect_input_stream_task = asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.load_sequence()
-        
-        await self.protocol.sync()     
+
+        await self.protocol.sync()
         await self.run_instance(config, input_stream, args)
 
         await self.protocol.sync()
         heartbeat_task.cancel()
-        connect_input_stream_task.cancel()
-        control_stream_task.cancel()
+        await asyncio.gather(*[heartbeat_task])
+        
+        await asyncio.gather(*[connect_input_stream_task])
 
-        await asyncio.gather(*[heartbeat_task,
-                               connect_input_stream_task,
-                               control_stream_task])
-      
+        await self.protocol.get_channel(CC.IN).sync()
+        await self.protocol.get_channel(CC.CONTROL).sync()
+
+        control_stream_task.cancel()
+        await asyncio.gather(*[control_stream_task])
+
         await self.protocol.stop()
+
+        [ task.cancel() if task.get_name() != 'RUNNER_MAIN' else None for task in asyncio.all_tasks()]
 
 
     async def init_tecemux(self, server_host, server_port):
@@ -152,6 +150,10 @@ class Runner:
                 if code == msg_codes.EVENT.value:
                     await self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
         except asyncio.CancelledError:
+            task = self.protocol.get_channel(CC.CONTROL)._outcoming_process_task
+            task.cancel()
+            await asyncio.sleep(0)
+            await asyncio.gather(*[task])
             return
 
 
@@ -182,6 +184,7 @@ class Runner:
                 )
                 await asyncio.sleep(1)
             except asyncio.CancelledError:
+                await self.protocol.get_channel(CC.MONITORING).sync()
                 return
 
 
@@ -199,8 +202,7 @@ class Runner:
         os.chdir(os.path.dirname(self.seq_path))
 
     async def run_instance(self, config, input, args):
-        context = AppContext(self, config)
-        await self.protocol.sync()      
+        context = AppContext(self, config)  
         self.logger.info('Running instance...')
         try:
             result = self.sequence.run(context, input, *args)
@@ -228,13 +230,11 @@ class Runner:
         elif asyncio.iscoroutine(result):
             result = await result
         if result:
-            await self.protocol.sync()
             await self.forward_output_stream(result)
         else:
             self.logger.debug('Sequence returned no output.')
 
         self.logger.info('Finished.')
-        await self.protocol.sync()
         
 
     async def connect_input_stream(self, input_stream):
@@ -248,8 +248,6 @@ class Runner:
             }
             self.logger.info(f'Input headers: {repr(headers)}')
             input_type = headers.get('content-type')
-
-        await self.protocol.sync()
 
         if input_type == 'text/plain':
             input = Stream.read_from(self.protocol.get_channel(CC.IN))
@@ -265,7 +263,6 @@ class Runner:
 
         input.pipe(input_stream)
         self.logger.debug('Input stream forwarded to the instance.')
-
 
     async def forward_output_stream(self, output):
         if hasattr(output, 'content_type'):
@@ -341,4 +338,4 @@ if not SEQUENCE_PATH or not SERVER_PORT or not INSTANCE_ID:
     sys.exit(2)
 
 runner = Runner(INSTANCE_ID, SEQUENCE_PATH, LOG_SETUP)
-asyncio.run(runner.main(SERVER_HOST, SERVER_PORT), debug=False)
+asyncio.run(runner.main(SERVER_HOST, SERVER_PORT))
