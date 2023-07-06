@@ -165,7 +165,7 @@ class _ChannelContext:
             if (not await self._get_data()):
                 break
         
-        if self._ended:
+        if self._ended and isep == -1:
             chunk = self._read_buffer.copy()
             self._read_buffer.clear()
         else:
