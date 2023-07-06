@@ -11,20 +11,25 @@ export class AdapterManager {
         this.sthConfig = sthConfig;
     }
 
-    async init() {
+    /**
+     * Initializes configured adapters.
+     *
+     * @returns True if any adapter is available. False otherwise.
+     */
+    async init(): Promise<boolean> {
         this.logger.info("Loading adapters...", Object.keys(this.sthConfig.adapters));
 
         await Promise.all(
             Object.keys(this.sthConfig.adapters).map(
-                async (pkgName: string) => {
+                async (pkgName) => {
+                    const typedPkgName = pkgName as unknown as keyof STHConfiguration["adapters"];
                     const adapter = Object.assign(await import(pkgName), { pkgName }) as IRuntimeAdapter;
 
                     if (!AdapterManager.validateAdapter(adapter)) {
                         throw new Error(`Invalid adapter provided ${adapter.pkgName}`);
                     }
 
-                    console.log(adapter);
-
+                    adapter.config = this.sthConfig.adapters[typedPkgName]!;
                     adapter.status = await this.initAdapter(adapter);
 
                     if (adapter.status !== "ready") {
@@ -41,8 +46,12 @@ export class AdapterManager {
 
         if (adaptersCount) {
             this.logger.info(`${adaptersCount} Adapters available:`, this.adapters);
+
+            return true;
         } else {
             this.logger.warn("No adapters defined. Sequences and Instances unsupported.");
+
+            return false;
         }
     }
 
@@ -51,7 +60,8 @@ export class AdapterManager {
     }
 
     async initAdapter(adapter: IRuntimeAdapter): Promise<{ error?: string } | "ready"> {
-        const initResult = await adapter.init();
+        const initResult = await adapter.init(adapter.config);
+
         return initResult.error ? initResult : Promise.resolve("ready");
     }
 

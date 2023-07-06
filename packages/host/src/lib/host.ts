@@ -148,6 +148,12 @@ export class Host implements IComponent {
     adapterName: string = "uninitialized";
 
     /**
+     * Indicates whether any Runtime Adapter is available.
+     * Set with return value of AdapterManager.init()
+     */
+    withRuntimeAdapters = false;
+
+    /**
      * S3 client.
      */
     s3Client?: S3Client;
@@ -328,16 +334,20 @@ export class Host implements IComponent {
         this.adapterManager = new AdapterManager(this.config);
         this.adapterManager.logger.pipe(this.logger);
 
-        await this.adapterManager.init();
+        this.withRuntimeAdapters = await this.adapterManager.init();
 
-        this.adapterName = this.config.runtimeAdapter;
-        const defaultAdapter = this.adapterManager.getDefaultAdapter(this.adapterName);
+        if (this.withRuntimeAdapters) {
+            this.adapterName = this.config.runtimeAdapter;
+            const defaultAdapter = this.adapterManager.getDefaultAdapter(this.adapterName);
 
-        if (!defaultAdapter) {
-            throw new Error("Can't set default adapter");
+            if (!defaultAdapter) {
+                throw new Error("Can't set default adapter");
+            }
+
+            this.logger.info(`Default adapter for running Sequences: "${this.adapterName}" (${defaultAdapter?.name})`);
+        } else {
+            this.logger.warn("No RuntimeAdapters.");
         }
-
-        this.logger.info(`Default adapter for running Sequences: "${this.adapterName}" (${defaultAdapter?.name})`);
 
         this.pushTelemetry("Host started");
 

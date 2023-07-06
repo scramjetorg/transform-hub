@@ -267,7 +267,7 @@ export type STHConfiguration = {
         "@scramjet/adapter-k8s"?: K8SAdapterConfiguration;
         "@scramjet/adapter-process"?: ProcessAdapterConfiguration;
         "@scramjet/adapter-docker"?: DockerAdapterConfiguration;
-    }
+    } | { [key: string]: any; }
 }
 
 export type PublicSTHConfiguration = Omit<Omit<STHConfiguration, "cpmSslCaPath">, "kubernetes"> & {
