@@ -164,8 +164,13 @@ class _ChannelContext:
 
             if (not await self._get_data()):
                 break
-
-        chunk = self._read_buffer[:isep + seplen]
+        
+        if self._ended:
+            chunk = self._read_buffer.copy()
+            self._read_buffer.clear()
+        else:
+            chunk = self._read_buffer[:isep + seplen]
+            
         del self._read_buffer[:isep + seplen]
         return bytes(chunk)
 
@@ -191,7 +196,7 @@ class _ChannelContext:
 
                 await asyncio.sleep(0)
 
-                if self._ended:
+                if self._ended and self._internal_incoming_queue.empty():
                     return False
 
             except asyncio.CancelledError:
@@ -620,6 +625,9 @@ class Tecemux:
             try:
                 pkt = await asyncio.wait_for(self._queue.get(),1)
                 self._queue.task_done()
+
+                if pkt.get_segment().data == b'':
+                    self._logger.debug(f'Pusty pakiet na kanale {CC(str(pkt.get_segment().dst_port))}')
 
                 # inject sequence number
                 if pkt.segment.seq == 0:
