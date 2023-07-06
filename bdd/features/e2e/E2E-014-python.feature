@@ -33,7 +33,9 @@ Feature: Test our shiny new Python runner
         Given host is running
         When sequence "../packages/python-unhealthy-sequence.tar.gz" loaded
         And instance started
+        And  wait for "1000" ms
         Then instance health is "false"
+
         And host is still running
 
     @ci-instance-python
@@ -64,5 +66,6 @@ Feature: Test our shiny new Python runner
         When sequence "../packages/python-gen-async.tar.gz" loaded
         And instance started
         And send "1" to input
+        And wait for "1000" ms
         Then "output" is "saved to db: 1"
         And host is still running
