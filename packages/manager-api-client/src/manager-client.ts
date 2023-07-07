@@ -4,13 +4,18 @@ import { MRestAPI, LoadCheckStat } from "@scramjet/types";
 import { Readable } from "stream";
 
 export class ManagerClient implements ClientProvider {
-    client: HttpClient;
     apiBase: string;
+
+    #_client: ClientUtils;
+
+    get client(): ClientUtils {
+        return this.#_client;
+    }
 
     constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
-        this.client = utils;
+        this.#_client = utils;
     }
 
     getHostClient(id: string, hostApiBase = "/api/v1") {

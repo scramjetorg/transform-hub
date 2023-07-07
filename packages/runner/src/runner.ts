@@ -32,6 +32,7 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ManagerClient } from "@scramjet/manager-api-client";
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -424,6 +425,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
         const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
+        const managerClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1/cpm/api/v1", this.hostClient.getAgent());
+        const managerApiClient = new ManagerClient("http://scramjet-host/api/v1/cpm/api/v1", managerClientUtils);
+
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => {
@@ -439,6 +443,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.emitter,
             runner,
             hostApiClient as HostClient,
+            managerApiClient as ManagerClient,
             this.instanceId
         );
         this._context.logger.pipe(this.logger);
