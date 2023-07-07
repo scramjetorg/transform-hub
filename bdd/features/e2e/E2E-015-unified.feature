@@ -64,6 +64,7 @@ Feature: Test our shiny new Python runner
         And send "topic test input" to input
         And find and upload sequence "topic-consumer.tar.gz"
         And instance started
+        And wait for "3000" ms
         Then "output" will be data named "python-topics"
         And host is still running
 
