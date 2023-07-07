@@ -53,9 +53,11 @@ Feature: Test our shiny new Python runner
         When I execute CLI with "seq send ../packages/python-topic-producer.tar.gz"
         When I execute CLI with "seq start - --output-topic names3"
         Then I send input data "topic test input" with options "--end"
+        And wait for "100" ms
         When I execute CLI with "seq send ../packages/python-topic-consumer.tar.gz"
         When I execute CLI with "seq start - --input-topic names3"
         And I execute CLI with "inst output -" without waiting for the end
+        And wait for "100" ms
         Then I confirm data named "python-topics" will be received
         And host is still running
 

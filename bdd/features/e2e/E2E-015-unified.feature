@@ -6,6 +6,7 @@ Feature: Test our shiny new Python runner
         When find and upload sequence "hello.tar.gz"
         And instance started
         And send "python runner" to input
+        And wait for "100" ms
         Then "output" is "Hello python runner!"
         And host is still running
 
@@ -15,6 +16,7 @@ Feature: Test our shiny new Python runner
         When find and upload sequence "stdinout.tar.gz"
         And instance started
         And send "python runner" to stdin
+        And wait for "100" ms        
         Then "stdout" is "Got on stdin: python runner"
         And host is still running
 
@@ -62,9 +64,9 @@ Feature: Test our shiny new Python runner
         When find and upload sequence "topic-producer.tar.gz"
         And instance started
         And send "topic test input" to input
+        And wait for "100" ms
         And find and upload sequence "topic-consumer.tar.gz"
         And instance started
-        And wait for "3000" ms
         Then "output" will be data named "python-topics"
         And host is still running
 
@@ -74,6 +76,7 @@ Feature: Test our shiny new Python runner
         When find and upload sequence "events.tar.gz"
         And instance started
         And send event "test-event" to instance with message "foo"
+        And wait for "100" ms
         Then instance emits event "test-response" with body
             """
             {"eventName":"test-response","message":"reply to foo"}
