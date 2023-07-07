@@ -206,6 +206,7 @@ export class Host implements IComponent {
 
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
+
         this.serviceDiscovery.logger.pipe(this.logger);
 
         if (sthConfig.telemetry.environment)
@@ -509,6 +510,8 @@ export class Host implements IComponent {
             this.logger.debug("Platform request");
             return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
         });
+
+        this.api.use(`${this.apiBase}/cpm`, (req, res, next) => this.spaceMiddleware(req, res, next));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -554,6 +557,34 @@ export class Host implements IComponent {
         req.url = req.url?.substring(this.topicsBase.length);
 
         return this.serviceDiscovery.router.lookup(req, res, next);
+    }
+
+    /**
+     * Forward request to Manager the Host is connected to.
+     * @param {ParsedMessage} req Request object.
+     * @param {ServerResponse} res Response object.
+     * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
+     */
+    spaceMiddleware(req: ParsedMessage, res: ServerResponse, _next: NextCallback) {
+        const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
+
+        this.logger.info("SPACE REQUEST", req.url, url);
+
+        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
+
+        if (clientRequest) {
+            clientRequest.on("response", (response: IncomingMessage) => {
+                response.pipe(res);
+                req.pipe(clientRequest);
+            }).on("error", (error) => {
+                this.logger.error("Error requesting CPM", error);
+            });
+
+            clientRequest.flushHeaders();
+        } else {
+            res.statusCode = 404;
+            res.end();
+        }
     }
 
     /**

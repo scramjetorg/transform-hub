@@ -41,7 +41,8 @@ const _defaultConfig: STHConfiguration = {
         infoFilePath: "/tmp/sth-id.json",
         instancesServerPort: 8001,
         hostname: "::",
-        port: 8000
+        port: 8000,
+        federationControl: false
     },
     instanceRequirements: {
         cpuLoad: 10,
