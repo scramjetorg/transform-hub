@@ -525,8 +525,10 @@ class Tecemux:
         await self._global_stop_channel_event.wait()
         for channel in self.get_channels():
             try:
-                await asyncio.wait_for(channel._outcoming_process_task, timeout=1)
+                await asyncio.wait_for(channel._outcoming_process_task,1)
             except asyncio.TimeoutError:
+                pass
+            except TypeError:
                 pass
 
     async def _finish_outcoming(self) -> None:
