@@ -163,6 +163,7 @@ class Runner:
                     await self.handle_stop(data)
                 if code == msg_codes.EVENT.value:
                     self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
+
         except asyncio.CancelledError:
             task = self.protocol.get_channel(CC.CONTROL)._outcoming_process_task
             task.cancel()
@@ -196,6 +197,7 @@ class Runner:
                     msg_codes.MONITORING,
                     self.health_check(),
                 )
+                await self.protocol.get_channel(CC.MONITORING).sync()
                 await asyncio.sleep(1)
             except asyncio.CancelledError:
                 await self.protocol.get_channel(CC.MONITORING).sync()
