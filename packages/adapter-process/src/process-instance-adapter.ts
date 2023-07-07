@@ -1,13 +1,11 @@
 import { STHConfiguration,
     ExitCode,
-    IComponent,
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterRun,
     InstanceConfig,
     InstanceLimits,
     IObjectLogger,
     MonitoringMessageData,
-    SequenceConfig
+    SequenceConfig,
+    IInstanceAdapter
 } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { streamToString } from "@scramjet/utility";
@@ -22,10 +20,7 @@ const gotPython = "\n                              _ \n __      _____  _ __  ___
 /**
  * Adapter for running Instance by Runner executed in separate process.
  */
-class ProcessInstanceAdapter implements
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterRun,
-    IComponent {
+class ProcessInstanceAdapter implements IInstanceAdapter {
     logger: IObjectLogger;
     sthConfig: STHConfiguration;
 

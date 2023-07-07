@@ -32,3 +32,7 @@ export interface ISequenceAdapter {
 
     logger: IObjectLogger;
 }
+
+export interface ISequenceAdapterContructor {
+    new (config: any): ISequenceAdapter;
+}

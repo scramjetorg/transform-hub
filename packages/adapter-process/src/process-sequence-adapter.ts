@@ -1,9 +1,9 @@
 import {
     ProcessSequenceConfig,
     ISequenceAdapter,
-    STHConfiguration,
     SequenceConfig,
     IObjectLogger,
+    ProcessAdapterConfiguration,
 } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
@@ -56,11 +56,11 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
     logger: IObjectLogger;
 
     name = "ProcessSequenceAdapter";
-    config: NonNullable<STHConfiguration["adapters"]["@scramjet/adapter-process"]>;
+    config: ProcessAdapterConfiguration;
 
-    constructor(config: STHConfiguration) {
+    constructor(config: ProcessAdapterConfiguration) {
         this.logger = new ObjLogger(this);
-        this.config = config.adapters["@scramjet/adapter-process"]!;
+        this.config = config;
     }
 
     /**

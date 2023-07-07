@@ -12,7 +12,7 @@ export class AdapterManager {
     }
 
     /**
-     * Initializes configured adapters.
+     * Initializes all configured adapters.
      *
      * @returns True if any adapter is available. False otherwise.
      */
@@ -37,6 +37,7 @@ export class AdapterManager {
                     }
 
                     if (this.adapters[adapter.pkgName]) throw new Error("Invalid adapters configuration, duplicated adapter name");
+
                     this.adapters[adapter.pkgName] = adapter;
                 }
             )
@@ -48,23 +49,41 @@ export class AdapterManager {
             this.logger.info(`${adaptersCount} Adapters available:`, this.adapters);
 
             return true;
-        } else {
-            this.logger.warn("No adapters defined. Sequences and Instances unsupported.");
-
-            return false;
         }
+
+        this.logger.warn("No adapters defined. Sequences and Instances unsupported.");
+
+        return false;
     }
 
+    /**
+     * Validates adapter.
+     *
+     * @param {IRuntimeAdapter} adapter Checks if adapter provides required fields.
+     * @returns {boolean} True if required fields are available.
+     */
     static validateAdapter(adapter: IRuntimeAdapter): boolean {
         return !!(adapter.name.trim() && ["SequenceAdapter", "InstanceAdapter", "init"].every((className: string) => className in adapter));
     }
 
+    /**
+     * Initializes adapter with adapter config.
+     *
+     * @param {IRuntimeAdapter} adapter Adapter to initialize
+     * @returns Object with error field if initialization failed, "ready" otherwise.
+     */
     async initAdapter(adapter: IRuntimeAdapter): Promise<{ error?: string } | "ready"> {
         const initResult = await adapter.init(adapter.config);
 
         return initResult.error ? initResult : Promise.resolve("ready");
     }
 
+    /**
+     * Returns Adapter by given package name.
+     *
+     * @param {string} pkgName Adapter package name.
+     * @returns {IRuntimeAdapter} Adapter
+     */
     getAdapterByName(pkgName: string): IRuntimeAdapter | undefined {
         return Object.values(this.adapters).find(a => a.pkgName === pkgName);
     }
