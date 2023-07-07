@@ -626,11 +626,6 @@ class Tecemux:
                 pkt = await asyncio.wait_for(self._queue.get(),1)
                 self._queue.task_done()
 
-                if CC(str(pkt.get_segment().dst_port)).name == 'MONITORING':
-                    pass
-                if pkt.get_segment().data == b'':
-                    self._logger.debug(f'Pusty pakiet na kanale {CC(str(pkt.get_segment().dst_port))}')
-
                 # inject sequence number
                 if pkt.segment.seq == 0:
                     pkt.segment.seq = self._sequence_number

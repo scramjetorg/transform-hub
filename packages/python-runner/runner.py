@@ -72,15 +72,20 @@ class Runner:
         await self.protocol.sync()
 
         heartbeat_task.cancel()
-        control_stream_task.cancel()    
-        await asyncio.gather(*[connect_input_stream_task,
-                               heartbeat_task,
-                               control_stream_task])
+        control_stream_task.cancel()
+        
+        if not connect_input_stream_task.done():
+            connect_input_stream_task.cancel()
+
+        await asyncio.gather(*[heartbeat_task])
+        await asyncio.gather(*[control_stream_task])
+        await asyncio.gather(*[connect_input_stream_task])
         
         await self.protocol.stop()
+        self.cancel_tasks()
 
+    def cancel_tasks(self):
         [ task.cancel() if task.get_name() != 'RUNNER_MAIN' else None for task in asyncio.all_tasks()]
-
 
     async def init_tecemux(self, server_host, server_port):
         self.logger.info('Connecting to host with TeceMux...')
@@ -153,11 +158,11 @@ class Runner:
             async for code, data in control_messages:
                 self.logger.debug(f'Control message received: {code} {data}')
                 if code == msg_codes.KILL.value:
-                    self.exit_immediately()
+                    await self.exit_immediately()
                 if code == msg_codes.STOP.value:
                     await self.handle_stop(data)
                 if code == msg_codes.EVENT.value:
-                    await self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
+                    self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
         except asyncio.CancelledError:
             task = self.protocol.get_channel(CC.CONTROL)._outcoming_process_task
             task.cancel()
@@ -180,7 +185,7 @@ class Runner:
 
         if not can_keep_alive or not self.keep_alive_requested:
             send_encoded_msg(self.protocol.get_channel(CC.MONITORING), msg_codes.SEQUENCE_STOPPED, {})
-            self.exit_immediately()
+            await self.exit_immediately()
 
 
     async def setup_heartbeat(self):
@@ -219,7 +224,7 @@ class Runner:
             import traceback
             self.protocol.get_channel(CC.STDERR).write(traceback.format_exc())
             await self.protocol.sync()
-            self.exit_immediately()
+            await self.exit_immediately()
   
         self.logger.info(f'Sending PANG')
 
@@ -248,31 +253,38 @@ class Runner:
         
 
     async def connect_input_stream(self, input_stream):
-        if hasattr(self.sequence, "requires"):
-            input_type = self.sequence.requires.get('contentType')
-        else:
-            raw_headers = await self.protocol.get_channel(CC.IN).readuntil(b'\r\n\r\n')
-            header_list = raw_headers.decode().rstrip().split('\r\n')
-            headers = {
-                key.lower(): val for key, val in [el.split(': ') for el in header_list]
-            }
-            self.logger.info(f'Input headers: {repr(headers)}')
-            input_type = headers.get('content-type')
+        try:
+            if hasattr(self.sequence, "requires"):
+                input_type = self.sequence.requires.get('contentType')
+            else:
+                raw_headers = await self.protocol.get_channel(CC.IN).readuntil(b'\r\n\r\n')
+                header_list = raw_headers.decode().rstrip().split('\r\n')
+                headers = {
+                    key.lower(): val for key, val in [el.split(': ') for el in header_list]
+                }
+                self.logger.info(f'Input headers: {repr(headers)}')
+                input_type = headers.get('content-type')
 
-        if input_type == 'text/plain':
-            input = Stream.read_from(self.protocol.get_channel(CC.IN))
+            if input_type == 'text/plain':
+                input = Stream.read_from(self.protocol.get_channel(CC.IN))
 
-            self.logger.debug('Decoding input stream...')
-            input = input.decode('utf-8')
-        elif input_type == 'application/octet-stream':
-            self.logger.debug('Opening input in binary mode...')
-            input = Stream.read_from(self.protocol.get_channel(CC.IN), chunk_size=CHUNK_SIZE)
+                self.logger.debug('Decoding input stream...')
+                input = input.decode('utf-8')
+            elif input_type == 'application/octet-stream':
+                self.logger.debug('Opening input in binary mode...')
+                input = Stream.read_from(self.protocol.get_channel(CC.IN), chunk_size=CHUNK_SIZE)
 
-        else:
-            raise TypeError(f'Unsupported input type: {repr(input_type)}')
+            else:
+                raise TypeError(f'Unsupported input type: {repr(input_type)}')
 
-        input.pipe(input_stream)
-        self.logger.debug('Input stream forwarded to the instance.')
+            input.pipe(input_stream)
+            self.logger.debug('Input stream forwarded to the instance.')
+        except asyncio.CancelledError:
+            task = self.protocol.get_channel(CC.IN)._outcoming_process_task
+            task.cancel()
+            await asyncio.sleep(0)
+            await asyncio.gather(*[task])
+            return
 
     async def forward_output_stream(self, output):
 
@@ -305,7 +317,8 @@ class Runner:
         await asyncio.sleep(timeout)
 
 
-    def exit_immediately(self):
+    async def exit_immediately(self):
+        await self.protocol.sync()
         sys.exit(1)
 
 
@@ -326,7 +339,7 @@ class AppContext:
     def on(self, event_name, callback):
         self.emitter.on(event_name, callback)
 
-    async def emit(self, event_name, message=''):
+    def emit(self, event_name, message=''):
         send_encoded_msg(
             self.monitoring,
             msg_codes.EVENT,
