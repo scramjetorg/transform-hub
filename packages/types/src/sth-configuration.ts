@@ -68,6 +68,8 @@ export type HostConfig = {
      * Host information filepath.
      */
     infoFilePath: string;
+
+    federationControl: boolean;
 }
 
 export type K8SAdapterConfiguration = {
@@ -266,7 +268,7 @@ export type STHConfiguration = {
         instanceLifetimeExtensionDelay: number;
     };
 
-    telemetry: TelemetryConfig
+    telemetry: TelemetryConfig;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

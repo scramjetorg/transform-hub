@@ -5,7 +5,7 @@ import { LoadCheckStat } from "../load-check-stat";
 import { KillMessageData } from "../messages";
 import * as STHRestAPI from "../rest-api-sth";
 import { PublicSTHConfiguration } from "../sth-configuration";
-import { ClientUtils, HttpClient, SendStreamOptions } from "./client-utils";
+import { ClientUtils, HttpClient, SendStreamOptions } from "../client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
@@ -50,7 +50,7 @@ export declare class HostClient {
     apiBase: string;
     client: ClientUtils;
 
-    constructor(apiBase: string, utils: ClientUtils | undefined)
+    constructor(apiBase: string, utils: ClientUtils | undefined);
 
     listSequences(): Promise<STHRestAPI.GetSequencesResponse>;
     listInstances(): Promise<STHRestAPI.GetInstancesResponse>;

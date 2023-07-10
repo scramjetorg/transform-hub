@@ -36,7 +36,9 @@ export * from "./instance-stats";
 export * from "./sth-command-options";
 export * from "./telemetry-config";
 export * from "./host-proxy";
-export * from "./api-client";
+export * from "./api-client/host-client";
+
+export type ManagerClient = import("./manager-api-client/manager-client").ManagerClient;
 
 export { MRestAPI };
 export { MWRestAPI };

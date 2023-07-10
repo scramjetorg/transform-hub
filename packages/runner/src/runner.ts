@@ -32,6 +32,7 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ManagerClient } from "@scramjet/manager-api-client";
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -140,7 +141,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             throw e;
         });
 
-        this.outputDataStream = new DataStream().catch((e: any) => {
+        this.outputDataStream = new DataStream({ highWaterMark: 0 }).catch((e: any) => {
             this.logger.error("Error during input data stream", e);
 
             throw e;
@@ -422,6 +423,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
         const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
+        const managerClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1/cpm/api/v1", this.hostClient.getAgent());
+        const managerApiClient = new ManagerClient("http://scramjet-host/api/v1/cpm/api/v1", managerClientUtils);
+
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => {
@@ -437,6 +441,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.emitter,
             runner,
             hostApiClient as HostClient,
+            managerApiClient as ManagerClient,
             this.instanceId
         );
         this._context.logger.pipe(this.logger);
@@ -539,7 +544,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 if (intermediate instanceof Readable) {
                     stream = intermediate;
                 } else if (intermediate !== undefined && isSynchronousStreamable(intermediate)) {
-                    stream = Object.assign(DataStream.from(intermediate as Readable), {
+                    stream = Object.assign(DataStream.from(intermediate as Readable, { highWaterMark: 0 }), {
                         topic: intermediate.topic,
                         contentType: intermediate.contentType
                     });
