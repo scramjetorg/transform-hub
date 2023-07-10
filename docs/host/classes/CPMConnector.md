@@ -50,6 +50,7 @@ Provides communication with Manager.
 - [init](CPMConnector.md#init)
 - [listenerCount](CPMConnector.md#listenercount)
 - [listeners](CPMConnector.md#listeners)
+- [makeHttpRequestToCpm](CPMConnector.md#makehttprequesttocpm)
 - [off](CPMConnector.md#off)
 - [on](CPMConnector.md#on)
 - [once](CPMConnector.md#once)
@@ -471,7 +472,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:629](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L629)
+[packages/host/src/lib/cpm-connector.ts:631](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L631)
 
 ___
 
@@ -495,7 +496,7 @@ Promise resolving to `ReadableStream<any>` with topic data.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:618](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L618)
+[packages/host/src/lib/cpm-connector.ts:620](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L620)
 
 ___
 
@@ -630,6 +631,28 @@ TypedEmitter.listeners
 #### Defined in
 
 node_modules/typed-emitter/index.d.ts:37
+
+___
+
+### makeHttpRequestToCpm
+
+▸ **makeHttpRequestToCpm**(`method`, `reqPath`, `headers?`): `ClientRequest`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `method` | `string` |
+| `reqPath` | `string` |
+| `headers` | `Record`<`string`, `string`\> |
+
+#### Returns
+
+`ClientRequest`
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:601](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L601)
 
 ___
 

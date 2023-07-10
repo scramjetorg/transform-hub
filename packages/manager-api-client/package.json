@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/manager-api-client",
-  "version": "0.34.4",
+  "version": "0.35.0",
   "description": "Scramjet Manager API Client",
   "main": "src/index.ts",
   "scripts": {
@@ -12,11 +12,11 @@
     "test:ava": "ava"
   },
   "dependencies": {
-    "@scramjet/api-client": "^0.34.4",
-    "@scramjet/client-utils": "^0.34.4"
+    "@scramjet/api-client": "^0.35.0",
+    "@scramjet/client-utils": "^0.35.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.34.4",
+    "@scramjet/types": "^0.35.0",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",

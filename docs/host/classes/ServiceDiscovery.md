@@ -8,20 +8,6 @@ and requesting Manager when Instance requires data but data is not available loc
 
 ## Table of contents
 
-### Methods
-
-- [addData](ServiceDiscovery.md#adddata)
-- [createTopicsRouter](ServiceDiscovery.md#createtopicsrouter)
-- [getByTopic](ServiceDiscovery.md#getbytopic)
-- [getData](ServiceDiscovery.md#getdata)
-- [getTopics](ServiceDiscovery.md#gettopics)
-- [removeData](ServiceDiscovery.md#removedata)
-- [removeLocalProvider](ServiceDiscovery.md#removelocalprovider)
-- [routeStreamToTopic](ServiceDiscovery.md#routestreamtotopic)
-- [routeTopicToStream](ServiceDiscovery.md#routetopictostream)
-- [setConnector](ServiceDiscovery.md#setconnector)
-- [update](ServiceDiscovery.md#update)
-
 ### Constructors
 
 - [constructor](ServiceDiscovery.md#constructor)
@@ -29,54 +15,129 @@ and requesting Manager when Instance requires data but data is not available loc
 ### Properties
 
 - [cpmConnector](ServiceDiscovery.md#cpmconnector)
-- [dataMap](ServiceDiscovery.md#datamap)
-- [logger](ServiceDiscovery.md#logger)
-- [router](ServiceDiscovery.md#router)
+- [topicsController](ServiceDiscovery.md#topicscontroller)
+
+### Methods
+
+- [createTopic](ServiceDiscovery.md#createtopic)
+- [createTopicIfNotExist](ServiceDiscovery.md#createtopicifnotexist)
+- [deleteTopic](ServiceDiscovery.md#deletetopic)
+- [getByTopic](ServiceDiscovery.md#getbytopic)
+- [getData](ServiceDiscovery.md#getdata)
+- [getTopic](ServiceDiscovery.md#gettopic)
+- [getTopics](ServiceDiscovery.md#gettopics)
+- [routeStreamToTopic](ServiceDiscovery.md#routestreamtotopic)
+- [routeTopicToStream](ServiceDiscovery.md#routetopictostream)
+- [setConnector](ServiceDiscovery.md#setconnector)
+- [update](ServiceDiscovery.md#update)
+
+## Constructors
+
+### constructor
+
+• **new ServiceDiscovery**(`logger`, `hostName`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `logger` | `IObjectLogger` |
+| `hostName` | `string` |
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L46)
+
+## Properties
+
+### cpmConnector
+
+• `Optional` **cpmConnector**: [`CPMConnector`](CPMConnector.md)
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L44)
+
+___
+
+### topicsController
+
+• `Protected` **topicsController**: `TopicsMap`
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L43)
 
 ## Methods
 
-### addData
+### createTopic
 
-▸ **addData**(`config`, `localProvider?`): [`topicDataType`](../modules.md#topicdatatype)
+▸ **createTopic**(`id`, `contentType`): `Topic`
 
-Stores given topic.
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `TopicId` |
+| `contentType` | `ContentType` |
+
+#### Returns
+
+`Topic`
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L56)
+
+___
+
+### createTopicIfNotExist
+
+▸ **createTopicIfNotExist**(`config`): `Topic`
+
+Returns topic with given configuration, if not exists creates new one.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | [`dataType`](../modules.md#datatype) | Topic configuration. |
-| `localProvider?` | `string` | Provider identifier. It not set topic will be considered as external. |
+| `config` | [`DataType`](../modules.md#datatype) | Topic configuration. |
 
 #### Returns
 
-[`topicDataType`](../modules.md#topicdatatype)
+`Topic`
 
 added topic data.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L143)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L81)
 
 ___
 
-### createTopicsRouter
+### deleteTopic
 
-▸ **createTopicsRouter**(): `void`
+▸ **deleteTopic**(`id`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `TopicId` |
 
 #### Returns
 
-`void`
+`boolean`
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L77)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L63)
 
 ___
 
 ### getByTopic
 
-▸ **getByTopic**(`topic`): `undefined` \| [`streamType`](../modules.md#streamtype)
+▸ **getByTopic**(`topic`): `undefined` \| [`StreamType`](../modules.md#streamtype)
 
 Returns topic details for given topic.
 
@@ -84,17 +145,17 @@ Returns topic details for given topic.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `topic` | `string` | Topic name. |
+| `topic` | `TopicId` | Topic name. |
 
 #### Returns
 
-`undefined` \| [`streamType`](../modules.md#streamtype)
+`undefined` \| [`StreamType`](../modules.md#streamtype)
 
 Topic details.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L182)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L115)
 
 ___
 
@@ -110,7 +171,7 @@ If topic exists but is not local, data will be requested from Manager.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `dataType` | [`dataType`](../modules.md#datatype) | Topic configuration. |
+| `dataType` | [`DataType`](../modules.md#datatype) | Topic configuration. |
 
 #### Returns
 
@@ -120,83 +181,56 @@ Topic stream.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:211](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L211)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L135)
+
+___
+
+### getTopic
+
+▸ **getTopic**(`id`): `undefined` \| `Topic`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `TopicId` |
+
+#### Returns
+
+`undefined` \| `Topic`
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L52)
 
 ___
 
 ### getTopics
 
-▸ **getTopics**(): { `contentType`: `string` = value.contentType; `localProvider`: `undefined` \| `string` = value.localProvider; `topic`: `string` = key; `topicName`: `string` = key }[]
-
-@TODO: implement.
+▸ **getTopics**(): { `contentType`: `ContentType` = value.contentType; `localProvider`: `string` = ""; `topic`: `string` = value.id; `topicName`: `string` = value.id }[]
 
 #### Returns
 
-{ `contentType`: `string` = value.contentType; `localProvider`: `undefined` \| `string` = value.localProvider; `topic`: `string` = key; `topicName`: `string` = key }[]
+{ `contentType`: `ContentType` = value.contentType; `localProvider`: `string` = ""; `topic`: `string` = value.id; `topicName`: `string` = value.id }[]
 
 All topics.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L167)
-
-___
-
-### removeData
-
-▸ **removeData**(`topic`): `void`
-
-Removes store topic with given id.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `topic` | `string` | Topic name. |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L242)
-
-___
-
-### removeLocalProvider
-
-▸ **removeLocalProvider**(`topic`): `void`
-
-Unsets local provider for given topic.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `topic` | `string` | Topic name. |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L195)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L100)
 
 ___
 
 ### routeStreamToTopic
 
-▸ **routeStreamToTopic**(`source`, `topicData`, `localProvider?`): `Promise`<`void`\>
+▸ **routeStreamToTopic**(`source`, `topicData`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `source` | `Readable` |
-| `topicData` | [`dataType`](../modules.md#datatype) |
-| `localProvider?` | `string` |
+| `topicData` | [`DataType`](../modules.md#datatype) |
 
 #### Returns
 
@@ -204,7 +238,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:257](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L257)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L156)
 
 ___
 
@@ -216,7 +250,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `topicData` | [`dataType`](../modules.md#datatype) |
+| `topicData` | [`DataType`](../modules.md#datatype) |
 | `target` | `Writable` |
 
 #### Returns
@@ -225,7 +259,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L250)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L143)
 
 ___
 
@@ -247,7 +281,7 @@ Sets the CPM connector.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L132)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L70)
 
 ___
 
@@ -271,54 +305,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:266](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L266)
-
-## Constructors
-
-### constructor
-
-• **new ServiceDiscovery**()
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L73)
-
-## Properties
-
-### cpmConnector
-
-• `Optional` **cpmConnector**: [`CPMConnector`](CPMConnector.md)
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L69)
-
-___
-
-### dataMap
-
-• **dataMap**: `Map`<`string`, [`topicDataType`](../modules.md#topicdatatype)\>
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L65)
-
-___
-
-### logger
-
-• **logger**: `ObjLogger`
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L67)
-
-___
-
-### router
-
-• **router**: `APIRoute`
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L71)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L167)

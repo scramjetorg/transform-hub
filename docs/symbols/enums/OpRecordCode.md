@@ -21,6 +21,8 @@
 - [GET\_SEQUENCE](OpRecordCode.md#get_sequence)
 - [GET\_TOPIC](OpRecordCode.md#get_topic)
 - [HOST\_HEARTBEAT](OpRecordCode.md#host_heartbeat)
+- [HUB\_CONNECTED](OpRecordCode.md#hub_connected)
+- [HUB\_DISCONNECTED](OpRecordCode.md#hub_disconnected)
 - [INSTANCE\_HEARTBEAT](OpRecordCode.md#instance_heartbeat)
 - [INSTANCE\_STOPPED](OpRecordCode.md#instance_stopped)
 - [MANAGER\_HEARTBEAT](OpRecordCode.md#manager_heartbeat)
@@ -199,6 +201,29 @@ It indicates whether the services are still operational.
 
 ___
 
+### HUB\_CONNECTED
+
+• **HUB\_CONNECTED** = ``14000``
+
+Message codes related to STH connection states
+Inticates whether the hub has been connected or disconnected
+
+#### Defined in
+
+[op-record-code.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L61)
+
+___
+
+### HUB\_DISCONNECTED
+
+• **HUB\_DISCONNECTED** = ``14001``
+
+#### Defined in
+
+[op-record-code.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L62)
+
+___
+
 ### INSTANCE\_HEARTBEAT
 
 • **INSTANCE\_HEARTBEAT** = ``13012``
@@ -218,7 +243,7 @@ in response to the API request but gracefully by itself or by throwing an error.
 
 #### Defined in
 
-[op-record-code.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L61)
+[op-record-code.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L68)
 
 ___
 
@@ -238,7 +263,7 @@ ___
 
 #### Defined in
 
-[op-record-code.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L63)
+[op-record-code.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L70)
 
 ___
 

@@ -1138,7 +1138,40 @@ Manage data flow through topics operations
 
 **Options**
 
-*  -h, --help                            Display help for command
+*  -h, --help                          Display help for command
+
+---
+
+## $ si topic create
+
+**Description**
+
+Create topic
+
+**Usage**
+
+`si topic create [options] <topic-name>`
+
+**Options**
+
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "text/plain")
+*  -h, --help                         Display help for command
+
+---
+
+## $ si topic delete | rm
+
+**Description**
+
+Delete topic
+
+**Usage**
+
+`si topic delete [options] <topic-name>`
+
+**Options**
+
+*  -h, --help               Display help for command
 
 ---
 
@@ -1154,7 +1187,7 @@ Get data from topic
 
 **Options**
 
-*  -t, --content-type <content-type>  Specifies data type of <topic-name> (default: application/x-ndjson)
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "text/plain")
 *  -h, --help                         Display help for command
 
 ---
@@ -1167,12 +1200,12 @@ Send data on topic from file, directory or directly through the console
 
 **Usage**
 
-`si topic send [options] <topic-name> [<file>]`
+`si topic send [options] <topic-name> [file]`
 
 **Options**
 
-*  -t, --content-type <value>  Content-Type (default: "text/plain")
-*  -h, --help                  Display help for command
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "text/plain")
+*  -h, --help                         Display help for command
 
 ---
 
