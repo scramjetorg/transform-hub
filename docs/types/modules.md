@@ -109,6 +109,7 @@
 - [Logger](modules.md#logger)
 - [LoggerOptions](modules.md#loggeroptions)
 - [LoggerOutput](modules.md#loggeroutput)
+- [ManagerClient](modules.md#managerclient)
 - [ManagerConfiguration](modules.md#managerconfiguration)
 - [Message](modules.md#message)
 - [MessageCode](modules.md#messagecode)
@@ -996,6 +997,7 @@ Host process configuration.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `apiBase` | `string` | API URL. |
+| `federationControl` | `boolean` | - |
 | `hostname` | `string` | Hostname. |
 | `id?` | `string` | Custom host identifier. |
 | `infoFilePath` | `string` | Host information filepath. |
@@ -1310,7 +1312,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L73)
+[packages/types/src/sth-configuration.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L75)
 
 ___
 
@@ -1357,7 +1359,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/app-context.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L21)
+[packages/types/src/app-context.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L20)
 
 ___
 
@@ -1543,6 +1545,16 @@ ___
 
 ___
 
+### ManagerClient
+
+Ƭ **ManagerClient**: `ManagerClient`
+
+#### Defined in
+
+[packages/types/src/index.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L41)
+
+___
+
 ### ManagerConfiguration
 
 Ƭ **ManagerConfiguration**: `Object`
@@ -1687,7 +1699,7 @@ the monitoring information
 
 #### Defined in
 
-[packages/types/src/app-context.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L29)
+[packages/types/src/app-context.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L28)
 
 ___
 
@@ -2092,7 +2104,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:272](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L272)
+[packages/types/src/sth-configuration.ts:274](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L274)
 
 ___
 
@@ -2355,7 +2367,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L107)
+[packages/types/src/sth-configuration.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L109)
 
 ___
 
@@ -2649,7 +2661,7 @@ the returned value can be a promise, once it's resolved the system will
 
 #### Defined in
 
-[packages/types/src/app-context.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L19)
+[packages/types/src/app-context.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L18)
 
 ___
 

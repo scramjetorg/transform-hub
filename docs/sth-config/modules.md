@@ -25,7 +25,7 @@
 
 #### Defined in
 
-[sth-config/src/config-service.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L94)
+[sth-config/src/config-service.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L95)
 
 ## Functions
 

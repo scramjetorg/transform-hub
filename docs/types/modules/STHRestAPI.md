@@ -217,7 +217,7 @@ ___
 
 ### GetTopicsResponse
 
-Ƭ **GetTopicsResponse**: { `contentType`: `string` ; `name`: `string`  }[]
+Ƭ **GetTopicsResponse**: { `contentType`: `string` ; `localProvider`: `string` ; `topic`: `string` ; `topicName`: `string`  }[]
 
 #### Defined in
 

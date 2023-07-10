@@ -26,7 +26,9 @@ Provides methods to interact with Host.
 
 ### Methods
 
+- [createTopic](HostClient.md#createtopic)
 - [deleteSequence](HostClient.md#deletesequence)
+- [deleteTopic](HostClient.md#deletetopic)
 - [getAuditStream](HostClient.md#getauditstream)
 - [getConfig](HostClient.md#getconfig)
 - [getInstanceClient](HostClient.md#getinstanceclient)
@@ -102,6 +104,27 @@ ClientProvider.client
 
 ## Methods
 
+### createTopic
+
+▸ **createTopic**(`id`, `contentType`): `Promise`<{ `topicName`: `string`  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+| `contentType` | `string` |
+
+#### Returns
+
+`Promise`<{ `topicName`: `string`  }\>
+
+#### Defined in
+
+[api-client/src/host-client.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L195)
+
+___
+
 ### deleteSequence
 
 ▸ **deleteSequence**(`sequenceId`, `opts?`): `Promise`<`DeleteSequenceResponse`\>
@@ -125,6 +148,26 @@ Promise resolving to delete Sequence result.
 #### Defined in
 
 [api-client/src/host-client.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L110)
+
+___
+
+### deleteTopic
+
+▸ **deleteTopic**(`id`): `Promise`<{ `message`: `string`  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+
+#### Returns
+
+`Promise`<{ `message`: `string`  }\>
+
+#### Defined in
+
+[api-client/src/host-client.ts:199](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L199)
 
 ___
 
@@ -190,7 +233,7 @@ InstanceClient instance.
 
 #### Defined in
 
-[api-client/src/host-client.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L205)
+[api-client/src/host-client.ts:213](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L213)
 
 ___
 
@@ -329,7 +372,7 @@ SequenceClient instance.
 
 #### Defined in
 
-[api-client/src/host-client.ts:215](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L215)
+[api-client/src/host-client.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L223)
 
 ___
 
@@ -359,7 +402,7 @@ ___
 
 #### Defined in
 
-[api-client/src/host-client.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L195)
+[api-client/src/host-client.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L203)
 
 ___
 
