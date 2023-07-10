@@ -113,40 +113,6 @@ const options: OptionValues & STHCommandOptions = program
             apiVersion: options.platformApiVersion
         },
         adapters: {
-            "@scramjet/adapter-process": {
-                sequencesRoot: options.sequencesRoot
-            },
-            "@scramjet/adapter-docker": {
-                prerunner: {
-                    image: options.prerunnerImage,
-                    maxMem: options.prerunnerMaxMem
-                },
-                runner: {
-                    maxMem: options.runnerMaxMem,
-                    hostIp: options.exposeHostIp
-                },
-                runnerImages: {
-                    node: options.runnerImage,
-                    python3: options.runnerPyImage
-                }
-            },
-            "@scramjet/adapter-k8s": {
-                quotaName: options.k8sQuotaName,
-                namespace: options.k8sNamespace,
-                authConfigPath: options.k8sAuthConfigPath,
-                sthPodHost: options.k8sSthPodHost,
-                runnerImages: {
-                    node: options.k8sRunnerImage,
-                    python3: options.k8sRunnerPyImage
-                },
-                sequencesRoot:
-                    options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
-                timeout: options.k8sRunnerCleanupTimeout,
-                runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
-                runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
-                runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
-                runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
-            }
         },
         host: {
             apiBase: "/api/v1",

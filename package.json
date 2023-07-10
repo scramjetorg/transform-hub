@@ -104,11 +104,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "packages/reference-apps/*",
       "bdd/"
-    ],
-    "refapps": [
-      "packages/reference-apps/*"
     ],
     "modules": [
       "packages/*"

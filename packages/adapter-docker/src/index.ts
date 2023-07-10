@@ -1,13 +1,39 @@
+import { DockerAdapterConfiguration, IInstanceAdapter, IRuntimeAdapter, ISequenceAdapter } from "@scramjet/types";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
+import { DockerSequenceAdapter } from "./docker-sequence-adapter";
+import { DockerInstanceAdapter } from "./docker-instance-adapter";
 
 /**
  * Adapter module must provide SequenceAdapter, InstanceAdapter classes, init method and name field.
  */
-export { DockerSequenceAdapter as SequenceAdapter } from "./docker-sequence-adapter";
-export { DockerInstanceAdapter as InstanceAdapter } from "./docker-instance-adapter";
+export default class DockerAdapter implements IRuntimeAdapter {
+    name = "docker";
 
-export const init = async (..._args: any[]) => {
-    return await DockerodeDockerHelper.isDockerConfigured() ? {} : { error: "Docker initialization failed" };
-};
+    #_instanceAdapter: IInstanceAdapter;
+    #_sequenceAdapter: ISequenceAdapter;
 
-export const name = "docker";
+    get instanceAdapter() {
+        return this.#_instanceAdapter;
+    }
+
+    get sequenceAdapter() {
+        return this.#_sequenceAdapter;
+    }
+
+    config: DockerAdapterConfiguration;
+
+    constructor(config: DockerAdapterConfiguration) {
+        this.config = config;
+
+        this.#_instanceAdapter = new DockerInstanceAdapter(this.config);
+        this.#_sequenceAdapter = new DockerSequenceAdapter(this.config);
+    }
+
+    getSequenceAdapter(): ISequenceAdapter {
+        return this.#_sequenceAdapter;
+    }
+
+    async init(): Promise<{ error?: string }> {
+        return await DockerodeDockerHelper.isDockerConfigured() ? {} : { error: "Docker initialization failed" };
+    }
+}

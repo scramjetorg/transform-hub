@@ -1,8 +1,10 @@
 import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
 
 import { merge } from "@scramjet/utility";
-import path from "path";
 import { homedir } from "os";
+import path from "path";
+// import path from "path";
+// import { homedir } from "os";
 
 const imageConfig = require("./image-config.json");
 
@@ -54,7 +56,7 @@ const _defaultConfig: STHConfiguration = {
     },
     adapters: {
         "@scramjet/adapter-process": {
-            sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences")
         },
         "@scramjet/adapter-docker": {
             prerunner: {
@@ -72,17 +74,17 @@ const _defaultConfig: STHConfiguration = {
                 node: imageConfig.runner.node
             }
         },
-        "@scramjet/adapter-k8s": {
-            namespace: "default",
-            authConfigPath: undefined,
-            sthPodHost: undefined,
-            runnerImages: {
-                python3: "",
-                node: "",
-            },
-            sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
-            timeout: "0"
-        }
+        // "@scramjet/adapter-k8s": {
+        //     namespace: "default",
+        //     authConfigPath: undefined,
+        //     sthPodHost: undefined,
+        //     runnerImages: {
+        //         python3: "",
+        //         node: "",
+        //     },
+        //     sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+        //     timeout: "0"
+        // }
     }
 };
 
@@ -122,7 +124,7 @@ export class ConfigService {
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
-        const kubeFull = config.adapters["@scramjet/adapter-k8s"]!;
+        const kubeFull = config.adapters["@scramjet/adapter-k8s"] || {};
         const {
             cpmSslCaPath: optionsCpmSslCaPath,
             ...safe

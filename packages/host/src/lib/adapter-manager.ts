@@ -1,8 +1,13 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { IRuntimeAdapter, InstanceRequirements, STHConfiguration } from "@scramjet/types";
 
+export type InitializedRuntimeAdapter = IRuntimeAdapter & {
+    pkgName: string;
+    status: "ready" | { error?: string };
+};
+
 export class AdapterManager {
-    adapters: { [key: string]: IRuntimeAdapter } = {};
+    adapters: { [key: string]: InitializedRuntimeAdapter } = {};
     sthConfig: STHConfiguration;
 
     logger = new ObjLogger(this);
@@ -23,13 +28,18 @@ export class AdapterManager {
             Object.keys(this.sthConfig.adapters).map(
                 async (pkgName) => {
                     const typedPkgName = pkgName as unknown as keyof STHConfiguration["adapters"];
-                    const adapter = Object.assign(await import(pkgName), { pkgName }) as IRuntimeAdapter;
+                    const config = this.sthConfig.adapters[typedPkgName]!;
+
+                    const adapter = Object.assign(
+                        new (await import(pkgName)).default(config),
+                        { pkgName }
+                    ) as InitializedRuntimeAdapter;
 
                     if (!AdapterManager.validateAdapter(adapter)) {
                         throw new Error(`Invalid adapter provided ${adapter.pkgName}`);
                     }
 
-                    adapter.config = this.sthConfig.adapters[typedPkgName]!;
+                    adapter.config = config;
                     adapter.status = await this.initAdapter(adapter);
 
                     if (adapter.status !== "ready") {
@@ -63,7 +73,7 @@ export class AdapterManager {
      * @returns {boolean} True if required fields are available.
      */
     static validateAdapter(adapter: IRuntimeAdapter): boolean {
-        return !!(adapter.name.trim() && ["SequenceAdapter", "InstanceAdapter", "init"].every((className: string) => className in adapter));
+        return !!(adapter.name?.trim() && ["sequenceAdapter", "instanceAdapter", "init"].every((className: string) => className in adapter));
     }
 
     /**
@@ -73,7 +83,7 @@ export class AdapterManager {
      * @returns Object with error field if initialization failed, "ready" otherwise.
      */
     async initAdapter(adapter: IRuntimeAdapter): Promise<{ error?: string } | "ready"> {
-        const initResult = await adapter.init(adapter.config);
+        const initResult = await adapter.init();
 
         return initResult.error ? initResult : Promise.resolve("ready");
     }
@@ -84,7 +94,7 @@ export class AdapterManager {
      * @param {string} pkgName Adapter package name.
      * @returns {IRuntimeAdapter} Adapter
      */
-    getAdapterByName(pkgName: string): IRuntimeAdapter | undefined {
+    getAdapterByName(pkgName: string): InitializedRuntimeAdapter | undefined {
         return Object.values(this.adapters).find(a => a.pkgName === pkgName);
     }
 

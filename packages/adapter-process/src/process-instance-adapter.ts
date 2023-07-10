@@ -1,11 +1,12 @@
-import { STHConfiguration,
+import {
     ExitCode,
     InstanceConfig,
     InstanceLimits,
     IObjectLogger,
     MonitoringMessageData,
     SequenceConfig,
-    IInstanceAdapter
+    IInstanceAdapter,
+    ProcessAdapterConfiguration
 } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { streamToString } from "@scramjet/utility";
@@ -22,7 +23,7 @@ const gotPython = "\n                              _ \n __      _____  _ __  ___
  */
 class ProcessInstanceAdapter implements IInstanceAdapter {
     logger: IObjectLogger;
-    sthConfig: STHConfiguration;
+    config: ProcessAdapterConfiguration;
 
     private runnerProcess?: ChildProcess;
     private crashLogStreams?: Promise<string[]>;
@@ -34,9 +35,9 @@ class ProcessInstanceAdapter implements IInstanceAdapter {
         this.logger.warn("Limits are not yet supported in process runner");
     }
 
-    constructor(config: STHConfiguration) {
+    constructor(config: ProcessAdapterConfiguration) {
         this.logger = new ObjLogger(this);
-        this.sthConfig = config;
+        this.config = config;
     }
 
     async init(): Promise<void> {
@@ -71,7 +72,7 @@ class ProcessInstanceAdapter implements IInstanceAdapter {
             this.logger.trace(gotPython);
             const runnerPath = path.resolve(__dirname, require.resolve("@scramjet/python-runner"));
 
-            if (this.sthConfig.debug)
+            if (this.config.debug)
                 debugFlags = ["-m", "pdb", "-c", "continue"];
 
             return [
@@ -82,7 +83,7 @@ class ProcessInstanceAdapter implements IInstanceAdapter {
                 "./python-runner-startup.log",
             ];
         }
-        if (this.sthConfig.debug)
+        if (this.config.debug)
             debugFlags = ["--inspect-brk=9229"];
 
         return [

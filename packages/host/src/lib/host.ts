@@ -48,15 +48,11 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
-<<<<<<< HEAD
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
-||||||| constructed merge base
-=======
 import { AdapterManager } from "./adapter-manager";
->>>>>>> Extract process adapter, introduce AdapterManager
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -112,6 +108,10 @@ export class Host implements IComponent {
      * Instance of CPMConnector used to communicate with Manager.
      */
     cpmConnector?: CPMConnector;
+
+    /**
+     *
+     */
     adapterManager!: AdapterManager;
 
     /**
@@ -346,7 +346,7 @@ export class Host implements IComponent {
 
             this.logger.info(`Default adapter for running Sequences: "${this.adapterName}" (${defaultAdapter?.name})`);
         } else {
-            this.logger.warn("No RuntimeAdapters.");
+            this.logger.warn("No Runtime Adapters.");
         }
 
         this.pushTelemetry("Host started");
@@ -507,7 +507,6 @@ export class Host implements IComponent {
         });
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
-
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
 
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
@@ -670,7 +669,7 @@ export class Host implements IComponent {
                 };
             }
 
-            const sequenceAdapter = new adapter.SequenceAdapter(this.config);
+            const sequenceAdapter = adapter.sequenceAdapter;
 
             await sequenceAdapter.remove(sequenceInfo.config);
             this.sequenceStore.delete(id);
@@ -741,7 +740,7 @@ export class Host implements IComponent {
             throw new Error("Error identifying existing sequences. Adapter unavailable");
         }
 
-        const sequenceAdapter = new adapter!.SequenceAdapter(this.config);
+        const sequenceAdapter = adapter!.sequenceAdapter;
 
         try {
             await sequenceAdapter.init();
@@ -772,7 +771,7 @@ export class Host implements IComponent {
         this.logger.info("New Sequence incoming", { name: sequenceName });
 
         try {
-            const adapter = this.adapterManager.getAvailableAdapter();
+            const adapter = this.adapterManager.getDefaultAdapter(this.adapterName);
 
             if (!adapter) {
                 return {
@@ -781,7 +780,7 @@ export class Host implements IComponent {
                 };
             }
 
-            const sequenceAdapter = new adapter.SequenceAdapter(this.config);
+            const sequenceAdapter = adapter.sequenceAdapter;
 
             sequenceAdapter.logger.updateBaseLog({ id });
             sequenceAdapter.logger.pipe(this.logger);
@@ -1005,13 +1004,13 @@ export class Host implements IComponent {
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      */
     async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
-        const adapter = this.adapterManager.getAvailableAdapter();
+        const adapter = this.adapterManager.getDefaultAdapter(this.adapterName);
 
         if (!adapter) {
             throw new Error("Failed to use adapter");
         }
 
-        const instanceAdapter = new adapter.InstanceAdapter(this.config);
+        const instanceAdapter = adapter.instanceAdapter;
 
         const communicationHandler = new CommunicationHandler();
         const id = payload.instanceId || IDProvider.generate();

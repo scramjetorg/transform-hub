@@ -77,6 +77,7 @@ export type ProcessAdapterConfiguration = {
      * Where should ProcessSequenceAdapter save new Sequences
      */
     sequencesRoot: string;
+    debug?: false;
 };
 
 export type DockerAdapterConfiguration = {
