@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/logger",
-  "version": "0.34.4",
+  "version": "0.35.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.",
   "main": "./src/index.ts",
   "scripts": {
@@ -14,7 +14,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "@scramjet/types": "^0.34.4",
+    "@scramjet/types": "^0.35.0",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
