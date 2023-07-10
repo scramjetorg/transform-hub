@@ -9,8 +9,9 @@
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
-    "test": "npm run test:ava",
+    "test": "npm run test:jest",
     "test:ava": "ava",
+    "test:jest": "jest --verbose",
     "prebuild": "yarn savehash",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
@@ -40,8 +41,11 @@
   "devDependencies": {
     "@scramjet/types": "^0.34.4",
     "@types/find-package-json": "^1.2.3",
+    "@types/jest": "^29.4.4",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
     "typedoc": "^0.23.17",
     "typedoc-plugin-markdown": "^3.13.6",

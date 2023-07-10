@@ -31,8 +31,7 @@ export class JSONParserStream extends Transform {
         try {
             this.push(this.parser(chunk));
         } catch (e: any) {
-            if (typeof e === "object") e.chunk = chunk;
-            this.emit("error", Object.assign(e, { chunk }));
+            this.emit("error", Object.assign(new Error("Cannot parse"), { originalMessage: e?.message, chunk, cause: e?.stack }));
         }
     }
 }
@@ -54,8 +53,7 @@ export class JSONStringifierStream extends Transform {
         try {
             this.push(this.stringifier(chunk));
         } catch (e: any) {
-            if (typeof e === "object") e.chunk = chunk;
-            this.emit("error", Object.assign(e, { chunk }));
+            this.emit("error", Object.assign(new Error("Cannot stringify"), { originalMessage: e?.message, chunk, cause: e?.stack }));
         }
     }
 }

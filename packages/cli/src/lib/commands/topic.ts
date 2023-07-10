@@ -3,10 +3,11 @@ import { CommandDefinition } from "../../types";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { profileManager } from "../config";
 import { displayEntity, displayStream } from "../output";
+import { Option, Argument } from "commander";
 
 const validateTopicName = (topicName: string) => {
     if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) {
-        return;
+        return topicName;
     }
 
     throw new Error("Invalid topic name");
@@ -18,6 +19,12 @@ const validateTopicName = (topicName: string) => {
  * @param {Command} program Commander object.
  */
 export const topic: CommandDefinition = (program) => {
+    const format = profileManager.getProfileConfig().format;
+    const topicNameArgument = new Argument("<topic-name>").argParser(validateTopicName);
+    const contentTypeOption = new Option("-t, --content-type [content-type]", "Specifies type of data in topic")
+        .choices(["text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream"])
+        .default("text/plain");
+
     const topicCmd = program
         .command("topic")
         .addHelpCommand(false)
@@ -26,23 +33,34 @@ export const topic: CommandDefinition = (program) => {
         .description("Manage data flow through topics operations");
 
     topicCmd
+        .command("create")
+        .addArgument(topicNameArgument)
+        .addOption(contentTypeOption)
+        .description("Create topic")
+        .action(async (topicName, { contentType }) =>
+            displayEntity(getHostClient().createTopic(topicName, contentType), format)
+        );
+
+    topicCmd
+        .command("delete")
+        .alias("rm")
+        .addArgument(topicNameArgument)
+        .description("Delete topic")
+        .action(async (topicName) => displayEntity(getHostClient().deleteTopic(topicName), format));
+
+    topicCmd
         .command("get")
-        .argument("<topic-name>")
-        .option(
-            "-t, --content-type <content-type>",
-            "Specifies data type of <topic-name> (default: application/x-ndjson)"
-        )
+        .addArgument(topicNameArgument)
+        .addOption(contentTypeOption)
         .description("Get data from topic")
-        .hook("preAction", (command) => { validateTopicName(command.args[0]); })
         .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
 
     topicCmd
         .command("send")
-        .argument("<topic-name>")
-        .argument("[<file>]")
-        .option("-t, --content-type <value>", "Content-Type", "text/plain")
+        .addArgument(topicNameArgument)
+        .argument("[file]")
+        .addOption(contentTypeOption)
         .description("Send data on topic from file, directory or directly through the console")
-        .hook("preAction", (command) => { validateTopicName(command.args[0]); })
         .action(async (topicName, filename, { contentType }) => {
             await getHostClient().sendNamedData(
                 topicName,
@@ -54,5 +72,5 @@ export const topic: CommandDefinition = (program) => {
 
     topicCmd.command("ls")
         .description("List information about topics")
-        .action(async () => displayEntity(getHostClient().getTopics(), profileManager.getProfileConfig().format));
+        .action(async () => displayEntity(getHostClient().getTopics(), format));
 };

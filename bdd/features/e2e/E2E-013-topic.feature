@@ -97,3 +97,11 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then confirm data defined as "hulk-nl" will be received
         And host is still running
 
+    @ci_api
+    Scenario: E2E-013 TC-009 Create and delete topic
+        Given host is running
+        And topic "RegularTopic" is created
+        Then confirm topics contain "RegularTopic"
+        Then remove topic "RegularTopic"
+        Then confirm topics are empty
+

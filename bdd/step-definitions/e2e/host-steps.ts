@@ -793,3 +793,25 @@ Then("confirm json {string} will be received", async function(this: CustomWorld,
 
     assert.equal(response, data);
 });
+
+Given("topic {string} is created", async function(this: CustomWorld, topicId: string) {
+    await hostClient.createTopic(topicId, "text/plain");
+});
+
+Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
+    const topics = await hostClient.getTopics();
+
+    const topic = topics.find(topicElement => topicElement.topicName === topicId);
+
+    assert.notEqual(topic, undefined);
+});
+
+Then("remove topic {string}", async function(this: CustomWorld, topicId: string) {
+    await hostClient.deleteTopic(topicId);
+});
+
+Then("confirm topics are empty", async function(this: CustomWorld) {
+    const topics = await hostClient.getTopics();
+
+    assert.equal(topics.length, 0);
+});
