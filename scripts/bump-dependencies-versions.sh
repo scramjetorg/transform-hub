@@ -14,23 +14,41 @@ find_packages() {
     done
 }
 
+
 process_package_json() {
     local file="$1"
-    local dependencies
-    #search for dependencies and devDependencies starterd with @scramjet/ to bump their version
-    if dependencies=$(jq -r '(.dependencies // {} + .devDependencies // {}) | to_entries[] | select(.key | startswith("@scramjet/")) | "\(.key)@\(.value)"' "$file" 2>/dev/null); then
-        if jq --arg dependencies_new_versions "$dependencies_new_versions" '(.dependencies // {} + .devDependencies // {}) |= with_entries(if .key | startswith("@scramjet/") then .value = $dependencies_new_versions else . end)' "$file" > temp.json 2>/dev/null; then
+    local dependencies dev_dependencies
+    
+    if dependencies=$(jq -r '(.dependencies // {}) | to_entries[] | select(.key | startswith("@scramjet/")) | "\(.key)@\(.value)"' "$file" 2>/dev/null); then
+        if jq --arg dependencies_new_versions "$dependencies_new_versions" '(.dependencies // {}?) |= with_entries(if .key | startswith("@scramjet/") then .value = (if .value | startswith("^") then "^" else "" end) + ($dependencies_new_versions | sub("^\\^"; "")) else . end)' "$file" > temp.json 2>/dev/null; then
             mv temp.json "$file"
             if [[ -n "$dependencies" ]]; then
-                echo "File: $file"
+                echo "Updating $file"
+                echo "Updated dependencies:"
                 while IFS= read -r dependency; do
                     echo " - $dependency bumped to $dependencies_new_versions"
                 done <<< "$dependencies"
+            fi
+        fi
+    fi
+
+    if dev_dependencies=$(jq -r '(.devDependencies // {}) | to_entries[] | select(.key | startswith("@scramjet/")) | "\(.key)@\(.value)"' "$file" 2>/dev/null); then
+        if jq --arg dependencies_new_versions "$dependencies_new_versions" '(.devDependencies // {}?) |= with_entries(if .key | startswith("@scramjet/") then .value = (if .value | startswith("^") then "^" else "" end) + ($dependencies_new_versions | sub("^\\^"; "")) else . end)' "$file" > temp.json 2>/dev/null; then
+            mv temp.json "$file"
+            if [[ -n "$dev_dependencies" ]]; then
+                echo "Updated devDependencies:"
+                while IFS= read -r dependency; do
+                    echo " - $dependency bumped to $dependencies_new_versions"
+                done <<< "$dev_dependencies"
                 echo
+                echo "------------------------"
             fi
         fi
     fi
 }
+
+
+
 
 #bump version in image-config file
 bump_image_config() {
