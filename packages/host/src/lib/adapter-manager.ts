@@ -2,12 +2,14 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { IRuntimeAdapter, InstanceRequirements, STHConfiguration } from "@scramjet/types";
 
 export type InitializedRuntimeAdapter = IRuntimeAdapter & {
-    pkgName: string;
+    moduleName: string;
     status: "ready" | { error?: string };
 };
 
+export type AdaptersStore = { [key: string]: InitializedRuntimeAdapter };
+
 export class AdapterManager {
-    adapters: { [key: string]: InitializedRuntimeAdapter } = {};
+    adapters: AdaptersStore = {};
     sthConfig: STHConfiguration;
 
     logger = new ObjLogger(this);
@@ -22,46 +24,58 @@ export class AdapterManager {
      * @returns True if any adapter is available. False otherwise.
      */
     async init(): Promise<boolean> {
-        this.logger.info("Loading adapters...", Object.keys(this.sthConfig.adapters));
+        if (!this.sthConfig.adapters) {
+            this.logger.info("No config for Runtime Adapters");
 
-        await Promise.all(
-            Object.keys(this.sthConfig.adapters).map(
-                async (pkgName) => {
-                    const typedPkgName = pkgName as unknown as keyof STHConfiguration["adapters"];
-                    const config = this.sthConfig.adapters[typedPkgName]!;
+            return false;
+        }
+
+        const moduleNames = Object.keys(this.sthConfig.adapters);
+
+        this.logger.info("Loading Runtime Adapters...", moduleNames);
+
+        this.adapters = await Promise.all(
+            moduleNames.map(
+                async (moduleName) => {
+                    const typedModuleName = moduleName as unknown as keyof STHConfiguration["adapters"];
+                    const config = this.sthConfig.adapters[typedModuleName]!;
 
                     const adapter = Object.assign(
-                        new (await import(pkgName)).default(config),
-                        { pkgName }
+                        new (await import(moduleName)).default(config),
+                        { moduleName }
                     ) as InitializedRuntimeAdapter;
 
                     if (!AdapterManager.validateAdapter(adapter)) {
-                        throw new Error(`Invalid adapter provided ${adapter.pkgName}`);
+                        throw new Error(`Invalid Runtime Adapter provided ${adapter.moduleName}`);
                     }
 
                     adapter.config = config;
                     adapter.status = await this.initAdapter(adapter);
 
                     if (adapter.status !== "ready") {
-                        this.logger.warn(`Failed to initialize "${adapter.pkgName}" Adapter: ${adapter.status.error}`);
+                        this.logger.warn(`Failed to initialize "${adapter.moduleName}" Adapter: ${adapter.status.error}`);
                     }
 
-                    if (this.adapters[adapter.pkgName]) throw new Error("Invalid adapters configuration, duplicated adapter name");
+                    if (this.adapters[adapter.moduleName]) {
+                        throw new Error("Invalid Runtime Adapters configuration, duplicated Runtime Adapter name");
+                    }
 
-                    this.adapters[adapter.pkgName] = adapter;
+                    return adapter;
                 }
             )
+        ).then((adapterList) =>
+            adapterList.reduce((a: AdaptersStore, c) => { a[c.moduleName] = c; return a; }, {})
         );
 
         const adaptersCount = Object.keys(this.adapters).length;
 
         if (adaptersCount) {
-            this.logger.info(`${adaptersCount} Adapters available:`, this.adapters);
+            this.logger.info(`${adaptersCount} Runtime Adapters available:`, this.adapters);
 
             return true;
         }
 
-        this.logger.warn("No adapters defined. Sequences and Instances unsupported.");
+        this.logger.warn("No Runtime Adapters defined. Sequences and Instances unsupported.");
 
         return false;
     }
@@ -91,11 +105,11 @@ export class AdapterManager {
     /**
      * Returns Adapter by given package name.
      *
-     * @param {string} pkgName Adapter package name.
+     * @param {string} moduleName Adapter package name.
      * @returns {IRuntimeAdapter} Adapter
      */
-    getAdapterByName(pkgName: string): InitializedRuntimeAdapter | undefined {
-        return Object.values(this.adapters).find(a => a.pkgName === pkgName);
+    getAdapterByName(moduleName: string): InitializedRuntimeAdapter | undefined {
+        return Object.values(this.adapters).find(a => a.moduleName === moduleName);
     }
 
     getDefaultAdapter(prefferedAdapter: string) {

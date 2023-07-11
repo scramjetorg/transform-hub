@@ -55,9 +55,6 @@ const _defaultConfig: STHConfiguration = {
         }
     },
     adapters: {
-        "@scramjet/adapter-process": {
-            sequencesRoot: path.join(homedir(), ".scramjet_sequences")
-        },
         "@scramjet/adapter-docker": {
             prerunner: {
                 image: imageConfig.prerunner,
@@ -73,6 +70,9 @@ const _defaultConfig: STHConfiguration = {
                 python3: imageConfig.runner.python,
                 node: imageConfig.runner.node
             }
+        },
+        "@scramjet/adapter-process": {
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences")
         },
         // "@scramjet/adapter-k8s": {
         //     namespace: "default",
