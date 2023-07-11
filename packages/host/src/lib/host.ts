@@ -44,7 +44,7 @@ import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
-import { AuditedRequest, Auditor } from "./auditor";
+import { Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
@@ -56,6 +56,7 @@ import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
+import { CSIDispatcher } from "./csi-dispatcher";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -151,6 +152,8 @@ export class Host implements IComponent {
      */
     s3Client?: S3Client;
 
+    csiDispatcher: CSIDispatcher;
+
     private instanceProxy: HostProxy = {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
     };
@@ -236,6 +239,10 @@ export class Host implements IComponent {
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
         this.topicsBase = `${this.config.host.apiBase}/topic`;
+
+        this.csiDispatcher = new CSIDispatcher(this.socketServer, this.instancesStore, this.sequenceStore, sthConfig);
+
+        this.csiDispatcher.logger.pipe(this.logger);
 
         if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
@@ -439,7 +446,7 @@ export class Host implements IComponent {
                     this.logger.warn("Sequence id not found for startup config", seqenceConfig);
                     return;
                 }
-
+                // @todo dispatcher
                 await this.startCSIController(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
@@ -942,36 +949,31 @@ export class Host implements IComponent {
 
         try {
             // @todo - this line should be done by CSIDispatcher
-            const csic = await this.startCSIController(sequence, payload);
+            const runner = await this.csiDispatcher.startRunner(sequence, payload);
 
-            await this.cpmConnector?.sendInstanceInfo({
-                id: csic.id,
-                appConfig: csic.appConfig,
-                args: csic.args,
-                sequence: (info => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const { instances, ...rest } = info;
+            // await this.cpmConnector?.sendInstanceInfo({
+            //     id: csic.id,
+            //     appConfig: csic.appConfig,
+            //     args: csic.args,
+            //     sequence: sequenceId,
+            //     ports: csic.info.ports,
+            //     created: csic.info.created,
+            //     started: csic.info.started,
+            //     status: csic.status,
+            // }, InstanceMessageCode.INSTANCE_STARTED);
 
-                    return rest;
-                })(sequence),
-                ports: csic.info.ports,
-                created: csic.info.created,
-                started: csic.info.started,
-                status: csic.status,
-            }, InstanceMessageCode.INSTANCE_STARTED);
+            // this.logger.debug("Instance limits", csic.limits);
+            // this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
+            // this.pushTelemetry("Instance started", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
 
-            this.logger.debug("Instance limits", csic.limits);
-            this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
-            this.pushTelemetry("Instance started", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
-
-            csic.on("hourChime", () => {
-                this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
-            });
+            // csic.on("hourChime", () => {
+            //     this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
+            // });
 
             return {
                 opStatus: ReasonPhrases.OK,
-                message: `Sequence ${csic.id} starting`,
-                id: csic.id
+                message: `Sequence ${runner.id} starting`,
+                id: runner.id
             };
         } catch (error: any) {
             this.pushTelemetry("Instance start failed", { error: error.message }, "error");
@@ -992,6 +994,9 @@ export class Host implements IComponent {
 
             // @todo this should be a call to CSIDispatcher
             // @todo CSIDispatcher should receive a reference to instanceStore.
+            if (!this.instancesStore[id]) {
+                this.csiDispatcher.createCSIController(id, {} as SequenceInfo, {} as STHRestAPI.StartSequencePayload, new CommunicationHandler(), this.config, this.instanceProxy);
+            }
             await this.instancesStore[id].handleInstanceConnect(
                 streams
             );
@@ -1012,14 +1017,10 @@ export class Host implements IComponent {
 
         if (isDevelopment) this.logger.debug("CSIC start payload", payload);
 
-        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
+        const csic = this.csiDispatcher.createCSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
 
         csic.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });
-
-        this.logger.trace("CSIController created", id);
-
-        this.instancesStore[id] = csic;
 
         csic.on("error", (err) => {
             this.pushTelemetry("Instance error", { ...err }, "error");
