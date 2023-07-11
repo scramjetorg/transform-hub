@@ -10,6 +10,22 @@ type ObjLogPipeOptions = {
     stringified?: boolean;
 };
 
+const getCircularReplacer = () => {
+    const seen = new WeakSet();
+
+    return (_key: string, value: any): any => {
+        if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return;
+            }
+            seen.add(value);
+        }
+
+        // eslint-disable-next-line consistent-return
+        return value;
+    };
+};
+
 export class ObjLogger implements IObjectLogger {
     /**
      * Identifies if you can still write messages.
@@ -165,11 +181,17 @@ export class ObjLogger implements IObjectLogger {
     private _stringifiedOutput?: StringStream;
 
     get stringifiedOutput(): StringStream {
-        if (!this._stringifiedOutput) {
-            // eslint-disable-next-line no-console
-            this._stringifiedOutput = this.output.JSONStringify().catch((e: any) => { console.error(e); });
-        }
-
+        if (!this._stringifiedOutput)
+            this._stringifiedOutput = this.output
+                .stringify((chunk) => {
+                    try {
+                        return JSON.stringify(chunk) + "\n";
+                    } catch (e) {
+                        return JSON.stringify(chunk, getCircularReplacer()) + "\n";
+                    }
+                })
+                // eslint-disable-next-line no-console
+                .catch((e: any) => { console.error(e?.cause); });
         return this._stringifiedOutput;
     }
 

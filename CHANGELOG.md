@@ -2,6 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.35.0] - 2023-07-10
+
+## Features
+
+* Add space client to AppContext by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/836
+* Feat/CLI Topic Create Delete by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/857
+
+## Fixed
+
+* Bump semver from 7.3.8 to 7.5.2 by @dependabot in https://github.com/scramjetorg/transform-hub/pull/890
+* Fixed bug with missing content-type by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/893
+* New AuditStream codes for CPM by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/891
+* Python runner stderr fix for crashlog() by @S4adam in https://github.com/scramjetorg/transform-hub/pull/895
+* added "clickup task" field in PR template by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/896
+
 ## [0.34.4] - 2023-06-21
 
 ## ## Fixed

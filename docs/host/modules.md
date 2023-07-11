@@ -13,19 +13,76 @@
 - [ServiceDiscovery](classes/ServiceDiscovery.md)
 - [SocketServer](classes/SocketServer.md)
 
+### Type Aliases
+
+- [DataType](modules.md#datatype)
+- [StreamType](modules.md#streamtype)
+- [TopicDataType](modules.md#topicdatatype)
+
 ### Variables
 
 - [InstanceStore](modules.md#instancestore)
 
-### Type Aliases
-
-- [dataType](modules.md#datatype)
-- [streamType](modules.md#streamtype)
-- [topicDataType](modules.md#topicdatatype)
-
 ### Functions
 
 - [startHost](modules.md#starthost)
+
+## Type Aliases
+
+### DataType
+
+Ƭ **DataType**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `contentType` | `ContentType` |
+| `topic` | `TopicId` |
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L12)
+
+___
+
+### StreamType
+
+Ƭ **StreamType**: `Object`
+
+Topic stream type definition.
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `contentType` | `string` |
+| `stream` | `Duplex` |
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L20)
+
+___
+
+### TopicDataType
+
+Ƭ **TopicDataType**: `Object`
+
+Topic details type definition.
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `contentType` | `string` |
+| `cpmRequest?` | `boolean` |
+| `localProvider?` | `string` |
+| `stream` | `Duplex` |
+
+#### Defined in
+
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L28)
 
 ## Variables
 
@@ -42,65 +99,6 @@ Object storing Instance controllers.
 #### Defined in
 
 [packages/host/src/lib/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/instance-store.ts#L6)
-
-## Type Aliases
-
-### dataType
-
-Ƭ **dataType**: `Object`
-
-TODO: Refactor types below.
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `contentType` | `string` |
-| `topic` | `string` |
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L13)
-
-___
-
-### streamType
-
-Ƭ **streamType**: `Object`
-
-Topic stream type definition.
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `contentType` | `string` |
-| `stream` | `Duplex` |
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L21)
-
-___
-
-### topicDataType
-
-Ƭ **topicDataType**: `Object`
-
-Topic details type definition.
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `contentType` | `string` |
-| `cpmRequest?` | `boolean` |
-| `localProvider?` | `string` |
-| `stream` | `Duplex` |
-
-#### Defined in
-
-[packages/host/src/lib/sd-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L29)
 
 ## Functions
 

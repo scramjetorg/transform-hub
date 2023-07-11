@@ -161,7 +161,7 @@ export class CSIController extends TypedEmitter<Events> {
      * Streams connected do API.
      */
     private downStreams?: DownstreamStreamsConfig;
-    private upStreams?: PassThroughStreamsConfig;
+    private upStreams: PassThroughStreamsConfig;
 
     communicationHandler: ICommunicationHandler;
 
@@ -197,6 +197,17 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
         this.status = InstanceStatus.INITIALIZING;
+
+        this.upStreams = [
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough({ highWaterMark: 0 }),
+            new PassThrough(),
+        ];
     }
 
     async start() {
@@ -443,11 +454,6 @@ export class CSIController extends TypedEmitter<Events> {
             streams[CC.STDERR].pipe(process.stderr);
             this.logger.addSerializedLoggerSource(streams[CC.LOG]);
         }
-
-        this.upStreams = [
-            new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),
-            new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),
-        ];
 
         this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
             this.logger.error("Downstream error on channel", i, err);
@@ -796,7 +802,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getOutputStream(): ReadableStream<any> {
-        return this.upStreams![CC.OUT];
+        return this.upStreams[CC.OUT];
     }
 
     getInputStream(): WritableStream<any> {
@@ -804,7 +810,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getLogStream(): Readable {
-        return this.upStreams![CC.LOG];
+        return this.upStreams[CC.LOG];
     }
 
     // @TODO discuss this
