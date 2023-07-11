@@ -139,13 +139,25 @@ const options: OptionValues & STHCommandOptions = program
         }
     });
 
+    let config = configService.getConfig();
+
+    if (config["adapters"] && config["adapters"]["@scramjet/adapter-process"] && options.sequencesRoot) {
+        configService.update({
+            adapters: {
+                "@scramjet/adapter-process": {
+                    sequencesRoot: options.sequencesRoot
+                }
+            }
+        });
+    }
+
     const tips = [
         ["Run Sequences in our cloud.", { "Check it": "out as a beta tester", here: "https://scr.je/join-beta-sth" }],
         ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "check the": "beta version", "at-this-link": "https://scr.je/join-beta-sth" }],
         ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
     ];
 
-    const config = configService.getConfig();
+    config = configService.getConfig();
 
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.

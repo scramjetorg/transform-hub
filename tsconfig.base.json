@@ -34,6 +34,7 @@
   "exclude": [
     "**/node_modules",
     "**/*.spec.ts",
-    "dist"
+    "dist",
+    ".work"
   ]
 }

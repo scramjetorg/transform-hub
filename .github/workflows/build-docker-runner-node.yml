@@ -29,6 +29,14 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
+      - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+
+      - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+
       - name: Install dependencies
         run: yarn install --ignore-engines --frozen-lockfile --prefer-offline
 

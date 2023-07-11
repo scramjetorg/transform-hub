@@ -1,10 +1,8 @@
-import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
+import { DeepPartial, DockerAdapterConfiguration, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
 
 import { merge } from "@scramjet/utility";
-import { homedir } from "os";
 import path from "path";
-// import path from "path";
-// import { homedir } from "os";
+import { homedir } from "os";
 
 const imageConfig = require("./image-config.json");
 
@@ -61,30 +59,30 @@ const _defaultConfig: STHConfiguration = {
                 maxMem: 128
             },
             runner: {
-                image: "",
+                image: imageConfig.runner.node,
                 maxMem: 512,
                 exposePortsRange: [30000, 32767],
                 hostIp: "0.0.0.0"
             },
             runnerImages: {
-                python3: imageConfig.runner.python,
+                python3: imageConfig.runner.python3,
                 node: imageConfig.runner.node
             }
         },
         "@scramjet/adapter-process": {
             sequencesRoot: path.join(homedir(), ".scramjet_sequences")
         },
-        // "@scramjet/adapter-k8s": {
-        //     namespace: "default",
-        //     authConfigPath: undefined,
-        //     sthPodHost: undefined,
-        //     runnerImages: {
-        //         python3: "",
-        //         node: "",
-        //     },
-        //     sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
-        //     timeout: "0"
-        // }
+        /*"@scramjet/adapter-k8s": {
+            namespace: "default",
+            authConfigPath: undefined,
+            sthPodHost: undefined,
+            runnerImages: {
+                python3: "",
+                node: "",
+            },
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+            timeout: "0"
+        }*/
     }
 };
 
@@ -115,7 +113,7 @@ export class ConfigService {
         return this.config;
     }
 
-    getDockerConfig() {
+    getDockerConfig(): DockerAdapterConfiguration {
         return this.config.adapters["@scramjet/adapter-docker"];
     }
 

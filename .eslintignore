@@ -2,3 +2,4 @@
 node_modules
 conf/launch.json
 jest.config.js
+.work

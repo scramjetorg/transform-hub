@@ -6,7 +6,7 @@ export type InitializedRuntimeAdapter = IRuntimeAdapter & {
     status: "ready" | { error?: string };
 };
 
-export type AdaptersStore = { [key: string]: InitializedRuntimeAdapter };
+export type AdaptersStore = Record<string, InitializedRuntimeAdapter>;
 
 export class AdapterManager {
     adapters: AdaptersStore = {};
@@ -38,34 +38,35 @@ export class AdapterManager {
             moduleNames.map(
                 async (moduleName) => {
                     const typedModuleName = moduleName as unknown as keyof STHConfiguration["adapters"];
-                    const config = this.sthConfig.adapters[typedModuleName]!;
-
                     const adapter = Object.assign(
-                        new (await import(moduleName)).default(config),
+                        new (await import(moduleName)).default(
+                            this.sthConfig.adapters[typedModuleName]!
+                        ),
                         { moduleName }
                     ) as InitializedRuntimeAdapter;
+
+                    adapter.logger.pipe(this.logger);
 
                     if (!AdapterManager.validateAdapter(adapter)) {
                         throw new Error(`Invalid Runtime Adapter provided ${adapter.moduleName}`);
                     }
 
-                    adapter.config = config;
                     adapter.status = await this.initAdapter(adapter);
 
                     if (adapter.status !== "ready") {
                         this.logger.warn(`Failed to initialize "${adapter.moduleName}" Adapter: ${adapter.status.error}`);
                     }
 
-                    if (this.adapters[adapter.moduleName]) {
-                        throw new Error("Invalid Runtime Adapters configuration, duplicated Runtime Adapter name");
-                    }
-
                     return adapter;
                 }
             )
-        ).then((adapterList) =>
-            adapterList.reduce((a: AdaptersStore, c) => { a[c.moduleName] = c; return a; }, {})
-        );
+        ).then((adapterList) => adapterList.reduce((a: AdaptersStore, c) => {
+            if (a[c.moduleName]) throw new Error("Invalid Runtime Adapters configuration, duplicated Runtime Adapter name");
+
+            a[c.moduleName] = c;
+
+            return a;
+        }, {}));
 
         const adaptersCount = Object.keys(this.adapters).length;
 
@@ -83,11 +84,13 @@ export class AdapterManager {
     /**
      * Validates adapter.
      *
-     * @param {IRuntimeAdapter} adapter Checks if adapter provides required fields.
-     * @returns {boolean} True if required fields are available.
+     * @param {IRuntimeAdapter} adapter Checks if adapter provides required functions.
+     * @returns {boolean} True if required functions are available.
      */
     static validateAdapter(adapter: IRuntimeAdapter): boolean {
-        return !!(adapter.name?.trim() && ["sequenceAdapter", "instanceAdapter", "init"].every((className: string) => className in adapter));
+        return !!(adapter.name?.trim() && ["sequenceAdapter", "instanceAdapter", "init"].every(
+            (field: string) => adapter[field as keyof IRuntimeAdapter])
+        );
     }
 
     /**
@@ -112,7 +115,13 @@ export class AdapterManager {
         return Object.values(this.adapters).find(a => a.moduleName === moduleName);
     }
 
-    getDefaultAdapter(prefferedAdapter: string) {
+    /**
+     * Returns first Adapter with "ready" status if prefferedAdapter is "detect".
+     * Returns Adapter with name provided by prefferedAdapter.
+     * @param prefferedAdapter name
+     * @returns {InitializedRuntimeAdapter | undefined} Found Runtime Adapter.
+     */
+    getDefaultAdapter(prefferedAdapter: string): InitializedRuntimeAdapter | undefined {
         if (prefferedAdapter === "detect") {
             return Object.values(this.adapters).filter(adapter => adapter.status === "ready")[0];
         }

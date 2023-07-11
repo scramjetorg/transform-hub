@@ -1,6 +1,7 @@
 import { IInstanceAdapter, IRuntimeAdapter, ISequenceAdapter, K8SAdapterConfiguration } from "@scramjet/types";
 import { KubernetesInstanceAdapter } from "./kubernetes-instance-adapter";
 import { KubernetesSequenceAdapter } from "./kubernetes-sequence-adapter";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 /**
  * Adapter module must provide SequenceAdapter, InstanceAdapter classes, init method and name field.
@@ -13,6 +14,8 @@ export default class KubernetesAdapter implements IRuntimeAdapter {
 
     #_instanceAdapter: IInstanceAdapter;
     #_sequenceAdapter: ISequenceAdapter;
+
+    logger = new ObjLogger(this);
 
     get instanceAdapter() {
         return this.#_instanceAdapter;

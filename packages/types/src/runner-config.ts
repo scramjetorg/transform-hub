@@ -45,6 +45,6 @@ export type KubernetesSequenceConfig = CommonSequenceConfig & {
     type: "kubernetes"
 }
 
-export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig
+export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig;
 
 export type InstanceConfig = SequenceConfig & { instanceAdapterExitDelay: number, limits: InstanceLimits }

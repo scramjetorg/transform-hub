@@ -26,9 +26,9 @@ export class HostClient implements ClientProvider {
     /**
      * Returns list of all Sequences on Host.
      *
-     * @returns {Promise<STHRestAPI.GetSequencesResponse[]>} Promise resolving to list of Sequences.
+     * @returns {Promise<STHRestAPI.GetSequencesResponse>} Promise resolving to list of Sequences.
      */
-    async listSequences() {
+    async listSequences(): Promise<STHRestAPI.GetSequencesResponse> {
         return this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
     }
 
@@ -37,7 +37,7 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<STHRestAPI.GetInstancesResponse>} Promise resolving to list of Instances.
      */
-    async listInstances() {
+    async listInstances(): Promise<STHRestAPI.GetInstancesResponse> {
         return this.client.get<STHRestAPI.GetInstancesResponse>("instances");
     }
 
@@ -46,7 +46,7 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<STHRestAPI.GetEntitiesResponse>} Promise resolving to list of entities.
      */
-    async listEntities() {
+    async listEntities(): Promise<STHRestAPI.GetEntitiesResponse> {
         return this.client.get<STHRestAPI.GetEntitiesResponse>("entities");
     }
 
@@ -80,7 +80,7 @@ export class HostClient implements ClientProvider {
      */
     async sendSequence(
         sequencePackage: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit,
+        requestInit: RequestInit = {},
         update?: boolean
     ): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
@@ -96,7 +96,7 @@ export class HostClient implements ClientProvider {
      * @param {string} sequenceId Sequence id.
      * @returns {Promise<STHRestAPI.GetSequenceResponse>} Promise resolving to Sequence details.
      */
-    async getSequence(sequenceId: string) {
+    async getSequence(sequenceId: string): Promise<STHRestAPI.GetSequenceResponse> {
         return this.client.get<STHRestAPI.GetSequenceResponse>(`sequence/${sequenceId}`);
     }
 
@@ -122,7 +122,7 @@ export class HostClient implements ClientProvider {
      * @param {string} instanceId Instance id.
      * @returns {Promise<STHRestAPI.GetInstanceResponse>} Promise resolving to Instance details.
      */
-    async getInstanceInfo(instanceId: string) {
+    async getInstanceInfo(instanceId: string): Promise<STHRestAPI.GetInstanceResponse> {
         return this.client.get<STHRestAPI.GetInstanceResponse>(`instance/${instanceId}`);
     }
 
@@ -131,7 +131,7 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<STHRestAPI.GetLoadCheckResponse>} Promise resolving to Host load check data.
      */
-    async getLoadCheck() {
+    async getLoadCheck(): Promise<STHRestAPI.GetLoadCheckResponse> {
         return this.client.get<STHRestAPI.GetLoadCheckResponse>("load-check");
     }
 
@@ -140,7 +140,7 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<STHRestAPI.GetVersionResponse>} Promise resolving to Host version.
      */
-    async getVersion() {
+    async getVersion(): Promise<STHRestAPI.GetVersionResponse> {
         return this.client.get<STHRestAPI.GetVersionResponse>("version");
     }
 
@@ -154,9 +154,9 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host public configuration.
      *
-     * @returns {Promise<GetConfigResponse>} Promise resolving to Host configuration (public part).
+     * @returns {Promise<STHRestAPI.GetConfigResponse>} Promise resolving to Host configuration (public part).
      */
-    async getConfig() {
+    async getConfig(): Promise<STHRestAPI.GetConfigResponse> {
         return this.client.get<STHRestAPI.GetConfigResponse>("config");
     }
 

@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/adapters",
+    "out": "../../docs/adapters-utils",
     "plugin": "typedoc-plugin-markdown",
     "gitRevision": "HEAD",
     "sort": "alphabetical"

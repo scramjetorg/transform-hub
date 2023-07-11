@@ -2,6 +2,7 @@ import { DockerAdapterConfiguration, IInstanceAdapter, IRuntimeAdapter, ISequenc
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerSequenceAdapter } from "./docker-sequence-adapter";
 import { DockerInstanceAdapter } from "./docker-instance-adapter";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 /**
  * Adapter module must provide SequenceAdapter, InstanceAdapter classes, init method and name field.
@@ -11,6 +12,8 @@ export default class DockerAdapter implements IRuntimeAdapter {
 
     #_instanceAdapter: IInstanceAdapter;
     #_sequenceAdapter: ISequenceAdapter;
+
+    logger = new ObjLogger(this);
 
     get instanceAdapter() {
         return this.#_instanceAdapter;

@@ -327,10 +327,6 @@ export class Host implements IComponent {
         this.logger.info("Log Level", this.config.logLevel);
         this.logger.trace("Host main called", { version });
 
-        if (this.config.identifyExisting) {
-            await this.identifyExistingSequences();
-        }
-
         this.adapterManager = new AdapterManager(this.config);
         this.adapterManager.logger.pipe(this.logger);
 
@@ -345,6 +341,10 @@ export class Host implements IComponent {
             }
 
             this.logger.info(`Default adapter for running Sequences: "${this.adapterName}" (${defaultAdapter?.name})`);
+
+            if (this.config.identifyExisting) {
+                await this.identifyExistingSequences();
+            }
         } else {
             this.logger.warn("No Runtime Adapters.");
         }
@@ -500,23 +500,42 @@ export class Host implements IComponent {
 
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
 
-        this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), {
-            end: true,
-            method: "put",
-        });
+        if (this.withRuntimeAdapters) {
+            this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
+            this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), {
+                end: true,
+                method: "put",
+            });
 
-        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
-        this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
+            this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
+            this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
 
-        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
-        this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
-        this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
-        this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
-        this.api.get(`${this.apiBase}/entities`, () => ({
-            sequences: this.getSequences(),
-            instances: this.getInstances()
-        }));
+            this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
+            this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
+            this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
+            this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
+            this.api.get(`${this.apiBase}/entities`, () => ({
+                sequences: this.getSequences(),
+                instances: this.getInstances()
+            }));
+            this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
+        } else {
+            [
+                `${this.apiBase}/sequences`,
+                `${this.apiBase}/sequence`,
+                `${this.apiBase}/instances`,
+                `${this.apiBase}/entities`,
+                `${this.instanceBase}/*`
+            ].forEach((path: string) => {
+                this.api.use(path, (_req, res: ServerResponse) => {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({
+                        message: "No Runtime Adapters available"
+                    }));
+                });
+            });
+        }
+
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(
             `${this.apiBase}/version`,
@@ -540,7 +559,6 @@ export class Host implements IComponent {
         });
 
         this.api.use(`${this.apiBase}/cpm`, (req, res, next) => this.spaceMiddleware(req, res, next));
-        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
     /**
@@ -734,7 +752,7 @@ export class Host implements IComponent {
      */
     async identifyExistingSequences() {
         //const adapter = await initializeRuntimeAdapters(this.config);
-        const adapter = this.adapterManager.getAvailableAdapter();
+        const adapter = this.adapterManager.getDefaultAdapter(this.adapterName);
 
         if (!adapter) {
             throw new Error("Error identifying existing sequences. Adapter unavailable");
@@ -767,16 +785,17 @@ export class Host implements IComponent {
         stream.params ||= {};
 
         const sequenceName = stream.params.id_name || stream.headers["x-name"];
+        const requestedAdapter = stream.headers["x-runtime-adapter"] as string;
 
-        this.logger.info("New Sequence incoming", { name: sequenceName });
+        this.logger.info("New Sequence incoming", { name: sequenceName, requestedAdapter });
 
         try {
-            const adapter = this.adapterManager.getDefaultAdapter(this.adapterName);
+            const adapter = this.adapterManager.getDefaultAdapter(requestedAdapter || this.adapterName);
 
             if (!adapter) {
                 return {
-                    opStatus: ReasonPhrases.FAILED_DEPENDENCY,
-                    error: "Can't initialize Adapter"
+                    opStatus: ReasonPhrases.NOT_ACCEPTABLE,
+                    error: "Can't initialize Runtime Adapter"
                 };
             }
 
@@ -808,7 +827,7 @@ export class Host implements IComponent {
 
             const config = await sequenceAdapter.identify(stream, id);
 
-            config.packageSize = stream.socket?.bytesRead;
+            config.packageSize = stream.socket.bytesRead - stream.rawHeaders.reduce((p, c) => p + c.length, 0) - 4; // - headers - 2 * "\n"
 
             this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName });
 
@@ -861,7 +880,7 @@ export class Host implements IComponent {
      * @param {string} id Sequence id.
      * @returns {Promise} Promise resolving to operation result.
      */
-    async handleNewSequence(stream: ParsedMessage, id = IDProvider.generate()):
+    async handleNewSequence(stream: ParsedMessage, id: string = IDProvider.generate()):
         Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         const sequenceName = stream.headers["x-name"] as string;
 
@@ -1004,7 +1023,7 @@ export class Host implements IComponent {
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      */
     async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
-        const adapter = this.adapterManager.getDefaultAdapter(this.adapterName);
+        const adapter = this.adapterManager.getDefaultAdapter(sequence.config.type || this.adapterName);
 
         if (!adapter) {
             throw new Error("Failed to use adapter");
