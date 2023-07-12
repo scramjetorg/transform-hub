@@ -8,6 +8,7 @@ import { AddressInfo } from "net";
 import {
     APIExpose,
     CPMConnectorOptions,
+    EventMessageData,
     HostProxy,
     IComponent,
     IObjectLogger,
@@ -982,6 +983,9 @@ export class Host implements IComponent {
 
         this.instancesStore[id] = csic;
 
+        csic.on("event", async (event: EventMessageData) => {
+            await this.eventBus({ source: id, ...event });
+        });
         csic.on("error", (err) => {
             this.pushTelemetry("Instance error", { ...err }, "error");
             this.logger.error("CSIController errored", err.message, err.exitcode);
@@ -1069,6 +1073,16 @@ export class Host implements IComponent {
         sequence.instances.push(id);
 
         return csic;
+    }
+
+    async eventBus(event: EventMessageData) {
+        this.logger.debug("Got event", event);
+
+        // Send the event to all instances except the source of the event.
+        await Promise.all(
+            Object.values(this.instancesStore)
+                .map(inst => event.source !== inst.id ? inst.emitEvent(event) : true)
+        );
     }
 
     /**

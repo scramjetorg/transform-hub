@@ -5,8 +5,10 @@ export type EventMessageData = {
     /** Name of the event. */
     eventName: string;
 
+    source?: string;
+
     /** TODO update Informs if keepAlive can be called to prolong the running of the Sequence. */
-    message: any
+    message: any;
 }
 
 /**

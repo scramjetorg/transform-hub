@@ -156,7 +156,8 @@ export const sequenceStart = async (
             args?: any[],
             outputTopic?: string,
             inputTopic?: string,
-            limits?: InstanceLimits
+            limits?: InstanceLimits,
+            name?: string
         }
 ): Promise<InstanceClient> => {
     if (configFile && configString) {

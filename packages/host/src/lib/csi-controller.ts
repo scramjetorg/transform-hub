@@ -23,6 +23,7 @@ import {
     OpResponse,
     StopSequenceMessageData,
     HostProxy,
+    EventMessageData,
 } from "@scramjet/types";
 import {
     AppError,
@@ -55,6 +56,7 @@ const runnerExitDelay = 15000;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
+    event: (payload: EventMessageData) => void;
     hourChime: () => void;
     error: (error: any) => void;
     stop: (code: number) => void;
@@ -163,6 +165,8 @@ export class CSIController extends TypedEmitter<Events> {
     private downStreams?: DownstreamStreamsConfig;
     private upStreams: PassThroughStreamsConfig;
 
+    public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
+
     communicationHandler: ICommunicationHandler;
 
     constructor(
@@ -172,7 +176,7 @@ export class CSIController extends TypedEmitter<Events> {
         communicationHandler: CommunicationHandler,
         sthConfig: STHConfiguration,
         hostProxy: HostProxy,
-        chosenAdapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        chosenAdapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
     ) {
         super();
 
@@ -193,6 +197,10 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler = communicationHandler;
 
         this.logger = new ObjLogger(this, { id });
+        this.localEmitter = Object.assign(
+            new EventEmitter(),
+            { lastEvents: {} }
+        );
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
@@ -650,18 +658,15 @@ export class CSIController extends TypedEmitter<Events> {
         // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
         // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
 
-        const localEmitter = Object.assign(
-            new EventEmitter(),
-            { lastEvents: {} } as { lastEvents: { [evname: string]: any } }
-        );
-
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
             const event = data[1];
 
             if (!event.eventName) return;
 
-            localEmitter.lastEvents[event.eventName] = event;
-            localEmitter.emit(event.eventName, event);
+            this.emit("event", event);
+
+            this.localEmitter.lastEvents[event.eventName] = event;
+            this.localEmitter.emit(event.eventName, event);
         });
         this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
             const name = req.params?.name;
@@ -675,12 +680,12 @@ export class CSIController extends TypedEmitter<Events> {
             const clean = () => {
                 this.logger.debug(`Event stream "${name}" disconnected`);
 
-                localEmitter.off(name, handler);
+                this.localEmitter.off(name, handler);
             };
 
             this.logger.debug("Event stream connected", name);
 
-            localEmitter.on(name, handler);
+            this.localEmitter.on(name, handler);
 
             res.on("error", clean);
             res.on("end", clean);
@@ -691,16 +696,15 @@ export class CSIController extends TypedEmitter<Events> {
         const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
             const name = req.params?.name;
 
-            if (!name) {
+            if (!name)
                 throw new HostError("EVENT_NAME_MISSING");
-            }
 
-            localEmitter.once(name, res);
+            this.localEmitter.once(name, res);
         });
 
         this.router.get("/event/:name", async (req) => {
-            if (req.params?.name && localEmitter.lastEvents[req.params.name]) {
-                return localEmitter.lastEvents[req.params.name];
+            if (req.params?.name && this.localEmitter.lastEvents[req.params.name]) {
+                return this.localEmitter.lastEvents[req.params.name];
             }
 
             return awaitEvent(req);
@@ -709,10 +713,28 @@ export class CSIController extends TypedEmitter<Events> {
 
         // operations
         this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-        this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
+        this.router.op("post", "/_event", (req) => this.handleEvent(req), this.communicationHandler);
 
         this.router.op("post", "/_stop", (req) => this.handleStop(req), this.communicationHandler);
         this.router.op("post", "/_kill", (req) => this.handleKill(req), this.communicationHandler);
+    }
+
+    private async handleEvent(event: ParsedMessage): Promise<OpResponse<STHRestAPI.SendEventResponse>> {
+        const { body: { source = "api", eventName, message } } = event;
+
+        if (typeof eventName !== "string")
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid format, eventName missing." };
+
+        await this.emitEvent({ eventName, source, message });
+        return { opStatus: ReasonPhrases.OK, accepted: ReasonPhrases.OK };
+    }
+
+    public async emitEvent({ source, eventName, message }: EventMessageData) {
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.EVENT, {
+            eventName,
+            source,
+            message
+        });
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {

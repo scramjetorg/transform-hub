@@ -1,5 +1,4 @@
-import { RunnerMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/types";
+import { STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/types";
 import { ClientProvider, HttpClient, SendStreamOptions } from "@scramjet/client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
@@ -84,13 +83,10 @@ export class InstanceClient {
      * @returns {Promise<STHRestAPI.SendEventResponse>} Promise resolving to send event result.
      */
     async sendEvent(eventName: string, message: string) {
-        const data = [
-            RunnerMessageCode.EVENT,
-            {
-                eventName,
-                message,
-            },
-        ] as EncodedControlMessage;
+        const data = {
+            eventName,
+            message,
+        };
 
         return this.clientUtils.post<STHRestAPI.SendEventResponse>(`${this.instanceURL}/_event`, data, {}, { json: true, parse: "json" });
     }
