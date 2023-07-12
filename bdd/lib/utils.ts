@@ -218,23 +218,25 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
     ]);
 }
 
-export async function waitUntilStreamEquals(stream: Readable, expected: string): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
     await Promise.race([
         (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
-                response += chunk.toString();
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
+                response += chunk;
+
+                // eslint-disable-next-line no-console
+                console.log(response, chunk);
 
                 if (response === expected) return expected;
                 if (response.length >= expected.length) {
-                    assert.equal(response, expected);
+                    return assert.equal(response, expected);
                 }
             }
-            assert.equal(response, expected, "End of stream reached");
-
-            return "passed";
-        })()
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
     ]);
 
     return response;
@@ -359,6 +361,27 @@ export function spawnSiInit(
             resolve();
         });
     });
+}
+
+export async function waitUntilStreamStartsWith(stream: Readable, expected: string, timeout = 10000): Promise<string> {
+    let response = "";
+
+    await Promise.race([
+        (async () => {
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
+                response += chunk.toString();
+
+                if (response === expected) return expected;
+                if (response.length >= expected.length) {
+                    return assert.equal(response.substring(0, expected.length), expected);
+                }
+            }
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
+    ]);
+
+    return response;
 }
 
 export function isTemplateCreated(templateType: string, workingDirectory: string) {
