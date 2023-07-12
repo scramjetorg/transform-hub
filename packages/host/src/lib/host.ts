@@ -512,6 +512,12 @@ export class Host implements IComponent {
 
         new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery);
 
+        this.api.op("post", `${this.apiBase}/_event`, async (event) => {
+            const { body: { eventName, message } } = event;
+
+            await this.eventBus({ eventName, message });
+        });
+
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
             this.logger.debug("Platform request");

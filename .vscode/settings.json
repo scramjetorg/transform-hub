@@ -2,6 +2,10 @@
   "cucumberautocomplete.steps": [
     "./bdd/step-definitions/**/*.ts"
   ],
+  "cucumber.glue": [
+        "**/step-definitions/**/*.ts",
+        "**/step-definitions/**/*.js"
+  ],
   "cucumberautocomplete.strictGherkinCompletion": true,
   "python.analysis.extraPaths": [
     "./packages/python-runner/__pypackages__"
