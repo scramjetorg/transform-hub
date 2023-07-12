@@ -9,7 +9,8 @@ import { STHConfiguration,
     InstanceLimits,
     IObjectLogger,
     MonitoringMessageData,
-    SequenceConfig
+    SequenceConfig,
+    SequenceInfo
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 
@@ -115,7 +116,8 @@ class ProcessInstanceAdapter implements
         return pythonpath;
     }
 
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
+        console.log("config type", config.type)
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }
@@ -134,7 +136,8 @@ class ProcessInstanceAdapter implements
             instancesServerHost: "127.0.0.1",
             instancesServerPort,
             instanceId,
-            pipesPath: ""
+            pipesPath: "",
+            sequenceInfo
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
         });
@@ -147,6 +150,10 @@ class ProcessInstanceAdapter implements
         this.crashLogStreams = Promise.all([runnerProcess.stdout, runnerProcess.stderr].map(streamToString));
 
         this.logger.trace("Runner process is running", runnerProcess.pid);
+
+        // @todo exit here with pid
+        // then promise waiting for process with given pid finish (endOfRun)
+        // how to connect to a process knowing id of it?
 
         this.runnerProcess = runnerProcess;
 

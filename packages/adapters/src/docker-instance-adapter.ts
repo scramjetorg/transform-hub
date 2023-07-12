@@ -12,6 +12,7 @@ import {
     RunnerContainerConfiguration,
     InstanceLimits,
     STHConfiguration,
+    SequenceInfo,
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -168,7 +169,7 @@ IComponent {
     }
 
     // eslint-disable-next-line complexity
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
@@ -191,7 +192,8 @@ IComponent {
             instancesServerPort,
             instancesServerHost: networkSetup.host,
             instanceId,
-            pipesPath: ""
+            pipesPath: "",
+            sequenceInfo
         }).map(([k, v]) => `${k}=${v}`);
 
         this.logger.debug("Runner will start with envs", envs);

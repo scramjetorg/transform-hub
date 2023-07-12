@@ -9,6 +9,7 @@ import {
     IObjectLogger,
     K8SAdapterConfiguration,
     MonitoringMessageData,
+    SequenceInfo,
     STHConfiguration,
 } from "@scramjet/types";
 
@@ -88,7 +89,7 @@ IComponent {
         };
     }
 
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
         }
@@ -109,7 +110,8 @@ IComponent {
                 instancesServerPort,
                 instancesServerHost: this.adapterConfig.sthPodHost,
                 instanceId,
-                pipesPath: ""
+                pipesPath: "",
+                sequenceInfo
             }).map(([name, value]) => ({ name, value }));
 
         const runnerImage = config.engines.python3

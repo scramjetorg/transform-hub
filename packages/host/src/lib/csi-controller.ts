@@ -10,7 +10,6 @@ import {
     ReadableStream,
     SequenceInfo,
     WritableStream,
-    InstanceConfig,
     ILifeCycleAdapterRun,
     MessageDataType,
     IObjectLogger,
@@ -197,7 +196,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger = new ObjLogger(this, { id });
 
         this.logger.debug("Constructor executed");
-        this.info.created = new Date();
+
         this.status = InstanceStatus.INITIALIZING;
 
         this.upStreams = [
@@ -215,7 +214,7 @@ export class CSIController extends TypedEmitter<Events> {
     async start() {
         const i = new Promise((res, rej) => {
             this.initResolver = { res, rej };
-            this.startInstance();
+            //this.startInstance();
         });
 
         i.then(() => this.main()).catch(async (e) => {
@@ -280,26 +279,12 @@ export class CSIController extends TypedEmitter<Events> {
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
-        const instanceConfig: InstanceConfig = {
-            ...this.sequence.config,
-            limits: this.limits,
-            instanceAdapterExitDelay: this.sthConfig.timings.instanceAdapterExitDelay
-        };
-
         // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {
             try {
                 this.status = InstanceStatus.STARTING;
 
-                await this.instanceAdapter.init();
-
                 this.logger.trace("Streams hooked and routed");
-
-                this.endOfSequence = this.instanceAdapter.run(
-                    instanceConfig,
-                    this.sthConfig.host.instancesServerPort,
-                    this.id
-                );
 
                 this.logger.trace("Sequence initialized");
 
@@ -539,12 +524,14 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.ports = message[1].ports;
+        this.sequence = message[1].sequenceInfo;
 
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                args: this.args
+                args: this.args,
+                //runtimeId:?
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));

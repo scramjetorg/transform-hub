@@ -9,7 +9,7 @@ import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
  * @returns env vars
  */
 export function getRunnerEnvVariables({
-    sequencePath, instancesServerPort, instancesServerHost, instanceId, pipesPath, paths = "posix"
+    sequencePath, instancesServerPort, instancesServerHost, instanceId, pipesPath, paths = "posix", sequenceInfo
 }: RunnerEnvConfig, extra: Record<string, string> = {}): RunnerEnvironmentVariables {
     const join = path[paths].join;
 
@@ -23,6 +23,7 @@ export function getRunnerEnvVariables({
         INSTANCE_ID: instanceId,
         PIPES_LOCATION: pipesPath,
         CRASH_LOG: join(pipesPath, "crash_log"),
+        SEQUENCE_INFO: JSON.stringify(sequenceInfo),
         ...extra
     };
 }

@@ -15,7 +15,8 @@ import {
     SynchronousStreamable,
     HasTopicInformation,
     IObjectLogger,
-    HostClient
+    HostClient,
+    SequenceInfo
 } from "@scramjet/types";
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -120,12 +121,15 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private inputDataStream: DataStream;
     private outputDataStream: DataStream;
+    private sequenceInfo: SequenceInfo
 
     constructor(
         private sequencePath: string,
         private hostClient: IHostClient,
-        private instanceId: string
+        private instanceId: string,
+        sequenceInfo: SequenceInfo
     ) {
+        this.sequenceInfo = sequenceInfo;
         this.emitter = new EventEmitter();
 
         this.logger = new ObjLogger(this, { id: instanceId });
@@ -456,7 +460,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     sendHandshakeMessage() {
         // TODO: send connection info
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {sequenceInfo: this.sequenceInfo}], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
     }

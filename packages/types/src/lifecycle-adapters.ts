@@ -3,6 +3,7 @@ import { MaybePromise } from "./utils";
 import { InstanceConfig } from "./runner-config";
 import { IObjectLogger } from "./object-logger";
 import { InstanceLimits } from "./instance-limits";
+import { SequenceInfo } from "./sequence-adapter";
 
 export type ExitCode = number;
 
@@ -36,7 +37,7 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode>;
+    run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
 
     monitorRate(rps: number): this;
 

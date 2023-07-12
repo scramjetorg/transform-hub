@@ -1,4 +1,4 @@
-import { ExitCode, InstanceId, IObjectLogger } from "@scramjet/types";
+import { ExitCode, InstanceId, IObjectLogger, SequenceInfo } from "@scramjet/types";
 import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
@@ -314,6 +314,7 @@ export type RunnerEnvConfig = {
     instancesServerPort: number;
     instancesServerHost: string;
     instanceId: InstanceId;
+    sequenceInfo: SequenceInfo
 }
 
 export type RunnerEnvironmentVariables = Partial<{

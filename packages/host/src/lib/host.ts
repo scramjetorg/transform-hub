@@ -24,14 +24,13 @@ import {
     STHRestAPI,
 } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { HostHeaders, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
-import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 
@@ -50,9 +49,8 @@ import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
-import TopicId from "./serviceDiscovery/topicId";
+
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
@@ -244,6 +242,8 @@ export class Host implements IComponent {
 
         this.csiDispatcher.logger.pipe(this.logger);
 
+        this.attachDispatcherEvents();
+
         if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
         }
@@ -269,6 +269,10 @@ export class Host implements IComponent {
         });
 
         return monitoringServer.start();
+    }
+
+    attachDispatcherEvents() {
+        //this.csiDispatcher.on();
     }
 
     getId() {
@@ -447,7 +451,7 @@ export class Host implements IComponent {
                     return;
                 }
                 // @todo dispatcher
-                await this.startCSIController(sequence, {
+                await this.csiDispatcher.startRunner(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
                     instanceId: seqenceConfig.instanceId
@@ -948,23 +952,23 @@ export class Host implements IComponent {
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
         try {
-            // @todo - this line should be done by CSIDispatcher
             const runner = await this.csiDispatcher.startRunner(sequence, payload);
+            // @todo more info
 
             // await this.cpmConnector?.sendInstanceInfo({
-            //     id: csic.id,
-            //     appConfig: csic.appConfig,
-            //     args: csic.args,
-            //     sequence: sequenceId,
-            //     ports: csic.info.ports,
-            //     created: csic.info.created,
-            //     started: csic.info.started,
-            //     status: csic.status,
+            //     id: runner.id,
+            //     appConfig: payload.appConfig,
+            //     args: payload.args,
+            //     sequence: sequence.id,
+            //     // ports: runner.info.ports
+            //     // created: csic.info.created,
+            //     // started: csic.info.started,
+            //     // status: csic.status,
             // }, InstanceMessageCode.INSTANCE_STARTED);
 
-            // this.logger.debug("Instance limits", csic.limits);
-            // this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
-            // this.pushTelemetry("Instance started", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
+            //this.logger.debug("Instance limits", runner.limits);
+            //this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
+            //this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
 
             // csic.on("hourChime", () => {
             //     this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
@@ -992,128 +996,23 @@ export class Host implements IComponent {
         this.socketServer.on("connect", async (id, streams) => {
             this.logger.debug("Instance connected", id);
 
-            // @todo this should be a call to CSIDispatcher
-            // @todo CSIDispatcher should receive a reference to instanceStore.
+            // @todo need more instance info
             if (!this.instancesStore[id]) {
-                this.csiDispatcher.createCSIController(id, {} as SequenceInfo, {} as STHRestAPI.StartSequencePayload, new CommunicationHandler(), this.config, this.instanceProxy);
+                this.logger.info("creating new CSIController for runner connecting");
+                this.csiDispatcher.createCSIController(
+                    id,
+                    {} as SequenceInfo,
+                    {} as STHRestAPI.StartSequencePayload,
+                    new CommunicationHandler(),
+                    this.config,
+                    this.instanceProxy
+                );
             }
+
             await this.instancesStore[id].handleInstanceConnect(
                 streams
             );
         });
-    }
-
-    /**
-     * Creates new CSIController {@link CSIController} object and handles its events.
-     *
-     * @param {SequenceInfo} sequence Sequence info object.
-     * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
-     * @todo This should be started by onConnect from `this..attachListeners`
-     * @todo Move this to CSI Dispatcher
-     */
-    async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
-        const communicationHandler = new CommunicationHandler();
-        const id = payload.instanceId || IDProvider.generate();
-
-        if (isDevelopment) this.logger.debug("CSIC start payload", payload);
-
-        const csic = this.csiDispatcher.createCSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
-
-        csic.logger.pipe(this.logger, { end: false });
-        communicationHandler.logger.pipe(this.logger, { end: false });
-
-        csic.on("error", (err) => {
-            this.pushTelemetry("Instance error", { ...err }, "error");
-            this.logger.error("CSIController errored", err.message, err.exitcode);
-        });
-
-        // eslint-disable-next-line complexity
-        csic.on("pang", async (data) => {
-            this.logger.trace("PANG received", data);
-
-            if ((data.requires || data.provides) && !data.contentType) {
-                this.logger.warn("Missing topic content-type");
-            }
-
-            if (data.requires && !csic.inputRouted && data.contentType) {
-                this.logger.trace("Routing Sequence input to topic", data.requires);
-
-                await this.serviceDiscovery.routeTopicToStream(
-                    { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
-                    csic.getInputStream()
-                );
-
-                csic.inputRouted = true;
-
-                await this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType!, topicName: data.requires
-                });
-            }
-
-            if (data.provides && !csic.outputRouted && data.contentType) {
-                this.logger.trace("Routing Sequence output to topic", data.provides);
-                await this.serviceDiscovery.routeStreamToTopic(
-                    csic.getOutputStream(),
-                    { topic: new TopicId(data.provides), contentType: data.contentType as ContentType },
-                    // csic.id
-                );
-
-                csic.outputRouted = true;
-
-                await this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides
-                });
-            }
-        });
-
-        csic.on("end", async (code) => {
-            this.logger.trace("CSIController ended", `Exit code: ${code}`);
-
-            if (csic.provides && csic.provides !== "") {
-                const topic = this.serviceDiscovery.getTopic(new TopicId(csic.provides));
-
-                if (topic) csic.getOutputStream()!.unpipe(topic);
-            }
-
-            csic.logger.unpipe(this.logger);
-
-            delete InstanceStore[csic.id];
-
-            sequence.instances = sequence.instances.filter(item => {
-                return item !== id;
-            });
-
-            await this.cpmConnector?.sendInstanceInfo({
-                id: csic.id,
-                sequence: sequence
-            }, InstanceMessageCode.INSTANCE_ENDED);
-
-            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
-        });
-
-        csic.once("terminated", (code) => {
-            if (csic.requires && csic.requires !== "") {
-                const topic = this.serviceDiscovery.getTopic(new TopicId(csic.requires));
-
-                if (topic) topic.unpipe(csic.getInputStream());
-            }
-
-            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
-            this.pushTelemetry("Instance ended", {
-                executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
-                id: csic.id,
-                code: code.toString(),
-                seqId: csic.sequence.id
-            });
-        });
-
-        await csic.start();
-
-        this.logger.trace("CSIController started", id);
-
-        sequence.instances.push(id);
-
-        return csic;
     }
 
     /**

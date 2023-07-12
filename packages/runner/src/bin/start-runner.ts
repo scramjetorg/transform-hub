@@ -2,7 +2,7 @@
 
 import { Runner } from "../runner";
 import fs from "fs";
-import { AppConfig } from "@scramjet/types";
+import { AppConfig, SequenceInfo } from "@scramjet/types";
 import { HostClient } from "../host-client";
 import { RunnerExitCode } from "@scramjet/symbols";
 
@@ -10,13 +10,13 @@ const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
 const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
-const connectInfoJSON = process.env.INSTANCE_CONNECT_JSON;
+const sequenceInfo = process.env.SEQUENCE_INFO;
 
-let connectInfo;
+let connectInfo: SequenceInfo;
 
 try {
-    if (!connectInfoJSON) throw new Error("Connection JSON is required.");
-    connectInfo = JSON.parse(connectInfoJSON);
+    if (!sequenceInfo) throw new Error("Connection JSON is required.");
+    connectInfo = JSON.parse(sequenceInfo);
 } catch {
     console.error("Error while parsing connection information.");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
@@ -54,7 +54,7 @@ const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
  * @param fifosPath - fifo files path
  */
 
-const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId, connectInfo, connectInfoJSON);
+const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId, connectInfo);
 
 runner.main()
     .catch(e => {
