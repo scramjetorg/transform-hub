@@ -149,16 +149,14 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         const id = IDProvider.generate();
 
         const instanceAdapter = getInstanceAdapter(this.STHConfig.runtimeAdapter, this.STHConfig, id);
-
-        await instanceAdapter.init();
-
         const instanceConfig: InstanceConfig = {
             ...sequence.config,
             limits: limits,
             instanceAdapterExitDelay: this.STHConfig.timings.instanceAdapterExitDelay
         };
 
-        await instanceAdapter.run(
+        await instanceAdapter.init();
+        await instanceAdapter.dispatch(
             instanceConfig,
             this.STHConfig.host.instancesServerPort,
             id,

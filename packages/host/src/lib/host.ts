@@ -953,6 +953,7 @@ export class Host implements IComponent {
 
         try {
             const runner = await this.csiDispatcher.startRunner(sequence, payload);
+
             // @todo more info
 
             // await this.cpmConnector?.sendInstanceInfo({

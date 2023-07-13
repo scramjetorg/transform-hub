@@ -24,12 +24,26 @@ export interface ILifeCycleAdapterMain {
     // TODO: THIS is forceful removal - let's think about refactor.
     remove(): MaybePromise<void>;
 
-    getCrashLog(): Promise<string[]>
+    monitorRate(rps: number): this;
+
+    stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
+
+    getCrashLog(): Promise<string[]>;
+
+    waitUntilExit(config: InstanceConfig, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
+
 }
 // @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     limits: InstanceLimits;
+    /**
+      * Initiates runner start
+      *
+      * @param {InstanceConfig} Runner configuration.
+      * @returns {ExitCode} Runner exit code.
+      */
+    dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<void>;
 
     /**
       * Starts Runner.
@@ -38,10 +52,6 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
       * @returns {ExitCode} Runner exit code.
       */
     run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
-
-    monitorRate(rps: number): this;
-
-    stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
 }
 
 export type LifeCycleError = any | (Error & { exitCode?: number, errorMessage?: string });

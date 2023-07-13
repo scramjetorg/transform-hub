@@ -526,6 +526,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.info.ports = message[1].ports;
         this.sequence = message[1].sequenceInfo;
 
+        // TODO: add message to initiate the instance adapter
+
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
