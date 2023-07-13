@@ -30,15 +30,15 @@ export interface ILifeCycleAdapterMain {
 
     getCrashLog(): Promise<string[]>;
 
-    waitUntilExit(config: InstanceConfig, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
-
+    waitUntilExit(instanceId: string): Promise<ExitCode>;
 }
 // @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     limits: InstanceLimits;
+
     /**
-      * Initiates runner start
+      * Initiates runner start without waiting for the result
       *
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
@@ -46,7 +46,7 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<void>;
 
     /**
-      * Starts Runner.
+      * Starts Runner - in essence does `dispatch` and then `waitUntilExit`.
       *
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.

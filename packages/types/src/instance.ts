@@ -11,3 +11,7 @@ export const enum InstanceStatus {
     COMPLETED ="completed",
     ERRORED = "errored",
 }
+
+export type InstanceConnectionInfo = {
+
+}

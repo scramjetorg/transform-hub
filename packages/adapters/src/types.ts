@@ -188,6 +188,14 @@ export interface IDockerHelper {
     translateVolumesConfig: (volumeConfigs: DockerAdapterVolumeConfig[]) => any;
 
     /**
+     * Gets first found container by a given label
+     *
+     * @param {string} label the label
+     * @param {string} value label value.
+     */
+    getContainerIdByLabel(label: string, value: string): Promise<DockerContainer>;
+
+    /**
      * Creates Docker container from provided image with attached volumes and local directories.
      *
      * @param {DockerImage} dockerImage Docker image name.

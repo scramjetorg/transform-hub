@@ -26,7 +26,6 @@ import {
 import {
     AppError,
     CSIControllerError,
-    CommunicationHandler,
     HostError,
     MessageUtilities,
     InstanceAdapterError,
@@ -76,7 +75,6 @@ export class CSIController extends TypedEmitter<Events> {
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
-    private adapter: string;
 
     get lastStats(): InstanceStats {
         return {
@@ -88,8 +86,6 @@ export class CSIController extends TypedEmitter<Events> {
             }
         };
     }
-    hostProxy: HostProxy;
-    sthConfig: STHConfiguration;
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
@@ -164,36 +160,28 @@ export class CSIController extends TypedEmitter<Events> {
     private downStreams?: DownstreamStreamsConfig;
     private upStreams: PassThroughStreamsConfig;
 
-    communicationHandler: ICommunicationHandler;
-
     constructor(
-        id: string,
-        sequence: SequenceInfo,
-        payload: STHRestAPI.StartSequencePayload,
-        communicationHandler: CommunicationHandler,
-        sthConfig: STHConfiguration,
-        hostProxy: HostProxy,
-        chosenAdapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        private handshakeMessage: MessageDataType<RunnerMessageCode.PING>,
+        public communicationHandler: ICommunicationHandler,
+        private sthConfig: STHConfiguration,
+        private hostProxy: HostProxy,
+        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
     ) {
         super();
 
-        this.id = id;
-        this.adapter = chosenAdapter;
-        this.sequence = sequence;
+        this.id = this.handshakeMessage.id;
+        this.sequence = this.handshakeMessage.sequenceInfo;
         this.appConfig = payload.appConfig;
-        this.sthConfig = sthConfig;
         this.args = payload.args;
         this.outputTopic = payload.outputTopic;
         this.inputTopic = payload.inputTopic;
-        this.hostProxy = hostProxy;
         this.limits = {
             memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
 
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
-        this.communicationHandler = communicationHandler;
 
-        this.logger = new ObjLogger(this, { id });
+        this.logger = new ObjLogger(this, { id: this.id });
 
         this.logger.debug("Constructor executed");
 
@@ -516,6 +504,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.upStreams[CC.MONITORING].resume();
     }
 
+    // TODO: refactor out of CSI Controller - this should be in
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
         this.logger.debug("PING received", message);
 

@@ -170,7 +170,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             args: payload.args,
             sequenceId: sequence.id,
             info: {
-
             },
             limits,
             sequence

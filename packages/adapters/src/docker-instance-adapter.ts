@@ -168,8 +168,13 @@ IComponent {
         };
     }
 
-    // eslint-disable-next-line complexity
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
+        await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo);
+        return this.waitUntilExit(config, instanceId, sequenceInfo);
+    }
+
+    // eslint-disable-next-line complexity
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<void> {
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
@@ -205,7 +210,8 @@ IComponent {
                 { mountPoint: config.sequenceDir, volume: config.id, writeable: false }
             ],
             labels: {
-                "scramjet.sequence.name": config.name
+                "scramjet.sequence.name": config.name,
+                "scramjet.instance.id": instanceId
             },
             ports: this.resources.ports,
             publishAllPorts: true,
@@ -220,8 +226,11 @@ IComponent {
         this.resources.containerId = containerId;
 
         this.logger.trace("Container is running", containerId);
+    }
 
+    async waitUntilExit(instanceId: string): Promise<number> {
         try {
+            const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
             const { statusCode } = await this.dockerHelper.wait(containerId);
 
             this.logger.debug("Container exited", statusCode);

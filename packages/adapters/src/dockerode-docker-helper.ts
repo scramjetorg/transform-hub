@@ -139,6 +139,12 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return id;
     }
 
+    async getContainerIdByLabel(label: string, value: string): Promise<DockerContainer> {
+        const result = await this.dockerode.listContainers({ label: `${label}=${value}` });
+
+        return result[0]!.Id;
+    }
+
     /**
      * Start container with provided id.
      *

@@ -121,7 +121,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private inputDataStream: DataStream;
     private outputDataStream: DataStream;
-    private sequenceInfo: SequenceInfo
+    private sequenceInfo: SequenceInfo;
 
     constructor(
         private sequencePath: string,
@@ -460,7 +460,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     sendHandshakeMessage() {
         // TODO: send connection info
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {sequenceInfo: this.sequenceInfo}], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, { id: this.instanceId, sequenceInfo: this.sequenceInfo }], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
     }

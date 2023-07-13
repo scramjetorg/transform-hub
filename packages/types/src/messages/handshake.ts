@@ -13,7 +13,7 @@ export type HandshakeMessage = {
     payload: StartSequencePayload
 };
 
-export type PingMessageData = { ports?: Record<string, string>; sequenceInfo: SequenceInfo }
+export type PingMessageData = { id: string, ports?: Record<string, string>; sequenceInfo: SequenceInfo, payload: StartSequencePayload }
 
 export type PangMessageData = {
     requires?: string,
