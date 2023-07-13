@@ -1,4 +1,4 @@
-import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
+import { DeepPartial, DockerAdapterConfiguration, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
 
 import { merge } from "@scramjet/utility";
 import path from "path";
@@ -19,22 +19,6 @@ const _defaultConfig: STHConfiguration = {
         reconnectionDelay: 2000,
     },
     debug: false,
-    docker: {
-        prerunner: {
-            image: "",
-            maxMem: 128,
-        },
-        runner: {
-            image: "",
-            maxMem: 512,
-            exposePortsRange: [30000, 32767],
-            hostIp: "0.0.0.0"
-        },
-        runnerImages: {
-            python3: "",
-            node: "",
-        },
-    },
     identifyExisting: false,
     host: {
         apiBase: "/api/v1",
@@ -51,18 +35,6 @@ const _defaultConfig: STHConfiguration = {
     },
     safeOperationLimit: 512,
     runtimeAdapter: "detect",
-    sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
-    kubernetes: {
-        namespace: "default",
-        authConfigPath: undefined,
-        sthPodHost: undefined,
-        runnerImages: {
-            python3: "",
-            node: "",
-        },
-        sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
-        timeout: "0"
-    },
     startupConfig: "",
     exitWithLastInstance: false,
     timings: {
@@ -79,18 +51,50 @@ const _defaultConfig: STHConfiguration = {
             replaceTimestamp: true,
             labels: { module: "host", job: "telemetry" }
         }
+    },
+    adapters: {
+        "@scramjet/adapter-docker": {
+            prerunner: {
+                image: imageConfig.prerunner,
+                maxMem: 128
+            },
+            runner: {
+                image: imageConfig.runner.node,
+                maxMem: 512,
+                exposePortsRange: [30000, 32767],
+                hostIp: "0.0.0.0"
+            },
+            runnerImages: {
+                python3: imageConfig.runner.python3,
+                node: imageConfig.runner.node
+            }
+        },
+        "@scramjet/adapter-process": {
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences")
+        },
+        /*"@scramjet/adapter-k8s": {
+            namespace: "default",
+            authConfigPath: undefined,
+            sthPodHost: undefined,
+            runnerImages: {
+                python3: "",
+                node: "",
+            },
+            sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+            timeout: "0"
+        }*/
     }
 };
 
-merge(_defaultConfig, {
-    docker: {
-        prerunner: { image: imageConfig.prerunner },
-        runnerImages: imageConfig.runner,
-    },
-    kubernetes: {
-        runnerImages: imageConfig.runner,
-    }
-});
+if (_defaultConfig.adapters && _defaultConfig.adapters["@scramjet/adapter-k8s"]) {
+    merge(_defaultConfig, {
+        adapters: {
+            "@scramjet/adapter-k8s": {
+                runnerImages: imageConfig.runner
+            }
+        }
+    });
+}
 
 export const defaultConfig = _defaultConfig;
 
@@ -109,8 +113,8 @@ export class ConfigService {
         return this.config;
     }
 
-    getDockerConfig() {
-        return this.config.docker;
+    getDockerConfig(): DockerAdapterConfiguration {
+        return this.config.adapters["@scramjet/adapter-docker"];
     }
 
     update(config: DeepPartial<STHConfiguration>) {
@@ -118,13 +122,11 @@ export class ConfigService {
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
+        const kubeFull = config.adapters["@scramjet/adapter-k8s"] || {};
         const {
-            kubernetes: kubeFull,
-            sequencesRoot: optionsSequencesRoot2,
             cpmSslCaPath: optionsCpmSslCaPath,
             ...safe
         } = config;
-
         const { authConfigPath: optionsAuthConfigPath, sequencesRoot: optionsSequencesRoot, ...kubernetes } = kubeFull;
 
         return { ...safe, kubernetes };

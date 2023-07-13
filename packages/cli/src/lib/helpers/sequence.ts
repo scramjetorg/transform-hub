@@ -20,6 +20,7 @@ const { F_OK, R_OK } = constants;
 
 type SequenceUploadOptions = {
     name?: string;
+    runtimeAdapter?: string;
 }
 
 /**
@@ -132,6 +133,10 @@ export const sequenceSendPackage = async (
 
             if (options.name) {
                 headers["x-name"] = options.name;
+            }
+
+            if (options.runtimeAdapter) {
+                headers["x-runtime-adapter"] = options.runtimeAdapter;
             }
 
             seq = await getHostClient().sendSequence(

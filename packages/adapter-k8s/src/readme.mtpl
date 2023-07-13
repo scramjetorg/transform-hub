@@ -1,0 +1,18 @@
+# Scramjet Transform Hub Adapters
+
+This module holds two types of adapters utilized by Scramjet Transform Hub: Instance Adapter and Sequence Adapter. These Adapters allows for running the Sequence identification and Instance execution in standalone processes.
+
+The adapter provides two main exports:
+
+* [SequenceAdapter](./src/process-sequence-adapter.ts) - An adapter for preparing Sequence to be run in subprocess.
+* [InstanceAdapter](./src/process-instance-adapter.ts) - An adapter for running Instance by Runner executed in subprocess.
+
+## Docs
+
+>!docs adapters/modules.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

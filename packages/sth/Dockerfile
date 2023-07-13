@@ -2,7 +2,6 @@ FROM node:lts-bullseye-slim as builder
 
 WORKDIR /build
 
-COPY ./dist/adapters ./dist/adapters
 COPY ./dist/api-server ./dist/api-server
 COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
@@ -18,6 +17,10 @@ COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
 COPY ./dist/verser ./dist/verser
 COPY ./dist/telemetry ./dist/telemetry
+COPY ./dist/adapter-docker ./dist/adapter-docker
+COPY ./dist/adapter-k8s ./dist/adapter-k8s
+COPY ./dist/adapter-process ./dist/adapter-process
+COPY ./dist/adapters-utils ./dist/adapters-utils
 COPY ./dist/package.json ./dist/package.json
 COPY LICENSE ./
 
@@ -39,3 +42,4 @@ COPY --from=builder /build/dist ./dist
 RUN npx npm@8 install -g ./dist/sth
 
 CMD [ "scramjet-transform-hub" ]
+

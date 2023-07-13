@@ -78,10 +78,16 @@ export const sequence: CommandDefinition = (program) => {
         .command("send")
         .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
         .option("--name <name>", "Allows to name sequence")
+        .option("--runtime-adapter <adapter>", "STH will try to use Adapter with this name or it's default when Adapter name is not provided.")
         .description("Send the Sequence package to the Hub")
         .action(
-            async (sequencePackage: string, { name }) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name }, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
+            async (sequencePackage: string, { name, runtimeAdapter }) => {
+                const sequenceClient = await sequenceSendPackage(
+                    sequencePackage,
+                    { name, runtimeAdapter },
+                    false,
+                    { progress: sequenceCmd.parent?.getOptionValue("progress") }
+                );
 
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
@@ -91,10 +97,15 @@ export const sequence: CommandDefinition = (program) => {
         .command("update")
         .argument("<query>", "Sequence id or name to be overwritten")
         .argument("<package>", "The file to upload")
+        .option("--runtime-adapter <adapter>", "STH will try to use Adapter with this name or it's default when Adapter name is not provided.")
         .description("Update Sequence with given name")
         .action(
-            async (query: string, sequencePackage: string) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name: query }, true);
+            async (query: string, sequencePackage: string, { runtimeAdapter }) => {
+                const sequenceClient = await sequenceSendPackage(
+                    sequencePackage,
+                    { name: query, runtimeAdapter },
+                    true
+                );
 
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
@@ -183,12 +194,12 @@ export const sequence: CommandDefinition = (program) => {
         .description("Removes the Sequence from the Hub")
         .action(async (id: string, { force }) => {
             await sequenceDelete(id, { force }).then(
-                (res => { displayObject(res, profileManager.getProfileConfig().format); }),
-                (error => {
+                res => { displayObject(res, profileManager.getProfileConfig().format); },
+                error => {
                     displayError(
                         JSON.parse(error?.body || { body: "Unknown error" })
                     );
-                })
+                }
             );
         });
 
@@ -233,3 +244,4 @@ export const sequence: CommandDefinition = (program) => {
             displayMessage("Sequences removed successfully.");
         });
 };
+

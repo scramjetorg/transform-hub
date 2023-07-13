@@ -23,6 +23,7 @@ import {
     OpResponse,
     StopSequenceMessageData,
     HostProxy,
+    IInstanceAdapter,
 } from "@scramjet/types";
 import {
     AppError,
@@ -41,7 +42,6 @@ import { EventEmitter, once } from "events";
 import { ServerResponse } from "http";
 import { DuplexStream, getRouter } from "@scramjet/api-server";
 
-import { getInstanceAdapter } from "@scramjet/adapters";
 import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
@@ -75,7 +75,6 @@ export class CSIController extends TypedEmitter<Events> {
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
-    private adapter: string;
 
     get lastStats(): InstanceStats {
         return {
@@ -132,7 +131,7 @@ export class CSIController extends TypedEmitter<Events> {
      */
     logger: IObjectLogger;
 
-    private _instanceAdapter?: ILifeCycleAdapterRun;
+    private _instanceAdapter: ILifeCycleAdapterRun;
     finalizingPromise?: CancellablePromise;
 
     get instanceAdapter(): ILifeCycleAdapterRun {
@@ -172,12 +171,12 @@ export class CSIController extends TypedEmitter<Events> {
         communicationHandler: CommunicationHandler,
         sthConfig: STHConfiguration,
         hostProxy: HostProxy,
-        chosenAdapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        instanceAdapter: IInstanceAdapter
     ) {
         super();
 
         this.id = id;
-        this.adapter = chosenAdapter;
+        this._instanceAdapter = instanceAdapter;
         this.sequence = sequence;
         this.appConfig = payload.appConfig;
         this.sthConfig = sthConfig;
@@ -186,7 +185,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.inputTopic = payload.inputTopic;
         this.hostProxy = hostProxy;
         this.limits = {
-            memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
+            memory: payload.limits?.memory // @TODO: || sthConfig.docker.runner.maxMem
         };
 
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
@@ -270,8 +269,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     startInstance() {
-        this._instanceAdapter = getInstanceAdapter(this.adapter, this.sthConfig, this.id);
-
+        //this._instanceAdapter = this.adapter.//getInstanceAdapter(this.adapter, this.sthConfig, this.id);
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
         const instanceConfig: InstanceConfig = {

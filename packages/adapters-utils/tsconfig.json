@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "./src",
+    "./test"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "typedocOptions": {
+    "entryPoints": [
+      "src/index.ts"
+    ],
+    "out": "../../docs/adapters-utils",
+    "plugin": "typedoc-plugin-markdown",
+    "gitRevision": "HEAD",
+    "sort": "alphabetical"
+  }
+}

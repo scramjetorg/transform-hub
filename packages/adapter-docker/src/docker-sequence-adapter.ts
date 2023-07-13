@@ -2,9 +2,9 @@ import { SequenceAdapterError } from "@scramjet/model";
 import {
     ISequenceAdapter,
     SequenceConfig,
-    STHConfiguration,
     DockerSequenceConfig,
-    IObjectLogger
+    IObjectLogger,
+    DockerAdapterConfiguration
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { appendFile } from "fs";
@@ -18,8 +18,7 @@ import {
 } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
-import { detectLanguage } from "./utils";
+import { detectLanguage, sequencePackageJSONDecoder } from "@scramjet/adapters-utils";
 
 const PACKAGE_DIR = "/package";
 
@@ -29,6 +28,7 @@ const PACKAGE_DIR = "/package";
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
     private resources: DockerAdapterResources = {};
+    private config: DockerAdapterConfiguration;
 
     public name = "DockerSequenceAdapter";
 
@@ -37,7 +37,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     logger: IObjectLogger;
 
-    constructor(private config: STHConfiguration) {
+    constructor(config: DockerAdapterConfiguration) {
+        this.config = config;
         this.logger = new ObjLogger(this.name);
 
         this.dockerHelper = new DockerodeDockerHelper();
@@ -50,12 +51,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     async init(): Promise<void> {
         this.logger.trace("Initializing");
 
-        await this.fetch(this.config.docker.prerunner.image);
+        await this.fetch(this.config.prerunner.image);
 
         this.logger.info("Docker adapter initialized with options", {
-            "python3 runner image": this.config.docker.runnerImages.python3,
-            "node runner image": this.config.docker.runnerImages.node,
-            "prerunner image": this.config.docker.prerunner.image
+            "python3 runner image": this.config.runnerImages.python3,
+            "node runner image": this.config.runnerImages.node,
+            "prerunner image": this.config.prerunner.image
         });
     }
 
@@ -98,14 +99,14 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         try {
             const { streams, wait } = await this.dockerHelper.run({
-                imageName: this.config.docker.prerunner?.image || "",
+                imageName: this.config.prerunner?.image || "",
                 volumes: [{ mountPoint: PACKAGE_DIR, volume, writeable: true }],
                 command: ["/opt/transform-hub/identify.sh"],
                 autoRemove: true,
-                maxMem: this.config.docker.prerunner?.maxMem || 0
+                maxMem: this.config.prerunner?.maxMem || 0
             });
 
-            this.logger.debug("Identify started", volume, this.config.docker.prerunner?.maxMem || 0);
+            this.logger.debug("Identify started", volume, this.config.prerunner?.maxMem || 0);
 
             const ret = await this.parsePackage(streams, wait, volume);
 
@@ -158,14 +159,14 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         let runResult: DockerAdapterRunResponse;
         const prerunnerStart = new Date();
 
-        this.logger.debug("Starting PreRunner", this.config.docker.prerunner);
+        this.logger.debug("Starting PreRunner", this.config.prerunner);
 
         try {
             runResult = await this.dockerHelper.run({
-                imageName: this.config.docker.prerunner.image || "",
+                imageName: this.config.prerunner.image || "",
                 volumes: [{ mountPoint: PACKAGE_DIR, volume: volumeId, writeable: true }],
                 autoRemove: true,
-                maxMem: this.config.docker.prerunner.maxMem || 0
+                maxMem: this.config.prerunner.maxMem || 0
             });
         } catch (err: any) {
             this.logger.error(err);
@@ -253,11 +254,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
         const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
 
-        const container = Object.assign({}, this.config.docker.runner);
+        const container = Object.assign({}, this.config.runner);
 
         container.image = "python3" in engines
-            ? this.config.docker.runnerImages.python3
-            : this.config.docker.runnerImages.node;
+            ? this.config.runnerImages.python3
+            : this.config.runnerImages.node;
 
         return {
             type: "docker",

@@ -8,16 +8,15 @@ import {
     InstanceLimits,
     IObjectLogger,
     K8SAdapterConfiguration,
-    MonitoringMessageData,
-    STHConfiguration,
+    MonitoringMessageData
 } from "@scramjet/types";
 
 import path from "path";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { createReadStream } from "fs";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
-import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { getRunnerEnvEntries } from "./get-runner-env";
+//import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+import { getRunnerEnvEntries } from "@scramjet/adapters-utils";
 import { PassThrough } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
 
@@ -40,16 +39,16 @@ IComponent {
     get limits() { return this._limits || {} as InstanceLimits; }
     private set limits(value: InstanceLimits) { this._limits = value; }
 
-    constructor(sthConfig: STHConfiguration) {
+    constructor(config: K8SAdapterConfiguration) {
         // @TODO this is a redundant check (it was already checked in sequence adapter)
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+        // const decodedAdapterConfig = adapterConfigDecoder.decode(config);
 
-        if (!decodedAdapterConfig.isOk()) {
-            throw new Error("Invalid Kubernetes Adapter configuration");
-        }
+        // if (!decodedAdapterConfig.isOk()) {
+        //     throw new Error("Invalid Kubernetes Adapter configuration");
+        // }
 
-        this.adapterConfig = decodedAdapterConfig.value;
+        this.adapterConfig = config;//decodedAdapterConfig.value;
         this.logger = new ObjLogger(this);
     }
 
@@ -107,7 +106,7 @@ IComponent {
             getRunnerEnvEntries({
                 sequencePath: path.join("/package", config.entrypointPath),
                 instancesServerPort,
-                instancesServerHost: this.adapterConfig.sthPodHost,
+                instancesServerHost: this.adapterConfig.sthPodHost!,
                 instanceId,
                 pipesPath: ""
             }).map(([name, value]) => ({ name, value }));

@@ -189,7 +189,7 @@ Then("container uses {string} image", async function(this: CustomWorld, image: s
 });
 
 Then("container uses node image defined in sth-config", async function(this: CustomWorld) {
-    const defaultRunnerImage = defaultConfig.docker.runnerImages.node;
+    const defaultRunnerImage = defaultConfig.adapters["@scramjet/adapter-docker"].runnerImages.node;
 
     assert.equal(this.resources.containerInfo.Image, defaultRunnerImage);
 });

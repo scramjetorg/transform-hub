@@ -112,19 +112,7 @@ const options: OptionValues & STHCommandOptions = program
             space: options.platformSpace,
             apiVersion: options.platformApiVersion
         },
-        docker: {
-            prerunner: {
-                image: options.prerunnerImage,
-                maxMem: options.prerunnerMaxMem
-            },
-            runner: {
-                maxMem: options.runnerMaxMem,
-                hostIp: options.exposeHostIp
-            },
-            runnerImages: {
-                node: options.runnerImage,
-                python3: options.runnerPyImage
-            }
+        adapters: {
         },
         host: {
             apiBase: "/api/v1",
@@ -135,30 +123,13 @@ const options: OptionValues & STHCommandOptions = program
             federationControl: options.enableFederationControl
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
-        sequencesRoot: resolveFile(options.sequencesRoot),
         startupConfig: resolveFile(options.startupConfig),
         identifyExisting: options.identifyExisting,
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
         logColors: options.colors,
-        kubernetes: {
-            quotaName: options.k8sQuotaName,
-            namespace: options.k8sNamespace,
-            authConfigPath: options.k8sAuthConfigPath,
-            sthPodHost: options.k8sSthPodHost,
-            runnerImages: {
-                node: options.k8sRunnerImage,
-                python3: options.k8sRunnerPyImage
-            },
-            sequencesRoot:
-                options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
-            timeout: options.k8sRunnerCleanupTimeout,
-            runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
-            runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
-            runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
-            runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
-        },
+
         timings: {
             instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
         },
@@ -168,13 +139,25 @@ const options: OptionValues & STHCommandOptions = program
         }
     });
 
+    let config = configService.getConfig();
+
+    if (config["adapters"] && config["adapters"]["@scramjet/adapter-process"] && options.sequencesRoot) {
+        configService.update({
+            adapters: {
+                "@scramjet/adapter-process": {
+                    sequencesRoot: options.sequencesRoot
+                }
+            }
+        });
+    }
+
     const tips = [
         ["Run Sequences in our cloud.", { "Check it": "out as a beta tester", here: "https://scr.je/join-beta-sth" }],
         ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "check the": "beta version", "at-this-link": "https://scr.je/join-beta-sth" }],
         ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
     ];
 
-    const config = configService.getConfig();
+    config = configService.getConfig();
 
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.

@@ -27,6 +27,7 @@ jobs:
       node-version: 16.x
 
   build-docker-runner-image:
+    needs: [build-sth]
     uses: ./.github/workflows/build-docker-runner-node.yml
     with:
       node-version: 16.x
