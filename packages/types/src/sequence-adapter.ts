@@ -7,7 +7,8 @@ export type SequenceInfo = {
     config: SequenceConfig;
     id: string;
     instances: Set<InstanceId>;
-    name?: string;
+    location? : string;
+    name? : string;
 }
 
 export interface ISequenceAdapter {
