@@ -6,5 +6,6 @@ export type GetSequenceResponse = {
     name?: string;
     id: string;
     config: SequenceConfig;
+
     location : string;
 }

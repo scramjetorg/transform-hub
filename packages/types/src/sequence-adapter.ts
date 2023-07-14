@@ -8,6 +8,7 @@ export type SequenceInfo = {
     id: string;
     instances: Set<InstanceId>;
     location? : string;
+
     name? : string;
 }
 
