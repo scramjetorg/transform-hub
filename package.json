@@ -30,6 +30,7 @@
     "build:readme": "node ./scripts/mk-readme",
     "build:docs": "scripts/run-script.js -w modules build:docs && NODE_ENV=development yarn run start:dev:cli dev cmdToMd -o docs/cli/commands-description.md",
     "build:all-docs": "yarn build:readme && yarn build:docs",
+    "prepack:pub": "scripts/run-script.js -w '!bdd' build:only",
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
     "cloc": "cloc . --fullpath --include-lang TypeScript,JavaScript,Python,Dockerfile,Markdown  --match-d=\"(packages|bdd/step-definitions|bdd/lib)\" --not-match-d \"(node_modules|test|dist)\" --by-percent cmb",
