@@ -13,6 +13,7 @@ import { displayProdOnlyMsg } from "../helpers/messages";
  */
 export const space: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
+    const mwClient = getMiddlewareClient();
 
     if (!isProdEnv) {
         program.command("space", { hidden: true })
@@ -35,7 +36,7 @@ export const space: CommandDefinition = (program) => {
         .description("Display info about the default space")
         .action(async () => {
             const spaceId = sessionConfig.lastSpaceId;
-            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
+            const managerClient = mwClient.getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 
             displayObject({ spaceId, version, managerClient }, profileManager.getProfileConfig().format);
@@ -46,7 +47,6 @@ export const space: CommandDefinition = (program) => {
         .alias("ls")
         .description("List all existing spaces")
         .action(async () => {
-            const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
             return displayObject(managers, profileManager.getProfileConfig().format);
@@ -57,7 +57,6 @@ export const space: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Use the space")
         .action(async (name: string) => {
-            const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
 
             displayObject({ name, ...await managerClient.getVersion() }, profileManager.getProfileConfig().format);
@@ -68,8 +67,6 @@ export const space: CommandDefinition = (program) => {
         .command("audit")
         .description("Fetch all audit messages from spaces")
         .action(async () => {
-            const mwClient = getMiddlewareClient();
-
             return displayStream(await mwClient.getAuditStream());
         });
 
@@ -80,7 +77,6 @@ export const space: CommandDefinition = (program) => {
         .action(async (spaceName: string) => {
             if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
 
-            const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(spaceName);
 
             await displayStream(await managerClient.getLogStream());
@@ -93,7 +89,6 @@ export const space: CommandDefinition = (program) => {
         .option("--id <id>", "Hub Id")
         .option("--all", "Disconnects all self-hosted Hubs connected to Space", false)
         .action(async (spaceName: string, options: { id: string, all: boolean }) => {
-            const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(spaceName);
             let opts = { } as PostDisconnectPayload;
 
@@ -111,7 +106,16 @@ export const space: CommandDefinition = (program) => {
 
             displayObject(await managerClient.disconnectHubs(opts), profileManager.getProfileConfig().format);
         });
+    spaceCmd
+        .command("version")
+        .description("Display space version")
+        .action(async () => {
+            const spaceName = sessionConfig.lastSpaceId;
+            const managerClient = mwClient.getManagerClient(spaceName);
+            const version = await managerClient.getVersion();
 
+            displayObject(version, profileManager.getProfileConfig().format);
+        });
     const accessKeyCmd = spaceCmd
         .command("access")
         .description("Manages Access Keys for active Space");
@@ -121,7 +125,6 @@ export const space: CommandDefinition = (program) => {
         .description("Create Access key for adding Hubs to active Space, i.e \"Army of Darkness\"")
         .action(async (description: string) => {
             const spaceName = sessionConfig.lastSpaceId;
-            const mwClient = getMiddlewareClient();
 
             if (!spaceName) {
                 throw new Error("No Space set");
@@ -137,7 +140,6 @@ export const space: CommandDefinition = (program) => {
         .description("List Access Keys metadata in active Space")
         .action(async () => {
             const spaceName = sessionConfig.lastSpaceId;
-            const mwClient = getMiddlewareClient();
 
             if (!spaceName) {
                 throw new Error("No Space set");
@@ -151,7 +153,6 @@ export const space: CommandDefinition = (program) => {
         .argument("<access_key>", "Access Key id")
         .action(async (accessKey: string) => {
             const spaceName = sessionConfig.lastSpaceId;
-            const mwClient = getMiddlewareClient();
 
             if (!spaceName) {
                 throw new Error("No Space set");
