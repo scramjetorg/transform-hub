@@ -52,6 +52,7 @@ import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
+import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -642,8 +643,8 @@ export class Host implements IComponent {
             this.sequenceStore.delete(id);
 
             this.logger.trace("Sequence removed:", id);
-
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+            console.log("consolelog: ", sequenceInfo);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as GetSequenceResponse);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -765,7 +766,7 @@ export class Host implements IComponent {
 
             this.logger.info("Sequence identified", config);
 
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
             this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
