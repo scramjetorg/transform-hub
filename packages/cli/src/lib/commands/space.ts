@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 /* eslint-disable no-console */
 import { PostDisconnectPayload } from "@scramjet/types/src/rest-api-manager";
 import { CommandDefinition, isProductionEnv } from "../../types";
@@ -5,12 +6,21 @@ import { profileManager, sessionConfig } from "../config";
 import { displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 import { displayProdOnlyMsg } from "../helpers/messages";
+import { Option } from "commander";
+import { isIdString } from "@scramjet/utility";
 
+function validateHubId(id:string): string {
+    if (!isIdString(id)) {
+        throw new Error("Provided argument is not a valid id");
+    }
+    return id;
+}
 /**
  * Initializes `space` command.
  *
  * @param {Command} program Commander object.
  */
+
 export const space: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
@@ -131,7 +141,6 @@ export const space: CommandDefinition = (program) => {
 
             displayObject(accessKey, profileManager.getProfileConfig().format);
         });
-
     accessKeyCmd.command("list")
         .alias("ls")
         .description("List Access Keys metadata in active Space")
@@ -146,19 +155,35 @@ export const space: CommandDefinition = (program) => {
             displayObject(await mwClient.listAccessKeys(spaceName), profileManager.getProfileConfig().format);
         });
 
+    const SpaceId = new Option("--id <id>", "revoke specified key").argParser(validateHubId);
+
     accessKeyCmd.command("revoke")
         .description("Revokes Access Key in active Space")
-        .argument("<access_key>", "Access Key id")
-        .action(async (accessKey: string) => {
+        .addOption(SpaceId)
+        .option("--all", "Removes all access keys and disconnects all self-hosted Hubs connected to Space")
+        .action(async ({ all, id } : { all: boolean, id: string }) => {
             const spaceName = sessionConfig.lastSpaceId;
             const mwClient = getMiddlewareClient();
 
+            if (all && id || !all && !id) {
+                throw new Error("Please provide one of the options, please use command with --help to get more information");
+            }
             if (!spaceName) {
                 throw new Error("No Space set");
             }
+            if (id) {
+                const revokedAccessKey = await mwClient.revokeAccessKey(spaceName, id);
 
-            const revokedAccessKey = await mwClient.revokeAccessKey(spaceName, accessKey);
+                return displayObject(revokedAccessKey, profileManager.getProfileConfig().format);
+            }
+            const apiKeys = await mwClient.listAccessKeys(spaceName);
 
-            displayObject(revokedAccessKey, profileManager.getProfileConfig().format);
+            if (!apiKeys.accessKeys || apiKeys.accessKeys.length === 0) {
+                throw new Error("There are no keys to revoke");
+            }
+
+            const revokedAccessKeys = await mwClient.revokeAllAccessKeys(spaceName, apiKeys);
+
+            return displayObject(revokedAccessKeys, profileManager.getProfileConfig().format);
         });
 };
