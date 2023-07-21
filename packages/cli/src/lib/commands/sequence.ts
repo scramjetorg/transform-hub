@@ -183,12 +183,12 @@ export const sequence: CommandDefinition = (program) => {
         .description("Removes the Sequence from the Hub")
         .action(async (id: string, { force }) => {
             await sequenceDelete(id, { force }).then(
-                (res => { displayObject(res, profileManager.getProfileConfig().format); }),
-                (error => {
+                res => { displayObject(res, profileManager.getProfileConfig().format); },
+                error => {
                     displayError(
                         JSON.parse(error?.body || { body: "Unknown error" })
                     );
-                })
+                }
             );
         });
 

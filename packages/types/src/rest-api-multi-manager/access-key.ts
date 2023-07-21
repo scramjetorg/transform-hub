@@ -1,4 +1,6 @@
 export type GetAccessKeysResponse = {
-    created: number;
-    description?: string;
-}[];
+    accessKeys: {
+        created: number;
+        description: string;
+    }[]
+}
