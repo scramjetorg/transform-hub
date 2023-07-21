@@ -40,7 +40,13 @@ ___
 
 ### GetAccessKeysResponse
 
-Ƭ **GetAccessKeysResponse**: { `created`: `number` ; `description?`: `string`  }[]
+Ƭ **GetAccessKeysResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `accessKeys` | { `created`: `number` ; `description`: `string`  }[] |
 
 #### Defined in
 

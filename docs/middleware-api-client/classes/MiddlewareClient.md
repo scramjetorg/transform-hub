@@ -29,6 +29,7 @@ Client for the Middleware interaction.
 - [getVersion](MiddlewareClient.md#getversion)
 - [listAccessKeys](MiddlewareClient.md#listaccesskeys)
 - [revokeAccessKey](MiddlewareClient.md#revokeaccesskey)
+- [revokeAllAccessKeys](MiddlewareClient.md#revokeallaccesskeys)
 
 ## Properties
 
@@ -38,7 +39,7 @@ Client for the Middleware interaction.
 
 #### Defined in
 
-[middleware-client.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L11)
+[middleware-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L12)
 
 ___
 
@@ -52,7 +53,7 @@ ClientProvider.client
 
 #### Defined in
 
-[middleware-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L12)
+[middleware-client.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L13)
 
 ## Constructors
 
@@ -69,7 +70,7 @@ ClientProvider.client
 
 #### Defined in
 
-[middleware-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L14)
+[middleware-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L15)
 
 ## Methods
 
@@ -91,7 +92,7 @@ ClientProvider.client
 
 #### Defined in
 
-[middleware-client.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L64)
+[middleware-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L65)
 
 ___
 
@@ -109,7 +110,7 @@ List of manager ids
 
 #### Defined in
 
-[middleware-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L54)
+[middleware-client.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L55)
 
 ___
 
@@ -134,7 +135,7 @@ ManagerClient for space management
 
 #### Defined in
 
-[middleware-client.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L27)
+[middleware-client.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L28)
 
 ___
 
@@ -152,7 +153,7 @@ List of manager ids
 
 #### Defined in
 
-[middleware-client.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L36)
+[middleware-client.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L37)
 
 ___
 
@@ -170,7 +171,7 @@ List of manager ids
 
 #### Defined in
 
-[middleware-client.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L45)
+[middleware-client.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L46)
 
 ___
 
@@ -190,7 +191,7 @@ ___
 
 #### Defined in
 
-[middleware-client.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L58)
+[middleware-client.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L59)
 
 ___
 
@@ -211,4 +212,25 @@ ___
 
 #### Defined in
 
-[middleware-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L73)
+[middleware-client.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L74)
+
+___
+
+### revokeAllAccessKeys
+
+▸ **revokeAllAccessKeys**(`spaceId`, `apiKeys`): `Promise`<{ `keysRevoked`: `number` ; `message`: `string`  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `spaceId` | `string` |
+| `apiKeys` | `GetAccessKeysResponse` |
+
+#### Returns
+
+`Promise`<{ `keysRevoked`: `number` ; `message`: `string`  }\>
+
+#### Defined in
+
+[middleware-client.ts:82](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L82)

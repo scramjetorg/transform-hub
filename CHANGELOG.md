@@ -2,6 +2,17 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.35.1] - 2023-07-21
+
+## Features
+
+* option to revoke all keys using --all flag by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/907
+
+## Fixed
+
+* VDM-1021: add script to bump dependencies version by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/898
+* Add prepack:pub command to execute installing dependencies for the packages to be released by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/906
+
 ## [0.35.0] - 2023-07-10
 
 ## Features
