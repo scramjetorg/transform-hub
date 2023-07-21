@@ -643,7 +643,7 @@ export class Host implements IComponent {
             this.sequenceStore.delete(id);
 
             this.logger.trace("Sequence removed:", id);
-            console.log("consolelog: ", sequenceInfo);
+            // eslint-disable-next-line max-len
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as GetSequenceResponse);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
@@ -766,6 +766,7 @@ export class Host implements IComponent {
 
             this.logger.info("Sequence identified", config);
 
+            // eslint-disable-next-line max-len
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
