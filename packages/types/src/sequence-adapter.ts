@@ -7,7 +7,7 @@ export type SequenceInfo = {
     config: SequenceConfig;
     id: string;
     instances: Set<InstanceId>;
-    location? : string;
+    location : string;
     name? : string;
 }
 

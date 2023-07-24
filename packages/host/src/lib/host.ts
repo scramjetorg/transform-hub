@@ -713,7 +713,13 @@ export class Host implements IComponent {
 
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
-                this.sequenceStore.set({ id: config.id, config: config, instances: new Set() });
+
+                if (this.config.host.id) {
+                    // eslint-disable-next-line max-len
+                    this.sequenceStore.set({ id: config.id, config: config, instances: new Set(), location: this.config.host.id });
+                } else {
+                    this.sequenceStore.set({ id: config.id, config: config, instances: new Set(), location: "STH" });
+                }
             }
             this.logger.info(` ${configs.length} sequences identified`);
         } catch (e: any) {
@@ -762,7 +768,12 @@ export class Host implements IComponent {
 
             config.packageSize = stream.socket?.bytesRead;
 
-            this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName });
+            if (this.config.host.id) {
+                // eslint-disable-next-line max-len
+                this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName, location: this.config.host.id });
+            } else {
+                this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName, location: "STH" });
+            }
 
             this.logger.info("Sequence identified", config);
 
