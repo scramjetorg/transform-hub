@@ -552,11 +552,11 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {SequenceMessageCode} seqStatus Sequence status.
      */
     // eslint-disable-next-line max-len
-    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, sequence: STHRestAPI.GetSequenceResponse) : Promise<void> {
+    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse) : Promise<void> {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 
         await this.communicationStream?.whenWrote(
-            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, sequence }]
+            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]
         );
 
         this.logger.trace("Sequence status update sent", sequenceId, seqStatus);
