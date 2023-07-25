@@ -706,11 +706,10 @@ export class Host implements IComponent {
         const sequenceAdapter = getSequenceAdapter(adapter, this.config);
 
         try {
+            sequenceAdapter.logger.pipe(this.logger);
             await sequenceAdapter.init();
 
             const configs = await sequenceAdapter.list();
-
-            sequenceAdapter.logger.pipe(this.logger);
 
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);

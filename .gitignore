@@ -159,3 +159,7 @@ timing-log.ndjson
 
 # private working directories
 /temp
+
+# extra dist dirs
+
+/dist.*
