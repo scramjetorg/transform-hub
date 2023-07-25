@@ -13,7 +13,6 @@ import { displayProdOnlyMsg } from "../helpers/messages";
  */
 export const space: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
-    const mwClient = getMiddlewareClient();
 
     if (!isProdEnv) {
         program.command("space", { hidden: true })
@@ -21,6 +20,7 @@ export const space: CommandDefinition = (program) => {
 
         return;
     }
+    const mwClient = getMiddlewareClient();
 
     const spaceCmd = program
         .command("space")
