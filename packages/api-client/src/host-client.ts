@@ -32,6 +32,19 @@ export class HostClient implements ClientProvider {
         return this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
     }
 
+    async getSequenceId(sequenceName: string) {
+        const sequenceList = await this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
+
+        const result = sequenceList.filter((sequence) => {
+            return sequence.config.name === sequenceName;
+        });
+
+        if (result.length !== 1) {
+            throw new Error("No results found");
+        }
+        return result[0].id;
+    }
+
     /**
      * Returns list of all Instances on Host.
      *

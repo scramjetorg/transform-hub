@@ -31,6 +31,11 @@ export const sequence: CommandDefinition = (program) => {
         .alias("ls")
         .description("List all Sequences available on Hub")
         .action(async () => displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format));
+    sequenceCmd
+        .command("getId")
+        .argument("<name>", "sequence name")
+        .action(async (name: string) =>
+            displayEntity(await getHostClient().getSequenceId(name), profileManager.getProfileConfig().format));
 
     sequenceCmd
         .command("use")
