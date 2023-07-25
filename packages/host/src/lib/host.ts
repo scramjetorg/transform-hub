@@ -610,7 +610,7 @@ export class Host implements IComponent {
             };
         }
 
-        if (sequenceInfo.instances.size > 0) {
+        if (sequenceInfo.instances.length > 0) {
             const instances = [...sequenceInfo.instances].every((instanceId) => {
                 // ?
                 // this.instancesStore[instanceId]?.finalizingPromise?.cancel();
@@ -716,9 +716,9 @@ export class Host implements IComponent {
 
                 if (this.config.host.id) {
                     // eslint-disable-next-line max-len
-                    this.sequenceStore.set({ id: config.id, config: config, instances: new Set(), location: this.config.host.id });
+                    this.sequenceStore.set({ id: config.id, config: config, instances: [], location: this.config.host.id });
                 } else {
-                    this.sequenceStore.set({ id: config.id, config: config, instances: new Set(), location: "STH" });
+                    this.sequenceStore.set({ id: config.id, config: config, instances: [], location: "STH" });
                 }
             }
             this.logger.info(` ${configs.length} sequences identified`);
@@ -770,9 +770,9 @@ export class Host implements IComponent {
 
             if (this.config.host.id) {
                 // eslint-disable-next-line max-len
-                this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName, location: this.config.host.id });
+                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: this.config.host.id });
             } else {
-                this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName, location: "STH" });
+                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
             }
 
             this.logger.info("Sequence identified", config);
@@ -807,7 +807,7 @@ export class Host implements IComponent {
             return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with name ${seqQuery} not found` };
         }
 
-        if (existingSequence.instances.size) {
+        if (existingSequence.instances.length) {
             return { opStatus: ReasonPhrases.CONFLICT, error: "Can't update sequence with instances" };
         }
 
@@ -1034,7 +1034,9 @@ export class Host implements IComponent {
 
             delete InstanceStore[csic.id];
 
-            sequence.instances.delete(id);
+            sequence.instances = sequence.instances.filter(item => {
+                return item !== id;
+            });
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
@@ -1064,7 +1066,7 @@ export class Host implements IComponent {
 
         this.logger.trace("CSIController started", id);
 
-        sequence.instances.add(id);
+        sequence.instances.push(id);
 
         return csic;
     }
