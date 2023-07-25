@@ -8,7 +8,6 @@ import { getMiddlewareClient } from "../platform";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { Option } from "commander";
 import { isIdString } from "@scramjet/utility";
-
 function validateHubId(id:string): string {
     if (!isIdString(id)) {
         throw new Error("Provided argument is not a valid id");
