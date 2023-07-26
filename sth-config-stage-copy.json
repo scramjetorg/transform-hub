@@ -1,0 +1,16 @@
+{
+    "host": {
+        "hostname": "0.0.0.0",
+        "port": 9002,
+        "instancesServerPort": 9003,
+        "id": "SELF_HUB-1"
+    },
+    "timings": {
+        "instanceLifetimeExtensionDelay": 10000
+    },
+    "platform": {
+        "apiKey": "+eVYFsX8OdFIlNiXAso2VkbZ4GkpRseu8iPfEZw1A1s5o8g3ic2k/XlwAA2LyPMH/TkRgY0oY89GE4TTvzJ5n7m/hBOsKD/9CYzt+tubajyuHzOL",
+        "api": "https://api-hybrid.stage.k8s-stage.scp.ovh:7000",
+        "space": "org-65ef7447-7376-4e2b-856d-be2a02897c81:org-65ef7447-7376-4e2b-856d-be2a02897c81-manager"
+    }
+}
