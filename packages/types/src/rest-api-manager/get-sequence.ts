@@ -1,7 +1,7 @@
 import { SequenceConfig } from "../runner-config";
 
 export type GetSequenceResponse = {
-    instances?: string[];
+    instances: string[];
     name?: string;
     id: string;
     config: SequenceConfig;
