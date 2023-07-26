@@ -630,7 +630,8 @@ Send the Sequence package to the Hub
 
 **Arguments**
 
-*  package                  The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.
+*  package                  The file or directory to upload or '-' to use the last packed. If directory, it
+*                           will be packed and sent.
 
 **Options**
 
@@ -676,7 +677,8 @@ Start the Sequence with or without given arguments
 
 **Options**
 
-*  -f, --config-file <path-to-file>   Path to configuration file in JSON format to be passed to the Instance context
+*  -f, --config-file <path-to-file>   Path to configuration file in JSON format to be passed to the Instance
+*                                     context
 *  -s, --config-string <json-string>  Configuration in JSON format to be passed to the Instance context
 *  --output-topic <string>            Topic to which the output stream should be routed
 *  --input-topic <string>             Topic to which the input stream should be routed
@@ -699,7 +701,8 @@ Pack (if needed), send and start the Sequence
 **Options**
 
 *  -o, --output <file.tar.gz>         Output path - defaults to dirname
-*  -f, --config-file <path-to-file>   Path to configuration file in JSON format to be passed to the Instance context
+*  -f, --config-file <path-to-file>   Path to configuration file in JSON format to be passed to the Instance
+*                                     context
 *  -s, --config-string <json-string>  Configuration in JSON format to be passed to the Instance context
 *  --args <json-string>               Arguments to be passed to the first function in the Sequence
 *  -h, --help                         Display help for command
@@ -936,7 +939,8 @@ Send a file to input, if no file given the data will be read directly from the c
 **Options**
 
 *  -t, --content-type <value>  Content-Type (default: "text/plain")
-*  -e, --end                   Close the input stream of the Instance when this stream ends, "x-end-stream" header (default: false)
+*  -e, --end                   Close the input stream of the Instance when this stream ends, "x-end-stream"
+*                              header (default: false)
 *  -h, --help                  Display help for command
 
 ---
@@ -958,8 +962,10 @@ See input and output
 
 **Options**
 
-*  -t,--content-type <content-type>  Content-Type (choices: "text/plain", "application/octet-stream", "application/x-ndjson")
-*  -e, --end                         Close the input stream of the Instance when this stream ends, "x-end-stream" header (default: false)
+*  -t,--content-type <content-type>  Content-Type (choices: "text/plain", "application/octet-stream",
+*                                    "application/x-ndjson")
+*  -e, --end                         Close the input stream of the Instance when this stream ends,
+*                                    "x-end-stream" header (default: false)
 *  -h, --help                        Display help for command
 
 ---
@@ -1154,7 +1160,9 @@ Create topic
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "text/plain")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson",
+*                                     "application/x-ndjson", "text/plain", "application/octet-stream",
+*                                     default: "text/plain")
 *  -h, --help                         Display help for command
 
 ---
@@ -1187,7 +1195,9 @@ Get data from topic
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "text/plain")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson",
+*                                     "application/x-ndjson", "text/plain", "application/octet-stream",
+*                                     default: "text/plain")
 *  -h, --help                         Display help for command
 
 ---
@@ -1204,7 +1214,9 @@ Send data on topic from file, directory or directly through the console
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "text/plain")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson",
+*                                     "application/x-ndjson", "text/plain", "application/octet-stream",
+*                                     default: "text/plain")
 *  -h, --help                         Display help for command
 
 ---
