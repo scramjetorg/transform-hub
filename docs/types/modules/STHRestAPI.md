@@ -179,6 +179,7 @@ ___
 | `config` | [`SequenceConfig`](../modules.md#sequenceconfig) |
 | `id` | `string` |
 | `instances` | readonly `string`[] |
+| `location` | `string` |
 | `name?` | `string` |
 
 #### Defined in

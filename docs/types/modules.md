@@ -2410,7 +2410,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/messages/sequence.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence.ts#L9)
+[packages/types/src/messages/sequence.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence.ts#L11)
 
 ___
 
@@ -2477,12 +2477,13 @@ ___
 | :------ | :------ |
 | `config` | [`SequenceConfig`](modules.md#sequenceconfig) |
 | `id` | `string` |
-| `instances` | `Set`<[`InstanceId`](modules.md#instanceid)\> |
+| `instances` | `string`[] |
+| `location` | `string` |
 | `name?` | `string` |
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L6)
+[packages/types/src/sequence-adapter.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L5)
 
 ___
 
@@ -2492,7 +2493,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/messages/sequence.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence.ts#L8)
+[packages/types/src/messages/sequence.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence.ts#L10)
 
 ___
 
@@ -2504,12 +2505,13 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `config` | [`SequenceConfig`](modules.md#sequenceconfig) |
 | `id` | `string` |
 | `status` | `SequenceMessageCode` |
 
 #### Defined in
 
-[packages/types/src/messages/sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence.ts#L3)
+[packages/types/src/messages/sequence.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence.ts#L4)
 
 ___
 

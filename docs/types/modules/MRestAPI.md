@@ -146,11 +146,21 @@ ___
 
 ### GetSequenceResponse
 
-Ƭ **GetSequenceResponse**: `string`
+Ƭ **GetSequenceResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `config` | [`SequenceConfig`](../modules.md#sequenceconfig) |
+| `id` | `string` |
+| `instances` | `string`[] |
+| `location` | `string` |
+| `name?` | `string` |
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/get-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-sequence.ts#L1)
+[packages/types/src/rest-api-manager/get-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-sequence.ts#L3)
 
 ___
 

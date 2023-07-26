@@ -2,6 +2,12 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.35.2] - 2023-07-26
+
+## Features
+
+* Feat/all sequences by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/903
+
 ## [0.35.1] - 2023-07-21
 
 ## Features

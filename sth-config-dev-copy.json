@@ -1,0 +1,18 @@
+{
+    "host": {
+        "hostname": "0.0.0.0",
+        "port": 9002,
+        "instancesServerPort": 9003,
+        "id": "SELF_HUB-1"
+    },
+    "timings": {
+        "instanceLifetimeExtensionDelay": 10000
+    },
+    "platform": {
+        "apiKey": "8LP81a9Dn2q6wwCBml8C3vRD+Nad9+Dqwxwt/l/C8m2MAGarWCoX7P+GROcRS4JEAuzYF92Oc2UJFamrD5M8Ec1Jiw0pVTFghaqjj3S1Wy/TlTyl",
+        "api": "https://api-hybrid.dev.k8s.scp.ovh:7000",
+        "space": "org-73deafd9-252c-43cb-a841-1832c9a99932:org-73deafd9-252c-43cb-a841-1832c9a99932-manager"
+    }
+}
+
+NODE_TLS_REJECT_UNAUTHORIZED=0 yarn start:dev --platform-api "https://api-hybrid.dev.k8s.scp.ovh:7000" --platform-space "org-98cfe2b5-968d-47c9-9702-5500c06908a5:org-98cfe2b5-968d-47c9-9702-5500c06908a5-manager" --platform-api-key "ZlOp5MrHn/Yxr3465+pUFHUMyL/buBrL49VcnxvxnnQWLgHr/0/zwjxGfMoKjDBbN6s55AnqXgJS1ZhjW7FO7AZdknhGeugPVR88K+BSw2Ap5jrB" --id "SELF_HOSTED_STH-2" --description "lorem" --tags "tag-1"

@@ -472,7 +472,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:631](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L631)
+[packages/host/src/lib/cpm-connector.ts:632](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L632)
 
 ___
 
@@ -496,7 +496,7 @@ Promise resolving to `ReadableStream<any>` with topic data.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:620](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L620)
+[packages/host/src/lib/cpm-connector.ts:621](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L621)
 
 ___
 
@@ -652,7 +652,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:601](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L601)
+[packages/host/src/lib/cpm-connector.ts:602](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L602)
 
 ___
 
@@ -937,7 +937,7 @@ Sends Instance information to Manager via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:570](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L570)
+[packages/host/src/lib/cpm-connector.ts:571](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L571)
 
 ___
 
@@ -979,7 +979,7 @@ ___
 
 ### sendSequenceInfo
 
-▸ **sendSequenceInfo**(`sequenceId`, `seqStatus`): `Promise`<`void`\>
+▸ **sendSequenceInfo**(`sequenceId`, `seqStatus`, `config`): `Promise`<`void`\>
 
 Sends Sequence status to Manager via communication channel.
 
@@ -989,6 +989,7 @@ Sends Sequence status to Manager via communication channel.
 | :------ | :------ | :------ |
 | `sequenceId` | `string` | Sequence id. |
 | `seqStatus` | `SequenceMessageCode` | Sequence status. |
+| `config` | `GetSequenceResponse` | - |
 
 #### Returns
 
@@ -996,7 +997,7 @@ Sends Sequence status to Manager via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:554](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L554)
+[packages/host/src/lib/cpm-connector.ts:555](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L555)
 
 ___
 
@@ -1045,7 +1046,7 @@ Topic information is send via communication channel.
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:586](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L586)
+[packages/host/src/lib/cpm-connector.ts:587](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L587)
 
 ___
 
@@ -1065,7 +1066,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:592](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L592)
+[packages/host/src/lib/cpm-connector.ts:593](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L593)
 
 ___
 
