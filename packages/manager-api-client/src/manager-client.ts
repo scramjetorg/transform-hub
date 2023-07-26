@@ -60,6 +60,10 @@ export class ManagerClient implements ClientProvider {
         return this.client.get<any>("config");
     }
 
+    async getAllSequences() {
+        return this.client.get<MRestAPI.GetSequencesResponse>("all_sequences");
+    }
+
     async getSequences() {
         return this.client.get<MRestAPI.GetSequencesResponse>("sequences");
     }

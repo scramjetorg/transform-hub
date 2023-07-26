@@ -12,6 +12,7 @@ class SequenceStore {
             id: sequence.id,
             name: sequence.name,
             config: sequence.config,
+            location: sequence.location,
             instances: Array.from(sequence.instances.values()),
         }));
     }
