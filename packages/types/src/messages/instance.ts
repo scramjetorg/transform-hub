@@ -1,10 +1,7 @@
 import { CPMMessageCode, InstanceMessageCode } from "@scramjet/symbols";
+import { Instance } from "../instance-store";
 
-export type InstanceMessageData = {
-    id: string;
-    sequence: string;
-    status: InstanceMessageCode;
-}
+export type InstanceMessageData =  { status: InstanceMessageCode } & Instance;
 
 export type InstanceMessage = { msgCode: CPMMessageCode.INSTANCE } & InstanceMessageData;
 export type InstanceBulkMessage = { msgCode: CPMMessageCode.INSTANCES, instances: InstanceMessageData[] };

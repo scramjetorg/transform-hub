@@ -10,6 +10,7 @@ export type SequenceInfo = {
     name? : string;
 }
 
+
 export interface ISequenceAdapter {
     /**
      * Adapter name.

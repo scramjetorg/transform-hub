@@ -926,10 +926,10 @@ export class Host implements IComponent {
 
         try {
             const csic = await this.startCSIController(sequence, payload);
-
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 appConfig: csic.appConfig,
+                sequenceInfo : sequence,
                 args: csic.args,
                 sequence: sequenceId,
                 ports: csic.info.ports,
@@ -1037,10 +1037,10 @@ export class Host implements IComponent {
             sequence.instances = sequence.instances.filter(item => {
                 return item !== id;
             });
-
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
-                sequence: sequence.id
+                sequence: sequence.id,
+                sequenceInfo: sequence,
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
