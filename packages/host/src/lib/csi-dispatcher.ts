@@ -1,9 +1,9 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { HostProxy, IObjectLogger, InstanceConfig, MessageDataType, STHConfiguration, STHRestAPI, SequenceInfo } from "@scramjet/types";
+import { HostProxy, ICommunicationHandler, IObjectLogger, InstanceConfig, MessageDataType, STHConfiguration, STHRestAPI, SequenceInfo } from "@scramjet/types";
 import { SocketServer } from "./socket-server";
 import { InstanceStore } from "./instance-store";
 import { CSIController } from "./csi-controller";
-import { CommunicationHandler, IDProvider } from "@scramjet/model";
+import { IDProvider } from "@scramjet/model";
 import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { getInstanceAdapter } from "@scramjet/adapters";
 import SequenceStore from "./sequenceStore";
@@ -35,10 +35,15 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.STHConfig = STHConfig;
     }
 
-    createCSIController(id: string, sequence: SequenceInfo, payload: StartSequencePayload, communicationHandler: CommunicationHandler, config: STHConfiguration, instanceProxy: HostProxy) {
-        sequence.instances = sequence.instances || [];
-
-        const csiController = new CSIController(id, sequence, payload, communicationHandler, config, instanceProxy);
+    async createCSIController(
+        id: string,
+        sequence: SequenceInfo,
+        payload: StartSequencePayload,
+        communicationHandler: ICommunicationHandler,
+        config: STHConfiguration,
+        instanceProxy: HostProxy) {
+        sequence.instances = sequence.instances || new Set();
+        const csiController = new CSIController({ id, sequence, payload }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
         csiController.logger.pipe(this.logger);
         this.logger.trace("CSIController created", id);
@@ -161,7 +166,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             this.STHConfig.host.instancesServerPort,
             id,
             sequence,
-            //payload
+            payload
         );
         // @todo more instance info
         return {

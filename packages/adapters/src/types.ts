@@ -1,4 +1,5 @@
 import { ExitCode, InstanceId, IObjectLogger, SequenceInfo } from "@scramjet/types";
+import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
@@ -323,6 +324,7 @@ export type RunnerEnvConfig = {
     instancesServerHost: string;
     instanceId: InstanceId;
     sequenceInfo: SequenceInfo
+    payload?: StartSequencePayload
 }
 
 export type RunnerEnvironmentVariables = Partial<{

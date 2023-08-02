@@ -22,6 +22,7 @@ import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { getRunnerEnvEntries } from "./get-runner-env";
 import { Readable } from "stream";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -168,13 +169,13 @@ IComponent {
         };
     }
 
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
-        await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo);
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
+        await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
         return this.waitUntilExit(config, instanceId, sequenceInfo);
     }
 
     // eslint-disable-next-line complexity
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<void> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
@@ -198,7 +199,8 @@ IComponent {
             instancesServerHost: networkSetup.host,
             instanceId,
             pipesPath: "",
-            sequenceInfo
+            sequenceInfo,
+            payload
         }).map(([k, v]) => `${k}=${v}`);
 
         this.logger.debug("Runner will start with envs", envs);
@@ -228,7 +230,7 @@ IComponent {
         this.logger.trace("Container is running", containerId);
     }
 
-    async waitUntilExit(instanceId: string): Promise<number> {
+    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
         try {
             const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
             const { statusCode } = await this.dockerHelper.wait(containerId);

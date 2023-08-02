@@ -4,7 +4,6 @@ import {
     DownstreamStreamsConfig,
     EncodedMessage,
     HandshakeAcknowledgeMessage,
-    ICommunicationHandler,
     ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
@@ -22,13 +21,14 @@ import {
     OpResponse,
     StopSequenceMessageData,
     HostProxy,
+    ICommunicationHandler,
 } from "@scramjet/types";
 import {
     AppError,
     CSIControllerError,
     HostError,
     MessageUtilities,
-    InstanceAdapterError,
+    InstanceAdapterError
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
@@ -165,18 +165,18 @@ export class CSIController extends TypedEmitter<Events> {
         public communicationHandler: ICommunicationHandler,
         private sthConfig: STHConfiguration,
         private hostProxy: HostProxy,
-        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
     ) {
         super();
 
         this.id = this.handshakeMessage.id;
-        this.sequence = this.handshakeMessage.sequenceInfo;
-        this.appConfig = payload.appConfig;
-        this.args = payload.args;
-        this.outputTopic = payload.outputTopic;
-        this.inputTopic = payload.inputTopic;
+        this.sequence = this.handshakeMessage.sequence;
+        this.appConfig = this.handshakeMessage.payload.appConfig;
+        this.args = this.handshakeMessage.payload.args;
+        this.outputTopic = this.handshakeMessage.payload.outputTopic;
+        this.inputTopic = this.handshakeMessage.payload.inputTopic;
         this.limits = {
-            memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
+            memory: handshakeMessage.payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
 
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
@@ -513,7 +513,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.ports = message[1].ports;
-        this.sequence = message[1].sequenceInfo;
+        this.sequence = message[1].sequence;
 
         // TODO: add message to initiate the instance adapter
 

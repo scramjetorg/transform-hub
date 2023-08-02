@@ -4,6 +4,7 @@ import { InstanceConfig } from "./runner-config";
 import { IObjectLogger } from "./object-logger";
 import { InstanceLimits } from "./instance-limits";
 import { SequenceInfo } from "./sequence-adapter";
+import { RunnerConnectInfo } from "./runner-connect";
 
 export type ExitCode = number;
 
@@ -30,7 +31,7 @@ export interface ILifeCycleAdapterMain {
 
     getCrashLog(): Promise<string[]>;
 
-    waitUntilExit(instanceId: string): Promise<ExitCode>;
+    waitUntilExit(config: InstanceConfig, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
 }
 // @TODO create ISequenceAdapter interface
 
@@ -43,7 +44,7 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<void>;
+    dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void>;
 
     /**
       * Starts Runner - in essence does `dispatch` and then `waitUntilExit`.
@@ -51,7 +52,7 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
+    run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode>;
 }
 
 export type LifeCycleError = any | (Error & { exitCode?: number, errorMessage?: string });
