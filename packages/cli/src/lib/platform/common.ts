@@ -44,7 +44,7 @@ export const setPlatformDefaults = async () => {
         managers = await middlewareClient.getManagers();
     } catch (_e) {
         (profileConfig as ProfileConfig).setEnv("development");
-        throw new Error("Unable to get your menager - forbidden access. Setting env to development...");
+        throw new Error("Unable to get Space - forbidden access. Setting env to development...");
     }
 
     const { lastSpaceId, lastHubId } = sessionConfig.get();
