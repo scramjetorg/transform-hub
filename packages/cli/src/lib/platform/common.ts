@@ -1,5 +1,5 @@
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
-import { sessionConfig, profileManager } from "../config";
+import { sessionConfig, profileManager, ProfileConfig } from "../config";
 import { displayError, displayMessage } from "../output";
 
 /**
@@ -37,7 +37,15 @@ export const getMiddlewareClient = (): MiddlewareClient => {
 
 export const setPlatformDefaults = async () => {
     const middlewareClient = getMiddlewareClient();
-    const managers = await middlewareClient.getManagers();
+    const profileConfig = profileManager.getProfileConfig();
+    let managers;
+
+    try {
+        managers = await middlewareClient.getManagers();
+    } catch (_e) {
+        (profileConfig as ProfileConfig).setEnv("development");
+        throw new Error("Unable to get your menager - forbidden access. Setting env to development...");
+    }
 
     const { lastSpaceId, lastHubId } = sessionConfig.get();
 
