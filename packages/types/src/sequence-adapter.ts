@@ -10,6 +10,8 @@ export type SequenceInfo = {
     name? : string;
 }
 
+export type SequenceInfoInstance = Omit<SequenceInfo, "instances">;
+
 export interface ISequenceAdapter {
     /**
      * Adapter name.

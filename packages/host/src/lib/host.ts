@@ -931,7 +931,12 @@ export class Host implements IComponent {
                 id: csic.id,
                 appConfig: csic.appConfig,
                 args: csic.args,
-                sequence: sequenceId,
+                sequenceInfo: (info => {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { instances, ...rest } = info;
+
+                    return rest;
+                })(sequence),
                 ports: csic.info.ports,
                 created: csic.info.created,
                 started: csic.info.started,
@@ -1040,7 +1045,7 @@ export class Host implements IComponent {
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
-                sequence: sequence.id
+                sequenceInfo: sequence
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);

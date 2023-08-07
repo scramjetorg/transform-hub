@@ -1,1 +1,3 @@
-export type GetInstanceResponse = string
+import { Instance } from "../instance-store";
+
+export type GetInstanceResponse = Instance
