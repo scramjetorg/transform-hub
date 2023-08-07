@@ -10,8 +10,6 @@ type HostOpenConnections = [
     TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
 ]
 
-const BPMux = require("bpmux").BPMux;
-
 /**
  * Connects to Host and exposes streams per channel (stdin, monitor etc.)
  */
@@ -19,7 +17,8 @@ class HostClient implements IHostClient {
     private _streams?: UpstreamStreamsConfig;
     public agent?: Agent;
     logger: IObjectLogger;
-    bpmux: any;
+    hubTunnel!: TeceMux;
+
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = new ObjLogger(this);
     }
@@ -60,10 +59,10 @@ class HostClient implements IHostClient {
             );
         });
 
-        this._streams = await openConnections as HostOpenConnections;
+        this._streams = openConnections as HostOpenConnections;
 
         try {
-            this.bpmux = new BPMux(this._streams[CC.PACKAGE]);
+            this.hubTunnel = new TeceMux(this._streams[CC.PACKAGE] as Socket);
         } catch (e) {
             // eslint-disable-next-line no-console
             console.error(e);
@@ -75,13 +74,13 @@ class HostClient implements IHostClient {
 
         agent.createConnection = () => {
             try {
-                const socket = this.bpmux!.multiplex() as Socket;
+                const socket = this.hubTunnel.multiplex() as unknown as Socket;
 
                 socket.on("error", () => {
                     this.logger.error("Muxed stream error");
                 });
 
-                // some libs call it but it is not here, in BPMux.
+                // mock Socket's setKeepAlive in TeceMuxChannel.
                 socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
 
                 this.logger.info("Creating connection to verser server");

@@ -100,7 +100,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
         if (flags.ACK && flags.SYN) {
             channel?.encoder.pause();
             this.framesKeeper.handleACK(acknowledgeNumber);
-            console.log("Pause channel command received", channel?._id);
+            //console.log("Pause channel command received", channel?._id);
             return 0;
         }
 
@@ -146,7 +146,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
                 const canWrite = channel.push(new Uint8Array((frame.chunk as any).data), undefined);
 
                 if (!canWrite) {
-                    console.log("cant write", channel._id);
+                    //console.log("cant write", channel._id);
                     channel.sendPauseACK(sequenceNumber);
 
                     channel.once("resume", () => {
