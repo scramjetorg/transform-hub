@@ -713,7 +713,7 @@ export class Host implements IComponent {
             sequenceAdapter.logger.pipe(this.logger);
 
             for (const config of configs) {
-                if (isDevelopment) this.logger.trace(`Sequence identified: ${config.id}`);
+                this.logger.trace(`Sequence identified: ${config.id}`);
 
                 if (this.config.host.id) {
                     // eslint-disable-next-line max-len
@@ -776,7 +776,7 @@ export class Host implements IComponent {
                 this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
             }
 
-            if (isDevelopment) this.logger.trace(`Sequence identified: ${config.id}`);
+            this.logger.trace(`Sequence identified: ${config.id}`);
 
             // eslint-disable-next-line max-len
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
