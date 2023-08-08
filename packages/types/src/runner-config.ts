@@ -1,7 +1,7 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
 import { InstanceLimits } from "./instance-limits";
-import { InstanceArgs } from "./instance-store";
+import { InstanceArgs } from "./instance";
 import { PortConfig } from "./sequence-package-json";
 import { RunnerContainerConfiguration } from "./sth-configuration";
 

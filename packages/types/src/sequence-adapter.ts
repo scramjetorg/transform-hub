@@ -1,6 +1,6 @@
-import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
 import { IObjectLogger } from "./object-logger";
+import { SequenceConfig } from "./runner-config";
 
 export type SequenceInfo = {
     config: SequenceConfig;

@@ -1,8 +1,6 @@
 import { AppConfig } from "./app-config";
-import { InstanceId, InstanceStatus } from "./instance";
+import { InstanceArgs, InstanceId, InstanceStatus } from "./instance";
 import { SequenceInfoInstance } from "./sequence-adapter";
-
-export type InstanceArgs = any[];
 
 export type Instance = {
     id: InstanceId,
