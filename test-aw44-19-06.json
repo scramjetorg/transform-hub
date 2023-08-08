@@ -1,0 +1,21 @@
+{
+    "host": {
+        "hostname": "0.0.0.0",
+        "port": 9002,
+        "instancesServerPort": 9003,
+        "id": "SELF_HOSTED_STH-1"
+    },
+    "description": "Some description",
+    "tags": [
+        "tag-1",
+        "tag-2"
+    ],
+    "timings": {
+        "instanceLifetimeExtensionDelay": 10000
+    },
+    "platform": {
+        "apiKey": "K4YPnm+JMgu8ox+l/K44DQ6bYkLF5RQPayBwvpG4dgOKpYKP1JCl49keoqe4PrcEEr4OSSFbLIzL7JUaw032Ce61ZmsYAcv74fLCfEMAScIj/n0a",
+        "api": "https://api-hybrid.dev.k8s.scp.ovh:7000",
+        "space": "org-6d239b01-47e8-444f-a36f-2999ae624d35:org-6d239b01-47e8-444f-a36f-2999ae624d35-manager"
+    }
+}

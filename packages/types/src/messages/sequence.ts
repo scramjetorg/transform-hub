@@ -1,8 +1,10 @@
 import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { SequenceConfig } from "../runner-config";
 
 export type SequenceMessageData = {
     id: string,
-    status: SequenceMessageCode
+    status: SequenceMessageCode,
+    config: SequenceConfig
 }
 
 export type SequenceMessage = { msgCode: CPMMessageCode.SEQUENCE } & SequenceMessageData;

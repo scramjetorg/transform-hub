@@ -52,6 +52,7 @@ import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
+import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -609,7 +610,7 @@ export class Host implements IComponent {
             };
         }
 
-        if (sequenceInfo.instances.size > 0) {
+        if (sequenceInfo.instances.length > 0) {
             const instances = [...sequenceInfo.instances].every((instanceId) => {
                 // ?
                 // this.instancesStore[instanceId]?.finalizingPromise?.cancel();
@@ -642,8 +643,8 @@ export class Host implements IComponent {
             this.sequenceStore.delete(id);
 
             this.logger.trace("Sequence removed:", id);
-
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+            // eslint-disable-next-line max-len
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as GetSequenceResponse);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -712,7 +713,13 @@ export class Host implements IComponent {
 
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
-                this.sequenceStore.set({ id: config.id, config: config, instances: new Set() });
+
+                if (this.config.host.id) {
+                    // eslint-disable-next-line max-len
+                    this.sequenceStore.set({ id: config.id, config: config, instances: [], location: this.config.host.id });
+                } else {
+                    this.sequenceStore.set({ id: config.id, config: config, instances: [], location: "STH" });
+                }
             }
             this.logger.info(` ${configs.length} sequences identified`);
         } catch (e: any) {
@@ -761,11 +768,17 @@ export class Host implements IComponent {
 
             config.packageSize = stream.socket?.bytesRead;
 
-            this.sequenceStore.set({ id, config, instances: new Set(), name: sequenceName });
+            if (this.config.host.id) {
+                // eslint-disable-next-line max-len
+                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: this.config.host.id });
+            } else {
+                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
+            }
 
             this.logger.info("Sequence identified", config);
 
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
+            // eslint-disable-next-line max-len
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
             this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
@@ -794,7 +807,7 @@ export class Host implements IComponent {
             return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with name ${seqQuery} not found` };
         }
 
-        if (existingSequence.instances.size) {
+        if (existingSequence.instances.length) {
             return { opStatus: ReasonPhrases.CONFLICT, error: "Can't update sequence with instances" };
         }
 
@@ -1021,7 +1034,9 @@ export class Host implements IComponent {
 
             delete InstanceStore[csic.id];
 
-            sequence.instances.delete(id);
+            sequence.instances = sequence.instances.filter(item => {
+                return item !== id;
+            });
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
@@ -1051,7 +1066,7 @@ export class Host implements IComponent {
 
         this.logger.trace("CSIController started", id);
 
-        sequence.instances.add(id);
+        sequence.instances.push(id);
 
         return csic;
     }
@@ -1088,6 +1103,7 @@ export class Host implements IComponent {
             id: sequence.id,
             name: sequence.name,
             config: sequence.config,
+            location: sequence.location,
             instances: Array.from(sequence.instances.values()),
         };
     }

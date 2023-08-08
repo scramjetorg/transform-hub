@@ -24,6 +24,7 @@
 
 - [deleteStoreItem](ManagerClient.md#deletestoreitem)
 - [disconnectHubs](ManagerClient.md#disconnecthubs)
+- [getAllSequences](ManagerClient.md#getallsequences)
 - [getAuditStream](ManagerClient.md#getauditstream)
 - [getConfig](ManagerClient.md#getconfig)
 - [getHostClient](ManagerClient.md#gethostclient)
@@ -102,7 +103,7 @@ ClientProvider.client
 
 #### Defined in
 
-[manager-client.ts:88](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L88)
+[manager-client.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L92)
 
 ___
 
@@ -122,7 +123,21 @@ ___
 
 #### Defined in
 
-[manager-client.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L92)
+[manager-client.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L96)
+
+___
+
+### getAllSequences
+
+▸ **getAllSequences**(): `Promise`<`GetSequencesResponse`\>
+
+#### Returns
+
+`Promise`<`GetSequencesResponse`\>
+
+#### Defined in
+
+[manager-client.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L63)
 
 ___
 
@@ -205,7 +220,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L67)
+[manager-client.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L71)
 
 ___
 
@@ -274,7 +289,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L63)
+[manager-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L67)
 
 ___
 
@@ -288,7 +303,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L75)
+[manager-client.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L79)
 
 ___
 
@@ -302,7 +317,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L71)
+[manager-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L75)
 
 ___
 
@@ -337,7 +352,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L79)
+[manager-client.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L83)
 
 ___
 

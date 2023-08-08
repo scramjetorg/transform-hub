@@ -1,13 +1,13 @@
 import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
-import { InstanceId } from "./instance";
 import { IObjectLogger } from "./object-logger";
 
 export type SequenceInfo = {
     config: SequenceConfig;
     id: string;
-    instances: Set<InstanceId>;
-    name?: string;
+    instances: string[];
+    location : string;
+    name? : string;
 }
 
 export interface ISequenceAdapter {

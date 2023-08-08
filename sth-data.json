@@ -1,0 +1,16 @@
+{
+    "host": {
+        "hostname": "0.0.0.0",
+        "port": 9002,
+        "instancesServerPort": 9003,
+        "id": "SELF_HUB-TESTOWO"
+    },
+    "timings": {
+        "instanceLifetimeExtensionDelay": 10000
+    },
+    "platform": {
+        "apiKey": "sQH31Fz5L0WJS8Y6npV9VjoN4JFZHdLKIv7rjTpNJ1k17H4NIEZAuE3NHTpArEY45VZxavI62C2F0jDvizYkmCYa9YWZF+vO/49yDhEF3ix4T/1Q",
+        "api": "https://api-hybrid.stage.k8s-stage.scp.ovh:7000",
+        "space": "org-601cc927-cf6d-42ff-85ed-95887d6cd0c8:org-601cc927-cf6d-42ff-85ed-95887d6cd0c8-manager"
+    }
+}
