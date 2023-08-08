@@ -120,7 +120,7 @@ Then("I see a sequence called {string}", function(string: string) {
 Then("the output of an instance of {string} is as in {string} file", async function(this: CustomWorld, sequenceId, outputContentsFile) {
     const fileData = await readFile(outputContentsFile, "utf-8");
     const hostClient = getHostClient();
-    const instance = this.cliResources.instances?.find(inst => inst.sequence === sequenceId);
+    const instance = this.cliResources.instances?.find(inst => inst.sequenceInfo.id === sequenceId);
 
     if (!instance) throw new Error("Instance not found");
 
