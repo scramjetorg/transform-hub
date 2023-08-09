@@ -1,3 +1,4 @@
 export type InstanceLimits = {
-    memory?: number
+    memory?: number;
+    gpu?: boolean;
 }
