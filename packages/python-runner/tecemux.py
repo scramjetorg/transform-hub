@@ -260,6 +260,20 @@ class _ChannelContext:
 
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK', 'SYN'], ack=sequence_number)))
 
+    async def _put_nested_packet(self, buf: bytes, flags: dict) -> None:
+        """Pack buffer to additional layer of IPPacket for nested channel and queue up to send
+
+        Args:
+            buf (bytes): RAW data to send
+            flags (dict): TCP segment flags to set in nested packet
+        """
+        if self._channel_nested_enum is None:
+            return
+        
+        inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=buf, flags=flags))
+        inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
+
     async def open(self) -> None:
         """Open channel
         """
@@ -273,11 +287,9 @@ class _ChannelContext:
 
             if self._channel_nested:
                 buf = b'' if self._global_instance_id is None else (
-                    self._global_instance_id.encode() + str(self._get_channel_id()).encode())
-                
-                inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=buf, flags=['PSH']))
-                inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
-                await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
+                    self._global_instance_id.encode() + str(self._channel_nested_enum.value).encode())
+    
+                await self._put_nested_packet(buf, flags=['PSH'])
 
             self._channel_opened = True
             self._ended = False
@@ -288,9 +300,7 @@ class _ChannelContext:
 
         await self._internal_outcoming_queue.join()
         if self._channel_nested:
-            inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=b'', flags=['PSH']))
-            inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
-            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
+            await self._put_nested_packet(b'', flags=['PSH'])
 
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
 
@@ -303,10 +313,7 @@ class _ChannelContext:
 
         self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
         if self._channel_nested:
-            inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=b'', flags=['FIN']))
-            inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
-            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
-        
+            await self._put_nested_packet(b'', flags=['FIN'])
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['FIN'])))
 
     async def queue_up_incoming(self, pkt: IPPacket) -> None:
