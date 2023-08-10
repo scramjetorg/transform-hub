@@ -38,7 +38,7 @@ import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
-import { ConfigService } from "@scramjet/sth-config";
+import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
@@ -63,6 +63,7 @@ const PARALLEL_SEQUENCE_STARTUP = 4;
 
 type HostSizes = "xs" | "s" | "m" | "l" | "xl";
 const GigaByte = 1024 << 20;
+const isDevelopment = development();
 
 /**
  * Host provides functionality to manage Instances and Sequences.
@@ -207,7 +208,7 @@ export class Host implements IComponent {
 
         prettyLog.pipe(process.stdout);
 
-        this.logger.info("config", this.config);
+        if (isDevelopment) this.logger.info("config", this.config);
 
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
@@ -775,7 +776,7 @@ export class Host implements IComponent {
                 this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
             }
 
-            this.logger.info("Sequence identified", config);
+            this.logger.trace(`Sequence identified: ${config.id}`);
 
             // eslint-disable-next-line max-len
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
@@ -971,7 +972,7 @@ export class Host implements IComponent {
         const communicationHandler = new CommunicationHandler();
         const id = payload.instanceId || IDProvider.generate();
 
-        this.logger.debug("CSIC start payload", payload);
+        if (isDevelopment) this.logger.debug("CSIC start payload", payload);
 
         const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
 
