@@ -134,6 +134,46 @@ class TestTecemux:
         await self._close_clients(client_a, client_b)
 
 
+
+    async def test_nested_channel(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+
+        client_a.get_channel(CC.CONTROL).use_with_nested_channel(CC.MONITORING)
+        client_b.get_channel(CC.CONTROL).use_with_nested_channel(CC.MONITORING)
+        
+
+        await client_a.get_channel(CC.CONTROL).open()
+
+        assert client_a._queue.qsize() == 2
+        
+        assert client_a._queue._queue[0].get_segment().dst_port == int(CC.CONTROL.value)
+        assert client_a._queue._queue[0].get_segment().data == b''
+
+        assert client_a._queue._queue[1].get_segment().dst_port == int(CC.CONTROL.value)
+        assert client_a._queue._queue[1].get_segment().data != b''
+
+        inner_packet = client_a._queue._queue[1].get_segment().data
+        inner_packet = IPPacket.from_buffer_with_pseudoheader(inner_packet)
+
+        assert inner_packet.get_segment().dst_port == int(CC.MONITORING.value)
+        assert inner_packet.get_segment().data == b''
+
+        client_a.get_channel(CC.CONTROL).write("{'foo':'bar'}\n")
+        await client_a.get_channel(CC.CONTROL)._internal_outcoming_queue.join()
+
+        inner_packet = client_a._queue._queue[0].get_segment().data
+        inner_packet = IPPacket.from_buffer_with_pseudoheader(inner_packet)
+        
+        assert inner_packet.get_segment().data == b"{'foo':'bar'}\n"
+        assert inner_packet.get_segment().dst_port == int(CC.MONITORING.value)
+
+        assert (await client_b.get_channel(CC.CONTROL).read(100)).decode() == ''
+        assert (await client_b.get_channel(CC.CONTROL).read(100)).decode() == ''
+        assert (await client_b.get_channel(CC.CONTROL).read(100)).decode() == "{'foo':'bar'}\n"
+
+        await self._close_clients(client_a, client_b)
+
+
     async def test_readuntil(self, local_socket_connection):
         client_a, client_b = local_socket_connection
 

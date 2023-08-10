@@ -31,6 +31,8 @@ class _ChannelContext:
 
     _channel_paused: bool
     _channel_opened: bool
+    _channel_nested: bool
+    _channel_nested_enum: CC
     
     _stop_channel_event: asyncio.Event
     _sync_channel_event: asyncio.Event
@@ -63,6 +65,12 @@ class _ChannelContext:
         self._outcoming_process_task = asyncio.create_task(self._outcoming_process_tasks(), name=f'{self._get_channel_name()}_PROCESS_TASK')
         self._ended = None
         self._read_buffer = bytearray()
+        self._channel_nested = False
+        self._channel_nested_enum = None
+
+    def use_with_nested_channel(self, nested_channel_enum):
+        self._channel_nested = True
+        self._channel_nested_enum = nested_channel_enum
 
     async def sync(self) -> None:
         """Waits until internal queues will be empty (packets will be processed)
@@ -263,6 +271,14 @@ class _ChannelContext:
 
             await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=buf, flags=['PSH'])))
 
+            if self._channel_nested:
+                buf = b'' if self._global_instance_id is None else (
+                    self._global_instance_id.encode() + str(self._get_channel_id()).encode())
+                
+                inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=buf, flags=['PSH']))
+                inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+                await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
+
             self._channel_opened = True
             self._ended = False
 
@@ -271,7 +287,14 @@ class _ChannelContext:
         """
 
         await self._internal_outcoming_queue.join()
+        if self._channel_nested:
+            inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=b'', flags=['PSH']))
+            inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
+
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
+
+
         self._ended = True
 
     async def close(self) -> None:
@@ -279,6 +302,11 @@ class _ChannelContext:
         """
 
         self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
+        if self._channel_nested:
+            inner = IPPacket(segment=TCPSegment(dst_port=int(self._channel_nested_enum.value), data=b'', flags=['FIN']))
+            inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=inner, flags=['PSH'])))
+        
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['FIN'])))
 
     async def queue_up_incoming(self, pkt: IPPacket) -> None:
@@ -287,6 +315,11 @@ class _ChannelContext:
         Args:
             pkt (IPPacket): Redirected packet from outside
         """
+        if self._channel_nested:
+            if pkt.get_segment().data != b'':
+                # unpack nested packet
+                pkt = pkt.from_buffer_with_pseudoheader(pkt.get_segment().data)
+
         # if SYN & ACK flag is up, pause channel
         if pkt.get_segment().is_flag('SYN') and pkt.get_segment().is_flag('ACK'):
             self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel pause request received')
@@ -323,7 +356,13 @@ class _ChannelContext:
             while not self._internal_outcoming_queue.empty():
                 try:
                     buf = await asyncio.wait_for(self._internal_outcoming_queue.get(),1)
-                    await self._global_queue.put(wrap(self._channel_enum, buf))
+                    if not self._channel_nested:
+                        await self._global_queue.put(wrap(self._channel_enum, buf))
+                    else:
+                        inner = wrap(self._channel_nested_enum, buf)
+                        inner = inner.build(for_STH=True).to_buffer_with_tcp_pseudoheader()
+
+                        await self._global_queue.put(wrap(self._channel_enum, inner))
                     self._internal_outcoming_queue.task_done()
                 except asyncio.QueueEmpty:
                     self._debug(f'Tecemux/{self._get_channel_name()}: [-] All data stored during pause were redirected to global queue')
@@ -449,6 +488,9 @@ class Tecemux:
                                                    self._global_stop_channel_event,
                                                    self._global_sync_channel_event,
                                                    self._global_sync_barrier) for channel in CC}
+
+        self.get_channel(CC.HOST).use_with_nested_channel(CC.HOST)
+
         if force_open:
             [await channel.open() for channel in self.get_channels()]
 
