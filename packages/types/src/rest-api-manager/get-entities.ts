@@ -1,4 +1,6 @@
-import { GetEntitiesResponse as STHRestAPIGetEntitiesResponse } from "../rest-api-sth";
-
-export type GetEntitiesResponse =
-    (STHRestAPIGetEntitiesResponse & { hostId: string })[]
+export type GetEntitiesResponse = {
+    hubs: string[],
+    topics: string[],
+    sequences: string[],
+    instances: string[],
+}
