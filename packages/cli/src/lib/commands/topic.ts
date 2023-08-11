@@ -4,6 +4,7 @@ import { getHostClient, getReadStreamFromFile } from "../common";
 import { profileManager } from "../config";
 import { displayEntity, displayStream } from "../output";
 import { Option, Argument } from "commander";
+import { initPlatform } from "../platform";
 
 const validateTopicName = (topicName: string) => {
     if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) {
@@ -27,6 +28,7 @@ export const topic: CommandDefinition = (program) => {
 
     const topicCmd = program
         .command("topic")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")

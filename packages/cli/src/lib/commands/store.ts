@@ -3,7 +3,7 @@ import { getReadStreamFromFile } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { displayObject } from "../output";
-import { getMiddlewareClient } from "../platform";
+import { getMiddlewareClient, initPlatform } from "../platform";
 
 /**
  * Initializes `store` command.
@@ -22,6 +22,7 @@ export const store: CommandDefinition = (program) => {
 
     const storeCmd = program
         .command("store")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true, developersOnly: true } as ExtendedHelpConfiguration)
         .usage("[command] [options...]")

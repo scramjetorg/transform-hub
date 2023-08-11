@@ -12,6 +12,7 @@ import { isDevelopment } from "../../utils/envs";
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
+import { initPlatform } from "../platform";
 
 /**
  * Initializes `sequence` command.
@@ -21,6 +22,7 @@ import { ClientError } from "@scramjet/client-utils";
 export const sequence: CommandDefinition = (program) => {
     const sequenceCmd = program
         .command("sequence")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .alias("seq")
