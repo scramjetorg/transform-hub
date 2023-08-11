@@ -80,7 +80,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             res
                 .on("error", disconnect)
                 .on("unpipe", disconnect)
-                .socket?.on("end", disconnect);
+                .socket?.on("end", disconnect).on("close", disconnect);
 
             return out.pipe(res);
         } catch (e: any) {
@@ -150,17 +150,14 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                             .pipe(data as Writable, { end });
 
                         logger.debug("Request data piped");
-                        // eslint-disable-next-line no-extra-parens
-                        (data as Writable).once("error", reject);
                     });
+
+                    res.end();
                 } else {
                     let status = 202;
 
-                    // eslint-disable-next-line no-extra-parens
                     if ((data as any).opStatus) {
-                        // eslint-disable-next-line no-extra-parens
                         status = getStatusCode((data as any).opStatus);
-                        // eslint-disable-next-line no-extra-parens
                         delete (data as any).opStatus;
                     }
 
@@ -169,8 +166,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                     return;
                 }
-
-                res.end();
             } catch (e: any) {
                 logger.error(e);
                 next(new CeroError("ERR_INTERNAL_ERROR", e));
