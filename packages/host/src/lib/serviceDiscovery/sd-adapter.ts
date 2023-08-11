@@ -83,10 +83,11 @@ export class ServiceDiscovery {
         const topic = this.topicsController.get(topicName); // TODO: sprawdzanie content Type
 
         if (topic) {
-            this.logger.trace("Routing topic:", config);
+            this.logger.info("Routing topic:", config);
             return topic;
         }
-        this.logger.trace("Adding topic:", config);
+
+        this.logger.info("Adding topic:", config);
         const origin: StreamOrigin = { id: "XXXX", type: "hub" };
         const newTopic = new Topic(topicName, config.contentType, origin);
 
