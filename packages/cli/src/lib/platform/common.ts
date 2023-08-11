@@ -1,6 +1,9 @@
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
 import { sessionConfig, profileManager } from "../config";
 import { displayError, displayMessage } from "../output";
+import { ClientUtils } from "@scramjet/client-utils";
+import { configEnv, isProductionEnv } from "../../types";
+import { Command } from "commander";
 
 /**
  * Returns host client for host pointed by command options.
@@ -69,5 +72,33 @@ export const setPlatformDefaults = async () => {
     } catch (_) {
         displayError("Unable to set platform defaults\n");
         return false;
+    }
+};
+
+const profileConfig = profileManager.getProfileConfig();
+const platformRequirementsValid = (
+    program: Command & { _helpShortFlag?: any, _helpLongFlag?: any },
+    token: string,
+    env: configEnv,
+    middlewareApiUrl: string
+) =>
+    token &&
+    isProductionEnv(env) &&
+    middlewareApiUrl &&
+    !process.argv.includes(program._helpShortFlag) &&
+    !process.argv.includes(program._helpLongFlag);
+
+export const initPlatform = async (program: Command) => {
+    const { token, env, middlewareApiUrl } = profileConfig.get();
+
+    /**
+     * Set the default values for platform only when all required settings
+     * are provided in the profile configuration.
+     * Do not set the default platform values when displaying the help commands.
+     */
+    if (platformRequirementsValid(program, token, env, middlewareApiUrl)) {
+        ClientUtils.setDefaultHeaders({ Authorization: `Bearer ${token}`, });
+
+        await setPlatformDefaults();
     }
 };

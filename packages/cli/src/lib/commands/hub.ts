@@ -3,7 +3,7 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
-import { getMiddlewareClient } from "../platform";
+import { getMiddlewareClient, initPlatform } from "../platform";
 
 /**
  * Initializes `hub` command.
@@ -23,6 +23,7 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("use")
+            .hook("preAction", initPlatform)
             .argument("<name|id>")
             .description("Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub")
             .action(async (id: string) => {
@@ -42,6 +43,7 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("list")
+            .hook("preAction", initPlatform)
             .alias("ls")
             .description("List all the Hubs in the default space")
             .action(async () => {
@@ -61,6 +63,7 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
+            .hook("preAction", initPlatform)
             .description("Display info about the default Hub")
             .action(async () => {
                 const { lastSpaceId: space, lastHubId: id } = sessionConfig.get();

@@ -6,6 +6,7 @@ import { getInstanceId, profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { ClientError } from "@scramjet/client-utils";
 import { Option } from "commander";
+import { initPlatform } from "../platform";
 /**
  * Initializes `instance` command.
  *
@@ -14,6 +15,7 @@ import { Option } from "commander";
 export const instance: CommandDefinition = (program) => {
     const instanceCmd = program
         .command("instance [command]")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .alias("inst")
