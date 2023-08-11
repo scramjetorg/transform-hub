@@ -93,6 +93,8 @@ merge(_defaultConfig, {
 });
 
 export const defaultConfig = _defaultConfig;
+// eslint-disable-next-line no-use-before-define
+let globalConfig: ConfigService | undefined;
 
 export class ConfigService {
     private config: STHConfiguration;
@@ -103,6 +105,14 @@ export class ConfigService {
         if (config) {
             this.update(config);
         }
+    }
+
+    static setGlobal(service: ConfigService) {
+        globalConfig = service;
+    }
+
+    static getGlobal(): ConfigService | undefined {
+        return globalConfig;
     }
 
     getConfig() {
