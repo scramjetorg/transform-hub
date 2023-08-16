@@ -155,11 +155,12 @@ export class Host implements IComponent {
      * Sets listener for connections to socket server.
      */
     private attachListeners() {
-        this.socketServer.on("connect", async (id, streams) => {
+        this.socketServer.on("connect", async (id, streams, protocol) => {
             this.logger.debug("Instance connected", id);
 
             await this.instancesStore[id].handleInstanceConnect(
-                streams
+                streams,
+                protocol
             );
         });
     }

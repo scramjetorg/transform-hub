@@ -46,7 +46,6 @@ import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitt
 import { ObjLogger } from "@scramjet/obj-logger";
 import { TeceMux } from "@scramjet/verser";
 import { ReasonPhrases } from "http-status-codes";
-import { Socket } from "net";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -74,7 +73,6 @@ export class CSIController extends TypedEmitter<Events> {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
-    private hubTunnel: any;
     private adapter: string;
 
     get lastStats(): InstanceStats {
@@ -549,18 +547,12 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.info("Instance started", this.info);
     }
 
-    async handleInstanceConnect(streams: DownstreamStreamsConfig) {
+    async handleInstanceConnect(streams: DownstreamStreamsConfig, protocol: TeceMux) {
         try {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
-            this.hubTunnel = new TeceMux(streams[8] as Socket);
-
-            this.hubTunnel
-                .on("error", (e: any) => {
-                    this.logger.warn("Instance client multiplex connection errored", e.message);
-                    streams[8]?.end();
-                })
+            protocol
                 .on("channel", (socket: Duplex) => this.hostProxy.onInstanceRequest(socket));
 
             await once(this, "pang");

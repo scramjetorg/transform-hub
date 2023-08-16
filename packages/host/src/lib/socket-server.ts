@@ -19,7 +19,7 @@ type RunnerConnectionsInProgress = [
 ];
 
 type Events = {
-    connect: (id: string, streams: RunnerChannels) => void
+    connect: (id: string, streams: RunnerChannels, protocol: TeceMux) => void
 };
 
 /**
@@ -72,7 +72,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     .on("end", () => this.logger.debug(`Channel [${instanceId}:${channelId}] ended`));
 
                 try {
-                    await this.handleConnection(instanceId, channelId, channel as unknown as Socket);
+                    await this.handleCommunicationChannel(instanceId, channelId, channel as unknown as Socket, protocol);
                 } catch (err: any) {
                     channel.destroy();
                 }
@@ -89,7 +89,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
         });
     }
 
-    async handleConnection(id: string, channel: number, connection: net.Socket) {
+    async handleCommunicationChannel(id: string, channel: number, connection: net.Socket, protocol: TeceMux) {
         let runner = this.runnerConnectionsInProgress.get(id);
 
         if (!runner) {
@@ -102,9 +102,12 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
         } else {
             throw new Error(`Runner(${id}) wanted to connect on already initialized channel ${channel}`);
         }
+
         if (runner.every(isDefined)) {
+            protocol.removeAllListeners("channel");
+
             this.runnerConnectionsInProgress.delete(id);
-            this.emit("connect", id, runner as RunnerChannels);
+            this.emit("connect", id, runner as RunnerChannels, protocol);
         }
     }
 

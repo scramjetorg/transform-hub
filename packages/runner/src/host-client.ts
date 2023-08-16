@@ -61,20 +61,13 @@ class HostClient implements IHostClient {
 
         this._streams = openConnections as HostOpenConnections;
 
-        try {
-            this.hubTunnel = new TeceMux(this._streams[CC.PACKAGE] as Socket);
-        } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error(e);
-        }
-
         const agent = new Agent() as Agent & {
             createConnection: typeof createConnection
         }; // lack of types?;
 
         agent.createConnection = () => {
             try {
-                const socket = this.hubTunnel.multiplex() as unknown as Socket;
+                const socket = protocol.multiplex() as unknown as Socket;
 
                 socket.on("error", () => {
                     this.logger.error("Muxed stream error");
