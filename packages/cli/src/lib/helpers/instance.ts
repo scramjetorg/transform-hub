@@ -29,7 +29,7 @@ export const instanceRestart = async (
     instanceId: string
 ) => {
     const instanceInfo = await getInstance(instanceId).getInfo();
-    const sequenceId = instanceInfo.sequenceInfo.id;
+    const sequenceId = instanceInfo.sequence.id;
     const sequenceClient = SequenceClient.from(sequenceId, getHostClient());
     const { provides, requires, args } = instanceInfo;
     const appConfig = instanceInfo.appConfig || {};
