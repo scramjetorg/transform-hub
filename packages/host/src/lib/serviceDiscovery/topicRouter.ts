@@ -65,7 +65,7 @@ class TopicRouter {
 
         if (topicExist) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic with given id already exist" };
 
-        const topic = this.serviceDiscovery.createTopic(topicId, contentType);
+        const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
         return {
             opStatus: ReasonPhrases.OK,
@@ -106,22 +106,15 @@ class TopicRouter {
 
         this.logger.debug(`Incoming topic '${id}' request`);
 
-        let topic = this.serviceDiscovery.getTopic(topicId);
+        const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
-        if (topic) {
-            const topicContentType = topic.options().contentType;
-
-            if (contentType !== topicContentType) {
-                return {
-                    opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE,
-                    error: `Acceptable Content-Type for ${id} is ${topicContentType}`
-                };
-            }
-        } else {
-            topic = this.serviceDiscovery.createTopic(topicId, contentType);
+        if (topic.contentType !== contentType) {
+            return {
+                opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE,
+                error: `Acceptable Content-Type for ${id} is ${topic.contentType}`
+            };
         }
-        req.pipe(topic, { end: false });
-        req.socket.on("close", () => req.unpipe(topic));
+        topic.acceptPipe(req);
 
         if (!cpm) {
             await this.serviceDiscovery.update({
@@ -130,6 +123,11 @@ class TopicRouter {
         } else {
             this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
         }
+
+        await new Promise<void>(res => {
+            req.on("end", () => res());
+        });
+
         return { opStatus: ReasonPhrases.OK };
     }
 

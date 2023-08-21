@@ -20,27 +20,12 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
     request.auditData = {
         id: IDProvider.generate(),
         object: (request.params || {}).id,
-        tx: 0,
-        rx: 0,
+        get tx() { return request.socket.bytesWritten; },
+        get rx() { return request.socket.bytesRead; },
         requestorId: (request.headers["x-mw-billable"] || "system") as string
     };
 
     auditor.auditRequest(request, "START");
-
-    request.on("data", (chunk) => {
-        request.auditData.rx += chunk.length;
-    }).pause();
-
-    const write = res.write;
-
-    type Callback = ((error: Error | null | undefined) => void) | undefined;
-    type WriteType = (chunk: any, encoding: BufferEncoding, cb: Callback) => boolean;
-
-    (res.write as WriteType) = (chunk: any, encoding: BufferEncoding, cb: Callback) => {
-        request.auditData.tx += chunk.length;
-
-        return write.apply(res, [chunk, encoding, cb]);
-    };
 
     const interval = setInterval(() => {
         if (request.auditData.rx !== rx || request.auditData.tx !== tx) {
