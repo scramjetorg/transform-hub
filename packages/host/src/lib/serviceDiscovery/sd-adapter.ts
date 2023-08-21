@@ -53,13 +53,6 @@ export class ServiceDiscovery {
         return this.topicsController.get(id);
     }
 
-    createTopic(id: TopicId, contentType: ContentType) {
-        const topic = new Topic(id, contentType, { id: this.hostName, type: "hub" });
-
-        this.topicsController.set(id, topic);
-        return topic;
-    }
-
     deleteTopic(id: TopicId) { return this.topicsController.delete(id); }
 
     /**
@@ -83,12 +76,12 @@ export class ServiceDiscovery {
         const topic = this.topicsController.get(topicName); // TODO: sprawdzanie content Type
 
         if (topic) {
-            this.logger.info("Routing topic:", config);
+            this.logger.debug("Topic routed:", config);
             return topic;
         }
 
-        this.logger.info("Adding topic:", config);
-        const origin: StreamOrigin = { id: "XXXX", type: "hub" };
+        this.logger.debug("Topic added:", config);
+        const origin: StreamOrigin = { id: this.hostName, type: "hub" };
         const newTopic = new Topic(topicName, config.contentType, origin);
 
         this.topicsController.set(topicName, newTopic);
@@ -157,7 +150,7 @@ export class ServiceDiscovery {
     public async routeStreamToTopic(source: Readable, topicData: DataType) {
         const topic = this.createTopicIfNotExist(topicData);
 
-        source.pipe(topic, { end: false });
+        topic.acceptPipe(source);
         await this.cpmConnector?.sendTopicInfo({
             provides: topicData.topic.toString(),
             topicName: topicData.topic.toString(),
