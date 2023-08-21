@@ -7,7 +7,7 @@ export type GetListResponse = {
       selfHosted: boolean,
       isConnectionActive: boolean,
       description?: string,
-      tags?: Array<string>,
+      tags?: string[],
       disconnectReason?: string,
       topics : string[],
       sequences: string[],

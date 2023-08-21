@@ -785,7 +785,7 @@ export class CSIController extends TypedEmitter<Events> {
             args: this.args,
             provides: this.provides,
             requires: this.requires,
-            sequenceInfo: {
+            sequence: {
                 id: this.sequence.id,
                 config: this.sequence.config,
                 name: this.sequence.name,

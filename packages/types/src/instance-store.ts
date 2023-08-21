@@ -8,7 +8,7 @@ export type Instance = {
     args?: InstanceArgs,
     provides?: string,
     requires?: string,
-    sequenceInfo: SequenceInfoInstance,
+    sequence: SequenceInfoInstance,
     ports?: Record<string, number>,
     created?: Date,
     started?: Date,

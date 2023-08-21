@@ -931,7 +931,7 @@ export class Host implements IComponent {
                 id: csic.id,
                 appConfig: csic.appConfig,
                 args: csic.args,
-                sequenceInfo: (info => {
+                sequence: (info => {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { instances, ...rest } = info;
 
@@ -1045,7 +1045,7 @@ export class Host implements IComponent {
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
-                sequenceInfo: sequence
+                sequence: sequence
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);

@@ -3,5 +3,5 @@ import { DeepPartial } from "../utils";
 import { GetSequenceResponse } from "./get-sequence";
 
 export type GetInstanceResponse = Instance & {
-    sequenceInfo: DeepPartial<GetSequenceResponse>
+    sequence: DeepPartial<GetSequenceResponse>
 };
