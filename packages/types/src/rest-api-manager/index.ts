@@ -6,6 +6,7 @@ export * from "./get-health";
 export * from "./get-load";
 export * from "./get-sequences";
 export * from "./get-sequence";
+export * from "./get-sequence-ids";
 export * from "./get-instance";
 export * from "./get-instances";
 export * from "./get-topics";
