@@ -118,6 +118,9 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     res.writeContinue();
                 }
 
+                // Explicit pause causes next `on('data')` not to resume stream automatically.
+                req.pause();
+
                 const end = checkEndHeader ? shouldEndTargetStream(req, _end) : _end;
                 const data = await getWritable(stream, req, res);
 
