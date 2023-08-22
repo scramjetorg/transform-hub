@@ -15,6 +15,7 @@ export const hub: CommandDefinition = (program) => {
 
     const hubCmd = program
         .command("hub")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
@@ -23,7 +24,6 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("use")
-            .hook("preAction", initPlatform)
             .argument("<name|id>")
             .description("Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub")
             .action(async (id: string) => {
@@ -43,7 +43,6 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("list")
-            .hook("preAction", initPlatform)
             .alias("ls")
             .description("List all the Hubs in the default space")
             .action(async () => {
@@ -63,7 +62,6 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
-            .hook("preAction", initPlatform)
             .description("Display info about the default Hub")
             .action(async () => {
                 const { lastSpaceId: space, lastHubId: id } = sessionConfig.get();
