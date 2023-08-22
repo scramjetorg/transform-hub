@@ -97,6 +97,7 @@ const platformRequirementsValid = (
     !process.argv.includes(program._helpLongFlag);
 
 export const initPlatform = async (program: Command) => {
+    if (!isProductionEnv(profileConfig.env)) return;
     const { token, env, middlewareApiUrl } = profileConfig.get();
 
     /**
