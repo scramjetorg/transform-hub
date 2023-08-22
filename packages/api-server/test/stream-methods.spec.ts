@@ -65,7 +65,7 @@ test("Downstream works with unended stream", async t => {
 
     t.is(response.statusCode, 202, "Got accepted response");
     t.false(ended, "Didn't end until ended");
-    up.end("abc\n");
+    // up.end("abc\n");
 });
 
 test("Downstream works with unended stream and header", async t => {
@@ -86,7 +86,7 @@ test("Downstream works with unended stream and header", async t => {
 
     t.is(response.statusCode, 200, "Got OK response");
     t.false(ended, "Didn't end until ended");
-    up.end("abc\n");
+    // up.end("abc\n");
 });
 
 test("Downstream works with ended stream", async t => {
@@ -106,7 +106,7 @@ test("Downstream works with ended stream", async t => {
 
     t.is(response.statusCode, 200, "Got OK response");
     t.false(ended, "Didn't end until ended");
-    up.end("abc\n");
+    // up.end("abc\n");
 });
 
 test("Downstream works with ended stream and header", async t => {
@@ -127,7 +127,7 @@ test("Downstream works with ended stream and header", async t => {
 
     t.is(response.statusCode, 202, "Got accepted response");
     t.false(ended, "Didn't end until ended");
-    up.end("abc\n");
+    // up.end("abc\n");
 });
 
 after(() => sandbox.restore());
