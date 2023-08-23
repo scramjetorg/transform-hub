@@ -253,6 +253,8 @@ export class CPMConnector extends TypedEmitter<Events> {
             };
         }
 
+        this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
+
         await this.setLoadCheckMessageSender();
 
         StringStream.from(duplex.input as Readable)
@@ -351,7 +353,8 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             connection.socket
                 .once("close", async () => {
-                    this.logger.warn("CLOSE STATUS", connection.res.statusCode);
+                    this.logger.warn("Space request close status", connection.res.statusCode);
+                    this.logger.warn("Space request close message", connection.res.statusMessage);
 
                     await this.handleConnectionClose(connection.res.statusCode || -1);
                 });
@@ -362,7 +365,6 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             return;
         }
-        this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
@@ -476,7 +478,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
     async sendLoad() {
         try {
-            await this.communicationStream!.whenWrote(
+            await this.communicationStream?.whenWrote(
                 [CPMMessageCode.LOAD, await this.getLoad()]
             );
 
