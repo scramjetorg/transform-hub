@@ -10,8 +10,7 @@ import {
 import { ObjLogger } from "@scramjet/obj-logger";
 import { createConnection, Socket } from "net";
 import { VerserRequestResult } from "../types";
-
-const BPMux = require("bpmux").BPMux;
+import { TeceMux } from "./tecemux/tecemux";
 
 /**
  * VerserConnection class.
@@ -22,21 +21,21 @@ export class VerserConnection {
     logger = new ObjLogger(this);
 
     private request: IncomingMessage;
-    private bpmux?: { [key: string]: any };
+    private teceMux?: TeceMux;
 
-    private _socket: Duplex;
+    private _socket: Socket;
     private agent?: Agent & { createConnection: typeof createConnection };
     private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
     get connected() {
-        return !(this._socket.destroyed && this.bpmux);
+        return !(this._socket.destroyed && this.teceMux);
     }
 
-    get socket(): Duplex {
+    get socket(): Socket {
         return this._socket;
     }
 
-    constructor(request: IncomingMessage, socket: Duplex) {
+    constructor(request: IncomingMessage, socket: Socket) {
         this.request = request;
         this._socket = socket;
 
@@ -100,9 +99,9 @@ export class VerserConnection {
      * @param res {ServerResponse} Response object.
      */
     async forward(req: IncomingMessage, res: ServerResponse) {
-        if (!this.connected) throw new Error("BPMux not connected");
+        if (!this.connected) throw new Error("Not connected");
 
-        const channel = this.bpmux?.multiplex() as Duplex;
+        const channel = await this.teceMux?.multiplex() as Duplex;
 
         channel
             .on("error", (error: Error) => {
@@ -192,23 +191,24 @@ export class VerserConnection {
      * @param id {number} Channel id.
      * @returns Duplex stream.
      */
-    createChannel(id: number): Duplex {
-        if (!this.bpmux) throw new Error("BPMux not connected");
+    createChannel(id: number) {
+        if (!this.teceMux) throw new Error("TeCeMux not connected");
 
-        return this.bpmux.multiplex({ channel: id });
+        return this.teceMux.multiplex({ channel: id });
     }
 
     reconnect() {
         this.logger.debug("Reconnecting...");
-        this.bpmux = this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
-            this.logger.error("BPMux Error", error.message);
+        this.teceMux = new TeceMux(this.socket, "client").on("error", (error: Error) => {
+            this.logger.error("TeCeMux Error", error.message);
             // TODO: Error handling?
         });
 
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+
         this.agent.createConnection = () => {
             try {
-                const socket = this.bpmux!.multiplex() as Socket;
+                const socket = this.teceMux!.multiplex() as unknown as Socket;
 
                 socket.on("error", () => {
                     this.logger.error("Muxed stream error");
@@ -220,8 +220,10 @@ export class VerserConnection {
                 socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
                 this.logger.debug("Created new muxed stream");
+
                 return socket;
             } catch (e) {
+                this.logger.error("Create connection error", e);
                 const ret = new Socket();
 
                 setImmediate(() => ret.emit("error", e));
@@ -229,9 +231,9 @@ export class VerserConnection {
             }
         };
 
-        this.bpmux!.on("peer_multiplex", (socket: Duplex, data: any) => {
+        this.teceMux!.on("channel", (socket: Duplex) => {
             this.channelListeners.forEach((listener) => {
-                listener(socket, data);
+                listener(socket);
             });
         });
     }

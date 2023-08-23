@@ -44,6 +44,7 @@ import { DuplexStream, getRouter } from "@scramjet/api-server";
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { TeceMux } from "@scramjet/verser";
 import { ReasonPhrases } from "http-status-codes";
 
 /**
@@ -62,8 +63,6 @@ type Events = {
     terminated: (code: number) => void;
 };
 
-const BPMux = require("bpmux").BPMux;
-
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  */
@@ -74,7 +73,6 @@ export class CSIController extends TypedEmitter<Events> {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
-    private bpmux: any;
     private adapter: string;
 
     get lastStats(): InstanceStats {
@@ -478,6 +476,7 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
+            this.logger.info("PANG");
             const pangData = message[1];
 
             this.provides ||= this.outputTopic || pangData.provides;
@@ -537,7 +536,7 @@ export class CSIController extends TypedEmitter<Events> {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
                 args: this.args
-            };
+            } as HandshakeAcknowledgeMessage;
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
         } else {
@@ -548,18 +547,16 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.info("Instance started", this.info);
     }
 
-    async handleInstanceConnect(streams: DownstreamStreamsConfig) {
+    async handleInstanceConnect(streams: DownstreamStreamsConfig, protocol: TeceMux) {
         try {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
-            this.bpmux = new BPMux(streams[8]);
-            this.bpmux.on("error", (e: any) => {
-                this.logger.warn("Instance client multiplex connection errored", e.message);
-                streams[8]?.end();
-            });
-            this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
+            protocol
+                .on("channel", (socket: Duplex) => this.hostProxy.onInstanceRequest(socket));
+
             await once(this, "pang");
+
             this.initResolver?.res();
         } catch (e: any) {
             this.initResolver?.rej(e);

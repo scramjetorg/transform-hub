@@ -1,4 +1,4 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.10-slim-bullseye
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub

@@ -40,7 +40,7 @@ export type VerserClientConnection = {
     /**
      * Connection request object.
      */
-    res: IncomingMessage;
+    response: IncomingMessage;
 };
 
 export type VerserRequestResult = { incomingMessage: IncomingMessage; clientRequest: ClientRequest }

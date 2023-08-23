@@ -5,13 +5,13 @@ export type ConnectedSTHInfoDetails = {
 }
 
 export type ConnectedSTHInfo = {
-    id: string,
-    info: ConnectedSTHInfoDetails,
-    healthy: boolean,
-    selfHosted: boolean,
-    isConnectionActive: boolean,
-    description?: string,
-    tags?: Array<string>,
+    id: string;
+    info: ConnectedSTHInfoDetails;
+    healthy: boolean;
+    selfHosted: boolean;
+    isConnectionActive: boolean;
+    description?: string;
+    tags?: Array<string>;
     disconnectReason?: string;
 };
 
