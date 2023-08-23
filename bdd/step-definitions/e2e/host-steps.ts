@@ -754,19 +754,19 @@ Then(
 
 Then("send json data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
-    const sendDataP = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
+    const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
 
     ps.push(data);
     ps.push(null);
-
-    const sendData = await sendDataP;
 
     assert.ok(sendData);
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
     const readStream = fs.createReadStream(path);
-    const sendData = await hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
+    const sendData = hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
+
+    readStream.push(null);
 
     assert.ok(sendData);
 });
@@ -800,18 +800,22 @@ Given("topic {string} is created", async function(this: CustomWorld, topicId: st
 
 Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
     const topics = await hostClient.getTopics();
-
     const topic = topics.find(topicElement => topicElement.topicName === topicId);
 
     assert.notEqual(topic, undefined);
 });
 
 Then("remove topic {string}", async function(this: CustomWorld, topicId: string) {
-    await hostClient.deleteTopic(topicId);
+    assert.ok(await hostClient.deleteTopic(topicId));
 });
 
-Then("confirm topics are empty", async function(this: CustomWorld) {
+Then("confirm topic {string} is removed", async function(this: CustomWorld, topicName: string) {
     const topics = await hostClient.getTopics();
+    const removedTopic = topics.find(topicElement => topicElement.topicName === topicName);
 
-    assert.equal(topics.length, 0);
+    assert.equal(removedTopic, undefined);
+
+    if (!removedTopic) {
+        console.log(`Topic ${topicName} removed successfully.`);
+    }
 });

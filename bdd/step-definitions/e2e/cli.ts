@@ -5,7 +5,7 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import { getStreamsFromSpawn, defer, waitUntilStreamEquals, waitUntilStreamContains } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitUntilStreamEquals, waitUntilStreamContains, killProcessByName } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -160,6 +160,10 @@ Then("I confirm data named {string} will be received", async function(this: Cust
     assert.equal(response, expected);
 
     await this.cliResources!.commandInProgress!.kill();
+});
+
+Then("kill process {string}", async function(this: CustomWorld, processName: string) {
+    await killProcessByName(processName);
 });
 
 Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function(this: CustomWorld, entity: string) {
