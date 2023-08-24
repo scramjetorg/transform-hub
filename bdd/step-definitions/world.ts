@@ -26,6 +26,7 @@ export class CustomWorld implements World {
     } = {};
 
     cliResources: {
+        collectedTopicData?: string;
         stdio?: [stdout: string, stderr: string, statusCode: any];
         stdio1?: [stdout: string, stderr: string, statusCode: any];
         stdio2?: [stdout: string, stderr: string, statusCode: any];
@@ -51,6 +52,7 @@ export class CustomWorld implements World {
         this.attach = attach;
         this.log = log;
         this.parameters = parameters;
+        this.cliResources.collectedTopicData = "";
     }
 }
 

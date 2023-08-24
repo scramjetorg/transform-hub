@@ -183,7 +183,7 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
     ]);
 }
 
-export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string): Promise<string> {
     let response = "";
 
     await Promise.race([
@@ -198,23 +198,18 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
             }
             throw new Error("End of stream reached");
         })(),
-        defer(timeout).then(() => { assert.equal(response, expected); })
     ]);
 
     return response;
 }
 
 export async function killProcessByName(processName: string): Promise<void> {
-    return new Promise((res, rej) => {
-        const killCommand = `kill -9 $(ps aux | grep "${processName}" | grep -v grep | awk '{print $2}')`;
+    return new Promise((res) => {
+        const killCommand = `kill -9 $(pgrep -f "${processName}")`;
 
-        exec(killCommand, (error) => {
-            if (error) {
-                rej(error);
-            } else {
-                res();
-                console.log(`${processName} process killed.`);
-            }
+        exec(killCommand, () => {
+            console.log(`${processName} process killed.`);
+            res();
         });
     });
 }

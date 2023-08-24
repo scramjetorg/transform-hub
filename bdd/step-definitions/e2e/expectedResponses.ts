@@ -62,6 +62,9 @@ export const expectedResponses: { [key:string]: any} = {
         `Rosa\n` +
         `Fahume\n`,
     "pets2":
+        `Bonnie\n` +
+        `Rosa\n` +
+        `Fahume\n` +
         `Yogi\n` +
         `Molly\n` +
         `Sisi\n`

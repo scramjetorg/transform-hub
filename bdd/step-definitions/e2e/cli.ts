@@ -84,6 +84,22 @@ When("I execute CLI with {string} without waiting for the end", { timeout: 30000
     this.cliResources.commandInProgress = cmdProcess;
 });
 
+When("I execute CLI with {string} and collect data", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
+    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        cmdProcess.stdout.pipe(process.stdout);
+        cmdProcess.stderr.pipe(process.stdout);
+    }
+    this.cliResources.commandInProgress = cmdProcess;
+
+    cmdProcess.stdout.on("data", (data) => {
+        const dataChunk = data.toString();
+
+        this.cliResources.collectedTopicData += dataChunk;
+    });
+});
+
 Then("I confirm data received", async function(this: CustomWorld) {
     const expected = "";
     const { stdout } = this.cliResources!.commandInProgress!;
@@ -91,7 +107,7 @@ Then("I confirm data received", async function(this: CustomWorld) {
 
     assert.ok(response);
 
-    await this.cliResources!.commandInProgress!.kill();
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {
@@ -145,7 +161,7 @@ Then("I get event {string} with event message {string} from Instance", async fun
 });
 
 Then("I confirm data named {string} received", async function(data) {
-    const res = (this as CustomWorld).cliResources;
+    const res: any = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
 
     logger.log("Received data:\n", stdio);
@@ -159,7 +175,13 @@ Then("I confirm data named {string} will be received", async function(this: Cust
 
     assert.equal(response, expected);
 
-    await this.cliResources!.commandInProgress!.kill();
+    this.cliResources!.commandInProgress!.kill();
+});
+
+Then("I confirm all topic data named {string} received", async function(this: CustomWorld, data) {
+    const expected = expectedResponses[data];
+
+    assert.equal(this.cliResources.collectedTopicData, expected);
 });
 
 Then("kill process {string}", async function(this: CustomWorld, processName: string) {

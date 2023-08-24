@@ -15,6 +15,7 @@ This feature checks topic functionalities over CLI
         When I execute CLI with "seq start -"
         Then I execute CLI with "topic get names" without waiting for the end
         Then I confirm data named "endless-names-10" will be received
+        And kill process "topic get"
 
     @ci-topic @cli
     Scenario: E2E-011 TC-003 API to Instance
@@ -46,15 +47,11 @@ This feature checks topic functionalities over CLI
         Then send json data "Bonnie" named "pets"
         Then send json data "Rosa" named "pets"
         Then send json data "Fahume" named "pets"
-        Then I execute CLI with "topic get pets" without waiting for the end
+        Then I execute CLI with "topic get pets" and collect data
         Then I confirm data named "pets" will be received
-        And wait for "1000" ms
-        # FIXME: kill does not work in GHA environment
-        # When kill process "topic get"
         Then send json data "Yogi" named "pets"
         Then send json data "Molly" named "pets"
         Then send json data "Sisi" named "pets"
-        Then I execute CLI with "topic get pets" without waiting for the end
-        # TODO: Enable when kill fixed
-        # Then I confirm data named "pets2" will be received
+        And wait for "1000" ms
+        Then I confirm all topic data named "pets2" received
         And host is still running
