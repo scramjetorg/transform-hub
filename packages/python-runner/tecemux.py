@@ -5,6 +5,7 @@ import socket
 
 from attrs import define, field
 from barrier import Barrier
+from enum import Enum
 from inet import IPPacket, TCPSegment, SequenceOrder
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -257,9 +258,13 @@ class _ChannelContext:
         """
 
         if not self._channel_opened:
+            # Channels with ids 0 - 8 are have special opening procedure: send intance id with channel number
 
-            buf = b'' if self._global_instance_id is None else (
-                self._global_instance_id.encode() + str(self._get_channel_id()).encode())
+            if self._get_channel_id() < 9:
+                buf = b'' if self._global_instance_id is None else (
+                    self._global_instance_id.encode() + str(self._get_channel_id()).encode())
+            else:
+                buf = b''
 
             await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=buf, flags=['PSH'])))
 
@@ -442,15 +447,43 @@ class Tecemux:
 
         self._queue = asyncio.Queue()
         self._global_sync_barrier = Barrier(len(CC))
-        self._channels = {channel: _ChannelContext(channel,
-                                                   self._queue,
-                                                   self._instance_id,
-                                                   self._logger,
-                                                   self._global_stop_channel_event,
-                                                   self._global_sync_channel_event,
-                                                   self._global_sync_barrier) for channel in CC}
+
+        [ await self.init_channel(channel, force_open) for channel in CC ]
+
+
+    async def init_channel(self, channel=None, force_open=False):
+
+        if not isinstance(channel, CC):
+
+            channel = self._expandCommunicationChannelEnum()
+
+        self._channels[channel] = _ChannelContext(channel,
+                                                self._queue,
+                                                self._instance_id,
+                                                self._logger,
+                                                self._global_stop_channel_event,
+                                                self._global_sync_channel_event,
+                                                self._global_sync_barrier)
+        
+        self._global_sync_barrier._parties = len(CC)
+        
         if force_open:
-            [await channel.open() for channel in self.get_channels()]
+            await self.get_channel(channel).open()
+
+        return channel
+            
+
+    def _expandCommunicationChannelEnum(self) -> CC:
+
+        if len(CC) >= 65535:
+            return None
+        
+        new_channel_name = 'HTTP_REQUEST_' + str(len(CC) - 8 + 1)
+        
+        globals()['CC'] = Enum('CC',  [m.name for m in CC] + [new_channel_name], start=0)
+        
+        return getattr(CC, new_channel_name)
+
 
     def set_logger(self, logger: logging.Logger) -> None:
         """Sets logger
