@@ -200,7 +200,9 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
                     assert.equal(response, expected);
                 }
             }
-            throw new Error("End of stream reached");
+            assert.equal(response, expected, "End of stream reached");
+
+            return "passed";
         })(),
         defer(timeout).then(() => { assert.equal(response, expected); })
     ]);

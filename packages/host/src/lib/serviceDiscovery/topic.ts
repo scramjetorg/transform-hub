@@ -22,7 +22,7 @@ export class Topic extends Transform implements TopicHandler {
     private _consuming: Promise<any> | undefined;
 
     constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
-        super({ ...options, highWaterMark: 0, writableHighWaterMark: 0, readableHighWaterMark: 0 });
+        super({ ...options, highWaterMark: 65536, writableHighWaterMark: 0, readableHighWaterMark: 65536 });
 
         this._id = id;
         this._origin = origin;

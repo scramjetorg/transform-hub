@@ -19,7 +19,7 @@ This feature checks topic functionalities over CLI
 
     @ci-topic @cli
     Scenario: E2E-011 TC-003 API to Instance
-        When I execute CLI with "topic send avengers data/data.json"
+        When I execute CLI with "topic send avengers data/data.json" without waiting for the end
         When I execute CLI with "seq send ../packages/hello-input-out.tar.gz"
         When I execute CLI with "seq start - --input-topic avengers "
         And wait for "10000" ms
@@ -34,8 +34,8 @@ This feature checks topic functionalities over CLI
         And wait for "6000" ms
         When I execute CLI with "seq send ../packages/hello-input-out.tar.gz"
         When I execute CLI with "seq start -"
-        And wait for "4000" ms
         And I execute CLI with "inst output -" without waiting for the end
+        And wait for "4000" ms
         Then I confirm data named "hello-input-out-10" will be received
 
     @ci-topic @cli

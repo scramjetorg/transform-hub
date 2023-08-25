@@ -53,7 +53,9 @@ export const topic: CommandDefinition = (program) => {
         .addArgument(topicNameArgument)
         .addOption(contentTypeOption)
         .description("Get data from topic")
-        .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
+        .action(async (topicName, { contentType }) =>
+            displayStream(getHostClient().getNamedData(topicName, {}, contentType))
+        );
 
     topicCmd
         .command("send")

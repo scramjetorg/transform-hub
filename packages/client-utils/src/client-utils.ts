@@ -1,7 +1,7 @@
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
 import { ClientError, QueryError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
+import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig, GetStreamOptions } from "./types";
 
 /**
  * Provides HTTP communication methods.
@@ -121,17 +121,6 @@ export abstract class ClientUtilsBase implements HttpClient {
     }
 
     /**
-     * Performs get request for streamed data.
-     *
-     * @param {string} url Request URL.
-     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
-     * @returns {Readable} Readable stream.
-     */
-    async getStream(url: string, requestInit: RequestInit = {}) {
-        return this.safeRequest<any>(this.normalizeUrlFn(`${this.apiBase}/${url}`), requestInit);
-    }
-
-    /**
      * Performs POST request and returns response in given type.
      *
      * @param url Request URL.
@@ -243,5 +232,23 @@ export abstract class ClientUtilsBase implements HttpClient {
         }
 
         return this[put ? "put" : "post"]<T>(url, stream, requestInit, { parse: parseResponse });
+    }
+
+    /**
+     * Performs get request for streamed data.
+     *
+     * @param {string} url Request URL.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
+     * @param {GetStreamOptions} options send stream options.
+     * @returns {Readable} Readable stream.
+     */
+    async getStream(url: string, requestInit: RequestInit = {}, { type }: GetStreamOptions = { type: "application/octet-stream" }) {
+        requestInit.headers ||= {} as Headers;
+
+        Object.assign(requestInit.headers, {
+            "content-type": type
+        });
+
+        return this.safeRequest<any>(this.normalizeUrlFn(`${this.apiBase}/${url}`), requestInit);
     }
 }

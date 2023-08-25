@@ -753,12 +753,11 @@ Then(
 );
 
 Then("send json data {string} named {string}", async (data: any, topic: string) => {
-    const ps = new Readable();
+    const ps = new PassThrough();
+
+    ps.end(data);
+
     const sendDataP = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
-
-    ps.push(data);
-    ps.push(null);
-
     const sendData = await sendDataP;
 
     assert.ok(sendData);
