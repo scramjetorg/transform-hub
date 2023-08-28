@@ -1,4 +1,4 @@
-import { InstanceArgs } from "./instance-store";
+import { InstanceArgs } from "./instance";
 
 export type PortConfig = `${number}/${"tcp" | "udp"}`
 

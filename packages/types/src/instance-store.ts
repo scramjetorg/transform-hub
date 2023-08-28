@@ -1,7 +1,6 @@
 import { AppConfig } from "./app-config";
-import { InstanceId, InstanceStatus } from "./instance";
-
-export type InstanceArgs = any[];
+import { InstanceArgs, InstanceId, InstanceStatus } from "./instance";
+import { SequenceInfoInstance } from "./sequence-adapter";
 
 export type Instance = {
     id: InstanceId,
@@ -9,8 +8,8 @@ export type Instance = {
     args?: InstanceArgs,
     provides?: string,
     requires?: string,
-    sequence: string,
-    ports?: Record<string, number>
+    sequence: SequenceInfoInstance,
+    ports?: Record<string, number>,
     created?: Date,
     started?: Date,
     ended?: Date,

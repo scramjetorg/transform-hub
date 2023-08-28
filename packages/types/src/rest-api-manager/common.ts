@@ -11,7 +11,7 @@ export type ConnectedSTHInfo = {
     selfHosted: boolean,
     isConnectionActive: boolean,
     description?: string,
-    tags?: Array<string>,
+    tags?: string[],
     disconnectReason?: string;
 };
 
