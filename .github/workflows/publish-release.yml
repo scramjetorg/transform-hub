@@ -69,7 +69,7 @@ jobs:
           path: docker-images
 
       - name: Unzip docker images
-        run: pigz -d docker-images/*/*-docker-image.tar.gz
+        run: gzip -d docker-images/*/*-docker-image.tar.gz
 
       - name: Load docker images
         run: ls -1 docker-images/*/*-docker-image.tar | while read line; do docker load -i $line; done

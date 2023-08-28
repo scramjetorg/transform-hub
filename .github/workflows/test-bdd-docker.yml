@@ -27,6 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: debug list
+        run: ls -la
+        
       - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v3
         with:
@@ -38,7 +41,7 @@ jobs:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
-        run: ls dist*tar.gz | xargs -n1 tar -I pigz -xf
+        run: ls dist*tar.gz | xargs -n1 tar -xzf
 
       - name: Download node runner artifact
         uses: actions/download-artifact@v3
@@ -56,7 +59,7 @@ jobs:
           name: pre-runner-image
 
       - name: Unzip docker images from artifacts
-        run: pigz -d *-docker-image.tar.gz
+        run: gzip -d *-docker-image.tar.gz
 
       - name: Load docker images
         run: ls -1 *-docker-image.tar | while read line; do docker load -i $line; done

@@ -36,7 +36,7 @@ jobs:
         run: find dist -maxdepth 2 -type d
 
       - name: Create artifact
-        run: tar --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz dist/.
+        run: tar -czf dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz dist/.
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
