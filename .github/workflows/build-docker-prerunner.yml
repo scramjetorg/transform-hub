@@ -43,7 +43,7 @@ jobs:
           done
 
       - name: Zip image
-        run: gzip *-docker-image.tar
+        run: find . -name '*-docker-image.tar' -exec tar -czf docker-image-archive.tar.gz {} +
 
       - name: Upload image as an artifact
         uses: actions/upload-artifact@v3

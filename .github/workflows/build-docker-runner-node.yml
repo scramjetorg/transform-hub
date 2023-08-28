@@ -49,7 +49,7 @@ jobs:
           done
 
       - name: Zip image
-        run: gzip *-docker-image.tar
+        run: pigz *-docker-image.tar
 
       - name: Upload image as an artifact
         uses: actions/upload-artifact@v3

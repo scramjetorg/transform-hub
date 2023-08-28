@@ -69,11 +69,11 @@ jobs:
           path: docker-images
 
       - name: Unzip docker images
-        run: |
-          for file in docker-images/*/*-docker-image.tar.gz; do
-            tar -xzvf "$file" -C "$(dirname "$file")"
+        run:  |  
+          for gz_file in docker-images/*/*-docker-image.tar.gz; do
+            tar -xzvf "$gz_file" -C "$(dirname "$gz_file")"
           done
-      
+
       - name: Load docker images
         run: ls -1 docker-images/*/*-docker-image.tar | while read line; do docker load -i $line; done
 

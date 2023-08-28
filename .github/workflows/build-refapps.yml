@@ -29,8 +29,8 @@ jobs:
         run: yarn build:refapps
 
       - name: Create artifact
-        run: tar -czvf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz packages/*.tar.gz
-
+        run: tar -czvf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz dist/.
+        
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
