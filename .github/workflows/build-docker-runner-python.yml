@@ -36,8 +36,10 @@ jobs:
             docker save $repo/$name:$tag -o $repo-$name-$tag-docker-image.tar
           done
 
-      - name: Zip image
-        run: pigz *-docker-image.tar
+      - name: Install pigz and zip image
+        run: |
+          sudo apt-get install pigz -y
+          pigz *-docker-image.tar
 
       - name: Upload image as an artifact
         uses: actions/upload-artifact@v3

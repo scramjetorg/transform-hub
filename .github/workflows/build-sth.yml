@@ -34,7 +34,10 @@ jobs:
 
       - name: List dirs in dist
         run: find dist -maxdepth 2 -type d
-
+      
+      - name: Install pigz
+        run: sudo apt-get install pigz -y
+        
       - name: Create artifact
         run: tar --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz dist/.
 
