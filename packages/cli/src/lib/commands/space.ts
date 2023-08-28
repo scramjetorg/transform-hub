@@ -4,7 +4,7 @@ import { PostDisconnectPayload } from "@scramjet/types/src/rest-api-manager";
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { profileManager, sessionConfig } from "../config";
 import { displayObject, displayStream } from "../output";
-import { getMiddlewareClient } from "../platform";
+import { getMiddlewareClient, initPlatform } from "../platform";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { Option } from "commander";
 import { isIdString } from "@scramjet/utility";
@@ -33,6 +33,7 @@ export const space: CommandDefinition = (program) => {
 
     const spaceCmd = program
         .command("space")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .alias("spc")
         .usage("[command] [options...]")

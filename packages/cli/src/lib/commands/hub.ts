@@ -3,7 +3,7 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
-import { getMiddlewareClient } from "../platform";
+import { getMiddlewareClient, initPlatform } from "../platform";
 
 /**
  * Initializes `hub` command.
@@ -15,6 +15,7 @@ export const hub: CommandDefinition = (program) => {
 
     const hubCmd = program
         .command("hub")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
