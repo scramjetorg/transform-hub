@@ -112,7 +112,7 @@ class Runner:
         self._logging_setup.flush_temp_handler()
 
         self.protocol.set_logger(self.logger)
-        [channel._set_logger(self.logger) for channel in self.protocol.get_channels()]
+        [channel._set_logger(self.logger) for channel in self.protocol.get_required_channels()]
 
         self.logger.info('Log stream connected.')
 

@@ -20,6 +20,15 @@ class _ChannelContext:
     """Internal class to manage single channel
     """
 
+    class _ChannelState(Enum):
+        """Internal class describes possible channel state
+        """
+
+        PREPARED = 1
+        OPENED = 2
+        PAUSED = 3
+        ENDED = 4
+
     _channel_enum: CC
 
     _global_queue: asyncio.Queue
@@ -30,24 +39,23 @@ class _ChannelContext:
     _internal_outcoming_queue: asyncio.Queue
     _internal_incoming_queue: asyncio.Queue
 
-    _channel_paused: bool
-    _channel_opened: bool
-    
     _stop_channel_event: asyncio.Event
     _sync_channel_event: asyncio.Event
     _sync_barrier: Barrier
 
     _read_buffer: bytearray
-    _ended: bool
     _outcoming_process_task: asyncio.Task
+    
+    _state: _ChannelState
 
-    def __init__(self, channel: CC,
+    def __init__(self, channel,
                  queue: asyncio.Queue,
                  instance_id: str, 
                  logger: logging.Logger,
                  stop_event: asyncio.Event,
                  sync_event: asyncio.Event,
-                 sync_barrier: Barrier):
+                 sync_barrier: Barrier,
+                 state: _ChannelState):
         
         self._channel_enum = channel
         self._global_queue = queue
@@ -56,14 +64,12 @@ class _ChannelContext:
         self._event_loop = asyncio.get_running_loop()
         self._internal_outcoming_queue = asyncio.Queue()
         self._internal_incoming_queue = asyncio.Queue()
-        self._channel_opened = False
-        self._channel_paused = False
         self._stop_channel_event = stop_event
         self._sync_channel_event = sync_event
         self._sync_barrier = sync_barrier
         self._outcoming_process_task = asyncio.create_task(self._outcoming_process_tasks(), name=f'{self._get_channel_name()}_PROCESS_TASK')
-        self._ended = None
         self._read_buffer = bytearray()
+        self._state = state
 
     async def sync(self) -> None:
         """Waits until internal queues will be empty (packets will be processed)
@@ -111,7 +117,10 @@ class _ChannelContext:
             str: Channel name
         """
 
-        return str(self._channel_enum.name)
+        if isinstance(self._channel_enum, CC):
+            return str(self._channel_enum.name)
+        else:
+            return str(self._channel_enum)
 
     def _get_channel_id(self) -> int:
         """Return channel id
@@ -119,7 +128,10 @@ class _ChannelContext:
         Returns:
             int: Channel id
         """
-        return int(self._channel_enum.value)
+        if isinstance(self._channel_enum, CC):
+            return int(self._channel_enum.value)
+        else:
+            return int(self._channel_enum)
 
     def _set_logger(self, logger: logging.Logger) -> None:
         """Sets new logger
@@ -166,7 +178,7 @@ class _ChannelContext:
             if (not await self._get_data()):
                 break
         
-        if self._ended and isep == -1:
+        if self._state == _ChannelContext._ChannelState.ENDED and isep == -1:
             chunk = self._read_buffer.copy()
             self._read_buffer.clear()
         else:
@@ -181,7 +193,7 @@ class _ChannelContext:
         Returns:
             bool: True if data are moved from queue to _read_buffer, false otherwise
         """
-        if self._ended and self._internal_incoming_queue.empty():
+        if self._state == _ChannelContext._ChannelState.ENDED and self._internal_incoming_queue.empty():
             return False
 
         while True:
@@ -197,7 +209,7 @@ class _ChannelContext:
 
                 await asyncio.sleep(0)
 
-                if self._ended and self._internal_incoming_queue.empty():
+                if self._state == _ChannelContext._ChannelState.ENDED and self._internal_incoming_queue.empty():
                     return False
 
             except asyncio.CancelledError:
@@ -257,7 +269,7 @@ class _ChannelContext:
         """Open channel
         """
 
-        if not self._channel_opened:
+        if self._state == _ChannelContext._ChannelState.PREPARED:
             # Channels with ids 0 - 8 are have special opening procedure: send intance id with channel number
 
             if self._get_channel_id() < 9:
@@ -268,8 +280,7 @@ class _ChannelContext:
 
             await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=buf, flags=['PSH'])))
 
-            self._channel_opened = True
-            self._ended = False
+            self._state = _ChannelContext._ChannelState.OPENED
 
     async def end(self) -> None:
         """Send EOF on current channel
@@ -277,7 +288,7 @@ class _ChannelContext:
 
         await self._internal_outcoming_queue.join()
         await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
-        self._ended = True
+        self._state = _ChannelContext._ChannelState.ENDED
 
     async def close(self) -> None:
         """Close current channel
@@ -295,13 +306,13 @@ class _ChannelContext:
         # if SYN & ACK flag is up, pause channel
         if pkt.get_segment().is_flag('SYN') and pkt.get_segment().is_flag('ACK'):
             self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel pause request received')
-            self.set_pause(True)
+            self._state = _ChannelContext._ChannelState.PAUSED
             await self.send_ACK(pkt.get_segment().seq)
             return
 
         # if ACK flag is up, reasume channel
         if not pkt.get_segment().is_flag('SYN') and pkt.get_segment().is_flag('ACK'):
-            self.set_pause(False)
+            self._state = _ChannelContext._ChannelState.OPENED
             return
 
         # if PSH flag is up, confirm
@@ -309,7 +320,7 @@ class _ChannelContext:
             await self.send_ACK(pkt.get_segment().seq)
 
         if pkt.segment.is_flag('FIN'):
-            self._ended = True
+            self._state = _ChannelContext._ChannelState.ENDED
             return
         await self._internal_incoming_queue.put(pkt.get_segment().data)
         self._internal_incoming_queue.task_done()
@@ -320,15 +331,14 @@ class _ChannelContext:
         Args:
             data (bytes): Buffer to send_incoming_process_task
         """
-        def wrap(channel_enum, buf):
-            channel_id = int(channel_enum.value)
+        def wrap(channel_id, buf):
             return IPPacket(segment=TCPSegment(dst_port=channel_id, flags=['PSH'], data=buf))
 
-        if not self._channel_paused:
+        if self._state is not _ChannelContext._ChannelState.PAUSED:
             while not self._internal_outcoming_queue.empty():
                 try:
                     buf = await asyncio.wait_for(self._internal_outcoming_queue.get(),1)
-                    await self._global_queue.put(wrap(self._channel_enum, buf))
+                    await self._global_queue.put(wrap(self._get_channel_id(), buf))
                     self._internal_outcoming_queue.task_done()
                 except asyncio.QueueEmpty:
                     self._debug(f'Tecemux/{self._get_channel_name()}: [-] All data stored during pause were redirected to global queue')
@@ -354,14 +364,6 @@ class _ChannelContext:
 
         self._internal_outcoming_queue.put_nowait(data)
 
-    def set_pause(self, state: bool) -> None:
-        """Sets pause state for current channel
-
-        Args:
-            state (bool): Pause state
-        """
-        self._channel_paused = state
-
 
 @define
 class Tecemux:
@@ -376,7 +378,9 @@ class Tecemux:
     _outcoming_data_forwarder: asyncio.coroutine = field(default=None)
 
     _instance_id: str = field(default=None)
-    _channels: dict = field(default={})
+    _required_channels: dict = field(default={})
+    _extra_channels: dict = field(default={})
+
     _logger: logging.Logger = field(default=None)
 
     _global_stop_channel_event: asyncio.Event = asyncio.Event()
@@ -447,43 +451,38 @@ class Tecemux:
 
         self._queue = asyncio.Queue()
         self._global_sync_barrier = Barrier(len(CC))
-
-        [ await self.init_channel(channel, force_open) for channel in CC ]
-
-
-    async def init_channel(self, channel=None, force_open=False):
-
-        if not isinstance(channel, CC):
-
-            channel = self._expandCommunicationChannelEnum()
-
-        self._channels[channel] = _ChannelContext(channel,
-                                                self._queue,
-                                                self._instance_id,
-                                                self._logger,
-                                                self._global_stop_channel_event,
-                                                self._global_sync_channel_event,
-                                                self._global_sync_barrier)
-        
-        self._global_sync_barrier._parties = len(CC)
-        
+        self._required_channels = {channel: _ChannelContext(channel,
+                                                   self._queue,
+                                                   self._instance_id,
+                                                   self._logger,
+                                                   self._global_stop_channel_event,
+                                                   self._global_sync_channel_event,
+                                                   self._global_sync_barrier,
+                                                   _ChannelContext._ChannelState.PREPARED) for channel in CC}
         if force_open:
-            await self.get_channel(channel).open()
+            [await channel.open() for channel in self.get_required_channels()]
 
-        return channel
+
+
+    async def open_channel(self, channel_id=None, force_open=False, initial_state=_ChannelContext._ChannelState.PREPARED):
+    
+        if channel_id is None:
+            channel = str(len(self._required_channels) + len(self._extra_channels)+1)
             
+        self._extra_channels[channel] = _ChannelContext(channel,
+                                    self._queue,
+                                    self._instance_id,
+                                    self._logger,
+                                    self._global_stop_channel_event,
+                                    self._global_sync_channel_event,
+                                    self._global_sync_barrier,
+                                    initial_state)
+    
+        if force_open:
+            await self._extra_channels[channel].open()
 
-    def _expandCommunicationChannelEnum(self) -> CC:
-
-        if len(CC) >= 65535:
-            return None
-        
-        new_channel_name = 'HTTP_REQUEST_' + str(len(CC) - 8 + 1)
-        
-        globals()['CC'] = Enum('CC',  [m.name for m in CC] + [new_channel_name], start=0)
-        
-        return getattr(CC, new_channel_name)
-
+        self._global_sync_barrier._parties = len(self.get_required_channels()) + len(self.get_extra_channels())
+        return channel
 
     def set_logger(self, logger: logging.Logger) -> None:
         """Sets logger
@@ -493,7 +492,7 @@ class Tecemux:
         """
         self._logger = logger
 
-    def get_channel(self, channel: CC) -> _ChannelContext:
+    def get_channel(self, channel) -> _ChannelContext:
         """Returns single channel context
 
         Args:
@@ -502,7 +501,10 @@ class Tecemux:
         Returns:
             _ChannelContext: Channel context
         """
-        return self._channels[channel]
+        if isinstance(channel, CC):
+            return self._required_channels[channel]
+        else:
+            return self._extra_channels[channel]
 
     async def sync(self) -> None:
         """Waits until all write tasks will be done
@@ -515,14 +517,22 @@ class Tecemux:
         if not self._queue.empty():
             await self._queue.join()
 
-    def get_channels(self) -> dict:
-        """Returns all initiated channels
+    def get_required_channels(self) -> dict:
+        """Returns only required channels by STH
 
         Returns:
             dict: Dict of channel's contexts
         """
-        return self._channels.values()
+        return self._required_channels.values()
 
+    def get_extra_channels(self) -> dict:
+        """Returns only extra initiated channels by runner 
+
+        Returns:
+            dict: Dict of channel's contexts
+        """
+        return self._extra_channels.values()
+    
     @staticmethod
     def _chunk_preview(value: bytes) -> str:
         """Returns small string preview of byte chunk. For logs
@@ -547,18 +557,25 @@ class Tecemux:
         """ Close all channels
         """
 
-        for channel in self.get_channels():
+        for channel in self.get_required_channels():
             await channel.end()
             await channel.close()
 
-        for channel in self.get_channels():
+        for channel in self.get_extra_channels():
+            await channel.end()
+            await channel.close() 
+
+        for channel in self.get_required_channels():
             await channel._internal_outcoming_queue.join()
 
+        for channel in self.get_extra_channels():
+            await channel._internal_outcoming_queue.join()
+        
         self._global_stop_channel_event.set()
         await self._global_stop_channel_event.wait()
-        for channel in self.get_channels():
+        for channel in self.get_required_channels():
             try:
-                await asyncio.wait_for(channel._outcoming_process_task,1)
+                await asyncio.wait_for(channel._outcoming_process_task,timeout=1)
             except asyncio.TimeoutError:
                 pass
             except TypeError:
@@ -606,7 +623,7 @@ class Tecemux:
 
         while not self._global_stop_channel_event.is_set():
             try:
-                chunk = await self._reader.read(READ_CHUNK_SIZE)
+                chunk = await asyncio.wait_for(self._reader.read(READ_CHUNK_SIZE),1)
 
                 if not chunk:
                     incoming_parser_finish_loop.set()
@@ -633,16 +650,23 @@ class Tecemux:
                         self._last_sequence_received = pkt.get_segment().seq
                         self._debug(f'Tecemux/MAIN: [<] Full incoming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
 
-                        channel = CC(str(pkt.get_segment().dst_port))
+                        dst_port = pkt.get_segment().dst_port
 
-                        await self._channels[channel].queue_up_incoming(pkt)
+                        if dst_port < 9:
+                            channel = CC(str(dst_port))
+                            channel_name = channel.name
+                            await self._required_channels[channel].queue_up_incoming(pkt)
+                        else:
+                            channel = str(dst_port)
+                            channel_name = f'EXTRA_CHANNEL_{channel}'
+                            await self._extra_channels[channel].queue_up_incoming(pkt)
 
-                        self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel.name} stream')
+                        self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel_name} stream')
                         buffer = buffer[current_packet_size:]
                     else:
                         self._warning('Tecemux/MAIN: [<] Not full packet received. Getting additional data chunk')
                         break
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 if self._global_stop_channel_event.is_set():
                     break
                 await asyncio.sleep(0)
@@ -658,7 +682,7 @@ class Tecemux:
 
         while True:
             try:
-                pkt = await asyncio.wait_for(self._queue.get(),1)
+                pkt = await asyncio.wait_for(self._queue.get(),timeout=1)
                 self._queue.task_done()
 
                 # inject sequence number
@@ -680,7 +704,7 @@ class Tecemux:
 
             except asyncio.TimeoutError:
                 if self._queue.empty() and self._global_stop_outcoming_event.is_set():
-                    break
+                    return
                 await asyncio.sleep(0)
 
             except asyncio.CancelledError:
