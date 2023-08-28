@@ -32,7 +32,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
-
+      
+      - name: Install pigz
+        run: sudo apt-get install pigz -y
+        
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
