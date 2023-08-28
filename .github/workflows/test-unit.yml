@@ -28,7 +28,7 @@ jobs:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
       - name: Unzip dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
-        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+        run: ls dist*tar.gz | xargs -n1 tar -zxvf
 
       - name: Install dependencies
         run: yarn install --ignore-engines --frozen-lockfile --cache-folder=$( $( dirname yarn cache dir ) )
