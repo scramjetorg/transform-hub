@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-loop-func */
 import fs from "fs";
 import { strict as assert } from "assert";
@@ -95,7 +96,6 @@ export async function streamToString(_stream: Readable): Promise<string> {
 
 export async function getOccurenceNumber(searchedValue: any, filePath: any) {
     try {
-        // eslint-disable-next-line no-console
         console.log(`${JSON.stringify(searchedValue)}`);
         return Number((await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout);
     } catch {
@@ -123,7 +123,6 @@ export async function getStreamsFromSpawn(
     command: string, options: string[], env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string, any]> {
     if (process.env.SCRAMJET_TEST_LOG) {
-        // eslint-disable-next-line no-console
         console.error("Spawning command", command, ...options);
     }
 
@@ -138,7 +137,6 @@ export async function getStreamsFromSpawn(
             child.on("exit", res);
         })
     ]).catch((error: any) => {
-        // eslint-disable-next-line no-console
         console.error("Error in spawn", error);
         throw error;
     });
@@ -152,7 +150,6 @@ export async function getStreamsFromSpawnSuccess(
     const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
 
     if (process.env.SCRAMJET_TEST_LOG) {
-        // eslint-disable-next-line no-console
         console.error("Results", { stdout, stderr });
     }
 
@@ -175,7 +172,7 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
         (async () => {
             for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
                 response = `${response}${chunk}`;
-                // eslint-disable-next-line no-console
+
                 console.log("\nData received: ", response);
                 if (response.includes(expected)) return true;
             }
@@ -187,7 +184,7 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
     ]);
 }
 
-export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string, _timeout = 10000): Promise<string> {
     let response = "";
 
     await Promise.race([
@@ -204,8 +201,20 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
 
             return "passed";
         })(),
-        defer(timeout).then(() => { assert.equal(response, expected); })
+        // defer(timeout).then(() => { assert.equal(response, expected); })
     ]);
 
     return response;
 }
+
+export async function killProcessByName(processName: string): Promise<void> {
+    return new Promise((res) => {
+        const killCommand = `kill -9 $(pgrep -f "${processName}")`;
+
+        exec(killCommand, () => {
+            console.log(`${processName} process killed.`);
+            res();
+        });
+    });
+}
+

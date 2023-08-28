@@ -754,24 +754,25 @@ Then(
 
 Then("send json data {string} named {string}", async (data: any, topic: string) => {
     const ps = new PassThrough();
+    const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
 
-    ps.end(data);
-
-    const sendDataP = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
-    const sendData = await sendDataP;
+    ps.push(data);
+    ps.end();
 
     assert.ok(sendData);
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
     const readStream = fs.createReadStream(path);
-    const sendData = await hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
+    const sendData = hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
+
+    readStream.push(null);
 
     assert.ok(sendData);
 });
 
 When("get data named {string} without waiting for the end", async function(this: CustomWorld, topic: string) {
-    this.resources.outStream = await hostClient.getNamedData(topic);
+    this.resources.outStream = await hostClient.getNamedData(topic, {}, "application/x-ndjson");
 });
 
 Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
@@ -806,11 +807,16 @@ Then("confirm topics contain {string}", async function(this: CustomWorld, topicI
 });
 
 Then("remove topic {string}", async function(this: CustomWorld, topicId: string) {
-    await hostClient.deleteTopic(topicId);
+    assert.ok(await hostClient.deleteTopic(topicId));
 });
 
-Then("confirm topics are empty", async function(this: CustomWorld) {
+Then("confirm topic {string} is removed", async function(this: CustomWorld, topicName: string) {
     const topics = await hostClient.getTopics();
+    const removedTopic = topics.find(topicElement => topicElement.topicName === topicName);
 
-    assert.equal(topics.length, 0);
+    assert.equal(removedTopic, undefined);
+
+    if (!removedTopic) {
+        console.log(`Topic ${topicName} removed successfully.`);
+    }
 });

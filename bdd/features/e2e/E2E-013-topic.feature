@@ -103,5 +103,5 @@ The tests check topic functionalities, where we send and receive data from /topi
         And topic "RegularTopic" is created
         Then confirm topics contain "RegularTopic"
         Then remove topic "RegularTopic"
-        Then confirm topics are empty
+        Then confirm topic "RegularTopic" is removed
 

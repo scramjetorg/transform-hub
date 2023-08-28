@@ -5,7 +5,7 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import { getStreamsFromSpawn, defer, waitUntilStreamEquals, waitUntilStreamContains } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitUntilStreamEquals, waitUntilStreamContains, killProcessByName } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -45,6 +45,17 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function(this: Cus
     assert.equal(res.stdio[2], 0);
 });
 
+When("I execute CLI with {string} without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
+    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        cmdProcess.stdout.pipe(process.stdout);
+        cmdProcess.stderr.pipe(process.stdout);
+    }
+
+    this.cliResources.commandInProgress = cmdProcess;
+});
+
 When("I get sequence id", { timeout: 30000 }, async function(this: CustomWorld) {
     const res = this.cliResources;
     const stdio = res.stdio![0].split("\n");
@@ -74,7 +85,7 @@ When("I start {string} with the first sequence id", { timeout: 30000 }, async fu
     assert.equal(res.stdio[2], 0);
 });
 
-When("I execute CLI with {string} without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
+When("I execute CLI with {string} and collect data", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
     const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
@@ -82,6 +93,14 @@ When("I execute CLI with {string} without waiting for the end", { timeout: 30000
         cmdProcess.stderr.pipe(process.stdout);
     }
     this.cliResources.commandInProgress = cmdProcess;
+
+    cmdProcess.stdout.on("data", (data) => {
+        const dataChunk = data.toString();
+
+        logger.log("===> dataChunk", dataChunk);
+
+        this.cliResources.collectedTopicData += dataChunk;
+    });
 });
 
 Then("I confirm data received", async function(this: CustomWorld) {
@@ -91,7 +110,7 @@ Then("I confirm data received", async function(this: CustomWorld) {
 
     assert.ok(response);
 
-    await this.cliResources!.commandInProgress!.kill();
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {
@@ -145,7 +164,7 @@ Then("I get event {string} with event message {string} from Instance", async fun
 });
 
 Then("I confirm data named {string} received", async function(data) {
-    const res = (this as CustomWorld).cliResources;
+    const res: any = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
 
     logger.log("Received data:\n", stdio);
@@ -159,7 +178,18 @@ Then("I confirm data named {string} will be received", async function(this: Cust
 
     assert.equal(response, expected);
 
-    await this.cliResources!.commandInProgress!.kill();
+    // this.cliResources!.commandInProgress!.kill();
+});
+
+Then("I confirm all topic data named {string} received", async function(this: CustomWorld, data) {
+    logger.log("===> All collected data chunks: \n", this.cliResources.collectedTopicData);
+    const expected = expectedResponses[data];
+
+    assert.equal(this.cliResources.collectedTopicData, expected);
+});
+
+Then("kill process {string}", async function(this: CustomWorld, processName: string) {
+    await killProcessByName(processName);
 });
 
 Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function(this: CustomWorld, entity: string) {

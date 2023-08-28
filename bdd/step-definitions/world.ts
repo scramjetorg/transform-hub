@@ -38,6 +38,7 @@ export class CustomWorld implements World {
         sequences?: STHRestAPI.GetSequencesResponse;
         instances?: STHRestAPI.GetInstancesResponse;
         commandInProgress?: ChildProcessWithoutNullStreams;
+        collectedTopicData?: string;
     } = {};
 
     constructor({ attach, log, parameters }: any) {
@@ -51,6 +52,7 @@ export class CustomWorld implements World {
         this.attach = attach;
         this.log = log;
         this.parameters = parameters;
+        this.cliResources.collectedTopicData = "";
     }
 }
 
