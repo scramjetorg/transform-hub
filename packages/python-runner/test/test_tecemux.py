@@ -2,7 +2,7 @@ import asyncio
 import codecs
 import pytest
 import sys
-from tecemux import Tecemux
+from tecemux import Tecemux, _ChannelContext
 from inet import IPPacket, TCPSegment
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
@@ -139,16 +139,38 @@ class TestTecemux:
         client_a, client_b = local_socket_connection
         
         test_channel = await client_a.open_channel(force_open=True)
-        client_a.get_channel(test_channel).write("{'foo':'bar'}\n")
+        test_channel.write("{'foo':'bar'}\n")
         
         await client_a._writer.drain()
         
-        data = await client_b.get_channel(test_channel).readuntil()
-        data = await client_b.get_channel(test_channel).readuntil()
+        data = await client_b.get_channel(test_channel._get_channel_name()).readuntil()
+        data = await client_b.get_channel(test_channel._get_channel_name()).readuntil()
         
         assert data.decode() == "{'foo':'bar'}\n"
 
         await self._close_clients(client_a, client_b)
+
+
+    async def test_extra_channel_with_proxy(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+
+        import aiohttp
+
+        async with aiohttp.ClientSession() as session:
+        
+            #fake opening on client b side
+            side_b = await client_b.open_channel(channel_id='10',initial_state=_ChannelContext._ChannelState.OPENED)
+            side_b.write(b'HTTP/1.1 200 OK\r\nContent-Length: 12\r\nContent-Type: text/html\r\n\r\nHello World!\r\n')        
+            await client_b._writer.drain()
+
+            async with session.get("http://_/api/version", proxy=client_a.get_proxy_uri()) as resp:
+
+                a = 5
+                x = await resp.text()
+                x = 5
+
+    
+       
 
     async def test_readuntil(self, local_socket_connection):
         client_a, client_b = local_socket_connection
