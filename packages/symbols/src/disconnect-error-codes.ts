@@ -7,4 +7,4 @@ export enum DisconnectHubErrors {
     NATIVE_HUB,
     CONNECTED,
     ALREADY_DISCONNECTED
-};
+}
