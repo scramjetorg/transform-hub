@@ -24,7 +24,7 @@ class _ChannelContext:
         """Internal class describes possible channel state
         """
 
-        PREPARED = 1
+        CREATED = 1
         OPENED = 2
         PAUSED = 3
         ENDED = 4
@@ -269,7 +269,7 @@ class _ChannelContext:
         """Open channel
         """
 
-        if self._state == _ChannelContext._ChannelState.PREPARED:
+        if self._state == _ChannelContext._ChannelState.CREATED:
             # Channels with ids 0 - 8 are have special opening procedure: send intance id with channel number
 
             if self._get_channel_id() < 9:
@@ -394,6 +394,87 @@ class Tecemux:
     _sequence_number: int = field(default=0)
     _last_sequence_received: int = field(default=0)
 
+    _proxy = field(default=None)
+    _proxy_task = asyncio.coroutine = field(default=None)
+
+    class _HTTPProxy:
+        
+        def __init__(self, protocol):
+            self._host = '127.0.0.1'
+            self._proxy_socket = None
+            self._port = None
+
+        
+        async def _from_initiator(reader, channel):
+
+            while True:
+                try:
+                    request_data = await asyncio.wait_for(reader.read(255), timeout=1)
+
+                    if request_data== b'':
+                        continue
+
+                    channel.write(request_data)
+                    await asyncio.sleep(0)
+                
+                except asyncio.TimeoutError:
+                    await asyncio.sleep(0)
+                
+                except asyncio.CancelledError:
+                    return
+
+
+        
+        async def _from_target(writer, channel):
+                
+            while True:
+                try:
+                    response_data = await asyncio.wait_for(channel.read(), timeout=1)
+
+                    if response_data== b'':
+                        continue
+
+                    writer.write(response_data)
+                    await writer.drain()
+
+                except asyncio.TimeoutError:
+                    await asyncio.sleep(0)
+                
+                except asyncio.CancelledError:
+                    return
+
+        @staticmethod
+        async def handle_request(reader, writer, protocol):  
+                     
+            channel = await protocol.open_channel(force_open=True)
+
+            from_initiator = asyncio.create_task(Tecemux._HTTPProxy._from_initiator(reader, channel))
+            from_target = asyncio.create_task(Tecemux._HTTPProxy._from_target(writer, channel))
+
+            await asyncio.gather(from_initiator, from_target)
+        
+        async def run(self, protocol):
+
+            self._proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self._proxy_socket.bind((self._host, 0))
+            self._proxy_socket.listen()
+
+            self._port = int(self._proxy_socket.getsockname()[1])
+
+            server = await asyncio.start_server(lambda r, w: Tecemux._HTTPProxy.handle_request(r, w, protocol), sock=self._proxy_socket)
+            
+            async with server:
+                await server.serve_forever()
+            
+            self._proxy_socket.close()
+
+        def get_proxy_uri(self):
+            return f'http://{self._host}:{self._port}'
+    
+    def get_proxy_uri(self):
+        return self._proxy.get_proxy_uri()
+        
     def _debug(self, msg):
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
             self._logger.debug(msg)
@@ -458,17 +539,23 @@ class Tecemux:
                                                    self._global_stop_channel_event,
                                                    self._global_sync_channel_event,
                                                    self._global_sync_barrier,
-                                                   _ChannelContext._ChannelState.PREPARED) for channel in CC}
+                                                   _ChannelContext._ChannelState.CREATED) for channel in CC}
         if force_open:
             [await channel.open() for channel in self.get_required_channels()]
 
+        self._proxy = Tecemux._HTTPProxy(self)
+        self._proxy_task = asyncio.create_task(self._proxy.run(self))
 
 
-    async def open_channel(self, channel_id=None, force_open=False, initial_state=_ChannelContext._ChannelState.PREPARED):
+
+    async def open_channel(self, channel_id=None, force_open=False, initial_state=_ChannelContext._ChannelState.CREATED):
     
         if channel_id is None:
             channel = str(len(self._required_channels) + len(self._extra_channels)+1)
-            
+
+        elif isinstance(channel_id, str):
+            channel = channel_id
+
         self._extra_channels[channel] = _ChannelContext(channel,
                                     self._queue,
                                     self._instance_id,
@@ -482,7 +569,8 @@ class Tecemux:
             await self._extra_channels[channel].open()
 
         self._global_sync_barrier._parties = len(self.get_required_channels()) + len(self.get_extra_channels())
-        return channel
+
+        return self._extra_channels[channel]
 
     def set_logger(self, logger: logging.Logger) -> None:
         """Sets logger
@@ -549,9 +637,18 @@ class Tecemux:
         """ Stops protocol
         """        
 
+        await self._finish_proxy()  
         await self._finish_channels()
         await self._finish_incoming()
         await self._finish_outcoming()
+
+
+    async def _finish_proxy(self) -> None:
+        try:
+            self._proxy_task.cancel()
+            await asyncio.gather(*[self._proxy_task])
+        except asyncio.CancelledError:
+            pass
 
     async def _finish_channels(self) -> None:
         """ Close all channels
