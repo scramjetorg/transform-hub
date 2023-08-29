@@ -96,4 +96,10 @@ export class ManagerClient implements ClientProvider {
     async disconnectHubs(opts: any) {
         return this.client.post<MRestAPI.PostDisconnectResponse>("disconnect", opts, {}, { json: true, parse: "json" });
     }
+
+    async deleteHub(id: string, force: boolean) {
+        return this.client.delete<MRestAPI.HubDeleteResponse>(`sth/${id}`, {
+            headers: { "x-force": force.toString(), "content-type": "application/json" }
+        });
+    }
 }
