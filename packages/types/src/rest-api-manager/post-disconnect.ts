@@ -1,3 +1,4 @@
+import { ReasonPhrases } from "http-status-codes";
 import { OpResponse } from "../rest-api-multi-manager";
 
 export type PostDisconnectPayload = {
@@ -12,4 +13,7 @@ export type PostDisconnectResponse = OpResponse<{
         sthId: string;
         reason: string;
     }[];
-}>;
+}> | {
+    opStatus: ReasonPhrases,
+    error: string;
+};
