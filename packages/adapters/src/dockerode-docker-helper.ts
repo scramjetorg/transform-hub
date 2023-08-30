@@ -280,11 +280,15 @@ export class DockerodeDockerHelper implements IDockerHelper {
             filters: { label: { "org.scramjet.host.is-sequence": true } }
         });
 
-        Volumes.forEach(
-            volume => { console.log(volume); });
         return Volumes.map(volume => volume.Name);
     }
-
+    /**
+     * Access to the value of volume's label
+     * @param volumeName Volume name.
+     * @param labelName Label name.
+     * 
+     * @returns Promise which resolves when volume has been removed.
+     */
     async getLabelValue(volumeName: string, labelName: string): Promise<string | null> {
         try {
             // Get information about the Docker volume
