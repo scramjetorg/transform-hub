@@ -509,7 +509,9 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
 
-        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery);
+        const topicLogger = new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery).logger;
+
+        topicLogger.pipe(this.logger);
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
@@ -706,11 +708,10 @@ export class Host implements IComponent {
         const sequenceAdapter = getSequenceAdapter(adapter, this.config);
 
         try {
+            sequenceAdapter.logger.pipe(this.logger);
             await sequenceAdapter.init();
 
             const configs = await sequenceAdapter.list();
-
-            sequenceAdapter.logger.pipe(this.logger);
 
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
@@ -993,10 +994,15 @@ export class Host implements IComponent {
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
+        // eslint-disable-next-line complexity
         csic.on("pang", async (data) => {
             this.logger.trace("PANG received", data);
 
-            if (data.requires && !csic.inputRouted) {
+            if ((data.requires || data.provides) && !data.contentType) {
+                this.logger.warn("Missing topic content-type");
+            }
+
+            if (data.requires && !csic.inputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
@@ -1011,7 +1017,7 @@ export class Host implements IComponent {
                 });
             }
 
-            if (data.provides && !csic.outputRouted) {
+            if (data.provides && !csic.outputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence output to topic", data.provides);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),

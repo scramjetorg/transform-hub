@@ -12,6 +12,13 @@ export type SendStreamOptions = Partial<{
 }>;
 
 /**
+ * Options for sending sending stream.
+ */
+export type GetStreamOptions = Partial<{
+    type: string;
+}>;
+
+/**
  * Request headers.
  */
 export type Headers = Record<string, string>;

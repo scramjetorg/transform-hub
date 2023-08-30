@@ -1,4 +1,4 @@
-import { ParsedMessage, StreamInput } from "@scramjet/types";
+import { ParsedMessage, StreamInput, StreamOutput } from "@scramjet/types";
 import { ServerResponse, IncomingMessage } from "http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
@@ -22,12 +22,16 @@ export async function getObject(object: any, req: IncomingMessage): Promise<any>
 /**
  * Returns result of the function call if object is a function or the object itself.
  *
- * @param {any} object Object.
+ * @param {StreamOutput} object Object.
  * @param {IncomingMessage} req Request.
  * @param {ServerResponse} res Response.
  * @returns {Promise<any>} Promise resolving to the result of the function call or to the object itself.
  */
-export async function getWritable(object: any, req: IncomingMessage, res: ServerResponse): Promise<Writable | Object> {
+export async function getWritable(
+    object: StreamOutput,
+    req: IncomingMessage,
+    res: ServerResponse
+): Promise<Writable | Object> {
     if (typeof object === "function") {
         return object(req, res);
     }

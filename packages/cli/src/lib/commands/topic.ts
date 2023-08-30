@@ -24,7 +24,7 @@ export const topic: CommandDefinition = (program) => {
     const topicNameArgument = new Argument("<topic-name>").argParser(validateTopicName);
     const contentTypeOption = new Option("-t, --content-type [content-type]", "Specifies type of data in topic")
         .choices(["text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream"])
-        .default("text/plain");
+        .default("application/x-ndjson");
 
     const topicCmd = program
         .command("topic")
@@ -55,7 +55,9 @@ export const topic: CommandDefinition = (program) => {
         .addArgument(topicNameArgument)
         .addOption(contentTypeOption)
         .description("Get data from topic")
-        .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
+        .action(async (topicName, { contentType }) =>
+            displayStream(getHostClient().getNamedData(topicName, {}, contentType))
+        );
 
     topicCmd
         .command("send")
