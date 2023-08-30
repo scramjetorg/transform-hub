@@ -35,7 +35,6 @@ class _ChannelContext:
     _global_instance_id: str
 
     _logger: logging.Logger
-    _event_loop: asyncio.unix_events._UnixSelectorEventLoop
     _internal_outcoming_queue: asyncio.Queue
     _internal_incoming_queue: asyncio.Queue
 
@@ -61,7 +60,6 @@ class _ChannelContext:
         self._global_queue = queue
         self._global_instance_id = instance_id
         self._logger = logger
-        self._event_loop = asyncio.get_running_loop()
         self._internal_outcoming_queue = asyncio.Queue()
         self._internal_incoming_queue = asyncio.Queue()
         self._stop_channel_event = stop_event
@@ -404,55 +402,38 @@ class Tecemux:
             self._proxy_socket = None
             self._port = None
 
-        
-        async def _from_initiator(reader, channel):
-
-            while True:
-                try:
-                    request_data = await asyncio.wait_for(reader.read(255), timeout=1)
-
-                    if request_data== b'':
-                        continue
-
-                    channel.write(request_data)
-                    await asyncio.sleep(0)
-                
-                except asyncio.TimeoutError:
-                    await asyncio.sleep(0)
-                
-                except asyncio.CancelledError:
-                    return
-
-
-        
-        async def _from_target(writer, channel):
-                
-            while True:
-                try:
-                    response_data = await asyncio.wait_for(channel.read(), timeout=1)
-
-                    if response_data== b'':
-                        continue
-
-                    writer.write(response_data)
-                    await writer.drain()
-
-                except asyncio.TimeoutError:
-                    await asyncio.sleep(0)
-                
-                except asyncio.CancelledError:
-                    return
-
         @staticmethod
         async def handle_request(reader, writer, protocol):  
-                     
+
             channel = await protocol.open_channel(force_open=True)
 
-            from_initiator = asyncio.create_task(Tecemux._HTTPProxy._from_initiator(reader, channel))
-            from_target = asyncio.create_task(Tecemux._HTTPProxy._from_target(writer, channel))
+            request_data = await reader.readuntil(b'\r\n\r\n')
+            channel.write(request_data)
+            
+            #await channel._internal_outcoming_queue.join()
+            #await protocol.sync()
+            
+            await asyncio.sleep(1)
 
-            await asyncio.gather(from_initiator, from_target)
-        
+            _ = await channel.read()
+    
+            raw_response_status = await channel.readuntil(b'\r\n')
+            writer.write(raw_response_status)
+
+            raw_response_headers = await channel.readuntil(b'\r\n\r\n')
+            writer.write(raw_response_headers)
+
+            header_list = raw_response_headers.decode().strip().split('\r\n')
+            
+            headers = {
+                key.lower(): val for key, val in [el.split(': ') for el in header_list]
+            }
+
+            raw_response_data = await channel.read(int(headers['content-length']))
+            writer.write(raw_response_data)
+
+            writer.write('\r\n')
+            await writer.drain()
         async def run(self, protocol):
 
             self._proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -550,26 +531,26 @@ class Tecemux:
 
     async def open_channel(self, channel_id=None, force_open=False, initial_state=_ChannelContext._ChannelState.CREATED):
     
-        if channel_id is None:
-            channel = str(len(self._required_channels) + len(self._extra_channels)+1)
+        channel = str(channel_id) if channel_id is not None else None
 
-        elif isinstance(channel_id, str):
-            channel = channel_id
+        if not channel in self._extra_channels.keys():
 
-        self._extra_channels[channel] = _ChannelContext(channel,
-                                    self._queue,
-                                    self._instance_id,
-                                    self._logger,
-                                    self._global_stop_channel_event,
-                                    self._global_sync_channel_event,
-                                    self._global_sync_barrier,
-                                    initial_state)
+            channel = str(len(self.get_required_channels()) + len(self.get_extra_channels()) + 1 ) if channel is None else channel
+
+            self._extra_channels[channel] = _ChannelContext(channel,
+                                        self._queue,
+                                        self._instance_id,
+                                        self._logger,
+                                        self._global_stop_channel_event,
+                                        self._global_sync_channel_event,
+                                        self._global_sync_barrier,
+                                        initial_state)
+        
+            if force_open:
+                await self._extra_channels[channel].open()
+
+            self._global_sync_barrier._parties = len(self.get_required_channels()) + len(self.get_extra_channels())
     
-        if force_open:
-            await self._extra_channels[channel].open()
-
-        self._global_sync_barrier._parties = len(self.get_required_channels()) + len(self.get_extra_channels())
-
         return self._extra_channels[channel]
 
     def set_logger(self, logger: logging.Logger) -> None:
