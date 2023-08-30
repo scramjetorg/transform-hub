@@ -24,8 +24,16 @@ import { detectLanguage } from "./utils";
  * @param {string} id Sequence Id.
  * @returns {ProcessSequenceConfig} Sequence configuration.
  */
-async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<KubernetesSequenceConfig> {
-    const sequenceDir = path.join(sequencesRoot, id);
+// eslint-disable-next-line max-len
+async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string, parentId?: string): Promise<KubernetesSequenceConfig> {
+    let sequenceDir: string;
+
+    if (parentId) {
+        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+    } else {
+        [id, parentId] = id.split("_");
+        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+    }
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
 
@@ -38,7 +46,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
         id,
-        parent_id: id,
+        parent_id: parentId || id,
         sequenceDir,
         engines,
         description: validPackageJson.description,
@@ -116,10 +124,10 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
     
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
-    async identify(stream: Readable, id: string, override = false, parentId?: string,): Promise<SequenceConfig> {
+    async identify(stream: Readable, id: string, override = false, parentId = id,): Promise<SequenceConfig> {
         // 1. Unpack package.json to stdout and map to config
         // 2. Create compressed package on the disk
-        const sequenceDir = path.join(this.adapterConfig.sequencesRoot, id);
+        const sequenceDir = path.join(this.adapterConfig.sequencesRoot, id + "_" + parentId);
 
         if (override) {
             await fs.rm(sequenceDir, { recursive: true, force: true });
@@ -137,7 +145,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
 
         await new Promise(res => uncompressingProc.on("close", res));
 
-        return getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id);
+        return getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id, parentId);
     }
 
     /**

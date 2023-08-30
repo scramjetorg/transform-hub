@@ -801,11 +801,8 @@ export class Host implements IComponent {
             if (external) {
                 id = IDProvider.generate();
             }
-            console.log("\n", "przed configuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
-
             const config = await sequenceAdapter.identify(stream, id, false, parentId);
 
-            console.log("\n", "po configuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
             config.packageSize = stream.socket?.bytesRead;
 
             if (this.config.host.id) {
@@ -875,8 +872,6 @@ export class Host implements IComponent {
         if (sequenceName) {
             const existingSequence = this.sequenceStore.getByNameOrId(sequenceName);
 
-            console.log("handler:", existingSequence);
-
             if (existingSequence) {
                 this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
 
@@ -886,9 +881,6 @@ export class Host implements IComponent {
                 };
             }
         }
-        console.log("===============================");
-        console.log("handlerID:", id);
-        console.log("===============================");
         return this.handleIncomingSequence(stream, id, external);
     }
 
@@ -945,6 +937,7 @@ export class Host implements IComponent {
             const sequenceId = req.params?.id as string;
             const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
 
+<<<<<<< HEAD
             if (payload.instanceId) {
                 if (!isStartSequenceEndpointPayloadDTO(payload)) {
                     return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
@@ -960,6 +953,13 @@ export class Host implements IComponent {
             }
 =======
             console.log(sequence);
+=======
+        if (this.cpmConnector?.connected) {
+            sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
+                this.logger.error("Error getting sequence from external sources", error);
+                return undefined;
+            });
+>>>>>>> bea3057d... Kubernetesconfig support added
         }
 >>>>>>> 6f070b71... Support for process adapter
 

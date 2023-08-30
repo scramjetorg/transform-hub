@@ -89,8 +89,6 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      */
     async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
-
-        console.log(storedSequencesIds);
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
@@ -115,8 +113,6 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      */
     async identify(stream: Readable, id: string, override = false, parentId = id): Promise<SequenceConfig> {
         const sequenceDir = path.join(this.config.sequencesRoot, id + "_" + parentId);
-
-        console.log("DIRR: ", sequenceDir);
 
         if (override) {
             await fs.rm(sequenceDir, { recursive: true, force: true });
