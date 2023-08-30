@@ -218,7 +218,7 @@ export class HostClient implements ClientProvider {
      * @param {string} [contentType] Content type to be set in headers.
      * @returns Promise resolving to readable stream.
      */
-    async getTopic(topic: string, requestInit?: RequestInit, contentType?: string): ReturnType<HttpClient["getStream"]> {
+    async getTopic(topic: string, requestInit?: RequestInit, contentType: string = "application/x-ndjson"): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream(`topic/${topic}`, requestInit, { type: contentType });
     }
 

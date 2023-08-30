@@ -3,6 +3,20 @@ Feature: E2E topic tests
 The tests check topic functionalities, where we send and receive data from /topic/:name endpoint by using api-client
 
     @ci-api
+    Scenario Outline: E2E-013 TC-000 Topic content-type <content type> compatibility
+        Given host is running
+        Then send data "{ \"city\": \"New York\" }" named <topic name> and content-type <content type>
+        Then get data named <topic name> and content-type <content type>
+        Then confirm data defined as "nyc-city-nl" will be received
+        And host is still running
+
+    Examples:
+        | topic name |        content type        |
+        |  "city1"   | "text/x-ndjson"            |
+        |  "city2"   | "text/plain"               |
+        |  "city3"   | "application/octet-stream" |
+        |  "city4"   | "application/x-ndjson"     |
+    @ci-api
     Scenario: E2E-013 TC-001 API to API
         Given host is running
         Then send json data "{ \"city\": \"New York\" }" named "city"

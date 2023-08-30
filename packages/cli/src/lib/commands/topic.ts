@@ -23,7 +23,7 @@ export const topic: CommandDefinition = (program) => {
     const topicNameArgument = new Argument("<topic-name>").argParser(validateTopicName);
     const contentTypeOption = new Option("-t, --content-type [content-type]", "Specifies type of data in topic")
         .choices(["text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream"])
-        .default("text/plain");
+        .default("application/x-ndjson");
 
     const topicCmd = program
         .command("topic")

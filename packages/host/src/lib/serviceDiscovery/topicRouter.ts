@@ -38,7 +38,7 @@ const invalidContentTypeMsg = "Unsupported content-type";
 const invalidTopicIdMsg = "Topic id incorrect format";
 
 class TopicRouter {
-    private logger = new ObjLogger(this);
+    logger = new ObjLogger(this);
     private serviceDiscovery: ServiceDiscovery;
 
     constructor(logger: IObjectLogger, apiServer: APIExpose, apiBaseUrl: string, serviceDiscovery: ServiceDiscovery) {
@@ -144,15 +144,20 @@ class TopicRouter {
 
         const topicId = new TopicId(id);
 
-        if (!cpm) {
-            await this.serviceDiscovery.update({
-                requires: id, contentType, topicName: topicId.toString()
-            });
-        } else {
-            this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
-        }
+        try {
+            const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
-        return this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
+            if (!cpm) {
+                await this.serviceDiscovery.update({
+                    requires: id, contentType, topicName: topicId.toString()
+                });
+            } else {
+                this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
+            }
+            return topic;
+        } catch (e: any) {
+            throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);
+        }
     }
 }
 

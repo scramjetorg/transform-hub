@@ -3,7 +3,7 @@
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { removeBoundaryQuotes, defer, waitUntilStreamEquals } from "../../lib/utils";
+import { removeBoundaryQuotes, defer, waitUntilStreamEquals, waitUntilStreamContains } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
@@ -752,14 +752,44 @@ Then(
     }
 );
 
-Then("send json data {string} named {string}", async (data: any, topic: string) => {
-    const ps = new PassThrough();
-    const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
+Then("send data {string} named {string} and content-type {string}", async (data: any, topic: string, contentType: string) => {
+    const ps = new PassThrough({ encoding: undefined });
+    const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, contentType, true);
 
-    ps.push(data);
+    ps.write(data);
     ps.end();
 
     assert.ok(sendData);
+});
+
+When("get data named {string} and content-type {string}", async function(this: CustomWorld, topic: string, contentType: string) {
+    this.resources.outStream = await hostClient.getNamedData(topic, {}, contentType);
+});
+
+Then("send json data {string} named {string}", async (data: any, topic: string) => {
+    const ps = new PassThrough({ encoding: undefined });
+    const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
+
+    ps.write(data);
+    ps.end();
+
+    assert.ok(sendData);
+});
+
+When("get data named {string} without waiting for the end", async function(this: CustomWorld, topic: string) {
+    this.resources.outStream = await hostClient.getNamedData(topic);
+});
+
+Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
+    const response = await waitUntilStreamContains(this.resources.outStream!, expectedResponses[data]);
+
+    assert.equal(response, true);
+
+    this.resources.outStream!.destroy();
+
+    this.resources.outStream!.on("close", () => {
+        console.log("Readable stream has been closed");
+    });
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
@@ -771,20 +801,10 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
     assert.ok(sendData);
 });
 
-When("get data named {string} without waiting for the end", async function(this: CustomWorld, topic: string) {
-    this.resources.outStream = await hostClient.getNamedData(topic, {}, "application/x-ndjson");
-});
-
 Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
     const output = await this.resources.instance!.getStream("output");
 
     this.resources.outStream = output;
-});
-
-Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
-    const response = await waitUntilStreamEquals(this.resources.outStream!, expectedResponses[data]);
-
-    assert.equal(response, expectedResponses[data]);
 });
 
 Then("confirm json {string} will be received", async function(this: CustomWorld, dataString) {

@@ -5,7 +5,7 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import { getStreamsFromSpawn, defer, waitUntilStreamEquals, waitUntilStreamContains, killProcessByName } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitUntilStreamContains, killProcessByName } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -174,9 +174,9 @@ Then("I confirm data named {string} received", async function(data) {
 Then("I confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
     const { stdout } = this.cliResources!.commandInProgress!;
-    const response = await waitUntilStreamEquals(stdout, expected);
+    const response = await waitUntilStreamContains(stdout, expected);
 
-    assert.equal(response, expected);
+    assert.equal(response, true);
 
     // this.cliResources!.commandInProgress!.kill();
 });

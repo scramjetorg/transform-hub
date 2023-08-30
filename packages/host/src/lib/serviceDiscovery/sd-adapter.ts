@@ -73,9 +73,13 @@ export class ServiceDiscovery {
      */
     createTopicIfNotExist(config: DataType) {
         const topicName = config.topic;
-        const topic = this.topicsController.get(topicName); // TODO: sprawdzanie content Type
+        const topic = this.topicsController.get(topicName);
 
         if (topic) {
+            if (topic.contentType !== config.contentType) {
+                this.logger.error("Content-type mismatch, existing and requested ", topic.contentType, config.contentType);
+                throw new Error("Content-type mismatch");
+            }
             this.logger.debug("Topic routed:", config);
             return topic;
         }

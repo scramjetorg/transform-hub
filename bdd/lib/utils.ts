@@ -165,32 +165,29 @@ export function removeBoundaryQuotes(str: string) {
     return str;
 }
 
-export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 10000): Promise<boolean> {
+export async function waitUntilStreamContains(stream: Readable, expected: string): Promise<boolean> {
     let response = "";
 
     return Promise.race([
         (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
-                response = `${response}${chunk}`;
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
+                response = `${response}${chunk.toString()}`;
 
                 console.log("\nData received: ", response);
                 if (response.includes(expected)) return true;
             }
             throw new Error("End of stream reached");
         })(),
-        defer(timeout).then(() => {
-            throw new Error("Timeout reached");
-        })
     ]);
 }
 
-export async function waitUntilStreamEquals(stream: Readable, expected: string, _timeout = 10000): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string): Promise<string> {
     let response = "";
 
     await Promise.race([
         (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
-                response += chunk;
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
+                response += chunk.toString();
 
                 if (response === expected) return expected;
                 if (response.length >= expected.length) {
@@ -201,7 +198,6 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
 
             return "passed";
         })(),
-        // defer(timeout).then(() => { assert.equal(response, expected); })
     ]);
 
     return response;

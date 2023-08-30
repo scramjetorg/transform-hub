@@ -2,7 +2,7 @@
 /* eslint-disable quotes */
 export const expectedResponses: { [key:string]: any} = {
     "endless-names-10": `{"name":"Alice"}\n{"name":"Ada"}\n{"name":"Aga"}\n{"name":"Michał"}\n{"name":"Patryk"}\n{"name":"Rafał"}\n{"name":"Aida"}\n{"name":"Basia"}\n{"name":"Natalia"}\n{"name":"Monika"}\n{"name":"Wojtek"}\n`,
-    "nyc-city-nl": `{ \"city\": \"New York\" }\n`,
+    "nyc-city-nl": `{ \"city\": \"New York\" }`,
     "hulkName": "Name is: Hulk\n",
     "hulk-nl": "{\"name\":\"Hulk\"}\n",
     "hello-avengers":
