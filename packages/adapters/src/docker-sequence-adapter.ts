@@ -108,12 +108,17 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             this.logger.debug("Identify started", volume, this.config.docker.prerunner?.maxMem || 0);
 
             const ret = await this.parsePackage(streams, wait, volume);
+            const parentId = await this.dockerHelper.getLabelValue(volume, "parentId");
 
             if (!ret.id) {
                 return undefined;
             }
 
             this.logger.info("Identified image for volume", { volume, image: ret.container?.image });
+
+            if (parentId) {
+                ret.parent_id = parentId;
+            }
 
             return ret;
         } catch (e: any) {
@@ -132,16 +137,23 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      * @param {Readable} stream Stream containing sequence to be identified.
      * @param {string} id Id for the new docker volume where sequence will be stored.
      * @param {boolean} override Removes previous sequence
+     * @param {string} parentId Id which indicates sequence's source.
+    
      * @returns {Promise<SequenceConfig>} Promise resolving to sequence config.
      */
-    async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
+    async identify(stream: Readable, id: string, override = false, parentId: string): Promise<SequenceConfig> {
         const volStart = new Date();
 
         if (override) {
             await this.dockerHelper.removeVolume(id);
         }
 
-        const volumeId = await this.createVolume(id);
+        const volumeId = await this.createVolume(id, parentId);
+        //const parentId = await this.dockerHelper.getLabelValue(volumeId, "parentId");
+        console.log("---------------------");
+        console.log("IDENTIFY", id);
+        //console.log("VOLUME", parentId);
+        console.log("---------------------");
 
         const volSecs = (new Date().getTime() - volStart.getTime()) / 1000;
 
@@ -188,6 +200,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             const config = await this.parsePackage(streams, wait, volumeId);
 
             await this.fetch(config.container.image);
+            if (parentId) {
+                config.parent_id = parentId;
+            }
 
             return config;
         } catch (err: any) {
@@ -204,11 +219,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      * Creates volume with provided id.
      *
      * @param {string} id Volume id.
+     * @param {string} parentId Sequence's parentId.
      * @returns {DockerVolume} Created volume.
      */
-    private async createVolume(id: string): Promise<DockerVolume> {
+    private async createVolume(id: string, parentId?: string): Promise<DockerVolume> {
         try {
-            return await this.dockerHelper.createVolume(id);
+            return await this.dockerHelper.createVolume(id, parentId);
         } catch (error: any) {
             this.logger.error("Error creating volume", id);
 
@@ -234,6 +250,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const [preRunnerResult] = (await Promise.all([readStreamedJSON(streams.stdout as Readable), wait])) as any;
 
+        console.log("result: ", preRunnerResult);
+
         const parseSecs = (new Date().getTime() - parseStart.getTime()) / 1000;
 
         appendFile("timing-log.ndjson", JSON.stringify({
@@ -249,6 +267,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             throw new SequenceAdapterError("PRERUNNER_ERROR", preRunnerResult.error);
         }
 
+        console.log("volumy:", this.dockerHelper.listVolumes());
         const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(preRunnerResult);
         const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
         const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
@@ -259,6 +278,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             ? this.config.docker.runnerImages.python3
             : this.config.docker.runnerImages.node;
 
+        console.log("runner: ", validPackageJson);
         return {
             type: "docker",
             container,
@@ -269,6 +289,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             sequenceDir: PACKAGE_DIR,
             entrypointPath: validPackageJson.main,
             id: volumeId,
+            parent_id: volumeId,
             description: validPackageJson.description,
             author: validPackageJson.author,
             keywords: validPackageJson.keywords,

@@ -176,6 +176,7 @@ export type DockerAdapterRunResponse = {
     containerId: DockerContainer
 };
 export interface IDockerHelper {
+    [x: string]: any;
     logger: IObjectLogger;
 
     /**
@@ -249,7 +250,16 @@ export interface IDockerHelper {
      * @returns {Promise<DockerVolume[]>} List of existing volumes
      */
     listVolumes: () => Promise<DockerVolume[]>;
-
+    /**
+     * Get value of a certain label in scramjet's volume with the proviede id
+     *
+     * @param {string} volumeName Volume name.
+     * 
+     * @param {string} labelName label name.
+     *
+     * @returns {Promise<string | null>} The value of a label (null if it doesnt exist)
+     */
+    getLabelValue: (volumeName: string, labelName: string) => Promise<string | null>
     /**
      * Creates volume.
      *
@@ -257,7 +267,7 @@ export interface IDockerHelper {
      *
      * @returns {Promise<DockerVolume>} Created volume.
      */
-    createVolume: (name?: string) => Promise<DockerVolume>;
+    createVolume: (name?: string, parentId?: string) => Promise<DockerVolume>;
 
     /**
      * Removes volume.

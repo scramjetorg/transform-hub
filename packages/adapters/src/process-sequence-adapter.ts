@@ -31,7 +31,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
 
     const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
     const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
-
+    console.log("runner: ", validPackageJson);
     return {
         type: "process",
         engines,
@@ -39,6 +39,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
         id,
+        parent_id: id,
         sequenceDir,
         description: validPackageJson.description,
         author: validPackageJson.author,
@@ -100,9 +101,11 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @param {Readable} stream Stream with packed sequence.
      * @param {string} id Sequence Id.
      * @param {boolean} override Removes previous sequence
+     * @param {string} parentId Sequence's parentId.
+     
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
-    async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
+    async identify(stream: Readable, id: string,override = false, parentId?: string): Promise<SequenceConfig> {
         const sequenceDir = path.join(this.config.sequencesRoot, id);
 
         if (override) {

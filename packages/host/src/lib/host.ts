@@ -747,9 +747,9 @@ export class Host implements IComponent {
 
                 if (this.config.host.id) {
                     // eslint-disable-next-line max-len
-                    this.sequenceStore.set({ id: config.id, config: config, instances: [], location: this.config.host.id });
+                    this.sequenceStore.set({ id: config.id, parent_id: config.parent_id, config: config, instances: [], location: this.config.host.id });
                 } else {
-                    this.sequenceStore.set({ id: config.id, config: config, instances: [], location: "STH" });
+                    this.sequenceStore.set({ id: config.id, parent_id: config.parent_id, config: config, instances: [], location: "STH" });
                 }
             }
             this.logger.info(` ${configs.length} sequences identified`);
@@ -760,10 +760,10 @@ export class Host implements IComponent {
 
     async handleIncomingSequence(
         stream: ParsedMessage,
-        id: string
+        id: string,
+        external?: boolean
     ): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         stream.params ||= {};
-
         const sequenceName = stream.params.id_name || stream.headers["x-name"];
 
         this.logger.info("New Sequence incoming", { name: sequenceName });
@@ -794,22 +794,29 @@ export class Host implements IComponent {
                     id = existingSequence.id;
                 }
             }
+            const parentId = id;
 
-            const config = await sequenceAdapter.identify(stream, id);
+            if (external) {
+                id = IDProvider.generate();
+            }
+
+            const config = await sequenceAdapter.identify(stream, id, false, parentId);
 
             config.packageSize = stream.socket?.bytesRead;
 
             if (this.config.host.id) {
                 // eslint-disable-next-line max-len
-                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: this.config.host.id });
+                this.sequenceStore.set({ id, parent_id: config.parent_id, config, instances: [], name: sequenceName, location: this.config.host.id });
             } else {
-                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
+                this.sequenceStore.set({ id, parent_id: config.parent_id, config, instances: [], name: sequenceName, location: "STH" });
             }
 
             this.logger.trace(`Sequence identified: ${config.id}`);
 
-            // eslint-disable-next-line max-len
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
+            await this.cpmConnector?.sendSequenceInfo(
+                id, // parentId
+                SequenceMessageCode.SEQUENCE_CREATED,
+                config as unknown as GetSequenceResponse,);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
             this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
@@ -854,14 +861,16 @@ export class Host implements IComponent {
      *
      * @param {IncomingMessage} stream Stream of packaged Sequence.
      * @param {string} id Sequence id.
+     * @param {boolean} external Define the source of sequence.
      * @returns {Promise} Promise resolving to operation result.
      */
-    async handleNewSequence(stream: ParsedMessage, id = IDProvider.generate()):
+    async handleNewSequence(stream: ParsedMessage, id = IDProvider.generate(), external?: boolean):
         Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         const sequenceName = stream.headers["x-name"] as string;
 
         if (sequenceName) {
             const existingSequence = this.sequenceStore.getByNameOrId(sequenceName);
+            console.log("handler:", existingSequence)
 
             if (existingSequence) {
                 this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
@@ -872,8 +881,10 @@ export class Host implements IComponent {
                 };
             }
         }
-
-        return this.handleIncomingSequence(stream, id);
+        console.log("===============================");
+        console.log("handlerID:", id);
+        console.log("===============================");
+        return this.handleIncomingSequence(stream, id, external);
     }
 
     async getExternalSequence(id: string): Promise<SequenceInfo> {
@@ -895,7 +906,8 @@ export class Host implements IComponent {
 
             const result = (await this.handleNewSequence(
                 packageStream as ParsedMessage,
-                id
+                id,
+                true
             )) as STHRestAPI.SendSequenceResponse;
 
             return this.sequenceStore.getById(result.id)!;
@@ -1154,6 +1166,7 @@ export class Host implements IComponent {
         return {
             opStatus: ReasonPhrases.OK,
             id: sequence.id,
+            parent_id: sequence.parent_id,
             name: sequence.name,
             config: sequence.config,
             location: sequence.location,
@@ -1168,7 +1181,6 @@ export class Host implements IComponent {
      */
     getSequences(): STHRestAPI.GetSequencesResponse {
         this.logger.info("List Sequences");
-
         return this.sequenceStore.sequences;
     }
 

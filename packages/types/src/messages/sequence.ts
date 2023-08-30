@@ -4,7 +4,8 @@ import { SequenceConfig } from "../runner-config";
 export type SequenceMessageData = {
     id: string,
     status: SequenceMessageCode,
-    config: SequenceConfig
+    config: SequenceConfig,
+    parent_id?: string
 }
 
 export type SequenceMessage = { msgCode: CPMMessageCode.SEQUENCE } & SequenceMessageData;

@@ -558,7 +558,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 
         await this.communicationStream?.whenWrote(
-            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]
+            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config: config, }]
         );
 
         this.logger.trace("Sequence status update sent", sequenceId, seqStatus);

@@ -9,6 +9,7 @@ type CommonSequenceConfig = {
     type: string;
     engines: Record<string, string>;
     id: string;
+    parent_id: string;
     /**
      * Relative path from sequence package root to JS file
      */

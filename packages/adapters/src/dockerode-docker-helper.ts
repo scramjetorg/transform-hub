@@ -250,13 +250,15 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * Creates docker volume.
      *
      * @param name Volume name. Optional. If not provided, volume will be named with unique name.
+     * @param parentId Volume parentId. Optional. If not provided, volume will benamed the same as the name.
      * @returns Volume name.
      */
-    async createVolume(name: string = ""): Promise<DockerVolume> {
+    async createVolume(name: string = "", parentId: string = name): Promise<DockerVolume> {
         return this.dockerode.createVolume({
             Name: name,
             Labels: {
-                "org.scramjet.host.is-sequence": "true"
+                "org.scramjet.host.is-sequence": "true",
+                parentId : parentId
             }
         }).then((volume: Dockerode.Volume) => {
             return volume.name;
@@ -278,9 +280,25 @@ export class DockerodeDockerHelper implements IDockerHelper {
             filters: { label: { "org.scramjet.host.is-sequence": true } }
         });
 
+        Volumes.forEach(
+            volume => { console.log(volume); });
         return Volumes.map(volume => volume.Name);
     }
 
+    async getLabelValue(volumeName: string, labelName: string): Promise<string | null> {
+        try {
+            // Get information about the Docker volume
+            const volumeInfo = await this.dockerode.getVolume(volumeName).inspect();
+
+            // Access the labels property and retrieve the specific label
+            const labelValue = volumeInfo.Labels ? volumeInfo.Labels[labelName] : null;
+
+            return labelValue;
+        } catch (error) {
+            this.logger.error(`Error reading Docker volume label: ${error}`);
+            return null;
+        }
+    }
     /**
      * Attaches to container streams.
      *
