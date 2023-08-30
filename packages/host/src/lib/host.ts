@@ -742,6 +742,8 @@ export class Host implements IComponent {
 
             const configs = await sequenceAdapter.list();
 
+            sequenceAdapter.logger.pipe(this.logger);
+
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
 
@@ -799,9 +801,11 @@ export class Host implements IComponent {
             if (external) {
                 id = IDProvider.generate();
             }
+            console.log("\n", "przed configuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
 
             const config = await sequenceAdapter.identify(stream, id, false, parentId);
 
+            console.log("\n", "po configuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
             config.packageSize = stream.socket?.bytesRead;
 
             if (this.config.host.id) {
@@ -870,7 +874,8 @@ export class Host implements IComponent {
 
         if (sequenceName) {
             const existingSequence = this.sequenceStore.getByNameOrId(sequenceName);
-            console.log("handler:", existingSequence)
+
+            console.log("handler:", existingSequence);
 
             if (existingSequence) {
                 this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
@@ -945,6 +950,7 @@ export class Host implements IComponent {
                     return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
                 }
 
+<<<<<<< HEAD
                 if (this.instancesStore[payload.instanceId]) {
                     return {
                         opStatus: ReasonPhrases.CONFLICT,
@@ -952,6 +958,10 @@ export class Host implements IComponent {
                     };
                 }
             }
+=======
+            console.log(sequence);
+        }
+>>>>>>> 6f070b71... Support for process adapter
 
             let sequence = this.sequenceStore.getByNameOrId(sequenceId);
 

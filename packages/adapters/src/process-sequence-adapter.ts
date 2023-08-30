@@ -23,15 +23,21 @@ import { detectLanguage } from "./utils";
  * @param {string} id Sequence Id.
  * @returns {ProcessSequenceConfig} Sequence configuration.
  */
-// eslint-disable-next-line complexity
-async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
-    const sequenceDir = path.join(sequencesRoot, id);
+// eslint-disable-next-line complexity, max-len
+async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string, parentId?: string): Promise<ProcessSequenceConfig> {
+    let sequenceDir: string;
+
+    if (parentId) {
+        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+    } else {
+        [id, parentId] = id.split("_");
+        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+    }
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
-
     const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
     const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
-    console.log("runner: ", validPackageJson);
+
     return {
         type: "process",
         engines,
@@ -39,7 +45,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
         id,
-        parent_id: id,
+        parent_id: parentId || id,
         sequenceDir,
         description: validPackageJson.description,
         author: validPackageJson.author,
@@ -83,6 +89,8 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      */
     async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
+
+        console.log(storedSequencesIds);
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
@@ -105,8 +113,10 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
-    async identify(stream: Readable, id: string,override = false, parentId?: string): Promise<SequenceConfig> {
-        const sequenceDir = path.join(this.config.sequencesRoot, id);
+    async identify(stream: Readable, id: string, override = false, parentId = id): Promise<SequenceConfig> {
+        const sequenceDir = path.join(this.config.sequencesRoot, id + "_" + parentId);
+
+        console.log("DIRR: ", sequenceDir);
 
         if (override) {
             await fs.rm(sequenceDir, { recursive: true, force: true });
@@ -143,7 +153,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         this.logger.debug("Unpacking sequence succeeded", stderrOutput);
 
-        return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id);
+        return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id, parentId);
     }
 
     /**
