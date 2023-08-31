@@ -13,7 +13,12 @@ export class MonitoringServer implements IMonitoringServer {
                 let ok = true;
 
                 if (this.options.validator) {
-                    ok = await this.options.validator();
+                    try {
+                        ok = await this.options.validator();
+                    } catch (_e) {
+                        res.statusCode = 500;
+                        res.end();
+                    }
                 }
 
                 res.setHeader("Content-type", "text/plain");
