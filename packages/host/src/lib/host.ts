@@ -10,6 +10,7 @@ import {
     CPMConnectorOptions,
     HostProxy,
     IComponent,
+    IMonitoringServer,
     IObjectLogger,
     LogLevel,
     NextCallback,
@@ -53,6 +54,7 @@ import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
+import { MonitoringServer } from "@scramjet/monitoring-server";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -142,6 +144,7 @@ export class Host implements IComponent {
     hostSize = this.getSize();
     ipvAddress: any;
     adapterName: string = "uninitialized";
+    monitoringServer?: IMonitoringServer;
 
     /**
      * S3 client.
@@ -217,7 +220,9 @@ export class Host implements IComponent {
 
         if (sthConfig.telemetry.environment)
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
-
+        if (sthConfig.monitorgingServer) {
+            this.startMonitoringServer(sthConfig.monitorgingServer.port);
+        }
         this.auditor = new Auditor();
         //this.auditor.logger.pipe(this.logger);
 
@@ -249,7 +254,17 @@ export class Host implements IComponent {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
         }
     }
-
+    private startMonitoringServer(port: number) {
+        this.logger.info("Starting monitoring server on port", port);
+        this.monitoringServer = new MonitoringServer({ port, validator: async () => {
+            return await this.loadCheck.getLoadCheck();
+        } });
+        try {
+            this.monitoringServer.startServer();
+        } catch (e: any) {
+            this.logger.error("unable to start monitoring server", e.message);
+        }
+    }
     getId() {
         let id = this.config.host.id;
 

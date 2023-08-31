@@ -269,6 +269,10 @@ export type STHConfiguration = {
     };
 
     telemetry: TelemetryConfig;
+
+    monitorgingServer?: {
+        port: number;
+    }
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
