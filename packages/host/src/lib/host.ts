@@ -259,11 +259,7 @@ export class Host implements IComponent {
         this.monitoringServer = new MonitoringServer({ port, validator: async () => {
             return await this.loadCheck.getLoadCheck();
         } });
-        try {
-            this.monitoringServer.startServer();
-        } catch (e: any) {
-            this.logger.error("unable to start monitoring server", e.message);
-        }
+        this.monitoringServer.startServer();
     }
     getId() {
         let id = this.config.host.id;
