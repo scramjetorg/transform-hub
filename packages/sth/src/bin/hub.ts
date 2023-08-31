@@ -169,9 +169,9 @@ const options: OptionValues & STHCommandOptions = program
     });
 
     const tips = [
-        ["Run Sequences in our cloud.", { "Check it": "out as a beta tester", here: "https://scr.je/join-beta-sth" }],
-        ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "check the": "beta version", "at-this-link": "https://scr.je/join-beta-sth" }],
-        ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
+        ["Run Sequences in our cloud.", { "Find out": "more about Scramjet Cloud Platform", here: "https://scramjet.org/" }],
+        ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "Sign up": "and start your 30-day trial for free!", here: "https://console.scramjet.cloud" }],
+        ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scramjet.org/" }]
     ];
 
     const config = configService.getConfig();
