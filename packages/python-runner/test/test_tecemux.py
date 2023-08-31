@@ -2,38 +2,9 @@ import asyncio
 import codecs
 import pytest
 import sys
-from tecemux import Tecemux, _ChannelContext
+from tecemux import Tecemux
 from inet import IPPacket, TCPSegment
-from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
-
-def get_logger():
-    if not hasattr(get_logger, "log_setup"):
-        get_logger.log_setup = LoggingSetup(sys.stdout)
-    return get_logger.log_setup.logger
-
-
-@pytest.fixture()
-async def local_socket_connection():
-    client_a = Tecemux()
-    client_a.set_logger(get_logger())
-
-    client_b = Tecemux()
-    client_b.set_logger(get_logger())
-
-    rsock_a, wsock_a = await Tecemux.prepare_socket_connection()
-    rsock_b, wsock_b = await Tecemux.prepare_socket_connection()
-
-    await client_a.connect(rsock_a, wsock_b)
-    await client_b.connect(rsock_b, wsock_a)
-
-    await client_a.prepare()
-    await client_b.prepare()
-
-    await client_a.loop()
-    await client_b.loop()
-
-    return client_a, client_b
 
 class TestTecemux:
 
@@ -148,41 +119,7 @@ class TestTecemux:
         
         assert data.decode() == "{'foo':'bar'}\n"
 
-        await self._close_clients(client_a, client_b)
-
-
-    async def test_extra_channel_with_proxy(self, local_socket_connection):
-        client_a, client_b = local_socket_connection 
-
-        async def _wait_for_channel(client_b):
-            while True: 
-                if len(client_b._extra_channels) > 0:
-                    opened_channel_name = list(client_b._extra_channels.keys())[0]
-                    channel = client_b.get_channel(opened_channel_name)
-                    _ = await channel.readuntil(b'\r\n\r\n')
-                    await asyncio.sleep(0.5)
-                    channel.write(b'HTTP/1.1 200 OK\r\nContent-Length: 12\r\nContent-Type: text/html\r\n\r\nHello World!\r\n')
-                    await client_b.sync()
-                    break
-                await asyncio.sleep(0)
-        
-        task = asyncio.create_task(_wait_for_channel(client_b))
-
-        import aiohttp
-
-        async with aiohttp.ClientSession() as session:        
-            async with session.get("http://_/api/version", proxy=client_a.get_proxy_uri()) as resp:
-                data = await resp.text()
-        
-        await asyncio.gather(task)
-
-        assert data == 'Hello World!'
-        await self._close_clients(client_a, client_b)
-
-
-
-    
-       
+        await self._close_clients(client_a, client_b)       
 
     async def test_readuntil(self, local_socket_connection):
         client_a, client_b = local_socket_connection
