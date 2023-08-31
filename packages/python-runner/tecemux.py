@@ -396,14 +396,29 @@ class Tecemux:
     _proxy_task = asyncio.coroutine = field(default=None)
 
     class _HTTPProxy:
+        """ Simple HTTP proxy implementation for internal usage by Tecemux procotol
+        """        
         
         def __init__(self, protocol):
+            """Initialize HTTP proxy
+
+            Args:
+                protocol (Tecemux): Tecemux object
+            """
+
             self._host = '127.0.0.1'
             self._proxy_socket = None
             self._port = None
 
         @staticmethod
-        async def handle_request(reader, writer, protocol):  
+        async def handle_request(reader, writer, protocol):
+            """Process single request to server
+
+            Args:
+                reader (asyncio.StreamReader): Stream reader provides access to HTTP request data 
+                writer (asyncio.StreamWriter): Stream writer give posibility to send response
+                protocol (Tecemux): Tecemux object
+            """            
 
             channel = await protocol.open_channel(force_open=True)
 
@@ -430,6 +445,11 @@ class Tecemux:
 
             
         async def run(self, protocol):
+            """Starts server on random local TCP port
+
+            Args:
+                protocol (Tecemux): Tecemux object
+            """        
 
             self._proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -446,9 +466,20 @@ class Tecemux:
             self._proxy_socket.close()
 
         def get_proxy_uri(self):
+            """Returns proxy config URI for aiohttp
+
+            Returns:
+                str: aiohttp proxy config
+            """            
+
             return f'http://{self._host}:{self._port}'
     
     def get_proxy_uri(self):
+        """Returns proxy config URI for aiohttp
+
+        Returns:
+            str: aiohttp proxy config
+        """  
         return self._proxy.get_proxy_uri()
         
     def _debug(self, msg):
@@ -524,7 +555,17 @@ class Tecemux:
 
 
 
-    async def open_channel(self, channel_id=None, force_open=False, initial_state=_ChannelContext._ChannelState.CREATED):
+    async def open_channel(self, channel_id=None, force_open=False, initial_state: _ChannelContext._ChannelState=_ChannelContext._ChannelState.CREATED) -> _ChannelContext:
+        """Opens additional channel in Tecemux
+
+        Args:
+            channel_id (CC, str, optional): Name for new channel. Defaults to None.
+            force_open (bool, optional): Sends empty PSH packet right now. Defaults to False.
+            initial_state (_ChannelState., optional): Initial channel state. Defaults to _ChannelContext._ChannelState.CREATED.
+
+        Returns:
+            _ChannelContext: Openned channel
+        """    
     
         channel = str(channel_id) if channel_id is not None else None
 
@@ -560,7 +601,7 @@ class Tecemux:
         """Returns single channel context
 
         Args:
-            channel (CC): Channel Enum
+            channel (str, CC): Channel name
 
         Returns:
             _ChannelContext: Channel context
@@ -620,6 +661,8 @@ class Tecemux:
 
 
     async def _finish_proxy(self) -> None:
+        """ Stops proxy
+        """
         try:
             self._proxy_task.cancel()
             await asyncio.gather(*[self._proxy_task])
