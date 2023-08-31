@@ -163,7 +163,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
             throw new Error(`Incorrect SequenceConfig passed to ProcessSequenceAdapter: ${config.type}`);
         }
 
-        const sequenceDir = path.join(this.config.sequencesRoot, config.id);
+        const sequenceDir = config.sequenceDir;
 
         return fs.rm(sequenceDir, { recursive: true });
     }

@@ -159,7 +159,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
             throw new Error(`Incorrect SequenceConfig passed to KubernetesSequenceAdapter: ${config.type}`);
         }
 
-        const sequenceDir = path.join(this.adapterConfig.sequencesRoot, config.id);
+        const sequenceDir = config.sequenceDir;
 
         this.logger.debug("Removing sequence directory...", sequenceDir);
 
