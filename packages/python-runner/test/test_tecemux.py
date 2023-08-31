@@ -65,6 +65,7 @@ class TestTecemux:
 
         await self._close_clients(client_a, client_b)
 
+    @pytest.mark.asyncio
     async def test_stream_write_redirection(self, local_socket_connection):
         client_a, client_b = local_socket_connection
     
@@ -76,6 +77,7 @@ class TestTecemux:
 
         await self._close_clients(client_a, client_b)
 
+    @pytest.mark.asyncio
     async def test_stream_read_redirection(self, local_socket_connection):
         
         from scramjet.streams import Stream
@@ -89,7 +91,8 @@ class TestTecemux:
         assert await output_stream.read() == 'Test\n'
         
         await self._close_clients(client_a, client_b)
-
+    
+    @pytest.mark.asyncio
     async def test_stderr_write_redirection(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         
@@ -105,7 +108,7 @@ class TestTecemux:
         await self._close_clients(client_a, client_b)
 
 
-
+    @pytest.mark.asyncio
     async def test_extra_channel(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         
@@ -119,8 +122,10 @@ class TestTecemux:
         
         assert data.decode() == "{'foo':'bar'}\n"
 
-        await self._close_clients(client_a, client_b)       
+        await self._close_clients(client_a, client_b)
+       
 
+    @pytest.mark.asyncio
     async def test_readuntil(self, local_socket_connection):
         client_a, client_b = local_socket_connection
 
@@ -142,6 +147,8 @@ class TestTecemux:
  
         await self._close_clients(client_a, client_b)
     
+
+    @pytest.mark.asyncio
     async def test_wih_scramjet_framework_to_list(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         channel = CC.CONTROL
@@ -159,6 +166,8 @@ class TestTecemux:
 
         await self._close_clients(client_a, client_b)
 
+
+    @pytest.mark.asyncio
     async def test_wih_scramjet_framework_to_pipe(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         channel = CC.CONTROL
@@ -182,6 +191,7 @@ class TestTecemux:
         await self._close_clients(client_a, client_b)
 
 
+    @pytest.mark.asyncio
     async def test_wih_scramjet_framework_write_to(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         channel = CC.CONTROL

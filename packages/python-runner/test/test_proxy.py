@@ -8,6 +8,7 @@ class TestProxy:
         await b.stop()
 
     
+    @pytest.mark.asyncio
     async def test_extra_channel_with_proxy(self, local_socket_connection):
         client_a, client_b = local_socket_connection 
 
