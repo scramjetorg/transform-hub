@@ -2,7 +2,7 @@ import asyncio
 import codecs
 import pytest
 import sys
-from tecemux import Tecemux
+from tecemux import Tecemux, _ChannelContext
 from inet import IPPacket, TCPSegment
 from hardcoded_magic_values import CommunicationChannels as CC
 
@@ -66,6 +66,24 @@ class TestTecemux:
         await self._close_clients(client_a, client_b)
 
     @pytest.mark.asyncio
+    async def test_write_and_read_from_the_same_side(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+
+        channel_alpha = CC.CONTROL
+
+        client_a.get_channel(channel_alpha).write("{'foo':'bar'}")
+        await client_a._writer.drain()
+
+        data = None
+
+        with pytest.raises(asyncio.TimeoutError):
+            data = await asyncio.wait_for(client_a.get_channel(channel_alpha).read(1),timeout=0.5)
+
+        assert data is None
+        
+        await self._close_clients(client_a, client_b)
+
+    @pytest.mark.asyncio
     async def test_stream_write_redirection(self, local_socket_connection):
         client_a, client_b = local_socket_connection
     
@@ -112,18 +130,37 @@ class TestTecemux:
     async def test_extra_channel(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         
-        test_channel = await client_a.open_channel(force_open=True)
+        test_channel = await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED)
         test_channel.write("{'foo':'bar'}\n")
-        
-        await client_a._writer.drain()
-        
-        data = await client_b.get_channel(test_channel._get_channel_name()).readuntil()
+
+        await asyncio.sleep(1)
+
         data = await client_b.get_channel(test_channel._get_channel_name()).readuntil()
         
         assert data.decode() == "{'foo':'bar'}\n"
 
         await self._close_clients(client_a, client_b)
        
+    @pytest.mark.asyncio
+    async def test_write_and_read_from_the_same_side_on_extra_channel(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+
+
+        channel = await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED)
+        
+        channel.write("{'foo':'bar'}")
+        
+        await client_a.sync()
+        await client_a._writer.drain()
+
+        data = None
+       
+        with pytest.raises(asyncio.TimeoutError):
+            data = await asyncio.wait_for(channel.read(1),timeout=0.5)
+
+        assert data is None
+        
+        await self._close_clients(client_a, client_b)
 
     @pytest.mark.asyncio
     async def test_readuntil(self, local_socket_connection):

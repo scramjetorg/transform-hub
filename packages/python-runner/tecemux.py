@@ -409,14 +409,7 @@ class Tecemux:
 
             request_data = await reader.readuntil(b'\r\n\r\n')
             channel.write(request_data)
-            
-            #await channel._internal_outcoming_queue.join()
-            #await protocol.sync()
-            
-            await asyncio.sleep(1)
 
-            _ = await channel.read()
-    
             raw_response_status = await channel.readuntil(b'\r\n')
             writer.write(raw_response_status)
 
@@ -434,6 +427,8 @@ class Tecemux:
 
             writer.write('\r\n')
             await writer.drain()
+
+            
         async def run(self, protocol):
 
             self._proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -510,7 +505,7 @@ class Tecemux:
         Args:
             force_open (bool, optional): If True, all channels will be opened immediately, Otherwise, will be opened on demand. Defaults to False.
         """
-
+        self._extra_channels = {}
         self._queue = asyncio.Queue()
         self._global_sync_barrier = Barrier(len(CC))
         self._required_channels = {channel: _ChannelContext(channel,
@@ -737,7 +732,14 @@ class Tecemux:
                         else:
                             channel = str(dst_port)
                             channel_name = f'EXTRA_CHANNEL_{channel}'
-                            await self._extra_channels[channel].queue_up_incoming(pkt)
+                            try:
+                                await self._extra_channels[channel].queue_up_incoming(pkt)
+                            except KeyError:
+                                await self.open_channel(channel,initial_state=_ChannelContext._ChannelState.OPENED)
+                                try:
+                                    await self._extra_channels[channel].queue_up_incoming(pkt)
+                                except KeyError:
+                                    self._debug(f'Tecemux/MAIN: [<] Unknown channel')
 
                         self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel_name} stream')
                         buffer = buffer[current_packet_size:]
