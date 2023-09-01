@@ -2,35 +2,16 @@ import asyncio
 import codecs
 import pytest
 import sys
-from tecemux import Tecemux, _ChannelContext
-from inet import IPPacket, TCPSegment
-from hardcoded_magic_values import CommunicationChannels as CC
+from tecemux.channel import ChannelState
+from tecemux.inet import IPPacket, TCPSegment
+from tecemux.hardcoded_magic_values import CommunicationChannels as CC
 
-class TestTecemux:
+class TestChannels:
 
     async def _close_clients(self, a, b):
         await a.stop()
         await b.stop()
-
-    def test_default_init(self):
-        protocol = Tecemux()
-        assert isinstance(protocol, Tecemux)
-        assert protocol._sequence_number == 0
-
-    @pytest.mark.asyncio
-    async def test_socket_connection(self):
         
-        protocol = Tecemux()
-
-        assert protocol._reader == None
-        assert protocol._writer == None
-        
-        await protocol.connect(*await Tecemux.prepare_socket_connection())
-
-        assert isinstance(protocol._reader, asyncio.StreamReader)
-        assert isinstance(protocol._writer, asyncio.StreamWriter)
-        assert protocol._sequence_number > 0
-
     @pytest.mark.asyncio
     async def test_forward_from_main_to_channel(self, local_socket_connection):
         client_a, client_b = local_socket_connection
@@ -130,7 +111,7 @@ class TestTecemux:
     async def test_extra_channel(self, local_socket_connection):
         client_a, client_b = local_socket_connection
         
-        test_channel = await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED)
+        test_channel = await client_a.open_channel(initial_state=ChannelState.OPENED)
         test_channel.write("{'foo':'bar'}\n")
 
         await asyncio.sleep(1)
@@ -147,7 +128,7 @@ class TestTecemux:
         
         test_func = lambda: str(client_a._get_unused_extra_channel_id([ int(id) for id in client_a._extra_channels.keys() ]) )
 
-        [ await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED) for _ in range(5)]
+        [ await client_a.open_channel(initial_state=ChannelState.OPENED) for _ in range(5)]
 
         assert len(client_a._extra_channels) == 5
 
@@ -159,7 +140,7 @@ class TestTecemux:
 
         assert  test_func() == '13'
 
-        await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED)
+        await client_a.open_channel(initial_state=ChannelState.OPENED)
 
         assert len(client_a._extra_channels) == 5
 
@@ -171,7 +152,7 @@ class TestTecemux:
         client_a, client_b = local_socket_connection
 
 
-        channel = await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED)
+        channel = await client_a.open_channel(initial_state=ChannelState.OPENED)
         
         channel.write("{'foo':'bar'}")
         

@@ -5,14 +5,14 @@ import codecs
 import json
 import logging
 from pyee.asyncio import AsyncIOEventEmitter
-from tecemux import Tecemux
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 import types
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
-from hardcoded_magic_values import CommunicationChannels as CC
-from hardcoded_magic_values import RunnerMessageCodes as msg_codes
+from tecemux.multiplexer import Tecemux
+from tecemux.hardcoded_magic_values import CommunicationChannels as CC
+from tecemux.hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
 
 SEQUENCE_PATH = os.getenv('SEQUENCE_PATH')

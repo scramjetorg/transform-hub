@@ -1,7 +1,7 @@
 import pytest
 import sys
 from logging_setup import LoggingSetup
-from tecemux import Tecemux
+from tecemux.multiplexer import Tecemux
 
 
 def get_logger():

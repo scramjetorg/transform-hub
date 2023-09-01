@@ -1,5 +1,5 @@
 import pytest
-from inet import TCPSegment, IPPacket, EthernetFrame, SequenceOrder
+from tecemux.inet import TCPSegment, IPPacket, EthernetFrame, SequenceOrder
 
 class TestIP:
     def test_mf_df_flags(self):

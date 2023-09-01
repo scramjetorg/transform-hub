@@ -47,7 +47,7 @@ class SequenceOrder(metaclass=_Singleton):
 
         Returns:
             str: return endianess for struct module
-        """        
+        """
         return self.endianess
 
 
@@ -77,7 +77,7 @@ class TCPSegment:
 
             Returns:
                 str: Options in readable format
-            """            
+            """
             return val
 
     class Flags:
@@ -224,6 +224,7 @@ class TCPSegment:
 
         return (self.flags & getattr(TCPSegment.Flags, flag)) > 0
 
+
 @define
 class IPPacket:
     """ Class for manage IP Packet data
@@ -265,7 +266,7 @@ class IPPacket:
 
             Returns:
                 int: Integer values represents bit state of each flag
-            """            
+            """
             res = 0
             if value is None:
                 return 0
@@ -372,7 +373,7 @@ class IPPacket:
 
         Returns:
             IPPacket: IPPacket object
-        """        
+        """
         ihl = (buffer[0] & 0xf)
         pkt = cls(ihl, *struct.unpack(SequenceOrder().get()+"BBHHHBBH4s4s",
                   buffer[0:ihl*4]), TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
@@ -498,6 +499,7 @@ class IPPacket:
             self._validate_ip()
 
         return self
+
     def get_segment(self):
         """Return TCP Segment
 
@@ -505,6 +507,7 @@ class IPPacket:
             TCPSegment: TCP Segment object
         """
         return self.segment
+
 
 @define
 class EthernetFrame:
@@ -532,14 +535,14 @@ class EthernetFrame:
         """Build raw buffer from Ethernet frame object
 
         Returns:
-            _bytes: Raw buffer
-        """        
+            bytes: Raw buffer
+        """
         return struct.pack(SequenceOrder().get()+"6s6s2s", unhexlify(self.src_mac), unhexlify(self.dst_mac), self.eth_type) + self.packet.to_buffer()
-    
+
     def get_packet(self):
         """Return IP Packet object
 
         Returns:
             IPPacket: IP Packet object
-        """        
+        """
         return self.packet
