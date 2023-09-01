@@ -28,9 +28,12 @@ class TestProxy:
 
         import aiohttp
 
-        async with aiohttp.ClientSession() as session:        
-            async with session.get("http://_/api/version", proxy=client_a.get_proxy_uri()) as resp:
-                data = await resp.text()
+        async with client_a.get_channel_guard() as guard:
+            async with aiohttp.ClientSession() as session:        
+                async with session.get("http://_/api/version", 
+                                       proxy_auth=guard.inject_tecemux_details_as(aiohttp.BasicAuth),
+                                       proxy=guard.get_proxy_uri()) as resp:
+                    data = await resp.text()
         
         await asyncio.gather(task)
 

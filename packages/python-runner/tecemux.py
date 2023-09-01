@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import logging
 import random
 import socket
@@ -28,6 +29,64 @@ class _ChannelContext:
         OPENED = 2
         PAUSED = 3
         ENDED = 4
+
+    class _ChannelGuard:
+        """Internal class to open/close channels for external usage
+        """
+
+        def __init__(self, protocol):
+            """Inits channel guard
+
+            Args:
+                protocol (Tecemux): Tecemux object
+            """
+
+            self._protocol = protocol
+            self._channel_name = None
+            
+        async def __aenter__(self):
+            """Opens new channel and returns guard
+
+            Returns:
+                _ChannelGuard: async guard object
+            """
+
+            channel = await self._protocol.open_channel(force_open=True)
+            self._channel_name = channel._channel_enum
+            return self
+            
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            """Closes channel
+
+            Args:
+                exc_type: Unused
+                exc_val: Unused
+                exc_tb: Unused
+            """
+            await self._protocol.get_channel(self._channel_name).end()
+            await self._protocol.get_channel(self._channel_name).close()
+            del self._protocol._extra_channels[self._channel_name]
+        
+        def inject_tecemux_details_as(self, provider):
+            """Retuns channel details for external lib
+
+            Args:
+                provider (Any): External provider
+
+            Returns:
+                Any: External provider object with channel details
+            """
+
+            return provider('tecemux', self._channel_name)
+        
+        def get_proxy_uri(self):
+            """Returns proxy config URI for aiohttp
+
+            Returns:
+                str: aiohttp config
+            """
+            
+            return self._protocol._get_proxy_uri()
 
     _channel_enum: CC
 
@@ -409,6 +468,26 @@ class Tecemux:
             self._host = '127.0.0.1'
             self._proxy_socket = None
             self._port = None
+        
+        @staticmethod
+        def _get_headers_as_dict(request_headers, convert_keys_to_lowercase=False):
+                headers_list = request_headers.decode().strip().split('\r\n')
+
+                return {(key.strip().lower() if convert_keys_to_lowercase
+                         else key.strip()) : val.strip() for key,val in [el.split(': ') for el in  headers_list] }
+
+        @staticmethod
+        def _extract_tecemux_details(request_headers):
+
+                headers = Tecemux._HTTPProxy._get_headers_as_dict(request_headers)
+
+                tecemux_params = base64.b64decode(headers['Proxy-Authorization'].split(' ')[1]).decode().split(':') 
+
+                del headers['Proxy-Authorization']
+                
+                new_headers = ('\r\n'.join(key +': '+ str(val) for key, val in headers.items())+'\r\n\r\n').encode('utf-8')
+
+                return type('TecemuxDetails', (object,), {'user' : tecemux_params[0], 'channel_id': tecemux_params[1]})() , new_headers
 
         @staticmethod
         async def handle_request(reader, writer, protocol):
@@ -420,10 +499,14 @@ class Tecemux:
                 protocol (Tecemux): Tecemux object
             """            
 
-            channel = await protocol.open_channel(force_open=True)
+            request_status = await reader.readuntil(b'\r\n')
+            
+            tecemux_params, request_headers = Tecemux._HTTPProxy._extract_tecemux_details(await reader.readuntil(b'\r\n\r\n'))
 
-            request_data = await reader.readuntil(b'\r\n\r\n')
-            channel.write(request_data)
+            channel = protocol.get_channel(tecemux_params.channel_id)
+            
+            channel.write(request_status)
+            channel.write(request_headers)
 
             raw_response_status = await channel.readuntil(b'\r\n')
             writer.write(raw_response_status)
@@ -431,16 +514,12 @@ class Tecemux:
             raw_response_headers = await channel.readuntil(b'\r\n\r\n')
             writer.write(raw_response_headers)
 
-            header_list = raw_response_headers.decode().strip().split('\r\n')
-            
-            headers = {
-                key.lower(): val for key, val in [el.split(': ') for el in header_list]
-            }
+            headers = Tecemux._HTTPProxy._get_headers_as_dict(raw_response_headers, convert_keys_to_lowercase=True)
 
             raw_response_data = await channel.read(int(headers['content-length']))
             writer.write(raw_response_data)
 
-            writer.write('\r\n')
+            writer.write(b'\r\n')
             await writer.drain()
 
             
@@ -474,13 +553,16 @@ class Tecemux:
 
             return f'http://{self._host}:{self._port}'
     
-    def get_proxy_uri(self):
+    def _get_proxy_uri(self):
         """Returns proxy config URI for aiohttp
 
         Returns:
             str: aiohttp proxy config
         """  
         return self._proxy.get_proxy_uri()
+    
+    def get_channel_guard(self):
+        return _ChannelContext._ChannelGuard(self)
         
     def _debug(self, msg):
         if TECEMUX_INTERNAL_VERBOSE_DEBUG:
