@@ -85,7 +85,7 @@ class _ChannelContext:
             Returns:
                 str: aiohttp config
             """
-            
+
             return self._protocol._get_proxy_uri()
 
     _channel_enum: CC
@@ -637,6 +637,25 @@ class Tecemux:
 
 
 
+    def _get_unused_extra_channel_id(self, used_channel_ids, start_from=10):
+        """Returns lowest, unused channel number
+
+        Args:
+            used_channel_ids (list): List of *USED* channel ids
+            start_from (int, optional): Minimal channel id. Defaults to 10.
+
+        Returns:
+            int: lowest, unused channel number
+        """        
+        used_channel_ids = sorted(set(used_channel_ids))
+        if len(used_channel_ids) == 0 or used_channel_ids[0] != start_from:
+            return start_from
+        for i, v in enumerate(used_channel_ids, start_from):
+            if i != v:
+                return i
+        return i+1
+
+
     async def open_channel(self, channel_id=None, force_open=False, initial_state: _ChannelContext._ChannelState=_ChannelContext._ChannelState.CREATED) -> _ChannelContext:
         """Opens additional channel in Tecemux
 
@@ -653,7 +672,7 @@ class Tecemux:
 
         if not channel in self._extra_channels.keys():
 
-            channel = str(len(self.get_required_channels()) + len(self.get_extra_channels()) + 1 ) if channel is None else channel
+            channel = str(self._get_unused_extra_channel_id([ int(id) for id in self._extra_channels.keys() ]) ) if channel is None else channel
 
             self._extra_channels[channel] = _ChannelContext(channel,
                                         self._queue,

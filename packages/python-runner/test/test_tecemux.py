@@ -142,6 +142,31 @@ class TestTecemux:
         await self._close_clients(client_a, client_b)
        
     @pytest.mark.asyncio
+    async def test_many_extra_channels(self, local_socket_connection):
+        client_a, client_b = local_socket_connection
+        
+        test_func = lambda: str(client_a._get_unused_extra_channel_id([ int(id) for id in client_a._extra_channels.keys() ]) )
+
+        [ await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED) for _ in range(5)]
+
+        assert len(client_a._extra_channels) == 5
+
+        assert  test_func() == '15'
+
+        del client_a._extra_channels['13']
+
+        assert len(client_a._extra_channels) == 4
+
+        assert  test_func() == '13'
+
+        await client_a.open_channel(initial_state=_ChannelContext._ChannelState.OPENED)
+
+        assert len(client_a._extra_channels) == 5
+
+        await self._close_clients(client_a, client_b)
+
+
+    @pytest.mark.asyncio
     async def test_write_and_read_from_the_same_side_on_extra_channel(self, local_socket_connection):
         client_a, client_b = local_socket_connection
 
