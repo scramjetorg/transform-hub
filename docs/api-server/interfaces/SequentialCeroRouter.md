@@ -31,7 +31,7 @@
 
 ### add
 
-▸ **add**(`method`, `pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **add**(`method`, `pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -57,7 +57,7 @@ ___
 
 ### all
 
-▸ **all**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **all**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -82,7 +82,7 @@ ___
 
 ### connect
 
-▸ **connect**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **connect**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -107,7 +107,7 @@ ___
 
 ### delete
 
-▸ **delete**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **delete**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -162,7 +162,7 @@ ___
 
 ### get
 
-▸ **get**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **get**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -187,7 +187,7 @@ ___
 
 ### head
 
-▸ **head**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **head**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -238,7 +238,7 @@ ___
 
 ### options
 
-▸ **options**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **options**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -263,7 +263,7 @@ ___
 
 ### patch
 
-▸ **patch**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **patch**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -288,7 +288,7 @@ ___
 
 ### post
 
-▸ **post**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **post**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -313,7 +313,7 @@ ___
 
 ### put
 
-▸ **put**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **put**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -338,7 +338,7 @@ ___
 
 ### trace
 
-▸ **trace**(`pattern`, `...handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **trace**(`pattern`, ...`handlers`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 
@@ -363,7 +363,7 @@ ___
 
 ### use
 
-▸ **use**(`path`, `...middlewares`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
+▸ **use**(`path`, ...`middlewares`): [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 #### Parameters
 

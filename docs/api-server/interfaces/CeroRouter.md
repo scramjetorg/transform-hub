@@ -33,7 +33,7 @@
 
 ### add
 
-▸ **add**(`method`, `pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **add**(`method`, `pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -59,7 +59,7 @@ ___
 
 ### all
 
-▸ **all**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **all**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -84,7 +84,7 @@ ___
 
 ### connect
 
-▸ **connect**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **connect**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -109,7 +109,7 @@ ___
 
 ### delete
 
-▸ **delete**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **delete**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -164,7 +164,7 @@ ___
 
 ### get
 
-▸ **get**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **get**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -189,7 +189,7 @@ ___
 
 ### head
 
-▸ **head**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **head**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -236,7 +236,7 @@ ___
 
 ### options
 
-▸ **options**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **options**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -261,7 +261,7 @@ ___
 
 ### patch
 
-▸ **patch**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **patch**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -286,7 +286,7 @@ ___
 
 ### post
 
-▸ **post**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **post**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -311,7 +311,7 @@ ___
 
 ### put
 
-▸ **put**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **put**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -336,7 +336,7 @@ ___
 
 ### trace
 
-▸ **trace**(`pattern`, `...handlers`): [`CeroRouter`](CeroRouter.md)
+▸ **trace**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -361,7 +361,7 @@ ___
 
 ### use
 
-▸ **use**(`path`, `...middlewares`): [`CeroRouter`](CeroRouter.md)
+▸ **use**(`path`, ...`middlewares`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 

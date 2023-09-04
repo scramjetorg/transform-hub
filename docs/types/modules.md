@@ -160,6 +160,7 @@
 - [SequenceEndMessage](modules.md#sequenceendmessage)
 - [SequenceEndMessageData](modules.md#sequenceendmessagedata)
 - [SequenceInfo](modules.md#sequenceinfo)
+- [SequenceInfoInstance](modules.md#sequenceinfoinstance)
 - [SequenceMessage](modules.md#sequencemessage)
 - [SequenceMessageData](modules.md#sequencemessagedata)
 - [SequencePackageJSON](modules.md#sequencepackagejson)
@@ -227,7 +228,7 @@
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `code` | `APIErrorCode` | A unique reference number for a given error type. |
-| `message` | `string` | An error message describing the potential cause of the error and possibly a way how to fix it. |
+| `message` | `string` | An error message describing the potential cause of the error  and possibly a way how to fix it. |
 | `url?` | `string` | A link to the detail information about the error. |
 
 #### Defined in
@@ -408,7 +409,7 @@ ___
 
 #### Type declaration
 
-▸ (`this`, `source`, `...argv`): `MaybePromise`<[`Streamable`](modules.md#streamable)<`any`\> \| `void`\>
+▸ (`this`, `source`, ...`argv`): `MaybePromise`<[`Streamable`](modules.md#streamable)<`any`\> \| `void`\>
 
 ##### Parameters
 
@@ -861,7 +862,7 @@ Definition that informs the platform of the details of a single function.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `description?` | `string` | Additional description of the function |
-| `mode` | ``"buffer"`` \| ``"object"`` \| ``"reference"`` | Stream mode: * buffer - carries binary/string chunks that have no fixed size chunks and can be passed through sockets * object - carries any type of object, that is serializable via JSON or analogue * reference - carries non-serializable object references that should not be passed outside of a single process |
+| `mode` | ``"buffer"`` \| ``"object"`` \| ``"reference"`` | Stream mode:  * buffer - carries binary/string chunks that have no fixed size chunks and can be passed through sockets * object - carries any type of object, that is serializable via JSON or analogue * reference - carries non-serializable object references that should not be passed outside of a single process |
 | `name?` | `string` | Optional name for the function (which will be shown in UI/CLI) |
 | `scalability?` | { `head?`: `ScalabilityOptions` ; `tail?`: `ScalabilityOptions`  } | Describes how head (readable side) and tail (writable side) of this Function can be scaled to other machines. |
 | `scalability.head?` | `ScalabilityOptions` | Writable side scalability |
@@ -1117,7 +1118,7 @@ ___
 | `ports?` | `Record`<`string`, `number`\> |
 | `provides?` | `string` |
 | `requires?` | `string` |
-| `sequence` | `string` |
+| `sequence` | [`SequenceInfoInstance`](modules.md#sequenceinfoinstance) |
 | `started?` | `Date` |
 | `status?` | [`InstanceStatus`](enums/InstanceStatus.md) |
 | `terminated?` | { `exitcode`: `number` ; `reason`: `string`  } |
@@ -1126,7 +1127,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L6)
+[packages/types/src/instance-store.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L5)
 
 ___
 
@@ -1146,7 +1147,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance-store.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L4)
+[packages/types/src/instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L3)
 
 ___
 
@@ -1163,7 +1164,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/messages/instance.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L10)
+[packages/types/src/messages/instance.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L11)
 
 ___
 
@@ -1219,7 +1220,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/messages/instance.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L9)
+[packages/types/src/messages/instance.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L10)
 
 ___
 
@@ -1231,13 +1232,12 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `id` | `string` |
-| `sequence` | `string` |
+| `instance` | [`Instance`](modules.md#instance) |
 | `status` | `InstanceMessageCode` |
 
 #### Defined in
 
-[packages/types/src/messages/instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L3)
+[packages/types/src/messages/instance.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L4)
 
 ___
 
@@ -2000,7 +2000,7 @@ ___
 
 ### ParsedMessage
 
-Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params`: { `[key: string]`: `any`;  } \| `undefined`  }
+Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params?`: { `[key: string]`: `any`;  }  }
 
 #### Defined in
 
@@ -2136,7 +2136,7 @@ ___
 
 #### Type declaration
 
-▸ (`stream`, `...parameters`): [`Streamable`](modules.md#streamable)<`Produces`\>
+▸ (`stream`, ...`parameters`): [`Streamable`](modules.md#streamable)<`Produces`\>
 
 A Function that returns a streamable result is a read function
 
@@ -2487,6 +2487,16 @@ ___
 
 ___
 
+### SequenceInfoInstance
+
+Ƭ **SequenceInfoInstance**: `Omit`<[`SequenceInfo`](modules.md#sequenceinfo), ``"instances"``\>
+
+#### Defined in
+
+[packages/types/src/sequence-adapter.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L13)
+
+___
+
 ### SequenceMessage
 
 Ƭ **SequenceMessage**: { `msgCode`: `CPMMessageCode.SEQUENCE`  } & [`SequenceMessageData`](modules.md#sequencemessagedata)
@@ -2709,7 +2719,7 @@ Configuration options for streaming endpoints
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `checkContentType?` | `boolean` | Perform stream content-type type checks |
-| `checkEndHeader?` | `boolean` | Should consider x-end-stream header or just use the 'end' **`Default`** true |
+| `checkEndHeader?` | `boolean` | Should consider x-end-stream header or just use the 'end'  **`Default`**  true |
 | `encoding?` | `BufferEncoding` | Encoding used in the stream |
 | `end?` | `boolean` | Should request end also end the stream or can the endpoint accept subsequent connections |
 | `json?` | `boolean` | Is the stream a JSON stream? |
@@ -2875,7 +2885,7 @@ ___
 
 #### Type declaration
 
-▸ (`stream`, `...parameters`): `StreambleMaybeFunction`<`Produces`\>
+▸ (`stream`, ...`parameters`): `StreambleMaybeFunction`<`Produces`\>
 
 ##### Parameters
 
@@ -2911,7 +2921,7 @@ ___
 
 #### Type declaration
 
-▸ (`this`, `source`, `...args`): `MaybePromise`<`ReturnType`\>
+▸ (`this`, `source`, ...`args`): `MaybePromise`<`ReturnType`\>
 
 A Transformation App that accepts data from the platform, performs operations on the data,
 and returns the data to the platforms for further use.
@@ -3124,7 +3134,7 @@ ___
 
 #### Type declaration
 
-▸ (`stream`, `...parameters`): `MaybePromise`<`void`\>
+▸ (`stream`, ...`parameters`): `MaybePromise`<`void`\>
 
 ##### Parameters
 

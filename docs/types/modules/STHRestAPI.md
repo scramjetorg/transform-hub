@@ -130,7 +130,7 @@ ___
 
 ### GetInstanceResponse
 
-Ƭ **GetInstanceResponse**: [`Instance`](../modules.md#instance) & { `sequenceInfo`: [`DeepPartial`](../modules.md#deeppartial)<[`GetSequenceResponse`](STHRestAPI.md#getsequenceresponse)\>  }
+Ƭ **GetInstanceResponse**: [`Instance`](../modules.md#instance) & { `sequence`: [`DeepPartial`](../modules.md#deeppartial)<[`GetSequenceResponse`](STHRestAPI.md#getsequenceresponse)\>  }
 
 #### Defined in
 
