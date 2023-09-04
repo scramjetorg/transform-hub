@@ -24,7 +24,7 @@ class SequenceOrder(metaclass=_Singleton):
     """
     class _Order:
         """ Contains suported orders. For internal usage only
-        """        
+        """
         LITTLE_ENDIAN = '<'
         BIG_ENDIAN = '>'
 
@@ -58,7 +58,7 @@ class TCPSegment:
 
     class Options:
         """ TCP Segments options, at the end of TCP Header
-        """        
+        """
 
         EOL = 0
         NOP = 1
@@ -181,10 +181,11 @@ class TCPSegment:
             return cls(src_port, dst_port, seq, ack, offres, flags, win, checksum, urp, buffer[TCP_MIN:], b'')
 
         if hdr_len > TCP_MIN:
-            return cls(src_port, dst_port, seq, ack, offres, flags, win, checksum, urp, buffer[hdr_len:], buffer[TCP_MIN:hdr_len])
+            return cls(src_port, dst_port, seq, ack, offres, flags, win,
+                       checksum, urp, buffer[hdr_len:], buffer[TCP_MIN:hdr_len])
 
     def to_buffer(self):
-        """Build raw buffer from TCP Segment object 
+        """Build raw buffer from TCP Segment object
 
         Returns:
             bytes: Raw buffer
@@ -208,7 +209,7 @@ class TCPSegment:
 
         Returns:
             TCPObject: Retuns self
-        """    
+        """
         self.flags = list_of_flags
         return self
 
@@ -312,15 +313,15 @@ class IPPacket:
         """Calculates checksum for provited packet
 
         Args:
-            pkt (bytes): Raw buffer 
+            pkt (bytes): Raw buffer
 
         Returns:
             int: Calculated checsum
-        """        
+        """
         if len(pkt) % 2 == 1:
             pkt += b"\0"
         s = sum(struct.unpack(('<' if SequenceOrder().get()
-                is '>' else '>')+str(len(pkt)//2)+'H', pkt))
+                == '>' else '>')+str(len(pkt)//2)+'H', pkt))
 
         # source: https://github.com/secdev/scapy
         s = (s >> 16) + (s & 0xffff)
@@ -337,7 +338,7 @@ class IPPacket:
 
         Returns:
             int: Calculated checksum
-        """    
+        """
         if len(pkt) % 2 == 1:
             pkt += b"\0"
         elements = list(struct.unpack(
@@ -347,8 +348,8 @@ class IPPacket:
         return s % 0x10000
 
     @classmethod
-    def from_buffer_with_pseudoheader(cls, buffer:bytes):
-        """Creates IP Packet object and TCP Segment object 
+    def from_buffer_with_pseudoheader(cls, buffer: bytes):
+        """Creates IP Packet object and TCP Segment object
         from provided raw buffer with pseudo TCP Header
 
         Args:
@@ -365,7 +366,7 @@ class IPPacket:
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
-        """Creates IP Packet object and TCP Segment object 
+        """Creates IP Packet object and TCP Segment object
         from provided raw buffer with
 
         Args:
@@ -390,7 +391,7 @@ class IPPacket:
         """
         return (self.flags & getattr(IPPacket.Flags, flag)) > 0
 
-    def prepare_pseudoheader(self, protocol:int, length:int) -> bytes:
+    def prepare_pseudoheader(self, protocol: int, length: int) -> bytes:
         """Prepare TCP pseudoheader to calulate checksum
 
         Args:
@@ -487,7 +488,7 @@ class IPPacket:
         """Calculates all checksums
 
         Args:
-            for_STH (bool, optional): If True, cheksums calculates with format valid for Transform Hub. 
+            for_STH (bool, optional): If True, cheksums calculates with format valid for Transform Hub.
             Otherise it is calcuated with RFC. Defaults to False.
         """
         if for_STH:
@@ -537,7 +538,8 @@ class EthernetFrame:
         Returns:
             bytes: Raw buffer
         """
-        return struct.pack(SequenceOrder().get()+"6s6s2s", unhexlify(self.src_mac), unhexlify(self.dst_mac), self.eth_type) + self.packet.to_buffer()
+        return struct.pack(SequenceOrder().get()+"6s6s2s", unhexlify(self.src_mac),
+                           unhexlify(self.dst_mac), self.eth_type) + self.packet.to_buffer()
 
     def get_packet(self):
         """Return IP Packet object

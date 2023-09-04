@@ -1,6 +1,8 @@
 import enum
 from asyncio import Condition
 
+# asyncio.barrier - only for compatibility with Python older than 3.11
+
 
 class BrokenBarrierError(RuntimeError):
     """Barrier is broken by barrier.abort() call."""
@@ -19,7 +21,7 @@ class Barrier():
         if parties < 1:
             raise ValueError('parties must be > 0')
 
-        self._cond = Condition() # notify all tasks when state changes
+        self._cond = Condition()  # notify all tasks when state changes
 
         self._parties = parties
         self._state = _BarrierState.FILLING
@@ -40,7 +42,7 @@ class Barrier():
 
     async def wait(self):
         async with self._cond:
-            await self._block() # Block while the barrier drains or resets.
+            await self._block()  # Block while the barrier drains or resets.
             try:
                 index = self._count
                 self._count += 1
@@ -88,7 +90,7 @@ class Barrier():
         async with self._cond:
             if self._count > 0:
                 if self._state is not _BarrierState.RESETTING:
-                    #reset the barrier, waking up tasks
+                    # reset the barrier, waking up tasks
                     self._state = _BarrierState.RESETTING
             else:
                 self._state = _BarrierState.FILLING
@@ -98,7 +100,6 @@ class Barrier():
         async with self._cond:
             self._state = _BarrierState.BROKEN
             self._cond.notify_all()
-
 
     @property
     def parties(self):

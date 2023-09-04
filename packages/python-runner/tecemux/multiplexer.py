@@ -109,19 +109,20 @@ class Tecemux:
         """Opens all channels to Transform Hub
 
         Args:
-            force_open (bool, optional): If True, all channels will be opened immediately, Otherwise, will be opened on demand. Defaults to False.
+            force_open (bool, optional): If True, all channels will be opened immediately,
+             Otherwise, will be opened on demand. Defaults to False.
         """
         self._extra_channels = {}
         self._queue = asyncio.Queue()
         self._global_sync_barrier = Barrier(len(CC))
         self._required_channels = {channel: ChannelContext(channel,
-                                                   self._queue,
-                                                   self._instance_id,
-                                                   self._logger,
-                                                   self._global_stop_channel_event,
-                                                   self._global_sync_channel_event,
-                                                   self._global_sync_barrier,
-                                                   ChannelState.CREATED) for channel in CC}
+                                                           self._queue,
+                                                           self._instance_id,
+                                                           self._logger,
+                                                           self._global_stop_channel_event,
+                                                           self._global_sync_channel_event,
+                                                           self._global_sync_barrier,
+                                                           ChannelState.CREATED) for channel in CC}
         if force_open:
             [await channel.open() for channel in self.get_required_channels()]
 
@@ -137,7 +138,7 @@ class Tecemux:
 
         Returns:
             int: lowest, unused channel number
-        """        
+        """
         used_channel_ids = sorted(set(used_channel_ids))
         if len(used_channel_ids) == 0 or used_channel_ids[0] != start_from:
             return start_from
@@ -146,7 +147,8 @@ class Tecemux:
                 return i
         return i+1
 
-    async def open_channel(self, channel_id=None, force_open=False, initial_state:ChannelState = ChannelState.CREATED) -> ChannelContext:
+    async def open_channel(self, channel_id=None, force_open=False,
+                           initial_state: ChannelState = ChannelState.CREATED) -> ChannelContext:
         """Opens additional channel in Tecemux
 
         Args:
@@ -160,18 +162,20 @@ class Tecemux:
 
         channel = str(channel_id) if channel_id is not None else None
 
-        if not channel in self._extra_channels.keys():
+        if channel not in self._extra_channels.keys():
 
-            channel = str(self._get_unused_extra_channel_id([ int(id) for id in self._extra_channels.keys() ]) ) if channel is None else channel
+            channel = str(self._get_unused_extra_channel_id([int(id)
+                                                             for id in self._extra_channels.keys()])) \
+                                                                if channel is None else channel
 
             self._extra_channels[channel] = ChannelContext(channel,
-                                        self._queue,
-                                        self._instance_id,
-                                        self._logger,
-                                        self._global_stop_channel_event,
-                                        self._global_sync_channel_event,
-                                        self._global_sync_barrier,
-                                        initial_state)
+                                                           self._queue,
+                                                           self._instance_id,
+                                                           self._logger,
+                                                           self._global_stop_channel_event,
+                                                           self._global_sync_channel_event,
+                                                           self._global_sync_barrier,
+                                                           initial_state)
 
             if force_open:
                 await self._extra_channels[channel].open()
@@ -222,7 +226,7 @@ class Tecemux:
         return self._required_channels.values()
 
     def get_extra_channels(self) -> dict:
-        """Returns only extra initiated channels by runner 
+        """Returns only extra initiated channels by runner
 
         Returns:
             dict: Dict of channel's contexts
@@ -245,7 +249,7 @@ class Tecemux:
         """ Stops protocol
         """
 
-        await self._finish_proxy()  
+        await self._finish_proxy()
         await self._finish_channels()
         await self._finish_incoming()
         await self._finish_outcoming()
@@ -269,7 +273,7 @@ class Tecemux:
 
         for channel in self.get_extra_channels():
             await channel.end()
-            await channel.close() 
+            await channel.close()
 
         for channel in self.get_required_channels():
             await channel._internal_outcoming_queue.join()
@@ -281,7 +285,7 @@ class Tecemux:
         await self._global_stop_channel_event.wait()
         for channel in self.get_required_channels():
             try:
-                await asyncio.wait_for(channel._outcoming_process_task,timeout=1)
+                await asyncio.wait_for(channel._outcoming_process_task, timeout=1)
             except asyncio.TimeoutError:
                 pass
             except TypeError:
@@ -294,7 +298,7 @@ class Tecemux:
         self._global_stop_outcoming_event.set()
         await asyncio.sleep(0)
         await self._global_stop_outcoming_event.wait()
-        await asyncio.gather(*[self._outcoming_data_forwarder])        
+        await asyncio.gather(*[self._outcoming_data_forwarder])
         await self._writer.drain()
         self._writer.close()
         await self._writer.wait_closed()
@@ -329,7 +333,7 @@ class Tecemux:
 
         while not self._global_stop_channel_event.is_set():
             try:
-                chunk = await asyncio.wait_for(self._reader.read(READ_CHUNK_SIZE),1)
+                chunk = await asyncio.wait_for(self._reader.read(READ_CHUNK_SIZE), 1)
 
                 if not chunk:
                     incoming_parser_finish_loop.set()
@@ -354,7 +358,8 @@ class Tecemux:
                         single_packet_buffer = buffer[:current_packet_size]
                         pkt = IPPacket().from_buffer_with_pseudoheader(single_packet_buffer)
                         self._last_sequence_received = pkt.get_segment().seq
-                        self._debug(f'Tecemux/MAIN: [<] Full incoming packet with sequence number {self._last_sequence_received} from Transform Hub was received')
+                        self._debug(f'Tecemux/MAIN: [<] Full incoming packet with sequence number'
+                                    f'{self._last_sequence_received} from Transform Hub was received')
 
                         dst_port = pkt.get_segment().dst_port
 
@@ -372,9 +377,10 @@ class Tecemux:
                                 try:
                                     await self._extra_channels[channel].queue_up_incoming(pkt)
                                 except KeyError:
-                                    self._debug(f'Tecemux/MAIN: [<] Unknown channel')
+                                    self._debug('Tecemux/MAIN: [<] Unknown channel')
 
-                        self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)} forwarded to {channel_name} stream')
+                        self._debug(f'Tecemux/MAIN: [<] Packet {Tecemux._chunk_preview(single_packet_buffer)}'
+                                    f' forwarded to {channel_name} stream')
                         buffer = buffer[current_packet_size:]
                     else:
                         self._warning('Tecemux/MAIN: [<] Not full packet received. Getting additional data chunk')
@@ -395,7 +401,7 @@ class Tecemux:
 
         while True:
             try:
-                pkt = await asyncio.wait_for(self._queue.get(),timeout=1)
+                pkt = await asyncio.wait_for(self._queue.get(), timeout=1)
                 self._queue.task_done()
 
                 # inject sequence number
@@ -406,10 +412,12 @@ class Tecemux:
                 chunk = pkt.build(
                     for_STH=True).to_buffer_with_tcp_pseudoheader()
 
-                self._debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)} is waiting to send to Transform Hub')
+                self._debug(f'Tecemux/MAIN: [>] Outcoming chunk {Tecemux._chunk_preview(chunk)}'
+                            ' is waiting to send to Transform Hub')
                 self._writer.write(chunk)
                 await self._writer.drain()
-                self._debug(f'Tecemux/MAIN: [>] Chunk {Tecemux._chunk_preview(chunk)} with sequence number: {pkt.segment.seq} was sent to Transform Hub')
+                self._debug(f'Tecemux/MAIN: [>] Chunk {Tecemux._chunk_preview(chunk)} with sequence number:'
+                            f' {pkt.segment.seq} was sent to Transform Hub')
             except asyncio.QueueEmpty:
                 if self._global_stop_outcoming_event.is_set():
                     break

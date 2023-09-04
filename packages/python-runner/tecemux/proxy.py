@@ -22,28 +22,29 @@ class HTTPProxy:
     def _get_headers_as_dict(request_headers, convert_keys_to_lowercase=False):
         headers_list = request_headers.decode().strip().split('\r\n')
 
-        return {(key.strip().lower() if convert_keys_to_lowercase 
-                else key.strip()) : val.strip() for key,val in [el.split(': ') for el in  headers_list] }
+        return {(key.strip().lower() if convert_keys_to_lowercase
+                else key.strip()): val.strip() for key, val in [el.split(': ') for el in headers_list]}
 
     @staticmethod
     def _extract_tecemux_details(request_headers):
 
         headers = HTTPProxy._get_headers_as_dict(request_headers)
 
-        tecemux_params = base64.b64decode(headers['Proxy-Authorization'].split(' ')[1]).decode().split(':') 
+        tecemux_params = base64.b64decode(headers['Proxy-Authorization'].split(' ')[1]).decode().split(':')
 
         del headers['Proxy-Authorization']
 
-        new_headers = ('\r\n'.join(key +': '+ str(val) for key, val in headers.items())+'\r\n\r\n').encode('utf-8')
+        new_headers = ('\r\n'.join(key + ': ' + str(val) for key, val in headers.items())+'\r\n\r\n').encode('utf-8')
 
-        return type('TecemuxDetails', (object,), {'user' : tecemux_params[0], 'channel_id': tecemux_params[1]})() , new_headers
+        return type('TecemuxDetails', (object,), {'user': tecemux_params[0],
+                                                  'channel_id': tecemux_params[1]})(), new_headers
 
     @staticmethod
     async def handle_request(reader, writer, protocol):
         """Process single request to server
 
         Args:
-            reader (asyncio.StreamReader): Stream reader provides access to HTTP request data 
+            reader (asyncio.StreamReader): Stream reader provides access to HTTP request data
             writer (asyncio.StreamWriter): Stream writer give posibility to send response
             protocol (Tecemux): Tecemux object
         """
@@ -76,7 +77,7 @@ class HTTPProxy:
 
         Args:
             protocol (Tecemux): Tecemux object
-        """        
+        """
 
         self._proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -85,7 +86,8 @@ class HTTPProxy:
 
         self._port = int(self._proxy_socket.getsockname()[1])
 
-        server = await asyncio.start_server(lambda r, w: HTTPProxy.handle_request(r, w, protocol), sock=self._proxy_socket)
+        server = await asyncio.start_server(lambda r, w: HTTPProxy.handle_request(r, w, protocol),
+                                            sock=self._proxy_socket)
 
         async with server:
             await server.serve_forever()

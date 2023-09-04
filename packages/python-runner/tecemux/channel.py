@@ -111,7 +111,7 @@ class ChannelContext:
 
     def __init__(self, channel,
                  queue: asyncio.Queue,
-                 instance_id: str, 
+                 instance_id: str,
                  logger: logging.Logger,
                  stop_event: asyncio.Event,
                  sync_event: asyncio.Event,
@@ -127,7 +127,8 @@ class ChannelContext:
         self._stop_channel_event = stop_event
         self._sync_channel_event = sync_event
         self._sync_barrier = sync_barrier
-        self._outcoming_process_task = asyncio.create_task(self._outcoming_process_tasks(), name=f'{self._get_channel_name()}_PROCESS_TASK')
+        self._outcoming_process_task = asyncio.create_task(self._outcoming_process_tasks(),
+                                                           name=f'{self._get_channel_name()}_PROCESS_TASK')
         self._read_buffer = bytearray()
         self._state = state
 
@@ -258,7 +259,7 @@ class ChannelContext:
 
         while True:
             try:
-                buf = self._internal_incoming_queue.get_nowait()                
+                buf = self._internal_incoming_queue.get_nowait()
 
                 if buf == b'':
                     return False
@@ -314,7 +315,8 @@ class ChannelContext:
             sequence_number (int): Value for Acknowledge field
         """
 
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK'], ack=sequence_number)))
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),
+                                                                 flags=['ACK'], ack=sequence_number)))
 
     async def _send_pause_ACK(self, sequence_number: int) -> None:
         """"Add to global queue an pause packet to send
@@ -323,7 +325,8 @@ class ChannelContext:
             sequence_number (int): Value for Acknowledge field
         """
 
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), flags=['ACK', 'SYN'], ack=sequence_number)))
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),
+                                                                 flags=['ACK', 'SYN'], ack=sequence_number)))
 
     async def open(self) -> None:
         """Open channel
@@ -338,7 +341,8 @@ class ChannelContext:
             else:
                 buf = b''
 
-            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=buf, flags=['PSH'])))
+            await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),
+                                                                     data=buf, flags=['PSH'])))
 
             self._state = ChannelState.OPENED
 
@@ -347,7 +351,8 @@ class ChannelContext:
         """
 
         await self._internal_outcoming_queue.join()
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'', flags=['PSH'])))
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),
+                                                                 data=b'', flags=['PSH'])))
         self._state = ChannelState.ENDED
 
     async def close(self) -> None:
@@ -355,7 +360,9 @@ class ChannelContext:
         """
 
         self._debug(f'Tecemux/{self._get_channel_name()}: [-] Channel close request is send')
-        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(), data=b'' if self._global_instance_id is None else self._global_instance_id, flags=['FIN'])))
+        await self._global_queue.put(IPPacket(segment=TCPSegment(dst_port=self._get_channel_id(),
+                                                                 data=b'' if self._global_instance_id is None
+                                                                 else self._global_instance_id, flags=['FIN'])))
 
     async def queue_up_incoming(self, pkt: IPPacket) -> None:
         """Redirects incoming data from provided packet to current channel
@@ -397,11 +404,12 @@ class ChannelContext:
         if self._state is not ChannelState.PAUSED:
             while not self._internal_outcoming_queue.empty():
                 try:
-                    buf = await asyncio.wait_for(self._internal_outcoming_queue.get(),1)
+                    buf = await asyncio.wait_for(self._internal_outcoming_queue.get(), 1)
                     await self._global_queue.put(wrap(self._get_channel_id(), buf))
                     self._internal_outcoming_queue.task_done()
                 except asyncio.QueueEmpty:
-                    self._debug(f'Tecemux/{self._get_channel_name()}: [-] All data stored during pause were redirected to global queue')
+                    self._debug(f'Tecemux/{self._get_channel_name()}:'
+                                '[-] All data stored during pause were redirected to global queue')
                     break
                 except asyncio.TimeoutError:
                     pass
