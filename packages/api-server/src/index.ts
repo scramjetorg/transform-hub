@@ -19,6 +19,8 @@ export const logger = new ObjLogger("ApiServer");
 
 opLogger.pipe(logger);
 
+// logger.addOutput(process.stderr);
+
 function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>) {
     return async (...args: T) => {
         try {
@@ -35,7 +37,7 @@ function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>
  * @returns Handler
  */
 function safeDecorator(cb: (req: IncomingMessage) => MaybePromise<void>) {
-    return async (req: IncomingMessage, res: ServerResponse, next: NextCallback) => {
+    return async (req: IncomingMessage, _res: ServerResponse, next: NextCallback) => {
         try {
             await cb(req);
         } catch (err) {

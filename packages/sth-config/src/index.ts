@@ -17,4 +17,8 @@ export function development() {
     return !PRODUCTION && DEVELOPMENT;
 }
 
+export const debug = development() && process.env.SCRAMJET_DEBUG
+    ? (arg: string) => process.stdout.write(arg)
+    : () => {};
+
 export { ConfigService, defaultConfig };

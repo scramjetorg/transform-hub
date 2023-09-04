@@ -1,3 +1,3 @@
-import { GetSequencesResponse } from "./get-sequences";
+import { GetInstanceResponse } from "../rest-api-sth";
 
-export type GetInstancesResponse = GetSequencesResponse[][];
+export type GetInstancesResponse = GetInstanceResponse[];

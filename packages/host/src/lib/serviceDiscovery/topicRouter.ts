@@ -3,12 +3,12 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { APIExpose, IObjectLogger, OpResponse } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage } from "http";
 import { TopicState } from "./topicHandler";
 import { StreamOrigin } from "./streamHandler";
 import { ContentType, isContentType } from "./contentType";
 import TopicId from "./topicId";
-import { PassThrough } from "stream";
+import { CeroError } from "@scramjet/api-server";
 
 type TopicsPostReq = IncomingMessage & {
     body?: {
@@ -38,7 +38,7 @@ const invalidContentTypeMsg = "Unsupported content-type";
 const invalidTopicIdMsg = "Topic id incorrect format";
 
 class TopicRouter {
-    private logger = new ObjLogger(this);
+    logger = new ObjLogger(this);
     private serviceDiscovery: ServiceDiscovery;
 
     constructor(logger: IObjectLogger, apiServer: APIExpose, apiBaseUrl: string, serviceDiscovery: ServiceDiscovery) {
@@ -49,7 +49,7 @@ class TopicRouter {
         apiServer.op("post", `${apiBaseUrl}/topics`, (req) => this.topicsPost(req));
         apiServer.op("delete", `${apiBaseUrl}/topics/:topic`, (req) => this.deleteTopic(req));
         apiServer.downstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicDownstream(req), { checkContentType: false });
-        apiServer.upstream(`${apiBaseUrl}/topic/:topic`, (req, res) => this.topicUpstream(req, res));
+        apiServer.upstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicUpstream(req));
     }
 
     async topicsPost(req: TopicsPostReq): Promise<OpResponse<TopicsPostRes>> {
@@ -65,7 +65,7 @@ class TopicRouter {
 
         if (topicExist) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic with given id already exist" };
 
-        const topic = this.serviceDiscovery.createTopic(topicId, contentType);
+        const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
         return {
             opStatus: ReasonPhrases.OK,
@@ -106,21 +106,15 @@ class TopicRouter {
 
         this.logger.debug(`Incoming topic '${id}' request`);
 
-        let topic = this.serviceDiscovery.getTopic(topicId);
+        const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
-        if (topic) {
-            const topicContentType = topic.options().contentType;
-
-            if (contentType !== topicContentType) {
-                return {
-                    opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE,
-                    error: `Acceptable Content-Type for ${id} is ${topicContentType}`
-                };
-            }
-        } else {
-            topic = this.serviceDiscovery.createTopic(topicId, contentType);
+        if (topic.contentType !== contentType) {
+            return {
+                opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE,
+                error: `Acceptable Content-Type for ${id} is ${topic.contentType}`
+            };
         }
-        req.pipe(topic, { end: false });
+        topic.acceptPipe(req);
 
         if (!cpm) {
             await this.serviceDiscovery.update({
@@ -129,33 +123,41 @@ class TopicRouter {
         } else {
             this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
         }
+
+        await new Promise<void>(res => {
+            req.on("end", () => res());
+        });
+
         return { opStatus: ReasonPhrases.OK };
     }
 
-    async topicUpstream(req: TopicStreamReq, res: ServerResponse) {
+    async topicUpstream(req: TopicStreamReq) {
         const { "content-type": contentType = "application/x-ndjson", cpm } = req.headers;
         const { topic: id = "" } = req.params || {};
 
         if (!isContentType(contentType)) {
-            res.end({ opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg });
-            return new PassThrough();
+            throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);
         }
         if (!TopicId.validate(id)) {
-            res.end({ opStatus: ReasonPhrases.BAD_REQUEST, error: invalidTopicIdMsg });
-            return new PassThrough();
+            throw new CeroError("ERR_CANNOT_PARSE_CONTENT", undefined, invalidTopicIdMsg);
         }
 
         const topicId = new TopicId(id);
 
-        if (!cpm) {
-            await this.serviceDiscovery.update({
-                requires: id, contentType, topicName: topicId.toString()
-            });
-        } else {
-            this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
-        }
+        try {
+            const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
-        return this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
+            if (!cpm) {
+                await this.serviceDiscovery.update({
+                    requires: id, contentType, topicName: topicId.toString()
+                });
+            } else {
+                this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
+            }
+            return topic;
+        } catch (e: any) {
+            throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);
+        }
     }
 }
 

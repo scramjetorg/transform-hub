@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { CommandDefinition } from "../../types";
 import { createWriteStream, lstatSync } from "fs";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
@@ -11,6 +12,7 @@ import { isDevelopment } from "../../utils/envs";
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
+import { initPlatform } from "../platform";
 
 /**
  * Initializes `sequence` command.
@@ -20,6 +22,7 @@ import { ClientError } from "@scramjet/client-utils";
 export const sequence: CommandDefinition = (program) => {
     const sequenceCmd = program
         .command("sequence")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .alias("seq")
@@ -30,7 +33,12 @@ export const sequence: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("List all Sequences available on Hub")
-        .action(async () => displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format));
+        .option("-n, --name <sequence-name>", "list id's of sequences with a given name")
+        .action(async ({ name } :{name:string}) => {
+            if (name) return await displayEntity(await getHostClient().getSequenceId(name), profileManager.getProfileConfig().format);
+
+            return await displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format);
+        });
 
     sequenceCmd
         .command("use")

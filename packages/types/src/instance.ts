@@ -1,4 +1,7 @@
 export type InstanceId = string;
+
+export type InstanceArgs = any[];
+
 export const enum InstanceStatus {
     INITIALIZING = "initializing",
     STARTING = "starting",

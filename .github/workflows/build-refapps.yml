@@ -27,6 +27,9 @@ jobs:
 
       - name: Build refapps
         run: yarn build:refapps
+        
+      - name: Install pigz
+        run: sudo apt-get install pigz -y
 
       - name: Create artifact
         run: tar --use-compress-program="pigz -0 --recursive" -cvf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz packages/*.tar.gz

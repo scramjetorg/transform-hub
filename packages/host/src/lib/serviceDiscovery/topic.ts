@@ -1,4 +1,4 @@
-import { Duplex, DuplexOptions, Readable } from "stream";
+import { TransformOptions, Readable, Transform } from "stream";
 import { WorkState, ReadableState, WritableState, StreamType, StreamOrigin } from "./streamHandler";
 import TopicId from "./topicId";
 import TopicHandler, { TopicOptions, TopicState } from "./topicHandler";
@@ -8,9 +8,9 @@ export enum TopicEvent {
     StateChanged = "stateChanged",
 }
 
-export type TopicStreamOptions = Pick<DuplexOptions, "encoding">
+export type TopicStreamOptions = Pick<TransformOptions, "encoding">
 
-export class Topic extends Duplex implements TopicHandler {
+export class Topic extends Transform implements TopicHandler {
     protected _id: TopicId;
     protected _options: TopicOptions;
     protected _origin: StreamOrigin;
@@ -18,8 +18,11 @@ export class Topic extends Duplex implements TopicHandler {
     protected _errored?: Error;
     protected needDrain: boolean;
 
+    private _pipeQueue: Readable[] = [];
+    private _consuming: Promise<any> | undefined;
+
     constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
-        super({ ...options, highWaterMark: 0 });
+        super({ ...options, highWaterMark: 65536, writableHighWaterMark: 0, readableHighWaterMark: 65536 });
 
         this._id = id;
         this._origin = origin;
@@ -28,6 +31,14 @@ export class Topic extends Duplex implements TopicHandler {
         this.needDrain = false;
 
         this.attachEventListeners();
+    }
+
+    get contentType() {
+        return this._options.contentType;
+    }
+
+    get topicIdent() {
+        return `${this._id.toString()}.${this.contentType}`;
     }
 
     id() { return this._id.toString(); }
@@ -41,18 +52,40 @@ export class Topic extends Duplex implements TopicHandler {
     }
     origin() { return this._origin; }
 
-    _read(_size: number): void { }
-    _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
+    acceptPipe(rdble: Readable) {
+        this._pipeQueue.push(rdble);
+        this.consumePipe();
+    }
+
+    consumePipe() {
+        if (this._consuming) return;
+
+        this._consuming = (async () => {
+            while (this._pipeQueue.length) {
+                const pipe = this._pipeQueue.shift();
+
+                pipe!.pipe(this, { end: false });
+                await new Promise(res => pipe!.on("end", res).on("error", res));
+
+                this._consuming = undefined;
+            }
+        })()
+            .catch(() => 0);
+    }
+
+    _transform(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
         this.needDrain = !this.push(chunk, encoding);
         callback();
         this.updateState();
     }
+
     end(cb?: (() => void) | undefined): this;
     end(chunk: any, cb?: (() => void) | undefined): this;
     end(chunk: any, encoding?: BufferEncoding | undefined, cb?: (() => void) | undefined): this;
     end(_chunk?: unknown, _encoding?: unknown, _cb?: unknown): this {
-        throw new Error("Topics are not supporting end() method");
+        throw new Error("Topics do not support end()");
     }
+
     resume(): this {
         super.resume();
         this.updateState();
@@ -70,11 +103,20 @@ export class Topic extends Duplex implements TopicHandler {
         super.destroy(error);
         this.updateState();
     }
+
     protected attachEventListeners() {
-        this.on("pipe", (source: Readable) => {
+        this.on("pipe", (_source: Readable) => {
             if (this._options.contentType !== "application/x-ndjson") return;
-            this.addXndjsonException(source);
+            this.addXndjsonException(_source);
         });
+    }
+
+    pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T {
+        return super.pipe(destination, options);
+    }
+
+    unpipe(...args: any[]) {
+        return super.unpipe(...args);
     }
 
     protected updateState() {
@@ -88,7 +130,7 @@ export class Topic extends Duplex implements TopicHandler {
     protected addXndjsonException(source: Readable) {
         const NEWLINE_BYTE = "\n".charCodeAt(0);
 
-        let lastChunk = Buffer.from([]);
+        let lastChunk = Buffer.from("");
 
         source
             .on("data", (chunk) => { lastChunk = chunk as Buffer; })

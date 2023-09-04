@@ -32,6 +32,17 @@ export class HostClient implements ClientProvider {
         return this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
     }
 
+    async getSequenceId(sequenceName: string) : Promise<string[]> {
+        const sequenceList = await this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
+        const result = sequenceList.filter(sequence => sequence.config.name === sequenceName);
+
+        if (!result.length) {
+            throw new Error("No results found");
+        }
+
+        return result.map(element => element.id);
+    }
+
     /**
      * Returns list of all Instances on Host.
      *
@@ -161,6 +172,15 @@ export class HostClient implements ClientProvider {
     }
 
     /**
+     * Alias for sendTopic
+     *
+     * @see this.sendTopic
+     */
+    get sendNamedData() {
+        return this.sendTopic;
+    }
+
+    /**
      * Sends data to the topic.
      * Topics are a part of Service Discovery feature enabling data exchange through Topics API.
      *
@@ -171,7 +191,7 @@ export class HostClient implements ClientProvider {
      * @param {boolean} end Indicates if "end" event from stream should be passed to topic.
      * @returns TODO: comment.
      */
-    async sendNamedData<T>(
+    async sendTopic<T>(
         topic: string,
         stream: Parameters<HttpClient["sendStream"]>[1],
         requestInit?: RequestInit,
@@ -182,14 +202,24 @@ export class HostClient implements ClientProvider {
     }
 
     /**
+     * Alias for getTopic
+     *
+     * @see this.getTopic
+     */
+    get getNamedData() {
+        return this.getTopic;
+    }
+
+    /**
      * Returns stream from given topic.
      *
      * @param topic Topic name.
      * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
+     * @param {string} [contentType] Content type to be set in headers.
      * @returns Promise resolving to readable stream.
      */
-    async getNamedData(topic: string, requestInit?: RequestInit): ReturnType<HttpClient["getStream"]> {
-        return this.client.getStream(`topic/${topic}`, requestInit);
+    async getTopic(topic: string, requestInit?: RequestInit, contentType: string = "application/x-ndjson"): ReturnType<HttpClient["getStream"]> {
+        return this.client.getStream(`topic/${topic}`, requestInit, { type: contentType });
     }
 
     async createTopic(id: string, contentType: string): Promise<{ topicName: string }> {
