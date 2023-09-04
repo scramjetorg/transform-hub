@@ -164,9 +164,8 @@ class Tecemux:
 
         if channel not in self._extra_channels.keys():
 
-            channel = str(self._get_unused_extra_channel_id([int(id)
-                                                             for id in self._extra_channels.keys()])) \
-                                                                if channel is None else channel
+            channel = str(self._get_unused_extra_channel_id(
+                [int(id) for id in self._extra_channels.keys()])) if channel is None else channel
 
             self._extra_channels[channel] = ChannelContext(channel,
                                                            self._queue,

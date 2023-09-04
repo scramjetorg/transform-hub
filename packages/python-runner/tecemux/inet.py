@@ -190,7 +190,7 @@ class TCPSegment:
         Returns:
             bytes: Raw buffer
         """
-        return struct.pack(SequenceOrder().get()+'HHIIBBHHH',
+        return struct.pack(SequenceOrder().get() + 'HHIIBBHHH',
                            self.src_port,
                            self.dst_port,
                            self.seq,
@@ -306,7 +306,7 @@ class IPPacket:
         # Cut data buffer to IP packet length
         if self.len > 0 and self.segment:
             self.get_segment().data = self.get_segment(
-            ).data[:self.len-(self.ihl*4)-20]
+            ).data[:self.len - (self.ihl * 4) - 20]
 
     @staticmethod
     def calc_checksum(pkt: bytes) -> int:
@@ -320,8 +320,8 @@ class IPPacket:
         """
         if len(pkt) % 2 == 1:
             pkt += b"\0"
-        s = sum(struct.unpack(('<' if SequenceOrder().get()
-                == '>' else '>')+str(len(pkt)//2)+'H', pkt))
+        s = sum(struct.unpack(('<' if SequenceOrder().get() == '>'
+                               else '>') + str(len(pkt) // 2) + 'H', pkt))
 
         # source: https://github.com/secdev/scapy
         s = (s >> 16) + (s & 0xffff)
@@ -342,7 +342,7 @@ class IPPacket:
         if len(pkt) % 2 == 1:
             pkt += b"\0"
         elements = list(struct.unpack(
-            SequenceOrder().get()+str(len(pkt)//2)+'H', pkt))
+            SequenceOrder().get() + str(len(pkt) // 2) + 'H', pkt))
         elements = elements[:14] + elements[15:]
         s = sum(elements)
         return s % 0x10000
@@ -359,7 +359,7 @@ class IPPacket:
             IPPacket: IPPacket object
         """
         src_addr, dst_addr, _, proto, length = struct.unpack(
-            SequenceOrder().get()+"4s4sBBH", bytes(buffer[0:12]))
+            SequenceOrder().get() + "4s4sBBH", bytes(buffer[0:12]))
         pkt = cls(0, 0, 0, length, 0, 0, 0, proto, 0, src_addr, dst_addr,
                   TCPSegment.from_buffer(buffer[12:]) if len(buffer) > 12 else None)
         return pkt
@@ -376,13 +376,13 @@ class IPPacket:
             IPPacket: IPPacket object
         """
         ihl = (buffer[0] & 0xf)
-        pkt = cls(ihl, *struct.unpack(SequenceOrder().get()+"BBHHHBBH4s4s",
-                  buffer[0:ihl*4]), TCPSegment.from_buffer(buffer[ihl*4:]) if len(buffer) > ihl*4 else None)
+        pkt = cls(ihl, *struct.unpack(SequenceOrder().get() + "BBHHHBBH4s4s",
+                  buffer[0:ihl * 4]), TCPSegment.from_buffer(buffer[ihl * 4:]) if len(buffer) > ihl * 4 else None)
 
         # Cut data buffer to IP packet length
         if pkt.segment:
             pkt.get_segment().data = pkt.get_segment(
-            ).data[:pkt.len-(ihl*4)-20]
+            ).data[:pkt.len - (ihl * 4) - 20]
 
         return pkt
 
@@ -401,12 +401,12 @@ class IPPacket:
         Returns:
             bytes: TCP Pseudoheader
         """
-        return struct.pack(SequenceOrder().get()+"4s4sBBH",
+        return struct.pack(SequenceOrder().get() + "4s4sBBH",
                            inet_aton(self.src_addr),
                            inet_aton(self.dst_addr),
                            0,
                            protocol,
-                           length+12)
+                           length + 12)
 
     def to_buffer_with_tcp_pseudoheader(self) -> bytes:
         """Build raw buffer from IP Packet with pseudo TCP header
@@ -429,7 +429,7 @@ class IPPacket:
 
         data = self.get_segment().to_buffer() if self.segment else b''
         self.len = 20 + len(data)
-        return struct.pack(SequenceOrder().get()+'BBHHHBBH4s4s',
+        return struct.pack(SequenceOrder().get() + 'BBHHHBBH4s4s',
                            ihl_ver,
                            self.tos,
                            self.len,
@@ -480,7 +480,7 @@ class IPPacket:
 
         self.checksum = 0
 
-        self.checksum = IPPacket.calc_checksum(self.to_buffer()[0:self.ihl*4])
+        self.checksum = IPPacket.calc_checksum(self.to_buffer()[0:self.ihl * 4])
 
         return self
 
@@ -530,7 +530,7 @@ class EthernetFrame:
         Returns:
             EthernetFrame: Ethernet frame object
         """
-        return cls(*struct.unpack(SequenceOrder().get()+"6s6s2s", buffer[0:14]), IPPacket.from_buffer(buffer[14:]))
+        return cls(*struct.unpack(SequenceOrder().get() + "6s6s2s", buffer[0:14]), IPPacket.from_buffer(buffer[14:]))
 
     def to_buffer(self) -> bytes:
         """Build raw buffer from Ethernet frame object
@@ -538,7 +538,7 @@ class EthernetFrame:
         Returns:
             bytes: Raw buffer
         """
-        return struct.pack(SequenceOrder().get()+"6s6s2s", unhexlify(self.src_mac),
+        return struct.pack(SequenceOrder().get() + "6s6s2s", unhexlify(self.src_mac),
                            unhexlify(self.dst_mac), self.eth_type) + self.packet.to_buffer()
 
     def get_packet(self):
