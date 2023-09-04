@@ -34,26 +34,26 @@ class HTTPProxy:
 
         del headers['Proxy-Authorization']
 
-        new_headers = ('\r\n'.join(key + ': ' + str(val) for key, val in headers.items())+'\r\n\r\n').encode('utf-8')
+        new_headers = ('\r\n'.join(key + ': ' + str(val) for key, val in headers.items()) + '\r\n\r\n').encode('utf-8')
 
         return type('TecemuxDetails', (object,), {'user': tecemux_params[0],
                                                   'channel_id': tecemux_params[1]})(), new_headers
 
     @staticmethod
-    async def handle_request(reader, writer, protocol):
+    async def handle_request(reader, writer, multiplexer):
         """Process single request to server
 
         Args:
             reader (asyncio.StreamReader): Stream reader provides access to HTTP request data
             writer (asyncio.StreamWriter): Stream writer give posibility to send response
-            protocol (Tecemux): Tecemux object
+            multiplexer (Tecemux): Tecemux object
         """
 
         request_status = await reader.readuntil(b'\r\n')
 
         tecemux_params, request_headers = HTTPProxy._extract_tecemux_details(await reader.readuntil(b'\r\n\r\n'))
 
-        channel = protocol.get_channel(tecemux_params.channel_id)
+        channel = multiplexer.get_channel(tecemux_params.channel_id)
 
         channel.write(request_status)
         channel.write(request_headers)
@@ -72,11 +72,11 @@ class HTTPProxy:
         writer.write(b'\r\n')
         await writer.drain()
 
-    async def run(self, protocol):
+    async def run(self, multiplexer):
         """Starts server on random local TCP port
 
         Args:
-            protocol (Tecemux): Tecemux object
+            multiplexer (Tecemux): Tecemux object
         """
 
         self._proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -86,7 +86,7 @@ class HTTPProxy:
 
         self._port = int(self._proxy_socket.getsockname()[1])
 
-        server = await asyncio.start_server(lambda r, w: HTTPProxy.handle_request(r, w, protocol),
+        server = await asyncio.start_server(lambda r, w: HTTPProxy.handle_request(r, w, multiplexer),
                                             sock=self._proxy_socket)
 
         async with server:

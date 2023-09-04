@@ -31,14 +31,14 @@ class ChannelGuard:
     """Internal class to open/close channels for external usage
     """
 
-    def __init__(self, protocol):
+    def __init__(self, multiplexer):
         """Inits channel guard
 
         Args:
-            protocol (Tecemux): Tecemux object
+            multiplexer (Tecemux): Tecemux object
         """
 
-        self._protocol = protocol
+        self._multiplexer = multiplexer
         self._channel_name = None
 
     async def __aenter__(self):
@@ -48,7 +48,7 @@ class ChannelGuard:
             _ChannelGuard: async guard object
         """
 
-        channel = await self._protocol.open_channel(force_open=True)
+        channel = await self._multiplexer.open_channel(force_open=True)
         self._channel_name = channel._channel_enum
         return self
 
@@ -60,9 +60,9 @@ class ChannelGuard:
             exc_val: Unused
             exc_tb: Unused
         """
-        await self._protocol.get_channel(self._channel_name).end()
-        await self._protocol.get_channel(self._channel_name).close()
-        del self._protocol._extra_channels[self._channel_name]
+        await self._multiplexer.get_channel(self._channel_name).end()
+        await self._multiplexer.get_channel(self._channel_name).close()
+        del self._multiplexer._extra_channels[self._channel_name]
 
     def inject_tecemux_details_as(self, provider):
         """Retuns channel details for external lib
@@ -83,7 +83,7 @@ class ChannelGuard:
             str: aiohttp config
         """
 
-        return self._protocol._get_proxy_uri()
+        return self._multiplexer._get_proxy_uri()
 
 
 @define

@@ -145,7 +145,7 @@ class Tecemux:
         for i, v in enumerate(used_channel_ids, start_from):
             if i != v:
                 return i
-        return i+1
+        return i + 1
 
     async def open_channel(self, channel_id=None, force_open=False,
                            initial_state: ChannelState = ChannelState.CREATED) -> ChannelContext:
