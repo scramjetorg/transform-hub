@@ -108,7 +108,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             this.logger.debug("Identify started", volume, this.config.docker.prerunner?.maxMem || 0);
 
             const ret = await this.parsePackage(streams, wait, volume);
-            const parentId = await this.dockerHelper.getLabelValue(volume, "parentId");
+            const [, parentId] = volume.split("_");
 
             if (!ret.id) {
                 return undefined;
@@ -261,6 +261,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(preRunnerResult);
         const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
         const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
+        const [id, parentId] = volumeId.split("_");
 
         const container = Object.assign({}, this.config.docker.runner);
 
@@ -277,8 +278,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             config,
             sequenceDir: PACKAGE_DIR,
             entrypointPath: validPackageJson.main,
-            id: volumeId,
-            parent_id: volumeId,
+            id: id,
+            parent_id: parentId,
             description: validPackageJson.description,
             author: validPackageJson.author,
             keywords: validPackageJson.keywords,
@@ -298,7 +299,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             throw new Error(`Incorrect SequenceConfig passed to DockerSequenceAdapter: ${config.type}`);
         }
 
-        await this.dockerHelper.removeVolume(config.id);
+        const volumeId = config.id + "_" + config.parent_id;
+
+        await this.dockerHelper.removeVolume(volumeId);
 
         this.logger.debug("Volume removed", config.id);
     }

@@ -250,15 +250,15 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * Creates docker volume.
      *
      * @param name Volume name. Optional. If not provided, volume will be named with unique name.
-     * @param parentId Volume parentId. Optional. If not provided, volume will benamed the same as the name.
+     * @param parentId Volume parentId. Optional. If not provided, volume will be named the same as the name.
      * @returns Volume name.
      */
     async createVolume(name: string = "", parentId: string = name): Promise<DockerVolume> {
+        name = name + "_" + parentId;
         return this.dockerode.createVolume({
             Name: name,
             Labels: {
                 "org.scramjet.host.is-sequence": "true",
-                parentId : parentId
             }
         }).then((volume: Dockerode.Volume) => {
             return volume.name;
