@@ -11,13 +11,6 @@
     "build:docker": "docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../"
   },
   "assets": [
-    "tecemux/__init__.py",
-    "tecemux/barrier.py",    
-    "tecemux/channel.py",
-    "tecemux/hardcoded_magic_values.py",
-    "tecemux/inet.py",
-    "tecemux/multiplexer.py",
-    "tecemux/proxy.py",
     "logging_setup.py",
     "runner.py"
   ],

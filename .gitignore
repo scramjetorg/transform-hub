@@ -127,7 +127,8 @@ bdd/*-test-result.txt
 
 # pre-runner sample-package
 packages/pre-runner/sample-package/
-
+packages/python-runner/tecemux/build/
+*.egg-info
 # sample packages
 *.tar.gz
 
