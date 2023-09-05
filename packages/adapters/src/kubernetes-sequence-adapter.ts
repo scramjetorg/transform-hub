@@ -16,6 +16,7 @@ import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 import { detectLanguage } from "./utils";
+import { IDProvider } from "@scramjet/model";
 
 /**
  * Returns existing Sequence configuration.
@@ -32,7 +33,13 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
     } else {
         [id, parentId] = id.split("_");
-        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+        const valid = IDProvider.isValid(id);
+
+        if (valid) {
+            sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+        } else {
+            sequenceDir = path.join(sequencesRoot, id);
+        }
     }
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));

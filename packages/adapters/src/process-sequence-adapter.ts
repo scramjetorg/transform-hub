@@ -13,7 +13,7 @@ import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
-import { SequenceAdapterError } from "@scramjet/model";
+import { IDProvider, SequenceAdapterError } from "@scramjet/model";
 import { detectLanguage } from "./utils";
 
 /**
@@ -31,7 +31,13 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
     } else {
         [id, parentId] = id.split("_");
-        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+        const valid = IDProvider.isValid(id);
+
+        if (valid) {
+            sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+        } else {
+            sequenceDir = path.join(sequencesRoot, id);
+        }
     }
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
@@ -89,6 +95,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      */
     async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
+
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
