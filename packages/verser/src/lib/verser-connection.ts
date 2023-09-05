@@ -85,10 +85,11 @@ export class VerserConnection {
     /**
      * Ends response with provided HTTP status code.
      *
-     * @param {number} httpStatusCode HTTP status code
+     * @param {number} httpStatusCode HTTP status code.
+     * @param {string} httpStatus HTTP status message.
      */
-    end(httpStatusCode: number) {
-        this._socket.end(`HTTP/1.1 ${httpStatusCode} \r\n\r\n`);
+    end(httpStatusCode: number, httpStatus: string = "") {
+        this._socket.end(`HTTP/1.1 ${httpStatusCode} ${httpStatus}\r\n\r\n`);
     }
 
     /**

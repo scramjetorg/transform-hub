@@ -511,7 +511,7 @@ Writable.emit
 
 node_modules/@types/node/stream.d.ts:190
 
-▸ **emit**(`event`, `...args`): `boolean`
+▸ **emit**(`event`, ...`args`): `boolean`
 
 #### Parameters
 

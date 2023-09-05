@@ -1,9 +1,11 @@
 /* eslint-disable no-console */
+import { PostDisconnectPayload } from "@scramjet/types/src/rest-api-manager";
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";
+import { getMiddlewareClient, initPlatform } from "../platform";
 import { displayEntity, displayObject, displayStream } from "../output";
-import { getMiddlewareClient } from "../platform";
+import { getInfo, setDefaultHub } from "../helpers/various";
 
 /**
  * Initializes `hub` command.
@@ -12,15 +14,19 @@ import { getMiddlewareClient } from "../platform";
  */
 export const hub: CommandDefinition = (program) => {
     const profileConfig = profileManager.getProfileConfig();
+    const isProdEnv = isProductionEnv(profileConfig.env);
 
     const hubCmd = program
         .command("hub")
+        .hook("preAction", initPlatform)
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true })
         .usage("[command] [options...]")
         .description("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isProductionEnv(profileConfig.env)) {
+    if (isProdEnv) {
+        const mwClient = getMiddlewareClient();
+
         hubCmd
             .command("use")
             .argument("<name|id>")
@@ -37,9 +43,6 @@ export const hub: CommandDefinition = (program) => {
                 managerClient.getHostClient(id);
                 sessionConfig.setLastHubId(id);
             });
-    }
-
-    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("list")
             .alias("ls")
@@ -56,19 +59,62 @@ export const hub: CommandDefinition = (program) => {
 
                 displayObject(hosts, profileConfig.format);
             });
-    }
-
-    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
             .description("Display info about the default Hub")
             .action(async () => {
-                const { lastSpaceId: space, lastHubId: id } = sessionConfig.get();
-                const managerClient = getMiddlewareClient().getManagerClient(space);
-                const hosts = await managerClient.getHosts();
-                const host = hosts.find((h: any) => h.id === id);
+                displayObject((await getInfo()).host, profileConfig.format);
+            });
+        hubCmd
+            .command("disconnect")
+            .description("Disconnect self hosted Hubs from space")
+            .argument("<space_name>", "The name of the Space")
+            .option("--id <id>", "Hub Id")
+            .option("--all", "Disconnects all self-hosted Hubs connected to Space", false)
+            .action(async (spaceName: string, options: { id: string, all: boolean }) => {
+                const managerClient = mwClient.getManagerClient(spaceName);
+                let opts = { } as PostDisconnectPayload;
 
-                displayObject(host, profileConfig.format);
+                if (typeof options.id === "string") {
+                    opts = { id: options.id };
+                }
+
+                if (options.all) {
+                    opts = { limit: 0 };
+                }
+                if (!Object.keys(opts).length) {
+                    throw new Error("Missing --id or --all");
+                }
+
+                displayObject(await managerClient.disconnectHubs(opts), profileManager.getProfileConfig().format);
+            });
+
+        hubCmd
+            .command("delete")
+            .description("Delete self hosted Hub from space")
+            .argument("<id>", "Hub Id")
+            .option("-f, --force", "Enable deleting Hubs that are not disconnected", false)
+            .hook("postAction", async () => {
+                await setDefaultHub();
+            })
+            .action(async (id: string, { force } : { force: boolean }) => {
+                const spaceName = sessionConfig.lastSpaceId;
+                const managerClient = mwClient.getManagerClient(spaceName);
+
+                let result;
+
+                try {
+                    result = await managerClient.deleteHub(id, force);
+                } catch (e: any) {
+                    if (e.body) {
+                        console.error(e.message);
+                        throw Error(JSON.parse(e.body).error);
+                    }
+
+                    throw e;
+                }
+
+                displayObject(result, profileManager.getProfileConfig().format);
             });
     }
 

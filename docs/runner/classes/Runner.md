@@ -86,13 +86,13 @@ ___
 
 ### controlStreamHandler
 
-▸ **controlStreamHandler**(`«destructured»`): `Promise`<`void`\>
+▸ **controlStreamHandler**(`__namedParameters`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `«destructured»` | `EncodedControlMessage` |
+| `__namedParameters` | `EncodedControlMessage` |
 
 #### Returns
 

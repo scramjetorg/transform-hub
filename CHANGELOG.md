@@ -2,47 +2,69 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.35.3] - 2023-09-04
+
+## Features
+
+* Delete hub in Client/CLI by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/927>
+* Display space version by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/909>
+* Feat/get sequence by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/919>
+* Feat/remove config logs by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/923>
+
+## Fixed
+
+* Remove redundant files by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/929>
+* Bump protobufjs from 6.11.3 to 6.11.4 by @dependabot in <https://github.com/scramjetorg/transform-hub/pull/931>
+* Fix workflows - delete node14 and step to install pigz by @tomekcrm in <https://github.com/scramjetorg/transform-hub/pull/938>
+* Show HTTP status/code returned by platform by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/934>
+* Fix CLI not to read space state when it's not needed by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/930>
+* Fix topic streaming bug by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/932>
+* Update tips in hub logs by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/943>
+* Changes in types and messages by @gzukowski in <https://github.com/scramjetorg/transform-hub/pull/926>
+
+**Full Changelog**: <https://github.com/scramjetorg/transform-hub/compare/v0.35.2...v0.35.3>
+
 ## [0.35.2] - 2023-07-26
 
 ## Features
 
-* Feat/all sequences by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/903
+* Feat/all sequences by @gzukowski in <https://github.com/scramjetorg/transform-hub/pull/903>
 
 ## [0.35.1] - 2023-07-21
 
 ## Features
 
-* option to revoke all keys using --all flag by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/907
+* option to revoke all keys using --all flag by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/907>
 
 ## Fixed
 
-* VDM-1021: add script to bump dependencies version by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/898
-* Add prepack:pub command to execute installing dependencies for the packages to be released by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/906
+* VDM-1021: add script to bump dependencies version by @tomekcrm in <https://github.com/scramjetorg/transform-hub/pull/898>
+* Add prepack:pub command to execute installing dependencies for the packages to be released by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/906>
 
 ## [0.35.0] - 2023-07-10
 
 ## Features
 
-* Add space client to AppContext by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/836
-* Feat/CLI Topic Create Delete by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/857
+* Add space client to AppContext by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/836>
+* Feat/CLI Topic Create Delete by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/857>
 
 ## Fixed
 
-* Bump semver from 7.3.8 to 7.5.2 by @dependabot in https://github.com/scramjetorg/transform-hub/pull/890
-* Fixed bug with missing content-type by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/893
-* New AuditStream codes for CPM by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/891
-* Python runner stderr fix for crashlog() by @S4adam in https://github.com/scramjetorg/transform-hub/pull/895
-* added "clickup task" field in PR template by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/896
+* Bump semver from 7.3.8 to 7.5.2 by @dependabot in <https://github.com/scramjetorg/transform-hub/pull/890>
+* Fixed bug with missing content-type by @gzukowski in <https://github.com/scramjetorg/transform-hub/pull/893>
+* New AuditStream codes for CPM by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/891>
+* Python runner stderr fix for crashlog() by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/895>
+* added "clickup task" field in PR template by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/896>
 
 ## [0.34.4] - 2023-06-21
 
 ## ## Fixed
 
-* fix/proper-permissions-after-unpack by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/881
-* Add crash log feature to Kube Adapter by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/792
-* si seq delete SEQ_ID --force by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/884
-* Fix: Unable to set platform defaults by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/883
-* Fix/prod only messages by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/886
+* fix/proper-permissions-after-unpack by @tomekcrm in <https://github.com/scramjetorg/transform-hub/pull/881>
+* Add crash log feature to Kube Adapter by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/792>
+* si seq delete SEQ_ID --force by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/884>
+* Fix: Unable to set platform defaults by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/883>
+* Fix/prod only messages by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/886>
 
 ## [0.34.3] and [0.34.2] - 2023-06-05
 

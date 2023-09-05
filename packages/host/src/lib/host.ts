@@ -38,7 +38,7 @@ import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
-import { ConfigService } from "@scramjet/sth-config";
+import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
@@ -63,6 +63,7 @@ const PARALLEL_SEQUENCE_STARTUP = 4;
 
 type HostSizes = "xs" | "s" | "m" | "l" | "xl";
 const GigaByte = 1024 << 20;
+const isDevelopment = development();
 
 /**
  * Host provides functionality to manage Instances and Sequences.
@@ -208,7 +209,7 @@ export class Host implements IComponent {
 
         prettyLog.pipe(process.stdout);
 
-        this.logger.info("config", this.config);
+        if (isDevelopment) this.logger.info("config", this.config);
 
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
@@ -509,7 +510,9 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
 
-        new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery);
+        const topicLogger = new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery).logger;
+
+        topicLogger.pipe(this.logger);
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
@@ -706,11 +709,10 @@ export class Host implements IComponent {
         const sequenceAdapter = getSequenceAdapter(adapter, this.config);
 
         try {
+            sequenceAdapter.logger.pipe(this.logger);
             await sequenceAdapter.init();
 
             const configs = await sequenceAdapter.list();
-
-            sequenceAdapter.logger.pipe(this.logger);
 
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
@@ -776,7 +778,7 @@ export class Host implements IComponent {
                 this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
             }
 
-            this.logger.info("Sequence identified", config);
+            this.logger.trace(`Sequence identified: ${config.id}`);
 
             // eslint-disable-next-line max-len
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
@@ -932,7 +934,12 @@ export class Host implements IComponent {
                 id: csic.id,
                 appConfig: csic.appConfig,
                 args: csic.args,
-                sequence: sequenceId,
+                sequence: (info => {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { instances, ...rest } = info;
+
+                    return rest;
+                })(sequence),
                 ports: csic.info.ports,
                 created: csic.info.created,
                 started: csic.info.started,
@@ -972,7 +979,7 @@ export class Host implements IComponent {
         const communicationHandler = new CommunicationHandler();
         const id = payload.instanceId || IDProvider.generate();
 
-        this.logger.debug("CSIC start payload", payload);
+        if (isDevelopment) this.logger.debug("CSIC start payload", payload);
 
         const csic = new CSIController(id, sequence, payload, communicationHandler, this.config, this.instanceProxy);
 
@@ -988,10 +995,15 @@ export class Host implements IComponent {
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
+        // eslint-disable-next-line complexity
         csic.on("pang", async (data) => {
             this.logger.trace("PANG received", data);
 
-            if (data.requires && !csic.inputRouted) {
+            if ((data.requires || data.provides) && !data.contentType) {
+                this.logger.warn("Missing topic content-type");
+            }
+
+            if (data.requires && !csic.inputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
@@ -1006,7 +1018,7 @@ export class Host implements IComponent {
                 });
             }
 
-            if (data.provides && !csic.outputRouted) {
+            if (data.provides && !csic.outputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence output to topic", data.provides);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
@@ -1041,7 +1053,7 @@ export class Host implements IComponent {
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
-                sequence: sequence.id
+                sequence: sequence
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);

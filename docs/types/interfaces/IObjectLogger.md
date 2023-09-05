@@ -92,7 +92,7 @@ ___
 
 ### debug
 
-▸ **debug**(`entry`, `...optionalParams`): `void`
+▸ **debug**(`entry`, ...`optionalParams`): `void`
 
 #### Parameters
 
@@ -127,7 +127,7 @@ ___
 
 ### error
 
-▸ **error**(`entry`, `...optionalParams`): `void`
+▸ **error**(`entry`, ...`optionalParams`): `void`
 
 #### Parameters
 
@@ -148,7 +148,7 @@ ___
 
 ### fatal
 
-▸ **fatal**(`entry`, `...optionalParams`): `void`
+▸ **fatal**(`entry`, ...`optionalParams`): `void`
 
 #### Parameters
 
@@ -169,7 +169,7 @@ ___
 
 ### info
 
-▸ **info**(`entry`, `...optionalParams`): `void`
+▸ **info**(`entry`, ...`optionalParams`): `void`
 
 #### Parameters
 
@@ -213,7 +213,7 @@ ___
 
 ### trace
 
-▸ **trace**(`entry`, `...optionalParams`): `void`
+▸ **trace**(`entry`, ...`optionalParams`): `void`
 
 #### Parameters
 
@@ -274,7 +274,7 @@ ___
 
 ### warn
 
-▸ **warn**(`entry`, `...optionalParams`): `void`
+▸ **warn**(`entry`, ...`optionalParams`): `void`
 
 #### Parameters
 
@@ -295,7 +295,7 @@ ___
 
 ### write
 
-▸ **write**(`level`, `entry`, `...optionalParams`): `void`
+▸ **write**(`level`, `entry`, ...`optionalParams`): `void`
 
 #### Parameters
 

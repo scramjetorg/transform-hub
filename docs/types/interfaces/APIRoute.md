@@ -211,7 +211,7 @@ ___
 
 ### use
 
-▸ **use**(`path`, `...middlewares`): `void`
+▸ **use**(`path`, ...`middlewares`): `void`
 
 Allows to register middlewares for specific paths, for all HTTP methods.
 

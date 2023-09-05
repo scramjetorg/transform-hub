@@ -50,7 +50,7 @@ Request logger.
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L22)
+[packages/client-utils/src/types/index.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L29)
 
 ___
 

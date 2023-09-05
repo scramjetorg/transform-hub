@@ -8,26 +8,37 @@
 
 - [ConfigService](classes/ConfigService.md)
 
+### Functions
+
+- [debug](modules.md#debug)
+- [development](modules.md#development)
+- [getRuntimeAdapterOption](modules.md#getruntimeadapteroption)
+
 ### Variables
 
 - [defaultConfig](modules.md#defaultconfig)
 
-### Functions
+## Functions
 
-- [development](modules.md#development)
-- [getRuntimeAdapterOption](modules.md#getruntimeadapteroption)
+### debug
 
-## Variables
+▸ **debug**(`arg`): `boolean` \| `void`
 
-### defaultConfig
+#### Parameters
 
-• `Const` **defaultConfig**: `STHConfiguration` = `_defaultConfig`
+| Name | Type |
+| :------ | :------ |
+| `arg` | `string` |
+
+#### Returns
+
+`boolean` \| `void`
 
 #### Defined in
 
-[sth-config/src/config-service.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L95)
+[sth-config/src/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/index.ts#L21)
 
-## Functions
+___
 
 ### development
 
@@ -60,3 +71,13 @@ ___
 #### Defined in
 
 [sth-config/src/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/index.ts#L8)
+
+## Variables
+
+### defaultConfig
+
+• `Const` **defaultConfig**: `STHConfiguration` = `_defaultConfig`
+
+#### Defined in
+
+[sth-config/src/config-service.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L95)

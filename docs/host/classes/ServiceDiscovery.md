@@ -19,7 +19,6 @@ and requesting Manager when Instance requires data but data is not available loc
 
 ### Methods
 
-- [createTopic](ServiceDiscovery.md#createtopic)
 - [createTopicIfNotExist](ServiceDiscovery.md#createtopicifnotexist)
 - [deleteTopic](ServiceDiscovery.md#deletetopic)
 - [getByTopic](ServiceDiscovery.md#getbytopic)
@@ -70,27 +69,6 @@ ___
 
 ## Methods
 
-### createTopic
-
-▸ **createTopic**(`id`, `contentType`): `Topic`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `id` | `TopicId` |
-| `contentType` | `ContentType` |
-
-#### Returns
-
-`Topic`
-
-#### Defined in
-
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L56)
-
-___
-
 ### createTopicIfNotExist
 
 ▸ **createTopicIfNotExist**(`config`): `Topic`
@@ -111,7 +89,7 @@ added topic data.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L81)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L74)
 
 ___
 
@@ -131,7 +109,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L63)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L56)
 
 ___
 
@@ -155,7 +133,7 @@ Topic details.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L115)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L113)
 
 ___
 
@@ -181,7 +159,7 @@ Topic stream.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L135)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L133)
 
 ___
 
@@ -217,7 +195,7 @@ All topics.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L100)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L98)
 
 ___
 
@@ -238,7 +216,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L156)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L154)
 
 ___
 
@@ -259,7 +237,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L143)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:141](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L141)
 
 ___
 
@@ -281,7 +259,7 @@ Sets the CPM connector.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L70)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L63)
 
 ___
 
@@ -305,4 +283,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L167)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L165)

@@ -108,7 +108,7 @@ ClientUtilsBase.delete
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L205)
+[packages/client-utils/src/client-utils.ts:194](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L194)
 
 ___
 
@@ -153,7 +153,7 @@ ___
 
 ### getStream
 
-▸ **getStream**(`url`, `requestInit?`): `Promise`<`any`\>
+▸ **getStream**(`url`, `requestInit?`, `options?`): `Promise`<`any`\>
 
 Performs get request for streamed data.
 
@@ -163,6 +163,7 @@ Performs get request for streamed data.
 | :------ | :------ | :------ |
 | `url` | `string` | Request URL. |
 | `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+| `options` | `Partial`<{ `type`: `string`  }\> | send stream options. |
 
 #### Returns
 
@@ -180,7 +181,7 @@ ClientUtilsBase.getStream
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L130)
+[packages/client-utils/src/client-utils.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L245)
 
 ___
 
@@ -221,7 +222,7 @@ ClientUtilsBase.post
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L143)
+[packages/client-utils/src/client-utils.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L132)
 
 ___
 
@@ -258,7 +259,7 @@ ClientUtilsBase.put
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L175)
+[packages/client-utils/src/client-utils.ts:164](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L164)
 
 ___
 
@@ -299,7 +300,7 @@ ClientUtilsBase.sendStream
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L228)
+[packages/client-utils/src/client-utils.ts:217](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L217)
 
 ___
 

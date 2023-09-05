@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[packages/types/src/instance.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L8)
+[packages/types/src/instance.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L11)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L9)
+[packages/types/src/instance.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L12)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L3)
+[packages/types/src/instance.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L6)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L7)
+[packages/types/src/instance.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L10)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L5)
+[packages/types/src/instance.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L8)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L4)
+[packages/types/src/instance.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L7)
 
 ___
 
@@ -82,4 +82,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L6)
+[packages/types/src/instance.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L9)
