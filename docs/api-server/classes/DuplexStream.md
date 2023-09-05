@@ -614,7 +614,7 @@ Duplex.emit
 
 node_modules/@types/node/stream.d.ts:83
 
-▸ **emit**(`event`, `...args`): `boolean`
+▸ **emit**(`event`, ...`args`): `boolean`
 
 #### Parameters
 

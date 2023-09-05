@@ -69,7 +69,7 @@ Closes the connection by sending FIN packet.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L242)
+[packages/verser/src/lib/verser-connection.ts:243](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L243)
 
 ___
 
@@ -96,21 +96,22 @@ Duplex stream.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L195)
+[packages/verser/src/lib/verser-connection.ts:196](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L196)
 
 ___
 
 ### end
 
-▸ **end**(`httpStatusCode`): `void`
+▸ **end**(`httpStatusCode`, `httpStatus?`): `void`
 
 Ends response with provided HTTP status code.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `httpStatusCode` | `number` | HTTP status code |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `httpStatusCode` | `number` | `undefined` | HTTP status code. |
+| `httpStatus` | `string` | `""` | HTTP status message. |
 
 #### Returns
 
@@ -118,7 +119,7 @@ Ends response with provided HTTP status code.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L91)
+[packages/verser/src/lib/verser-connection.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L92)
 
 ___
 
@@ -144,7 +145,7 @@ Forwards data from the request to the new duplex stream multiplexed in the socke
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L102)
+[packages/verser/src/lib/verser-connection.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L103)
 
 ___
 
@@ -158,7 +159,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L249)
+[packages/verser/src/lib/verser-connection.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L250)
 
 ___
 
@@ -224,7 +225,7 @@ Promise resolving to Response and Request objects.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L165)
+[packages/verser/src/lib/verser-connection.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L166)
 
 ___
 
@@ -238,7 +239,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L201)
+[packages/verser/src/lib/verser-connection.ts:202](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L202)
 
 ___
 

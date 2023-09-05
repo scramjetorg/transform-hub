@@ -22,6 +22,7 @@
 
 ### Methods
 
+- [deleteHub](ManagerClient.md#deletehub)
 - [deleteStoreItem](ManagerClient.md#deletestoreitem)
 - [disconnectHubs](ManagerClient.md#disconnecthubs)
 - [getAllSequences](ManagerClient.md#getallsequences)
@@ -86,6 +87,27 @@ ClientProvider.client
 [manager-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L15)
 
 ## Methods
+
+### deleteHub
+
+▸ **deleteHub**(`id`, `force`): `Promise`<`HubDeleteResponse`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+| `force` | `boolean` |
+
+#### Returns
+
+`Promise`<`HubDeleteResponse`\>
+
+#### Defined in
+
+[manager-client.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L100)
+
+___
 
 ### deleteStoreItem
 

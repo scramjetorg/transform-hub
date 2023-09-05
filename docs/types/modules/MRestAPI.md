@@ -14,13 +14,16 @@
 - [GetHostInfoResponse](MRestAPI.md#gethostinforesponse)
 - [GetInstanceResponse](MRestAPI.md#getinstanceresponse)
 - [GetInstancesResponse](MRestAPI.md#getinstancesresponse)
+- [GetListResponse](MRestAPI.md#getlistresponse)
 - [GetLoadResponse](MRestAPI.md#getloadresponse)
+- [GetSequenceIDSResponse](MRestAPI.md#getsequenceidsresponse)
 - [GetSequenceResponse](MRestAPI.md#getsequenceresponse)
 - [GetSequencesResponse](MRestAPI.md#getsequencesresponse)
 - [GetStoreItemsResponse](MRestAPI.md#getstoreitemsresponse)
 - [GetTopicsResponse](MRestAPI.md#gettopicsresponse)
 - [GetVersionResponse](MRestAPI.md#getversionresponse)
 - [HealthCheckInfo](MRestAPI.md#healthcheckinfo)
+- [HubDeleteResponse](MRestAPI.md#hubdeleteresponse)
 - [PostDisconnectPayload](MRestAPI.md#postdisconnectpayload)
 - [PostDisconnectResponse](MRestAPI.md#postdisconnectresponse)
 - [PutStoreItemResponse](MRestAPI.md#putstoreitemresponse)
@@ -86,11 +89,20 @@ ___
 
 ### GetEntitiesResponse
 
-Ƭ **GetEntitiesResponse**: [`GetEntitiesResponse`](STHRestAPI.md#getentitiesresponse) & { `hostId`: `string`  }[]
+Ƭ **GetEntitiesResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `hubs` | `string`[] |
+| `instances` | `string`[] |
+| `sequences` | `string`[] |
+| `topics` | `string`[] |
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/get-entities.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-entities.ts#L3)
+[packages/types/src/rest-api-manager/get-entities.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-entities.ts#L1)
 
 ___
 
@@ -116,21 +128,31 @@ ___
 
 ### GetInstanceResponse
 
-Ƭ **GetInstanceResponse**: `string`
+Ƭ **GetInstanceResponse**: [`Instance`](../modules.md#instance)
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/get-instance.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-instance.ts#L1)
+[packages/types/src/rest-api-manager/get-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-instance.ts#L3)
 
 ___
 
 ### GetInstancesResponse
 
-Ƭ **GetInstancesResponse**: [`GetSequencesResponse`](MRestAPI.md#getsequencesresponse)[][]
+Ƭ **GetInstancesResponse**: [`GetInstanceResponse`](STHRestAPI.md#getinstanceresponse)[]
 
 #### Defined in
 
 [packages/types/src/rest-api-manager/get-instances.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-instances.ts#L3)
+
+___
+
+### GetListResponse
+
+Ƭ **GetListResponse**: { `description?`: `string` ; `disconnectReason?`: `string` ; `healthy`: `boolean` ; `id`: `string` ; `info`: [`ConnectedSTHInfoDetails`](MRestAPI.md#connectedsthinfodetails) ; `instances`: `string`[] ; `isConnectionActive`: `boolean` ; `selfHosted`: `boolean` ; `sequences`: `string`[] ; `tags?`: `string`[] ; `topics`: `string`[]  }[]
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/get-list.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-list.ts#L3)
 
 ___
 
@@ -141,6 +163,16 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-manager/get-load.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-load.ts#L3)
+
+___
+
+### GetSequenceIDSResponse
+
+Ƭ **GetSequenceIDSResponse**: `string`[]
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/get-sequence-ids.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-sequence-ids.ts#L1)
 
 ___
 
@@ -186,7 +218,7 @@ ___
 
 ### GetTopicsResponse
 
-Ƭ **GetTopicsResponse**: { `contentType`: `string` ; `name`: `string`  }[]
+Ƭ **GetTopicsResponse**: { `actors`: { `hostId?`: `string` ; `retired`: `boolean` ; `role`: `string` ; `stream`: `boolean` ; `type`: `string`  }[] ; `contentType`: `string` ; `name`: `string`  }[]
 
 #### Defined in
 
@@ -228,6 +260,16 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-manager/common.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L18)
+
+___
+
+### HubDeleteResponse
+
+Ƭ **HubDeleteResponse**: { `opStatus`: `ReasonPhrases`  } \| { `error`: `any` ; `opStatus`: `ReasonPhrases`  }
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/delete-hub.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/delete-hub.ts#L3)
 
 ___
 
