@@ -322,7 +322,7 @@ class AppContext:
     def __init__(self, runner, config) -> None:
         self.logger = runner.logger
         self.config = config
-        self.monitoring = runner.protocol.get_channel(CC.MONITORING)
+        self.monitoring = runner.multiplexer.get_channel(CC.MONITORING)
         self.runner = runner
         self.emitter = runner.emitter
 
