@@ -65,6 +65,7 @@ class Runner:
 
         control_stream_task = asyncio.create_task(self.connect_control_stream())
         heartbeat_task = asyncio.create_task(self.setup_heartbeat())
+        await self.multiplexer.sync()
         connect_input_stream_task = asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.load_sequence()
