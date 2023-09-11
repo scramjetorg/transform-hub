@@ -2,14 +2,14 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ModuleLoaderOpts } from "@scramjet/types";
 
 export const logger = new ObjLogger("ModuleLoader");
-export async function loadModule(opts: ModuleLoaderOpts): Promise<any> {
+export async function loadModule<T>(opts: ModuleLoaderOpts): Promise<T> {
     logger.info("Loading module", opts.name);
 
     if (!opts.name) {
         throw new Error("Name missing");
     }
 
-    let module: ClassDecorator | null;
+    let module: T;
 
     const heap = process.memoryUsage().heapUsed;
 

@@ -1,12 +1,14 @@
 import { MaybePromise } from "./utils";
 
+export type MonitoringServerValidator = () => MaybePromise<boolean>;
+
 export type MonitoringServerOptions = {
     port: number,
-    validator: MaybePromise<any>;
+    check?: MonitoringServerValidator | MonitoringServerValidator[];
 }
 
 export interface IMonitoringServer {
-    startServer(): void;
+    start(): void;
 }
 
 export interface IMonitoringServerConstructor {

@@ -1,44 +1,43 @@
 import { createServer } from "http";
-import { IMonitoringServer, MonitoringServerOptions } from "@scramjet/types";
+import { IMonitoringServer, MonitoringServerOptions, MonitoringServerValidator as MonitoringServerHealthCheck } from "@scramjet/types";
 
 export class MonitoringServer implements IMonitoringServer {
-    id = "MonitoringServer";
-
     private options: MonitoringServerOptions;
+    private checks: MonitoringServerHealthCheck[] = [];
 
     constructor(options: MonitoringServerOptions) {
         this.options = options;
+
+        if (Array.isArray(options.check)) {
+            this.checks = options.check;
+        }
+
+        if (typeof this.options.check === "function") {
+            this.checks.push(this.options.check);
+        }
     }
 
-    startServer() {
-        const server = createServer(async (req, res) => {
-            if (req.url === "/healtz" && req.method === "GET") {
-                let ok = true;
+    async handleHealtzRequest(): Promise<boolean> {
+        return Promise.all(this.checks.map(v => v())).then(res => res.every(v => v === true), () => false);
+    }
 
-                if (this.options.validator) {
-                    try {
-                        ok = await this.options.validator();
-                    } catch (_e) {
-                        res.statusCode = 500;
-                        res.end();
-                    }
-                }
+    start() {
+        createServer(async (req, res) => {
+            if (req.url === "/healtz" && req.method === "GET") {
+                const healtz = await this.handleHealtzRequest();
 
                 res.setHeader("Content-type", "text/plain");
 
-                if (ok) {
+                if (healtz) {
                     res.statusCode = 200;
                     res.end("ok");
-                } else {
-                    res.statusCode = 500;
-                    res.end();
+
+                    return;
                 }
-            } else {
-                res.statusCode = 404;
+
+                res.statusCode = 500;
                 res.end();
             }
-        });
-
-        server.listen(this.options.port);
+        }).listen(this.options.port);
     }
 }

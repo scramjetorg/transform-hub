@@ -10,7 +10,6 @@ import {
     CPMConnectorOptions,
     HostProxy,
     IComponent,
-    IMonitoringServer,
     IMonitoringServerConstructor,
     IObjectLogger,
     LogLevel,
@@ -145,7 +144,6 @@ export class Host implements IComponent {
     hostSize = this.getSize();
     ipvAddress: any;
     adapterName: string = "uninitialized";
-    monitoringServer?: IMonitoringServer;
 
     /**
      * S3 client.
@@ -226,7 +224,9 @@ export class Host implements IComponent {
         }
 
         if (sthConfig.monitorgingServer) {
-            this.startMonitoringServer(sthConfig.monitorgingServer.port);
+            this.startMonitoringServer(sthConfig.monitorgingServer.port).then(() => {}, (e) => {
+                throw new Error(e);
+            });
         }
 
         this.auditor = new Auditor();
@@ -261,19 +261,17 @@ export class Host implements IComponent {
         }
     }
 
-    private async startMonitoringServer(port: number) {
-        const { MonitoringServer } = await loadModule({ name: "@scramjet/monitoring-server" }) as unknown as { MonitoringServer: IMonitoringServerConstructor };
+    private async startMonitoringServer(port: number): Promise<void> {
+        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
 
         this.logger.info("Starting monitoring server on port", port);
 
-        this.monitoringServer = new MonitoringServer({
+        const monitoringServer = new MonitoringServer({
             port,
-            validator: async () => {
-                return await this.loadCheck.getLoadCheck();
-            }
+            check: async () => !!await this.loadCheck.getLoadCheck()
         });
 
-        this.monitoringServer.startServer();
+        monitoringServer.start();
     }
 
     getId() {
