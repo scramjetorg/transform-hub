@@ -20,6 +20,8 @@ export * from "./lifecycle-adapters";
 export * from "./manager-configuration";
 export * from "./message-streams";
 export * from "./messages";
+export * from "./monitoring-server";
+export * from "./module-loader";
 export * from "./object-logger";
 export * from "./op-response";
 export * from "./runner-config";
@@ -54,4 +56,3 @@ export * from "./dto/index";
 
 export * from "./rest-api-error/rest-api-error";
 
-export * from "./monitoring-server";

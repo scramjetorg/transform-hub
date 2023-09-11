@@ -22,7 +22,7 @@
     "@scramjet/api-server": "^0.35.3",
     "@scramjet/load-check": "^0.35.3",
     "@scramjet/model": "^0.35.3",
-    "@scramjet/monitoring-server": "^0.35.3",
+    "@scramjet/module-loader": "^0.35.3",
     "@scramjet/obj-logger": "^0.35.3",
     "@scramjet/sth-config": "^0.35.3",
     "@scramjet/symbols": "^0.35.3",

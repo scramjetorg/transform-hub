@@ -2,7 +2,10 @@ import { createServer } from "http";
 import { IMonitoringServer, MonitoringServerOptions } from "@scramjet/types";
 
 export class MonitoringServer implements IMonitoringServer {
+    id = "MonitoringServer";
+
     private options: MonitoringServerOptions;
+
     constructor(options: MonitoringServerOptions) {
         this.options = options;
     }
@@ -22,6 +25,7 @@ export class MonitoringServer implements IMonitoringServer {
                 }
 
                 res.setHeader("Content-type", "text/plain");
+
                 if (ok) {
                     res.statusCode = 200;
                     res.end("ok");

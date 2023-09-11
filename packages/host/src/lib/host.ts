@@ -11,6 +11,7 @@ import {
     HostProxy,
     IComponent,
     IMonitoringServer,
+    IMonitoringServerConstructor,
     IObjectLogger,
     LogLevel,
     NextCallback,
@@ -54,7 +55,7 @@ import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { MonitoringServer } from "@scramjet/monitoring-server";
+import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -213,16 +214,21 @@ export class Host implements IComponent {
 
         if (isDevelopment) this.logger.info("config", this.config);
 
+        loadModuleLogger.pipe(this.logger);
+
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
 
         this.serviceDiscovery = new ServiceDiscovery(this.logger, this.config.host.hostname);
 
-        if (sthConfig.telemetry.environment)
+        if (sthConfig.telemetry.environment) {
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
+        }
+
         if (sthConfig.monitorgingServer) {
             this.startMonitoringServer(sthConfig.monitorgingServer.port);
         }
+
         this.auditor = new Auditor();
         //this.auditor.logger.pipe(this.logger);
 
@@ -254,13 +260,22 @@ export class Host implements IComponent {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
         }
     }
-    private startMonitoringServer(port: number) {
+
+    private async startMonitoringServer(port: number) {
+        const { MonitoringServer } = await loadModule({ name: "@scramjet/monitoring-server" }) as unknown as { MonitoringServer: IMonitoringServerConstructor };
+
         this.logger.info("Starting monitoring server on port", port);
-        this.monitoringServer = new MonitoringServer({ port, validator: async () => {
-            return await this.loadCheck.getLoadCheck();
-        } });
+
+        this.monitoringServer = new MonitoringServer({
+            port,
+            validator: async () => {
+                return await this.loadCheck.getLoadCheck();
+            }
+        });
+
         this.monitoringServer.startServer();
     }
+
     getId() {
         let id = this.config.host.id;
 
