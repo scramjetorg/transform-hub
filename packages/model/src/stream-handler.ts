@@ -7,6 +7,7 @@ import {
     EncodedMonitoringMessage,
     ICommunicationHandler,
     IObjectLogger,
+    InstanceConnectionInfo,
     LoggerOutput,
     MaybePromise,
     MessageDataType,
@@ -145,6 +146,14 @@ export class CommunicationHandler implements ICommunicationHandler {
     hookDownstreamStreams(streams: DownstreamStreamsConfig): this {
         this.downstreams = streams;
         return this;
+    }
+
+    waitForHandshake(): Promise<InstanceConnectionInfo> {
+        return new Promise((res) => {
+            this.addMonitoringHandler(RunnerMessageCode.PING, (msg) => {
+                res(msg);
+            });
+        })
     }
 
     pipeMessageStreams() {

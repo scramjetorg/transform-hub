@@ -37,16 +37,16 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
     async createCSIController(
         id: string,
-        sequence: SequenceInfo,
+        sequenceInfo: SequenceInfo,
         payload: StartSequencePayload,
         communicationHandler: ICommunicationHandler,
         config: STHConfiguration,
         instanceProxy: HostProxy) {
-        sequence.instances = sequence.instances || new Set();
-        const csiController = new CSIController({ id, sequence, payload }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
+        sequenceInfo.instances = sequenceInfo.instances || new Set();
+        const csiController = new CSIController({ id, sequenceInfo, payload }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
         csiController.logger.pipe(this.logger);
-        this.logger.trace("CSIController created", id);
+        this.logger.trace("CSIController created", id, sequenceInfo);
 
         csiController.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });
@@ -107,7 +107,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             delete InstanceStore[csiController.id];
 
-            sequence.instances.filter(a => a !== id);
+            sequenceInfo.instances.filter(a => a !== id);
 
             // await this.cpmConnector?.sendInstanceInfo({
             //     id: csiController.id,
@@ -141,9 +141,10 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.trace("csiController started", id);
 
-        sequence.instances.push(id);
+        sequenceInfo.instances.push(id);
 
         this.instancesStore[id] = csiController;
+
         return csiController;
     }
 
@@ -168,6 +169,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             sequence,
             payload
         );
+
         // @todo more instance info
         return {
             id,

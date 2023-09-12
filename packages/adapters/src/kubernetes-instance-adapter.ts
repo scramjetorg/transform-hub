@@ -21,6 +21,7 @@ import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 import { getRunnerEnvEntries } from "./get-runner-env";
 import { PassThrough } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -87,6 +88,9 @@ IComponent {
                 cpu: this.adapterConfig.runnerResourcesLimitsCpu || "1000m"
             }
         };
+    }
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
+        throw Error("not implemented");
     }
 
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
@@ -180,6 +184,11 @@ IComponent {
         // @TODO handle error status
         return 0;
     }
+
+    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
+        throw Error("Not implemented");
+    }
+
 
     async cleanup(): Promise<void> {
         await this.remove(this.adapterConfig.timeout);

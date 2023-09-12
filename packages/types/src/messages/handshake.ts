@@ -10,13 +10,19 @@ import { StartSequencePayload } from "../rest-api-sth";
 export type HandshakeMessage = {
     msgCode: RunnerMessageCode.PING,
     sequence: SequenceInfo,
-    payload: StartSequencePayload
+    payload: StartSequencePayload,
+    sequenceInfo: SequenceInfo
 };
 
-export type PingMessageData = { id: string, ports?: Record<string, string>; sequence: SequenceInfo, payload: StartSequencePayload }
+export type PingMessageData = {
+    id: string;
+    ports?: Record<string, string>;
+    payload: StartSequencePayload;
+    sequenceInfo: SequenceInfo;
+};
 
 export type PangMessageData = {
     requires?: string,
     contentType?: string,
     provides?: string
-}
+};

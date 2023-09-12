@@ -33,7 +33,12 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+<<<<<<< HEAD
 import { ManagerClient } from "@scramjet/manager-api-client";
+||||||| constructed merge base
+=======
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+>>>>>>> Reconnect. Fix starting instance
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -123,14 +128,21 @@ export class Runner<X extends AppConfig> implements IComponent {
     private outputDataStream: DataStream;
     private sequenceInfo: SequenceInfo;
 
+    private runnerConnectInfo: RunnerConnectInfo = {
+        appConfig: {}
+    };
+
     constructor(
         private sequencePath: string,
         private hostClient: IHostClient,
         private instanceId: string,
-        sequenceInfo: SequenceInfo
+        sequenceInfo: SequenceInfo,
+        runnerConnectInfo: RunnerConnectInfo
     ) {
         this.sequenceInfo = sequenceInfo;
         this.emitter = new EventEmitter();
+
+        this.runnerConnectInfo = runnerConnectInfo;
 
         this.logger = new ObjLogger(this, { id: instanceId });
         hostClient.logger.pipe(this.logger);
@@ -460,7 +472,12 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     sendHandshakeMessage() {
         // TODO: send connection info
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, { id: this.instanceId, sequenceInfo: this.sequenceInfo }], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream([
+            RunnerMessageCode.PING, {
+                id: this.instanceId,
+                sequenceInfo: this.sequenceInfo,
+                payload: this.runnerConnectInfo
+            }], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
     }

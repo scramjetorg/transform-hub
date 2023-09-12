@@ -21,7 +21,7 @@ import {
     OpResponse,
     StopSequenceMessageData,
     HostProxy,
-    ICommunicationHandler,
+    ICommunicationHandler
 } from "@scramjet/types";
 import {
     AppError,
@@ -165,12 +165,12 @@ export class CSIController extends TypedEmitter<Events> {
         public communicationHandler: ICommunicationHandler,
         private sthConfig: STHConfiguration,
         private hostProxy: HostProxy,
-        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
+        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
     ) {
         super();
 
         this.id = this.handshakeMessage.id;
-        this.sequence = this.handshakeMessage.sequence;
+        this.sequence = this.handshakeMessage.sequenceInfo;
         this.appConfig = this.handshakeMessage.payload.appConfig;
         this.args = this.handshakeMessage.payload.args;
         this.outputTopic = this.handshakeMessage.payload.outputTopic;
@@ -202,7 +202,7 @@ export class CSIController extends TypedEmitter<Events> {
     async start() {
         const i = new Promise((res, rej) => {
             this.initResolver = { res, rej };
-            //this.startInstance();
+            this.startInstance();
         });
 
         i.then(() => this.main()).catch(async (e) => {
@@ -266,6 +266,8 @@ export class CSIController extends TypedEmitter<Events> {
         this._instanceAdapter = getInstanceAdapter(this.adapter, this.sthConfig, this.id);
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
+
+        this.endOfSequence = this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
 
         // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {
@@ -513,7 +515,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.ports = message[1].ports;
-        this.sequence = message[1].sequence;
+        this.sequence = message[1].sequenceInfo;
 
         // TODO: add message to initiate the instance adapter
 
@@ -531,7 +533,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.started = new Date();
-        this.logger.info("Instance started", this.info);
+        this.logger.info("Instance started", JSON.stringify(message, undefined, 4));
     }
 
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {

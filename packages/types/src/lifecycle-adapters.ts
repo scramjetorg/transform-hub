@@ -31,7 +31,7 @@ export interface ILifeCycleAdapterMain {
 
     getCrashLog(): Promise<string[]>;
 
-    waitUntilExit(config: InstanceConfig, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
+    waitUntilExit(config: InstanceConfig | undefined, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
 }
 // @TODO create ISequenceAdapter interface
 

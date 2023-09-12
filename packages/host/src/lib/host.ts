@@ -1000,18 +1000,6 @@ export class Host implements IComponent {
             // @todo need more instance info
             if (!this.instancesStore[id]) {
                 this.logger.info("creating new CSIController for runner connecting");
-<<<<<<< HEAD
-                this.csiDispatcher.createCSIController(
-                    id,
-                    {} as SequenceInfo,
-                    {} as STHRestAPI.StartSequencePayload,
-                    new CommunicationHandler(),
-                    this.config,
-                    this.instanceProxy
-                );
-||||||| constructed merge base
-                this.csiDispatcher.createCSIController(id, {} as SequenceInfo, {} as STHRestAPI.StartSequencePayload, new CommunicationHandler(), this.config, this.instanceProxy);
-=======
                 await this.csiDispatcher.createCSIController(
                     id,
                     {} as SequenceInfo,
@@ -1019,7 +1007,6 @@ export class Host implements IComponent {
                     new CommunicationHandler(),
                     this.config,
                     this.instanceProxy);
->>>>>>> pushing payload to runner/ docker run&disptach
             }
 
             await this.instancesStore[id].handleInstanceConnect(

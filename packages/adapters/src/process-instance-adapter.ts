@@ -16,6 +16,7 @@ import { ChildProcess, spawn } from "child_process";
 
 import path from "path";
 import { getRunnerEnvVariables } from "./get-runner-env";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
@@ -116,8 +117,11 @@ class ProcessInstanceAdapter implements
         return pythonpath;
     }
 
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
+        throw Error("not implemented");
+    }
+
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
-        console.log("config type", config.type)
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }
@@ -175,6 +179,10 @@ class ProcessInstanceAdapter implements
         }
 
         return statusCode;
+    }
+
+    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
+        throw Error("Not implemented");
     }
 
     /**
