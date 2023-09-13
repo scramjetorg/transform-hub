@@ -117,11 +117,12 @@ class ProcessInstanceAdapter implements
         return pythonpath;
     }
 
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
-        throw Error("not implemented");
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
+        await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
+        return this.waitUntilExit(config, instanceId, sequenceInfo);
     }
 
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }
@@ -141,7 +142,8 @@ class ProcessInstanceAdapter implements
             instancesServerPort,
             instanceId,
             pipesPath: "",
-            sequenceInfo
+            sequenceInfo,
+            payload
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
         });
@@ -160,12 +162,14 @@ class ProcessInstanceAdapter implements
         // how to connect to a process knowing id of it?
 
         this.runnerProcess = runnerProcess;
+    }
 
+    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
         const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
-            (res) => runnerProcess.on("exit", (code, sig) => res([code, sig]))
+            (res) => this.runnerProcess?.on("exit", (code, sig) => res([code, sig]))
         );
 
-        this.logger.trace("Runner process exited", runnerProcess.pid);
+        this.logger.trace("Runner process exited", this.runnerProcess?.pid);
 
         if (statusCode === null) {
             this.logger.warn("Runner was killed by a signal, and didn't return a status code", signal);
@@ -179,10 +183,7 @@ class ProcessInstanceAdapter implements
         }
 
         return statusCode;
-    }
 
-    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
-        throw Error("Not implemented");
     }
 
     /**

@@ -119,6 +119,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     private monitoringInterval?: NodeJS.Timeout;
     private keepAliveRequested?: boolean;
 
+    private monitoringMessageReplyTimeout?: NodeJS.Timeout;
     private stopExpected: boolean = false;
     handshakeResolver?: { res: Function, rej: Function };
 
@@ -195,6 +196,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 this.emitter.emit(eventData.eventName, eventData.message);
                 break;
+            case RunnerMessageCode.MONITORING_REPLY:
+                if (this.monitoringMessageReplyTimeout) {
+                    clearTimeout(this.monitoringMessageReplyTimeout);
+                }
+                break;
             default:
                 break;
         }
@@ -247,6 +253,15 @@ export class Runner<X extends AppConfig> implements IComponent {
         MessageUtils.writeMessageOnStream(
             [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
         );
+
+        this.monitoringMessageReplyTimeout = setTimeout(() => {
+            this.handleDisconnect();
+        }, 500);
+    }
+
+    async handleDisconnect() {
+        this.logger.info("Handling disconnect....");
+        await this.premain();
     }
 
     async handleKillRequest(): Promise<void> {
@@ -301,7 +316,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             .finally(() => process.exit());
     }
 
-    async main() {
+    async premain() {
         await this.hostClient.init(this.instanceId);
 
         this.redirectOutputs();
@@ -322,6 +337,12 @@ export class Runner<X extends AppConfig> implements IComponent {
         const { appConfig, args } = await this.waitForHandshakeResponse();
 
         this.logger.debug("Handshake received");
+
+        return { appConfig, args };
+    }
+
+    async main() {
+        const { appConfig, args } = await this.premain();
 
         this.initAppContext(appConfig as X);
 

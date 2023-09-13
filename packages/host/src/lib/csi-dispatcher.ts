@@ -161,6 +161,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             instanceAdapterExitDelay: this.STHConfig.timings.instanceAdapterExitDelay
         };
 
+        instanceAdapter.logger.pipe(this.logger);
+
         await instanceAdapter.init();
         await instanceAdapter.dispatch(
             instanceConfig,

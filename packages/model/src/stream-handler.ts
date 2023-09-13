@@ -50,6 +50,7 @@ type MonitoringMessageHandlerList = {
 type ControlMessageHandlerList = {
     [RunnerMessageCode.KILL]: ConfiguredMessageHandler<RunnerMessageCode.KILL>[];
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
+    [RunnerMessageCode.MONITORING_REPLY]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_REPLY>[];
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
@@ -87,6 +88,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlHandlerHash = {
             [RunnerMessageCode.KILL]: [],
             [RunnerMessageCode.MONITORING_RATE]: [],
+            [RunnerMessageCode.MONITORING_REPLY]: [],
             [RunnerMessageCode.STOP]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],

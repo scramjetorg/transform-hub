@@ -485,6 +485,11 @@ export class CSIController extends TypedEmitter<Events> {
             this.heartBeatTick();
 
             message[1] = stats;
+
+            await this.controlDataStream?.whenWrote(
+                MessageUtilities.serializeMessage<RunnerMessageCode.MONITORING_REPLY>({ msgCode: RunnerMessageCode.MONITORING_REPLY })
+            );
+
             return message;
         }, true);
 
