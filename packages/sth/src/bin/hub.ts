@@ -71,7 +71,10 @@ const options: OptionValues & STHCommandOptions = program
     .option("--environment-name <name>", "Sets the environment name for telemetry reporting (defaults to SCP_ENV_VALUE env var or 'not-set')")
     .option("--no-telemetry", "Disables telemetry", false)
     .option("--enable-federation-control", "Enables federation control", false)
-    .option("--monitoring-port <monitoring-port>", "Starts monitoring sever on a selected port")
+    .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port")
+    .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
+    .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
+
     .parse(process.argv)
     .opts() as STHCommandOptions;
 
@@ -166,9 +169,11 @@ const options: OptionValues & STHCommandOptions = program
             status: options.telemetry,
             environment: options.environmentName || process.env.SCP_ENV_VALUE || "not-set"
         },
-        monitorgingServer: {
-            port: options.monitoringPort
-        }
+        monitorgingServer: options.healtzPort || options.healtzHost || options.healtzPath ? {
+            port: parseInt(options.healtzPort, 10),
+            host: options.healtzHost,
+            path: options.healtzPath
+        } : undefined
     });
 
     const tips = [

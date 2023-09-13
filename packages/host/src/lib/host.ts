@@ -13,6 +13,7 @@ import {
     IMonitoringServerConstructor,
     IObjectLogger,
     LogLevel,
+    MonitoringServerConfig,
     NextCallback,
     OpResponse,
     ParsedMessage,
@@ -224,7 +225,9 @@ export class Host implements IComponent {
         }
 
         if (sthConfig.monitorgingServer) {
-            this.startMonitoringServer(sthConfig.monitorgingServer.port).then(() => {}, (e) => {
+            this.startMonitoringServer(sthConfig.monitorgingServer).then((res) => {
+                this.logger.info("MonitoringServer started", res);
+            }, (e) => {
                 throw new Error(e);
             });
         }
@@ -261,17 +264,17 @@ export class Host implements IComponent {
         }
     }
 
-    private async startMonitoringServer(port: number): Promise<void> {
+    private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
         const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
 
-        this.logger.info("Starting monitoring server on port", port);
+        this.logger.info("Starting monitoring server with config", config);
 
         const monitoringServer = new MonitoringServer({
-            port,
+            ...config,
             check: async () => !!await this.loadCheck.getLoadCheck()
         });
 
-        monitoringServer.start();
+        return monitoringServer.start();
     }
 
     getId() {
