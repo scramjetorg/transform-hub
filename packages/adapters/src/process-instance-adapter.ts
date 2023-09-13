@@ -151,7 +151,9 @@ class ProcessInstanceAdapter implements
         this.logger.debug("Spawning Runner process with command", runnerCommand);
         this.logger.trace("Runner process environment", env);
 
-        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env });
+        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env, detached: true });
+
+        runnerProcess.unref();
 
         this.crashLogStreams = Promise.all([runnerProcess.stdout, runnerProcess.stderr].map(streamToString));
 

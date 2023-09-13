@@ -70,7 +70,8 @@ const overrideMap: Map<Writable, OverrideConfig> = new Map();
 
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     if (overrideMap.has(oldStream)) {
-        throw new Error("Attempt to override stream more than once");
+        //throw new Error("Attempt to override stream more than once");
+        revertStandardStream(oldStream);
     }
 
     const write = oldStream.write;
@@ -260,8 +261,9 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleDisconnect() {
-        this.logger.info("Handling disconnect....");
-        await this.premain();
+        this.logger.info("Reinitializing....");
+
+        this.premain();
     }
 
     async handleKillRequest(): Promise<void> {
@@ -317,7 +319,12 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async premain() {
-        await this.hostClient.init(this.instanceId);
+        try {
+            await this.hostClient.init(this.instanceId);
+        } catch (e) {
+            await defer(2000);
+            this.premain();
+        }
 
         this.redirectOutputs();
 

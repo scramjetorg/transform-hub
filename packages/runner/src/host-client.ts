@@ -44,9 +44,15 @@ class HostClient implements IHostClient {
             Array.from(Array(9))
                 .map(() => {
                     // Error handling for each connection is process crash for now
-                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+                    let connection: Socket;
 
-                    connection.setNoDelay(true);
+                    try {
+                        connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+                        connection.on("error", () => {});
+                        connection.setNoDelay(true);
+                    } catch (e) {
+                        return Promise.reject(e);
+                    }
 
                     return new Promise<net.Socket>(res => {
                         connection.on("connect", () => res(connection));
@@ -62,7 +68,7 @@ class HostClient implements IHostClient {
                         return connection;
                     });
                 })
-        );
+        ).catch((e) => {});
 
         this._streams = openConnections as HostOpenConnections;
 
