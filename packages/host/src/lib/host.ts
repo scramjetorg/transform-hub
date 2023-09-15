@@ -1000,6 +1000,7 @@ export class Host implements IComponent {
             // @todo need more instance info
             if (!this.instancesStore[id]) {
                 this.logger.info("creating new CSIController for runner connecting");
+
                 await this.csiDispatcher.createCSIController(
                     id,
                     {} as SequenceInfo,

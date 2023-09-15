@@ -36,6 +36,8 @@ export interface ILifeCycleAdapterMain {
 // @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
+    setRunner?(system: RunnerConnectInfo["system"]): void;
+
     limits: InstanceLimits;
 
     /**

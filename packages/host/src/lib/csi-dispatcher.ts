@@ -43,9 +43,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         config: STHConfiguration,
         instanceProxy: HostProxy) {
         sequenceInfo.instances = sequenceInfo.instances || new Set();
+
         const csiController = new CSIController({ id, sequenceInfo, payload }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
-        csiController.logger.pipe(this.logger);
         this.logger.trace("CSIController created", id, sequenceInfo);
 
         csiController.logger.pipe(this.logger, { end: false });

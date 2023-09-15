@@ -1,22 +1,25 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { streamToString } from "@scramjet/utility";
-import { STHConfiguration,
+import {
     ExitCode,
     IComponent,
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
+    IObjectLogger,
     InstanceConfig,
     InstanceLimits,
-    IObjectLogger,
     MonitoringMessageData,
+    STHConfiguration,
     SequenceConfig,
     SequenceInfo
 } from "@scramjet/types";
+import { streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { constants } from "fs";
+import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables } from "./get-runner-env";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
@@ -30,6 +33,8 @@ class ProcessInstanceAdapter implements
     IComponent {
     logger: IObjectLogger;
     sthConfig: STHConfiguration;
+
+    processPID: number = -1;
 
     private runnerProcess?: ChildProcess;
     private crashLogStreams?: Promise<string[]>;
@@ -45,6 +50,7 @@ class ProcessInstanceAdapter implements
         this.logger = new ObjLogger(this);
         this.sthConfig = config;
     }
+    id?: string | undefined;
 
     async init(): Promise<void> {
         // noop
@@ -117,6 +123,11 @@ class ProcessInstanceAdapter implements
         return pythonpath;
     }
 
+    setRunner(system: Record<string, string>): void {
+        this.logger.info("--------- Setting system from runner", system);
+        this.processPID = parseInt(system.processPID, 10);
+    }
+
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
         return this.waitUntilExit(config, instanceId, sequenceInfo);
@@ -166,26 +177,66 @@ class ProcessInstanceAdapter implements
         this.runnerProcess = runnerProcess;
     }
 
-    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
-        const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
-            (res) => this.runnerProcess?.on("exit", (code, sig) => res([code, sig]))
-        );
+    getRunnerInfo(): RunnerConnectInfo["system"] {
+        return {
+            processPID: this.processPID.toString()
+        }
+    }
 
-        this.logger.trace("Runner process exited", this.runnerProcess?.pid);
+    async waitUntilExit(config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
+        if (this.runnerProcess) {
+            const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
+                (res) => this.runnerProcess?.on("exit", (code, sig) => res([code, sig]))
+            );
 
-        if (statusCode === null) {
-            this.logger.warn("Runner was killed by a signal, and didn't return a status code", signal);
+            this.logger.trace("Runner process exited", this.runnerProcess?.pid);
 
-            // Probably SIGIKLL
-            return 137;
+            if (statusCode === null) {
+                this.logger.warn("Runner was killed by a signal, and didn't return a status code", signal);
+
+                // Probably SIGIKLL
+                return 137;
+            }
+
+            if (statusCode > 0) {
+                this.logger.debug("Process returned non-zero status code", statusCode);
+            }
+
+            return statusCode;
         }
 
-        if (statusCode > 0) {
-            this.logger.debug("Process returned non-zero status code", statusCode);
-        }
+        // When no process reference Wait for file created by runner
+        return new Promise<ExitCode>((res, reject) => {
+            const interval = setInterval(async() => {
+                if (this.processPID < 1) return;
 
-        return statusCode;
+                const filePath = `/tmp/runner-${this.processPID}`;
 
+                try {
+                    await access(filePath, constants.F_OK)
+
+                    clearInterval(interval);
+
+                    const data = await readFile(filePath, 'utf8').catch((readErr) => {
+                        this.logger.error(`Cant' read runner exit code from: ${readErr}`);
+                        reject(readErr);
+                        return;
+                    })
+
+                    this.logger.debug("exitCode saved to file by runner:", data, filePath);
+
+                    rm(filePath).then(() => {
+                        this.logger.debug("File removed");
+                    }, (err) => {
+                        this.logger.error("Can't remove exitcode file");
+                    })
+
+                    res(parseInt(data!, 10));
+                } catch (err) {
+                    /** file not exists */
+                };
+            }, 1000);
+        });
     }
 
     /**

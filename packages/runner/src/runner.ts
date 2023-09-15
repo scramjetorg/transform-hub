@@ -1,3 +1,6 @@
+import { RunnerError } from "@scramjet/model";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     AppConfig,
     ApplicationFunction,
@@ -6,21 +9,18 @@ import {
     EncodedMonitoringMessage,
     EventMessageData,
     HandshakeAcknowledgeMessageData,
+    HasTopicInformation,
+    HostClient,
     IComponent,
     IHostClient,
+    IObjectLogger,
     MaybePromise,
     MonitoringRateMessageData,
+    SequenceInfo,
     StopSequenceMessageData,
     Streamable,
-    SynchronousStreamable,
-    HasTopicInformation,
-    IObjectLogger,
-    HostClient,
-    SequenceInfo
+    SynchronousStreamable
 } from "@scramjet/types";
-import { RunnerError } from "@scramjet/model";
-import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { defer } from "@scramjet/utility";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
@@ -28,9 +28,6 @@ import { BufferStream, DataStream, StringStream } from "scramjet";
 import { EventEmitter } from "events";
 import { Readable, Writable } from "stream";
 
-import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
-import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
-import { MessageUtils } from "./message-utils";
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
 <<<<<<< HEAD
@@ -38,7 +35,15 @@ import { ManagerClient } from "@scramjet/manager-api-client";
 ||||||| constructed merge base
 =======
 import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+<<<<<<< HEAD
 >>>>>>> Reconnect. Fix starting instance
+||||||| constructed merge base
+=======
+import { writeFileSync } from "fs";
+import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
+import { MessageUtils } from "./message-utils";
+import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
+>>>>>>> Reconnect. Write runner exitcode to file. read in process-adapter
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -163,6 +168,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("Error during input data stream", e);
 
             throw e;
+        });
+
+        process.on("beforeExit", (code)=> {
+            const filepath = `/tmp/runner-${process.pid.toString()}`;
+
+            writeFileSync(filepath, code.toString());
         });
     }
 
@@ -504,7 +515,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             RunnerMessageCode.PING, {
                 id: this.instanceId,
                 sequenceInfo: this.sequenceInfo,
-                payload: this.runnerConnectInfo
+                payload: {
+                    ...this.runnerConnectInfo,
+                    system: {
+                        processPID: process.pid.toString()
+                    }
+                }
             }], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");

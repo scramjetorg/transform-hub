@@ -43,6 +43,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -87,6 +88,7 @@ export class CSIController extends TypedEmitter<Events> {
         };
     }
     limits: InstanceLimits = {};
+    runnerSystemInfo: RunnerConnectInfo["system"];
     sequence: SequenceInfo;
     appConfig: AppConfig;
     instancePromise?: Promise<{ message: string, exitcode: number; status: InstanceStatus }>;
@@ -170,6 +172,7 @@ export class CSIController extends TypedEmitter<Events> {
         super();
 
         this.id = this.handshakeMessage.id;
+        this.runnerSystemInfo = this.handshakeMessage.payload.system;
         this.sequence = this.handshakeMessage.sequenceInfo;
         this.appConfig = this.handshakeMessage.payload.appConfig;
         this.args = this.handshakeMessage.payload.args;
@@ -513,10 +516,14 @@ export class CSIController extends TypedEmitter<Events> {
 
     // TODO: refactor out of CSI Controller - this should be in
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
-        this.logger.debug("PING received", message);
+        this.logger.debug("PING received", JSON.stringify(message));
 
-        if (!message[1].ports) {
-            this.logger.trace("Received a PING message but didn't receive ports config");
+        if (message[1].ports) {
+            this.logger.trace("Received a PING message with ports config");
+        }
+
+        if (this.instanceAdapter.setRunner) {
+            this.instanceAdapter.setRunner(message[1].payload.system);
         }
 
         this.info.ports = message[1].ports;
@@ -538,7 +545,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.started = new Date();
-        this.logger.info("Instance started", JSON.stringify(message, undefined, 4));
+        this.logger.info("Instance started", JSON.stringify(message, undefined));
     }
 
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {
@@ -552,6 +559,7 @@ export class CSIController extends TypedEmitter<Events> {
                 streams[8]?.end();
             });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
+
             await once(this, "pang");
             this.initResolver?.res();
         } catch (e: any) {
@@ -656,6 +664,7 @@ export class CSIController extends TypedEmitter<Events> {
             localEmitter.lastEvents[event.eventName] = event;
             localEmitter.emit(event.eventName, event);
         });
+
         this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
             const name = req.params?.name;
 
