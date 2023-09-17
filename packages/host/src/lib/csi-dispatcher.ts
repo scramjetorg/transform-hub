@@ -1,14 +1,14 @@
-import { ObjLogger } from "@scramjet/obj-logger";
-import { HostProxy, ICommunicationHandler, IObjectLogger, InstanceConfig, MessageDataType, STHConfiguration, STHRestAPI, SequenceInfo } from "@scramjet/types";
-import { SocketServer } from "./socket-server";
-import { InstanceStore } from "./instance-store";
-import { CSIController } from "./csi-controller";
-import { IDProvider } from "@scramjet/model";
-import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { getInstanceAdapter } from "@scramjet/adapters";
-import SequenceStore from "./sequenceStore";
-import { TypedEmitter } from "@scramjet/utility";
+import { IDProvider } from "@scramjet/model";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
+import { HostProxy, ICommunicationHandler, IObjectLogger, InstanceConfig, MessageDataType, STHConfiguration, STHRestAPI, SequenceInfo } from "@scramjet/types";
+import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
+import { TypedEmitter } from "@scramjet/utility";
+import { CSIController } from "./csi-controller";
+import { InstanceStore } from "./instance-store";
+import { SocketServer } from "./socket-server";
+import SequenceStore from "./sequenceStore";
 
 type errorEventData = {id:string, err: any }
 type endEventData = {id:string, code:number }
@@ -19,6 +19,7 @@ type Events = {
     stop: (code: number) => void;
     end: (data: endEventData) => void;
     terminated: (data: endEventData) => void;
+    established: (id: string) => void;
 };
 
 export class CSIDispatcher extends TypedEmitter<Events> {
@@ -145,6 +146,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.instancesStore[id] = csiController;
 
+        this.emit("established", id);
+
         return csiController;
     }
 
@@ -171,6 +174,17 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             sequence,
             payload
         );
+
+        await new Promise<void>((resolve, _reject) => {
+            const resolveFunction = (eventId: string) => {
+                if (eventId === id) {
+                    resolve();
+                    this.off("established", resolveFunction);
+                }
+            };
+
+            this.on("established", resolveFunction);
+        });
 
         // @todo more instance info
         return {

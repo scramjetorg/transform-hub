@@ -1,10 +1,12 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Duplex } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
+import { Duplex } from "stream";
 
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { HostHeaders, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
     CPMConnectorOptions,
@@ -21,37 +23,35 @@ import {
     SequenceInfo,
     StartSequenceDTO,
     STHConfiguration,
-    STHRestAPI,
+    STHRestAPI
 } from "@scramjet/types";
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { HostHeaders, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
-import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
+import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
+import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 
-import { CPMConnector } from "./cpm-connector";
 import { CommonLogsPipe } from "./common-logs-pipe";
+import { CPMConnector } from "./cpm-connector";
 import { InstanceStore } from "./instance-store";
 
+import { DuplexStream } from "@scramjet/api-server";
+import { ConfigService, development } from "@scramjet/sth-config";
+import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
+import { defer, FileBuilder, isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
+import { readFileSync } from "fs";
+import { cpus, totalmem } from "os";
+import { DataStream } from "scramjet";
+import { inspect } from "util";
+import { Auditor } from "./auditor";
+
+import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
+import { corsMiddleware } from "./middlewares/cors";
+import { optionsMiddleware } from "./middlewares/options";
+import { S3Client } from "./s3-client";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
-import { DataStream } from "scramjet";
-import { optionsMiddleware } from "./middlewares/options";
-import { corsMiddleware } from "./middlewares/cors";
-import { ConfigService, development } from "@scramjet/sth-config";
-import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
-import { inspect } from "util";
-import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
-import { Auditor } from "./auditor";
-import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
-import { cpus, totalmem } from "os";
-import { S3Client } from "./s3-client";
-import { DuplexStream } from "@scramjet/api-server";
-import { readFileSync } from "fs";
-
-import TopicRouter from "./serviceDiscovery/topicRouter";
 import SequenceStore from "./sequenceStore";
+import TopicRouter from "./serviceDiscovery/topicRouter";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
 import { CSIDispatcher } from "./csi-dispatcher";
