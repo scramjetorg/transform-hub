@@ -1,3 +1,4 @@
+import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC, CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
@@ -18,7 +19,6 @@ import {
     UpstreamStreamsConfig,
     WritableStream
 } from "@scramjet/types";
-import { ObjLogger } from "@scramjet/obj-logger";
 
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
@@ -155,7 +155,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             this.addMonitoringHandler(RunnerMessageCode.PING, (msg) => {
                 res(msg);
             });
-        })
+        });
     }
 
     pipeMessageStreams() {

@@ -20,10 +20,10 @@ import {
     OpResponse,
     ParsedMessage,
     PublicSTHConfiguration,
-    SequenceInfo,
-    StartSequenceDTO,
     STHConfiguration,
-    STHRestAPI
+    STHRestAPI,
+    SequenceInfo,
+    StartSequenceDTO
 } from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
@@ -42,17 +42,17 @@ import { readFileSync } from "fs";
 import { cpus, totalmem } from "os";
 import { DataStream } from "scramjet";
 import { inspect } from "util";
-import { Auditor } from "./auditor";
 
+import { AuditedRequest, Auditor } from "./auditor";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { corsMiddleware } from "./middlewares/cors";
 import { optionsMiddleware } from "./middlewares/options";
 import { S3Client } from "./s3-client";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
+
 import SequenceStore from "./sequenceStore";
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
 import { CSIDispatcher } from "./csi-dispatcher";
 
@@ -185,6 +185,7 @@ export class Host implements IComponent {
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
+        this.sequenceStore = new SequenceStore();
 
         this.logger = new ObjLogger(
             this,
@@ -672,7 +673,7 @@ export class Host implements IComponent {
 
             this.logger.trace("Sequence removed:", id);
             // eslint-disable-next-line max-len
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as GetSequenceResponse);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as STHRestAPI.GetSequenceResponse);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -805,7 +806,7 @@ export class Host implements IComponent {
             this.logger.trace(`Sequence identified: ${config.id}`);
 
             // eslint-disable-next-line max-len
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as GetSequenceResponse);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as STHRestAPI.GetSequenceResponse);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
             this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
@@ -955,21 +956,25 @@ export class Host implements IComponent {
             const runner = await this.csiDispatcher.startRunner(sequence, payload);
 
             // @todo more info
-
             // await this.cpmConnector?.sendInstanceInfo({
             //     id: runner.id,
-            //     appConfig: payload.appConfig,
-            //     args: payload.args,
-            //     sequence: sequence.id,
-            //     // ports: runner.info.ports
-            //     // created: csic.info.created,
-            //     // started: csic.info.started,
-            //     // status: csic.status,
+            //     appConfig: runner.appConfig,
+            //     args: runner.args,
+            //     sequence: (info => {
+            //        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            //        const { instances, ...rest } = info;
+
+            //        return rest;
+            //     })(sequence),
+            //     ports: runner.info.ports,
+            //     created: csic.info.created,
+            //     started: csic.info.started,
+            //     status: csic.status,
             // }, InstanceMessageCode.INSTANCE_STARTED);
 
-            //this.logger.debug("Instance limits", runner.limits);
-            //this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
-            //this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
+            this.logger.debug("Instance limits", runner.limits);
+            this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
+            this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
 
             // csic.on("hourChime", () => {
             //     this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });

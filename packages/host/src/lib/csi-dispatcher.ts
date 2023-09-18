@@ -7,8 +7,8 @@ import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController } from "./csi-controller";
 import { InstanceStore } from "./instance-store";
-import { SocketServer } from "./socket-server";
 import SequenceStore from "./sequenceStore";
+import { SocketServer } from "./socket-server";
 
 type errorEventData = {id:string, err: any }
 type endEventData = {id:string, code:number }
@@ -43,7 +43,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         communicationHandler: ICommunicationHandler,
         config: STHConfiguration,
         instanceProxy: HostProxy) {
-        sequenceInfo.instances = sequenceInfo.instances || new Set();
+        sequenceInfo.instances = sequenceInfo.instances || [];
 
         const csiController = new CSIController({ id, sequenceInfo, payload }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
@@ -58,10 +58,15 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             this.emit("error", { id, err });
         });
 
+        // eslint-disable-next-line complexity
         csiController.on("pang", async (data) => {
             this.logger.trace("PANG received", data);
 
-            if (data.requires && !csiController.inputRouted) {
+            if ((data.requires || data.provides) && !data.contentType) {
+                this.logger.warn("Missing topic content-type");
+            }
+
+            if (data.requires && !csiController.inputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 // await this.serviceDiscovery.routeTopicToStream(
@@ -76,7 +81,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 // });
             }
 
-            if (data.provides && !csiController.outputRouted) {
+            if (data.provides && !csiController.outputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence output to topic", data.provides);
                 // await this.serviceDiscovery.routeStreamToTopic(
                 //     csiController.getOutputStream(),
@@ -108,7 +113,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             delete InstanceStore[csiController.id];
 
-            sequenceInfo.instances.filter(a => a !== id);
+            sequenceInfo.instances = sequenceInfo.instances.filter(item => {
+                return item !== id;
+            });
 
             // await this.cpmConnector?.sendInstanceInfo({
             //     id: csiController.id,
@@ -130,7 +137,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             // this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
             // this.pushTelemetry("Instance ended", {
-            //     executionTime: csiController.info.ended && csiController.info.started ? ((csiController.info.ended?.getTime() - csiController.info.started.getTime()) / 1000).toString() : "-1",
+            //     executionTime: csiController.info.ended && csiController.info.started
+            //         ? ((csiController.info.ended?.getTime() - csiController.info.started.getTime()) / 1000).toString()
+            //         : "-1",
             //     id: csiController.id,
             //     code: code.toString(),
             //     seqId: csiController.sequence.id
@@ -138,7 +147,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             this.emit("terminated", { id, code });
         });
 
-        csiController.start().then(() => {}, () => {});
+        csiController.start().catch(() => {
+            //@TODO: handle start error;
+        });
 
         this.logger.trace("csiController started", id);
 

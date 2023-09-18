@@ -180,10 +180,10 @@ class ProcessInstanceAdapter implements
     getRunnerInfo(): RunnerConnectInfo["system"] {
         return {
             processPID: this.processPID.toString()
-        }
+        };
     }
 
-    async waitUntilExit(config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
+    async waitUntilExit(_config: InstanceConfig, _instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
         if (this.runnerProcess) {
             const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
                 (res) => this.runnerProcess?.on("exit", (code, sig) => res([code, sig]))
@@ -207,34 +207,34 @@ class ProcessInstanceAdapter implements
 
         // When no process reference Wait for file created by runner
         return new Promise<ExitCode>((res, reject) => {
-            const interval = setInterval(async() => {
+            const interval = setInterval(async () => {
                 if (this.processPID < 1) return;
 
                 const filePath = `/tmp/runner-${this.processPID}`;
 
                 try {
-                    await access(filePath, constants.F_OK)
+                    await access(filePath, constants.F_OK);
 
                     clearInterval(interval);
 
-                    const data = await readFile(filePath, 'utf8').catch((readErr) => {
+                    const data = await readFile(filePath, "utf8").catch((readErr) => {
                         this.logger.error(`Cant' read runner exit code from: ${readErr}`);
                         reject(readErr);
                         return;
-                    })
+                    });
 
                     this.logger.debug("exitCode saved to file by runner:", data, filePath);
 
                     rm(filePath).then(() => {
                         this.logger.debug("File removed");
-                    }, (err) => {
-                        this.logger.error("Can't remove exitcode file");
-                    })
+                    }, (err: any) => {
+                        this.logger.error("Can't remove exitcode file", err);
+                    });
 
                     res(parseInt(data!, 10));
                 } catch (err) {
                     /** file not exists */
-                };
+                }
             }, 1000);
         });
     }

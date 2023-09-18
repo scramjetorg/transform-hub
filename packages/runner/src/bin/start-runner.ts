@@ -25,7 +25,6 @@ try {
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
-
 try {
     if (!sequenceInfo) throw new Error("Connection JSON is required.");
     connectInfo = JSON.parse(sequenceInfo);

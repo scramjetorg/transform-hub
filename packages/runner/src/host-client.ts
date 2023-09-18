@@ -1,9 +1,9 @@
 /* eslint-disable dot-notation */
-import { IHostClient, IObjectLogger, UpstreamStreamsConfig, } from "@scramjet/types";
-import { CommunicationChannel as CC } from "@scramjet/symbols";
-import net, { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { CommunicationChannel as CC } from "@scramjet/symbols";
+import { IHostClient, IObjectLogger, UpstreamStreamsConfig, } from "@scramjet/types";
 import { Agent } from "http";
+import net, { Socket, createConnection } from "net";
 
 type HostOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
@@ -68,7 +68,9 @@ class HostClient implements IHostClient {
                         return connection;
                     });
                 })
-        ).catch((e) => {});
+        ).catch((_e) => {
+            //@TODO: handle error.
+        });
 
         this._streams = openConnections as HostOpenConnections;
 

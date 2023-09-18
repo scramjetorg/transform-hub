@@ -13,15 +13,15 @@ import {
     STHConfiguration,
 } from "@scramjet/types";
 
-import path from "path";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { createReadStream } from "fs";
-import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
-import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { getRunnerEnvEntries } from "./get-runner-env";
-import { PassThrough } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
 import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { createReadStream } from "fs";
+import path from "path";
+import { PassThrough } from "stream";
+import { getRunnerEnvEntries } from "./get-runner-env";
+import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
+import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -89,7 +89,7 @@ IComponent {
             }
         };
     }
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
+    async dispatch(_config: InstanceConfig, _instancesServerPort: number, _instanceId: string, _sequenceInfo: SequenceInfo, _payload: RunnerConnectInfo): Promise<void> {
         throw Error("not implemented");
     }
 
@@ -185,10 +185,10 @@ IComponent {
         return 0;
     }
 
-    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
+    async waitUntilExit(_config: InstanceConfig, _instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
+        this.logger.debug("WaitUntilExit", [_config, _instanceId, _sequenceInfo]);
         throw Error("Not implemented");
     }
-
 
     async cleanup(): Promise<void> {
         await this.remove(this.adapterConfig.timeout);

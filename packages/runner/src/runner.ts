@@ -30,20 +30,14 @@ import { Readable, Writable } from "stream";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
-<<<<<<< HEAD
 import { ManagerClient } from "@scramjet/manager-api-client";
-||||||| constructed merge base
-=======
+
 import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
-<<<<<<< HEAD
->>>>>>> Reconnect. Fix starting instance
-||||||| constructed merge base
-=======
+
 import { writeFileSync } from "fs";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
->>>>>>> Reconnect. Write runner exitcode to file. read in process-adapter
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -73,6 +67,23 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
 
 const overrideMap: Map<Writable, OverrideConfig> = new Map();
 
+function revertStandardStream(oldStream: Writable) {
+    if (overrideMap.has(oldStream)) {
+        const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
+
+        // @ts-ignore - this is ok, we're doing this on purpose!
+        delete oldStream.write;
+
+        // if prototypic write is there, then no change needed
+        if (oldStream.write !== write)
+            oldStream.write = write;
+
+        oldStream.off("drain", drainCb);
+        oldStream.off("error", errorCb);
+        overrideMap.delete(oldStream);
+    }
+}
+
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     if (overrideMap.has(oldStream)) {
         //throw new Error("Attempt to override stream more than once");
@@ -95,23 +106,6 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     newStream.on("error", errorCb);
 
     overrideMap.set(oldStream, { write, drainCb, errorCb });
-}
-
-function revertStandardStream(oldStream: Writable) {
-    if (overrideMap.has(oldStream)) {
-        const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
-
-        // @ts-ignore - this is ok, we're doing this on purpose!
-        delete oldStream.write;
-
-        // if prototypic write is there, then no change needed
-        if (oldStream.write !== write)
-            oldStream.write = write;
-
-        oldStream.off("drain", drainCb);
-        oldStream.off("error", errorCb);
-        overrideMap.delete(oldStream);
-    }
 }
 
 /**
@@ -170,7 +164,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             throw e;
         });
 
-        process.on("beforeExit", (code)=> {
+        process.on("beforeExit", (code) => {
             const filepath = `/tmp/runner-${process.pid.toString()}`;
 
             writeFileSync(filepath, code.toString());
@@ -266,15 +260,17 @@ export class Runner<X extends AppConfig> implements IComponent {
             [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
         );
 
-        this.monitoringMessageReplyTimeout = setTimeout(() => {
-            this.handleDisconnect();
+        this.monitoringMessageReplyTimeout = setTimeout(async () => {
+            await this.handleDisconnect();
         }, 500);
     }
 
     async handleDisconnect() {
         this.logger.info("Reinitializing....");
 
-        this.premain();
+        this.premain().catch((e) => {
+            this.logger.error("Premain error", e);
+        });
     }
 
     async handleKillRequest(): Promise<void> {
@@ -333,8 +329,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             await this.hostClient.init(this.instanceId);
         } catch (e) {
+            this.logger.error("hostClient init error", e);
+
             await defer(2000);
-            this.premain();
+
+            this.premain().catch((err: any) => {
+                this.logger.error("Premain error", err);
+            });
         }
 
         this.redirectOutputs();
