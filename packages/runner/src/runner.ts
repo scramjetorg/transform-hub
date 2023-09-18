@@ -39,6 +39,15 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 
+process.once("beforeExit", (code) => {
+    const filepath = `/tmp/runner-${process.pid.toString()}`;
+
+    writeFileSync(filepath, code.toString());
+
+    // eslint-disable-next-line no-console
+    console.log("Runner exit");
+});
+
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
 
@@ -162,12 +171,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("Error during input data stream", e);
 
             throw e;
-        });
-
-        process.on("beforeExit", (code) => {
-            const filepath = `/tmp/runner-${process.pid.toString()}`;
-
-            writeFileSync(filepath, code.toString());
         });
     }
 

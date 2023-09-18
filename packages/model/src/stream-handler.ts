@@ -163,6 +163,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             this.logger.error("pipeMessageStreams called twice");
             throw new Error("pipeMessageStreams called twice");
         }
+
         this._piped = true;
 
         if (!this.downstreams || !this.upstreams) {

@@ -60,7 +60,10 @@ class ProcessInstanceAdapter implements
 
         if (!runnerProcess) {
             // Runner process not initialized yet
-            return msg;
+            return {
+                ...msg,
+                processId: this.processPID
+            };
         }
 
         return {
@@ -169,10 +172,6 @@ class ProcessInstanceAdapter implements
         this.crashLogStreams = Promise.all([runnerProcess.stdout, runnerProcess.stderr].map(streamToString));
 
         this.logger.trace("Runner process is running", runnerProcess.pid);
-
-        // @todo exit here with pid
-        // then promise waiting for process with given pid finish (endOfRun)
-        // how to connect to a process knowing id of it?
 
         this.runnerProcess = runnerProcess;
     }
