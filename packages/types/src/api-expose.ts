@@ -6,7 +6,11 @@ import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 
-export type ParsedMessage = IncomingMessage & { body?: any; params?: { [key: string]: any } | undefined };
+export type ParsedMessage = IncomingMessage & {
+    body?: any;
+    params?: { [key: string]: any} | undefined,
+    query?: { [key: string]: any } | undefined;
+};
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
 export type StreamInput =
