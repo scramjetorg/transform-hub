@@ -50,7 +50,8 @@ class HTTPProxy:
         """
 
         request_status = await reader.readuntil(b'\r\n')
-
+        # Workaround...
+        request_status = bytes('GET /', encoding='utf-8' )+'/'.join(request_status.decode().split('/')[3:]).encode('utf-8')
         tecemux_params, request_headers = HTTPProxy._extract_tecemux_details(await reader.readuntil(b'\r\n\r\n'))
 
         channel = multiplexer.get_channel(tecemux_params.channel_id)
@@ -65,9 +66,17 @@ class HTTPProxy:
         writer.write(raw_response_headers)
 
         headers = HTTPProxy._get_headers_as_dict(raw_response_headers, convert_keys_to_lowercase=True)
-
-        raw_response_data = await channel.read(int(headers['content-length']))
-        writer.write(raw_response_data)
+        if 'content-length' in headers:
+            writer.write(await channel.read(int(headers['content-length'])))
+        elif 'transfer-encoding' in headers and headers['transfer-encoding'] == 'chunked':
+            while True:
+                try:
+                    raw_response_data = await asyncio.wait_for(channel.read(8), timeout=3)
+                    if not raw_response_data:
+                        break
+                    writer.write(raw_response_data)
+                except asyncio.TimeoutError:
+                    break 
 
         writer.write(b'\r\n')
         await writer.drain()
