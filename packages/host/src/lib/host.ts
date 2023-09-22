@@ -742,8 +742,6 @@ export class Host implements IComponent {
 
             const configs = await sequenceAdapter.list();
 
-            sequenceAdapter.logger.pipe(this.logger);
-
             for (const config of configs) {
                 this.logger.trace(`Sequence identified: ${config.id}`);
 
@@ -815,7 +813,7 @@ export class Host implements IComponent {
             this.logger.trace(`Sequence identified: ${config.id}`);
 
             await this.cpmConnector?.sendSequenceInfo(
-                id, // parentId
+                id,
                 SequenceMessageCode.SEQUENCE_CREATED,
                 config as unknown as GetSequenceResponse,);
 

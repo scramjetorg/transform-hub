@@ -282,27 +282,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
         return Volumes.map(volume => volume.Name);
     }
-    /**
-     * Access to the value of volume's label
-     * @param volumeName Volume name.
-     * @param labelName Label name.
-     * 
-     * @returns Promise which resolves when volume has been removed.
-     */
-    async getLabelValue(volumeName: string, labelName: string): Promise<string | null> {
-        try {
-            // Get information about the Docker volume
-            const volumeInfo = await this.dockerode.getVolume(volumeName).inspect();
 
-            // Access the labels property and retrieve the specific label
-            const labelValue = volumeInfo.Labels ? volumeInfo.Labels[labelName] : null;
-
-            return labelValue;
-        } catch (error) {
-            this.logger.error(`Error reading Docker volume label: ${error}`);
-            return null;
-        }
-    }
     /**
      * Attaches to container streams.
      *
