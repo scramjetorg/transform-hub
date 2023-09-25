@@ -328,7 +328,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             .finally(() => process.exit());
     }
 
-    async premain() {
+    async premain(): Promise<{ appConfig: AppConfig, args: any}> {
+        this.logger.debug("premain");
+
         try {
             await this.hostClient.init(this.instanceId);
         } catch (e) {
@@ -336,9 +338,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             await defer(2000);
 
-            this.premain().catch((err: any) => {
-                this.logger.error("Premain error", err);
-            });
+            return await this.premain();
         }
 
         this.redirectOutputs();
@@ -358,7 +358,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const { appConfig, args } = await this.waitForHandshakeResponse();
 
-        this.logger.debug("Handshake received");
+        this.logger.debug("Handshake received", appConfig, args);
 
         return { appConfig, args };
     }

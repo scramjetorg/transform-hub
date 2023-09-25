@@ -186,7 +186,10 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger = new ObjLogger(this, { id: this.id });
 
-        this.logger.debug("Constructor executed");
+        this.logger.debug("Constructor executed", arguments);
+
+        // eslint-disable-next-line no-console
+        console.log("Constructor executed", arguments);
 
         this.status = InstanceStatus.INITIALIZING;
 
