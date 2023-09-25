@@ -1,0 +1,10 @@
+export enum DisconnectHubErrors {
+    STH_NOT_FOUND,
+    KEY_NOT_FOUND,
+    BAD_REQUEST,
+    CONFLICT,
+    ID_NOT_PROVIDED,
+    NATIVE_HUB,
+    CONNECTED,
+    ALREADY_DISCONNECTED
+}

@@ -10,8 +10,10 @@ import {
     CPMConnectorOptions,
     HostProxy,
     IComponent,
+    IMonitoringServerConstructor,
     IObjectLogger,
     LogLevel,
+    MonitoringServerConfig,
     NextCallback,
     OpResponse,
     ParsedMessage,
@@ -53,6 +55,7 @@ import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
+import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -210,13 +213,24 @@ export class Host implements IComponent {
 
         if (isDevelopment) this.logger.info("config", this.config);
 
+        loadModuleLogger.pipe(this.logger);
+
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
 
         this.serviceDiscovery = new ServiceDiscovery(this.logger, this.config.host.hostname);
 
-        if (sthConfig.telemetry.environment)
+        if (sthConfig.telemetry.environment) {
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
+        }
+
+        if (sthConfig.monitorgingServer) {
+            this.startMonitoringServer(sthConfig.monitorgingServer).then((res) => {
+                this.logger.info("MonitoringServer started", res);
+            }, (e) => {
+                throw new Error(e);
+            });
+        }
 
         this.auditor = new Auditor();
         //this.auditor.logger.pipe(this.logger);
@@ -248,6 +262,19 @@ export class Host implements IComponent {
         if (!!this.config.cpmId !== !!this.config.cpmUrl && !!this.config.cpmId !== !!this.config.platform?.api) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
         }
+    }
+
+    private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
+        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
+
+        this.logger.info("Starting monitoring server with config", config);
+
+        const monitoringServer = new MonitoringServer({
+            ...config,
+            check: async () => !!await this.loadCheck.getLoadCheck()
+        });
+
+        return monitoringServer.start();
     }
 
     getId() {
