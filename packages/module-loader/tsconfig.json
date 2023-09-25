@@ -8,13 +8,14 @@
         "./test"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "dist"
     ],
     "typedocOptions": {
         "entryPoints": [
             "src/index.ts"
         ],
-        "out": "../../docs/multi-manager-api-client",
+        "out": "../../docs/module-loader",
         "plugin": "typedoc-plugin-markdown",
         "excludePrivate": "true",
         "gitRevision": "HEAD",
