@@ -356,7 +356,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.sendHandshakeMessage();
 
-        const { appConfig, args } = await this.waitForHandshakeResponse();
+        const { args, appConfig } = this.runnerConnectInfo;
 
         this.logger.debug("Handshake received", appConfig, args);
 
