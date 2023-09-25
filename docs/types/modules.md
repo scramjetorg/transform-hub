@@ -17,6 +17,8 @@
 - [ILifeCycleAdapter](interfaces/ILifeCycleAdapter.md)
 - [ILifeCycleAdapterMain](interfaces/ILifeCycleAdapterMain.md)
 - [ILifeCycleAdapterRun](interfaces/ILifeCycleAdapterRun.md)
+- [IMonitoringServer](interfaces/IMonitoringServer.md)
+- [IMonitoringServerConstructor](interfaces/IMonitoringServerConstructor.md)
 - [IObjectLogger](interfaces/IObjectLogger.md)
 - [ISequenceAdapter](interfaces/ISequenceAdapter.md)
 - [ReadableStream](interfaces/ReadableStream.md)
@@ -116,6 +118,7 @@
 - [MessageDataType](modules.md#messagedatatype)
 - [MessageType](modules.md#messagetype)
 - [Middleware](modules.md#middleware)
+- [ModuleLoaderOpts](modules.md#moduleloaderopts)
 - [MonitoringHandler](modules.md#monitoringhandler)
 - [MonitoringMessage](modules.md#monitoringmessage)
 - [MonitoringMessageCode](modules.md#monitoringmessagecode)
@@ -124,6 +127,9 @@
 - [MonitoringMessageHandler](modules.md#monitoringmessagehandler)
 - [MonitoringRateMessage](modules.md#monitoringratemessage)
 - [MonitoringRateMessageData](modules.md#monitoringratemessagedata)
+- [MonitoringServerConfig](modules.md#monitoringserverconfig)
+- [MonitoringServerOptions](modules.md#monitoringserveroptions)
+- [MonitoringServerValidator](modules.md#monitoringservervalidator)
 - [MutatingMonitoringMessageHandler](modules.md#mutatingmonitoringmessagehandler)
 - [NetworkInfo](modules.md#networkinfo)
 - [NetworkInfoMessage](modules.md#networkinfomessage)
@@ -497,7 +503,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L4)
+[packages/types/src/sth-configuration.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L5)
 
 ___
 
@@ -514,7 +520,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L16)
+[packages/types/src/sth-configuration.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L17)
 
 ___
 
@@ -1007,7 +1013,7 @@ Host process configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L41)
+[packages/types/src/sth-configuration.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L42)
 
 ___
 
@@ -1312,7 +1318,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L75)
+[packages/types/src/sth-configuration.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L76)
 
 ___
 
@@ -1551,7 +1557,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/index.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L41)
+[packages/types/src/index.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L43)
 
 ___
 
@@ -1672,6 +1678,22 @@ ___
 #### Defined in
 
 [packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
+
+___
+
+### ModuleLoaderOpts
+
+Ƭ **ModuleLoaderOpts**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Defined in
+
+[packages/types/src/module-loader.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/module-loader.ts#L1)
 
 ___
 
@@ -1809,6 +1831,52 @@ ___
 #### Defined in
 
 [packages/types/src/messages/monitor-rate.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/monitor-rate.ts#L3)
+
+___
+
+### MonitoringServerConfig
+
+Ƭ **MonitoringServerConfig**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `host?` | `string` |
+| `path?` | `string` |
+| `port` | `number` |
+
+#### Defined in
+
+[packages/types/src/monitoring-server.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L3)
+
+___
+
+### MonitoringServerOptions
+
+Ƭ **MonitoringServerOptions**: [`MonitoringServerConfig`](modules.md#monitoringserverconfig) & { `check?`: [`MonitoringServerValidator`](modules.md#monitoringservervalidator) \| [`MonitoringServerValidator`](modules.md#monitoringservervalidator)[]  }
+
+#### Defined in
+
+[packages/types/src/monitoring-server.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L11)
+
+___
+
+### MonitoringServerValidator
+
+Ƭ **MonitoringServerValidator**: () => `MaybePromise`<`boolean`\>
+
+#### Type declaration
+
+▸ (): `MaybePromise`<`boolean`\>
+
+##### Returns
+
+`MaybePromise`<`boolean`\>
+
+#### Defined in
+
+[packages/types/src/monitoring-server.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L9)
 
 ___
 
@@ -2084,7 +2152,7 @@ PreRunner container configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L31)
+[packages/types/src/sth-configuration.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L32)
 
 ___
 
@@ -2104,7 +2172,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:274](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L274)
+[packages/types/src/sth-configuration.ts:277](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L277)
 
 ___
 
@@ -2211,7 +2279,7 @@ Runner container configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L36)
+[packages/types/src/sth-configuration.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L37)
 
 ___
 
@@ -2291,6 +2359,8 @@ ___
 | `k8sSequencesRoot` | `string` |
 | `k8sSthPodHost` | `string` |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) |
+| `monitoringServer` | { `port`: `number`  } |
+| `monitoringServer.port` | `number` |
 | `platformApi` | `string` |
 | `platformApiKey` | `string` |
 | `platformApiVersion` | `string` |
@@ -2348,6 +2418,7 @@ ___
 | `kubernetes` | `Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\> | Kubernetes adapter configuration |
 | `logColors` | `boolean` | Enable colors in logging. |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
+| `monitorgingServer?` | [`MonitoringServerConfig`](modules.md#monitoringserverconfig) | - |
 | `platform?` | { `api`: `string` ; `apiKey`: `string` ; `apiVersion`: `string` ; `hostType`: ``"hub"`` \| ``"federation"`` ; `space`: `string`  } | - |
 | `platform.api` | `string` | - |
 | `platform.apiKey` | `string` | - |
@@ -2367,7 +2438,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L109)
+[packages/types/src/sth-configuration.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L110)
 
 ___
 
