@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/module-loader",
-  "version": "0.35.3",
+  "version": "0.36.0",
   "description": "Scramjet Module Loader",
   "main": "src/index.ts",
   "scripts": {
@@ -12,10 +12,10 @@
     "test:ava": "# nyc ava"
   },
   "dependencies": {
-    "@scramjet/obj-logger": "^0.35.3"
+    "@scramjet/obj-logger": "^0.36.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.35.3",
+    "@scramjet/types": "^0.36.0",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
