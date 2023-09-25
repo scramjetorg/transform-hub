@@ -205,7 +205,7 @@ export class CSIController extends TypedEmitter<Events> {
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
-            new PassThrough({ highWaterMark: 0 }),
+            new PassThrough(),
             new PassThrough(),
         ];
     }
