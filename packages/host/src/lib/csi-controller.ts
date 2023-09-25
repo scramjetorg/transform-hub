@@ -63,6 +63,7 @@ type Events = {
 
 const BPMux = require("bpmux").BPMux;
 
+export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; ended?: Date; };
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  *
@@ -95,7 +96,7 @@ export class CSIController extends TypedEmitter<Events> {
     args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
-    info: { ports?: any; created?: Date; started?: Date; ended?: Date; } = {};
+    info: CSIControllerInfo = {};
     status: InstanceStatus;
     terminated?: { exitcode: number; reason: string; };
     provides?: string;
@@ -110,6 +111,8 @@ export class CSIController extends TypedEmitter<Events> {
 
     apiOutput = new PassThrough();
     apiInputEnabled = true;
+
+    executionTime: number = -1;
 
     /**
      * Topic to which the output stream should be routed
@@ -186,11 +189,6 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger = new ObjLogger(this, { id: this.id });
 
-        this.logger.debug("Constructor executed", arguments);
-
-        // eslint-disable-next-line no-console
-        console.log("Constructor executed", arguments);
-
         this.status = InstanceStatus.INITIALIZING;
 
         this.upStreams = [
@@ -205,8 +203,8 @@ export class CSIController extends TypedEmitter<Events> {
         ];
     }
 
-    async start() {
-        const i = new Promise((res, rej) => {
+    async start(): Promise<void> {
+        const i = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
         });

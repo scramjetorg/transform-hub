@@ -239,7 +239,7 @@ export class Host implements IComponent {
         this.instanceBase = `${this.config.host.apiBase}/instance`;
         this.topicsBase = `${this.config.host.apiBase}/topic`;
 
-        this.csiDispatcher = new CSIDispatcher(this.socketServer, this.instancesStore, this.sequenceStore, sthConfig);
+        this.csiDispatcher = new CSIDispatcher(this.instancesStore, this.serviceDiscovery, sthConfig);
 
         this.csiDispatcher.logger.pipe(this.logger);
 
@@ -273,7 +273,9 @@ export class Host implements IComponent {
     }
 
     attachDispatcherEvents() {
-        //this.csiDispatcher.on();
+        this.csiDispatcher.on("error", (errorData) => {
+            this.pushTelemetry("Instance error", { ...errorData }, "error");
+        });
     }
 
     getId() {

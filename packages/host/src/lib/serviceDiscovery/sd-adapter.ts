@@ -76,6 +76,8 @@ export class ServiceDiscovery {
         const topic = this.topicsController.get(topicName);
 
         if (topic) {
+            config.contentType ||= topic.contentType;
+
             if (topic.contentType !== config.contentType) {
                 this.logger.error("Content-type mismatch, existing and requested ", topic.contentType, config.contentType);
                 throw new Error("Content-type mismatch");
