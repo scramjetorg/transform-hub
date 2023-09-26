@@ -62,7 +62,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         // eslint-disable-next-line complexity
         csiController.on("pang", async (data) => {
-            this.logger.trace("PANG received", data);
+            this.logger.trace("PANG received", [csiController.id, data]);
 
             if ((data.requires || data.provides) && !data.contentType) {
                 this.logger.warn("Missing topic content-type");
@@ -96,6 +96,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     provides: data.provides, contentType: data.contentType!, topicName: data.provides
                 });
             }
+
+            this.emit("established", id); // after pang?
         });
 
         csiController.on("end", async (code) => {
@@ -173,8 +175,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         sequenceInfo.instances.push(id);
 
         this.instancesStore[id] = csiController;
-
-        this.emit("established", id);
 
         return csiController;
     }

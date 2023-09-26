@@ -276,6 +276,14 @@ export class Host implements IComponent {
         this.csiDispatcher.on("error", (errorData) => {
             this.pushTelemetry("Instance error", { ...errorData }, "error");
         });
+
+        this.csiDispatcher.on("end", () => {
+
+        });
+
+        this.csiDispatcher.on("terminated", () => {
+
+        });
     }
 
     getId() {
@@ -1002,7 +1010,7 @@ export class Host implements IComponent {
      */
     private attachListeners() {
         this.socketServer.on("connect", async (id, streams) => {
-            this.logger.debug("Instance connected", id);
+            this.logger.debug("Instance connecting", id);
 
             // @todo need more instance info
             if (!this.instancesStore[id]) {

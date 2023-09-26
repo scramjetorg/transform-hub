@@ -174,6 +174,9 @@ export class CSIController extends TypedEmitter<Events> {
     ) {
         super();
 
+        // eslint-disable-next-line no-console
+        console.log(handshakeMessage);
+
         this.id = this.handshakeMessage.id;
         this.runnerSystemInfo = this.handshakeMessage.payload.system;
         this.sequence = this.handshakeMessage.sequenceInfo;
@@ -253,6 +256,8 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.ended = new Date();
+        this.executionTime = (this.info.ended.getTime() - this.info.started!.getTime()) / 1000;
+
         this.emit("terminated", code);
 
         this.logger.trace("Finalizing...");
@@ -459,12 +464,17 @@ export class CSIController extends TypedEmitter<Events> {
             .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
+            // eslint-disable-next-line no-console
+            console.log("ping", message);
             await this.handleHandshake(message);
 
             return null;
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
+            // eslint-disable-next-line no-console
+            console.log("pong", message);
+
             const pangData = message[1];
 
             this.provides ||= this.outputTopic || pangData.provides;
@@ -483,6 +493,8 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
             const stats = await this.instanceAdapter.stats(message[1]);
+
+            this.logger.debug("Health stats", stats);
 
             this._lastStats = stats;
 
@@ -545,7 +557,7 @@ export class CSIController extends TypedEmitter<Events> {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
 
-        this.info.started = new Date();
+        this.info.started = new Date(); //@TODO: set by runner?
         this.logger.info("Instance started", JSON.stringify(message, undefined));
     }
 
@@ -782,6 +794,9 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getInfo(): STHRestAPI.GetInstanceResponse {
+        // eslint-disable-next-line no-console
+        this.logger.debug(this.sequence, this.info);
+
         return {
             id: this.id,
             appConfig: this.appConfig,

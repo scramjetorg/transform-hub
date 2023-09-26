@@ -114,6 +114,8 @@ IComponent {
      * @returns {Promise<MonitoringMessageData>} Promise resolved with container statistics.
      */
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
+        this.logger.debug("STATS. Container id:", this.resources.containerId);
+
         if (this.resources.containerId) {
             const stats = await this.dockerHelper.stats(this.resources.containerId)!;
 
@@ -225,7 +227,7 @@ IComponent {
 
         this.crashLogStreams = Promise.all(([streams.stdout, streams.stderr] as Readable[]).map(streamToString));
 
-        this.resources.containerId = containerId;
+        this.resources.containerId = containerId; // doesnt matter
 
         this.logger.trace("Container is running", containerId);
     }
@@ -233,6 +235,9 @@ IComponent {
     async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
         try {
             const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
+
+            this.resources.containerId = containerId;
+
             const { statusCode } = await this.dockerHelper.wait(containerId);
 
             this.logger.debug("Container exited", statusCode);

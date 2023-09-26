@@ -35,6 +35,7 @@ class ProcessInstanceAdapter implements
     sthConfig: STHConfiguration;
 
     processPID: number = -1;
+    id?: string | undefined;
 
     private runnerProcess?: ChildProcess;
     private crashLogStreams?: Promise<string[]>;
@@ -50,11 +51,11 @@ class ProcessInstanceAdapter implements
         this.logger = new ObjLogger(this);
         this.sthConfig = config;
     }
-    id?: string | undefined;
 
     async init(): Promise<void> {
         // noop
     }
+
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         const { runnerProcess } = this;
 

@@ -430,29 +430,39 @@ When("send kill message to instance", async function(this: CustomWorld) {
     assert.ok(resp);
 });
 
+// eslint-disable-next-line complexity
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
+    const adapter = process.env.RUNTIME_ADAPTER;
+
     while (!success && tries < 3) {
-        if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-            // @TODO
-            return;
-        }
+        const health = await this.resources.instance?.getHealth();
 
-        if (process.env.RUNTIME_ADAPTER === "process") {
-            const res = (await this.resources.instance?.getHealth())?.processId;
+        console.log("Health", health);
 
-            if (res) {
-                processId = success = res;
-                console.log("Process is identified.", processId);
-            }
-        } else {
-            containerId = success = (await this.resources.instance?.getHealth())?.containerId!;
+        switch (adapter) {
+            case "kubernetes":
+                return;
+            case "docker":
 
-            if (containerId) {
-                console.log("Container is identified.", containerId);
-            }
+                containerId = success = health?.containerId!;
+
+                if (containerId) {
+                    console.log("Container is identified.", containerId);
+                }
+                break;
+            case "process":
+                const res = health?.processId;
+
+                if (res) {
+                    processId = success = res;
+                    console.log("Process is identified.", processId);
+                }
+                break;
+            default:
+                break;
         }
 
         tries++;
