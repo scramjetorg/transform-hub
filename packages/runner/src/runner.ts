@@ -21,7 +21,7 @@ import {
     Streamable,
     SynchronousStreamable
 } from "@scramjet/types";
-import { defer } from "@scramjet/utility";
+import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
@@ -39,14 +39,24 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 
-process.once("beforeExit", (code) => {
+let exitHandled = false;
+
+function onBeforeExit(code: number) {
+    if (exitHandled) return;
+
     const filepath = `/tmp/runner-${process.pid.toString()}`;
 
     writeFileSync(filepath, code.toString());
 
-    // eslint-disable-next-line no-console
-    console.log("Runner exit");
-});
+    exitHandled = true;
+}
+
+function onException(_error: Error) {
+    onBeforeExit(RunnerExitCode.UNCAUGHT_EXCEPTION);
+}
+
+process.once("beforeExit", onBeforeExit);
+process.once("uncaughtException", onException);
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -321,11 +331,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private async exit(exitCode?: number) {
         //TODO: we need to wait a bit for the logs to flush - we shouldn't need to as cleanup should wait.
-        await defer(200);
+        //await defer(200);
 
         this.cleanup()
             .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
-            .finally(() => process.exit());
+            .finally(() => { onBeforeExit(process.exitCode!); process.exit(); });
     }
 
     async premain(): Promise<{ appConfig: AppConfig, args: any}> {
@@ -447,7 +457,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             this.logger.info("Cleaning up streams");
 
-            await this.hostClient.disconnect();
+            await promiseTimeout(
+                this.hostClient.disconnect(), 5000
+            );
         } catch (e: any) {
             exitcode = RunnerExitCode.CLEANUP_FAILED;
         }
@@ -457,8 +469,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private async revertOutputs() {
         this.logger.unpipe(this.hostClient.logStream);
+
         revertStandardStream(process.stdout);
         revertStandardStream(process.stderr);
+
         this.logger.addOutput(process.stderr);
     }
 

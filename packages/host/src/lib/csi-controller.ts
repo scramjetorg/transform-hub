@@ -795,7 +795,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     getInfo(): STHRestAPI.GetInstanceResponse {
         // eslint-disable-next-line no-console
-        this.logger.debug(this.sequence, this.info);
+        this.logger.debug("Get info [seq, info]", this.sequence, this.info);
 
         return {
             id: this.id,
