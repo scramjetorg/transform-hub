@@ -116,22 +116,20 @@ IComponent {
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         this.logger.debug("STATS. Container id:", this.resources.containerId);
 
-        if (this.resources.containerId) {
-            const stats = await this.dockerHelper.stats(this.resources.containerId)!;
+        this.resources.containerId ||= await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", this.id);
 
-            return {
-                cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
-                healthy: msg.healthy,
-                limit: stats.memory_stats?.limit,
-                memoryMaxUsage: stats.memory_stats?.max_usage,
-                memoryUsage: stats.memory_stats?.usage,
-                networkRx: stats.networks?.eth0?.rx_bytes,
-                networkTx: stats.networks?.eth0?.tx_bytes,
-                containerId: this.resources.containerId
-            };
-        }
+        const stats = await this.dockerHelper.stats(this.resources.containerId)!;
 
-        return msg;
+        return {
+            cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
+            healthy: msg.healthy,
+            limit: stats.memory_stats?.limit,
+            memoryMaxUsage: stats.memory_stats?.max_usage,
+            memoryUsage: stats.memory_stats?.usage,
+            networkRx: stats.networks?.eth0?.rx_bytes,
+            networkTx: stats.networks?.eth0?.tx_bytes,
+            containerId: this.resources.containerId
+        };
     }
 
     private async getNetworkSetup(): Promise<{ network: string, host: string }> {

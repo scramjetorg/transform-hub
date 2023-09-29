@@ -21,7 +21,7 @@ import {
     Streamable,
     SynchronousStreamable
 } from "@scramjet/types";
-import { defer, promiseTimeout } from "@scramjet/utility";
+import { defer } from "@scramjet/utility";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
@@ -452,14 +452,19 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.trace("Monitoring interval removed");
         }
 
+        if (this.monitoringMessageReplyTimeout) {
+            clearTimeout(this.monitoringMessageReplyTimeout);
+            this.logger.trace("Monitoring reply check removed");
+        }
+
         let exitcode = 0;
 
         try {
             this.logger.info("Cleaning up streams");
 
-            await promiseTimeout(
-                this.hostClient.disconnect(), 5000
-            );
+            // await promiseTimeout(
+            //     this.hostClient.disconnect(), 5000
+            // );
         } catch (e: any) {
             exitcode = RunnerExitCode.CLEANUP_FAILED;
         }
