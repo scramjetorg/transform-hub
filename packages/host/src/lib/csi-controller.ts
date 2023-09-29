@@ -536,7 +536,10 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         if (this.instanceAdapter.setRunner) {
-            this.instanceAdapter.setRunner(message[1].payload.system);
+            await this.instanceAdapter.setRunner({
+                ...message[1].payload.system,
+                id: this.id
+            });
         }
 
         this.info.ports = message[1].ports;

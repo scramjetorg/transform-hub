@@ -171,6 +171,14 @@ IComponent {
         };
     }
 
+    async setRunner(system: Record<string, string>): Promise<void> {
+        const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", system.id);
+
+        this.logger.debug("Container id restored", containerId);
+
+        this.resources.containerId = containerId;
+    }
+
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
         return this.waitUntilExit(config, instanceId, sequenceInfo);
@@ -235,6 +243,8 @@ IComponent {
     async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
         try {
             const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
+
+            this.logger.debug("Container id restored", containerId);
 
             this.resources.containerId = containerId;
 
