@@ -84,23 +84,42 @@ const waitForProcessToEnd = async (pid: number) => {
     }
 };
 
-const killRunner = async () => {
-    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-        // @TODO
-        return;
+// const killRunner = async () => {
+//     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+//         // @TODO
+//         return;
+//     }
+
+//     if (process.env.RUNTIME_ADAPTER === "process" && processId) {
+//         try {
+//             process.kill(processId);
+//             await waitForProcessToEnd(processId);
+//         } catch (e) {
+//             console.error("Couldn't kill runner", e);
+//         }
+//     }
+
+//     if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
+//         await dockerode.getContainer(containerId).kill();
+//     }
+// };
+
+const killAllRunners = async () => {
+    if (process.env.RUNTIME_ADAPTER === "process") {
+        exec("killall runner");
     }
 
-    if (process.env.RUNTIME_ADAPTER === "process" && processId) {
-        try {
-            process.kill(processId);
-            await waitForProcessToEnd(processId);
-        } catch (e) {
-            console.error("Couldn't kill runner", e);
-        }
-    }
+    if (process.env.RUNTIME_ADAPTER === "docker") {
+        await Promise.all(
+            (await dockerode.listContainers())
+                .map(async container => {
+                    if (container.Labels["scramjet.instance.id"]) {
+                        return dockerode.getContainer(container.Id).kill();
+                    }
 
-    if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
-        await dockerode.getContainer(containerId).kill();
+                    return Promise.resolve();
+                })
+        );
     }
 };
 
@@ -162,7 +181,7 @@ Before(() => {
     streams = {};
 });
 
-After({ tags: "@runner-cleanup" }, killRunner);
+After({ tags: "@runner-cleanup" }, killAllRunners);
 
 const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
