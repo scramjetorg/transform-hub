@@ -273,18 +273,20 @@ export class Runner<X extends AppConfig> implements IComponent {
             [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
         );
 
-        this.monitoringMessageReplyTimeout = setTimeout(async () => {
-            await this.handleDisconnect();
-        }, 500);
+        // this.monitoringMessageReplyTimeout = setTimeout(async () => {
+        //     await this.handleDisconnect();
+        // }, 1000);
     }
 
-    async handleDisconnect() {
-        this.logger.info("Reinitializing....");
+    // async handleDisconnect() {
+    //     await defer(5000);
 
-        this.premain().catch((e) => {
-            this.logger.error("Premain error", e);
-        });
-    }
+    //     this.logger.info("Reinitializing....");
+
+    //     this.premain().catch((e) => {
+    //         this.logger.error("Premain error", e);
+    //     });
+    // }
 
     async handleKillRequest(): Promise<void> {
         this.logger.debug("Handling KILL request");
