@@ -53,6 +53,7 @@ import { ReasonPhrases } from "http-status-codes";
 const runnerExitDelay = 15000;
 
 type Events = {
+    ping: (pingMessage: MessageDataType<RunnerMessageCode.PING>) => void;
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
     hourChime: () => void;
     error: (error: any) => void;
@@ -175,7 +176,7 @@ export class CSIController extends TypedEmitter<Events> {
         super();
 
         // eslint-disable-next-line no-console
-        console.log(handshakeMessage);
+        console.log("csic constructor handshakeMessage", handshakeMessage);
 
         this.id = this.handshakeMessage.id;
         this.runnerSystemInfo = this.handshakeMessage.payload.system;
@@ -466,14 +467,19 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             // eslint-disable-next-line no-console
             console.log("ping", message);
+
+            this.provides ||= this.outputTopic || message[1].payload?.outputTopic;
+            this.requires ||= this.inputTopic || message[1].payload?.inputTopic;
+
             await this.handleHandshake(message);
 
+            this.emit("ping", message[1]);
             return null;
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
             // eslint-disable-next-line no-console
-            console.log("pong", message);
+            console.log("pang", message);
 
             const pangData = message[1];
 
@@ -545,6 +551,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.info.ports = message[1].ports;
         this.sequence = message[1].sequenceInfo;
 
+        this.inputTopic = message[1].payload?.inputTopic;
+        this.outputTopic = message[1].payload?.outputTopic;
         // TODO: add message to initiate the instance adapter
 
         if (this.controlDataStream) {

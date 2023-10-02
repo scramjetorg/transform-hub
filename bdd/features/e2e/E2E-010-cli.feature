@@ -46,6 +46,7 @@ Feature: CLI tests
 
     @ci-api @cli
     Scenario: E2E-010 TC-006 Test Sequence 'prune --force' option
+        Given I set config for local Hub
         When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "seq send ../packages/csv-transform.tar.gz"
         When I execute CLI with "seq list"

@@ -14,6 +14,7 @@ import {
     IComponent,
     IMonitoringServerConstructor,
     IObjectLogger,
+    Instance,
     LogLevel,
     MonitoringServerConfig,
     NextCallback,
@@ -277,12 +278,30 @@ export class Host implements IComponent {
             this.pushTelemetry("Instance error", { ...errorData }, "error");
         });
 
-        this.csiDispatcher.on("end", () => {
+        this.csiDispatcher.on("end", (terminated) => {
+            const seq = this.sequenceStore.getById(terminated.sequence.id);
 
+            // eslint-disable-next-line no-console
+            console.log("ended", terminated);
+
+            if (seq) {
+                seq.instances = seq.instances.filter(i => i !== terminated.id);
+            }
+
+            delete this.instancesStore[terminated.id];
         });
 
-        this.csiDispatcher.on("terminated", () => {
+        this.csiDispatcher.on("established", (instance: Instance) => {
+            const seq = this.sequenceStore.getById(instance.sequence.id);
 
+            // eslint-disable-next-line no-console
+            console.log("established", instance);
+
+            if (seq) {
+                seq.instances.push(instance.id);
+            } else {
+                this.logger.warn("Instance of not existing sequence connected");
+            }
         });
     }
 
@@ -648,6 +667,8 @@ export class Host implements IComponent {
                 error: `The sequence ${id} does not exist.`
             };
         }
+        // eslint-disable-next-line no-console
+        console.log("Instances of sequence", sequenceInfo.id, sequenceInfo.instances);
 
         if (sequenceInfo.instances.length > 0) {
             const instances = [...sequenceInfo.instances].every((instanceId) => {
