@@ -182,6 +182,13 @@ Before(() => {
 });
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
+After({}, async () => {
+    const seqs = await hostClient.listSequences();
+
+    await Promise.all(
+        seqs.map(seq => hostClient.deleteSequence(seq.id, { force: true }))
+    );
+});
 
 const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
