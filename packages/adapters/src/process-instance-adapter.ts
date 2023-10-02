@@ -256,7 +256,11 @@ class ProcessInstanceAdapter implements
      * Forcefully stops Runner process.
      */
     async remove() {
-        this.runnerProcess?.kill();
+        if (this.runnerProcess) {
+            this.runnerProcess.kill();
+        } else {
+            spawn("kill", ["-9", this.processPID.toString()]);
+        }
     }
 
     async getCrashLog(): Promise<string[]> {

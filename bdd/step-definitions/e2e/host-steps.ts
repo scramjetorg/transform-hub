@@ -183,10 +183,16 @@ Before(() => {
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
 After({}, async () => {
-    const seqs = await hostClient.listSequences();
+    let insts = [];
+
+    try {
+        insts = await hostClient.listInstances();
+    } catch (_e) {
+        return;
+    }
 
     await Promise.all(
-        seqs.map(seq => hostClient.deleteSequence(seq.id, { force: true }))
+        insts.map(i => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
     );
 });
 
