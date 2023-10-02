@@ -2,6 +2,12 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.36.1] - 2023-10-02
+
+## Fixed
+
+* Add missing dependency in STH Dockerfile by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/956
+
 ## [0.36.0] - 2023-09-25
 
 ## Features
