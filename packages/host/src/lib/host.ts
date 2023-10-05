@@ -6,7 +6,7 @@ import { AddressInfo } from "net";
 import { Duplex } from "stream";
 
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { HostHeaders, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
     CPMConnectorOptions,
@@ -55,7 +55,7 @@ import { SocketServer } from "./socket-server";
 import SequenceStore from "./sequenceStore";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
-import { CSIDispatcher } from "./csi-dispatcher";
+import { CSIDispatcher, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -240,7 +240,12 @@ export class Host implements IComponent {
         this.instanceBase = `${this.config.host.apiBase}/instance`;
         this.topicsBase = `${this.config.host.apiBase}/topic`;
 
-        this.csiDispatcher = new CSIDispatcher(this.instancesStore, this.serviceDiscovery, sthConfig);
+        this.csiDispatcher = new CSIDispatcher({
+            instanceStore: this.instancesStore,
+            sequenceStore: this.sequenceStore,
+            serviceDiscovery: this.serviceDiscovery,
+            STHConfig: sthConfig
+        });
 
         this.csiDispatcher.logger.pipe(this.logger);
 
@@ -274,34 +279,74 @@ export class Host implements IComponent {
     }
 
     attachDispatcherEvents() {
-        this.csiDispatcher.on("error", (errorData) => {
-            this.pushTelemetry("Instance error", { ...errorData }, "error");
+        this.csiDispatcher
+            .on("end", async (eventData: DispatcherInstanceEndEventData) => {
+                await this.handleDispatcherEndEvent(eventData);
+            })
+            .on("established", async (instance: Instance) => {
+                await this.handleDispatcherEstablishedEvent(instance);
+            })
+            .on("terminated", async (eventData: DispatcherInstanceTerminatedEventData) => {
+                await this.handleDispatcherTerminatedEvent(eventData);
+            })
+            .on("error", (errorData: DispatcherErrorEventData) => {
+                this.pushTelemetry("Instance error", { ...errorData }, "error");
+            });
+    }
+
+    /**
+     * Pass information about connected instance to monitoring and platform services.
+     *
+     * @param {Instance} instance Instance data.
+     */
+    async handleDispatcherEstablishedEvent(instance: Instance) {
+        this.auditor.auditInstance(instance.id, InstanceMessageCode.INSTANCE_CONNECTED);
+
+        await this.cpmConnector?.sendInstanceInfo({
+            id: instance.id,
+            sequence: instance.sequence
+        }, InstanceMessageCode.INSTANCE_CONNECTED);
+
+        this.pushTelemetry("Instance connected", {
+            id: instance.id,
+            seqId: instance.sequence.id
         });
+    }
 
-        this.csiDispatcher.on("end", (terminated) => {
-            const seq = this.sequenceStore.getById(terminated.sequence.id);
+    /**
+     * Pass information about ended instance to monitoring and platform services.
+     *
+     * @param {DispatcherInstanceEndEventData} eventData Event details.
+     */
+    async handleDispatcherEndEvent(eventData: DispatcherInstanceEndEventData) {
+        this.auditor.auditInstance(eventData.id, InstanceMessageCode.INSTANCE_ENDED);
 
-            // eslint-disable-next-line no-console
-            console.log("ended", terminated);
+        await this.cpmConnector?.sendInstanceInfo({
+            id: eventData.id,
+            sequence: eventData.sequence
+        }, InstanceMessageCode.INSTANCE_ENDED);
 
-            if (seq) {
-                seq.instances = seq.instances.filter(i => i !== terminated.id);
-            }
-
-            delete this.instancesStore[terminated.id];
+        this.pushTelemetry("Instance ended", {
+            executionTime: eventData.info.executionTime.toString(),
+            id: eventData.id,
+            code: eventData.code.toString(),
+            seqId: eventData.sequence.id
         });
+    }
 
-        this.csiDispatcher.on("established", (instance: Instance) => {
-            const seq = this.sequenceStore.getById(instance.sequence.id);
+    /**
+     * Pass information about terminated instance to monitoring services.
+     *
+     * @param {DispatcherInstanceTerminatedEventData} eventData Event details.
+     */
+    async handleDispatcherTerminatedEvent(eventData: DispatcherInstanceTerminatedEventData) {
+        this.auditor.auditInstance(eventData.id, InstanceMessageCode.INSTANCE_TERMINATED);
 
-            // eslint-disable-next-line no-console
-            console.log("established", instance);
-
-            if (seq) {
-                seq.instances.push(instance.id);
-            } else {
-                this.logger.warn("Instance of not existing sequence connected");
-            }
+        this.pushTelemetry("Instance terminated", {
+            executionTime: eventData.info.executionTime.toString(),
+            id: eventData.id,
+            code: eventData.code.toString(),
+            seqId: eventData.sequence.id
         });
     }
 

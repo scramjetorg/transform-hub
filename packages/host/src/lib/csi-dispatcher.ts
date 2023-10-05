@@ -2,7 +2,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, STHConfiguration, STHRestAPI, SequenceInfo } from "@scramjet/types";
+import { HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
 import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
@@ -11,32 +11,45 @@ import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
+import SequenceStore from "./sequenceStore";
 
-type errorEventData = {id:string, err: any }
-type endEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfo};
+export type DispatcherErrorEventData = { id:string, err: any };
+export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};
+export type DispatcherInstanceTerminatedEventData = DispatcherInstanceEndEventData;
+export type DispatcherInstanceEstablishedEventData = Instance;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
     hourChime: () => void;
-    error: (data: errorEventData) => void;
+    error: (data: DispatcherErrorEventData) => void;
     stop: (code: number) => void;
-    end: (data: endEventData) => void;
-    terminated: (data: endEventData) => void;
-    established: (instance: Instance) => void;
+    end: (data: DispatcherInstanceEndEventData) => void;
+    terminated: (data: DispatcherInstanceEndEventData) => void;
+    established: (data: DispatcherInstanceEstablishedEventData) => void;
 };
+
+type CSIDispatcherOpts = {
+    instanceStore: typeof InstanceStore,
+    sequenceStore: SequenceStore,
+    serviceDiscovery: ServiceDiscovery,
+    STHConfig: STHConfiguration
+}
 
 export class CSIDispatcher extends TypedEmitter<Events> {
     public logger: IObjectLogger;
-    public instancesStore: typeof InstanceStore;
+    public instanceStore: typeof InstanceStore;
+    public sequenceStore: SequenceStore;
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
 
-    constructor(instancesStore: typeof InstanceStore, serviceDiscovery: ServiceDiscovery, STHConfig: STHConfiguration) {
+    constructor(opts: CSIDispatcherOpts) {
         super();
+
         this.logger = new ObjLogger(this);
-        this.instancesStore = instancesStore;
-        this.STHConfig = STHConfig;
-        this.serviceDiscovery = serviceDiscovery;
+        this.instanceStore = opts.instanceStore;
+        this.sequenceStore = opts.sequenceStore;
+        this.STHConfig = opts.STHConfig;
+        this.serviceDiscovery = opts.serviceDiscovery;
     }
 
     async createCSIController(
@@ -61,7 +74,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         });
 
         // eslint-disable-next-line complexity
-        csiController.on("pang", async (data) => {
+        csiController.on("pang", async (data: PangMessageData) => {
             this.logger.trace("PANG received", [csiController.id, data]);
 
             if ((data.requires || data.provides) && !data.contentType) {
@@ -85,6 +98,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             if (data.provides && !csiController.outputRouted && data.contentType) {
                 this.logger.trace("Routing Sequence output to topic", data.provides);
+
                 await this.serviceDiscovery.routeStreamToTopic(
                     csiController.getOutputStream(),
                     { topic: new TopicId(data.provides), contentType: data.contentType as ContentType }
@@ -98,11 +112,19 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             }
         });
 
-        csiController.on("ping", (pingMessage) => {
+        csiController.on("ping", (pingMessage: PingMessageData) => {
+            const seq = this.sequenceStore.getById(csiController.sequence.id);
+
+            if (seq) {
+                seq.instances.push(csiController.id);
+            } else {
+                this.logger.warn("Instance of not existing sequence connected");
+                //@TODO: ?
+            }
             this.emit("established", { id: pingMessage.id, sequence: pingMessage.sequenceInfo });
         });
 
-        csiController.on("end", async (code) => {
+        csiController.on("end", async (code: number) => {
             this.logger.trace("csiControllerontrolled ended", `id: ${csiController.id}`, `Exit code: ${code}`);
 
             if (csiController.provides && csiController.provides !== "") {
@@ -116,12 +138,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             csiController.logger.unpipe(this.logger);
 
-            // await this.cpmConnector?.sendInstanceInfo({
-            //     id: csiController.id,
-            //     sequence: sequence.id
-            // }, InstanceMessageCode.INSTANCE_ENDED);
-
-            // this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
             this.emit("end", {
                 id,
                 code,
@@ -130,6 +146,14 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 },
                 sequence: csiController.sequence
             });
+
+            const seq = this.sequenceStore.getById(csiController.sequence.id);
+
+            if (seq) {
+                seq.instances = seq.instances.filter(i => i !== csiController.id);
+            }
+
+            delete this.instanceStore[csiController.id];
         });
 
         csiController.once("terminated", (code) => {
@@ -140,16 +164,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 }) as Readable
                 ).unpipe(csiController.getInputStream()!);
             }
-
-            // this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
-            // this.pushTelemetry("Instance ended", {
-            //     executionTime: csiController.info.ended && csiController.info.started
-            //         ? ((csiController.info.ended?.getTime() - csiController.info.started.getTime()) / 1000).toString()
-            //         : "-1",
-            //     id: csiController.id,
-            //     code: code.toString(),
-            //     seqId: csiController.sequence.id
-            // });
 
             this.emit("terminated", {
                 id,
@@ -168,7 +182,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.trace("csiController started", id);
 
-        this.instancesStore[id] = csiController;
+        this.instanceStore[id] = csiController;
 
         return csiController;
     }
@@ -214,8 +228,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             appConfig: payload.appConfig,
             args: payload.args,
             sequenceId: sequence.id,
-            info: {
-            },
+            info: {},
             limits,
             sequence
         };
