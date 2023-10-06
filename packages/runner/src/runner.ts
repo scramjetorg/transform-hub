@@ -148,6 +148,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     private outputDataStream: DataStream;
     private sequenceInfo: SequenceInfo;
 
+    private connected = false;
+
     private runnerConnectInfo: RunnerConnectInfo = {
         appConfig: {}
     };
@@ -256,7 +258,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
-            if (working) {
+            if (working || !this.connected) {
                 return;
             }
 
@@ -273,20 +275,25 @@ export class Runner<X extends AppConfig> implements IComponent {
             [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
         );
 
-        // this.monitoringMessageReplyTimeout = setTimeout(async () => {
-        //     await this.handleDisconnect();
-        // }, 1000);
+        this.monitoringMessageReplyTimeout = setTimeout(async () => {
+            if (!this.connected) return;
+
+            this.connected = false;
+
+            await this.handleDisconnect();
+        }, 1000);
     }
 
-    // async handleDisconnect() {
-    //     await defer(5000);
+    async handleDisconnect() {
+        this.connected = false;
+        //await this.hostClient.disconnect();
 
-    //     this.logger.info("Reinitializing....");
+        await defer(5000);
 
-    //     this.premain().catch((e) => {
-    //         this.logger.error("Premain error", e);
-    //     });
-    // }
+        this.logger.info("Reinitializing....");
+
+        await this.premain();
+    }
 
     async handleKillRequest(): Promise<void> {
         this.logger.debug("Handling KILL request");
@@ -345,7 +352,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             await this.hostClient.init(this.instanceId);
+            this.connected = true;
         } catch (e) {
+            this.connected = false;
             this.logger.error("hostClient init error", e);
 
             await defer(2000);
