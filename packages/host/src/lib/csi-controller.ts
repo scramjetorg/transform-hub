@@ -468,8 +468,12 @@ export class CSIController extends TypedEmitter<Events> {
             // eslint-disable-next-line no-console
             console.log("ping", message);
 
-            this.provides ||= this.outputTopic || message[1].payload?.outputTopic;
-            this.requires ||= this.inputTopic || message[1].payload?.inputTopic;
+            const payload = message[1].payload;
+
+            this.args = message[1].payload.args;
+
+            this.provides ||= this.outputTopic || payload?.outputTopic;
+            this.requires ||= this.inputTopic || payload?.inputTopic;
 
             await this.handleHandshake(message);
 
