@@ -166,7 +166,7 @@ class Runner:
                 await self.handle_stop(data)
             if code == msg_codes.EVENT.value:
                 self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
-            if code == msg_codes.FORCE_CONFIRM_ALIVE.value:
+            if code == msg_codes.MONITORING_REPLY.value:
                 self.runner_clock.reset(self.reconnect)
 
     async def handle_stop(self, data):
