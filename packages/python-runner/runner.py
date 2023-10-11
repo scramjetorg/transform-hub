@@ -11,6 +11,7 @@ from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
+from runnerClock import RunnerClock
 
 
 sequence_path = os.getenv('SEQUENCE_PATH')
@@ -49,7 +50,12 @@ class Runner:
         self.health_check = lambda: {'healthy': True}
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
+        self.runner_clock = RunnerClock(2)
 
+    async def reconnect(self):
+        self.logger.debug('trying to reconnect...')
+        #reconnect logic here
+        self.runner_clock.reset(self.reconnect)
 
     async def main(self, server_host, server_port):
         self.logger.info('Connecting to host...')
@@ -65,6 +71,7 @@ class Runner:
         asyncio.create_task(self.setup_heartbeat())
 
         self.load_sequence()
+        self.runner_clock.start(self.reconnect)
         await self.run_instance(config, args)
 
 
@@ -159,7 +166,8 @@ class Runner:
                 await self.handle_stop(data)
             if code == msg_codes.EVENT.value:
                 self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
-
+            if code == msg_codes.FORCE_CONFIRM_ALIVE.value:
+                self.runner_clock.reset(self.reconnect)
 
     async def handle_stop(self, data):
         self.logger.info(f'Gracefully shutting down...{data}')
