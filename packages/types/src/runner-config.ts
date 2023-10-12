@@ -50,6 +50,6 @@ export type SequenceConfigDisplay = CommonSequenceConfig & {
 }
 
 // eslint-disable-next-line max-len
-export type SequenceConfig = DockerSequenceConfig | SequenceConfigDisplay | ProcessSequenceConfig | KubernetesSequenceConfig;
+export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig | SequenceConfigDisplay;
 
 export type InstanceConfig = SequenceConfig & { instanceAdapterExitDelay: number, limits: InstanceLimits }
