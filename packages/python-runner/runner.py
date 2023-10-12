@@ -54,21 +54,32 @@ class Runner:
 
     async def reconnect(self):
         self.logger.debug('trying to reconnect...')
-        #reconnect logic here
+        await self.premain()
+
+        asyncio.sleep(1)
         self.runner_clock.reset(self.reconnect)
 
-    async def main(self, server_host, server_port):
-        self.logger.info('Connecting to host...')
-        await self.init_connections(server_host, server_port)
+    async def premain(self):
+        try:
+            await self.init_connections(server_host, server_port)
+        except:
+            self.logger.debug("hostClient init error")
+            asyncio.sleep(2)
+            return await self.premain()
 
-        # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
         self.connect_log_stream()
-
         config, args = await self.handshake()
         self.logger.info('Communication established.')
+
         asyncio.create_task(self.connect_control_stream())
         asyncio.create_task(self.setup_heartbeat())
+
+        return config, args
+
+    async def main(self):
+        self.logger.info('Connecting to host...')
+        config, args = await self.premain()
 
         self.load_sequence()
         self.runner_clock.start(self.reconnect)
@@ -348,4 +359,4 @@ if not sequence_path or not server_port or not instance_id:
     sys.exit(2)
 
 runner = Runner(instance_id, sequence_path, log_setup)
-asyncio.run(runner.main(server_host, server_port))
+asyncio.run(runner.main())
