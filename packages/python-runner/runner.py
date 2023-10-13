@@ -11,7 +11,8 @@ from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
-
+# from runnerClock import RunnerClock
+import threading
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -40,7 +41,12 @@ class StderrRedirector:
 
 
 class Runner:
+
+
+
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
+        self.reconnect_interval = None
+        self.connected = False
         self.instance_id = instance_id
         self.seq_path = sequence_path
         self._logging_setup = log_setup
@@ -49,22 +55,45 @@ class Runner:
         self.health_check = lambda: {'healthy': True}
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
+        #self.runner_clock = RunnerClock(2)
+
+    async def reconnect(self):
+        self.logger.debug('trying to reconnect...')
+        await self.premain()
+
+        # await asyncio.sleep(1)
+        # self.runner_clock.reset(self.reconnect)
 
 
-    async def main(self, server_host, server_port):
+    async def premain(self):
         self.logger.info('Connecting to host...')
-        await self.init_connections(server_host, server_port)
 
-        # Do this early to have access to any thrown exceptions and logs.
+        try:
+            if not self.connected:
+                self.logger.debug(f"connected: {self.connected}")
+                await self.init_connections(server_host, server_port)
+        except:
+            self.logger.debug("hostClient init error")
+            await asyncio.sleep(2)
+            return await self.premain()
+
+        self.connected = True
+
         self.connect_stdio()
         self.connect_log_stream()
-
         config, args = await self.handshake()
         self.logger.info('Communication established.')
+
         asyncio.create_task(self.connect_control_stream())
         asyncio.create_task(self.setup_heartbeat())
 
+        return config, args
+
+    async def main(self):
+        config, args = await self.premain()
+
         self.load_sequence()
+
         await self.run_instance(config, args)
 
 
@@ -107,9 +136,9 @@ class Runner:
     def connect_log_stream(self):
         self.logger.info('Switching to main log stream...')
         log_stream = codecs.getwriter('utf-8')(self.streams[CC.LOG])
-        self._logging_setup.switch_target(log_stream)
-        self._logging_setup.flush_temp_handler()
-        self.logger.info('Log stream connected.')
+        # self._logging_setup.switch_target(log_stream)
+        # self._logging_setup.flush_temp_handler()
+        # self.logger.info('Log stream connected.')
 
 
     async def handshake(self):
@@ -159,7 +188,13 @@ class Runner:
                 await self.handle_stop(data)
             if code == msg_codes.EVENT.value:
                 self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
+            if code == msg_codes.MONITORING_REPLY.value:
+                self.logger.debug("Monitoring reply received. Canceling reconnect")
 
+                if self.reconnect_interval:
+                    self.logger.debug("Reconnect has been set. canceling")
+                    self.reconnect_interval.cancel()
+                    self.reconnect_interval = None
 
     async def handle_stop(self, data):
         self.logger.info(f'Gracefully shutting down...{data}')
@@ -181,14 +216,31 @@ class Runner:
 
 
     async def setup_heartbeat(self):
-        while True:
+        async def timeout(self):
+            self.logger.debug("timeout method")
+
+            await asyncio.sleep(4)
+
+            self.connected = False
+
+            self.logger.debug("TIMEOUT!, going to reconnect...")
+
+            await self.reconnect()
+
+        while self.connected:
+            await asyncio.sleep(5)
+
+            self.logger.debug(f"Sending health check {self.reconnect_interval}")
+
+
             send_encoded_msg(
                 self.streams[CC.MONITORING],
                 msg_codes.MONITORING,
                 self.health_check(),
             )
-            await asyncio.sleep(1)
 
+            if self.reconnect_interval == None:
+                self.reconnect_interval = asyncio.create_task(timeout(self))
 
     def load_sequence(self):
         # Add sequence directory to sys.path
@@ -340,4 +392,4 @@ if not sequence_path or not server_port or not instance_id:
     sys.exit(2)
 
 runner = Runner(instance_id, sequence_path, log_setup)
-asyncio.run(runner.main(server_host, server_port))
+asyncio.run(runner.main())
