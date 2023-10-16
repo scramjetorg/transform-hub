@@ -222,7 +222,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             this.on("established", resolveFunction);
         });
 
-        // @todo more instance info
         return {
             id,
             appConfig: payload.appConfig,

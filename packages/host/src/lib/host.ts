@@ -525,7 +525,6 @@ export class Host implements IComponent {
                     this.logger.warn("Sequence id not found for startup config", seqenceConfig);
                     return;
                 }
-                // @todo dispatcher
                 await this.csiDispatcher.startRunner(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
@@ -1078,7 +1077,6 @@ export class Host implements IComponent {
         this.socketServer.on("connect", async (id, streams) => {
             this.logger.debug("Instance connecting", id);
 
-            // @todo need more instance info
             if (!this.instancesStore[id]) {
                 this.logger.info("creating new CSIController for runner connecting");
 

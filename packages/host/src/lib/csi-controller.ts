@@ -174,10 +174,6 @@ export class CSIController extends TypedEmitter<Events> {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
     ) {
         super();
-
-        // eslint-disable-next-line no-console
-        console.log("csic constructor handshakeMessage", handshakeMessage);
-
         this.id = this.handshakeMessage.id;
         this.runnerSystemInfo = this.handshakeMessage.payload.system;
         this.sequence = this.handshakeMessage.sequenceInfo;
@@ -268,10 +264,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.emit("end", code);
     }
 
-    /**
-     * @todo add comment
-     * @todo move this to CSIDispatcher - that would be one for all sequences
-     */
     startInstance() {
         this._instanceAdapter = getInstanceAdapter(this.adapter, this.sthConfig, this.id);
 
@@ -465,9 +457,6 @@ export class CSIController extends TypedEmitter<Events> {
             .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
-            // eslint-disable-next-line no-console
-            console.log("ping", message);
-
             const payload = message[1].payload;
 
             this.args = message[1].payload.args;
@@ -482,9 +471,6 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
-            // eslint-disable-next-line no-console
-            console.log("pang", message);
-
             const pangData = message[1];
 
             this.provides ||= this.outputTopic || pangData.provides;
@@ -503,8 +489,6 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
             const stats = await this.instanceAdapter.stats(message[1]);
-
-            this.logger.debug("Health stats", stats);
 
             this._lastStats = stats;
 
