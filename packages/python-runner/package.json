@@ -13,8 +13,7 @@
   "assets": [
     "hardcoded_magic_values.py",
     "logging_setup.py",
-    "runner.py",
-    "runnerClock.py"
+    "runner.py"
   ],
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",

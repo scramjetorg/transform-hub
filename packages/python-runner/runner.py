@@ -11,8 +11,6 @@ from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
-# from runnerClock import RunnerClock
-import threading
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -41,9 +39,6 @@ class StderrRedirector:
 
 
 class Runner:
-
-
-
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
         self.reconnect_interval = None
         self.connected = False
@@ -55,15 +50,10 @@ class Runner:
         self.health_check = lambda: {'healthy': True}
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
-        #self.runner_clock = RunnerClock(2)
 
     async def reconnect(self):
         self.logger.debug('trying to reconnect...')
         await self.premain()
-
-        # await asyncio.sleep(1)
-        # self.runner_clock.reset(self.reconnect)
-
 
     async def premain(self):
         self.logger.info('Connecting to host...')
