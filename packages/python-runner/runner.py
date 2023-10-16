@@ -143,9 +143,9 @@ class Runner:
     def connect_log_stream(self):
         self.logger.info('Switching to main log stream...')
         log_stream = codecs.getwriter('utf-8')(self.streams[CC.LOG])
-        # self._logging_setup.switch_target(log_stream)
-        # self._logging_setup.flush_temp_handler()
-        # self.logger.info('Log stream connected.')
+        self._logging_setup.switch_target(log_stream)
+        self._logging_setup.flush_temp_handler()
+        self.logger.info('Log stream connected.')
 
 
     async def handshake(self):
@@ -196,10 +196,8 @@ class Runner:
             if code == msg_codes.EVENT.value:
                 self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
             if code == msg_codes.MONITORING_REPLY.value:
-                self.logger.debug("Monitoring reply received. Canceling reconnect")
 
                 if self.reconnect_interval:
-                    self.logger.debug("Reconnect has been set. canceling")
                     self.reconnect_interval.cancel()
                     self.reconnect_interval = None
 
@@ -234,8 +232,6 @@ class Runner:
 
         while self.connected:
             await asyncio.sleep(5)
-
-            self.logger.debug(f"Sending health check {self.reconnect_interval}")
 
             send_encoded_msg(
                 self.streams[CC.MONITORING],
@@ -358,15 +354,18 @@ class Runner:
 
     async def forward_output_stream(self):
         if self.instance_direct_output is None:
+            self.logger.warn("Instance direct output not initialized")
             return
 
-        if self.output_content_type == 'text/plain':
-            self.logger.debug('Output stream will be treated as text and encoded')
-            self.instance_output = self.instance_direct_output.map(lambda s: s.encode())
-        if self.output_content_type == 'application/x-ndjson':
-            self.logger.debug('Output will be converted to JSON')
-            self.instance_output = self.instance_direct_output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
+        if self.instance_output is None:
+            if self.output_content_type == 'text/plain':
+                self.logger.debug('Output stream will be treated as text and encoded')
+                self.instance_output = self.instance_direct_output.map(lambda s: s.encode())
+            if self.output_content_type == 'application/x-ndjson':
+                self.logger.debug('Output will be converted to JSON')
+                self.instance_output = self.instance_direct_output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
+        self.logger.debug("Writing instance_output to CC.OUT")
         await self.instance_output.write_to(self.streams[CC.OUT])
 
 
