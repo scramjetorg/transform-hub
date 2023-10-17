@@ -84,7 +84,6 @@ class Runner:
         await self.connect_to_host()
 
         asyncio.create_task(self.connect_input_stream())
-        self.forward_output_stream()
 
         self.connect_stdio()
         self.connect_log_stream()
@@ -93,7 +92,8 @@ class Runner:
 
         asyncio.create_task(self.connect_control_stream())
         asyncio.create_task(self.setup_heartbeat())
-        await self.forward_output_stream()
+
+        self.forward_output_stream()
 
         return config, args
 
@@ -274,6 +274,7 @@ class Runner:
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
         consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
+
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
             send_encoded_msg(monitoring, msg_codes.PANG, consumes)
@@ -288,7 +289,18 @@ class Runner:
             self.logger.info("Instance result stream")
             self.instance_direct_output = result
             self.get_output_content_type()
-            await self.forward_output_stream()
+            self.forward_output_stream()
+
+            end_stream = Stream()
+            self.instance_output.pipe(end_stream)
+
+
+            while True:
+                chunk = await end_stream.read()
+                if chunk is None:
+                    self.logger.debug('Ending output')
+                    break
+
         else:
             self.logger.debug('Sequence returned no output.')
 
@@ -332,7 +344,7 @@ class Runner:
         else:
             raise TypeError(f'Unsupported input type: {repr(self.input_type)}')
 
-        input.pipe(self.instance_input)
+        input.pipe(self.instance_input, False)
         self.logger.debug('Input stream forwarded to the instance.')
 
 
@@ -352,12 +364,15 @@ class Runner:
         self.logger.info(f'Content-type: {self.output_content_type}')
 
 
-    async def forward_output_stream(self):
+    def forward_output_stream(self):
         if self.instance_direct_output is None:
             self.logger.warn("Instance direct output not initialized")
             return
 
-        if self.instance_output is None:
+        if self.instance_output and len(self.instance_output._sinks) > 0:
+            self.instance_output.unpipe()
+            # self.instance_output.end()
+        else:
             if self.output_content_type == 'text/plain':
                 self.logger.debug('Output stream will be treated as text and encoded')
                 self.instance_output = self.instance_direct_output.map(lambda s: s.encode())
@@ -366,7 +381,15 @@ class Runner:
                 self.instance_output = self.instance_direct_output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
         self.logger.debug("Writing instance_output to CC.OUT")
-        await self.instance_output.write_to(self.streams[CC.OUT])
+
+        s = Stream()
+
+        self.instance_output.pipe(s, False)
+
+        async def write():
+            await s.write_to(self.streams[CC.OUT])
+
+        asyncio.create_task(write())
 
 
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
