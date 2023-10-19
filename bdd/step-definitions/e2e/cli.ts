@@ -12,7 +12,7 @@ import { CustomWorld } from "../world";
 import { spawn } from "child_process";
 import { once } from "events";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-// import { extractJsonFromSiSeqDeploy, extractKillResponseFromSiInstRestart } from "../../lib/json.parser";
+import { extractKillResponseFromSiInstRestart } from "../../lib/json.parser";
 
 addLoggerOutput(process.stdout, process.stdout);
 
@@ -327,21 +327,22 @@ Then("I confirm I switched to {string} profile", async function (this: CustomWor
     assert.equal(defaultConfig, true);
 });
 
-Then("I restart instance", async function (this: CustomWorld) {
+Then("I confirm instance status is {string}", async function (this: CustomWorld, expectedStatus: string) {
     const resources = this.cliResources;
     const stdio = resources.stdio;
-    const data = stdio?.[0];
+    const data: string = stdio?.[0]!;
+    let response: any;
 
-    // eslint-disable-next-line no-console
-    console.log(data);
-    // const obj = extractJsonFromSiSeqDeploy(data);
+    switch (expectedStatus) {
+        case "killing":
+            response = extractKillResponseFromSiInstRestart(data);
+            break;
+        case "running":
+            response = JSON.parse(data);
+            break;
+        default:
+            response = null;
+    }
 
-    // stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "restart", obj.instanceId || ""]);
-    // data = stdio[0];
-
-    // const killResponse = extractKillResponseFromSiInstRestart(data);
-
-    // this.cliResources.instanceId = killResponse.id;
-
-    // assert.equal(killResponse.status, "killing");
+    assert.equal(response.status, expectedStatus);
 });
