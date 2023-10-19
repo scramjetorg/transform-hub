@@ -74,7 +74,7 @@ When("I get sequence id", { timeout: 30000 }, async function (this: CustomWorld)
     const stdio = res.stdio![0].split("\n");
     const seqInfo = JSON.parse(stdio[0]);
 
-    this.cliResources.sequenceId = seqInfo._id;
+    this.cliResources.sequenceId = seqInfo.id;
     logger.log("Sequence id: ", this.cliResources.sequenceId);
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);
