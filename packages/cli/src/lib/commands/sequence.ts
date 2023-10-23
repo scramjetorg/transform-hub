@@ -115,19 +115,20 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--hub <provider>", "aws|ovh|gcp");
         .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
+        .option("--inst-id <string>", "Start Sequence with a custom Instance Id.")
         .option("--output-topic <string>", "Topic to which the output stream should be routed")
         .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
-        .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr }) => {
+        .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }) => {
             let args;
 
             if (argsStr) args = sequenceParseArgs(argsStr);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
             const instanceClient = await sequenceStart(
-                id, { configFile, configString, args, outputTopic, inputTopic, limits });
+                id, { configFile, configString, args, outputTopic, inputTopic, limits, instId });
 
             displayObject(instanceClient, profileManager.getProfileConfig().format);
         });
@@ -136,6 +137,7 @@ export const sequence: CommandDefinition = (program) => {
         output: string;
         configFile: any;
         configString: string;
+        instId?: string;
         args?: string;
     };
 
