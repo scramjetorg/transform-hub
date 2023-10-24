@@ -148,10 +148,11 @@ export const sequence: CommandDefinition = (program) => {
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
+        .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
         // TODO: check if output-topic and input-topic should be added after development
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
         .description("Pack (if needed), send and start the Sequence")
-        .action(async (path: string, { output: fileoutput, configFile, configString, args: argsStr }: DeployArgs) => {
+        .action(async (path: string, { output: fileoutput, configFile, configString, args: argsStr, instId }: DeployArgs) => {
             let args;
 
             if (argsStr) args = sequenceParseArgs(argsStr);
@@ -180,7 +181,7 @@ export const sequence: CommandDefinition = (program) => {
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
 
-            const instanceClient = await sequenceStart("-", { configFile, configString, args });
+            const instanceClient = await sequenceStart("-", { configFile, configString, args, instId });
 
             displayObject(instanceClient, format);
         });
