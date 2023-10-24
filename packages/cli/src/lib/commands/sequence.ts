@@ -115,7 +115,7 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--hub <provider>", "aws|ovh|gcp");
         .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
-        .option("--inst-id <string>", "Start Sequence with a custom Instance Id.")
+        .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
         .option("--output-topic <string>", "Topic to which the output stream should be routed")
         .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
