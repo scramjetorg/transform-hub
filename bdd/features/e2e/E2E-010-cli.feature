@@ -139,7 +139,7 @@ Feature: CLI tests
 
 
     @ci-api @cli
-    Scenario: E2E-010 TC-016 Test Instance 'restart' option
+    Scenario: E2E-010 TC-017 Test Instance 'restart' option
         When I execute CLI with "seq deploy ../packages/hello.tar.gz"
         When I execute CLI with "inst restart -"
         Then I confirm instance status is "killing"
