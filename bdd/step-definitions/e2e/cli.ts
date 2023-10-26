@@ -12,7 +12,7 @@ import { CustomWorld } from "../world";
 import { spawn } from "child_process";
 import { once } from "events";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { extractKillResponseFromSiInstRestart } from "../../lib/json.parser";
+import { extractInstanceFromSiInstLs, extractKillResponseFromSiInstRestart } from "../../lib/json.parser";
 
 addLoggerOutput(process.stdout, process.stdout);
 
@@ -345,4 +345,21 @@ Then("I confirm instance status is {string}", async function (this: CustomWorld,
     }
 
     assert.equal(response.status, expectedStatus);
+});
+
+Then(/^I confirm instance id is: (.*)$/, async function (this: CustomWorld, expectedInstanceId: string) {
+    const data = this.cliResources.stdio?.[0];
+    const isLogActive = process.env.SCRAMJET_TEST_LOG;
+
+    const instance = extractInstanceFromSiInstLs(data, expectedInstanceId);
+
+    if (isLogActive) {
+        logger.debug(`Cli resources: `);
+        logger.debug(data);
+        logger.debug(`Expected instance ID: ${expectedInstanceId}`);
+        logger.debug(`Instance received:`);
+        logger.debug(instance);
+    }
+
+    assert.equal(instance.id, expectedInstanceId);
 });

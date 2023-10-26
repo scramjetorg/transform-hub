@@ -6,3 +6,9 @@ export type StartSequenceDTO = {
     args?: string[],
     instanceId?: string;
 }
+
+export type StartSequenceEndpointPayloadDTO = {
+    appConfig?: AppConfig,
+    instanceId?: string;
+    args?: string[],
+}

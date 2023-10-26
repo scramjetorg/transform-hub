@@ -53,9 +53,8 @@ export const config: CommandDefinition = (program) => {
         .description("Print out the current session configuration")
         .action(() => {
             const configuration = profileConfig.get();
-            const session = sessionConfig.get();
 
-            displayObject(session, configuration.log.format);
+            displayObject(sessionConfig.get(), configuration.log.format);
         });
 
     if (isProfileConfig(profileConfig)) {

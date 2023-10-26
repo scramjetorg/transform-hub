@@ -149,14 +149,15 @@ export const sequenceSendPackage = async (
 };
 
 export const sequenceStart = async (
-    id: string, { configFile, configString, args, outputTopic, inputTopic, limits }:
+    id: string, { configFile, configString, args, outputTopic, inputTopic, limits, instId }:
         {
             configFile: any,
             configString: string,
             args?: any[],
             outputTopic?: string,
             inputTopic?: string,
-            limits?: InstanceLimits
+            limits?: InstanceLimits,
+            instId?: string
         }
 ): Promise<InstanceClient> => {
     if (configFile && configString) {
@@ -174,7 +175,9 @@ export const sequenceStart = async (
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
     try {
-        const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic, limits });
+        const instance = await sequenceClient.start({
+            appConfig, args, outputTopic, inputTopic, limits, instanceId: instId
+        });
 
         sessionConfig.setLastInstanceId(instance.id);
         return Promise.resolve(instance);
