@@ -1,6 +1,6 @@
 import { homedir, tmpdir } from "os";
 import { basename, resolve } from "path";
-import { existsSync, mkdirSync, readdirSync, rmSync } from "fs";
+import { accessSync, constants, existsSync, mkdirSync, readdirSync, rmSync } from "fs";
 import { sessionId } from "../utils/sessionId";
 
 export const configFileExt = ".json";
@@ -37,18 +37,31 @@ const initDir = (dir: string) => {
 const procPath = "/proc";
 /**
  * Checks existing si session directories and compares it with list of running sessions.
- * If session no longer exists responding dir is being removed.
+ * If session no longer exists and current user has sufficient permissions, responding dir is being removed.
  */
 const clearUnusedSessionDirs = () => {
     if (!existsSync(siTempDir)) return;
-    const existingSessions = readdirSync(siTempDir).filter(Number);
 
-    if (existingSessions.length === 0) return;
+    const existingSessionsDirs = readdirSync(siTempDir).filter(sessionDirname => {
+        if (!Number(sessionDirname)) return false;
+
+        try {
+            accessSync(resolve(siTempDir, sessionDirname), constants.W_OK);
+            return true;
+        } catch (_e) {
+            return false;
+        }
+    });
+
+    if (existingSessionsDirs.length === 0) return;
+
     const currentPids = readdirSync(procPath).filter(Number);
 
-    existingSessions
+    existingSessionsDirs
         .filter((sessionPID) => !currentPids.includes(sessionPID))
-        .forEach((unusedSession: string) => rmSync(resolve(siTempDir, `./${unusedSession}`), { recursive: true }));
+        .forEach((unusedSession: string) => {
+            rmSync(resolve(siTempDir, `./${unusedSession}`), { recursive: true });
+        });
 };
 
 /**
