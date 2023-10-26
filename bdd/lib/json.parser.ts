@@ -16,3 +16,22 @@ export function extractKillResponseFromSiInstRestart(data: any) {
 
     return killResponse;
 }
+
+export function extractInstanceFromSiInstLs(data: any, instanceId: string) {
+    const lines = data.split("\n");
+    const json = JSON.parse(lines[0]);
+    let instance: any = null;
+
+    if (json.length > 0) {
+        for (let i = 0; i < json.length; i++) {
+            const obj = json[i];
+            const id: string = obj.id;
+
+            if (id.localeCompare(instanceId) === 0) {
+                instance = obj;
+                break;
+            }
+        }
+    }
+    return instance;
+}
