@@ -1,0 +1,19 @@
+{
+  "sequences": [
+    {
+      "id": "supervisor-sequence",
+      "args": [],
+      "instanceId": "Supervisor-Instance-0000-11111111111"
+    },
+    {
+      "id": "producer-sequence",
+      "args": [],
+      "instanceId": "Produce-Inst-must-c0nsist-0f-36signs"
+    },
+    {
+      "id": "consumer-sequence",
+      "args": [],
+      "instanceId": "Consume-Inst-must-c0nsist-0f-36signs"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "configVersion": 1,
+  "apiUrl": "http://127.0.0.1:8000/api/v1",
+  "middlewareApiUrl": "",
+  "env": "development",
+  "scope": "",
+  "token": "",
+  "log": { "debug": false, "format": "pretty" }
+}

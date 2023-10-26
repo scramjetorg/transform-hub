@@ -1,0 +1,12 @@
+{
+  "configVersion": 1,
+  "apiUrl": "http://127.0.0.1:8000/api/v1",
+  "middlewareApiUrl": "https://api.scramjet.cloud/api/v1",
+  "env": "production",
+  "scope": "",
+  "token": "<token>",
+  "log": {
+    "debug": false,
+    "format": "pretty"
+  }
+}
