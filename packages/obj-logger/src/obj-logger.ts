@@ -119,21 +119,27 @@ export class ObjLogger implements IObjectLogger {
             return;
         }
 
+        let paramsCopy;
+
+        if (optionalParams.length) {
+            paramsCopy = JSON.parse(JSON.stringify(optionalParams));
+        }
+
         if (typeof entry === "string") {
             entry = { msg: entry };
         }
 
-        const a: any = { ...entry, level, ts: entry.ts || Date.now() };
-
-        a.from = entry.from || this.name;
+        const a: any = {
+            ...entry,
+            level,
+            ts: entry.ts || Date.now(),
+            data: paramsCopy,
+            from: entry.from || this.name
+        };
 
         a[this.name] = {
             ...this.baseLog
         };
-
-        if (optionalParams.length) {
-            a.data = optionalParams;
-        }
 
         this.outputs.forEach(output => {
             if (output.writableObjectMode) {
