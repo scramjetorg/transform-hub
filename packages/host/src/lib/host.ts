@@ -1023,10 +1023,22 @@ export class Host implements IComponent {
 
         // eslint-disable-next-line complexity
         csic.on("pang", async (data) => {
-            this.logger.trace("PANG received", data);
+            this.logger.trace("PANG received", [{ ...data }]);
 
             if ((data.requires || data.provides) && !data.contentType) {
-                this.logger.warn("Missing topic content-type");
+                this.logger.warn("Missing topic content-type", data.provides, data.contentType);
+
+                if (data.provides) {
+                    data.contentType = this.serviceDiscovery.getTopics()
+                        .find(t => t.topic === data.provides)?.contentType;
+                }
+
+                if (data.contentType) {
+                    this.logger.warn("Content-type set to match existing topic", data.contentType);
+                } else {
+                    data.contentType = "application/x-ndjson";
+                    this.logger.warn("Content-type set to default", data.contentType);
+                }
             }
 
             if (data.requires && !csic.inputRouted && data.contentType) {
