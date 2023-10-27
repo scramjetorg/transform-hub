@@ -1,6 +1,6 @@
 
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { InstanceLimits } from "@scramjet/types";
+import { AppConfig, InstanceLimits } from "@scramjet/types";
 import { constants, createReadStream, createWriteStream, PathLike } from "fs";
 import { readFile, readdir, access, lstat } from "fs/promises";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
@@ -148,23 +148,12 @@ export const sequenceSendPackage = async (
     }
 };
 
-export const sequenceStart = async (
-    id: string, { configFile, configString, args, outputTopic, inputTopic, limits, instId }:
-        {
-            configFile: any,
-            configString: string,
-            args?: any[],
-            outputTopic?: string,
-            inputTopic?: string,
-            limits?: InstanceLimits,
-            instId?: string
-        }
-): Promise<InstanceClient> => {
+export const sequenceParseConfig = async (configFile: string, configString: string): Promise<AppConfig> => {
     if (configFile && configString) {
         return Promise.reject(new Error("Provide one source of configuration"));
     }
 
-    let appConfig = {};
+    let appConfig;
 
     try {
         if (configString) appConfig = JSON.parse(configString);
@@ -172,11 +161,26 @@ export const sequenceStart = async (
     } catch (_) {
         return Promise.reject(new Error("Unable to read configuration"));
     }
+
+    return appConfig;
+};
+
+export const sequenceStart = async (
+    id: string, { appConfig, args, outputTopic, inputTopic, limits, instanceId }:
+        {
+            appConfig: AppConfig,
+            args?: any[],
+            outputTopic?: string,
+            inputTopic?: string,
+            limits?: InstanceLimits,
+            instanceId?: string
+        }
+): Promise<InstanceClient> => {
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
     try {
         const instance = await sequenceClient.start({
-            appConfig, args, outputTopic, inputTopic, limits, instanceId: instId
+            appConfig, args: args?.length ? args : undefined, outputTopic, inputTopic, limits, instanceId
         });
 
         sessionConfig.setLastInstanceId(instance.id);
