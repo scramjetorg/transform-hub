@@ -213,6 +213,8 @@ export class Host implements IComponent {
 
         if (isDevelopment) this.logger.info("config", this.config);
 
+        this.logger.info("Node version:", process.version);
+
         loadModuleLogger.pipe(this.logger);
 
         this.config.host.id ||= this.getId();
