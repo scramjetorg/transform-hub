@@ -122,7 +122,11 @@ export class ObjLogger implements IObjectLogger {
         let paramsCopy;
 
         if (optionalParams.length) {
-            paramsCopy = JSON.parse(JSON.stringify(optionalParams));
+            try {
+                paramsCopy = JSON.parse(JSON.stringify(optionalParams));
+            } catch {
+                paramsCopy = JSON.parse(JSON.stringify(optionalParams, getCircularReplacer()));
+            }
         }
 
         if (typeof entry === "string") {
