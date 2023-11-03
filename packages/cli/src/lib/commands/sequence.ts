@@ -13,8 +13,9 @@ import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
 import { initPlatform } from "../platform";
-import { AppConfig, DeepPartial, InstanceLimits } from "@scramjet/types";
+import { AppConfig, DeepPartial } from "@scramjet/types";
 import { isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
+import { SequenceDeployArgs, SequenceStartCLIArgs } from "../../types/params";
 
 /**
  * Initializes `sequence` command.
@@ -110,32 +111,11 @@ export const sequence: CommandDefinition = (program) => {
             }
         );
 
-    type ProcessedDeployArgs = {
-        output?: string;
-        config: AppConfig;
-        instanceId?: string;
-        inputTopic?: string;
-        outputTopic?: string;
-        args?: any[];
-        appConfig: AppConfig,
-        limits: InstanceLimits
-    };
-
-    type SequenceStartParams = Omit<ProcessedDeployArgs, "instanceId"> & {
-        startupConfig: DeepPartial<ProcessedDeployArgs>
-        args?: string;
-        instId?: string;
-        limits: string;
-        configFile: any;
-        configString: any;
-
-    };
-
-    function validateStartupConfig(config: DeepPartial<ProcessedDeployArgs>) {
+    function validateStartupConfig(config: DeepPartial<SequenceDeployArgs>) {
         return isStartSequenceEndpointPayloadDTO(config);
     }
 
-    function loadStartupConfig(filename: string): DeepPartial<ProcessedDeployArgs> {
+    function loadStartupConfig(filename: string): DeepPartial<SequenceDeployArgs> {
         if (!filename) return {};
 
         let json = {};
@@ -167,7 +147,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("--startup-config <path-to-config>", "Path to startup config", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
-        .action(async (id, { startupConfig, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }: SequenceStartParams) => {
+        .action(async (id, { startupConfig, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId: instanceId }: SequenceStartCLIArgs) => {
             const args = argsStr ? sequenceParseArgs(argsStr) : undefined;
             const appConfig = await sequenceParseConfig(configFile, configString);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
@@ -176,7 +156,7 @@ export const sequence: CommandDefinition = (program) => {
             merge(startupConfig, {
                 appConfig,
                 args,
-                instanceId: instId,
+                instanceId,
                 inputTopic,
                 outputTopic,
                 limits
@@ -187,7 +167,7 @@ export const sequence: CommandDefinition = (program) => {
             }
 
             const instanceClient = await sequenceStart(id, {
-                appConfig: startupConfig.appConfig as SequenceStartParams["appConfig"],
+                appConfig: startupConfig.appConfig as AppConfig,
                 args: startupConfig.args,
                 limits: startupConfig.limits,
                 instanceId: startupConfig.instanceId,
@@ -213,7 +193,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("--startup-config <path-to-config>", "Path to startup config", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Pack (if needed), send and start the Sequence")
-        .action(async (path: string, { startupConfig, output, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }: SequenceStartParams) => {
+        .action(async (path: string, { startupConfig, output, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }: SequenceStartCLIArgs) => {
             const args = argsStr ? sequenceParseArgs(argsStr) : undefined;
             const appConfig = await sequenceParseConfig(configFile, configString);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
@@ -258,7 +238,7 @@ export const sequence: CommandDefinition = (program) => {
             }
 
             const instanceClient = await sequenceStart("-", {
-                appConfig: startupConfig.appConfig as SequenceStartParams["appConfig"],
+                appConfig: startupConfig.appConfig as AppConfig,
                 args: startupConfig.args,
                 limits: startupConfig.limits,
                 instanceId: startupConfig.instanceId,

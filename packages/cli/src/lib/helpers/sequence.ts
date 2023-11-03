@@ -148,7 +148,7 @@ export const sequenceSendPackage = async (
     }
 };
 
-export const sequenceParseConfig = async (configFile: string, configString: string): Promise<AppConfig> => {
+export const sequenceParseConfig = async (configFile: string = "", configString: string = ""): Promise<AppConfig> => {
     if (configFile && configString) {
         return Promise.reject(new Error("Provide one source of configuration"));
     }
