@@ -1,7 +1,6 @@
 import { ConfigFileDefault } from "@scramjet/utility";
 import { SessionConfigEntity } from "../../types";
 import { sessionId } from "../../utils/sessionId";
-import isUUID from "validator/lib/isUUID";
 import { sessionConfigFile } from "../paths";
 
 // Session configuration represents configuration used internally
@@ -42,16 +41,15 @@ export class SessionConfig extends ConfigFileDefault<SessionConfigEntity> {
     setLastHubId(lastHubId: string): boolean {
         return this.setEntry("lastHubId", lastHubId);
     }
-    protected validateEntry(key: string, value: any): boolean | null {
+    protected validateEntry(key: string): boolean | null {
         switch (key) {
             case "lastPackagePath":
             case "lastSpaceId":
             case "lastSequenceId":
             case "lastHubId":
+            case "lastInstanceId":
             case "sessionId":
                 return null;
-            case "lastInstanceId":
-                return value === "" || isUUID(value, 4);
             default:
                 return false;
         }

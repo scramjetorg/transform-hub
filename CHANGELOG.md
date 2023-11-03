@@ -2,6 +2,25 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.36.1] - 2023-10-02
+
+## Fixed
+
+* Add missing dependency in STH Dockerfile by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/956
+
+## [0.36.0] - 2023-09-25
+
+## Features
+
+* Monitoring Server by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/944
+
+## Fixed
+
+* Disconnect Hub errors enum + types by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/941
+* Fix runner exit by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/951
+* Bump systeminformation from 5.21.4 to 5.21.7 by @dependabot in https://github.com/scramjetorg/transform-hub/pull/950
+* Fix build docs for ModuleLoader and MonitoringServer by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/953
+
 ## [0.35.3] - 2023-09-04
 
 ## Features
