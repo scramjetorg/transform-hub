@@ -12,7 +12,7 @@ export class FramesKeeper extends TypedEmitter<FramesKeeperEvents> implements IF
 
     logger = new ObjLogger(this);
 
-    generator: AsyncGenerator<number, never, unknown> = (async function* (this: FramesKeeper) {
+    generator: AsyncGenerator<number, never, unknown> = async function* (this: FramesKeeper) {
         while (true) {
             if (this.lastSequenceSent - this.lastSequenceReceived < this.#MAX_FRAMES_DIFFERENCE) {
                 this.logger.debug("Write allowed");
@@ -30,7 +30,7 @@ export class FramesKeeper extends TypedEmitter<FramesKeeperEvents> implements IF
                 });
             });
         }
-    }).apply(this);
+    }.apply(this);
 
     handlePSH(sequenceNumber: number) {
         this.lastSequenceSent = sequenceNumber;

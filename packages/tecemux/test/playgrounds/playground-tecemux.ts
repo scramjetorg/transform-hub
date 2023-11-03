@@ -6,7 +6,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { IncomingMessage, createServer } from "http";
 
 import { Socket, createConnection } from "net";
-import { TeceMux } from "../../src/tecemux";
+import { TeceMux } from "../..";
 import { TeceMuxChannel } from "../../src/types";
 import { createReadStream, createWriteStream } from "fs";
 import path from "path";

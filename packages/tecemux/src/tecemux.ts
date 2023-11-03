@@ -16,7 +16,7 @@ export class TeceMux extends TypedEmitter<TeceMuxEvents> {
     framesSent = 0;
     carrierDecoder: FrameDecoder;
     framesKeeper = new FramesKeeper();
-    sequenceNumber = Math.abs((Math.random() * (2 ** 32)) / 2 | 0);
+    sequenceNumber = Math.abs(Math.random() * 2 ** 32 / 2 | 0);
     channels = new Map<number, TeceMuxChannel>();
 
     logger: ObjLogger;
