@@ -44,7 +44,7 @@ import { DuplexStream, getRouter } from "@scramjet/api-server";
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { TeceMux } from "@scramjet/verser";
+import { TeceMux } from "@scramjet/tecemux";
 import { ReasonPhrases } from "http-status-codes";
 
 /**

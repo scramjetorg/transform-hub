@@ -4,7 +4,7 @@ import net, { Socket } from "net";
 
 import { isDefined, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
+import { TeceMux, TeceMuxChannel } from "@scramjet/tecemux";
 
 type MaybeChannel = TeceMuxChannel | Socket | null;
 

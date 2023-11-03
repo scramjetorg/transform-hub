@@ -7,7 +7,7 @@ import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-import { TeceMux, TeceMuxChannel } from "./tecemux/tecemux";
+import { TeceMux, TeceMuxChannel } from "@scramjet/tecemux";
 
 type Events = {
     error: (err: Error) => void;

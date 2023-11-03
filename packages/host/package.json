@@ -28,6 +28,7 @@
     "@scramjet/telemetry": "^0.35.3",
     "@scramjet/utility": "^0.35.3",
     "@scramjet/verser": "^0.35.3",
+    "@scramjet/tecemux": "^0.35.3",
     "bpmux": "^8.2.1",
     "ext-ip": "^0.3.9",
     "find-package-json": "^1.2.0",

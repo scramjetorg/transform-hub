@@ -4,10 +4,11 @@ import { CommunicationChannel as CC } from "@scramjet/symbols";
 import net, { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Agent } from "http";
-import { TeceMux, TeceMuxChannel } from "@scramjet/verser";
+import { TeceMux, TeceMuxChannel } from "@scramjet/tecemux";
 
 type HostOpenConnections = [
-    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel,
+    TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel, TeceMuxChannel
 ]
 
 /**

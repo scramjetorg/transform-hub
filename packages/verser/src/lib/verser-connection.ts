@@ -10,7 +10,7 @@ import {
 import { ObjLogger } from "@scramjet/obj-logger";
 import { createConnection, Socket } from "net";
 import { VerserRequestResult } from "../types";
-import { TeceMux } from "./tecemux/tecemux";
+import { TeceMux } from "@scramjet/tecemux";
 
 /**
  * VerserConnection class.

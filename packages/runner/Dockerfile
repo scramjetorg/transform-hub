@@ -28,6 +28,7 @@ COPY ./dist/obj-logger ./dist/obj-logger
 COPY ./dist/model ./dist/model
 COPY ./dist/runner ./dist/runner
 COPY ./dist/verser ./dist/verser
+COPY ./dist/tecemux ./dist/tecemux
 COPY ./dist/package.json ./dist/package.json
 
 FROM target
