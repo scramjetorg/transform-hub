@@ -1,3 +1,4 @@
+import { MonitoringServerConfig } from "./monitoring-server";
 import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
 
@@ -269,6 +270,8 @@ export type STHConfiguration = {
     };
 
     telemetry: TelemetryConfig;
+
+    monitorgingServer?: MonitoringServerConfig;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

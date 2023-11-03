@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/adapters",
-  "version": "0.35.3",
+  "version": "0.36.1",
   "description": "This package is part of Scramjet Transform Hub. This module holds the docker adapters utilized by Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
@@ -27,7 +27,7 @@
     "dockerode": "^3.3.4",
     "scramjet": "^4.36.9",
     "shell-escape": "^0.2.0",
-    "systeminformation": "^5.12.7",
+    "systeminformation": "^5.21.7",
     "ts.data.json": "^2.2.0"
   },
   "devDependencies": {

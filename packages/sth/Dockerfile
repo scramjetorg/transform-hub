@@ -8,6 +8,7 @@ COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
 COPY ./dist/obj-logger ./dist/obj-logger
 COPY ./dist/model ./dist/model
+COPY ./dist/module-loader ./dist/module-loader
 COPY ./dist/runner ./dist/runner
 COPY ./dist/pre-runner ./dist/pre-runner
 COPY ./dist/python-runner ./dist/python-runner

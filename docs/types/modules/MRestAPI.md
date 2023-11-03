@@ -287,17 +287,17 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/post-disconnect.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/post-disconnect.ts#L3)
+[packages/types/src/rest-api-manager/post-disconnect.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/post-disconnect.ts#L4)
 
 ___
 
 ### PostDisconnectResponse
 
-Ƭ **PostDisconnectResponse**: [`OpResponse`](MMRestAPI.md#opresponse)<{ `disconnected`: { `reason`: `string` ; `sthId`: `string`  }[] ; `managerId`: `string`  }\>
+Ƭ **PostDisconnectResponse**: [`OpResponse`](MMRestAPI.md#opresponse)<{ `disconnected`: { `reason`: `string` ; `sthId`: `string`  }[] ; `managerId`: `string`  }\> \| { `error`: `string` ; `opStatus`: `ReasonPhrases`  }
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/post-disconnect.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/post-disconnect.ts#L9)
+[packages/types/src/rest-api-manager/post-disconnect.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/post-disconnect.ts#L10)
 
 ___
 

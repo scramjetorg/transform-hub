@@ -99,9 +99,12 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .description("Kills the instance and start the new one from root sequence")
         .action(async (id: string) => {
-            const instanceRestartResponse = await instanceRestart(id);
+            const instanceId = await getInstanceId(id);
+            const instanceRestartResponse = await instanceRestart(instanceId);
 
             displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
+
+            sessionConfig.setLastInstanceId(instanceId);
         });
 
     instanceCmd
