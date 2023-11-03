@@ -14,11 +14,11 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/model": "^0.35.3",
-    "@scramjet/obj-logger": "^0.35.3",
-    "@scramjet/sth-config": "^0.35.3",
-    "@scramjet/symbols": "^0.35.3",
-    "@scramjet/utility": "^0.35.3",
+    "@scramjet/model": "^0.36.1",
+    "@scramjet/obj-logger": "^0.36.1",
+    "@scramjet/sth-config": "^0.36.1",
+    "@scramjet/symbols": "^0.36.1",
+    "@scramjet/utility": "^0.36.1",
     "@types/node-fetch": "^2.6.4",
     "abort-controller": "^3.0.0",
     "n-readlines": "^1.0.1",
@@ -27,7 +27,7 @@
     "scramjet": "^4.36.9"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.35.3",
+    "@scramjet/types": "^0.36.1",
     "@types/node": "15.12.5",
     "@types/node-fetch": "^2.6.2",
     "ava": "^3.15.0",

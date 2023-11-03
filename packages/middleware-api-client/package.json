@@ -14,13 +14,13 @@
     "test:ava": "ava"
   },
   "dependencies": {
-    "@scramjet/api-client": "^0.35.3",
-    "@scramjet/client-utils": "^0.35.3",
-    "@scramjet/manager-api-client": "^0.35.3",
-    "@scramjet/multi-manager-api-client": "^0.35.3"
+    "@scramjet/api-client": "^0.36.1",
+    "@scramjet/client-utils": "^0.36.1",
+    "@scramjet/manager-api-client": "^0.36.1",
+    "@scramjet/multi-manager-api-client": "^0.36.1"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.35.3",
+    "@scramjet/types": "^0.36.1",
     "ava": "^3.15.0",
     "esbuild": "^0.14.54",
     "ts-node": "^10.9.1",

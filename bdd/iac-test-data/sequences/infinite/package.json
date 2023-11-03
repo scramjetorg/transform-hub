@@ -9,6 +9,6 @@
     "build": "si pack -o ../hello-2.tar.gz ."
   },
   "devDependencies": {
-    "@scramjet/types": "^0.35.3"
+    "@scramjet/types": "^0.36.1"
   }
 }
