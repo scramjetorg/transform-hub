@@ -2,10 +2,10 @@
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { AppConfig, InstanceLimits } from "@scramjet/types";
 import { constants, createReadStream, createWriteStream, PathLike } from "fs";
-import { readFile, readdir, access, lstat } from "fs/promises";
+import { readdir, access, lstat } from "fs/promises";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
 import { getPackagePath, getSequenceId, sessionConfig } from "../config";
-import { defer, promiseTimeout } from "@scramjet/utility";
+import { FileBuilder, defer, promiseTimeout } from "@scramjet/utility";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { displayMessage } from "../output";
 import { c } from "tar";
@@ -157,9 +157,14 @@ export const sequenceParseConfig = async (configFile: string = "", configString:
 
     try {
         if (configString) appConfig = JSON.parse(configString);
-        if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
+    } catch {
+        return Promise.reject(new Error("Unable to parse configuration string"));
+    }
+
+    try {
+        if (configFile) appConfig = FileBuilder(configFile).read();
     } catch (_) {
-        return Promise.reject(new Error("Unable to read configuration"));
+        return Promise.reject(new Error("Unable to read configuration file"));
     }
 
     return appConfig;
