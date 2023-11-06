@@ -10,10 +10,8 @@ import {
     CPMConnectorOptions,
     HostProxy,
     IComponent,
-    IMonitoringServerConstructor,
     IObjectLogger,
     LogLevel,
-    MonitoringServerConfig,
     NextCallback,
     OpResponse,
     ParsedMessage,
@@ -41,7 +39,7 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService, development } from "@scramjet/sth-config";
-import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
+import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
@@ -55,7 +53,6 @@ import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -213,26 +210,13 @@ export class Host implements IComponent {
 
         if (isDevelopment) this.logger.info("config", this.config);
 
-        this.logger.info("Node version:", process.version);
-
-        loadModuleLogger.pipe(this.logger);
-
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
 
         this.serviceDiscovery = new ServiceDiscovery(this.logger, this.config.host.hostname);
 
-        if (sthConfig.telemetry.environment) {
+        if (sthConfig.telemetry.environment)
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
-        }
-
-        if (sthConfig.monitorgingServer) {
-            this.startMonitoringServer(sthConfig.monitorgingServer).then((res) => {
-                this.logger.info("MonitoringServer started", res);
-            }, (e) => {
-                throw new Error(e);
-            });
-        }
 
         this.auditor = new Auditor();
         //this.auditor.logger.pipe(this.logger);
@@ -264,19 +248,6 @@ export class Host implements IComponent {
         if (!!this.config.cpmId !== !!this.config.cpmUrl && !!this.config.cpmId !== !!this.config.platform?.api) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
         }
-    }
-
-    private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
-        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
-
-        this.logger.info("Starting monitoring server with config", config);
-
-        const monitoringServer = new MonitoringServer({
-            ...config,
-            check: async () => !!await this.loadCheck.getLoadCheck()
-        });
-
-        return monitoringServer.start();
     }
 
     getId() {
@@ -925,57 +896,44 @@ export class Host implements IComponent {
      */
     // eslint-disable-next-line complexity
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
-        try {
-            if (await this.loadCheck.overloaded()) {
+        if (await this.loadCheck.overloaded()) {
+            return {
+                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
+            };
+        }
+
+        const sequenceId = req.params?.id as string;
+        const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
+
+        if (payload.instanceId) {
+            if (!IDProvider.isValid(payload.instanceId)) {
+                return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
+            }
+
+            if (this.instancesStore[payload.instanceId]) {
                 return {
-                    opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Instance with a given ID already exists"
                 };
             }
+        }
 
-            const sequenceId = req.params?.id as string;
-            const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
+        let sequence = this.sequenceStore.getByNameOrId(sequenceId);
 
-<<<<<<< HEAD
-            if (payload.instanceId) {
-                if (!isStartSequenceEndpointPayloadDTO(payload)) {
-                    return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
-                }
-
-<<<<<<< HEAD
-                if (this.instancesStore[payload.instanceId]) {
-                    return {
-                        opStatus: ReasonPhrases.CONFLICT,
-                        error: "Instance with a given ID already exists"
-                    };
-                }
-            }
-=======
-            console.log(sequence);
-=======
         if (this.cpmConnector?.connected) {
             sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
                 this.logger.error("Error getting sequence from external sources", error);
                 return undefined;
             });
->>>>>>> bea3057d... Kubernetesconfig support added
         }
->>>>>>> 6f070b71... Support for process adapter
 
-            let sequence = this.sequenceStore.getByNameOrId(sequenceId);
+        if (!sequence) {
+            return { opStatus: ReasonPhrases.NOT_FOUND };
+        }
 
-            if (this.cpmConnector?.connected) {
-                sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
-                    this.logger.error("Error getting sequence from external sources", error);
-                    return undefined;
-                });
-            }
+        this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
-            if (!sequence) {
-                return { opStatus: ReasonPhrases.NOT_FOUND };
-            }
-
-            this.logger.info("Start sequence", sequence.id, sequence.config.name);
-
+        try {
             const csic = await this.startCSIController(sequence, payload);
 
             await this.cpmConnector?.sendInstanceInfo({
@@ -1009,10 +967,10 @@ export class Host implements IComponent {
             };
         } catch (error: any) {
             this.pushTelemetry("Instance start failed", { error: error.message }, "error");
-            this.logger.error(error.message);
+
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
-                error: error.message
+                error: error,
             };
         }
     }
@@ -1045,22 +1003,10 @@ export class Host implements IComponent {
 
         // eslint-disable-next-line complexity
         csic.on("pang", async (data) => {
-            this.logger.trace("PANG received", [{ ...data }]);
+            this.logger.trace("PANG received", data);
 
             if ((data.requires || data.provides) && !data.contentType) {
-                this.logger.warn("Missing topic content-type", data.provides, data.contentType);
-
-                if (data.provides) {
-                    data.contentType = this.serviceDiscovery.getTopics()
-                        .find(t => t.topic === data.provides)?.contentType;
-                }
-
-                if (data.contentType) {
-                    this.logger.warn("Content-type set to match existing topic", data.contentType);
-                } else {
-                    data.contentType = "application/x-ndjson";
-                    this.logger.warn("Content-type set to default", data.contentType);
-                }
+                this.logger.warn("Missing topic content-type");
             }
 
             if (data.requires && !csic.inputRouted && data.contentType) {
