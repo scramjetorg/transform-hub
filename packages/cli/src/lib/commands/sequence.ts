@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { CommandDefinition } from "../../types";
-import { createWriteStream, lstatSync, readFileSync } from "fs";
+import { createWriteStream, lstatSync } from "fs";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
 import { getHostClient } from "../common";
 import { getSequenceId, profileManager, sessionConfig } from "../config";
@@ -14,7 +14,7 @@ import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, s
 import { ClientError } from "@scramjet/client-utils";
 import { initPlatform } from "../platform";
 import { AppConfig, DeepPartial } from "@scramjet/types";
-import { isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
+import { FileBuilder, isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
 import { SequenceDeployArgs, SequenceStartCLIArgs } from "../../types/params";
 
 /**
@@ -118,19 +118,17 @@ export const sequence: CommandDefinition = (program) => {
     function loadStartupConfig(filename: string): DeepPartial<SequenceDeployArgs> {
         if (!filename) return {};
 
-        let json = {};
+        let config = {};
 
         try {
-            const data = readFileSync(filename, "utf8");
-
-            json = JSON.parse(data);
+            config = FileBuilder(filename).read();
         } catch (e) {
             // eslint-disable-next-line no-console
             console.error(e);
             process.exit(1);
         }
 
-        return json;
+        return config;
     }
 
     sequenceCmd
@@ -138,13 +136,13 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<id>", "Sequence id to start or '-' for the last uploaded")
         // TODO: for future implementation
         // .option("--hub <provider>", "aws|ovh|gcp");
-        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
+        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON or YAML format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
         .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
         .option("--output-topic <string>", "Topic to which the output stream should be routed")
         .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
-        .option("--startup-config <path-to-config>", "Path to startup config", loadStartupConfig)
+        .option("--startup-config <path-to-config>", "Path to startup config (JSON or YAML)", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
         .action(async (id, { startupConfig, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId: instanceId }: SequenceStartCLIArgs) => {
@@ -165,7 +163,6 @@ export const sequence: CommandDefinition = (program) => {
             if (!validateStartupConfig(startupConfig)) {
                 throw new Error("Invalid startup config",);
             }
-
             const instanceClient = await sequenceStart(id, {
                 appConfig: startupConfig.appConfig as AppConfig,
                 args: startupConfig.args,
@@ -183,14 +180,14 @@ export const sequence: CommandDefinition = (program) => {
         .alias("run")
         .argument("<path>")
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
-        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
+        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON or YAML format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
         .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
         // TODO: check if output-topic and input-topic should be added after development
         .option("--output-topic <string>", "Topic to which the output stream should be routed")
         .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
-        .option("--startup-config <path-to-config>", "Path to startup config", loadStartupConfig)
+        .option("--startup-config <path-to-config>", "Path to startup config (JSON or YAML)", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Pack (if needed), send and start the Sequence")
         .action(async (path: string, { startupConfig, output, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }: SequenceStartCLIArgs) => {
