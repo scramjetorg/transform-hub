@@ -20,8 +20,8 @@ const logger = getLogger("test");
 const si = process.env.SCRAMJET_SPAWN_JS
     ? ["node", "../dist/cli/bin"]
     : process.env.SCRAMJET_SPAWN_TS
-    ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
-    : ["si"];
+        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
+        : ["si"];
 
 Given("I set config for local Hub", { timeout: 30000 }, async function (this: CustomWorld) {
     const res = this.cliResources;

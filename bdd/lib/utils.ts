@@ -5,14 +5,22 @@ import { strict as assert } from "assert";
 import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
+import { getLogger } from "@scramjet/logger";
 
+const isLogActive = process.env.SCRAMJET_TEST_LOG;
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
-export const defer = (timeout: number): Promise<void> =>
-    new Promise(res => setTimeout(res, timeout));
+const logger = getLogger("test");
+const si = process.env.SCRAMJET_SPAWN_JS
+    ? ["node", "../dist/cli/bin"]
+    : process.env.SCRAMJET_SPAWN_TS
+        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
+        : ["si"];
+
+export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
 
 export async function file1ContainsLinesFromFile2(file1: any, greeting: any, file2: any, suffix: any) {
     const output = new lineByLine(`${file1}`);
@@ -38,20 +46,23 @@ export const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 40
     }
 };
 
-export const callInLoopTillExpectedCode =
-    async (fnToCall: any, that: any, expectedHttpCode: number = 200): Promise<any> => {
-        let response;
+export const callInLoopTillExpectedCode = async (
+    fnToCall: any,
+    that: any,
+    expectedHttpCode: number = 200
+): Promise<any> => {
+    let response;
 
-        const startTime: number = Date.now();
-        const timeout: number = timeoutLongMs;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
 
-        do {
-            response = await fnToCall.call(that);
-            await defer(timeout);
-        } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+    do {
+        response = await fnToCall.call(that);
+        await defer(timeout);
+    } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
-        return response;
-    };
+    return response;
+};
 
 export function fileContains(filename: any, key: any) {
     const stdoutFile = new lineByLine(filename);
@@ -68,20 +79,24 @@ export function fileContains(filename: any, key: any) {
     assert.fail("stdout does not contain: " + key);
 }
 
-export const callInLoopTillExpectedStatusCode =
-    async (fnToCall: any, that: any, expectedHttpCode: number = 200, ...args: any[]) => {
-        let response;
+export const callInLoopTillExpectedStatusCode = async (
+    fnToCall: any,
+    that: any,
+    expectedHttpCode: number = 200,
+    ...args: any[]
+) => {
+    let response;
 
-        const startTime: number = Date.now();
-        const timeout: number = timeoutLongMs;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
 
-        do {
-            response = await fnToCall.call(that, ...args);
-            await defer(timeout);
-        } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
+    do {
+        response = await fnToCall.call(that, ...args);
+        await defer(timeout);
+    } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
 
-        return response;
-    };
+    return response;
+};
 
 export async function streamToString(_stream: Readable): Promise<string> {
     const chunks = [];
@@ -97,7 +112,9 @@ export async function streamToString(_stream: Readable): Promise<string> {
 export async function getOccurenceNumber(searchedValue: any, filePath: any) {
     try {
         console.log(`${JSON.stringify(searchedValue)}`);
-        return Number((await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout);
+        return Number(
+            (await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout
+        );
     } catch {
         return 0;
     }
@@ -120,7 +137,9 @@ export async function removeFile(filePath: any) {
 }
 
 export async function getStreamsFromSpawn(
-    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+    command: string,
+    options: string[],
+    env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string, any]> {
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error("Spawning command", command, ...options);
@@ -145,7 +164,9 @@ export async function getStreamsFromSpawn(
 }
 
 export async function getStreamsFromSpawnSuccess(
-    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+    command: string,
+    options: string[],
+    env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string]> {
     const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
 
@@ -159,7 +180,8 @@ export async function getStreamsFromSpawnSuccess(
 }
 
 export function removeBoundaryQuotes(str: string) {
-    if (str.charAt(0) === "\"" && str.charAt(str.length - 1) === "\"") {
+    // eslint-disable-next-line quotes
+    if (str.charAt(0) === '"' && str.charAt(str.length - 1) === '"') {
         return str.substr(1, str.length - 2);
     }
     return str;
@@ -177,7 +199,7 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
                 if (response.includes(expected)) return true;
             }
             throw new Error("End of stream reached");
-        })(),
+        })()
     ]);
 }
 
@@ -197,7 +219,7 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string):
             assert.equal(response, expected, "End of stream reached");
 
             return "passed";
-        })(),
+        })()
     ]);
 
     return response;
@@ -214,3 +236,26 @@ export async function killProcessByName(processName: string): Promise<void> {
     });
 }
 
+export async function createProfile(profileName: string) {
+    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "create", profileName]);
+
+    if (isLogActive) {
+        logger.debug(res);
+    }
+}
+
+export async function setProfile(profileName: string) {
+    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "use", profileName]);
+
+    if (isLogActive) {
+        logger.debug(res);
+    }
+}
+
+export async function removeProfile(profileName: string) {
+    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "remove", profileName]);
+
+    if (isLogActive) {
+        logger.debug(res);
+    }
+}
