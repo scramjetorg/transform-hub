@@ -1,8 +1,13 @@
 {
-  "appConfig": {},
-  "args": [],
+  "appConfig": {
+    "key1": "value",
+    "key2": 2
+  },
+  "args": [1, 2, 3, "someArg"],
   "outputTopic": "",
   "inputTopic": "",
-  "limits": 100,
+  "limits": {
+    "memory": 128
+  },
   "instanceId": "Instance-id-must-consist-of-36-signs"
 }
