@@ -17,8 +17,8 @@ const logger = getLogger("test");
 const si = process.env.SCRAMJET_SPAWN_JS
     ? ["node", "../dist/cli/bin"]
     : process.env.SCRAMJET_SPAWN_TS
-    ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
-    : ["si"];
+        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
+        : ["si"];
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
 
@@ -70,7 +70,7 @@ export function fileContains(filename: any, key: any) {
     let line;
 
     // eslint-disable-next-line no-cond-assign
-    while ((line = stdoutFile.next())) {
+    while (line = stdoutFile.next()) {
         if (line.includes(key)) {
             return;
         }
