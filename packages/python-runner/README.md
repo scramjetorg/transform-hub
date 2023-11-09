@@ -2,6 +2,30 @@
 
 This package executes sequences written in Python and provides control mechanisms to them.
 
+# Docker Images
+
+## Python Base Image
+
+Our Python base image contains only the necessary libraries to operate. It's perfect for those who need a lightweight image for running Sequences written in Python.
+
+### TensorFlow GPU Image
+
+Our TensorFlow image enables the use of GPU, which is ideal for intensive computations such as machine learning.
+
+### How to Use
+
+Specify python docker image used by Instances when starting `sth`
+
+```
+sth --runner-py-image <image>
+```
+
+To take advantage of the GPU features, you need to run Sequence with the appropriate limits. For example:
+
+```
+si seq start --limits "{\"gpu\": true}
+```
+
 ## Scramjet Transform Hub
 
 This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).

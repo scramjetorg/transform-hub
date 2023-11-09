@@ -210,7 +210,8 @@ IComponent {
             envs,
             autoRemove: true,
             maxMem: config.container.maxMem,
-            networkMode: networkSetup.network
+            networkMode: networkSetup.network,
+            gpu: this.limits.gpu
         });
 
         this.crashLogStreams = Promise.all(([streams.stdout, streams.stderr] as Readable[]).map(streamToString));
