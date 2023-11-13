@@ -12,7 +12,6 @@ const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 const isLogActive = process.env.SCRAMJET_TEST_LOG;
-
 const logger = getLogger("test");
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
@@ -250,7 +249,6 @@ export async function killProcessByName(processName: string): Promise<void> {
         });
     });
 }
-
 export async function createProfile(profileName: string) {
     const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "create", profileName]);
 
