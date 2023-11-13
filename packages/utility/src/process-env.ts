@@ -3,7 +3,7 @@ export function processCommanderEnvs(env: string[]) {
         const [key, value] = item.split(":");
 
         if (!key || key === "" || !value || value === "") {
-            throw new Error("Wrong ENV syntax");
+            throw new Error("Invalid format for ENV variables. Please use the format KEY:VALUE.");
         }
 
         return [key, value];
