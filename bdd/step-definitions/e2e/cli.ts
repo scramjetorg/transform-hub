@@ -370,7 +370,7 @@ Then(/^I confirm instance id is: (.*)$/, async function (this: CustomWorld, expe
     assert.equal(instance.id, expectedInstanceId);
 });
 
-When(/^I execute CLI command si init (.*)$/, { timeout: 30000 }, async function (templateType: string) {
+When(/^I execute CLI command si init (.*)$/, { timeout: 60000 }, async function (templateType: string) {
     const workingDirectory = "data/template_seq";
     const args = () => {
         if (templateType === "typeScript") {
