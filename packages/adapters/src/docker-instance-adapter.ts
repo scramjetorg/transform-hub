@@ -186,6 +186,8 @@ IComponent {
 
         const networkSetup = await this.getNetworkSetup();
 
+        const volumeId = config.id + "_" + config.parent_id;
+
         const envs = getRunnerEnvEntries({
             sequencePath: path.join(config.sequenceDir, config.entrypointPath),
             instancesServerPort,
@@ -200,7 +202,7 @@ IComponent {
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
-                { mountPoint: config.sequenceDir, volume: config.id, writeable: false }
+                { mountPoint: config.sequenceDir, volume: volumeId, writeable: false }
             ],
             labels: {
                 "scramjet.sequence.name": config.name

@@ -13,7 +13,7 @@ import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
-import { SequenceAdapterError } from "@scramjet/model";
+import { IDProvider, SequenceAdapterError } from "@scramjet/model";
 import { detectLanguage } from "./utils";
 
 /**
@@ -23,12 +23,25 @@ import { detectLanguage } from "./utils";
  * @param {string} id Sequence Id.
  * @returns {ProcessSequenceConfig} Sequence configuration.
  */
-// eslint-disable-next-line complexity
-async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
-    const sequenceDir = path.join(sequencesRoot, id);
+// eslint-disable-next-line complexity, max-len
+async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string, parentId?: string): Promise<ProcessSequenceConfig> {
+    let sequenceDir: string;
+
+    if (parentId) {
+        sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+    } else {
+        [id, parentId] = id.split("_");
+        const valid = IDProvider.isValid(id);
+
+        if (valid) {
+            sequenceDir = path.join(sequencesRoot, id + "_" + parentId);
+        } else {
+            sequenceDir = path.join(sequencesRoot, id);
+        }
+    }
+
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
-
     const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
     const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
 
@@ -39,6 +52,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
         id,
+        parent_id: parentId || id,
         sequenceDir,
         description: validPackageJson.description,
         author: validPackageJson.author,
@@ -82,6 +96,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      */
     async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
+
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
@@ -100,10 +115,12 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @param {Readable} stream Stream with packed sequence.
      * @param {string} id Sequence Id.
      * @param {boolean} override Removes previous sequence
+     * @param {string} parentId Sequence's parentId.
+
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
-    async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
-        const sequenceDir = path.join(this.config.sequencesRoot, id);
+    async identify(stream: Readable, id: string, override = false, parentId = id): Promise<SequenceConfig> {
+        const sequenceDir = path.join(this.config.sequencesRoot, id + "_" + parentId);
 
         if (override) {
             await fs.rm(sequenceDir, { recursive: true, force: true });
@@ -140,7 +157,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         this.logger.debug("Unpacking sequence succeeded", stderrOutput);
 
-        return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id);
+        return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id, parentId);
     }
 
     /**
@@ -154,7 +171,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
             throw new Error(`Incorrect SequenceConfig passed to ProcessSequenceAdapter: ${config.type}`);
         }
 
-        const sequenceDir = path.join(this.config.sequencesRoot, config.id);
+        const sequenceDir = config.sequenceDir;
 
         return fs.rm(sequenceDir, { recursive: true });
     }

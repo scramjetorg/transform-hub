@@ -8,6 +8,7 @@ export type SequenceInfo = {
     instances: string[];
     location : string;
     name? : string;
+    parent_id: string;
 }
 
 export type SequenceInfoInstance = Omit<SequenceInfo, "instances">;
@@ -28,7 +29,7 @@ export interface ISequenceAdapter {
     /**
      * Identifies new Sequence
      */
-    identify(stream: Readable, id: string, override?: boolean): Promise<SequenceConfig>;
+    identify(stream: Readable, id: string, override?: boolean, parent_id?: string,): Promise<SequenceConfig>;
 
     remove(conifg: SequenceConfig): Promise<void>
 
