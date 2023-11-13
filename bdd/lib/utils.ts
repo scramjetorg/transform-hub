@@ -14,13 +14,28 @@ const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
 const logger = getLogger("test");
-const si = process.env.SCRAMJET_SPAWN_JS
-    ? ["node", "../dist/cli/bin"]
-    : process.env.SCRAMJET_SPAWN_TS
-        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
-        : ["si"];
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
+
+export function getSiCommand() {
+    if (process.env.SCRAMJET_SPAWN_JS && process.env.SCRAMJET_SPAWN_TS) {
+        throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
+    }
+
+    let si = ["si"];
+
+    if (process.env.SCRAMJET_SPAWN_JS) {
+        si = ["node", "../dist/cli/bin"];
+    }
+
+    if (process.env.SCRAMJET_SPAWN_TS) {
+        si = ["npx", "ts-node", "../packages/cli/src/bin/index.ts"];
+    }
+
+    return si;
+}
+
+const si = getSiCommand();
 
 export async function file1ContainsLinesFromFile2(file1: any, greeting: any, file2: any, suffix: any) {
     const output = new lineByLine(`${file1}`);

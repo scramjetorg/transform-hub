@@ -6,7 +6,7 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import { getStreamsFromSpawn, defer, waitUntilStreamContains, killProcessByName } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitUntilStreamContains, killProcessByName, getSiCommand } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -17,11 +17,7 @@ import { extractInstanceFromSiInstLs, extractKillResponseFromSiInstRestart } fro
 addLoggerOutput(process.stdout, process.stdout);
 
 const logger = getLogger("test");
-const si = process.env.SCRAMJET_SPAWN_JS
-    ? ["node", "../dist/cli/bin"]
-    : process.env.SCRAMJET_SPAWN_TS
-        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
-        : ["si"];
+const si = getSiCommand();
 
 Given("I set config for local Hub", { timeout: 30000 }, async function (this: CustomWorld) {
     const res = this.cliResources;
