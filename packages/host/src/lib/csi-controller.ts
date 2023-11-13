@@ -672,7 +672,14 @@ export class CSIController extends TypedEmitter<Events> {
             }
 
             const out = new DataStream();
-            const handler = (data: any) => out.write(data);
+            const handler = (data: any) => {
+                if (typeof data !== "object") {
+                    out.write(data);
+                }
+                const { eventName, ...message} = data;
+
+                out.write(message ? message : {} );
+            }
             const clean = () => {
                 this.logger.debug(`Event stream "${name}" disconnected`);
 
