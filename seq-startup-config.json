@@ -1,0 +1,10 @@
+{
+  "appConfig": {},
+  "args": [],
+  "limits": {
+    "maxMem": 64
+  },
+  "instanceId": "this-is-my-custom-instance-id-654321",
+  "outputTopic": "",
+  "inputTopic": "myNewTopic"
+}

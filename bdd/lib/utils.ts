@@ -7,11 +7,11 @@ import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 import { getLogger } from "@scramjet/logger";
 
-const isLogActive = process.env.SCRAMJET_TEST_LOG;
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
+const isLogActive = process.env.SCRAMJET_TEST_LOG;
 
 const logger = getLogger("test");
 
@@ -85,7 +85,7 @@ export function fileContains(filename: any, key: any) {
     let line;
 
     // eslint-disable-next-line no-cond-assign
-    while (line = stdoutFile.next()) {
+    while ((line = stdoutFile.next())) {
         if (line.includes(key)) {
             return;
         }
@@ -273,4 +273,81 @@ export async function removeProfile(profileName: string) {
     if (isLogActive) {
         logger.debug(res);
     }
+}
+export async function deleteAllFilesInDirectory(directoryPath: string) {
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            logger.error(`Can not read from directory: ${directoryPath}`);
+            return;
+        }
+        files.forEach((file) => {
+            const filePath = `${directoryPath}/${file}`;
+
+            fs.unlink(filePath, (error: any) => {
+                if (err) {
+                    logger.error(`Deleting error file ${file}: ${error}`);
+                } else if (isLogActive) {
+                    logger.debug(`File ${directoryPath}/${file} was deleted`);
+                }
+            });
+        });
+    });
+}
+
+export function spawnSiInit(command: string, args: string[], workingDirectory: string) {
+    return new Promise<void>((resolve, reject) => {
+        const process = spawn(command, args, {
+            cwd: workingDirectory,
+            shell: true
+        });
+
+        process.stdout.on("data", async function (data) {
+            if (isLogActive) {
+                logger.debug(`spawnSiInit stdout: ${data}`);
+            }
+            if (data.includes("Sequence template succesfully created")) {
+                resolve(data);
+            } else {
+                process.stdin.write("\n");
+            }
+        });
+        process.on("error", function (err) {
+            logger.error(`spawnSiInit on error: ${err}`);
+            reject(err);
+        });
+    });
+}
+
+export function isTemplateCreated(templateType: string, workingDirectory: string) {
+    return new Promise<boolean>((resolve, reject) => {
+        // eslint-disable-next-line complexity
+        fs.readdir(workingDirectory, (err, files) => {
+            if (err) {
+                logger.error(`Can not read from directory: ${workingDirectory}`);
+                reject(err);
+                return;
+            }
+            if (
+                templateType === "typeScript" &&
+                files.includes("index.ts") &&
+                files.includes("package.json") &&
+                files.includes("tsconfig.json")
+            ) {
+                resolve(true);
+            }
+            if (
+                templateType === "python" &&
+                files.includes("main.py") &&
+                files.includes("package.json") &&
+                files.includes("requirements.txt")
+            ) {
+                resolve(true);
+            }
+            if (templateType === "javaScript" && files.includes("index.js") && files.includes("package.json")) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    });
 }

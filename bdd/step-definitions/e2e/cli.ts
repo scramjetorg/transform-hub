@@ -6,7 +6,16 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import { getStreamsFromSpawn, defer, waitUntilStreamContains, killProcessByName, getSiCommand } from "../../lib/utils";
+import {
+    getStreamsFromSpawn,
+    defer,
+    waitUntilStreamContains,
+    killProcessByName,
+    deleteAllFilesInDirectory,
+    spawnSiInit,
+    isTemplateCreated,
+    getSiCommand
+} from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -17,6 +26,7 @@ import { extractInstanceFromSiInstLs, extractKillResponseFromSiInstRestart } fro
 addLoggerOutput(process.stdout, process.stdout);
 
 const logger = getLogger("test");
+
 const si = getSiCommand();
 
 Given("I set config for local Hub", { timeout: 30000 }, async function (this: CustomWorld) {
@@ -358,4 +368,29 @@ Then(/^I confirm instance id is: (.*)$/, async function (this: CustomWorld, expe
     }
 
     assert.equal(instance.id, expectedInstanceId);
+});
+
+When(/^I execute CLI command si init (.*)$/, { timeout: 30000 }, async function (templateType: string) {
+    const workingDirectory = "data/template_seq";
+    const args = () => {
+        if (templateType === "typeScript") {
+            return [...si, "init", "seq", "ts"];
+        }
+        if (templateType === "python") {
+            return [...si, "init", "seq", "py"];
+        }
+        if (templateType === "javaScript") {
+            return [...si, "init", "seq", "js"];
+        }
+        return [];
+    };
+
+    await deleteAllFilesInDirectory(workingDirectory);
+    await spawnSiInit("/usr/bin/env", args(), workingDirectory);
+});
+
+Then(/^I confirm template (.*) is created$/, async function (templateType: string) {
+    const workingDirectory = "data/template_seq";
+
+    assert.equal(await isTemplateCreated(templateType, workingDirectory), true);
 });
