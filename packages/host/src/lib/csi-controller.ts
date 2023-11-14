@@ -676,10 +676,11 @@ export class CSIController extends TypedEmitter<Events> {
                 if (typeof data !== "object") {
                     out.write(data);
                 }
-                const { eventName, ...message} = data;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { _eventName, ...message } = data;
 
-                out.write(message ? message : {} );
-            }
+                out.write(message ? message : {});
+            };
             const clean = () => {
                 this.logger.debug(`Event stream "${name}" disconnected`);
 
