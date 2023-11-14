@@ -1,0 +1,24 @@
+name: Tests on push
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repo checkout
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: yarn install && yarn build:all && npm i -g ./dist/cli
+
+      - name: Run tests
+        run: SCRAMJET_TEST_LOG=1 yarn test:bdd --name="E2E-010"
