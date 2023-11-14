@@ -163,3 +163,6 @@ timing-log.ndjson
 # extra dist dirs
 
 /dist.*
+
+# directory to create template sequence
+/bdd/data/template_seq
