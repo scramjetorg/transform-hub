@@ -1,0 +1,39 @@
+name: Tests on dispatch 
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: true
+      node_version:
+        description: 'Node.js version (18 default)'
+        default: '18'
+      scramjet_test_log:
+        description: 'Value of SCRAMJET_TEST_LOG'
+        default: '0'
+      test_name:
+        description: 'Test name'
+        default: "E2E-010"
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Repo checkout
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.branch }}
+
+    - name: Setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ github.event.inputs.node_version }}
+
+    - name: Install dependencies
+      run: yarn install && yarn build:all && npm i -g ./dist/cli
+
+    - name: Run tests
+      run: SCRAMJET_TEST_LOG=${{ github.event.inputs.scramjet_test_log }} yarn test:bdd --names="${{ github.event.inputs.test_name }}"
