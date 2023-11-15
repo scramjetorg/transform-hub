@@ -23,6 +23,7 @@ import {
     OpResponse,
     StopSequenceMessageData,
     HostProxy,
+    EventMessageData,
 } from "@scramjet/types";
 import {
     AppError,
@@ -670,17 +671,19 @@ export class CSIController extends TypedEmitter<Events> {
             if (!name) {
                 throw new HostError("EVENT_NAME_MISSING");
             }
-
             const out = new DataStream();
-            const handler = (data: any) => {
+            const handler = (data: EventMessageData) => {
                 if (typeof data !== "object") {
                     out.write(data);
+
+                    return;
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { _eventName, ...message } = data;
+
+                const { message } = data;
 
                 out.write(message ? message : {});
             };
+
             const clean = () => {
                 this.logger.debug(`Event stream "${name}" disconnected`);
 
