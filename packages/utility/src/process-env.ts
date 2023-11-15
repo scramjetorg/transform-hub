@@ -1,17 +1,10 @@
-export function processCommanderEnvs(env: string[]) {
-    const keyValuePairs = env.map((item: string) => {
-        const [key, value] = item.split(":");
+export function processCommanderEnvs(envString: string) {
+    const pairs = envString.split(";").map(pair => pair.split("="));
 
+    pairs.forEach(([key, value]) => {
         if (!key || key === "" || !value || value === "") {
-            throw new Error("Invalid format for ENV variables. Please use the format KEY:VALUE.");
+            throw new Error("Invalid format for ENV variables. Please use the format key1=value1;key2=value2.");
         }
-
-        return [key, value];
     });
-
-    keyValuePairs.forEach((e) => {
-        const name = e[0];
-
-        process.env[name] = e[1];
-    });
+    return pairs;
 }

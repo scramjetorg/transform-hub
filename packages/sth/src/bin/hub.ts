@@ -74,7 +74,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port")
     .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
     .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
-    .option("-e, --env <envVars...>", "Array of environment variables")
+    .option("-e, --runner-envs <runnerEnvs>", "Set Runner environmental variables")
 
     .parse(process.argv)
     .opts() as STHCommandOptions;
@@ -91,10 +91,9 @@ const options: OptionValues & STHCommandOptions = program
 
         configService.update(configContents);
     }
-    if (options.env) {
-        processCommanderEnvs(options.env);
+    if (options.runnerEnvs) {
+        processCommanderEnvs(options.runnerEnvs);
     }
-
     if (options.tags.length) {
         configService.update({ tags: options.tags.split(",") });
     }

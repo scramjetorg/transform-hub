@@ -52,5 +52,5 @@ export type STHCommandOptions = {
     environmentName?: string;
     telemetry: TelemetryConfig["status"]
     monitoringServer: { port: number },
-    env?: string[];
+    runnerEnvs?: string;
 }
