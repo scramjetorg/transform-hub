@@ -134,9 +134,10 @@ class ProcessInstanceAdapter implements
             instancesServerHost: "127.0.0.1",
             instancesServerPort,
             instanceId,
-            pipesPath: ""
+            pipesPath: "",
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
+            ...this.sthConfig.runnerEnvs
         });
 
         this.logger.debug("Spawning Runner process with command", runnerCommand);

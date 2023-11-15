@@ -8,7 +8,7 @@ import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { Host } from "@scramjet/host";
-import { FileBuilder, processCommanderEnvs } from "@scramjet/utility";
+import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 
 const stringToIntSanitizer = (str : string) => {
     const parsedValue = parseInt(str, 10);
@@ -92,7 +92,7 @@ const options: OptionValues & STHCommandOptions = program
         configService.update(configContents);
     }
     if (options.runnerEnvs) {
-        processCommanderEnvs(options.runnerEnvs);
+        configService.update({ runnerEnvs: processCommanderRunnerEnvs(options.runnerEnvs) });
     }
     if (options.tags.length) {
         configService.update({ tags: options.tags.split(",") });
