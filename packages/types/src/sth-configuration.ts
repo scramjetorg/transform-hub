@@ -273,7 +273,7 @@ export type STHConfiguration = {
 
     monitorgingServer?: MonitoringServerConfig;
 
-    runnerEnvs?: Record<string, string>
+    runnerEnvs?: Record<string, string>;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
