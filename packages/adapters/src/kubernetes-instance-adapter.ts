@@ -111,8 +111,7 @@ IComponent {
                 instancesServerPort,
                 instancesServerHost: this.adapterConfig.sthPodHost,
                 instanceId,
-                pipesPath: "",
-                ...this.sthConfig.runnerEnvs
+                pipesPath: ""
             }, {
                 ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
