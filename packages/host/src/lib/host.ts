@@ -507,7 +507,7 @@ export class Host implements IComponent {
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
 
         this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), {
+        this.api.downstream(`${this.apiBase}/sequence/:id`, async (req) => this.handleUpdateSequence(req), {
             end: true,
             method: "put",
         });
@@ -516,7 +516,7 @@ export class Host implements IComponent {
 
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
 
-        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
+        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
@@ -628,22 +628,23 @@ export class Host implements IComponent {
      * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
      */
     async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
-        const id = req.params?.id;
+        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+        const id = req.params.id as string;
+        const sequence: SequenceInfo| undefined = this.sequenceStore.getById(req.params.id as string);
+
         const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 
         this.logger.trace("Deleting Sequence...", id, { force });
 
-        const sequenceInfo = this.sequenceStore.getByNameOrId(id);
-
-        if (!sequenceInfo) {
+        if (!sequence) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
                 error: `The sequence ${id} does not exist.`
             };
         }
 
-        if (sequenceInfo.instances.length > 0) {
-            const instances = [...sequenceInfo.instances].every((instanceId) => {
+        if (sequence.instances.length > 0) {
+            const instances = [...sequence.instances].every((instanceId) => {
                 // ?
                 // this.instancesStore[instanceId]?.finalizingPromise?.cancel();
                 return this.instancesStore[instanceId]?.isRunning;
@@ -660,7 +661,7 @@ export class Host implements IComponent {
 
             if (instances) {
                 this.logger.info(`Killing Instances from Sequence ${id}...`);
-                await Promise.all([...sequenceInfo.instances].map(async (instanceId) => {
+                await Promise.all([...sequence.instances].map(async (instanceId) => {
                     await this.instancesStore[instanceId]?.kill({ removeImmediately: true });
 
                     return new Promise((res) => this.instancesStore[instanceId]?.once("end", res));
@@ -671,12 +672,12 @@ export class Host implements IComponent {
         try {
             const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
-            await sequenceAdapter.remove(sequenceInfo.config);
+            await sequenceAdapter.remove(sequence.config);
             this.sequenceStore.delete(id);
 
             this.logger.trace("Sequence removed:", id);
             // eslint-disable-next-line max-len
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as GetSequenceResponse);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequence as unknown as GetSequenceResponse);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -759,12 +760,12 @@ export class Host implements IComponent {
     }
 
     async handleIncomingSequence(
-        stream: ParsedMessage,
+        req: ParsedMessage,
         id: string
     ): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        stream.params ||= {};
+        req.params ||= {};
 
-        const sequenceName = stream.params.id_name || stream.headers["x-name"];
+        const sequenceName = req.params.id_name || req.headers["x-name"];
 
         this.logger.info("New Sequence incoming", { name: sequenceName });
 
@@ -782,7 +783,7 @@ export class Host implements IComponent {
                 const existingSequence = this.sequenceStore.getByName(sequenceName as string);
 
                 if (existingSequence) {
-                    if (stream.method === "post") {
+                    if (req.method === "post") {
                         this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
 
                         return {
@@ -795,9 +796,9 @@ export class Host implements IComponent {
                 }
             }
 
-            const config = await sequenceAdapter.identify(stream, id);
+            const config = await sequenceAdapter.identify(req, id);
 
-            config.packageSize = stream.socket?.bytesRead;
+            config.packageSize = req.socket?.bytesRead;
 
             if (this.config.host.id) {
                 // eslint-disable-next-line max-len
@@ -828,14 +829,14 @@ export class Host implements IComponent {
         }
     }
 
-    async handleSequenceUpdate(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        stream.params ||= {};
-
-        const seqQuery = stream.params.id_name as string;
-        const existingSequence = this.sequenceStore.getByNameOrId(seqQuery);
+    async handleUpdateSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        req.params ||= {};
+        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
+        const id = req.params.id as string;
+        const existingSequence: SequenceInfo | undefined = this.sequenceStore.getById(req.params.id as string);
 
         if (!existingSequence) {
-            return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with name ${seqQuery} not found` };
+            return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with name ${id}} not found` };
         }
 
         if (existingSequence.instances.length) {
@@ -844,7 +845,7 @@ export class Host implements IComponent {
 
         this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
 
-        return this.handleIncomingSequence(stream, existingSequence.id);
+        return this.handleIncomingSequence(req, existingSequence.id);
     }
 
     /**
@@ -1138,10 +1139,12 @@ export class Host implements IComponent {
     /**
      * Returns Sequence information.
      *
-     * @param {string} id Instance ID.
+     * @param {ParsedMessage} req Request object that should contain id parameter inside.
      * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
      */
-    getSequence(id: string): OpResponse<STHRestAPI.GetSequenceResponse> {
+    getSequence(req: ParsedMessage): OpResponse<STHRestAPI.GetSequenceResponse> {
+        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+        const id = req.params.id;
         const sequence = this.sequenceStore.getById(id);
 
         if (!sequence) {
