@@ -8,7 +8,8 @@ export const init: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .configureHelp({ showGlobalOptions: true, developersOnly: true } as ExtendedHelpConfiguration)
         .alias("i")
-        .usage("[command] [options...]");
+        .usage("[command] [options...]")
+        .description("Create all the necessary files and start working on your Sequence");
 
     initCmd
         .command("sequence")
