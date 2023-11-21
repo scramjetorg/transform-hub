@@ -158,3 +158,13 @@ Feature: CLI tests
         Examples:
             | instanceId                           |
             | Supervisor-Instance-0000-11111111111 |
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-019 Test Init template sequence
+        When I execute CLI command si init <templateType>
+        Then I confirm template <templateType> is created
+        Examples:
+            | templateType |
+            | ts           |
+            | js           |
+            | py           |

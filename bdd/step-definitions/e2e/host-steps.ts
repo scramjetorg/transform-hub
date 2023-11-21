@@ -8,9 +8,9 @@ import {
     defer,
     waitUntilStreamEquals,
     waitUntilStreamContains,
+    removeProfile,
     createProfile,
-    setProfile,
-    removeProfile
+    setProfile
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
