@@ -45,6 +45,7 @@ IComponent {
         // @TODO this is a redundant check (it was already checked in sequence adapter)
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
         this.sthConfig = sthConfig;
+
         const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
 
         if (!decodedAdapterConfig.isOk()) {

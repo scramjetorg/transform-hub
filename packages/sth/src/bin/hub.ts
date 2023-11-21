@@ -94,6 +94,7 @@ const options: OptionValues & STHCommandOptions = program
     if (options.runnerEnvs) {
         configService.update({ runnerEnvs: processCommanderRunnerEnvs(options.runnerEnvs) });
     }
+
     if (options.tags.length) {
         configService.update({ tags: options.tags.split(",") });
     }

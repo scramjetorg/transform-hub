@@ -193,7 +193,7 @@ IComponent {
             instancesServerPort,
             instancesServerHost: networkSetup.host,
             instanceId,
-            pipesPath: "",
+            pipesPath: ""
         }, {
             ...this.sthConfig.runnerEnvs
         }).map(([k, v]) => `${k}=${v}`);

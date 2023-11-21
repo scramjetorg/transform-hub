@@ -134,7 +134,7 @@ class ProcessInstanceAdapter implements
             instancesServerHost: "127.0.0.1",
             instancesServerPort,
             instanceId,
-            pipesPath: "",
+            pipesPath: ""
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
             ...this.sthConfig.runnerEnvs
