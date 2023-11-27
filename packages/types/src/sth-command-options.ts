@@ -51,5 +51,6 @@ export type STHCommandOptions = {
     instanceLifetimeExtensionDelay: number;
     environmentName?: string;
     telemetry: TelemetryConfig["status"]
-    monitoringServer: { port: number }
+    monitoringServer: { port: number };
+    runnerEnvs?: string;
 }

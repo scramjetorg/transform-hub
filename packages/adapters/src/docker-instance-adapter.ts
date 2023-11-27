@@ -32,6 +32,7 @@ IComponent {
     private dockerHelper: IDockerHelper;
     private _limits?: InstanceLimits = {};
     private resources: DockerAdapterResources = {};
+    private sthConfig: STHConfiguration;
     id: string = "";
 
     logger: IObjectLogger;
@@ -41,7 +42,8 @@ IComponent {
     get limits() { return this._limits || {} as InstanceLimits; }
     private set limits(value: InstanceLimits) { this._limits = value; }
 
-    constructor(_sthConfig: STHConfiguration, id: string = "") {
+    constructor(sthConfig: STHConfiguration, id: string = "") {
+        this.sthConfig = sthConfig;
         this.dockerHelper = new DockerodeDockerHelper();
 
         this.logger = new ObjLogger(this, { id });
@@ -192,6 +194,8 @@ IComponent {
             instancesServerHost: networkSetup.host,
             instanceId,
             pipesPath: ""
+        }, {
+            ...this.sthConfig.runnerEnvs
         }).map(([k, v]) => `${k}=${v}`);
 
         this.logger.debug("Runner will start with envs", envs);
