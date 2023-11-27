@@ -155,13 +155,13 @@ Topics are a part of Service Discovery feature enabling data exchange through To
 
 ##### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `topic` | `string` | Topic name. |
-| `stream` | `string` \| `Readable` | Stream to be piped to topic. |
-| `requestInit?` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `contentType?` | `string` | Content type to be set in headers. |
-| `end?` | `boolean` | Indicates if "end" event from stream should be passed to topic. |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `topic` | `string` | `undefined` | Topic name. |
+| `stream` | `string` \| `Readable` | `undefined` | Stream to be piped to topic. |
+| `requestInit?` | `RequestInit` | `undefined` | RequestInit object to be passed to fetch. |
+| `contentType?` | `string` | `"application/x-ndjson"` | Content type to be set in headers. |
+| `end?` | `boolean` | `undefined` | Indicates if "end" event from stream should be passed to topic. |
 
 ##### Returns
 
@@ -628,13 +628,13 @@ Topics are a part of Service Discovery feature enabling data exchange through To
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `topic` | `string` | Topic name. |
-| `stream` | `string` \| `Readable` | Stream to be piped to topic. |
-| `requestInit?` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `contentType?` | `string` | Content type to be set in headers. |
-| `end?` | `boolean` | Indicates if "end" event from stream should be passed to topic. |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `topic` | `string` | `undefined` | Topic name. |
+| `stream` | `string` \| `Readable` | `undefined` | Stream to be piped to topic. |
+| `requestInit?` | `RequestInit` | `undefined` | RequestInit object to be passed to fetch. |
+| `contentType?` | `string` | `"application/x-ndjson"` | Content type to be set in headers. |
+| `end?` | `boolean` | `undefined` | Indicates if "end" event from stream should be passed to topic. |
 
 #### Returns
 

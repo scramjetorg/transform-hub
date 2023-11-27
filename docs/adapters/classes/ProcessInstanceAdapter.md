@@ -113,7 +113,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[process-instance-adapter.ts:177](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L177)
+[process-instance-adapter.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L178)
 
 ___
 
@@ -131,7 +131,7 @@ ILifeCycleAdapterMain.getCrashLog
 
 #### Defined in
 
-[process-instance-adapter.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L193)
+[process-instance-adapter.ts:194](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L194)
 
 ___
 
@@ -213,7 +213,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[process-instance-adapter.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L182)
+[process-instance-adapter.ts:183](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L183)
 
 ___
 
@@ -233,7 +233,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[process-instance-adapter.ts:189](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L189)
+[process-instance-adapter.ts:190](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/process-instance-adapter.ts#L190)
 
 ___
 
