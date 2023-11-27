@@ -121,7 +121,7 @@ class TopicRouter {
                 provides: topic.id(), contentType: contentType, topicName: topic.id()
             });
         } else {
-            this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
+            this.logger.debug(`Incoming Downstream CPM request for topic: '${topic.id()}, ${topic.contentType}'`);
         }
 
         await new Promise<void>(res => {

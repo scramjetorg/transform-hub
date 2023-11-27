@@ -51,7 +51,6 @@ const options: OptionValues & STHCommandOptions = program
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
-    .option("--platform-token <token>", "Platform authorization token")
     .option("--cpm-ssl-ca-path <path>", "Certificate Authority for self-signed CPM SSL certificates")
     .option("--cpm-id <id>")
     .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")

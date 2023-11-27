@@ -6,7 +6,15 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import { getStreamsFromSpawn, defer, waitUntilStreamContains, killProcessByName, getSiCommand } from "../../lib/utils";
+import {
+    getStreamsFromSpawn,
+    defer,
+    waitUntilStreamContains,
+    killProcessByName,
+    getSiCommand,
+    spawnSiInit,
+    isTemplateCreated
+} from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -358,4 +366,16 @@ Then(/^I confirm instance id is: (.*)$/, async function (this: CustomWorld, expe
     }
 
     assert.equal(instance.id, expectedInstanceId);
+});
+
+When(/^I execute CLI command si init (.*)$/, { timeout: 30000 }, async function (templateType: string) {
+    const workingDirectory = "data/template_seq";
+
+    await spawnSiInit("/usr/bin/env", templateType, workingDirectory);
+});
+
+Then(/^I confirm template (.*) is created$/, async function (templateType: string) {
+    const workingDirectory = "data/template_seq";
+
+    assert.equal(await isTemplateCreated(templateType, workingDirectory), true);
 });

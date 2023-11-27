@@ -274,3 +274,106 @@ export async function removeProfile(profileName: string) {
         logger.debug(res);
     }
 }
+
+export function createDirectory(workingDirectory: string) {
+    if (!fs.existsSync(workingDirectory)) {
+        fs.mkdirSync(workingDirectory);
+        if (isLogActive) {
+            logger.debug(`Directory "${workingDirectory}" successfully created`);
+        }
+    } else {
+        logger.error(`Directory "${workingDirectory}" already exist`);
+    }
+}
+
+export function deleteDirectory(workingDirectory: string) {
+    try {
+        fs.rmdirSync(workingDirectory, { recursive: true });
+        if (isLogActive) {
+            logger.debug(`Directory "${workingDirectory}" was successfully deleted`);
+        }
+    } catch (error: any) {
+        logger.error(`Error while deleting direcory "${workingDirectory}": ${error.message}`);
+    }
+}
+
+export function spawnSiInit(
+    command: string,
+    templateType: string,
+    workingDirectory: string,
+    env: NodeJS.ProcessEnv = process.env
+) {
+    return new Promise<void>((resolve, reject) => {
+        const args = () => {
+            return [...si, "init", "seq", templateType, "-p", workingDirectory];
+        };
+
+        if (isLogActive) {
+            logger.debug("Spawning command: /usr/bin/env", ...args());
+        }
+
+        const childProcess = spawn(command, args(), {
+            env
+        });
+
+        childProcess.stdout.on("data", (data) => {
+            if (isLogActive) {
+                logger.debug(data.toString());
+            }
+            if (data.includes("Sequence template succesfully created")) {
+                resolve();
+            } else {
+                childProcess.stdin.write("\n");
+            }
+        });
+        childProcess.stderr.on("data", (data) => {
+            const stderrString = data.toString();
+
+            logger.warn(`Stderr: ${stderrString}`);
+        });
+        childProcess.on("error", (err) => {
+            logger.error(err);
+            reject();
+        });
+        childProcess.on("exit", (code) => {
+            if (isLogActive) {
+                logger.debug(`Exit code: ${code}`);
+            }
+            resolve();
+        });
+    });
+}
+
+export function isTemplateCreated(templateType: string, workingDirectory: string) {
+    return new Promise<boolean>((resolve, reject) => {
+        // eslint-disable-next-line complexity
+        fs.readdir(workingDirectory, (err, files) => {
+            if (err) {
+                logger.error(`Can not read from directory: ${workingDirectory}`);
+                reject(err);
+                return;
+            }
+            if (
+                templateType === "ts" &&
+                files.includes("index.ts") &&
+                files.includes("package.json") &&
+                files.includes("tsconfig.json")
+            ) {
+                resolve(true);
+            }
+            if (
+                templateType === "py" &&
+                files.includes("main.py") &&
+                files.includes("package.json") &&
+                files.includes("requirements.txt")
+            ) {
+                resolve(true);
+            }
+            if (templateType === "js" && files.includes("index.js") && files.includes("package.json")) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}

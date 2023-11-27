@@ -1044,7 +1044,7 @@ export class Host implements IComponent {
             }
 
             if (data.requires && !csic.inputRouted && data.contentType) {
-                this.logger.trace("Routing Sequence input to topic", data.requires);
+                this.logger.trace("Routing topic to Sequence input", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
                     { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },

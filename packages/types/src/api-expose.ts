@@ -8,7 +8,8 @@ import { MaybePromise } from "./utils";
 
 export type ParsedMessage = IncomingMessage & {
     body?: any;
-    params?: { [key: string]: any }
+    params?: { [key: string]: any },
+    query?: { [key: string]: any };
 };
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 

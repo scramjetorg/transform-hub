@@ -8,9 +8,11 @@ import {
     defer,
     waitUntilStreamEquals,
     waitUntilStreamContains,
+    removeProfile,
     createProfile,
     setProfile,
-    removeProfile
+    createDirectory,
+    deleteDirectory
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
@@ -178,6 +180,13 @@ Before(() => {
 });
 
 After({ tags: "@runner-cleanup" }, killRunner);
+
+Before({ tags: "@test-si-init" }, function() {
+    createDirectory("data/template_seq");
+});
+After({ tags: "@test-si-init" }, function() {
+    deleteDirectory("data/template_seq");
+});
 
 const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
@@ -683,7 +692,7 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
 
     if (!sequenceId) assert.fail();
 
-    const sequences = await hostClient.listSequences() || [];
+    const sequences = (await hostClient.listSequences()) || [];
     const sequenceExist = !!sequences.find((sequenceInfo) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
