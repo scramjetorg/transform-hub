@@ -85,7 +85,7 @@ export function fileContains(filename: any, key: any) {
     let line;
 
     // eslint-disable-next-line no-cond-assign
-    while ((line = stdoutFile.next())) {
+    while (line = stdoutFile.next()) {
         if (line.includes(key)) {
             return;
         }
@@ -275,26 +275,25 @@ export async function removeProfile(profileName: string) {
     }
 }
 
-export async function deleteAllFilesInDirectory(workingDirectory: string) {
+export function createDirectory(workingDirectory: string) {
+    if (!fs.existsSync(workingDirectory)) {
+        fs.mkdirSync(workingDirectory);
+        if (isLogActive) {
+            logger.debug(`Directory "${workingDirectory}" successfully created`);
+        }
+    } else {
+        logger.error(`Directory "${workingDirectory}" already exist`);
+    }
+}
+
+export function deleteDirectory(workingDirectory: string) {
     try {
-        const files = await fs.promises.readdir(workingDirectory);
-
-        await Promise.all(
-            files.map(async (file) => {
-                const filePath = `${workingDirectory}/${file}`;
-
-                try {
-                    await fs.promises.unlink(filePath);
-                    if (isLogActive) {
-                        logger.debug(`File ${filePath} was deleted`);
-                    }
-                } catch (error) {
-                    logger.error(`Deleting error file ${file}: ${error}`);
-                }
-            })
-        );
-    } catch (err) {
-        logger.error(`Can not read from directory: ${workingDirectory}`);
+        fs.rmdirSync(workingDirectory, { recursive: true });
+        if (isLogActive) {
+            logger.debug(`Directory "${workingDirectory}" was successfully deleted`);
+        }
+    } catch (error: any) {
+        logger.error(`Error while deleting direcory "${workingDirectory}": ${error.message}`);
     }
 }
 

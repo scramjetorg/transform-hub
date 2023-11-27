@@ -12,7 +12,6 @@ import {
     waitUntilStreamContains,
     killProcessByName,
     getSiCommand,
-    deleteAllFilesInDirectory,
     spawnSiInit,
     isTemplateCreated
 } from "../../lib/utils";
@@ -372,7 +371,6 @@ Then(/^I confirm instance id is: (.*)$/, async function (this: CustomWorld, expe
 When(/^I execute CLI command si init (.*)$/, { timeout: 30000 }, async function (templateType: string) {
     const workingDirectory = "data/template_seq";
 
-    await deleteAllFilesInDirectory(workingDirectory);
     await spawnSiInit("/usr/bin/env", templateType, workingDirectory);
 });
 
