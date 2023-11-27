@@ -662,9 +662,10 @@ export class CSIController extends TypedEmitter<Events> {
 
             if (!event.eventName) return;
 
-            localEmitter.lastEvents[event.eventName] = event;
+            localEmitter.lastEvents[event.eventName] = event.message;
             localEmitter.emit(event.eventName, event);
         });
+
         this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
             const name = req.params?.name;
 
@@ -700,14 +701,14 @@ export class CSIController extends TypedEmitter<Events> {
             return out.JSONStringify();
         });
 
-        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
+        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise((res) => {
             const name = req.params?.name;
 
             if (!name) {
                 throw new HostError("EVENT_NAME_MISSING");
             }
 
-            localEmitter.once(name, res);
+            localEmitter.once(name, (data) => res(data.message));
         });
 
         this.router.get("/event/:name", async (req) => {

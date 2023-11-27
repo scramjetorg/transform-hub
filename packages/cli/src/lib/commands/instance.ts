@@ -190,9 +190,9 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, event: string, { next, stream }) => {
             if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
             if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event),
-                profileManager.getProfileConfig().format);
+                "json");
             return displayEntity(
-                getInstance(getInstanceId(id)).getEvent(event), profileManager.getProfileConfig().format
+                getInstance(getInstanceId(id)).getEvent(event), "json"
             );
         });
 
