@@ -69,7 +69,7 @@ Closes the connection by sending FIN packet.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:243](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L243)
+[packages/verser/src/lib/verser-connection.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L250)
 
 ___
 
@@ -96,7 +96,7 @@ Duplex stream.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:196](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L196)
+[packages/verser/src/lib/verser-connection.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L203)
 
 ___
 
@@ -159,7 +159,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L250)
+[packages/verser/src/lib/verser-connection.ts:257](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L257)
 
 ___
 
@@ -239,7 +239,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser-connection.ts:202](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L202)
+[packages/verser/src/lib/verser-connection.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-connection.ts#L209)
 
 ___
 
