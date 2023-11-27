@@ -1,30 +1,45 @@
 import { createServer } from "http";
 import { IMonitoringServer, MonitoringServerOptions, MonitoringServerValidator as MonitoringServerHealthCheck, MonitoringServerConfig } from "@scramjet/types";
+import { MonitoringServerConf } from "./config/monitoringConfig";
 
 export class MonitoringServer implements IMonitoringServer {
-    private options: MonitoringServerOptions;
     private checks: MonitoringServerHealthCheck[] = [];
     private running = false;
+    public serverOptions: MonitoringServerOptions;
+    private monitoringSeverConf: MonitoringServerConf;
 
-    constructor(options: MonitoringServerOptions) {
-        if (!Number.isInteger(options.port) || (options.port < 0 || options.port > 65535)) {
-            throw Error(`Invalid port number ${options.port}`);
+    constructor(serverOptions: MonitoringServerOptions) {
+        const { check, ...config } = serverOptions;
+
+        this.monitoringSeverConf = new MonitoringServerConf(config);
+
+        const errors = this.monitoringSeverConf.errors;
+
+        if (errors.length > 0) {
+            throw new Error(errors.reduce((p: string[], c) => {
+                p.push(c.message || "");
+                return p;
+            }, []).join());
         }
 
-        this.options = options;
+        this.serverOptions = serverOptions;
 
-        this.options.path ||= "healtz";
-
-        if ((/!^[a-zA-Z0-9\-_~:.@!$&'()*+,;=%]*$/).test(this.options.path)) {
-            throw Error(`Invalid path: ${this.options.path}`);
+        if (!this.monitoringSeverConf.isValid()) {
+            throw Error("Invalid config");
         }
 
-        if (Array.isArray(options.check)) {
-            this.checks = options.check;
+        this.serverOptions.path ||= "healtz";
+
+        if ((/!^[a-zA-Z0-9\-_~:.@!$&'()*+,;=%]*$/).test(this.serverOptions.path)) {
+            throw Error(`Invalid path: ${this.serverOptions.path}`);
         }
 
-        if (typeof this.options.check === "function") {
-            this.checks.push(this.options.check);
+        if (Array.isArray(check)) {
+            this.checks = check;
+        }
+
+        if (typeof this.serverOptions.check === "function") {
+            this.checks.push(this.serverOptions.check);
         }
     }
 
@@ -37,7 +52,7 @@ export class MonitoringServer implements IMonitoringServer {
             if (this.running) reject("MonitoringServer already running");
 
             createServer(async (req, res) => {
-                if (req.url === `/${this.options.path}` && req.method === "GET") {
+                if (req.url === `/${this.serverOptions.path}` && req.method === "GET") {
                     const healtz = await this.handleHealtzRequest();
 
                     res.setHeader("Content-type", "text/plain");
@@ -52,13 +67,13 @@ export class MonitoringServer implements IMonitoringServer {
                     res.statusCode = 500;
                     res.end();
                 }
-            }).listen(this.options.port, this.options.host, () => {
+            }).listen(this.serverOptions.port, this.serverOptions.host, () => {
                 this.running = true;
 
                 resolve({
-                    port: this.options.port,
-                    host: this.options.host,
-                    path: this.options.path
+                    port: this.serverOptions.port,
+                    host: this.serverOptions.host,
+                    path: this.serverOptions.path
                 });
             });
         });
