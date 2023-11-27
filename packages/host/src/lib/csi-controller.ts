@@ -23,6 +23,7 @@ import {
     OpResponse,
     StopSequenceMessageData,
     HostProxy,
+    EventMessageData,
 } from "@scramjet/types";
 import {
     AppError,
@@ -661,18 +662,29 @@ export class CSIController extends TypedEmitter<Events> {
 
             if (!event.eventName) return;
 
-            localEmitter.lastEvents[event.eventName] = event;
+            localEmitter.lastEvents[event.eventName] = event.message;
             localEmitter.emit(event.eventName, event);
         });
+
         this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
             const name = req.params?.name;
 
             if (!name) {
                 throw new HostError("EVENT_NAME_MISSING");
             }
-
             const out = new DataStream();
-            const handler = (data: any) => out.write(data);
+            const handler = (data: EventMessageData) => {
+                if (typeof data !== "object") {
+                    out.write(data);
+
+                    return;
+                }
+
+                const { message } = data;
+
+                out.write(message ? message : {});
+            };
+
             const clean = () => {
                 this.logger.debug(`Event stream "${name}" disconnected`);
 
@@ -689,14 +701,14 @@ export class CSIController extends TypedEmitter<Events> {
             return out.JSONStringify();
         });
 
-        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
+        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise((res) => {
             const name = req.params?.name;
 
             if (!name) {
                 throw new HostError("EVENT_NAME_MISSING");
             }
 
-            localEmitter.once(name, res);
+            localEmitter.once(name, (data) => res(data.message));
         });
 
         this.router.get("/event/:name", async (req) => {

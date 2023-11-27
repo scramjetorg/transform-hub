@@ -110,14 +110,14 @@ Feature: CLI tests
         When I execute CLI with "seq deploy ../packages/event-sequence-v2.tar.gz"
         When I execute CLI with "inst event emit - test-event test message"
         When I execute CLI with "inst event on - test-event-response"
-        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
+        Then I get event "test-event-response" with event message "\"message from sequence\"" from Instance
 
     @ci-api @cli
     Scenario: E2E-010 TC-013a Test Instance 'event' option without payload
         When I execute CLI with "seq deploy ../packages/event-sequence-v2.tar.gz"
         When I execute CLI with "inst event emit - test-event"
         When I execute CLI with "inst event on - test-event-response"
-        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
+        Then I get event "test-event-response" with event message "\"message from sequence\"" from Instance
 
     @ci-api @cli
     Scenario: E2E-010 TC-014 Test Sequence 'start' with multiple JSON arguments
