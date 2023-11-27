@@ -20,9 +20,9 @@ export async function loadModule<T>(opts: ModuleLoaderOpts): Promise<T> {
 
         return module!;
     } catch (e) {
-        logger.error(`Error loading module ${name}`);
+        logger.error(`Error loading module ${opts.name}`);
 
-        throw new Error(`Error loading module ${name}`);
+        throw new Error(`Error loading module ${opts.name}`);
     }
 }
 

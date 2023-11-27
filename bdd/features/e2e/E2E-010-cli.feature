@@ -136,3 +136,35 @@ Feature: CLI tests
     Scenario: E2E-010 TC-016 Get Hub logs
         When I execute CLI with "hub logs" without waiting for the end
         Then I confirm Hub logs received
+
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-017 Test Instance 'restart' option
+        When I execute CLI with "seq deploy ../packages/hello.tar.gz"
+        When I execute CLI with "inst restart -"
+        Then I confirm instance status is "killing"
+        When I execute CLI with "inst info -"
+        Then I confirm instance status is "running"
+
+    ##
+    #    If you change name of instanceId, keep remember it should consist of 36 chars!!!
+    ##
+    @ci-api @cli
+    Scenario: E2E-010 TC-018 Test Set instance id
+        When I execute CLI with "seq send ../packages/hello.tar.gz"
+        When I execute CLI with "seq start - --inst-id <instanceId>"
+        When I execute CLI with "inst ls"
+        Then I confirm instance id is: <instanceId>
+        Examples:
+            | instanceId                           |
+            | Supervisor-Instance-0000-11111111111 |
+
+    @ci-api @cli @test-si-init
+    Scenario: E2E-010 TC-019 Test Init template sequence
+        When I execute CLI command si init <templateType>
+        Then I confirm template <templateType> is created
+        Examples:
+            | templateType |
+            | ts           |
+            | js           |
+            | py           |

@@ -195,7 +195,7 @@ export class HostClient implements ClientProvider {
         topic: string,
         stream: Parameters<HttpClient["sendStream"]>[1],
         requestInit?: RequestInit,
-        contentType?: string,
+        contentType: string = "application/x-ndjson",
         end?: boolean
     ) {
         return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });

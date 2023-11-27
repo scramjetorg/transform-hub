@@ -1,11 +1,11 @@
 
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { InstanceLimits } from "@scramjet/types";
+import { AppConfig, InstanceLimits } from "@scramjet/types";
 import { constants, createReadStream, createWriteStream, PathLike } from "fs";
-import { readFile, readdir, access, lstat } from "fs/promises";
+import { readdir, access, lstat } from "fs/promises";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
 import { getPackagePath, getSequenceId, sessionConfig } from "../config";
-import { defer, promiseTimeout } from "@scramjet/utility";
+import { FileBuilder, defer, promiseTimeout } from "@scramjet/utility";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { displayMessage } from "../output";
 import { c } from "tar";
@@ -148,33 +148,45 @@ export const sequenceSendPackage = async (
     }
 };
 
-export const sequenceStart = async (
-    id: string, { configFile, configString, args, outputTopic, inputTopic, limits }:
-        {
-            configFile: any,
-            configString: string,
-            args?: any[],
-            outputTopic?: string,
-            inputTopic?: string,
-            limits?: InstanceLimits
-        }
-): Promise<InstanceClient> => {
+export const sequenceParseConfig = async (configFile: string = "", configString: string = ""): Promise<AppConfig> => {
     if (configFile && configString) {
         return Promise.reject(new Error("Provide one source of configuration"));
     }
 
-    let appConfig = {};
+    let appConfig;
 
     try {
         if (configString) appConfig = JSON.parse(configString);
-        if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
-    } catch (_) {
-        return Promise.reject(new Error("Unable to read configuration"));
+    } catch {
+        return Promise.reject(new Error("Unable to parse configuration string"));
     }
+
+    try {
+        if (configFile) appConfig = FileBuilder(configFile).read();
+    } catch (_) {
+        return Promise.reject(new Error("Unable to read configuration file"));
+    }
+
+    return appConfig;
+};
+
+export const sequenceStart = async (
+    id: string, { appConfig, args, outputTopic, inputTopic, limits, instanceId }:
+        {
+            appConfig: AppConfig,
+            args?: any[],
+            outputTopic?: string,
+            inputTopic?: string,
+            limits?: InstanceLimits,
+            instanceId?: string
+        }
+): Promise<InstanceClient> => {
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
     try {
-        const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic, limits });
+        const instance = await sequenceClient.start({
+            appConfig, args: args?.length ? args : undefined, outputTopic, inputTopic, limits, instanceId
+        });
 
         sessionConfig.setLastInstanceId(instance.id);
         return Promise.resolve(instance);
