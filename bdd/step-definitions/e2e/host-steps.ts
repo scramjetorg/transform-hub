@@ -12,7 +12,8 @@ import {
     createProfile,
     setProfile,
     createDirectory,
-    deleteDirectory
+    deleteDirectory,
+    getActiveProfile
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
@@ -37,6 +38,7 @@ let actualLogResponse: any;
 let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
+let activeProfile: any;
 
 const freeport = promisify(require("freeport"));
 
@@ -121,6 +123,7 @@ BeforeAll({ timeout: 10e3 }, async () => {
         return;
     }
 
+    activeProfile = await getActiveProfile();
     await createProfile(profileName);
     await setProfile(profileName);
 
@@ -168,7 +171,7 @@ AfterAll(async () => {
             throw new Error("Host unexpected closed");
         }
     }
-
+    await setProfile(activeProfile);
     await removeProfile(profileName);
 });
 
