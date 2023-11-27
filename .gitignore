@@ -124,9 +124,6 @@ dist
 bdd/.work/
 bdd/reports/*.html
 bdd/*-test-result.txt
-bdd/data/template_seq/
-
-!bdd/data/template_seq/.gitkeep
 
 # pre-runner sample-package
 packages/pre-runner/sample-package/
