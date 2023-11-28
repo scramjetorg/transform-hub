@@ -629,6 +629,7 @@ export class Host implements IComponent {
      */
     async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
         if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+
         const id = req.params.id as string;
         const sequence: SequenceInfo| undefined = this.sequenceStore.getById(req.params.id as string);
 
@@ -828,7 +829,7 @@ export class Host implements IComponent {
     async handleUpdateSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         req.params ||= {};
 
-        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
+        if (!req.params.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
 
         const id = req.params.id as string;
         const existingSequence: SequenceInfo | undefined = this.sequenceStore.getById(req.params.id as string);
@@ -1138,6 +1139,7 @@ export class Host implements IComponent {
      */
     getSequence(req: ParsedMessage): OpResponse<STHRestAPI.GetSequenceResponse> {
         if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+
         const id = req.params.id;
         const sequence = this.sequenceStore.getById(id);
 
