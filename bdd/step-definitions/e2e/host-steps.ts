@@ -49,7 +49,7 @@ const testPath = "../packages/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
-const startWith = async function (this: CustomWorld, instanceArg: string) {
+const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArg.split(" ")
@@ -118,7 +118,7 @@ const killRunner = async () => {
     }
 };
 
-BeforeAll({ timeout: 10e3 }, async () => {
+BeforeAll({ timeout: 20e3 }, async () => {
     if (process.env.NO_HOST) {
         return;
     }
@@ -184,10 +184,11 @@ Before(() => {
 
 After({ tags: "@runner-cleanup" }, killRunner);
 
-Before({ tags: "@test-si-init" }, function () {
+Before({ tags: "@test-si-init" }, function() {
     createDirectory("data/template_seq");
 });
-After({ tags: "@test-si-init" }, function () {
+
+After({ tags: "@test-si-init" }, function() {
     deleteDirectory("data/template_seq");
 });
 
@@ -229,9 +230,10 @@ const startHost = async () => {
 };
 
 Given("start host", () => startHost());
+
 Then("stop host", () => hostUtils.stopHost());
 
-Then("send fake stream as sequence", async function (this: CustomWorld) {
+Then("send fake stream as sequence", async function(this: CustomWorld) {
     this.resources.pkgFake = new PassThrough();
 
     this.resources.sequenceSendPromise = getHostClient(this)
@@ -241,7 +243,7 @@ Then("send fake stream as sequence", async function (this: CustomWorld) {
     this.resources.pkgFake.write(Buffer.from([0x1f8b0800000000000003]));
 });
 
-Then("end fake stream", async function (this: CustomWorld): Promise<void> {
+Then("end fake stream", async function(this: CustomWorld): Promise<void> {
     return new Promise((res) => {
         this.resources.pkgFake
             .on("close", async () => {
@@ -252,7 +254,7 @@ Then("end fake stream", async function (this: CustomWorld): Promise<void> {
     });
 });
 
-Given("host is running", async function (this: CustomWorld) {
+Given("host is running", async function(this: CustomWorld) {
     const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (apiUrl) {
@@ -262,7 +264,7 @@ Given("host is running", async function (this: CustomWorld) {
     assert.ok(await hostClient.getLoadCheck());
 });
 
-Then("host is still running", async function (this: CustomWorld) {
+Then("host is still running", async function(this: CustomWorld) {
     assert.ok(await getHostClient(this).getLoadCheck());
 });
 
@@ -270,7 +272,7 @@ When("wait for {string} ms", async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("find and upload sequence {string}", { timeout: 50000 }, async function (this: CustomWorld, packageName: string) {
+When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
     const packagePath = `${process.env.PACKAGES_DIR}${packageName}`;
 
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
@@ -278,41 +280,41 @@ When("find and upload sequence {string}", { timeout: 50000 }, async function (th
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
-When("sequence {string} loaded", { timeout: 50000 }, async function (this: CustomWorld, packagePath: string) {
+When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
-When("sequence {string} is loaded", { timeout: 15000 }, async function (this: CustomWorld, packagePath: string) {
+When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
 });
 
-When("instance started", async function (this: CustomWorld) {
+When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
 });
 
 When(
     "instance started with url from assets argument {string}",
     { timeout: 25000 },
-    async function (this: CustomWorld, assetUrl: string) {
+    async function(this: CustomWorld, assetUrl: string) {
         return startWith.call(this, `${assetsLocation}${assetUrl}`);
     }
 );
 
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 
-When("start Instance with output topic name {string}", async function (this: CustomWorld, topicOut: string) {
+When("start Instance with output topic name {string}", async function(this: CustomWorld, topicOut: string) {
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         outputTopic: topicOut
     });
 });
 
-When("start Instance with input topic name {string}", async function (this: CustomWorld, topicIn: string) {
+When("start Instance with input topic name {string}", async function(this: CustomWorld, topicIn: string) {
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         inputTopic: topicIn
@@ -321,7 +323,7 @@ When("start Instance with input topic name {string}", async function (this: Cust
 
 When(
     "start Instance with args {string} and output topic name {string}",
-    async function (this: CustomWorld, instanceArg: string, topicOut: string) {
+    async function(this: CustomWorld, instanceArg: string, topicOut: string) {
         this.resources.instance = await this.resources.sequence!.start({
             appConfig: {},
             args: instanceArg.split(" "),
@@ -332,7 +334,7 @@ When(
 
 When(
     "start Instance with args {string} and input topic name {string}",
-    async function (this: CustomWorld, instanceArg: string, topicIn: string) {
+    async function(this: CustomWorld, instanceArg: string, topicIn: string) {
         this.resources.instance = await this.resources.sequence!.start({
             appConfig: {},
             args: instanceArg.split(" "),
@@ -344,7 +346,7 @@ When(
 When(
     "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
     { timeout: -1 },
-    async function (this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
+    async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
         this.resources.instance = await this.resources.sequence!.start({
             appConfig: {},
             args: instanceArg.split(" ")
@@ -370,7 +372,7 @@ When(
 When(
     "get {string} with instanceId and wait for it to finish",
     { timeout: 500000 },
-    async function (this: CustomWorld, outputStream: InstanceOutputStream) {
+    async function(this: CustomWorld, outputStream: InstanceOutputStream) {
         const out = await this.resources.instance?.getStream(outputStream);
 
         out!.pipe(process.stdout);
@@ -411,7 +413,7 @@ Given("file in the location {string} exists on hard drive", async (filename: any
     assert.ok(await promisify(fs.exists)(filename));
 });
 
-When("compare checksums of content sent from file {string}", async function (this: CustomWorld, filePath: string) {
+When("compare checksums of content sent from file {string}", async function(this: CustomWorld, filePath: string) {
     const readStream = fs.createReadStream(filePath);
     const hex: string = crypto
         .createHash("md5")
@@ -441,14 +443,14 @@ When("compare checksums of content sent from file {string}", async function (thi
 
 When(
     "send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}",
-    async function (this: CustomWorld, timeout: number, canCallKeepalive: string) {
+    async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
         const resp = await this.resources.instance?.stop(timeout, canCallKeepalive === "true");
 
         assert.ok(resp);
     }
 );
 
-When("send kill message to instances of sequence {string}", async function (id) {
+When("send kill message to instances of sequence {string}", async function(id) {
     const seqClient = hostClient.getSequenceClient(id);
     const instances = await seqClient.listInstances();
 
@@ -459,13 +461,13 @@ When("send kill message to instances of sequence {string}", async function (id) 
     }
 });
 
-When("send kill message to instance", async function (this: CustomWorld) {
+When("send kill message to instance", async function(this: CustomWorld) {
     const resp = await this.resources.instance?.kill();
 
     assert.ok(resp);
 });
 
-When("get runner PID", { timeout: 31000 }, async function (this: CustomWorld) {
+When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
@@ -523,24 +525,24 @@ When("runner has ended execution", { timeout: 20000 }, async () => {
 
 When(
     "send event {string} to instance with message {string}",
-    async function (this: CustomWorld, eventName, eventMessage) {
+    async function(this: CustomWorld, eventName, eventMessage) {
         const resp = await this.resources.instance?.sendEvent(eventName, eventMessage);
 
         assert.ok(resp);
     }
 );
 
-Then("wait for event {string} from instance", { timeout: 10000 }, async function (this: CustomWorld, event: string) {
+Then("wait for event {string} from instance", { timeout: 10000 }, async function(this: CustomWorld, event: string) {
     actualStatusResponse = await this.resources.instance?.getNextEvent(event);
     assert.ok(actualStatusResponse);
 });
 
-Then("get event {string} from instance", { timeout: 10000 }, async function (this: CustomWorld, event: string) {
+Then("get event {string} from instance", { timeout: 10000 }, async function(this: CustomWorld, event: string) {
     actualStatusResponse = await this.resources.instance?.getEvent(event);
     assert.ok(actualStatusResponse);
 });
 
-When("wait for instance healthy is {string}", async function (this: CustomWorld, resp: string) {
+When("wait for instance healthy is {string}", async function(this: CustomWorld, resp: string) {
     let healthy = "false";
 
     if (resp === "false") {
@@ -563,7 +565,7 @@ When("wait for instance healthy is {string}", async function (this: CustomWorld,
     assert.equal(healthy, resp);
 });
 
-Then("get instance info", async function (this: CustomWorld) {
+Then("get instance info", async function(this: CustomWorld) {
     const info = this.resources.instance?.getInfo();
 
     assert.ok(info, "No response on info");
@@ -581,11 +583,11 @@ Then("instance response body is {string}", async (expectedResp: string) => {
     assert.equal(resp, expectedResp);
 });
 
-When("send stdin to instance with contents of file {string}", async function (this: CustomWorld, filePath: string) {
+When("send stdin to instance with contents of file {string}", async function(this: CustomWorld, filePath: string) {
     await this.resources.instance?.sendStream("stdin", createReadStream(filePath));
 });
 
-When("flood the stdin stream with {int} kilobytes", async function (this: CustomWorld, kbytes: number) {
+When("flood the stdin stream with {int} kilobytes", async function(this: CustomWorld, kbytes: number) {
     let i = 0;
 
     await new Promise<void>((res, rej) => {
@@ -610,7 +612,7 @@ When("flood the stdin stream with {int} kilobytes", async function (this: Custom
     });
 });
 
-When("keep instance streams {string}", async function (this: CustomWorld, streamNames) {
+When("keep instance streams {string}", async function(this: CustomWorld, streamNames) {
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!this.resources.instance) assert.fail("Instance not existent");
 
@@ -625,13 +627,13 @@ Then("kept instance stream {string} should be {string}", async (streamName, _exp
 });
 
 // ? When I get version
-When("I get version", async function () {
+When("I get version", async function() {
     actualApiResponse = await hostClient.getVersion();
     assert.ok(await hostClient.getVersion());
 });
 
 // ? Then it returns the root package version
-Then("it returns the root package version", function () {
+Then("it returns the root package version", function() {
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse, version);
 
@@ -642,14 +644,14 @@ Then("it returns the root package version", function () {
 });
 
 // ? When I get load-check
-When("I get load-check", async function () {
+When("I get load-check", async function() {
     actualApiResponse = await hostClient.getLoadCheck();
     assert.ok(await hostClient.getLoadCheck());
 });
 
 // ? Then it returns a correct load check with required properties
 
-Then("it returns a correct load check with required properties", function () {
+Then("it returns a correct load check with required properties", function() {
     const data = actualApiResponse as any;
 
     assert.ok(typeof data === "object");
@@ -684,24 +686,24 @@ When(
     }
 );
 
-When("delete sequence and volumes", async function (this: CustomWorld) {
+When("delete sequence and volumes", async function(this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
     await hostClient.deleteSequence(sequenceId);
 });
 
-When("confirm that sequence and volumes are removed", async function (this: CustomWorld) {
+When("confirm that sequence and volumes are removed", async function(this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
     if (!sequenceId) assert.fail();
 
-    const sequences = (await hostClient.listSequences()) || [];
+    const sequences = await hostClient.listSequences() || [];
     const sequenceExist = !!sequences.find((sequenceInfo) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
 });
 
-When("instance is finished", async function (this: CustomWorld) {
+When("instance is finished", async function(this: CustomWorld) {
     actualHealthResponse = await this.resources.instance
         ?.getHealth()
         .then(() => {
@@ -712,7 +714,7 @@ When("instance is finished", async function (this: CustomWorld) {
         });
 });
 
-When("send {string} to input", async function (this: CustomWorld, str) {
+When("send {string} to input", async function(this: CustomWorld, str) {
     await this.resources.instance?.sendStream(
         "input",
         str,
@@ -724,7 +726,7 @@ When("send {string} to input", async function (this: CustomWorld, str) {
     );
 });
 
-When("send file {string} as text input", async function (this: CustomWorld, path) {
+When("send file {string} as text input", async function(this: CustomWorld, path) {
     await this.resources.instance?.sendStream(
         "input",
         createReadStream(path),
@@ -736,7 +738,7 @@ When("send file {string} as text input", async function (this: CustomWorld, path
     );
 });
 
-When("send file {string} as binary input", async function (this: CustomWorld, path) {
+When("send file {string} as binary input", async function(this: CustomWorld, path) {
     await this.resources.instance?.sendStream(
         "input",
         createReadStream(path),
@@ -748,11 +750,11 @@ When("send file {string} as binary input", async function (this: CustomWorld, pa
     );
 });
 
-When("send {string} to stdin", async function (this: CustomWorld, str) {
+When("send {string} to stdin", async function(this: CustomWorld, str) {
     await this.resources.instance?.sendStream("stdin", Readable.from(str));
 });
 
-Then("{string} is {string}", async function (this: CustomWorld, stream, text) {
+Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
     const result = await this.resources.instance?.getStream(stream);
     const response = await waitUntilStreamEquals(result!, text);
 
@@ -760,14 +762,14 @@ Then("{string} is {string}", async function (this: CustomWorld, stream, text) {
     assert.equal(text, response);
 });
 
-Then("{string} will be data named {string}", async function (this: CustomWorld, streamName, dataName) {
+Then("{string} will be data named {string}", async function(this: CustomWorld, streamName, dataName) {
     const stream = await this.resources.instance!.getStream(streamName);
     const response = await waitUntilStreamEquals(stream, expectedResponses[dataName]);
 
     assert.equal(response, expectedResponses[dataName]);
 });
 
-Then("{string} contains {string}", async function (this: CustomWorld, stream, text) {
+Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
     const output = (await this.resources.instance?.getStream(stream))?.pipe(new PassThrough({ encoding: "utf-8" }));
 
     if (!output) assert.fail("No output!");
@@ -782,7 +784,7 @@ Then("{string} contains {string}", async function (this: CustomWorld, stream, te
     assert.fail("Text not found matched in string");
 });
 
-When("instance health is {string}", async function (this: CustomWorld, health: string) {
+When("instance health is {string}", async function(this: CustomWorld, health: string) {
     const resp = await this.resources.instance?.getHealth()!;
     const actual = resp.healthy.toString();
 
@@ -792,7 +794,7 @@ When("instance health is {string}", async function (this: CustomWorld, health: s
 Then(
     "instance emits event {string} with body",
     { timeout: 10000 },
-    async function (this: CustomWorld, event: string, body: string) {
+    async function(this: CustomWorld, event: string, body: string) {
         const resp = await this.resources.instance?.getEvent(event);
         const actual = JSON.stringify(resp);
 
@@ -815,7 +817,7 @@ Then(
 
 When(
     "get data named {string} and content-type {string}",
-    async function (this: CustomWorld, topic: string, contentType: string) {
+    async function(this: CustomWorld, topic: string, contentType: string) {
         this.resources.outStream = await hostClient.getNamedData(topic, {}, contentType);
     }
 );
@@ -830,11 +832,11 @@ Then("send json data {string} named {string}", async (data: any, topic: string) 
     assert.ok(sendData);
 });
 
-When("get data named {string} without waiting for the end", async function (this: CustomWorld, topic: string) {
+When("get data named {string} without waiting for the end", async function(this: CustomWorld, topic: string) {
     this.resources.outStream = await hostClient.getNamedData(topic);
 });
 
-Then("confirm data defined as {string} will be received", async function (this: CustomWorld, data) {
+Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
     const response = await waitUntilStreamContains(this.resources.outStream!, expectedResponses[data]);
 
     assert.equal(response, true);
@@ -855,24 +857,24 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
     assert.ok(sendData);
 });
 
-Then("get output without waiting for the end", { timeout: 6e4 }, async function (this: CustomWorld) {
+Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
     const output = await this.resources.instance!.getStream("output");
 
     this.resources.outStream = output;
 });
 
-Then("confirm json {string} will be received", async function (this: CustomWorld, dataString) {
+Then("confirm json {string} will be received", async function(this: CustomWorld, dataString) {
     const data = JSON.parse(dataString);
     const response = await waitUntilStreamEquals(this.resources.outStream!, data);
 
     assert.equal(response, data);
 });
 
-Given("topic {string} is created", async function (this: CustomWorld, topicId: string) {
+Given("topic {string} is created", async function(this: CustomWorld, topicId: string) {
     await hostClient.createTopic(topicId, "text/plain");
 });
 
-Then("confirm topics contain {string}", async function (this: CustomWorld, topicId: string) {
+Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
     const topics = await hostClient.getTopics();
 
     const topic = topics.find((topicElement) => topicElement.topicName === topicId);
@@ -880,11 +882,11 @@ Then("confirm topics contain {string}", async function (this: CustomWorld, topic
     assert.notEqual(topic, undefined);
 });
 
-Then("remove topic {string}", async function (this: CustomWorld, topicId: string) {
+Then("remove topic {string}", async function(this: CustomWorld, topicId: string) {
     assert.ok(await hostClient.deleteTopic(topicId));
 });
 
-Then("confirm topic {string} is removed", async function (this: CustomWorld, topicName: string) {
+Then("confirm topic {string} is removed", async function(this: CustomWorld, topicName: string) {
     const topics = await hostClient.getTopics();
     const removedTopic = topics.find((topicElement) => topicElement.topicName === topicName);
 
