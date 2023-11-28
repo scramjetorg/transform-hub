@@ -25,7 +25,7 @@ export class MonitoringServer implements IMonitoringServer {
         this.serverOptions = serverOptions;
 
         if (!this.monitoringSeverConf.isValid()) {
-            throw Error("Invalid config");
+            throw new Error("Invalid config");
         }
 
         this.serverOptions.path ||= "healtz";

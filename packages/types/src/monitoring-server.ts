@@ -11,6 +11,7 @@ export type MonitoringServerValidator = () => MaybePromise<boolean>;
 export interface IMonitoringServer {
     start(): Promise<MonitoringServerConfig>;
 }
+
 export interface IMonitoringServerConf {
     port: number;
     host: string;
@@ -29,6 +30,7 @@ export type MonitoringServerOptions = MonitoringServerConfig & {
 export interface IMonitoringServerConstructor {
     new(opts: MonitoringServerOptions): IMonitoringServer;
 }
+
 export interface IMonitoringServerConfConstructor {
     new(opts: MonitoringServerConfig): IMonitoringServerConf;
 }
