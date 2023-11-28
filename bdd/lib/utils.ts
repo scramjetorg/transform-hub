@@ -251,6 +251,23 @@ export async function killProcessByName(processName: string): Promise<void> {
     });
 }
 
+export async function getActiveProfile() {
+    try {
+        const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "ls"]);
+
+        const match = res[1].match(/->\s*([^\n]+)/);
+        const activeProfile = match ? match[1].trim() : null;
+
+        if (isLogActive) {
+            logger.log("Active profile:", activeProfile);
+        }
+        return activeProfile;
+    } catch (error: any) {
+        logger.error(`Error while getting the active profile: ${error.message}`);
+        return "";
+    }
+}
+
 export async function createProfile(profileName: string) {
     const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "create", profileName]);
 
