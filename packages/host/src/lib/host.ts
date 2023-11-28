@@ -230,7 +230,7 @@ export class Host implements IComponent {
             this.startMonitoringServer(sthConfig.monitorgingServer).then((res) => {
                 this.logger.info("MonitoringServer started", res);
             }, (e) => {
-                throw new Error(e);
+                throw e;
             });
         }
 
@@ -267,9 +267,12 @@ export class Host implements IComponent {
     }
 
     private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
-        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
+        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor}>({ name: "@scramjet/monitoring-server" });
 
         this.logger.info("Starting monitoring server with config", config);
+
+        config.host ||= "localhost";
+        config.path ||= "healtz";
 
         const monitoringServer = new MonitoringServer({
             ...config,
