@@ -101,6 +101,7 @@ export class VerserConnection {
      * @param res {ServerResponse} Response object.
      */
     async forward(req: IncomingMessage, res: ServerResponse) {
+        res.socket?.setNoDelay(true);
         if (!this.connected) throw new Error("BPMux not connected");
 
         const channel = this.bpmux?.multiplex() as Duplex;
@@ -169,7 +170,7 @@ export class VerserConnection {
         return new Promise((resolve, reject) => {
             let expectedEvent = "response";
 
-            if (options.headers?.Expect) {
+            if (options.headers?.Expect || options.headers?.expect) {
                 expectedEvent = "continue";
             }
 
