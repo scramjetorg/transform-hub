@@ -781,15 +781,13 @@ export class Host implements IComponent {
             const existingSequence = this.sequenceStore.getById(id as string);
 
             if (existingSequence) {
-                if (req.method !== "put") {
-                    this.logger.debug("Overriding sequence", id, existingSequence.id);
-
+                if (req.method?.toLowerCase() !== "put") {
                     return {
                         opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
                         error: `Sequence with name ${id} already exist`
                     };
                 }
-
+                this.logger.debug("Overriding sequence", id, existingSequence.id);
                 id = existingSequence.id;
             }
 
@@ -828,7 +826,6 @@ export class Host implements IComponent {
 
     async handleUpdateSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         req.params ||= {};
-
         if (!req.params.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
 
         const id = req.params.id as string;
@@ -842,7 +839,7 @@ export class Host implements IComponent {
             return { opStatus: ReasonPhrases.CONFLICT, error: "Can't update sequence with instances" };
         }
 
-        this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
+        this.logger.debug("Sequence Update", existingSequence.id);
 
         return this.handleIncomingSequence(req, id);
     }
