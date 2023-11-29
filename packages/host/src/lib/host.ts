@@ -628,10 +628,12 @@ export class Host implements IComponent {
      * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
      */
     async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
-        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+        if (!req.params?.id || typeof req.params.id !== "string") {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+        }
 
-        const id = req.params.id as string;
-        const sequence: SequenceInfo| undefined = this.sequenceStore.getById(req.params.id as string);
+        const id = req.params.id;
+        const sequence: SequenceInfo| undefined = this.sequenceStore.getById(id);
 
         const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 
@@ -826,10 +828,13 @@ export class Host implements IComponent {
 
     async handleUpdateSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         req.params ||= {};
-        if (!req.params.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
 
-        const id = req.params.id as string;
-        const existingSequence: SequenceInfo | undefined = this.sequenceStore.getById(req.params.id as string);
+        if (!req.params.id || typeof req.params.id !== "string") {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
+        }
+
+        const id = req.params.id;
+        const existingSequence: SequenceInfo | undefined = this.sequenceStore.getById(id);
 
         if (!existingSequence) {
             return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with id: ${id} not found` };
