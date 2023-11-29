@@ -19,7 +19,7 @@ import { EOL } from "os";
 const { F_OK, R_OK } = constants;
 
 type SequenceUploadOptions = {
-    name?: string;
+    id?: string;
 }
 
 /**
@@ -84,8 +84,6 @@ export const sequenceSendPackage = async (
     sequencePackage: string, options: SequenceUploadOptions = {}, update = false, config: { progress?: boolean } = {}
 ): Promise<SequenceClient> => {
     try {
-        const id = getSequenceId(options.name!);
-
         let sequencePath = getPackagePath(sequencePackage);
 
         if ((await lstat(sequencePath)).isDirectory()) {
@@ -124,19 +122,14 @@ export const sequenceSendPackage = async (
         }
 
         if (update) {
+            const id = getSequenceId(options.id!);
+
             seq = await getHostClient().getSequenceClient(id)?.overwrite(
                 sequenceStream,
             );
         } else {
-            const headers: HeadersInit = {};
-
-            if (options.name) {
-                headers["x-name"] = options.name;
-            }
-
             seq = await getHostClient().sendSequence(
                 sequenceStream,
-                { headers }
             );
         }
 
