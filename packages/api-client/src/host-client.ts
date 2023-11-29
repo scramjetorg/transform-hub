@@ -92,10 +92,9 @@ export class HostClient implements ClientProvider {
     async sendSequence(
         sequencePackage: Parameters<HttpClient["sendStream"]>[1],
         requestInit?: RequestInit,
-        update?: boolean
     ): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
-            parseResponse: "json", put: update
+            parseResponse: "json"
         });
 
         return SequenceClient.from(response.id, this);
