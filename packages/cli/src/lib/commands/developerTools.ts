@@ -4,6 +4,7 @@ import { CommandDefinition, ExtendedHelpConfiguration } from "../../types";
 import { profileManager } from "../config";
 import { cmdToJson, cmdToList, cmdToMd, rootCommand } from "../helpers/developerTools";
 import { displayObject, displayStream } from "../output";
+import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
 
 /**
  * Initializes `developerTools` command.
@@ -34,6 +35,9 @@ export const developerTools: CommandDefinition = (program) => {
         .command("cmdToJson")
         .description("Lists all commands structure in JSON format")
         .option("-o, --output <fileName>", "Output to file instead of stdout")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.output = "filenames";
+        })
         .action(async ({ output }) => {
             const rootCmd = rootCommand(program);
             const cmdJson = cmdToJson(rootCmd);
@@ -48,11 +52,17 @@ export const developerTools: CommandDefinition = (program) => {
         .command("cmdToList")
         .description("Lists all commands in CLI as string list")
         .option("-o, --output <fileName>", "Output to file instead of stdout")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.output = "filenames";
+        })
         .action(async ({ output }) => await cmdToFormat(cmdToList, output));
 
     developerToolsCmd
         .command("cmdToMd")
         .option("-o, --output <fileName>", "Output to file instead of stdout")
         .description("Lists all commands in Markdown format")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.output = "filenames";
+        })
         .action(async ({ output }) => await cmdToFormat(cmdToMd, output));
 };

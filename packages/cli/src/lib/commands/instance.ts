@@ -7,6 +7,7 @@ import { displayEntity, displayObject, displayStream } from "../output";
 import { ClientError } from "@scramjet/client-utils";
 import { Option } from "commander";
 import { initPlatform } from "../platform";
+import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
 /**
  * Initializes `instance` command.
  *
@@ -114,6 +115,9 @@ export const instance: CommandDefinition = (program) => {
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
         .description("Send a file to input, if no file given the data will be read directly from the console input (stdin)")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.file = "filenames";
+        })
         .action(async (id: string, filename: string, { contentType, end }) => {
             const instanceClient = getInstance(getInstanceId(id));
 
@@ -127,6 +131,9 @@ export const instance: CommandDefinition = (program) => {
         .argument("[file]", "File with data")
         .addOption(new Option("-t,--content-type <content-type>", "Content-Type").choices(["text/plain", "application/octet-stream", "application/x-ndjson"]))
         .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.file = "filenames";
+        })
         .description("See input and output")
         .action(async (id: string, filename: string, { contentType, end }) => {
             const instanceClient = getInstance(getInstanceId(id));
@@ -183,7 +190,6 @@ export const instance: CommandDefinition = (program) => {
         .command("on")
         .argument("<id>", "The instance id or '-' for the last one started or selected")
         .argument("<eventName>", "The event name")
-        // .argument("[options]")
         .option("-n, --next", "Wait for the next event occurrence")
         .option("-s, --stream", "Stream the events (the stream will start with last event)")
         .description("Get the last event occurrence (will wait for the first one if not yet retrieved)")
@@ -201,6 +207,9 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .argument("[file]", "The input file (stdin if not given default)")
         .description("Send a file to stdin, if no file given the data will be read from stdin")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.file = "filenames";
+        })
         .action(async (id: string, file: string) => {
             const instanceClient = getInstance(getInstanceId(id));
 

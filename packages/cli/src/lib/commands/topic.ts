@@ -5,6 +5,7 @@ import { profileManager } from "../config";
 import { displayEntity, displayStream } from "../output";
 import { Option, Argument } from "commander";
 import { initPlatform } from "../platform";
+import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
 
 const validateTopicName = (topicName: string) => {
     if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) {
@@ -65,6 +66,9 @@ export const topic: CommandDefinition = (program) => {
         .argument("[file]")
         .addOption(contentTypeOption)
         .description("Send data on topic from file, directory or directly through the console")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+            complDetails.file = "filenames";
+        })
         .action(async (topicName, filename, { contentType }) => {
             await getHostClient().sendNamedData(
                 topicName,
