@@ -255,8 +255,6 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
 
-        await this.setLoadCheckMessageSender();
-
         StringStream.from(duplex.input as Readable)
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
@@ -298,6 +296,8 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.communicationStream = new StringStream().JSONStringify().resume();
         this.communicationStream.pipe(duplex.output);
+
+        await this.setLoadCheckMessageSender();
 
         this.communicationStream.on("pause", () => {
             this.logger.warn("Communication stream paused");
