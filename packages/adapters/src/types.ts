@@ -260,7 +260,7 @@ export interface IDockerHelper {
      *
      * @returns {Promise<DockerVolume>} Created volume.
      */
-    createVolume: (name?: string) => Promise<DockerVolume>;
+    createVolume: (name?: string, parentId?: string) => Promise<DockerVolume>;
 
     /**
      * Removes volume.
