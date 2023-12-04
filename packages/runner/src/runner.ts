@@ -442,7 +442,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.emitter,
             runner,
             hostApiClient as HostClient,
-            managerApiClient as ManagerClient,
+            managerApiClient,
             this.instanceId
         );
         this._context.logger.pipe(this.logger);

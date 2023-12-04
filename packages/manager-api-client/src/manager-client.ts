@@ -1,9 +1,9 @@
 import { HostClient, } from "@scramjet/api-client";
 import { ClientUtils, ClientProvider, HttpClient } from "@scramjet/client-utils";
-import { MRestAPI, LoadCheckStat } from "@scramjet/types";
+import { MRestAPI, LoadCheckStat, IManagerClient } from "@scramjet/types";
 import { Readable } from "stream";
 
-export class ManagerClient implements ClientProvider {
+export class ManagerClient implements ClientProvider, IManagerClient {
     apiBase: string;
 
     #_client: ClientUtils;
