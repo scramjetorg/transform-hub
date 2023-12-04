@@ -11,6 +11,7 @@ from .barrier import Barrier
 from .inet import IPPacket
 from .hardcoded_magic_values import CommunicationChannels as CC
 from .channel import ChannelContext, ChannelGuard, ChannelState
+from .connector import Connector
 from .proxy import HTTPProxy
 TECEMUX_INTERNAL_VERBOSE_DEBUG = False
 
@@ -19,6 +20,7 @@ TECEMUX_INTERNAL_VERBOSE_DEBUG = False
 class Tecemux:
     """Tecemux protocol implementation for Scramjet Transform Hub Python Runner
     """
+    _connector = field(default=None)
 
     _queue: asyncio.Queue = field(default=None)
     _reader: asyncio.StreamReader = field(default=None)
@@ -431,3 +433,10 @@ class Tecemux:
                 break
 
         self._debug('Tecemux/MAIN: Outcoming data forwarder finished')
+
+    def setup_connector(self) -> Connector:
+        """Sets connector for aiohttp
+        """
+        self._connector = Connector(self)
+        return self._connector
+

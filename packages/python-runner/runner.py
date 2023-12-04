@@ -13,7 +13,7 @@ from logging_setup import LoggingSetup
 from tecemux.multiplexer import Tecemux
 from tecemux.hardcoded_magic_values import CommunicationChannels as CC
 from tecemux.hardcoded_magic_values import RunnerMessageCodes as msg_codes
-
+from client.host_client import HostClient
 
 SEQUENCE_PATH = os.getenv('SEQUENCE_PATH')
 SERVER_PORT = os.getenv('INSTANCES_SERVER_PORT')
@@ -216,6 +216,8 @@ class Runner:
 
     async def run_instance(self, config, input, args):
         context = AppContext(self, config)
+        custom_conn = self.multiplexer.setup_connector()
+        context.hub = HostClient('http://scramjet-host/api/v1')  # (url, connector=custom_conn)
         self.logger.info('Running instance...')
         try:
             result = self.sequence.run(context, input, *args)
@@ -325,6 +327,7 @@ class AppContext:
         self.monitoring = runner.multiplexer.get_channel(CC.MONITORING)
         self.runner = runner
         self.emitter = runner.emitter
+        self.hub = None
 
     def set_stop_handler(self, handler, *args):
         self.runner.stop_handlers.append(handler)
