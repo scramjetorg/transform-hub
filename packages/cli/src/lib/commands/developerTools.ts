@@ -35,7 +35,7 @@ export const developerTools: CommandDefinition = (program) => {
         .command("cmdToJson")
         .description("Lists all commands structure in JSON format")
         .option("-o, --output <fileName>", "Output to file instead of stdout")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.output = "filenames";
         })
         .action(async ({ output }) => {
@@ -52,7 +52,7 @@ export const developerTools: CommandDefinition = (program) => {
         .command("cmdToList")
         .description("Lists all commands in CLI as string list")
         .option("-o, --output <fileName>", "Output to file instead of stdout")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.output = "filenames";
         })
         .action(async ({ output }) => await cmdToFormat(cmdToList, output));
@@ -61,7 +61,7 @@ export const developerTools: CommandDefinition = (program) => {
         .command("cmdToMd")
         .option("-o, --output <fileName>", "Output to file instead of stdout")
         .description("Lists all commands in Markdown format")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.output = "filenames";
         })
         .action(async ({ output }) => await cmdToFormat(cmdToMd, output));

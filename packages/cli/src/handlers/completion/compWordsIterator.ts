@@ -28,7 +28,7 @@ export class CompWordsIterator {
         return this;
     }
     cursor() {
-        this.currentWordIndex = this.cword
+        this.currentWordIndex = this.cword;
         return this;
     }
 }

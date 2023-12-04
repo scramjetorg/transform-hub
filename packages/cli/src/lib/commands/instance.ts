@@ -115,7 +115,7 @@ export const instance: CommandDefinition = (program) => {
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
         .description("Send a file to input, if no file given the data will be read directly from the console input (stdin)")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.file = "filenames";
         })
         .action(async (id: string, filename: string, { contentType, end }) => {
@@ -131,7 +131,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("[file]", "File with data")
         .addOption(new Option("-t,--content-type <content-type>", "Content-Type").choices(["text/plain", "application/octet-stream", "application/x-ndjson"]))
         .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.file = "filenames";
         })
         .description("See input and output")
@@ -207,7 +207,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .argument("[file]", "The input file (stdin if not given default)")
         .description("Send a file to stdin, if no file given the data will be read from stdin")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.file = "filenames";
         })
         .action(async (id: string, file: string) => {

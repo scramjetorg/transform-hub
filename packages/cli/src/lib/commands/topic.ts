@@ -66,7 +66,7 @@ export const topic: CommandDefinition = (program) => {
         .argument("[file]")
         .addOption(contentTypeOption)
         .description("Send data on topic from file, directory or directly through the console")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.file = "filenames";
         })
         .action(async (topicName, filename, { contentType }) => {

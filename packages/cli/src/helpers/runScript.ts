@@ -12,6 +12,7 @@ export const runScript = async (scriptPath: string) => {
             if (error) return reject(new BashScriptError(stderr, error.code));
             return resolve();
         };
+
         return exec(scriptPath, { encoding: "utf8" }, execCallback);
-    })
-}
+    });
+};

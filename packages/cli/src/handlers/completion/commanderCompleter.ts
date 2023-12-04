@@ -65,7 +65,7 @@ export class CommanderCompleter {
         // @ts-ignore:
         command.options.forEach((option: Option) => {
             const optFlag = option.long || option.short || "";
-            
+
             if (optFlag && optFlag.startsWith(optionNameStart)) optionFlags.push(optFlag);
         });
         return optionFlags;
@@ -74,7 +74,7 @@ export class CommanderCompleter {
     private getCommandCompleterDetails(command: Command, argOrOptionName: string) {
         const emiter = command as unknown as EventEmitter;
         const completerDetails: CommandCompleterDetails = {};
-        
+
         emiter.emit(CompleterDetailsEvent, completerDetails);
 
         if (!(argOrOptionName in completerDetails)) return null;
@@ -84,7 +84,7 @@ export class CommanderCompleter {
 
     private getFilteredCommandCompleterDetails(command: Command, argOrOptionName: string, valueStart: string = "") {
         const detail = this.getCommandCompleterDetails(command, argOrOptionName);
-        
+
         if (Array.isArray(detail) && valueStart) {
             return detail.filter((det) => det.startsWith(valueStart));
         }
@@ -120,9 +120,10 @@ export class CommanderCompleter {
     public complete(compWords: string[], compCword: number): CompleterParams {
         const cmdIt = new CommandIterator(this.rootCommand);
         const compWordsIt = new CompWordsIterator(compWords, compCword);
-        let cursorWord = compWords[compCword];
+        const cursorWord = compWords[compCword];
 
         const cmd = this.findLastKnownCommand(cmdIt, compWordsIt);
+
         // not found = wrong command name in compWords
         if (!cmd) return [];
 
@@ -138,6 +139,7 @@ export class CommanderCompleter {
         if (arg && (arg.required || !this.hasOptionStart(compWordsIt.word()))) {
             // @ts-ignore
             const choices: string[] | undefined = arg.argChoices;
+
             if (choices) return this.filterMatchingChoices(choices, compWordsIt.word());
             return this.getFilteredCommandCompleterDetails(cmd, arg.name(), compWordsIt.word()) || [];
         }
@@ -153,7 +155,9 @@ export class CommanderCompleter {
 
         if (this.hasOptionStart(previousWord)) {
             const option = this.findOption(cmd, previousWord);
+
             if (!option) return [];
+
             if (option.argChoices) return this.filterMatchingChoices(option.argChoices, currentWord);
             return this.getFilteredCommandCompleterDetails(cmd, option.name(), currentWord) || [];
         }

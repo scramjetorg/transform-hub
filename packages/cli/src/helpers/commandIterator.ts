@@ -16,8 +16,9 @@ export class CommandIterator {
         while (this.command.parent) {
             this.command = this.command.parent!;
         }
-        this.commandParent === null;
+        this.commandParent = null;
         this.index = 0;
+
         return this;
     }
     childrenCount() {

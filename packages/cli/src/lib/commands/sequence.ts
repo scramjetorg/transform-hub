@@ -38,7 +38,7 @@ export const sequence: CommandDefinition = (program) => {
         .alias("ls")
         .description("List all Sequences available on Hub")
         .option("-n, --name <sequence-name>", "list id's of sequences with a given name")
-        .action(async ({ name } :{name:string}) => {
+        .action(async ({ name }: { name: string }) => {
             if (name) return await displayEntity(await getHostClient().getSequenceId(name), profileManager.getProfileConfig().format);
 
             return await displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format);
@@ -76,7 +76,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("-c, --stdout", "Output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .description("Create archived file (package) with the Sequence for later use")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.path = "filenames";
             complDetails.output = "dirnames";
         })
@@ -94,7 +94,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("send")
         .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
         .description("Send the Sequence package to the Hub")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.package = "filenames";
         })
         .action(
@@ -110,7 +110,7 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<query>", "Sequence id to be overwritten")
         .argument("<package>", "The file to upload")
         .description("Update Sequence with given name")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.package = "filenames";
         })
         .action(
@@ -155,7 +155,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("--startup-config <path-to-config>", "Path to startup config (JSON or YAML)", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.configFile = "filenames";
         })
         .action(async (id, { startupConfig, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId: instanceId }: SequenceStartCLIArgs) => {
@@ -203,7 +203,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("--startup-config <path-to-config>", "Path to startup config (JSON or YAML)", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Pack (if needed), send and start the Sequence")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails)=>{
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
             complDetails.path = "dirnames";
             complDetails.output = "dirnames";
             complDetails.configFile = "filenames";

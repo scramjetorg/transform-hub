@@ -23,15 +23,18 @@ export class Completion {
         const comperly = new CommanderCompleter(command).complete(compWords, compCword);
 
         const siComperly = this.formatForSiScript(comperly);
+
         process.stdout.write(siComperly);
     }
 
     public static async install() {
         await runScript(completionInstallScript);
+
         displayMessage("Scramjet CLI completion script installed. Please restart bash");
     }
     public static async uninstall() {
         await runScript(completionUninstallScript);
+
         displayMessage("Scramjet CLI completion script uninstalled. Please restart bash");
     }
 }
