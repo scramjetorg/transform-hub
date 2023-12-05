@@ -23,7 +23,7 @@ export class ManagerClient implements ClientProvider, IManagerClient {
     }
 
     async getHosts() {
-        return this.client.get<MRestAPI.GetHostInfoResponse[]>("list");
+        return this.client.get<MRestAPI.GetListResponse>("list");
     }
 
     async getVersion(): Promise<MRestAPI.GetVersionResponse> {
