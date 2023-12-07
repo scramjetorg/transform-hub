@@ -34,7 +34,7 @@ export const hub: CommandDefinition = (program) => {
             .action(async (id: string) => {
                 const space = sessionConfig.lastSpaceId;
                 const managerClient = getMiddlewareClient().getManagerClient(space);
-                const hosts = await managerClient.getHosts();
+                const hosts = (await managerClient.getHosts()).data;
                 const host = hosts.find((h: any) => h.id === id);
 
                 if (!host) {
