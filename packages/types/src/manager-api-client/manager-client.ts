@@ -1,6 +1,5 @@
 /// <reference lib="dom" />
 
-// eslint-disable-next-line import/no-cycle
 import { MRestAPI } from "..";
 
 import * as STHRestAPI from "../rest-api-sth";
