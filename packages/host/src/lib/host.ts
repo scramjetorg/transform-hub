@@ -1057,7 +1057,10 @@ export class Host implements IComponent {
                 csic.inputRouted = true;
 
                 await this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType!, topicName: data.requires
+                    requires: data.requires,
+                    contentType: data.contentType!,
+                    topicName: data.requires,
+                    status: "add"
                 });
             }
 
@@ -1072,7 +1075,10 @@ export class Host implements IComponent {
                 csic.outputRouted = true;
 
                 await this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides
+                    provides: data.provides,
+                    contentType: data.contentType!,
+                    topicName: data.provides,
+                    status: "add"
                 });
             }
         });
