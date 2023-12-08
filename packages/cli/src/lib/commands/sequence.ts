@@ -88,11 +88,10 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd
         .command("send")
         .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
-        .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Hub")
         .action(
-            async (sequencePackage: string, { name }) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name }, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
+            async (sequencePackage: string) => {
+                const sequenceClient = await sequenceSendPackage(sequencePackage, {}, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
 
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
@@ -100,12 +99,12 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("update")
-        .argument("<query>", "Sequence id or name to be overwritten")
+        .argument("<query>", "Sequence id to be overwritten")
         .argument("<package>", "The file to upload")
         .description("Update Sequence with given name")
         .action(
             async (query: string, sequencePackage: string) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name: query }, true);
+                const sequenceClient = await sequenceSendPackage(sequencePackage, { id: query }, true);
 
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }

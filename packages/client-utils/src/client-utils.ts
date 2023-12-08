@@ -218,7 +218,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         url: string,
         stream: any | string,
         requestInit: RequestInit = {},
-        { type = "application/octet-stream", end, parseResponse = "stream", put = false }: SendStreamOptions = {}
+        { type = "application/octet-stream", end, parseResponse = "stream" }: SendStreamOptions = {}
     ): Promise<T> {
         requestInit.headers ||= {} as Headers;
 
@@ -230,8 +230,11 @@ export abstract class ClientUtilsBase implements HttpClient {
         if (typeof end !== "undefined") {
             (requestInit.headers as Headers)["x-end-stream"] = end ? "true" : "false";
         }
+        let method: "post" | "put" = "post";
 
-        return this[put ? "put" : "post"]<T>(url, stream, requestInit, { parse: parseResponse });
+        if (requestInit.method === "put") method = "put";
+
+        return this[method]<T>(url, stream, requestInit, { parse: parseResponse });
     }
 
     /**
