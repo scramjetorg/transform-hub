@@ -5,8 +5,6 @@ import { FunctionDefinition } from "./messages/describe-sequence";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 import { MonitoringMessageFromRunnerData } from "./messages";
-import { HostClient } from "./api-client/host-client";
-import { ManagerClient as IManagerClient } from "./manager-api-client/manager-client";
 
 /**
  * A callback that will be called when the Sequence is being stopped gracefully.
@@ -183,10 +181,10 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     exitTimeout: number;
 
     /** Allows to access Hub, for datails please refer to @scramjet/api-client */
-    hub: HostClient;
+    hub: import("./api-client/host-client").HostClient;
 
     /** Allows to access Space, for datails please refer to @scramjet/manager-api-client */
-    space: IManagerClient;
+    space: import("./manager-api-client/manager-client").ManagerClient;
 
     /** Instance Id */
     instanceId: string;

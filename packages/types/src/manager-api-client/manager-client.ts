@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-import { MRestAPI } from "..";
+import * as MRestAPI from "../rest-api-manager";
 
 import * as STHRestAPI from "../rest-api-sth";
 import { PublicSTHConfiguration } from "../sth-configuration";
