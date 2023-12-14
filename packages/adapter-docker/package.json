@@ -1,31 +1,38 @@
 {
-  "name": "@scramjet/obj-logger",
+  "name": "@scramjet/adapter-docker",
   "version": "0.37.0",
-  "description": "This package is part of Scramjet Transform Hub. The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.",
+  "description": "This package is part of Scramjet Transform Hub. This module holds the docker adapters utilized by Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
-    "test": "npm run test:ava",
-    "test:ava": "# nyc ava",
-    "clean": "rm -rf ./dist .bic_cache"
+    "clean": "rm -rf ./dist .bic_cache",
+    "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
+    "test": "nyc ava",
+    "prepack": "node ../../scripts/publish.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
+  "dependencies": {
+    "@scramjet/model": "^0.37.0",
+    "@scramjet/adapters": "0.37.0",
+    "@scramjet/obj-logger": "^0.37.0",
+    "@scramjet/sth-config": "^0.37.0",
+    "@scramjet/utility": "^0.37.0",
+    "dockerode": "^3.3.4",
+    "ts.data.json": "^2.2.0"
+  },
   "devDependencies": {
     "@scramjet/types": "^0.37.0",
+    "@types/dockerode": "<=3.3.3",
+    "@types/js-yaml": "4.0.5",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
-    "nyc": "^15.1.0",
     "ts-node": "^10.9.1",
     "typedoc": "0.23.17",
     "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
-  },
-  "dependencies": {
-    "@scramjet/utility": "^0.37.0",
-    "scramjet": "^4.37.0"
   },
   "ava": {
     "extensions": [

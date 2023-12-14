@@ -126,6 +126,6 @@
   "dependencies": {
     "minimist": "^1.2.7",
     "npm": "8",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   }
 }

@@ -56,3 +56,10 @@ export * from "./dto/index";
 
 export * from "./rest-api-error/rest-api-error";
 
+// system-observable.ts
+declare global {
+    interface SymbolConstructor {
+      readonly asyncDispose: unique symbol
+    }
+}
+  

@@ -1,7 +1,7 @@
-import { ProcessSequenceAdapter } from "./process-sequence-adapter";
-import { DockerSequenceAdapter } from "./docker-sequence-adapter";
+import { SequenceAdapter as ProcessSequenceAdapter } from "@scramjet/adapter-process";
+import { SequenceAdapter as DockerSequenceAdapter } from "@scramjet/adapter-docker";
 import { ISequenceAdapter, STHConfiguration } from "@scramjet/types";
-import { KubernetesSequenceAdapter } from "./kubernetes-sequence-adapter";
+import { SequenceAdapter as KubernetesSequenceAdapter } from "@scramjet/adapter-kubernetes";
 
 type SequenceAdapterClass = {new (config: STHConfiguration): ISequenceAdapter};
 

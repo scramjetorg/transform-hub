@@ -353,7 +353,7 @@ export class Host implements IComponent {
             await this.identifyExistingSequences();
         }
 
-        const adapter = await initializeRuntimeAdapters(this.config);
+        const adapter = await initializeRuntimeAdapters(this.config, this.logger);
 
         this.adapterName = adapter;
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
@@ -740,7 +740,7 @@ export class Host implements IComponent {
      * Used to recover Sequences information after restart.
      */
     async identifyExistingSequences() {
-        const adapter = await initializeRuntimeAdapters(this.config);
+        const adapter = await initializeRuntimeAdapters(this.config, this.logger);
         const sequenceAdapter = getSequenceAdapter(adapter, this.config);
 
         try {

@@ -17,7 +17,7 @@
     "@scramjet/sth-config": "^0.37.0",
     "@scramjet/symbols": "^0.37.0",
     "n-readlines": "^1.0.1",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^0.37.0",

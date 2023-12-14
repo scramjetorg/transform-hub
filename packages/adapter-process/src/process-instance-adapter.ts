@@ -14,10 +14,10 @@ import { STHConfiguration,
 import { ChildProcess, spawn } from "child_process";
 
 import path from "path";
-import { getRunnerEnvVariables } from "./get-runner-env";
+import { getRunnerEnvVariables } from "@scramjet/adapters";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
-const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
+const gotPython = "Python available";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.

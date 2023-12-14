@@ -20,7 +20,7 @@
     "@scramjet/symbols": "^0.37.0",
     "@scramjet/utility": "^0.37.0",
     "http-status-codes": "^2.2.0",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^0.37.0",
