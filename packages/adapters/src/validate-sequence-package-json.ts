@@ -8,7 +8,6 @@ import {
 import { Err, JsonDecoder, Ok } from "ts.data.json";
 
 const enginesDecoder = JsonDecoder.dictionary(JsonDecoder.string, "EnginesDecoder");
-
 const portDecoder = new JsonDecoder.Decoder<PortConfig>((val) => {
     const isValid = typeof val === "string" && (/^\d{3,5}\/(tcp|udp)$/).test(val);
 
