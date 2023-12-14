@@ -24,7 +24,7 @@
     "n-readlines": "^1.0.1",
     "node-fetch": "^2.6.7",
     "normalize-url": "4",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^1.0.1",

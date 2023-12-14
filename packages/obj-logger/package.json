@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@scramjet/utility": "^1.0.1",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "ava": {
     "extensions": [

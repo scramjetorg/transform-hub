@@ -14,14 +14,14 @@ import {
 } from "@scramjet/types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerExitCode } from "@scramjet/symbols";
 import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 import { createReadStream } from "fs";
 import path from "path";
-import { PassThrough } from "stream";
-import { getRunnerEnvEntries } from "./get-runner-env";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+import { getRunnerEnvEntries } from "@scramjet/adapters";
+import { PassThrough } from "stream";
+import { RunnerExitCode } from "@scramjet/symbols";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.

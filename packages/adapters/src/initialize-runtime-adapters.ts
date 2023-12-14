@@ -1,24 +1,39 @@
-import { STHConfiguration } from "@scramjet/types";
-import { setupDockerNetworking } from "./docker-networking";
-import { DockerodeDockerHelper } from "./dockerode-docker-helper";
+import { IObjectLogger, STHConfiguration } from "@scramjet/types";
 
-export async function initializeRuntimeAdapters(config: STHConfiguration): Promise<string> {
+import { initialize as initializeDocker } from "@scramjet/adapter-docker";
+import { initialize as initializeProcess } from "@scramjet/adapter-process";
+import { initialize as initializeKubernetes } from "@scramjet/adapter-kubernetes";
+
+const adapterInitializers = {
+    process: initializeProcess,
+    docker: initializeDocker,
+    kubernetes: initializeKubernetes
+};
+
+export async function initializeRuntimeAdapters(config: STHConfiguration, logger: IObjectLogger): Promise<string> {
+    const availableAdapters = Object.fromEntries(await Promise.all(
+        Object.entries(adapterInitializers)
+            .filter(async ([adapterName, adapterInitializer]) => {
+                try {
+                    await adapterInitializer(config.adapters[adapterName]);
+                    return true;
+                } catch (e: any) {
+                    logger.info(`Skipping ${adapterName} adapter initialization: ${e?.message}`);
+                    return false;
+                }
+            })
+    ));
+
     if (config.runtimeAdapter === "detect") {
-        if (await DockerodeDockerHelper.isDockerConfigured()) {
+        if (availableAdapters.docker) {
             config.runtimeAdapter = "docker";
-        } else {
+        } else if (availableAdapters.process) {
             config.runtimeAdapter = "process";
         }
     }
 
-    if (config.runtimeAdapter === "docker") {
-        await setupDockerNetworking(new DockerodeDockerHelper());
-    }
-
-    if (config.runtimeAdapter === "kubernetes") {
-        if (!config.kubernetes.sthPodHost) {
-            throw new Error("Kubernetes pod host url is not set in kubernetes.sthPodHost config.");
-        }
+    if (!availableAdapters[config.runtimeAdapter]) {
+        throw new Error(`Runtime adapter ${config.runtimeAdapter} is not available or not configured correctly.`);
     }
 
     return config.runtimeAdapter;

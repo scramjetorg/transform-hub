@@ -1,7 +1,7 @@
-import { ProcessInstanceAdapter } from "./process-instance-adapter";
-import { DockerInstanceAdapter } from "./docker-instance-adapter";
+import { InstanceAdapter as ProcessInstanceAdapter } from "@scramjet/adapter-process";
+import { InstanceAdapter as DockerInstanceAdapter } from "@scramjet/adapter-docker";
 import { ILifeCycleAdapterMain, ILifeCycleAdapterRun, STHConfiguration } from "@scramjet/types";
-import { KubernetesInstanceAdapter } from "./kubernetes-instance-adapter";
+import { InstanceAdapter as KubernetesInstanceAdapter } from "@scramjet/adapter-kubernetes";
 
 type InstanceAdapterClass = {new (config: STHConfiguration, id?: string): ILifeCycleAdapterMain & ILifeCycleAdapterRun};
 

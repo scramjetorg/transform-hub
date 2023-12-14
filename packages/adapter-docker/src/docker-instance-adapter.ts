@@ -13,6 +13,7 @@ import {
     InstanceLimits,
     STHConfiguration,
     SequenceInfo,
+    RunnerConnectInfo
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -20,9 +21,8 @@ import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolum
 import { FreePortsFinder, defer, streamToString } from "@scramjet/utility";
 import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { getRunnerEnvEntries } from "./get-runner-env";
+import { getRunnerEnvEntries } from "@scramjet/adapters";
 import { Readable } from "stream";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.

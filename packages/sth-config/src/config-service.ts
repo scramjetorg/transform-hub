@@ -6,6 +6,32 @@ import { homedir } from "os";
 
 const imageConfig = require("./image-config.json");
 
+function updateAdaptersConfig(config: STHConfiguration) {
+    const { docker, kubernetes } = config;
+
+    config.adapters.process = {
+        name: "process",
+        instanceRequirements: config.instanceRequirements,
+        safeOperationLimit: config.safeOperationLimit,
+        sequencesRoot: config.sequencesRoot
+    };
+
+    if (docker) {
+        config.adapters.docker = {
+            name: "docker",
+            ...config.docker
+        }
+    }
+
+    if (kubernetes) {
+        config.adapters.kubernetes = {
+            name: "kubernetes",
+            ...config.kubernetes,
+            sequencesRoot: kubernetes.sequencesRoot || config.sequencesRoot
+        }
+    }
+}
+
 const _defaultConfig: STHConfiguration = {
     logLevel: "TRACE",
     logColors: true,
@@ -14,6 +40,7 @@ const _defaultConfig: STHConfiguration = {
     tags: [],
     cpmUrl: "",
     cpmId: "",
+    adapters: {},
     cpm: {
         maxReconnections: 100,
         reconnectionDelay: 2000,
@@ -115,6 +142,7 @@ export class ConfigService {
 
     update(config: DeepPartial<STHConfiguration>) {
         merge(this.config, config);
+        updateAdaptersConfig(this.config);
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
