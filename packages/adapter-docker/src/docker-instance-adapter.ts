@@ -15,11 +15,11 @@ import {
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from ".//types";
+import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer, streamToString } from "@scramjet/utility";
 import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { getRunnerEnvEntries } from "../../adapters/src/get-runner-env";
+import { getRunnerEnvEntries } from "@scramjet/adapters";
 import { Readable } from "stream";
 
 /**

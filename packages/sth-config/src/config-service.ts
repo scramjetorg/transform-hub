@@ -20,7 +20,7 @@ function updateAdaptersConfig(config: STHConfiguration) {
         config.adapters.docker = {
             name: "docker",
             ...config.docker
-        }
+        };
     }
 
     if (kubernetes) {
@@ -28,7 +28,7 @@ function updateAdaptersConfig(config: STHConfiguration) {
             name: "kubernetes",
             ...config.kubernetes,
             sequencesRoot: kubernetes.sequencesRoot || config.sequencesRoot
-        }
+        };
     }
 }
 

@@ -12,9 +12,8 @@ import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder } from "@scramjet/adapters";
+import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters";
 import { SequenceAdapterError } from "@scramjet/model";
-import { detectLanguage } from "@scramjet/adapters";
 
 /**
  * Returns existing Sequence configuration.
