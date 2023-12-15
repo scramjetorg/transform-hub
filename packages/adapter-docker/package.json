@@ -21,8 +21,7 @@
     "@scramjet/sth-config": "^0.37.0",
     "@scramjet/utility": "^0.37.0",
     "dockerode": "^3.3.4",
-    "ts.data.json": "^2.2.0",
-    "ws": "^7.3.1"
+    "ts.data.json": "^2.2.0"
   },
   "devDependencies": {
     "@scramjet/types": "^0.37.0",

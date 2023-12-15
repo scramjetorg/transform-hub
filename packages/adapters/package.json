@@ -18,8 +18,7 @@
     "@scramjet/adapter-docker": "^0.37.0",
     "@scramjet/adapter-kubernetes": "^0.37.0",
     "@scramjet/adapter-process": "^0.37.0",
-    "ts.data.json": "^2.2.0",
-    "ws": "^7.3.1"
+    "ts.data.json": "^2.2.0"
   },
   "devDependencies": {
     "@scramjet/types": "^0.37.0",

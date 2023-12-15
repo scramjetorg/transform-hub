@@ -17,15 +17,11 @@
   "dependencies": {
     "@scramjet/model": "^0.37.0",
     "@scramjet/obj-logger": "^0.37.0",
-    "@scramjet/pre-runner": "^0.37.0",
     "@scramjet/python-runner": "^0.37.0",
     "@scramjet/runner": "^0.37.0",
-    "@scramjet/sth-config": "^0.37.0",
-    "@scramjet/symbols": "^0.37.0",
     "@scramjet/utility": "^0.37.0",
     "@scramjet/adapters": "0.37.0",
-    "scramjet": "^4.37.0",
-    "ws": "^7.3.1"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^0.37.0",
