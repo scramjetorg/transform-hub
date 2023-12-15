@@ -22,7 +22,7 @@ const { exec } = require("child_process");
 const opts = minimist(process.argv.slice(2), {
     alias: {
         list: "l",
-        strict: "S",
+        lax: "L",
         scope: "s",
         threads: "j",
         verbose: "v",
@@ -44,7 +44,7 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC,
     },
-    boolean: ["list", "strict", "verbose", "help", "exec"]
+    boolean: ["list", "lax", "verbose", "help", "exec"]
 });
 
 if (opts.help || !opts._.length && !opts.list) {
@@ -54,7 +54,7 @@ if (opts.help || !opts._.length && !opts.list) {
     console.error("Runs scripts in workspaces");
     console.error(`Usage: ${pName} [options] <script> [...args]`);
     console.error(`       ${spaces} -v,--verbose - verbose output`);
-    console.error(`       ${spaces} -S,--strict - returns error level if any of script fails`);
+    console.error(`       ${spaces} -L,--lax - succeeds and continues even if any of script fails`);
     console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
@@ -133,7 +133,7 @@ function execCommand(path, command, verbose) {
     await DataStream.from(packages)
         .setOptions({ maxParallel: +opts.threads || cpus().length })
         .flatMap(async path => {
-            if (error)
+            if (!opts.lax && error)
                 return Promise.reject(new Error("Fail fast..."));
 
             const runconfig = {
@@ -190,7 +190,7 @@ function execCommand(path, command, verbose) {
     ;
 })()
     .then(() => {
-        if (opts.strict && error) {
+        if (!opts.lax && error) {
             console.timeLog(BUILD_NAME, "One or more scripts failed.");
             process.exitCode = 11;
         }
