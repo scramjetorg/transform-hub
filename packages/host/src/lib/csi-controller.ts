@@ -329,7 +329,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.instancePromise.finally(() => {
             this.heartBeatResolver?.res(this.id);
-        });
+        }).catch(() => 0);
     }
 
     heartBeatTick(): void {

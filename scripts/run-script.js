@@ -24,6 +24,7 @@ const opts = minimist(process.argv.slice(2), {
         list: "l",
         strict: "S",
         scope: "s",
+        threads: "j",
         verbose: "v",
         help: ["h", "?"],
         workspace: "w",
@@ -71,6 +72,29 @@ console.time(BUILD_NAME);
 
 let error = false;
 
+function execCommand(path, command, verbose) {
+    console.log(`> ${path}\n> ${command}\n`);
+
+    return new Promise((res, reject) => {
+        exec(command, { cwd: path, maxBuffer: 1 << 20 }, async (exception, stdout, stderr) => {
+            const code = exception && exception.code || 0;
+
+            if (code) {
+                const err = new Error(`Command exited with code ${code}`);
+
+                [err.code, err.stdout, err.stderr] = [code, stdout, stderr];
+                [err.path, err.event, err.script] = [path, "exit", command];
+                reject(err);
+            } else {
+                if (verbose) {
+                    console.log(`CMD: ${command}\n---- stdout -----\n${stdout}\n---- stderr -----\n${stderr}\n---- exit: ${code} -----`);
+                }
+                res();
+            }
+        });
+    });
+}
+
 // eslint-disable-next-line complexity
 (async function() {
     const pkg = findClosestPackageJSONLocation(opts.root);
@@ -107,7 +131,7 @@ let error = false;
     }
 
     await DataStream.from(packages)
-        .setOptions({ maxParallel: cpus().length })
+        .setOptions({ maxParallel: +opts.threads || cpus().length })
         .flatMap(async path => {
             if (error)
                 return Promise.reject(new Error("Fail fast..."));
@@ -123,17 +147,10 @@ let error = false;
 
                 const command = opts._[0];
 
-                console.log(`> ${path}\n> ${command}\n`);
-
-                const child = exec(command, { cwd: path });
-
-                if (opts.verbose) {
-                    child.stdout.pipe(process.stdout);
-                    child.stderr.pipe(process.stderr);
-                }
+                const endPromise = execCommand(path, command, opts.verbose);
 
                 return [
-                    [Date.now(), await child]
+                    [Date.now(), await endPromise]
                 ];
             }
             if (opts.verbose) runconfig.stdio = "inherit";
@@ -164,8 +181,7 @@ let error = false;
             console.error(`${path}: command was: "${script}"`);
 
             if (!opts.verbose) {
-                console.error(stdout);
-                console.error(stderr);
+                console.log(`---- stdout -----\n${stdout}\n---- stderr -----\n${stderr}\n---- exit: ${code} -----`);
             }
 
             error = true;

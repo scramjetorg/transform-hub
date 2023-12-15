@@ -3,7 +3,6 @@
   "version": "0.10.0-pre.1",
   "description": "Package template",
   "---remove-next-line": "",
-  "bic": false,
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
