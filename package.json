@@ -30,7 +30,7 @@
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -or -name __pypackages__ -prune -exec rm -rf {} ';' 2> /dev/null",
     "lint:full": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=3072\" eslint . --ext .ts --ext .js --cache --cache-strategy=content --cache-location=.eslintcache_scramjet-csi",
-    "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ -v --ext .ts --ext .js --cache --cache-strategy=content\"",
+    "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --ext .js --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && yarn lint",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
     "start:dev": "DEVELOPMENT=true ts-node packages/sth/src/bin/hub.ts",
