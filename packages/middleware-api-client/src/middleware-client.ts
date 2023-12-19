@@ -2,7 +2,6 @@
 import { ClientProvider, ClientUtils } from "@scramjet/client-utils";
 import { ManagerClient } from "@scramjet/manager-api-client";
 import { MWRestAPI, MMRestAPI } from "@scramjet/types";
-import { GetAccessKeysResponse } from "@scramjet/types/src/rest-api-multi-manager";
 
 /**
  * Middleware client.
@@ -79,18 +78,13 @@ export class MiddlewareClient implements ClientProvider {
             }
         });
     }
-    async revokeAllAccessKeys(spaceId: string, apiKeys: GetAccessKeysResponse)
-        : Promise<{message:string, keysRevoked: number}> {
-        for (const key of apiKeys.accessKeys) {
-            try {
-                await this.revokeAccessKey(spaceId, key.created.toString());
-            } catch (_e) {
-                throw new Error("Unable to revoke access keys");
+
+    async revokeAllAccessKeys(spaceId: string) : Promise<{message:string, keysRevoked: number}> {
+        return this.client.delete(`space/${spaceId}/apikey`, {
+            headers: {
+                "content-type": "application/json",
+                "x-revoke-all": "true"
             }
-        }
-        return {
-            message: "Keys successfully revoked",
-            keysRevoked: apiKeys.accessKeys.length
-        };
+        });
     }
 }
