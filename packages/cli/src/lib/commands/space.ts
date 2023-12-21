@@ -105,16 +105,17 @@ export const space: CommandDefinition = (program) => {
         .description("Manages Access Keys for active Space");
 
     accessKeyCmd.command("create")
-        .argument("<description>", "Key description")
+        .argument("[description]", "Key description", "")
+        .argument("[quantity]", "Quantity", 1)
         .description("Create Access key for adding Hubs to active Space, i.e \"Army of Darkness\"")
-        .action(async (description: string) => {
+        .action(async (description: string = "", quantity: string = "1") => {
             const spaceName = sessionConfig.lastSpaceId;
 
             if (!spaceName) {
                 throw new Error("No Space set");
             }
 
-            const accessKey = await mwClient.createAccessKey(spaceName, { description });
+            const accessKey = await mwClient.createAccessKey(spaceName, { description, quantity: parseInt(quantity, 10) });
 
             displayObject(accessKey, profileManager.getProfileConfig().format);
         });
