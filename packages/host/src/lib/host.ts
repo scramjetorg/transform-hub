@@ -406,15 +406,20 @@ export class Host implements IComponent {
     }
 
     private async startListening() {
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>((res) => {
-            this.api?.server.once("listening", () => {
-                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+        return new Promise<void>((res) => {
+            this.api.server
+                // Disable auto sending "100 Continue"
+                .on("checkContinue", (request, response) => {
+                    this.api.server.emit("request", request, response);
+                })
+                .once("listening", () => {
+                    const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                    this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
-                res();
-            });
+                    res();
+                })
+                .listen(this.config.host.port, this.config.host.hostname);
         });
     }
 
