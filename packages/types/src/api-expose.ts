@@ -33,14 +33,17 @@ export type StreamConfig = {
      * Is the stream a JSON stream?
      */
     json?: boolean;
+
     /**
      * Is the stream a text stream?
      */
     text?: boolean;
+
     /**
      * Should request end also end the stream or can the endpoint accept subsequent connections
      */
     end?: boolean;
+
     /**
      * Encoding used in the stream
      */
@@ -58,6 +61,11 @@ export type StreamConfig = {
     checkEndHeader?: boolean;
 
     method?: "post" | "put";
+
+    /**
+     * Should send 100 Continue immediately and require "expect: 100-continue" header
+     */
+    postponeContinue?: boolean;
 };
 
 export interface APIError extends Error {
@@ -65,10 +73,12 @@ export interface APIError extends Error {
      * Http status code to be outputted
      */
     code: number;
+
     /**
      * The message that will be sent in reason line
      */
     httpMessage: string;
+
     /**
      *
      */
@@ -155,6 +165,7 @@ export interface APIExpose extends APIBase {
      * The raw HTTP server
      */
     server: Server;
+
     log: DataStream;
     opLogger?: IObjectLogger;
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;

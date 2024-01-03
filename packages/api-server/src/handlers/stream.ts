@@ -106,7 +106,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const downstream = (
         path: string | RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post" }: StreamConfig = {}
+        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post", postponeContinue = false }: StreamConfig = {}
     ): void => {
         router[method](path, async (req, res, next) => {
             try {
@@ -115,7 +115,17 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 }
 
                 if (req.headers.expect === "100-continue") {
-                    res.writeContinue();
+                    if (!postponeContinue) {
+                        res.writeContinue();
+                    }
+                }
+
+                if (postponeContinue && req.headers.expect !== "100-continue") {
+                    res.writeHead(400, "Bad Request", { "Content-type": "application/json" });
+                    res.write(JSON.stringify({ error: "Missing 'expect' header" }));
+                    res.end();
+
+                    return;
                 }
 
                 // Explicit pause causes next `on('data')` not to resume stream automatically.

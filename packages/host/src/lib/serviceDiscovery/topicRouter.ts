@@ -1,12 +1,10 @@
 /* eslint-disable complexity */
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, IObjectLogger, OpResponse } from "@scramjet/types";
+import { APIExpose, ContentType, IObjectLogger, OpResponse, StreamOrigin, TopicState } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
-import { IncomingMessage } from "http";
-import { TopicState } from "./topicHandler";
-import { StreamOrigin } from "./streamHandler";
-import { ContentType, isContentType } from "./contentType";
+import { IncomingMessage, ServerResponse } from "http";
+import { isContentType } from "./contentType";
 import TopicId from "./topicId";
 import { CeroError } from "@scramjet/api-server";
 
@@ -16,15 +14,18 @@ type TopicsPostReq = IncomingMessage & {
         "content-type"?: string,
     };
 };
+
 type TopicsPostRes = {
     id: string
     origin: StreamOrigin
     state: TopicState
     contentType: ContentType
 }
+
 type TopicDeleteReq = IncomingMessage & {
     params?: { topic?: string }
 }
+
 type TopicStreamReq = IncomingMessage & {
     headers?: {
         "content-type"?: string,
@@ -32,6 +33,8 @@ type TopicStreamReq = IncomingMessage & {
     },
     params?: { topic?: string }
 }
+
+type TopicStreamReqWithContinue = TopicStreamReq & { writeContinue: ServerResponse["writeContinue"] };
 
 const missingBodyId = "Missing body param: id";
 const invalidContentTypeMsg = "Unsupported content-type";
@@ -48,7 +51,7 @@ class TopicRouter {
         apiServer.get(`${apiBaseUrl}/topics`, () => this.serviceDiscovery.getTopics());
         apiServer.op("post", `${apiBaseUrl}/topics`, (req) => this.topicsPost(req));
         apiServer.op("delete", `${apiBaseUrl}/topics/:topic`, (req) => this.deleteTopic(req));
-        apiServer.downstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicDownstream(req), { checkContentType: false });
+        apiServer.downstream(`${apiBaseUrl}/topic/:topic`, (req, res) => this.topicDownstream(req, res), { checkContentType: false, postponeContinue: true });
         apiServer.upstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicUpstream(req));
     }
 
@@ -96,7 +99,7 @@ class TopicRouter {
         };
     }
 
-    async topicDownstream(req: TopicStreamReq) {
+    async topicDownstream(req: TopicStreamReq, res: ServerResponse) {
         const { "content-type": contentType = "", cpm } = req.headers;
         const { topic: id = "" } = req.params || {};
 
@@ -116,7 +119,11 @@ class TopicRouter {
             };
         }
 
-        topic.acceptPipe(req);
+        Object.assign(
+            req, { writeContinue: () => { res.writeContinue(); } }
+        );
+
+        topic.acceptPipe(req as TopicStreamReqWithContinue);
 
         if (!cpm) {
             await this.serviceDiscovery.update({
@@ -129,8 +136,9 @@ class TopicRouter {
             this.logger.debug(`Incoming Downstream CPM request for topic: '${topic.id()}, ${topic.contentType}'`);
         }
 
-        await new Promise<void>(res => {
-            req.on("end", () => res());
+        await new Promise<void>(resolve => {
+            req.on("close", () => resolve());
+            req.on("end", () => resolve());
         });
 
         return { opStatus: ReasonPhrases.OK };

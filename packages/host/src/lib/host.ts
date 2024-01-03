@@ -7,6 +7,7 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    ContentType,
     CPMConnectorOptions,
     HostProxy,
     IComponent,
@@ -52,7 +53,6 @@ import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";

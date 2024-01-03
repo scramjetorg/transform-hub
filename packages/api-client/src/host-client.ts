@@ -193,10 +193,13 @@ export class HostClient implements ClientProvider {
     async sendTopic<T>(
         topic: string,
         stream: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit,
+        requestInit: RequestInit = {},
         contentType: string = "application/x-ndjson",
         end?: boolean
     ) {
+        requestInit.headers ||= {};
+        (requestInit.headers as Record<string, string>).expect = "100-continue";
+
         return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });
     }
 
