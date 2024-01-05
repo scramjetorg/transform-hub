@@ -66,7 +66,7 @@ export const topic: CommandDefinition = (program) => {
         .addOption(contentTypeOption)
         .description("Send data on topic from file, directory or directly through the console")
         .action(async (topicName, filename, { contentType }) => {
-            await getHostClient().sendNamedData(
+            await getHostClient().sendTopic(
                 topicName,
                 filename ? await getReadStreamFromFile(filename) : process.stdin,
                 {},

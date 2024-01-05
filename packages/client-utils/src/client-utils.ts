@@ -221,15 +221,12 @@ export abstract class ClientUtilsBase implements HttpClient {
         { type = "application/octet-stream", end, parseResponse = "stream" }: SendStreamOptions = {}
     ): Promise<T> {
         requestInit.headers ||= {} as Headers;
-
-        Object.assign(requestInit.headers, {
-            "content-type": type,
-            expect: "100-continue"
-        });
+        (requestInit.headers as Headers)["content-type"] = type;
 
         if (typeof end !== "undefined") {
             (requestInit.headers as Headers)["x-end-stream"] = end ? "true" : "false";
         }
+
         let method: "post" | "put" = "post";
 
         if (requestInit.method === "put") method = "put";
