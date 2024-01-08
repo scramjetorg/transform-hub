@@ -12,6 +12,7 @@ import {
     AppConfig,
     DownstreamStreamsConfig,
     EncodedMessage,
+    EventMessageData,
     HandshakeAcknowledgeMessage,
     HostProxy,
     ICommunicationHandler,
@@ -182,7 +183,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.outputTopic = this.handshakeMessage.payload.outputTopic;
         this.inputTopic = this.handshakeMessage.payload.inputTopic;
         this.limits = {
-            memory: handshakeMessage.payload.limits?.memory || sthConfig.docker.runner.maxMem
+            memory: handshakeMessage.payload.limits?.memory || sthConfig.docker.runner.maxMem,
+            gpu: payload.limits?.gpu
         };
 
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
@@ -312,7 +314,7 @@ export class CSIController extends TypedEmitter<Events> {
         // @todo - this should be checked by CSIController, but Dispatcher should know about this via event listener.
         this.instancePromise.finally(() => {
             this.heartBeatResolver?.res(this.id);
-        });
+        }).catch(() => 0);
     }
 
     heartBeatTick(): void {
@@ -673,7 +675,7 @@ export class CSIController extends TypedEmitter<Events> {
 
             if (!event.eventName) return;
 
-            localEmitter.lastEvents[event.eventName] = event;
+            localEmitter.lastEvents[event.eventName] = event.message;
             localEmitter.emit(event.eventName, event);
         });
 
@@ -683,9 +685,19 @@ export class CSIController extends TypedEmitter<Events> {
             if (!name) {
                 throw new HostError("EVENT_NAME_MISSING");
             }
-
             const out = new DataStream();
-            const handler = (data: any) => out.write(data);
+            const handler = (data: EventMessageData) => {
+                if (typeof data !== "object") {
+                    out.write(data);
+
+                    return;
+                }
+
+                const { message } = data;
+
+                out.write(message ? message : {});
+            };
+
             const clean = () => {
                 this.logger.debug(`Event stream "${name}" disconnected`);
 
@@ -702,14 +714,14 @@ export class CSIController extends TypedEmitter<Events> {
             return out.JSONStringify();
         });
 
-        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
+        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise((res) => {
             const name = req.params?.name;
 
             if (!name) {
                 throw new HostError("EVENT_NAME_MISSING");
             }
 
-            localEmitter.once(name, res);
+            localEmitter.once(name, (data) => res(data.message));
         });
 
         this.router.get("/event/:name", async (req) => {

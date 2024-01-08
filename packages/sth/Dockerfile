@@ -1,4 +1,4 @@
-FROM node:lts-bullseye-slim as builder
+FROM node:18-bullseye-slim as builder
 
 WORKDIR /build
 
@@ -8,6 +8,7 @@ COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
 COPY ./dist/obj-logger ./dist/obj-logger
 COPY ./dist/model ./dist/model
+COPY ./dist/module-loader ./dist/module-loader
 COPY ./dist/runner ./dist/runner
 COPY ./dist/pre-runner ./dist/pre-runner
 COPY ./dist/python-runner ./dist/python-runner
@@ -23,7 +24,7 @@ COPY LICENSE ./
 
 RUN cd dist && npx -y npm@8 i
 
-FROM node:lts-bullseye-slim as release
+FROM node:18-bullseye-slim as release
 
 WORKDIR /app
 

@@ -3,7 +3,18 @@
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { removeBoundaryQuotes, defer, waitUntilStreamEquals, waitUntilStreamContains } from "../../lib/utils";
+import {
+    removeBoundaryQuotes,
+    defer,
+    waitUntilStreamEquals,
+    waitUntilStreamContains,
+    removeProfile,
+    createProfile,
+    setProfile,
+    createDirectory,
+    deleteDirectory,
+    getActiveProfile
+} from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
@@ -27,18 +38,21 @@ let actualLogResponse: any;
 let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
+let activeProfile: any;
 
 const freeport = promisify(require("freeport"));
 
+const profileName = "test_bdd";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const testPath = "../packages/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
-const getHostClient = ({ resources } : CustomWorld): HostClient => resources.hostClient || hostClient;
+const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
-        appConfig: {}, args: instanceArg.split(" ")
+        appConfig: {},
+        args: instanceArg.split(" ")
     });
 };
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
@@ -123,10 +137,12 @@ const killAllRunners = async () => {
     }
 };
 
-BeforeAll({ timeout: 10e3 }, async () => {
+BeforeAll({ timeout: 20e3 }, async () => {
     if (process.env.NO_HOST) {
         return;
     }
+
+    activeProfile = await getActiveProfile();
 
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
@@ -158,10 +174,12 @@ BeforeAll({ timeout: 10e3 }, async () => {
                 const { message } = result || {};
 
                 console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
-            },
+            }
         });
     }
     await hostUtils.spawnHost([]);
+    await createProfile(profileName);
+    await setProfile(profileName);
 });
 
 AfterAll(async () => {
@@ -172,6 +190,8 @@ AfterAll(async () => {
             throw new Error("Host unexpected closed");
         }
     }
+    await setProfile(activeProfile);
+    await removeProfile(profileName);
 });
 
 Before(() => {
@@ -194,6 +214,14 @@ After({}, async () => {
     await Promise.all(
         insts.map(i => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
     );
+});
+
+Before({ tags: "@test-si-init" }, function() {
+    createDirectory("data/template_seq");
+});
+
+After({ tags: "@test-si-init" }, function() {
+    deleteDirectory("data/template_seq");
 });
 
 const startHost = async () => {
@@ -227,33 +255,34 @@ const startHost = async () => {
                 const { message } = result || {};
 
                 console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
-            },
+            }
         });
     }
     await hostUtils.spawnHost([]);
 };
 
 Given("start host", () => startHost());
+
 Then("stop host", () => hostUtils.stopHost());
 
 Then("send fake stream as sequence", async function(this: CustomWorld) {
     this.resources.pkgFake = new PassThrough();
 
-    this.resources.sequenceSendPromise = getHostClient(this).sendSequence(
-        this.resources.pkgFake as unknown as ReadStream
-    ).catch((err: any) => console.log(err));
+    this.resources.sequenceSendPromise = getHostClient(this)
+        .sendSequence(this.resources.pkgFake as unknown as ReadStream)
+        .catch((err: any) => console.log(err));
 
-    this.resources.pkgFake.write(
-        Buffer.from([0x1f8b0800000000000003])
-    );
+    this.resources.pkgFake.write(Buffer.from([0x1f8b0800000000000003]));
 });
 
 Then("end fake stream", async function(this: CustomWorld): Promise<void> {
-    return new Promise(res => {
-        this.resources.pkgFake.on("close", async () => {
-            await defer(50);
-            res();
-        }).end();
+    return new Promise((res) => {
+        this.resources.pkgFake
+            .on("close", async () => {
+                await defer(50);
+                res();
+            })
+            .end();
     });
 });
 
@@ -278,22 +307,19 @@ When("wait for {string} ms", async (timeoutMs: number) => {
 When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
     const packagePath = `${process.env.PACKAGES_DIR}${packageName}`;
 
-    if (!existsSync(packagePath))
-        assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
-    if (!existsSync(packagePath))
-        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
-    if (!existsSync(packagePath))
-        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
@@ -327,21 +353,27 @@ When("start Instance with input topic name {string}", async function(this: Custo
     });
 });
 
-When("start Instance with args {string} and output topic name {string}", async function(this: CustomWorld, instanceArg: string, topicOut: string) {
-    this.resources.instance = await this.resources.sequence!.start({
-        appConfig: {},
-        args: instanceArg.split(" "),
-        outputTopic: topicOut
-    });
-});
+When(
+    "start Instance with args {string} and output topic name {string}",
+    async function(this: CustomWorld, instanceArg: string, topicOut: string) {
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: instanceArg.split(" "),
+            outputTopic: topicOut
+        });
+    }
+);
 
-When("start Instance with args {string} and input topic name {string}", async function(this: CustomWorld, instanceArg: string, topicIn: string) {
-    this.resources.instance = await this.resources.sequence!.start({
-        appConfig: {},
-        args: instanceArg.split(" "),
-        inputTopic: topicIn
-    });
-});
+When(
+    "start Instance with args {string} and input topic name {string}",
+    async function(this: CustomWorld, instanceArg: string, topicIn: string) {
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: instanceArg.split(" "),
+            inputTopic: topicIn
+        });
+    }
+);
 
 When(
     "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
@@ -364,7 +396,7 @@ When(
                 writeStream.on("error", rej);
                 stream.on("end", res);
             }),
-            new Promise((res) => setTimeout(res, 1000 * timeout)),
+            new Promise((res) => setTimeout(res, 1000 * timeout))
         ]);
     }
 );
@@ -420,10 +452,15 @@ When("compare checksums of content sent from file {string}", async function(this
         .update(await readFile(filePath))
         .digest("hex");
 
-    await this.resources.instance?.sendStream("input", readStream, {}, {
-        type: "application/octet-stream",
-        end: true,
-    });
+    await this.resources.instance?.sendStream(
+        "input",
+        readStream,
+        {},
+        {
+            type: "application/octet-stream",
+            end: true
+        }
+    );
 
     const output = await this.resources.instance?.getStream("output");
 
@@ -703,7 +740,7 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
     if (!sequenceId) assert.fail();
 
     const sequences = await hostClient.listSequences() || [];
-    const sequenceExist = !!sequences.find(sequenceInfo => sequenceId === sequenceInfo.id);
+    const sequenceExist = !!sequences.find((sequenceInfo) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
 });
@@ -720,26 +757,39 @@ When("instance is finished", async function(this: CustomWorld) {
 });
 
 When("send {string} to input", async function(this: CustomWorld, str) {
-    await this.resources.instance?.sendStream("input", str, {}, {
-        type: "text/plain",
-        end: true,
-    });
+    await this.resources.instance?.sendStream(
+        "input",
+        str,
+        {},
+        {
+            type: "text/plain",
+            end: true
+        }
+    );
 });
 
 When("send file {string} as text input", async function(this: CustomWorld, path) {
-    await this.resources.instance?.sendStream("input", createReadStream(path), {},
+    await this.resources.instance?.sendStream(
+        "input",
+        createReadStream(path),
+        {},
         {
             type: "text/plain",
-            end: true,
+            end: true
         }
     );
 });
 
 When("send file {string} as binary input", async function(this: CustomWorld, path) {
-    await this.resources.instance?.sendStream("input", createReadStream(path), {}, {
-        type: "application/octet-stream",
-        end: true,
-    });
+    await this.resources.instance?.sendStream(
+        "input",
+        createReadStream(path),
+        {},
+        {
+            type: "application/octet-stream",
+            end: true
+        }
+    );
 });
 
 When("send {string} to stdin", async function(this: CustomWorld, str) {
@@ -794,19 +844,25 @@ Then(
     }
 );
 
-Then("send data {string} named {string} and content-type {string}", async (data: any, topic: string, contentType: string) => {
-    const ps = new PassThrough({ encoding: undefined });
-    const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, contentType, true);
+Then(
+    "send data {string} named {string} and content-type {string}",
+    async (data: any, topic: string, contentType: string) => {
+        const ps = new PassThrough({ encoding: undefined });
+        const sendData = hostClient.sendNamedData<Stream>(topic, ps, {}, contentType, true);
 
-    ps.write(data);
-    ps.end();
+        ps.write(data);
+        ps.end();
 
-    assert.ok(sendData);
-});
+        assert.ok(sendData);
+    }
+);
 
-When("get data named {string} and content-type {string}", async function(this: CustomWorld, topic: string, contentType: string) {
-    this.resources.outStream = await hostClient.getNamedData(topic, {}, contentType);
-});
+When(
+    "get data named {string} and content-type {string}",
+    async function(this: CustomWorld, topic: string, contentType: string) {
+        this.resources.outStream = await hostClient.getNamedData(topic, {}, contentType);
+    }
+);
 
 Then("send json data {string} named {string}", async (data: any, topic: string) => {
     const ps = new PassThrough({ encoding: undefined });
@@ -863,7 +919,7 @@ Given("topic {string} is created", async function(this: CustomWorld, topicId: st
 Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
     const topics = await hostClient.getTopics();
 
-    const topic = topics.find(topicElement => topicElement.topicName === topicId);
+    const topic = topics.find((topicElement) => topicElement.topicName === topicId);
 
     assert.notEqual(topic, undefined);
 });
@@ -874,7 +930,7 @@ Then("remove topic {string}", async function(this: CustomWorld, topicId: string)
 
 Then("confirm topic {string} is removed", async function(this: CustomWorld, topicName: string) {
     const topics = await hostClient.getTopics();
-    const removedTopic = topics.find(topicElement => topicElement.topicName === topicName);
+    const removedTopic = topics.find((topicElement) => topicElement.topicName === topicName);
 
     assert.equal(removedTopic, undefined);
 

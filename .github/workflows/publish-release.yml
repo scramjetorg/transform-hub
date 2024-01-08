@@ -119,11 +119,11 @@ jobs:
         with:
           ref: v${{ inputs.version }}
 
-      - name: Setup Nodejs 16
+      - name: Setup Nodejs 18
         uses: actions/setup-node@v3
         with:
           cache: 'yarn'
-          node-version: 16
+          node-version: 18
 
       - name: Configure npm registry access
         run: |

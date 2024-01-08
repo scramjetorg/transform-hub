@@ -3,7 +3,7 @@ import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { Readable } from "stream";
 
-const logger = new ObjLogger("@sth/runner/inputStram");
+const logger = new ObjLogger("RunnerInput");
 
 function loopStream<T extends unknown>(
     stream: Readable,
@@ -92,3 +92,5 @@ export function mapToInputDataStream(stream: Readable, contentType: string): Dat
 
     throw new Error(`Content-Type does not match any supported value. The actual value is ${contentType}`);
 }
+
+export const inputStreamInitLogger = logger;

@@ -103,7 +103,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             command?: string[],
             publishAllPorts: boolean,
             labels: { [key: string]: string },
-            networkMode?: string
+            networkMode?: string,
+            gpu?: boolean
         }
     ): Promise<DockerContainer> {
         containerCfg.ports = { ...containerCfg.ports };
@@ -129,6 +130,16 @@ export class DockerodeDockerHelper implements IDockerHelper {
             },
             Labels: containerCfg.labels || {},
         };
+
+        if (containerCfg.gpu === true) {
+            config.HostConfig!.DeviceRequests = [
+                {
+                    Count: -1,
+                    Driver: "nvidia",
+                    Capabilities: [["gpu"]],
+                },
+            ];
+        }
 
         if (containerCfg.command) {
             config.Cmd = [...containerCfg.command];
@@ -323,7 +334,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 command: config.command,
                 labels: config.labels || {},
                 publishAllPorts: config.publishAllPorts || false,
-                networkMode: config.networkMode
+                networkMode: config.networkMode,
+                gpu: config.gpu
             }
         );
         // ------

@@ -2,6 +2,46 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.37.0] - 2023-11-27
+
+## Features
+
+* VDM-1493 [TEST CLI] Feat/Instance restart  by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/965
+* [CLI] Add `si seq start <seq-id> --inst-id` to CLI command by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/966
+* Add option to provide file with arguments to start/deploy sequence by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/971
+* Feat/cli yaml config by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/980
+* Example configs by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/968
+* add create and remove new profile by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/975
+* GPU in Python Runner (docker) by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/928
+* [CLI]add path option to si init by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/989
+* Pagination-support by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/949
+* [CLI TEST] VDM-1507 si init by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/990
+* Set default runner envs with `--runner-envs` STH param by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/986
+
+## Fixed
+
+* [FIX] Instance ID replacement in `si inst restart -` by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/963
+* Bump @babel/traverse from 7.20.13 to 7.23.2 by @dependabot in https://github.com/scramjetorg/transform-hub/pull/964
+* fix variable name by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/967
+* [CLI] Remove session configs with write access by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/970
+* Show Node version on Host start by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/974
+* Auto set contenty-type in PANG by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/972
+* Fix ObjLogger arguments reference by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/973
+* Fix logging circular args by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/977
+* Set Node to 18 in STH and Runner Dockerfiles by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/979
+* VDM-1516 change node in workflow and as defualt input from 16 to 18 by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/981
+* [FIX] Add missing hostClient types by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/982
+* Fix linting and duplicated code by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/984
+* [FIX] VDM-1507 add missed description by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/992
+* Change in makeRequest method by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/991
+* Small cleanup in host and runner logs by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/995
+
+## [0.36.1] - 2023-10-02
+
+## Fixed
+
+* Add missing dependency in STH Dockerfile by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/956
+
 ## [0.36.0] - 2023-09-25
 
 ## Features

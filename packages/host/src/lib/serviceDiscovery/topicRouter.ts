@@ -55,6 +55,7 @@ class TopicRouter {
     async topicsPost(req: TopicsPostReq): Promise<OpResponse<TopicsPostRes>> {
         if (!req.body?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: missingBodyId };
         if (!req.body?.["content-type"]) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing body param: content-type" };
+
         const { "content-type": contentType, id } = req.body;
 
         if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg };
@@ -114,14 +115,18 @@ class TopicRouter {
                 error: `Acceptable Content-Type for ${id} is ${topic.contentType}`
             };
         }
+
         topic.acceptPipe(req);
 
         if (!cpm) {
             await this.serviceDiscovery.update({
-                provides: topic.id(), contentType: contentType, topicName: topic.id()
+                provides: topic.id(),
+                contentType: contentType,
+                topicName: topic.id(),
+                status: "add"
             });
         } else {
-            this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
+            this.logger.debug(`Incoming Downstream CPM request for topic: '${topic.id()}, ${topic.contentType}'`);
         }
 
         await new Promise<void>(res => {
@@ -149,11 +154,15 @@ class TopicRouter {
 
             if (!cpm) {
                 await this.serviceDiscovery.update({
-                    requires: id, contentType, topicName: topicId.toString()
+                    requires: id,
+                    contentType,
+                    topicName: topicId.toString(),
+                    status: "add"
                 });
             } else {
-                this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
+                this.logger.debug(`Incoming CPM Upstream request for topic '${id}'`);
             }
+
             return topic;
         } catch (e: any) {
             throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);

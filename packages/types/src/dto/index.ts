@@ -1,1 +1,1 @@
-export { StartSequenceDTO } from "./start-sequence";
+export { StartSequenceDTO, StartSequenceEndpointPayloadDTO } from "./start-sequence";

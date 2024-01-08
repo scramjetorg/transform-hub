@@ -174,6 +174,7 @@
 - [SequencePackageJSONScramjetSection](modules.md#sequencepackagejsonscramjetsection)
 - [SequenceStoppedMessageData](modules.md#sequencestoppedmessagedata)
 - [StartSequenceDTO](modules.md#startsequencedto)
+- [StartSequenceEndpointPayloadDTO](modules.md#startsequenceendpointpayloaddto)
 - [StatusMessage](modules.md#statusmessage)
 - [StatusMessageData](modules.md#statusmessagedata)
 - [StopHandler](modules.md#stophandler)
@@ -584,7 +585,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L22)
+[packages/types/src/api-expose.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L26)
 
 ___
 
@@ -921,7 +922,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
+[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
 
 ___
 
@@ -1049,7 +1050,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L10)
+[packages/types/src/api-expose.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L14)
 
 ___
 
@@ -1212,6 +1213,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `gpu?` | `boolean` |
 | `memory?` | `number` |
 
 #### Defined in
@@ -1677,7 +1679,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
+[packages/types/src/api-expose.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L25)
 
 ___
 
@@ -1963,7 +1965,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
+[packages/types/src/api-expose.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L24)
 
 ___
 
@@ -1979,7 +1981,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L18)
+[packages/types/src/api-expose.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L22)
 
 ___
 
@@ -2028,7 +2030,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L17)
+[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
 
 ___
 
@@ -2068,7 +2070,7 @@ ___
 
 ### ParsedMessage
 
-Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params?`: { `[key: string]`: `any`;  }  }
+Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params?`: { `[key: string]`: `any`;  } ; `query?`: { `[key: string]`: `any`;  }  }
 
 #### Defined in
 
@@ -2172,7 +2174,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:277](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L277)
+[packages/types/src/sth-configuration.ts:279](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L279)
 
 ___
 
@@ -2368,6 +2370,7 @@ ___
 | `port` | `number` |
 | `prerunnerImage` | `string` |
 | `prerunnerMaxMem` | `number` |
+| `runnerEnvs?` | `string` |
 | `runnerImage` | `string` |
 | `runnerMaxMem` | `number` |
 | `runnerPyImage` | `string` |
@@ -2425,6 +2428,7 @@ ___
 | `platform.apiVersion` | `string` | - |
 | `platform.hostType` | ``"hub"`` \| ``"federation"`` | - |
 | `platform.space` | `string` | - |
+| `runnerEnvs?` | `Record`<`string`, `string`\> | - |
 | `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes', 'detect' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. In megabytes. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
@@ -2688,6 +2692,24 @@ ___
 
 ___
 
+### StartSequenceEndpointPayloadDTO
+
+Ƭ **StartSequenceEndpointPayloadDTO**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `appConfig?` | [`AppConfig`](modules.md#appconfig) |
+| `args?` | `string`[] |
+| `instanceId?` | `string` |
+
+#### Defined in
+
+[packages/types/src/dto/start-sequence.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/dto/start-sequence.ts#L10)
+
+___
+
 ### StatusMessage
 
 Ƭ **StatusMessage**: { `msgCode`: `RunnerMessageCode.STATUS`  } & [`StatusMessageData`](modules.md#statusmessagedata)
@@ -2799,7 +2821,7 @@ Configuration options for streaming endpoints
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L27)
+[packages/types/src/api-expose.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L31)
 
 ___
 
@@ -2809,7 +2831,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L12)
+[packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
 
 ___
 
@@ -2819,7 +2841,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L15)
+[packages/types/src/api-expose.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L19)
 
 ___
 

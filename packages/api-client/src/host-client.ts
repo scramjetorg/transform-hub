@@ -92,10 +92,9 @@ export class HostClient implements ClientProvider {
     async sendSequence(
         sequencePackage: Parameters<HttpClient["sendStream"]>[1],
         requestInit?: RequestInit,
-        update?: boolean
     ): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
-            parseResponse: "json", put: update
+            parseResponse: "json"
         });
 
         return SequenceClient.from(response.id, this);
@@ -195,7 +194,7 @@ export class HostClient implements ClientProvider {
         topic: string,
         stream: Parameters<HttpClient["sendStream"]>[1],
         requestInit?: RequestInit,
-        contentType?: string,
+        contentType: string = "application/x-ndjson",
         end?: boolean
     ) {
         return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });

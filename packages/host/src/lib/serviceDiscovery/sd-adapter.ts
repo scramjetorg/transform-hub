@@ -7,7 +7,7 @@ import TopicsMap from "./topicsController";
 import { Topic } from "./topic";
 import { ContentType } from "./contentType";
 import { StreamOrigin } from "./streamHandler";
-import { IObjectLogger } from "@scramjet/types";
+import { IObjectLogger, STHTopicEventData } from "@scramjet/types";
 
 export type DataType = {
     topic: TopicId,
@@ -53,7 +53,20 @@ export class ServiceDiscovery {
         return this.topicsController.get(id);
     }
 
-    deleteTopic(id: TopicId) { return this.topicsController.delete(id); }
+    deleteTopic(id: TopicId) {
+        const deleted = this.topicsController.delete(id);
+
+        if (deleted) {
+            this.cpmConnector?.sendTopicInfo({
+                topicName: id.toString(),
+                status: "remove"
+            }).catch(() => {
+                this.logger.error("Error sending topic remove message");
+            });
+        }
+
+        return deleted;
+    }
 
     /**
      * Sets the CPM connector.
@@ -149,7 +162,8 @@ export class ServiceDiscovery {
         await this.cpmConnector?.sendTopicInfo({
             requires: topicData.topic.toString(),
             topicName: topicData.topic.toString(),
-            contentType: topicData.contentType
+            contentType: topicData.contentType,
+            status: "add"
         });
     }
 
@@ -160,11 +174,12 @@ export class ServiceDiscovery {
         await this.cpmConnector?.sendTopicInfo({
             provides: topicData.topic.toString(),
             topicName: topicData.topic.toString(),
-            contentType: topicData.contentType
+            contentType: topicData.contentType,
+            status: "add"
         });
     }
 
-    async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
+    async update(data: STHTopicEventData) {
         this.logger.trace("Topic update. Send topic info to CPM", data);
 
         if (this.cpmConnector?.connected) {

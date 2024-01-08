@@ -33,6 +33,7 @@ IComponent {
     logger: IObjectLogger;
     name = "KubernetesInstanceAdapter";
 
+    private sthConfig: STHConfiguration;
     private _runnerName?: string;
     private _kubeClient?: KubernetesClientAdapter;
 
@@ -47,6 +48,8 @@ IComponent {
     constructor(sthConfig: STHConfiguration) {
         // @TODO this is a redundant check (it was already checked in sequence adapter)
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
+        this.sthConfig = sthConfig;
+
         const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
 
         if (!decodedAdapterConfig.isOk()) {
@@ -114,6 +117,8 @@ IComponent {
                 instanceId,
                 pipesPath: "",
                 sequenceInfo
+            }, {
+                ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
 
         const runnerImage = config.engines.python3

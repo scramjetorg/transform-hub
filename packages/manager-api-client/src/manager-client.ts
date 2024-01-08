@@ -84,8 +84,8 @@ export class ManagerClient implements ClientProvider {
         sequencePackage: Readable,
         id: string = ""
     ) {
-        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(`s3/${id}`, sequencePackage, {}, {
-            parseResponse: "json", put: true
+        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(`s3/${id}`, sequencePackage, { method: "put" }, {
+            parseResponse: "json"
         });
     }
 
@@ -93,7 +93,7 @@ export class ManagerClient implements ClientProvider {
         await this.client.delete<any>(`s3/${id}`);
     }
 
-    async disconnectHubs(opts: any) {
+    async disconnectHubs(opts: MRestAPI.PostDisconnectPayload) {
         return this.client.post<MRestAPI.PostDisconnectResponse>("disconnect", opts, {}, { json: true, parse: "json" });
     }
 

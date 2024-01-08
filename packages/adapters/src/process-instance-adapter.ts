@@ -161,6 +161,7 @@ class ProcessInstanceAdapter implements
             payload
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
+            ...this.sthConfig.runnerEnvs
         });
 
         this.logger.debug("Spawning Runner process with command", runnerCommand);

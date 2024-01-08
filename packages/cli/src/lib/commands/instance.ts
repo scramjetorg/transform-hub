@@ -99,9 +99,12 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .description("Kills the instance and start the new one from root sequence")
         .action(async (id: string) => {
-            const instanceRestartResponse = await instanceRestart(id);
+            const instanceId = await getInstanceId(id);
+            const instanceRestartResponse = await instanceRestart(instanceId);
 
             displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
+
+            sessionConfig.setLastInstanceId(instanceId);
         });
 
     instanceCmd
@@ -187,9 +190,9 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, event: string, { next, stream }) => {
             if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
             if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event),
-                profileManager.getProfileConfig().format);
+                "json");
             return displayEntity(
-                getInstance(getInstanceId(id)).getEvent(event), profileManager.getProfileConfig().format
+                getInstance(getInstanceId(id)).getEvent(event), "json"
             );
         });
 

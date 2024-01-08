@@ -143,21 +143,24 @@ export const space: CommandDefinition = (program) => {
             if (all && id || !all && !id) {
                 throw new Error("Please provide one of the options, please use command with --help to get more information");
             }
+
             if (!spaceName) {
                 throw new Error("No Space set");
             }
+
             if (id) {
                 const revokedAccessKey = await mwClient.revokeAccessKey(spaceName, id);
 
                 return displayObject(revokedAccessKey, profileManager.getProfileConfig().format);
             }
+
             const apiKeys = await mwClient.listAccessKeys(spaceName);
 
             if (!apiKeys.accessKeys || apiKeys.accessKeys.length === 0) {
                 throw new Error("There are no keys to revoke");
             }
 
-            const revokedAccessKeys = await mwClient.revokeAllAccessKeys(spaceName, apiKeys);
+            const revokedAccessKeys = await mwClient.revokeAllAccessKeys(spaceName);
 
             return displayObject(revokedAccessKeys, profileManager.getProfileConfig().format);
         });

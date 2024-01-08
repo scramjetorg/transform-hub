@@ -119,6 +119,8 @@ export type DockerAdapterRunConfig = {
     },
 
     networkMode?: string,
+
+    gpu?: boolean;
 };
 
 /**
@@ -220,7 +222,8 @@ export interface IDockerHelper {
             labels: {
                 [key: string]: string
             },
-            networkMode?: string
+            networkMode?: string,
+            gpu: boolean
         }
     ) => Promise<DockerContainer>;
 

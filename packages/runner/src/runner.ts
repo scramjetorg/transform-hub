@@ -28,6 +28,10 @@ import { BufferStream, DataStream, StringStream } from "scramjet";
 import { EventEmitter } from "events";
 import { Readable, Writable } from "stream";
 
+import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
+import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
+import { MessageUtils } from "./message-utils";
+
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { ManagerClient } from "@scramjet/manager-api-client";
@@ -168,6 +172,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger = new ObjLogger(this, { id: instanceId });
         hostClient.logger.pipe(this.logger);
+        inputStreamInitLogger.pipe(this.logger);
 
         if (process.env.PRINT_TO_STDOUT) {
             this.logger.addOutput(process.stdout);
