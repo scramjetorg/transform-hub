@@ -1,5 +1,5 @@
 import { TransformOptions, Readable, Transform } from "stream";
-import { ContentType, WorkState, ReadableState, WritableState, StreamType, StreamOrigin, TopicHandler, TopicOptions, TopicState, TopicStreamReqWithContinue } from "@scramjet/types";
+import { ContentType, WorkState, ReadableState, WritableState, StreamType, StreamOrigin, TopicHandler, TopicOptions, TopicState, ParsedMessage } from "@scramjet/types";
 import TopicId from "./topicId";
 
 export enum TopicEvent {
@@ -16,7 +16,7 @@ export class Topic extends Transform implements TopicHandler {
     protected _errored?: Error;
     protected needDrain: boolean;
 
-    private _pipeQueue: (Readable | TopicStreamReqWithContinue)[] = [];
+    private _pipeQueue: (Readable)[] = [];
     private _consuming: Promise<any> | undefined;
 
     constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
@@ -50,7 +50,7 @@ export class Topic extends Transform implements TopicHandler {
     }
     origin() { return this._origin; }
 
-    acceptPipe(rdble: Readable | TopicStreamReqWithContinue) {
+    acceptPipe(rdble: Readable) {
         this._pipeQueue.push(rdble);
         this.consumePipe();
     }
@@ -62,8 +62,8 @@ export class Topic extends Transform implements TopicHandler {
             while (this._pipeQueue.length) {
                 const pipe = this._pipeQueue.shift()!;
 
-                if ((pipe as TopicStreamReqWithContinue).writeContinue) {
-                    (pipe as TopicStreamReqWithContinue).writeContinue();
+                if ((pipe as ParsedMessage).writeContinue) {
+                    (pipe as ParsedMessage).writeContinue();
                 }
 
                 pipe.pipe(this, { end: false });

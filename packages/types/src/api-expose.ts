@@ -10,13 +10,17 @@ export type ParsedMessage = IncomingMessage & {
     body?: any;
     params?: { [key: string]: any },
     query?: { [key: string]: any };
+    writeContinue: ServerResponse["writeContinue"];
 };
+
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
 export type StreamInput =
     | ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>)
     | MaybePromise<Readable>;
-export type StreamOutput = ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
+export type StreamOutput = (
+    (req: ParsedMessage, res: ServerResponse) => MaybePromise<any>
+) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 export type OpOptions = { rawBody?: boolean };

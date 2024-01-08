@@ -408,10 +408,6 @@ export class Host implements IComponent {
     private async startListening() {
         return new Promise<void>((res) => {
             this.api.server
-                // Disable auto sending "100 Continue"
-                .on("checkContinue", (request, response) => {
-                    this.api.server.emit("request", request, response);
-                })
                 .once("listening", () => {
                     const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
