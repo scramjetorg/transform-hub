@@ -73,7 +73,7 @@ test("Get works when we have content", async t => {
     t.is(fullBody, "{\"healthy\":true}", "Data retrieved");
 });
 
-noGHTest("Get works with spaces and strange chars", async t => {
+test("Get works with spaces and strange chars", async t => {
     const endpoints = [
         "/abc",
         "/abc+",
