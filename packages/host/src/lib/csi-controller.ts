@@ -732,12 +732,12 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleEvent(event: ParsedMessage): Promise<OpResponse<STHRestAPI.SendEventResponse>> {
-        const { body: { source = "api", eventName, message } } = event;
+        const [, { eventName, message }] = event.body;
 
         if (typeof eventName !== "string")
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid format, eventName missing." };
 
-        await this.emitEvent({ eventName, source, message });
+        await this.emitEvent({ eventName, source: "api", message });
         return { opStatus: ReasonPhrases.OK, accepted: ReasonPhrases.OK };
     }
 
