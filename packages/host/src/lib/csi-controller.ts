@@ -184,7 +184,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.inputTopic = this.handshakeMessage.payload.inputTopic;
         this.limits = {
             memory: handshakeMessage.payload.limits?.memory || sthConfig.docker.runner.maxMem,
-            gpu: payload.limits?.gpu
+            gpu: handshakeMessage.payload.limits?.gpu
         };
 
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;

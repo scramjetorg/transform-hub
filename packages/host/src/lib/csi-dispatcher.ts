@@ -92,7 +92,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 csiController.inputRouted = true;
 
                 await this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType, topicName: data.requires
+                    requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"
                 });
             }
 
@@ -107,7 +107,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 csiController.outputRouted = true;
 
                 await this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides
+                    provides: data.provides, contentType: data.contentType!, topicName: data.provides, status: "add"
                 });
             }
         });
@@ -191,7 +191,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         const limits = {
             memory: payload.limits?.memory || this.STHConfig.docker.runner.maxMem
         };
-        const id = IDProvider.generate();
+        const id = payload.instanceId || IDProvider.generate();
 
         const instanceAdapter = getInstanceAdapter(this.STHConfig.runtimeAdapter, this.STHConfig, id);
         const instanceConfig: InstanceConfig = {

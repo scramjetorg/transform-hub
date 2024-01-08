@@ -39,7 +39,7 @@ import { DuplexStream } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 
-import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
+import { ITelemetryAdapter } from "@scramjet/telemetry";
 
 import { readFileSync } from "fs";
 import { cpus, totalmem } from "os";
@@ -723,7 +723,7 @@ export class Host implements IComponent {
             };
         }
         // eslint-disable-next-line no-console
-        console.log("Instances of sequence", sequenceInfo.id, sequenceInfo.instances);
+        this.logger.info("Instances of sequence", sequence.id, sequence.instances);
 
         if (sequence.instances.length > 0) {
             const instances = [...sequence.instances].every((instanceId) => {
@@ -759,7 +759,7 @@ export class Host implements IComponent {
 
             this.logger.trace("Sequence removed:", id);
 
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequence as unknown as GetSequenceResponse);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequence as unknown as STHRestAPI.GetSequenceResponse);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
@@ -996,7 +996,6 @@ export class Host implements IComponent {
      */
     // eslint-disable-next-line complexity
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
-        
         if (await this.loadCheck.overloaded()) {
             return {
                 opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
@@ -1062,7 +1061,6 @@ export class Host implements IComponent {
             //     this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
             // });
 
-
             return {
                 opStatus: ReasonPhrases.OK,
                 message: `Sequence ${runner.id} starting`,
@@ -1095,7 +1093,6 @@ export class Host implements IComponent {
                     new CommunicationHandler(),
                     this.config,
                     this.instanceProxy);
-
             }
 
             await this.instancesStore[id].handleInstanceConnect(
@@ -1251,7 +1248,7 @@ export class Host implements IComponent {
      */
     async setTelemetry(): Promise<void> {
         if (this.config.telemetry.status) {
-            this.telemetryAdapter.logger.pipe(this.logger);
+            this.telemetryAdapter?.logger.pipe(this.logger);
 
             const ipAddress = require("ext-ip")();
 
