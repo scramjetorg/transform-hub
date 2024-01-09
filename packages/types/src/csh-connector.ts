@@ -13,7 +13,7 @@ export interface IHostClient extends IComponent {
     /**
      * Disconnects from a host server.
      */
-    disconnect(): Promise<void>;
+    disconnect(hard: boolean): Promise<void>;
     getAgent(): Agent;
 
     stdinStream: UpstreamStreamsConfig[CC.STDIN]

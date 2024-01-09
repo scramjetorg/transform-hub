@@ -280,15 +280,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.monitoringMessageReplyTimeout = setTimeout(async () => {
             if (!this.connected) return;
 
-            this.connected = false;
-
             await this.handleDisconnect();
         }, 1000);
     }
 
     async handleDisconnect() {
         this.connected = false;
-        //await this.hostClient.disconnect();
+        await this.hostClient.disconnect(true);
 
         await defer(5000);
 
