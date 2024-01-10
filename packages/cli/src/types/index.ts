@@ -1,12 +1,11 @@
-import { HelpConfiguration } from "commander";
-import { ComplitingCommand } from "commander-completion";
+import { Command, HelpConfiguration } from "commander";
 
 /**
  * CommandDefinition is an object from commander.js
  * program.opts() - show options
  * program.args - show arguments passed by user
  */
-export type CommandDefinition = (program: ComplitingCommand) => void;
+export type CommandDefinition = (program: Command) => void;
 
 /**
  * ExtendedHelpConfiguration is used to pass context options throughout commands

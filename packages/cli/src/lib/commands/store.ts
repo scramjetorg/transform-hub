@@ -1,3 +1,4 @@
+import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
 import { CommandDefinition, ExtendedHelpConfiguration, isProductionEnv } from "../../types";
 import { getReadStreamFromFile } from "../common";
 import { profileManager, sessionConfig } from "../config";
@@ -14,7 +15,7 @@ export const store: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) {
-        program.command("store", { hidden:true })
+        program.command("store", { hidden: true })
             .action(() => displayProdOnlyMsg("store"));
 
         return;
@@ -44,6 +45,9 @@ export const store: CommandDefinition = (program) => {
         .argument("<package>", "The file or directory to upload. If directory, it will be packed and sent.")
         .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Store")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.package = "filenames";
+        })
         .action(async (sequencePackage: string, { name }) => {
             const spaceId = sessionConfig.lastSpaceId;
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);

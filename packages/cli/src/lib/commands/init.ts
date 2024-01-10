@@ -1,6 +1,7 @@
 import { Argument } from "commander";
 import { spawnSync } from "child_process";
 import { CommandDefinition, ExtendedHelpConfiguration } from "../../types";
+import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
 
 export const init: CommandDefinition = (program) => {
     const initCmd = program
@@ -26,6 +27,9 @@ export const init: CommandDefinition = (program) => {
         )
         .option("-p, --path <dir-path>", "Path to create sequence")
         .description("Create all the necessary files and start working on your Sequence")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.path = "dirnames";
+        })
         .action(async (language: string, type: string, { path }) => {
             const args = `init scramjetorg/sequence ${language}-${type}`;
 

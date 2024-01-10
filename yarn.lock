@@ -2563,11 +2563,6 @@ clone@^1.0.2:
   resolved "https://registry.npmjs.org/clone/-/clone-1.0.4.tgz"
   integrity sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==
 
-clone@~0.1.16:
-  version "0.1.19"
-  resolved "https://registry.npmjs.org/clone/-/clone-0.1.19.tgz"
-  integrity sha512-IO78I0y6JcSpEPHzK4obKdsL7E7oLdRVDVOLwr2Hkbjsb+Eoz0dxW6tef0WizoKu0gLC4oZSZuEF4U2K6w1WQw==
-
 cmd-shim@^5.0.0:
   version "5.0.0"
   resolved "https://registry.npmjs.org/cmd-shim/-/cmd-shim-5.0.0.tgz"
@@ -2677,13 +2672,6 @@ combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   dependencies:
     delayed-stream "~1.0.0"
 
-commander-completion@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/commander-completion/-/commander-completion-1.0.1.tgz"
-  integrity sha512-vB9PaGRqUgrVRkibVFnd4VTx7gPt+/SxJr8vYi1KWDMl00tEHQOfakmntCVx/TX7ZZxKF7XgVti4/iUVhbxdLA==
-  dependencies:
-    completion "~1.0.1"
-
 commander@7.2.0, commander@^7.0.0:
   version "7.2.0"
   resolved "https://registry.npmjs.org/commander/-/commander-7.2.0.tgz"
@@ -2718,14 +2706,6 @@ commondir@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/commondir/-/commondir-1.0.1.tgz"
   integrity sha512-W9pAhw0ja1Edb5GVdIF1mjZw/ASI0AlShXM83UUGe2DVr5TdAPEA1OA8m/g8zWp9x6On7gqufY+FatDbC3MDQg==
-
-completion@~1.0.1:
-  version "1.0.3"
-  resolved "https://registry.npmjs.org/completion/-/completion-1.0.3.tgz"
-  integrity sha512-uptx4YCEYMtsq20x8X0LzuEALa+BAAFbByOSMInlDfiP7dw/8YuQSE2zbdr9yc2MvtCN/yKhO/cd4bNx7N1stg==
-  dependencies:
-    clone "~0.1.16"
-    line-info "~0.2.0"
 
 concat-map@0.0.1:
   version "0.0.1"
@@ -5563,11 +5543,6 @@ libnpmversion@^3.0.7:
     json-parse-even-better-errors "^2.3.1"
     proc-log "^2.0.0"
     semver "^7.3.7"
-
-line-info@~0.2.0:
-  version "0.2.0"
-  resolved "https://registry.npmjs.org/line-info/-/line-info-0.2.0.tgz"
-  integrity sha512-2EapVhnSTnRbRyvr27GmCJM9BouIM8YVzm2LhEZ9JT9emzeoSxDea+wJ72/uCGR5oOQSq5mveStDQecCp3mJjw==
 
 lines-and-columns@^1.1.6:
   version "1.2.4"

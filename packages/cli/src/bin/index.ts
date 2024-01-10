@@ -1,8 +1,7 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
 
-import commander from "commander";
-import completionMixin, { ComplitingCommand } from "commander-completion";
+import { Command } from "commander";
 
 import { errorHandler } from "../lib/errorHandler";
 import { commands } from "../lib/commands/index";
@@ -10,8 +9,7 @@ import { initConfig } from "../lib/config";
 import { initPaths } from "../lib/paths";
 import * as dns from "dns";
 
-const CommandClass = completionMixin(commander).Command;
-const program = new CommandClass() as ComplitingCommand;
+const program = new Command();
 
 /**
  * Start commander using defined config {@link Apple.seeds}
