@@ -22,8 +22,9 @@ const { exec } = require("child_process");
 const opts = minimist(process.argv.slice(2), {
     alias: {
         list: "l",
-        strict: "S",
+        lax: "L",
         scope: "s",
+        threads: "j",
         verbose: "v",
         help: ["h", "?"],
         workspace: "w",
@@ -43,7 +44,7 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC,
     },
-    boolean: ["list", "strict", "verbose", "help", "exec"]
+    boolean: ["list", "lax", "verbose", "help", "exec"]
 });
 
 if (opts.help || !opts._.length && !opts.list) {
@@ -53,7 +54,7 @@ if (opts.help || !opts._.length && !opts.list) {
     console.error("Runs scripts in workspaces");
     console.error(`Usage: ${pName} [options] <script> [...args]`);
     console.error(`       ${spaces} -v,--verbose - verbose output`);
-    console.error(`       ${spaces} -S,--strict - returns error level if any of script fails`);
+    console.error(`       ${spaces} -L,--lax - succeeds and continues even if any of script fails`);
     console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
@@ -70,6 +71,29 @@ const BUILD_NAME = "run-script";
 console.time(BUILD_NAME);
 
 let error = false;
+
+function execCommand(path, command, verbose) {
+    console.log(`> ${path}\n> ${command}\n`);
+
+    return new Promise((res, reject) => {
+        exec(command, { cwd: path, maxBuffer: 1 << 20 }, async (exception, stdout, stderr) => {
+            const code = exception && exception.code || 0;
+
+            if (code) {
+                const err = new Error(`Command exited with code ${code}`);
+
+                [err.code, err.stdout, err.stderr] = [code, stdout, stderr];
+                [err.path, err.event, err.script] = [path, "exit", command];
+                reject(err);
+            } else {
+                if (verbose) {
+                    console.log(`CMD: ${command}\n---- stdout -----\n${stdout}\n---- stderr -----\n${stderr}\n---- exit: ${code} -----`);
+                }
+                res();
+            }
+        });
+    });
+}
 
 // eslint-disable-next-line complexity
 (async function() {
@@ -107,9 +131,9 @@ let error = false;
     }
 
     await DataStream.from(packages)
-        .setOptions({ maxParallel: cpus().length })
+        .setOptions({ maxParallel: +opts.threads || cpus().length })
         .flatMap(async path => {
-            if (error)
+            if (!opts.lax && error)
                 return Promise.reject(new Error("Fail fast..."));
 
             const runconfig = {
@@ -123,17 +147,10 @@ let error = false;
 
                 const command = opts._[0];
 
-                console.log(`> ${path}\n> ${command}\n`);
-
-                const child = exec(command, { cwd: path });
-
-                if (opts.verbose) {
-                    child.stdout.pipe(process.stdout);
-                    child.stderr.pipe(process.stderr);
-                }
+                const endPromise = execCommand(path, command, opts.verbose);
 
                 return [
-                    [Date.now(), await child]
+                    [Date.now(), await endPromise]
                 ];
             }
             if (opts.verbose) runconfig.stdio = "inherit";
@@ -164,8 +181,7 @@ let error = false;
             console.error(`${path}: command was: "${script}"`);
 
             if (!opts.verbose) {
-                console.error(stdout);
-                console.error(stderr);
+                console.log(`---- stdout -----\n${stdout}\n---- stderr -----\n${stderr}\n---- exit: ${code} -----`);
             }
 
             error = true;
@@ -174,7 +190,7 @@ let error = false;
     ;
 })()
     .then(() => {
-        if (opts.strict && error) {
+        if (!opts.lax && error) {
             console.timeLog(BUILD_NAME, "One or more scripts failed.");
             process.exitCode = 11;
         }

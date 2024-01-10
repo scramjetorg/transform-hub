@@ -96,7 +96,7 @@ export class SequenceClient {
     }
 
     async overwrite(stream: Readable) {
-        const response = await this.clientUtils.sendStream<any>("sequence", stream, { method: "PUT" }, {
+        const response = await this.clientUtils.sendStream<any>(`sequence/${this.id}`, stream, { method: "put" }, {
             parseResponse: "json"
         });
 

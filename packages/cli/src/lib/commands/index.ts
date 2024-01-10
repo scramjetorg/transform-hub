@@ -13,10 +13,11 @@ import { isDevelopment } from "../../utils/envs";
 import { store } from "./store";
 import { developerTools } from "./developerTools";
 import { si } from "./si";
+import { isLinuxOS } from "../helpers/isLinux";
 
 export const commands: CommandDefinition[] = [
     si,
-    completion,
+    isLinuxOS() ? completion : () => {},
     config,
     scope,
     space,
@@ -27,5 +28,5 @@ export const commands: CommandDefinition[] = [
     init,
     store,
     util,
-    isDevelopment() ? developerTools : () => { },
+    isDevelopment() ? developerTools : () => {}
 ];

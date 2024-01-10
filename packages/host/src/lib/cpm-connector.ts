@@ -13,7 +13,9 @@ import {
     LoadCheckStatMessage,
     NetworkInfo,
     STHIDMessageData,
-    IObjectLogger
+    IObjectLogger,
+    STHTopicEventData,
+    AddSTHTopicEventData
 } from "@scramjet/types";
 
 import { StringStream } from "scramjet";
@@ -255,8 +257,6 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
 
-        await this.setLoadCheckMessageSender();
-
         StringStream.from(duplex.input as Readable)
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
@@ -298,6 +298,8 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.communicationStream = new StringStream().JSONStringify().resume();
         this.communicationStream.pipe(duplex.output);
+
+        await this.setLoadCheckMessageSender();
 
         this.communicationStream.on("pause", () => {
             this.logger.warn("Communication stream paused");
@@ -481,8 +483,6 @@ export class CPMConnector extends TypedEmitter<Events> {
             await this.communicationStream?.whenWrote(
                 [CPMMessageCode.LOAD, await this.getLoad()]
             );
-
-            this.logger.debug("LoadCheck sent");
         } catch (e) {
             this.logger.error("Error sending loadcheck");
         }
@@ -585,16 +585,18 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @param data Topic information.
      */
-    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string, topicName: string }) {
+    async sendTopicInfo(data: STHTopicEventData) {
         await this.communicationStream?.whenWrote(
-            [CPMMessageCode.TOPIC, { ...data, status: "add" }]
+            [CPMMessageCode.TOPIC, { ...data }]
         );
     }
 
-    async sendTopicsInfo(topics: { provides?: string, requires?: string, contentType?: string, topicName: string }[]) {
+    async sendTopicsInfo(topics: Omit<STHTopicEventData, "status">[]) {
         this.logger.debug("Sending topics information", topics);
-        topics.forEach(async topic => {
-            await this.sendTopicInfo(topic);
+
+        topics.forEach(async (topic) => {
+            (topic as AddSTHTopicEventData).status = "add";
+            await this.sendTopicInfo(topic as AddSTHTopicEventData);
         });
 
         this.logger.trace("Topics information sent");
@@ -605,6 +607,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
+        //@TODO: Disconnecting/error handling
         this.logger.info("make HTTP Req to CPM", `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`);
 
         return http.request(

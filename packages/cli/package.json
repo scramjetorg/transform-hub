@@ -27,7 +27,6 @@
     "@scramjet/utility": "^0.37.0",
     "chalk": "^4.1.2",
     "commander": "^9.5.0",
-    "commander-completion": "^1.0.1",
     "find-package-json": "^1.2.0",
     "minimatch": "^3.1.2",
     "scramjet": "^4.36.9",
@@ -49,12 +48,8 @@
   },
   "assets": [
     {
-      "src": "src/completion",
-      "dest": "completion"
-    },
-    {
-      "src": "src/types/commander-completion.d.ts",
-      "dest": "types/commander-completion.d.ts"
+      "src": "scripts/completion",
+      "dest": "scripts/completion"
     }
   ],
   "ava": {

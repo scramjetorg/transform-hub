@@ -12,7 +12,8 @@ import {
     createProfile,
     setProfile,
     createDirectory,
-    deleteDirectory
+    deleteDirectory,
+    getActiveProfile
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
@@ -37,6 +38,7 @@ let actualLogResponse: any;
 let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
+let activeProfile: any;
 
 const freeport = promisify(require("freeport"));
 
@@ -116,13 +118,12 @@ const killRunner = async () => {
     }
 };
 
-BeforeAll({ timeout: 10e3 }, async () => {
+BeforeAll({ timeout: 20e3 }, async () => {
     if (process.env.NO_HOST) {
         return;
     }
 
-    await createProfile(profileName);
-    await setProfile(profileName);
+    activeProfile = await getActiveProfile();
 
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
@@ -158,6 +159,8 @@ BeforeAll({ timeout: 10e3 }, async () => {
         });
     }
     await hostUtils.spawnHost([]);
+    await createProfile(profileName);
+    await setProfile(profileName);
 });
 
 AfterAll(async () => {
@@ -168,7 +171,7 @@ AfterAll(async () => {
             throw new Error("Host unexpected closed");
         }
     }
-
+    await setProfile(activeProfile);
     await removeProfile(profileName);
 });
 
@@ -184,6 +187,7 @@ After({ tags: "@runner-cleanup" }, killRunner);
 Before({ tags: "@test-si-init" }, function() {
     createDirectory("data/template_seq");
 });
+
 After({ tags: "@test-si-init" }, function() {
     deleteDirectory("data/template_seq");
 });
@@ -226,6 +230,7 @@ const startHost = async () => {
 };
 
 Given("start host", () => startHost());
+
 Then("stop host", () => hostUtils.stopHost());
 
 Then("send fake stream as sequence", async function(this: CustomWorld) {
@@ -692,7 +697,7 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
 
     if (!sequenceId) assert.fail();
 
-    const sequences = (await hostClient.listSequences()) || [];
+    const sequences = await hostClient.listSequences() || [];
     const sequenceExist = !!sequences.find((sequenceInfo) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
