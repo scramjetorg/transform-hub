@@ -16,6 +16,7 @@ import {
     IObjectLogger,
     MaybePromise,
     MonitoringRateMessageData,
+    RunnerConnectInfo,
     SequenceInfo,
     StopSequenceMessageData,
     Streamable,
@@ -23,22 +24,19 @@ import {
 } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 
+import { HostClient as HostApiClient } from "@scramjet/api-client";
+import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ManagerClient } from "@scramjet/manager-api-client";
+
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { EventEmitter } from "events";
+import { writeFileSync } from "fs";
 import { Readable, Writable } from "stream";
 
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
-
-import { HostClient as HostApiClient } from "@scramjet/api-client";
-import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/manager-api-client";
-
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
-
-import { writeFileSync } from "fs";
 
 let exitHandled = false;
 
@@ -271,6 +269,10 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async reportHealth() {
+        if (this.monitoringMessageReplyTimeout) {
+            clearTimeout(this.monitoringMessageReplyTimeout);
+        }
+
         const { healthy } = await this.context.monitor();
 
         MessageUtils.writeMessageOnStream(
@@ -281,7 +283,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             if (!this.connected) return;
 
             await this.handleDisconnect();
-        }, 1000);
+        }, 5000);
     }
 
     async handleDisconnect() {

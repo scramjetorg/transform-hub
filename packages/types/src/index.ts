@@ -25,6 +25,7 @@ export * from "./module-loader";
 export * from "./object-logger";
 export * from "./op-response";
 export * from "./runner-config";
+export * from "./runner-connect";
 export * from "./runner";
 export * from "./sequence";
 export * from "./utils";

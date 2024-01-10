@@ -245,13 +245,11 @@ IComponent {
 
     async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
         try {
-            const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
+            this.resources.containerId = this.resources.containerId || await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
 
-            this.logger.debug("Container id restored", containerId);
+            this.logger.debug("Wait for container exit...", this.resources.containerId);
 
-            this.resources.containerId = containerId;
-
-            const { statusCode } = await this.dockerHelper.wait(containerId);
+            const { statusCode } = await this.dockerHelper.wait(this.resources.containerId);
 
             this.logger.debug("Container exited", statusCode);
 
