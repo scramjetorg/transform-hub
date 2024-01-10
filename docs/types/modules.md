@@ -18,6 +18,8 @@
 - [ILifeCycleAdapterMain](interfaces/ILifeCycleAdapterMain.md)
 - [ILifeCycleAdapterRun](interfaces/ILifeCycleAdapterRun.md)
 - [IMonitoringServer](interfaces/IMonitoringServer.md)
+- [IMonitoringServerConf](interfaces/IMonitoringServerConf.md)
+- [IMonitoringServerConfConstructor](interfaces/IMonitoringServerConfConstructor.md)
 - [IMonitoringServerConstructor](interfaces/IMonitoringServerConstructor.md)
 - [IObjectLogger](interfaces/IObjectLogger.md)
 - [ISequenceAdapter](interfaces/ISequenceAdapter.md)
@@ -29,6 +31,7 @@
 - [APIErrorMessage](modules.md#apierrormessage)
 - [AcknowledgeMessage](modules.md#acknowledgemessage)
 - [AcknowledgeMessageData](modules.md#acknowledgemessagedata)
+- [AddSTHTopicEventData](modules.md#addsthtopiceventdata)
 - [ApiVersion](modules.md#apiversion)
 - [AppConfig](modules.md#appconfig)
 - [AppError](modules.md#apperror)
@@ -152,6 +155,7 @@
 - [ReadFunction](modules.md#readfunction)
 - [ReadSequence](modules.md#readsequence)
 - [ReadableApp](modules.md#readableapp)
+- [RemoveSTHTopicEventData](modules.md#removesthtopiceventdata)
 - [RunnerContainerConfiguration](modules.md#runnercontainerconfiguration)
 - [RunnerErrorCode](modules.md#runnererrorcode)
 - [RunnerMessage](modules.md#runnermessage)
@@ -159,6 +163,7 @@
 - [STHCommandOptions](modules.md#sthcommandoptions)
 - [STHConfiguration](modules.md#sthconfiguration)
 - [STHIDMessageData](modules.md#sthidmessagedata)
+- [STHTopicEventData](modules.md#sthtopiceventdata)
 - [SequenceAdapterErrorCode](modules.md#sequenceadaptererrorcode)
 - [SequenceBulkMessage](modules.md#sequencebulkmessage)
 - [SequenceCompleteMessage](modules.md#sequencecompletemessage)
@@ -274,6 +279,16 @@ ___
 #### Defined in
 
 [packages/types/src/messages/acknowledge.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/acknowledge.ts#L4)
+
+___
+
+### AddSTHTopicEventData
+
+Ƭ **AddSTHTopicEventData**: `BaseSTHTopicEventData` & { `contentType`: `string` ; `localProvider?`: `string` ; `status`: ``"add"``  } & { `provides?`: `never` ; `requires`: `string`  } \| { `provides`: `string` ; `requires?`: `never`  }
+
+#### Defined in
+
+[packages/types/src/messages/sth-topic.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-topic.ts#L8)
 
 ___
 
@@ -1860,7 +1875,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/monitoring-server.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L11)
+[packages/types/src/monitoring-server.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L26)
 
 ___
 
@@ -2273,6 +2288,16 @@ A Readable App is an app that obtains the data by it's own means and preforms
 
 ___
 
+### RemoveSTHTopicEventData
+
+Ƭ **RemoveSTHTopicEventData**: `BaseSTHTopicEventData` & { `status`: ``"remove"``  }
+
+#### Defined in
+
+[packages/types/src/messages/sth-topic.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-topic.ts#L17)
+
+___
+
 ### RunnerContainerConfiguration
 
 Ƭ **RunnerContainerConfiguration**: [`ContainerConfiguration`](modules.md#containerconfiguration) & [`ContainerConfigurationWithExposedPorts`](modules.md#containerconfigurationwithexposedports)
@@ -2459,6 +2484,16 @@ ___
 #### Defined in
 
 [packages/types/src/messages/sth-id.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-id.ts#L3)
+
+___
+
+### STHTopicEventData
+
+Ƭ **STHTopicEventData**: [`AddSTHTopicEventData`](modules.md#addsthtopiceventdata) \| [`RemoveSTHTopicEventData`](modules.md#removesthtopiceventdata)
+
+#### Defined in
+
+[packages/types/src/messages/sth-topic.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-topic.ts#L21)
 
 ___
 

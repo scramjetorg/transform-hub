@@ -14,15 +14,15 @@ Completion operations
 
 ---
 
-## $ si completion bash
+## $ si completion install
 
 **Description**
 
-Print out bash completion script
+Installs bash completion script
 
 **Usage**
 
-`si completion bash [options]`
+`si completion install [options]`
 
 **Options**
 
@@ -30,15 +30,15 @@ Print out bash completion script
 
 ---
 
-## $ si completion install
+## $ si completion uninstall
 
 **Description**
 
-Installs bash completion script in .bashrc
+Uninstalls bash completion script
 
 **Usage**
 
-`si completion install [options]`
+`si completion uninstall [options]`
 
 **Options**
 
@@ -416,15 +416,31 @@ Remove existing profile configuration
 
 ---
 
-## $ si scope
+## $ si scope | s
 
 **Description**
 
-
+/This functionality is under development./ Manage scopes that store pairs of spaces and Hubs used when working
 
 **Usage**
 
-`si scope [options]`
+`si scope [command] [options...]`
+
+**Options**
+
+*  -h, --help     Display help for command
+
+---
+
+## $ si scope list | ls
+
+**Description**
+
+List all created scopes
+
+**Usage**
+
+`si scope list [options]`
 
 **Options**
 
@@ -432,18 +448,238 @@ Remove existing profile configuration
 
 ---
 
-## $ si space
+## $ si scope print
 
 **Description**
 
-
+See json file under the scope
 
 **Usage**
 
-`si space [options]`
+`si scope print [options] <name>`
 
 **Options**
 
+*  -h, --help  Display help for command
+
+---
+
+## $ si scope use
+
+**Description**
+
+Work on the selected scope
+
+**Usage**
+
+`si scope use [options] <name>`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si scope delete
+
+**Description**
+
+Delete specific scope
+
+**Usage**
+
+`si scope delete [options] <name>`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space | spc
+
+**Description**
+
+Operations on grouped and separated runtime environments that allow sharing the data within them
+
+**Usage**
+
+`si space [command] [options...]`
+
+**Options**
+
+*  -c, --stdout                Output to stdout (ignores -o)
+*  -o, --output <file.tar.gz>  Output path - defaults to dirname
+*  -h, --help                  Display help for command
+
+---
+
+## $ si space info
+
+**Description**
+
+Display info about the default space
+
+**Usage**
+
+`si space info [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space list | ls
+
+**Description**
+
+List all existing spaces
+
+**Usage**
+
+`si space list [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space use
+
+**Description**
+
+Use the space
+
+**Usage**
+
+`si space use [options] <name>`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space audit
+
+**Description**
+
+Fetch all audit messages from spaces
+
+**Usage**
+
+`si space audit [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space logs
+
+**Description**
+
+Fetch all logs from space
+
+**Usage**
+
+`si space logs [options] [<space_name>]`
+
+**Arguments**
+
+*  <space_name>  The name of the space (defaults to current space)
+
+**Options**
+
+*  -h, --help    Display help for command
+
+---
+
+## $ si space version
+
+**Description**
+
+Display space version
+
+**Usage**
+
+`si space version [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space access
+
+**Description**
+
+Manages Access Keys for active Space
+
+**Usage**
+
+`si space access [options] [command]`
+
+**Options**
+
+*  -h, --help            Display help for command
+
+---
+
+## $ si space access create
+
+**Description**
+
+Create Access key for adding Hubs to active Space, i.e "Army of Darkness"
+
+**Usage**
+
+`si space access create [options] <description>`
+
+**Arguments**
+
+*  description  Key description
+
+**Options**
+
+*  -h, --help   Display help for command
+
+---
+
+## $ si space access list | ls
+
+**Description**
+
+List Access Keys metadata in active Space
+
+**Usage**
+
+`si space access list [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space access revoke
+
+**Description**
+
+Revokes Access Key in active Space
+
+**Usage**
+
+`si space access revoke [options]`
+
+**Options**
+
+*  --id <id>   revoke specified key
+*  --all       Removes all access keys and disconnects all self-hosted Hubs connected to Space
 *  -h, --help  Display help for command
 
 ---
@@ -460,6 +696,97 @@ Allows to run programs in different data centers, computers or devices in local 
 
 **Options**
 
+*  -h, --help                         Display help for command
+
+---
+
+## $ si hub use
+
+**Description**
+
+Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub
+
+**Usage**
+
+`si hub use [options] <name|id>`
+
+**Options**
+
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub list | ls
+
+**Description**
+
+List all the Hubs in the default space
+
+**Usage**
+
+`si hub list [options]`
+
+**Options**
+
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub info
+
+**Description**
+
+Display info about the default Hub
+
+**Usage**
+
+`si hub info [options]`
+
+**Options**
+
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub disconnect
+
+**Description**
+
+Disconnect self hosted Hubs from space
+
+**Usage**
+
+`si hub disconnect [options] <space_name>`
+
+**Arguments**
+
+*  space_name               The name of the Space
+
+**Options**
+
+*  --id <id>                Hub Id
+*  --all                    Disconnects all self-hosted Hubs connected to Space (default: false)
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub delete
+
+**Description**
+
+Delete self hosted Hub from space
+
+**Usage**
+
+`si hub delete [options] <id>`
+
+**Arguments**
+
+*  id                       Hub Id
+
+**Options**
+
+*  -f, --force              Enable deleting Hubs that are not disconnected (default: false)
 *  -h, --help               Display help for command
 
 ---
@@ -631,12 +958,10 @@ Send the Sequence package to the Hub
 
 **Arguments**
 
-*  package                  The file or directory to upload or '-' to use the last packed. If directory, it will be packed and
-*                           sent.
+*  package                  The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.
 
 **Options**
 
-*  --name <name>            Allows to name sequence
 *  -h, --help               Display help for command
 
 ---
@@ -653,7 +978,7 @@ Update Sequence with given name
 
 **Arguments**
 
-*  query                    Sequence id or name to be overwritten
+*  query                    Sequence id to be overwritten
 *  package                  The file to upload
 
 **Options**
@@ -945,8 +1270,7 @@ Send a file to input, if no file given the data will be read directly from the c
 **Options**
 
 *  -t, --content-type <value>  Content-Type (default: "text/plain")
-*  -e, --end                   Close the input stream of the Instance when this stream ends, "x-end-stream" header (default:
-*                              false)
+*  -e, --end                   Close the input stream of the Instance when this stream ends, "x-end-stream" header (default: false)
 *  -h, --help                  Display help for command
 
 ---
@@ -969,8 +1293,7 @@ See input and output
 **Options**
 
 *  -t,--content-type <content-type>  Content-Type (choices: "text/plain", "application/octet-stream", "application/x-ndjson")
-*  -e, --end                         Close the input stream of the Instance when this stream ends, "x-end-stream" header
-*                                    (default: false)
+*  -e, --end                         Close the input stream of the Instance when this stream ends, "x-end-stream" header (default: false)
 *  -h, --help                        Display help for command
 
 ---
@@ -1165,8 +1488,8 @@ Create topic
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson",
-*                                     "text/plain", "application/octet-stream", default: "application/x-ndjson")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain",
+*                                     "application/octet-stream", default: "application/x-ndjson")
 *  -h, --help                         Display help for command
 
 ---
@@ -1199,8 +1522,8 @@ Get data from topic
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson",
-*                                     "text/plain", "application/octet-stream", default: "application/x-ndjson")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain",
+*                                     "application/octet-stream", default: "application/x-ndjson")
 *  -h, --help                         Display help for command
 
 ---
@@ -1217,8 +1540,8 @@ Send data on topic from file, directory or directly through the console
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson",
-*                                     "text/plain", "application/octet-stream", default: "application/x-ndjson")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain",
+*                                     "application/octet-stream", default: "application/x-ndjson")
 *  -h, --help                         Display help for command
 
 ---
@@ -1236,22 +1559,6 @@ List information about topics
 **Options**
 
 *  -h, --help               Display help for command
-
----
-
-## $ si store
-
-**Description**
-
-
-
-**Usage**
-
-`si store [options]`
-
-**Options**
-
-*  -h, --help  Display help for command
 
 ---
 

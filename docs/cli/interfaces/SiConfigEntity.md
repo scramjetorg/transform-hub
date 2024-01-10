@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[cli/src/types/index.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L27)
+[cli/src/types/index.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L26)

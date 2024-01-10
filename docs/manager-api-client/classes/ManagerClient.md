@@ -137,7 +137,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `opts` | `any` |
+| `opts` | `PostDisconnectPayload` |
 
 #### Returns
 

@@ -89,7 +89,7 @@ added topic data.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L74)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L87)
 
 ___
 
@@ -133,7 +133,7 @@ Topic details.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L113)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L126)
 
 ___
 
@@ -159,7 +159,7 @@ Topic stream.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L133)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:146](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L146)
 
 ___
 
@@ -195,7 +195,7 @@ All topics.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L98)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L111)
 
 ___
 
@@ -216,7 +216,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L154)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L168)
 
 ___
 
@@ -237,7 +237,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:141](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L141)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L154)
 
 ___
 
@@ -259,7 +259,7 @@ Sets the CPM connector.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L63)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L76)
 
 ___
 
@@ -271,11 +271,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `data` | `Object` |
-| `data.contentType` | `string` |
-| `data.provides?` | `string` |
-| `data.requires?` | `string` |
-| `data.topicName` | `string` |
+| `data` | `STHTopicEventData` |
 
 #### Returns
 
@@ -283,4 +279,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L165)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L180)
