@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/monitoring-server",
-  "version": "0.37.0",
+  "version": "0.38.0",
   "description": "Scramjet Monitoring Server",
   "main": "src/index.ts",
   "scripts": {
@@ -12,10 +12,10 @@
     "test:ava": "# nyc ava"
   },
   "dependencies": {
-    "@scramjet/utility": "^0.37.0"
+    "@scramjet/utility": "^0.38.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.37.0",
+    "@scramjet/types": "^0.38.0",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
