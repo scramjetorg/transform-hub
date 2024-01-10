@@ -64,7 +64,7 @@
 
 ### CommandDefinition
 
-Ƭ **CommandDefinition**: (`program`: `ComplitingCommand`) => `void`
+Ƭ **CommandDefinition**: (`program`: `Command`) => `void`
 
 #### Type declaration
 
@@ -78,7 +78,7 @@ program.args - show arguments passed by user
 
 | Name | Type |
 | :------ | :------ |
-| `program` | `ComplitingCommand` |
+| `program` | `Command` |
 
 ##### Returns
 
@@ -86,7 +86,7 @@ program.args - show arguments passed by user
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -98,7 +98,7 @@ ExtendedHelpConfiguration is used to pass context options throughout commands
 
 #### Defined in
 
-[cli/src/types/index.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L14)
+[cli/src/types/index.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L13)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L16)
+[cli/src/types/index.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L15)
 
 ___
 
@@ -118,7 +118,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L21)
+[cli/src/types/index.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L20)
 
 ## Functions
 
@@ -150,13 +150,15 @@ ___
 
 ▸ **completion**(`program`): `void`
 
-Initializes `completion` command.
+CommandDefinition is an object from commander.js
+program.opts() - show options
+program.args - show arguments passed by user
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| Name | Type |
+| :------ | :------ |
+| `program` | `Command` |
 
 #### Returns
 
@@ -164,7 +166,7 @@ Initializes `completion` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -178,7 +180,7 @@ Initializes `config` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -186,7 +188,7 @@ Initializes `config` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -453,7 +455,7 @@ program.args - show arguments passed by user
 
 | Name | Type |
 | :------ | :------ |
-| `program` | `ComplitingCommand` |
+| `program` | `Command` |
 
 #### Returns
 
@@ -461,7 +463,7 @@ program.args - show arguments passed by user
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -489,7 +491,7 @@ Initializes `instance` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -497,7 +499,7 @@ Initializes `instance` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -517,7 +519,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L17)
+[cli/src/types/index.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L16)
 
 ___
 
@@ -537,7 +539,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L22)
+[cli/src/types/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L21)
 
 ___
 
@@ -557,7 +559,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L18)
+[cli/src/types/index.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L17)
 
 ___
 
@@ -577,7 +579,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L23)
+[cli/src/types/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L22)
 
 ___
 
@@ -597,7 +599,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L24)
+[cli/src/types/index.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L23)
 
 ___
 
@@ -617,7 +619,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L19)
+[cli/src/types/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L18)
 
 ___
 
@@ -651,7 +653,7 @@ Initializes `scope` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -659,7 +661,7 @@ Initializes `scope` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -673,7 +675,7 @@ Initializes `sequence` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -681,7 +683,7 @@ Initializes `sequence` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -695,7 +697,7 @@ Initializes `space` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -703,7 +705,7 @@ Initializes `space` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -717,7 +719,7 @@ Initializes `topic` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -725,7 +727,7 @@ Initializes `topic` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ___
 
@@ -739,7 +741,7 @@ Initializes `config` command.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `program` | `ComplitingCommand` | Commander object. |
+| `program` | `Command` | Commander object. |
 
 #### Returns
 
@@ -747,7 +749,7 @@ Initializes `config` command.
 
 #### Defined in
 
-[cli/src/types/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L9)
+[cli/src/types/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L8)
 
 ## Variables
 

@@ -304,7 +304,7 @@ ___
 | :------ | :------ |
 | `stream` | `string` \| `Readable` |
 | `requestInit?` | `RequestInit` |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> |
 
 #### Returns
 
@@ -377,7 +377,7 @@ Pipes given stream to Instance "input".
 | :------ | :------ | :------ |
 | `stream` | `string` \| `Readable` | Stream to be piped. Or string written to "stdin" stream. |
 | `requestInit?` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> | Request options |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> | Request options |
 
 #### Returns
 
@@ -428,7 +428,7 @@ Sends stream to one of the Instance inputs.
 | `streamId` | [`InstanceInputStream`](../modules.md#instanceinputstream) | Target input stream. |
 | `stream` | `string` \| `Readable` | Stream to send. |
 | `requestInit?` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> | Stream options. |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> | Stream options. |
 
 #### Returns
 

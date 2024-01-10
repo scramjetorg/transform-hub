@@ -177,7 +177,7 @@ ClientUtilsBase.getStream
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L245)
+[packages/client-utils/src/client-utils.ts:248](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L248)
 
 ___
 
@@ -278,7 +278,7 @@ Performs POST request for streamed data.
 | `url` | `string` | Request url. |
 | `stream` | `any` | stream to be send. |
 | `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `options` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> | send stream options. |
+| `options` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> | send stream options. |
 
 #### Returns
 
