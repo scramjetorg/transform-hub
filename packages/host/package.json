@@ -36,8 +36,7 @@
     "minimist": "^1.2.6",
     "pico-s3": "^2.0.0",
     "rereadable-stream": "^1.4.14",
-    "scramjet": "^4.36.9",
-    "systeminformation": "^5.21.7"
+    "scramjet": "^4.36.9"
   },
   "devDependencies": {
     "@scramjet/types": "^0.38.0",

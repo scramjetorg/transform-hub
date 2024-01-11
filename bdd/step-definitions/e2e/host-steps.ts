@@ -695,12 +695,12 @@ Then("it returns a correct load check with required properties", function() {
     assert.ok(data.fsSize.length > 0);
     // available);
     assert.strictEqual(typeof data.fsSize[0].fs, "string"); //: '/dev/sda1',
-    assert.strictEqual(typeof data.fsSize[0].type, "string"); //: 'ext4',
+    // assert.strictEqual(typeof data.fsSize[0].type, "string"); //: 'ext4',
     assert.strictEqual(typeof data.fsSize[0].size, "number"); //: 41651752960,
     assert.strictEqual(typeof data.fsSize[0].used, "number"); //: 30935633920,
     assert.strictEqual(typeof data.fsSize[0].available, "number"); //: 10699341824,
     assert.strictEqual(typeof data.fsSize[0].use, "number"); //: 74.3,
-    assert.strictEqual(typeof data.fsSize[0].mount, "string"); //: '/'
+    // assert.strictEqual(typeof data.fsSize[0].mount, "string"); //: '/'
 
     return "skip";
 });

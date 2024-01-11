@@ -41,10 +41,8 @@ export type LoadCheckRequirements = {
      * The amount of memory that must remain free.
      */
     safeOperationLimit: number;
-    /**
-     * Minimum requirements to start new Manager instance.
-     */
-    instanceRequirements: InstanceRequirements
+    fsPaths: string[];
+    instanceRequirements: InstanceRequirements;
 }
 
 export type LoadCheckContstants = {
