@@ -49,7 +49,7 @@ import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
-import { readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 import { ContentType } from "./serviceDiscovery/contentType";
@@ -247,7 +247,13 @@ export class Host implements IComponent {
             this.config.sequencesRoot
         ];
 
+        if (!existsSync(this.config.sequencesRoot)) {
+            mkdirSync(this.config.sequencesRoot);
+        }
+
         if (this.config.kubernetes.sequencesRoot) fsPaths.push(this.config.kubernetes.sequencesRoot);
+
+        this.logger.info("Following path will be examined on load check.", fsPaths);
 
         this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements, fsPaths }));
         this.loadCheck.logger.pipe(this.logger);

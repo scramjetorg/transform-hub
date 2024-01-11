@@ -40,7 +40,9 @@ export class LoadCheck implements IComponent {
 
     constructor(config: LoadCheckConfig) {
         if (!config.isValid()) throw new Error("Invalid load-check configuration");
+
         this.config = config.get();
+
         this.constants = {
             SAFE_OPERATION_LIMIT: this.config.safeOperationLimit * MEBIBYTE,
             MIN_INSTANCE_REQUIREMENTS: {
@@ -64,7 +66,10 @@ export class LoadCheck implements IComponent {
         const [usage, _fsSize] = await Promise.all([
             mem.info(),
             Promise.all(this.config.fsPaths.map(async (path) => ({ path, usage: await du(path) })))
-        ]);
+        ]).catch((e) => {
+            this.logger.error("Load check failed", e);
+            return [];
+        });
 
         const memFree = (usage.totalMemMb - usage.usedMemMb) * MEBIBYTE;
         const memUsed = usage.usedMemMb * MEBIBYTE;
