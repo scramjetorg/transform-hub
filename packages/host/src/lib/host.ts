@@ -7,6 +7,7 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    ContentType,
     CPMConnectorOptions,
     HostProxy,
     IComponent,
@@ -52,7 +53,6 @@ import { DuplexStream } from "@scramjet/api-server";
 import { readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
@@ -406,15 +406,16 @@ export class Host implements IComponent {
     }
 
     private async startListening() {
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>((res) => {
-            this.api?.server.once("listening", () => {
-                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+        return new Promise<void>((res) => {
+            this.api.server
+                .once("listening", () => {
+                    const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                    this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
-                res();
-            });
+                    res();
+                })
+                .listen(this.config.host.port, this.config.host.hostname);
         });
     }
 

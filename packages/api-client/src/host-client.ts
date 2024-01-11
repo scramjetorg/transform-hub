@@ -1,4 +1,4 @@
-import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
+import { ClientProvider, ClientUtils, Headers, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
@@ -193,10 +193,13 @@ export class HostClient implements ClientProvider {
     async sendTopic<T>(
         topic: string,
         stream: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit,
+        requestInit: RequestInit = {},
         contentType: string = "application/x-ndjson",
         end?: boolean
     ) {
+        requestInit.headers ||= {} as Headers;
+        (requestInit.headers as Headers).expect = "100-continue";
+
         return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });
     }
 

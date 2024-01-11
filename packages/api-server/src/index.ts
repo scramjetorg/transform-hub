@@ -100,8 +100,20 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
     };
     const { server: srv, router } = cero({ server: createCeroServerConfig(conf), router: sequentialRouter(config) });
 
+    // Disable auto sending "100 Continue".
+    srv.on("checkContinue", (request, response) => {
+        request.writeContinue = () => {
+            response.writeContinue();
+        };
+
+        srv.emit("request", request, response);
+    });
+
     router.use("/", async (req, res, next) => {
+        req.writeContinue ||= () => {};
+
         next();
+
         // TODO: fix - this should log on errors.
         log.write({ date: Date.now(), method: req.method, url: req.url, status: await new Promise(s => res.on("finish", () => s(res.statusCode))) } as any);
     });
