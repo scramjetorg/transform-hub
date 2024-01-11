@@ -7,7 +7,9 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    ContentType,
     CPMConnectorOptions,
+    EventMessageData,
     HostProxy,
     IComponent,
     IMonitoringServerConstructor,
@@ -52,7 +54,6 @@ import { DuplexStream } from "@scramjet/api-server";
 import { existsSync, mkdirSync, readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
@@ -422,15 +423,16 @@ export class Host implements IComponent {
     }
 
     private async startListening() {
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>((res) => {
-            this.api?.server.once("listening", () => {
-                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+        return new Promise<void>((res) => {
+            this.api.server
+                .once("listening", () => {
+                    const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                    this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
-                res();
-            });
+                    res();
+                })
+                .listen(this.config.host.port, this.config.host.hostname);
         });
     }
 
@@ -1035,6 +1037,9 @@ export class Host implements IComponent {
 
         this.instancesStore[id] = csic;
 
+        csic.on("event", async (event: EventMessageData) => {
+            await this.eventBus({ source: id, ...event });
+        });
         csic.on("error", (err) => {
             this.pushTelemetry("Instance error", { ...err }, "error");
             this.logger.error("CSIController errored", err.message, err.exitcode);
@@ -1145,6 +1150,16 @@ export class Host implements IComponent {
         sequence.instances.push(id);
 
         return csic;
+    }
+
+    async eventBus(event: EventMessageData) {
+        this.logger.debug("Got event", event);
+
+        // Send the event to all instances except the source of the event.
+        await Promise.all(
+            Object.values(this.instancesStore)
+                .map(inst => event.source !== inst.id ? inst.emitEvent(event) : true)
+        );
     }
 
     /**

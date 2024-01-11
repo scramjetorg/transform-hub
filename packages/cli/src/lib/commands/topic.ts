@@ -70,7 +70,7 @@ export const topic: CommandDefinition = (program) => {
             complDetails.file = "filenames";
         })
         .action(async (topicName, filename, { contentType }) => {
-            await getHostClient().sendNamedData(
+            await getHostClient().sendTopic(
                 topicName,
                 filename ? await getReadStreamFromFile(filename) : process.stdin,
                 {},

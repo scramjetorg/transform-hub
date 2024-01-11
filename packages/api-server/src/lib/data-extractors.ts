@@ -29,7 +29,7 @@ export async function getObject(object: any, req: IncomingMessage): Promise<any>
  */
 export async function getWritable(
     object: StreamOutput,
-    req: IncomingMessage,
+    req: ParsedMessage,
     res: ServerResponse
 ): Promise<Writable | Object> {
     if (typeof object === "function") {

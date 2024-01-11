@@ -7,6 +7,7 @@ import {
     removeBoundaryQuotes,
     defer,
     waitUntilStreamEquals,
+    waitUntilStreamStartsWith,
     waitUntilStreamContains,
     removeProfile,
     createProfile,
@@ -306,6 +307,37 @@ When(
 );
 
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
+
+When("start Instance by name {string}", async function(this: CustomWorld, name: string) {
+    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {}
+    });
+});
+
+When("start Instance by name {string} with JSON arguments {string}", async function(this: CustomWorld, name: string, args: string) {
+    const instanceArgs: any = JSON.parse(args);
+
+    if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
+
+    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {},
+        args: instanceArgs
+    });
+});
+
+When("remember last instance as {string}", function(this: CustomWorld, seq: string) {
+    if (!this.resources.instance) throw new Error("No instance client set");
+
+    this.resources.instanceList[seq] = this.resources.instance;
+});
+
+When("switch to instance {string}", function(this: CustomWorld, seq: string) {
+    if (!this.resources.instanceList[seq]) throw new Error(`No instance "${seq}"`);
+
+    this.resources.instance = this.resources.instanceList[seq];
+});
 
 When("start Instance with output topic name {string}", async function(this: CustomWorld, topicOut: string) {
     this.resources.instance = await this.resources.sequence!.start({
@@ -752,6 +784,13 @@ When("send file {string} as binary input", async function(this: CustomWorld, pat
 
 When("send {string} to stdin", async function(this: CustomWorld, str) {
     await this.resources.instance?.sendStream("stdin", Readable.from(str));
+});
+
+Then("{string} starts with {string}", async function(this: CustomWorld, stream, text) {
+    const result = await this.resources.instance?.getStream(stream);
+
+    await waitUntilStreamStartsWith(result!, text);
+    if (!result) assert.fail(`No data in ${stream}!`);
 });
 
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
