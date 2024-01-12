@@ -12,6 +12,7 @@ from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
+
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
@@ -40,10 +41,6 @@ class StderrRedirector:
 
 class Runner:
     def __init__(self, instance_id, sequence_path, log_setup) -> None:
-        self.connection_retry_delay = 2
-
-        self.reconnect_interval = None
-        self.connected = False
         self.instance_id = instance_id
         self.seq_path = sequence_path
         self._logging_setup = log_setup
@@ -53,53 +50,20 @@ class Runner:
         self.emitter = AsyncIOEventEmitter()
         self.keep_alive_requested = False
 
-        self.sequence = None
 
-        self.input_type = None
-        self.instance_input = Stream()
-
-        self.output_content_type = None
-        self.instance_output = None
-        self.instance_direct_output = None
-
-
-    async def connect_to_host(self):
+    async def main(self, server_host, server_port):
         self.logger.info('Connecting to host...')
+        await self.init_connections(server_host, server_port)
 
-        try:
-            if not self.connected:
-                await self.init_connections(server_host, server_port)
-
-                self.connected = True
-            else:
-                self.logger.warn(f"Already connected!")
-        except:
-            self.logger.debug(f"Error connecting. Retrying in {self.connection_retry_delay}")
-
-            await asyncio.sleep(self.connection_retry_delay)
-            return await self.connect_to_host()
-
-
-    async def initialize(self):
-        await self.connect_to_host()
-
-        asyncio.create_task(self.connect_input_stream())
-
+        # Do this early to have access to any thrown exceptions and logs.
         self.connect_stdio()
         self.connect_log_stream()
+
         config, args = await self.handshake()
         self.logger.info('Communication established.')
-
         asyncio.create_task(self.connect_control_stream())
         asyncio.create_task(self.setup_heartbeat())
 
-        self.forward_output_stream()
-
-        return config, args
-
-
-    async def main(self):
-        config, args = await self.initialize()
         self.load_sequence()
         await self.run_instance(config, args)
 
@@ -195,11 +159,6 @@ class Runner:
                 await self.handle_stop(data)
             if code == msg_codes.EVENT.value:
                 self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
-            if code == msg_codes.MONITORING_REPLY.value:
-
-                if self.reconnect_interval:
-                    self.reconnect_interval.cancel()
-                    self.reconnect_interval = None
 
 
     async def handle_stop(self, data):
@@ -222,25 +181,13 @@ class Runner:
 
 
     async def setup_heartbeat(self):
-        async def timeout(self):
-            await asyncio.sleep(4)
-
-            self.logger.warn("Monitoring reply not received!")
-            self.connected = False
-
-            await self.initialize()
-
-        while self.connected:
-            await asyncio.sleep(5)
-
+        while True:
             send_encoded_msg(
                 self.streams[CC.MONITORING],
                 msg_codes.MONITORING,
                 self.health_check(),
             )
-
-            if self.reconnect_interval == None:
-                self.reconnect_interval = asyncio.create_task(timeout(self))
+            await asyncio.sleep(1)
 
 
     def load_sequence(self):
@@ -256,15 +203,13 @@ class Runner:
         # switch to sequence dir so that relative paths will work
         os.chdir(os.path.dirname(self.seq_path))
 
-
     async def run_instance(self, config, args):
         context = AppContext(self, config)
-        self.instance_input = Stream()
-
-        asyncio.create_task(self.connect_input_stream())
+        input_stream = Stream()
+        asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.logger.info('Running instance...')
-        result = self.sequence.run(context, self.instance_input, *args)
+        result = self.sequence.run(context, input_stream, *args)
 
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
@@ -274,49 +219,28 @@ class Runner:
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
         consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
-
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
             send_encoded_msg(monitoring, msg_codes.PANG, consumes)
 
         if isinstance(result, types.AsyncGeneratorType):
-            self.logger.info("Instance result is instance")
             result = Stream.read_from(result)
         elif asyncio.iscoroutine(result):
-            self.logger.info("Instance result is coroutine")
             result = await result
         if result:
-            self.logger.info("Instance result stream")
-            self.instance_direct_output = result
-            self.get_output_content_type()
-            self.forward_output_stream()
-
-            end_stream = Stream()
-            self.instance_output.pipe(end_stream)
-
-
-            while True:
-                chunk = await end_stream.read()
-                if chunk is None:
-                    self.logger.debug('Ending output')
-                    break
-
+            await self.forward_output_stream(result)
         else:
             self.logger.debug('Sequence returned no output.')
 
         self.logger.info('Finished.')
         await self.cleanup()
 
-
     async def cleanup(self):
         self.streams[CC.LOG].write_eof()
 
-    async def get_input_content_type(self):
-        if self.sequence is None:
-            return
-
+    async def connect_input_stream(self, input_stream):
         if hasattr(self.sequence, "requires"):
-            self.input_type = self.sequence.requires.get('contentType')
+            input_type = self.sequence.requires.get('contentType')
         else:
             raw_headers = await self.streams[CC.IN].readuntil(b'\r\n\r\n')
             header_list = raw_headers.decode().rstrip().split('\r\n')
@@ -324,72 +248,44 @@ class Runner:
                 key.lower(): val for key, val in [el.split(': ') for el in header_list]
             }
             self.logger.info(f'Input headers: {repr(headers)}')
-            self.input_type = headers.get('content-type')
+            input_type = headers.get('content-type')
 
-
-    async def connect_input_stream(self):
-        if self.input_type is None:
-            await self.get_input_content_type()
-
-        if self.input_type is None:
-            return
-
-        if self.input_type == 'text/plain':
+        if input_type == 'text/plain':
             input = Stream.read_from(self.streams[CC.IN])
             self.logger.debug('Decoding input stream...')
             input = input.decode('utf-8')
-        elif self.input_type == 'application/octet-stream':
+        elif input_type == 'application/octet-stream':
             self.logger.debug('Opening input in binary mode...')
             input = Stream.read_from(self.streams[CC.IN], chunk_size=CHUNK_SIZE)
         else:
-            raise TypeError(f'Unsupported input type: {repr(self.input_type)}')
+            raise TypeError(f'Unsupported input type: {repr(input_type)}')
 
-        input.pipe(self.instance_input, False)
+        input.pipe(input_stream)
         self.logger.debug('Input stream forwarded to the instance.')
 
 
-    def get_output_content_type(self):
-        if self.output_content_type is None:
-            if hasattr(self.instance_direct_output, 'provides'):
-                attribute = getattr(self.sequence, 'provides', None)
-                self.output_content_type = attribute['contentType']
-            else:
-                if hasattr(self.sequence, 'provides'):
-                    attribute = getattr(self.sequence, 'provides', None)
-                    self.output_content_type = attribute['contentType']
-                else:
-                    self.logger.debug('Output type not set, using default')
-                    self.output_content_type = 'text/plain'
+    async def forward_output_stream(self, output):
 
-        self.logger.info(f'Content-type: {self.output_content_type}')
-
-
-    def forward_output_stream(self):
-        if self.instance_direct_output is None:
-            self.logger.warn("Instance direct output not initialized")
-            return
-
-        if self.instance_output and len(self.instance_output._sinks) > 0:
-            self.instance_output.unpipe()
-            # self.instance_output.end()
+        if hasattr(output, 'provides'):
+            attribute = getattr(self.sequence, 'provides', None)
+            content_type = attribute['contentType']
         else:
-            if self.output_content_type == 'text/plain':
-                self.logger.debug('Output stream will be treated as text and encoded')
-                self.instance_output = self.instance_direct_output.map(lambda s: s.encode())
-            if self.output_content_type == 'application/x-ndjson':
-                self.logger.debug('Output will be converted to JSON')
-                self.instance_output = self.instance_direct_output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
+            if hasattr(self.sequence, 'provides'):
+                attribute = getattr(self.sequence, 'provides', None)
+                content_type = attribute['contentType']
+            else:
+                self.logger.debug('Output type not set, using default')
+                content_type = 'text/plain'
 
-        self.logger.debug("Writing instance_output to CC.OUT")
+        self.logger.info(f'Content-type: {content_type}')
+        if content_type == 'text/plain':
+            self.logger.debug('Output stream will be treated as text and encoded')
+            output = output.map(lambda s: s.encode())
+        if content_type == 'application/x-ndjson':
+            self.logger.debug('Output will be converted to JSON')
+            output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
-        s = Stream()
-
-        self.instance_output.pipe(s, False)
-
-        async def write():
-            await s.write_to(self.streams[CC.OUT])
-
-        asyncio.create_task(write())
+        await output.write_to(self.streams[CC.OUT])
 
 
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
@@ -444,4 +340,4 @@ if not sequence_path or not server_port or not instance_id:
     sys.exit(2)
 
 runner = Runner(instance_id, sequence_path, log_setup)
-asyncio.run(runner.main())
+asyncio.run(runner.main(server_host, server_port))
