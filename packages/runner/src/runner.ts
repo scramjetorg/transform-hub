@@ -22,7 +22,7 @@ import {
     Streamable,
     SynchronousStreamable
 } from "@scramjet/types";
-import { defer } from "@scramjet/utility";
+import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
@@ -166,6 +166,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.runnerConnectInfo = runnerConnectInfo;
 
         this.logger = new ObjLogger(this, { id: instanceId });
+
         hostClient.logger.pipe(this.logger);
         inputStreamInitLogger.pipe(this.logger);
 
@@ -258,7 +259,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
-            if (working || !this.connected) {
+            if (working) {
                 return;
             }
 
@@ -269,10 +270,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async reportHealth() {
-        if (this.monitoringMessageReplyTimeout) {
-            clearTimeout(this.monitoringMessageReplyTimeout);
-        }
-
         const { healthy } = await this.context.monitor();
 
         MessageUtils.writeMessageOnStream(
@@ -280,17 +277,25 @@ export class Runner<X extends AppConfig> implements IComponent {
         );
 
         this.monitoringMessageReplyTimeout = setTimeout(async () => {
-            if (!this.connected) return;
+            this.logger.warn("Monitoring Reply Timeout. Connected", this.connected);
 
             await this.handleDisconnect();
-        }, 5000);
+        }, 500);
     }
 
     async handleDisconnect() {
-        this.connected = false;
-        await this.hostClient.disconnect(true);
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
+        }
 
-        await defer(5000);
+        this.connected = false;
+
+        try {
+            await this.hostClient.disconnect(true);
+            await defer(5000);
+        } catch (e) {
+            this.logger.error("Disconnect failed");
+        }
 
         this.logger.info("Reinitializing....");
 
@@ -353,7 +358,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.debug("premain");
 
         try {
-            await this.hostClient.init(this.instanceId);
+            await promiseTimeout(this.hostClient.init(this.instanceId), 2000);
             this.connected = true;
         } catch (e) {
             this.connected = false;
@@ -383,6 +388,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.debug("Handshake received", appConfig, args);
 
+        await this.handleMonitoringRequest({ monitoringRate: 1 });
+
         return { appConfig, args };
     }
 
@@ -390,9 +397,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         const { appConfig, args } = await this.premain();
 
         this.initAppContext(appConfig as X);
-
-        await this.reportHealth();
-        await this.handleMonitoringRequest({ monitoringRate: 1 });
 
         let sequence: any[] = [];
 

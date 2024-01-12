@@ -9,7 +9,6 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
-    ContentType,
     CPMConnectorOptions,
     EventMessageData,
     HostProxy,
@@ -41,8 +40,6 @@ import { DuplexStream } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 
-import { readFileSync } from "fs";
-import { cpus, totalmem } from "os";
 import { DataStream } from "scramjet";
 import { inspect } from "util";
 
@@ -50,16 +47,15 @@ import { AuditedRequest, Auditor } from "./auditor";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { corsMiddleware } from "./middlewares/cors";
 import { optionsMiddleware } from "./middlewares/options";
-import { S3Client } from "./s3-client";
+
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
 
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
-import { DuplexStream } from "@scramjet/api-server";
+
 import { existsSync, mkdirSync, readFileSync } from "fs";
-import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
 
 import SequenceStore from "./sequenceStore";
@@ -313,6 +309,9 @@ export class Host implements IComponent {
 
     attachDispatcherEvents() {
         this.csiDispatcher
+            .on("event", async ({ event, id }) => {
+                await this.eventBus({ source: id, ...event });
+            })
             .on("end", async (eventData: DispatcherInstanceEndEventData) => {
                 await this.handleDispatcherEndEvent(eventData);
             })
@@ -1285,7 +1284,8 @@ export class Host implements IComponent {
      */
     async setTelemetry(): Promise<void> {
         if (this.config.telemetry.status) {
-            this.telemetryAdapter?.logger.pipe(this.logger);
+            this.telemetryAdapter = await getTelemetryAdapter(this.config.telemetry.adapter, this.config.telemetry);
+            this.telemetryAdapter.logger.pipe(this.logger);
 
             const ipAddress = require("ext-ip")();
 

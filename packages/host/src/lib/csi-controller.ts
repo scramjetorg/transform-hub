@@ -170,8 +170,6 @@ export class CSIController extends TypedEmitter<Events> {
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
 
-    communicationHandler: ICommunicationHandler;
-
     constructor(
         private handshakeMessage: MessageDataType<RunnerMessageCode.PING>,
         public communicationHandler: ICommunicationHandler,

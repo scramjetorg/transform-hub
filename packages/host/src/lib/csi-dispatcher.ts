@@ -2,13 +2,11 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
-import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
+import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { InstanceStore } from "./instance-store";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
 import SequenceStore from "./sequenceStore";
@@ -26,6 +24,7 @@ type Events = {
     end: (data: DispatcherInstanceEndEventData) => void;
     terminated: (data: DispatcherInstanceEndEventData) => void;
     established: (data: DispatcherInstanceEstablishedEventData) => void;
+    event: (eventData: { event: EventMessageData, id: string }) => void;
 };
 
 type CSIDispatcherOpts = {
@@ -55,7 +54,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     async createCSIController(
         id: string,
         sequenceInfo: SequenceInfo,
-        payload: StartSequencePayload,
+        payload: STHRestAPI.StartSequencePayload,
         communicationHandler: ICommunicationHandler,
         config: STHConfiguration,
         instanceProxy: HostProxy) {
@@ -71,6 +70,10 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         csiController.on("error", (err) => {
             this.logger.error("CSIController errored", err.message, err.exitcode);
             this.emit("error", { id, err });
+        });
+
+        csiController.on("event", async (event: EventMessageData) => {
+            this.emit("event", { event, id: csiController.id });
         });
 
         // eslint-disable-next-line complexity
