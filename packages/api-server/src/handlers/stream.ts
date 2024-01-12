@@ -1,4 +1,4 @@
-import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
+import { ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 import { Writable, Readable, Duplex } from "stream";
 import { DuplexStream } from "../lib/duplex-stream";
@@ -106,16 +106,27 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const downstream = (
         path: string | RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post" }: StreamConfig = {}
+        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post", postponeContinue = false }: StreamConfig = {}
     ): void => {
-        router[method](path, async (req, res, next) => {
+        // eslint-disable-next-line complexity
+        router[method](path, async (req: ParsedMessage, res, next) => {
             try {
                 if (checkContentType) {
                     checkAccepts(req.headers["content-type"], text, json);
                 }
 
                 if (req.headers.expect === "100-continue") {
-                    res.writeContinue();
+                    if (!postponeContinue) {
+                        res.writeContinue();
+                    }
+                }
+
+                if (postponeContinue && req.headers.expect !== "100-continue") {
+                    res.writeHead(400, "Bad Request", { "Content-type": "application/json" });
+                    res.write(JSON.stringify({ error: "Missing 'expect' header" }));
+                    res.end();
+
+                    return;
                 }
 
                 // Explicit pause causes next `on('data')` not to resume stream automatically.
@@ -177,11 +188,14 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     };
     const duplex = (
         path: string | RegExp,
-        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void
+        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void,
+        { postponeContinue = false }: StreamConfig = {}
     ): void => {
         router.post(path, (req, res, next) => {
             if (req.headers.expect === "100-continue") {
-                res.writeContinue();
+                if (!postponeContinue) {
+                    res.writeContinue();
+                }
             }
 
             try {

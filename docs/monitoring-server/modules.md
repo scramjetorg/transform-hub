@@ -7,3 +7,4 @@
 ### Classes
 
 - [MonitoringServer](classes/MonitoringServer.md)
+- [MonitoringServerConf](classes/MonitoringServerConf.md)

@@ -50,13 +50,13 @@ Request logger.
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L29)
+[packages/client-utils/src/types/index.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L28)
 
 ___
 
 ### SendStreamOptions
 
-Ƭ **SendStreamOptions**: `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\>
+Ƭ **SendStreamOptions**: `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\>
 
 Options for sending sending stream.
 

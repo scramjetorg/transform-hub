@@ -1,8 +1,6 @@
 import { TransformOptions, Readable, Transform } from "stream";
-import { WorkState, ReadableState, WritableState, StreamType, StreamOrigin } from "./streamHandler";
+import { ContentType, WorkState, ReadableState, WritableState, StreamType, StreamOrigin, TopicHandler, TopicOptions, TopicState, ParsedMessage } from "@scramjet/types";
 import TopicId from "./topicId";
-import TopicHandler, { TopicOptions, TopicState } from "./topicHandler";
-import { ContentType } from "./contentType";
 
 export enum TopicEvent {
     StateChanged = "stateChanged",
@@ -18,7 +16,7 @@ export class Topic extends Transform implements TopicHandler {
     protected _errored?: Error;
     protected needDrain: boolean;
 
-    private _pipeQueue: Readable[] = [];
+    private _pipeQueue: (Readable)[] = [];
     private _consuming: Promise<any> | undefined;
 
     constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
@@ -62,13 +60,25 @@ export class Topic extends Transform implements TopicHandler {
 
         this._consuming = (async () => {
             while (this._pipeQueue.length) {
-                const pipe = this._pipeQueue.shift();
+                const pipe = this._pipeQueue.shift()!;
 
-                pipe!.pipe(this, { end: false });
-                await new Promise(res => pipe!.on("end", res).on("error", res));
+                if ((pipe as ParsedMessage).writeContinue) {
+                    (pipe as ParsedMessage).writeContinue();
+                }
 
-                this._consuming = undefined;
+                pipe.pipe(this, { end: false });
+
+                await new Promise<void>(res => {
+                    pipe
+                        .once("close", res)
+                        .once("end", res)
+                        .once("error", res);
+                });
+
+                pipe.unpipe();
             }
+
+            this._consuming = undefined;
         })()
             .catch(() => 0);
     }

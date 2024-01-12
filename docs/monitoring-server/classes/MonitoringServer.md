@@ -17,21 +17,25 @@
 - [handleHealtzRequest](MonitoringServer.md#handlehealtzrequest)
 - [start](MonitoringServer.md#start)
 
+### Properties
+
+- [serverOptions](MonitoringServer.md#serveroptions)
+
 ## Constructors
 
 ### constructor
 
-• **new MonitoringServer**(`options`)
+• **new MonitoringServer**(`serverOptions`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `options` | `MonitoringServerOptions` |
+| `serverOptions` | `MonitoringServerOptions` |
 
 #### Defined in
 
-[monitoring-server.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L9)
+[monitoring-server/src/monitoring-server.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L11)
 
 ## Methods
 
@@ -45,7 +49,7 @@
 
 #### Defined in
 
-[monitoring-server.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L31)
+[monitoring-server/src/monitoring-server.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L46)
 
 ___
 
@@ -63,4 +67,14 @@ IMonitoringServer.start
 
 #### Defined in
 
-[monitoring-server.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L35)
+[monitoring-server/src/monitoring-server.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L50)
+
+## Properties
+
+### serverOptions
+
+• **serverOptions**: `MonitoringServerOptions`
+
+#### Defined in
+
+[monitoring-server/src/monitoring-server.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/monitoring-server/src/monitoring-server.ts#L8)

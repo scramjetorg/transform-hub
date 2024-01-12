@@ -9,7 +9,9 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
+    ContentType,
     CPMConnectorOptions,
+    EventMessageData,
     HostProxy,
     IComponent,
     IMonitoringServerConstructor,
@@ -39,8 +41,6 @@ import { DuplexStream } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 
-import { ITelemetryAdapter } from "@scramjet/telemetry";
-
 import { readFileSync } from "fs";
 import { cpus, totalmem } from "os";
 import { DataStream } from "scramjet";
@@ -54,10 +54,21 @@ import { S3Client } from "./s3-client";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
 
-import SequenceStore from "./sequenceStore";
+import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
+import { cpus, homedir, totalmem } from "os";
+import { S3Client } from "./s3-client";
+import { DuplexStream } from "@scramjet/api-server";
+import { existsSync, mkdirSync, readFileSync } from "fs";
+import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
+
+import SequenceStore from "./sequenceStore";
+
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
+
 import { CSIDispatcher, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
+
+import { parse } from "path";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -185,6 +196,7 @@ export class Host implements IComponent {
      * @param {SocketServer} socketServer Server to listen for connections from Instances.
      * @param {STHConfiguration} sthConfig Configuration.
      */
+    // eslint-disable-next-line complexity
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
@@ -231,7 +243,21 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
+        const fsPaths = [
+            parse(process.cwd()).root, // root dir
+            homedir(),
+            this.config.sequencesRoot
+        ];
+
+        if (!existsSync(this.config.sequencesRoot)) {
+            mkdirSync(this.config.sequencesRoot);
+        }
+
+        if (this.config.kubernetes.sequencesRoot) fsPaths.push(this.config.kubernetes.sequencesRoot);
+
+        this.logger.info("Following path will be examined on load check.", fsPaths);
+
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements, fsPaths }));
         this.loadCheck.logger.pipe(this.logger);
 
         this.socketServer = socketServer;
@@ -481,15 +507,16 @@ export class Host implements IComponent {
     }
 
     private async startListening() {
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>((res) => {
-            this.api?.server.once("listening", () => {
-                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+        return new Promise<void>((res) => {
+            this.api.server
+                .once("listening", () => {
+                    const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                    this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
-                res();
-            });
+                    res();
+                })
+                .listen(this.config.host.port, this.config.host.hostname);
         });
     }
 
@@ -1099,6 +1126,16 @@ export class Host implements IComponent {
                 streams
             );
         });
+    }
+
+    async eventBus(event: EventMessageData) {
+        this.logger.debug("Got event", event);
+
+        // Send the event to all instances except the source of the event.
+        await Promise.all(
+            Object.values(this.instancesStore)
+                .map(inst => event.source !== inst.id ? inst.emitEvent(event) : true)
+        );
     }
 
     /**

@@ -2,9 +2,6 @@
   "ts-node": {
     "files": true
   },
-  "files": [
-    "./src/types/commander-completion.d.ts"
-  ],
   "compilerOptions": {
     "outDir": "./dist"
   },

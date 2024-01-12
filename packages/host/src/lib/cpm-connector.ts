@@ -2,8 +2,6 @@ import fs from "fs";
 import { Readable } from "stream";
 import * as http from "http";
 
-import { networkInterfaces } from "systeminformation";
-
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     STHRestAPI,
@@ -26,7 +24,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser/src/types";
-import { EOL } from "os";
+import { EOL, networkInterfaces } from "os";
 
 type STHInformation = {
     id?: string;
@@ -460,22 +458,38 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Returns network interfaces information.
      *
-     * @returns {Promise<NetworkInfo>} Promise resolving to NetworkInfo object.
+     * @returns Promise resolving to NetworkInfo object.
      */
     async getNetworkInfo(): Promise<NetworkInfo[]> {
-        const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
+        const net = Object.entries(networkInterfaces());
+        const ifs: NetworkInfo[] = [];
 
-        const nInterfaces = await networkInterfaces();
+        for (const [ifname, ifdata] of net) {
+            const ipv4 = ifdata?.find(({ family }) => family === "IPv4");
+            const ipv6 = ifdata?.find(({ family }) => family === "IPv6");
 
-        return [nInterfaces].flat().map((iface: any) => {
-            const info: any = {};
+            if (!ipv4?.mac && !ipv6?.mac) continue;
 
-            for (const field of fields) {
-                info[field] = iface[field];
+            const netInfo: Partial<NetworkInfo> = {
+                iface: ifname,
+                ifaceName: ifname,
+                mac: (ipv4?.mac || ipv6?.mac) as string,
+                dhcp: false
+            };
+
+            if (ipv4?.address) {
+                netInfo.ip4 = ipv4?.address;
+                netInfo.ip4subnet = ipv4?.cidr as "string";
+            }
+            if (ipv6?.address) {
+                netInfo.ip6 = ipv6?.address;
+                netInfo.ip6subnet = ipv6?.cidr as "string";
             }
 
-            return info;
-        });
+            ifs.push(netInfo as NetworkInfo);
+        }
+
+        return ifs;
     }
 
     async sendLoad() {

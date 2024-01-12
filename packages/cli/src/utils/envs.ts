@@ -5,5 +5,6 @@ export const envs = {
 };
 
 export const isDevelopment = () => envs.nodeEnv === "development";
+export const isCompletionScript = () => envs.nodeEnv === "completion";
 export const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 

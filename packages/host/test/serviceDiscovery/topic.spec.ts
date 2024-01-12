@@ -1,5 +1,5 @@
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import { ReadableState, StreamOrigin, WorkState } from "../../src/lib/serviceDiscovery/streamHandler";
+import { ReadableState, StreamOrigin, WorkState } from "@scramjet/types";
 import { Topic, TopicEvent } from "../../src/lib/serviceDiscovery/topic";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
 
