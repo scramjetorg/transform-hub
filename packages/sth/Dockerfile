@@ -1,4 +1,4 @@
-FROM node:lts-bullseye-slim as builder
+FROM node:18-bullseye-slim as builder
 
 WORKDIR /build
 
@@ -25,7 +25,7 @@ COPY LICENSE ./
 
 RUN cd dist && npx -y npm@8 i
 
-FROM node:lts-bullseye-slim as release
+FROM node:18-bullseye-slim as release
 
 WORKDIR /app
 

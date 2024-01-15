@@ -5,14 +5,37 @@ import { strict as assert } from "assert";
 import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
+import { getLogger } from "@scramjet/logger";
 
+const isLogActive = process.env.SCRAMJET_TEST_LOG;
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
-export const defer = (timeout: number): Promise<void> =>
-    new Promise(res => setTimeout(res, timeout));
+const logger = getLogger("test");
+
+export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
+
+export function getSiCommand() {
+    if (process.env.SCRAMJET_SPAWN_JS && process.env.SCRAMJET_SPAWN_TS) {
+        throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
+    }
+
+    let si = ["si"];
+
+    if (process.env.SCRAMJET_SPAWN_JS) {
+        si = ["node", "../dist/cli/bin"];
+    }
+
+    if (process.env.SCRAMJET_SPAWN_TS) {
+        si = ["npx", "ts-node", "../packages/cli/src/bin/index.ts"];
+    }
+
+    return si;
+}
+
+const si = getSiCommand();
 
 export async function file1ContainsLinesFromFile2(file1: any, greeting: any, file2: any, suffix: any) {
     const output = new lineByLine(`${file1}`);
@@ -38,20 +61,23 @@ export const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 40
     }
 };
 
-export const callInLoopTillExpectedCode =
-    async (fnToCall: any, that: any, expectedHttpCode: number = 200): Promise<any> => {
-        let response;
+export const callInLoopTillExpectedCode = async (
+    fnToCall: any,
+    that: any,
+    expectedHttpCode: number = 200
+): Promise<any> => {
+    let response;
 
-        const startTime: number = Date.now();
-        const timeout: number = timeoutLongMs;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
 
-        do {
-            response = await fnToCall.call(that);
-            await defer(timeout);
-        } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+    do {
+        response = await fnToCall.call(that);
+        await defer(timeout);
+    } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
-        return response;
-    };
+    return response;
+};
 
 export function fileContains(filename: any, key: any) {
     const stdoutFile = new lineByLine(filename);
@@ -68,20 +94,24 @@ export function fileContains(filename: any, key: any) {
     assert.fail("stdout does not contain: " + key);
 }
 
-export const callInLoopTillExpectedStatusCode =
-    async (fnToCall: any, that: any, expectedHttpCode: number = 200, ...args: any[]) => {
-        let response;
+export const callInLoopTillExpectedStatusCode = async (
+    fnToCall: any,
+    that: any,
+    expectedHttpCode: number = 200,
+    ...args: any[]
+) => {
+    let response;
 
-        const startTime: number = Date.now();
-        const timeout: number = timeoutLongMs;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
 
-        do {
-            response = await fnToCall.call(that, ...args);
-            await defer(timeout);
-        } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
+    do {
+        response = await fnToCall.call(that, ...args);
+        await defer(timeout);
+    } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
 
-        return response;
-    };
+    return response;
+};
 
 export async function streamToString(_stream: Readable): Promise<string> {
     const chunks = [];
@@ -97,7 +127,9 @@ export async function streamToString(_stream: Readable): Promise<string> {
 export async function getOccurenceNumber(searchedValue: any, filePath: any) {
     try {
         console.log(`${JSON.stringify(searchedValue)}`);
-        return Number((await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout);
+        return Number(
+            (await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout
+        );
     } catch {
         return 0;
     }
@@ -120,7 +152,9 @@ export async function removeFile(filePath: any) {
 }
 
 export async function getStreamsFromSpawn(
-    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+    command: string,
+    options: string[],
+    env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string, any]> {
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error("Spawning command", command, ...options);
@@ -145,7 +179,9 @@ export async function getStreamsFromSpawn(
 }
 
 export async function getStreamsFromSpawnSuccess(
-    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+    command: string,
+    options: string[],
+    env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string]> {
     const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
 
@@ -159,7 +195,8 @@ export async function getStreamsFromSpawnSuccess(
 }
 
 export function removeBoundaryQuotes(str: string) {
-    if (str.charAt(0) === "\"" && str.charAt(str.length - 1) === "\"") {
+    // eslint-disable-next-line quotes
+    if (str.charAt(0) === '"' && str.charAt(str.length - 1) === '"') {
         return str.substr(1, str.length - 2);
     }
     return str;
@@ -177,27 +214,29 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
                 if (response.includes(expected)) return true;
             }
             throw new Error("End of stream reached");
-        })(),
+        })()
     ]);
 }
 
-export async function waitUntilStreamEquals(stream: Readable, expected: string): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
     await Promise.race([
         (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
-                response += chunk.toString();
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
+                response += chunk;
+
+                // eslint-disable-next-line no-console
+                console.log(response, chunk);
 
                 if (response === expected) return expected;
                 if (response.length >= expected.length) {
-                    assert.equal(response, expected);
+                    return assert.equal(response, expected);
                 }
             }
-            assert.equal(response, expected, "End of stream reached");
-
-            return "passed";
+            throw new Error("End of stream reached");
         })(),
+        defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
     ]);
 
     return response;
@@ -214,3 +253,167 @@ export async function killProcessByName(processName: string): Promise<void> {
     });
 }
 
+export async function getActiveProfile() {
+    try {
+        const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "ls"]);
+
+        const match = res[1].match(/->\s*([^\n]+)/);
+        const activeProfile = match ? match[1].trim() : null;
+
+        if (isLogActive) {
+            logger.log("Active profile:", activeProfile);
+        }
+        return activeProfile;
+    } catch (error: any) {
+        logger.error(`Error while getting the active profile: ${error.message}`);
+        return "";
+    }
+}
+
+export async function createProfile(profileName: string) {
+    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "create", profileName]);
+
+    if (isLogActive) {
+        logger.debug(res);
+    }
+}
+
+export async function setProfile(profileName: string) {
+    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "use", profileName]);
+
+    if (isLogActive) {
+        logger.debug(res);
+    }
+}
+
+export async function removeProfile(profileName: string) {
+    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "remove", profileName]);
+
+    if (isLogActive) {
+        logger.debug(res);
+    }
+}
+
+export function createDirectory(workingDirectory: string) {
+    if (!fs.existsSync(workingDirectory)) {
+        fs.mkdirSync(workingDirectory);
+        if (isLogActive) {
+            logger.debug(`Directory "${workingDirectory}" successfully created`);
+        }
+    } else {
+        logger.error(`Directory "${workingDirectory}" already exist`);
+    }
+}
+
+export function deleteDirectory(workingDirectory: string) {
+    try {
+        fs.rmdirSync(workingDirectory, { recursive: true });
+        if (isLogActive) {
+            logger.debug(`Directory "${workingDirectory}" was successfully deleted`);
+        }
+    } catch (error: any) {
+        logger.error(`Error while deleting direcory "${workingDirectory}": ${error.message}`);
+    }
+}
+
+export function spawnSiInit(
+    command: string,
+    templateType: string,
+    workingDirectory: string,
+    env: NodeJS.ProcessEnv = process.env
+) {
+    return new Promise<void>((resolve, reject) => {
+        const args = () => {
+            return [...si, "init", "seq", templateType, "-p", workingDirectory];
+        };
+
+        if (isLogActive) {
+            logger.debug("Spawning command: /usr/bin/env", ...args());
+        }
+
+        const childProcess = spawn(command, args(), {
+            env
+        });
+
+        childProcess.stdout.on("data", (data) => {
+            if (isLogActive) {
+                logger.debug(data.toString());
+            }
+            if (data.includes("Sequence template succesfully created")) {
+                resolve();
+            } else {
+                childProcess.stdin.write("\n");
+            }
+        });
+        childProcess.stderr.on("data", (data) => {
+            const stderrString = data.toString();
+
+            logger.warn(`Stderr: ${stderrString}`);
+        });
+        childProcess.on("error", (err) => {
+            logger.error(err);
+            reject();
+        });
+        childProcess.on("exit", (code) => {
+            if (isLogActive) {
+                logger.debug(`Exit code: ${code}`);
+            }
+            resolve();
+        });
+    });
+}
+
+export async function waitUntilStreamStartsWith(stream: Readable, expected: string, timeout = 10000): Promise<string> {
+    let response = "";
+
+    await Promise.race([
+        (async () => {
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
+                response += chunk.toString();
+
+                if (response === expected) return expected;
+                if (response.length >= expected.length) {
+                    return assert.equal(response.substring(0, expected.length), expected);
+                }
+            }
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
+    ]);
+
+    return response;
+}
+
+export function isTemplateCreated(templateType: string, workingDirectory: string) {
+    return new Promise<boolean>((resolve, reject) => {
+        // eslint-disable-next-line complexity
+        fs.readdir(workingDirectory, (err, files) => {
+            if (err) {
+                logger.error(`Can not read from directory: ${workingDirectory}`);
+                reject(err);
+                return;
+            }
+            if (
+                templateType === "ts" &&
+                files.includes("index.ts") &&
+                files.includes("package.json") &&
+                files.includes("tsconfig.json")
+            ) {
+                resolve(true);
+            }
+            if (
+                templateType === "py" &&
+                files.includes("main.py") &&
+                files.includes("package.json") &&
+                files.includes("requirements.txt")
+            ) {
+                resolve(true);
+            }
+            if (templateType === "js" && files.includes("index.js") && files.includes("package.json")) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}

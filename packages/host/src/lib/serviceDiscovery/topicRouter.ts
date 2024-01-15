@@ -1,12 +1,10 @@
 /* eslint-disable complexity */
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, IObjectLogger, OpResponse } from "@scramjet/types";
+import { APIExpose, ContentType, IObjectLogger, OpResponse, ParsedMessage, StreamOrigin, TopicState } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
 import { IncomingMessage } from "http";
-import { TopicState } from "./topicHandler";
-import { StreamOrigin } from "./streamHandler";
-import { ContentType, isContentType } from "./contentType";
+import { isContentType } from "./contentType";
 import TopicId from "./topicId";
 import { CeroError } from "@scramjet/api-server";
 
@@ -16,16 +14,19 @@ type TopicsPostReq = IncomingMessage & {
         "content-type"?: string,
     };
 };
+
 type TopicsPostRes = {
     id: string
     origin: StreamOrigin
     state: TopicState
     contentType: ContentType
 }
+
 type TopicDeleteReq = IncomingMessage & {
     params?: { topic?: string }
 }
-type TopicStreamReq = IncomingMessage & {
+
+type TopicStreamReq = ParsedMessage & {
     headers?: {
         "content-type"?: string,
         cpm?: string
@@ -48,13 +49,14 @@ class TopicRouter {
         apiServer.get(`${apiBaseUrl}/topics`, () => this.serviceDiscovery.getTopics());
         apiServer.op("post", `${apiBaseUrl}/topics`, (req) => this.topicsPost(req));
         apiServer.op("delete", `${apiBaseUrl}/topics/:topic`, (req) => this.deleteTopic(req));
-        apiServer.downstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicDownstream(req), { checkContentType: false });
+        apiServer.downstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicDownstream(req), { checkContentType: false, postponeContinue: true });
         apiServer.upstream(`${apiBaseUrl}/topic/:topic`, (req) => this.topicUpstream(req));
     }
 
     async topicsPost(req: TopicsPostReq): Promise<OpResponse<TopicsPostRes>> {
         if (!req.body?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: missingBodyId };
         if (!req.body?.["content-type"]) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing body param: content-type" };
+
         const { "content-type": contentType, id } = req.body;
 
         if (!isContentType(contentType)) return { opStatus: ReasonPhrases.BAD_REQUEST, error: invalidContentTypeMsg };
@@ -114,18 +116,23 @@ class TopicRouter {
                 error: `Acceptable Content-Type for ${id} is ${topic.contentType}`
             };
         }
+
         topic.acceptPipe(req);
 
         if (!cpm) {
             await this.serviceDiscovery.update({
-                provides: topic.id(), contentType: contentType, topicName: topic.id()
+                provides: topic.id(),
+                contentType: contentType,
+                topicName: topic.id(),
+                status: "add"
             });
         } else {
-            this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
+            this.logger.debug(`Incoming Downstream CPM request for topic: '${topic.id()}, ${topic.contentType}'`);
         }
 
-        await new Promise<void>(res => {
-            req.on("end", () => res());
+        await new Promise<void>(resolve => {
+            req.on("close", () => resolve());
+            req.on("end", () => resolve());
         });
 
         return { opStatus: ReasonPhrases.OK };
@@ -149,11 +156,15 @@ class TopicRouter {
 
             if (!cpm) {
                 await this.serviceDiscovery.update({
-                    requires: id, contentType, topicName: topicId.toString()
+                    requires: id,
+                    contentType,
+                    topicName: topicId.toString(),
+                    status: "add"
                 });
             } else {
-                this.logger.debug(`Incoming Upstream CPM request for topic '${id}'`);
+                this.logger.debug(`Incoming CPM Upstream request for topic '${id}'`);
             }
+
             return topic;
         } catch (e: any) {
             throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);

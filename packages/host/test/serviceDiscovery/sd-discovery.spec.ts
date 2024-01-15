@@ -3,6 +3,7 @@ import { CPMConnector } from "../../src/lib/cpm-connector";
 import { PassThrough } from "stream";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { AddSTHTopicEventData } from "@scramjet/types";
 
 let serviceDiscovery: ServiceDiscovery;
 const testUUID = new TopicId("4fb4230f-5481-487d-a055-a99d20740e96");
@@ -11,15 +12,14 @@ const testConfig: DataType = {
     contentType: "text/plain"
 };
 
-type sendTopicInfoArg = { provides?: string; requires?: string; topicName: string, contentType: string; };
-let topicInfo: sendTopicInfoArg;
+let topicInfo: AddSTHTopicEventData;
 
 beforeEach(() => {
     const mockLogger = new ObjLogger(this);
 
     serviceDiscovery = new ServiceDiscovery(mockLogger, "MockHost");
     serviceDiscovery.cpmConnector = {
-        sendTopicInfo: (data: sendTopicInfoArg): Promise<void> => {
+        sendTopicInfo: (data: AddSTHTopicEventData): Promise<void> => {
             topicInfo = data;
             return new Promise((resolve) => resolve());
         }
@@ -106,11 +106,19 @@ test("Route stream to topic", async () => {
     expect(topicInfo!.contentType).toEqual(testConfig.contentType);
 });
 
-test("Update", async () => {
+test("Update with provides", async () => {
     serviceDiscovery.cpmConnector!.connected = true;
-    await serviceDiscovery.update({ provides: "dummyProvides", requires: "dummyRequires", topicName: "dummyTopicName", contentType: "dummyContentType" });
+    await serviceDiscovery.update({ provides: "dummyProvides", topicName: "dummyTopicName", contentType: "dummyContentType", status: "add" });
     expect(topicInfo!).not.toBeUndefined();
     expect(topicInfo!.provides).toEqual("dummyProvides");
+    expect(topicInfo!.topicName).toEqual("dummyTopicName");
+    expect(topicInfo!.contentType).toEqual("dummyContentType");
+});
+
+test("Update with requires", async () => {
+    serviceDiscovery.cpmConnector!.connected = true;
+    await serviceDiscovery.update({ requires: "dummyRequires", topicName: "dummyTopicName", contentType: "dummyContentType", status: "add" });
+    expect(topicInfo!).not.toBeUndefined();
     expect(topicInfo!.requires).toEqual("dummyRequires");
     expect(topicInfo!.topicName).toEqual("dummyTopicName");
     expect(topicInfo!.contentType).toEqual("dummyContentType");

@@ -8,7 +8,7 @@ import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { Host } from "@scramjet/host";
-import { FileBuilder } from "@scramjet/utility";
+import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 
 const stringToIntSanitizer = (str : string) => {
     const parsedValue = parseInt(str, 10);
@@ -51,7 +51,6 @@ const options: OptionValues & STHCommandOptions = program
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
-    .option("--platform-token <token>", "Platform authorization token")
     .option("--cpm-ssl-ca-path <path>", "Certificate Authority for self-signed CPM SSL certificates")
     .option("--cpm-id <id>")
     .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")
@@ -74,6 +73,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port")
     .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
     .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
+    .option("--runner-envs <runnerEnvs>", "Additional ENVs for Runners. e.g ENV1=1;ENV2=2")
 
     .parse(process.argv)
     .opts() as STHCommandOptions;
@@ -89,6 +89,9 @@ const options: OptionValues & STHCommandOptions = program
         const configContents = configFile.read() as DeepPartial<STHConfiguration>;
 
         configService.update(configContents);
+    }
+    if (options.runnerEnvs) {
+        configService.update({ runnerEnvs: processCommanderRunnerEnvs(options.runnerEnvs) });
     }
 
     if (options.tags.length) {

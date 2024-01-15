@@ -1,0 +1,59 @@
+#!/bin/bash
+
+if complete &>/dev/null; then
+  _si_completion() {
+    COMPREPLY=()
+    local si="$IFS"
+
+    SI_COMPERLY=$(
+      COMP_CWORD="$COMP_CWORD" \
+        COMP_WORDS=${COMP_WORDS[@]} \
+        NODE_ENV=completion si completion \
+        2>/dev/null
+    )
+
+    IFS=$'|'
+    read -ra SI_COMP <<<$SI_COMPERLY
+    SI_COMPERLY_WORDS=${SI_COMP[0]}
+    SI_COMPERLY_OPTIONS=${SI_COMP[1]}
+
+    if [[ $SI_COMPERLY_OPTIONS == "filenames" ]]; then
+      compopt -o default
+    elif [[ $SI_COMPERLY_OPTIONS == "dirnames" ]]; then
+      compopt -o dirnames
+    else
+      IFS=$' '
+      COMPREPLY=($SI_COMPERLY_WORDS)
+    fi
+
+    IFS="$si"
+    return 0
+  }
+  complete -F _si_completion si
+elif compctl &>/dev/null; then
+  _si_completion() {
+    local cword line point words si
+    read -Ac words
+    read -cn cword
+    let cword-=1
+    read -l line
+    read -ln point
+    si="$IFS"
+    IFS=$'\n'
+
+    SI_COMPERLY=$(
+      COMP_CWORD="$COMP_CWORD" \
+        COMP_WORDS=${COMP_WORDS[@]} \
+        NODE_ENV=completion si completion \
+        2>/dev/null
+    )
+    IFS=$'|'
+    read -ra SI_COMP <<<$SI_COMPERLY
+    SI_COMPERLY_WORDS=${SI_COMP[0]}
+
+    reply=($SI_COMPERLY_WORDS)
+    IFS="$si"
+  }
+  compctl -K _si_completion si
+fi
+###-end-si-completion-###

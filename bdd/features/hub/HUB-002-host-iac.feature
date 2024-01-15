@@ -28,3 +28,21 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
         And wait for "500" ms
         And host is running
         * exit hub process
+
+    @ci-hub @starts-host
+    Scenario: HUB-002 TC-004 Event forwarding works between sequences
+        When hub process is started with random ports and parameters "--sequences-root=data/sequences/ --instance-lifetime-extension-delay=10 --identify-existing --runtime-adapter=process"
+        And host is running
+        And I get list of instances
+        And start Instance by name "event-sequence" with JSON arguments '["event-one", "event-two"]'
+        * remember last instance as "first"
+        And start Instance by name "event-sequence" with JSON arguments '["event-two", "event-three"]'
+        * remember last instance as "second"
+        * switch to instance "first"
+        And send event "event-one" to instance with message '{"test": 1}'
+        # * wait for "100" ms
+        Then "stdout" starts with 'event {"test":1}'
+        * switch to instance "second"
+        Then "stdout" starts with 'event {"test":2}'
+        And host is running
+        * exit hub process

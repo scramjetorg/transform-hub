@@ -165,11 +165,18 @@ export class VerserConnection {
     public async makeRequest(options: RequestOptions): Promise<VerserRequestResult> {
         if (!this.connected) throw new Error("Not connected");
 
-        this.logger.debug("making request", options);
         return new Promise((resolve, reject) => {
+            let expectedEvent = "response";
+
+            if (options.headers?.Expect) {
+                expectedEvent = "continue";
+            }
+
+            this.logger.debug("making request and waiting for event", options, expectedEvent);
+
             const clientRequest = httpRequest({ ...options, agent: this.agent })
-                .on("response", (incomingMessage: IncomingMessage) => {
-                    this.logger.debug("Got Response", options);
+                .on(expectedEvent, (incomingMessage: IncomingMessage) => {
+                    this.logger.debug(`Got event ${expectedEvent}`);
                     resolve({ incomingMessage, clientRequest });
                 })
                 .on("error", (error: Error) => {

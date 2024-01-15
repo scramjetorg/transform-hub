@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-runner",
-  "version": "0.36.1",
+  "version": "0.38.0",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./runner.py",
   "scripts": {
@@ -8,7 +8,8 @@
     "build:only": "pip3 install --upgrade -r requirements.txt --target dist/__pypackages__",
     "build": "yarn build:only",
     "clean": "rm -rf dist/",
-    "build:docker": "docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../"
+    "build:docker": "docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../",
+    "build:docker-tf": "docker build -t scramjetorg/runner-py-tf:$(git rev-parse HEAD) -f Dockerfile-tf-gpu ../../"
   },
   "assets": [
     "logging_setup.py",

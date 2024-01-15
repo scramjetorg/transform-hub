@@ -10,9 +10,13 @@ import { PassThrough, Writable } from "stream";
 import { isDevelopment } from "../../utils/envs";
 
 import { resolve } from "path";
-import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
+import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
 import { initPlatform } from "../platform";
+import { AppConfig, DeepPartial } from "@scramjet/types";
+import { FileBuilder, isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
+import { SequenceDeployArgs, SequenceStartCLIArgs } from "../../types/params";
+import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
 
 /**
  * Initializes `sequence` command.
@@ -34,7 +38,7 @@ export const sequence: CommandDefinition = (program) => {
         .alias("ls")
         .description("List all Sequences available on Hub")
         .option("-n, --name <sequence-name>", "list id's of sequences with a given name")
-        .action(async ({ name } :{name:string}) => {
+        .action(async ({ name }: { name: string }) => {
             if (name) return await displayEntity(await getHostClient().getSequenceId(name), profileManager.getProfileConfig().format);
 
             return await displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format);
@@ -72,6 +76,10 @@ export const sequence: CommandDefinition = (program) => {
         .option("-c, --stdout", "Output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .description("Create archived file (package) with the Sequence for later use")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.path = "filenames";
+            complDetails.output = "dirnames";
+        })
         .action((path, { stdout, output: fileoutput }) => {
             const outputPath: string = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
             const output: Writable = stdout ? process.stdout : createWriteStream(outputPath);
@@ -85,11 +93,13 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd
         .command("send")
         .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
-        .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Hub")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.package = "filenames";
+        })
         .action(
-            async (sequencePackage: string, { name }) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name }, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
+            async (sequencePackage: string) => {
+                const sequenceClient = await sequenceSendPackage(sequencePackage, {}, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
 
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
@@ -97,83 +107,144 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("update")
-        .argument("<query>", "Sequence id or name to be overwritten")
+        .argument("<query>", "Sequence id to be overwritten")
         .argument("<package>", "The file to upload")
         .description("Update Sequence with given name")
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.package = "filenames";
+        })
         .action(
             async (query: string, sequencePackage: string) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name: query }, true);
+                const sequenceClient = await sequenceSendPackage(sequencePackage, { id: query }, true);
 
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
         );
+
+    function validateStartupConfig(config: DeepPartial<SequenceDeployArgs>) {
+        return isStartSequenceEndpointPayloadDTO(config);
+    }
+
+    function loadStartupConfig(filename: string): DeepPartial<SequenceDeployArgs> {
+        if (!filename) return {};
+
+        let config = {};
+
+        try {
+            config = FileBuilder(filename).read();
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error(e);
+            process.exit(1);
+        }
+
+        return config;
+    }
 
     sequenceCmd
         .command("start")
         .argument("<id>", "Sequence id to start or '-' for the last uploaded")
         // TODO: for future implementation
         // .option("--hub <provider>", "aws|ovh|gcp");
-        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
+        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON or YAML format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
         .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
         .option("--output-topic <string>", "Topic to which the output stream should be routed")
         .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
+        .option("--startup-config <path-to-config>", "Path to startup config (JSON or YAML)", loadStartupConfig)
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
-        .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }) => {
-            let args;
-
-            if (argsStr) args = sequenceParseArgs(argsStr);
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.configFile = "filenames";
+        })
+        .action(async (id, { startupConfig, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId: instanceId }: SequenceStartCLIArgs) => {
+            const args = argsStr ? sequenceParseArgs(argsStr) : undefined;
+            const appConfig = await sequenceParseConfig(configFile, configString);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
-            const instanceClient = await sequenceStart(
-                id, { configFile, configString, args, outputTopic, inputTopic, limits, instId });
+            startupConfig ||= {};
+            merge(startupConfig, {
+                appConfig,
+                args,
+                instanceId,
+                inputTopic,
+                outputTopic,
+                limits
+            });
+
+            if (!validateStartupConfig(startupConfig)) {
+                throw new Error("Invalid startup config",);
+            }
+            const instanceClient = await sequenceStart(id, {
+                appConfig: startupConfig.appConfig as AppConfig,
+                args: startupConfig.args,
+                limits: startupConfig.limits,
+                instanceId: startupConfig.instanceId,
+                outputTopic: startupConfig.outputTopic,
+                inputTopic: startupConfig.inputTopic
+            });
 
             displayObject(instanceClient, profileManager.getProfileConfig().format);
         });
-
-    type DeployArgs = {
-        output: string;
-        configFile: any;
-        configString: string;
-        instId?: string;
-        args?: string;
-    };
 
     sequenceCmd
         .command("deploy")
         .alias("run")
         .argument("<path>")
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
-        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
+        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON or YAML format to be passed to the Instance context")
         .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
         .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
         // TODO: check if output-topic and input-topic should be added after development
+        .option("--output-topic <string>", "Topic to which the output stream should be routed")
+        .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
+        .option("--startup-config <path-to-config>", "Path to startup config (JSON or YAML)", loadStartupConfig)
+        .option("--limits <json-string>", "Instance limits")
         .description("Pack (if needed), send and start the Sequence")
-        .action(async (path: string, { output: fileoutput, configFile, configString, args: argsStr, instId }: DeployArgs) => {
-            let args;
+        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
+            complDetails.path = "dirnames";
+            complDetails.output = "dirnames";
+            complDetails.configFile = "filenames";
+        })
+        .action(async (path: string, { startupConfig, output, configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr, instId }: SequenceStartCLIArgs) => {
+            const args = argsStr ? sequenceParseArgs(argsStr) : undefined;
+            const appConfig = await sequenceParseConfig(configFile, configString);
+            const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
-            if (argsStr) args = sequenceParseArgs(argsStr);
+            startupConfig ||= {};
+            merge(startupConfig, {
+                output,
+                appConfig,
+                args,
+                instanceId: instId,
+                inputTopic,
+                outputTopic,
+                limits
+            });
 
-            const output = new PassThrough();
+            if (!validateStartupConfig(startupConfig)) {
+                throw new Error("Invalid startup config",);
+            }
 
-            if (fileoutput) {
-                const outputPath = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
+            const compressedPackageStream = new PassThrough();
 
-                output.pipe(createWriteStream(outputPath));
+            if (startupConfig.output) {
+                const outputPath = startupConfig.output ? resolve(startupConfig.output) : `${resolve(path)}.tar.gz`;
+
+                compressedPackageStream.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
             const format = profileManager.getProfileConfig().format;
 
             if (lstatSync(path).isDirectory()) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                const sendSeqPromise = getHostClient().sendSequence(output).then(seq => {
+                const sendSeqPromise = getHostClient().sendSequence(compressedPackageStream).then(seq => {
                     sessionConfig.setLastSequenceId(seq.id);
                 });
 
-                await sequencePack(path, { output });
+                await sequencePack(path, { output: compressedPackageStream });
                 await sendSeqPromise;
             } else {
                 const sequenceClient = await sequenceSendPackage(path, {}, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
@@ -181,7 +252,14 @@ export const sequence: CommandDefinition = (program) => {
                 displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
 
-            const instanceClient = await sequenceStart("-", { configFile, configString, args, instId });
+            const instanceClient = await sequenceStart("-", {
+                appConfig: startupConfig.appConfig as AppConfig,
+                args: startupConfig.args,
+                limits: startupConfig.limits,
+                instanceId: startupConfig.instanceId,
+                outputTopic: startupConfig.outputTopic,
+                inputTopic: startupConfig.inputTopic
+            });
 
             displayObject(instanceClient, format);
         });
@@ -205,8 +283,6 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("prune")
-        // .option("--all")
-        // .option("--filter")
         .option("-f,--force", "Removes also active Sequences (with its running Instances)")
         .description("Remove all Sequences from the Hub (use with caution)")
         .action(async ({ force }) => {

@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/types/src/monitoring-server.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L16)
+[packages/types/src/monitoring-server.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/monitoring-server.ts#L12)

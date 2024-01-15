@@ -2,8 +2,6 @@ import fs from "fs";
 import { Readable } from "stream";
 import * as http from "http";
 
-import { networkInterfaces } from "systeminformation";
-
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     STHRestAPI,
@@ -13,7 +11,9 @@ import {
     LoadCheckStatMessage,
     NetworkInfo,
     STHIDMessageData,
-    IObjectLogger
+    IObjectLogger,
+    STHTopicEventData,
+    AddSTHTopicEventData
 } from "@scramjet/types";
 
 import { StringStream } from "scramjet";
@@ -24,7 +24,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser/src/types";
-import { EOL } from "os";
+import { EOL, networkInterfaces } from "os";
 
 type STHInformation = {
     id?: string;
@@ -255,8 +255,6 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
 
-        await this.setLoadCheckMessageSender();
-
         StringStream.from(duplex.input as Readable)
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
@@ -298,6 +296,8 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.communicationStream = new StringStream().JSONStringify().resume();
         this.communicationStream.pipe(duplex.output);
+
+        await this.setLoadCheckMessageSender();
 
         this.communicationStream.on("pause", () => {
             this.logger.warn("Communication stream paused");
@@ -458,22 +458,38 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Returns network interfaces information.
      *
-     * @returns {Promise<NetworkInfo>} Promise resolving to NetworkInfo object.
+     * @returns Promise resolving to NetworkInfo object.
      */
     async getNetworkInfo(): Promise<NetworkInfo[]> {
-        const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
+        const net = Object.entries(networkInterfaces());
+        const ifs: NetworkInfo[] = [];
 
-        const nInterfaces = await networkInterfaces();
+        for (const [ifname, ifdata] of net) {
+            const ipv4 = ifdata?.find(({ family }) => family === "IPv4");
+            const ipv6 = ifdata?.find(({ family }) => family === "IPv6");
 
-        return [nInterfaces].flat().map((iface: any) => {
-            const info: any = {};
+            if (!ipv4?.mac && !ipv6?.mac) continue;
 
-            for (const field of fields) {
-                info[field] = iface[field];
+            const netInfo: Partial<NetworkInfo> = {
+                iface: ifname,
+                ifaceName: ifname,
+                mac: (ipv4?.mac || ipv6?.mac) as string,
+                dhcp: false
+            };
+
+            if (ipv4?.address) {
+                netInfo.ip4 = ipv4?.address;
+                netInfo.ip4subnet = ipv4?.cidr as "string";
+            }
+            if (ipv6?.address) {
+                netInfo.ip6 = ipv6?.address;
+                netInfo.ip6subnet = ipv6?.cidr as "string";
             }
 
-            return info;
-        });
+            ifs.push(netInfo as NetworkInfo);
+        }
+
+        return ifs;
     }
 
     async sendLoad() {
@@ -481,8 +497,6 @@ export class CPMConnector extends TypedEmitter<Events> {
             await this.communicationStream?.whenWrote(
                 [CPMMessageCode.LOAD, await this.getLoad()]
             );
-
-            this.logger.debug("LoadCheck sent");
         } catch (e) {
             this.logger.error("Error sending loadcheck");
         }
@@ -585,16 +599,18 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @param data Topic information.
      */
-    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string, topicName: string }) {
+    async sendTopicInfo(data: STHTopicEventData) {
         await this.communicationStream?.whenWrote(
-            [CPMMessageCode.TOPIC, { ...data, status: "add" }]
+            [CPMMessageCode.TOPIC, { ...data }]
         );
     }
 
-    async sendTopicsInfo(topics: { provides?: string, requires?: string, contentType?: string, topicName: string }[]) {
+    async sendTopicsInfo(topics: Omit<STHTopicEventData, "status">[]) {
         this.logger.debug("Sending topics information", topics);
-        topics.forEach(async topic => {
-            await this.sendTopicInfo(topic);
+
+        topics.forEach(async (topic) => {
+            (topic as AddSTHTopicEventData).status = "add";
+            await this.sendTopicInfo(topic as AddSTHTopicEventData);
         });
 
         this.logger.trace("Topics information sent");
@@ -605,6 +621,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
+        //@TODO: Disconnecting/error handling
         this.logger.info("make HTTP Req to CPM", `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`);
 
         return http.request(

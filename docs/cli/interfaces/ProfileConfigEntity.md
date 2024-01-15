@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[cli/src/types/index.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L32)
+[cli/src/types/index.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L31)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L31)
+[cli/src/types/index.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L30)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L34)
+[cli/src/types/index.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L33)
 
 ___
 
@@ -59,7 +59,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L37)
+[cli/src/types/index.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L36)
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L33)
+[cli/src/types/index.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L32)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L35)
+[cli/src/types/index.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L34)
 
 ___
 
@@ -89,4 +89,4 @@ ___
 
 #### Defined in
 
-[cli/src/types/index.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L36)
+[cli/src/types/index.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/cli/src/types/index.ts#L35)

@@ -1,0 +1,12 @@
+host:
+  hostname: '0.0.0.0'
+  port: 8000
+  instancesServerPort: 8001
+  id: 'sth-1'
+timings:
+  instanceLifetimeExtensionDelay: 10000
+platform:
+  apiKey: '<your-platform-access-key>'
+  api: 'https://api-shh.scramjet.cloud'
+  space: 'org-abcd88bd-1111-2222-3333-042ffedd0e25:org-abcd88bd-1111-2222-3333-042ffedd0e25-manager'
+  hostType: 'hub'

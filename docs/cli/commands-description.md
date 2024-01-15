@@ -14,15 +14,15 @@ Completion operations
 
 ---
 
-## $ si completion bash
+## $ si completion install
 
 **Description**
 
-Print out bash completion script
+Installs bash completion script
 
 **Usage**
 
-`si completion bash [options]`
+`si completion install [options]`
 
 **Options**
 
@@ -30,15 +30,15 @@ Print out bash completion script
 
 ---
 
-## $ si completion install
+## $ si completion uninstall
 
 **Description**
 
-Installs bash completion script in .bashrc
+Uninstalls bash completion script
 
 **Usage**
 
-`si completion install [options]`
+`si completion uninstall [options]`
 
 **Options**
 
@@ -416,15 +416,31 @@ Remove existing profile configuration
 
 ---
 
-## $ si scope
+## $ si scope | s
 
 **Description**
 
-
+/This functionality is under development./ Manage scopes that store pairs of spaces and Hubs used when working
 
 **Usage**
 
-`si scope [options]`
+`si scope [command] [options...]`
+
+**Options**
+
+*  -h, --help     Display help for command
+
+---
+
+## $ si scope list | ls
+
+**Description**
+
+List all created scopes
+
+**Usage**
+
+`si scope list [options]`
 
 **Options**
 
@@ -432,18 +448,238 @@ Remove existing profile configuration
 
 ---
 
-## $ si space
+## $ si scope print
 
 **Description**
 
-
+See json file under the scope
 
 **Usage**
 
-`si space [options]`
+`si scope print [options] <name>`
 
 **Options**
 
+*  -h, --help  Display help for command
+
+---
+
+## $ si scope use
+
+**Description**
+
+Work on the selected scope
+
+**Usage**
+
+`si scope use [options] <name>`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si scope delete
+
+**Description**
+
+Delete specific scope
+
+**Usage**
+
+`si scope delete [options] <name>`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space | spc
+
+**Description**
+
+Operations on grouped and separated runtime environments that allow sharing the data within them
+
+**Usage**
+
+`si space [command] [options...]`
+
+**Options**
+
+*  -c, --stdout                Output to stdout (ignores -o)
+*  -o, --output <file.tar.gz>  Output path - defaults to dirname
+*  -h, --help                  Display help for command
+
+---
+
+## $ si space info
+
+**Description**
+
+Display info about the default space
+
+**Usage**
+
+`si space info [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space list | ls
+
+**Description**
+
+List all existing spaces
+
+**Usage**
+
+`si space list [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space use
+
+**Description**
+
+Use the space
+
+**Usage**
+
+`si space use [options] <name>`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space audit
+
+**Description**
+
+Fetch all audit messages from spaces
+
+**Usage**
+
+`si space audit [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space logs
+
+**Description**
+
+Fetch all logs from space
+
+**Usage**
+
+`si space logs [options] [<space_name>]`
+
+**Arguments**
+
+*  <space_name>  The name of the space (defaults to current space)
+
+**Options**
+
+*  -h, --help    Display help for command
+
+---
+
+## $ si space version
+
+**Description**
+
+Display space version
+
+**Usage**
+
+`si space version [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space access
+
+**Description**
+
+Manages Access Keys for active Space
+
+**Usage**
+
+`si space access [options] [command]`
+
+**Options**
+
+*  -h, --help            Display help for command
+
+---
+
+## $ si space access create
+
+**Description**
+
+Create Access key for adding Hubs to active Space, i.e "Army of Darkness"
+
+**Usage**
+
+`si space access create [options] <description>`
+
+**Arguments**
+
+*  description  Key description
+
+**Options**
+
+*  -h, --help   Display help for command
+
+---
+
+## $ si space access list | ls
+
+**Description**
+
+List Access Keys metadata in active Space
+
+**Usage**
+
+`si space access list [options]`
+
+**Options**
+
+*  -h, --help  Display help for command
+
+---
+
+## $ si space access revoke
+
+**Description**
+
+Revokes Access Key in active Space
+
+**Usage**
+
+`si space access revoke [options]`
+
+**Options**
+
+*  --id <id>   revoke specified key
+*  --all       Removes all access keys and disconnects all self-hosted Hubs connected to Space
 *  -h, --help  Display help for command
 
 ---
@@ -460,6 +696,97 @@ Allows to run programs in different data centers, computers or devices in local 
 
 **Options**
 
+*  -h, --help                         Display help for command
+
+---
+
+## $ si hub use
+
+**Description**
+
+Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub
+
+**Usage**
+
+`si hub use [options] <name|id>`
+
+**Options**
+
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub list | ls
+
+**Description**
+
+List all the Hubs in the default space
+
+**Usage**
+
+`si hub list [options]`
+
+**Options**
+
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub info
+
+**Description**
+
+Display info about the default Hub
+
+**Usage**
+
+`si hub info [options]`
+
+**Options**
+
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub disconnect
+
+**Description**
+
+Disconnect self hosted Hubs from space
+
+**Usage**
+
+`si hub disconnect [options] <space_name>`
+
+**Arguments**
+
+*  space_name               The name of the Space
+
+**Options**
+
+*  --id <id>                Hub Id
+*  --all                    Disconnects all self-hosted Hubs connected to Space (default: false)
+*  -h, --help               Display help for command
+
+---
+
+## $ si hub delete
+
+**Description**
+
+Delete self hosted Hub from space
+
+**Usage**
+
+`si hub delete [options] <id>`
+
+**Arguments**
+
+*  id                       Hub Id
+
+**Options**
+
+*  -f, --force              Enable deleting Hubs that are not disconnected (default: false)
 *  -h, --help               Display help for command
 
 ---
@@ -635,7 +962,6 @@ Send the Sequence package to the Hub
 
 **Options**
 
-*  --name <name>            Allows to name sequence
 *  -h, --help               Display help for command
 
 ---
@@ -652,7 +978,7 @@ Update Sequence with given name
 
 **Arguments**
 
-*  query                    Sequence id or name to be overwritten
+*  query                    Sequence id to be overwritten
 *  package                  The file to upload
 
 **Options**
@@ -677,11 +1003,13 @@ Start the Sequence with or without given arguments
 
 **Options**
 
-*  -f, --config-file <path-to-file>   Path to configuration file in JSON format to be passed to the Instance context
+*  -f, --config-file <path-to-file>   Path to configuration file in JSON or YAML format to be passed to the Instance context
 *  -s, --config-string <json-string>  Configuration in JSON format to be passed to the Instance context
+*  --inst-id <string>                 Start Sequence with a custom Instance Id. Should consist of 36 characters
 *  --output-topic <string>            Topic to which the output stream should be routed
 *  --input-topic <string>             Topic to which the input stream should be routed
 *  --args <json-string>               Arguments to be passed to the first function in the Sequence
+*  --startup-config <path-to-config>  Path to startup config (JSON or YAML)
 *  --limits <json-string>             Instance limits
 *  -h, --help                         Display help for command
 
@@ -700,9 +1028,14 @@ Pack (if needed), send and start the Sequence
 **Options**
 
 *  -o, --output <file.tar.gz>         Output path - defaults to dirname
-*  -f, --config-file <path-to-file>   Path to configuration file in JSON format to be passed to the Instance context
+*  -f, --config-file <path-to-file>   Path to configuration file in JSON or YAML format to be passed to the Instance context
 *  -s, --config-string <json-string>  Configuration in JSON format to be passed to the Instance context
+*  --inst-id <string>                 Start Sequence with a custom Instance Id. Should consist of 36 characters
+*  --output-topic <string>            Topic to which the output stream should be routed
+*  --input-topic <string>             Topic to which the input stream should be routed
 *  --args <json-string>               Arguments to be passed to the first function in the Sequence
+*  --startup-config <path-to-config>  Path to startup config (JSON or YAML)
+*  --limits <json-string>             Instance limits
 *  -h, --help                         Display help for command
 
 ---
@@ -1226,22 +1559,6 @@ List information about topics
 **Options**
 
 *  -h, --help               Display help for command
-
----
-
-## $ si store
-
-**Description**
-
-
-
-**Usage**
-
-`si store [options]`
-
-**Options**
-
-*  -h, --help  Display help for command
 
 ---
 

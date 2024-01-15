@@ -79,6 +79,6 @@ Feature: Test our shiny new Python runner
         And wait for "100" ms
         Then instance emits event "test-response" with body
             """
-            {"eventName":"test-response","message":"reply to foo"}
+            "reply to foo"
             """
         And host is still running

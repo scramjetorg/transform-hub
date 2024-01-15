@@ -164,3 +164,6 @@ timing-log.ndjson
 # extra dist dirs
 
 /dist.*
+
+# Docs
+.nojekyll

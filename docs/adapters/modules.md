@@ -67,7 +67,7 @@
 
 #### Defined in
 
-[types.ts:147](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L147)
+[types.ts:149](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L149)
 
 ___
 
@@ -85,6 +85,7 @@ Configuration used to run command in container.
 | `binds?` | `string`[] | **`Property`**  Directories mount configuration. |
 | `command?` | `string`[] | Command with optional parameters.  **`Property`**  Command to be executed. |
 | `envs?` | `string`[] | **`Property`**  A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
+| `gpu?` | `boolean` | - |
 | `imageName` | `string` | **`Property`**  Image name. |
 | `labels?` | { `[key: string]`: `string`;  } | - |
 | `maxMem?` | `number` | **`Property`**  Container memory limit (bytes). |
@@ -132,7 +133,7 @@ Result of running command in container.
 
 #### Defined in
 
-[types.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L161)
+[types.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L163)
 
 ___
 
@@ -152,7 +153,7 @@ Standard streams connected with container.
 
 #### Defined in
 
-[types.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L126)
+[types.ts:128](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L128)
 
 ___
 
@@ -180,7 +181,7 @@ ___
 
 #### Defined in
 
-[types.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L154)
+[types.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L156)
 
 ___
 
@@ -266,7 +267,7 @@ ___
 
 #### Defined in
 
-[types.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L143)
+[types.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L145)
 
 ___
 
@@ -282,7 +283,7 @@ ___
 
 #### Defined in
 
-[types.ts:306](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L306)
+[types.ts:309](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L309)
 
 ___
 
@@ -303,7 +304,7 @@ ___
 
 #### Defined in
 
-[types.ts:310](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L310)
+[types.ts:313](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L313)
 
 ___
 
@@ -313,7 +314,7 @@ ___
 
 #### Defined in
 
-[types.ts:319](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L319)
+[types.ts:322](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L322)
 
 ## Variables
 

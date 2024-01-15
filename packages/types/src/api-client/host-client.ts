@@ -53,6 +53,7 @@ export declare class HostClient {
     constructor(apiBase: string, utils: ClientUtils | undefined);
 
     listSequences(): Promise<STHRestAPI.GetSequencesResponse>;
+    getSequenceId(sequenceName: string): Promise<string[]>;
     listInstances(): Promise<STHRestAPI.GetInstancesResponse>;
     listEntities(): Promise<STHRestAPI.GetEntitiesResponse>;
     getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
@@ -66,7 +67,11 @@ export declare class HostClient {
     getStatus(): Promise<STHRestAPI.GetStatusResponse>;
     getConfig(): Promise<PublicSTHConfiguration>;
     sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;
+    sendTopic<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;
     getNamedData(topic: string, requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
+    getTopic(topic: string, requestInit?: RequestInit, contentType?: string): ReturnType<HttpClient["getStream"]>;
+    createTopic(topic: string, contentType: string): Promise<{ topicName: string }>;
+    deleteTopic(topic: string): Promise<{ message: string }>;
     getTopics(): Promise<STHRestAPI.GetTopicsResponse>;
     getInstanceClient(id: string): InstanceClient;
     getSequenceClient(id: string): SequenceClient;

@@ -7,7 +7,9 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    ContentType,
     CPMConnectorOptions,
+    EventMessageData,
     HostProxy,
     IComponent,
     IMonitoringServerConstructor,
@@ -46,16 +48,16 @@ import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
-import { cpus, totalmem } from "os";
+import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
-import { readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
+import { parse } from "path";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -195,6 +197,7 @@ export class Host implements IComponent {
      * @param {SocketServer} socketServer Server to listen for connections from Instances.
      * @param {STHConfiguration} sthConfig Configuration.
      */
+    // eslint-disable-next-line complexity
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
@@ -231,7 +234,7 @@ export class Host implements IComponent {
             this.startMonitoringServer(sthConfig.monitorgingServer).then((res) => {
                 this.logger.info("MonitoringServer started", res);
             }, (e) => {
-                throw new Error(e);
+                throw e;
             });
         }
 
@@ -240,7 +243,21 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
+        const fsPaths = [
+            parse(process.cwd()).root, // root dir
+            homedir(),
+            this.config.sequencesRoot
+        ];
+
+        if (!existsSync(this.config.sequencesRoot)) {
+            mkdirSync(this.config.sequencesRoot);
+        }
+
+        if (this.config.kubernetes.sequencesRoot) fsPaths.push(this.config.kubernetes.sequencesRoot);
+
+        this.logger.info("Following path will be examined on load check.", fsPaths);
+
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements, fsPaths }));
         this.loadCheck.logger.pipe(this.logger);
 
         this.socketServer = socketServer;
@@ -268,9 +285,12 @@ export class Host implements IComponent {
     }
 
     private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
-        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
+        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor}>({ name: "@scramjet/monitoring-server" });
 
         this.logger.info("Starting monitoring server with config", config);
+
+        config.host ||= "localhost";
+        config.path ||= "healtz";
 
         const monitoringServer = new MonitoringServer({
             ...config,
@@ -404,15 +424,16 @@ export class Host implements IComponent {
     }
 
     private async startListening() {
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>((res) => {
-            this.api?.server.once("listening", () => {
-                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+        return new Promise<void>((res) => {
+            this.api.server
+                .once("listening", () => {
+                    const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                    this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
-                res();
-            });
+                    res();
+                })
+                .listen(this.config.host.port, this.config.host.hostname);
         });
     }
 
@@ -508,7 +529,7 @@ export class Host implements IComponent {
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
 
         this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), {
+        this.api.downstream(`${this.apiBase}/sequence/:id`, async (req) => this.handleUpdateSequence(req), {
             end: true,
             method: "put",
         });
@@ -517,7 +538,7 @@ export class Host implements IComponent {
 
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
 
-        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
+        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
@@ -629,22 +650,26 @@ export class Host implements IComponent {
      * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
      */
     async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
-        const id = req.params?.id;
+        if (!req.params?.id || typeof req.params.id !== "string") {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+        }
+
+        const id = req.params.id;
+        const sequence: SequenceInfo| undefined = this.sequenceStore.getById(id);
+
         const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 
         this.logger.trace("Deleting Sequence...", id, { force });
 
-        const sequenceInfo = this.sequenceStore.getByNameOrId(id);
-
-        if (!sequenceInfo) {
+        if (!sequence) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
                 error: `The sequence ${id} does not exist.`
             };
         }
 
-        if (sequenceInfo.instances.length > 0) {
-            const instances = [...sequenceInfo.instances].every((instanceId) => {
+        if (sequence.instances.length > 0) {
+            const instances = [...sequence.instances].every((instanceId) => {
                 // ?
                 // this.instancesStore[instanceId]?.finalizingPromise?.cancel();
                 return this.instancesStore[instanceId]?.isRunning;
@@ -661,7 +686,7 @@ export class Host implements IComponent {
 
             if (instances) {
                 this.logger.info(`Killing Instances from Sequence ${id}...`);
-                await Promise.all([...sequenceInfo.instances].map(async (instanceId) => {
+                await Promise.all([...sequence.instances].map(async (instanceId) => {
                     await this.instancesStore[instanceId]?.kill({ removeImmediately: true });
 
                     return new Promise((res) => this.instancesStore[instanceId]?.once("end", res));
@@ -672,12 +697,12 @@ export class Host implements IComponent {
         try {
             const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
-            await sequenceAdapter.remove(sequenceInfo.config);
+            await sequenceAdapter.remove(sequence.config);
             this.sequenceStore.delete(id);
 
             this.logger.trace("Sequence removed:", id);
             // eslint-disable-next-line max-len
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequenceInfo as unknown as GetSequenceResponse);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED, sequence as unknown as GetSequenceResponse);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -760,14 +785,12 @@ export class Host implements IComponent {
     }
 
     async handleIncomingSequence(
-        stream: ParsedMessage,
+        req: ParsedMessage,
         id: string
     ): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        stream.params ||= {};
+        req.params ||= {};
 
-        const sequenceName = stream.params.id_name || stream.headers["x-name"];
-
-        this.logger.info("New Sequence incoming", { name: sequenceName });
+        this.logger.info("New Sequence incoming", { id });
 
         try {
             const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
@@ -779,32 +802,28 @@ export class Host implements IComponent {
 
             await sequenceAdapter.init();
 
-            if (sequenceName) {
-                const existingSequence = this.sequenceStore.getByName(sequenceName as string);
+            const existingSequence = this.sequenceStore.getById(id as string);
 
-                if (existingSequence) {
-                    if (stream.method === "post") {
-                        this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
-
-                        return {
-                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
-                            error: `Sequence with name ${sequenceName} already exist`
-                        };
-                    }
-
-                    id = existingSequence.id;
+            if (existingSequence) {
+                if (req.method?.toLowerCase() !== "put") {
+                    return {
+                        opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
+                        error: `Sequence with name ${id} already exist`
+                    };
                 }
+                this.logger.debug("Overriding sequence", id, existingSequence.id);
+                id = existingSequence.id;
             }
 
-            const config = await sequenceAdapter.identify(stream, id);
+            const config = await sequenceAdapter.identify(req, id);
 
-            config.packageSize = stream.socket?.bytesRead;
+            config.packageSize = req.socket?.bytesRead;
 
             if (this.config.host.id) {
                 // eslint-disable-next-line max-len
-                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: this.config.host.id });
+                this.sequenceStore.set({ id, config, instances: [], location: this.config.host.id });
             } else {
-                this.sequenceStore.set({ id, config, instances: [], name: sequenceName, location: "STH" });
+                this.sequenceStore.set({ id, config, instances: [], location: "STH" });
             }
 
             this.logger.trace(`Sequence identified: ${config.id}`);
@@ -829,23 +848,27 @@ export class Host implements IComponent {
         }
     }
 
-    async handleSequenceUpdate(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        stream.params ||= {};
+    async handleUpdateSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        req.params ||= {};
 
-        const seqQuery = stream.params.id_name as string;
-        const existingSequence = this.sequenceStore.getByNameOrId(seqQuery);
+        if (!req.params.id || typeof req.params.id !== "string") {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
+        }
+
+        const id = req.params.id;
+        const existingSequence: SequenceInfo | undefined = this.sequenceStore.getById(id);
 
         if (!existingSequence) {
-            return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with name ${seqQuery} not found` };
+            return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with id: ${id} not found` };
         }
 
         if (existingSequence.instances.length) {
             return { opStatus: ReasonPhrases.CONFLICT, error: "Can't update sequence with instances" };
         }
 
-        this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
+        this.logger.debug("Sequence Update", existingSequence.id);
 
-        return this.handleIncomingSequence(stream, existingSequence.id);
+        return this.handleIncomingSequence(req, id);
     }
 
     /**
@@ -859,19 +882,15 @@ export class Host implements IComponent {
      */
     async handleNewSequence(stream: ParsedMessage, id = IDProvider.generate()):
         Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        const sequenceName = stream.headers["x-name"] as string;
+        const existingSequence = this.sequenceStore.getById(id);
 
-        if (sequenceName) {
-            const existingSequence = this.sequenceStore.getByNameOrId(sequenceName);
+        if (existingSequence) {
+            this.logger.debug("Method not allowed", id, existingSequence.id);
 
-            if (existingSequence) {
-                this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
-
-                return {
-                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
-                    error: `Sequence with name ${sequenceName} already exist`
-                };
-            }
+            return {
+                opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
+                error: `Sequence with id ${id} already exist`
+            };
         }
 
         return this.handleIncomingSequence(stream, id);
@@ -1019,6 +1038,9 @@ export class Host implements IComponent {
 
         this.instancesStore[id] = csic;
 
+        csic.on("event", async (event: EventMessageData) => {
+            await this.eventBus({ source: id, ...event });
+        });
         csic.on("error", (err) => {
             this.pushTelemetry("Instance error", { ...err }, "error");
             this.logger.error("CSIController errored", err.message, err.exitcode);
@@ -1045,7 +1067,7 @@ export class Host implements IComponent {
             }
 
             if (data.requires && !csic.inputRouted && data.contentType) {
-                this.logger.trace("Routing Sequence input to topic", data.requires);
+                this.logger.trace("Routing topic to Sequence input", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
                     { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
@@ -1055,7 +1077,10 @@ export class Host implements IComponent {
                 csic.inputRouted = true;
 
                 await this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType!, topicName: data.requires
+                    requires: data.requires,
+                    contentType: data.contentType!,
+                    topicName: data.requires,
+                    status: "add"
                 });
             }
 
@@ -1070,7 +1095,10 @@ export class Host implements IComponent {
                 csic.outputRouted = true;
 
                 await this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides
+                    provides: data.provides,
+                    contentType: data.contentType!,
+                    topicName: data.provides,
+                    status: "add"
                 });
             }
         });
@@ -1125,6 +1153,16 @@ export class Host implements IComponent {
         return csic;
     }
 
+    async eventBus(event: EventMessageData) {
+        this.logger.debug("Got event", event);
+
+        // Send the event to all instances except the source of the event.
+        await Promise.all(
+            Object.values(this.instancesStore)
+                .map(inst => event.source !== inst.id ? inst.emitEvent(event) : true)
+        );
+    }
+
     /**
      * Returns list of all Sequences.
      *
@@ -1139,10 +1177,13 @@ export class Host implements IComponent {
     /**
      * Returns Sequence information.
      *
-     * @param {string} id Instance ID.
+     * @param {ParsedMessage} req Request object that should contain id parameter inside.
      * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
      */
-    getSequence(id: string): OpResponse<STHRestAPI.GetSequenceResponse> {
+    getSequence(req: ParsedMessage): OpResponse<STHRestAPI.GetSequenceResponse> {
+        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+
+        const id = req.params.id;
         const sequence = this.sequenceStore.getById(id);
 
         if (!sequence) {

@@ -48,12 +48,14 @@
 - [isLogLevel](modules.md#isloglevel)
 - [isPort](modules.md#isport)
 - [isStartSequenceDTO](modules.md#isstartsequencedto)
+- [isStartSequenceEndpointPayloadDTO](modules.md#isstartsequenceendpointpayloaddto)
 - [isUrlPath](modules.md#isurlpath)
 - [logLevelValidator](modules.md#loglevelvalidator)
 - [merge](modules.md#merge)
 - [normalizeUrl](modules.md#normalizeurl)
 - [optionalValidator](modules.md#optionalvalidator)
 - [portValidator](modules.md#portvalidator)
+- [processCommanderRunnerEnvs](modules.md#processcommanderrunnerenvs)
 - [promiseTimeout](modules.md#promisetimeout)
 - [readJsonFile](modules.md#readjsonfile)
 - [readStreamedJSON](modules.md#readstreamedjson)
@@ -574,6 +576,26 @@ arg is StartSequenceDTO
 
 ___
 
+### isStartSequenceEndpointPayloadDTO
+
+▸ **isStartSequenceEndpointPayloadDTO**(`arg`): arg is StartSequenceEndpointPayloadDTO
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `arg` | `any` |
+
+#### Returns
+
+arg is StartSequenceEndpointPayloadDTO
+
+#### Defined in
+
+[packages/utility/src/typeguards/dto/sequence-start.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/dto/sequence-start.ts#L25)
+
+___
+
 ### isUrlPath
 
 ▸ **isUrlPath**(`url`): url is string
@@ -739,6 +761,26 @@ ___
 #### Defined in
 
 [packages/types/src/utils.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L119)
+
+___
+
+### processCommanderRunnerEnvs
+
+▸ **processCommanderRunnerEnvs**(`envString`): `Record`<`string`, `string`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `envString` | `string` |
+
+#### Returns
+
+`Record`<`string`, `string`\>
+
+#### Defined in
+
+[packages/utility/src/process-env.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/process-env.ts#L1)
 
 ___
 
