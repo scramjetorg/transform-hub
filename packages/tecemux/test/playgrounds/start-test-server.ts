@@ -3,7 +3,7 @@
 
 import net, { Socket, createConnection } from "net";
 
-import { TeceMux, TeceMuxChannel } from "@scramjet/tecemux";
+import { TeceMux, TeceMuxChannel } from "../../src";
 import { Agent, createServer, request } from "http";
 
 const httpServer = createServer((req, res) => {

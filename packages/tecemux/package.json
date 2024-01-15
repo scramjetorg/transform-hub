@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/tecemux",
-  "version": "0.36.1",
+  "version": "0.38.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides a communication protocol used among Scramjet modules.",
   "main": "./src/index.ts",
   "scripts": {
@@ -19,8 +19,8 @@
     "bpmux": "^8.2.1"
   },
   "devDependencies": {
-    "@scramjet/api-server": "^0.36.1",
-    "@scramjet/types": "^0.36.1",
+    "@scramjet/api-server": "^0.38.0",
+    "@scramjet/types": "^0.38.0",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
