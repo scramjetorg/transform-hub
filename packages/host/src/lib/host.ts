@@ -1110,7 +1110,7 @@ export class Host implements IComponent {
             this.logger.debug("Instance connecting", id);
 
             if (!this.instancesStore[id]) {
-                this.logger.info("creating new CSIController for runner connecting");
+                this.logger.info("creating new CSIController unknown istance");
 
                 await this.csiDispatcher.createCSIController(
                     id,

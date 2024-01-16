@@ -31,7 +31,7 @@ import { ManagerClient } from "@scramjet/manager-api-client";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { EventEmitter } from "events";
-import { writeFileSync } from "fs";
+import { createWriteStream, writeFileSync } from "fs";
 import { Readable, Writable } from "stream";
 
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
@@ -174,6 +174,10 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.addOutput(process.stdout);
         }
 
+        if (process.env.RUNNER_LOG_FILE) {
+            this.logger.addOutput(createWriteStream(process.env.RUNNER_LOG_FILE));
+        }
+
         this.inputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream", e);
 
@@ -200,6 +204,10 @@ export class Runner<X extends AppConfig> implements IComponent {
     async controlStreamHandler([code, data]: EncodedControlMessage) {
         this.logger.debug("Control message received", code, data);
 
+        if (this.monitoringMessageReplyTimeout) {
+            clearTimeout(this.monitoringMessageReplyTimeout);
+        }
+
         switch (code) {
             case RunnerMessageCode.MONITORING_RATE:
                 await this.handleMonitoringRequest(data as MonitoringRateMessageData);
@@ -219,9 +227,6 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.emitter.emit(eventData.eventName, eventData.message);
                 break;
             case RunnerMessageCode.MONITORING_REPLY:
-                if (this.monitoringMessageReplyTimeout) {
-                    clearTimeout(this.monitoringMessageReplyTimeout);
-                }
                 break;
             default:
                 break;
@@ -264,23 +269,25 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
 
             working = true;
-            await this.reportHealth();
+            await this.reportHealth(1000);
             working = false;
         }, 1000 / data.monitoringRate).unref();
     }
 
-    private async reportHealth() {
+    private async reportHealth(timeout?: number) {
         const { healthy } = await this.context.monitor();
 
         MessageUtils.writeMessageOnStream(
             [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
         );
 
-        this.monitoringMessageReplyTimeout = setTimeout(async () => {
-            this.logger.warn("Monitoring Reply Timeout. Connected", this.connected);
+        if (timeout) {
+            this.monitoringMessageReplyTimeout = setTimeout(async () => {
+                this.logger.warn("Monitoring Reply Timeout. Connected");
 
-            await this.handleDisconnect();
-        }, 500);
+                await this.handleDisconnect();
+            }, timeout);
+        }
     }
 
     async handleDisconnect() {
@@ -288,10 +295,14 @@ export class Runner<X extends AppConfig> implements IComponent {
             clearInterval(this.monitoringInterval);
         }
 
+        if (this.monitoringMessageReplyTimeout) {
+            clearTimeout(this.monitoringMessageReplyTimeout);
+        }
+
         this.connected = false;
 
         try {
-            await this.hostClient.disconnect(true);
+            await this.hostClient.disconnect(!this.connected);
             await defer(5000);
         } catch (e) {
             this.logger.error("Disconnect failed");
@@ -358,8 +369,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.debug("premain");
 
         try {
+            this.logger.debug("connecting...");
             await promiseTimeout(this.hostClient.init(this.instanceId), 2000);
+            this.logger.debug("connected");
             this.connected = true;
+            await this.handleMonitoringRequest({ monitoringRate: 1 });
         } catch (e) {
             this.connected = false;
             this.logger.error("hostClient init error", e);
@@ -369,8 +383,10 @@ export class Runner<X extends AppConfig> implements IComponent {
             return await this.premain();
         }
 
+        this.logger.debug("Redirecting outputs");
         this.redirectOutputs();
 
+        this.logger.debug("Defining control stream");
         this.defineControlStream();
 
         this.hostClient.stdinStream
@@ -386,10 +402,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const { args, appConfig } = this.runnerConnectInfo;
 
-        this.logger.debug("Handshake received", appConfig, args);
-
-        await this.handleMonitoringRequest({ monitoringRate: 1 });
-
         return { appConfig, args };
     }
 
@@ -397,6 +409,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         const { appConfig, args } = await this.premain();
 
         this.initAppContext(appConfig as X);
+
+        await this.reportHealth();
+        await this.handleMonitoringRequest({ monitoringRate: 1 });
 
         let sequence: any[] = [];
 

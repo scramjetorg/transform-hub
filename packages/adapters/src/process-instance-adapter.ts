@@ -173,9 +173,9 @@ class ProcessInstanceAdapter implements
 
         this.crashLogStreams = Promise.all([runnerProcess.stdout, runnerProcess.stderr].map(streamToString));
 
-        this.logger.trace("Runner process is running", runnerProcess.pid);
-
         this.runnerProcess = runnerProcess;
+
+        this.logger.trace("Runner process is running", runnerProcess.pid);
     }
 
     getRunnerInfo(): RunnerConnectInfo["system"] {
@@ -234,7 +234,15 @@ class ProcessInstanceAdapter implements
 
                     res(parseInt(data!, 10));
                 } catch (err) {
-                    /** file not exists */
+                    /** OK. file not exists. check if process is*/
+
+                    try {
+                        process.kill(this.processPID, 0);
+                    } catch (e) {
+                        this.logger.error("Runner process not exists", e);
+                        /** process not exists */
+                        reject("pid not exists");
+                    }
                 }
             }, 1000);
         });

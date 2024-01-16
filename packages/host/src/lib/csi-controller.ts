@@ -236,7 +236,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async main() {
         this.status = InstanceStatus.RUNNING;
-        this.logger.trace("Instance started");
+        this.logger.trace("Instance started", this.status);
 
         let code = -1;
 
@@ -290,6 +290,8 @@ export class CSIController extends TypedEmitter<Events> {
                 this.logger.trace("Sequence initialized");
 
                 const exitcode = await this.endOfSequence;
+
+                this.logger.trace("End of sequence");
 
                 if (exitcode > 0) {
                     this.status = InstanceStatus.ERRORED;
@@ -497,6 +499,10 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
+            await this.controlDataStream?.whenWrote(
+                MessageUtilities.serializeMessage<RunnerMessageCode.MONITORING_REPLY>({ msgCode: RunnerMessageCode.MONITORING_REPLY })
+            );
+
             const stats = await this.instanceAdapter.stats(message[1]);
 
             this._lastStats = stats;
@@ -504,10 +510,6 @@ export class CSIController extends TypedEmitter<Events> {
             this.heartBeatTick();
 
             message[1] = stats;
-
-            await this.controlDataStream?.whenWrote(
-                MessageUtilities.serializeMessage<RunnerMessageCode.MONITORING_REPLY>({ msgCode: RunnerMessageCode.MONITORING_REPLY })
-            );
 
             return message;
         }, true);
@@ -566,7 +568,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.started = new Date(); //@TODO: set by runner?
-        this.logger.info("Instance started", JSON.stringify(message, undefined));
+        this.logger.info("Handshake", JSON.stringify(message, undefined));
     }
 
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {

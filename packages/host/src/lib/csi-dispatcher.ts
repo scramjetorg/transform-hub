@@ -73,6 +73,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         });
 
         csiController.on("event", async (event: EventMessageData) => {
+            this.logger.info("Received event", event);
             this.emit("event", { event, id: csiController.id });
         });
 
@@ -116,6 +117,14 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         });
 
         csiController.on("ping", (pingMessage: PingMessageData) => {
+            this.logger.info("Ping received", JSON.stringify(pingMessage));
+
+            if (pingMessage.sequenceInfo.config.type !== this.STHConfig.runtimeAdapter) {
+                this.logger.error("Incorrect Instance adapter");
+
+                return;
+            }
+
             const seq = this.sequenceStore.getById(csiController.sequence.id);
 
             if (seq) {
@@ -180,7 +189,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         csiController.start().catch((e) => {
             this.logger.error("CSIC start error", csiController.id, e);
-            throw new Error("CSIC start error");
+            this.emit("error", { id: csiController.id, err: "fatal" });
         });
 
         this.logger.trace("csiController started", id);
