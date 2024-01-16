@@ -64,7 +64,7 @@ export const setPlatformDefaults = async () => {
         const selectedManager = managers[0];
 
         const managerClient = middlewareClient.getManagerClient(selectedManager.id);
-        const hosts = await managerClient.getHosts();
+        const hosts = (await managerClient.getHosts()).data;
 
         if (!hosts.length) return false;
 

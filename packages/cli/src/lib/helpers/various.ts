@@ -5,7 +5,7 @@ import { getMiddlewareClient } from "../platform";
 export async function getInfo() {
     const { lastSpaceId: space, lastHubId: id } = sessionConfig.get();
     const managerClient = getMiddlewareClient().getManagerClient(space);
-    const hosts = await managerClient.getHosts();
+    const hosts = (await managerClient.getHosts()).data;
     const host = hosts.find((h: any) => h.id === id);
 
     return { managerClient, host, hosts };

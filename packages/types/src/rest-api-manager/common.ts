@@ -22,3 +22,9 @@ export type HealthCheckInfo = {
         [key: string]: boolean;
     };
 }
+
+export type Pagination = {
+    pagination: {
+        total: number
+    }
+}
