@@ -171,7 +171,7 @@ IComponent {
 
     // eslint-disable-next-line complexity
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
-        if (config.type !== "docker") {
+        if (!(config.type === "docker" && "container" in config)) {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
 

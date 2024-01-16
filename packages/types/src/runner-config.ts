@@ -5,7 +5,7 @@ import { InstanceArgs } from "./instance";
 import { PortConfig } from "./sequence-package-json";
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
-type CommonSequenceConfig = {
+export type CommonSequenceConfig = {
     type: string;
     engines: Record<string, string>;
     id: string;
@@ -45,6 +45,7 @@ export type KubernetesSequenceConfig = CommonSequenceConfig & {
     type: "kubernetes"
 }
 
-export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig
+// eslint-disable-next-line max-len
+export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig | CommonSequenceConfig;
 
 export type InstanceConfig = SequenceConfig & { instanceAdapterExitDelay: number, limits: InstanceLimits }
