@@ -586,6 +586,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     async sendInstanceInfo(instance: Instance, instanceStatus: InstanceMessageCode): Promise<void> {
         this.logger.trace("Send instance status update", instanceStatus);
+
         await this.communicationStream?.whenWrote(
             [CPMMessageCode.INSTANCE, { instance, status: instanceStatus }]
         );

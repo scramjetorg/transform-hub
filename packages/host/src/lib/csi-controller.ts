@@ -171,7 +171,7 @@ export class CSIController extends TypedEmitter<Events> {
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
 
     constructor(
-        private handshakeMessage: MessageDataType<RunnerMessageCode.PING>,
+        private handshakeMessage: Omit<MessageDataType<RunnerMessageCode.PING>, "created">,
         public communicationHandler: ICommunicationHandler,
         private sthConfig: STHConfiguration,
         private hostProxy: HostProxy,
@@ -470,7 +470,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             const payload = message[1].payload;
 
-            this.args = message[1].payload.args;
+            this.args = payload.args;
+            this.info.created = new Date(message[1].created);
 
             this.provides ||= this.outputTopic || payload?.outputTopic;
             this.requires ||= this.inputTopic || payload?.inputTopic;
@@ -478,6 +479,7 @@ export class CSIController extends TypedEmitter<Events> {
             await this.handleHandshake(message);
 
             this.emit("ping", message[1]);
+
             return null;
         });
 
@@ -828,7 +830,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getInfo(): STHRestAPI.GetInstanceResponse {
-        // eslint-disable-next-line no-console
         this.logger.debug("Get info [seq, info]", this.sequence, this.info);
 
         return {

@@ -148,6 +148,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     private sequenceInfo: SequenceInfo;
 
     private connected = false;
+    private created = Date.now();
 
     private runnerConnectInfo: RunnerConnectInfo = {
         appConfig: {}
@@ -570,6 +571,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             RunnerMessageCode.PING, {
                 id: this.instanceId,
                 sequenceInfo: this.sequenceInfo,
+                created: this.created,
                 payload: {
                     ...this.runnerConnectInfo,
                     system: {

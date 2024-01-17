@@ -19,6 +19,7 @@ export type PingMessageData = {
     ports?: Record<string, string>;
     payload: StartSequencePayload;
     sequenceInfo: SequenceInfo;
+    created: number;
 };
 
 export type PangMessageData = {
