@@ -262,7 +262,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.ended = new Date();
-        this.executionTime = (this.info.ended.getTime() - this.info.started!.getTime()) / 1000;
+        this.executionTime = (this.info.ended.getTime() - this.info.created!.getTime()) / 1000;
 
         this.emit("terminated", code);
 
@@ -469,6 +469,8 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             const payload = message[1].payload;
+
+            this.status = InstanceStatus.RUNNING;
 
             this.args = payload.args;
             this.info.created = new Date(message[1].created);

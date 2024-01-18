@@ -377,7 +377,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.handleMonitoringRequest({ monitoringRate: 1 });
         } catch (e) {
             this.connected = false;
-            this.logger.error("hostClient init error", e);
+            this.logger.warn("Can't connect to Host", e);
 
             await defer(2000);
 
