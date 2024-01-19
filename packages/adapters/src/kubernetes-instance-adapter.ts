@@ -62,7 +62,8 @@ IComponent {
 
     private get kubeClient() {
         if (!this._kubeClient) {
-            throw new Error("Kubernetes client not initialized");
+            this._kubeClient = new KubernetesClientAdapter(this.adapterConfig.authConfigPath, this.adapterConfig.namespace);
+            this._kubeClient.init();
         }
 
         return this._kubeClient;

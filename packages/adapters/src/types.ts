@@ -327,7 +327,7 @@ export type RunnerEnvConfig = {
     instancesServerHost: string;
     instanceId: InstanceId;
     sequenceInfo: SequenceInfo
-    payload?: StartSequencePayload
+    payload: StartSequencePayload
 }
 
 export type RunnerEnvironmentVariables = Partial<{

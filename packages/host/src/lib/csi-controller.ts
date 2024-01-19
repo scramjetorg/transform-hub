@@ -220,7 +220,10 @@ export class CSIController extends TypedEmitter<Events> {
 
         i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
+
             this.status ||= InstanceStatus.ERRORED;
+            this.executionTime = (Date.now() - this.info.created!.getTime()) / 1000;
+
             this.setExitInfo(e.exitcode, e.message);
 
             this.emit("error", e);
