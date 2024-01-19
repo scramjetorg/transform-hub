@@ -94,7 +94,7 @@ IComponent {
             }
         };
     }
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, _payload: RunnerConnectInfo): Promise<void> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
         }
@@ -116,7 +116,8 @@ IComponent {
                 instancesServerHost: this.adapterConfig.sthPodHost,
                 instanceId,
                 pipesPath: "",
-                sequenceInfo
+                sequenceInfo,
+                payload
             }, {
                 ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
@@ -147,7 +148,11 @@ IComponent {
             2
         );
 
+        this.logger.debug("Runner Pod created");
+
         const startPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Running", "Failed"]);
+
+        this.logger.debug("Runner Pod status");
 
         if (startPodStatus.status === "Failed") {
             this.logger.error("Runner unable to start", startPodStatus);
@@ -168,9 +173,15 @@ IComponent {
         this.stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
 
         await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, this.stdErrorStream, compressedStream, 2);
+
+        this.logger.debug("Copy command done");
     }
 
-    async waitUntilExit(_config: InstanceConfig, _instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
+    async waitUntilExit(_config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
+        this.logger.info("Waiting for pod exit...");
+
+        this._runnerName ||= `runner-${ instanceId }`;
+
         const exitPodStatus = await this.kubeClient.waitForPodStatus(this._runnerName!, ["Succeeded", "Failed", "Unknown"]);
 
         this.stdErrorStream?.end();
