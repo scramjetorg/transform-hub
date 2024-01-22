@@ -133,6 +133,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 this.logger.warn("Instance of not existing sequence connected");
                 //@TODO: ?
             }
+
             this.emit("established", { id: pingMessage.id, sequence: pingMessage.sequenceInfo });
         });
 

@@ -473,6 +473,12 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             const payload = message[1].payload;
 
+            if (!payload) {
+                this.emit("error", "No payload in ping!");
+
+                return null;
+            }
+
             this.status = InstanceStatus.RUNNING;
 
             this.args = payload.args;

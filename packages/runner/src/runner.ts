@@ -150,6 +150,11 @@ export class Runner<X extends AppConfig> implements IComponent {
     private connected = false;
     private created = Date.now();
 
+    private requires?: string;
+    private requiresContentType?: string;
+    private provides?: string;
+    private providesContentType?: string;
+
     private runnerConnectInfo: RunnerConnectInfo = {
         appConfig: {}
     };
@@ -312,6 +317,14 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.info("Reinitializing....");
 
         await this.premain();
+
+        if (this.requires) {
+            this.sendPang({ requires: this.requires, contentType: this.requiresContentType });
+        }
+
+        if (this.provides) {
+            this.sendPang({ provides: this.provides, contentType: this.providesContentType });
+        }
     }
 
     async handleKillRequest(): Promise<void> {
@@ -406,6 +419,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         return { appConfig, args };
     }
 
+    sendPang(args: { contentType?: string, requires?: string, provides?: string }) {
+        MessageUtils.writeMessageOnStream(
+            [RunnerMessageCode.PANG, args], this.hostClient.monitorStream);
+    }
+
     async main() {
         const { appConfig, args } = await this.premain();
 
@@ -423,11 +441,10 @@ export class Runner<X extends AppConfig> implements IComponent {
             if (sequence.length && typeof sequence[0] !== "function") {
                 this.logger.debug("First Sequence object is not a function:", sequence[0]);
 
-                MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        requires: sequence[0].requires,
-                        contentType: sequence[0].contentType
-                    }], this.hostClient.monitorStream);
+                this.requires = sequence[0].requires;
+                this.requiresContentType = sequence[0].contentType;
+
+                this.sendPang({ requires: this.requires, contentType: this.requiresContentType });
 
                 this.logger.trace("Waiting for input stream");
 
@@ -694,13 +711,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 this.hostClient.outputStream.end(`${intermediate}`);
 
-                MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        provides: "",
-                        contentType: ""
-                    }],
-                    this.hostClient.monitorStream,
-                );
+                this.sendPang({ provides: "", contentType: "" });
 
                 res();
             } else if (stream && this.hostClient.outputStream) {
@@ -722,13 +733,10 @@ export class Runner<X extends AppConfig> implements IComponent {
                         : this.hostClient.outputStream
                     );
 
-                MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        provides: intermediate.topic || "",
-                        contentType: intermediate.contentType || ""
-                    }],
-                    this.hostClient.monitorStream,
-                );
+                    this.provides = intermediate.topic || "";
+                    this.providesContentType = intermediate.contentType || "";
+
+                this.sendPang({ provides: this.provides, contentType: this.providesContentType });
             } else {
             // TODO: this should push a PANG message with the sequence description
                 this.logger.debug("Sequence did not output a stream");

@@ -843,6 +843,8 @@ export class Host implements IComponent {
      * Used to recover Sequences information after restart.
      */
     async identifyExistingSequences() {
+        this.logger.trace("Identifing existing sequences");
+
         const adapter = await initializeRuntimeAdapters(this.config);
         const sequenceAdapter = getSequenceAdapter(adapter, this.config);
 
