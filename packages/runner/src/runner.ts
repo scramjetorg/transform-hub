@@ -14,8 +14,10 @@ import {
     IComponent,
     IHostClient,
     IObjectLogger,
+    InstanceStatus,
     MaybePromise,
     MonitoringRateMessageData,
+    PangMessageData,
     RunnerConnectInfo,
     SequenceInfo,
     StopSequenceMessageData,
@@ -154,6 +156,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     private requiresContentType?: string;
     private provides?: string;
     private providesContentType?: string;
+
+    private status: InstanceStatus = InstanceStatus.STARTING;
 
     private runnerConnectInfo: RunnerConnectInfo = {
         appConfig: {}
@@ -334,10 +338,13 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (!this.stopExpected) {
             this.logger.trace(`Exiting (unexpected, ${RunnerExitCode.KILLED})`);
+            this.status = InstanceStatus.KILLING;
+
             return this.exit(RunnerExitCode.KILLED);
         }
 
         this.logger.trace("Exiting (expected)");
+        this.status = InstanceStatus.STOPPING;
         return this.exit(RunnerExitCode.STOPPED);
     }
 
@@ -358,6 +365,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
+            this.status = InstanceStatus.STOPPING;
+
             MessageUtils.writeMessageOnStream(
                 [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream
             );
@@ -419,7 +428,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         return { appConfig, args };
     }
 
-    sendPang(args: { contentType?: string, requires?: string, provides?: string }) {
+    sendPang(args: PangMessageData) {
         MessageUtils.writeMessageOnStream(
             [RunnerMessageCode.PANG, args], this.hostClient.monitorStream);
     }
@@ -474,6 +483,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Sequence error:", error.stack);
             }
 
+            this.status = InstanceStatus.ERRORED;
+
             return this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
 
@@ -481,12 +492,17 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.runSequence(sequence, args);
 
             this.logger.trace(`Sequence completed. Waiting ${this.context.exitTimeout}ms with exit.`);
+
+            this.status = InstanceStatus.COMPLETED;
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, { timeout: this.context.exitTimeout }]);
 
             await defer(this.context.exitTimeout);
+
             return this.exit(0);
         } catch (error: any) {
             this.logger.error("Error occurred during Sequence execution: ", error.stack);
+
+            this.status = InstanceStatus.ERRORED;
 
             return this.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
         }
@@ -511,11 +527,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.info("Cleaning up streams");
-
-            // await promiseTimeout(
-            //     this.hostClient.disconnect(), 5000
-            // );
         } catch (e: any) {
+            this.status = InstanceStatus.ERRORED;
+
             exitcode = RunnerExitCode.CLEANUP_FAILED;
         }
 
@@ -594,7 +608,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                     system: {
                         processPID: process.pid.toString()
                     }
-                }
+                },
+                status: this.status
             }], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
@@ -646,6 +661,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             try {
                 this.logger.debug("Processing function on index", sequence.length - itemsLeftInSequence - 1);
 
+                this.status = InstanceStatus.RUNNING;
+
                 out = func.call(
                     this.context,
                     stream,
@@ -656,6 +673,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             } catch (error: any) {
                 this.logger.error("Function errored", sequence.length - itemsLeftInSequence, error.stack);
 
+                this.status = InstanceStatus.ERRORED;
+
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
             }
 
@@ -663,8 +682,11 @@ export class Runner<X extends AppConfig> implements IComponent {
                 intermediate = await out;
 
                 this.logger.info("Function output type", sequence.length - itemsLeftInSequence - 1, typeof out);
+
                 if (!intermediate) {
                     this.logger.error("Sequence ended premature");
+
+                    this.status = InstanceStatus.ERRORED;
 
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
                 } else if (typeof intermediate === "object" && intermediate instanceof DataStream) {

@@ -2,7 +2,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
+import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, InstanceStatus, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { InstanceStore } from "./instance-store";
@@ -60,7 +60,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         instanceProxy: HostProxy) {
         sequenceInfo.instances = sequenceInfo.instances || [];
 
-        const csiController = new CSIController({ id, sequenceInfo, payload }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
+        const csiController = new CSIController({ id, sequenceInfo, payload, status: InstanceStatus.INITIALIZING }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 

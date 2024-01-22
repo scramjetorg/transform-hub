@@ -471,7 +471,7 @@ export class CSIController extends TypedEmitter<Events> {
             .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
-            const payload = message[1].payload;
+            const { status, payload } = message[1];
 
             if (!payload) {
                 this.emit("error", "No payload in ping!");
@@ -479,7 +479,7 @@ export class CSIController extends TypedEmitter<Events> {
                 return null;
             }
 
-            this.status = InstanceStatus.RUNNING;
+            this.status = status || InstanceStatus.RUNNING;
 
             this.args = payload.args;
             this.info.created = new Date(message[1].created);
