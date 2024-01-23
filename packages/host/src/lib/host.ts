@@ -327,11 +327,26 @@ export class Host implements IComponent {
     }
 
     /**
+     * Check for Sequence.
      * Pass information about connected instance to monitoring and platform services.
      *
      * @param {Instance} instance Instance data.
      */
     async handleDispatcherEstablishedEvent(instance: Instance) {
+        const seq = this.sequenceStore.getById(instance.sequence.id);
+
+        this.logger.info("Checking Sequence...");
+
+        if (!seq) {
+            this.logger.info("Sequence not found. Checking Store...");
+
+            try {
+                await this.getExternalSequence(instance.sequence.id);
+            } catch (e) {
+                this.logger.warn("Sequence not found in store. Instance has no Sequence.");
+            }
+        }
+
         this.auditor.auditInstance(instance.id, InstanceMessageCode.INSTANCE_CONNECTED);
 
         await this.cpmConnector?.sendInstanceInfo({
