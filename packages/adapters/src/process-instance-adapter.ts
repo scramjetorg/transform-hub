@@ -35,6 +35,7 @@ class ProcessInstanceAdapter implements
     sthConfig: STHConfiguration;
 
     processPID: number = -1;
+    exitCode = -1;
     id?: string | undefined;
 
     private runnerProcess?: ChildProcess;
@@ -171,6 +172,11 @@ class ProcessInstanceAdapter implements
 
         runnerProcess.unref();
 
+        runnerProcess.on("exit", (code) => {
+            this.exitCode = Number(code) || -1;
+            this.logger.info("Runner exit code", code);
+        });
+
         this.crashLogStreams = Promise.all([runnerProcess.stdout, runnerProcess.stderr].map(streamToString));
 
         this.runnerProcess = runnerProcess;
@@ -187,7 +193,13 @@ class ProcessInstanceAdapter implements
     async waitUntilExit(_config: InstanceConfig, _instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
         if (this.runnerProcess) {
             const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
-                (res) => this.runnerProcess?.on("exit", (code, sig) => res([code, sig]))
+                (res) => {
+                    if (this.exitCode > -1) {
+                        res([this.exitCode, null]);
+                    }
+
+                    this.runnerProcess?.on("exit", (code, sig) => res([code, sig]));
+                }
             );
 
             this.logger.trace("Runner process exited", this.runnerProcess?.pid);

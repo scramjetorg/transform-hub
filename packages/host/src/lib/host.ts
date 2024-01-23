@@ -62,7 +62,7 @@ import SequenceStore from "./sequenceStore";
 
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
 
-import { CSIDispatcher, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
+import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
 
@@ -323,6 +323,9 @@ export class Host implements IComponent {
             })
             .on("error", (errorData: DispatcherErrorEventData) => {
                 this.pushTelemetry("Instance error", { ...errorData }, "error");
+            })
+            .on("hourChime", (data: DispatcherChimeEventData) => {
+                this.pushTelemetry("Instance hour chime", data);
             });
     }
 
@@ -330,9 +333,9 @@ export class Host implements IComponent {
      * Check for Sequence.
      * Pass information about connected instance to monitoring and platform services.
      *
-     * @param {Instance} instance Instance data.
+     * @param {DispatcherInstanceEstablishedEventData} instance Instance data.
      */
-    async handleDispatcherEstablishedEvent(instance: Instance) {
+    async handleDispatcherEstablishedEvent(instance: DispatcherInstanceEstablishedEventData) {
         this.logger.info("Checking Sequence...");
 
         const seq = this.sequenceStore.getById(instance.sequence.id);
@@ -575,11 +578,13 @@ export class Host implements IComponent {
                     this.logger.warn("Sequence id not found for startup config", seqenceConfig);
                     return;
                 }
+
                 await this.csiDispatcher.startRunner(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
                     instanceId: seqenceConfig.instanceId
                 });
+
                 this.logger.debug("Starting sequence based on config", seqenceConfig);
             })
             .run();
@@ -1085,6 +1090,7 @@ export class Host implements IComponent {
         if (this.cpmConnector?.connected) {
             sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
                 this.logger.error("Error getting sequence from external sources", error);
+
                 return undefined;
             });
         }
@@ -1098,39 +1104,23 @@ export class Host implements IComponent {
         try {
             const runner = await this.csiDispatcher.startRunner(sequence, payload);
 
-            // @todo more info
-            // await this.cpmConnector?.sendInstanceInfo({
-            //     id: runner.id,
-            //     appConfig: runner.appConfig,
-            //     args: runner.args,
-            //     sequence: (info => {
-            //        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            //        const { instances, ...rest } = info;
+            if ("id" in runner) {
+                this.logger.debug("Instance limits", runner.limits);
+                this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
+                this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
 
-            //        return rest;
-            //     })(sequence),
-            //     ports: runner.info.ports,
-            //     created: csic.info.created,
-            //     started: csic.info.started,
-            //     status: csic.status,
-            // }, InstanceMessageCode.INSTANCE_STARTED);
-
-            this.logger.debug("Instance limits", runner.limits);
-            this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
-            this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
-
-            // csic.on("hourChime", () => {
-            //     this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
-            // });
-
-            return {
-                opStatus: ReasonPhrases.OK,
-                message: `Sequence ${runner.id} starting`,
-                id: runner.id
-            };
+                return {
+                    opStatus: ReasonPhrases.OK,
+                    message: `Sequence ${runner.id} starting`,
+                    id: runner.id
+                };
+            } else {
+                throw runner;
+            }
         } catch (error: any) {
             this.pushTelemetry("Instance start failed", { error: error.message }, "error");
             this.logger.error(error.message);
+
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
                 error: error.message

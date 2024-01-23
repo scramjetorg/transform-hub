@@ -33,7 +33,7 @@
     "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --ext .js --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && yarn lint",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
-    "start:dev": "DEVELOPMENT=true ts-node packages/sth/src/bin/hub.ts",
+    "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "start:dev:cli": "DEVELOPMENT=true ts-node packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "scripts/run-script.js -v -w modules install:deps",

@@ -10,15 +10,17 @@ import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
 import SequenceStore from "./sequenceStore";
+import { mapRunnerExitCode } from "./utils";
 
 export type DispatcherErrorEventData = { id:string, err: any };
 export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};
 export type DispatcherInstanceTerminatedEventData = DispatcherInstanceEndEventData;
 export type DispatcherInstanceEstablishedEventData = Instance;
+export type DispatcherChimeEvent = { id: string, language: string, seqId: string };
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
-    hourChime: () => void;
+    hourChime: (data: DispatcherChimeEvent) => void;
     error: (data: DispatcherErrorEventData) => void;
     stop: (code: number) => void;
     end: (data: DispatcherInstanceEndEventData) => void;
@@ -60,133 +62,142 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         instanceProxy: HostProxy) {
         sequenceInfo.instances = sequenceInfo.instances || [];
 
-        const csiController = new CSIController({ id, sequenceInfo, payload, status: InstanceStatus.INITIALIZING }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
+        const csiController = new CSIController({
+            id,
+            sequenceInfo,
+            payload,
+            status: InstanceStatus.INITIALIZING
+        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 
         csiController.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });
 
-        csiController.on("error", (err) => {
-            this.logger.error("CSIController errored", err.message, err.exitcode);
-            this.emit("error", { id, err });
-        });
-
-        csiController.on("event", async (event: EventMessageData) => {
-            this.logger.info("Received event", event);
-            this.emit("event", { event, id: csiController.id });
-        });
-
-        // eslint-disable-next-line complexity
-        csiController.on("pang", async (data: PangMessageData) => {
-            this.logger.trace("PANG received", [csiController.id, data]);
-
-            if ((data.requires || data.provides) && !data.contentType) {
-                this.logger.warn("Missing topic content-type");
-            }
-
-            if (data.requires && !csiController.inputRouted && data.contentType) {
-                this.logger.trace("Routing topic to Sequence input", data.requires);
-
-                await this.serviceDiscovery.routeTopicToStream(
-                    { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
-                    csiController.getInputStream()
-                );
-
-                csiController.inputRouted = true;
-
-                await this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"
+        csiController
+            .on("error", (err) => {
+                this.logger.error("CSIController errored", err.message, err.exitcode);
+                this.emit("error", { id, err });
+            })
+            .on("event", async (event: EventMessageData) => {
+                this.logger.info("Received event", event);
+                this.emit("event", { event, id: csiController.id });
+            })
+            .on("hourChime", () => {
+                this.emit("hourChime", {
+                    id: csiController.id,
+                    language: csiController.sequence.config.language,
+                    seqId: csiController.sequence.id
                 });
-            }
+            })
 
-            if (data.provides && !csiController.outputRouted && data.contentType) {
-                this.logger.trace("Routing Sequence output to topic", data.provides);
+            // eslint-disable-next-line complexity
+            .on("pang", async (data: PangMessageData) => {
+                this.logger.trace("PANG received", [csiController.id, data]);
 
-                await this.serviceDiscovery.routeStreamToTopic(
-                    csiController.getOutputStream(),
-                    { topic: new TopicId(data.provides), contentType: data.contentType as ContentType }
-                );
+                if ((data.requires || data.provides) && !data.contentType) {
+                    this.logger.warn("Missing topic content-type");
+                }
 
-                csiController.outputRouted = true;
+                if (data.requires && !csiController.inputRouted && data.contentType) {
+                    this.logger.trace("Routing topic to Sequence input", data.requires);
 
-                await this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides, status: "add"
+                    await this.serviceDiscovery.routeTopicToStream(
+                        { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
+                        csiController.getInputStream()
+                    );
+
+                    csiController.inputRouted = true;
+
+                    await this.serviceDiscovery.update({
+                        requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"
+                    });
+                }
+
+                if (data.provides && !csiController.outputRouted && data.contentType) {
+                    this.logger.trace("Routing Sequence output to topic", data.provides);
+
+                    await this.serviceDiscovery.routeStreamToTopic(
+                        csiController.getOutputStream(),
+                        { topic: new TopicId(data.provides), contentType: data.contentType as ContentType }
+                    );
+
+                    csiController.outputRouted = true;
+
+                    await this.serviceDiscovery.update({
+                        provides: data.provides, contentType: data.contentType!, topicName: data.provides, status: "add"
+                    });
+                }
+            })
+            .on("ping", (pingMessage: PingMessageData) => {
+                this.logger.info("Ping received", JSON.stringify(pingMessage));
+
+                if (pingMessage.sequenceInfo.config.type !== this.STHConfig.runtimeAdapter) {
+                    this.logger.error("Incorrect Instance adapter");
+
+                    return;
+                }
+
+                const seq = this.sequenceStore.getById(csiController.sequence.id);
+
+                if (seq) {
+                    seq.instances.push(csiController.id);
+                } else {
+                    this.logger.warn("Instance of not existing sequence connected");
+                    //@TODO: ?
+                }
+
+                this.emit("established", { id: pingMessage.id, sequence: pingMessage.sequenceInfo });
+            })
+            .on("end", async (code: number) => {
+                this.logger.trace("csiControllerontrolled ended", `id: ${csiController.id}`, `Exit code: ${code}`);
+
+                if (csiController.provides && csiController.provides !== "") {
+                    csiController.getOutputStream().unpipe(this.serviceDiscovery.getData(
+                        {
+                            topic: new TopicId(csiController.provides),
+                            contentType: "" as ContentType
+                        }
+                    ) as Writable);
+                }
+
+                csiController.logger.unpipe(this.logger);
+
+                this.emit("end", {
+                    id,
+                    code,
+                    info: {
+                        executionTime: csiController.executionTime
+                    },
+                    sequence: csiController.sequence
                 });
-            }
-        });
 
-        csiController.on("ping", (pingMessage: PingMessageData) => {
-            this.logger.info("Ping received", JSON.stringify(pingMessage));
+                const seq = this.sequenceStore.getById(csiController.sequence.id);
 
-            if (pingMessage.sequenceInfo.config.type !== this.STHConfig.runtimeAdapter) {
-                this.logger.error("Incorrect Instance adapter");
+                if (seq) {
+                    seq.instances = seq.instances.filter(i => i !== csiController.id);
+                }
 
-                return;
-            }
+                delete this.instanceStore[csiController.id];
+            })
+            .once("terminated", (code) => {
+                if (csiController.requires && csiController.requires !== "") {
+                    (this.serviceDiscovery.getData({
+                        topic: new TopicId(csiController.requires),
+                        contentType: "" as ContentType,
+                    }) as Readable
+                    ).unpipe(csiController.getInputStream()!);
+                }
 
-            const seq = this.sequenceStore.getById(csiController.sequence.id);
-
-            if (seq) {
-                seq.instances.push(csiController.id);
-            } else {
-                this.logger.warn("Instance of not existing sequence connected");
-                //@TODO: ?
-            }
-
-            this.emit("established", { id: pingMessage.id, sequence: pingMessage.sequenceInfo });
-        });
-
-        csiController.on("end", async (code: number) => {
-            this.logger.trace("csiControllerontrolled ended", `id: ${csiController.id}`, `Exit code: ${code}`);
-
-            if (csiController.provides && csiController.provides !== "") {
-                csiController.getOutputStream().unpipe(this.serviceDiscovery.getData(
-                    {
-                        topic: new TopicId(csiController.provides),
-                        contentType: "" as ContentType
-                    }
-                ) as Writable);
-            }
-
-            csiController.logger.unpipe(this.logger);
-
-            this.emit("end", {
-                id,
-                code,
-                info: {
-                    executionTime: csiController.executionTime
-                },
-                sequence: csiController.sequence
+                this.emit("terminated", {
+                    id,
+                    code,
+                    info: {
+                        executionTime: csiController.executionTime
+                    },
+                    sequence: csiController.sequence
+                });
             });
-
-            const seq = this.sequenceStore.getById(csiController.sequence.id);
-
-            if (seq) {
-                seq.instances = seq.instances.filter(i => i !== csiController.id);
-            }
-
-            delete this.instanceStore[csiController.id];
-        });
-
-        csiController.once("terminated", (code) => {
-            if (csiController.requires && csiController.requires !== "") {
-                (this.serviceDiscovery.getData({
-                    topic: new TopicId(csiController.requires),
-                    contentType: "" as ContentType,
-                }) as Readable
-                ).unpipe(csiController.getInputStream()!);
-            }
-
-            this.emit("terminated", {
-                id,
-                code,
-                info: {
-                    executionTime: csiController.executionTime
-                },
-                sequence: csiController.sequence
-            });
-        });
 
         csiController.start().catch((e) => {
             this.logger.error("CSIC start error", csiController.id, e);
@@ -201,6 +212,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     }
 
     async startRunner(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload) {
+        this.logger.debug("Preparing Runner...");
+
         const limits = {
             memory: payload.limits?.memory || this.STHConfig.docker.runner.maxMem
         };
@@ -209,13 +222,18 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         const instanceAdapter = getInstanceAdapter(this.STHConfig.runtimeAdapter, this.STHConfig, id);
         const instanceConfig: InstanceConfig = {
             ...sequence.config,
-            limits: limits,
+            limits,
             instanceAdapterExitDelay: this.STHConfig.timings.instanceAdapterExitDelay
         };
 
         instanceAdapter.logger.pipe(this.logger);
 
+        this.logger.debug("Initializing Adapter...");
+
         await instanceAdapter.init();
+
+        this.logger.debug("Dispatching...");
+
         await instanceAdapter.dispatch(
             instanceConfig,
             this.STHConfig.host.instancesServerPort,
@@ -224,25 +242,38 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload
         );
 
-        await new Promise<void>((resolve, _reject) => {
-            const resolveFunction = (instance: Instance) => {
-                if (instance.id === id) {
-                    this.off("established", resolveFunction);
-                    resolve();
-                }
-            };
+        this.logger.debug("Dispatched.");
+        this.logger.debug("Waiting for connection...");
 
-            this.on("established", resolveFunction);
-        });
+        return await Promise.race([
+            new Promise<void>((resolve, _reject) => {
+                const resolveFunction = (instance: Instance) => {
+                    if (instance.id === id) {
+                        this.logger.debug("Established", id);
 
-        return {
-            id,
-            appConfig: payload.appConfig,
-            args: payload.args,
-            sequenceId: sequence.id,
-            info: {},
-            limits,
-            sequence
-        };
+                        this.off("established", resolveFunction);
+                        resolve();
+                    }
+                };
+
+                this.on("established", resolveFunction);
+            }).then(() => ({
+                id,
+                appConfig: payload.appConfig,
+                args: payload.args,
+                sequenceId: sequence.id,
+                info: {},
+                limits,
+                sequence
+            })),
+            // handle failed start
+            Promise.resolve()
+                .then(() => instanceAdapter.waitUntilExit(undefined, id, sequence))
+                .then(async (exitCode) => {
+                    this.logger.info("Exited before established", id, exitCode);
+
+                    return mapRunnerExitCode(exitCode, sequence);
+                })
+        ]);
     }
 }
