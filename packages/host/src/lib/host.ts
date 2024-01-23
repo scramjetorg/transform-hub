@@ -333,17 +333,19 @@ export class Host implements IComponent {
      * @param {Instance} instance Instance data.
      */
     async handleDispatcherEstablishedEvent(instance: Instance) {
-        const seq = this.sequenceStore.getById(instance.sequence.id);
-
         this.logger.info("Checking Sequence...");
+
+        const seq = this.sequenceStore.getById(instance.sequence.id);
 
         if (!seq) {
             this.logger.info("Sequence not found. Checking Store...");
 
             try {
-                await this.getExternalSequence(instance.sequence.id);
+                const extSeq = await this.getExternalSequence(instance.sequence.id);
+
+                this.logger.info("Sequence acquired.", extSeq);
             } catch (e) {
-                this.logger.warn("Sequence not found in store. Instance has no Sequence.");
+                this.logger.warn("Sequence not found in Store. Instance has no Sequence.");
             }
         }
 
@@ -594,7 +596,22 @@ export class Host implements IComponent {
         connector.init();
 
         connector.on("connect", async () => {
-            await connector.sendSequencesInfo(this.getSequences());
+            await defer(3000);
+            //await connector.sendSequencesInfo(this.getSequences());
+            await Promise.all(
+                this.getSequences()
+                    .map(
+                        s =>
+                            connector.sendSequenceInfo(
+                                s.id,
+                                SequenceMessageCode.SEQUENCE_CREATED,
+                                {
+                                    ...s.config,
+                                    location: this.getId()!
+                                } as unknown as STHRestAPI.GetSequenceResponse
+                            )
+                    )
+            );
             await connector.sendInstancesInfo(this.getInstances());
             await connector.sendTopicsInfo(this.getTopics());
 
@@ -998,6 +1015,8 @@ export class Host implements IComponent {
     }
 
     async getExternalSequence(id: string): Promise<SequenceInfo> {
+        this.logger.info("Requesting Sequence from external source");
+
         let packageStream: IncomingMessage | undefined;
 
         try {
@@ -1021,7 +1040,7 @@ export class Host implements IComponent {
 
             return this.sequenceStore.getById(result.id)!;
         } catch (e: any) {
-            this.logger.error("Error requesting sequence", e.message);
+            this.logger.warn("Can't aquire Sequence from external source", e.message);
 
             throw new Error(ReasonPhrases.NOT_FOUND);
         }
