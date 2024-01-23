@@ -169,6 +169,7 @@ export class ServiceDiscovery {
         const topic = this.createTopicIfNotExist(topicData);
 
         topic.acceptPipe(source);
+
         await this.cpmConnector?.sendTopicInfo({
             provides: topicData.topic.toString(),
             topicName: topicData.topic.toString(),

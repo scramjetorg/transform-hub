@@ -406,13 +406,13 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             const { status, payload } = message[1];
 
+            this.status = status || InstanceStatus.RUNNING;
+
             if (!payload) {
                 this.emit("error", "No payload in ping!");
 
                 return null;
             }
-
-            this.status = status || InstanceStatus.RUNNING;
 
             this.args = payload.args;
             this.info.created = new Date(message[1].created);
@@ -517,6 +517,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.info("Handshake", JSON.stringify(message, undefined));
     }
 
+    //@TODO: ! unhookup ! set proper state for reconnecting !
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {
         try {
             this.hookupStreams(streams);

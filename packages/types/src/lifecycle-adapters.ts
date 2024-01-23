@@ -46,7 +46,7 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void>;
+    dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<number>;
 
     /**
       * Starts Runner - in essence does `dispatch` and then `waitUntilExit`.

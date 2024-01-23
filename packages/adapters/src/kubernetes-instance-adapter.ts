@@ -95,13 +95,13 @@ IComponent {
             }
         };
     }
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<number> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
         }
 
         if (this.adapterConfig.quotaName && await this.kubeClient.isPodsLimitReached(this.adapterConfig.quotaName)) {
-            throw Error(RunnerExitCode.PODS_LIMIT_REACHED.toString());
+            return RunnerExitCode.PODS_LIMIT_REACHED;
         }
 
         this.limits = config.limits;
@@ -163,7 +163,7 @@ IComponent {
             // This means runner pod was unable to start. So it went from "Pending" to "Failed" state directly.
             // Return 1 which is Linux exit code for "General Error" since we are not able
             // to determine what happened exactly.
-            return;
+            return RunnerExitCode.UNCAUGHT_EXCEPTION;
         }
 
         this.logger.debug("Copy sequence files to Runner");
@@ -176,6 +176,8 @@ IComponent {
         await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, this.stdErrorStream, compressedStream, 2);
 
         this.logger.debug("Copy command done");
+
+        return 0;
     }
 
     async waitUntilExit(_config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {

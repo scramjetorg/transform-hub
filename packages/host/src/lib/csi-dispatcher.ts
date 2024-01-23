@@ -234,7 +234,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.debug("Dispatching...");
 
-        await instanceAdapter.dispatch(
+        const dispatchResultCode = await instanceAdapter.dispatch(
             instanceConfig,
             this.STHConfig.host.instancesServerPort,
             id,
@@ -242,8 +242,12 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload
         );
 
-        this.logger.debug("Dispatched.");
-        this.logger.debug("Waiting for connection...");
+        if (dispatchResultCode !== 0) {
+            this.logger.warn("Dispatch result code:", dispatchResultCode);
+            throw await mapRunnerExitCode(dispatchResultCode, sequence);
+        }
+
+        this.logger.debug("Dispatched. Waiting for connection...", id);
 
         return await Promise.race([
             new Promise<void>((resolve, _reject) => {
@@ -266,7 +270,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 limits,
                 sequence
             })),
-            // handle failed start
+            // handle fast fail - before connection is established.
             Promise.resolve()
                 .then(() => instanceAdapter.waitUntilExit(undefined, id, sequence))
                 .then(async (exitCode) => {

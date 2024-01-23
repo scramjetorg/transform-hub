@@ -185,7 +185,7 @@ IComponent {
     }
 
     // eslint-disable-next-line complexity
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         if (!(config.type === "docker" && "container" in config)) {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
@@ -241,6 +241,8 @@ IComponent {
         this.resources.containerId = containerId; // doesnt matter
 
         this.logger.trace("Container is running", containerId);
+
+        return 0;
     }
 
     async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {

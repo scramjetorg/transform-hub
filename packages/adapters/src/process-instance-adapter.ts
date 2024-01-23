@@ -138,7 +138,7 @@ class ProcessInstanceAdapter implements
         return this.waitUntilExit(config, instanceId, sequenceInfo);
     }
 
-    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<void> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }
@@ -182,6 +182,8 @@ class ProcessInstanceAdapter implements
         this.runnerProcess = runnerProcess;
 
         this.logger.trace("Runner process is running", runnerProcess.pid);
+
+        return 0;
     }
 
     getRunnerInfo(): RunnerConnectInfo["system"] {
