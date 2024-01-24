@@ -1,5 +1,5 @@
-import { RunnerExitCode } from "@scramjet/symbols";
-import { InstanceStatus, SequenceInfo } from "@scramjet/types";
+import { InstanceStatus, RunnerExitCode } from "@scramjet/symbols";
+import { SequenceInfo } from "@scramjet/types";
 
 // eslint-disable-next-line complexity
 export const mapRunnerExitCode = async (exitcode: number, sequence: SequenceInfo): Promise<

@@ -2,7 +2,7 @@ import fs from "fs";
 import { Readable } from "stream";
 import * as http from "http";
 
-import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     STHRestAPI,
     CPMConnectorOptions,
@@ -582,14 +582,12 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {string} instance Instance details.
      * @param {SequenceMessageCode} instanceStatus Instance status.
      */
-    async sendInstanceInfo(instance: Instance, instanceStatus: InstanceMessageCode): Promise<void> {
-        this.logger.trace("Send instance status update", instanceStatus);
+    async sendInstanceInfo(instance: Instance): Promise<void> {
+        this.logger.trace("Send instance status update", instance.status);
 
         await this.communicationStream?.whenWrote(
-            [CPMMessageCode.INSTANCE, { instance, status: instanceStatus }]
+            [CPMMessageCode.INSTANCE, { instance }]
         );
-
-        this.logger.trace("Instance status update sent", instanceStatus);
     }
 
     /**

@@ -6,7 +6,7 @@ import {
     MessageUtilities
 } from "@scramjet/model";
 import { development } from "@scramjet/sth-config";
-import { CommunicationChannel as CC, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import {
     APIRoute,
     AppConfig,
@@ -19,7 +19,6 @@ import {
     ILifeCycleAdapterRun,
     InstanceLimits,
     InstanceStats,
-    InstanceStatus,
     IObjectLogger,
     MessageDataType,
     MonitoringMessageData,

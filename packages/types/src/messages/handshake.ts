@@ -1,7 +1,6 @@
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { SequenceInfo } from "../sequence-adapter";
 import { StartSequencePayload } from "../rest-api-sth";
-import { InstanceStatus } from "../instance";
 
 /**
  * Runner sends a handshake message to the Cloud Server Host (CSH) after it is.

@@ -6,7 +6,7 @@ import { AddressInfo } from "net";
 import { Duplex } from "stream";
 
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { HostHeaders, InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { HostHeaders, InstanceMessageCode, InstanceStatus, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
     CPMConnectorOptions,
@@ -357,7 +357,7 @@ export class Host implements IComponent {
         await this.cpmConnector?.sendInstanceInfo({
             id: instance.id,
             sequence: instance.sequence
-        }, InstanceMessageCode.INSTANCE_CONNECTED);
+        });
 
         this.pushTelemetry("Instance connected", {
             id: instance.id,
@@ -368,21 +368,22 @@ export class Host implements IComponent {
     /**
      * Pass information about ended instance to monitoring and platform services.
      *
-     * @param {DispatcherInstanceEndEventData} eventData Event details.
+     * @param {DispatcherInstanceEndEventData} instance Event details.
      */
-    async handleDispatcherEndEvent(eventData: DispatcherInstanceEndEventData) {
-        this.auditor.auditInstance(eventData.id, InstanceMessageCode.INSTANCE_ENDED);
+    async handleDispatcherEndEvent(instance: DispatcherInstanceEndEventData) {
+        this.auditor.auditInstance(instance.id, InstanceMessageCode.INSTANCE_ENDED);
 
         await this.cpmConnector?.sendInstanceInfo({
-            id: eventData.id,
-            sequence: eventData.sequence
-        }, InstanceMessageCode.INSTANCE_ENDED);
+            id: instance.id,
+            status: InstanceStatus.GONE,
+            sequence: instance.sequence
+        });
 
         this.pushTelemetry("Instance ended", {
-            executionTime: eventData.info.executionTime.toString(),
-            id: eventData.id,
-            code: eventData.code.toString(),
-            seqId: eventData.sequence.id
+            executionTime: instance.info.executionTime.toString(),
+            id: instance.id,
+            code: instance.code.toString(),
+            seqId: instance.sequence.id
         });
     }
 
@@ -1089,7 +1090,7 @@ export class Host implements IComponent {
         try {
             const runner = await this.csiDispatcher.startRunner(sequence, payload);
 
-            if ("id" in runner) {
+            if (runner && "id" in runner) {
                 this.logger.debug("Instance limits", runner.limits);
                 this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
                 this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
@@ -1099,9 +1100,11 @@ export class Host implements IComponent {
                     message: `Sequence ${runner.id} starting`,
                     id: runner.id
                 };
-            } else {
+            } else if (runner) {
                 throw runner;
             }
+
+            throw Error("Unexpected startup error");
         } catch (error: any) {
             this.pushTelemetry("Instance start failed", { error: error.message }, "error");
             this.logger.error(error.message);

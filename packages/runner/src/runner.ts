@@ -1,6 +1,6 @@
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     AppConfig,
     ApplicationFunction,
@@ -14,7 +14,6 @@ import {
     IComponent,
     IHostClient,
     IObjectLogger,
-    InstanceStatus,
     MaybePromise,
     MonitoringRateMessageData,
     PangMessageData,

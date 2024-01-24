@@ -1,8 +1,8 @@
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, InstanceStatus, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
+import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { InstanceStore } from "./instance-store";
@@ -249,6 +249,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.debug("Dispatched. Waiting for connection...", id);
 
+        let established = false;
+
         return await Promise.race([
             new Promise<void>((resolve, _reject) => {
                 const resolveFunction = (instance: Instance) => {
@@ -256,6 +258,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                         this.logger.debug("Established", id);
 
                         this.off("established", resolveFunction);
+                        established = true;
                         resolve();
                     }
                 };
@@ -271,13 +274,18 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 sequence
             })),
             // handle fast fail - before connection is established.
-            Promise.resolve()
-                .then(() => instanceAdapter.waitUntilExit(undefined, id, sequence))
-                .then(async (exitCode) => {
-                    this.logger.info("Exited before established", id, exitCode);
+            Promise.resolve().then(
+                () => instanceAdapter.waitUntilExit(undefined, id, sequence)
+                    .then(async (exitCode: number) => {
+                        if (!established) {
+                            this.logger.info("Exited before established", id, exitCode);
 
-                    return mapRunnerExitCode(exitCode, sequence);
-                })
+                            return mapRunnerExitCode(exitCode, sequence);
+                        }
+
+                        return undefined;
+                    })
+            )
         ]);
     }
 }
