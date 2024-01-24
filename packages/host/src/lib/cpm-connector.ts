@@ -291,7 +291,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
                 return message;
             }).catch((e: any) => {
-                this.logger.error("communicationChannel error", e.message);
+                this.logger.warn("communicationChannel error", e.message);
             });
 
         this.communicationStream = new StringStream().JSONStringify().resume();
@@ -386,7 +386,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         });
 
         this.verserClient.once("error", async (error: any) => {
-            this.logger.error("VerserClient error", error);
+            this.logger.warn("VerserClient error", error);
 
             try {
                 await this.reconnect();
@@ -408,9 +408,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connection?.removeAllListeners();
         this.connected = false;
 
-        this.logger.trace("Tunnel closed", this.getId());
-
-        this.logger.info("CPM connection closed.");
+        this.logger.info("CPM connection closed.", connectionStatusCode, this.getId());
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);

@@ -601,22 +601,7 @@ export class Host implements IComponent {
         connector.init();
 
         connector.on("connect", async () => {
-            await defer(3000);
-            //await connector.sendSequencesInfo(this.getSequences());
-            await Promise.all(
-                this.getSequences()
-                    .map(
-                        s =>
-                            connector.sendSequenceInfo(
-                                s.id,
-                                SequenceMessageCode.SEQUENCE_CREATED,
-                                {
-                                    ...s.config,
-                                    location: this.getId()!
-                                } as unknown as STHRestAPI.GetSequenceResponse
-                            )
-                    )
-            );
+            await connector.sendSequencesInfo(this.getSequences().map(s => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
             await connector.sendInstancesInfo(this.getInstances());
             await connector.sendTopicsInfo(this.getTopics());
 

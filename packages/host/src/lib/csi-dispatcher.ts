@@ -125,7 +125,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     csiController.outputRouted = true;
 
                     await this.serviceDiscovery.update({
-                        provides: data.provides, contentType: data.contentType!, topicName: data.provides, status: "add"
+                        localProvider: csiController.id, provides: data.provides, contentType: data.contentType!, topicName: data.provides, status: "add"
                     });
                 }
             })

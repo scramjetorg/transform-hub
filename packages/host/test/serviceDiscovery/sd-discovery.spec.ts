@@ -21,7 +21,7 @@ beforeEach(() => {
     serviceDiscovery.cpmConnector = {
         sendTopicInfo: (data: AddSTHTopicEventData): Promise<void> => {
             topicInfo = data;
-            return new Promise((resolve) => resolve());
+            return Promise.resolve();
         }
     } as CPMConnector;
 });
