@@ -116,6 +116,7 @@ export class CSIController extends TypedEmitter<Events> {
     apiInputEnabled = true;
 
     executionTime: number = -1;
+    inputHeadersSent = false;
 
     /**
      * Topic to which the output stream should be routed
@@ -222,7 +223,8 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.info("Instance status: errored", e);
 
             this.status ||= InstanceStatus.ERRORED;
-            this.executionTime = (Date.now() - this.info.created!.getTime()) / 1000;
+
+            this.executionTime = this.info.created ? (Date.now() - this.info.created!.getTime()) / 1000 : -1;
 
             this.setExitInfo(e.exitcode, e.message);
 
@@ -403,9 +405,10 @@ export class CSIController extends TypedEmitter<Events> {
             .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
-            const { status, payload } = message[1];
+            const { status, payload, inputHeadersSent } = message[1];
 
             this.status = status || InstanceStatus.RUNNING;
+            this.inputHeadersSent = inputHeadersSent;
 
             if (!payload) {
                 this.emit("error", "No payload in ping!");
@@ -485,6 +488,10 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.trace("Received a PING message with ports config");
         }
 
+        this.inputHeadersSent = !!message[1].inputHeadersSent;
+
+        this.logger.info("Headers already sent for input?", this.inputHeadersSent);
+
         if (this.instanceAdapter.setRunner) {
             await this.instanceAdapter.setRunner({
                 ...message[1].payload.system,
@@ -537,8 +544,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     createInstanceAPIRouter() {
-        let inputHeadersSent = false;
-
         if (!this.upStreams) {
             throw new AppError("UNATTACHED_STREAMS");
         }
@@ -551,11 +556,11 @@ export class CSIController extends TypedEmitter<Events> {
          * @experimental
          */
         this.router.duplex("/inout", (duplex, _headers) => {
-            if (!inputHeadersSent) {
+            if (!this.inputHeadersSent) {
                 this.downStreams![CC.IN].write(`Content-Type: ${_headers["content-type"]}\r\n`);
                 this.downStreams![CC.IN].write("\r\n");
 
-                inputHeadersSent = true;
+                this.inputHeadersSent = true;
             }
 
             (duplex as unknown as DuplexStream).input.pipe(this.downStreams![CC.IN], { end: false });
@@ -597,7 +602,7 @@ export class CSIController extends TypedEmitter<Events> {
                 const contentType = req.headers["content-type"];
 
                 // @TODO: Check if subsequent requests have the same content-type.
-                if (!inputHeadersSent) {
+                if (!this.inputHeadersSent) {
                     if (contentType === undefined) {
                         return { opStatus: ReasonPhrases.NOT_ACCEPTABLE, error: "Content-Type must be defined" };
                     }
@@ -605,7 +610,7 @@ export class CSIController extends TypedEmitter<Events> {
                     stream.write(`Content-Type: ${contentType}\r\n`);
                     stream.write("\r\n");
 
-                    inputHeadersSent = true;
+                    this.inputHeadersSent = true;
                 }
 
                 return stream;

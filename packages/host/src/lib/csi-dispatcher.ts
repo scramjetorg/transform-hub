@@ -66,12 +66,14 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             id,
             sequenceInfo,
             payload,
-            status: InstanceStatus.INITIALIZING
+            status: InstanceStatus.INITIALIZING,
+            inputHeadersSent: false
         }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 
         csiController.logger.pipe(this.logger, { end: false });
+
         communicationHandler.logger.pipe(this.logger, { end: false });
 
         csiController
@@ -99,15 +101,15 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     this.logger.warn("Missing topic content-type");
                 }
 
-                if (data.requires && !csiController.inputRouted && data.contentType) {
-                    this.logger.trace("Routing topic to Sequence input", data.requires);
+                if (data.requires && data.contentType) {
+                    this.logger.trace("Routing topic to Instance input", data.requires);
 
                     await this.serviceDiscovery.routeTopicToStream(
                         { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
                         csiController.getInputStream()
                     );
 
-                    csiController.inputRouted = true;
+                    csiController.inputHeadersSent = true;
 
                     await this.serviceDiscovery.update({
                         requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"

@@ -340,7 +340,7 @@ export class Host implements IComponent {
 
         const seq = this.sequenceStore.getById(instance.sequence.id);
 
-        if (!seq) {
+        if (!seq && this.cpmConnector?.connected) {
             this.logger.info("Sequence not found. Checking Store...");
 
             try {

@@ -179,9 +179,8 @@ export class ServiceDiscovery {
     }
 
     async update(data: STHTopicEventData) {
-        this.logger.trace("Topic update. Send topic info to CPM", data);
-
         if (this.cpmConnector?.connected) {
+            this.logger.trace("Topic update. Send topic info to CPM", data);
             await this.cpmConnector?.sendTopicInfo(data);
         }
     }

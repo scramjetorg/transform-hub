@@ -254,7 +254,9 @@ class ProcessInstanceAdapter implements
                         process.kill(this.processPID, 0);
                     } catch (e) {
                         this.logger.error("Runner process not exists", e);
-                        /** process not exists */
+
+                        clearInterval(interval);
+
                         reject("pid not exists");
                     }
                 }

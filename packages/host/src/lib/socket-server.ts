@@ -77,6 +77,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             this.server!
                 .listen(this.port, this.hostname, () => {
                     this.logger.info("SocketServer on", this.server?.address());
+
                     res();
                 })
                 .on("error", rej);

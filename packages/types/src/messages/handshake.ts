@@ -21,10 +21,11 @@ export type PingMessageData = {
     sequenceInfo: SequenceInfo;
     created: number;
     status: InstanceStatus;
+    inputHeadersSent: boolean;
 };
 
 export type PangMessageData = {
-    requires?: string,
-    contentType?: string,
-    provides?: string
+    requires?: string;
+    contentType?: string;
+    provides?: string;
 };

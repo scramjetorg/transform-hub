@@ -32,7 +32,7 @@ import { ManagerClient } from "@scramjet/manager-api-client";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { EventEmitter } from "events";
-import { createWriteStream, writeFileSync } from "fs";
+import { WriteStream, createWriteStream, writeFileSync } from "fs";
 import { Readable, Writable } from "stream";
 
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
@@ -52,6 +52,7 @@ function onBeforeExit(code: number) {
 }
 
 function onException(_error: Error) {
+    console.error(_error);
     onBeforeExit(RunnerExitCode.UNCAUGHT_EXCEPTION);
 }
 
@@ -156,11 +157,16 @@ export class Runner<X extends AppConfig> implements IComponent {
     private provides?: string;
     private providesContentType?: string;
 
+    private inputContentType: string = "";
+    private shouldSerialize = false;
     private status: InstanceStatus = InstanceStatus.STARTING;
+    private logFile?: WriteStream;
 
     private runnerConnectInfo: RunnerConnectInfo = {
         appConfig: {}
     };
+
+    instanceOutput?: Readable & HasTopicInformation | void;
 
     constructor(
         private sequencePath: string,
@@ -184,7 +190,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         if (process.env.RUNNER_LOG_FILE) {
-            this.logger.addOutput(createWriteStream(process.env.RUNNER_LOG_FILE));
+            this.logFile ||= createWriteStream(process.env.RUNNER_LOG_FILE);
+            this.logFile.write("\n\n------------- \n\n");
+            this.logger.addOutput(this.logFile);
         }
 
         this.inputDataStream = new DataStream().catch((e: any) => {
@@ -253,11 +261,11 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async setInputContentType(headers: any) {
-        const contentType = headers["content-type"];
+        this.inputContentType ||= headers["content-type"];
 
-        this.logger.debug("Content-Type", contentType);
+        this.logger.debug("Content-Type", this.inputContentType);
 
-        mapToInputDataStream(this.hostClient.inputStream, contentType)
+        mapToInputDataStream(this.hostClient.inputStream, this.inputContentType)
             .catch((error: any) => {
                 this.logger.error("mapToInputDataStream", error);
                 // TODO: we should be doing some error handling here:
@@ -266,6 +274,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
+        this.logger.info("handleMonitoringRequest");
+
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
         }
@@ -273,22 +283,22 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
+            this.logger.info("working", working);
+
             if (working) {
-                return;
+                //return;
             }
 
             working = true;
             await this.reportHealth(1000);
             working = false;
-        }, 1000 / data.monitoringRate).unref();
+        }, 1000 / data.monitoringRate);//.unref();
     }
 
     private async reportHealth(timeout?: number) {
-        const { healthy } = await this.context.monitor();
+        this.logger.info("Report health");
 
-        MessageUtils.writeMessageOnStream(
-            [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
-        );
+        const { healthy } = await this.context.monitor();
 
         if (timeout) {
             this.monitoringMessageReplyTimeout = setTimeout(async () => {
@@ -297,6 +307,10 @@ export class Runner<X extends AppConfig> implements IComponent {
                 await this.handleDisconnect();
             }, timeout);
         }
+
+        MessageUtils.writeMessageOnStream(
+            [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
+        );
     }
 
     async handleDisconnect() {
@@ -344,6 +358,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.trace("Exiting (expected)");
         this.status = InstanceStatus.STOPPING;
+
         return this.exit(RunnerExitCode.STOPPED);
     }
 
@@ -392,15 +407,18 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.debug("connecting...");
-            await promiseTimeout(this.hostClient.init(this.instanceId), 2000);
+            await promiseTimeout(this.hostClient.init(this.instanceId), 5000);
             this.logger.debug("connected");
             this.connected = true;
+
+            this.hostClient.inputStream.pipe(this.logFile!);
+
             await this.handleMonitoringRequest({ monitoringRate: 1 });
         } catch (e) {
             this.connected = false;
             this.logger.warn("Can't connect to Host", e);
 
-            await defer(2000);
+            await defer(5000);
 
             return await this.premain();
         }
@@ -410,6 +428,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.debug("Defining control stream");
         this.defineControlStream();
+
+        if (this.inputContentType) {
+            await this.setInputContentType({ headers: { "content-type": this.inputContentType } });
+        }
 
         this.hostClient.stdinStream
             .on("data", (chunk) => process.stdin.unshift(chunk))
@@ -546,9 +568,19 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private redirectOutputs() {
         this.logger.pipe(this.hostClient.logStream, { stringified: true });
+
+        if (!this.shouldSerialize) {
+            this.instanceOutput?.pipe(this.hostClient.outputStream);
+        }
+
         this.outputDataStream
             .JSONStringify()
             .pipe(this.hostClient.outputStream);
+
+        if (process.env.PRINT_TO_STDOUT) {
+            process.stdout.pipe(this.logFile!);
+            process.stderr.pipe(this.logFile!);
+        }
 
         overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
         overrideStandardStream(process.stderr, this.hostClient.stderrStream);
@@ -608,7 +640,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                         processPID: process.pid.toString()
                     }
                 },
-                status: this.status
+                status: this.status,
+                inputHeadersSent: !!this.inputContentType
             }], this.hostClient.monitorStream);
 
         this.logger.trace("Handshake sent");
@@ -648,9 +681,9 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: Readable & HasTopicInformation | void = this.inputDataStream;
+        this.instanceOutput = this.inputDataStream;
         let itemsLeftInSequence = sequence.length;
-        let intermediate: SynchronousStreamable<any> | void = stream;
+        let intermediate: SynchronousStreamable<any> | void = this.instanceOutput;
 
         for (const func of sequence) {
             itemsLeftInSequence--;
@@ -664,7 +697,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 out = func.call(
                     this.context,
-                    stream,
+                    this.instanceOutput,
                     ...args
                 );
 
@@ -691,11 +724,11 @@ export class Runner<X extends AppConfig> implements IComponent {
                 } else if (typeof intermediate === "object" && intermediate instanceof DataStream) {
                     this.logger.debug("Sequence function returned DataStream.", sequence.length - itemsLeftInSequence - 1);
 
-                    stream = intermediate;
+                    this.instanceOutput = intermediate;
                 } else {
                     this.logger.debug("Sequence function returned readable", sequence.length - itemsLeftInSequence - 1);
                     // TODO: what if this is not a DataStream, but BufferStream stream!!!!
-                    stream = DataStream.from(intermediate as Readable);
+                    this.instanceOutput = DataStream.from(intermediate as Readable);
                 }
             } else {
                 this.logger.info("All Sequences processed.");
@@ -703,17 +736,17 @@ export class Runner<X extends AppConfig> implements IComponent {
                 intermediate = await out;
 
                 if (intermediate instanceof Readable) {
-                    stream = intermediate;
+                    this.instanceOutput = intermediate;
                 } else if (intermediate !== undefined && isSynchronousStreamable(intermediate)) {
-                    stream = Object.assign(DataStream.from(intermediate as Readable, { highWaterMark: 0 }), {
+                    this.instanceOutput = Object.assign(DataStream.from(intermediate as Readable, { highWaterMark: 0 }), {
                         topic: intermediate.topic,
                         contentType: intermediate.contentType
                     });
                 } else {
-                    stream = undefined;
+                    this.instanceOutput = undefined;
                 }
 
-                this.logger.debug("Stream type is", typeof stream);
+                this.logger.debug("Stream type is", typeof this.instanceOutput);
             }
         }
 
@@ -735,27 +768,27 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.sendPang({ provides: "", contentType: "" });
 
                 res();
-            } else if (stream && this.hostClient.outputStream) {
-                this.logger.trace("Piping Sequence output", typeof stream);
+            } else if (this.instanceOutput && this.hostClient.outputStream) {
+                this.logger.trace("Piping Sequence output", typeof this.instanceOutput);
 
-                const shouldSerialize = stream.contentType &&
-                ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||
-                stream instanceof DataStream && !(
-                    stream instanceof StringStream || stream instanceof BufferStream
+                this.shouldSerialize = this.instanceOutput.contentType &&
+                ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType) ||
+                this.instanceOutput instanceof DataStream && !(
+                    this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream
                 );
 
-                stream
+                this.instanceOutput
                     .once("end", () => {
                         this.logger.debug("Sequence stream ended");
                         res();
                     })
-                    .pipe(shouldSerialize
+                    .pipe(this.shouldSerialize
                         ? this.outputDataStream
                         : this.hostClient.outputStream
                     );
 
-                    this.provides = intermediate.topic || "";
-                    this.providesContentType = intermediate.contentType || "";
+                this.provides = intermediate.topic || "";
+                this.providesContentType = intermediate.contentType || "";
 
                 this.sendPang({ provides: this.provides, contentType: this.providesContentType });
             } else {

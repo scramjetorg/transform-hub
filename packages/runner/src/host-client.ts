@@ -2,8 +2,10 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig, } from "@scramjet/types";
+import { defer } from "@scramjet/utility";
 import { Agent } from "http";
 import net, { Socket, createConnection } from "net";
+import { PassThrough } from "stream";
 
 type HostOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
@@ -42,20 +44,24 @@ class HostClient implements IHostClient {
     async init(id: string): Promise<void> {
         const openConnections = await Promise.all(
             Array.from(Array(9))
-                .map(() => {
+                .map((_e: any, i: number) => {
                     // Error handling for each connection is process crash for now
                     let connection: Socket;
 
                     try {
                         connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
-                        connection.on("error", () => {});
+                        connection.on("error", () => {
+                            this.logger.warn(`${i} Stream error`);
+                        });
                         connection.setNoDelay(true);
                     } catch (e) {
                         return Promise.reject(e);
                     }
 
                     return new Promise<net.Socket>(res => {
-                        connection.on("connect", () => res(connection));
+                        connection.on("connect", () => {
+                            res(connection);
+                        });
                     });
                 })
                 .map((connPromised, index) => {
@@ -73,6 +79,26 @@ class HostClient implements IHostClient {
         });
 
         this._streams = openConnections as HostOpenConnections;
+
+        const input = this._streams[CC.IN];
+
+        const inputTarget = new PassThrough({ emitClose: false });
+
+        input.on("end", async () => {
+            await defer(500);
+
+            if ((this._streams![CC.CONTROL] as net.Socket).readableEnded) {
+                this.logger.info("Input end. Control is also ended... We are disconnected.");
+            } else {
+                this.logger.info("Input end. Control not ended. We are online. Desired input end.");
+                inputTarget.end();
+            }
+        });
+
+        input.pipe(inputTarget, { end: false });
+
+        this._streams[CC.IN] = inputTarget;
+        //this._streams[CC.STDIN] = this._streams[CC.STDIN].pipe(new PassThrough({ emitClose: false }), { end: false });
 
         try {
             this.bpmux = new BPMux(this._streams[CC.PACKAGE]);
@@ -118,6 +144,11 @@ class HostClient implements IHostClient {
         const streamsExitedPromised: Promise<void>[] = this.streams.map((stream, i) =>
             new Promise(
                 (res) => {
+                    if ([CC.IN, CC.STDIN, CC.CONTROL].includes(i)) {
+                        res();
+                        return;
+                    }
+
                     if (!hard && "writable" in stream!) {
                         stream
                             .on("error", (e) => {
