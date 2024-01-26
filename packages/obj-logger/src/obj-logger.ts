@@ -202,7 +202,6 @@ export class ObjLogger implements IObjectLogger {
                 })
                 // eslint-disable-next-line no-console
                 .catch((e: any) => { console.error(e?.cause); });
-
         return this._stringifiedOutput;
     }
 

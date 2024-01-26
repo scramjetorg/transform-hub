@@ -172,10 +172,10 @@ export class CPMConnector extends TypedEmitter<Events> {
             headers: {
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
-                "x-manager-id": cpmId,
                 "x-sth-id": this.config.id || "",
-                ...orgId && { "x-org-id": orgId },
-                ...sthKey && { Authorization: `Digest cnonce="${sthKey}"` }
+                "x-manager-id": cpmId,
+                ...orgId ? { "x-org-id": orgId } : {},
+                ...sthKey ? { Authorization: `Digest cnonce="${sthKey}"` } : {}
             },
             server,
             https: this.isHttps
@@ -353,10 +353,10 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             connection.socket
                 .once("close", async () => {
-                    this.logger.warn("Space request close status", connection.res.statusCode);
-                    this.logger.warn("Space request close message", connection.res.statusMessage);
+                    this.logger.warn("Space request close status", connection.response.statusCode);
+                    this.logger.warn("Space request close message", connection.response.statusMessage);
 
-                    await this.handleConnectionClose(connection.res.statusCode || -1);
+                    await this.handleConnectionClose(connection.response.statusCode || -1);
                 });
         } catch (error: any) {
             this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
@@ -375,7 +375,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connected = true;
         this.connectionAttempts = 0;
 
-        connection.res.once("error", async (error: any) => {
+        connection.response.once("error", async (error: any) => {
             this.logger.error("Request error", error);
 
             try {

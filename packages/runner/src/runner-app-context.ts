@@ -46,7 +46,6 @@ implements AppContext<AppConfigType, State> {
         this.space = spaceClient;
         this.instanceId = id;
     }
-
     private handleSave(_state: any): void {
         throw new Error("Method not implemented.");
     }

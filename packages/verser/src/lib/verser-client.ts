@@ -3,13 +3,11 @@ import { Agent as HttpsAgent, request } from "https";
 import { merge, TypedEmitter } from "@scramjet/utility";
 import { IObjectLogger } from "@scramjet/types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
-import { Duplex } from "stream";
 import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-
-const BPMux = require("bpmux").BPMux;
+import { TeceMux, TeceMuxChannel } from "@scramjet/tecemux";
 
 type Events = {
     error: (err: Error) => void;
@@ -25,7 +23,7 @@ export class VerserClient extends TypedEmitter<Events> {
     /**
      * BPMux instance.
      */
-    private bpmux: any;
+    private teceMux: any;
 
     /**
      * VerserClient options.
@@ -113,12 +111,11 @@ export class VerserClient extends TypedEmitter<Events> {
                 reject(err);
             });
 
-            connectRequest.once("connect", (res, socket, head) => {
-                this.logger.info("HEAD", head.toString());
+            connectRequest.on("connect", (response, socket) => {
                 this.socket = socket;
                 this.mux();
 
-                resolve({ res, socket });
+                resolve({ response, socket });
             });
 
             connectRequest.flushHeaders();
@@ -132,14 +129,14 @@ export class VerserClient extends TypedEmitter<Events> {
      * otherwise stream will be passed to the server.
      */
     private mux() {
-        this.bpmux = new BPMux(this.socket)
-            .on("peer_multiplex", async (mSocket: Duplex & { _chan: number }) => {
-                const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
+        this.teceMux = new TeceMux(this.socket!, "client")
+            .on("channel", async (channel: TeceMuxChannel) => {
+                const registeredChannelCallback = this.registeredChannels.get(channel._id);
 
                 if (registeredChannelCallback) {
-                    await registeredChannelCallback(mSocket);
+                    await registeredChannelCallback(channel);
                 } else {
-                    this.opts.server?.emit("connection", mSocket);
+                    this.opts.server?.emit("connection", channel);
                 }
             })
             .on("error", (err: Error) => {
@@ -152,7 +149,7 @@ export class VerserClient extends TypedEmitter<Events> {
 
         this._verserAgent.createConnection = () => {
             try {
-                const socket = this.bpmux!.multiplex() as Socket;
+                const socket = this.teceMux!.multiplex() as Socket;
 
                 socket.on("error", () => {
                     this.logger.error("Muxed stream error");

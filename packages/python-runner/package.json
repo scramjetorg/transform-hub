@@ -12,7 +12,6 @@
     "build:docker-tf": "docker build -t scramjetorg/runner-py-tf:$(git rev-parse HEAD) -f Dockerfile-tf-gpu ../../"
   },
   "assets": [
-    "hardcoded_magic_values.py",
     "logging_setup.py",
     "runner.py"
   ],

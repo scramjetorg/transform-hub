@@ -1,4 +1,4 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.10-slim-bullseye
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub
@@ -15,6 +15,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packages/python-runner/*.py ./
+COPY packages/python-runner/tecemux ./tecemux
 COPY packages/python-runner/requirements.txt ./requirements.txt
 COPY packages/python-runner/docker-entrypoint.sh /usr/local/bin/
 COPY packages/runner/unpack.sh /usr/local/bin/

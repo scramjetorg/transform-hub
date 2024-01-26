@@ -158,7 +158,7 @@ export type STHConfiguration = {
         apiVersion: string;
         api: string;
         space: string;
-        hostType: "hub" | "federation"
+        hostType: "hub" | "federation";
     };
 
     /**

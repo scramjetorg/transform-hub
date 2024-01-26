@@ -24,10 +24,14 @@ export class Verser extends TypedEmitter<Events> {
         super();
         this.server = server;
 
+        this.server.timeout = 0;
+
         this.server.on("connect", (req, socket: Socket) => {
             this.logger.info("New connection:", req.url);
 
             const connection = new VerserConnection(req, socket);
+
+            connection.logger.pipe(this.logger);
 
             this.connections.push(connection);
             this.logger.info("Total connections:", this.connections.length);

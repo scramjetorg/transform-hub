@@ -16,7 +16,7 @@
   "dependencies": {
     "@scramjet/obj-logger": "^0.38.0",
     "@scramjet/utility": "^0.38.0",
-    "bpmux": "^8.2.1"
+    "@scramjet/tecemux": "^0.38.0"
   },
   "devDependencies": {
     "@scramjet/api-server": "^0.38.0",

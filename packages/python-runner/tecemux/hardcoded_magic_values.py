@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 # See packages/symbols/src/communication-channel.ts
 class CommunicationChannels(Enum):
     STDIN = "0"
@@ -11,6 +12,7 @@ class CommunicationChannels(Enum):
     OUT = "6"
     LOG = "7"
     HOST = "8"
+
 
 # See packages/symbols/src/runner-message-code.ts
 class RunnerMessageCodes(Enum):

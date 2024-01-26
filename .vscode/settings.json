@@ -13,5 +13,17 @@
     "markdown",
     "latex",
     "plaintext"
-  ]
+  ],
+  "python.testing.pytestArgs": [
+    "packages"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.enabled": true,
+  "flake8.args": [
+    "--max-line-length=120",
+    "--ignore=F401",
+ ],
+  
 }
