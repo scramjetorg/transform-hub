@@ -14,8 +14,7 @@ import {
     Streamable,
     SynchronousStreamable,
     HasTopicInformation,
-    IObjectLogger,
-    HostClient
+    IObjectLogger
 } from "@scramjet/types";
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -32,7 +31,6 @@ import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } f
 import { MessageUtils } from "./message-utils";
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/manager-api-client";
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
@@ -424,8 +422,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
         const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
-        const managerClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1/cpm/api/v1", this.hostClient.getAgent());
-        const managerApiClient = new ManagerClient("http://scramjet-host/api/v1/cpm/api/v1", managerClientUtils);
+        const managerApiClient = hostApiClient.getManagerClient(
+            "/api/v1"
+        );
 
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
@@ -441,8 +440,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.hostClient.monitorStream,
             this.emitter,
             runner,
-            hostApiClient as HostClient,
-            managerApiClient as ManagerClient,
+            hostApiClient,
+            managerApiClient,
             this.instanceId
         );
         this._context.logger.pipe(this.logger);
