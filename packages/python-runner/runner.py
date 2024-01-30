@@ -212,7 +212,7 @@ class Runner:
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
 
-        if getattr(result, 'provides', None) == None:
+        if getattr(result, 'provides', None) == None: 
             produces = getattr(self.sequence, 'provides', None)
         else:
             produces = {}
@@ -225,7 +225,15 @@ class Runner:
             self.logger.info(f'Sending PANG with {produces}')
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
-        consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
+
+        if getattr(result, 'requires', None) == None: 
+            consumes = getattr(self.sequence, 'requires', None)
+        else:
+            consumes = {}
+            consumes['requires'] = getattr(result, 'requires', None)
+            consumes['contentType'] = getattr(result, 'content_type', None)
+            consumes_json = json.dumps(consumes) 
+
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
             send_encoded_msg(monitoring, msg_codes.PANG, consumes)
