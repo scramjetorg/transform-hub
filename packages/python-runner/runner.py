@@ -211,7 +211,16 @@ class Runner:
 
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
-        produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
+
+        if getattr(result, 'provides', None) == None:
+            produces = getattr(self.sequence, 'provides', None)
+        else:
+            produces = {}
+            produces['provides'] = getattr(result, 'provides', None)
+            produces['contentType'] = getattr(result, 'content_type', None)
+            produces_json = json.dumps(produces) 
+
+
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
@@ -265,8 +274,9 @@ class Runner:
     async def forward_output_stream(self, output):
 
         if hasattr(output, 'provides'):
-            attribute = getattr(self.sequence, 'provides', None)
-            content_type = attribute['contentType']
+            attribute = getattr(output, 'provides', None)
+            content_type = getattr(output, 'content_type', None)
+
         else:
             if hasattr(self.sequence, 'provides'):
                 attribute = getattr(self.sequence, 'provides', None)
