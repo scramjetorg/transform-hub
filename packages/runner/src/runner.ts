@@ -112,7 +112,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     private keepAliveRequested?: boolean;
 
     private stopExpected: boolean = false;
-    handshakeResolver?: { res: Function, rej: Function };
+    handshakeResolver?: { res: Function; rej: Function };
 
     logger: IObjectLogger;
 

@@ -73,10 +73,13 @@ export class HostUtils {
 
             const decoder = new StringDecoder();
 
+            let decodedData = "";
             const listener = (data: Buffer) => {
-                const decodedData = decoder.write(data);
+                const last = decoder.write(data);
 
-                if (decodedData.match(/API on/)) {
+                decodedData += last;
+
+                if (last.match(/Running/)) {
                     hub.stdout?.off("data", listener);
                     resolve(decodedData);
                 }

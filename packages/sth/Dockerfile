@@ -4,6 +4,7 @@ WORKDIR /build
 
 COPY ./dist/adapters ./dist/adapters
 COPY ./dist/api-client ./dist/api-client
+COPY ./dist/client-utils ./dist/client-utils
 COPY ./dist/api-server ./dist/api-server
 COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host

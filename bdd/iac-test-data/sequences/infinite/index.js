@@ -7,11 +7,11 @@ function incrementLE(buffer) {
 }
 
 module.exports = function(/** @this {import("@scramjet/types").AppContext} */) {
+    const buf = Buffer.alloc(16, 0);
+
     return Readable
         .from(
             (async function*(/** @type {import("stream").Readable} */ _stream) {
-                const buf = Buffer.alloc(16, 0);
-
                 while (true) {
                     yield buf.toString("hex");
                     incrementLE(buf);
