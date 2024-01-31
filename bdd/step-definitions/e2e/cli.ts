@@ -380,8 +380,8 @@ Then(/^I confirm template (.*) is created$/, async function (templateType: strin
     assert.equal(await isTemplateCreated(templateType, workingDirectory), true);
 });
 
-When("I deploy sequence {string} {string}", async function (this: CustomWorld, workingDirectory: string, sequenceName: string) {
-    const seqPath = `${workingDirectory}/${sequenceName}`
+When("I deploy sequence {string}", async function (this: CustomWorld, sequenceName: string) {
+    const seqPath = `../packages/${sequenceName}`
     const res = this.cliResources;
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", seqPath]);
 });
