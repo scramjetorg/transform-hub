@@ -211,12 +211,33 @@ class Runner:
 
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
-        produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
+
+        # Sending Topics producer information to STH
+        produces_runtime = getattr(result, 'provides', None)
+
+        if produces_runtime == None: 
+            produces = getattr(self.sequence, 'provides', None)
+        else:
+            produces = {}
+            produces['provides'] = produces_runtime
+            produces['contentType'] = getattr(result, 'content_type', None)
+            produces_json = json.dumps(produces) 
+
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
-        consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
+        # Sending Topics consumer information to STH
+        consumes_runtime = getattr(result, 'requires', None)
+
+        if consumes_runtime == None: 
+            consumes = getattr(self.sequence, 'requires', None)
+        else:
+            consumes = {}
+            consumes['requires'] = consumes_runtime
+            consumes['contentType'] = getattr(result, 'content_type', None)
+            consumes_json = json.dumps(consumes) 
+
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
             send_encoded_msg(monitoring, msg_codes.PANG, consumes)
@@ -265,8 +286,9 @@ class Runner:
     async def forward_output_stream(self, output):
 
         if hasattr(output, 'provides'):
-            attribute = getattr(self.sequence, 'provides', None)
-            content_type = attribute['contentType']
+            attribute = getattr(output, 'provides', None)
+            content_type = getattr(output, 'content_type', None)
+
         else:
             if hasattr(self.sequence, 'provides'):
                 attribute = getattr(self.sequence, 'provides', None)
