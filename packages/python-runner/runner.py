@@ -207,25 +207,10 @@ class Runner:
         asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.logger.info('Running instance...')
-        result = self.sequence.run(context, input_stream, *args)
+        result =  self.sequence.run(context, input_stream, *args)
 
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
-
-        # Sending Topics producer information to STH
-        produces_runtime = getattr(result, 'provides', None)
-
-        if produces_runtime == None: 
-            produces = getattr(self.sequence, 'provides', None)
-        else:
-            produces = {}
-            produces['provides'] = produces_runtime
-            produces['contentType'] = getattr(result, 'content_type', None)
-            produces_json = json.dumps(produces) 
-
-        if produces:
-            self.logger.info(f'Sending PANG with {produces}')
-            send_encoded_msg(monitoring, msg_codes.PANG, produces)
 
         # Sending Topics consumer information to STH
         consumes_runtime = getattr(result, 'requires', None)
@@ -246,6 +231,22 @@ class Runner:
             result = Stream.read_from(result)
         elif asyncio.iscoroutine(result):
             result = await result
+
+        # Sending Topics producer information to STH
+        produces_runtime = getattr(result, 'provides', None)
+
+        if produces_runtime == None: 
+            produces = getattr(self.sequence, 'provides', None)
+        else:
+            produces = {}
+            produces['provides'] = produces_runtime
+            produces['contentType'] = getattr(result, 'content_type', None)
+
+        if produces:
+            self.logger.info(f'Sending PANG with {produces}')
+            send_encoded_msg(monitoring, msg_codes.PANG, produces)
+            
+
         if result:
             await self.forward_output_stream(result)
         else:
