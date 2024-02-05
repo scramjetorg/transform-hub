@@ -379,3 +379,30 @@ Then(/^I confirm template (.*) is created$/, async function (templateType: strin
 
     assert.equal(await isTemplateCreated(templateType, workingDirectory), true);
 });
+
+When("I deploy sequence {string}", async function (this: CustomWorld, sequenceName: string) {
+    const seqPath = `../packages/${sequenceName}`
+    const res = this.cliResources;
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "deploy", seqPath]);
+});
+
+Then("I should see error message: {string}", async function (this: CustomWorld, errorMessage: string) {
+    const res = this.cliResources;
+    if (res.stdio) {
+        const errorMessageRegex = new RegExp(errorMessage);
+        assert.match(res.stdio[1], errorMessageRegex);
+    } else {
+        assert.fail("cliResources or stdio is undefined");
+    }
+});
+
+Then("I should see exitCode: {string}", async function (this: CustomWorld, exitCode: string) {
+    const res = this.cliResources
+    if (res && res.stdio) {
+        const exitCodeRegex = new RegExp(exitCode);
+        const receivedExitCode: string  = res.stdio[2].toString();
+        assert.match(receivedExitCode, exitCodeRegex, `\nReceived exit code(${receivedExitCode}) did not match to expected(${exitCode})\n`);
+    } else {
+        assert.fail("cliResources or stdio is undefined");
+    }
+});
