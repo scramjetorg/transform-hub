@@ -1,8 +1,9 @@
-import { ClientProvider, ClientUtils, Headers, HttpClient } from "@scramjet/client-utils";
+import { ClientProvider, ClientUtils, ClientUtilsCustomAgent, Headers, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 import { HostHeaders } from "@scramjet/symbols";
+import { ManagerClient } from "@scramjet/manager-api-client";
 
 /**
  * Host client.
@@ -254,5 +255,16 @@ export class HostClient implements ClientProvider {
      */
     getSequenceClient(id: string) {
         return SequenceClient.from(id, this);
+    }
+
+    /**
+     * Creates ManagerClient for Manager that Hub is connected to.
+     *
+     * @param apiBase Api base.
+     * @param utils ClientUtils
+     * @returns ManagerClient
+     */
+    getManagerClient(apiBase: string = "/api/v1") {
+        return new ManagerClient(`${this.apiBase}/cpm${apiBase}`, new ClientUtilsCustomAgent(`${this.apiBase}/cpm${apiBase}`, this.client.agent));
     }
 }

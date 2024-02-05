@@ -382,7 +382,6 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        await this.performStartup();
         await this.startListening();
 
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
@@ -411,7 +410,11 @@ export class Host implements IComponent {
             });
 
             this.serviceDiscovery.setConnector(this.cpmConnector);
-            await this.connectToCPM();
+
+            await Promise.race([
+                this.connectToCPM(),
+                defer(2500)
+            ]);
         }
 
         this.s3Client = new S3Client({
@@ -420,6 +423,10 @@ export class Host implements IComponent {
         });
 
         this.s3Client.logger.pipe(this.logger);
+
+        await this.performStartup();
+
+        this.logger.info("Running!");
     }
 
     private async startListening() {
@@ -569,7 +576,8 @@ export class Host implements IComponent {
             return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
         });
 
-        this.api.use(`${this.apiBase}/cpm`, (req, res, next) => this.spaceMiddleware(req, res, next));
+        this.api.use(`${this.apiBase}/cpm`, (req, res) => this.spaceMiddleware(req, res));
+
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -617,22 +625,22 @@ export class Host implements IComponent {
      * @param {ServerResponse} res Response object.
      * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
      */
-    spaceMiddleware(req: ParsedMessage, res: ServerResponse, _next: NextCallback) {
+    spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
         const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
 
-        this.logger.info("SPACE REQUEST", req.url, url);
+        this.logger.info("SPACE REQUEST", req.url, url, this.apiBase, req.body);
 
-        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
+        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
 
         if (clientRequest) {
             clientRequest.on("response", (response: IncomingMessage) => {
                 response.pipe(res);
-                req.pipe(clientRequest);
             }).on("error", (error) => {
                 this.logger.error("Error requesting CPM", error);
             });
 
             clientRequest.flushHeaders();
+            req.pipe(clientRequest);
         } else {
             res.statusCode = 404;
             res.end();
