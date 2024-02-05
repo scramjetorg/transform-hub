@@ -168,3 +168,10 @@ Feature: CLI tests
             | ts           |
             | js           |
             | py           |
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-020 Test Start sequence with startup-config
+        When I execute CLI with "seq send ../packages/endless-names-output.tar.gz"
+        And I execute CLI with "seq start - --startup-config ../bdd/data/seq-startup-config.json"
+        And I execute CLI with "inst info -"
+        Then Instance info should contain provided parameters
