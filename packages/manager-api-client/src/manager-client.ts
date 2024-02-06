@@ -1,5 +1,5 @@
 import { HostClient, } from "@scramjet/api-client";
-import { ClientUtils, ClientProvider, HttpClient } from "@scramjet/client-utils";
+import { ClientUtils, ClientProvider, HttpClient, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { MRestAPI, LoadCheckStat } from "@scramjet/types";
 import { Readable } from "stream";
 
@@ -19,7 +19,10 @@ export class ManagerClient implements ClientProvider {
     }
 
     getHostClient(id: string, hostApiBase = "/api/v1") {
-        return new HostClient(this.apiBase + "/sth/" + id + hostApiBase);
+        return new HostClient(
+            `${this.apiBase}/sth/${id}${hostApiBase}`,
+            new ClientUtilsCustomAgent(`${this.apiBase}/sth/${id}${hostApiBase}`, this.client.agent)
+        );
     }
 
     async getHosts() {
