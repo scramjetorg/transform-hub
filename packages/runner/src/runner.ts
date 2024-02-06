@@ -10,7 +10,6 @@ import {
     EventMessageData,
     HandshakeAcknowledgeMessageData,
     HasTopicInformation,
-    HostClient,
     IComponent,
     IHostClient,
     IObjectLogger,
@@ -27,7 +26,6 @@ import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/manager-api-client";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
@@ -58,7 +56,6 @@ function onException(_error: Error) {
 
 process.once("beforeExit", onBeforeExit);
 process.once("uncaughtException", onException);
-
 
 // async function flushStream(source: Readable | undefined, target: Writable) {
 //     if (!source) return;
