@@ -2,6 +2,25 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.39.0] - 2024-02-06
+
+## Features
+
+* Send 100 Continue when ready to receive topic downstream by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/1010
+* Event Hub by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/1012
+* Added alias to delete hub by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1017
+* [CLI][TEST] Error handling when sequence is uploaded by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1022
+* [CLI][TEST]siseq-startup-config by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1025
+
+## Fixed
+
+* Remove cpu-features and systeminformation modules by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/532
+* Type change in order to achieve coherent structure for displaying by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/960
+* Python Runner: Topics provided on runtime by @RayNawfal in https://github.com/scramjetorg/transform-hub/pull/1023
+* Fix this.space.getHostClient when using custom Agent by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/1021
+* Do not create or commit .nojekyll files by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1016
+
+
 ## [0.37.0] - 2023-11-27
 
 ## Features
