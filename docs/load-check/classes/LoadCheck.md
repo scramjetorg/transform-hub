@@ -36,7 +36,7 @@ Configuration object with requirements to determine if machine is overloaded.
 
 #### Defined in
 
-[load-check/src/load-check.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L20)
+[load-check/src/load-check.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L25)
 
 ___
 
@@ -48,7 +48,7 @@ Values calculated from configuration indicating minimum requirements.
 
 #### Defined in
 
-[load-check/src/load-check.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L27)
+[load-check/src/load-check.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L32)
 
 ___
 
@@ -64,7 +64,7 @@ IComponent.logger
 
 #### Defined in
 
-[load-check/src/load-check.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L34)
+[load-check/src/load-check.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L39)
 
 ## Constructors
 
@@ -80,7 +80,7 @@ IComponent.logger
 
 #### Defined in
 
-[load-check/src/load-check.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L36)
+[load-check/src/load-check.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L41)
 
 ## Methods
 
@@ -98,7 +98,7 @@ Promise resolving to gathered load check data.
 
 #### Defined in
 
-[load-check/src/load-check.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L54)
+[load-check/src/load-check.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L61)
 
 ___
 
@@ -117,7 +117,7 @@ Stream with load check data.
 
 #### Defined in
 
-[load-check/src/load-check.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L97)
+[load-check/src/load-check.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L121)
 
 ___
 
@@ -135,4 +135,4 @@ True if machine is overloaded, false otherwise.
 
 #### Defined in
 
-[load-check/src/load-check.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L75)
+[load-check/src/load-check.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L99)

@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[packages/client-utils/src/index.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/index.ts#L60)
+[packages/client-utils/src/index.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/index.ts#L62)

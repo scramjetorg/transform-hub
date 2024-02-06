@@ -27,7 +27,7 @@
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L75)
+[packages/types/src/api-expose.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L89)
 
 ___
 
@@ -39,7 +39,7 @@ Http status code to be outputted
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L67)
+[packages/types/src/api-expose.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L79)
 
 ___
 
@@ -51,7 +51,7 @@ The message that will be sent in reason line
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L71)
+[packages/types/src/api-expose.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L84)
 
 ___
 

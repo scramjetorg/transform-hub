@@ -24,6 +24,7 @@
 - [getInstanceInfo](HostClient.md#getinstanceinfo)
 - [getLoadCheck](HostClient.md#getloadcheck)
 - [getLogStream](HostClient.md#getlogstream)
+- [getManagerClient](HostClient.md#getmanagerclient)
 - [getNamedData](HostClient.md#getnameddata)
 - [getSequence](HostClient.md#getsequence)
 - [getSequenceClient](HostClient.md#getsequenceclient)
@@ -246,6 +247,27 @@ ___
 #### Defined in
 
 [packages/types/src/api-client/host-client.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L60)
+
+___
+
+### getManagerClient
+
+▸ **getManagerClient**(`apiBase`, `utils`): `ManagerClient`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `apiBase` | `string` |
+| `utils` | `undefined` \| `ClientUtils` |
+
+#### Returns
+
+`ManagerClient`
+
+#### Defined in
+
+[packages/types/src/api-client/host-client.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-client/host-client.ts#L78)
 
 ___
 
