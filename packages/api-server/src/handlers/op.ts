@@ -182,6 +182,10 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         const handler: Middleware = async (req, res, next) => {
             logger.trace("Request", req.method, req.url);
 
+            if (req.headers.expect === "100-continue") {
+                res.writeContinue();
+            }
+
             try {
                 if (typeof message === "function") {
                     return await opDataHandler(req, res, message, { rawBody });

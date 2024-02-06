@@ -10,13 +10,17 @@ export type ParsedMessage = IncomingMessage & {
     body?: any;
     params?: { [key: string]: any },
     query?: { [key: string]: any };
+    writeContinue: ServerResponse["writeContinue"];
 };
+
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
 export type StreamInput =
     | ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>)
     | MaybePromise<Readable>;
-export type StreamOutput = ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
+export type StreamOutput = (
+    (req: ParsedMessage, res: ServerResponse) => MaybePromise<any>
+) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 export type OpOptions = { rawBody?: boolean };
@@ -33,14 +37,17 @@ export type StreamConfig = {
      * Is the stream a JSON stream?
      */
     json?: boolean;
+
     /**
      * Is the stream a text stream?
      */
     text?: boolean;
+
     /**
      * Should request end also end the stream or can the endpoint accept subsequent connections
      */
     end?: boolean;
+
     /**
      * Encoding used in the stream
      */
@@ -58,6 +65,11 @@ export type StreamConfig = {
     checkEndHeader?: boolean;
 
     method?: "post" | "put";
+
+    /**
+     * Should send 100 Continue immediately and require "expect: 100-continue" header
+     */
+    postponeContinue?: boolean;
 };
 
 export interface APIError extends Error {
@@ -65,10 +77,12 @@ export interface APIError extends Error {
      * Http status code to be outputted
      */
     code: number;
+
     /**
      * The message that will be sent in reason line
      */
     httpMessage: string;
+
     /**
      *
      */
@@ -155,6 +169,7 @@ export interface APIExpose extends APIBase {
      * The raw HTTP server
      */
     server: Server;
+
     log: DataStream;
     opLogger?: IObjectLogger;
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;

@@ -16,6 +16,7 @@ export class CustomWorld implements World {
     resources: {
         [key: string]: any;
         hub?: ChildProcess;
+        instanceList: {[key: string]: InstanceClient};
         instance?: InstanceClient;
         instance1?: InstanceClient;
         instance2?: InstanceClient;
@@ -23,7 +24,9 @@ export class CustomWorld implements World {
         sequence1?: SequenceClient;
         sequence2?: SequenceClient;
         outStream?: Readable;
-    } = {};
+    } = {
+            instanceList: {}
+        };
 
     cliResources: {
         stdio?: [stdout: string, stderr: string, statusCode: any];
@@ -48,7 +51,6 @@ export class CustomWorld implements World {
         if (setDefaultResultOrder) {
             setDefaultResultOrder("ipv4first");
         }
-
         this.attach = attach;
         this.log = log;
         this.parameters = parameters;

@@ -7,7 +7,9 @@ import { AddressInfo } from "net";
 
 import {
     APIExpose,
+    ContentType,
     CPMConnectorOptions,
+    EventMessageData,
     HostProxy,
     IComponent,
     IMonitoringServerConstructor,
@@ -46,16 +48,16 @@ import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
-import { cpus, totalmem } from "os";
+import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { DuplexStream } from "@scramjet/api-server";
-import { readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import TopicId from "./serviceDiscovery/topicId";
 import TopicRouter from "./serviceDiscovery/topicRouter";
-import { ContentType } from "./serviceDiscovery/contentType";
 import SequenceStore from "./sequenceStore";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
+import { parse } from "path";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -194,6 +196,7 @@ export class Host implements IComponent {
      * @param {SocketServer} socketServer Server to listen for connections from Instances.
      * @param {STHConfiguration} sthConfig Configuration.
      */
+    // eslint-disable-next-line complexity
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
@@ -239,7 +242,21 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
+        const fsPaths = [
+            parse(process.cwd()).root, // root dir
+            homedir(),
+            this.config.sequencesRoot
+        ];
+
+        if (!existsSync(this.config.sequencesRoot)) {
+            mkdirSync(this.config.sequencesRoot);
+        }
+
+        if (this.config.kubernetes.sequencesRoot) fsPaths.push(this.config.kubernetes.sequencesRoot);
+
+        this.logger.info("Following path will be examined on load check.", fsPaths);
+
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements, fsPaths }));
         this.loadCheck.logger.pipe(this.logger);
 
         this.socketServer = socketServer;
@@ -365,7 +382,6 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        await this.performStartup();
         await this.startListening();
 
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
@@ -394,7 +410,11 @@ export class Host implements IComponent {
             });
 
             this.serviceDiscovery.setConnector(this.cpmConnector);
-            await this.connectToCPM();
+
+            await Promise.race([
+                this.connectToCPM(),
+                defer(2500)
+            ]);
         }
 
         this.s3Client = new S3Client({
@@ -403,18 +423,23 @@ export class Host implements IComponent {
         });
 
         this.s3Client.logger.pipe(this.logger);
+
+        await this.performStartup();
+
+        this.logger.info("Running!");
     }
 
     private async startListening() {
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>((res) => {
-            this.api?.server.once("listening", () => {
-                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+        return new Promise<void>((res) => {
+            this.api.server
+                .once("listening", () => {
+                    const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                    this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
-                res();
-            });
+                    res();
+                })
+                .listen(this.config.host.port, this.config.host.hostname);
         });
     }
 
@@ -551,7 +576,8 @@ export class Host implements IComponent {
             return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
         });
 
-        this.api.use(`${this.apiBase}/cpm`, (req, res, next) => this.spaceMiddleware(req, res, next));
+        this.api.use(`${this.apiBase}/cpm`, (req, res) => this.spaceMiddleware(req, res));
+
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -599,22 +625,22 @@ export class Host implements IComponent {
      * @param {ServerResponse} res Response object.
      * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
      */
-    spaceMiddleware(req: ParsedMessage, res: ServerResponse, _next: NextCallback) {
+    spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
         const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
 
-        this.logger.info("SPACE REQUEST", req.url, url);
+        this.logger.info("SPACE REQUEST", req.url, url, this.apiBase, req.body);
 
-        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url);
+        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
 
         if (clientRequest) {
             clientRequest.on("response", (response: IncomingMessage) => {
                 response.pipe(res);
-                req.pipe(clientRequest);
             }).on("error", (error) => {
                 this.logger.error("Error requesting CPM", error);
             });
 
             clientRequest.flushHeaders();
+            req.pipe(clientRequest);
         } else {
             res.statusCode = 404;
             res.end();
@@ -1019,6 +1045,9 @@ export class Host implements IComponent {
 
         this.instancesStore[id] = csic;
 
+        csic.on("event", async (event: EventMessageData) => {
+            await this.eventBus({ source: id, ...event });
+        });
         csic.on("error", (err) => {
             this.pushTelemetry("Instance error", { ...err }, "error");
             this.logger.error("CSIController errored", err.message, err.exitcode);
@@ -1129,6 +1158,16 @@ export class Host implements IComponent {
         sequence.instances.push(id);
 
         return csic;
+    }
+
+    async eventBus(event: EventMessageData) {
+        this.logger.debug("Got event", event);
+
+        // Send the event to all instances except the source of the event.
+        await Promise.all(
+            Object.values(this.instancesStore)
+                .map(inst => event.source !== inst.id ? inst.emitEvent(event) : true)
+        );
     }
 
     /**

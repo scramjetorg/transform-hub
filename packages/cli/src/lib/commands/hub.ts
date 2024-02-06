@@ -91,6 +91,7 @@ export const hub: CommandDefinition = (program) => {
 
         hubCmd
             .command("delete")
+            .alias("rm")
             .description("Delete self hosted Hub from space")
             .argument("<id>", "Hub Id")
             .option("-f, --force", "Enable deleting Hubs that are not disconnected", false)

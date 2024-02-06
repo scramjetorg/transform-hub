@@ -1,6 +1,7 @@
 import { Duplex } from "stream";
-import { ReadableState, StreamHandler, WorkState, WritableState } from "./streamHandler";
-import { ContentType } from "./contentType";
+
+import { ContentType } from "./sd-content-type";
+import { ReadableState, StreamHandler, WorkState, WritableState } from "./sd-stream-handler";
 
 export type TopicOptions = {
     contentType: ContentType
@@ -8,7 +9,7 @@ export type TopicOptions = {
 
 export type TopicState = WorkState.Flowing | WorkState.Error | ReadableState.Pause | WritableState.Drain;
 
-interface TopicHandler extends Duplex, StreamHandler {
+export interface TopicHandler extends Duplex, StreamHandler {
     options(): TopicOptions
 }
 
