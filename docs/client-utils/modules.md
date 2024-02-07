@@ -13,6 +13,7 @@
 ### Type Aliases
 
 - [ClientErrorCode](modules.md#clienterrorcode)
+- [Headers](modules.md#headers)
 - [RequestLogger](modules.md#requestlogger)
 - [SendStreamOptions](modules.md#sendstreamoptions)
 
@@ -30,6 +31,18 @@
 #### Defined in
 
 [packages/client-utils/src/client-error.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-error.ts#L32)
+
+___
+
+### Headers
+
+Ƭ **Headers**: `Record`<`string`, `string`\>
+
+Request headers.
+
+#### Defined in
+
+[packages/client-utils/src/types/index.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L23)
 
 ___
 

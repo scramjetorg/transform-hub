@@ -24,6 +24,8 @@
 - [IObjectLogger](interfaces/IObjectLogger.md)
 - [ISequenceAdapter](interfaces/ISequenceAdapter.md)
 - [ReadableStream](interfaces/ReadableStream.md)
+- [StreamHandler](interfaces/StreamHandler.md)
+- [TopicHandler](interfaces/TopicHandler.md)
 - [WritableStream](interfaces/WritableStream.md)
 
 ### Type Aliases
@@ -45,8 +47,10 @@
 - [CPMMessage](modules.md#cpmmessage)
 - [CPMMessageSTHID](modules.md#cpmmessagesthid)
 - [CSIControllerErrorCode](modules.md#csicontrollererrorcode)
+- [CommonSequenceConfig](modules.md#commonsequenceconfig)
 - [ContainerConfiguration](modules.md#containerconfiguration)
 - [ContainerConfigurationWithExposedPorts](modules.md#containerconfigurationwithexposedports)
+- [ContentType](modules.md#contenttype)
 - [ControlMessageCode](modules.md#controlmessagecode)
 - [ControlMessageHandler](modules.md#controlmessagehandler)
 - [Decorator](modules.md#decorator)
@@ -141,6 +145,7 @@
 - [OpRecord](modules.md#oprecord)
 - [OpResolver](modules.md#opresolver)
 - [OpResponse](modules.md#opresponse)
+- [OriginType](modules.md#origintype)
 - [PangMessageData](modules.md#pangmessagedata)
 - [ParsedMessage](modules.md#parsedmessage)
 - [PassThoughStream](modules.md#passthoughstream)
@@ -187,7 +192,10 @@
 - [StopSequenceMessageData](modules.md#stopsequencemessagedata)
 - [StreamConfig](modules.md#streamconfig)
 - [StreamInput](modules.md#streaminput)
+- [StreamOptions](modules.md#streamoptions)
+- [StreamOrigin](modules.md#streamorigin)
 - [StreamOutput](modules.md#streamoutput)
+- [StreamState](modules.md#streamstate)
 - [Streamable](modules.md#streamable)
 - [SynchronousStreamable](modules.md#synchronousstreamable)
 - [SynchronousStreamablePayload](modules.md#synchronousstreamablepayload)
@@ -195,6 +203,13 @@
 - [TFunctionChain](modules.md#tfunctionchain)
 - [TelemetryAdaptersConfig](modules.md#telemetryadaptersconfig)
 - [TelemetryConfig](modules.md#telemetryconfig)
+- [TopicDeleteReq](modules.md#topicdeletereq)
+- [TopicOptions](modules.md#topicoptions)
+- [TopicState](modules.md#topicstate)
+- [TopicStreamReq](modules.md#topicstreamreq)
+- [TopicStreamReqWithContinue](modules.md#topicstreamreqwithcontinue)
+- [TopicsPostReq](modules.md#topicspostreq)
+- [TopicsPostRes](modules.md#topicspostres)
 - [TranformFunction](modules.md#tranformfunction)
 - [TransformApp](modules.md#transformapp)
 - [TransformAppAcceptableSequence](modules.md#transformappacceptablesequence)
@@ -219,6 +234,10 @@
 ### Enumerations
 
 - [InstanceStatus](enums/InstanceStatus.md)
+- [ReadableState](enums/ReadableState.md)
+- [StreamType](enums/StreamType.md)
+- [WorkState](enums/WorkState.md)
+- [WritableState](enums/WritableState.md)
 
 ### Namespaces
 
@@ -506,6 +525,35 @@ ___
 
 ___
 
+### CommonSequenceConfig
+
+Ƭ **CommonSequenceConfig**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `args?` | [`InstanceArgs`](modules.md#instanceargs) | - |
+| `author?` | `string` | - |
+| `description?` | `string` | - |
+| `engines` | `Record`<`string`, `string`\> | - |
+| `entrypointPath` | `string` | Relative path from sequence package root to JS file |
+| `id` | `string` | - |
+| `keywords?` | `string`[] | - |
+| `language` | `string` | - |
+| `name` | `string` | - |
+| `packageSize?` | `number` | - |
+| `repository?` | { `directory?`: `string` ; `type`: `string` ; `url`: `string`  } \| `string` | - |
+| `sequenceDir` | `string` | - |
+| `type` | `string` | - |
+| `version` | `string` | - |
+
+#### Defined in
+
+[packages/types/src/runner-config.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L8)
+
+___
+
 ### ContainerConfiguration
 
 Ƭ **ContainerConfiguration**: `Object`
@@ -537,6 +585,16 @@ ___
 #### Defined in
 
 [packages/types/src/sth-configuration.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L17)
+
+___
+
+### ContentType
+
+Ƭ **ContentType**: ``"text/x-ndjson"`` \| ``"application/x-ndjson"`` \| ``"text/plain"`` \| ``"application/octet-stream"``
+
+#### Defined in
+
+[packages/types/src/sd-content-type.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-content-type.ts#L1)
 
 ___
 
@@ -600,7 +658,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L26)
+[packages/types/src/api-expose.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L30)
 
 ___
 
@@ -674,7 +732,7 @@ ___
 
 ### DockerSequenceConfig
 
-Ƭ **DockerSequenceConfig**: `CommonSequenceConfig` & { `config?`: { `ports?`: [`PortConfig`](modules.md#portconfig)[] \| ``null``  } ; `container`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `type`: ``"docker"``  }
+Ƭ **DockerSequenceConfig**: [`CommonSequenceConfig`](modules.md#commonsequenceconfig) & { `config?`: { `ports?`: [`PortConfig`](modules.md#portconfig)[] \| ``null``  } ; `container`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `type`: ``"docker"``  }
 
 #### Defined in
 
@@ -842,7 +900,7 @@ Event message emitted by Sequence and handled in the context.
 
 #### Defined in
 
-[packages/types/src/messages/event.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/event.ts#L16)
+[packages/types/src/messages/event.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/event.ts#L18)
 
 ___
 
@@ -856,6 +914,7 @@ ___
 | :------ | :------ | :------ |
 | `eventName` | `string` | Name of the event. |
 | `message` | `any` | TODO update Informs if keepAlive can be called to prolong the running of the Sequence. |
+| `source?` | `string` | - |
 
 #### Defined in
 
@@ -937,7 +996,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
+[packages/types/src/api-expose.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L24)
 
 ___
 
@@ -1065,7 +1124,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L14)
+[packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
 
 ___
 
@@ -1196,7 +1255,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L50)
+[packages/types/src/runner-config.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L51)
 
 ___
 
@@ -1418,7 +1477,7 @@ ___
 
 ### KubernetesSequenceConfig
 
-Ƭ **KubernetesSequenceConfig**: `CommonSequenceConfig` & { `type`: ``"kubernetes"``  }
+Ƭ **KubernetesSequenceConfig**: [`CommonSequenceConfig`](modules.md#commonsequenceconfig) & { `type`: ``"kubernetes"``  }
 
 #### Defined in
 
@@ -1452,7 +1511,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/load-check-stat.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L50)
+[packages/types/src/load-check-stat.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L48)
 
 ___
 
@@ -1464,7 +1523,8 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `instanceRequirements` | [`InstanceRequirements`](modules.md#instancerequirements) | Minimum requirements to start new Manager instance. |
+| `fsPaths` | `string`[] | - |
+| `instanceRequirements` | [`InstanceRequirements`](modules.md#instancerequirements) | - |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. |
 
 #### Defined in
@@ -1574,7 +1634,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/index.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L43)
+[packages/types/src/index.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L47)
 
 ___
 
@@ -1694,7 +1754,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L25)
+[packages/types/src/api-expose.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L29)
 
 ___
 
@@ -1938,10 +1998,10 @@ ___
 | `dhcp` | `boolean` |
 | `iface` | `string` |
 | `ifaceName` | `string` |
-| `ip4` | `string` |
-| `ip4subnet` | `string` |
-| `ip6` | `string` |
-| `ip6subnet` | `string` |
+| `ip4?` | `string` |
+| `ip4subnet?` | `string` |
+| `ip6?` | `string` |
+| `ip6subnet?` | `string` |
 | `mac` | `string` |
 
 #### Defined in
@@ -1980,7 +2040,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L24)
+[packages/types/src/api-expose.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L28)
 
 ___
 
@@ -1996,7 +2056,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L22)
+[packages/types/src/api-expose.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L26)
 
 ___
 
@@ -2045,7 +2105,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
+[packages/types/src/api-expose.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L25)
 
 ___
 
@@ -2062,6 +2122,16 @@ ___
 #### Defined in
 
 [packages/types/src/op-response.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/op-response.ts#L3)
+
+___
+
+### OriginType
+
+Ƭ **OriginType**: ``"space"`` \| ``"hub"``
+
+#### Defined in
+
+[packages/types/src/sd-stream-handler.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L29)
 
 ___
 
@@ -2085,7 +2155,7 @@ ___
 
 ### ParsedMessage
 
-Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params?`: { `[key: string]`: `any`;  } ; `query?`: { `[key: string]`: `any`;  }  }
+Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params?`: { `[key: string]`: `any`;  } ; `query?`: { `[key: string]`: `any`;  } ; `writeContinue`: `ServerResponse`[``"writeContinue"``]  }
 
 #### Defined in
 
@@ -2175,7 +2245,7 @@ ___
 
 ### ProcessSequenceConfig
 
-Ƭ **ProcessSequenceConfig**: `CommonSequenceConfig` & { `type`: ``"process"``  }
+Ƭ **ProcessSequenceConfig**: [`CommonSequenceConfig`](modules.md#commonsequenceconfig) & { `type`: ``"process"``  }
 
 #### Defined in
 
@@ -2539,11 +2609,11 @@ ___
 
 ### SequenceConfig
 
-Ƭ **SequenceConfig**: [`DockerSequenceConfig`](modules.md#dockersequenceconfig) \| [`ProcessSequenceConfig`](modules.md#processsequenceconfig) \| [`KubernetesSequenceConfig`](modules.md#kubernetessequenceconfig)
+Ƭ **SequenceConfig**: [`DockerSequenceConfig`](modules.md#dockersequenceconfig) \| [`ProcessSequenceConfig`](modules.md#processsequenceconfig) \| [`KubernetesSequenceConfig`](modules.md#kubernetessequenceconfig) \| [`CommonSequenceConfig`](modules.md#commonsequenceconfig)
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L48)
+[packages/types/src/runner-config.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L49)
 
 ___
 
@@ -2852,11 +2922,12 @@ Configuration options for streaming endpoints
 | `end?` | `boolean` | Should request end also end the stream or can the endpoint accept subsequent connections |
 | `json?` | `boolean` | Is the stream a JSON stream? |
 | `method?` | ``"post"`` \| ``"put"`` | - |
+| `postponeContinue?` | `boolean` | Should send 100 Continue immediately and require "expect: 100-continue" header |
 | `text?` | `boolean` | Is the stream a text stream? |
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L31)
+[packages/types/src/api-expose.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L35)
 
 ___
 
@@ -2866,7 +2937,34 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
+[packages/types/src/api-expose.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L18)
+
+___
+
+### StreamOptions
+
+Ƭ **StreamOptions**: `Record`<`string`, `any`\>
+
+#### Defined in
+
+[packages/types/src/sd-stream-handler.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L27)
+
+___
+
+### StreamOrigin
+
+Ƭ **StreamOrigin**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+| `type` | [`OriginType`](modules.md#origintype) |
+
+#### Defined in
+
+[packages/types/src/sd-stream-handler.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L31)
 
 ___
 
@@ -2876,7 +2974,17 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L19)
+[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
+
+___
+
+### StreamState
+
+Ƭ **StreamState**: [`WorkState`](enums/WorkState.md) \| [`WritableState`](enums/WritableState.md) \| [`ReadableState`](enums/ReadableState.md)
+
+#### Defined in
+
+[packages/types/src/sd-stream-handler.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L19)
 
 ___
 
@@ -2997,6 +3105,91 @@ ___
 #### Defined in
 
 [packages/types/src/telemetry-config.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/telemetry-config.ts#L10)
+
+___
+
+### TopicDeleteReq
+
+Ƭ **TopicDeleteReq**: `IncomingMessage` & { `params?`: { `topic?`: `string`  }  }
+
+#### Defined in
+
+[packages/types/src/topic-router.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/topic-router.ts#L20)
+
+___
+
+### TopicOptions
+
+Ƭ **TopicOptions**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `contentType` | [`ContentType`](modules.md#contenttype) |
+
+#### Defined in
+
+[packages/types/src/sd-topic-handler.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-topic-handler.ts#L6)
+
+___
+
+### TopicState
+
+Ƭ **TopicState**: [`Flowing`](enums/WorkState.md#flowing) \| [`Error`](enums/WorkState.md#error) \| [`Pause`](enums/ReadableState.md#pause) \| [`Drain`](enums/WritableState.md#drain)
+
+#### Defined in
+
+[packages/types/src/sd-topic-handler.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-topic-handler.ts#L10)
+
+___
+
+### TopicStreamReq
+
+Ƭ **TopicStreamReq**: `IncomingMessage` & { `headers?`: { `content-type?`: `string` ; `cpm?`: `string`  } ; `params?`: { `topic?`: `string`  }  }
+
+#### Defined in
+
+[packages/types/src/topic-router.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/topic-router.ts#L24)
+
+___
+
+### TopicStreamReqWithContinue
+
+Ƭ **TopicStreamReqWithContinue**: [`TopicStreamReq`](modules.md#topicstreamreq) & { `writeContinue`: `ServerResponse`[``"writeContinue"``]  }
+
+#### Defined in
+
+[packages/types/src/topic-router.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/topic-router.ts#L32)
+
+___
+
+### TopicsPostReq
+
+Ƭ **TopicsPostReq**: `IncomingMessage` & { `body?`: { `content-type?`: `string` ; `id?`: `string`  }  }
+
+#### Defined in
+
+[packages/types/src/topic-router.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/topic-router.ts#L6)
+
+___
+
+### TopicsPostRes
+
+Ƭ **TopicsPostRes**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `contentType` | [`ContentType`](modules.md#contenttype) |
+| `id` | `string` |
+| `origin` | [`StreamOrigin`](modules.md#streamorigin) |
+| `state` | [`TopicState`](modules.md#topicstate) |
+
+#### Defined in
+
+[packages/types/src/topic-router.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/topic-router.ts#L13)
 
 ___
 
