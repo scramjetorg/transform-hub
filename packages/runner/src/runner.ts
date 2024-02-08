@@ -589,6 +589,13 @@ export class Runner<X extends AppConfig> implements IComponent {
                     stream instanceof StringStream || stream instanceof BufferStream
                 );
 
+                if (!shouldSerialize && stream.readableEncoding) {
+                    this.hostClient.outputStream.setDefaultEncoding(stream.readableEncoding);
+                }
+
+                this.logger.info("Will Output be serialized?", shouldSerialize);
+                this.logger.info("Stream encoding is", stream.readableEncoding);
+
                 stream
                     .once("end", () => {
                         this.logger.debug("Sequence stream ended");
@@ -602,7 +609,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 MessageUtils.writeMessageOnStream(
                     [RunnerMessageCode.PANG, {
                         provides: intermediate.topic || "",
-                        contentType: intermediate.contentType || ""
+                        contentType: intermediate.contentType || "",
+                        outputEncoding: stream.readableEncoding
                     }],
                     this.hostClient.monitorStream,
                 );

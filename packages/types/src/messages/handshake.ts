@@ -10,7 +10,8 @@ export type HandshakeMessage = { msgCode: RunnerMessageCode.PING };
 export type PingMessageData = { ports?: Record<string, string> }
 
 export type PangMessageData = {
-    requires?: string,
-    contentType?: string,
-    provides?: string
+    requires?: string;
+    contentType?: string;
+    provides?: string;
+    outputEncoding?: BufferEncoding | null;
 }

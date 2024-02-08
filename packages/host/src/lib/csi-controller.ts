@@ -101,8 +101,10 @@ export class CSIController extends TypedEmitter<Events> {
     info: { ports?: any; created?: Date; started?: Date; ended?: Date; } = {};
     status: InstanceStatus;
     terminated?: { exitcode: number; reason: string; };
+
     provides?: string;
     requires?: string;
+    outputEncoding: BufferEncoding = "utf-8";
 
     initResolver?: { res: Function; rej: Function };
     heartBeatResolver?: { res: Function; rej: Function };
@@ -496,6 +498,9 @@ export class CSIController extends TypedEmitter<Events> {
                 this.apiInputEnabled = false;
             }
 
+            this.outputEncoding = pangData.outputEncoding || "utf-8";
+            //this.upStreams[CC.OUT].setDefaultEncoding(pangData.outputEncoding || "utf-8");
+
             this.emit("pang", {
                 provides: this.provides,
                 requires: this.requires,
@@ -628,7 +633,8 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
         }
-        this.router.upstream("/output", this.upStreams[CC.OUT]);
+
+        this.router.upstream("/output", this.upStreams[CC.OUT], { encoding: this.outputEncoding });
 
         this.router.downstream("/input", (req) => {
             if (this.apiInputEnabled) {

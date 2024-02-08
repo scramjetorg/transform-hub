@@ -67,7 +67,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 ? `${type}; charset=${encoding}`
                 : type;
 
-            out.setEncoding(encoding);
+            logger.debug("encoding, cType, readableEncoding", encoding, cType, data.readableEncoding);
 
             res.setHeader("content-type", cType);
             res.setHeader("transfer-encoding", "chunked");
