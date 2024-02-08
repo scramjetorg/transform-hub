@@ -773,6 +773,14 @@ export class Runner<X extends AppConfig> implements IComponent {
                 );
 
                 this.instanceOutput
+                if (!this.shouldSerialize && this.instanceOutput.readableEncoding) {
+                    this.hostClient.outputStream.setDefaultEncoding(this.instanceOutput.readableEncoding);
+                }
+
+                this.logger.info("Will Output be serialized?", this.shouldSerialize);
+                this.logger.info("Stream encoding is", this.instanceOutput.readableEncoding);
+
+                this.instanceOutput
                     .once("end", () => {
                         this.logger.debug("Sequence stream ended");
                         res();
@@ -786,6 +794,14 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.providesContentType = intermediate.contentType || "";
 
                 this.sendPang({ provides: this.provides, contentType: this.providesContentType });
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        provides: intermediate.topic || "",
+                        contentType: intermediate.contentType || "",
+                        outputEncoding: this.instanceOutput.readableEncoding
+                    }],
+                    this.hostClient.monitorStream,
+                );
             } else {
             // TODO: this should push a PANG message with the sequence description
                 this.logger.debug("Sequence did not output a stream");

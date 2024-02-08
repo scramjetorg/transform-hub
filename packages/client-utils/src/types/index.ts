@@ -15,6 +15,7 @@ export type SendStreamOptions = Partial<{
  */
 export type GetStreamOptions = Partial<{
     type: string;
+    encoding?: BufferEncoding;
 }>;
 
 /**

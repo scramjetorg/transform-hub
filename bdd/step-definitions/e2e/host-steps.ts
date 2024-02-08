@@ -67,6 +67,25 @@ const streamToString = async (stream: Stream): Promise<string> => {
 
     return chunks.join("");
 };
+const streamToBinary = async (stream: Readable): Promise<string> => {
+    const chunks: Uint8Array[] = [];
+
+    return new Promise((resolve, reject) => {
+        stream.on("data", (chunk: Buffer | Uint8Array) => {
+            chunks.push(chunk instanceof Buffer ? chunk : Uint8Array.from(chunk));
+        });
+
+        stream.on("end", () => {
+            const binaryData = Buffer.concat(chunks);
+
+            resolve(binaryData.toString("binary"));
+        });
+
+        stream.on("error", (error: Error) => {
+            reject(error);
+        });
+    });
+};
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
 
@@ -503,6 +522,23 @@ When("compare checksums of content sent from file {string}", async function(this
     assert.equal(outputString, hex);
 
     await this.resources.instance?.sendInput("null");
+});
+
+When("confirm file checksum match output checksum", async function(this: CustomWorld) {
+    // the random.bin hex is written to instance stdout
+    const stdout = await this.resources.instance!.getStream("stdout");
+    const fileHexFromStdout = await streamToString(stdout);
+    const output = await this.resources.instance?.getStream("output");
+
+    if (!output || !stdout) assert.fail("No output or stdout, or both.");
+
+    const dataFromOutput = await streamToBinary(output);
+    const outputHex: string = crypto
+        .createHash("sha256")
+        .update(dataFromOutput)
+        .digest("hex");
+
+    assert.equal(outputHex, fileHexFromStdout);
 });
 
 When(
