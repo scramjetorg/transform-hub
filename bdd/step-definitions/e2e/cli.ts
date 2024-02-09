@@ -554,29 +554,30 @@ Then("I should see exitCode: {string}", async function (
     }
 });
 
-Then("Instance info should contain provided parameters", async function (
-    this: CustomWorld
-) {
-    const res = this.cliResources;
-    if (res.stdio) {
-        try {
-            const expected = await fs.promises
-                .readFile("../bdd/data/seq-startup-config.json", "utf8")
-                .then(JSON.parse);
+Then(
+    "Instance info should contain provided parameters in {string}",
+    async function (this: CustomWorld, file: string) {
+        const res = this.cliResources;
+        if (res.stdio) {
+            try {
+                const expected = await fs.promises
+                    .readFile(`../bdd/data/${file}`, "utf8")
+                    .then(JSON.parse);
 
-            const received = res.stdio[0] ? JSON.parse(res.stdio[0]) : null;
-            if (process.env.SCRAMJET_TEST_LOG) {
-                logger.debug("received.appConfig:", received.appConfig);
-                logger.debug("expected.appConfig:", expected.appConfig);
-                logger.debug("received.args:", received.args);
-                logger.debug("expected.args:", expected.args);
+                const received = res.stdio[0] ? JSON.parse(res.stdio[0]) : null;
+                if (process.env.SCRAMJET_TEST_LOG) {
+                    logger.debug("received.appConfig:", received.appConfig);
+                    logger.debug("expected.appConfig:", expected.appConfig);
+                    logger.debug("received.args:", received.args);
+                    logger.debug("expected.args:", expected.args);
+                }
+                assert.deepEqual(received.appConfig, expected.appConfig);
+                assert.deepEqual(received.args, expected.args);
+            } catch (error) {
+                logger.error(error);
             }
-            assert.deepEqual(received.appConfig, expected.appConfig);
-            assert.deepEqual(received.args, expected.args);
-        } catch (error) {
-            logger.error(error);
+        } else {
+            assert.fail("cliResources or stdio is undefined");
         }
-    } else {
-        assert.fail("cliResources or stdio is undefined");
     }
-});
+);
