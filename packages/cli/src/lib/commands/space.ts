@@ -7,7 +7,8 @@ import { getMiddlewareClient, initPlatform } from "../platform";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { Option } from "commander";
 import { isIdString } from "@scramjet/utility";
-function validateHubId(id:string): string {
+
+function validateHubId(id: string): string {
     if (!isIdString(id)) {
         throw new Error("Provided argument is not a valid id");
     }
@@ -23,7 +24,8 @@ export const space: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) {
-        program.command("space", { hidden: true })
+        program
+            .command("space", { hidden: true })
             .action(() => displayProdOnlyMsg("space"));
 
         return;
@@ -37,8 +39,13 @@ export const space: CommandDefinition = (program) => {
         .alias("spc")
         .usage("[command] [options...]")
         .option("-c, --stdout", "Output to stdout (ignores -o)")
-        .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
-        .description("Operations on grouped and separated runtime environments that allow sharing the data within them");
+        .option(
+            "-o, --output <file.tar.gz>",
+            "Output path - defaults to dirname"
+        )
+        .description(
+            "Operations on grouped and separated runtime environments that allow sharing the data within them"
+        );
 
     spaceCmd
         .command("info")
@@ -48,7 +55,10 @@ export const space: CommandDefinition = (program) => {
             const managerClient = mwClient.getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 
-            displayObject({ spaceId, version, managerClient }, profileManager.getProfileConfig().format);
+            displayObject(
+                { spaceId, version, managerClient },
+                profileManager.getProfileConfig().format
+            );
         });
 
     spaceCmd
@@ -58,7 +68,10 @@ export const space: CommandDefinition = (program) => {
         .action(async () => {
             const managers = await mwClient.getManagers();
 
-            return displayObject(managers, profileManager.getProfileConfig().format);
+            return displayObject(
+                managers,
+                profileManager.getProfileConfig().format
+            );
         });
 
     spaceCmd
@@ -68,7 +81,10 @@ export const space: CommandDefinition = (program) => {
         .action(async (name: string) => {
             const managerClient = mwClient.getManagerClient(name);
 
-            displayObject({ name, ...await managerClient.getVersion() }, profileManager.getProfileConfig().format);
+            displayObject(
+                { name, ...(await managerClient.getVersion()) },
+                profileManager.getProfileConfig().format
+            );
             sessionConfig.setLastSpaceId(name);
         });
 
@@ -82,9 +98,13 @@ export const space: CommandDefinition = (program) => {
     spaceCmd
         .command("logs")
         .description("Fetch all logs from space")
-        .argument("[<space_name>]", "The name of the space (defaults to current space)")
+        .argument(
+            "[<space_name>]",
+            "The name of the space (defaults to current space)"
+        )
         .action(async (spaceName: string) => {
-            if (typeof spaceName === "undefined") spaceName = sessionConfig.lastSpaceId;
+            if (typeof spaceName === "undefined")
+                spaceName = sessionConfig.lastSpaceId;
 
             const managerClient = mwClient.getManagerClient(spaceName);
 
@@ -104,9 +124,12 @@ export const space: CommandDefinition = (program) => {
         .command("access")
         .description("Manages Access Keys for active Space");
 
-    accessKeyCmd.command("create")
+    accessKeyCmd
+        .command("create")
         .argument("<description>", "Key description")
-        .description("Create Access key for adding Hubs to active Space, i.e \"Army of Darkness\"")
+        .description(
+            'Create Access key for adding Hubs to active Space, i.e "Army of Darkness"'
+        )
         .action(async (description: string) => {
             const spaceName = sessionConfig.lastSpaceId;
 
@@ -114,11 +137,14 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            const accessKey = await mwClient.createAccessKey(spaceName, { description });
+            const accessKey = await mwClient.createAccessKey(spaceName, {
+                description,
+            });
 
             displayObject(accessKey, profileManager.getProfileConfig().format);
         });
-    accessKeyCmd.command("list")
+    accessKeyCmd
+        .command("list")
         .alias("ls")
         .description("List Access Keys metadata in active Space")
         .action(async () => {
@@ -128,20 +154,31 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            displayObject(await mwClient.listAccessKeys(spaceName), profileManager.getProfileConfig().format);
+            displayObject(
+                await mwClient.listAccessKeys(spaceName),
+                profileManager.getProfileConfig().format
+            );
         });
 
-    const SpaceId = new Option("--id <id>", "revoke specified key").argParser(validateHubId);
+    const SpaceId = new Option("--id <id>", "revoke specified key").argParser(
+        validateHubId
+    );
 
-    accessKeyCmd.command("revoke")
+    accessKeyCmd
+        .command("revoke")
         .description("Revokes Access Key in active Space")
         .addOption(SpaceId)
-        .option("--all", "Removes all access keys and disconnects all self-hosted Hubs connected to Space")
-        .action(async ({ all, id } : { all: boolean, id: string }) => {
+        .option(
+            "--all",
+            "Removes all access keys and disconnects all self-hosted Hubs connected to Space"
+        )
+        .action(async ({ all, id }: { all: boolean; id: string }) => {
             const spaceName = sessionConfig.lastSpaceId;
 
-            if (all && id || !all && !id) {
-                throw new Error("Please provide one of the options, please use command with --help to get more information");
+            if ((all && id) || (!all && !id)) {
+                throw new Error(
+                    "Please provide one of the options, please use command with --help to get more information"
+                );
             }
 
             if (!spaceName) {
@@ -149,9 +186,15 @@ export const space: CommandDefinition = (program) => {
             }
 
             if (id) {
-                const revokedAccessKey = await mwClient.revokeAccessKey(spaceName, id);
+                const revokedAccessKey = await mwClient.revokeAccessKey(
+                    spaceName,
+                    id
+                );
 
-                return displayObject(revokedAccessKey, profileManager.getProfileConfig().format);
+                return displayObject(
+                    revokedAccessKey,
+                    profileManager.getProfileConfig().format
+                );
             }
 
             const apiKeys = await mwClient.listAccessKeys(spaceName);
@@ -160,8 +203,30 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("There are no keys to revoke");
             }
 
-            const revokedAccessKeys = await mwClient.revokeAllAccessKeys(spaceName);
+            const revokedAccessKeys = await mwClient.revokeAllAccessKeys(
+                spaceName
+            );
 
-            return displayObject(revokedAccessKeys, profileManager.getProfileConfig().format);
+            return displayObject(
+                revokedAccessKeys,
+                profileManager.getProfileConfig().format
+            );
+        });
+
+    const topicKeyCmd = spaceCmd
+        .command("topic")
+        .description("Manage data flow through topics operations");
+
+    topicKeyCmd
+        .command("list")
+        .alias("ls")
+        .action(async () => {
+            const spaceName = sessionConfig.lastSpaceId;
+            const managerClient = mwClient.getManagerClient(spaceName);
+            const topics = await managerClient.getTopics();
+            return displayObject(
+                topics,
+                profileManager.getProfileConfig().format
+            );
         });
 };
