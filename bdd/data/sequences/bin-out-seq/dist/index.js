@@ -40,7 +40,6 @@ var fs_1 = require("fs");
 var stream_1 = require("stream");
 var crypto = require("crypto");
 var mod = [
-    // eslint-disable-next-line consistent-return
     function (_stream, filePath) {
         if (filePath === void 0) { filePath = "".concat(__dirname, "/random.bin"); }
         return __awaiter(this, void 0, void 0, function () {

@@ -20,7 +20,7 @@ import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import crypto from "crypto";
+import crypto, { BinaryLike } from "crypto";
 import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
@@ -67,7 +67,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
 
     return chunks.join("");
 };
-const streamToBinary = async (stream: Readable): Promise<string> => {
+const streamToBinary = async (stream: Readable): Promise<BinaryLike> => {
     const chunks: Uint8Array[] = [];
 
     return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ const streamToBinary = async (stream: Readable): Promise<string> => {
         stream.on("end", () => {
             const binaryData = Buffer.concat(chunks);
 
-            resolve(binaryData.toString("binary"));
+            resolve(binaryData);
         });
 
         stream.on("error", (error: Error) => {
@@ -538,7 +538,7 @@ When("confirm file checksum match output checksum", async function(this: CustomW
         .update(dataFromOutput)
         .digest("hex");
 
-    assert.equal(outputHex, fileHexFromStdout);
+    assert.strictEqual(outputHex, fileHexFromStdout.trim());
 });
 
 When(

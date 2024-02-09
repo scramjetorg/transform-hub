@@ -772,7 +772,6 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream
                 );
 
-                this.instanceOutput
                 if (!this.shouldSerialize && this.instanceOutput.readableEncoding) {
                     this.hostClient.outputStream.setDefaultEncoding(this.instanceOutput.readableEncoding);
                 }
