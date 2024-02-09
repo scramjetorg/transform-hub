@@ -174,4 +174,11 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/endless-names-output.tar.gz"
         And I execute CLI with "seq start - --startup-config ../bdd/data/seq-startup-config.json"
         And I execute CLI with "inst info -"
-        Then Instance info should contain provided parameters
+        Then Instance info should contain provided parameters in "seq-startup-config.json"
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-021 Test Start sequence in python with startup-config
+        When I execute CLI with "seq send ../packages/python-weather-args.tar.gz"
+        And I execute CLI with "seq start - --startup-config ../bdd/data/python-weather-startup-config.json"
+        And I execute CLI with "inst info -"
+        Then Instance info should contain provided parameters in "python-weather-startup-config.json"
