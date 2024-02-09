@@ -1,0 +1,23 @@
+{
+  "name": "@scramjet/bin-out-seq",
+  "version": "0.23.2",
+  "description": "A Sequence that reads binary file and writes data to output.",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "postbuild": "cp -r package.json random.bin dist/ && (cd dist && npm i --only=production)"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.38.0",
+    "@types/node": "15.12.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "assets": [
+    "random.bin"
+  ]
+}

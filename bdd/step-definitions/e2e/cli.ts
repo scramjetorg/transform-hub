@@ -515,6 +515,7 @@ When("I deploy sequence {string}", async function (
 ) {
     const seqPath = `../packages/${sequenceName}`;
     const res = this.cliResources;
+
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "seq",
@@ -528,8 +529,10 @@ Then("I should see error message: {string}", async function (
     errorMessage: string
 ) {
     const res = this.cliResources;
+
     if (res.stdio) {
         const errorMessageRegex = new RegExp(errorMessage);
+
         assert.match(res.stdio[1], errorMessageRegex);
     } else {
         assert.fail("cliResources or stdio is undefined");
@@ -541,9 +544,11 @@ Then("I should see exitCode: {string}", async function (
     exitCode: string
 ) {
     const res = this.cliResources;
+
     if (res && res.stdio) {
         const exitCodeRegex = new RegExp(exitCode);
         const receivedExitCode: string = res.stdio[2].toString();
+
         assert.match(
             receivedExitCode,
             exitCodeRegex,
@@ -558,6 +563,7 @@ Then("Instance info should contain provided parameters", async function (
     this: CustomWorld
 ) {
     const res = this.cliResources;
+
     if (res.stdio) {
         try {
             const expected = await fs.promises
@@ -565,6 +571,7 @@ Then("Instance info should contain provided parameters", async function (
                 .then(JSON.parse);
 
             const received = res.stdio[0] ? JSON.parse(res.stdio[0]) : null;
+
             if (process.env.SCRAMJET_TEST_LOG) {
                 logger.debug("received.appConfig:", received.appConfig);
                 logger.debug("expected.appConfig:", expected.appConfig);
