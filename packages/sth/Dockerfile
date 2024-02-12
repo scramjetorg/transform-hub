@@ -9,7 +9,6 @@ COPY ./dist/api-server ./dist/api-server
 COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
 COPY ./dist/obj-logger ./dist/obj-logger
-COPY ./dist/manager-api-client ./dist/manager-api-client
 COPY ./dist/model ./dist/model
 COPY ./dist/module-loader ./dist/module-loader
 COPY ./dist/runner ./dist/runner

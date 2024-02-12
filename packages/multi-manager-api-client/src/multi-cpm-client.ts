@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/manager-api-client";
+import { ManagerClient } from "@scramjet/api-client";
 import { DeepPartial, LoadCheckStat, ManagerConfiguration, MMRestAPI } from "@scramjet/types";
 
 export class MultiManagerClient implements ClientProvider {

@@ -1,4 +1,7 @@
-import { HostClient, } from "@scramjet/api-client";
+/// <reference path="./definitions.d.ts" />
+
+// eslint-disable-next-line import/no-cycle
+import { HostClient } from "./host-client";
 import { ClientUtils, ClientProvider, HttpClient, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { MRestAPI, LoadCheckStat } from "@scramjet/types";
 import { Readable } from "stream";
