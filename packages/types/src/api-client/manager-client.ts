@@ -12,7 +12,7 @@ export declare class ManagerClient {
 
     constructor(apiBase: string, utils: ClientUtils | undefined);
 
-    getHostClient(id: string, hostApiBase: string): import("../api-client/host-client").HostClient;
+    getHostClient(id: string, hostApiBase: string): import("./host-client").HostClient;
     getHosts(): Promise<MRestAPI.GetHostInfoResponse[]>;
     getVersion(): Promise<STHRestAPI.GetVersionResponse>;
     sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;

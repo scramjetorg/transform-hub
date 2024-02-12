@@ -44,7 +44,7 @@ export * from "./sd-stream-handler";
 export * from "./sd-topic-handler";
 export * from "./topic-router";
 
-export type ManagerClient = import("./manager-api-client/manager-client").ManagerClient;
+export type ManagerClient = import("./api-client/manager-client").ManagerClient;
 
 export { MRestAPI };
 export { MWRestAPI };
