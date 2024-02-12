@@ -1,9 +1,12 @@
+/// <reference path="./definitions.d.ts" />
+
 import { ClientProvider, ClientUtils, ClientUtilsCustomAgent, Headers, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 import { HostHeaders } from "@scramjet/symbols";
-import { ManagerClient } from "@scramjet/manager-api-client";
+// eslint-disable-next-line import/no-cycle
+import { ManagerClient } from "./manager-client";
 
 /**
  * Host client.
