@@ -101,7 +101,9 @@ export const space: CommandDefinition = (program) => {
 
             displayObject(version, profileManager.getProfileConfig().format);
         });
-    const accessKeyCmd = spaceCmd.command("access").description("Manages Access Keys for active Space");
+    const accessKeyCmd = spaceCmd
+        .command("access")
+        .description("Manages Access Keys for active Space");
 
     accessKeyCmd
         .command("create")
@@ -114,9 +116,7 @@ export const space: CommandDefinition = (program) => {
                 throw new Error("No Space set");
             }
 
-            const accessKey = await mwClient.createAccessKey(spaceName, {
-                description
-            });
+            const accessKey = await mwClient.createAccessKey(spaceName, { description });
 
             displayObject(accessKey, profileManager.getProfileConfig().format);
         });
