@@ -287,26 +287,24 @@ export const sequence: CommandDefinition = (program) => {
         .description("Remove all Sequences from the Hub (use with caution)")
         .action(async ({ force }) => {
             let seqs = await getHostClient().listSequences();
-            const { lastSequenceId } = sessionConfig.get();
+            const { lastSequenceId, lastSpaceId } = sessionConfig.get();
+            let middlewareClient;
+            let managerClient;
+
+            try {
+                middlewareClient = getMiddlewareClient();
+            } catch (e : any) {
+                displayMessage("Result from local environment.");
+            }
+
+            if (middlewareClient) {
+                managerClient = middlewareClient.getManagerClient(lastSpaceId);
+            }
 
             if (!seqs.length) {
                 displayMessage("Sequence list is empty, nothing to delete.");
                 return;
             }
-
-            //const test = await getHostClient();
-            //const dwa = sessionConfig;
-            //const dwa = getMiddlewareClient().getManagerClient();
-
-
-            const { lastSpaceId, lastHubId } = sessionConfig.get();
-
-            const test = getMiddlewareClient().getManagerClient(lastSpaceId);
-
-            await test.getAllSequences();
-
-            console.log(lastHubId);
-            displayMessage(`${test}`);
 
             let fullSuccess = true;
 
@@ -320,6 +318,16 @@ export const sequence: CommandDefinition = (program) => {
                 }
             });
 
+            fullSuccess = true;
+
+            if (managerClient) {
+                try {
+                    await managerClient.clearStore();
+                } catch (error) {
+                    fullSuccess = false;
+                }
+            }
+
             if (!fullSuccess) {
                 throw new Error("Some Sequences may have not been deleted.");
             }
@@ -331,6 +339,6 @@ export const sequence: CommandDefinition = (program) => {
                 throw new Error("Some Sequences may have not been deleted.");
             }
 
-            displayMessage("Sequences removed successfully ddddddddddd.");
+            displayMessage("Sequences removed successfully.");
         });
 };
