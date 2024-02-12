@@ -14,7 +14,6 @@
   "license": "MIT",
   "dependencies": {
     "@scramjet/client-utils": "^0.39.0",
-    "@scramjet/manager-api-client": "^0.39.0",
     "@scramjet/sth-config": "^0.39.0",
     "@scramjet/symbols": "^0.39.0",
     "n-readlines": "^1.0.1",
