@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { ClientProvider, ClientUtils } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/manager-api-client";
+import { ManagerClient } from "@scramjet/api-client";
 import { MWRestAPI, MMRestAPI } from "@scramjet/types";
 
 /**
