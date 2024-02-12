@@ -176,6 +176,7 @@ export const space: CommandDefinition = (program) => {
     topicKeyCmd
         .command("list")
         .alias("ls")
+        .description("List information about topics")
         .action(async () => {
             const spaceName = sessionConfig.lastSpaceId;
             const managerClient = mwClient.getManagerClient(spaceName);
