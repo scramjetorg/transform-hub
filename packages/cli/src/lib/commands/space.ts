@@ -82,7 +82,7 @@ export const space: CommandDefinition = (program) => {
             const managerClient = mwClient.getManagerClient(name);
 
             displayObject(
-                { name, ...(await managerClient.getVersion()) },
+                { name, ...await managerClient.getVersion() },
                 profileManager.getProfileConfig().format
             );
             sessionConfig.setLastSpaceId(name);
@@ -128,7 +128,7 @@ export const space: CommandDefinition = (program) => {
         .command("create")
         .argument("<description>", "Key description")
         .description(
-            'Create Access key for adding Hubs to active Space, i.e "Army of Darkness"'
+            "Create Access key for adding Hubs to active Space, i.e \"Army of Darkness\""
         )
         .action(async (description: string) => {
             const spaceName = sessionConfig.lastSpaceId;
@@ -175,7 +175,7 @@ export const space: CommandDefinition = (program) => {
         .action(async ({ all, id }: { all: boolean; id: string }) => {
             const spaceName = sessionConfig.lastSpaceId;
 
-            if ((all && id) || (!all && !id)) {
+            if (all && id || !all && !id) {
                 throw new Error(
                     "Please provide one of the options, please use command with --help to get more information"
                 );
@@ -224,6 +224,7 @@ export const space: CommandDefinition = (program) => {
             const spaceName = sessionConfig.lastSpaceId;
             const managerClient = mwClient.getManagerClient(spaceName);
             const topics = await managerClient.getTopics();
+
             return displayObject(
                 topics,
                 profileManager.getProfileConfig().format
