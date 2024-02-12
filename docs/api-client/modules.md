@@ -8,6 +8,7 @@
 
 - [HostClient](classes/HostClient.md)
 - [InstanceClient](classes/InstanceClient.md)
+- [ManagerClient](classes/ManagerClient.md)
 - [SequenceClient](classes/SequenceClient.md)
 
 ### Type Aliases

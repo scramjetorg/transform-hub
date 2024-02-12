@@ -2,6 +2,17 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.39.1] - 2024-02-12
+
+## Features
+
+* [TEST][CLI]VDM-1723 Test Reading App Config in Python Sequence by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1030
+
+## Fixed
+
+* fix topic list command by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1031
+* [FIX] Cyclic dependency in api-client and manager-client by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/1034
+
 ## [0.39.0] - 2024-02-06
 
 ## Features
