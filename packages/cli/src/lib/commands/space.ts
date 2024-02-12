@@ -24,7 +24,8 @@ export const space: CommandDefinition = (program) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) {
-        program.command("space", { hidden: true }).action(() => displayProdOnlyMsg("space"));
+        program.command("space", { hidden: true })
+            .action(() => displayProdOnlyMsg("space"));
 
         return;
     }
@@ -38,9 +39,7 @@ export const space: CommandDefinition = (program) => {
         .usage("[command] [options...]")
         .option("-c, --stdout", "Output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
-        .description(
-            "Operations on grouped and separated runtime environments that allow sharing the data within them"
-        );
+        .description("Operations on grouped and separated runtime environments that allow sharing the data within them");
 
     spaceCmd
         .command("info")
@@ -146,9 +145,7 @@ export const space: CommandDefinition = (program) => {
             const spaceName = sessionConfig.lastSpaceId;
 
             if (all && id || !all && !id) {
-                throw new Error(
-                    "Please provide one of the options, please use command with --help to get more information"
-                );
+                throw new Error("Please provide one of the options, please use command with --help to get more information");
             }
 
             if (!spaceName) {
@@ -172,7 +169,9 @@ export const space: CommandDefinition = (program) => {
             return displayObject(revokedAccessKeys, profileManager.getProfileConfig().format);
         });
 
-    const topicKeyCmd = spaceCmd.command("topic").description("Manage data flow through topics operations");
+    const topicKeyCmd = spaceCmd
+        .command("topic")
+        .description("Manage data flow through topics operations");
 
     topicKeyCmd
         .command("list")
