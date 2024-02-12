@@ -12,7 +12,7 @@ import { isDevelopment } from "../../utils/envs";
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
-import { initPlatform } from "../platform";
+import { initPlatform, getMiddlewareClient } from "../platform";
 import { AppConfig, DeepPartial } from "@scramjet/types";
 import { FileBuilder, isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
 import { SequenceDeployArgs, SequenceStartCLIArgs } from "../../types/params";
@@ -294,6 +294,20 @@ export const sequence: CommandDefinition = (program) => {
                 return;
             }
 
+            //const test = await getHostClient();
+            //const dwa = sessionConfig;
+            //const dwa = getMiddlewareClient().getManagerClient();
+
+
+            const { lastSpaceId, lastHubId } = sessionConfig.get();
+
+            const test = getMiddlewareClient().getManagerClient(lastSpaceId);
+
+            await test.getAllSequences();
+
+            console.log(lastHubId);
+            displayMessage(`${test}`);
+
             let fullSuccess = true;
 
             await Promise.all(
@@ -317,6 +331,6 @@ export const sequence: CommandDefinition = (program) => {
                 throw new Error("Some Sequences may have not been deleted.");
             }
 
-            displayMessage("Sequences removed successfully.");
+            displayMessage("Sequences removed successfully ddddddddddd.");
         });
 };
