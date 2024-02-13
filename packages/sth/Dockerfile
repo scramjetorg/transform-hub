@@ -16,7 +16,6 @@ COPY ./dist/pre-runner ./dist/pre-runner
 COPY ./dist/python-runner ./dist/python-runner
 COPY ./dist/sth ./dist/sth
 COPY ./dist/symbols ./dist/symbols
-COPY ./dist/types ./dist/types
 COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
 COPY ./dist/verser ./dist/verser
