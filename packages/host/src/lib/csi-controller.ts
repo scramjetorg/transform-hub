@@ -17,7 +17,6 @@ import {
     STHRestAPI,
     STHConfiguration,
     InstanceLimits,
-    InstanceStatus,
     MonitoringMessageData,
     InstanceStats,
     OpResponse,
@@ -33,7 +32,7 @@ import {
     MessageUtilities,
     InstanceAdapterError,
 } from "@scramjet/model";
-import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 import { development } from "@scramjet/sth-config";
 
