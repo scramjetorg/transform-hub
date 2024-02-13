@@ -18,3 +18,5 @@ export interface StreamHandler {
     options(): StreamOptions
     origin(): StreamOrigin
 }
+
+export { WorkState, WritableState, ReadableState, StreamType };
