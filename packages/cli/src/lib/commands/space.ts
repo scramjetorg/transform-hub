@@ -7,7 +7,7 @@ import { getMiddlewareClient, initPlatform } from "../platform";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { Option } from "commander";
 import { isIdString } from "@scramjet/utility";
-function validateHubId(id:string): string {
+function validateHubId(id: string): string {
     if (!isIdString(id)) {
         throw new Error("Provided argument is not a valid id");
     }
@@ -137,7 +137,7 @@ export const space: CommandDefinition = (program) => {
         .description("Revokes Access Key in active Space")
         .addOption(SpaceId)
         .option("--all", "Removes all access keys and disconnects all self-hosted Hubs connected to Space")
-        .action(async ({ all, id } : { all: boolean, id: string }) => {
+        .action(async ({ all, id }: { all: boolean, id: string }) => {
             const spaceName = sessionConfig.lastSpaceId;
 
             if (all && id || !all && !id) {
@@ -163,5 +163,21 @@ export const space: CommandDefinition = (program) => {
             const revokedAccessKeys = await mwClient.revokeAllAccessKeys(spaceName);
 
             return displayObject(revokedAccessKeys, profileManager.getProfileConfig().format);
+        });
+
+    const topicKeyCmd = spaceCmd
+        .command("topic")
+        .description("Manage data flow through topics operations");
+
+    topicKeyCmd
+        .command("list")
+        .alias("ls")
+        .description("List information about topics")
+        .action(async () => {
+            const spaceName = sessionConfig.lastSpaceId;
+            const managerClient = mwClient.getManagerClient(spaceName);
+            const topics = await managerClient.getTopics();
+
+            return displayObject(topics, profileManager.getProfileConfig().format);
         });
 };
