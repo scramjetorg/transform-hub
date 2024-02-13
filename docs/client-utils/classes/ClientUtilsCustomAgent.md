@@ -375,7 +375,7 @@ ClientUtilsBase.headers
 | Name | Type |
 | :------ | :------ |
 | `apiBase` | `string` |
-| `agent` | `Agent` |
+| `agent` | `Agent` \| `Agent` |
 
 #### Overrides
 

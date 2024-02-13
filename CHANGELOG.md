@@ -2,6 +2,14 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.39.2] - 2024-02-13
+
+## Fixed
+
+* Remove docs for manager-api-client by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1038
+* Move enums from @types to @symbols by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1041
+* Fix HTTP vs HTTPS issue in clients  by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1040
+
 ## [0.39.1] - 2024-02-12
 
 ## Features

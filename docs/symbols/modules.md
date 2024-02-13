@@ -12,10 +12,15 @@
 - [DisconnectHubErrors](enums/DisconnectHubErrors.md)
 - [HostHeaders](enums/HostHeaders.md)
 - [InstanceMessageCode](enums/InstanceMessageCode.md)
+- [InstanceStatus](enums/InstanceStatus.md)
 - [OpRecordCode](enums/OpRecordCode.md)
+- [ReadableState](enums/ReadableState.md)
 - [RunnerExitCode](enums/RunnerExitCode.md)
 - [RunnerMessageCode](enums/RunnerMessageCode.md)
 - [SequenceMessageCode](enums/SequenceMessageCode.md)
+- [StreamType](enums/StreamType.md)
+- [WorkState](enums/WorkState.md)
+- [WritableState](enums/WritableState.md)
 
 ### Variables
 

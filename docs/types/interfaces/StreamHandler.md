@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L37)
+[packages/types/src/sd-stream-handler.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L15)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L40)
+[packages/types/src/sd-stream-handler.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L18)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L41)
+[packages/types/src/sd-stream-handler.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L19)
 
 ___
 
@@ -72,18 +72,18 @@ ___
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L38)
+[packages/types/src/sd-stream-handler.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L16)
 
 ___
 
 ### type
 
-▸ **type**(): [`StreamType`](../enums/StreamType.md)
+▸ **type**(): `StreamType`
 
 #### Returns
 
-[`StreamType`](../enums/StreamType.md)
+`StreamType`
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L39)
+[packages/types/src/sd-stream-handler.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L17)

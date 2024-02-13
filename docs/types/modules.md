@@ -231,14 +231,6 @@
 - [InstanceClient](classes/InstanceClient.md)
 - [SequenceClient](classes/SequenceClient.md)
 
-### Enumerations
-
-- [InstanceStatus](enums/InstanceStatus.md)
-- [ReadableState](enums/ReadableState.md)
-- [StreamType](enums/StreamType.md)
-- [WorkState](enums/WorkState.md)
-- [WritableState](enums/WritableState.md)
-
 ### Namespaces
 
 - [MHRestAPI](modules/MHRestAPI.md)
@@ -1201,14 +1193,14 @@ ___
 | `requires?` | `string` |
 | `sequence` | [`SequenceInfoInstance`](modules.md#sequenceinfoinstance) |
 | `started?` | `Date` |
-| `status?` | [`InstanceStatus`](enums/InstanceStatus.md) |
+| `status?` | `InstanceStatus` |
 | `terminated?` | { `exitcode`: `number` ; `reason`: `string`  } |
 | `terminated.exitcode` | `number` |
 | `terminated.reason` | `string` |
 
 #### Defined in
 
-[packages/types/src/instance-store.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L5)
+[packages/types/src/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L6)
 
 ___
 
@@ -1634,7 +1626,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/index.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L47)
+[packages/types/src/index.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L46)
 
 ___
 
@@ -2131,7 +2123,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L29)
+[packages/types/src/sd-stream-handler.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L7)
 
 ___
 
@@ -2947,7 +2939,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L27)
+[packages/types/src/sd-stream-handler.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L5)
 
 ___
 
@@ -2964,7 +2956,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L31)
+[packages/types/src/sd-stream-handler.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L9)
 
 ___
 
@@ -2980,11 +2972,11 @@ ___
 
 ### StreamState
 
-Ƭ **StreamState**: [`WorkState`](enums/WorkState.md) \| [`WritableState`](enums/WritableState.md) \| [`ReadableState`](enums/ReadableState.md)
+Ƭ **StreamState**: `WorkState` \| `WritableState` \| `ReadableState`
 
 #### Defined in
 
-[packages/types/src/sd-stream-handler.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L19)
+[packages/types/src/sd-stream-handler.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sd-stream-handler.ts#L3)
 
 ___
 
@@ -3136,7 +3128,7 @@ ___
 
 ### TopicState
 
-Ƭ **TopicState**: [`Flowing`](enums/WorkState.md#flowing) \| [`Error`](enums/WorkState.md#error) \| [`Pause`](enums/ReadableState.md#pause) \| [`Drain`](enums/WritableState.md#drain)
+Ƭ **TopicState**: `WorkState.Flowing` \| `WorkState.Error` \| `ReadableState.Pause` \| `WritableState.Drain`
 
 #### Defined in
 
