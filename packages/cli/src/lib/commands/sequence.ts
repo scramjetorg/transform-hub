@@ -12,7 +12,7 @@ import { isDevelopment } from "../../utils/envs";
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
-import { initPlatform, getMiddlewareClient } from "../platform";
+import { initPlatform } from "../platform";
 import { AppConfig, DeepPartial } from "@scramjet/types";
 import { FileBuilder, isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
 import { SequenceDeployArgs, SequenceStartCLIArgs } from "../../types/params";
@@ -287,19 +287,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("Remove all Sequences from the Hub (use with caution)")
         .action(async ({ force }) => {
             let seqs = await getHostClient().listSequences();
-            const { lastSequenceId, lastSpaceId } = sessionConfig.get();
-            let middlewareClient;
-            let managerClient;
-
-            try {
-                middlewareClient = getMiddlewareClient();
-            } catch (e : any) {
-                displayMessage("Result from local environment.");
-            }
-
-            if (middlewareClient) {
-                managerClient = middlewareClient.getManagerClient(lastSpaceId);
-            }
+            const { lastSequenceId } = sessionConfig.get();
 
             if (!seqs.length) {
                 displayMessage("Sequence list is empty, nothing to delete.");
@@ -317,16 +305,6 @@ export const sequence: CommandDefinition = (program) => {
                     displayMessage("error stack", error?.stack);
                 }
             });
-
-            fullSuccess = true;
-
-            if (managerClient) {
-                try {
-                    await managerClient.clearStore();
-                } catch (error) {
-                    fullSuccess = false;
-                }
-            }
 
             if (!fullSuccess) {
                 throw new Error("Some Sequences may have not been deleted.");
