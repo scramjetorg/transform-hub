@@ -92,7 +92,7 @@ ClientProvider.client
 
 #### Defined in
 
-[middleware-client.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L64)
+[middleware-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L67)
 
 ___
 
@@ -110,7 +110,7 @@ List of manager ids
 
 #### Defined in
 
-[middleware-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L54)
+[middleware-client.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L57)
 
 ___
 
@@ -153,7 +153,7 @@ List of manager ids
 
 #### Defined in
 
-[middleware-client.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L36)
+[middleware-client.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L39)
 
 ___
 
@@ -171,7 +171,7 @@ List of manager ids
 
 #### Defined in
 
-[middleware-client.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L45)
+[middleware-client.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L48)
 
 ___
 
@@ -191,7 +191,7 @@ ___
 
 #### Defined in
 
-[middleware-client.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L58)
+[middleware-client.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L61)
 
 ___
 
@@ -212,7 +212,7 @@ ___
 
 #### Defined in
 
-[middleware-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L73)
+[middleware-client.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L76)
 
 ___
 
@@ -232,4 +232,4 @@ ___
 
 #### Defined in
 
-[middleware-client.ts:82](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L82)
+[middleware-client.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/middleware-api-client/src/middleware-client.ts#L85)
