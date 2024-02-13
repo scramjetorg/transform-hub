@@ -2,6 +2,7 @@ import { PassThrough, Readable, Stream, Writable } from "stream";
 import { StreamOrigin } from "@scramjet/types";
 import { Topic, TopicEvent } from "../../src/lib/serviceDiscovery/topic";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
+import { ReadableState, WorkState } from "@scramjet/symbols";
 
 let testTopic: Topic;
 const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
