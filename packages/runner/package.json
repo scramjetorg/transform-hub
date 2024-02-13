@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner",
-  "version": "0.39.1",
+  "version": "0.39.2",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./src/bin/start-runner.ts",
   "scripts": {
@@ -16,17 +16,17 @@
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/api-client": "^0.39.1",
-    "@scramjet/client-utils": "^0.39.1",
-    "@scramjet/model": "^0.39.1",
-    "@scramjet/obj-logger": "^0.39.1",
-    "@scramjet/symbols": "^0.39.1",
-    "@scramjet/utility": "^0.39.1",
+    "@scramjet/api-client": "^0.39.2",
+    "@scramjet/client-utils": "^0.39.2",
+    "@scramjet/model": "^0.39.2",
+    "@scramjet/obj-logger": "^0.39.2",
+    "@scramjet/symbols": "^0.39.2",
+    "@scramjet/utility": "^0.39.2",
     "bpmux": "^8.2.1",
     "scramjet": "^4.36.9"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.39.1",
+    "@scramjet/types": "^0.39.2",
     "@types/node": "15.12.5",
     "@types/sinon": "^10.0.13",
     "ava": "^3.15.0",
