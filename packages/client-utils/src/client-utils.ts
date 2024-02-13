@@ -11,7 +11,7 @@ export abstract class ClientUtilsBase implements HttpClient {
     private normalizeUrlFn: (url: string) => string;
 
     static headers: Headers = {};
-    public agent: HTTPAgent | HTTPSAgent = new HTTPAgent();
+    public agent: HTTPAgent | HTTPSAgent = new HTTPSAgent();
 
     constructor(
         public apiBase: string,
