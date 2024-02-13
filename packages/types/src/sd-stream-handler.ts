@@ -1,28 +1,6 @@
-export enum WorkState {
-    Flowing = "flowing",
-    Close = "close",
-    Error = "error"
-}
-
-export enum WritableState {
-    Finish = "finish",
-    Writable = "writable",
-    Drain = "drain"
-}
-
-export enum ReadableState {
-    Readable = "readable",
-    Pause = "pause",
-    End = "end"
-}
+import { WorkState, WritableState, ReadableState, StreamType } from "@scramjet/symbols";
 
 export type StreamState = WorkState | WritableState | ReadableState;
-
-export enum StreamType {
-    Instance = "instance",
-    Topic = "topic",
-    Api = "api"
-}
 
 export type StreamOptions = Record<string, any>;
 
@@ -40,3 +18,5 @@ export interface StreamHandler {
     options(): StreamOptions
     origin(): StreamOrigin
 }
+
+export { WorkState, WritableState, ReadableState, StreamType };
