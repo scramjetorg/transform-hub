@@ -119,14 +119,8 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     if (!postponeContinue) {
                         res.writeContinue();
                     }
-                }
-
-                if (postponeContinue && req.headers.expect !== "100-continue") {
-                    res.writeHead(400, "Bad Request", { "Content-type": "application/json" });
-                    res.write(JSON.stringify({ error: "Missing 'expect' header" }));
-                    res.end();
-
-                    return;
+                } else {
+                    req.writeContinue = () => {};
                 }
 
                 // Explicit pause causes next `on('data')` not to resume stream automatically.
