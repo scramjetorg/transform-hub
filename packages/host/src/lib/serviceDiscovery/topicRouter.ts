@@ -54,6 +54,7 @@ class TopicRouter {
     }
 
     async topicsPost(req: TopicsPostReq): Promise<OpResponse<TopicsPostRes>> {
+        this.logger.debug(`Topics req headers '${req.headers}'`);
         if (!req.body?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: missingBodyId };
         if (!req.body?.["content-type"]) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing body param: content-type" };
 
@@ -98,6 +99,8 @@ class TopicRouter {
     }
 
     async topicDownstream(req: TopicStreamReq) {
+        this.logger.debug(`Topics req headers '${req.headers}'`);
+
         const { "content-type": contentType = "", cpm } = req.headers;
         const { topic: id = "" } = req.params || {};
 
@@ -139,6 +142,7 @@ class TopicRouter {
     }
 
     async topicUpstream(req: TopicStreamReq) {
+        this.logger.debug(`Topics req headers '${req.headers}'`);
         const { "content-type": contentType = "application/x-ndjson", cpm } = req.headers;
         const { topic: id = "" } = req.params || {};
 
