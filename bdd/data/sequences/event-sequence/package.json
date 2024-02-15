@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/scramjetorg/create-sequence#readme",
   "devDependencies": {
-    "@scramjet/types": "^0.39.2"
+    "@scramjet/types": "^0.39.3"
   },
   "author": "",
   "license": "ISC"
