@@ -2,96 +2,101 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.39.3] - 2024-02-15
+
+## Fixed
+
+* Allow to omit expect header in topic by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/1045>
+
 ## [0.39.2] - 2024-02-13
 
 ## Fixed
 
-* Remove docs for manager-api-client by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1038
-* Move enums from @types to @symbols by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1041
-* Fix HTTP vs HTTPS issue in clients  by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1040
+* Remove docs for manager-api-client by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/1038>
+* Move enums from @types to @symbols by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/1041>
+* Fix HTTP vs HTTPS issue in clients  by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/1040>
 
 ## [0.39.1] - 2024-02-12
 
 ## Features
 
-* [TEST][CLI]VDM-1723 Test Reading App Config in Python Sequence by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1030
+* [TEST CLI] Test Reading App Config in Python Sequence by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/1030>
 
 ## Fixed
 
-* fix topic list command by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1031
-* [FIX] Cyclic dependency in api-client and manager-client by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/1034
+* [FIX] topic list command by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/1031>
+* [FIX] Cyclic dependency in api-client and manager-client by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/1034>
 
 ## [0.39.0] - 2024-02-06
 
 ## Features
 
-* Send 100 Continue when ready to receive topic downstream by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/1010
-* Event Hub by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/1012
-* Added alias to delete hub by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1017
-* [CLI][TEST] Error handling when sequence is uploaded by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1022
-* [CLI][TEST]siseq-startup-config by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/1025
+* Send 100 Continue when ready to receive topic downstream by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/1010>
+* Event Hub by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/1012>
+* Added alias to delete hub by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/1017>
+* [CLI TEST] Error handling when sequence is uploaded by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/1022>
+* [CLI TEST] siseq-startup-config by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/1025>
 
 ## Fixed
 
-* Remove cpu-features and systeminformation modules by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/532
-* Type change in order to achieve coherent structure for displaying by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/960
-* Python Runner: Topics provided on runtime by @RayNawfal in https://github.com/scramjetorg/transform-hub/pull/1023
-* Fix this.space.getHostClient when using custom Agent by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/1021
-* Do not create or commit .nojekyll files by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/1016
-
+* Remove cpu-features and systeminformation modules by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/532>
+* Type change in order to achieve coherent structure for displaying by @gzukowski in <https://github.com/scramjetorg/transform-hub/pull/960>
+* Python Runner: Topics provided on runtime by @RayNawfal in <https://github.com/scramjetorg/transform-hub/pull/1023>
+* Fix this.space.getHostClient when using custom Agent by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/1021>
+* Do not create or commit .nojekyll files by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/1016>
 
 ## [0.37.0] - 2023-11-27
 
 ## Features
 
-* VDM-1493 [TEST CLI] Feat/Instance restart  by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/965
-* [CLI] Add `si seq start <seq-id> --inst-id` to CLI command by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/966
-* Add option to provide file with arguments to start/deploy sequence by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/971
-* Feat/cli yaml config by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/980
-* Example configs by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/968
-* add create and remove new profile by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/975
-* GPU in Python Runner (docker) by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/928
-* [CLI]add path option to si init by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/989
-* Pagination-support by @gzukowski in https://github.com/scramjetorg/transform-hub/pull/949
-* [CLI TEST] VDM-1507 si init by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/990
-* Set default runner envs with `--runner-envs` STH param by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/986
+* [TEST CLI] Feat/Instance restart  by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/965>
+* [CLI] Add `si seq start <seq-id> --inst-id` to CLI command by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/966>
+* Add option to provide file with arguments to start/deploy sequence by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/971>
+* Feat/cli yaml config by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/980>
+* Example configs by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/968>
+* add create and remove new profile by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/975>
+* GPU in Python Runner (docker) by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/928>
+* [CLI]add path option to si init by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/989>
+* Pagination-support by @gzukowski in <https://github.com/scramjetorg/transform-hub/pull/949>
+* [CLI TEST] si init by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/990>
+* Set default runner envs with `--runner-envs` STH param by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/986>
 
 ## Fixed
 
-* [FIX] Instance ID replacement in `si inst restart -` by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/963
-* Bump @babel/traverse from 7.20.13 to 7.23.2 by @dependabot in https://github.com/scramjetorg/transform-hub/pull/964
-* fix variable name by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/967
-* [CLI] Remove session configs with write access by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/970
-* Show Node version on Host start by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/974
-* Auto set contenty-type in PANG by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/972
-* Fix ObjLogger arguments reference by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/973
-* Fix logging circular args by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/977
-* Set Node to 18 in STH and Runner Dockerfiles by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/979
-* VDM-1516 change node in workflow and as defualt input from 16 to 18 by @tomekcrm in https://github.com/scramjetorg/transform-hub/pull/981
-* [FIX] Add missing hostClient types by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/982
-* Fix linting and duplicated code by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/984
-* [FIX] VDM-1507 add missed description by @karoltylenda in https://github.com/scramjetorg/transform-hub/pull/992
-* Change in makeRequest method by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/991
-* Small cleanup in host and runner logs by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/995
+* [FIX] Instance ID replacement in `si inst restart -` by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/963>
+* Bump @babel/traverse from 7.20.13 to 7.23.2 by @dependabot in <https://github.com/scramjetorg/transform-hub/pull/964>
+* fix variable name by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/967>
+* [CLI] Remove session configs with write access by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/970>
+* Show Node version on Host start by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/974>
+* Auto set content-type in PANG by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/972>
+* Fix ObjLogger arguments reference by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/973>
+* Fix logging circular args by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/977>
+* Set Node to 18 in STH and Runner Dockerfiles by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/979>
+* Change node in workflow and as default input from 16 to 18 by @tomekcrm in <https://github.com/scramjetorg/transform-hub/pull/981>
+* [FIX] Add missing hostClient types by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/982>
+* Fix linting and duplicated code by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/984>
+* [FIX] add missed description by @karoltylenda in <https://github.com/scramjetorg/transform-hub/pull/992>
+* Change in makeRequest method by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/991>
+* Small cleanup in host and runner logs by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/995>
 
 ## [0.36.1] - 2023-10-02
 
 ## Fixed
 
-* Add missing dependency in STH Dockerfile by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/956
+* Add missing dependency in STH Dockerfile by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/956>
 
 ## [0.36.0] - 2023-09-25
 
 ## Features
 
-* Monitoring Server by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/944
+* Monitoring Server by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/944>
 
 ## Fixed
 
-* Disconnect Hub errors enum + types by @piotrek6641 in https://github.com/scramjetorg/transform-hub/pull/941
-* Fix runner exit by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/951
-* Bump systeminformation from 5.21.4 to 5.21.7 by @dependabot in https://github.com/scramjetorg/transform-hub/pull/950
-* Fix build docs for ModuleLoader and MonitoringServer by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/953
+* Disconnect Hub errors enum + types by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/941>
+* Fix runner exit by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/951>
+* Bump systeminformation from 5.21.4 to 5.21.7 by @dependabot in <https://github.com/scramjetorg/transform-hub/pull/950>
+* Fix build docs for ModuleLoader and MonitoringServer by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/953>
 
 ## [0.35.3] - 2023-09-04
 
