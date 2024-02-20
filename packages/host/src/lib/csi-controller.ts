@@ -6,7 +6,7 @@ import {
     MessageUtilities
 } from "@scramjet/model";
 import { development } from "@scramjet/sth-config";
-import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+
 import {
     APIRoute,
     AppConfig,
@@ -32,6 +32,7 @@ import {
     StopSequenceMessageData,
     WritableStream
 } from "@scramjet/types";
+import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 
 import { DuplexStream, getRouter } from "@scramjet/api-server";

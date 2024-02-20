@@ -9,7 +9,6 @@ COPY ./dist/api-server ./dist/api-server
 COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
 COPY ./dist/obj-logger ./dist/obj-logger
-COPY ./dist/manager-api-client ./dist/manager-api-client
 COPY ./dist/model ./dist/model
 COPY ./dist/module-loader ./dist/module-loader
 COPY ./dist/runner ./dist/runner
@@ -17,7 +16,6 @@ COPY ./dist/pre-runner ./dist/pre-runner
 COPY ./dist/python-runner ./dist/python-runner
 COPY ./dist/sth ./dist/sth
 COPY ./dist/symbols ./dist/symbols
-COPY ./dist/types ./dist/types
 COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
 COPY ./dist/verser ./dist/verser

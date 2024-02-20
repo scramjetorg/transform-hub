@@ -181,7 +181,7 @@ ClientUtilsBase.getStream
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:248](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L248)
+[packages/client-utils/src/client-utils.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L245)
 
 ___
 
@@ -312,7 +312,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `headers` | `Headers` |
+| `headers` | [`Headers`](../modules.md#headers) |
 
 #### Returns
 
@@ -358,7 +358,7 @@ ___
 
 ### headers
 
-▪ `Static` **headers**: `Headers` = `{}`
+▪ `Static` **headers**: [`Headers`](../modules.md#headers) = `{}`
 
 #### Inherited from
 

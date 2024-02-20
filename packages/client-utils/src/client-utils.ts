@@ -54,7 +54,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         const fetchInit: RequestInit & { agent?: HTTPAgent } = { signal: abortController.signal, ...init };
 
         fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
-        fetchInit.agent ||= new HTTPAgent();
+        fetchInit.agent ||= this.agent;
 
         options.throwOnErrorHttpCode ??= true;
 

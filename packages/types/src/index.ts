@@ -41,11 +41,10 @@ export * from "./telemetry-config";
 export * from "./host-proxy";
 export * from "./api-client/host-client";
 export * from "./sd-content-type";
-export * from "./sd-stream-handler";
 export * from "./sd-topic-handler";
 export * from "./topic-router";
 
-export type ManagerClient = import("./manager-api-client/manager-client").ManagerClient;
+export type ManagerClient = import("./api-client/manager-client").ManagerClient;
 
 export { MRestAPI };
 export { MWRestAPI };
@@ -60,6 +59,8 @@ export * from "./sequence-adapter";
 export * from "./dto/index";
 
 export * from "./rest-api-error/rest-api-error";
+
+export { StreamState, StreamOptions, OriginType, StreamHandler, StreamOrigin } from "./sd-stream-handler";
 
 // system-observable.ts
 declare global {

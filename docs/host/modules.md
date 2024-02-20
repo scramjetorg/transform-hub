@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L12)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L10)
 
 ___
 
@@ -61,7 +61,7 @@ Topic stream type definition.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L20)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L18)
 
 ___
 
@@ -82,7 +82,7 @@ Topic details type definition.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L28)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L26)
 
 ## Variables
 

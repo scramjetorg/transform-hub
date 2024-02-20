@@ -38,7 +38,7 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
 export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClient {
     constructor(
         apiBase: string,
-        agent: http.Agent
+        agent: http.Agent | https.Agent
     ) {
         super(
             apiBase,
@@ -50,7 +50,7 @@ export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClien
             },
             normalizeUrl
         );
-
+        
         this.agent = agent;
     }
 }

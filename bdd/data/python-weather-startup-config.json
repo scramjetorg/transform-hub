@@ -1,0 +1,12 @@
+{
+    "appConfig": {
+        "current": [
+            "temperature_2m",
+            "is_day",
+            "rain",
+            "snowfall",
+            "wind_speed_10m"
+        ]
+    },
+    "args": [{ "cities": ["Warszawa", "Berlin", "Moskwa"] }]
+}

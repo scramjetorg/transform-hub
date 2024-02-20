@@ -1,4 +1,4 @@
-[@scramjet/manager-api-client](../README.md) / [Exports](../modules.md) / ManagerClient
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / ManagerClient
 
 # Class: ManagerClient
 
@@ -10,6 +10,7 @@
 
 ### Properties
 
+- [#\_client](ManagerClient.md##_client)
 - [apiBase](ManagerClient.md#apibase)
 
 ### Accessors
@@ -43,13 +44,23 @@
 
 ## Properties
 
+### #\_client
+
+• `Private` **#\_client**: `ClientUtils`
+
+#### Defined in
+
+[api-client/src/manager-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L12)
+
+___
+
 ### apiBase
 
 • **apiBase**: `string`
 
 #### Defined in
 
-[manager-client.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L7)
+[api-client/src/manager-client.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L10)
 
 ## Accessors
 
@@ -67,7 +78,7 @@ ClientProvider.client
 
 #### Defined in
 
-[manager-client.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L11)
+[api-client/src/manager-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L14)
 
 ## Constructors
 
@@ -84,7 +95,7 @@ ClientProvider.client
 
 #### Defined in
 
-[manager-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L15)
+[api-client/src/manager-client.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L18)
 
 ## Methods
 
@@ -105,7 +116,7 @@ ClientProvider.client
 
 #### Defined in
 
-[manager-client.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L100)
+[api-client/src/manager-client.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L106)
 
 ___
 
@@ -125,7 +136,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L92)
+[api-client/src/manager-client.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L98)
 
 ___
 
@@ -145,7 +156,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L96)
+[api-client/src/manager-client.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L102)
 
 ___
 
@@ -159,7 +170,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L63)
+[api-client/src/manager-client.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L69)
 
 ___
 
@@ -179,7 +190,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L55)
+[api-client/src/manager-client.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L61)
 
 ___
 
@@ -193,13 +204,13 @@ ___
 
 #### Defined in
 
-[manager-client.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L59)
+[api-client/src/manager-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L65)
 
 ___
 
 ### getHostClient
 
-▸ **getHostClient**(`id`, `hostApiBase?`): `HostClient`
+▸ **getHostClient**(`id`, `hostApiBase?`): [`HostClient`](HostClient.md)
 
 #### Parameters
 
@@ -210,11 +221,11 @@ ___
 
 #### Returns
 
-`HostClient`
+[`HostClient`](HostClient.md)
 
 #### Defined in
 
-[manager-client.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L21)
+[api-client/src/manager-client.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L24)
 
 ___
 
@@ -228,7 +239,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L25)
+[api-client/src/manager-client.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L31)
 
 ___
 
@@ -242,7 +253,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L71)
+[api-client/src/manager-client.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L77)
 
 ___
 
@@ -256,7 +267,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L33)
+[api-client/src/manager-client.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L39)
 
 ___
 
@@ -276,7 +287,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L51)
+[api-client/src/manager-client.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L57)
 
 ___
 
@@ -297,7 +308,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L47)
+[api-client/src/manager-client.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L53)
 
 ___
 
@@ -311,7 +322,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L67)
+[api-client/src/manager-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L73)
 
 ___
 
@@ -325,7 +336,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L79)
+[api-client/src/manager-client.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L85)
 
 ___
 
@@ -339,7 +350,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L75)
+[api-client/src/manager-client.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L81)
 
 ___
 
@@ -353,7 +364,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L29)
+[api-client/src/manager-client.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L35)
 
 ___
 
@@ -374,7 +385,7 @@ ___
 
 #### Defined in
 
-[manager-client.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L83)
+[api-client/src/manager-client.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L89)
 
 ___
 
@@ -404,4 +415,4 @@ ___
 
 #### Defined in
 
-[manager-client.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/manager-api-client/src/manager-client.ts#L37)
+[api-client/src/manager-client.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L43)

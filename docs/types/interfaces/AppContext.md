@@ -90,7 +90,7 @@ ___
 
 • **hub**: [`HostClient`](../classes/HostClient.md)
 
-Allows to access Hub, for datails please refer to @scramjet/api-client
+Allows to access Hub, for details please refer to @scramjet/api-client
 
 #### Defined in
 
@@ -137,7 +137,7 @@ ___
 
 • **space**: `ManagerClient`
 
-Allows to access Space, for datails please refer to @scramjet/manager-api-client
+Allows to access Space, for details please refer to @scramjet/api-client
 
 #### Defined in
 

@@ -1,6 +1,7 @@
 import { TransformOptions, Readable, Transform } from "stream";
-import { ContentType, WorkState, ReadableState, WritableState, StreamType, StreamOrigin, TopicHandler, TopicOptions, TopicState, ParsedMessage } from "@scramjet/types";
+import { ContentType, StreamOrigin, TopicHandler, TopicOptions, TopicState, ParsedMessage } from "@scramjet/types";
 import TopicId from "./topicId";
+import { ReadableState, StreamType, WorkState, WritableState } from "@scramjet/symbols";
 
 export enum TopicEvent {
     StateChanged = "stateChanged",

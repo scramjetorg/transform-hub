@@ -20,7 +20,6 @@ WORKDIR /app/
 
 COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/api-client ./dist/api-client
-COPY ./dist/manager-api-client ./dist/manager-api-client
 COPY ./dist/client-utils ./dist/client-utils
 COPY ./dist/utility ./dist/utility
 COPY ./dist/symbols ./dist/symbols

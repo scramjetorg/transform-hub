@@ -1,9 +1,11 @@
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
 import { sessionConfig, profileManager, ProfileConfig } from "../config";
 import { displayError, displayMessage } from "../output";
-import { ClientUtils } from "@scramjet/client-utils";
+import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { configEnv, isProductionEnv } from "../../types";
 import { Command } from "commander";
+import http from "http";
+import https from "https";
 
 /**
  * Returns host client for host pointed by command options.
@@ -17,7 +19,11 @@ export const getMiddlewareClient = (): MiddlewareClient => {
         throw new Error("Middleware API URL is not specified");
     }
 
-    const middlewareClient = new MiddlewareClient(middlewareApiUrl);
+    const agent = middlewareApiUrl.startsWith("https") ? https.Agent : http.Agent;
+    const middlewareClient = new MiddlewareClient(
+        middlewareApiUrl,
+        new ClientUtilsCustomAgent(middlewareApiUrl, new agent({ keepAlive: true }))
+    );
 
     if (debug) {
         middlewareClient.client.addLogger({
