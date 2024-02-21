@@ -300,7 +300,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (timeout) {
             this.monitoringMessageReplyTimeout = setTimeout(async () => {
-                this.logger.warn("Monitoring Reply Timeout. Connected");
+                this.logger.warn("Monitoring Reply Timeout");
 
                 await this.handleDisconnect();
             }, timeout);
@@ -324,7 +324,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             await this.hostClient.disconnect(!this.connected);
-            await defer(5000);
+            await defer(10000);
         } catch (e) {
             this.logger.error("Disconnect failed");
         }
@@ -392,8 +392,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async exit(exitCode?: number) {
-        //TODO: we need to wait a bit for the logs to flush - we shouldn't need to as cleanup should wait.
-        //await defer(200);
+        await defer(200);
 
         this.cleanup()
             .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
@@ -405,18 +404,16 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.debug("connecting...");
-            await promiseTimeout(this.hostClient.init(this.instanceId), 5000);
+            await promiseTimeout(this.hostClient.init(this.instanceId), 10000);
             this.logger.debug("connected");
             this.connected = true;
-
-            this.hostClient.inputStream.pipe(this.logFile!);
 
             await this.handleMonitoringRequest({ monitoringRate: 1 });
         } catch (e) {
             this.connected = false;
             this.logger.warn("Can't connect to Host", e);
 
-            await defer(5000);
+            await defer(10000);
 
             return await this.premain();
         }
@@ -464,7 +461,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             sequence = this.getSequence();
-            // this.logger.debug("Sequence", sequence);
 
             if (sequence.length && typeof sequence[0] !== "function") {
                 this.logger.debug("First Sequence object is not a function:", sequence[0]);
