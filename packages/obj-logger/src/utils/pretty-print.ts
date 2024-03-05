@@ -22,6 +22,6 @@ export const prettyPrint = (opts: { colors?: boolean }) => opts.colors
     ? (obj: LogEntry) => {
         return `${colorDate(obj.ts)} ${colorLevel(obj.level)} ${colorSource(obj.from)}${colorId(((obj as any)[obj.from as any] as any)?.id)}${obj.msg} ${colorData(obj.data)}\n`;
     } : (obj: LogEntry) => {
-        return `${new Date(obj.ts!).toISOString()} ${obj.level} ${obj.from}${(obj as any)[obj.from as any]?.id ? `[${obj.from!.substring(0, 8)}] ` : ""}${obj.msg} ${(obj.data || []).length ? inspect(obj.data, { colors: false, depth: 2 }) : ""}\n`;
+        return `${new Date(obj.ts!).toISOString()} ${obj.level} ${obj.from}${(obj as any)[obj.from as any]?.id ? `[${obj.from!.substring(0, 8)}] ` : ""}${obj.msg} ${(obj.data || []).length ? inspect(obj.data, { colors: false, depth: 2, breakLength: Infinity }) : ""}\n`;
     };
 
