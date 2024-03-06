@@ -19,6 +19,7 @@ This feature checks topic functionalities over CLI
 
     @ci-topic @cli
     Scenario: E2E-011 TC-003 API to Instance
+        # Given I set config for local Hub
         When I execute CLI with "topic send avengers data/data.json" without waiting for the end
         When I execute CLI with "seq send ../packages/hello-input-out.tar.gz"
         When I execute CLI with "seq start - --input-topic avengers "

@@ -9,17 +9,19 @@ import {
     IObjectLogger,
     K8SAdapterConfiguration,
     MonitoringMessageData,
+    SequenceInfo,
     STHConfiguration,
 } from "@scramjet/types";
 
-import path from "path";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { RunnerExitCode } from "@scramjet/symbols";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 import { createReadStream } from "fs";
+import path from "path";
+import { PassThrough } from "stream";
+import { getRunnerEnvEntries } from "./get-runner-env";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { getRunnerEnvEntries } from "./get-runner-env";
-import { PassThrough } from "stream";
-import { RunnerExitCode } from "@scramjet/symbols";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -37,6 +39,8 @@ IComponent {
 
     private adapterConfig: K8SAdapterConfiguration;
     private _limits?: InstanceLimits = {};
+
+    stdErrorStream?: PassThrough;
 
     get limits() { return this._limits || {} as InstanceLimits; }
     private set limits(value: InstanceLimits) { this._limits = value; }
@@ -58,7 +62,8 @@ IComponent {
 
     private get kubeClient() {
         if (!this._kubeClient) {
-            throw new Error("Kubernetes client not initialized");
+            this._kubeClient = new KubernetesClientAdapter(this.adapterConfig.authConfigPath, this.adapterConfig.namespace);
+            this._kubeClient.init();
         }
 
         return this._kubeClient;
@@ -90,8 +95,7 @@ IComponent {
             }
         };
     }
-
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<number> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
         }
@@ -112,7 +116,9 @@ IComponent {
                 instancesServerPort,
                 instancesServerHost: this.adapterConfig.sthPodHost,
                 instanceId,
-                pipesPath: ""
+                pipesPath: "",
+                sequenceInfo,
+                payload
             }, {
                 ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
@@ -143,7 +149,11 @@ IComponent {
             2
         );
 
+        this.logger.debug("Runner Pod created");
+
         const startPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Running", "Failed"]);
+
+        this.logger.debug("Runner Pod status");
 
         if (startPodStatus.status === "Failed") {
             this.logger.error("Runner unable to start", startPodStatus);
@@ -153,25 +163,35 @@ IComponent {
             // This means runner pod was unable to start. So it went from "Pending" to "Failed" state directly.
             // Return 1 which is Linux exit code for "General Error" since we are not able
             // to determine what happened exactly.
-            return startPodStatus.code || 137;
+            return RunnerExitCode.UNCAUGHT_EXCEPTION;
         }
 
         this.logger.debug("Copy sequence files to Runner");
 
         const compressedStream = createReadStream(path.join(config.sequenceDir, "compressed.tar.gz"));
-        const stdErrorStream = new PassThrough();
 
-        stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
+        this.stdErrorStream = new PassThrough();
+        this.stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
 
-        await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, stdErrorStream, compressedStream, 2);
+        await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, this.stdErrorStream, compressedStream, 2);
 
-        const exitPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Succeeded", "Failed", "Unknown"]);
+        this.logger.debug("Copy command done");
 
-        stdErrorStream.end();
+        return 0;
+    }
+
+    async waitUntilExit(_config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
+        this.logger.info("Waiting for pod exit...");
+
+        this._runnerName ||= `runner-${ instanceId }`;
+
+        const exitPodStatus = await this.kubeClient.waitForPodStatus(this._runnerName!, ["Succeeded", "Failed", "Unknown"]);
+
+        this.stdErrorStream?.end();
 
         if (exitPodStatus.status !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
-            this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(runnerName));
+            this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(this._runnerName!));
 
             return exitPodStatus.code || 137;
         }
@@ -182,6 +202,11 @@ IComponent {
 
         // @TODO handle error status
         return 0;
+    }
+
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
+        await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
+        return this.waitUntilExit(config, instanceId, sequenceInfo);
     }
 
     async cleanup(): Promise<void> {

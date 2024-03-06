@@ -1,50 +1,51 @@
 import {
+    AppError,
+    CSIControllerError,
+    HostError,
+    InstanceAdapterError,
+    MessageUtilities
+} from "@scramjet/model";
+import { development } from "@scramjet/sth-config";
+
+import {
     APIRoute,
     AppConfig,
     DownstreamStreamsConfig,
     EncodedMessage,
+    EventMessageData,
     HandshakeAcknowledgeMessage,
+    HostProxy,
     ICommunicationHandler,
+    ILifeCycleAdapterRun,
+    InstanceLimits,
+    InstanceStats,
+    IObjectLogger,
+    MessageDataType,
+    MonitoringMessageData,
+    OpResponse,
     ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
     SequenceInfo,
-    WritableStream,
-    InstanceConfig,
-    ILifeCycleAdapterRun,
-    MessageDataType,
-    IObjectLogger,
-    STHRestAPI,
     STHConfiguration,
-    InstanceLimits,
-    MonitoringMessageData,
-    InstanceStats,
-    OpResponse,
+    STHRestAPI,
     StopSequenceMessageData,
-    HostProxy,
-    EventMessageData,
+    WritableStream
 } from "@scramjet/types";
-import {
-    AppError,
-    CSIControllerError,
-    CommunicationHandler,
-    HostError,
-    MessageUtilities,
-    InstanceAdapterError,
-} from "@scramjet/model";
-import { CommunicationChannel as CC, InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
-import { development } from "@scramjet/sth-config";
 
-import { DataStream } from "scramjet";
+import { DuplexStream, getRouter } from "@scramjet/api-server";
 import { EventEmitter, once } from "events";
 import { ServerResponse } from "http";
-import { DuplexStream, getRouter } from "@scramjet/api-server";
+import { DataStream } from "scramjet";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
-import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ReasonPhrases } from "http-status-codes";
+import { mapRunnerExitCode } from "./utils";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -54,6 +55,7 @@ import { ReasonPhrases } from "http-status-codes";
 const runnerExitDelay = 15000;
 
 type Events = {
+    ping: (pingMessage: MessageDataType<RunnerMessageCode.PING>) => void;
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
     event: (payload: EventMessageData) => void;
     hourChime: () => void;
@@ -65,8 +67,11 @@ type Events = {
 
 const BPMux = require("bpmux").BPMux;
 
+export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; ended?: Date; };
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
+ *
+ * @todo write interface for CSIController and CSIDispatcher
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
@@ -76,7 +81,6 @@ export class CSIController extends TypedEmitter<Events> {
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
-    private adapter: string;
 
     get lastStats(): InstanceStats {
         return {
@@ -88,16 +92,15 @@ export class CSIController extends TypedEmitter<Events> {
             }
         };
     }
-    hostProxy: HostProxy;
-    sthConfig: STHConfiguration;
     limits: InstanceLimits = {};
+    runnerSystemInfo: RunnerConnectInfo["system"];
     sequence: SequenceInfo;
     appConfig: AppConfig;
     instancePromise?: Promise<{ message: string, exitcode: number; status: InstanceStatus }>;
     args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
-    info: { ports?: any; created?: Date; started?: Date; ended?: Date; } = {};
+    info: CSIControllerInfo = {};
     status: InstanceStatus;
     terminated?: { exitcode: number; reason: string; };
     provides?: string;
@@ -112,6 +115,9 @@ export class CSIController extends TypedEmitter<Events> {
 
     apiOutput = new PassThrough();
     apiInputEnabled = true;
+
+    executionTime: number = -1;
+    inputHeadersSent = false;
 
     /**
      * Topic to which the output stream should be routed
@@ -166,44 +172,34 @@ export class CSIController extends TypedEmitter<Events> {
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
 
-    communicationHandler: ICommunicationHandler;
-
     constructor(
-        id: string,
-        sequence: SequenceInfo,
-        payload: STHRestAPI.StartSequencePayload,
-        communicationHandler: CommunicationHandler,
-        sthConfig: STHConfiguration,
-        hostProxy: HostProxy,
-        chosenAdapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        private handshakeMessage: Omit<MessageDataType<RunnerMessageCode.PING>, "created">,
+        public communicationHandler: ICommunicationHandler,
+        private sthConfig: STHConfiguration,
+        private hostProxy: HostProxy,
+        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
     ) {
         super();
-
-        this.id = id;
-        this.adapter = chosenAdapter;
-        this.sequence = sequence;
-        this.appConfig = payload.appConfig;
-        this.sthConfig = sthConfig;
-        this.args = payload.args;
-        this.outputTopic = payload.outputTopic;
-        this.inputTopic = payload.inputTopic;
-        this.hostProxy = hostProxy;
+        this.id = this.handshakeMessage.id;
+        this.runnerSystemInfo = this.handshakeMessage.payload.system;
+        this.sequence = this.handshakeMessage.sequenceInfo;
+        this.appConfig = this.handshakeMessage.payload.appConfig;
+        this.args = this.handshakeMessage.payload.args;
+        this.outputTopic = this.handshakeMessage.payload.outputTopic;
+        this.inputTopic = this.handshakeMessage.payload.inputTopic;
         this.limits = {
-            memory: payload.limits?.memory || sthConfig.docker.runner.maxMem,
-            gpu: payload.limits?.gpu
+            memory: handshakeMessage.payload.limits?.memory || sthConfig.docker.runner.maxMem,
+            gpu: handshakeMessage.payload.limits?.gpu
         };
 
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
-        this.communicationHandler = communicationHandler;
 
-        this.logger = new ObjLogger(this, { id });
+        this.logger = new ObjLogger(this, { id: this.id });
         this.localEmitter = Object.assign(
             new EventEmitter(),
             { lastEvents: {} }
         );
 
-        this.logger.debug("Constructor executed");
-        this.info.created = new Date();
         this.status = InstanceStatus.INITIALIZING;
 
         this.upStreams = [
@@ -218,15 +214,19 @@ export class CSIController extends TypedEmitter<Events> {
         ];
     }
 
-    async start() {
-        const i = new Promise((res, rej) => {
+    async start(): Promise<void> {
+        const i = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
         });
 
         i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
+
             this.status ||= InstanceStatus.ERRORED;
+
+            this.executionTime = this.info.created ? (Date.now() - this.info.created!.getTime()) / 1000 : -1;
+
             this.setExitInfo(e.exitcode, e.message);
 
             this.emit("error", e);
@@ -242,7 +242,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async main() {
         this.status = InstanceStatus.RUNNING;
-        this.logger.trace("Instance started");
+        this.logger.trace("Main. Current status:", this.status);
 
         let code = -1;
 
@@ -268,6 +268,8 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.info.ended = new Date();
+        this.executionTime = (this.info.ended.getTime() - this.info.created!.getTime()) / 1000;
+
         this.emit("terminated", code);
 
         this.logger.trace("Finalizing...");
@@ -282,29 +284,20 @@ export class CSIController extends TypedEmitter<Events> {
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
-        const instanceConfig: InstanceConfig = {
-            ...this.sequence.config,
-            limits: this.limits,
-            instanceAdapterExitDelay: this.sthConfig.timings.instanceAdapterExitDelay
-        };
+        this.endOfSequence = this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
 
+        // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {
             try {
                 this.status = InstanceStatus.STARTING;
 
-                await this.instanceAdapter.init();
-
                 this.logger.trace("Streams hooked and routed");
-
-                this.endOfSequence = this.instanceAdapter.run(
-                    instanceConfig,
-                    this.sthConfig.host.instancesServerPort,
-                    this.id
-                );
 
                 this.logger.trace("Sequence initialized");
 
                 const exitcode = await this.endOfSequence;
+
+                this.logger.trace("End of sequence");
 
                 if (exitcode > 0) {
                     this.status = InstanceStatus.ERRORED;
@@ -325,7 +318,7 @@ export class CSIController extends TypedEmitter<Events> {
         };
 
         this.instancePromise = instanceMain()
-            .then((exitcode) => this.mapRunnerExitCode(exitcode))
+            .then((exitcode) => mapRunnerExitCode(exitcode, this.sequence))
             .catch((error) => {
                 this.logger.error("Instance promise rejected", error);
                 this.initResolver?.rej(error);
@@ -333,6 +326,7 @@ export class CSIController extends TypedEmitter<Events> {
                 return error;
             });
 
+        // @todo - this should be checked by CSIController, but Dispatcher should know about this via event listener.
         this.instancePromise.finally(() => {
             this.heartBeatResolver?.res(this.id);
         }).catch(() => 0);
@@ -343,74 +337,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.heartBeatPromise = new Promise((res, rej) => {
             this.heartBeatResolver = { res, rej };
         });
-    }
-
-    // eslint-disable-next-line complexity
-    private mapRunnerExitCode(exitcode: number): Promise<
-        { message: string, exitcode: number, status: InstanceStatus }
-    > {
-        // eslint-disable-next-line default-case
-        switch (exitcode) {
-            case RunnerExitCode.INVALID_ENV_VARS: {
-                return Promise.reject({
-                    message: "Runner was started with invalid configuration. This is probably a bug in STH.",
-                    exitcode: RunnerExitCode.INVALID_ENV_VARS,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.PODS_LIMIT_REACHED: {
-                return Promise.reject({
-                    message: "Instance limit reached",
-                    exitcode: RunnerExitCode.PODS_LIMIT_REACHED,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.INVALID_SEQUENCE_PATH: {
-                return Promise.reject({
-                    message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
-                        "Check `main` field in Sequence package.json",
-                    exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
-                return Promise.reject({
-                    message: "Sequence failed on start",
-                    exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION: {
-                return Promise.reject({
-                    message: "Sequence failed during execution",
-                    exitcode: RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
-                return Promise.reject({
-                    message: "Sequence unpack failed",
-                    exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED,
-                    status: InstanceStatus.ERRORED
-                });
-            }
-            case RunnerExitCode.KILLED: {
-                return Promise.resolve({
-                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, status: InstanceStatus.COMPLETED
-                });
-            }
-            case RunnerExitCode.STOPPED: {
-                return Promise.resolve({
-                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, status: InstanceStatus.COMPLETED
-                });
-            }
-        }
-
-        if (exitcode > 0) {
-            return Promise.reject({ message: "Runner failed", exitcode, status: InstanceStatus.ERRORED });
-        }
-
-        return Promise.resolve({ message: "Instance completed", exitcode, status: InstanceStatus.COMPLETED });
     }
 
     async cleanup() {
@@ -480,7 +406,26 @@ export class CSIController extends TypedEmitter<Events> {
             .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
+            const { status, payload, inputHeadersSent } = message[1];
+
+            this.status = status || InstanceStatus.RUNNING;
+            this.inputHeadersSent = inputHeadersSent;
+
+            if (!payload) {
+                this.emit("error", "No payload in ping!");
+
+                return null;
+            }
+
+            this.args = payload.args;
+            this.info.created = new Date(message[1].created);
+
+            this.provides ||= this.outputTopic || payload?.outputTopic;
+            this.requires ||= this.inputTopic || payload?.inputTopic;
+
             await this.handleHandshake(message);
+
+            this.emit("ping", message[1]);
 
             return null;
         });
@@ -503,6 +448,10 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
+            await this.controlDataStream?.whenWrote(
+                MessageUtilities.serializeMessage<RunnerMessageCode.MONITORING_REPLY>({ msgCode: RunnerMessageCode.MONITORING_REPLY })
+            );
+
             const stats = await this.instanceAdapter.stats(message[1]);
 
             this._lastStats = stats;
@@ -510,6 +459,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.heartBeatTick();
 
             message[1] = stats;
+
             return message;
         }, true);
 
@@ -531,20 +481,38 @@ export class CSIController extends TypedEmitter<Events> {
         this.upStreams[CC.MONITORING].resume();
     }
 
+    // TODO: refactor out of CSI Controller - this should be in
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
-        this.logger.debug("PING received", message);
+        this.logger.debug("PING received", JSON.stringify(message));
 
-        if (!message[1].ports) {
-            this.logger.trace("Received a PING message but didn't receive ports config");
+        if (message[1].ports) {
+            this.logger.trace("Received a PING message with ports config");
+        }
+
+        this.inputHeadersSent = !!message[1].inputHeadersSent;
+
+        this.logger.info("Headers already sent for input?", this.inputHeadersSent);
+
+        if (this.instanceAdapter.setRunner) {
+            await this.instanceAdapter.setRunner({
+                ...message[1].payload.system,
+                id: this.id
+            });
         }
 
         this.info.ports = message[1].ports;
+        this.sequence = message[1].sequenceInfo;
+
+        this.inputTopic = message[1].payload?.inputTopic;
+        this.outputTopic = message[1].payload?.outputTopic;
+        // TODO: add message to initiate the instance adapter
 
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                args: this.args
+                args: this.args,
+                //runtimeId:?
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
@@ -552,10 +520,11 @@ export class CSIController extends TypedEmitter<Events> {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
 
-        this.info.started = new Date();
-        this.logger.info("Instance started", this.info);
+        this.info.started = new Date(); //@TODO: set by runner?
+        this.logger.info("Handshake", JSON.stringify(message, undefined));
     }
 
+    //@TODO: ! unhookup ! set proper state for reconnecting !
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {
         try {
             this.hookupStreams(streams);
@@ -567,6 +536,7 @@ export class CSIController extends TypedEmitter<Events> {
                 streams[8]?.end();
             });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
+
             await once(this, "pang");
             this.initResolver?.res();
         } catch (e: any) {
@@ -575,8 +545,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     createInstanceAPIRouter() {
-        let inputHeadersSent = false;
-
         if (!this.upStreams) {
             throw new AppError("UNATTACHED_STREAMS");
         }
@@ -589,11 +557,11 @@ export class CSIController extends TypedEmitter<Events> {
          * @experimental
          */
         this.router.duplex("/inout", (duplex, _headers) => {
-            if (!inputHeadersSent) {
+            if (!this.inputHeadersSent) {
                 this.downStreams![CC.IN].write(`Content-Type: ${_headers["content-type"]}\r\n`);
                 this.downStreams![CC.IN].write("\r\n");
 
-                inputHeadersSent = true;
+                this.inputHeadersSent = true;
             }
 
             (duplex as unknown as DuplexStream).input.pipe(this.downStreams![CC.IN], { end: false });
@@ -635,7 +603,7 @@ export class CSIController extends TypedEmitter<Events> {
                 const contentType = req.headers["content-type"];
 
                 // @TODO: Check if subsequent requests have the same content-type.
-                if (!inputHeadersSent) {
+                if (!this.inputHeadersSent) {
                     if (contentType === undefined) {
                         return { opStatus: ReasonPhrases.NOT_ACCEPTABLE, error: "Content-Type must be defined" };
                     }
@@ -643,7 +611,7 @@ export class CSIController extends TypedEmitter<Events> {
                     stream.write(`Content-Type: ${contentType}\r\n`);
                     stream.write("\r\n");
 
-                    inputHeadersSent = true;
+                    this.inputHeadersSent = true;
                 }
 
                 return stream;
@@ -812,6 +780,8 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     getInfo(): STHRestAPI.GetInstanceResponse {
+        this.logger.debug("Get info [seq, info]", this.sequence, this.info);
+
         return {
             id: this.id,
             appConfig: this.appConfig,

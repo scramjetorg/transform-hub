@@ -15,5 +15,6 @@ export enum RunnerMessageCode {
     STOP = 4001,
     KILL = 4002,
     MONITORING_RATE = 4003,
+    MONITORING_REPLY = 4004,
     EVENT = 5001,
 }

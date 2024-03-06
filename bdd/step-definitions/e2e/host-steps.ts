@@ -99,23 +99,42 @@ const waitForProcessToEnd = async (pid: number) => {
     }
 };
 
-const killRunner = async () => {
-    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-        // @TODO
-        return;
+// const killRunner = async () => {
+//     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+//         // @TODO
+//         return;
+//     }
+
+//     if (process.env.RUNTIME_ADAPTER === "process" && processId) {
+//         try {
+//             process.kill(processId);
+//             await waitForProcessToEnd(processId);
+//         } catch (e) {
+//             console.error("Couldn't kill runner", e);
+//         }
+//     }
+
+//     if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
+//         await dockerode.getContainer(containerId).kill();
+//     }
+// };
+
+const killAllRunners = async () => {
+    if (process.env.RUNTIME_ADAPTER === "process") {
+        exec("killall runner");
     }
 
-    if (process.env.RUNTIME_ADAPTER === "process" && processId) {
-        try {
-            process.kill(processId);
-            await waitForProcessToEnd(processId);
-        } catch (e) {
-            console.error("Couldn't kill runner", e);
-        }
-    }
+    if (process.env.RUNTIME_ADAPTER === "docker") {
+        await Promise.all(
+            (await dockerode.listContainers())
+                .map(async container => {
+                    if (container.Labels["scramjet.instance.id"]) {
+                        return dockerode.getContainer(container.Id).kill();
+                    }
 
-    if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
-        await dockerode.getContainer(containerId).kill();
+                    return Promise.resolve();
+                })
+        );
     }
 };
 
@@ -183,7 +202,20 @@ Before(() => {
     streams = {};
 });
 
-After({ tags: "@runner-cleanup" }, killRunner);
+After({ tags: "@runner-cleanup" }, killAllRunners);
+After({}, async () => {
+    let insts = [];
+
+    try {
+        insts = await hostClient.listInstances();
+    } catch (_e) {
+        return;
+    }
+
+    await Promise.all(
+        insts.map(i => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
+    );
+});
 
 Before({ tags: "@test-si-init" }, function() {
     createDirectory("data/template_seq");
@@ -499,29 +531,39 @@ When("send kill message to instance", async function(this: CustomWorld) {
     assert.ok(resp);
 });
 
+// eslint-disable-next-line complexity
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
+    const adapter = process.env.RUNTIME_ADAPTER;
+
     while (!success && tries < 3) {
-        if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-            // @TODO
-            return;
-        }
+        const health = await this.resources.instance?.getHealth();
 
-        if (process.env.RUNTIME_ADAPTER === "process") {
-            const res = (await this.resources.instance?.getHealth())?.processId;
+        console.log("Health", health);
 
-            if (res) {
-                processId = success = res;
-                console.log("Process is identified.", processId);
-            }
-        } else {
-            containerId = success = (await this.resources.instance?.getHealth())?.containerId!;
+        switch (adapter) {
+            case "kubernetes":
+                return;
+            case "docker":
 
-            if (containerId) {
-                console.log("Container is identified.", containerId);
-            }
+                containerId = success = health?.containerId!;
+
+                if (containerId) {
+                    console.log("Container is identified.", containerId);
+                }
+                break;
+            case "process":
+                const res = health?.processId;
+
+                if (res) {
+                    processId = success = res;
+                    console.log("Process is identified.", processId);
+                }
+                break;
+            default:
+                break;
         }
 
         tries++;

@@ -43,6 +43,7 @@ import { LoadCheckStat } from "./load-check-stat";
 import { NetworkInfo } from "./network-info";
 import { SequenceCompleteMessageData } from "./messages/sequence-complete";
 import { KillMessageData } from "./messages/kill-sequence";
+import { MonitoringReplyMessage, MonitoringReplyMessageData } from "./messages/monitor-reply";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -53,6 +54,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.KILL ? KillSequenceMessage :
     T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
+    T extends RunnerMessageCode.MONITORING_REPLY ? MonitoringReplyMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
@@ -71,6 +73,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.KILL ? KillMessageData :
     T extends RunnerMessageCode.MONITORING ? MonitoringMessageData :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessageData :
+    T extends RunnerMessageCode.MONITORING_REPLY ? MonitoringReplyMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
@@ -93,7 +96,7 @@ export type EncodedMessage<
     > = [T, MessageDataType<T>];
 
 export type ControlMessageCode =
-    RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
+    RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.MONITORING_REPLY | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
     CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
     RunnerMessageCode.INPUT_CONTENT_TYPE;

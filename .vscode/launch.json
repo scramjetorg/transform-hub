@@ -31,6 +31,15 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
+        },
+        {
+            "name": "Attach by Process ID",
+            "processId": "${command:PickProcess}",
+            "request": "attach",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
         }
     ]
 }

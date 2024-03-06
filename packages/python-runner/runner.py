@@ -17,7 +17,8 @@ sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 instance_id = os.getenv('INSTANCE_ID')
-
+runner_connect_info = json.loads(os.getenv("RUNNER_CONNECT_INFO"))
+sequence_info = json.loads(os.getenv("SEQUENCE_INFO"))
 
 def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
@@ -116,7 +117,8 @@ class Runner:
         control = self.streams[CC.CONTROL]
 
         self.logger.info(f'Sending PING')
-        send_encoded_msg(monitoring, msg_codes.PING)
+        payload = {**runner_connect_info, **{"system":{"processPID":str(os.getpid())}}}
+        send_encoded_msg(monitoring, msg_codes.PING, {"payload":payload, "sequenceInfo": sequence_info, "id": instance_id})
 
         message = await control.readuntil(b'\n')
         self.logger.info(f'Got message: {message}')
@@ -164,7 +166,7 @@ class Runner:
         self.keep_alive_requested = False
         timeout = data.get('timeout') / 1000
         can_keep_alive = data.get('canCallKeepalive')
-        try:         
+        try:
             for handler in self.stop_handlers:
                 await handler(timeout, can_keep_alive)
         except Exception as e:
@@ -307,7 +309,7 @@ class Runner:
 
         await output.write_to(self.streams[CC.OUT])
 
-    
+
     async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
         monitoring = self.streams[CC.MONITORING]
         send_encoded_msg(monitoring, msg_codes.ALIVE)
@@ -342,7 +344,7 @@ class AppContext:
             msg_codes.EVENT,
             {'eventName': event_name, 'message': message}
         )
-    
+
     async def keep_alive(self, timeout: int = 0):
         await self.runner.send_keep_alive(timeout)
 
