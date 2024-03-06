@@ -129,7 +129,7 @@ class ProcessInstanceAdapter implements
     }
 
     setRunner(system: Record<string, string>): void {
-        this.logger.info("--------- Setting system from runner", system);
+        this.logger.info("Setting system from runner", system);
         this.processPID = parseInt(system.processPID, 10);
     }
 

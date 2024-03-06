@@ -189,7 +189,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (process.env.RUNNER_LOG_FILE) {
             this.logFile ||= createWriteStream(process.env.RUNNER_LOG_FILE);
-            this.logFile.write("\n\n------------- \n\n");
+            this.logFile.write("\n\n");
             this.logger.addOutput(this.logFile);
         }
 
