@@ -12,6 +12,7 @@ type TopicsPostReq = IncomingMessage & {
     body?: {
         id?: string,
         "content-type"?: string,
+        cli? : boolean
     };
 };
 
@@ -67,7 +68,7 @@ class TopicRouter {
 
         if (topicExist) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Topic with given id already exist" };
 
-        const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
+        const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType }, req.body.cli);
 
         return {
             opStatus: ReasonPhrases.OK,

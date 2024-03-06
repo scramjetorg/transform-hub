@@ -55,7 +55,7 @@ export const topic: CommandDefinition = (program) => {
         .description("Create topic")
         .action(async (topicName, { contentType }) =>
             displayEntity(
-                getHostClient().createTopic(topicName, contentType),
+                getHostClient().createTopic(topicName, contentType, true),
                 format
             )
         );

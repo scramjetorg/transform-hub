@@ -12,6 +12,7 @@ export type AddSTHTopicEventData = BaseSTHTopicEventData & {
 } & (
     { requires: string; provides?: never }
     | { provides: string; requires?: never }
+    | { requires?: never; provides?: never }
 );
 
 export type RemoveSTHTopicEventData = BaseSTHTopicEventData & {

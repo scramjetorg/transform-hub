@@ -79,10 +79,10 @@ export class ServiceDiscovery {
      * Returns topic with given configuration, if not exists creates new one.
      *
      * @param {DataType} config Topic configuration.
-     * @param {string} [localProvider] Provider identifier. It not set topic will be considered as external.
+     * @param {string} cli Flag specifying the origin of the request from cli.
      * @returns added topic data.
      */
-    createTopicIfNotExist(config: DataType) {
+    createTopicIfNotExist(config: DataType, cli?: boolean) {
         const topicName = config.topic;
         const topic = this.topicsController.get(topicName);
 
@@ -94,12 +94,23 @@ export class ServiceDiscovery {
                 throw new Error("Content-type mismatch");
             }
             this.logger.debug("Topic routed:", config);
+
             return topic;
         }
 
         this.logger.debug("Topic added:", config);
         const origin: StreamOrigin = { id: this.hostName, type: "hub" };
         const newTopic = new Topic(topicName, config.contentType, origin);
+
+        if (cli) {
+            this.cpmConnector?.sendTopicInfo({
+                topicName: topicName.toString(),
+                contentType : config.contentType,
+                status: "add"
+            }).catch(() => {
+                this.logger.error("Error sending message about new topic");
+            });
+        }
 
         this.topicsController.set(topicName, newTopic);
         return newTopic;
