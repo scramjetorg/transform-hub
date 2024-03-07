@@ -5447,9 +5447,9 @@ jest@^29.5.0:
     jest-cli "^29.6.2"
 
 jose@^4.10.0:
-  version "4.11.2"
-  resolved "https://registry.npmjs.org/jose/-/jose-4.11.2.tgz"
-  integrity sha512-njj0VL2TsIxCtgzhO+9RRobBvws4oYyCM8TpvoUQwl/MbIM3NFJRR9+e6x0sS5xXaP1t6OCBkaBME98OV9zU5A==
+  version "4.15.5"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-4.15.5.tgz#6475d0f467ecd3c630a1b5dadd2735a7288df706"
+  integrity sha512-jc7BFxgKPKi94uOvEmzlSWFFe2+vASyXaKUpdQKatWAESU2MWjDfFf0fdfc83CDKcA5QecabZeNLyfhe3yKNkg==
 
 js-string-escape@^1.0.1:
   version "1.0.1"
@@ -7582,7 +7582,7 @@ scramjet-core@^4.32.12:
   resolved "https://registry.yarnpkg.com/scramjet-core/-/scramjet-core-4.32.12.tgz#d049a2b2cb4a2635f2f30e56d54f6b0367cf21d5"
   integrity sha512-FkNaZqzXvzqdwrUWzMztJq2RUBcpBlm08zOYIhA69+//FzgrespLBz7DmCXdXfujjvmUIFGgq/T3aPFy1ctonw==
 
-scramjet@^4.36.6, scramjet@^4.36.9:
+scramjet@^4.36.9:
   version "4.37.0"
   resolved "https://registry.yarnpkg.com/scramjet/-/scramjet-4.37.0.tgz#2e89f07cbaffd1f9cdd5a3da64aba250745aac13"
   integrity sha512-Y6b59qGsulkr5MxiVn9CABnL9pE/sPKihCcWSUhzZc6W0YWbfLWRXc1fE1M40QKfOQUBxks81efzJ7WpEuFmlQ==
