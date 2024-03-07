@@ -79,7 +79,6 @@ export class ServiceDiscovery {
      * Returns topic with given configuration, if not exists creates new one.
      *
      * @param {DataType} config Topic configuration.
-     * @param {string} cli Flag specifying the origin of the request from cli.
      * @returns added topic data.
      */
     createTopicIfNotExist(config: DataType) {
