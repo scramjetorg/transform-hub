@@ -228,10 +228,7 @@ export class HostClient implements ClientProvider {
         return this.client.getStream(`topic/${topic}`, requestInit, { type: contentType });
     }
 
-    async createTopic(id: string, contentType: string, cli? : boolean): Promise<{ topicName: string }> {
-        if (cli) {
-            return this.client.post("topics", { id, "content-type": contentType, cli }, undefined, { json: true, parse: "json" });
-        }
+    async createTopic(id: string, contentType: string): Promise<{ topicName: string }> {
         return this.client.post("topics", { id, "content-type": contentType }, undefined, { json: true, parse: "json" });
     }
 

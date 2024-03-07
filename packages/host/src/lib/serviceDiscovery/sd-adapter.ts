@@ -82,7 +82,7 @@ export class ServiceDiscovery {
      * @param {string} cli Flag specifying the origin of the request from cli.
      * @returns added topic data.
      */
-    createTopicIfNotExist(config: DataType, cli?: boolean) {
+    createTopicIfNotExist(config: DataType) {
         const topicName = config.topic;
         const topic = this.topicsController.get(topicName);
 
@@ -101,16 +101,6 @@ export class ServiceDiscovery {
         this.logger.debug("Topic added:", config);
         const origin: StreamOrigin = { id: this.hostName, type: "hub" };
         const newTopic = new Topic(topicName, config.contentType, origin);
-
-        if (cli) {
-            this.cpmConnector?.sendTopicInfo({
-                topicName: topicName.toString(),
-                contentType : config.contentType,
-                status: "add"
-            }).catch(() => {
-                this.logger.error("Error sending message about new topic");
-            });
-        }
 
         this.topicsController.set(topicName, newTopic);
         return newTopic;
