@@ -3,7 +3,7 @@ import { CommandDefinition, ExtendedHelpConfiguration, isProductionEnv } from ".
 import { getReadStreamFromFile } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayProdOnlyMsg } from "../helpers/messages";
-import { displayObject } from "../output";
+import { displayMessage, displayObject } from "../output";
 import { getMiddlewareClient, initPlatform } from "../platform";
 
 /**
@@ -68,5 +68,21 @@ export const store: CommandDefinition = (program) => {
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
 
             displayObject(await managerClient.deleteStoreItem(id), profileManager.getProfileConfig().format);
+        });
+
+    storeCmd
+        .command("prune")
+        .description("Remove all Sequences from the store (use with caution)")
+        .action(async () => {
+            const spaceId = sessionConfig.lastSpaceId;
+            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
+
+            try {
+                await managerClient.clearStore();
+            } catch (e : any) {
+                throw new Error("Some Sequences may have not been deleted.");
+            }
+
+            displayMessage("Sequences removed successfully.");
         });
 };
