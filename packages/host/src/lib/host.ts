@@ -733,19 +733,27 @@ export class Host implements IComponent {
     spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
         const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
 
-        this.logger.info("SPACE REQUEST", req.url, url, this.apiBase, req.body);
+        this.logger.info("SPACE REQUEST", req.url, url, this.apiBase);
 
         const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
 
         if (clientRequest) {
-            clientRequest.on("response", (response: IncomingMessage) => {
-                response.pipe(res);
-            }).on("error", (error) => {
-                this.logger.error("Error requesting CPM", error);
-            });
+            clientRequest.on("socket", (socket) => {
+                clientRequest.on("response", (response: IncomingMessage) => {
+                    response.on("end", () => {
+                        this.logger.info("Space response ended", url, response.statusCode);
+                    });
 
-            clientRequest.flushHeaders();
-            req.pipe(clientRequest);
+                    res.writeHead(response.statusCode!, response.statusMessage || "", response.headers);
+
+                    socket.pipe(res.socket!);
+                }).on("error", (error) => {
+                    this.logger.error("Error requesting CPM", error);
+                });
+
+                clientRequest.flushHeaders();
+                req.socket.pipe(socket);
+            });
         } else {
             res.statusCode = 404;
             res.end();

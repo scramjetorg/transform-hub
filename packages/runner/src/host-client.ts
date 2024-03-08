@@ -79,6 +79,9 @@ class HostClient implements IHostClient {
         });
 
         this._streams = openConnections as HostOpenConnections;
+        this._streams[CC.OUT].on("end", () => {
+            this.logger.info("Total data written to instance output", (this.streams[CC.OUT] as net.Socket).bytesWritten);
+        });
 
         const input = this._streams[CC.IN];
 

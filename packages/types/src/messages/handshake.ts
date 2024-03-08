@@ -28,4 +28,5 @@ export type PangMessageData = {
     requires?: string;
     contentType?: string;
     provides?: string;
-};
+    outputEncoding?: BufferEncoding | null;
+}

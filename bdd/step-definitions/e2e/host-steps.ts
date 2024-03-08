@@ -20,7 +20,7 @@ import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import crypto from "crypto";
+import crypto, { BinaryLike } from "crypto";
 import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
@@ -66,6 +66,25 @@ const streamToString = async (stream: Stream): Promise<string> => {
     }
 
     return chunks.join("");
+};
+const streamToBinary = async (stream: Readable): Promise<BinaryLike> => {
+    const chunks: Uint8Array[] = [];
+
+    return new Promise((resolve, reject) => {
+        stream.on("data", (chunk: Buffer | Uint8Array) => {
+            chunks.push(chunk instanceof Buffer ? chunk : Uint8Array.from(chunk));
+        });
+
+        stream.on("end", () => {
+            const binaryData = Buffer.concat(chunks);
+
+            resolve(binaryData);
+        });
+
+        stream.on("error", (error: Error) => {
+            reject(error);
+        });
+    });
 };
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
@@ -503,6 +522,23 @@ When("compare checksums of content sent from file {string}", async function(this
     assert.equal(outputString, hex);
 
     await this.resources.instance?.sendInput("null");
+});
+
+When("confirm file checksum match output checksum", async function(this: CustomWorld) {
+    // the random.bin hex is written to instance stdout
+    const stdout = await this.resources.instance!.getStream("stdout");
+    const fileHexFromStdout = await streamToString(stdout);
+    const output = await this.resources.instance?.getStream("output");
+
+    if (!output || !stdout) assert.fail("No output or stdout, or both.");
+
+    const dataFromOutput = await streamToBinary(output);
+    const outputHex: string = crypto
+        .createHash("sha256")
+        .update(dataFromOutput)
+        .digest("hex");
+
+    assert.strictEqual(outputHex, fileHexFromStdout.trim());
 });
 
 When(
