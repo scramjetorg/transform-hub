@@ -10,7 +10,7 @@
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
   "devDependencies": {
-    "@scramjet/types": "0.39.3"
+    "@scramjet/types": "1.0.0"
   },
   "private": true
 }
