@@ -1,13 +1,5 @@
-import { AppConfig } from "../app-config";
-import { InstanceLimits } from "../instance-limits";
+import { RunnerConnectInfo } from "../runner-connect";
 
 export type StartSequenceResponse = { id: string };
 
-export type StartSequencePayload = {
-    appConfig: AppConfig;
-    args?: any[];
-    outputTopic?: string;
-    inputTopic?: string;
-    limits?: InstanceLimits;
-    instanceId?: string;
-};
+export type StartSequencePayload = Omit<Omit<RunnerConnectInfo, "adapter">, "inputContentType">;

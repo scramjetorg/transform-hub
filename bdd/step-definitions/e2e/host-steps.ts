@@ -20,7 +20,7 @@ import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import crypto from "crypto";
+import crypto, { BinaryLike } from "crypto";
 import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
@@ -67,6 +67,25 @@ const streamToString = async (stream: Stream): Promise<string> => {
 
     return chunks.join("");
 };
+const streamToBinary = async (stream: Readable): Promise<BinaryLike> => {
+    const chunks: Uint8Array[] = [];
+
+    return new Promise((resolve, reject) => {
+        stream.on("data", (chunk: Buffer | Uint8Array) => {
+            chunks.push(chunk instanceof Buffer ? chunk : Uint8Array.from(chunk));
+        });
+
+        stream.on("end", () => {
+            const binaryData = Buffer.concat(chunks);
+
+            resolve(binaryData);
+        });
+
+        stream.on("error", (error: Error) => {
+            reject(error);
+        });
+    });
+};
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
 
@@ -99,23 +118,42 @@ const waitForProcessToEnd = async (pid: number) => {
     }
 };
 
-const killRunner = async () => {
-    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-        // @TODO
-        return;
+// const killRunner = async () => {
+//     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+//         // @TODO
+//         return;
+//     }
+
+//     if (process.env.RUNTIME_ADAPTER === "process" && processId) {
+//         try {
+//             process.kill(processId);
+//             await waitForProcessToEnd(processId);
+//         } catch (e) {
+//             console.error("Couldn't kill runner", e);
+//         }
+//     }
+
+//     if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
+//         await dockerode.getContainer(containerId).kill();
+//     }
+// };
+
+const killAllRunners = async () => {
+    if (process.env.RUNTIME_ADAPTER === "process") {
+        exec("killall runner");
     }
 
-    if (process.env.RUNTIME_ADAPTER === "process" && processId) {
-        try {
-            process.kill(processId);
-            await waitForProcessToEnd(processId);
-        } catch (e) {
-            console.error("Couldn't kill runner", e);
-        }
-    }
+    if (process.env.RUNTIME_ADAPTER === "docker") {
+        await Promise.all(
+            (await dockerode.listContainers())
+                .map(async container => {
+                    if (container.Labels["scramjet.instance.id"]) {
+                        return dockerode.getContainer(container.Id).kill();
+                    }
 
-    if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
-        await dockerode.getContainer(containerId).kill();
+                    return Promise.resolve();
+                })
+        );
     }
 };
 
@@ -183,7 +221,20 @@ Before(() => {
     streams = {};
 });
 
-After({ tags: "@runner-cleanup" }, killRunner);
+After({ tags: "@runner-cleanup" }, killAllRunners);
+After({}, async () => {
+    let insts = [];
+
+    try {
+        insts = await hostClient.listInstances();
+    } catch (_e) {
+        return;
+    }
+
+    await Promise.all(
+        insts.map(i => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
+    );
+});
 
 Before({ tags: "@test-si-init" }, function() {
     createDirectory("data/template_seq");
@@ -473,6 +524,23 @@ When("compare checksums of content sent from file {string}", async function(this
     await this.resources.instance?.sendInput("null");
 });
 
+When("confirm file checksum match output checksum", async function(this: CustomWorld) {
+    // the random.bin hex is written to instance stdout
+    const stdout = await this.resources.instance!.getStream("stdout");
+    const fileHexFromStdout = await streamToString(stdout);
+    const output = await this.resources.instance?.getStream("output");
+
+    if (!output || !stdout) assert.fail("No output or stdout, or both.");
+
+    const dataFromOutput = await streamToBinary(output);
+    const outputHex: string = crypto
+        .createHash("sha256")
+        .update(dataFromOutput)
+        .digest("hex");
+
+    assert.strictEqual(outputHex, fileHexFromStdout.trim());
+});
+
 When(
     "send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}",
     async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
@@ -499,29 +567,39 @@ When("send kill message to instance", async function(this: CustomWorld) {
     assert.ok(resp);
 });
 
+// eslint-disable-next-line complexity
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
+    const adapter = process.env.RUNTIME_ADAPTER;
+
     while (!success && tries < 3) {
-        if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-            // @TODO
-            return;
-        }
+        const health = await this.resources.instance?.getHealth();
 
-        if (process.env.RUNTIME_ADAPTER === "process") {
-            const res = (await this.resources.instance?.getHealth())?.processId;
+        console.log("Health", health);
 
-            if (res) {
-                processId = success = res;
-                console.log("Process is identified.", processId);
-            }
-        } else {
-            containerId = success = (await this.resources.instance?.getHealth())?.containerId!;
+        switch (adapter) {
+            case "kubernetes":
+                return;
+            case "docker":
 
-            if (containerId) {
-                console.log("Container is identified.", containerId);
-            }
+                containerId = success = health?.containerId!;
+
+                if (containerId) {
+                    console.log("Container is identified.", containerId);
+                }
+                break;
+            case "process":
+                const res = health?.processId;
+
+                if (res) {
+                    processId = success = res;
+                    console.log("Process is identified.", processId);
+                }
+                break;
+            default:
+                break;
         }
 
         tries++;

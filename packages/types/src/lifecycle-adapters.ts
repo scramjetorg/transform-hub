@@ -3,6 +3,8 @@ import { MaybePromise } from "./utils";
 import { InstanceConfig } from "./runner-config";
 import { IObjectLogger } from "./object-logger";
 import { InstanceLimits } from "./instance-limits";
+import { SequenceInfo } from "./sequence-adapter";
+import { RunnerConnectInfo } from "./runner-connect";
 
 export type ExitCode = number;
 
@@ -23,24 +25,36 @@ export interface ILifeCycleAdapterMain {
     // TODO: THIS is forceful removal - let's think about refactor.
     remove(): MaybePromise<void>;
 
-    getCrashLog(): Promise<string[]>
+    monitorRate(rps: number): this;
+
+    stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
+
+    getCrashLog(): Promise<string[]>;
+
+    waitUntilExit(config: InstanceConfig | undefined, instanceId: string, sequenceInfo: SequenceInfo): Promise<ExitCode>;
 }
 // @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
+    setRunner?(system: RunnerConnectInfo["system"]): MaybePromise<void>;
+
     limits: InstanceLimits;
 
     /**
-      * Starts Runner.
+      * Initiates runner start without waiting for the result
       *
       * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode>;
+    dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<number>;
 
-    monitorRate(rps: number): this;
-
-    stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
+    /**
+      * Starts Runner - in essence does `dispatch` and then `waitUntilExit`.
+      *
+      * @param {InstanceConfig} Runner configuration.
+      * @returns {ExitCode} Runner exit code.
+      */
+    run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode>;
 }
 
 export type LifeCycleError = any | (Error & { exitCode?: number, errorMessage?: string });

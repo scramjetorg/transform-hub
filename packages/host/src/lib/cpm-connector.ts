@@ -2,7 +2,7 @@ import fs from "fs";
 import { Readable } from "stream";
 import * as http from "http";
 
-import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     STHRestAPI,
     CPMConnectorOptions,
@@ -291,7 +291,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
                 return message;
             }).catch((e: any) => {
-                this.logger.error("communicationChannel error", e.message);
+                this.logger.warn("communicationChannel error", e.message);
             });
 
         this.communicationStream = new StringStream().JSONStringify().resume();
@@ -386,7 +386,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         });
 
         this.verserClient.once("error", async (error: any) => {
-            this.logger.error("VerserClient error", error);
+            this.logger.warn("VerserClient error", error);
 
             try {
                 await this.reconnect();
@@ -408,9 +408,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connection?.removeAllListeners();
         this.connected = false;
 
-        this.logger.trace("Tunnel closed", this.getId());
-
-        this.logger.info("CPM connection closed.");
+        this.logger.info("CPM connection closed.", connectionStatusCode, this.getId());
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
@@ -584,13 +582,12 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {string} instance Instance details.
      * @param {SequenceMessageCode} instanceStatus Instance status.
      */
-    async sendInstanceInfo(instance: Instance, instanceStatus: InstanceMessageCode): Promise<void> {
-        this.logger.trace("Send instance status update", instanceStatus);
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.INSTANCE, { instance, status: instanceStatus }]
-        );
+    async sendInstanceInfo(instance: Instance): Promise<void> {
+        this.logger.trace("Send instance status update", instance.status);
 
-        this.logger.trace("Instance status update sent", instanceStatus);
+        await this.communicationStream?.whenWrote(
+            [CPMMessageCode.INSTANCE, { instance }]
+        );
     }
 
     /**

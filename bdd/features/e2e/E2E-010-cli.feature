@@ -46,6 +46,7 @@ Feature: CLI tests
 
     @ci-api @cli
     Scenario: E2E-010 TC-006 Test Sequence 'prune --force' option
+        Given I set config for local Hub
         When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "seq send ../packages/csv-transform.tar.gz"
         When I execute CLI with "seq list"
@@ -79,7 +80,7 @@ Feature: CLI tests
 
     @ci-api @cli
     Scenario: E2E-010 TC-009 Get 404 on health endpoint for finished Instance
-        When I execute CLI with "seq send ../packages/inert-function.tar.gz"
+        When I execute CLI with "seq send ../packages/js-inert-function.tar.gz"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst health -"
         And I wait for Instance to end
@@ -88,7 +89,7 @@ Feature: CLI tests
 
     @ci-api @cli
     Scenario: E2E-010 TC-010 Test Instance 'log' option
-        When I execute CLI with "seq send ../packages/inert-function.tar.gz"
+        When I execute CLI with "seq send ../packages/js-inert-function.tar.gz"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst log -" without waiting for the end
         Then I confirm instance logs received

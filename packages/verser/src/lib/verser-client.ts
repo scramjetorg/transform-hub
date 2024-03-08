@@ -121,6 +121,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 resolve({ res, socket });
             });
 
+            connectRequest.socket?.setNoDelay(true);
             connectRequest.flushHeaders();
         });
     }

@@ -7,6 +7,7 @@ import {
     MonitoringMessageCode, UpstreamStreamsConfig
 } from "./message-streams";
 import { MaybePromise } from "./utils";
+import { InstanceConnectionInfo } from "./instance";
 
 export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => void;
@@ -17,6 +18,8 @@ export type ControlMessageHandler<T extends ControlMessageCode> =
 
 export interface ICommunicationHandler {
     logger: IObjectLogger;
+
+    waitForHandshake(): Promise<InstanceConnectionInfo>;
 
     hookUpstreamStreams(str: UpstreamStreamsConfig): this;
     hookDownstreamStreams(str: DownstreamStreamsConfig): this;

@@ -1,4 +1,5 @@
-import { ExitCode, InstanceId, IObjectLogger } from "@scramjet/types";
+import { ExitCode, InstanceId, IObjectLogger, SequenceInfo } from "@scramjet/types";
+import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
@@ -190,6 +191,14 @@ export interface IDockerHelper {
     translateVolumesConfig: (volumeConfigs: DockerAdapterVolumeConfig[]) => any;
 
     /**
+     * Gets first found container by a given label
+     *
+     * @param {string} label the label
+     * @param {string} value label value.
+     */
+    getContainerIdByLabel(label: string, value: string): Promise<DockerContainer>;
+
+    /**
      * Creates Docker container from provided image with attached volumes and local directories.
      *
      * @param {DockerImage} dockerImage Docker image name.
@@ -317,6 +326,8 @@ export type RunnerEnvConfig = {
     instancesServerPort: number;
     instancesServerHost: string;
     instanceId: InstanceId;
+    sequenceInfo: SequenceInfo
+    payload: StartSequencePayload
 }
 
 export type RunnerEnvironmentVariables = Partial<{

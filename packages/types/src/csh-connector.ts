@@ -1,4 +1,3 @@
-import { MaybePromise } from "./utils";
 import { IComponent } from "./component";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { UpstreamStreamsConfig } from "./message-streams";
@@ -9,12 +8,12 @@ export interface IHostClient extends IComponent {
      * Interface used by Runner to communicate with Host.
      */
 
-    init(id: string): MaybePromise<void>;
+    init(id: string): Promise<void>;
 
     /**
      * Disconnects from a host server.
      */
-    disconnect(): Promise<void>;
+    disconnect(hard: boolean): Promise<void>;
     getAgent(): Agent;
 
     stdinStream: UpstreamStreamsConfig[CC.STDIN]

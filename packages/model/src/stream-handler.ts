@@ -1,3 +1,4 @@
+import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC, CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
@@ -7,6 +8,7 @@ import {
     EncodedMonitoringMessage,
     ICommunicationHandler,
     IObjectLogger,
+    InstanceConnectionInfo,
     LoggerOutput,
     MaybePromise,
     MessageDataType,
@@ -17,7 +19,6 @@ import {
     UpstreamStreamsConfig,
     WritableStream
 } from "@scramjet/types";
-import { ObjLogger } from "@scramjet/obj-logger";
 
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
@@ -49,6 +50,7 @@ type MonitoringMessageHandlerList = {
 type ControlMessageHandlerList = {
     [RunnerMessageCode.KILL]: ConfiguredMessageHandler<RunnerMessageCode.KILL>[];
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
+    [RunnerMessageCode.MONITORING_REPLY]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_REPLY>[];
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
@@ -86,6 +88,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlHandlerHash = {
             [RunnerMessageCode.KILL]: [],
             [RunnerMessageCode.MONITORING_RATE]: [],
+            [RunnerMessageCode.MONITORING_REPLY]: [],
             [RunnerMessageCode.STOP]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
@@ -147,11 +150,20 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
+    waitForHandshake(): Promise<InstanceConnectionInfo> {
+        return new Promise((res) => {
+            this.addMonitoringHandler(RunnerMessageCode.PING, (msg) => {
+                res(msg);
+            });
+        });
+    }
+
     pipeMessageStreams() {
         if (this._piped) {
             this.logger.error("pipeMessageStreams called twice");
             throw new Error("pipeMessageStreams called twice");
         }
+
         this._piped = true;
 
         if (!this.downstreams || !this.upstreams) {

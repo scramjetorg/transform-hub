@@ -4,6 +4,7 @@ import net from "net";
 
 import { isDefined, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { CommunicationChannel } from "@scramjet/symbols";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
@@ -45,9 +46,15 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 });
 
                 const id = await new Promise<string>((resolve) => {
-                    connection.once("readable", () => {
-                        resolve(connection.read(36).toString());
-                    });
+                    const immediateData = connection.read(36);
+
+                    if (!immediateData) {
+                        connection.once("readable", () => {
+                            resolve(connection.read(36).toString());
+                        });
+                    } else {
+                        resolve(immediateData);
+                    }
                 });
 
                 const channel = await new Promise<number>((resolve) => {
@@ -58,7 +65,9 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
                 connection
                     .on("error", (err) => this.logger.error("Error on Instance in stream", id, channel, err))
-                    .on("end", () => this.logger.debug(`Channel [${id}:${channel}] ended`));
+                    .on("end", () => this.logger.debug(
+                        `Channel [${id}:${channel}] ended. tx/rx: ${connection.bytesWritten}/${connection.bytesRead}`
+                    ));
 
                 try {
                     await this.handleConnection(id, channel, connection);
@@ -71,6 +80,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             this.server!
                 .listen(this.port, this.hostname, () => {
                     this.logger.info("SocketServer on", this.server?.address());
+
                     res();
                 })
                 .on("error", rej);
@@ -90,8 +100,10 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
         } else {
             throw new Error(`Runner(${id}) wanted to connect on already initialized channel ${channel}`);
         }
+
         if (runner.every(isDefined)) {
             this.runnerConnectionsInProgress.delete(id);
+            runner[CommunicationChannel.OUT]?.setDefaultEncoding("binary");
             this.emit("connect", id, runner as RunnerOpenConnections);
         }
     }

@@ -12,6 +12,7 @@ import {
     RunnerContainerConfiguration,
     InstanceLimits,
     STHConfiguration,
+    SequenceInfo,
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -21,6 +22,7 @@ import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { getRunnerEnvEntries } from "./get-runner-env";
 import { Readable } from "stream";
+import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -114,22 +116,22 @@ IComponent {
      * @returns {Promise<MonitoringMessageData>} Promise resolved with container statistics.
      */
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
-        if (this.resources.containerId) {
-            const stats = await this.dockerHelper.stats(this.resources.containerId)!;
+        this.logger.debug("STATS. Container id:", this.resources.containerId);
 
-            return {
-                cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
-                healthy: msg.healthy,
-                limit: stats.memory_stats?.limit,
-                memoryMaxUsage: stats.memory_stats?.max_usage,
-                memoryUsage: stats.memory_stats?.usage,
-                networkRx: stats.networks?.eth0?.rx_bytes,
-                networkTx: stats.networks?.eth0?.tx_bytes,
-                containerId: this.resources.containerId
-            };
-        }
+        this.resources.containerId ||= await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", this.id);
 
-        return msg;
+        const stats = await this.dockerHelper.stats(this.resources.containerId)!;
+
+        return {
+            cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
+            healthy: msg.healthy,
+            limit: stats.memory_stats?.limit,
+            memoryMaxUsage: stats.memory_stats?.max_usage,
+            memoryUsage: stats.memory_stats?.usage,
+            networkRx: stats.networks?.eth0?.rx_bytes,
+            networkTx: stats.networks?.eth0?.tx_bytes,
+            containerId: this.resources.containerId
+        };
     }
 
     private async getNetworkSetup(): Promise<{ network: string, host: string }> {
@@ -169,8 +171,21 @@ IComponent {
         };
     }
 
+    async setRunner(system: Record<string, string>): Promise<void> {
+        const containerId = await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", system.id);
+
+        this.logger.debug("Container id restored", containerId);
+
+        this.resources.containerId = containerId;
+    }
+
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
+        await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
+        return this.waitUntilExit(config, instanceId, sequenceInfo);
+    }
+
     // eslint-disable-next-line complexity
-    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         if (!(config.type === "docker" && "container" in config)) {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
@@ -193,7 +208,9 @@ IComponent {
             instancesServerPort,
             instancesServerHost: networkSetup.host,
             instanceId,
-            pipesPath: ""
+            pipesPath: "",
+            sequenceInfo,
+            payload
         }, {
             ...this.sthConfig.runnerEnvs
         }).map(([k, v]) => `${k}=${v}`);
@@ -207,7 +224,8 @@ IComponent {
                 { mountPoint: config.sequenceDir, volume: config.id, writeable: false }
             ],
             labels: {
-                "scramjet.sequence.name": config.name
+                "scramjet.sequence.name": config.name,
+                "scramjet.instance.id": instanceId
             },
             ports: this.resources.ports,
             publishAllPorts: true,
@@ -220,12 +238,20 @@ IComponent {
 
         this.crashLogStreams = Promise.all(([streams.stdout, streams.stderr] as Readable[]).map(streamToString));
 
-        this.resources.containerId = containerId;
+        this.resources.containerId = containerId; // doesnt matter
 
         this.logger.trace("Container is running", containerId);
 
+        return 0;
+    }
+
+    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
         try {
-            const { statusCode } = await this.dockerHelper.wait(containerId);
+            this.resources.containerId = this.resources.containerId || await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
+
+            this.logger.debug("Wait for container exit...", this.resources.containerId);
+
+            const { statusCode } = await this.dockerHelper.wait(this.resources.containerId);
 
             this.logger.debug("Container exited", statusCode);
 

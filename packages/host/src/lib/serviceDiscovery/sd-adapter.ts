@@ -87,6 +87,8 @@ export class ServiceDiscovery {
         const topic = this.topicsController.get(topicName);
 
         if (topic) {
+            config.contentType ||= topic.contentType;
+
             if (topic.contentType !== config.contentType) {
                 this.logger.error("Content-type mismatch, existing and requested ", topic.contentType, config.contentType);
                 throw new Error("Content-type mismatch");
@@ -167,6 +169,7 @@ export class ServiceDiscovery {
         const topic = this.createTopicIfNotExist(topicData);
 
         topic.acceptPipe(source);
+
         await this.cpmConnector?.sendTopicInfo({
             provides: topicData.topic.toString(),
             topicName: topicData.topic.toString(),
@@ -176,9 +179,8 @@ export class ServiceDiscovery {
     }
 
     async update(data: STHTopicEventData) {
-        this.logger.trace("Topic update. Send topic info to CPM", data);
-
         if (this.cpmConnector?.connected) {
+            this.logger.trace("Topic update. Send topic info to CPM", data);
             await this.cpmConnector?.sendTopicInfo(data);
         }
     }

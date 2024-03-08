@@ -23,6 +23,7 @@ Feature: Test our shiny new Python runner
         Given host is running
         When find and upload sequence "debug-args.tar.gz"
         And instance started with arguments "foo 3"
+        And wait for "1000" ms
         Then "output" is "{\"first_arg\":\"foo\",\"second_arg\":\"3\"}"
         And host is still running
 
