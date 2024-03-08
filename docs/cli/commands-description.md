@@ -1488,8 +1488,7 @@ Create topic
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default:
-*                                     "application/x-ndjson")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "application/x-ndjson")
 *  -h, --help                         Display help for command
 
 ---
@@ -1522,8 +1521,7 @@ Get data from topic
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default:
-*                                     "application/x-ndjson")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "application/x-ndjson")
 *  -h, --help                         Display help for command
 
 ---
@@ -1540,8 +1538,7 @@ Send data on topic from file, directory or directly through the console
 
 **Options**
 
-*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default:
-*                                     "application/x-ndjson")
+*  -t, --content-type [content-type]  Specifies type of data in topic (choices: "text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream", default: "application/x-ndjson")
 *  -h, --help                         Display help for command
 
 ---

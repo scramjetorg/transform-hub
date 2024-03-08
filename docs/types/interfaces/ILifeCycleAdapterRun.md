@@ -13,12 +13,15 @@
 ### Methods
 
 - [cleanup](ILifeCycleAdapterRun.md#cleanup)
+- [dispatch](ILifeCycleAdapterRun.md#dispatch)
 - [getCrashLog](ILifeCycleAdapterRun.md#getcrashlog)
 - [init](ILifeCycleAdapterRun.md#init)
 - [monitorRate](ILifeCycleAdapterRun.md#monitorrate)
 - [remove](ILifeCycleAdapterRun.md#remove)
 - [run](ILifeCycleAdapterRun.md#run)
+- [setRunner](ILifeCycleAdapterRun.md#setrunner)
 - [stats](ILifeCycleAdapterRun.md#stats)
+- [waitUntilExit](ILifeCycleAdapterRun.md#waituntilexit)
 
 ### Properties
 
@@ -44,7 +47,35 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L21)
+[packages/types/src/lifecycle-adapters.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L23)
+
+___
+
+### dispatch
+
+▸ **dispatch**(`config`, `instancesServerPort`, `instanceId`, `sequenceInfo`, `payload`): `Promise`<`number`\>
+
+Initiates runner start without waiting for the result
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | [`InstanceConfig`](../modules.md#instanceconfig) |
+| `instancesServerPort` | `number` |
+| `instanceId` | `string` |
+| `sequenceInfo` | [`SequenceInfo`](../modules.md#sequenceinfo) |
+| `payload` | [`RunnerConnectInfo`](../modules.md#runnerconnectinfo) |
+
+#### Returns
+
+`Promise`<`number`\>
+
+Runner exit code.
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L49)
 
 ___
 
@@ -62,7 +93,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L26)
+[packages/types/src/lifecycle-adapters.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L32)
 
 ___
 
@@ -82,7 +113,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
+[packages/types/src/lifecycle-adapters.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L18)
 
 ___
 
@@ -100,9 +131,13 @@ ___
 
 [`ILifeCycleAdapterRun`](ILifeCycleAdapterRun.md)
 
+#### Inherited from
+
+[ILifeCycleAdapterMain](ILifeCycleAdapterMain.md).[monitorRate](ILifeCycleAdapterMain.md#monitorrate)
+
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L41)
+[packages/types/src/lifecycle-adapters.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L28)
 
 ___
 
@@ -120,15 +155,15 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)
+[packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L26)
 
 ___
 
 ### run
 
-▸ **run**(`config`, `instancesServerPort`, `instanceId`): `Promise`<`number`\>
+▸ **run**(`config`, `instancesServerPort`, `instanceId`, `sequenceInfo`, `payload`): `Promise`<`number`\>
 
-Starts Runner.
+Starts Runner - in essence does `dispatch` and then `waitUntilExit`.
 
 #### Parameters
 
@@ -137,12 +172,34 @@ Starts Runner.
 | `config` | [`InstanceConfig`](../modules.md#instanceconfig) |
 | `instancesServerPort` | `number` |
 | `instanceId` | `string` |
+| `sequenceInfo` | [`SequenceInfo`](../modules.md#sequenceinfo) |
+| `payload` | [`RunnerConnectInfo`](../modules.md#runnerconnectinfo) |
 
 #### Returns
 
 `Promise`<`number`\>
 
 Runner exit code.
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L57)
+
+___
+
+### setRunner
+
+▸ `Optional` **setRunner**(`system`): `MaybePromise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `system` | `undefined` \| `Record`<`string`, `string`\> |
+
+#### Returns
+
+`MaybePromise`<`void`\>
 
 #### Defined in
 
@@ -164,9 +221,39 @@ ___
 
 `Promise`<[`MonitoringMessageData`](../modules.md#monitoringmessagedata)\>
 
+#### Inherited from
+
+[ILifeCycleAdapterMain](ILifeCycleAdapterMain.md).[stats](ILifeCycleAdapterMain.md#stats)
+
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L43)
+[packages/types/src/lifecycle-adapters.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L30)
+
+___
+
+### waitUntilExit
+
+▸ **waitUntilExit**(`config`, `instanceId`, `sequenceInfo`): `Promise`<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `undefined` \| [`InstanceConfig`](../modules.md#instanceconfig) |
+| `instanceId` | `string` |
+| `sequenceInfo` | [`SequenceInfo`](../modules.md#sequenceinfo) |
+
+#### Returns
+
+`Promise`<`number`\>
+
+#### Inherited from
+
+[ILifeCycleAdapterMain](ILifeCycleAdapterMain.md).[waitUntilExit](ILifeCycleAdapterMain.md#waituntilexit)
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L34)
 
 ## Properties
 
@@ -180,7 +267,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L11)
+[packages/types/src/lifecycle-adapters.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L13)
 
 ___
 
@@ -190,7 +277,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L31)
+[packages/types/src/lifecycle-adapters.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L41)
 
 ___
 
@@ -204,4 +291,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L10)
+[packages/types/src/lifecycle-adapters.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L12)

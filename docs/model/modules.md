@@ -49,7 +49,7 @@
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L25)
+[packages/model/src/stream-handler.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L26)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `msgCode` | `X` |
-| `msgData` | `LoadCheckStat` \| `ErrorMessageData` \| `AcknowledgeMessageData` \| `DescribeSequenceMessageData` \| `StatusMessageData` \| `EventMessageData` \| `PingMessageData` \| `PangMessageData` \| `HandshakeAcknowledgeMessageData` \| `KeepAliveMessageData` \| `KillMessageData` \| `MonitoringRateMessageData` \| `MonitoringMessageData` \| `StopSequenceMessageData` \| `SequenceCompleteMessageData` \| `STHIDMessageData` \| `InstanceMessage` \| `InstanceBulkMessage` \| `SequenceMessage` \| `SequenceBulkMessage` \| `SequenceStoppedMessageData` \| `NetworkInfo`[] |
+| `msgData` | `LoadCheckStat` \| `ErrorMessageData` \| `AcknowledgeMessageData` \| `DescribeSequenceMessageData` \| `StatusMessageData` \| `EventMessageData` \| `PingMessageData` \| `PangMessageData` \| `HandshakeAcknowledgeMessageData` \| `KeepAliveMessageData` \| `KillMessageData` \| `MonitoringRateMessageData` \| `MonitoringMessageData` \| `StopSequenceMessageData` \| `SequenceCompleteMessageData` \| `STHIDMessageData` \| `InstanceMessage` \| `InstanceBulkMessage` \| `SequenceMessage` \| `SequenceBulkMessage` \| `SequenceStoppedMessageData` \| `MonitoringReplyMessageData` \| `NetworkInfo`[] |
 
 #### Returns
 

@@ -93,6 +93,7 @@
 - [InstanceArgs](modules.md#instanceargs)
 - [InstanceBulkMessage](modules.md#instancebulkmessage)
 - [InstanceConfig](modules.md#instanceconfig)
+- [InstanceConnectionInfo](modules.md#instanceconnectioninfo)
 - [InstanceId](modules.md#instanceid)
 - [InstanceInputStream](modules.md#instanceinputstream)
 - [InstanceLimits](modules.md#instancelimits)
@@ -161,6 +162,7 @@
 - [ReadSequence](modules.md#readsequence)
 - [ReadableApp](modules.md#readableapp)
 - [RemoveSTHTopicEventData](modules.md#removesthtopiceventdata)
+- [RunnerConnectInfo](modules.md#runnerconnectinfo)
 - [RunnerContainerConfiguration](modules.md#runnercontainerconfiguration)
 - [RunnerErrorCode](modules.md#runnererrorcode)
 - [RunnerMessage](modules.md#runnermessage)
@@ -592,11 +594,11 @@ ___
 
 ### ControlMessageCode
 
-Ƭ **ControlMessageCode**: `RunnerMessageCode.KILL` \| `RunnerMessageCode.MONITORING_RATE` \| `RunnerMessageCode.STOP` \| `RunnerMessageCode.EVENT` \| `RunnerMessageCode.PONG` \| `CPMMessageCode.STH_ID` \| `CPMMessageCode.KEY_REVOKED` \| `CPMMessageCode.LIMIT_EXCEEDED` \| `CPMMessageCode.ID_DROP` \| `RunnerMessageCode.INPUT_CONTENT_TYPE`
+Ƭ **ControlMessageCode**: `RunnerMessageCode.KILL` \| `RunnerMessageCode.MONITORING_RATE` \| `RunnerMessageCode.MONITORING_REPLY` \| `RunnerMessageCode.STOP` \| `RunnerMessageCode.EVENT` \| `RunnerMessageCode.PONG` \| `CPMMessageCode.STH_ID` \| `CPMMessageCode.KEY_REVOKED` \| `CPMMessageCode.LIMIT_EXCEEDED` \| `CPMMessageCode.ID_DROP` \| `RunnerMessageCode.INPUT_CONTENT_TYPE`
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L95)
+[packages/types/src/message-streams.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L98)
 
 ___
 
@@ -626,7 +628,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L15)
+[packages/types/src/communication-handler.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L16)
 
 ___
 
@@ -738,7 +740,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L129)
+[packages/types/src/message-streams.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L132)
 
 ___
 
@@ -754,7 +756,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L116)
+[packages/types/src/message-streams.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L119)
 
 ___
 
@@ -791,7 +793,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L114)
+[packages/types/src/message-streams.ts:117](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L117)
 
 ___
 
@@ -801,7 +803,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L101)
+[packages/types/src/message-streams.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L104)
 
 ___
 
@@ -817,7 +819,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L91)
+[packages/types/src/message-streams.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L94)
 
 ___
 
@@ -827,7 +829,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L113)
+[packages/types/src/message-streams.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L116)
 
 ___
 
@@ -837,7 +839,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L110)
+[packages/types/src/message-streams.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L113)
 
 ___
 
@@ -847,7 +849,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L111)
+[packages/types/src/message-streams.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L114)
 
 ___
 
@@ -920,7 +922,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L7)
+[packages/types/src/lifecycle-adapters.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L9)
 
 ___
 
@@ -1036,10 +1038,13 @@ from the CSH to start the Sequence.
 | Name | Type |
 | :------ | :------ |
 | `msgCode` | `RunnerMessageCode.PING` |
+| `payload` | [`StartSequencePayload`](modules/STHRestAPI.md#startsequencepayload) |
+| `sequence` | [`SequenceInfo`](modules.md#sequenceinfo) |
+| `sequenceInfo` | [`SequenceInfo`](modules.md#sequenceinfo) |
 
 #### Defined in
 
-[packages/types/src/messages/handshake.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L8)
+[packages/types/src/messages/handshake.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L10)
 
 ___
 
@@ -1248,6 +1253,16 @@ ___
 #### Defined in
 
 [packages/types/src/runner-config.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L51)
+
+___
+
+### InstanceConnectionInfo
+
+Ƭ **InstanceConnectionInfo**: `Object`
+
+#### Defined in
+
+[packages/types/src/instance.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L5)
 
 ___
 
@@ -1483,7 +1498,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L46)
+[packages/types/src/lifecycle-adapters.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L60)
 
 ___
 
@@ -1626,7 +1641,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/index.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L46)
+[packages/types/src/index.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/index.ts#L47)
 
 ___
 
@@ -1694,7 +1709,7 @@ ___
 
 ### MessageDataType
 
-Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? [`KillMessageData`](modules.md#killmessagedata) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
+Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? [`KillMessageData`](modules.md#killmessagedata) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.MONITORING_REPLY` ? `MonitoringReplyMessageData` : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
 
 #### Type parameters
 
@@ -1704,13 +1719,13 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L65)
+[packages/types/src/message-streams.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L67)
 
 ___
 
 ### MessageType
 
-Ƭ **MessageType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessage`](modules.md#acknowledgemessage) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessage`](modules.md#keepalivemessage) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessage`](modules.md#describesequencemessage) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessage`](modules.md#statusmessage) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessage`](modules.md#errormessage) : `T` extends `RunnerMessageCode.KILL` ? [`KillSequenceMessage`](modules.md#killsequencemessage) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessage`](modules.md#monitoringmessage) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessage`](modules.md#monitoringratemessage) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessage`](modules.md#stopsequencemessage) : `T` extends `RunnerMessageCode.PING` ? [`HandshakeMessage`](modules.md#handshakemessage) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessage`](modules.md#handshakeacknowledgemessage) : `T` extends `CPMMessageCode.STH_ID` ? [`CPMMessageSTHID`](modules.md#cpmmessagesthid) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStatMessage`](modules.md#loadcheckstatmessage) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfoMessage`](modules.md#networkinfomessage) : `never`
+Ƭ **MessageType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessage`](modules.md#acknowledgemessage) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessage`](modules.md#keepalivemessage) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessage`](modules.md#describesequencemessage) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessage`](modules.md#statusmessage) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessage`](modules.md#errormessage) : `T` extends `RunnerMessageCode.KILL` ? [`KillSequenceMessage`](modules.md#killsequencemessage) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessage`](modules.md#monitoringmessage) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessage`](modules.md#monitoringratemessage) : `T` extends `RunnerMessageCode.MONITORING_REPLY` ? `MonitoringReplyMessage` : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessage`](modules.md#stopsequencemessage) : `T` extends `RunnerMessageCode.PING` ? [`HandshakeMessage`](modules.md#handshakemessage) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessage`](modules.md#handshakeacknowledgemessage) : `T` extends `CPMMessageCode.STH_ID` ? [`CPMMessageSTHID`](modules.md#cpmmessagesthid) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStatMessage`](modules.md#loadcheckstatmessage) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfoMessage`](modules.md#networkinfomessage) : `never`
 
 #### Type parameters
 
@@ -1720,7 +1735,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L47)
+[packages/types/src/message-streams.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L48)
 
 ___
 
@@ -1813,7 +1828,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L103)
+[packages/types/src/message-streams.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L106)
 
 ___
 
@@ -1870,7 +1885,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L11)
+[packages/types/src/communication-handler.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L12)
 
 ___
 
@@ -1975,7 +1990,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L13)
+[packages/types/src/communication-handler.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L14)
 
 ___
 
@@ -2136,12 +2151,13 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `contentType?` | `string` |
+| `outputEncoding?` | `BufferEncoding` \| ``null`` |
 | `provides?` | `string` |
 | `requires?` | `string` |
 
 #### Defined in
 
-[packages/types/src/messages/handshake.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L12)
+[packages/types/src/messages/handshake.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L27)
 
 ___
 
@@ -2183,7 +2199,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L145)
+[packages/types/src/message-streams.ts:148](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L148)
 
 ___
 
@@ -2195,11 +2211,17 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `created` | `number` |
+| `id` | `string` |
+| `inputHeadersSent` | `boolean` |
+| `payload` | [`StartSequencePayload`](modules/STHRestAPI.md#startsequencepayload) |
 | `ports?` | `Record`<`string`, `string`\> |
+| `sequenceInfo` | [`SequenceInfo`](modules.md#sequenceinfo) |
+| `status` | `InstanceStatus` |
 
 #### Defined in
 
-[packages/types/src/messages/handshake.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L10)
+[packages/types/src/messages/handshake.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L17)
 
 ___
 
@@ -2357,6 +2379,28 @@ ___
 #### Defined in
 
 [packages/types/src/messages/sth-topic.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-topic.ts#L17)
+
+___
+
+### RunnerConnectInfo
+
+Ƭ **RunnerConnectInfo**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `appConfig` | [`AppConfig`](modules.md#appconfig) |
+| `args?` | `any`[] |
+| `inputTopic?` | `string` |
+| `instanceId?` | `string` |
+| `limits?` | [`InstanceLimits`](modules.md#instancelimits) |
+| `outputTopic?` | `string` |
+| `system?` | `Record`<`string`, `string`\> |
+
+#### Defined in
+
+[packages/types/src/runner-connect.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-connect.ts#L4)
 
 ___
 
@@ -3312,7 +3356,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L133)
+[packages/types/src/message-streams.ts:136](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L136)
 
 ___
 
