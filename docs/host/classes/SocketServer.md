@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L98)
+[packages/host/src/lib/socket-server.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L110)
 
 ___
 
@@ -178,7 +178,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L80)
+[packages/host/src/lib/socket-server.ts:90](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L90)
 
 ___
 
@@ -522,7 +522,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L37)
+[packages/host/src/lib/socket-server.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L38)
 
 ## Constructors
 
@@ -543,7 +543,7 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L31)
+[packages/host/src/lib/socket-server.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L32)
 
 ## Properties
 
@@ -557,7 +557,7 @@ IComponent.logger
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L27)
+[packages/host/src/lib/socket-server.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L28)
 
 ___
 
@@ -567,4 +567,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L25)
+[packages/host/src/lib/socket-server.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L26)

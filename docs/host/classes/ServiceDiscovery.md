@@ -133,7 +133,7 @@ Topic details.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:124](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L124)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L126)
 
 ___
 
@@ -159,7 +159,7 @@ Topic stream.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L144)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:146](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L146)
 
 ___
 
@@ -195,7 +195,7 @@ All topics.
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L109)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L111)
 
 ___
 
@@ -216,7 +216,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L166)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L168)
 
 ___
 
@@ -237,7 +237,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:152](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L152)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L154)
 
 ___
 
@@ -279,4 +279,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L178)
+[packages/host/src/lib/serviceDiscovery/sd-adapter.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/serviceDiscovery/sd-adapter.ts#L181)

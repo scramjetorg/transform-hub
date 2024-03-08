@@ -27,6 +27,7 @@
 - [PostDisconnectPayload](MRestAPI.md#postdisconnectpayload)
 - [PostDisconnectResponse](MRestAPI.md#postdisconnectresponse)
 - [PutStoreItemResponse](MRestAPI.md#putstoreitemresponse)
+- [StoreClearResponse](MRestAPI.md#storeclearresponse)
 
 ## Type Aliases
 
@@ -308,3 +309,13 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-manager/put-store-item.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/put-store-item.ts#L3)
+
+___
+
+### StoreClearResponse
+
+Ƭ **StoreClearResponse**: { `opStatus`: `ReasonPhrases`  } \| { `error`: `any` ; `opStatus`: `ReasonPhrases`  }
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/clear-store.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/clear-store.ts#L3)

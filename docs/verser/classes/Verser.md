@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser.ts#L43)
+[packages/verser/src/lib/verser.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser.ts#L44)
 
 ___
 
@@ -497,7 +497,7 @@ ___
 
 #### Defined in
 
-[packages/verser/src/lib/verser.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser.ts#L49)
+[packages/verser/src/lib/verser.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser.ts#L50)
 
 ## Constructors
 

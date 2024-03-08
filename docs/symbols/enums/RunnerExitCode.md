@@ -16,6 +16,7 @@
 - [SEQUENCE\_UNPACK\_FAILED](RunnerExitCode.md#sequence_unpack_failed)
 - [STOPPED](RunnerExitCode.md#stopped)
 - [SUCCESS](RunnerExitCode.md#success)
+- [UNCAUGHT\_EXCEPTION](RunnerExitCode.md#uncaught_exception)
 
 ## Enumeration Members
 
@@ -116,3 +117,13 @@ ___
 #### Defined in
 
 [runner-exit-code.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-exit-code.ts#L9)
+
+___
+
+### UNCAUGHT\_EXCEPTION
+
+• **UNCAUGHT\_EXCEPTION** = ``101``
+
+#### Defined in
+
+[runner-exit-code.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-exit-code.ts#L12)

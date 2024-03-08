@@ -432,7 +432,7 @@ Registers a channel on the client.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L195)
+[packages/verser/src/lib/verser-client.ts:196](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L196)
 
 ___
 
@@ -539,7 +539,7 @@ Sets up headers.
 
 #### Defined in
 
-[packages/verser/src/lib/verser-client.ts:184](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L184)
+[packages/verser/src/lib/verser-client.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/verser/src/lib/verser-client.ts#L185)
 
 ## Accessors
 

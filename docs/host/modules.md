@@ -15,6 +15,7 @@
 
 ### Type Aliases
 
+- [CSIControllerInfo](modules.md#csicontrollerinfo)
 - [DataType](modules.md#datatype)
 - [StreamType](modules.md#streamtype)
 - [TopicDataType](modules.md#topicdatatype)
@@ -28,6 +29,25 @@
 - [startHost](modules.md#starthost)
 
 ## Type Aliases
+
+### CSIControllerInfo
+
+Ƭ **CSIControllerInfo**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `created?` | `Date` |
+| `ended?` | `Date` |
+| `ports?` | `any` |
+| `started?` | `Date` |
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L70)
+
+___
 
 ### DataType
 

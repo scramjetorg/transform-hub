@@ -8,6 +8,7 @@
 
 - [COMPLETED](InstanceStatus.md#completed)
 - [ERRORED](InstanceStatus.md#errored)
+- [GONE](InstanceStatus.md#gone)
 - [INITIALIZING](InstanceStatus.md#initializing)
 - [KILLING](InstanceStatus.md#killing)
 - [RUNNING](InstanceStatus.md#running)
@@ -22,13 +23,23 @@
 
 #### Defined in
 
-[instance-status.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L8)
+[instance-status.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L7)
 
 ___
 
 ### ERRORED
 
 • **ERRORED** = ``"errored"``
+
+#### Defined in
+
+[instance-status.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L8)
+
+___
+
+### GONE
+
+• **GONE** = ``"gone"``
 
 #### Defined in
 
@@ -42,7 +53,7 @@ ___
 
 #### Defined in
 
-[instance-status.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L3)
+[instance-status.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L2)
 
 ___
 
@@ -52,7 +63,7 @@ ___
 
 #### Defined in
 
-[instance-status.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L7)
+[instance-status.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L6)
 
 ___
 
@@ -62,7 +73,7 @@ ___
 
 #### Defined in
 
-[instance-status.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L5)
+[instance-status.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L4)
 
 ___
 
@@ -72,7 +83,7 @@ ___
 
 #### Defined in
 
-[instance-status.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L4)
+[instance-status.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L3)
 
 ___
 
@@ -82,4 +93,4 @@ ___
 
 #### Defined in
 
-[instance-status.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L6)
+[instance-status.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/instance-status.ts#L5)

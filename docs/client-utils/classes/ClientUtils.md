@@ -163,7 +163,7 @@ Performs get request for streamed data.
 | :------ | :------ | :------ |
 | `url` | `string` | Request URL. |
 | `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `options` | `Partial`<{ `type`: `string`  }\> | send stream options. |
+| `options` | `Partial`<{ `encoding?`: `BufferEncoding` ; `type`: `string`  }\> | send stream options. |
 
 #### Returns
 

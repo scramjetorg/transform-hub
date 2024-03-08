@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/load-check",
-  "version": "0.39.3",
+  "version": "1.0.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides health info for STH.",
   "main": "./src/index.ts",
   "scripts": {
@@ -14,15 +14,15 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/obj-logger": "^0.39.3",
-    "@scramjet/utility": "^0.39.3",
+    "@scramjet/obj-logger": "^1.0.0",
+    "@scramjet/utility": "^1.0.0",
     "scramjet": "^4.36.9",
     "diskusage-ng": "1.0.2",
     "node-os-utils": "1.3.7",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.39.3",
+    "@scramjet/types": "^1.0.0",
     "@types/node": "15.12.5",
     "@types/node-os-utils": "^1.2.0",
     "@types/uuid": "^8.3.4",

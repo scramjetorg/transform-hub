@@ -38,7 +38,7 @@
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L26)
+[packages/types/src/csh-connector.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L25)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L30)
+[packages/types/src/csh-connector.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L29)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L34)
+[packages/types/src/csh-connector.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L33)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L28)
+[packages/types/src/csh-connector.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L27)
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L32)
+[packages/types/src/csh-connector.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L31)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L36)
+[packages/types/src/csh-connector.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L35)
 
 ___
 
@@ -126,7 +126,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L24)
+[packages/types/src/csh-connector.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L23)
 
 ___
 
@@ -136,7 +136,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L20)
+[packages/types/src/csh-connector.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L19)
 
 ___
 
@@ -146,15 +146,21 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L22)
+[packages/types/src/csh-connector.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L21)
 
 ## Methods
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`void`\>
+▸ **disconnect**(`hard`): `Promise`<`void`\>
 
 Disconnects from a host server.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `hard` | `boolean` |
 
 #### Returns
 
@@ -162,7 +168,7 @@ Disconnects from a host server.
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L17)
+[packages/types/src/csh-connector.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L16)
 
 ___
 
@@ -176,13 +182,13 @@ ___
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L18)
+[packages/types/src/csh-connector.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L17)
 
 ___
 
 ### init
 
-▸ **init**(`id`): `MaybePromise`<`void`\>
+▸ **init**(`id`): `Promise`<`void`\>
 
 Interface used by Runner to communicate with Host.
 
@@ -194,8 +200,8 @@ Interface used by Runner to communicate with Host.
 
 #### Returns
 
-`MaybePromise`<`void`\>
+`Promise`<`void`\>
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L12)
+[packages/types/src/csh-connector.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L11)

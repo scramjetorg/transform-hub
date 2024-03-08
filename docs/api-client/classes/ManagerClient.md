@@ -13,16 +13,9 @@
 - [#\_client](ManagerClient.md##_client)
 - [apiBase](ManagerClient.md#apibase)
 
-### Accessors
-
-- [client](ManagerClient.md#client)
-
-### Constructors
-
-- [constructor](ManagerClient.md#constructor)
-
 ### Methods
 
+- [clearStore](ManagerClient.md#clearstore)
 - [deleteHub](ManagerClient.md#deletehub)
 - [deleteStoreItem](ManagerClient.md#deletestoreitem)
 - [disconnectHubs](ManagerClient.md#disconnecthubs)
@@ -41,6 +34,14 @@
 - [getVersion](ManagerClient.md#getversion)
 - [putStoreItem](ManagerClient.md#putstoreitem)
 - [sendNamedData](ManagerClient.md#sendnameddata)
+
+### Accessors
+
+- [client](ManagerClient.md#client)
+
+### Constructors
+
+- [constructor](ManagerClient.md#constructor)
 
 ## Properties
 
@@ -62,42 +63,21 @@ ___
 
 [api-client/src/manager-client.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L10)
 
-## Accessors
+## Methods
 
-### client
+### clearStore
 
-• `get` **client**(): `ClientUtils`
+▸ **clearStore**(): `Promise`<`void`\>
 
 #### Returns
 
-`ClientUtils`
-
-#### Implementation of
-
-ClientProvider.client
+`Promise`<`void`\>
 
 #### Defined in
 
-[api-client/src/manager-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L14)
+[api-client/src/manager-client.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L102)
 
-## Constructors
-
-### constructor
-
-• **new ManagerClient**(`apiBase`, `utils?`)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `apiBase` | `string` |
-| `utils` | `ClientUtils` |
-
-#### Defined in
-
-[api-client/src/manager-client.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L18)
-
-## Methods
+___
 
 ### deleteHub
 
@@ -116,7 +96,7 @@ ClientProvider.client
 
 #### Defined in
 
-[api-client/src/manager-client.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L106)
+[api-client/src/manager-client.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L110)
 
 ___
 
@@ -156,7 +136,7 @@ ___
 
 #### Defined in
 
-[api-client/src/manager-client.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L102)
+[api-client/src/manager-client.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L106)
 
 ___
 
@@ -416,3 +396,38 @@ ___
 #### Defined in
 
 [api-client/src/manager-client.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L43)
+
+## Accessors
+
+### client
+
+• `get` **client**(): `ClientUtils`
+
+#### Returns
+
+`ClientUtils`
+
+#### Implementation of
+
+ClientProvider.client
+
+#### Defined in
+
+[api-client/src/manager-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L14)
+
+## Constructors
+
+### constructor
+
+• **new ManagerClient**(`apiBase`, `utils?`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `apiBase` | `string` |
+| `utils` | `ClientUtils` |
+
+#### Defined in
+
+[api-client/src/manager-client.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/manager-client.ts#L18)

@@ -274,22 +274,11 @@ ___
 
 ### StartSequencePayload
 
-Ƭ **StartSequencePayload**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `appConfig` | [`AppConfig`](../modules.md#appconfig) |
-| `args?` | `any`[] |
-| `inputTopic?` | `string` |
-| `instanceId?` | `string` |
-| `limits?` | [`InstanceLimits`](../modules.md#instancelimits) |
-| `outputTopic?` | `string` |
+Ƭ **StartSequencePayload**: `Omit`<`Omit`<[`RunnerConnectInfo`](../modules.md#runnerconnectinfo), ``"adapter"``\>, ``"inputContentType"``\>
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/start-sequence.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L6)
+[packages/types/src/rest-api-sth/start-sequence.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L5)
 
 ___
 
@@ -305,7 +294,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/start-sequence.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L4)
+[packages/types/src/rest-api-sth/start-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L3)
 
 ## References
 

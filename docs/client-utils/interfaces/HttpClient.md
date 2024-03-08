@@ -48,7 +48,7 @@ HttpClient.addLogger
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L56)
+[packages/client-utils/src/types/index.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L57)
 
 ___
 
@@ -79,7 +79,7 @@ HttpClient.delete
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L60)
+[packages/client-utils/src/types/index.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L61)
 
 ___
 
@@ -110,7 +110,7 @@ HttpClient.get
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L57)
+[packages/client-utils/src/types/index.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L58)
 
 ___
 
@@ -135,7 +135,7 @@ HttpClient.getStream
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L68)
+[packages/client-utils/src/types/index.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L69)
 
 ___
 
@@ -168,7 +168,7 @@ HttpClient.post
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L59)
+[packages/client-utils/src/types/index.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L60)
 
 ___
 
@@ -201,4 +201,4 @@ HttpClient.sendStream
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L69)
+[packages/client-utils/src/types/index.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L70)

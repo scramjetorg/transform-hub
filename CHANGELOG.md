@@ -2,6 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [1.0.0] - 2024-03-08
+
+## Features
+
+* Runner Reconnect: Connection Process Revamp by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/900>
+* Py runner reconnect by @piotrek6641 in <https://github.com/scramjetorg/transform-hub/pull/959>
+* Allow to get binary output from `/output` by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/1029>
+* Store clear with prune by @gzukowski in <https://github.com/scramjetorg/transform-hub/pull/1036>
+
+## Fixed
+
+* [Fix] Log objects in one line by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/1052>
+* [Fix] Runner log by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/1050>
+* [Fix] Refapps update after release 0.26.0 by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/1048>
+
 ## [0.39.3] - 2024-02-15
 
 ## Fixed
