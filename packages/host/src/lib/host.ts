@@ -393,12 +393,14 @@ export class Host implements IComponent {
      * @param {DispatcherInstanceTerminatedEventData} eventData Event details.
      */
     async handleDispatcherTerminatedEvent(eventData: DispatcherInstanceTerminatedEventData) {
+        this.logger.debug("handleDispatcherTerminatedEvent", eventData);
+
         this.auditor.auditInstance(eventData.id, InstanceMessageCode.INSTANCE_TERMINATED);
 
         this.pushTelemetry("Instance terminated", {
             executionTime: eventData.info.executionTime.toString(),
             id: eventData.id,
-            code: eventData.code.toString(),
+            code: (eventData.code || -2).toString(),
             seqId: eventData.sequence.id
         });
     }
