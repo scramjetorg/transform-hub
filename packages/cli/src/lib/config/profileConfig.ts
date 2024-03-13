@@ -32,7 +32,7 @@ export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity
         return this.setEntry("apiUrl", normalizeUrl(apiUrl));
     }
     setMiddlewareApiUrl(middlewareApiUrl: string): boolean {
-        return this.setEntry("middlewareApiUrl", normalizeUrl(middlewareApiUrl)) as boolean;
+        return this.setEntry("middlewareApiUrl", normalizeUrl(middlewareApiUrl));
     }
     setEnv(env: configEnv): boolean {
         return this.setEntry("env", env);

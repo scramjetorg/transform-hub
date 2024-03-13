@@ -253,18 +253,23 @@ export class CSIController extends TypedEmitter<Events> {
         try {
             const stopResult = await this.instanceStopped();
 
+            this.logger.debug("Stop result", stopResult);
+
             if (stopResult) {
-                code = stopResult.exitcode;
+                code = stopResult.exitcode || code;
                 this.logger.trace("Instance ended with code", code);
                 this.status = stopResult.status;
                 this.setExitInfo(code, stopResult.message);
+
+                this.logger.debug("Exit info", this.terminated);
             }
         } catch (e: any) {
             code = e.exitcode;
+
             this.status = e.status || InstanceStatus.ERRORED;
             this.setExitInfo(code, e.reason);
 
-            this.logger.error("Instance caused error", e.message, code);
+            this.logger.error("Instance caused error", e);
         } finally {
             clearInterval(interval);
         }
@@ -274,7 +279,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.emit("terminated", code);
 
-        this.logger.trace("Finalizing...");
+        this.logger.trace("Finalizing...", code);
 
         await this.finalize();
 
@@ -299,7 +304,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 const exitcode = await this.endOfSequence;
 
-                this.logger.trace("End of sequence");
+                this.logger.trace("End of sequence", exitcode);
 
                 if (exitcode > 0) {
                     this.status = InstanceStatus.ERRORED;
@@ -320,7 +325,10 @@ export class CSIController extends TypedEmitter<Events> {
         };
 
         this.instancePromise = instanceMain()
-            .then((exitcode) => mapRunnerExitCode(exitcode, this.sequence))
+            .then((exitcode) => {
+                this.logger.debug("instanceMain ExitCode", exitcode);
+                return mapRunnerExitCode(exitcode, this.sequence);
+            })
             .catch((error) => {
                 this.logger.error("Instance promise rejected", error);
                 this.initResolver?.rej(error);
@@ -373,6 +381,8 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     instanceStopped(): CSIController["instancePromise"] {
+        this.logger.debug("function InstanceStopped called");
+
         if (!this.instancePromise) {
             throw new CSIControllerError("UNATTACHED_STREAMS");
         }
@@ -766,6 +776,8 @@ export class CSIController extends TypedEmitter<Events> {
     async kill(opts = { removeImmediately: false }) {
         if (this.status === InstanceStatus.KILLING) {
             await this.instanceAdapter.remove();
+
+            return;
         }
 
         this.status = InstanceStatus.KILLING;

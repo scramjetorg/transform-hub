@@ -182,7 +182,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
                 delete this.instanceStore[csiController.id];
             })
-            .once("terminated", (code) => {
+            .on("terminated", (code) => {
+                this.logger.debug("Terminated event received", code);
+
                 if (csiController.requires && csiController.requires !== "") {
                     (this.serviceDiscovery.getData({
                         topic: new TopicId(csiController.requires),
