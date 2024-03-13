@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/model",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This package is part of Scramjet Transform Hub. The package provides the domain model for STH and the CLI.",
   "main": "./src/index.ts",
   "scripts": {
@@ -13,13 +13,13 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/obj-logger": "^1.0.0",
-    "@scramjet/symbols": "^1.0.0",
+    "@scramjet/obj-logger": "^1.0.1",
+    "@scramjet/symbols": "^1.0.1",
     "scramjet": "^4.36.9",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@scramjet/types": "^1.0.0",
+    "@scramjet/types": "^1.0.1",
     "@types/node": "15.12.5",
     "@types/uuid": "^8.3.4",
     "ava": "^3.15.0",

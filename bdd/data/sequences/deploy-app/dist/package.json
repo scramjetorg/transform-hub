@@ -10,7 +10,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^1.0.0",
+    "@scramjet/types": "^1.0.1",
     "@types/node": "15.12.5"
   },
   "repository": {
