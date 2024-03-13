@@ -2,6 +2,12 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [1.0.1] - 2024-03-13
+
+## Fixed
+
+* Add logs to trace missing exit code by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/1059>
+
 ## [1.0.0] - 2024-03-08
 
 ## Features
