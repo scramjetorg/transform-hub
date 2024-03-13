@@ -619,10 +619,12 @@ export class CPMConnector extends TypedEmitter<Events> {
         headers: http.OutgoingHttpHeaders | Record<string, string> = {}
     ): http.ClientRequest {
         //@TODO: Disconnecting/error handling
-        this.logger.info("make HTTP Req to CPM", `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`);
+        const url = `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
+
+        this.logger.info("make HTTP Req to CPM", url);
 
         return http.request(
-            `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`,
+            url,
             { method, agent: this.verserClient.verserAgent, headers }
         );
     }

@@ -738,22 +738,20 @@ export class Host implements IComponent {
         const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
 
         if (clientRequest) {
-            clientRequest.on("socket", (socket) => {
-                clientRequest.on("response", (response: IncomingMessage) => {
-                    response.on("end", () => {
-                        this.logger.info("Space response ended", url, response.statusCode);
-                    });
-
-                    res.writeHead(response.statusCode!, response.statusMessage || "", response.headers);
-
-                    socket.pipe(res.socket!);
-                }).on("error", (error) => {
-                    this.logger.error("Error requesting CPM", error);
+            clientRequest.on("response", (response: IncomingMessage) => {
+                response.on("end", () => {
+                    this.logger.info("Space response ended", url, response.statusCode);
                 });
 
-                clientRequest.flushHeaders();
-                req.socket.pipe(socket);
+                res.writeHead(response.statusCode!, response.statusMessage || "", response.headers);
+
+                response.pipe(res);
+            }).on("error", (error) => {
+                this.logger.error("Error requesting CPM", error);
             });
+
+            clientRequest.flushHeaders();
+            req.pipe(clientRequest);
         } else {
             res.statusCode = 404;
             res.end();
