@@ -192,7 +192,7 @@ ILifeCycleAdapterMain.getCrashLog
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:237](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L237)
+[kubernetes-instance-adapter.ts:240](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L240)
 
 ___
 
