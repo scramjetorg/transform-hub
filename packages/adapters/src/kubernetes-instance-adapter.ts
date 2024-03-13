@@ -228,7 +228,10 @@ IComponent {
             this.logger.error("Trying to stop non existent runner", this._runnerName);
         } else {
             await this.timeout(ms);
-            await this.kubeClient.deletePod(this._runnerName, 2);
+            await this.kubeClient.deletePod(this._runnerName, 2)
+                .catch((e) => {
+                    this.logger.error("Error deleting pod", e, this._runnerName);
+                });
 
             this._runnerName = undefined;
         }
