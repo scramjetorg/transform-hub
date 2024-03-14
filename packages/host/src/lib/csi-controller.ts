@@ -760,6 +760,10 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
+        if (this.status !== InstanceStatus.RUNNING) {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Instance not running" };
+        }
+
         const { body: { removeImmediately = false } = { removeImmediately: false } } = req;
 
         if (typeof removeImmediately !== "boolean")
