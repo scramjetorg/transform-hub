@@ -79,7 +79,6 @@ export class ServiceDiscovery {
      * Returns topic with given configuration, if not exists creates new one.
      *
      * @param {DataType} config Topic configuration.
-     * @param {string} [localProvider] Provider identifier. It not set topic will be considered as external.
      * @returns added topic data.
      */
     createTopicIfNotExist(config: DataType) {
@@ -94,6 +93,7 @@ export class ServiceDiscovery {
                 throw new Error("Content-type mismatch");
             }
             this.logger.debug("Topic routed:", config);
+
             return topic;
         }
 

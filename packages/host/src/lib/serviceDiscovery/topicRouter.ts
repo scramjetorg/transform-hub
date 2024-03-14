@@ -69,6 +69,12 @@ class TopicRouter {
 
         const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
+        await this.serviceDiscovery.update({
+            contentType,
+            topicName: topicId.toString(),
+            status: "add"
+        });
+
         return {
             opStatus: ReasonPhrases.OK,
             id: topic.id(),
