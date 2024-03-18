@@ -1291,6 +1291,80 @@
   resolved "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.0.tgz"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
+"@scramjet/api-client@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/api-client/-/api-client-0.38.0.tgz#0c93d6ebe9c522dc67d073dfe6794bcdb0e6fbba"
+  integrity sha512-YxUHtQDPPIlmRoRsFEDviKQehSTl0Gb3l8drzUcZ8vpAZzijKqab7DTgDHwf8P1sW6AKjhUKMF0Di/Ve2J14iQ==
+  dependencies:
+    "@scramjet/client-utils" "^0.38.0"
+    "@scramjet/sth-config" "^0.38.0"
+    "@scramjet/symbols" "^0.38.0"
+    n-readlines "^1.0.1"
+    scramjet "^4.36.9"
+
+"@scramjet/client-utils@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/client-utils/-/client-utils-0.38.0.tgz#dfebd035617aaa192cea79a9ca93844cab143e85"
+  integrity sha512-DzxwgcSCEtIxdG+GsIReL1Zhkh9zKnPDIq3zbVt9Svvsq/UuP94KGg25KVelvr0OTM/yEEovJw9/yOMDWLiXbQ==
+  dependencies:
+    "@scramjet/model" "^0.38.0"
+    "@scramjet/obj-logger" "^0.38.0"
+    "@scramjet/sth-config" "^0.38.0"
+    "@scramjet/symbols" "^0.38.0"
+    "@scramjet/utility" "^0.38.0"
+    "@types/node-fetch" "^2.6.4"
+    abort-controller "^3.0.0"
+    n-readlines "^1.0.1"
+    node-fetch "^2.6.7"
+    normalize-url "4"
+    scramjet "^4.36.9"
+
+"@scramjet/model@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/model/-/model-0.38.0.tgz#c5bc04d346dbeba6b90ac7ec182c39877477c25d"
+  integrity sha512-KaIqZi6tbNnBZcc7TmvJhki+oO3k+EKUuH7h044LGatVcS5tbMrIki3w5BX41OCi5neigDCoOla/nJraod6IcQ==
+  dependencies:
+    "@scramjet/obj-logger" "^0.38.0"
+    "@scramjet/symbols" "^0.38.0"
+    scramjet "^4.36.9"
+    uuid "^8.3.2"
+
+"@scramjet/obj-logger@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/obj-logger/-/obj-logger-0.38.0.tgz#681c1aa13505dbcd0ce2bcd7141a6872e80c2367"
+  integrity sha512-2RLYiGnVbt1rGN74yvhqocz3PDxjYdO2Rb0GKlxYZJ2JQB/hIVAJSE47wUjKmPkG39anH6UrfGV8T73paH9qgg==
+  dependencies:
+    "@scramjet/utility" "^0.38.0"
+    scramjet "^4.36.9"
+
+"@scramjet/sth-config@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/sth-config/-/sth-config-0.38.0.tgz#b3523823b2550ba19e7d61daeda6f600e2f1601c"
+  integrity sha512-Glm/lXMK3UsdAwnWnINlxGm7UFaJfGCnDgjwtI8DVHOL3+52SujFbO0fNb/ye0htR77vNg6GTydbK8sEFdTbkw==
+  dependencies:
+    "@scramjet/utility" "^0.38.0"
+
+"@scramjet/symbols@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.38.0.tgz#0ae5f48085eff32dab8c3ed621e3e6560949bc67"
+  integrity sha512-Wjg0JUFybp++ngDUovkoBb3IrfVAjo3OeK6d7JodCOVlgrPsOs2jvmINhGhTfbB/WZx0/sRHeG6Yr9zmpDY3Cg==
+
+"@scramjet/types@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.38.0.tgz#2543bcb15c47b6e91f1d87d835c40398b30a5203"
+  integrity sha512-6PlWPgdP5ot65Zr17d01rf9m6rgL9xgsliFw2yhikEPflLV8c2ohSGSsptR+faM+x+pNyN/O9TnxbSzwwWBNVA==
+  dependencies:
+    "@scramjet/symbols" "^0.38.0"
+    http-status-codes "^2.2.0"
+
+"@scramjet/utility@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/utility/-/utility-0.38.0.tgz#336876075396b6959dbb8c4730889718b3a8d334"
+  integrity sha512-jSxeqm1BJ/ZczZAlcXP8tiU4k0cRTF4oVFsrczSw07sxliHbKSh7FaYsRfDKrO53xOlyD5FGLER/3IJckFlPpQ==
+  dependencies:
+    normalize-url "4"
+    yaml "^2.2.2"
+
 "@sinclair/typebox@^0.27.8":
   version "0.27.8"
   resolved "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.27.8.tgz"
@@ -4008,9 +4082,9 @@ fn.name@1.x.x:
   integrity sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==
 
 follow-redirects@^1.14.8:
-  version "1.15.4"
-  resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.4.tgz"
-  integrity sha512-Cr4D/5wlrb0z9dgERpUL3LrmPKVDsETIJhaCMeDfuFYcqa5bldGV6wBsAN6X/vxlXQtFBMrXdXxdL8CbDTGniw==
+  version "1.15.6"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.6.tgz#7f815c0cda4249c74ff09e95ef97c23b5fd0399b"
+  integrity sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==
 
 for-each@^0.3.3:
   version "0.3.3"
