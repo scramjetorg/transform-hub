@@ -517,8 +517,9 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.info.ports = message[1].ports;
         this.sequence = message[1].sequenceInfo;
-
+        this.appConfig = message[1].payload.appConfig;
         this.inputTopic = message[1].payload?.inputTopic;
+
         this.outputTopic = message[1].payload?.outputTopic;
         // TODO: add message to initiate the instance adapter
 
