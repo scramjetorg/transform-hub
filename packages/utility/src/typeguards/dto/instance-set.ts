@@ -1,4 +1,4 @@
-import { StartSequenceDTO, StartSequenceEndpointPayloadDTO } from "@scramjet/types";
+import { StartSequenceDTO, StartSequenceEndpointPayloadDTO, SetSequenceEndpointPayloadDTO } from "@scramjet/types";
 import { LogLevelStrings } from "../../constants";
 
 // eslint-disable-next-line complexity
@@ -43,5 +43,20 @@ export function isStartSequenceEndpointPayloadDTO(arg: any): arg is StartSequenc
     if (logLevel && !LogLevelStrings.includes(logLevel)) {
         throw new Error("DTO logLevel is not valid");        
     }
+    return true;
+}
+
+export function isSetSequenceEndpointPayloadDTO(arg: any): arg is SetSequenceEndpointPayloadDTO {
+    if (typeof arg !== "object") {
+        throw new Error("DTO is not an object");
+    }
+    const { logLevel, ...rest } = arg;
+
+    if (logLevel && !LogLevelStrings.includes(logLevel)) {
+        throw new Error("DTO logLevel is not valid");        
+    }
+    if (Object.values(rest).length > 0) 
+        throw new Error(`DTO has unknown ${Object.keys(rest)} keys`);
+
     return true;
 }

@@ -36,6 +36,7 @@ import { Readable, Writable } from "stream";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
+import { SetMessageData } from "@scramjet/types/src/messages/set";
 
 let exitHandled = false;
 
@@ -178,7 +179,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.runnerConnectInfo = runnerConnectInfo;
 
-        this.logger = new ObjLogger(this, { id: instanceId });
+        this.logger = new ObjLogger(this, { id: instanceId }, runnerConnectInfo.logLevel || "DEBUG");
 
         hostClient.logger.pipe(this.logger);
         inputStreamInitLogger.pipe(this.logger);
@@ -250,9 +251,15 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private handlePongRequest(data: HandshakeAcknowledgeMessageData) {
         this.handshakeResolver?.res(data);
+        this.handleSetRequest(data);
+    }
 
+    private handleSetRequest(data: SetMessageData) {
         if (data.logLevel) {
             this.logger.logLevel = data.logLevel;
+            
+            if (this._context)
+                this._context.logger.logLevel = data.logLevel;
         }
     }
 
@@ -618,7 +625,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             runner,
             hostApiClient,
             managerApiClient,
-            this.instanceId
+            this.instanceId,
+            this.logger.logLevel
         );
         this._context.logger.pipe(this.logger);
 
