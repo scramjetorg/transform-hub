@@ -231,10 +231,10 @@ export class Runner<X extends AppConfig> implements IComponent {
                 await this.handleKillRequest();
                 break;
             case RunnerMessageCode.STOP:
-                await this.addStopHandlerRequest(data as StopSequenceMessageData);
+                await this.handleStopRequest(data as StopSequenceMessageData);
                 break;
             case RunnerMessageCode.PONG:
-                this.handshakeResolver?.res(data);
+                this.handlePongRequest(data as HandshakeAcknowledgeMessageData);
                 break;
             case RunnerMessageCode.EVENT:
                 const eventData = data as EventMessageData;
@@ -245,6 +245,14 @@ export class Runner<X extends AppConfig> implements IComponent {
                 break;
             default:
                 break;
+        }
+    }
+
+    private handlePongRequest(data: HandshakeAcknowledgeMessageData) {
+        this.handshakeResolver?.res(data);
+
+        if (data.logLevel) {
+            this.logger.logLevel = data.logLevel;
         }
     }
 
@@ -272,7 +280,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
-        this.logger.info("handleMonitoringRequest");
+        this.logger.debug("handleMonitoringRequest");
 
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
@@ -281,7 +289,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
-            this.logger.info("working", working);
+            this.logger.debug("working", working);
 
             if (working) {
                 //return;
@@ -294,7 +302,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async reportHealth(timeout?: number) {
-        this.logger.info("Report health");
+        // this.logger.info("Report health");
 
         const { healthy } = await this.context.monitor();
 
@@ -348,19 +356,19 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.context.killHandler();
 
         if (!this.stopExpected) {
-            this.logger.trace(`Exiting (unexpected, ${RunnerExitCode.KILLED})`);
+            this.logger.warn(`Exiting (unexpected, ${RunnerExitCode.KILLED})`);
             this.status = InstanceStatus.KILLING;
 
             return this.exit(RunnerExitCode.KILLED);
         }
 
-        this.logger.trace("Exiting (expected)");
+        this.logger.info("Exiting (expected)");
         this.status = InstanceStatus.STOPPING;
 
         return this.exit(RunnerExitCode.STOPPED);
     }
 
-    async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
+    async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
         this.keepAliveRequested = false;
 
         let sequenceError;
@@ -764,7 +772,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 res();
             } else if (this.instanceOutput && this.hostClient.outputStream) {
-                this.logger.trace("Piping Sequence output", typeof this.instanceOutput);
+                this.logger.info("Piping Sequence output", typeof this.instanceOutput);
 
                 this.shouldSerialize = this.instanceOutput.contentType &&
                 ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType) ||
@@ -787,7 +795,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                         rej(new RunnerError("SEQUENCE_RUNTIME_ERROR", e));
                     })
                     .once("end", () => {
-                        this.logger.debug("Sequence stream ended");
+                        this.logger.info("Sequence stream ended");
                         res();
                     })
                     .pipe(this.shouldSerialize
@@ -809,7 +817,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 );
             } else {
             // TODO: this should push a PANG message with the sequence description
-                this.logger.debug("Sequence did not output a stream");
+                this.logger.info("Sequence did not output a stream");
                 res();
             }
         });
