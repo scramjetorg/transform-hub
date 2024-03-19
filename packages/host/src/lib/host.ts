@@ -592,7 +592,8 @@ export class Host implements IComponent {
                 await this.csiDispatcher.startRunner(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
-                    instanceId: seqenceConfig.instanceId
+                    instanceId: seqenceConfig.instanceId,
+                    logLevel: this.logger.logLevel
                 });
 
                 this.logger.debug("Starting sequence based on config", seqenceConfig);
@@ -617,6 +618,8 @@ export class Host implements IComponent {
 
             // @TODO this causes problem with axios.
             this.s3Client?.setAgent(connector.getHttpAgent());
+
+            this.auditor
         });
 
         await connector.connect();
@@ -1305,7 +1308,7 @@ export class Host implements IComponent {
         await new Promise<void>((res, _rej) => {
             this.socketServer.server
                 ?.once("close", () => {
-                    this.logger.trace("Socket server stopped.");
+                    this.logger.info("Socket server stopped.");
 
                     res();
                 })

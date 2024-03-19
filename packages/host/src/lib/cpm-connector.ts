@@ -24,7 +24,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser/src/types";
-import { EOL, networkInterfaces } from "os";
+import { networkInterfaces } from "os";
 
 type STHInformation = {
     id?: string;
@@ -253,13 +253,13 @@ export class CPMConnector extends TypedEmitter<Events> {
             };
         }
 
-        this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
+        this.logger.info(`Hub ${this.config.id} connected to ${this.cpmId}`);
 
         StringStream.from(duplex.input as Readable)
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
                 this.logger.trace("Received message", message);
-                const messageCode = message[0] as CPMMessageCode;
+                const messageCode = message[0] as unknown as CPMMessageCode;
 
                 if (messageCode === CPMMessageCode.STH_ID) {
                     // eslint-disable-next-line no-extra-parens
