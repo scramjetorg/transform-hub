@@ -9,6 +9,7 @@ import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { Host } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
+import { constants } from "os";
 
 const stringToIntSanitizer = (str : string) => {
     const parsedValue = parseInt(str, 10);
@@ -31,6 +32,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
+    .option("-K, --kill-on-exit", "Kills all instances on exit")
     .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
     .option("--platform-api-version <version>", "Platform API version", "v1")
     .option("--platform-api-key <string>", "Platform API Key")
@@ -218,6 +220,29 @@ const options: OptionValues & STHCommandOptions = program
             if (config.telemetry.status) {
                 host.logger.info("Telemetry is active. If you don't want to send anonymous telemetry data use '--no-telemetry' when starting STH or set it in the config file.");
             }
+
+            if (options.killOnExit) {
+                let killing = false;
+                const kill = (signal: NodeJS.Signals) => {
+                    if (killing) return process.exit(constants.signals[signal]);
+                    killing = true;
+
+                    host.logger.warn("Kill on exit is enabled. Killing all instances and exiting.");
+                    host.stop()
+                        .then(() => {
+                            host.logger.info("All instances killed. Exiting.");
+                            process.exit(constants.signals[signal]);
+                        }, (e) => {
+                            host.logger.error("Error killing instances", e);
+                            process.exit(constants.signals[signal]);
+                        });
+
+                    return undefined;
+                };
+
+                process.on("SIGINT", kill);
+                process.on("SIGTERM", kill);
+            }
         });
 })()
     .catch((e: (Error | HostError) & { exitCode?: number }) => {
@@ -234,3 +259,4 @@ const options: OptionValues & STHCommandOptions = program
         process.exitCode = e.exitCode || 1;
         process.exit();
     });
+
