@@ -741,7 +741,7 @@ export class CSIController extends TypedEmitter<Events> {
             if (isSetSequenceEndpointPayloadDTO(body)) {
                 this.logger.debug("Setting instance", body);
 
-                this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, body);
+                await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, body);
             }
 
             return { opStatus: ReasonPhrases.OK };

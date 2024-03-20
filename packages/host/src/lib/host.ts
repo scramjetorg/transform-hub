@@ -618,8 +618,6 @@ export class Host implements IComponent {
 
             // @TODO this causes problem with axios.
             this.s3Client?.setAgent(connector.getHttpAgent());
-
-            this.auditor
         });
 
         await connector.connect();
