@@ -201,7 +201,7 @@ export class Host implements IComponent {
         this.logger = new ObjLogger(
             this,
             {},
-            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
+            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel.toLowerCase()) ||
             ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
