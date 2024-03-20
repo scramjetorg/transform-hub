@@ -257,7 +257,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     private handleSetRequest(data: SetMessageData) {
         if (data.logLevel) {
             this.logger.logLevel = data.logLevel;
-            
+
             if (this._context)
                 this._context.logger.logLevel = data.logLevel;
         }

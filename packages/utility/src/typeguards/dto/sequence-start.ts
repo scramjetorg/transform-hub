@@ -27,6 +27,7 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     return true;
 }
 
+// eslint-disable-next-line complexity
 export function isStartSequenceEndpointPayloadDTO(arg: any): arg is StartSequenceEndpointPayloadDTO {
     if (typeof arg !== "object") {
         throw new Error("DTO is not an object");
@@ -41,7 +42,7 @@ export function isStartSequenceEndpointPayloadDTO(arg: any): arg is StartSequenc
         throw new Error("DTO instanceId is not valid string");
     }
     if (logLevel && !LogLevelStrings.includes(logLevel)) {
-        throw new Error("DTO logLevel is not valid");        
+        throw new Error("DTO logLevel is not valid");
     }
     return true;
 }
