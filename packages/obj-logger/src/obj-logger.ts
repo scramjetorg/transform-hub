@@ -81,20 +81,28 @@ export class ObjLogger implements IObjectLogger {
         this.debug = noop;
         this.fatal = noop;
         this.warn = noop;
-        
+
         switch (value) {
             case "TRACE":
                 this.trace = ObjLogger.prototype.trace;
+            // eslint-disable-next-line no-fallthrough
             case "DEBUG":
                 this.debug = ObjLogger.prototype.debug;
+            // eslint-disable-next-line no-fallthrough
             case "INFO":
                 this.info = ObjLogger.prototype.info;
+            // eslint-disable-next-line no-fallthrough
             case "WARN":
                 this.warn = ObjLogger.prototype.warn;
+            // eslint-disable-next-line no-fallthrough
             case "ERROR":
                 this.error = ObjLogger.prototype.error;
+            // eslint-disable-next-line no-fallthrough
             case "FATAL":
                 this.fatal = ObjLogger.prototype.fatal;
+            // eslint-disable-next-line no-fallthrough
+            default:
+                break;
         }
     }
 
