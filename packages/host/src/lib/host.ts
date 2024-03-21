@@ -201,7 +201,7 @@ export class Host implements IComponent {
         this.logger = new ObjLogger(
             this,
             {},
-            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
+            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel.toLowerCase()) ||
             ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
@@ -592,7 +592,8 @@ export class Host implements IComponent {
                 await this.csiDispatcher.startRunner(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
-                    instanceId: seqenceConfig.instanceId
+                    instanceId: seqenceConfig.instanceId,
+                    logLevel: this.logger.logLevel
                 });
 
                 this.logger.debug("Starting sequence based on config", seqenceConfig);
@@ -1149,11 +1150,17 @@ export class Host implements IComponent {
                     new CommunicationHandler(),
                     this.config,
                     this.instanceProxy);
-            }
 
-            await this.instancesStore[id].handleInstanceConnect(
-                streams
-            );
+                await this.instancesStore[id].handleInstanceConnect(
+                    streams
+                );
+            } else {
+                this.logger.info("Instance already exists", id);
+
+                await this.instancesStore[id].handleInstanceReconnect(
+                    streams
+                );
+            }
         });
     }
 
@@ -1299,7 +1306,7 @@ export class Host implements IComponent {
         await new Promise<void>((res, _rej) => {
             this.socketServer.server
                 ?.once("close", () => {
-                    this.logger.trace("Socket server stopped.");
+                    this.logger.info("Socket server stopped.");
 
                     res();
                 })

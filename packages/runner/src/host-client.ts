@@ -8,7 +8,7 @@ import net, { Socket, createConnection } from "net";
 import { PassThrough } from "stream";
 
 type HostOpenConnections = [
-    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
+    Socket, Socket, Socket, Socket, Socket, Socket, Socket, Socket, Socket
 ]
 
 const BPMux = require("bpmux").BPMux;
@@ -21,6 +21,7 @@ class HostClient implements IHostClient {
     public agent?: Agent;
     logger: IObjectLogger;
     bpmux: any;
+
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = new ObjLogger(this);
     }
@@ -41,29 +42,30 @@ class HostClient implements IHostClient {
         throw new Error("No HTTP Agent set");
     }
 
-    async init(id: string): Promise<void> {
-        const openConnections = await Promise.all(
-            Array.from(Array(9))
-                .map((_e: any, i: number) => {
-                    // Error handling for each connection is process crash for now
-                    let connection: Socket;
+    private async connectOne(i: number): Promise<Socket> {
+        return new Promise<Socket>((res, rej) => {
+            try {
+                const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
 
-                    try {
-                        connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
-                        connection.on("error", () => {
-                            this.logger.warn(`${i} Stream error`);
-                        });
-                        connection.setNoDelay(true);
-                    } catch (e) {
-                        return Promise.reject(e);
-                    }
-
-                    return new Promise<net.Socket>(res => {
-                        connection.on("connect", () => {
-                            res(connection);
-                        });
+                connection.setNoDelay(true);
+                connection.on("error", rej);
+                connection.on("connect", () => {
+                    res(connection);
+                    connection.removeAllListeners("error");
+                    connection.on("error", () => {
+                        this.logger.warn(`${i} Stream error`);
                     });
-                })
+                });
+            } catch (e) {
+                rej(e);
+            }
+        });
+    }
+
+    private async connect(id: string): Promise<HostOpenConnections> {
+        return Promise.all(
+            Array.from(Array(9))
+                .map((_e: void, i: number) => this.connectOne(i))
                 .map((connPromised, index) => {
                     return connPromised.then((connection) => {
                         // Assuming id is exactly 36 bytes
@@ -74,11 +76,12 @@ class HostClient implements IHostClient {
                         return connection;
                     });
                 })
-        ).catch((_e) => {
-            //@TODO: handle error.
-        });
+        ) as Promise<unknown> as Promise<HostOpenConnections>;
+    }
 
-        this._streams = openConnections as HostOpenConnections;
+    async init(id: string): Promise<void> {
+        this._streams = await this.connect(id);
+
         this._streams[CC.OUT].on("end", () => {
             this.logger.info("Total data written to instance output", (this.streams[CC.OUT] as net.Socket).bytesWritten);
         });

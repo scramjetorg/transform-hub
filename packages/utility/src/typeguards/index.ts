@@ -1,4 +1,5 @@
-export * from "./dto/sequence-start";
+export { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO } from "./dto/sequence-start";
+export { isSetSequenceEndpointPayloadDTO } from "./dto/instance-set";
 export { isDefined } from "./is-defined";
 export { isBoolean } from "./is-boolean";
 export { isEmptyString } from "./is-empty-string";

@@ -43,7 +43,7 @@ import { DataStream } from "scramjet";
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
-import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
+import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPayloadDTO, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ReasonPhrases } from "http-status-codes";
 import { mapRunnerExitCode } from "./utils";
 
@@ -169,7 +169,7 @@ export class CSIController extends TypedEmitter<Events> {
     /**
      * Streams connected do API.
      */
-    private downStreams?: DownstreamStreamsConfig;
+    private downStreams: DownstreamStreamsConfig | null = null;
     private upStreams: PassThroughStreamsConfig;
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
@@ -390,6 +390,15 @@ export class CSIController extends TypedEmitter<Events> {
         return this.instancePromise;
     }
 
+    unhookupStreams() {
+        this.downStreams![CC.STDOUT].unpipe();
+        this.downStreams![CC.STDERR].unpipe();
+        this.downStreams![CC.OUT].unpipe();
+        this.upStreams![CC.STDOUT].unpipe();
+        this.upStreams![CC.STDERR].unpipe();
+        this.upStreams![CC.OUT].unpipe();
+    }
+
     hookupStreams(streams: DownstreamStreamsConfig) {
         this.logger.trace("Hookup streams");
 
@@ -537,6 +546,19 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.info.started = new Date(); //@TODO: set by runner?
         this.logger.info("Handshake", JSON.stringify(message, undefined));
+    }
+
+    async handleInstanceDisconnect() {
+        this.bpmux?.removeAllListeners();
+        if (this.downStreams) this.unhookupStreams();
+
+        this.bpmux = null;
+        this.downStreams = null;
+    }
+
+    async handleInstanceReconnect(streams: DownstreamStreamsConfig) {
+        await this.handleInstanceDisconnect();
+        await this.handleInstanceConnect(streams);
     }
 
     //@TODO: ! unhookup ! set proper state for reconnecting !
@@ -712,6 +734,18 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.router.op("post", "/_stop", (req) => this.handleStop(req), this.communicationHandler);
         this.router.op("post", "/_kill", (req) => this.handleKill(req), this.communicationHandler);
+
+        this.router.op("post", "/set", async (req) => {
+            const { body } = req;
+
+            if (isSetSequenceEndpointPayloadDTO(body)) {
+                this.logger.debug("Setting instance", body);
+
+                await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, body);
+            }
+
+            return { opStatus: ReasonPhrases.OK };
+        });
     }
 
     private async handleEvent(event: ParsedMessage): Promise<OpResponse<STHRestAPI.SendEventResponse>> {

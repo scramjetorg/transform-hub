@@ -10,6 +10,8 @@ type ObjLogPipeOptions = {
     stringified?: boolean;
 };
 
+const noop = () => {};
+
 const getCircularReplacer = () => {
     const seen = new WeakSet();
 
@@ -65,7 +67,44 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Log level.
      */
-    logLevel: LogLevel;
+    private _logLevel: LogLevel = "TRACE";
+
+    public get logLevel(): LogLevel {
+        return this._logLevel;
+    }
+    public set logLevel(value: LogLevel) {
+        this._logLevel = value;
+
+        this.trace = noop;
+        this.info = noop;
+        this.error = noop;
+        this.debug = noop;
+        this.fatal = noop;
+        this.warn = noop;
+
+        switch (value) {
+            case "TRACE":
+                this.trace = ObjLogger.prototype.trace;
+            // eslint-disable-next-line no-fallthrough
+            case "DEBUG":
+                this.debug = ObjLogger.prototype.debug;
+            // eslint-disable-next-line no-fallthrough
+            case "INFO":
+                this.info = ObjLogger.prototype.info;
+            // eslint-disable-next-line no-fallthrough
+            case "WARN":
+                this.warn = ObjLogger.prototype.warn;
+            // eslint-disable-next-line no-fallthrough
+            case "ERROR":
+                this.error = ObjLogger.prototype.error;
+            // eslint-disable-next-line no-fallthrough
+            case "FATAL":
+                this.fatal = ObjLogger.prototype.fatal;
+            // eslint-disable-next-line no-fallthrough
+            default:
+                break;
+        }
+    }
 
     /**
      * Additional output streams.
@@ -114,10 +153,6 @@ export class ObjLogger implements IObjectLogger {
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
         if (this.ended)
             throw new Error("Cannot write to the stream anymore.");
-
-        if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
-            return;
-        }
 
         let paramsCopy;
 
