@@ -746,7 +746,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         // eslint-disable-next-line complexity
-        await new Promise<void>((res) => {
+        await new Promise<void>((res, rej) => {
             /**
              * @analyze-how-to-pass-in-out-streams
              * We need to make sure to close input and output streams
@@ -780,6 +780,12 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.info("Stream encoding is", this.instanceOutput.readableEncoding);
 
                 this.instanceOutput
+                    .on("error", (e) => {
+                        this.logger.error("Sequence output stream error", e);
+                        this.status = InstanceStatus.ERRORED;
+
+                        rej(new RunnerError("SEQUENCE_RUNTIME_ERROR", e));
+                    })
                     .once("end", () => {
                         this.logger.debug("Sequence stream ended");
                         res();

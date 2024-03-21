@@ -1149,11 +1149,17 @@ export class Host implements IComponent {
                     new CommunicationHandler(),
                     this.config,
                     this.instanceProxy);
-            }
 
-            await this.instancesStore[id].handleInstanceConnect(
-                streams
-            );
+                await this.instancesStore[id].handleInstanceConnect(
+                    streams
+                );
+            } else {
+                this.logger.info("Instance already exists", id);
+
+                await this.instancesStore[id].handleInstanceReconnect(
+                    streams
+                );
+            }
         });
     }
 
