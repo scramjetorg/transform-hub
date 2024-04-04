@@ -15,9 +15,9 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/adapter-docker": "^0.37.0",
-    "@scramjet/adapter-kubernetes": "^0.37.0",
-    "@scramjet/adapter-process": "^0.37.0",
+    "@scramjet/adapter-docker": "^1.0.1",
+    "@scramjet/adapter-kubernetes": "^1.0.1",
+    "@scramjet/adapter-process": "^1.0.1",
     "ts.data.json": "^2.2.0"
   },
   "devDependencies": {
