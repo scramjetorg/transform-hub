@@ -52,7 +52,7 @@ skip("Get works on empty response", async t => {
     t.is(response.statusCode, 204, "No content");
 });
 
-noGHTest("Get works when we have content", async t => {
+test("Get works when we have content", async t => {
     const { request, response } = mockRequestResponse("GET", "/api/get");
 
     api.get("/api/get", RunnerMessageCode.MONITORING, comm);
@@ -71,6 +71,49 @@ noGHTest("Get works when we have content", async t => {
 
     t.is(response.statusCode, 200, "Has content");
     t.is(fullBody, "{\"healthy\":true}", "Data retrieved");
+});
+
+test("Get works with spaces and strange chars", async t => {
+    const endpoints = [
+        "/abc",
+        "/abc+",
+        "/abc ",
+        "/abc śź",
+        "/abc %0",
+        "/abc \0",
+        "/abc \t",
+        "/abc abc",
+        "/abc+abc",
+        "/abc%20abc",
+        "/abc\nabc",
+        "/abc'\"abc"
+    ];
+
+    const monitorEndpoint = (name: string) => {
+        const out: { received: number, url?: string } = { received: 0 };
+
+        api.get(name, (message) => {
+            out.received++;
+            out.url = message.url;
+            return "OK";
+        });
+        return out;
+    };
+
+    const makeRequest = async (name: string) => {
+        const { request, response } = mockRequestResponse("GET", name);
+
+        server.request(request, response);
+
+        return [await response.fullBody, response.statusCode, name];
+    };
+
+    const srvSide = endpoints.map(monitorEndpoint);
+
+    const cliSide = await Promise.all(endpoints.map(makeRequest));
+
+    t.deepEqual(endpoints.map((name) => ["\"OK\"", 200, name]), cliSide);
+    t.deepEqual(endpoints.map((name) => ({ received: 1, url: name })), srvSide);
 });
 
 noGHTest("Op fails with bad and works with good content type", async t => {
