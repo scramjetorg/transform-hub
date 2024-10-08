@@ -2,6 +2,7 @@ import { AdapterConfig } from "@scramjet/types";
 
 export { KubernetesSequenceAdapter as SequenceAdapter } from "./kubernetes-sequence-adapter";
 export { KubernetesInstanceAdapter as InstanceAdapter } from "./kubernetes-instance-adapter";
+export { initializeImports } from "./kubernetes-client-adapter";
 
 export function extendConfig() {
 

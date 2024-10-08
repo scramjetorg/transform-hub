@@ -1,29 +1,41 @@
 import { IObjectLogger } from "@scramjet/types";
-import * as k8s from "@kubernetes/client-node";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defer } from "@scramjet/utility";
 import { Writable, Readable } from "stream";
 import http from "http";
-import { HttpError } from "@kubernetes/client-node";
+
+type KubeConfig = import("@kubernetes/client-node").KubeConfig;
+type V1ObjectMeta = import("@kubernetes/client-node").V1ObjectMeta;
+type V1PodSpec = import("@kubernetes/client-node").V1PodSpec;
+type V1Pod = import("@kubernetes/client-node").V1Pod;
 
 const POD_STATUS_CHECK_INTERVAL_MS = 500;
 const POD_STATUS_FAIL_LIMIT = 10;
+
+let k8s: typeof import("@kubernetes/client-node");
+
+async function initializeImports() {
+    k8s = await import("@kubernetes/client-node");
+}
 
 class KubernetesClientAdapter {
     logger: IObjectLogger;
     name = "KubernetesClientAdapter";
 
     private _configPath: string;
-    private _config?: k8s.KubeConfig;
+    private _config?: KubeConfig;
     private _namespace: string;
 
     constructor(configPath: string = "", namespace: string = "default") {
         this.logger = new ObjLogger(this.name);
         this._configPath = configPath;
         this._namespace = namespace;
+
+        if (!k8s)
+            throw new Error("Kubernetes client library not initialized");
     }
 
-    private get config(): k8s.KubeConfig {
+    private get config(): KubeConfig {
         if (!this._config) {
             throw new Error("Kubernetes API client not initialized");
         }
@@ -47,7 +59,7 @@ class KubernetesClientAdapter {
         }
     }
 
-    async createPod(metadata: k8s.V1ObjectMeta, spec: k8s.V1PodSpec, retries: number = 0) {
+    async createPod(metadata: V1ObjectMeta, spec: V1PodSpec, retries: number = 0) {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         const result = await this.runWithRetries(retries, "Create Pod", () =>
@@ -61,7 +73,7 @@ class KubernetesClientAdapter {
 
         return result as {
             response: http.IncomingMessage;
-            body: k8s.V1Pod;
+            body: V1Pod;
         };
     }
 
@@ -74,7 +86,7 @@ class KubernetesClientAdapter {
 
         return result as {
             response: http.IncomingMessage;
-            body: k8s.V1Pod;
+            body: V1Pod;
         };
     }
 
@@ -109,7 +121,7 @@ class KubernetesClientAdapter {
                     };
                 }
             } catch (err: any) {
-                if (err instanceof HttpError) {
+                if (err instanceof k8s.HttpError) {
                     this.logger.error(`Status for "${podName}" pod responded with error`, err?.body?.message);
 
                     if (err.statusCode === 404) {
@@ -190,7 +202,7 @@ class KubernetesClientAdapter {
 
                 success = true;
             } catch (err: any) {
-                if (err instanceof HttpError) {
+                if (err instanceof k8s.HttpError) {
                     this.logger.error(`Running "${name}" responded with error`, err?.body?.message);
                 } else {
                     this.logger.error(`Failed to run: ${name}.`, err);
@@ -210,4 +222,4 @@ class KubernetesClientAdapter {
     }
 }
 
-export { KubernetesClientAdapter };
+export { KubernetesClientAdapter, initializeImports };
