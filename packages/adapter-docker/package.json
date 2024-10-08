@@ -23,7 +23,7 @@
     "@scramjet/python-runner": "^1.0.1",
     "@scramjet/sth-config": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
-    "dockerode": "^3.3.4",
+    "dockerode": "^4.0.2",
     "ts.data.json": "^2.2.0"
   },
   "devDependencies": {

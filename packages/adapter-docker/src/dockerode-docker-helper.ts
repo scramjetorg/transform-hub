@@ -150,8 +150,20 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return id;
     }
 
+    private async listContainers(filter: any): Promise<Dockerode.ContainerInfo[]> {
+        return new Promise((res, rej) => {
+            this.dockerode.listContainers(filter, (err, containers) => {
+                if (err || typeof containers === "undefined") {
+                    rej(err);
+                } else {
+                    res(containers);
+                }
+            });
+        })
+    }
+
     async getContainerIdByLabel(label: string, value: string): Promise<DockerContainer> {
-        const result = await this.dockerode.listContainers({ label: `${label}=${value}` });
+        const result = await this.listContainers({ label: `${label}=${value}` });
 
         return result[0]!.Id;
     }
@@ -275,7 +287,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             Labels: {
                 "org.scramjet.host.is-sequence": "true"
             }
-        }).then((volume: Dockerode.Volume) => {
+        }).then((volume) => {
+            console.log(volume);
             return volume.name;
         });
     }
@@ -292,7 +305,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     async listVolumes() {
         const { Volumes } = await this.dockerode.listVolumes({
-            filters: { label: { "org.scramjet.host.is-sequence": true } }
+            filters: { label: ["org.scramjet.host.is-sequence=true"] }
         });
 
         return Volumes.map(volume => volume.Name);

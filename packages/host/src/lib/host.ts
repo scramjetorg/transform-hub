@@ -1142,7 +1142,7 @@ export class Host implements IComponent {
             if (!this.instancesStore[id]) {
                 this.logger.info("Creating new CSIController for unknown Instance");
 
-                await this.csiDispatcher.createCSIController(
+                const instance = await this.csiDispatcher.createCSIController(
                     id,
                     {} as SequenceInfo,
                     {} as STHRestAPI.StartSequencePayload,
@@ -1150,9 +1150,7 @@ export class Host implements IComponent {
                     this.config,
                     this.instanceProxy);
 
-                await this.instancesStore[id].handleInstanceConnect(
-                    streams
-                );
+                await instance.handleInstanceConnect(streams);
             } else {
                 this.logger.info("Instance already exists", id);
 
