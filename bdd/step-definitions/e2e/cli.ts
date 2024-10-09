@@ -132,7 +132,7 @@ When(
             ...si,
             "seq",
             "deploy",
-            `../packages/${sequenceName}.tar.gz`,
+            `../refapps/${sequenceName}.tar.gz`,
             "--args",
             `[\"${seqId}\"]`,
         ]);
@@ -514,7 +514,7 @@ When("I deploy sequence {string}", async function (
     this: CustomWorld,
     sequenceName: string
 ) {
-    const seqPath = `../packages/${sequenceName}`;
+    const seqPath = `../refapps/${sequenceName}`;
     const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [

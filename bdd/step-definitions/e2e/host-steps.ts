@@ -46,7 +46,7 @@ const freeport = promisify(require("freeport"));
 const profileName = "test_bdd";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
-const testPath = "../packages/reference-apps/hello-alice-out/";
+const testPath = "data/test-data/hello-alice-out/";
 const dockerode = new Dockerode();
 const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
