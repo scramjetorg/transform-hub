@@ -249,12 +249,12 @@ export class Host implements IComponent {
             mkdirSync(this.config.sequencesRoot);
         }
 
-        if (this.config.kubernetes.sequencesRoot && this.config.runtimeAdapter === "kubernetes") 
+        if (this.config.kubernetes.sequencesRoot && this.config.runtimeAdapter === "kubernetes")
             fsPaths.push(this.config.kubernetes.sequencesRoot);
 
         this.logger.info("Following path will be examined on load check.", [...new Set(fsPaths)]);
 
-        this.loadCheck = new LoadCheck(new LoadCheckConfig({ 
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({
             safeOperationLimit,
             instanceRequirements,
             fsPaths: [...new Set(fsPaths)]
