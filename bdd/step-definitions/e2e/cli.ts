@@ -5,7 +5,6 @@
 
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import fs from "fs";
 import {
     getStreamsFromSpawn,
     defer,
@@ -24,6 +23,8 @@ import {
     extractInstanceFromSiInstLs,
     extractKillResponseFromSiInstRestart,
 } from "../../lib/json.parser";
+import { existsSync } from "fs";
+import { readFile } from "fs/promises";
 
 addLoggerOutput(process.stdout, process.stdout);
 
@@ -179,7 +180,7 @@ Then("I confirm data received", async function (this: CustomWorld) {
 Then("I get location {string} of compressed directory", function (
     filepath: string
 ) {
-    assert.equal(fs.existsSync(filepath), true);
+    assert.equal(existsSync(filepath), true);
 });
 
 Then("I get Instance id after deployment", function () {
@@ -202,7 +203,7 @@ Then("I wait for Instance to end", { timeout: 25e4 }, async function () {
             ...si,
             "inst",
             "health",
-            "-" || "",
+            "-",
         ]);
 
         const data = JSON.parse(res.stdio[0]);
@@ -223,7 +224,7 @@ Then("I send input data {string} with options {string}", async function (
         ...si,
         "inst",
         "input",
-        "-" || "",
+        "-",
         ...options.split(" "),
     ]);
 
@@ -245,7 +246,7 @@ Then(
             "inst",
             "event",
             "on",
-            "-" || "",
+            "-",
             eventName,
         ]);
         assert.equal(res.stdio[2], 0);
@@ -566,8 +567,7 @@ Then(
 
         if (res.stdio) {
             try {
-                const expected = await fs.promises
-                    .readFile(`../bdd/data/${file}`, "utf8")
+                const expected = await readFile(`../bdd/data/${file}`, "utf8")
                     .then(JSON.parse);
 
                 const received = res.stdio[0] ? JSON.parse(res.stdio[0]) : null;

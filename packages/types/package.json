@@ -18,7 +18,7 @@
     "http-status-codes": "^2.2.0"
   },
   "devDependencies": {
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "scramjet": "^4.37.0",
     "commander": "^8.3.0",
     "typedoc": "0.23.17",

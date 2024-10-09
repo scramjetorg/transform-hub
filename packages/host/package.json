@@ -43,7 +43,7 @@
     "@types/aws4": "^1.11.0",
     "@types/find-package-json": "^1.2.3",
     "@types/jest": "^29.4.4",
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "axios": "1.7.7",
     "ava": "^3.15.0",
     "jest": "^29.5.0",
