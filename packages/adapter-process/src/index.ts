@@ -4,3 +4,8 @@ export { ProcessInstanceAdapter as InstanceAdapter } from "./process-instance-ad
 export function initialize() {
     return true;
 }
+
+type Command = import("commander").Command;
+export function augmentOptions(options: Command): Command {
+    return options;
+}
