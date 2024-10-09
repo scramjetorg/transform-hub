@@ -33,7 +33,7 @@ jobs:
         run: yarn install --ignore-engines --frozen-lockfile --prefer-offline
 
       - name: Prebuild packages
-        run: scripts/run-script.js --scope packages/runner prebuild:docker
+        run: scripts/run-script.js -v --scope packages/runner prebuild:docker
 
       - name: Build image
         run: docker build -t scramjetorg/runner:$(git rev-parse HEAD) -f Dockerfile ../../
