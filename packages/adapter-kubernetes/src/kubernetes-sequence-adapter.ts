@@ -59,7 +59,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
     private adapterConfig: K8SAdapterConfiguration;
 
     constructor(sthConfig: STHConfiguration) {
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.adapters.kubernetes);
 
         if (!decodedAdapterConfig.isOk()) {
             throw new Error("Invalid Kubernetes Adapter configuration");

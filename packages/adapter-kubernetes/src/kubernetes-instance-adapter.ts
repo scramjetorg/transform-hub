@@ -50,7 +50,7 @@ IComponent {
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
         this.sthConfig = sthConfig;
 
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.adapters.kubernetes);
 
         if (!decodedAdapterConfig.isOk()) {
             throw new Error("Invalid Kubernetes Adapter configuration");
@@ -70,10 +70,7 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        this._kubeClient = new KubernetesClientAdapter(this.adapterConfig.authConfigPath, this.adapterConfig.namespace);
-        this.kubeClient.init();
-
-        this._kubeClient.logger.pipe(this.logger);
+        this.kubeClient.logger.pipe(this.logger);
     }
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {

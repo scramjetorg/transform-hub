@@ -1,54 +1,24 @@
 import { IObjectLogger, STHConfiguration } from "@scramjet/types";
-
-import { initialize as initializeDocker, augmentOptions as augmentOptionsDocker } from "@scramjet/adapter-docker";
-import { initialize as initializeProcess, augmentOptions as augmentOptionsProcess } from "@scramjet/adapter-process";
-import { initialize as initializeKubernetes, augmentOptions as augmentOptionsKubernetes } from "@scramjet/adapter-kubernetes";
-
-const adapterInitializers = {
-    process: initializeProcess,
-    docker: initializeDocker,
-    kubernetes: initializeKubernetes
-};
-
-const adapterConfigAugmentations: {[key: string]: (options: Command) => Command} = {
-    process: augmentOptionsProcess,
-    docker: augmentOptionsDocker,
-    kubernetes: augmentOptionsKubernetes
-};
+import { getAdapter, getValidAdapters } from "./get-adapters";
 
 export function updateAdaptersConfig(config: STHConfiguration) {
-    const { docker, kubernetes } = config;
+    config.adapters = config.adapters || {};
+    const validAdapters = getValidAdapters();
 
-    config.adapters.process = {
-        name: "process",
-        instanceRequirements: config.instanceRequirements,
-        safeOperationLimit: config.safeOperationLimit,
-        sequencesRoot: config.sequencesRoot
-    };
-
-    if (docker) {
-        config.adapters.docker = {
-            name: "docker",
-            ...config.docker
-        };
-    }
-
-    if (kubernetes) {
-        config.adapters.kubernetes = {
-            name: "kubernetes",
-            ...config.kubernetes,
-            sequencesRoot: kubernetes.sequencesRoot || config.sequencesRoot
-        };
+    for (const adapter of validAdapters) {
+        getAdapter(adapter).augmentConfig(config);
     }
 }
 
 type Command = import("commander").Command;
 export function augmentOptions(options: Command): Command {
-    options.option("-a,--runtime-adapter <adapter>", `Runtime adapter to use (${Object.keys(adapterInitializers).map(x => JSON.stringify(x))}, "detect")`, (value) => {
+    const validAdapters = getValidAdapters();
+
+    options.option("-a,--runtime-adapter <adapter>", `Runtime adapter to use (${validAdapters.map(x => JSON.stringify(x))},"detect")`, (value) => {
         if (!value || value === "detect") {
             return "detect"
         }
-        if (!Object.keys(adapterInitializers).includes(value)) {
+        if (!validAdapters.includes(value)) {
             throw new Error(`Invalid runtime adapter: ${value}`);
         }
 
@@ -60,42 +30,41 @@ export function augmentOptions(options: Command): Command {
     const runtimeAdapterValue: string = options.getOptionValue("runtimeAdapter") || "detect";
     
     if (runtimeAdapterValue === "detect") {
-        adapterConfigAugmentations.process(options);
-        adapterConfigAugmentations.docker(options);
-    } else if (runtimeAdapterValue in adapterConfigAugmentations) {
-        adapterConfigAugmentations[runtimeAdapterValue](options);
+        if (validAdapters.includes("process"))
+            getAdapter("process").augmentOptions(options);
+        if (validAdapters.includes("docker"))
+            getAdapter("docker").augmentOptions(options);
     } else {
-        throw new Error(`Invalid runtime adapter: ${runtimeAdapterValue}`);
+        getAdapter(runtimeAdapterValue).augmentOptions(options);
     }
 
     return options;
 }
 
 export async function initializeRuntimeAdapters(config: STHConfiguration, logger: IObjectLogger): Promise<string> {
-    const availableAdapters = Object.fromEntries(await Promise.all(
-        Object.entries(adapterInitializers)
-            .filter(async ([adapterName, adapterInitializer]) => {
-                try {
-                    await adapterInitializer(config.adapters[adapterName]);
-                    return true;
-                } catch (e: any) {
-                    logger.info(`Skipping ${adapterName} adapter initialization: ${e?.message}`);
-                    return false;
-                }
-            })
-    ));
+    const validAdapters = getValidAdapters();
 
     if (config.runtimeAdapter === "detect") {
-        if (availableAdapters.docker) {
+        try {
+            await getAdapter("docker").initialize(config.adapters.docker);
             config.runtimeAdapter = "docker";
-        } else if (availableAdapters.process) {
+        } catch (e) {
+            logger.info("Docker not available, falling back to process adapter.");
+            await getAdapter("process").initialize(config.adapters.process);
             config.runtimeAdapter = "process";
         }
+    } else {
+        if (!validAdapters.includes(config.runtimeAdapter)) {
+            throw new Error(`Runtime adapter ${config.runtimeAdapter} is not available.`);
+        }
+        if (!config.adapters[config.runtimeAdapter]) {
+            throw new Error(`Adapter configuration for "${config.runtimeAdapter}" is missing.`);
+        }
+
+        await getAdapter(config.runtimeAdapter).initialize(config.adapters[config.runtimeAdapter]);
     }
 
-    if (!availableAdapters[config.runtimeAdapter]) {
-        throw new Error(`Runtime adapter ${config.runtimeAdapter} is not available or not configured correctly.`);
-    }
+    await getAdapter(config.runtimeAdapter).augmentConfig(config);
 
     return config.runtimeAdapter;
 }

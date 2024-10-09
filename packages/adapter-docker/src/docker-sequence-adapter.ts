@@ -4,7 +4,8 @@ import {
     SequenceConfig,
     STHConfiguration,
     DockerSequenceConfig,
-    IObjectLogger
+    IObjectLogger,
+    DockerAdapterConfiguration
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { appendFile } from "fs";
@@ -28,6 +29,7 @@ const PACKAGE_DIR = "/package";
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
     private resources: DockerAdapterResources = {};
+    private dockerConfig: DockerAdapterConfiguration;
 
     public name = "DockerSequenceAdapter";
 
@@ -36,10 +38,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     logger: IObjectLogger;
 
-    constructor(private config: STHConfiguration) {
+    constructor(config: STHConfiguration) {
         this.logger = new ObjLogger(this.name);
 
         this.dockerHelper = new DockerodeDockerHelper();
+        this.dockerConfig = config.adapters.docker as unknown as DockerAdapterConfiguration;
         this.dockerHelper.logger.pipe(this.logger);
     }
 
@@ -49,12 +52,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     async init(): Promise<void> {
         this.logger.trace("Initializing");
 
-        await this.fetch(this.config.docker.prerunner.image);
+        await this.fetch(this.dockerConfig.prerunner.image);
 
         this.logger.info("Docker adapter initialized with options", {
-            "python3 runner image": this.config.docker.runnerImages.python3,
-            "node runner image": this.config.docker.runnerImages.node,
-            "prerunner image": this.config.docker.prerunner.image
+            "python3 runner image": this.dockerConfig.runnerImages.python3,
+            "node runner image": this.dockerConfig.runnerImages.node,
+            "prerunner image": this.dockerConfig.prerunner.image
         });
     }
 
@@ -97,14 +100,14 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         try {
             const { streams, wait } = await this.dockerHelper.run({
-                imageName: this.config.docker.prerunner?.image || "",
+                imageName: this.dockerConfig.prerunner?.image || "",
                 volumes: [{ mountPoint: PACKAGE_DIR, volume, writeable: true }],
                 command: ["/opt/transform-hub/identify.sh"],
                 autoRemove: true,
-                maxMem: this.config.docker.prerunner?.maxMem || 0
+                maxMem: this.dockerConfig.prerunner?.maxMem || 0
             });
 
-            this.logger.debug("Identify started", volume, this.config.docker.prerunner?.maxMem || 0);
+            this.logger.debug("Identify started", volume, this.dockerConfig.prerunner?.maxMem || 0);
 
             const ret = await this.parsePackage(streams, wait, volume);
 
@@ -157,14 +160,14 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         let runResult: DockerAdapterRunResponse;
         const prerunnerStart = new Date();
 
-        this.logger.debug("Starting PreRunner", this.config.docker.prerunner);
+        this.logger.debug("Starting PreRunner", this.dockerConfig.prerunner);
 
         try {
             runResult = await this.dockerHelper.run({
-                imageName: this.config.docker.prerunner.image || "",
+                imageName: this.dockerConfig.prerunner.image || "",
                 volumes: [{ mountPoint: PACKAGE_DIR, volume: volumeId, writeable: true }],
                 autoRemove: true,
-                maxMem: this.config.docker.prerunner.maxMem || 0
+                maxMem: this.dockerConfig.prerunner.maxMem || 0
             });
         } catch (err: any) {
             this.logger.error(err);
@@ -252,11 +255,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
         const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
 
-        const container = Object.assign({}, this.config.docker.runner);
+        const container = Object.assign({}, this.dockerConfig.runner);
 
         container.image = "python3" in engines
-            ? this.config.docker.runnerImages.python3
-            : this.config.docker.runnerImages.node;
+            ? this.dockerConfig.runnerImages.python3
+            : this.dockerConfig.runnerImages.node;
 
         return {
             type: "docker",

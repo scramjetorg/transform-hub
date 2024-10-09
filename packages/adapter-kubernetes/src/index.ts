@@ -1,13 +1,10 @@
-import { AdapterConfig } from "@scramjet/types";
-
-export { KubernetesSequenceAdapter as SequenceAdapter } from "./kubernetes-sequence-adapter";
-export { KubernetesInstanceAdapter as InstanceAdapter } from "./kubernetes-instance-adapter";
-export { initializeImports } from "./kubernetes-client-adapter";
+import { AdapterConfig, IAdapterAugmentation, STHConfiguration } from "@scramjet/types";
+import { KubernetesSequenceAdapter } from "./kubernetes-sequence-adapter";
+import { KubernetesInstanceAdapter } from "./kubernetes-instance-adapter";
+import { initializeImports } from "./kubernetes-client-adapter";
 
 type Command = import("commander").Command;
 export function augmentOptions(options: Command): Command {
-    console.error("Options for Kubernetes adapter");
-
     return options
         .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
         .option("--k8s-quota-name <name>", "Quota object name used in Instance adapter.")
@@ -21,11 +18,34 @@ export function augmentOptions(options: Command): Command {
         .option("--k8s-runner-resources-requests-memory <memory>", "Requests memory for pod e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
         .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
         .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
-    ;
+        ;
 }
 
 export async function initialize(config: AdapterConfig) {
     if (!config.sthPodHost) {
         throw new Error("Kubernetes pod host url is not set in kubernetes.sthPodHost config.");
     }
+
+    initializeImports();
+}
+
+
+export function augmentConfig(config: STHConfiguration) {
+    config.adapters.kubernetes = {
+        name: "kubernetes",
+        sequencesRoot: config.sequencesRoot,
+        ...config.kubernetes
+    };
+
+    return config;
+}
+
+export function augment() {
+    return {
+        initialize,
+        augmentOptions,
+        augmentConfig,
+        SequenceAdapterClass: KubernetesSequenceAdapter,
+        LifeCycleAdapterClass: KubernetesInstanceAdapter
+    } as IAdapterAugmentation
 }

@@ -16,7 +16,6 @@
   "dependencies": {
     "@scramjet/model": "^1.0.1",
     "@scramjet/obj-logger": "^1.0.1",
-    "@scramjet/sth-config": "^1.0.1",
     "@scramjet/symbols": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
     "@types/node-fetch": "^2.6.4",
@@ -27,6 +26,7 @@
     "scramjet": "^4.37.0"
   },
   "devDependencies": {
+    "@scramjet/sth-config": "^1.0.1",
     "@scramjet/types": "^1.0.1",
     "@types/node": "15.12.5",
     "@types/node-fetch": "^2.6.2",

@@ -1,18 +1,5 @@
-import { SequenceAdapter as ProcessSequenceAdapter } from "@scramjet/adapter-process";
-import { SequenceAdapter as DockerSequenceAdapter } from "@scramjet/adapter-docker";
 import { ISequenceAdapter, STHConfiguration } from "@scramjet/types";
-import { SequenceAdapter as KubernetesSequenceAdapter } from "@scramjet/adapter-kubernetes";
-
-type SequenceAdapterClass = {new (config: STHConfiguration): ISequenceAdapter};
-
-const sequenceAdapters: Record<
-    STHConfiguration["runtimeAdapter"],
-    SequenceAdapterClass
-> = {
-    docker: DockerSequenceAdapter,
-    process: ProcessSequenceAdapter,
-    kubernetes: KubernetesSequenceAdapter,
-};
+import { getAdapter } from "./get-adapters";
 
 /**
  * Provides Sequence adapter basing on Host configuration.
@@ -21,10 +8,8 @@ const sequenceAdapters: Record<
  * @param config Host configuration.
  * @returns Sequence adapter.
  */
-export function getSequenceAdapter(adapter: STHConfiguration["runtimeAdapter"], config: STHConfiguration): ISequenceAdapter {
-    if (!(adapter in sequenceAdapters)) {
-        throw new Error(`Invalid runtimeAdapter ${adapter}`);
-    }
+export function getSequenceAdapter(runtimeAdapter: STHConfiguration["runtimeAdapter"], config: STHConfiguration): ISequenceAdapter {
+    const { SequenceAdapterClass } = getAdapter(runtimeAdapter);
 
-    return new sequenceAdapters[adapter](config);
+    return new SequenceAdapterClass(config);
 }

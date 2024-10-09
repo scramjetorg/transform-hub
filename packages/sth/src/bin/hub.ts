@@ -53,7 +53,7 @@ const unaugmentedOptions = program
     .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")
     .option("--cpm-reconnection-delay <number>", "Time to wait before next reconnection attempt")
     .option("--environment-name <name>", "Sets the environment name for telemetry reporting (defaults to SCP_ENV_VALUE env var or 'not-set')")
-    .option("--no-telemetry", "Disables telemetry", false)
+    .option("--telemetry", "Enables telemetry", false)
     .option("--enable-federation-control", "Enables federation control", false)
     .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port")
     .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")

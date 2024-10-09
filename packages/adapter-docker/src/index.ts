@@ -1,11 +1,14 @@
+import { IAdapterAugmentation, STHConfiguration } from "@scramjet/types";
 import { setupDockerNetworking } from "./docker-networking";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-export { DockerSequenceAdapter as SequenceAdapter } from "./docker-sequence-adapter";
-export { DockerInstanceAdapter as InstanceAdapter } from "./docker-instance-adapter";
+import { DockerSequenceAdapter } from "./docker-sequence-adapter";
+import { DockerInstanceAdapter } from "./docker-instance-adapter";
 
 type Command = import("commander").Command;
-export function augmentOptions(options: Command): Command {
+function augmentOptions(options: Command): Command {
     return options
+        // .option("--docker-socket <socket>", "Docker socket path", "/var/run/docker.sock")
+        // .option("--docker-host <host>", "Docker host:port (will override socket connection)")
         .option("--runner-image <image name>", "Image used by docker runner for Node.js")
         .option("--runner-py-image <image>", "Image used by docker runner for Python")
         .option("--runner-max-mem <mb>", "Maximum mem used by runner")
@@ -13,7 +16,7 @@ export function augmentOptions(options: Command): Command {
         .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
 }
 
-export async function initialize() {
+async function initialize() {
     if (!await DockerodeDockerHelper.isDockerConfigured()) {
         throw new Error("Docker is not configured.");
     }
@@ -21,3 +24,22 @@ export async function initialize() {
     await setupDockerNetworking(new DockerodeDockerHelper());
 }
 
+
+function augmentConfig(config: STHConfiguration) {
+    config.adapters.docker = {
+        name: "docker",
+        ...config.docker
+    };
+
+    return config;
+}
+
+export function augment() {
+    return {
+        initialize,
+        augmentOptions,
+        augmentConfig,
+        SequenceAdapterClass: DockerSequenceAdapter,
+        LifeCycleAdapterClass: DockerInstanceAdapter
+    } as IAdapterAugmentation
+}
