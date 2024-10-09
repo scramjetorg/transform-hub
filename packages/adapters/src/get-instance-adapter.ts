@@ -12,7 +12,6 @@ import { getAdapter } from "./get-adapters";
  */
 export function getInstanceAdapter(runtimeAdapter: STHConfiguration["runtimeAdapter"], config: STHConfiguration, id: string):
     ILifeCycleAdapterMain & ILifeCycleAdapterRun {
-    
     const { LifeCycleAdapterClass } = getAdapter(runtimeAdapter);
 
     return new LifeCycleAdapterClass(config, id);

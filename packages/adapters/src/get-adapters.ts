@@ -7,9 +7,13 @@ const augmentations: Record<string, () => IAdapterAugmentation> = {
     process: processAugment,
     docker: dockerAugment,
     kubernetes: kubernetesAugment
-}
+};
 
 const adapters: {[id: keyof typeof augmentations]: IAdapterAugmentation} = {};
+
+export function getValidAdapters(): string[] {
+    return ["process", "docker", "kubernetes"];
+}
 
 export function getAdapter(adapter: string): IAdapterAugmentation {
     if (adapter in adapters) {
@@ -19,9 +23,8 @@ export function getAdapter(adapter: string): IAdapterAugmentation {
         throw new Error(`Invalid runtime adapter: ${adapter}`);
     }
 
-    return adapters[adapter] = require(`@scramjet/adapter-${adapter}`).augment();
-}
+    // eslint-disable-next-line import/no-dynamic-require
+    adapters[adapter] = require(`@scramjet/adapter-${adapter}`).augment();
 
-export function getValidAdapters(): string[] {
-    return ["process", "docker", "kubernetes"];
+    return adapters[adapter];
 }

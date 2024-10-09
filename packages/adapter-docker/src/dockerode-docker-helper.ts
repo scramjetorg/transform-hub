@@ -159,7 +159,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                     res(containers);
                 }
             });
-        })
+        });
     }
 
     async getContainerIdByLabel(label: string, value: string): Promise<DockerContainer> {
@@ -288,7 +288,6 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 "org.scramjet.host.is-sequence": "true"
             }
         }).then((volume) => {
-            console.log(volume);
             return volume.name;
         });
     }

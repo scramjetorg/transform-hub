@@ -4,7 +4,7 @@ import { getAdapter } from "./get-adapters";
 /**
  * Provides Sequence adapter basing on Host configuration.
  *
- * @param adapter The adapter name
+ * @param runtimeAdapter The adapter name
  * @param config Host configuration.
  * @returns Sequence adapter.
  */

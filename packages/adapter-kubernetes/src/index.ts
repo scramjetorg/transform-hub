@@ -17,8 +17,7 @@ export function augmentOptions(options: Command): Command {
         .option("--k8s-runner-resources-requests-cpu <cpu_unit>", "Requests CPU for pod in cpu units [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
         .option("--k8s-runner-resources-requests-memory <memory>", "Requests memory for pod e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
         .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
-        .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
-        ;
+        .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]");
 }
 
 export async function initialize(config: AdapterConfig) {
@@ -26,9 +25,8 @@ export async function initialize(config: AdapterConfig) {
         throw new Error("Kubernetes pod host url is not set in kubernetes.sthPodHost config.");
     }
 
-    initializeImports();
+    await initializeImports();
 }
-
 
 export function augmentConfig(config: STHConfiguration) {
     config.adapters.kubernetes = {
@@ -47,5 +45,5 @@ export function augment() {
         augmentConfig,
         SequenceAdapterClass: KubernetesSequenceAdapter,
         LifeCycleAdapterClass: KubernetesInstanceAdapter
-    } as IAdapterAugmentation
+    } as IAdapterAugmentation;
 }

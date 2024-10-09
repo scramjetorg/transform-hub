@@ -13,7 +13,7 @@ function augmentOptions(options: Command): Command {
         .option("--runner-py-image <image>", "Image used by docker runner for Python")
         .option("--runner-max-mem <mb>", "Maximum mem used by runner")
         .option("--prerunner-image <image name>", "Image used by prerunner")
-        .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
+        .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner");
 }
 
 async function initialize() {
@@ -23,7 +23,6 @@ async function initialize() {
 
     await setupDockerNetworking(new DockerodeDockerHelper());
 }
-
 
 function augmentConfig(config: STHConfiguration) {
     config.adapters.docker = {
@@ -41,5 +40,5 @@ export function augment() {
         augmentConfig,
         SequenceAdapterClass: DockerSequenceAdapter,
         LifeCycleAdapterClass: DockerInstanceAdapter
-    } as IAdapterAugmentation
+    } as IAdapterAugmentation;
 }

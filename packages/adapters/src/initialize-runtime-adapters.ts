@@ -16,7 +16,7 @@ export function augmentOptions(options: Command): Command {
 
     options.option("-a,--runtime-adapter <adapter>", `Runtime adapter to use (${validAdapters.map(x => JSON.stringify(x))},"detect")`, (value) => {
         if (!value || value === "detect") {
-            return "detect"
+            return "detect";
         }
         if (!validAdapters.includes(value)) {
             throw new Error(`Invalid runtime adapter: ${value}`);
@@ -28,7 +28,7 @@ export function augmentOptions(options: Command): Command {
     options.parseOptions(process.argv);
 
     const runtimeAdapterValue: string = options.getOptionValue("runtimeAdapter") || "detect";
-    
+
     if (runtimeAdapterValue === "detect") {
         if (validAdapters.includes("process"))
             getAdapter("process").augmentOptions(options);

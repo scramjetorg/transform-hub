@@ -24,6 +24,7 @@
     "@scramjet/obj-logger": "^1.0.1",
     "@scramjet/sth-config": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
+    "@scramjet/adapters": "1.0.1",
     "commander": "^8.3.0"
   },
   "devDependencies": {

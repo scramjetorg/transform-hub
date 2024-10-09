@@ -29,6 +29,6 @@ export function augment() {
         augmentConfig,
         SequenceAdapterClass: ProcessSequenceAdapter,
         LifeCycleAdapterClass: ProcessInstanceAdapter
-    } as IAdapterAugmentation
-};
+    } as IAdapterAugmentation;
+}
 
