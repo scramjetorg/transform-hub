@@ -4,7 +4,7 @@ Feature: Verify the checksums of payloads are correct
     Scenario: PT-004 TC-001 Checksum of JSON payload
         Given file in the location "../dist/checksum-sequence/data.json" exists on hard drive
         And host is running
-        When sequence "../packages/checksum-sequence.tar.gz" loaded
+        When sequence "../refapps/checksum-sequence.tar.gz" loaded
         And instance started
         When wait for instance healthy is "true"
         And get runner PID

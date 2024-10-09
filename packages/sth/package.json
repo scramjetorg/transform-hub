@@ -24,12 +24,13 @@
     "@scramjet/obj-logger": "^1.0.1",
     "@scramjet/sth-config": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
+    "@scramjet/adapters": "1.0.1",
     "commander": "^8.3.0"
   },
   "devDependencies": {
     "@scramjet/model": "^1.0.1",
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
     "typedoc": "0.23.17",

@@ -15,7 +15,7 @@
   "license": "AGPL-3.0",
   "devDependencies": {
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
     "ts-node": "^10.9.1",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@scramjet/utility": "^1.0.1",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "ava": {
     "extensions": [

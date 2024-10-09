@@ -11,7 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5"
+    "@types/node": "20.16.11"
   },
   "repository": {
     "type": "git",

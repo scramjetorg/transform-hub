@@ -2,6 +2,17 @@ import { MonitoringServerConfig } from "./monitoring-server";
 import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
 
+export type AdapterConfig = {
+    /**
+     * The adapter module name
+     */
+    name: string,
+    /**
+     * Adapter configuration
+     */
+    [key: string]: any;
+}
+
 export type ContainerConfiguration = {
     /**
      * Docker image to use.
@@ -107,6 +118,21 @@ export type K8SAdapterConfiguration = {
     runnerResourcesLimitsCpu?: string
 }
 
+export type DockerAdapterConfiguration = {
+    /**
+     * PreRunner container configuration.
+     */
+    prerunner: PreRunnerContainerConfiguration;
+    /**
+     * Runner container configuration.
+     */
+    runner: RunnerContainerConfiguration;
+    runnerImages: {
+        python3: string;
+        node: string;
+    };
+};
+
 export type STHConfiguration = {
     /**
      * Description set by user
@@ -169,21 +195,7 @@ export type STHConfiguration = {
     /**
      * Docker related configuration.
      */
-    docker: {
-        /**
-         * PreRunner container configuration.
-         */
-        prerunner: PreRunnerContainerConfiguration,
-
-        /**
-         * Runner container configuration.
-         */
-        runner: RunnerContainerConfiguration,
-        runnerImages: {
-            python3: string,
-            node: string,
-        },
-    },
+    docker: DockerAdapterConfiguration,
 
     /**
      * Host configuration.
@@ -274,6 +286,8 @@ export type STHConfiguration = {
     monitorgingServer?: MonitoringServerConfig;
 
     runnerEnvs?: Record<string, string>;
+
+    adapters: Record<string, AdapterConfig>;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

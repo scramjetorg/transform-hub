@@ -16,7 +16,6 @@
   "dependencies": {
     "@scramjet/model": "^1.0.1",
     "@scramjet/obj-logger": "^1.0.1",
-    "@scramjet/sth-config": "^1.0.1",
     "@scramjet/symbols": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
     "@types/node-fetch": "^2.6.4",
@@ -24,11 +23,12 @@
     "n-readlines": "^1.0.1",
     "node-fetch": "^2.6.7",
     "normalize-url": "4",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
+    "@scramjet/sth-config": "^1.0.1",
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "@types/node-fetch": "^2.6.2",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",

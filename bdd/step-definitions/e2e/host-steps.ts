@@ -16,11 +16,11 @@ import {
     deleteDirectory,
     getActiveProfile
 } from "../../lib/utils";
-import fs, { createReadStream, existsSync, ReadStream } from "fs";
+import { createReadStream, createWriteStream, exists, existsSync, readFileSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import crypto, { BinaryLike } from "crypto";
+import { BinaryLike, createHash } from "crypto";
 import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
@@ -46,7 +46,7 @@ const freeport = promisify(require("freeport"));
 const profileName = "test_bdd";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
-const testPath = "../packages/reference-apps/hello-alice-out/";
+const testPath = "data/test-data/hello-alice-out/";
 const dockerode = new Dockerode();
 const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
@@ -436,7 +436,7 @@ When(
         });
 
         const stream: any = await this.resources.instance?.getStream("stdout");
-        const writeStream = fs.createWriteStream(fileName);
+        const writeStream = createWriteStream(fileName);
 
         stream.pipe(writeStream);
 
@@ -467,13 +467,13 @@ When(
 );
 
 Then("file {string} is generated", async (filename) => {
-    assert.ok(await promisify(fs.exists)(`${filename}`));
+    assert.ok(await promisify(exists)(`${filename}`));
 });
 
 When(
     "response in every line contains {string} followed by name from file {string} finished by {string}",
     async (greeting: string, file2: any, suffix: string) => {
-        const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
+        const input = JSON.parse(readFileSync(`${testPath}${file2}`, "utf8"));
         const lines: string[] = actualLogResponse.split("\n");
 
         let i: number;
@@ -493,13 +493,12 @@ When("response data is equal {string}", async (respNumber: any) => {
 });
 
 Given("file in the location {string} exists on hard drive", async (filename: any) => {
-    assert.ok(await promisify(fs.exists)(filename));
+    assert.ok(await promisify(exists)(filename));
 });
 
 When("compare checksums of content sent from file {string}", async function(this: CustomWorld, filePath: string) {
-    const readStream = fs.createReadStream(filePath);
-    const hex: string = crypto
-        .createHash("md5")
+    const readStream = createReadStream(filePath);
+    const hex: string = createHash("md5")
         .update(await readFile(filePath))
         .digest("hex");
 
@@ -533,8 +532,7 @@ When("confirm file checksum match output checksum", async function(this: CustomW
     if (!output || !stdout) assert.fail("No output or stdout, or both.");
 
     const dataFromOutput = await streamToBinary(output);
-    const outputHex: string = crypto
-        .createHash("sha256")
+    const outputHex: string = createHash("sha256")
         .update(dataFromOutput)
         .digest("hex");
 
@@ -966,7 +964,7 @@ Then("confirm data defined as {string} will be received", async function(this: C
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
-    const readStream = fs.createReadStream(path);
+    const readStream = createReadStream(path);
     const sendData = hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
 
     readStream.push(null);

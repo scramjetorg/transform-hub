@@ -14,14 +14,14 @@ import {
 } from "@scramjet/types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerExitCode } from "@scramjet/symbols";
 import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 import { createReadStream } from "fs";
 import path from "path";
-import { PassThrough } from "stream";
-import { getRunnerEnvEntries } from "./get-runner-env";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+import { getRunnerEnvEntries } from "@scramjet/adapters";
+import { PassThrough } from "stream";
+import { RunnerExitCode } from "@scramjet/symbols";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -50,7 +50,7 @@ IComponent {
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
         this.sthConfig = sthConfig;
 
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.adapters.kubernetes);
 
         if (!decodedAdapterConfig.isOk()) {
             throw new Error("Invalid Kubernetes Adapter configuration");
@@ -70,10 +70,7 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        this._kubeClient = new KubernetesClientAdapter(this.adapterConfig.authConfigPath, this.adapterConfig.namespace);
-        this.kubeClient.init();
-
-        this._kubeClient.logger.pipe(this.logger);
+        this.kubeClient.logger.pipe(this.logger);
     }
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {

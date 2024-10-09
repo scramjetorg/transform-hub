@@ -23,11 +23,11 @@
     "@scramjet/symbols": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
     "bpmux": "^8.2.1",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "@types/sinon": "^10.0.13",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",

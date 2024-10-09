@@ -13,9 +13,8 @@ import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
+import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { detectLanguage } from "./utils";
 
 /**
  * Returns existing Sequence configuration.
@@ -60,7 +59,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
     private adapterConfig: K8SAdapterConfiguration;
 
     constructor(sthConfig: STHConfiguration) {
-        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.adapters.kubernetes);
 
         if (!decodedAdapterConfig.isOk()) {
             throw new Error("Invalid Kubernetes Adapter configuration");

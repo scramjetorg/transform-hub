@@ -16,14 +16,14 @@
   "dependencies": {
     "@scramjet/obj-logger": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
-    "scramjet": "^4.36.9",
+    "scramjet": "^4.37.0",
     "diskusage-ng": "1.0.2",
     "node-os-utils": "1.3.7",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "20.16.11",
     "@types/node-os-utils": "^1.2.0",
     "@types/uuid": "^8.3.4",
     "ava": "^3.15.0",
