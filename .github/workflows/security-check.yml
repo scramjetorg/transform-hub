@@ -24,7 +24,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: yarn install --ignore-engines  --frozen-lockfile
+        run: yarn install --ignore-engines --frozen-lockfile
 
       - name: Checks for known security issues with the installed packages
         run: yarn audit
