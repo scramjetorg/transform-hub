@@ -1,8 +1,4 @@
 import { IAdapterAugmentation, STHConfiguration } from "@scramjet/types";
-import { setupDockerNetworking } from "./docker-networking";
-import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerSequenceAdapter } from "./docker-sequence-adapter";
-import { DockerInstanceAdapter } from "./docker-instance-adapter";
 
 type Command = import("commander").Command;
 function augmentOptions(options: Command): Command {
@@ -17,6 +13,9 @@ function augmentOptions(options: Command): Command {
 }
 
 async function initialize() {
+    const { DockerodeDockerHelper } = await import("./dockerode-docker-helper");
+    const { setupDockerNetworking } = await import("./docker-networking");
+
     if (!await DockerodeDockerHelper.isDockerConfigured()) {
         throw new Error("Docker is not configured.");
     }
@@ -34,6 +33,9 @@ function augmentConfig(config: STHConfiguration) {
 }
 
 export function augment() {
+    const { DockerSequenceAdapter } = require("./docker-sequence-adapter") as typeof import("./docker-sequence-adapter");
+    const { DockerInstanceAdapter } = require("./docker-instance-adapter") as typeof import("./docker-instance-adapter");
+
     return {
         initialize,
         augmentOptions,

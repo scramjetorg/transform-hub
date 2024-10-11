@@ -39,7 +39,7 @@ export class ConfigService {
 
     update(config: DeepPartial<STHConfiguration>) {
         merge(this.config, config);
-        updateAdaptersConfig(this.config);
+        updateAdaptersConfig(this.config.runtimeAdapter, this.config);
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {

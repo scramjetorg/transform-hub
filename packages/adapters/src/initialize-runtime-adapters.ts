@@ -1,13 +1,15 @@
 import { IObjectLogger, STHConfiguration } from "@scramjet/types";
 import { getAdapter, getValidAdapters } from "./get-adapters";
 
-export function updateAdaptersConfig(config: STHConfiguration) {
+export function updateAdaptersConfig(adapter: string, config: STHConfiguration) {
     config.adapters = config.adapters || {};
     const validAdapters = getValidAdapters();
 
-    for (const adapter of validAdapters) {
-        getAdapter(adapter).augmentConfig(config);
+    if (!validAdapters.includes(adapter)) {
+        throw new Error(`Invalid runtime adapter: ${adapter}`);
     }
+
+    getAdapter(adapter).augmentConfig(config);
 }
 
 type Command = import("commander").Command;
