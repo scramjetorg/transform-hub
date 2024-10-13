@@ -1,3 +1,4 @@
+import { SchemaValidator } from "../validators";
 import ReadOnlyConfiguration from "./readOnlyConfiguration";
 
 /**
@@ -6,8 +7,11 @@ import ReadOnlyConfiguration from "./readOnlyConfiguration";
 export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyConfiguration<Type> {
     protected readonly configuration: Type;
     protected readonly isValidConfig: boolean;
+    protected readonly _validator: SchemaValidator | undefined;
 
-    constructor(configuration: Type) {
+    constructor(configuration: Type, validator?: SchemaValidator) {
+        this._validator = validator;
+
         if (this.validate(configuration)) {
             this.isValidConfig = true;
             this.configuration = configuration;

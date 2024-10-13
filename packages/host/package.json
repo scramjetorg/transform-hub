@@ -34,7 +34,7 @@
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",
     "minimist": "^1.2.6",
-    "pico-s3": "^2.0.0",
+    "pico-s3": "^2.6.0",
     "rereadable-stream": "^1.4.14",
     "scramjet": "^4.37.0"
   },
