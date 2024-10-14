@@ -15,7 +15,7 @@
   "dependencies": {
     "@scramjet/obj-logger": "^1.0.1",
     "@scramjet/symbols": "^1.0.1",
-    "scramjet": "^4.36.9",
+    "scramjet": "^4.37.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

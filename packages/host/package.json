@@ -34,15 +34,17 @@
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",
     "minimist": "^1.2.6",
-    "pico-s3": "^2.0.0",
+    "pico-s3": "^2.6.0",
     "rereadable-stream": "^1.4.14",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^1.0.1",
+    "@types/aws4": "^1.11.0",
     "@types/find-package-json": "^1.2.3",
     "@types/jest": "^29.4.4",
     "@types/node": "15.12.5",
+    "axios": "1.7.7",
     "ava": "^3.15.0",
     "jest": "^29.5.0",
     "ts-jest": "^29.0.5",

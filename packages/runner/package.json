@@ -23,7 +23,7 @@
     "@scramjet/symbols": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
     "bpmux": "^8.2.1",
-    "scramjet": "^4.36.9"
+    "scramjet": "^4.37.0"
   },
   "devDependencies": {
     "@scramjet/types": "^1.0.1",

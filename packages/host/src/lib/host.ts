@@ -249,11 +249,16 @@ export class Host implements IComponent {
             mkdirSync(this.config.sequencesRoot);
         }
 
-        if (this.config.kubernetes.sequencesRoot) fsPaths.push(this.config.kubernetes.sequencesRoot);
+        if (this.config.kubernetes.sequencesRoot && this.config.runtimeAdapter === "kubernetes")
+            fsPaths.push(this.config.kubernetes.sequencesRoot);
 
-        this.logger.info("Following path will be examined on load check.", fsPaths);
+        this.logger.info("Following path will be examined on load check.", [...new Set(fsPaths)]);
 
-        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements, fsPaths }));
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({
+            safeOperationLimit,
+            instanceRequirements,
+            fsPaths: [...new Set(fsPaths)]
+        }));
         this.loadCheck.logger.pipe(this.logger);
 
         this.socketServer = socketServer;
@@ -476,7 +481,7 @@ export class Host implements IComponent {
             await this.identifyExistingSequences();
         }
 
-        const adapter = await initializeRuntimeAdapters(this.config);
+        const adapter = await initializeRuntimeAdapters(this.config, this.logger);
 
         this.adapterName = adapter;
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
@@ -884,7 +889,7 @@ export class Host implements IComponent {
     async identifyExistingSequences() {
         this.logger.trace("Identifing existing sequences");
 
-        const adapter = await initializeRuntimeAdapters(this.config);
+        const adapter = await initializeRuntimeAdapters(this.config, this.logger);
         const sequenceAdapter = getSequenceAdapter(adapter, this.config);
 
         try {
@@ -1142,7 +1147,7 @@ export class Host implements IComponent {
             if (!this.instancesStore[id]) {
                 this.logger.info("Creating new CSIController for unknown Instance");
 
-                await this.csiDispatcher.createCSIController(
+                const instance = await this.csiDispatcher.createCSIController(
                     id,
                     {} as SequenceInfo,
                     {} as STHRestAPI.StartSequencePayload,
@@ -1150,9 +1155,7 @@ export class Host implements IComponent {
                     this.config,
                     this.instanceProxy);
 
-                await this.instancesStore[id].handleInstanceConnect(
-                    streams
-                );
+                await instance.handleInstanceConnect(streams);
             } else {
                 this.logger.info("Instance already exists", id);
 

@@ -54,6 +54,7 @@ export { STHRestAPI };
 
 export * from "./sequence-package-json";
 
+export * from "./runtime-adapter";
 export * from "./sequence-adapter";
 
 export * from "./dto/index";

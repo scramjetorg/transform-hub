@@ -1,18 +1,5 @@
-import { ProcessInstanceAdapter } from "./process-instance-adapter";
-import { DockerInstanceAdapter } from "./docker-instance-adapter";
 import { ILifeCycleAdapterMain, ILifeCycleAdapterRun, STHConfiguration } from "@scramjet/types";
-import { KubernetesInstanceAdapter } from "./kubernetes-instance-adapter";
-
-type InstanceAdapterClass = {new (config: STHConfiguration, id?: string): ILifeCycleAdapterMain & ILifeCycleAdapterRun};
-
-const instanceAdapters: Record<
-STHConfiguration["runtimeAdapter"],
-InstanceAdapterClass
-> = {
-    docker: DockerInstanceAdapter,
-    process: ProcessInstanceAdapter,
-    kubernetes: KubernetesInstanceAdapter
-};
+import { getAdapter } from "./get-adapters";
 
 /**
  * Provides Instance adapter.
@@ -25,9 +12,7 @@ InstanceAdapterClass
  */
 export function getInstanceAdapter(runtimeAdapter: STHConfiguration["runtimeAdapter"], config: STHConfiguration, id: string):
     ILifeCycleAdapterMain & ILifeCycleAdapterRun {
-    if (!(runtimeAdapter in instanceAdapters)) {
-        throw new Error(`Invalid runtimeAdapter ${runtimeAdapter}`);
-    }
+    const { LifeCycleAdapterClass } = getAdapter(runtimeAdapter);
 
-    return new instanceAdapters[runtimeAdapter](config, id);
+    return new LifeCycleAdapterClass(config, id);
 }

@@ -18,15 +18,13 @@ FROM node:18-bullseye-slim AS builder
 
 WORKDIR /app/
 
-COPY ./dist/sth-config ./dist/sth-config
-COPY ./dist/api-client ./dist/api-client
-COPY ./dist/client-utils ./dist/client-utils
-COPY ./dist/utility ./dist/utility
-COPY ./dist/symbols ./dist/symbols
-COPY ./dist/obj-logger ./dist/obj-logger
-COPY ./dist/model ./dist/model
-COPY ./dist/runner ./dist/runner
-COPY ./dist/package.json ./dist/package.json
+COPY ./dist/docker-runner/api-client ./dist/api-client
+COPY ./dist/docker-runner/client-utils ./dist/client-utils
+COPY ./dist/docker-runner/utility ./dist/utility
+COPY ./dist/docker-runner/symbols ./dist/symbols
+COPY ./dist/docker-runner/obj-logger ./dist/obj-logger
+COPY ./dist/docker-runner/model ./dist/model
+COPY ./dist/docker-runner/runner ./dist/runner
 
 FROM target
 

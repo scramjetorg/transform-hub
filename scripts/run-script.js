@@ -107,7 +107,7 @@ function execCommand(path, command, verbose) {
         for (const _path of packages) {
             const path = resolve(opts.root, _path);
 
-            if (scopes.includes(path)) {
+            if (scopes.includes(_path)) {
                 packages = [_path];
                 break;
             }
