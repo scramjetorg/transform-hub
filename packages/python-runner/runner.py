@@ -59,13 +59,13 @@ class Runner:
         self.connect_stdio()
         self.connect_log_stream()
 
-        config, args = await self.handshake()
+        config, args, log_level = await self.handshake()
         self.logger.info('Communication established.')
         asyncio.create_task(self.connect_control_stream())
         asyncio.create_task(self.setup_heartbeat())
 
         self.load_sequence()
-        await self.run_instance(config, args)
+        await self.run_instance(config, args, log_level)
 
 
     async def init_connections(self, host, port):
@@ -130,6 +130,8 @@ class Runner:
             data['appConfig'] = {}
         if 'args' not in data:
             data['args'] = []
+        if 'logLevel' not in data:
+            data['logLevel'] = 'DEBUG'
 
         self.logger.info(f'Sending PANG')
         pang_requires_data = {
@@ -140,8 +142,7 @@ class Runner:
 
         if code == msg_codes.PONG.value:
             self.logger.info(f'Got configuration: {data}')
-            return data['appConfig'], data['args']
-
+            return data['appConfig'], data['args'], data['logLevel']
 
     async def connect_control_stream(self):
         # Control stream carries ndjson, so it's enough to split into lines.
@@ -153,6 +154,8 @@ class Runner:
         )
         async for code, data in control_messages:
             self.logger.debug(f'Control message received: {code} {data}')
+            if code == msg_codes.SET.value:
+                self.handle_set(data)
             if code == msg_codes.KILL.value:
                 self.exit_immediately()
             if code == msg_codes.STOP.value:
@@ -160,6 +163,11 @@ class Runner:
             if code == msg_codes.EVENT.value:
                 self.emitter.emit(data['eventName'], data['message'] if 'message' in data else None)
 
+
+    async def handle_set(self, data):
+        self.logger.info(f'Setting logLevel: {data}')
+        if 'logLevel' in data:
+            self.logger.setLevel(data['logLevel'])
 
     async def handle_stop(self, data):
         self.logger.info(f'Gracefully shutting down...{data}')
@@ -203,12 +211,14 @@ class Runner:
         # switch to sequence dir so that relative paths will work
         os.chdir(os.path.dirname(self.seq_path))
 
-    async def run_instance(self, config, args):
+    async def run_instance(self, config, args, log_level):
         context = AppContext(self, config)
         input_stream = Stream()
+        
         asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.logger.info('Running instance...')
+        self.logger.setLevel(log_level)
         result = self.sequence.run(context, input_stream, *args)
 
         self.logger.info(f'Sending PANG')
@@ -223,7 +233,7 @@ class Runner:
             produces = {}
             produces['provides'] = produces_runtime
             produces['contentType'] = getattr(result, 'content_type', None)
-            produces_json = json.dumps(produces) 
+            produces_json = json.dumps(produces)
 
         if produces:
             self.logger.info(f'Sending PANG with {produces}')
@@ -238,7 +248,7 @@ class Runner:
             consumes = {}
             consumes['requires'] = consumes_runtime
             consumes['contentType'] = getattr(result, 'content_type', None)
-            consumes_json = json.dumps(consumes) 
+            consumes_json = json.dumps(consumes)
 
         if consumes:
             self.logger.info(f'Sending PANG with {consumes}')

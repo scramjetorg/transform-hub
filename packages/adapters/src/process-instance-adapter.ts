@@ -20,6 +20,7 @@ import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables } from "./get-runner-env";
+import { development } from "@scramjet/sth-config";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
@@ -152,6 +153,9 @@ class ProcessInstanceAdapter implements
             config.sequenceDir,
             config.entrypointPath
         );
+
+        const extraEnvs = development() ? process.env : {};
+
         const env = getRunnerEnvVariables({
             sequencePath,
             instancesServerHost: "127.0.0.1",
@@ -162,7 +166,8 @@ class ProcessInstanceAdapter implements
             payload
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
-            ...this.sthConfig.runnerEnvs
+            ...this.sthConfig.runnerEnvs,
+            ...extraEnvs
         });
 
         this.logger.debug("Spawning Runner process with command", runnerCommand);

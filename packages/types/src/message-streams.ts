@@ -44,6 +44,7 @@ import { NetworkInfo } from "./network-info";
 import { SequenceCompleteMessageData } from "./messages/sequence-complete";
 import { KillMessageData } from "./messages/kill-sequence";
 import { MonitoringReplyMessage, MonitoringReplyMessageData } from "./messages/monitor-reply";
+import { SetMessageData } from "./messages/set";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -77,6 +78,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
+    T extends RunnerMessageCode.SET ? SetMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
     T extends RunnerMessageCode.SEQUENCE_COMPLETED ? SequenceCompleteMessageData :
     T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
@@ -97,7 +99,7 @@ export type EncodedMessage<
 
 export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.MONITORING_REPLY | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PONG |
+    RunnerMessageCode.PONG | RunnerMessageCode.SET |
     CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
     RunnerMessageCode.INPUT_CONTENT_TYPE;
 
