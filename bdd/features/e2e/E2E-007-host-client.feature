@@ -5,7 +5,7 @@ Feature: Test for host client used by sequences
     @ci-api @cli
     Scenario: E2E-007 TC-001 Test sequence with basic host client methods like getVersion(), getStatus(), etc.
         Given I set config for local Hub
-        When I execute CLI with "seq send ../packages/js-hostclient-basic.tar.gz"
+        When I execute CLI with "seq send ../refapps/js-hostclient-basic.tar.gz"
         When I execute CLI with "seq start -"
         And wait for "3000" ms
         When I execute CLI with "inst output -" without waiting for the end
@@ -18,7 +18,7 @@ Feature: Test for host client used by sequences
     @ci-api @cli
     Scenario: E2E-007 TC-002 Test Sequence that starts another Sequence
         Given I set config for local Hub
-        When I execute CLI with "seq send ../packages/js-hostclient-basic.tar.gz"
+        When I execute CLI with "seq send ../refapps/js-hostclient-basic.tar.gz"
         And I execute CLI with "seq info -"
         And I get sequence id
         Then I start "js-hostclient-start-seq" with the first sequence id
