@@ -1,5 +1,6 @@
 import { AppConfig } from "./app-config";
 import { InstanceLimits } from "./instance-limits";
+import { LogLevel } from "./object-logger";
 
 export type RunnerConnectInfo = {
     appConfig: AppConfig;
@@ -9,4 +10,5 @@ export type RunnerConnectInfo = {
     limits?: InstanceLimits;
     instanceId?: string;
     system?: Record<string, string>;
+    logLevel?: LogLevel;
 }

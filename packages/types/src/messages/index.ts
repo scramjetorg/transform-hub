@@ -5,6 +5,7 @@ export { ErrorMessage, ErrorMessageData } from "./error";
 export { EventMessage, EventMessageData } from "./event";
 export { PangMessageData, PingMessageData, HandshakeMessage } from "./handshake";
 export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./handshake-acknowledge";
+export { SetMessage, SetMessageData } from "./set";
 export { KeepAliveMessage, KeepAliveMessageData } from "./keep-alive";
 export { KillSequenceMessage, KillMessageData } from "./kill-sequence";
 export { EmptyMessageData, Message } from "./message";

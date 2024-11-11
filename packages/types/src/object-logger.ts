@@ -51,6 +51,8 @@ export interface IObjectLogger {
     outputLogStream: PassThrough;
     output: DataStream;
 
+    logLevel: LogLevel;
+
     addOutput(output: Writable): void;
 
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
