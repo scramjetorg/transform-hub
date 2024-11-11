@@ -5,6 +5,14 @@ export function updateAdaptersConfig(adapter: string, config: STHConfiguration) 
     config.adapters = config.adapters || {};
     const validAdapters = getValidAdapters();
 
+    if (adapter === "detect") {
+        if (validAdapters.includes("docker"))
+            getAdapter("docker").augmentConfig(config);
+        if (validAdapters.includes("process"))
+            getAdapter("process").augmentConfig(config);
+        return;
+    }
+
     if (!validAdapters.includes(adapter)) {
         throw new Error(`Invalid runtime adapter: ${adapter}`);
     }
@@ -32,10 +40,10 @@ export function augmentOptions(options: Command): Command {
     const runtimeAdapterValue: string = options.getOptionValue("runtimeAdapter") || "detect";
 
     if (runtimeAdapterValue === "detect") {
-        if (validAdapters.includes("process"))
-            getAdapter("process").augmentOptions(options);
         if (validAdapters.includes("docker"))
             getAdapter("docker").augmentOptions(options);
+        if (validAdapters.includes("process"))
+            getAdapter("process").augmentOptions(options);
     } else {
         getAdapter(runtimeAdapterValue).augmentOptions(options);
     }

@@ -165,9 +165,10 @@ const options = augmentOptions(unaugmentedOptions)
         } : undefined
     });
 
+    await configService.selectRuntimeAdapter();
+
     const tips = [
         ["Run Sequences in our cloud.", { "Find out": "more about Scramjet Cloud Platform", here: "https://scramjet.org/" }],
-        ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "Sign up": "and start your 30-day trial for free!", here: "https://console.scramjet.cloud" }],
         ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scramjet.org/" }]
     ];
 
