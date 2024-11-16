@@ -116,6 +116,6 @@ export type Port = number;
 
 export type ApiVersion = string;
 
-export type Validator = (message: string) => (value: any) => string | boolean;
-export type ValidationSchema = { [key: string]: ((value: any) => string | boolean)[] };
+export type Validator = (message: string) => (value: any, object: Record<string, any>) => string | boolean;
+export type ValidationSchema = { [key: string]: ((value: any, obj: Record<string, any>) => string | boolean)[] };
 export type ValidationResult = { name: string; isValid: boolean; message?: string };

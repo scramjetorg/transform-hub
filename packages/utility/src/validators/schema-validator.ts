@@ -33,7 +33,7 @@ export class SchemaValidator {
         this._errors = [];
 
         for (const key of Object.keys(this.schema)) {
-            const result = this.validateSchemaElement(key, obj[key as keyof Object]);
+            const result = this.validateSchemaElement(key, obj[key as keyof Object], obj);
 
             if (result === false) continue;
 
@@ -57,7 +57,7 @@ export class SchemaValidator {
      * or false if validation should be stopped.
      * Returns string with error message when validation error occurs.
      */
-    validateSchemaElement(key: string, value: any): string | boolean {
+    validateSchemaElement(key: string, value: any, obj: Record<string, any>): string | boolean {
         const validators = this.schema[key];
 
         if (!validators) {
@@ -65,7 +65,7 @@ export class SchemaValidator {
         }
 
         for (const validator of validators) {
-            const result = validator(value);
+            const result = validator(value, obj);
 
             if (!result) {
                 break;
@@ -97,6 +97,6 @@ export class SchemaValidator {
      * @returns {boolean} true if entry is valid with schema, false otherwise
      */
     validateEntry(key: string, value: any): boolean {
-        return typeof this.validateSchemaElement(key, value) === "boolean";
+        return typeof this.validateSchemaElement(key, value, {}) === "boolean";
     }
 }
