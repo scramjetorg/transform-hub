@@ -50,7 +50,7 @@ export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClien
             },
             normalizeUrl
         );
-        
+
         this.agent = agent;
     }
 }

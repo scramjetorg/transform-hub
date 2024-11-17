@@ -20,7 +20,7 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
 export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClient {
     constructor(
         apiBase: string,
-        agent: HttpClient,
+        _agent: HttpClient,
     ) {
         super(apiBase, window.fetch.bind(window), normalizeUrl);
     }
