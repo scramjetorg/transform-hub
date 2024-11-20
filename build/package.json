@@ -1,0 +1,6 @@
+{
+  "name": "@scramjet/docker-build",
+  "version": "1.0.1",
+  "description": "Build all Transform Hub packages",
+  "scripts": {}
+}
