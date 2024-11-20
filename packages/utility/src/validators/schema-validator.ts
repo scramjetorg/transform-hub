@@ -33,7 +33,7 @@ export class SchemaValidator {
         this._errors = [];
 
         for (const key of Object.keys(this.schema)) {
-            const result = this.validateSchemaElement(key, obj[key as keyof Object], obj);
+            const result = this.validateSchemaElement(key, obj[key], obj);
 
             if (result === false) continue;
 
@@ -53,6 +53,7 @@ export class SchemaValidator {
      * Validates property using defined schema
      * @param {string} key property key
      * @param {any} value property value
+     * @param {Record} obj input object for validation
      * @returns {string | boolean} for valid entry returns true if validation should continue
      * or false if validation should be stopped.
      * Returns string with error message when validation error occurs.
