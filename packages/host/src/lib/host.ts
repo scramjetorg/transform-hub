@@ -34,7 +34,7 @@ import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
-import { InstanceStore } from "./instance-store";
+import { IInstanceStore, InstanceStore } from "./instance-store";
 
 import { DuplexStream } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
@@ -65,6 +65,7 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
+import { RPCService } from "./rpc-service";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -125,12 +126,17 @@ export class Host implements IComponent {
     /**
      * Object to store CSIControllers.
      */
-    instancesStore = InstanceStore;
+    instancesStore: IInstanceStore = InstanceStore;
 
     /**
      * Sequences store.
      */
     sequenceStore = new SequenceStore();
+
+    /**
+     * RPC service.
+     */
+    rpcService: RPCService;
 
     /**
      * Instance of class providing logging utilities.
@@ -165,6 +171,7 @@ export class Host implements IComponent {
     private instanceProxy: HostProxy = {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
     };
+    rpcBase: string;
 
     public get service(): string {
         return name;
@@ -204,6 +211,8 @@ export class Host implements IComponent {
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel.toLowerCase()) ||
             ObjLogger.levels[ObjLogger.levels.length - 1]
         );
+
+        this.rpcService = new RPCService(this.logger, this.instancesStore);
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
@@ -269,6 +278,7 @@ export class Host implements IComponent {
 
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
+        this.rpcBase = `${this.config.host.apiBase}/rpc`;
         this.topicsBase = `${this.config.host.apiBase}/topic`;
 
         this.csiDispatcher = new CSIDispatcher({
@@ -692,6 +702,8 @@ export class Host implements IComponent {
         this.api.use(`${this.apiBase}/cpm`, (req, res) => this.spaceMiddleware(req, res));
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
+
+        this.api.use(`${this.rpcBase}/:topic`, (req, res, next) => this.rpcService.handleRequest(req, res, next));
     }
 
     /**
