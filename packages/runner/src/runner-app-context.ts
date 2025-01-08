@@ -3,8 +3,10 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import {
     EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
     AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
-    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient, ManagerClient, LogLevel
+    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient, ManagerClient, LogLevel,
+    InstanceClient
 } from "@scramjet/types";
+import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
 import { EventEmitter } from "events";
 
 function assertFunction(handler: any | Function): handler is Function {
@@ -148,5 +150,9 @@ implements AppContext<AppConfigType, State> {
         this.runner.sendEvent({ eventName, message });
         // this.emitter.emit(eventName, message);
         return this;
+    }
+
+    spawn(params: StartSequencePayload): Promise<InstanceClient> {
+        throw new Error("Method not implemented.");
     }
 }

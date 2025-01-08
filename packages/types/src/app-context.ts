@@ -5,6 +5,7 @@ import { FunctionDefinition } from "./messages/describe-sequence";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 import { MonitoringMessageFromRunnerData } from "./messages";
+import { StartSequencePayload } from "./rest-api-sth";
 
 /**
  * A callback that will be called when the Sequence is being stopped gracefully.
@@ -188,4 +189,6 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
 
     /** Instance Id */
     instanceId: string;
+
+    spawn(params: StartSequencePayload): Promise<import("./api-client/host-client").InstanceClient>;
 }
