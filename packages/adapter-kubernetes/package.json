@@ -15,7 +15,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@kubernetes/client-node": "^0.17.1",
+    "@kubernetes/client-node": "^1.0.0",
     "@scramjet/adapters": "1.0.1",
     "@scramjet/obj-logger": "^1.0.1",
     "@scramjet/symbols": "^1.0.1",

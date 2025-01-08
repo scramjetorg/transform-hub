@@ -168,7 +168,7 @@ if (opts.help || opts["long-help"]) {
                     if (dep in localVersions) continue;
 
                     const [name, version] = dep;
-                    const newVersion = version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.dependencies[dep[0]].version);
+                    const newVersion = version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.packages[dep[0]].version);
 
                     newDeps[depType][name] = newVersion;
                 }

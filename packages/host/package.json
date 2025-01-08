@@ -30,7 +30,6 @@
     "@scramjet/utility": "^1.0.1",
     "@scramjet/verser": "^1.0.1",
     "bpmux": "^8.2.1",
-    "ext-ip": "^0.3.9",
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",
     "minimist": "^1.2.6",

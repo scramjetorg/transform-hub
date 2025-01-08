@@ -63,11 +63,14 @@ class KubernetesClientAdapter {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         const result = await this.runWithRetries(retries, "Create Pod", () =>
-            kubeApi.createNamespacedPod(this._namespace, {
-                apiVersion: "v1",
-                kind: "Pod",
-                metadata,
-                spec
+            kubeApi.createNamespacedPod({
+                namespace: this._namespace,
+                body: {
+                    apiVersion: "v1",
+                    kind: "Pod",
+                    metadata,
+                    spec
+                }
             })
         );
 
@@ -81,7 +84,11 @@ class KubernetesClientAdapter {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         const result = await this.runWithRetries(retries, "Delete Pod", () =>
-            kubeApi.deleteNamespacedPod(podName, this._namespace, undefined, undefined, 0)
+            kubeApi.deleteNamespacedPod({
+                name: podName,
+                namespace: this._namespace,
+                gracePeriodSeconds: 0
+            })
         );
 
         return result as {
@@ -109,10 +116,13 @@ class KubernetesClientAdapter {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             try {
-                const response = await kubeApi.readNamespacedPodStatus(podName, this._namespace);
-                const status = response.body.status?.phase || "";
+                const response = await kubeApi.readNamespacedPodStatus({
+                    name: podName,
+                    namespace: this._namespace
+                });
+                const status = response.status?.phase || "";
 
-                const container = (response.body.status?.containerStatuses || []).find(c => c.name === podName);
+                const container = (response.status?.containerStatuses || []).find(c => c.name === podName);
 
                 if (expectedStatuses.includes(status)) {
                     return {
@@ -121,10 +131,10 @@ class KubernetesClientAdapter {
                     };
                 }
             } catch (err: any) {
-                if (err instanceof k8s.HttpError) {
-                    this.logger.error(`Status for "${podName}" pod responded with error`, err?.body?.message);
+                if (err instanceof k8s.FetchError) {
+                    this.logger.error(`Status for "${podName}" pod responded with error`, err?.message);
 
-                    if (err.statusCode === 404) {
+                    if (err.errno === "404") {
                         this.logger.error("Pod not found", podName);
                         throw Error("Pod not found");
                     }
@@ -145,31 +155,35 @@ class KubernetesClientAdapter {
 
     async getPodLog(podName: string): Promise<string[]> {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
-        const response = await kubeApi.readNamespacedPodLog(
-            podName, this._namespace,
-            undefined, false, undefined, undefined,
-            undefined, false, undefined,
-            100, true
-        );
+        const response = await kubeApi.readNamespacedPodLog({
+            name: podName,
+            namespace: this._namespace,
+            follow: false,
+            tailLines: 100
+        });
 
-        return [response.body];
+        return [response];
     }
 
     async getPodTerminatedContainerReason(podName: string): Promise<string | undefined> {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
-        const response = await kubeApi.readNamespacedPod(podName, this._namespace);
+        const response = await kubeApi.readNamespacedPod({
+            name: podName,
+            namespace: this._namespace
+        });
 
-        return response.body.status?.containerStatuses?.[0].state?.terminated?.reason;
+        return response.status?.containerStatuses?.[0].state?.terminated?.reason;
     }
 
     async isPodsLimitReached(quotaName: string) {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         try {
-            const getQuotaPromise =
-                await kubeApi.readNamespacedResourceQuota(quotaName, this._namespace);
-
-            const responseBody = getQuotaPromise.body;
+            const responseBody =
+                await kubeApi.readNamespacedResourceQuota({
+                    name: quotaName,
+                    namespace: this._namespace
+                });
 
             if (responseBody) {
                 const used = parseInt(responseBody.status?.used?.pods || "", 10) || 0;
@@ -202,8 +216,8 @@ class KubernetesClientAdapter {
 
                 success = true;
             } catch (err: any) {
-                if (err instanceof k8s.HttpError) {
-                    this.logger.error(`Running "${name}" responded with error`, err?.body?.message);
+                if (err instanceof k8s.FetchError) {
+                    this.logger.error(`Running "${name}" responded with error`, err?.message);
                 } else {
                     this.logger.error(`Failed to run: ${name}.`, err);
                 }

@@ -1327,14 +1327,6 @@ export class Host implements IComponent {
             this.telemetryAdapter = await getTelemetryAdapter(this.config.telemetry.adapter, this.config.telemetry);
             this.telemetryAdapter.logger.pipe(this.logger);
 
-            const ipAddress = require("ext-ip")();
-
-            ipAddress.on("ip", (ip: any) => {
-                this.ipvAddress = ip;
-            });
-
-            await ipAddress();
-
             this.logger.info(`Telemetry is active. Adapter: ${this.config.telemetry.adapter}`);
 
             return;
@@ -1362,7 +1354,7 @@ export class Host implements IComponent {
                 version: this.version,
                 environment: this.telemetryEnvironmentName,
                 hostSize: this.hostSize,
-                ip: this.ipvAddress,
+                ip: "unsupported",
                 adapter: this.adapterName,
                 ...labels
             }
