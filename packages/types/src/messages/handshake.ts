@@ -16,6 +16,7 @@ export type HandshakeMessage = {
 
 export type PingMessageData = {
     id: string;
+    parentId?: string;
     ports?: Record<string, string>;
     payload: StartSequencePayload;
     sequenceInfo: SequenceInfo;

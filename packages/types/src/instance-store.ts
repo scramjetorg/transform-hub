@@ -5,6 +5,7 @@ import { SequenceInfoInstance } from "./sequence-adapter";
 
 export type Instance = {
     id: InstanceId,
+    parentId?: InstanceId,
     appConfig?: AppConfig,
     args?: InstanceArgs,
     provides?: string,

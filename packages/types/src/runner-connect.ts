@@ -9,6 +9,7 @@ export type RunnerConnectInfo = {
     inputTopic?: string;
     limits?: InstanceLimits;
     instanceId?: string;
+    parentId?: string;
     system?: Record<string, string>;
     logLevel?: LogLevel;
 }

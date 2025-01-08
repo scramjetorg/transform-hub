@@ -190,5 +190,5 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     /** Instance Id */
     instanceId: string;
 
-    spawn(params: StartSequencePayload): Promise<import("./api-client/host-client").InstanceClient>;
+    spawn(sequenceId: string, params: StartSequencePayload): Promise<import("./api-client/host-client").InstanceClient>;
 }

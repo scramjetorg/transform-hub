@@ -20,6 +20,8 @@ class SequenceStore {
     getById(id: string): SequenceInfo | undefined { return this.store.get(id); }
 
     getByName(sequenceName: string): SequenceInfo | undefined {
+        if (!sequenceName) return undefined;
+
         for (const i of this.store.values()) {
             if (i.name === sequenceName) return i;
         }

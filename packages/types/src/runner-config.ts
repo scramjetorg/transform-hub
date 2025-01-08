@@ -27,6 +27,7 @@ export type CommonSequenceConfig = {
     } | string;
     language: string;
     packageSize?: number;
+    parentId?: string;
 }
 
 export type DockerSequenceConfig = CommonSequenceConfig & {

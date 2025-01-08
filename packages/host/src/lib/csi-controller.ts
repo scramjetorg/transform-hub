@@ -75,6 +75,7 @@ export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; e
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
+    parentId?: string;
 
     private instanceLifetimeExtensionDelay: number;
 
@@ -182,7 +183,9 @@ export class CSIController extends TypedEmitter<Events> {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
     ) {
         super();
+        
         this.id = this.handshakeMessage.id;
+        this.parentId = this.handshakeMessage.parentId;
         this.runnerSystemInfo = this.handshakeMessage.payload.system;
         this.sequence = this.handshakeMessage.sequenceInfo;
         this.appConfig = this.handshakeMessage.payload.appConfig;
@@ -840,6 +843,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         return {
             id: this.id,
+            parentId: this.parentId,
             appConfig: this.appConfig,
             args: this.args,
             provides: this.provides,

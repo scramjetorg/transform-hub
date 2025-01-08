@@ -152,7 +152,10 @@ implements AppContext<AppConfigType, State> {
         return this;
     }
 
-    spawn(params: StartSequencePayload): Promise<InstanceClient> {
-        throw new Error("Method not implemented.");
+    async spawn(sequenceId: string, params: StartSequencePayload): Promise<InstanceClient> {
+        return await this.hub.getSequenceClient(sequenceId).start({
+            ...params,
+            parentId: this.instanceId
+        });
     }
 }

@@ -587,7 +587,7 @@ export class Host implements IComponent {
         await DataStream.from(startupConfig)
             .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
             .map(async (seqenceConfig: StartSequenceDTO) => {
-                const sequence = this.sequenceStore.getById(seqenceConfig.id);
+                const sequence = this.sequenceStore.getByNameOrId(seqenceConfig.id);
 
                 if (!sequence) {
                     this.logger.warn("Sequence id not found for startup config", seqenceConfig);
@@ -1186,6 +1186,14 @@ export class Host implements IComponent {
         this.logger.info("List Instances");
 
         return Object.values(this.instancesStore).map((csiController) => csiController.getInfo());
+    }
+
+    getInstancesByParentId(parentId: string): STHRestAPI.GetInstancesResponse {
+        this.logger.info("List Instances by parent ID", parentId);
+
+        return Object.values(this.instancesStore)
+            .filter((csiController) => csiController.parentId === parentId)
+            .map((csiController) => csiController.getInfo());
     }
 
     /**
