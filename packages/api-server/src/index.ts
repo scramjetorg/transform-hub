@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, APIRoute, MaybePromise, NextCallback } from "@scramjet/types";
+import { APIExpose, APIRoute, ForwardStrategy, MaybePromise, NextCallback } from "@scramjet/types";
 import { IncomingMessage, ServerResponse, createServer as createHttpServer } from "http";
 import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
@@ -9,6 +9,8 @@ import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
 import { CeroRouterConfig } from "./lib/definitions";
 import { ServerConfig } from "./types/ServerConfig";
+import { createForwardController } from "./handlers/forward";
+import { roundRobinStrategy } from "./strategies/round-robin";
 
 export { ServerConfiguration } from "./config/ServerConfiguration";
 export { ServerConfig } from "./types";
@@ -80,7 +82,10 @@ export function getRouter(): APIRoute {
         duplex,
         upstream,
         downstream,
-        use
+        use,
+        forward: (path: string, urls: string[], strategy: ForwardStrategy = roundRobinStrategy) => {
+            return use(path, createForwardController(urls, strategy));
+        }
     };
 }
 
@@ -140,6 +145,9 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
         },
         decorate: (path, ...decorators) => {
             router.use(path, ...decorators.map(safeDecorator));
+        },
+        forward: (path, urls, strategy = roundRobinStrategy) => {
+            return router.use(path, createForwardController(urls, strategy));
         }
     };
 }

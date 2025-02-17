@@ -43,6 +43,7 @@ export * from "./api-client/host-client";
 export * from "./sd-content-type";
 export * from "./sd-topic-handler";
 export * from "./topic-router";
+export * from "./verser";
 
 export type ManagerClient = import("./api-client/manager-client").ManagerClient;
 

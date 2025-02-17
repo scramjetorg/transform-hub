@@ -2,6 +2,7 @@ import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
+    APIExpose,
     AppConfig,
     ApplicationFunction,
     ApplicationInterface,
@@ -37,6 +38,8 @@ import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 import { SetMessageData } from "@scramjet/types/src/messages/set";
+import { createServer } from "@scramjet/api-server";
+import { AddressInfo } from "net";
 
 let exitHandled = false;
 
@@ -127,6 +130,14 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     overrideMap.set(oldStream, { write, drainCb, errorCb });
 }
 
+type RunnerArgs = {
+    sequencePath: string,
+    hostClient: IHostClient,
+    instanceId: string,
+    connectInfo: SequenceInfo,
+    runnerConnectInfo: RunnerConnectInfo
+};
+
 /**
  * Runtime environment for sequence code.
  * Communicates with Host with data transferred to/from Sequence, health info,
@@ -166,16 +177,24 @@ export class Runner<X extends AppConfig> implements IComponent {
     };
 
     instanceOutput?: Readable & HasTopicInformation | void;
+    sequencePath: string;
+    hostClient: IHostClient;
+    instanceId: string;
+    api: APIExpose;
 
-    constructor(
-        private sequencePath: string,
-        private hostClient: IHostClient,
-        private instanceId: string,
-        sequenceInfo: SequenceInfo,
-        runnerConnectInfo: RunnerConnectInfo
-    ) {
-        this.sequenceInfo = sequenceInfo;
+    constructor({
+        sequencePath,
+        hostClient,
+        instanceId,
+        connectInfo,
+        runnerConnectInfo
+    }: RunnerArgs) {
+        this.sequencePath = sequencePath;
+        this.hostClient = hostClient;
+        this.instanceId = instanceId;
+        this.sequenceInfo = connectInfo;
         this.emitter = new EventEmitter();
+        this.api = createServer();
 
         this.runnerConnectInfo = runnerConnectInfo;
 
@@ -451,10 +470,20 @@ export class Runner<X extends AppConfig> implements IComponent {
         process.stdin.on("resume", () => this.hostClient.stdinStream.resume());
 
         this.logger.debug("Streams initialized");
+        
+        const { args, appConfig, exposePath, exposeHost } = this.runnerConnectInfo;
+
+        if (exposePath) {
+            this.runnerConnectInfo.exposePort = await new Promise((res) => {
+                this.api.server.listen(0, exposeHost || "localhost", () => {
+                    const port = (this.api.server.address() as AddressInfo).port;
+
+                    this.logger.debug("API server started", port);
+                });
+            });
+        }
 
         this.sendHandshakeMessage();
-
-        const { args, appConfig } = this.runnerConnectInfo;
 
         return { appConfig, args };
     }
@@ -626,7 +655,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             hostApiClient,
             managerApiClient,
             this.instanceId,
-            this.logger.logLevel
+            this.logger.logLevel,
+            this.api
         );
         this._context.logger.pipe(this.logger);
 

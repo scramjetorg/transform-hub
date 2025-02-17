@@ -34,7 +34,7 @@ import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
-import { InstanceStore } from "./instance-store";
+import { InstancesStore } from "./instance-store";
 
 import { DuplexStream } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
@@ -65,6 +65,7 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
+import { roundRobinStrategy } from "@scramjet/api-server/src/strategies/round-robin";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -125,7 +126,7 @@ export class Host implements IComponent {
     /**
      * Object to store CSIControllers.
      */
-    instancesStore = InstanceStore;
+    instancesStore = new InstancesStore();
 
     /**
      * Sequences store.
@@ -692,6 +693,19 @@ export class Host implements IComponent {
         this.api.use(`${this.apiBase}/cpm`, (req, res) => this.spaceMiddleware(req, res));
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
+
+        this.api.forward(`${this.apiBase}/rpc`, [], this.createRPCForwarder());
+    }
+
+    /**
+     * Forwards RPC to the correct instances
+     */
+    createRPCForwarder() {
+        return async (req: IncomingMessage) => {
+            const instance = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
+            
+            return instance.rpcUrl;
+        };
     }
 
     /**
@@ -713,7 +727,7 @@ export class Host implements IComponent {
             return next(new HostError("UNKNOWN_INSTANCE"));
         }
 
-        const instance = this.instancesStore[params.id];
+        const instance = this.instancesStore.get(params.id);
 
         if (instance) {
             if (!instance.router) {
@@ -800,7 +814,7 @@ export class Host implements IComponent {
             const instances = [...sequence.instances].every((instanceId) => {
                 // ?
                 // this.instancesStore[instanceId]?.finalizingPromise?.cancel();
-                return this.instancesStore[instanceId]?.isRunning;
+                return this.instancesStore.get(instanceId)?.isRunning;
             });
 
             if (instances && !force) {
@@ -815,9 +829,9 @@ export class Host implements IComponent {
             if (instances) {
                 this.logger.info(`Killing Instances from Sequence ${id}...`);
                 await Promise.all([...sequence.instances].map(async (instanceId) => {
-                    await this.instancesStore[instanceId]?.kill({ removeImmediately: true });
+                    await this.instancesStore.get(instanceId)?.kill({ removeImmediately: true });
 
-                    return new Promise((res) => this.instancesStore[instanceId]?.once("end", res));
+                    return new Promise((res) => this.instancesStore.get(instanceId)?.once("end", res));
                 }));
             }
         }
@@ -850,7 +864,7 @@ export class Host implements IComponent {
 
     heartBeat() {
         Promise.all(
-            Object.values(this.instancesStore).map((csiController) =>
+            this.instancesStore.map((csiController) =>
                 Promise.race([
                     csiController.heartBeatPromise?.then((id) =>
                         this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)
@@ -1085,7 +1099,7 @@ export class Host implements IComponent {
                 return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
             }
 
-            if (this.instancesStore[payload.instanceId]) {
+            if (this.instancesStore.has(payload.instanceId)) {
                 return {
                     opStatus: ReasonPhrases.CONFLICT,
                     error: "Instance with a given ID already exists"
@@ -1145,7 +1159,9 @@ export class Host implements IComponent {
         this.socketServer.on("connect", async (id, streams) => {
             this.logger.debug("Instance connecting", id);
 
-            if (!this.instancesStore[id]) {
+            const instance = this.instancesStore.get(id);
+
+            if (!instance) {
                 this.logger.info("Creating new CSIController for unknown Instance");
 
                 const instance = await this.csiDispatcher.createCSIController(
@@ -1154,13 +1170,14 @@ export class Host implements IComponent {
                     {} as STHRestAPI.StartSequencePayload,
                     new CommunicationHandler(),
                     this.config,
-                    this.instanceProxy);
+                    this.instanceProxy
+                );
 
                 await instance.handleInstanceConnect(streams);
             } else {
                 this.logger.info("Instance already exists", id);
 
-                await this.instancesStore[id].handleInstanceReconnect(
+                await instance.handleInstanceReconnect(
                     streams
                 );
             }
@@ -1288,9 +1305,9 @@ export class Host implements IComponent {
         const instancesStore = this.instancesStore;
 
         this.logger.trace("Finalizing remaining instances");
-        await Promise.all(Object.values(instancesStore).map((csi) => csi.finalize()));
+        await Promise.all(instancesStore.map((csi) => csi.finalize()));
 
-        this.instancesStore = {};
+        this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();
 
         this.logger.trace("Stopping API server");

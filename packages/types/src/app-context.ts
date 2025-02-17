@@ -188,4 +188,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
 
     /** Instance Id */
     instanceId: string;
+
+    /** API Server */
+    api: import("./api-expose").APIExpose;
 }

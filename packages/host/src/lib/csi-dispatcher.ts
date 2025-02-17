@@ -5,12 +5,12 @@ import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
-import { InstanceStore } from "./instance-store";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
 import SequenceStore from "./sequenceStore";
 import { mapRunnerExitCode } from "./utils";
+import { InstancesStore } from "./instance-store";
 
 export type DispatcherErrorEventData = { id:string, err: any };
 export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};
@@ -30,7 +30,7 @@ type Events = {
 };
 
 type CSIDispatcherOpts = {
-    instanceStore: typeof InstanceStore,
+    instanceStore: InstancesStore,
     sequenceStore: SequenceStore,
     serviceDiscovery: ServiceDiscovery,
     STHConfig: STHConfiguration
@@ -38,7 +38,7 @@ type CSIDispatcherOpts = {
 
 export class CSIDispatcher extends TypedEmitter<Events> {
     public logger: IObjectLogger;
-    public instanceStore: typeof InstanceStore;
+    public instanceStore: InstancesStore;
     public sequenceStore: SequenceStore;
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
@@ -180,7 +180,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     seq.instances = seq.instances.filter(i => i !== csiController.id);
                 }
 
-                delete this.instanceStore[csiController.id];
+                this.instanceStore.delete(csiController.id);
             })
             .on("terminated", (code) => {
                 this.logger.debug("Terminated event received", code);
@@ -210,7 +210,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.trace("csiController started", id);
 
-        this.instanceStore[id] = csiController;
+        this.instanceStore.set(id, csiController);
 
         return csiController;
     }

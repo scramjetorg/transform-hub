@@ -5,7 +5,7 @@ import fs from "fs";
 import { AppConfig, SequenceInfo } from "@scramjet/types";
 import { HostClient } from "../host-client";
 import { RunnerExitCode } from "@scramjet/symbols";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { RunnerConnectInfo } from "@scramjet/types";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
@@ -65,7 +65,13 @@ const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
  * @param fifosPath - fifo files path
  */
 
-const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId, connectInfo, parsedRunnerConnectInfo);
+const runner: Runner<AppConfig> = new Runner({
+    sequencePath, 
+    hostClient, 
+    instanceId, 
+    connectInfo, 
+    runnerConnectInfo: parsedRunnerConnectInfo
+});
 
 runner.main()
     .catch(e => {

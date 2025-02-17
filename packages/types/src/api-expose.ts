@@ -89,6 +89,8 @@ export interface APIError extends Error {
     cause?: Error;
 }
 
+export type ForwardStrategy = (req: IncomingMessage, urls: string[]) => MaybePromise<string>;
+
 export interface APIBase {
     /**
      * Simple POST/DELETE request hook.
@@ -154,6 +156,8 @@ export interface APIBase {
      * @param callback A method to be called when the stream is ready.
      */
     duplex(path: string | RegExp, callback: (stream: Duplex, headers: IncomingHttpHeaders) => void): void;
+
+    forward(path: string, urls: string[], strategy?: ForwardStrategy): void;
 
     /**
      * Allows to register middlewares for specific paths, for all HTTP methods.

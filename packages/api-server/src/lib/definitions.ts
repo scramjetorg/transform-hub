@@ -26,6 +26,7 @@ const codelist = {
     ERR_NOT_CURRENTLY_AVAILABLE: [412, "Not currently available"],
     ERR_FAILED_FETCH_DATA: [500, "Failed to fetch data"],
     ERR_FAILED_TO_SERIALIZE: [500, "Failed to serialize data"],
+    ERR_BAD_GATEWAY: [502, "Bad gateway"],
     ERR_INTERNAL_ERROR: [500, "Internal error occurred"],
     ERR_INVALID_CONTENT_TYPE: [415, "Invalid content-type"],
     ERR_CANNOT_PARSE_CONTENT: [400, "Could not parse content"],
