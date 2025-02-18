@@ -29,7 +29,7 @@ export function getSiCommand() {
     }
 
     if (process.env.SCRAMJET_SPAWN_TS) {
-        si = ["npx", "ts-node", "../packages/cli/src/bin/index.ts"];
+        si = ["npx", "tsx", "../packages/cli/src/bin/index.ts"];
     }
 
     return si;
