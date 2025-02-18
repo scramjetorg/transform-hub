@@ -49,6 +49,37 @@ function getHostClient() {
     return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
 }
 
+When('I send a {string} request to {string} with body {string}', async function (method, path, body) {
+    const url = process.env.LOCAL_HOST_BASE_URL + path;
+    const options: RequestInit = {
+        method,
+        headers: { "Content-Type": "application/json" }
+    };
+
+    // Send the request and store the response for later steps
+    const response = await fetch(url, options);
+    this.response = response;
+});
+
+When('I send a {string} request to {string}', async function (method, path) {
+    const url = process.env.LOCAL_HOST_BASE_URL + path;
+    const options: RequestInit = { method };
+
+    // Send the request and store the response for later steps
+    const response = await fetch(url, options);
+    this.response = response;
+
+    assert.ok(response.ok, `Request failed with status ${response.status}`);
+});
+
+Then('the response body should be {string}', function (string) {
+    assert.strictEqual(this.response.body, string);
+});
+
+Then('the response status should be {int}', function (int) {
+    assert.strictEqual(this.response.status, int);
+});
+
 When("hub process is started with random ports and parameters {string}",
     async function(this: CustomWorld, params: string) {
         const apiPort = await freeport();

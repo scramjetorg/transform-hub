@@ -115,6 +115,7 @@
   "dependencies": {
     "minimist": "^1.2.7",
     "npm": "8",
-    "scramjet": "^4.37.0"
+    "scramjet": "^4.37.0",
+    "tsx": "^4.19.2"
   }
 }

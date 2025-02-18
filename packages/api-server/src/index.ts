@@ -11,6 +11,9 @@ import { CeroRouterConfig } from "./lib/definitions";
 import { ServerConfig } from "./types/ServerConfig";
 import { createForwardController } from "./handlers/forward";
 import { roundRobinStrategy } from "./strategies/round-robin";
+export { createForwardController } from "./handlers/forward";
+export { roundRobinStrategy } from "./strategies/round-robin";  
+export { consistentHashStrategy } from "./strategies/consistent-hash";
 
 export { ServerConfiguration } from "./config/ServerConfiguration";
 export { ServerConfig } from "./types";

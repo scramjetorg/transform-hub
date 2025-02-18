@@ -202,7 +202,7 @@ Then("I wait for Instance to end", { timeout: 25e4 }, async function () {
             ...si,
             "inst",
             "health",
-            "-" || "",
+            "-",
         ]);
 
         const data = JSON.parse(res.stdio[0]);
@@ -223,7 +223,7 @@ Then("I send input data {string} with options {string}", async function (
         ...si,
         "inst",
         "input",
-        "-" || "",
+        "-",
         ...options.split(" "),
     ]);
 
@@ -245,7 +245,7 @@ Then(
             "inst",
             "event",
             "on",
-            "-" || "",
+            "-",
             eventName,
         ]);
         assert.equal(res.stdio[2], 0);

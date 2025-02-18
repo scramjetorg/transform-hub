@@ -65,7 +65,7 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
-import { roundRobinStrategy } from "@scramjet/api-server/src/strategies/round-robin";
+import { roundRobinStrategy } from "@scramjet/api-server";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
