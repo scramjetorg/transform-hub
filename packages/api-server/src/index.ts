@@ -107,9 +107,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
 
     // Disable auto sending "100 Continue".
     srv.on("checkContinue", (request, response) => {
-        request.writeContinue = () => {
-            response.writeContinue();
-        };
+        response.writeContinue();
 
         srv.emit("request", request, response);
     });

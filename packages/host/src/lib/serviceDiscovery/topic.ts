@@ -109,10 +109,12 @@ export class Topic extends Transform implements TopicHandler {
         return this;
     }
 
-    destroy(error?: Error | undefined): void {
+    destroy(error?: Error | undefined): this {
         this._errored = error;
         super.destroy(error);
         this.updateState();
+
+        return this;
     }
 
     protected attachEventListeners() {
