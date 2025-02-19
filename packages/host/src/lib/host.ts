@@ -165,6 +165,11 @@ export class Host implements IComponent {
 
     private instanceProxy: HostProxy = {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
+        onRPCExpose: (path: string, instanceId: string) => {
+            this.instancesStore.registerRpc(path, instanceId);
+            
+            this.logger.info("RPC exposed", {path, instanceId});
+        }
     };
 
     public get service(): string {
@@ -599,6 +604,8 @@ export class Host implements IComponent {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
                     instanceId: seqenceConfig.instanceId,
+                    exposePath: seqenceConfig.exposePath || sequence.config.exposePath,
+                    exposeHost: "localhost",
                     logLevel: this.logger.logLevel
                 });
 
@@ -695,6 +702,14 @@ export class Host implements IComponent {
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
 
         this.api.forward(`${this.apiBase}/rpc`, [], this.createRPCForwarder());
+
+        if (["TRACE", "DEBUG"].includes(this.logger.logLevel)) {
+            this.api.log
+                .on("data", (data) => {
+                    this.logger.debug("API log", data);
+                })
+                .resume();
+        }
     }
 
     /**
@@ -702,9 +717,11 @@ export class Host implements IComponent {
      */
     createRPCForwarder() {
         return async (req: IncomingMessage) => {
-            const instance = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
+            const [instance] = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
             
-            return instance.rpcUrl;
+            const url = req.url!.slice(instance.expose?.path?.length || 0);
+            this.logger.debug("RPC request", req.url, url, instance?.id, instance?.rpcUrl);
+            return [instance?.rpcUrl, url] as [string, string];
         };
     }
 
@@ -1202,7 +1219,7 @@ export class Host implements IComponent {
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.info("List Instances");
 
-        return Object.values(this.instancesStore).map((csiController) => csiController.getInfo());
+        return this.instancesStore.map((csiController) => csiController.getInfo());
     }
 
     /**

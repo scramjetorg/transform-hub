@@ -3,6 +3,7 @@ import { ForwardStrategy, NextCallback } from "@scramjet/types";
 import http from "http";
 import https from "https";
 import { CeroError } from "../lib/definitions";
+import { stdout } from "process";
 
 /**
  * Creates a forwarding controller that forwards requests to one of the provided URLs.
@@ -12,33 +13,53 @@ import { CeroError } from "../lib/definitions";
  * @returns A middleware function that forwards incoming HTTP requests.
  */
 export function createForwardController(
+	basePath: string,
 	urls: string[],
 	strategy: ForwardStrategy
 ) {
 	return async (req: IncomingMessage, res: ServerResponse, next: NextCallback): Promise<void> => {
-		if (!urls.length) {
+		// Check if request path starts with basePath.
+		if (!req.url || !req.url.startsWith(basePath)) {
+			next(new CeroError("ERR_NOT_FOUND"));
+			return;
+		}
+		// Remove basePath from request URL.
+		req.url = req.url.slice(basePath.length);
+
+		// Choose target URL using the provided strategy or default to roundRobinStrategy.
+		const [targetUrl, rewriteUrl] = await strategy(req, urls);
+		if (!targetUrl) {
 			throw new CeroError("ERR_BAD_GATEWAY");
 		}
-		// Choose target URL using the provided strategy or default to roundRobinStrategy.
-		const targetUrl = await strategy(req, urls);
 		const parsedUrl = new URL(targetUrl);
 		const protocol = parsedUrl.protocol === "https:" ? https : http;
 		const options = {
+			protocol: parsedUrl.protocol,
 			hostname: parsedUrl.hostname,
 			port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : (parsedUrl.protocol === "https:" ? 443 : 80),
-			path: req.url, // Forward the original URL path and query.
+			path: rewriteUrl, // Forward the hoisted URL path and query.
 			method: req.method,
-			headers: req.headers,
+			headers: {
+				...req.headers
+			},
+			timeout: 1000
 		};
+		options.headers.host = parsedUrl.host;
+
 		const proxyReq = protocol.request(options, (proxyRes) => {
 			// Set response headers and status code.
 			res.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
 			proxyRes.pipe(res, { end: true });
+			proxyRes.pipe(stdout);
 		});
 		proxyReq.on("error", (err) => {
 			next(err);
 		});
-		// Pipe the incoming request body to proxy request.
-		req.pipe(proxyReq, { end: true });
+
+		// Pipe the incoming request body to proxy request if needed.
+		if (req.readableEnded)
+			proxyReq.end();
+		else
+			req.pipe(proxyReq, { end: true });
 	};
 }

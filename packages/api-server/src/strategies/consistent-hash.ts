@@ -4,13 +4,13 @@ import { IncomingMessage } from "http";
  * Consistent hash strategy function.
  * Chooses a URL based on a hash of the request header "x-consistent-key".
  */
-export function consistentHashStrategy<X>(req: IncomingMessage, urls: X[]): X {
+export function consistentHashStrategy<X>(req: IncomingMessage, urls: X[]): [X, string] {
     let key = req.headers['x-source-id'] || req.socket.remoteAddress;
     if (Array.isArray(key)) key = key[0];
     if (!key) key = "";
     const hash = hashString(key);
     const index = hash % urls.length;
-    return urls[index];
+    return [urls[index], req.url] as [X, string];
 }
 
 function hashString(str: string): number {

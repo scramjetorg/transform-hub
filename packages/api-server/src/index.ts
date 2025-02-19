@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, APIRoute, ForwardStrategy, MaybePromise, NextCallback } from "@scramjet/types";
+import { APIExpose, APIRoute, ForwardStrategy, MaybePromise, Middleware, NextCallback, ParsedMessage } from "@scramjet/types";
 import { IncomingMessage, ServerResponse, createServer as createHttpServer } from "http";
 import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
@@ -26,12 +26,12 @@ opLogger.pipe(logger);
 
 // logger.addOutput(process.stderr);
 
-function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>) {
-    return async (...args: T) => {
+function safeHandler(value: Middleware): Middleware {
+    return async (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {
         try {
-            await cb(...args);
-        } catch (err) {
-            logger.error("Uncaught error in handler", err);
+            await value(req, res, next);
+        } catch (err: Error | any) {
+            next(err);
         }
     };
 }
@@ -87,15 +87,15 @@ export function getRouter(): APIRoute {
         downstream,
         use,
         forward: (path: string, urls: string[], strategy: ForwardStrategy = roundRobinStrategy) => {
-            return use(path, createForwardController(urls, strategy));
+            return use(path, createForwardController(path, urls, strategy));
         }
     };
 }
 
-export function createServer(conf: ServerConfig = {}): APIExpose {
+export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterConfig): APIExpose {
     const log = new DataStream();
     const config: CeroRouterConfig = {
-        defaultRoute: (req, res) => {
+        defaultRoute: (_req, res) => {
             res.writeHead(404);
             res.end();
         },
@@ -104,7 +104,8 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
             res.writeHead(err.code || 500, err.httpMessage);
             if (conf.verbose) res.end(err.stack);
             else res.end();
-        }
+        },
+        ...routerConfig
     };
     const { server: srv, router } = cero({ server: createCeroServerConfig(conf), router: sequentialRouter(config) });
 
@@ -148,10 +149,11 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
             router.use(path, ...decorators.map(safeDecorator));
         },
         forward: (path, urls, strategy = roundRobinStrategy) => {
-            return router.use(path, createForwardController(urls, strategy));
+            router.use(path, createForwardController(path, urls, strategy));
         }
     };
 }
 
 export * from "./lib/definitions";
 export { DuplexStream } from "./lib/duplex-stream";
+

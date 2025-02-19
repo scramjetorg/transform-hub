@@ -1,6 +1,14 @@
 import { CSIController } from "./csi-controller";
 
 export class InstancesStore extends Map<string, CSIController> {
+    private exposePathMap: Map<string, Set<string>> = new Map();
+
+    registerRpc(path: string, instanceId: string) {
+        if (!this.exposePathMap.has(path)) {
+            this.exposePathMap.set(path, new Set());
+        }
+        this.exposePathMap.get(path)?.add(instanceId);
+    }
     map<X>(mapper: (csiController: CSIController) => X): X[] {
         return Array.from(this.values()).map(mapper);
     }
@@ -10,7 +18,16 @@ export class InstancesStore extends Map<string, CSIController> {
     }
 
     getByExposePath(exposePath: string): CSIController[] {
-        return Array.from(this.values()).filter((controller) => controller.expose?.path === exposePath);
+        const set = Array.from(this.exposePathMap)
+            .find(([path]) => exposePath.startsWith(path))?.[1];
+
+        if (!set) {
+            return [];
+        }
+        
+        return Array.from(set)
+            .map(instanceId => this.get(instanceId))
+            .filter((instance): instance is CSIController => !!instance);
     }
 
     set(instanceId: string, value: CSIController): this {

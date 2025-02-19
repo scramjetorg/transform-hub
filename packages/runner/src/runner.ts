@@ -194,7 +194,14 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.instanceId = instanceId;
         this.sequenceInfo = connectInfo;
         this.emitter = new EventEmitter();
-        this.api = createServer();
+        this.api = createServer(undefined, {
+            defaultRoute: (req, res) => {
+                this.logger.debug("API 404 request", req.url);
+
+                res.writeHead(404);
+                res.end("Not Found");
+            }
+        });
 
         this.runnerConnectInfo = runnerConnectInfo;
 
@@ -237,8 +244,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async controlStreamHandler([code, data]: EncodedControlMessage) {
-        this.logger.debug("Control message received", code, data);
-
         if (this.monitoringMessageReplyTimeout) {
             clearTimeout(this.monitoringMessageReplyTimeout);
         }
@@ -315,8 +320,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
-            this.logger.debug("working", working);
-
             if (working) {
                 //return;
             }
@@ -473,12 +476,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         
         const { args, appConfig, exposePath, exposeHost } = this.runnerConnectInfo;
 
-        if (exposePath) {
+        if (exposePath && !this.api.server.listening) {
             this.runnerConnectInfo.exposePort = await new Promise((res) => {
                 this.api.server.listen(0, exposeHost || "localhost", () => {
                     const port = (this.api.server.address() as AddressInfo).port;
 
                     this.logger.debug("API server started", port);
+                    res(port);
                 });
             });
         }

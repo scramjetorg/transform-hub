@@ -89,7 +89,7 @@ export interface APIError extends Error {
     cause?: Error;
 }
 
-export type ForwardStrategy = (req: IncomingMessage, urls: string[]) => MaybePromise<string>;
+export type ForwardStrategy = (req: IncomingMessage, urls: string[]) => MaybePromise<[string, string]>;
 
 export interface APIBase {
     /**
