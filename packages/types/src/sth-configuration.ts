@@ -250,6 +250,11 @@ export type STHConfiguration = {
     sequencesRoot: string,
 
     /**
+     * Instance reconnect feature toggle
+     */
+    instanceReconnect: boolean;
+
+    /**
      * Provides the location of a config file with the list of sequences
      * to be started along with the host
      */

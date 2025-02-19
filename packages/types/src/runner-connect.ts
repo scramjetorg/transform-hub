@@ -12,6 +12,7 @@ export type RunnerConnectInfo = {
     exposePath?: string;
     exposeHost?: string;
     exposePort?: number;
+    reconnect?: boolean;
     system?: Record<string, string>;
     logLevel?: LogLevel;
 }

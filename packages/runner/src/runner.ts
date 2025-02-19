@@ -181,6 +181,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     hostClient: IHostClient;
     instanceId: string;
     api: APIExpose;
+    reconnect: boolean;
 
     constructor({
         sequencePath,
@@ -194,6 +195,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.instanceId = instanceId;
         this.sequenceInfo = connectInfo;
         this.emitter = new EventEmitter();
+        this.reconnect = !!runnerConnectInfo.reconnect;
+
         this.api = createServer(undefined, {
             defaultRoute: (req, res) => {
                 this.logger.debug("API 404 request", req.url);
@@ -364,6 +367,19 @@ export class Runner<X extends AppConfig> implements IComponent {
             await defer(10000);
         } catch (e) {
             this.logger.error("Disconnect failed");
+        }
+
+        if (!this.reconnect) {
+            await Promise.all([
+                new Promise<void>(res => {
+                    this.api.server.close(() => {
+                        this.logger.debug("API server closed");
+                        res();
+                    });
+                })
+            ]);
+
+            return this.exit(RunnerExitCode.DISCONNECTED);
         }
 
         this.logger.info("Reinitializing....");

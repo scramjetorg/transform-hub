@@ -33,6 +33,7 @@ const unaugmentedOptions = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
+    .option("-R, --instance-reconnect", "Signal runners to attempt to reconnect", false)
     .option("-K, --kill-on-exit", "Kills all instances on exit")
     .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
     .option("--platform-api-version <version>", "Platform API version", "v1")
@@ -93,6 +94,7 @@ const options = augmentOptions(unaugmentedOptions)
         cpmUrl: options.cpmUrl,
         cpmId: options.cpmId,
         cpmSslCaPath: options.cpmSslCaPath,
+        instanceReconnect: options.instanceReconnect,
         cpm: {
             reconnectionDelay: options.cpmReconnectionDelay,
             maxReconnections: options.cpmMaxReconnections

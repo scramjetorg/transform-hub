@@ -238,6 +238,10 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.debug("Dispatching...");
 
+        if (typeof payload.reconnect === "undefined") {
+            payload.reconnect = this.STHConfig.instanceReconnect;
+        }
+
         const dispatchResultCode = await instanceAdapter.dispatch(
             instanceConfig,
             this.STHConfig.host.instancesServerPort,

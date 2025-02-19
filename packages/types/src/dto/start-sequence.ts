@@ -9,6 +9,7 @@ export type StartSequenceDTO = {
     instanceId?: string;
     exposePath?: string;
     logLevel?: LogLevel;
+    keepAlive?: boolean;
 }
 
 export type StartSequenceEndpointPayloadDTO = {
