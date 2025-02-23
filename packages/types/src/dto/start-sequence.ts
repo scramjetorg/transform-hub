@@ -3,10 +3,13 @@ import { LogLevel } from "../object-logger";
 
 export type StartSequenceDTO = {
     id: string,
+    name?: string,
     appConfig?: AppConfig,
     args?: string[],
     instanceId?: string;
+    exposePath?: string;
     logLevel?: LogLevel;
+    keepAlive?: boolean;
 }
 
 export type StartSequenceEndpointPayloadDTO = {

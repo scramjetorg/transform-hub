@@ -17,6 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "@scramjet/api-client": "^1.0.1",
+    "@scramjet/api-server": "^1.0.1",
     "@scramjet/client-utils": "^1.0.1",
     "@scramjet/model": "^1.0.1",
     "@scramjet/obj-logger": "^1.0.1",
@@ -27,7 +28,7 @@
   },
   "devDependencies": {
     "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "^18.19.76",
     "@types/sinon": "^10.0.13",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",

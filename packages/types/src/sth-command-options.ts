@@ -31,6 +31,7 @@ export type STHCommandOptions = {
     prerunnerMaxMem: number;
     exposeHostIp: string;
     instancesServerPort: string;
+    instanceReconnect: boolean;
     sequencesRoot: string;
     k8sNamespace: string;
     k8sQuotaName: string;

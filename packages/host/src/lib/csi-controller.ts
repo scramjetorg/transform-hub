@@ -81,6 +81,11 @@ export class CSIController extends TypedEmitter<Events> {
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
+    expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
+    
+    get rpcUrl(): string {
+        return `http://${this.expose?.host}:${this.expose?.port}`;
+    }
 
     get lastStats(): InstanceStats {
         return {
@@ -531,6 +536,16 @@ export class CSIController extends TypedEmitter<Events> {
         this.outputTopic = message[1].payload?.outputTopic;
         // TODO: add message to initiate the instance adapter
 
+        if (message[1].payload.exposePath) {
+            this.expose = {
+                path: message[1].payload.exposePath,
+                host: message[1].payload.exposeHost,
+                port: message[1].payload.exposePort
+            };
+    
+            this.hostProxy.onRPCExpose(message[1].payload.exposePath, this.id);
+        }
+        
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,

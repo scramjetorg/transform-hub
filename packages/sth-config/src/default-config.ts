@@ -76,5 +76,6 @@ export const defaultConfig: STHConfiguration = {
             replaceTimestamp: true,
             labels: { module: "host", job: "telemetry" }
         }
-    }
+    },
+    instanceReconnect: false
 };

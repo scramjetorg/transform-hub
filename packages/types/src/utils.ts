@@ -43,7 +43,7 @@ export interface PipeableStream<Produces> extends Readable {
 
 export interface ReadableStream<Produces> extends PipeableStream<Produces> {
     [Symbol.asyncIterator](): AsyncIterableIterator<Produces>;
-    destroy(): void;
+    destroy(): this;
 }
 /**
  * Writable stream representation with generic chunks.
@@ -54,12 +54,12 @@ export interface ReadableStream<Produces> extends PipeableStream<Produces> {
 export interface WritableStream<Consumes> extends Writable {
     objectMode?: true;
     writable: boolean;
-    destroy(): void;
+    destroy(): this;
     write(item: Consumes, cb?: (err?: Error | null) => void): boolean;
     write(str: never, encoding: never, cb?: (err?: Error | null) => void): boolean;
-    end(cb?: () => void): void;
-    end(data: Consumes, cb?: () => void): void;
-    end(str: never, encoding: never, cb?: () => void): void;
+    end(cb?: () => void): this;
+    end(data: Consumes, cb?: () => void): this;
+    end(str: never, encoding: never, cb?: () => void): this;
 }
 
 export type DuplexStream<Consumes, Produces> = WritableStream<Consumes> & ReadableStream<Produces>;

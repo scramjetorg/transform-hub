@@ -29,7 +29,7 @@ export function getSiCommand() {
     }
 
     if (process.env.SCRAMJET_SPAWN_TS) {
-        si = ["npx", "ts-node", "../packages/cli/src/bin/index.ts"];
+        si = ["npx", "tsx", "../packages/cli/src/bin/index.ts"];
     }
 
     return si;
@@ -270,7 +270,7 @@ export async function getActiveProfile() {
     }
 }
 
-export async function createProfile(profileName: string) {
+export async function createProfile(profileName: string = "test_bdd") {
     const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "create", profileName]);
 
     if (isLogActive) {
@@ -278,7 +278,7 @@ export async function createProfile(profileName: string) {
     }
 }
 
-export async function setProfile(profileName: string) {
+export async function setProfile(profileName: string = "test_bdd") {
     const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "use", profileName]);
 
     if (isLogActive) {

@@ -40,7 +40,7 @@ const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
 
 export class Logger implements Console {
     private name: string;
-    Console: NodeJS.ConsoleConstructor;
+    Console: typeof Console.prototype.Console;
     /**
      * @param reference - A reference passed to logger (log4j style)
      * @param _options - Logger options

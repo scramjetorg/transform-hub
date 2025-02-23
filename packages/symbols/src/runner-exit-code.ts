@@ -6,6 +6,7 @@ export enum RunnerExitCode {
     SEQUENCE_UNPACK_FAILED = 10,
     KILLED = 137,
     STOPPED = 138,
+    DISCONNECTED = 139,
     SUCCESS = 0,
     CLEANUP_FAILED = 223,
     PODS_LIMIT_REACHED = 24,

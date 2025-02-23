@@ -34,8 +34,8 @@
     "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --ext .js --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && yarn lint",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
-    "start:dev": "ts-node packages/sth/src/bin/hub.ts",
-    "start:dev:cli": "DEVELOPMENT=true ts-node packages/cli/src/bin/index.ts",
+    "start:dev": "tsx packages/sth/src/bin/hub.ts",
+    "start:dev:cli": "DEVELOPMENT=true tsx packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "scripts/run-script.js -v -w modules install:deps",
     "prepare": "npx husky install",
@@ -73,7 +73,7 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "4.2.1",
-    "@types/node": "15.12.5",
+    "@types/node": "^18.19.76",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "cloc": "^2.10.0",
@@ -115,6 +115,7 @@
   "dependencies": {
     "minimist": "^1.2.7",
     "npm": "8",
-    "scramjet": "^4.37.0"
+    "scramjet": "^4.37.0",
+    "tsx": "^4.19.2"
   }
 }

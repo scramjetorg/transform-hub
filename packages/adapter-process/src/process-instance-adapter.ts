@@ -22,7 +22,9 @@ import path from "path";
 import { getRunnerEnvVariables } from "@scramjet/adapters";
 import { development } from "@scramjet/sth-config";
 
-const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
+const isTSNode = 
+    !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) || 
+    !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "Python available";
 
 /**
@@ -104,13 +106,9 @@ class ProcessInstanceAdapter implements
             debugFlags = ["--inspect-brk=9229"];
 
         return [
-            isTSNode ? "ts-node" : process.execPath,
+            isTSNode ? "tsx" : process.execPath,
             ...debugFlags,
-            path.resolve(__dirname,
-                process.env.ESBUILD
-                    ? "../../runner/bin/start-runner.js"
-                    : require.resolve("@scramjet/runner")
-            )
+            path.resolve(__dirname, require.resolve("@scramjet/runner"))
         ];
     }
 
@@ -173,7 +171,11 @@ class ProcessInstanceAdapter implements
         this.logger.debug("Spawning Runner process with command", runnerCommand);
         this.logger.trace("Runner process environment", env);
 
-        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env, detached: true });
+        const runnerProcess = spawn(
+            runnerCommand[0], 
+            runnerCommand.slice(1), 
+            { env, detached: payload.reconnect }
+        );
 
         runnerProcess.unref();
 
