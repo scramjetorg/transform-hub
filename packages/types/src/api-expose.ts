@@ -176,6 +176,12 @@ export interface APIExpose extends APIBase {
 
     log: DataStream;
     opLogger?: IObjectLogger;
+
+    create(path: string | RegExp, handler: Middleware): void;
+    delete(path: string | RegExp, handler: Middleware): void;
+    update(path: string | RegExp, handler: Middleware): void;
+    read(path: string | RegExp, handler: Middleware): void;
+
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;
 }
 

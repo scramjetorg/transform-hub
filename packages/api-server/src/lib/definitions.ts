@@ -5,6 +5,8 @@ import TRouter from "trouter";
 export type CeroMiddleware = Middleware;
 export type CeroDefaultRoute = Middleware;
 
+export type Handler = (path: string, ...middlewares: CeroMiddleware[]) => void;
+
 export interface CeroRouter extends TRouter<CeroMiddleware> {
     use(path: string|RegExp, ...middlewares: CeroMiddleware[]): this;
     lookup(req: IncomingMessage, res: ServerResponse, next: NextCallback): void;

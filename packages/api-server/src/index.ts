@@ -4,6 +4,7 @@ import { IncomingMessage, ServerResponse, createServer as createHttpServer } fro
 import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
+import { createCrudHandlers } from "./handlers/crud";
 import { createOperationHandler, logger as opLogger } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
@@ -75,12 +76,14 @@ export function getRouter(): APIRoute {
     const router = sequentialRouter({});
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
+    const crud = createCrudHandlers(router);
     const { duplex, upstream, downstream } = createStreamHandlers(router);
     const use = router.use;
 
     return {
         lookup: (...args) => router.lookup(...args),
         get,
+        ...crud,
         op,
         duplex,
         upstream,
@@ -127,6 +130,7 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
 
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
+    const crud = createCrudHandlers(router);
     const { duplex, upstream, downstream } = createStreamHandlers(router);
 
     log.resume(); // if log is not read.
@@ -139,6 +143,7 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
         duplex,
         downstream,
         upstream,
+        ...crud,
         get log() {
             return log.pause(); // if log is accessed then it should be read
         },
