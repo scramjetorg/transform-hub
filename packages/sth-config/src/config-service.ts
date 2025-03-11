@@ -44,6 +44,10 @@ export class ConfigService {
     async selectRuntimeAdapter() {
         await updateAdaptersConfig(this.config.runtimeAdapter, this.config);
     }
+    async selectLocalStorageAdapter() {
+        this.config.localStorageAdapter;
+        return this.config;
+    }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
         const {

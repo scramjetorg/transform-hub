@@ -16,3 +16,16 @@ export type EventMessageData = {
  * Event message emitted by Sequence and handled in the context.
  */
 export type EventMessage = { msgCode: RunnerMessageCode.EVENT } & EventMessageData;
+
+export type StorageMessageData = {
+    values: Record<string, any>
+}
+
+export type StorageMessage = { msgCode: RunnerMessageCode.STORAGE } & EventMessageData;
+
+export type StorageUpdateMessageData = {
+    key: string;
+    value: any
+}
+
+export type StorageUpdateMessage = { msgCode: RunnerMessageCode.STORAGE_UPDATE } & EventMessageData;

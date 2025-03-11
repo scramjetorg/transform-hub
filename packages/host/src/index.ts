@@ -6,3 +6,4 @@ export * from "./lib/instance-store";
 export * from "./lib/serviceDiscovery/sd-adapter";
 export * from "./lib/socket-server";
 export * from "./lib/start-host";
+export * from "./lib/localStorage/storageUtils";

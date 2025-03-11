@@ -24,19 +24,17 @@ export class InstancesStore extends Map<string, CSIController> {
         if (!set) {
             return [];
         }
-        
+
         return Array.from(set)
             .map(instanceId => this.get(instanceId))
             .filter((instance): instance is CSIController => !!instance);
     }
 
     set(instanceId: string, value: CSIController): this {
-        
         return super.set(instanceId, value);
     }
 
     delete(instanceId: string): boolean {
-        
         return super.delete(instanceId);
     }
 }

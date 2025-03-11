@@ -36,7 +36,7 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
-import { DuplexStream } from "@scramjet/api-server";
+import { DuplexStream, roundRobinStrategy } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 
@@ -65,7 +65,8 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
-import { roundRobinStrategy } from "@scramjet/api-server";
+import { getStorageAdapter } from "./localStorage/storageUtils";
+import { IStorageAdapter } from "./localStorage/IStorageAdapter";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -163,6 +164,8 @@ export class Host implements IComponent {
 
     csiDispatcher: CSIDispatcher;
 
+    localStorage: IStorageAdapter;
+
     private instanceProxy: HostProxy = {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
         onRPCExpose: (path: string, instanceId: string) => {
@@ -203,6 +206,7 @@ export class Host implements IComponent {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
         this.sequenceStore = new SequenceStore();
+        this.localStorage = getStorageAdapter(sthConfig.localStorageAdapter);
 
         this.logger = new ObjLogger(
             this,
@@ -220,7 +224,7 @@ export class Host implements IComponent {
         if (isDevelopment) this.logger.info("config", this.config);
 
         this.logger.info("Node version:", process.version);
-
+        this.logger.warn(`Local Storage Adapter: ${sthConfig.localStorageAdapter}`);
         loadModuleLogger.pipe(this.logger);
 
         this.config.host.id ||= this.getId();
@@ -276,12 +280,13 @@ export class Host implements IComponent {
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
         this.topicsBase = `${this.config.host.apiBase}/topic`;
-
+        this.localStorage.init();
         this.csiDispatcher = new CSIDispatcher({
             instanceStore: this.instancesStore,
             sequenceStore: this.sequenceStore,
             serviceDiscovery: this.serviceDiscovery,
-            STHConfig: sthConfig
+            STHConfig: sthConfig,
+            localStorageAdapter: this.localStorage,
         });
 
         this.csiDispatcher.logger.pipe(this.logger);

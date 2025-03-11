@@ -32,7 +32,7 @@ import {
     StopSequenceMessageData,
     WritableStream
 } from "@scramjet/types";
-import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 
 import { DuplexStream, getRouter } from "@scramjet/api-server";
@@ -46,6 +46,9 @@ import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPayloadDTO, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ReasonPhrases } from "http-status-codes";
 import { mapRunnerExitCode } from "./utils";
+import { StorageUpdateMessageData } from "@scramjet/types/src/messages/event";
+import { IStorageAdapter } from "./localStorage/IStorageAdapter";
+import { InstancesStore } from "./instance-store";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -75,7 +78,8 @@ export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; e
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
-
+    private globalLocalStorageState: Record<string, string | null> = {};
+    private localStorageAdapter: IStorageAdapter;
     private instanceLifetimeExtensionDelay: number;
 
     private keepAliveRequested?: boolean;
@@ -178,15 +182,18 @@ export class CSIController extends TypedEmitter<Events> {
     private upStreams: PassThroughStreamsConfig;
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
-
+    private instanceStore: InstancesStore;
     constructor(
         private handshakeMessage: Omit<MessageDataType<RunnerMessageCode.PING>, "created">,
         public communicationHandler: ICommunicationHandler,
         private sthConfig: STHConfiguration,
         private hostProxy: HostProxy,
-        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
+        localStorageAdapter: IStorageAdapter,
+        instanceStore: InstancesStore
     ) {
         super();
+        this.instanceStore = instanceStore;
         this.id = this.handshakeMessage.id;
         this.runnerSystemInfo = this.handshakeMessage.payload.system;
         this.sequence = this.handshakeMessage.sequenceInfo;
@@ -199,6 +206,7 @@ export class CSIController extends TypedEmitter<Events> {
             gpu: handshakeMessage.payload.limits?.gpu
         };
 
+        this.localStorageAdapter = localStorageAdapter;
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
 
         this.logger = new ObjLogger(this, { id: this.id });
@@ -222,6 +230,8 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async start(): Promise<void> {
+        this.globalLocalStorageState = await this.localStorageAdapter.getAllItems();
+        
         const i = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
@@ -507,7 +517,46 @@ export class CSIController extends TypedEmitter<Events> {
             message => this.handleSequenceCompleted(message)
         );
 
+        this.communicationHandler.addMonitoringHandler(
+            RunnerMessageCode.STORAGE_UPDATE,
+            async ([code, data]) => 
+            {
+                const { key, value } = data as StorageUpdateMessageData;
+                try {
+                    await this.applyUpdate(key, value);
+                } catch (err) {
+                    return [code, data];
+                }
+                this.broadcastUpdate(key, value);
+                return [code, data];
+            }, true
+          );
         this.upStreams[CC.MONITORING].resume();
+    }
+    async applyUpdate(key: string, value: string | null): Promise<void> {
+        if (key === StorageActionCode.CLEAR && value === null) {
+            this.globalLocalStorageState = {};
+            await this.localStorageAdapter.clear();
+        } else if (value === null) {
+            delete this.globalLocalStorageState[key];
+            await this.localStorageAdapter.removeItem(key);
+        } else {
+            this.globalLocalStorageState[key] = value;
+            await this.localStorageAdapter.setItem(key, value);
+        }
+    }
+    async broadcastUpdate(key: string, value: string | null) {
+        this.instanceStore.map((csi) => {
+            csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
+        });
+    }
+      
+    async sendFullStorageState(runnerId: string, globalLocalStorageState: Record<string, any>) {
+        this.logger.debug("Sending full storage state to Runner", runnerId, globalLocalStorageState);
+        await this.communicationHandler.sendControlMessage(
+          RunnerMessageCode.STORAGE,
+          { values: globalLocalStorageState }
+        );
     }
 
     // TODO: refactor out of CSI Controller - this should be in
@@ -542,10 +591,10 @@ export class CSIController extends TypedEmitter<Events> {
                 host: message[1].payload.exposeHost,
                 port: message[1].payload.exposePort
             };
-    
+
             this.hostProxy.onRPCExpose(message[1].payload.exposePath, this.id);
         }
-        
+
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
@@ -588,6 +637,8 @@ export class CSIController extends TypedEmitter<Events> {
                 streams[8]?.end();
             });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
+
+            await this.sendFullStorageState(this.id, this.globalLocalStorageState);
 
             await once(this, "pang");
             this.initResolver?.res();

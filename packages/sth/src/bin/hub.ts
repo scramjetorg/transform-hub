@@ -3,11 +3,11 @@
 
 import { Command, Option, OptionValues } from "commander";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
-import { DeepPartial, STHCommandOptions, STHConfiguration } from "@scramjet/types";
+import { DeepPartial, STHCommandOptions, STHConfiguration, StorageAdapterType } from "@scramjet/types";
 import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
-import { Host } from "@scramjet/host";
+import { getValidLocalStorageAdapters, Host } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions } from "@scramjet/adapters";
@@ -59,7 +59,17 @@ const unaugmentedOptions = program
     .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port")
     .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
     .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
-    .option("--runner-envs <runnerEnvs>", "Additional ENVs for Runners. e.g ENV1=1;ENV2=2");
+    .option("--runner-envs <runnerEnvs>", "Additional ENVs for Runners. e.g ENV1=1;ENV2=2")
+    
+const validStorageAdapters = getValidLocalStorageAdapters();
+unaugmentedOptions.option("--localstorage-adapter <adapter>", `LocalStorage adapter to use (${validStorageAdapters.map(x => JSON.stringify(x))},"file")`, (value) => {
+    if (!value || value === "file")
+        return "file";
+
+    if (!validStorageAdapters.includes(value as StorageAdapterType))
+        throw new Error(`Invalid LocalStorage adapter: ${value}`);
+    return value;
+});
 
 const options = augmentOptions(unaugmentedOptions)
     .parse(process.argv)
@@ -129,6 +139,7 @@ const options = augmentOptions(unaugmentedOptions)
             federationControl: options.enableFederationControl
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
+        localStorageAdapter: options.localstorageAdapter as StorageAdapterType,
         sequencesRoot: resolveFile(options.sequencesRoot),
         startupConfig: resolveFile(options.startupConfig),
         identifyExisting: options.identifyExisting,
@@ -168,6 +179,7 @@ const options = augmentOptions(unaugmentedOptions)
     });
 
     await configService.selectRuntimeAdapter();
+    await configService.selectLocalStorageAdapter();
 
     const tips = [
         ["Run Sequences in our cloud.", { "Find out": "more about Scramjet Cloud Platform", here: "https://scramjet.org/" }],

@@ -23,6 +23,7 @@ export type STHCommandOptions = {
     platformApiVersion: string;
     id?: string;
     runtimeAdapter: string;
+    localStorageAdapter: string;
     runnerImage: string;
     runnerPyImage: string;
     runnerMaxMem: number;

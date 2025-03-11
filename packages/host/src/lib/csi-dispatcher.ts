@@ -11,6 +11,7 @@ import { Readable, Writable } from "stream";
 import SequenceStore from "./sequenceStore";
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
+import { IStorageAdapter } from "./localStorage/IStorageAdapter";
 
 export type DispatcherErrorEventData = { id:string, err: any };
 export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};
@@ -33,7 +34,8 @@ type CSIDispatcherOpts = {
     instanceStore: InstancesStore,
     sequenceStore: SequenceStore,
     serviceDiscovery: ServiceDiscovery,
-    STHConfig: STHConfiguration
+    STHConfig: STHConfiguration,
+    localStorageAdapter: IStorageAdapter
 }
 
 export class CSIDispatcher extends TypedEmitter<Events> {
@@ -42,6 +44,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     public sequenceStore: SequenceStore;
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
+    private localStorageAdapter: any;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -51,6 +54,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.sequenceStore = opts.sequenceStore;
         this.STHConfig = opts.STHConfig;
         this.serviceDiscovery = opts.serviceDiscovery;
+        this.localStorageAdapter = opts.localStorageAdapter;
     }
 
     async createCSIController(
@@ -68,7 +72,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload,
             status: InstanceStatus.INITIALIZING,
             inputHeadersSent: false
-        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
+        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.localStorageAdapter, this.instanceStore);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 

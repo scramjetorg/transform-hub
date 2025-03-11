@@ -1,3 +1,4 @@
+import { StorageAdapterType } from "./local-storage";
 import { MonitoringServerConfig } from "./monitoring-server";
 import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
@@ -293,6 +294,11 @@ export type STHConfiguration = {
     runnerEnvs?: Record<string, string>;
 
     adapters: Record<string, AdapterConfig>;
+
+    /**
+     * The type of storage adapter to use
+     */
+    localStorageAdapter: StorageAdapterType;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

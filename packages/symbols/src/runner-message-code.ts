@@ -19,4 +19,6 @@ export enum RunnerMessageCode {
     SET = 4005,
 
     EVENT = 5001,
+    STORAGE = 5002,
+    STORAGE_UPDATE = 5003
 }
