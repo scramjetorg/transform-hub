@@ -245,6 +245,11 @@ export type STHConfiguration = {
     kubernetes: Partial<K8SAdapterConfiguration>,
 
     /**
+     * The type of storage adapter to use
+     */
+    localStorageAdapter: StorageAdapterType;
+
+    /**
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new Sequences
      */
@@ -295,10 +300,6 @@ export type STHConfiguration = {
 
     adapters: Record<string, AdapterConfig>;
 
-    /**
-     * The type of storage adapter to use
-     */
-    localStorageAdapter: StorageAdapterType;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
