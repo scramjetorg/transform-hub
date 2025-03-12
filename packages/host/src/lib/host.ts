@@ -224,7 +224,7 @@ export class Host implements IComponent {
         if (isDevelopment) this.logger.info("config", this.config);
 
         this.logger.info("Node version:", process.version);
-        this.logger.warn(`Local Storage Adapter: ${sthConfig.localStorageAdapter}`);
+        this.logger.info(`Local Storage Adapter: ${sthConfig.localStorageAdapter}`);
         loadModuleLogger.pipe(this.logger);
 
         this.config.host.id ||= this.getId();
