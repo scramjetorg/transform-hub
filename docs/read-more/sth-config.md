@@ -97,6 +97,10 @@ kubernetes:
     # Path to store sequences
     sequencesRoot: ${HOME}/.scramjet_k8s_sequences
 
+# Which localStorage adapter should STH use.
+# One of 'file', 'couchdb'.
+localStorageAdapter: file
+
 # Where should ProcessSequenceAdapter save new Sequences
 sequencesRoot:
 

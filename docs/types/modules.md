@@ -2506,6 +2506,7 @@ ___
 | `runnerMaxMem` | `number` |
 | `runnerPyImage` | `string` |
 | `runtimeAdapter` | `string` |
+| `localStorageAdapter` | `string` |
 | `safeOperationLimit` | `number` |
 | `selfHosted` | `boolean` |
 | `sequencesRoot` | `string` |
@@ -2561,6 +2562,7 @@ ___
 | `platform.space` | `string` | - |
 | `runnerEnvs?` | `Record`<`string`, `string`\> | - |
 | `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes', 'detect' |
+| `localStorageAdapter` | `string` | Which localStorage adapter should STH use. One of 'file', 'couchdb' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. In megabytes. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
 | `startupConfig` | `string` | Provides the location of a config file with the list of sequences to be started along with the host |
