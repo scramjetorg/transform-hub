@@ -42,7 +42,7 @@ export interface IStorageAdapter {
      * Returns the number of stored items.
      * @returns The number of stored items.
      */
-    length(): number;
+    length(): Promise<number>;
 
     /**
      * Retrieves all stored items as a key–value map.

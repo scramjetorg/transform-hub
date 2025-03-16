@@ -134,6 +134,13 @@ export type DockerAdapterConfiguration = {
     };
 };
 
+export interface CouchDbAdapterConf {
+    url: string;
+    dbName?: string;
+    user?: string;
+    pass?: string;
+}
+
 export type STHConfiguration = {
     /**
      * Description set by user
@@ -300,6 +307,7 @@ export type STHConfiguration = {
 
     adapters: Record<string, AdapterConfig>;
 
+    couchdb?: CouchDbAdapterConf;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

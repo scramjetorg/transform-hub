@@ -14,8 +14,8 @@ export class FileLocalStorageAdapter implements IStorageAdapter {
         this.storagePath = storagePath;
     }
 
-    length(): number {
-        return this.localStorage.length;
+    length(): Promise<number> {
+        return Promise.resolve(this.localStorage.length);
     }
 
     async init(): Promise<void> {

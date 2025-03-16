@@ -55,4 +55,8 @@ export type STHCommandOptions = {
     telemetry: TelemetryConfig["status"]
     monitoringServer: { port: number };
     runnerEnvs?: string;
+    couchdbUrl?: string;
+    couchdbName?: string;
+    couchdbUser?: string;
+    couchdbPass?: string;
 }

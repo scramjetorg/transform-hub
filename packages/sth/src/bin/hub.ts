@@ -60,6 +60,10 @@ const unaugmentedOptions = program
     .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
     .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
     .option("--runner-envs <runnerEnvs>", "Additional ENVs for Runners. e.g ENV1=1;ENV2=2")
+    .option("--couchdb-url <couchdb-url>", "URL to CouchDB localStorage instance")
+    .option("--couchdb-name <couchdb-name>", "CouchDB database name")
+    .option("--couchdb-user <couchdb-user>", "CouchDB user")
+    .option("--couchdb-pass <couchdb-pass>", "CouchDB password")
     
 const validStorageAdapters = getValidLocalStorageAdapters();
 unaugmentedOptions.option("--localstorage-adapter <adapter>", `LocalStorage adapter to use (${validStorageAdapters.map(x => JSON.stringify(x))},"file")`, (value) => {
@@ -175,7 +179,13 @@ const options = augmentOptions(unaugmentedOptions)
             port: parseInt(options.healtzPort, 10),
             host: options.healtzHost,
             path: options.healtzPath
-        } : undefined
+        } : undefined,
+        couchdb: {
+            url: options.couchdbUrl,
+            dbName: options.couchdbName,
+            user: options.couchdbUser,
+            pass: options.couchdbPass
+        }
     });
 
     await configService.selectRuntimeAdapter();

@@ -78,5 +78,11 @@ export const defaultConfig: STHConfiguration = {
             labels: { module: "host", job: "telemetry" }
         }
     },
-    instanceReconnect: false
+    instanceReconnect: false,
+    couchdb: {
+        url: "http://localhost:5984",
+        dbName: "localstorage",
+        user: "",
+        pass: ""
+    },
 };

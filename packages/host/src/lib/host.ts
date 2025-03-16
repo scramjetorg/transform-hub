@@ -65,7 +65,7 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
-import { getStorageAdapter } from "./localStorage/storageUtils";
+import { getStorageAdapter } from "./localStorage/utils";
 import { IStorageAdapter } from "./localStorage/IStorageAdapter";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
@@ -206,7 +206,7 @@ export class Host implements IComponent {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
         this.sequenceStore = new SequenceStore();
-        this.localStorage = getStorageAdapter(sthConfig.localStorageAdapter);
+        this.localStorage = getStorageAdapter(sthConfig);
 
         this.logger = new ObjLogger(
             this,
@@ -1196,6 +1196,7 @@ export class Host implements IComponent {
                 );
 
                 await instance.handleInstanceConnect(streams);
+                
             } else {
                 this.logger.info("Instance already exists", id);
 

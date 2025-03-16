@@ -229,13 +229,15 @@ export class CSIController extends TypedEmitter<Events> {
         ];
     }
 
-    async start(): Promise<void> {
-        this.globalLocalStorageState = await this.localStorageAdapter.getAllItems();
-        
+    async start(): Promise<void> {        
         const i = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
+
         });
+        
+        this.globalLocalStorageState = await this.localStorageAdapter.getAllItems();
+        await this.sendFullStorageState(this.id, this.globalLocalStorageState);
 
         i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
@@ -638,7 +640,7 @@ export class CSIController extends TypedEmitter<Events> {
             });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
 
-            await this.sendFullStorageState(this.id, this.globalLocalStorageState);
+            // await this.sendFullStorageState(this.id, this.globalLocalStorageState);
 
             await once(this, "pang");
             this.initResolver?.res();
