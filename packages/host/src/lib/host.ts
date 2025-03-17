@@ -170,8 +170,8 @@ export class Host implements IComponent {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
         onRPCExpose: (path: string, instanceId: string) => {
             this.instancesStore.registerRpc(path, instanceId);
-            
-            this.logger.info("RPC exposed", {path, instanceId});
+
+            this.logger.info("RPC exposed", { path, instanceId });
         }
     };
 
@@ -308,7 +308,7 @@ export class Host implements IComponent {
     }
 
     private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
-        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor}>({ name: "@scramjet/monitoring-server" });
+        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
 
         this.logger.info("Starting monitoring server with config", config);
 
@@ -509,7 +509,7 @@ export class Host implements IComponent {
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
             const cpmHostName = this.config.platform?.api || this.config.cpmUrl;
             const cpmId = this.config.platform?.space || `:${this.config.cpmId}`;
-            const cpmConnectorConfig : CPMConnectorOptions = {
+            const cpmConnectorConfig: CPMConnectorOptions = {
                 description: this.config.description,
                 tags: this.config.tags,
                 id: this.config.host.id,
@@ -723,7 +723,6 @@ export class Host implements IComponent {
     createRPCForwarder() {
         return async (req: IncomingMessage) => {
             const [instance] = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
-            
             const url = req.url!.slice(instance.expose?.path?.length || 0);
             this.logger.debug("RPC request", req.url, url, instance?.id, instance?.rpcUrl);
             return [instance?.rpcUrl, url] as [string, string];
@@ -817,7 +816,7 @@ export class Host implements IComponent {
         }
 
         const id = req.params.id;
-        const sequence: SequenceInfo| undefined = this.sequenceStore.getById(id);
+        const sequence: SequenceInfo | undefined = this.sequenceStore.getById(id);
 
         const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 
@@ -1196,7 +1195,6 @@ export class Host implements IComponent {
                 );
 
                 await instance.handleInstanceConnect(streams);
-                
             } else {
                 this.logger.info("Instance already exists", id);
 
