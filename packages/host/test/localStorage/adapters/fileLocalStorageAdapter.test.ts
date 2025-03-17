@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { FileLocalStorageAdapter } from '../../../src/lib/localStorage/adapters/fileAdapter';
+import { FileLocalStorageAdapter } from '@scramjet/host';
 
 
 const testStorageName = 'localstorage_test';

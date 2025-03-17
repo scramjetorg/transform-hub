@@ -47,7 +47,7 @@ import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPaylo
 import { ReasonPhrases } from "http-status-codes";
 import { mapRunnerExitCode } from "./utils";
 import { StorageUpdateMessageData } from "@scramjet/types/src/messages/event";
-import { IStorageAdapter } from "./localStorage/IStorageAdapter";
+import { IStorageAdapter } from "@scramjet/types";
 import { InstancesStore } from "./instance-store";
 
 /**

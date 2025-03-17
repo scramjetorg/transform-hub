@@ -11,7 +11,7 @@ import { Readable, Writable } from "stream";
 import SequenceStore from "./sequenceStore";
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
-import { IStorageAdapter } from "./localStorage/IStorageAdapter";
+import { IStorageAdapter } from "@scramjet/types";
 
 export type DispatcherErrorEventData = { id:string, err: any };
 export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};

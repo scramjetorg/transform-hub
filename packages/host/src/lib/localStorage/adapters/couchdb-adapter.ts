@@ -1,5 +1,5 @@
 import nano, { DocumentScope, ServerScope } from "nano";
-import { IStorageAdapter } from "../IStorageAdapter";
+import { IStorageAdapter } from "@scramjet/types";
 import { CouchDbAdapterConf } from "@scramjet/types";
 
 

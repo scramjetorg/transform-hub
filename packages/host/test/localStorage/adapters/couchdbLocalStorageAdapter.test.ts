@@ -1,4 +1,4 @@
-import { CouchdbLocalStorageAdapter } from '@scramjet/host/src/lib/localStorage/adapters';
+import { CouchdbLocalStorageAdapter } from '@scramjet/host';
 import { CouchDbAdapterConf } from '@scramjet/types';
 
 

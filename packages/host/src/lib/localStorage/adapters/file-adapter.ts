@@ -1,5 +1,5 @@
 import { LocalStorage } from "node-localstorage";
-import { IStorageAdapter } from "../IStorageAdapter";
+import { IStorageAdapter } from "@scramjet/types";
 
 
 export class FileLocalStorageAdapter implements IStorageAdapter {

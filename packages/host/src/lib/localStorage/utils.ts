@@ -1,6 +1,6 @@
 import { STHConfiguration, StorageAdapterType } from "@scramjet/types";
-import { FileLocalStorageAdapter, CouchdbLocalStorageAdapter } from "./adapters";
-import { IStorageAdapter } from "./IStorageAdapter";
+import { FileLocalStorageAdapter, CouchdbLocalStorageAdapter } from "@scramjet/host";
+import { IStorageAdapter } from "@scramjet/types";
 
 
 export function getValidLocalStorageAdapters(): StorageAdapterType[] {

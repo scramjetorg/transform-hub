@@ -1,2 +1,2 @@
-export * from "./couchdbAdapter";
-export * from "./fileAdapter";
+export * from "./couchdb-adapter";
+export * from "./file-adapter";

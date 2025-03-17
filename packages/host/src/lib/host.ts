@@ -65,8 +65,8 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
-import { getStorageAdapter } from "./localStorage/utils";
-import { IStorageAdapter } from "./localStorage/IStorageAdapter";
+import { getStorageAdapter } from "@scramjet/host";
+import { IStorageAdapter } from "@scramjet/types";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();

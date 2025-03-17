@@ -7,3 +7,4 @@ export * from "./lib/serviceDiscovery/sd-adapter";
 export * from "./lib/socket-server";
 export * from "./lib/start-host";
 export * from "./lib/localStorage/utils";
+export * from "./lib/localStorage/adapters";
