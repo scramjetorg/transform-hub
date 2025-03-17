@@ -640,8 +640,6 @@ export class CSIController extends TypedEmitter<Events> {
             });
             this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
 
-            // await this.sendFullStorageState(this.id, this.globalLocalStorageState);
-
             await once(this, "pang");
             this.initResolver?.res();
         } catch (e: any) {
