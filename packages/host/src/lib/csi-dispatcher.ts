@@ -44,7 +44,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     public sequenceStore: SequenceStore;
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
-    private localStorageAdapter: any;
+    private localStorageAdapter: IStorageAdapter;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -72,7 +72,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload,
             status: InstanceStatus.INITIALIZING,
             inputHeadersSent: false
-        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.localStorageAdapter, this.instanceStore);
+        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.instanceStore, this.localStorageAdapter);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 
