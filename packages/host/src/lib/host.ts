@@ -280,7 +280,7 @@ export class Host implements IComponent {
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
         this.topicsBase = `${this.config.host.apiBase}/topic`;
-        this.localStorage.init();
+
         this.csiDispatcher = new CSIDispatcher({
             instanceStore: this.instancesStore,
             sequenceStore: this.sequenceStore,
@@ -493,6 +493,7 @@ export class Host implements IComponent {
         }
 
         const adapter = await initializeRuntimeAdapters(this.config, this.logger);
+        await this.localStorage.init();
 
         this.adapterName = adapter;
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
