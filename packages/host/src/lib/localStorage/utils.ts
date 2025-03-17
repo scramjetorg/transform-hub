@@ -12,20 +12,20 @@ export function getValidLocalStorageAdapters(): StorageAdapterType[] {
  */
 export function getStorageAdapter(sthConfig: STHConfiguration): IStorageAdapter {
     switch (sthConfig.localStorageAdapter) {
-      case "couchdb": {
-        if (!sthConfig.couchdb) {
-          throw new Error("Missing `couchdb` config in STHConfiguration");
+        case "couchdb": {
+            if (!sthConfig.couchdb) {
+                throw new Error("Missing `couchdb` config in STHConfiguration");
+            }
+            return new CouchdbLocalStorageAdapter({
+                url: sthConfig.couchdb.url,
+                dbName: sthConfig.couchdb.dbName || "localstorage",
+                user: sthConfig.couchdb.user,
+                pass: sthConfig.couchdb.pass,
+            });
         }
-        return new CouchdbLocalStorageAdapter({
-          url: sthConfig.couchdb.url,
-          dbName: sthConfig.couchdb.dbName || "localstorage",
-          user: sthConfig.couchdb.user,
-          pass: sthConfig.couchdb.pass,
-        });
-      }
-  
-      case "file":
-      default:
-        return new FileLocalStorageAdapter();
+
+        case "file":
+        default:
+            return new FileLocalStorageAdapter();
     }
-  }
+}
