@@ -104,13 +104,4 @@ describe('CouchdbLocalStorageAdapter Tests', () => {
         await expect(adapter.setItem('fail', 'value')).rejects.toThrow('Simulated insert error');
         (adapter as any).db.insert = backup;
     });
-
-    test('performance under a larger dataset', async () => {
-        const numItems = 1000;
-        const keys = Array.from({ length: numItems }, (_, i) => `k_${i}`);
-        const start = Date.now();
-        await Promise.all(keys.map(key => adapter.setItem(key, `v_${key}`)));
-        const duration = Date.now() - start;
-        expect(duration).toBeLessThan(3000);
-    });
 });

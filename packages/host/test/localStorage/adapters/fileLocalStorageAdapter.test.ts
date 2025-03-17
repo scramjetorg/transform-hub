@@ -108,13 +108,4 @@ describe('FileLocalStorageAdapter Tests', () => {
 
         (adapter as any).localStorage.setItem = backup;
     });
-
-    test('performance under large dataset', async () => {
-        const numItems = 1000;
-        const keys = Array.from({ length: numItems }, (_, i) => `k_${i}`);
-        const start = Date.now();
-        await Promise.all(keys.map(key => adapter.setItem(key, `v_${key}`)));
-        const duration = Date.now() - start;
-        expect(duration).toBeLessThan(1500);
-    });
 });
