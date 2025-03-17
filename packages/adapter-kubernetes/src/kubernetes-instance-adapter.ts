@@ -14,7 +14,7 @@ import {
 } from "@scramjet/types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { RunnerConnectInfo } from "@scramjet/types";
 import { createReadStream } from "fs";
 import path from "path";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";

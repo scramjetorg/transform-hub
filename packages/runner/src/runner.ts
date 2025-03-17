@@ -37,10 +37,10 @@ import { Readable, Writable } from "stream";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
-import { SetMessageData } from "@scramjet/types/src/messages/set";
+import { SetMessageData } from "@scramjet/types";
 import { createServer } from "@scramjet/api-server";
 import { AddressInfo } from "net";
-import { StorageMessageData, StorageUpdateMessageData } from "@scramjet/types/src/messages/event";
+import { StorageMessageData, StorageUpdateMessageData } from "@scramjet/types";
 import { LocalStorageAgent, LocalStorageAgentHost } from "./local-storage-agent";
 
 let exitHandled = false;

@@ -15,7 +15,7 @@ import {
 import { streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { RunnerConnectInfo } from "@scramjet/types";
 import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";

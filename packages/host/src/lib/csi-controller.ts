@@ -42,11 +42,11 @@ import { DataStream } from "scramjet";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import { RunnerConnectInfo } from "@scramjet/types";
 import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPayloadDTO, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ReasonPhrases } from "http-status-codes";
 import { mapRunnerExitCode } from "./utils";
-import { StorageUpdateMessageData } from "@scramjet/types/src/messages/event";
+import { StorageUpdateMessageData } from "@scramjet/types";
 import { IStorageAdapter } from "@scramjet/types";
 import { InstancesStore } from "./instance-store";
 
