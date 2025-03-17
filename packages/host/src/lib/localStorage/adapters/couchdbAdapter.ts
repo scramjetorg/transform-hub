@@ -104,4 +104,8 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
             await this.db.bulk({ docs: docsToDelete });
         }
     }
+
+    async destroy(): Promise<void> {
+        await this.nanoInstance.db.destroy(this.dbName);
+    }
 }
