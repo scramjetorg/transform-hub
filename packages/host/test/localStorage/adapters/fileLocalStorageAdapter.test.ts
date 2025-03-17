@@ -62,7 +62,7 @@ describe('FileLocalStorageAdapter Tests', () => {
         await adapter.clear();
         const allItems = await adapter.getAllItems();
         expect(allItems).toEqual({});
-        expect(adapter.length()).toBe(0);
+        expect(await adapter.length()).toBe(0);
     });
 
     test('getAllItems() returns complete key-value mapping', async () => {
@@ -74,13 +74,13 @@ describe('FileLocalStorageAdapter Tests', () => {
 
     test('length() returns correct number of keys', async () => {
         await adapter.clear();
-        expect(adapter.length()).toBe(0);
+        expect(await adapter.length()).toBe(0);
         await adapter.setItem('a', '1');
-        expect(adapter.length()).toBe(1);
+        expect(await adapter.length()).toBe(1);
         await adapter.setItem('b', '2');
-        expect(adapter.length()).toBe(2);
+        expect(await adapter.length()).toBe(2);
         await adapter.removeItem('a');
-        expect(adapter.length()).toBe(1);
+        expect(await adapter.length()).toBe(1);
     });
 
     test('handles special characters in keys and values', async () => {
