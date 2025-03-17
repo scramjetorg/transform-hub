@@ -78,7 +78,7 @@ export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; e
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
-    private globalLocalStorageState: Record<string, string | null> = {};
+    private sharedLocalStorage: Record<string, string | null> = {};
     private localStorageAdapter: IStorageAdapter;
     private instanceLifetimeExtensionDelay: number;
 
@@ -101,6 +101,7 @@ export class CSIController extends TypedEmitter<Events> {
             }
         };
     }
+
     limits: InstanceLimits = {};
     runnerSystemInfo: RunnerConnectInfo["system"];
     sequence: SequenceInfo;
@@ -182,15 +183,14 @@ export class CSIController extends TypedEmitter<Events> {
     private upStreams: PassThroughStreamsConfig;
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
-    private instanceStore: InstancesStore;
     constructor(
         private handshakeMessage: Omit<MessageDataType<RunnerMessageCode.PING>, "created">,
         public communicationHandler: ICommunicationHandler,
         private sthConfig: STHConfiguration,
         private hostProxy: HostProxy,
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
+        private instanceStore: InstancesStore,
         localStorageAdapter: IStorageAdapter,
-        instanceStore: InstancesStore
     ) {
         super();
         this.instanceStore = instanceStore;
@@ -229,15 +229,15 @@ export class CSIController extends TypedEmitter<Events> {
         ];
     }
 
-    async start(): Promise<void> {        
+    async start(): Promise<void> {
         const i = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
 
         });
         
-        this.globalLocalStorageState = await this.localStorageAdapter.getAllItems();
-        await this.sendFullStorageState(this.id, this.globalLocalStorageState);
+        this.sharedLocalStorage = await this.localStorageAdapter.getAllItems();
+        await this.sendFullStorageState(this.id, this.sharedLocalStorage);
 
         i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
@@ -535,29 +535,31 @@ export class CSIController extends TypedEmitter<Events> {
           );
         this.upStreams[CC.MONITORING].resume();
     }
+
     async applyUpdate(key: string, value: string | null): Promise<void> {
         if (key === StorageActionCode.CLEAR && value === null) {
-            this.globalLocalStorageState = {};
+            this.sharedLocalStorage = {};
             await this.localStorageAdapter.clear();
         } else if (value === null) {
-            delete this.globalLocalStorageState[key];
+            delete this.sharedLocalStorage[key];
             await this.localStorageAdapter.removeItem(key);
         } else {
-            this.globalLocalStorageState[key] = value;
+            this.sharedLocalStorage[key] = value;
             await this.localStorageAdapter.setItem(key, value);
         }
     }
+    
     async broadcastUpdate(key: string, value: string | null) {
         this.instanceStore.map((csi) => {
             csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
         });
     }
       
-    async sendFullStorageState(runnerId: string, globalLocalStorageState: Record<string, any>) {
-        this.logger.debug("Sending full storage state to Runner", runnerId, globalLocalStorageState);
+    async sendFullStorageState(runnerId: string, sharedLocalStorage: Record<string, any>) {
+        this.logger.debug("Sending full storage state to Runner", runnerId, sharedLocalStorage);
         await this.communicationHandler.sendControlMessage(
           RunnerMessageCode.STORAGE,
-          { values: globalLocalStorageState }
+          { values: sharedLocalStorage }
         );
     }
 
