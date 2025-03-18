@@ -2,7 +2,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
+import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
@@ -11,7 +11,6 @@ import { Readable, Writable } from "stream";
 import SequenceStore from "./sequenceStore";
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
-import { IStorageAdapter } from "@scramjet/types";
 
 export type DispatcherErrorEventData = { id:string, err: any };
 export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};

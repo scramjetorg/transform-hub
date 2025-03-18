@@ -12,4 +12,4 @@ export function createCrudHandlers(router: CeroRouter): {
         update: router.put,
         delete: router.delete
     };
-};
+}

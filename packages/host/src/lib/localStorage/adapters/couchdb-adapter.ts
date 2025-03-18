@@ -1,7 +1,5 @@
 import nano, { DocumentScope, ServerScope } from "nano";
-import { IStorageAdapter } from "@scramjet/types";
-import { CouchDbAdapterConf } from "@scramjet/types";
-
+import { IStorageAdapter, CouchDbAdapterConf } from "@scramjet/types";
 
 export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     private db!: DocumentScope<any>;
@@ -38,12 +36,14 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
 
     async length(): Promise<number> {
         const info = await this.db.info();
+
         return info.doc_count;
     }
 
     async getAllItems(): Promise<Record<string, string | null>> {
         const result: Record<string, string | null> = {};
         const rows = await this.db.list({ include_docs: true });
+
         for (const row of rows.rows) {
             if (row.doc && typeof row.doc.value === "string") {
                 result[row.id] = row.doc.value;
@@ -57,6 +57,7 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     async setItem(key: string, value: string): Promise<void> {
         try {
             const doc = await this.db.get(key);
+
             // update
             await this.db.insert({ ...doc, value });
         } catch (err: any) {
@@ -72,6 +73,7 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     async getItem(key: string): Promise<string | null> {
         try {
             const doc = await this.db.get(key);
+
             return doc.value ?? null;
         } catch (err: any) {
             if (err.statusCode === 404) {
@@ -84,6 +86,7 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     async removeItem(key: string): Promise<void> {
         try {
             const doc = await this.db.get(key);
+
             await this.db.destroy(doc._id, doc._rev);
         } catch (err: any) {
             if (err.statusCode !== 404) {
@@ -100,6 +103,7 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
             _rev: r.value.rev,
             _deleted: true
         }));
+
         if (docsToDelete.length) {
             await this.db.bulk({ docs: docsToDelete });
         }

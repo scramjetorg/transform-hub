@@ -25,8 +25,8 @@ import {
     STHConfiguration,
     STHRestAPI,
     SequenceInfo,
-    StartSequenceDTO
-} from "@scramjet/types";
+    StartSequenceDTO,
+    IStorageAdapter } from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
@@ -66,7 +66,6 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 
 import { parse } from "path";
 import { getStorageAdapter } from "@scramjet/host";
-import { IStorageAdapter } from "@scramjet/types";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -493,6 +492,7 @@ export class Host implements IComponent {
         }
 
         const adapter = await initializeRuntimeAdapters(this.config, this.logger);
+
         await this.localStorage.init();
 
         this.adapterName = adapter;
@@ -725,6 +725,7 @@ export class Host implements IComponent {
         return async (req: IncomingMessage) => {
             const [instance] = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
             const url = req.url!.slice(instance.expose?.path?.length || 0);
+
             this.logger.debug("RPC request", req.url, url, instance?.id, instance?.rpcUrl);
             return [instance?.rpcUrl, url] as [string, string];
         };

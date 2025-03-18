@@ -10,20 +10,19 @@ import {
     MonitoringMessageData,
     STHConfiguration,
     SequenceConfig,
-    SequenceInfo
-} from "@scramjet/types";
+    SequenceInfo,
+    RunnerConnectInfo } from "@scramjet/types";
 import { streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 
-import { RunnerConnectInfo } from "@scramjet/types";
 import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables } from "@scramjet/adapters";
 import { development } from "@scramjet/sth-config";
 
-const isTSNode = 
-    !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) || 
+const isTSNode =
+    !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) ||
     !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "Python available";
 
@@ -172,8 +171,8 @@ class ProcessInstanceAdapter implements
         this.logger.trace("Runner process environment", env);
 
         const runnerProcess = spawn(
-            runnerCommand[0], 
-            runnerCommand.slice(1), 
+            runnerCommand[0],
+            runnerCommand.slice(1),
             { env, detached: payload.reconnect }
         );
 

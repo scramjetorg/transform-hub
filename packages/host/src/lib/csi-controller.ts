@@ -30,8 +30,10 @@ import {
     STHConfiguration,
     STHRestAPI,
     StopSequenceMessageData,
-    WritableStream
-} from "@scramjet/types";
+    WritableStream,
+    RunnerConnectInfo,
+    StorageUpdateMessageData,
+    IStorageAdapter } from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 
@@ -42,12 +44,9 @@ import { DataStream } from "scramjet";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerConnectInfo } from "@scramjet/types";
 import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPayloadDTO, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ReasonPhrases } from "http-status-codes";
 import { mapRunnerExitCode } from "./utils";
-import { StorageUpdateMessageData } from "@scramjet/types";
-import { IStorageAdapter } from "@scramjet/types";
 import { InstancesStore } from "./instance-store";
 
 /**
@@ -86,7 +85,7 @@ export class CSIController extends TypedEmitter<Events> {
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
-    
+
     get rpcUrl(): string {
         return `http://${this.expose?.host}:${this.expose?.port}`;
     }
@@ -233,9 +232,8 @@ export class CSIController extends TypedEmitter<Events> {
         const i = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
-
         });
-        
+
         this.sharedLocalStorage = await this.localStorageAdapter.getAllItems();
         await this.sendFullStorageState(this.id, this.sharedLocalStorage);
 
@@ -521,9 +519,9 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.communicationHandler.addMonitoringHandler(
             RunnerMessageCode.STORAGE_UPDATE,
-            async ([code, data]) => 
-            {
+            async ([code, data]) => {
                 const { key, value } = data as StorageUpdateMessageData;
+
                 try {
                     await this.applyUpdate(key, value);
                 } catch (err) {
@@ -532,7 +530,7 @@ export class CSIController extends TypedEmitter<Events> {
                 this.broadcastUpdate(key, value);
                 return [code, data];
             }, true
-          );
+        );
         this.upStreams[CC.MONITORING].resume();
     }
 
@@ -548,18 +546,18 @@ export class CSIController extends TypedEmitter<Events> {
             await this.localStorageAdapter.setItem(key, value);
         }
     }
-    
+
     async broadcastUpdate(key: string, value: string | null) {
         this.instanceStore.map((csi) => {
             csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
         });
     }
-      
+
     async sendFullStorageState(runnerId: string, sharedLocalStorage: Record<string, any>) {
         this.logger.debug("Sending full storage state to Runner", runnerId, sharedLocalStorage);
         await this.communicationHandler.sendControlMessage(
-          RunnerMessageCode.STORAGE,
-          { values: sharedLocalStorage }
+            RunnerMessageCode.STORAGE,
+            { values: sharedLocalStorage }
         );
     }
 

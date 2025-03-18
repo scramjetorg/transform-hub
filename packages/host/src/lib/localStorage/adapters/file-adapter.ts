@@ -1,7 +1,6 @@
 import { LocalStorage } from "node-localstorage";
 import { IStorageAdapter } from "@scramjet/types";
 
-
 export class FileLocalStorageAdapter implements IStorageAdapter {
     private localStorage!: LocalStorage;
     private storagePath: string;
@@ -24,10 +23,13 @@ export class FileLocalStorageAdapter implements IStorageAdapter {
 
     async getAllItems(): Promise<Record<string, string | null>> {
         const result: Record<string, string | null> = {};
+
         try {
             const length = this.localStorage.length;
+
             for (let i = 0; i < length; i++) {
                 const key = this.localStorage.key(i);
+
                 if (key) {
                     result[key] = this.localStorage.getItem(key);
                 }
@@ -50,6 +52,7 @@ export class FileLocalStorageAdapter implements IStorageAdapter {
     async getItem(key: string): Promise<string | null> {
         try {
             const item = this.localStorage.getItem(key);
+
             return item !== null ? item : null;
         } catch (error) {
             return Promise.reject(error);
@@ -69,6 +72,7 @@ export class FileLocalStorageAdapter implements IStorageAdapter {
         try {
             while (this.localStorage.length > 0) {
                 const key = this.localStorage.key(0);
+
                 if (key !== null) {
                     this.localStorage.removeItem(key);
                 }
