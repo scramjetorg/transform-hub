@@ -189,7 +189,6 @@ const options = augmentOptions(unaugmentedOptions)
     });
 
     await configService.selectRuntimeAdapter();
-    await configService.selectLocalStorageAdapter();
 
     const tips = [
         ["Run Sequences in our cloud.", { "Find out": "more about Scramjet Cloud Platform", here: "https://scramjet.org/" }],
