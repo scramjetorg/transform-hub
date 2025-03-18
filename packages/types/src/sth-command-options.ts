@@ -24,6 +24,7 @@ export type STHCommandOptions = {
     id?: string;
     runtimeAdapter: string;
     localStorageAdapter: string;
+    localStoragePath: string;
     runnerImage: string;
     runnerPyImage: string;
     runnerMaxMem: number;

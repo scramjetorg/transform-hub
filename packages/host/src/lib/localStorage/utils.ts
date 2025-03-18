@@ -3,7 +3,7 @@ import { FileLocalStorageAdapter, CouchdbLocalStorageAdapter } from "@scramjet/h
 import { IStorageAdapter } from "@scramjet/types";
 
 
-export function getValidLocalStorageAdapters(): StorageAdapterType[] {
+export function getValidStorageAdapters(): StorageAdapterType[] {
     return ["file", "couchdb"];
 }
 
@@ -26,6 +26,6 @@ export function getStorageAdapter(sthConfig: STHConfiguration): IStorageAdapter 
 
         case "file":
         default:
-            return new FileLocalStorageAdapter();
+            return new FileLocalStorageAdapter(sthConfig.localStoragePath);
     }
 }

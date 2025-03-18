@@ -257,6 +257,11 @@ export type STHConfiguration = {
     localStorageAdapter: StorageAdapterType;
 
     /**
+     * Storage path for file-based adapter
+     */
+    localStoragePath: string;
+
+    /**
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new Sequences
      */

@@ -7,7 +7,7 @@ import { DeepPartial, STHCommandOptions, STHConfiguration, StorageAdapterType } 
 import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
-import { getValidLocalStorageAdapters, Host } from "@scramjet/host";
+import { getValidStorageAdapters, Host } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions } from "@scramjet/adapters";
@@ -64,8 +64,9 @@ const unaugmentedOptions = program
     .option("--couchdb-name <couchdb-name>", "CouchDB database name")
     .option("--couchdb-user <couchdb-user>", "CouchDB user")
     .option("--couchdb-pass <couchdb-pass>", "CouchDB password")
-    
-const validStorageAdapters = getValidLocalStorageAdapters();
+    .option("--localstorage-path <path>", "Storage path for file-based localStorage adapter", "./localStorage")
+
+const validStorageAdapters = getValidStorageAdapters();
 unaugmentedOptions.option("--localstorage-adapter <adapter>", `LocalStorage adapter to use (${validStorageAdapters.map(x => JSON.stringify(x))},"file")`, (value) => {
     if (!value || value === "file")
         return "file";
@@ -144,6 +145,7 @@ const options = augmentOptions(unaugmentedOptions)
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
         localStorageAdapter: options.localstorageAdapter as StorageAdapterType,
+        localStoragePath: resolveFile(options.localstoragePath),
         sequencesRoot: resolveFile(options.sequencesRoot),
         startupConfig: resolveFile(options.startupConfig),
         identifyExisting: options.identifyExisting,
