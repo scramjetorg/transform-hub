@@ -25,6 +25,7 @@ COPY ./dist/docker-runner/symbols ./dist/symbols
 COPY ./dist/docker-runner/obj-logger ./dist/obj-logger
 COPY ./dist/docker-runner/model ./dist/model
 COPY ./dist/docker-runner/runner ./dist/runner
+COPY ./dist/docker-runner/api-server ./dist/api-server
 
 FROM target
 
