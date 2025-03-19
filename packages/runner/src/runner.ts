@@ -37,9 +37,11 @@ import { Readable, Writable } from "stream";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
-import { SetMessageData } from "@scramjet/types/src/messages/set";
+import { SetMessageData } from "@scramjet/types";
 import { createServer } from "@scramjet/api-server";
 import { AddressInfo } from "net";
+import { StorageMessageData, StorageUpdateMessageData } from "@scramjet/types";
+import { LocalStorageAgent, LocalStorageAgentHost } from "./local-storage-agent";
 
 let exitHandled = false;
 
@@ -144,6 +146,7 @@ type RunnerArgs = {
  * reacts to control messages such as stopping etc.
  */
 export class Runner<X extends AppConfig> implements IComponent {
+    private localCache: Record<string, string | null> = {};
     private emitter;
     private _context?: RunnerAppContext<X, any>;
     private monitoringInterval?: NodeJS.Timeout;
@@ -236,6 +239,16 @@ export class Runner<X extends AppConfig> implements IComponent {
         });
     }
 
+    async onStorageMessage(data: { values: Record<string, string> }) {
+        // this.logger.debug("Received local storage state from Host", data.values);  // <-- uncomment for debugging
+        Object.keys(this.localCache).forEach(k => delete this.localCache[k]);
+        Object.assign(this.localCache, data.values);
+    }
+
+    async onStorageUpdateMessage(data: { key: string; value: string | null }) {
+        (this.context.localStorage as any).handleBroadcastUpdate(data);
+    }
+
     get context(): RunnerAppContext<X, any> {
         if (!this._context) {
             this.logger.error("Uninitialized context");
@@ -270,6 +283,12 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.emitter.emit(eventData.eventName, eventData.message);
                 break;
             case RunnerMessageCode.MONITORING_REPLY:
+                break;
+            case RunnerMessageCode.STORAGE:
+                await this.onStorageMessage(data as StorageMessageData);
+                break;
+            case RunnerMessageCode.STORAGE_UPDATE:
+                await this.onStorageUpdateMessage(data as StorageUpdateMessageData);
                 break;
             default:
                 break;
@@ -654,6 +673,15 @@ export class Runner<X extends AppConfig> implements IComponent {
         const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
         const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
+        const localStorageHost: LocalStorageAgentHost = {
+            localCache: this.localCache,
+            writeMonitoringMessage: (msg: EncodedMonitoringMessage) => {
+                this.writeMonitoringMessage(msg);
+            }
+        };
+
+        const localStorageAgent = new LocalStorageAgent(localStorageHost);
+
         const managerApiClient = hostApiClient.getManagerClient(
             "/api/v1"
         );
@@ -676,7 +704,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             managerApiClient,
             this.instanceId,
             this.logger.logLevel,
-            this.api
+            this.api,
+            localStorageAgent  
         );
         this._context.logger.pipe(this.logger);
 

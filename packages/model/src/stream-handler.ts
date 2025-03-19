@@ -45,6 +45,8 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [CPMMessageCode.LOAD]: ConfiguredMessageHandler<CPMMessageCode.LOAD>[];
     [CPMMessageCode.NETWORK_INFO]: ConfiguredMessageHandler<CPMMessageCode.NETWORK_INFO>[];
+    [RunnerMessageCode.STORAGE]: ConfiguredMessageHandler<RunnerMessageCode.STORAGE>[];
+    [RunnerMessageCode.STORAGE_UPDATE]: ConfiguredMessageHandler<RunnerMessageCode.STORAGE_UPDATE>[];
 };
 
 type ControlMessageHandlerList = {
@@ -60,6 +62,9 @@ type ControlMessageHandlerList = {
     [CPMMessageCode.KEY_REVOKED]: ConfiguredMessageHandler<CPMMessageCode.KEY_REVOKED>[];
     [CPMMessageCode.LIMIT_EXCEEDED]: ConfiguredMessageHandler<CPMMessageCode.LIMIT_EXCEEDED>[];
     [CPMMessageCode.ID_DROP]: ConfiguredMessageHandler<CPMMessageCode.ID_DROP>[];
+    [RunnerMessageCode.STORAGE] : ConfiguredMessageHandler<RunnerMessageCode.STORAGE>[];
+    [RunnerMessageCode.STORAGE_UPDATE] : ConfiguredMessageHandler<RunnerMessageCode.STORAGE_UPDATE>[];
+
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -99,6 +104,8 @@ export class CommunicationHandler implements ICommunicationHandler {
             [CPMMessageCode.KEY_REVOKED]: [],
             [CPMMessageCode.LIMIT_EXCEEDED]: [],
             [CPMMessageCode.ID_DROP]: [],
+            [RunnerMessageCode.STORAGE]: [],
+            [RunnerMessageCode.STORAGE_UPDATE]: [],
         };
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],
@@ -113,7 +120,9 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.SEQUENCE_STOPPED]: [],
             [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
             [CPMMessageCode.LOAD]: [],
-            [CPMMessageCode.NETWORK_INFO]: []
+            [CPMMessageCode.NETWORK_INFO]: [],
+            [RunnerMessageCode.STORAGE]: [],
+            [RunnerMessageCode.STORAGE_UPDATE]: [],
         };
 
         this.logger.trace("CommunicationHandler created");

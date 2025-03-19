@@ -48,6 +48,8 @@ export const defaultConfig: STHConfiguration = {
     },
     safeOperationLimit: 512,
     runtimeAdapter: "detect",
+    localStorageAdapter: "file",
+    localStoragePath: "./localStorage",
     sequencesRoot: join(homedir(), ".scramjet_sequences"),
     kubernetes: {
         namespace: "default",
@@ -77,5 +79,11 @@ export const defaultConfig: STHConfiguration = {
             labels: { module: "host", job: "telemetry" }
         }
     },
-    instanceReconnect: false
+    instanceReconnect: false,
+    couchdb: {
+        url: "http://localhost:5984",
+        dbName: "localstorage",
+        user: "",
+        pass: ""
+    },
 };

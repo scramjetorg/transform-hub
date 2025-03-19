@@ -25,8 +25,8 @@ import {
     STHConfiguration,
     STHRestAPI,
     SequenceInfo,
-    StartSequenceDTO
-} from "@scramjet/types";
+    StartSequenceDTO,
+    IStorageAdapter } from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
@@ -36,7 +36,7 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
-import { DuplexStream } from "@scramjet/api-server";
+import { DuplexStream, roundRobinStrategy } from "@scramjet/api-server";
 import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 
@@ -65,7 +65,7 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
-import { roundRobinStrategy } from "@scramjet/api-server";
+import { getStorageAdapter } from "@scramjet/host";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -163,12 +163,14 @@ export class Host implements IComponent {
 
     csiDispatcher: CSIDispatcher;
 
+    localStorage: IStorageAdapter;
+
     private instanceProxy: HostProxy = {
         onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
         onRPCExpose: (path: string, instanceId: string) => {
             this.instancesStore.registerRpc(path, instanceId);
-            
-            this.logger.info("RPC exposed", {path, instanceId});
+
+            this.logger.info("RPC exposed", { path, instanceId });
         }
     };
 
@@ -203,6 +205,7 @@ export class Host implements IComponent {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
         this.sequenceStore = new SequenceStore();
+        this.localStorage = getStorageAdapter(sthConfig);
 
         this.logger = new ObjLogger(
             this,
@@ -220,7 +223,7 @@ export class Host implements IComponent {
         if (isDevelopment) this.logger.info("config", this.config);
 
         this.logger.info("Node version:", process.version);
-
+        this.logger.info(`Local Storage Adapter: ${sthConfig.localStorageAdapter}`);
         loadModuleLogger.pipe(this.logger);
 
         this.config.host.id ||= this.getId();
@@ -281,7 +284,8 @@ export class Host implements IComponent {
             instanceStore: this.instancesStore,
             sequenceStore: this.sequenceStore,
             serviceDiscovery: this.serviceDiscovery,
-            STHConfig: sthConfig
+            STHConfig: sthConfig,
+            localStorageAdapter: this.localStorage,
         });
 
         this.csiDispatcher.logger.pipe(this.logger);
@@ -303,7 +307,7 @@ export class Host implements IComponent {
     }
 
     private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
-        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor}>({ name: "@scramjet/monitoring-server" });
+        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
 
         this.logger.info("Starting monitoring server with config", config);
 
@@ -489,6 +493,8 @@ export class Host implements IComponent {
 
         const adapter = await initializeRuntimeAdapters(this.config, this.logger);
 
+        await this.localStorage.init();
+
         this.adapterName = adapter;
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
 
@@ -504,7 +510,7 @@ export class Host implements IComponent {
         if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
             const cpmHostName = this.config.platform?.api || this.config.cpmUrl;
             const cpmId = this.config.platform?.space || `:${this.config.cpmId}`;
-            const cpmConnectorConfig : CPMConnectorOptions = {
+            const cpmConnectorConfig: CPMConnectorOptions = {
                 description: this.config.description,
                 tags: this.config.tags,
                 id: this.config.host.id,
@@ -718,8 +724,8 @@ export class Host implements IComponent {
     createRPCForwarder() {
         return async (req: IncomingMessage) => {
             const [instance] = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
-            
             const url = req.url!.slice(instance.expose?.path?.length || 0);
+
             this.logger.debug("RPC request", req.url, url, instance?.id, instance?.rpcUrl);
             return [instance?.rpcUrl, url] as [string, string];
         };
@@ -812,7 +818,7 @@ export class Host implements IComponent {
         }
 
         const id = req.params.id;
-        const sequence: SequenceInfo| undefined = this.sequenceStore.getById(id);
+        const sequence: SequenceInfo | undefined = this.sequenceStore.getById(id);
 
         const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 

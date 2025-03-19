@@ -2,7 +2,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
+import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
@@ -33,7 +33,8 @@ type CSIDispatcherOpts = {
     instanceStore: InstancesStore,
     sequenceStore: SequenceStore,
     serviceDiscovery: ServiceDiscovery,
-    STHConfig: STHConfiguration
+    STHConfig: STHConfiguration,
+    localStorageAdapter: IStorageAdapter
 }
 
 export class CSIDispatcher extends TypedEmitter<Events> {
@@ -42,6 +43,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     public sequenceStore: SequenceStore;
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
+    private localStorageAdapter: IStorageAdapter;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -51,6 +53,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.sequenceStore = opts.sequenceStore;
         this.STHConfig = opts.STHConfig;
         this.serviceDiscovery = opts.serviceDiscovery;
+        this.localStorageAdapter = opts.localStorageAdapter;
     }
 
     async createCSIController(
@@ -68,7 +71,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload,
             status: InstanceStatus.INITIALIZING,
             inputHeadersSent: false
-        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
+        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.instanceStore, this.localStorageAdapter);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 

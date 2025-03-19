@@ -23,6 +23,8 @@ export type STHCommandOptions = {
     platformApiVersion: string;
     id?: string;
     runtimeAdapter: string;
+    localStorageAdapter: string;
+    localStoragePath: string;
     runnerImage: string;
     runnerPyImage: string;
     runnerMaxMem: number;
@@ -54,4 +56,8 @@ export type STHCommandOptions = {
     telemetry: TelemetryConfig["status"]
     monitoringServer: { port: number };
     runnerEnvs?: string;
+    couchdbUrl?: string;
+    couchdbName?: string;
+    couchdbUser?: string;
+    couchdbPass?: string;
 }

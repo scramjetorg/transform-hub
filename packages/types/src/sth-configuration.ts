@@ -1,3 +1,4 @@
+import { StorageAdapterType } from "./local-storage";
 import { MonitoringServerConfig } from "./monitoring-server";
 import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
@@ -133,6 +134,13 @@ export type DockerAdapterConfiguration = {
     };
 };
 
+export interface CouchDbAdapterConf {
+    url: string;
+    dbName?: string;
+    user?: string;
+    pass?: string;
+}
+
 export type STHConfiguration = {
     /**
      * Description set by user
@@ -244,6 +252,16 @@ export type STHConfiguration = {
     kubernetes: Partial<K8SAdapterConfiguration>,
 
     /**
+     * The type of storage adapter to use
+     */
+    localStorageAdapter: StorageAdapterType;
+
+    /**
+     * Storage path for file-based adapter
+     */
+    localStoragePath: string;
+
+    /**
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new Sequences
      */
@@ -293,6 +311,8 @@ export type STHConfiguration = {
     runnerEnvs?: Record<string, string>;
 
     adapters: Record<string, AdapterConfig>;
+
+    couchdb?: CouchDbAdapterConf;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

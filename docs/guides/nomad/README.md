@@ -198,6 +198,7 @@ $ nomad alloc logs 63894ad6-5806-ee16-9c51-0f84ddd6ab97
     safeOperationLimit: 512,
     instanceAdapterExitDelay: 9000,
     runtimeAdapter: 'docker',
+    localStorageAdapter: 'file',
     sequencesRoot: '/root/.scramjet_sequences',
     kubernetes: {
       namespace: 'default',

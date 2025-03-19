@@ -45,6 +45,7 @@ import { SequenceCompleteMessageData } from "./messages/sequence-complete";
 import { KillMessageData } from "./messages/kill-sequence";
 import { MonitoringReplyMessage, MonitoringReplyMessageData } from "./messages/monitor-reply";
 import { SetMessageData } from "./messages/set";
+import { StorageMessageData, StorageUpdateMessageData } from "./messages/event";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -90,6 +91,8 @@ export type MessageDataType<T> =
     T extends CPMMessageCode.INSTANCE ? InstanceMessage :
     T extends CPMMessageCode.SEQUENCES ? SequenceBulkMessage :
     T extends CPMMessageCode.SEQUENCE ? SequenceMessage :
+    T extends RunnerMessageCode.STORAGE ? StorageMessageData :
+    T extends RunnerMessageCode.STORAGE_UPDATE ? StorageUpdateMessageData :
     never
     ;
 
@@ -101,7 +104,8 @@ export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.MONITORING_REPLY | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG | RunnerMessageCode.SET |
     CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
-    RunnerMessageCode.INPUT_CONTENT_TYPE;
+    RunnerMessageCode.INPUT_CONTENT_TYPE |
+    RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 
@@ -110,7 +114,8 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.PANG |
     RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD |
-    CPMMessageCode.NETWORK_INFO;
+    CPMMessageCode.NETWORK_INFO
+    | RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
 
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;

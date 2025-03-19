@@ -13,6 +13,10 @@
 - [ServiceDiscovery](classes/ServiceDiscovery.md)
 - [SocketServer](classes/SocketServer.md)
 
+### Interfaces
+
+- [IStorageAdapter](interfaces/IStorageAdapter.md)
+
 ### Type Aliases
 
 - [CSIControllerInfo](modules.md#csicontrollerinfo)
@@ -27,6 +31,32 @@
 ### Functions
 
 - [startHost](modules.md#starthost)
+
+## Interfaces
+
+### IStorageAdapter
+
+Ƭ **IStorageAdapter**: `Object`
+
+The IStorageAdapter interface defines the methods that any local storage adapter implementation must provide on the Host side. It is used to persist state using either a file-based adapter or a CouchDB-based adapter.
+
+#### Type declaration
+
+| Name         | Type                                                        | Description                                                         |
+| ------------ | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| `init()`     | `() => Promise<void>`                                       | Initializes the adapter, ensuring that the storage resource exists. |
+| `setItem()`  | `(key: string, value: string) => Promise<void>`             | Persists a value for the given key.                                 |
+| `getItem()`  | `(key: string) => Promise<string \| null>`                   | Retrieves the stored value for the given key.                       |
+| `removeItem()` | `(key: string) => Promise<void>`                          | Removes the stored value for the given key.                         |
+| `clear()`    | `() => Promise<void>`                                       | Clears all stored data.                                             |
+| `length()`   | `() => number`                                              | Returns the number of stored items.                                 |
+| `getAllItems()` | `() => Promise<Record<string, string \| null>>`            | Retrieves all stored items as a key–value map.                      |
+
+#### Defined in
+
+[packages/host/src/lib/localStorage/IStorageAdapter.ts](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/localStorage/IStorageAdapter.ts)
+
+___
 
 ## Type Aliases
 

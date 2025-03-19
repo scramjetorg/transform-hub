@@ -6,6 +6,7 @@ import {
     FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient, ManagerClient, LogLevel,
     APIExpose
 } from "@scramjet/types";
+import { ILocalStorage } from "@scramjet/types";
 import { EventEmitter } from "events";
 
 function assertFunction(handler: any | Function): handler is Function {
@@ -37,10 +38,11 @@ implements AppContext<AppConfigType, State> {
     space: ManagerClient;
     instanceId: string;
     api: APIExpose;
+    localStorage: ILocalStorage;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient, 
-        spaceClient: ManagerClient, id: string, logLevel: LogLevel, api: APIExpose) {
+        spaceClient: ManagerClient, id: string, logLevel: LogLevel, api: APIExpose, localStorage: ILocalStorage) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
@@ -49,6 +51,7 @@ implements AppContext<AppConfigType, State> {
         this.space = spaceClient;
         this.instanceId = id;
         this.api = api;
+        this.localStorage = localStorage;
         this.logger = new ObjLogger("Sequence", {}, logLevel);
     }
 

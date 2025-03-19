@@ -30,9 +30,11 @@ import {
     STHConfiguration,
     STHRestAPI,
     StopSequenceMessageData,
-    WritableStream
-} from "@scramjet/types";
-import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+    WritableStream,
+    RunnerConnectInfo,
+    StorageUpdateMessageData,
+    IStorageAdapter } from "@scramjet/types";
+import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 
 import { DuplexStream, getRouter } from "@scramjet/api-server";
@@ -42,10 +44,10 @@ import { DataStream } from "scramjet";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
 import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPayloadDTO, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ReasonPhrases } from "http-status-codes";
 import { mapRunnerExitCode } from "./utils";
+import { InstancesStore } from "./instance-store";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -75,14 +77,15 @@ export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; e
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
-
+    private sharedLocalStorage: Record<string, string | null> = {};
+    private localStorageAdapter: IStorageAdapter;
     private instanceLifetimeExtensionDelay: number;
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
-    
+
     get rpcUrl(): string {
         return `http://${this.expose?.host}:${this.expose?.port}`;
     }
@@ -97,6 +100,7 @@ export class CSIController extends TypedEmitter<Events> {
             }
         };
     }
+
     limits: InstanceLimits = {};
     runnerSystemInfo: RunnerConnectInfo["system"];
     sequence: SequenceInfo;
@@ -178,15 +182,17 @@ export class CSIController extends TypedEmitter<Events> {
     private upStreams: PassThroughStreamsConfig;
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
-
     constructor(
         private handshakeMessage: Omit<MessageDataType<RunnerMessageCode.PING>, "created">,
         public communicationHandler: ICommunicationHandler,
         private sthConfig: STHConfiguration,
         private hostProxy: HostProxy,
-        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter
+        private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
+        private instanceStore: InstancesStore,
+        localStorageAdapter: IStorageAdapter,
     ) {
         super();
+        this.instanceStore = instanceStore;
         this.id = this.handshakeMessage.id;
         this.runnerSystemInfo = this.handshakeMessage.payload.system;
         this.sequence = this.handshakeMessage.sequenceInfo;
@@ -199,6 +205,7 @@ export class CSIController extends TypedEmitter<Events> {
             gpu: handshakeMessage.payload.limits?.gpu
         };
 
+        this.localStorageAdapter = localStorageAdapter;
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
 
         this.logger = new ObjLogger(this, { id: this.id });
@@ -226,6 +233,9 @@ export class CSIController extends TypedEmitter<Events> {
             this.initResolver = { res, rej };
             this.startInstance();
         });
+
+        this.sharedLocalStorage = await this.localStorageAdapter.getAllItems();
+        await this.sendFullStorageState(this.id, this.sharedLocalStorage);
 
         i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
@@ -507,7 +517,48 @@ export class CSIController extends TypedEmitter<Events> {
             message => this.handleSequenceCompleted(message)
         );
 
+        this.communicationHandler.addMonitoringHandler(
+            RunnerMessageCode.STORAGE_UPDATE,
+            async ([code, data]) => {
+                const { key, value } = data as StorageUpdateMessageData;
+
+                try {
+                    await this.applyUpdate(key, value);
+                } catch (err) {
+                    return [code, data];
+                }
+                this.broadcastUpdate(key, value);
+                return [code, data];
+            }, true
+        );
         this.upStreams[CC.MONITORING].resume();
+    }
+
+    async applyUpdate(key: string, value: string | null): Promise<void> {
+        if (key === StorageActionCode.CLEAR && value === null) {
+            this.sharedLocalStorage = {};
+            await this.localStorageAdapter.clear();
+        } else if (value === null) {
+            delete this.sharedLocalStorage[key];
+            await this.localStorageAdapter.removeItem(key);
+        } else {
+            this.sharedLocalStorage[key] = value;
+            await this.localStorageAdapter.setItem(key, value);
+        }
+    }
+
+    async broadcastUpdate(key: string, value: string | null) {
+        this.instanceStore.map((csi) => {
+            csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
+        });
+    }
+
+    async sendFullStorageState(runnerId: string, sharedLocalStorage: Record<string, any>) {
+        this.logger.debug("Sending full storage state to Runner", runnerId, sharedLocalStorage);
+        await this.communicationHandler.sendControlMessage(
+            RunnerMessageCode.STORAGE,
+            { values: sharedLocalStorage }
+        );
     }
 
     // TODO: refactor out of CSI Controller - this should be in
@@ -542,10 +593,10 @@ export class CSIController extends TypedEmitter<Events> {
                 host: message[1].payload.exposeHost,
                 port: message[1].payload.exposePort
             };
-    
+
             this.hostProxy.onRPCExpose(message[1].payload.exposePath, this.id);
         }
-        
+
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,

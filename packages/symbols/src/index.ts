@@ -9,6 +9,7 @@ export { OpRecordCode } from "./op-record-code";
 export { APIErrorCode } from "./api-error-codes";
 export { DisconnectHubErrors } from "./disconnect-error-codes";
 export { InstanceStatus } from "./instance-status";
+export { StorageActionCode } from "./storage-action-code";
 
 export * from "./sd-stream-handler-state";
 export * from "./headers";
