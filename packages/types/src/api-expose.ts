@@ -185,6 +185,8 @@ export interface APIExpose extends APIBase {
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;
 }
 
+export type APIMethods = "create" | "delete" | "update" | "read" | "use" | "op" | "get" | "duplex" | "upstream" | "downstream" | "forward";
+
 export interface APIRoute extends APIBase {
     lookup: Middleware;
 }

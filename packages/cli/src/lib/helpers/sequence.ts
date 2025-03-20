@@ -22,6 +22,8 @@ type SequenceUploadOptions = {
     id?: string;
 }
 
+type MMFilter = () => (p: string, i: number, arr: string[]) => boolean;
+
 /**
  * TODO: Comment.
  *
@@ -35,7 +37,7 @@ const getIgnoreFunction = async (file: PathLike) => {
         return () => true;
     }
 
-    const rules: ReturnType<typeof mmfilter>[] = await StringStream.from(createReadStream(file))
+    const rules: ReturnType<MMFilter>[] = await StringStream.from(createReadStream(file))
         .lines()
         .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
         .parse((line: string) => mmfilter(line))
