@@ -32,6 +32,17 @@ export class ManagerClient implements ClientProvider {
         return this.client.get<MRestAPI.GetHostInfoResponse[]>("list");
     }
 
+
+    /**
+     * Returns list of all entities on Host.
+     * @param {string} sequenceUrl base url exposed from sequence.
+     * @param {string} hostTag host tag.
+     * @returns {Promise<STHRestAPI.GetEntitiesResponse>} Promise resolving to list of entities.
+     */
+    async listHostsWithFilter(sequenceUrl : string, hostTag: string) {
+        return this.client.get<MRestAPI.GetHostInfoResponse[]>(`${sequenceUrl}/${hostTag}/hosts`);
+    }
+
     async getVersion(): Promise<MRestAPI.GetVersionResponse> {
         return this.client.get<MRestAPI.GetVersionResponse>("version");
     }

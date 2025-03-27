@@ -36,6 +36,19 @@ export class HostClient implements ClientProvider {
         return this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
     }
 
+    /**
+     * Returns list of all Sequences on given Host, optionally filtered by the tag.
+     * @param {string} sequenceUrl base url exposed from sequence.
+     * @param {string} hostTag host tag.
+     * @param {string} filter filtering tag.
+     * @returns {Promise<STHRestAPI.GetSequencesResponse>} Promise resolving to list of Sequences.
+     */
+    async listSequencesWithFilter(sequenceUrl: string, hostTag: string, filter? : string) {
+        if (filter)
+            return this.client.get<STHRestAPI.GetSequencesResponse>(`${sequenceUrl}/${hostTag}/sequences/${filter}`);
+        return this.client.get<STHRestAPI.GetSequencesResponse>(`${sequenceUrl}/${hostTag}/sequences`);
+    }
+
     async getSequenceId(sequenceName: string) : Promise<string[]> {
         const sequenceList = await this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
         const result = sequenceList.filter(sequence => sequence.config.name === sequenceName);
@@ -54,6 +67,16 @@ export class HostClient implements ClientProvider {
      */
     async listInstances() {
         return this.client.get<STHRestAPI.GetInstancesResponse>("instances");
+    }
+
+    /**
+     * Returns list of all Instances on given Host.
+     * @param {string} sequenceUrl base url exposed from sequence.
+     * @param {string} hostTag host tag.
+     * @returns {Promise<STHRestAPI.GetSequencesResponse>} Promise resolving to list of Instances.
+     */
+    async listInstancesWithFilter(sequenceUrl: string, hostTag: string) {
+        return this.client.get<STHRestAPI.GetSequencesResponse>(`${sequenceUrl}/${hostTag}/instances`);
     }
 
     /**
