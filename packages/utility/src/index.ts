@@ -14,3 +14,4 @@ export * from "./stream-to-string";
 export * from "./typed-emitter";
 export * from "./typeguards";
 export * from "./validators";
+export * from "./refcount";

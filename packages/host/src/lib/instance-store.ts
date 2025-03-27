@@ -10,7 +10,8 @@ export class InstancesStore extends Map<string, CSIController> {
         this.exposePathMap.get(path)?.add(instanceId);
     }
     map<X>(mapper: (csiController: CSIController) => X): X[] {
-        return Array.from(this.values()).map(mapper);
+        const values = this.values();
+        return Array.from(values).map(mapper);
     }
 
     getByInstanceId(instanceId: string): CSIController | undefined {
@@ -31,6 +32,9 @@ export class InstancesStore extends Map<string, CSIController> {
     }
 
     set(instanceId: string, value: CSIController): this {
+        if (!(value instanceof CSIController)) {
+            throw new Error("value must be an instance of CSIController");
+        }
         return super.set(instanceId, value);
     }
 

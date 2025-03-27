@@ -325,7 +325,7 @@ When("wait for {string} ms", async (timeoutMs: number) => {
 });
 
 When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
-    const packagePath = `${process.env.PACKAGES_DIR}${packageName}`;
+    const packagePath = `${process.env.PACKAGES_DIR || "../refapps/"}${packageName}`;
 
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
 
@@ -572,7 +572,7 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
-    const adapter = process.env.RUNTIME_ADAPTER;
+    const adapter = process.env.RUNTIME_ADAPTER || "process";
 
     while (!success && tries < 3) {
         const health = await this.resources.instance?.getHealth();
@@ -592,6 +592,8 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
                 break;
             case "process":
                 const res = health?.processId;
+
+                console.log("Health", health);
 
                 if (res) {
                     processId = success = res;
@@ -620,7 +622,7 @@ When("runner has ended execution", { timeout: 20000 }, async () => {
         return;
     }
 
-    if (process.env.RUNTIME_ADAPTER === "process") {
+    if (!process.env.RUNTIME_ADAPTER || process.env.RUNTIME_ADAPTER === "process") {
         if (!processId) assert.fail("There is no process ID");
 
         await waitForProcessToEnd(processId);

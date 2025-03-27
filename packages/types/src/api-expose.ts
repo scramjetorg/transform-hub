@@ -91,6 +91,11 @@ export interface APIError extends Error {
 
 export type ForwardStrategy = (req: IncomingMessage, urls: string[]) => MaybePromise<[string, string]>;
 
+export type IDuplexStream = Duplex & {
+    input: Readable;
+    output: Writable;
+};
+
 export interface APIBase {
     /**
      * Simple POST/DELETE request hook.
@@ -155,7 +160,7 @@ export interface APIBase {
      * @param path the request path as string or regex
      * @param callback A method to be called when the stream is ready.
      */
-    duplex(path: string | RegExp, callback: (stream: Duplex, headers: IncomingHttpHeaders) => void): void;
+    duplex(path: string | RegExp, callback: (stream: IDuplexStream, headers: IncomingHttpHeaders) => void): void;
 
     forward(path: string, urls: string[], strategy?: ForwardStrategy): void;
 

@@ -5,7 +5,7 @@ import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
 import { createCrudHandlers } from "./handlers/crud";
-import { createOperationHandler, logger as opLogger } from "./handlers/op";
+import { createOperationHandler } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
 import { CeroRouterConfig } from "./lib/definitions";
@@ -22,8 +22,6 @@ export { ServerConfig } from "./types";
 export { cero, sequentialRouter };
 
 export const logger = new ObjLogger("ApiServer");
-
-opLogger.pipe(logger);
 
 // logger.addOutput(process.stderr);
 
@@ -135,17 +133,19 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
 
     log.resume(); // if log is not read.
 
+    let paused = false;
+
     return {
         server: srv,
         get,
-        opLogger,
         op,
         duplex,
         downstream,
         upstream,
         ...crud,
         get log() {
-            return log.pause(); // if log is accessed then it should be read
+            if (!paused) log.pause(); // if log is accessed then it should be read
+            return log;
         },
         use: (path, ...middlewares) => {
             router.use(path, ...middlewares.map(safeHandler));

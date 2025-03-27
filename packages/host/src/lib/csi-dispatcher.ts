@@ -2,7 +2,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter } from "@scramjet/types";
+import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
@@ -218,7 +218,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         return csiController;
     }
 
-    async startRunner(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload) {
+    async startRunner(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<StartInstanceReturnType> {
         this.logger.debug("Preparing Runner...");
 
         const limits = {
@@ -294,7 +294,11 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                             return mapRunnerExitCode(exitCode, sequence);
                         }
 
-                        return undefined;
+                        return {
+                            message: "Exited before established",
+                            exitcode: -1,
+                            status: InstanceStatus.ERRORED
+                        }
                     })
             )
         ]);

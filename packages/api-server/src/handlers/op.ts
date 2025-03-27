@@ -14,9 +14,6 @@ import { IncomingMessage, ServerResponse } from "http";
 import { mimeAccepts } from "../lib/mime";
 import { StringDecoder } from "string_decoder";
 import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
-import { ObjLogger } from "@scramjet/obj-logger";
-
-export const logger = new ObjLogger("API op");
 
 /**
  * Creates and returns a method to set up a POST/DELETE handlers for the given path.
@@ -180,8 +177,6 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         rawBody?: boolean
     ): void => {
         const handler: Middleware = async (req, res, next) => {
-            logger.trace("Request", req.method, req.url);
-
             if (req.headers.expect === "100-continue") {
                 res.writeContinue();
             }

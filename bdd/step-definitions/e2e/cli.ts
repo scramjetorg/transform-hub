@@ -24,6 +24,7 @@ import {
     extractInstanceFromSiInstLs,
     extractKillResponseFromSiInstRestart,
 } from "../../lib/json.parser";
+import { Readable } from "stream";
 
 addLoggerOutput(process.stdout, process.stdout);
 
@@ -131,7 +132,7 @@ When(
             ...si,
             "seq",
             "deploy",
-            `../packages/${sequenceName}.tar.gz`,
+            `../refapps/${sequenceName}.tar.gz`,
             "--args",
             `[\"${seqId}\"]`,
         ]);
@@ -165,6 +166,32 @@ When(
         });
     }
 );
+
+Then("I confirm I can read instance info", async function (this: CustomWorld) {
+    const stdio = await getStreamsFromSpawn("/usr/bin/env", [
+        ...si,
+        "inst",
+        "info",
+    ]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        logger.debug(stdio[1]);
+    }
+
+    assert.ok(stdio[1]);
+});
+
+Then("I confirm stdio ended", async function (this: CustomWorld) {
+    const { stdout } = this.cliResources!.commandInProgress!;
+
+    assert.ok(stdout instanceof Readable);
+    if (stdout.readableEnded) {
+        assert.ok(true);
+    } else {
+        await once(stdout, "end");
+        assert.ok(true);
+    }
+});
 
 Then("I confirm data received", async function (this: CustomWorld) {
     const expected = "";
@@ -465,10 +492,10 @@ Then("I confirm instance status is {string}", async function (
             response = JSON.parse(data);
             break;
         default:
-            response = null;
+            response = undefined;
     }
 
-    assert.equal(response.status, expectedStatus);
+    assert.equal(response?.status, expectedStatus);
 });
 
 Then(/^I confirm instance id is: (.*)$/, async function (

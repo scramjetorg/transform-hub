@@ -1,6 +1,6 @@
-import { ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
+import { IDuplexStream, ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
-import { Writable, Readable, Duplex } from "stream";
+import { Writable, Readable } from "stream";
 import { DuplexStream } from "../lib/duplex-stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
@@ -182,7 +182,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     };
     const duplex = (
         path: string | RegExp,
-        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void,
+        callback: (stream: IDuplexStream, headers: IncomingHttpHeaders) => void,
         { postponeContinue = false }: StreamConfig = {}
     ): void => {
         router.post(path, (req, res, next) => {

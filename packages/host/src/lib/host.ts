@@ -1,12 +1,12 @@
 import findPackage from "find-package-json";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import { ReasonPhrases } from "http-status-codes";
 
-import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
-import { AddressInfo } from "net";
-import { Duplex } from "stream";
+import { IncomingMessage, Server } from "http";
+import { AddressInfo, Socket } from "net";
+import { Duplex, Readable } from "stream";
 
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { HostHeaders, InstanceMessageCode, InstanceStatus, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { CommunicationHandler, HostError } from "@scramjet/model";
+import { InstanceMessageCode, InstanceStatus, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
     CPMConnectorOptions,
@@ -18,15 +18,17 @@ import {
     Instance,
     LogLevel,
     MonitoringServerConfig,
-    NextCallback,
     OpResponse,
     ParsedMessage,
     PublicSTHConfiguration,
+    RunnerConnectInfo,
     STHConfiguration,
     STHRestAPI,
     SequenceInfo,
+    StartInstanceReturnType,
     StartSequenceDTO,
-    IStorageAdapter } from "@scramjet/types";
+    IStorageAdapter
+} from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
@@ -36,17 +38,14 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
-import { DuplexStream, roundRobinStrategy } from "@scramjet/api-server";
+
 import { ConfigService, development } from "@scramjet/sth-config";
-import { isStartSequenceDTO, isStartSequenceEndpointPayloadDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
+import { isStartSequenceDTO, readJsonFile, defer, FileBuilder, RefCountHandler } from "@scramjet/utility";
 
 import { DataStream } from "scramjet";
 import { inspect } from "util";
 
-import { AuditedRequest, Auditor } from "./auditor";
-import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
-import { corsMiddleware } from "./middlewares/cors";
-import { optionsMiddleware } from "./middlewares/options";
+import { Auditor } from "./auditor";
 
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { SocketServer } from "./socket-server";
@@ -56,7 +55,6 @@ import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
 
 import { existsSync, mkdirSync, readFileSync } from "fs";
-import TopicRouter from "./serviceDiscovery/topicRouter";
 
 import SequenceStore from "./sequenceStore";
 
@@ -65,7 +63,9 @@ import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader"
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
+import { HostAPIHandler } from "./api/host-api";
 import { getStorageAdapter } from "@scramjet/host";
+import { CSIController } from "./csi-controller";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -84,6 +84,11 @@ const isDevelopment = development();
  * Can communicate with Manager.
  */
 export class Host implements IComponent {
+    apiHandler: HostAPIHandler;    
+    getSequenceAdapter() {
+        return getSequenceAdapter(this.adapterName, this.config);
+    }
+
     /**
      * Host auditor.
      * @type {Auditor}
@@ -192,6 +197,17 @@ export class Host implements IComponent {
         return buildInfo.hash || "source";
     }
 
+    private _heartbeatInterval: NodeJS.Timeout | undefined;
+    heartBeatInterval = new RefCountHandler(
+        () => {
+            this._heartbeatInterval = setInterval(() => this.heartBeat(), this.config.timings.heartBeatInterval)
+        },
+        () => {
+            clearInterval(this._heartbeatInterval!);
+            this._heartbeatInterval = undefined;
+        }
+    );
+
     /**
      * Initializes Host.
      * Sets used modules with provided configuration.
@@ -274,7 +290,7 @@ export class Host implements IComponent {
         this.socketServer.logger.pipe(this.logger);
 
         this.api = apiServer;
-        this.api.opLogger?.pipe(this.logger);
+        this.apiHandler = new HostAPIHandler(this.api, this, version, this.build);
 
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
@@ -291,6 +307,7 @@ export class Host implements IComponent {
         this.csiDispatcher.logger.pipe(this.logger);
 
         this.attachDispatcherEvents();
+        this.apiHandler.attach();
 
         if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
@@ -477,9 +494,9 @@ export class Host implements IComponent {
 
         this.api.log
             .each(({ date, method, url, status }) =>
-                this.logger.debug(
+                this.logger.info(
                     "Request",
-                    `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`
+                    { date: new Date(date).toISOString(), method, url, status }
                 )
             )
             .resume();
@@ -503,7 +520,7 @@ export class Host implements IComponent {
         await this.socketServer.start();
 
         this.attachListeners();
-        this.attachHostAPIs();
+        new HostAPIHandler(this.api, this, version, this.build).attach();
 
         await this.startListening();
 
@@ -642,193 +659,15 @@ export class Host implements IComponent {
         await connector.connect();
     }
 
-    /**
-     * Setting up handlers for general Host API endpoints:
-     * - creating Sequence (passing stream with the compressed package)
-     * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
-     * - getting Sequence details
-     * - listing all Instances running on the CSH
-     * - listing all Sequences saved on the CSH
-     * - Instance
-     */
-    attachHostAPIs() {
-        this.api.use(`${this.apiBase}/:type/:id?/:op?`, auditMiddleware(this.auditor));
-
-        auditMiddlewareLogger.pipe(this.logger);
-
-        this.api.use("*", corsMiddleware);
-        this.api.use("*", optionsMiddleware);
-
-        this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
-
-        this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.downstream(`${this.apiBase}/sequence/:id`, async (req) => this.handleUpdateSequence(req), {
-            end: true,
-            method: "put",
-        });
-
-        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
-
-        this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
-
-        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req));
-        this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
-        this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
-        this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
-        this.api.get(`${this.apiBase}/entities`, () => ({
-            sequences: this.getSequences(),
-            instances: this.getInstances()
-        }));
-        this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
-        this.api.get(
-            `${this.apiBase}/version`,
-            (): STHRestAPI.GetVersionResponse => ({
-                service: this.service,
-                apiVersion: this.apiVersion,
-                version,
-                build: this.build,
-            })
-        );
-
-        this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
-        this.api.get(`${this.apiBase}/status`, () => this.getStatus());
-
-        const topicLogger = new TopicRouter(this.logger, this.api, this.apiBase, this.serviceDiscovery).logger;
-
-        topicLogger.pipe(this.logger);
-
-        this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
-            this.logger.debug("Platform request");
-            return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
-        });
-
-        this.api.use(`${this.apiBase}/cpm`, (req, res) => this.spaceMiddleware(req, res));
-
-        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
-
-        this.api.forward(`${this.apiBase}/rpc`, [], this.createRPCForwarder());
-
-        if (["TRACE", "DEBUG"].includes(this.logger.logLevel)) {
-            this.api.log
-                .on("data", (data) => {
-                    this.logger.debug("API log", data);
-                })
-                .resume();
-        }
-    }
-
-    /**
-     * Forwards RPC to the correct instances
-     */
-    createRPCForwarder() {
-        return async (req: IncomingMessage) => {
-            const [instance] = roundRobinStrategy(req, this.instancesStore.getByExposePath(req.url!));
-            const url = req.url!.slice(instance.expose?.path?.length || 0);
-
-            this.logger.debug("RPC request", req.url, url, instance?.id, instance?.rpcUrl);
-            return [instance?.rpcUrl, url] as [string, string];
-        };
-    }
-
-    /**
-     * Finds Instance with given id passed in request parameters and forwards request to Instance router.
-     * Forwarded request's url is reduced by the Instance base path and Instance parameter.
-     * For example: /api/instance/:id/log -> /log
-     *
-     * Ends response with 404 if Instance is not found.
-     *
-     * @param {Request} req Request object.
-     * @param {ServerResponse} res Response object.
-     * @param {NextCallback} next Function to call when request is not handled by Instance middleware.
-     * @returns {Middleware} Instance middleware.
-     */
-    instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        const params = req.params;
-
-        if (!params || !params.id) {
-            return next(new HostError("UNKNOWN_INSTANCE"));
-        }
-
-        const instance = this.instancesStore.get(params.id);
-
-        if (instance) {
-            if (!instance.router) {
-                return next(new HostError("CONTROLLER_ERROR", "Instance controller doesn't provide API."));
-            }
-
-            req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
-
-            return instance.router.lookup(req, res, next);
-        }
-
-        res.statusCode = StatusCodes.NOT_FOUND;
-        res.write(JSON.stringify({ error: `Instance ${params.id} not found` }));
-        res.end();
-
-        return next();
-    }
-
-    /**
-     * Forward request to Manager the Host is connected to.
-     * @param {ParsedMessage} req Request object.
-     * @param {ServerResponse} res Response object.
-     * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
-     */
-    spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
-        const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
-
-        this.logger.info("SPACE REQUEST", req.url, url, this.apiBase);
-
-        const clientRequest = this.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
-
-        if (clientRequest) {
-            clientRequest.on("response", (response: IncomingMessage) => {
-                response.on("end", () => {
-                    this.logger.info("Space response ended", url, response.statusCode);
-                });
-
-                res.writeHead(response.statusCode!, response.statusMessage || "", response.headers);
-
-                response.pipe(res);
-            }).on("error", (error) => {
-                this.logger.error("Error requesting CPM", error);
-            });
-
-            clientRequest.flushHeaders();
-            req.pipe(clientRequest);
-        } else {
-            res.statusCode = 404;
-            res.end();
-        }
-    }
-
-    /**
-     * Handles delete Sequence request.
-     * Removes Sequence from the store and sends notification to Manager if connected.
-     * Note: If Instance is started from a given Sequence, Sequence can not be removed
-     * and CONFLICT status code is returned.
-     *
-     * @param {ParsedMessage} req Request object.
-     * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
-     */
-    async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
-        if (!req.params?.id || typeof req.params.id !== "string") {
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
-        }
-
-        const id = req.params.id;
-        const sequence: SequenceInfo | undefined = this.sequenceStore.getById(id);
-
-        const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
+    async deleteSequence(id: string, force: boolean): Promise<string> {
 
         this.logger.trace("Deleting Sequence...", id, { force });
 
+        const sequence = this.sequenceStore.getById(id);
+
         if (!sequence) {
-            return {
-                opStatus: ReasonPhrases.NOT_FOUND,
-                error: `The sequence ${id} does not exist.`
-            };
+            this.logger.warn("Unknown Sequence", id);
+            throw new HostError("UNKNOWN_SEQUENCE", `Unknown Sequence: ${id}`);
         }
         // eslint-disable-next-line no-console
         this.logger.info("Instances of sequence", sequence.id, sequence.instances);
@@ -843,10 +682,7 @@ export class Host implements IComponent {
             if (instances && !force) {
                 this.logger.warn("Can't remove Sequence in use:", id);
 
-                return {
-                    opStatus: ReasonPhrases.CONFLICT,
-                    error: "Can't remove- Sequence in use"
-                };
+                throw new HostError("SEQUENCE_IN_USE", "Can't remove- Sequence in use");
             }
 
             if (instances) {
@@ -871,17 +707,11 @@ export class Host implements IComponent {
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
-            return {
-                opStatus: ReasonPhrases.OK,
-                id,
-            };
+            return id;
         } catch (error: any) {
             this.logger.error("Error removing Sequence!", error);
 
-            return {
-                opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR,
-                error: `Error removing Sequence: ${error.message}`,
-            };
+            throw new HostError("CONTROLLER_ERROR", error.message);
         }
     }
 
@@ -904,20 +734,6 @@ export class Host implements IComponent {
         });
 
         this.auditor.auditHostHeartBeat();
-    }
-
-    async handleAuditRequest(req: ParsedMessage, res: ServerResponse) {
-        const i = setInterval(() => this.heartBeat(), this.config.timings.heartBeatInterval);
-
-        req.socket.on("end", () => {
-            clearInterval(i);
-        });
-
-        req.socket.on("error", () => {
-            clearInterval(i);
-        });
-
-        return this.auditor.getOutputStream(req, res);
     }
 
     /**
@@ -952,116 +768,55 @@ export class Host implements IComponent {
         }
     }
 
-    async handleIncomingSequence(
-        req: ParsedMessage,
-        id: string
-    ): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        req.params ||= {};
-
+    async addSequence(
+        id: string,
+        req: Readable,
+        override: boolean,
+        socket?: Socket
+    ): Promise<STHRestAPI.SendSequenceResponse> {
         this.logger.info("New Sequence incoming", { id });
 
-        try {
-            const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
+        const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
 
-            sequenceAdapter.logger.updateBaseLog({ id });
-            sequenceAdapter.logger.pipe(this.logger);
+        sequenceAdapter.logger.updateBaseLog({ id });
+        sequenceAdapter.logger.pipe(this.logger);
 
-            this.logger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
+        this.logger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
 
-            await sequenceAdapter.init();
+        await sequenceAdapter.init();
 
-            const existingSequence = this.sequenceStore.getById(id as string);
-
-            if (existingSequence) {
-                if (req.method?.toLowerCase() !== "put") {
-                    return {
-                        opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
-                        error: `Sequence with name ${id} already exist`
-                    };
-                }
-                this.logger.debug("Overriding sequence", id, existingSequence.id);
-                id = existingSequence.id;
-            }
-
-            const config = await sequenceAdapter.identify(req, id);
-
-            config.packageSize = req.socket?.bytesRead;
-
-            if (this.config.host.id) {
-                // eslint-disable-next-line max-len
-                this.sequenceStore.set({ id, config, instances: [], location: this.config.host.id });
-            } else {
-                this.sequenceStore.set({ id, config, instances: [], location: "STH" });
-            }
-
-            this.logger.trace(`Sequence identified: ${config.id}`);
-
-            // eslint-disable-next-line max-len
-            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as STHRestAPI.GetSequenceResponse);
-
-            this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
-            this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
-
-            return {
-                id: config.id,
-                opStatus: ReasonPhrases.OK,
-            };
-        } catch (error: any) {
-            this.logger.error("Error processing sequence", error);
-
-            return {
-                opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
-                error,
-            };
-        }
-    }
-
-    async handleUpdateSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        req.params ||= {};
-
-        if (!req.params.id || typeof req.params.id !== "string") {
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "missing id parameter" };
-        }
-
-        const id = req.params.id;
-        const existingSequence: SequenceInfo | undefined = this.sequenceStore.getById(id);
-
-        if (!existingSequence) {
-            return { opStatus: ReasonPhrases.NOT_FOUND, error: `Sequence with id: ${id} not found` };
-        }
-
-        if (existingSequence.instances.length) {
-            return { opStatus: ReasonPhrases.CONFLICT, error: "Can't update sequence with instances" };
-        }
-
-        this.logger.debug("Sequence Update", existingSequence.id);
-
-        return this.handleIncomingSequence(req, id);
-    }
-
-    /**
-     * Handles incoming Sequence.
-     * Uses Sequence adapter to unpack and identify Sequence.
-     * Notifies Manager (if connected) about new Sequence.
-     *
-     * @param {IncomingMessage} stream Stream of packaged Sequence.
-     * @param {string} id Sequence id.
-     * @returns {Promise} Promise resolving to operation result.
-     */
-    async handleNewSequence(stream: ParsedMessage, id = IDProvider.generate()):
-        Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        const existingSequence = this.sequenceStore.getById(id);
+        const existingSequence = this.sequenceStore.getById(id as string);
 
         if (existingSequence) {
-            this.logger.debug("Method not allowed", id, existingSequence.id);
-
-            return {
-                opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
-                error: `Sequence with id ${id} already exist`
-            };
+            if (!override) {
+                throw new HostError("SEQUENCE_EXISTS", "Sequence already exists");
+            }
+            this.logger.debug("Overriding sequence", id, existingSequence.id);
+            id = existingSequence.id;
         }
 
-        return this.handleIncomingSequence(stream, id);
+        const config = await sequenceAdapter.identify(req, id);
+
+        config.packageSize = socket?.bytesRead;
+
+        if (this.config.host.id) {
+            // eslint-disable-next-line max-len
+            this.sequenceStore.set({ id, config, instances: [], location: this.config.host.id });
+        } else {
+            this.sequenceStore.set({ id, config, instances: [], location: "STH" });
+        }
+
+        this.logger.trace(`Sequence identified: ${config.id}`);
+
+        // eslint-disable-next-line max-len
+        await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as STHRestAPI.GetSequenceResponse);
+
+        this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
+        this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
+
+        return {
+            id: config.id
+        };
     }
 
     async getExternalSequence(id: string): Promise<SequenceInfo> {
@@ -1083,9 +838,10 @@ export class Host implements IComponent {
             packageStream = response.data as IncomingMessage;
             packageStream.headers = response.headers;
 
-            const result = (await this.handleNewSequence(
+            const result = (await this.addSequence(
+                id,
                 packageStream as ParsedMessage,
-                id
+                true
             )) as STHRestAPI.SendSequenceResponse;
 
             return this.sequenceStore.getById(result.id)!;
@@ -1107,32 +863,20 @@ export class Host implements IComponent {
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
     // eslint-disable-next-line complexity
-    async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
+    async startSequence(sequenceId: string, config: Omit<Omit<RunnerConnectInfo, "adapter">, "inputContentType">): Promise<StartInstanceReturnType> {
         if (await this.loadCheck.overloaded()) {
-            return {
-                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
-            };
+            throw new HostError("HOST_OVERLOAD", "Host overloaded");
         }
 
-        const sequenceId = req.params?.id as string;
-        const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
-
-        if (payload.instanceId) {
-            if (!isStartSequenceEndpointPayloadDTO(payload)) {
-                return { opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY, error: "Invalid Instance id" };
-            }
-
-            if (this.instancesStore.has(payload.instanceId)) {
-                return {
-                    opStatus: ReasonPhrases.CONFLICT,
-                    error: "Instance with a given ID already exists"
-                };
+        if (config.instanceId) {
+            if (this.instancesStore.has(config.instanceId)) {
+                throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID already taken");
             }
         }
 
         let sequence = this.sequenceStore.getByNameOrId(sequenceId);
 
-        if (this.cpmConnector?.connected) {
+        if (!sequence && this.cpmConnector?.connected) {
             sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
                 this.logger.error("Error getting sequence from external sources", error);
 
@@ -1141,37 +885,27 @@ export class Host implements IComponent {
         }
 
         if (!sequence) {
-            return { opStatus: ReasonPhrases.NOT_FOUND };
+            throw new HostError("UNKNOWN_SEQUENCE", `Unknown Sequence: ${sequenceId}`);
         }
 
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
         try {
-            const runner = await this.csiDispatcher.startRunner(sequence, payload);
+            const runner = await this.csiDispatcher.startRunner(sequence, config);
 
             if (runner && "id" in runner) {
                 this.logger.debug("Instance limits", runner.limits);
-                this.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
                 this.pushTelemetry("Instance started", { id: runner.id, language: runner.sequence.config.language, seqId: runner.sequence.id });
 
-                return {
-                    opStatus: ReasonPhrases.OK,
-                    message: `Sequence ${runner.id} starting`,
-                    id: runner.id
-                };
-            } else if (runner) {
-                throw runner;
+                return runner;
             }
 
-            throw Error("Unexpected startup error");
+            throw new HostError("INSTANCE_STARTUP_ERROR", "Instance startup failed");
         } catch (error: any) {
             this.pushTelemetry("Instance start failed", { error: error.message }, "error");
             this.logger.error(error.message);
 
-            return {
-                opStatus: ReasonPhrases.BAD_REQUEST,
-                error: error.message
-            };
+            throw new HostError("INSTANCE_STARTUP_ERROR", error.message);
         }
     }
 
@@ -1212,8 +946,10 @@ export class Host implements IComponent {
 
         // Send the event to all instances except the source of the event.
         await Promise.all(
-            Object.values(this.instancesStore)
-                .map(inst => event.source !== inst.id ? inst.emitEvent(event) : true)
+            this.instancesStore
+                .map((inst: CSIController) => {
+                    event.source !== inst.id ? inst.emitEvent(event) : true
+                })
         );
     }
 

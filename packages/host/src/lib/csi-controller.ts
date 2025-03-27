@@ -1,5 +1,4 @@
 import {
-    AppError,
     CSIControllerError,
     HostError,
     InstanceAdapterError,
@@ -22,32 +21,30 @@ import {
     IObjectLogger,
     MessageDataType,
     MonitoringMessageData,
-    OpResponse,
-    ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
     SequenceInfo,
+    SetMessageData,
     STHConfiguration,
     STHRestAPI,
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
-    StorageUpdateMessageData,
     IStorageAdapter } from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 
-import { DuplexStream, getRouter } from "@scramjet/api-server";
+import { getRouter } from "@scramjet/api-server";
 import { EventEmitter, once } from "events";
-import { ServerResponse } from "http";
 import { DataStream } from "scramjet";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { cancellableDefer, CancellablePromise, defer, isSetSequenceEndpointPayloadDTO, promiseTimeout, TypedEmitter } from "@scramjet/utility";
-import { ReasonPhrases } from "http-status-codes";
+import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
+
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
+import { InstanceAPI } from "./api/instance-api";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -85,6 +82,8 @@ export class CSIController extends TypedEmitter<Events> {
     private _lastStats?: MonitoringMessageData;
     private bpmux: any;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
+    private inputContentType: string | undefined;
+    api: InstanceAPI;
 
     get rpcUrl(): string {
         return `http://${this.expose?.host}:${this.expose?.port}`;
@@ -226,6 +225,36 @@ export class CSIController extends TypedEmitter<Events> {
             new PassThrough(),
             new PassThrough(),
         ];
+
+        this.api = new InstanceAPI(this, this.logger, this.localEmitter);
+    }
+
+    getInfo(): STHRestAPI.GetInstanceResponse {
+        this.logger.debug("Get info [seq, info]", this.sequence.id, this.info);
+
+        return {
+            id: this.id,
+            appConfig: this.appConfig,
+            args: this.args,
+            provides: this.provides,
+            requires: this.requires,
+            sequence: {
+                id: this.sequence.id,
+                config: this.sequence.config,
+                name: this.sequence.name,
+                location : this.sequence.location
+            },
+            ports: this.info.ports,
+            created: this.info.created,
+            started: this.info.started,
+            ended: this.info.ended,
+            status: this.status,
+            terminated: this.terminated
+        };
+    }
+
+    async set(payload: SetMessageData) {
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, payload);
     }
 
     async start(): Promise<void> {
@@ -405,7 +434,7 @@ export class CSIController extends TypedEmitter<Events> {
         return this.instancePromise;
     }
 
-    unhookupStreams() {
+    unhookStreams() {
         this.downStreams![CC.STDOUT].unpipe();
         this.downStreams![CC.STDERR].unpipe();
         this.downStreams![CC.OUT].unpipe();
@@ -517,20 +546,17 @@ export class CSIController extends TypedEmitter<Events> {
             message => this.handleSequenceCompleted(message)
         );
 
-        this.communicationHandler.addMonitoringHandler(
-            RunnerMessageCode.STORAGE_UPDATE,
-            async ([code, data]) => {
-                const { key, value } = data as StorageUpdateMessageData;
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
+            const event = data[1];
 
-                try {
-                    await this.applyUpdate(key, value);
-                } catch (err) {
-                    return [code, data];
-                }
-                this.broadcastUpdate(key, value);
-                return [code, data];
-            }, true
-        );
+            if (!event.eventName) return;
+
+            this.emit("event", event);
+
+            this.localEmitter.lastEvents[event.eventName] = event.message;
+            this.localEmitter.emit(event.eventName, event);
+        });
+
         this.upStreams[CC.MONITORING].resume();
     }
 
@@ -559,6 +585,31 @@ export class CSIController extends TypedEmitter<Events> {
             RunnerMessageCode.STORAGE,
             { values: sharedLocalStorage }
         );
+    }
+
+    async getInput(contentType?: string) {
+        const stream = this.downStreams![CC.IN];
+
+        // @TODO: Check if subsequent requests have the same content-type.
+        if (!this.inputHeadersSent) {
+            if (contentType === undefined) {
+                throw new HostError("INVALID_CONTENT_TYPE", "Content-Type must be defined");
+            }
+
+            stream.write(`Content-Type: ${contentType}\r\n`);
+            stream.write("\r\n");
+
+            this.inputContentType = contentType;
+            this.inputHeadersSent = true;
+        } else if (contentType && this.inputContentType !== contentType) {
+            throw new HostError("INVALID_CONTENT_TYPE", "Content-Type must be the same as the first one");
+        }
+
+        return stream;
+    }
+
+    async awaitEvent(name: string) {
+        return new Promise(res => this.localEmitter.once(name, (data) => res(data.message)));
     }
 
     // TODO: refactor out of CSI Controller - this should be in
@@ -616,7 +667,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async handleInstanceDisconnect() {
         this.bpmux?.removeAllListeners();
-        if (this.downStreams) this.unhookupStreams();
+        if (this.downStreams) this.unhookStreams();
 
         this.bpmux = null;
         this.downStreams = null;
@@ -647,181 +698,11 @@ export class CSIController extends TypedEmitter<Events> {
         }
     }
 
-    createInstanceAPIRouter() {
-        if (!this.upStreams) {
-            throw new AppError("UNATTACHED_STREAMS");
-        }
-
-        this.router = getRouter();
-
-        this.router.get("/", () => this.getInfo());
-
-        /**
-         * @experimental
-         */
-        this.router.duplex("/inout", (duplex, _headers) => {
-            if (!this.inputHeadersSent) {
-                this.downStreams![CC.IN].write(`Content-Type: ${_headers["content-type"]}\r\n`);
-                this.downStreams![CC.IN].write("\r\n");
-
-                this.inputHeadersSent = true;
-            }
-
-            (duplex as unknown as DuplexStream).input.pipe(this.downStreams![CC.IN], { end: false });
-            this.upStreams![CC.OUT]?.pipe((duplex as unknown as DuplexStream).output, { end: false });
-        });
-
-        this.router.upstream("/stdout", this.upStreams[CC.STDOUT]);
-        this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
-        this.router.downstream("/stdin", this.upStreams[CC.STDIN], { end: true });
-
-        const logStream = this.upStreams[CC.LOG];
-
+    private createInstanceAPIRouter() {
+        const router = this.router = getRouter();
         const mux = this.logMux = new PassThrough();
 
-        logStream.pipe(mux, { end: false });
-        logStream.on("end", () => {
-            logStream.unpipe(mux);
-        });
-
-        this.logger.pipe(mux);
-
-        mux.unpipe = (...args) => {
-            logStream.unpipe(mux);
-            this.logger.unpipe(mux);
-
-            return PassThrough.prototype.unpipe.call(mux, ...args);
-        };
-
-        this.router.upstream("/log", mux);
-
-        if (development()) {
-            this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
-        }
-
-        this.router.upstream("/output", this.upStreams[CC.OUT], { encoding: this.outputEncoding });
-
-        this.router.downstream("/input", (req) => {
-            if (this.apiInputEnabled) {
-                const stream = this.downStreams![CC.IN];
-                const contentType = req.headers["content-type"];
-
-                // @TODO: Check if subsequent requests have the same content-type.
-                if (!this.inputHeadersSent) {
-                    if (contentType === undefined) {
-                        return { opStatus: ReasonPhrases.NOT_ACCEPTABLE, error: "Content-Type must be defined" };
-                    }
-
-                    stream.write(`Content-Type: ${contentType}\r\n`);
-                    stream.write("\r\n");
-
-                    this.inputHeadersSent = true;
-                }
-
-                return stream;
-            }
-
-            return { opStatus: ReasonPhrases.METHOD_NOT_ALLOWED, error: "Input provided in other way" };
-        }, { checkContentType: false, end: true, encoding: "binary" });
-
-        // monitoring data
-        this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
-
-        // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
-        // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
-
-        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
-            const event = data[1];
-
-            if (!event.eventName) return;
-
-            this.emit("event", event);
-
-            this.localEmitter.lastEvents[event.eventName] = event.message;
-            this.localEmitter.emit(event.eventName, event);
-        });
-
-        this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
-            const name = req.params?.name;
-
-            if (!name) {
-                throw new HostError("EVENT_NAME_MISSING");
-            }
-            const out = new DataStream();
-            const handler = (data: EventMessageData) => {
-                if (typeof data !== "object") {
-                    out.write(data);
-
-                    return;
-                }
-
-                const { message } = data;
-
-                out.write(message ? message : {});
-            };
-
-            const clean = () => {
-                this.logger.debug(`Event stream "${name}" disconnected`);
-
-                this.localEmitter.off(name, handler);
-            };
-
-            this.logger.debug("Event stream connected", name);
-
-            this.localEmitter.on(name, handler);
-
-            res.on("error", clean);
-            res.on("end", clean);
-
-            return out.JSONStringify();
-        });
-
-        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise((res) => {
-            const name = req.params?.name;
-
-            if (!name)
-                throw new HostError("EVENT_NAME_MISSING");
-
-            this.localEmitter.once(name, (data) => res(data.message));
-        });
-
-        this.router.get("/event/:name", async (req) => {
-            if (req.params?.name && this.localEmitter.lastEvents[req.params.name]) {
-                return this.localEmitter.lastEvents[req.params.name];
-            }
-
-            return awaitEvent(req);
-        });
-        this.router.get("/once/:name", awaitEvent);
-
-        // operations
-        this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-        this.router.op("post", "/_event", (req) => this.handleEvent(req), this.communicationHandler);
-
-        this.router.op("post", "/_stop", (req) => this.handleStop(req), this.communicationHandler);
-        this.router.op("post", "/_kill", (req) => this.handleKill(req), this.communicationHandler);
-
-        this.router.op("post", "/set", async (req) => {
-            const { body } = req;
-
-            if (isSetSequenceEndpointPayloadDTO(body)) {
-                this.logger.debug("Setting instance", body);
-
-                await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, body);
-            }
-
-            return { opStatus: ReasonPhrases.OK };
-        });
-    }
-
-    private async handleEvent(event: ParsedMessage): Promise<OpResponse<STHRestAPI.SendEventResponse>> {
-        const [, { eventName, message }] = event.body;
-
-        if (typeof eventName !== "string")
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid format, eventName missing." };
-
-        await this.emitEvent({ eventName, source: "api", message });
-        return { opStatus: ReasonPhrases.OK, accepted: ReasonPhrases.OK };
+        this.api.attach(router, this.communicationHandler!, mux);
     }
 
     public async emitEvent({ source, eventName, message }: EventMessageData) {
@@ -832,16 +713,8 @@ export class CSIController extends TypedEmitter<Events> {
         });
     }
 
-    private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
-        const { body: { timeout = 7000, canCallKeepalive = false } = { timeout: 7000, canCallKeepalive: false } } = req;
-
-        if (typeof timeout !== "number") {
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid timeout format" };
-        }
-        if (typeof canCallKeepalive !== "boolean") {
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid canCallKeepalive format" };
-        }
-        const message: StopSequenceMessageData = { timeout, canCallKeepalive };
+    async stop(opts: StopSequenceMessageData) {
+        const message: StopSequenceMessageData = opts;
 
         this.status = InstanceStatus.STOPPING;
 
@@ -849,32 +722,11 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.keepAliveRequested = false;
 
-        await defer(timeout || 0);
+        await defer(opts.timeout || 0);
 
         if (!this.keepAliveRequested) {
-            // TODO: shouldn't this be just this.handleKill();
-            await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+            await this.kill();
         }
-
-        return { opStatus: ReasonPhrases.ACCEPTED, ...this.getInfo() };
-    }
-
-    private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
-        if (this.status !== InstanceStatus.RUNNING) {
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Instance not running" };
-        }
-
-        const { body: { removeImmediately = false } = { removeImmediately: false } } = req;
-
-        if (typeof removeImmediately !== "boolean")
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid removeImmediately format" };
-
-        await this.kill({ removeImmediately });
-
-        return {
-            opStatus: ReasonPhrases.ACCEPTED,
-            ...this.getInfo()
-        };
     }
 
     async kill(opts = { removeImmediately: false }) {
@@ -901,28 +753,12 @@ export class CSIController extends TypedEmitter<Events> {
         }
     }
 
-    getInfo(): STHRestAPI.GetInstanceResponse {
-        this.logger.debug("Get info [seq, info]", this.sequence, this.info);
-
-        return {
-            id: this.id,
-            appConfig: this.appConfig,
-            args: this.args,
-            provides: this.provides,
-            requires: this.requires,
-            sequence: {
-                id: this.sequence.id,
-                config: this.sequence.config,
-                name: this.sequence.name,
-                location : this.sequence.location
-            },
-            ports: this.info.ports,
-            created: this.info.created,
-            started: this.info.started,
-            ended: this.info.ended,
-            status: this.status,
-            terminated: this.terminated
-        };
+    getStdio(): [WritableStream<any>, ReadableStream<any>, ReadableStream<any>] {
+        return [
+            this.upStreams[CC.STDIN],
+            this.upStreams[CC.STDOUT],
+            this.upStreams[CC.STDERR]
+        ]
     }
 
     getOutputStream(): ReadableStream<any> {
@@ -935,6 +771,10 @@ export class CSIController extends TypedEmitter<Events> {
 
     getLogStream(): Readable {
         return this.upStreams[CC.LOG];
+    }
+
+    getMonitoringStream(): Readable {
+        return this.upStreams[CC.MONITORING];
     }
 
     // @TODO discuss this
