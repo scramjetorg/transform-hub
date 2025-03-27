@@ -210,13 +210,13 @@ const options = augmentOptions(unaugmentedOptions)
             // Host..main is done, so we can now wait until all sequences exited.
             // If no sequences started, we exit as well...
             if (options.exitWithLastInstance) {
-                if (Object.keys(host.instancesStore).length === 0) {
+                if (host.instancesStore.length === 0) {
                     process.exit(101);
                 }
 
                 // TODO: fix this up once heartbeats are up
                 const interval = setInterval(async () => {
-                    if (Object.keys(host.instancesStore).length === 0) {
+                    if (host.instancesStore.length === 0) {
                         clearInterval(interval);
                         try {
                             await host.stop();

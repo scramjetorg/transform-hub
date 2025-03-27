@@ -3,6 +3,10 @@ import { CSIController } from "./csi-controller";
 export class InstancesStore extends Map<string, CSIController> {
     private exposePathMap: Map<string, Set<string>> = new Map();
 
+    get length() {
+        return this.size;
+    }
+
     registerRpc(path: string, instanceId: string) {
         if (!this.exposePathMap.has(path)) {
             this.exposePathMap.set(path, new Set());
