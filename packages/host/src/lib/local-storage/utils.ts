@@ -1,5 +1,5 @@
 import { STHConfiguration, StorageAdapterType, IStorageAdapter } from "@scramjet/types";
-import { FileLocalStorageAdapter, CouchdbLocalStorageAdapter } from "@scramjet/host";
+import { CouchdbLocalStorageAdapter, FileLocalStorageAdapter, MemoryStorageAdapter } from "./adapters";
 
 export function getValidStorageAdapters(): StorageAdapterType[] {
     return ["file", "couchdb"];
@@ -23,7 +23,11 @@ export function getStorageAdapter(sthConfig: STHConfiguration): IStorageAdapter 
         }
 
         case "file":
-        default:
+            if (!sthConfig.localStoragePath) {
+                return new MemoryStorageAdapter();
+            }
             return new FileLocalStorageAdapter(sthConfig.localStoragePath);
+        default:
+            return new MemoryStorageAdapter();
     }
 }

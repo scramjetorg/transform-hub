@@ -1,10 +1,11 @@
-import nano, { DocumentScope, ServerScope } from "nano";
+import { DocumentScope, ServerScope } from "nano";
 import { IStorageAdapter, CouchDbAdapterConf } from "@scramjet/types";
 
 export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     private db!: DocumentScope<any>;
-    private nanoInstance: ServerScope;
+    private nanoInstance?: ServerScope;
 
+    private readonly url: string;
     private readonly dbName: string;
     private readonly user?: string;
     private readonly pass?: string;
@@ -13,11 +14,14 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
         this.dbName = options.dbName ?? "localstorage";
         this.user = options.user;
         this.pass = options.pass;
-
-        this.nanoInstance = nano(options.url);
+        this.url = options.url;
     }
 
     async init(): Promise<void> {
+        const { default: nano } = await import("nano");
+
+        this.nanoInstance = nano(this.url);
+
         if (this.user && this.pass) {
             await this.nanoInstance.auth(this.user, this.pass);
         }
@@ -110,6 +114,6 @@ export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     }
 
     async destroy(): Promise<void> {
-        await this.nanoInstance.db.destroy(this.dbName);
+        await this.nanoInstance?.db.destroy(this.dbName);
     }
 }

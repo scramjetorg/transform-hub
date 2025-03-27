@@ -49,7 +49,7 @@ export const defaultConfig: STHConfiguration = {
     safeOperationLimit: 512,
     runtimeAdapter: "detect",
     localStorageAdapter: "file",
-    localStoragePath: "./localStorage",
+    localStoragePath: "",
     sequencesRoot: join(homedir(), ".scramjet_sequences"),
     kubernetes: {
         namespace: "default",

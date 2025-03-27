@@ -7,7 +7,6 @@ export class FileLocalStorageAdapter implements IStorageAdapter {
 
     /**
      * @param storagePath - The path to the directory where the storage files will be saved.
-     *                      Defaults to "./localStorage".
      */
     constructor(storagePath: string) {
         this.storagePath = storagePath;

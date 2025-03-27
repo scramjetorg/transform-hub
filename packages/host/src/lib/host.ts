@@ -64,8 +64,10 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
-import { getStorageAdapter } from "@scramjet/host";
+
 import { CSIController } from "./csi-controller";
+import { getStorageAdapter } from "./local-storage/utils";
+import { MemoryStorageAdapter } from "./local-storage/adapters";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -240,6 +242,9 @@ export class Host implements IComponent {
 
         this.logger.info("Node version:", process.version);
         this.logger.info(`Local Storage Adapter: ${sthConfig.localStorageAdapter}`);
+        if (this.localStorage instanceof MemoryStorageAdapter) {
+            this.logger.warn("LocalStorage path not configured, using no-op adapter");
+        }
         loadModuleLogger.pipe(this.logger);
 
         this.config.host.id ||= this.getId();
