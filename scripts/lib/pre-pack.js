@@ -230,6 +230,7 @@ class PrePack {
             cpu = this.rootPackageJson.cpu,
             publishConfig = this.rootPackageJson.publishConfig,
             exposePath = this.currPackageJson.exposePath,
+            tags = this.currPackageJson.tags,
             man, directories, config, peerDependencies, scramjet,
             peerDependenciesMeta, bundledDependencies, optionalDependencies, postBuildOverride
         } = content;
@@ -266,7 +267,7 @@ class PrePack {
             license, author, contributors, funding, files, main, types,
             bin, man, directories, repository, config, browser,
             dependencies, peerDependencies, peerDependenciesMeta,
-            bundledDependencies, optionalDependencies, exposePath,
+            bundledDependencies, optionalDependencies, exposePath, tags,
             engines, os, cpu, private: priv, publishConfig, scramjet, scripts: _scripts
         };
 
