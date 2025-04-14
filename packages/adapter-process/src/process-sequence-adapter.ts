@@ -46,6 +46,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         repository: validPackageJson.repository,
         exposePath: validPackageJson.exposePath,
         exposeHost: validPackageJson.exposeHost,
+        tags: validPackageJson.tags,
         language: detectLanguage(validPackageJson)
     };
 }

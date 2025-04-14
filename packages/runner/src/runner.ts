@@ -508,7 +508,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         process.stdin.on("resume", () => this.hostClient.stdinStream.resume());
 
         this.logger.debug("Streams initialized");
-        
+
         const { args, appConfig, exposePath, exposeHost } = this.runnerConnectInfo;
 
         if (exposePath && !this.api.server.listening) {

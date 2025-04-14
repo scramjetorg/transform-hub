@@ -22,6 +22,7 @@ export type SequencePackageJSON = {
     args?: InstanceArgs
     exposePath?: string;
     exposeHost?: string;
+    tags?: string[];
     repository?: {
         type: string;
         url: string;
