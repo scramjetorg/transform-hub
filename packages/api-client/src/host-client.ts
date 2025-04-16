@@ -28,16 +28,6 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Returns list of all Sequences on given Host, optionally filtered by the tag.
-     * @param {string} sequenceUrl base url exposed from sequence.
-     * @param {string} route route to the certain endpoint ie
-     * @returns {Promise<any>} Promise resolving to endpoint's response
-     */
-    async requestRpc(sequenceUrl: string, route: string) {
-        return this.client.get<any>(`${sequenceUrl}/${route}`);
-    }
-
-    /**
      * Returns list of all Sequences on Host.
      *
      * @returns {Promise<STHRestAPI.GetSequencesResponse[]>} Promise resolving to list of Sequences.
