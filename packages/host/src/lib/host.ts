@@ -900,6 +900,9 @@ export class Host implements IComponent {
                 ...sequence.config,
                 ...requestConfig,
             }
+            // TODO replace this with a proper implementation in process adapters
+            if (!config.exposeHost)
+                config.exposeHost = "localhost";
 
             const runner = await this.csiDispatcher.startRunner(sequence, config);
 
