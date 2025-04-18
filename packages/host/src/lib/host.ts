@@ -868,13 +868,13 @@ export class Host implements IComponent {
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
     // eslint-disable-next-line complexity
-    async startSequence(sequenceId: string, config: Omit<Omit<RunnerConnectInfo, "adapter">, "inputContentType">): Promise<StartInstanceReturnType> {
+    async startSequence(sequenceId: string, requestConfig: Omit<Omit<RunnerConnectInfo, "adapter">, "inputContentType">): Promise<StartInstanceReturnType> {
         if (await this.loadCheck.overloaded()) {
             throw new HostError("HOST_OVERLOAD", "Host overloaded");
         }
 
-        if (config.instanceId) {
-            if (this.instancesStore.has(config.instanceId)) {
+        if (requestConfig.instanceId) {
+            if (this.instancesStore.has(requestConfig.instanceId)) {
                 throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID already taken");
             }
         }
@@ -896,6 +896,11 @@ export class Host implements IComponent {
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
         try {
+            const config = {
+                ...sequence.config,
+                ...requestConfig,
+            }
+
             const runner = await this.csiDispatcher.startRunner(sequence, config);
 
             if (runner && "id" in runner) {
