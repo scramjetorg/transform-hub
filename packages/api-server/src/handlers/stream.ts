@@ -146,10 +146,9 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                         }
 
                         req
-                            .on("error", reject)
                             .on("error", () => {
                                 logger.error("Downstream request error.");
-                                reject();
+                                reject(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
                             })
                             .on("end", () => {
                                 logger.debug("Downstream request end.");

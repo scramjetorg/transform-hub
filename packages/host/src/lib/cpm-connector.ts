@@ -25,6 +25,7 @@ import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser/src/types";
 import { networkInterfaces } from "os";
+import { HostError } from "@scramjet/model";
 
 type STHInformation = {
     id?: string;
@@ -321,7 +322,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 this.logger.error("Platform request error");
 
                 this.handleCommunicationRequestEnd();
-                reject();
+                reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
             });
         });
     }

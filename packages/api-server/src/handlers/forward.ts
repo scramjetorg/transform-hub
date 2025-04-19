@@ -16,7 +16,7 @@ export function createForwardController(
     urls: string[],
     strategy: ForwardStrategy
 ) {
-    return async (req: IncomingMessage, res: ServerResponse, next: NextCallback): Promise<void> => {
+    return async (req: IncomingMessage, res: ServerResponse & { errorMessage?: string }, next: NextCallback): Promise<void> => {
         // Check if request path starts with basePath.
         if (!req.url || !req.url.startsWith(basePath)) {
             next(new CeroError("ERR_NOT_FOUND"));
@@ -54,7 +54,11 @@ export function createForwardController(
             proxyRes.pipe(stdout);
         });
 
-        proxyReq.on("error", (err) => {
+        proxyReq.on("error", (err: Error & { code: any }) => {
+            if (typeof err.code === "string") {
+                err.code = 500;
+            }
+            res.errorMessage = err.message;
             next(err);
         });
 

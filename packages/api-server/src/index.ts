@@ -26,10 +26,11 @@ export const logger = new ObjLogger("ApiServer");
 // logger.addOutput(process.stderr);
 
 function safeHandler(value: Middleware): Middleware {
-    return async (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {
+    return async (req: ParsedMessage, res: ServerResponse & { errorMessage?: string }, next: NextCallback) => {
         try {
             await value(req, res, next);
         } catch (err: Error | any) {
+            res.errorMessage = err.message;
             next(err);
         }
     };
@@ -101,7 +102,7 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
             res.end();
         },
         errorHandler: (err, req, res) => {
-            log.write({ date: Date.now(), method: req.method, url: req.url, error: err.stack } as any);
+            log.write({ date: Date.now(), method: req.method, url: req.url, errorMessage: res.errorMessage, error: err.stack } as any);
             if (!res.headersSent) {
                 res.writeHead(err.code || 500, err.httpMessage);
             }
@@ -119,13 +120,14 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
         srv.emit("request", request, response);
     });
 
-    router.use("/", async (req, res, next) => {
+    router.use("/", async (req, res: ServerResponse & { errorMessage?: string }, next) => {
         req.writeContinue ||= () => {};
 
         next();
+        const status = await new Promise(s => res.on("finish", () => s(res.statusCode)));
+        const message = res.errorMessage;
 
-        // TODO: fix - this should log on errors.
-        log.write({ date: Date.now(), method: req.method, url: req.url, status: await new Promise(s => res.on("finish", () => s(res.statusCode))) } as any);
+        log.write({ date: Date.now(), method: req.method, url: req.url, status, message } as any);
     });
 
     const get = createGetterHandler(router);

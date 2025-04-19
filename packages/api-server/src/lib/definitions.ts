@@ -32,7 +32,8 @@ const codelist = {
     ERR_INTERNAL_ERROR: [500, "Internal error occurred"],
     ERR_INVALID_CONTENT_TYPE: [415, "Invalid content-type"],
     ERR_CANNOT_PARSE_CONTENT: [400, "Could not parse content"],
-    ERR_UNSUPPORTED_ENCODING: [400, "Invalid encoding in content-type"]
+    ERR_UNSUPPORTED_ENCODING: [400, "Invalid encoding in content-type"],
+    DOWNSTREAM_REQUEST_ERROR: [400, "Error in stream processing"]
 };
 
 export type CeroCode = keyof typeof codelist;
@@ -61,7 +62,7 @@ export class CeroError extends Error implements APIError {
     }
 }
 
-export type CeroErrorHandler = (err: CeroError, req: IncomingMessage, res: ServerResponse) => void;
+export type CeroErrorHandler = (err: CeroError, req: IncomingMessage, res: ServerResponse & { errorMessage?: string}) => void;
 
 export type CeroRouterConfig = Partial<{
     defaultRoute: CeroDefaultRoute;
