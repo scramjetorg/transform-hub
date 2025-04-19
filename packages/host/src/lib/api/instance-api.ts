@@ -76,6 +76,13 @@ export class InstanceAPI {
         router.op("post", "/_kill", this.handleKill.bind(this), communicationHandler);
 
         router.op("post", "/set", this.handleSet.bind(this));
+
+        router.forward("/rpc", [], (req) => {
+            const url = req.url!.slice(this.csi.expose?.path?.length || 0);
+            this.logger.debug("RPC direct request", req.url, url, this.csi.id, this.csi.rpcUrl);
+
+            return [this.csi.rpcUrl, url] as [string, string];
+        });
     }
 
     private async handleOneEvent(req: ParsedMessage) {
