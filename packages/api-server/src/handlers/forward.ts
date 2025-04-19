@@ -51,7 +51,6 @@ export function createForwardController(
             // Set response headers and status code.
             res.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
             proxyRes.pipe(res, { end: true });
-            proxyRes.pipe(stdout);
         });
 
         proxyReq.on("error", (err: Error & { code: any }) => {
