@@ -7,6 +7,8 @@ export function getValidStorageAdapters(): StorageAdapterType[] {
 
 /**
  * Factory function that returns the adapter based on configuration.
+ * @param {STHConfiguration} sthConfig - Configuration object specifying which adapter to use
+ * @returns {IStorageAdapter} The configured storage adapter instance
  */
 export function getStorageAdapter(sthConfig: STHConfiguration): IStorageAdapter {
     switch (sthConfig.localStorageAdapter) {

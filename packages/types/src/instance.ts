@@ -8,7 +8,7 @@ export type InstanceArgs = any[];
 
 export type InstanceConnectionInfo = {}
 
-export type StartInstanceReturnType = 
-    { message: string; exitcode: number; status: InstanceStatus; } | 
+export type StartInstanceReturnType =
+    { message: string; exitcode: number; status: InstanceStatus; } |
     { id: string; appConfig: AppConfig; args: any[] | undefined; sequenceId: string; info: {}; limits: { memory: number; }; sequence: SequenceInfo; }
 ;

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { FileLocalStorageAdapter } from "@scramjet/host";
+// eslint-disable-next-line import/no-useless-path-segments
+import { FileLocalStorageAdapter } from "../../../";
 
 const testStorageName = "localstorage_test";
 

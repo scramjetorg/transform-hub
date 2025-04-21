@@ -64,9 +64,10 @@ const unaugmentedOptions = program
     .option("--couchdb-name <couchdb-name>", "CouchDB database name")
     .option("--couchdb-user <couchdb-user>", "CouchDB user")
     .option("--couchdb-pass <couchdb-pass>", "CouchDB password")
-    .option("--localstorage-path <path>", "Storage path for file-based localStorage adapter")
+    .option("--localstorage-path <path>", "Storage path for file-based localStorage adapter");
 
 const validStorageAdapters = getValidStorageAdapters();
+
 unaugmentedOptions.option("--localstorage-adapter <adapter>", `LocalStorage adapter to use (${validStorageAdapters.map(x => JSON.stringify(x))},"file")`, (value) => {
     if (!value || value === "file")
         return "file";

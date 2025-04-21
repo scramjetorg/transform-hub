@@ -33,7 +33,7 @@ export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyCon
         }
         return true;
     }
-    
+
     isValid() {
         return this.isValidConfig;
     }

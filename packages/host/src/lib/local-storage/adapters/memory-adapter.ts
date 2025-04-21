@@ -5,7 +5,7 @@ import { IStorageAdapter } from "@scramjet/types";
  */
 export class MemoryStorageAdapter implements IStorageAdapter {
     private storage: Map<string, string> = new Map();
-    
+
     async init(): Promise<void> {}
 
     async setItem(key: string, value: string): Promise<void> {

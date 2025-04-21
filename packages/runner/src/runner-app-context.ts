@@ -5,8 +5,7 @@ import {
     AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
     FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient, ManagerClient, LogLevel,
     APIExpose
-} from "@scramjet/types";
-import { ILocalStorage } from "@scramjet/types";
+    , ILocalStorage } from "@scramjet/types";
 import { EventEmitter } from "events";
 
 function assertFunction(handler: any | Function): handler is Function {
@@ -41,7 +40,7 @@ implements AppContext<AppConfigType, State> {
     localStorage: ILocalStorage;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient, 
+        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient,
         spaceClient: ManagerClient, id: string, logLevel: LogLevel, api: APIExpose, localStorage: ILocalStorage) {
         this.config = config;
         this.monitorStream = monitorStream;

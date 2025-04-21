@@ -38,7 +38,6 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
-
 import { ConfigService, development } from "@scramjet/sth-config";
 import { isStartSequenceDTO, readJsonFile, defer, FileBuilder, RefCountHandler } from "@scramjet/utility";
 
@@ -86,7 +85,7 @@ const isDevelopment = development();
  * Can communicate with Manager.
  */
 export class Host implements IComponent {
-    apiHandler: HostAPIHandler;    
+    apiHandler: HostAPIHandler;
     getSequenceAdapter() {
         return getSequenceAdapter(this.adapterName, this.config);
     }
@@ -202,7 +201,7 @@ export class Host implements IComponent {
     private _heartbeatInterval: NodeJS.Timeout | undefined;
     heartBeatInterval = new RefCountHandler(
         () => {
-            this._heartbeatInterval = setInterval(() => this.heartBeat(), this.config.timings.heartBeatInterval)
+            this._heartbeatInterval = setInterval(() => this.heartBeat(), this.config.timings.heartBeatInterval);
         },
         () => {
             clearInterval(this._heartbeatInterval!);
@@ -620,24 +619,24 @@ export class Host implements IComponent {
 
         await DataStream.from(startupConfig)
             .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
-            .map(async (seqenceConfig: StartSequenceDTO) => {
-                const sequence = this.sequenceStore.getById(seqenceConfig.id);
+            .map(async (sequenceConfig: StartSequenceDTO) => {
+                const sequence = this.sequenceStore.getById(sequenceConfig.id);
 
                 if (!sequence) {
-                    this.logger.warn("Sequence id not found for startup config", seqenceConfig);
+                    this.logger.warn("Sequence id not found for startup config", sequenceConfig);
                     return;
                 }
 
                 await this.csiDispatcher.startRunner(sequence, {
-                    appConfig: seqenceConfig.appConfig || {},
-                    args: seqenceConfig.args,
-                    instanceId: seqenceConfig.instanceId,
-                    exposePath: seqenceConfig.exposePath || sequence.config.exposePath,
+                    appConfig: sequenceConfig.appConfig || {},
+                    args: sequenceConfig.args,
+                    instanceId: sequenceConfig.instanceId,
+                    exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
                     exposeHost: "localhost",
                     logLevel: this.logger.logLevel
                 });
 
-                this.logger.debug("Starting sequence based on config", seqenceConfig);
+                this.logger.debug("Starting sequence based on config", sequenceConfig);
             })
             .run();
     }
@@ -665,7 +664,6 @@ export class Host implements IComponent {
     }
 
     async deleteSequence(id: string, force: boolean): Promise<string> {
-
         this.logger.trace("Deleting Sequence...", id, { force });
 
         const sequence = this.sequenceStore.getById(id);
@@ -929,12 +927,12 @@ export class Host implements IComponent {
         this.socketServer.on("connect", async (id, streams) => {
             this.logger.debug("Instance connecting", id);
 
-            const instance = this.instancesStore.get(id);
+            let instance = this.instancesStore.get(id);
 
             if (!instance) {
                 this.logger.info("Creating new CSIController for unknown Instance");
 
-                const instance = await this.csiDispatcher.createCSIController(
+                instance = await this.csiDispatcher.createCSIController(
                     id,
                     {} as SequenceInfo,
                     {} as STHRestAPI.StartSequencePayload,
@@ -961,7 +959,7 @@ export class Host implements IComponent {
         await Promise.all(
             this.instancesStore
                 .map((inst: CSIController) => {
-                    event.source !== inst.id ? inst.emitEvent(event) : true
+                    return event.source !== inst.id ? inst.emitEvent(event) : true;
                 })
         );
     }
@@ -1058,8 +1056,8 @@ export class Host implements IComponent {
         this.logger.trace("Stopping instances");
 
         await Promise.all(
-            Object.values(this.instancesStore).map((csiController) =>
-                csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {})
+            Object.values(this.instancesStore).map(async (csiController) =>
+                await csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {})
             )
         );
 

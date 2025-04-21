@@ -62,7 +62,6 @@ export class InstanceAPI {
         // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
         // router.get("/status", RunnerMessageCode.STATUS, communicationHandler);
 
-
         router.upstream("/events/:name", this.handleEvents.bind(this));
 
         router.get("/event/:name", this.handleOneEvent.bind(this));
@@ -106,7 +105,7 @@ export class InstanceAPI {
 
         return this.csi.awaitEvent(name);
     }
-    
+
     private async handleEvents(req: ParsedMessage, res: ServerResponse) {
         const name = req.params?.name;
 
@@ -148,7 +147,7 @@ export class InstanceAPI {
         if (isSetSequenceEndpointPayloadDTO(body)) {
             this.logger.debug("Setting instance", body);
 
-            this.csi.set(body);
+            await this.csi.set(body);
         }
 
         return { opStatus: ReasonPhrases.OK };
@@ -167,7 +166,6 @@ export class InstanceAPI {
                     default:
                         return { opStatus: ReasonPhrases.BAD_REQUEST, error: e.message };
                 }
-
             }
         }
 
@@ -188,11 +186,12 @@ export class InstanceAPI {
         const input = await this.handleInput({ headers: _headers });
 
         if ("opStatus" in input) {
-            return input
+            return input;
         }
 
         duplex.input.pipe(input, { end: false });
         this.csi.getOutputStream().pipe(duplex.output);
+        return {};
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
@@ -205,7 +204,7 @@ export class InstanceAPI {
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid canCallKeepalive format" };
         }
 
-        this.csi.stop({ timeout, canCallKeepalive })
+        await this.csi.stop({ timeout, canCallKeepalive });
 
         return { opStatus: ReasonPhrases.ACCEPTED, ...this.csi.getInfo() };
     }

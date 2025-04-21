@@ -22,7 +22,7 @@ import {
     StopSequenceMessageData,
     Streamable,
     SynchronousStreamable
-} from "@scramjet/types";
+    , SetMessageData, StorageMessageData, StorageUpdateMessageData } from "@scramjet/types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
@@ -37,10 +37,8 @@ import { Readable, Writable } from "stream";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
-import { SetMessageData } from "@scramjet/types";
 import { createServer } from "@scramjet/api-server";
 import { AddressInfo } from "net";
-import { StorageMessageData, StorageUpdateMessageData } from "@scramjet/types";
 import { LocalStorageAgent, LocalStorageAgentHost } from "./local-storage-agent";
 
 let exitHandled = false;
@@ -258,7 +256,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         return this._context;
     }
-
+    // eslint-disable-next-line complexity
     async controlStreamHandler([code, data]: EncodedControlMessage) {
         if (this.monitoringMessageReplyTimeout) {
             clearTimeout(this.monitoringMessageReplyTimeout);
@@ -412,6 +410,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (this.provides) {
             this.sendPang({ provides: this.provides, contentType: this.providesContentType });
         }
+
+        return Promise.resolve();
     }
 
     async handleKillRequest(): Promise<void> {
@@ -705,7 +705,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.instanceId,
             this.logger.logLevel,
             this.api,
-            localStorageAgent  
+            localStorageAgent
         );
         this._context.logger.pipe(this.logger);
 

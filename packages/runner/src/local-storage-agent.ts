@@ -1,6 +1,5 @@
-import { ILocalStorage } from "@scramjet/types";
+import { ILocalStorage, EncodedMonitoringMessage } from "@scramjet/types";
 import { RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
-import { EncodedMonitoringMessage } from "@scramjet/types";
 
 /**
  * LocalStorageAgentHost defines the minimal interface needed from the Runner.
@@ -17,17 +16,16 @@ export interface LocalStorageAgentHost {
 }
 
 export class LocalStorageAgent implements ILocalStorage {
-
     private pendingUpdates = new Map<
-        string, 
-        { 
-            expectedValue: string | null; 
-            resolve: () => void; 
-            reject: (err: Error) => void; 
+        string,
+        {
+            expectedValue: string | null;
+            resolve:() => void;
+            reject: (err: Error) => void;
         }
-        >();
+    >();
 
-    constructor(private host: LocalStorageAgentHost) {}
+    constructor(private host: LocalStorageAgentHost) { }
 
     async getItem(key: string): Promise<string | null> {
         return this.host.localCache[key] ?? null;
@@ -46,25 +44,34 @@ export class LocalStorageAgent implements ILocalStorage {
     }
 
     private async sendUpdate(key: string, value: string | null): Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             this.pendingUpdates.set(key, { expectedValue: value, resolve, reject });
-            this.host.writeMonitoringMessage([
-                RunnerMessageCode.STORAGE_UPDATE,
-                { key, value }
-            ]);
-            });
+            try {
+                this.host.writeMonitoringMessage([
+                    RunnerMessageCode.STORAGE_UPDATE,
+                    { key, value }
+                ]);
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     public handleBroadcastUpdate(data: { key: string; value: string | null }): void {
         const { key, value } = data;
+
         if (key === StorageActionCode.CLEAR) {
             for (const k in this.host.localCache) {
-                delete this.host.localCache[k];
+                if (Object.prototype.hasOwnProperty.call(this.host.localCache, k)) {
+                    delete this.host.localCache[k];
+                }
             }
         } else {
             this.host.localCache[key] = value;
         }
+
         const pending = this.pendingUpdates.get(key);
+
         if (pending && pending.expectedValue === value) {
             pending.resolve();
             this.pendingUpdates.delete(key);

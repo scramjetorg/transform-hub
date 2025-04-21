@@ -2,10 +2,9 @@
 
 import { Runner } from "../runner";
 import fs from "fs";
-import { AppConfig, SequenceInfo } from "@scramjet/types";
+import { AppConfig, SequenceInfo, RunnerConnectInfo } from "@scramjet/types";
 import { HostClient } from "../host-client";
 import { RunnerExitCode } from "@scramjet/symbols";
-import { RunnerConnectInfo } from "@scramjet/types";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
@@ -66,10 +65,10 @@ const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
  */
 
 const runner: Runner<AppConfig> = new Runner({
-    sequencePath, 
-    hostClient, 
-    instanceId, 
-    connectInfo, 
+    sequencePath,
+    hostClient,
+    instanceId,
+    connectInfo,
     runnerConnectInfo: parsedRunnerConnectInfo
 });
 

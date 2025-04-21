@@ -13,8 +13,10 @@ export class InstancesStore extends Map<string, CSIController> {
         }
         this.exposePathMap.get(path)?.add(instanceId);
     }
+
     map<X>(mapper: (csiController: CSIController) => X): X[] {
         const values = this.values();
+
         return Array.from(values).map(mapper);
     }
 

@@ -49,7 +49,7 @@ function getHostClient() {
     return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
 }
 
-When('I send a {string} request to {string} with body {string}', async function (method, path, body) {
+When("I send a {string} request to {string} with body {string}", async function(method, path, body) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
     const options: RequestInit = {
         method,
@@ -59,10 +59,11 @@ When('I send a {string} request to {string} with body {string}', async function 
 
     // Send the request and store the response for later steps
     const response = await fetch(url, options);
+
     this.response = response;
 });
 
-When('I send a {string} request to {string}', async function (method, path) {
+When("I send a {string} request to {string}", async function(method, path) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
     const options: RequestInit = { method };
 
@@ -74,11 +75,11 @@ When('I send a {string} request to {string}', async function (method, path) {
     assert.ok(response.ok, `Request failed with status ${response.status}`);
 });
 
-Then('the response body should be {string}', async function (string) {
+Then("the response body should be {string}", async function(string) {
     assert.strictEqual(await this.response.text(), string);
 });
 
-Then('the response status should be {int}', async function (int) {
+Then("the response status should be {int}", async function(int) {
     assert.strictEqual(this.response.status, int);
 });
 

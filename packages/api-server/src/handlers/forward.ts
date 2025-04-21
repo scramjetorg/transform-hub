@@ -2,11 +2,11 @@ import http, { IncomingMessage, ServerResponse } from "http";
 import { ForwardStrategy, NextCallback } from "@scramjet/types";
 import https from "https";
 import { CeroError } from "../lib/definitions";
-import { stdout } from "process";
 
 /**
  * Creates a forwarding controller that forwards requests to one of the provided URLs.
  * The target URL is chosen by the optional strategy function. If no strategy is provided, roundRobinStrategy is used.
+ * @param basePath The base path to match for forwarding requests
  * @param urls An array of target base URLs (e.g. "http://example.com" or "https://example.com")
  * @param strategy Optional strategy function to pick a URL based on the request and available URLs.
  * @returns A middleware function that forwards incoming HTTP requests.
@@ -33,10 +33,16 @@ export function createForwardController(
         }
         const parsedUrl = new URL(targetUrl);
         const protocol = parsedUrl.protocol === "https:" ? https : http;
+        const defaultPort = parsedUrl.protocol === "https:" ? 443 : 80;
+        const port = parsedUrl.port
+            ? parseInt(parsedUrl.port, 10)
+            : defaultPort
+        ;
+
         const options = {
             protocol: parsedUrl.protocol,
             hostname: parsedUrl.hostname,
-            port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : parsedUrl.protocol === "https:" ? 443 : 80,
+            port,
             path: rewriteUrl, // Forward the hoisted URL path and query.
             method: req.method,
             headers: {

@@ -1,4 +1,5 @@
-import { CouchdbLocalStorageAdapter } from "@scramjet/host";
+// eslint-disable-next-line import/no-useless-path-segments
+import { CouchdbLocalStorageAdapter } from "../../..";
 import { CouchDbAdapterConf } from "@scramjet/types";
 
 const TEST_DB_PREFIX = "localstorage_test_";
@@ -20,6 +21,7 @@ describe("CouchdbLocalStorageAdapter Tests", () => {
             adapter = new CouchdbLocalStorageAdapter(options);
             await adapter.init();
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error("Failed to initialize CouchDB adapter:", error);
             throw error;
         }

@@ -148,7 +148,10 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
         upstream,
         ...crud,
         get log() {
-            if (!paused) log.pause(); // if log is accessed then it should be read
+            if (!paused) {
+                log.pause(); // if log is accessed then it should be read
+                paused = true;
+            }
             return log;
         },
         use: (path, ...middlewares) => {

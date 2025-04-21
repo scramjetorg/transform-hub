@@ -30,7 +30,8 @@ import {
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
-    IStorageAdapter } from "@scramjet/types";
+    IStorageAdapter
+} from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { Duplex, PassThrough, Readable } from "stream";
 
@@ -242,7 +243,7 @@ export class CSIController extends TypedEmitter<Events> {
                 id: this.sequence.id,
                 config: this.sequence.config,
                 name: this.sequence.name,
-                location : this.sequence.location
+                location: this.sequence.location
             },
             ports: this.info.ports,
             created: this.info.created,
@@ -574,9 +575,11 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async broadcastUpdate(key: string, value: string | null) {
-        this.instanceStore.map((csi) => {
-            csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
-        });
+        return Promise.all(
+            this.instanceStore.map(async (csi) => {
+                await csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
+            })
+        );
     }
 
     async sendFullStorageState(runnerId: string, sharedLocalStorage: Record<string, any>) {
@@ -758,7 +761,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.upStreams[CC.STDIN],
             this.upStreams[CC.STDOUT],
             this.upStreams[CC.STDERR]
-        ]
+        ];
     }
 
     getOutputStream(): ReadableStream<any> {

@@ -106,13 +106,16 @@ export class HostAPIHandler {
 
     /**
      * Forwards RPC to the correct instances
+     * @returns {Function} Function that forwards the request to the correct instance.
      */
     createRPCForwarder() {
         return async (req: IncomingMessage) => {
             const [instance] = roundRobinStrategy(req, this.host.instancesStore.getByExposePath(req.url!));
-            
+
             const url = req.url!.slice(instance.expose?.path?.length || 0);
+
             this.logger.debug("RPC request", req.url, url, instance?.id, instance?.rpcUrl);
+
             return [instance?.rpcUrl, url] as [string, string];
         };
     }
@@ -154,7 +157,7 @@ export class HostAPIHandler {
 
         return next();
     }
-    
+
     /**
      * Forward request to Manager the Host is connected to.
      * @param {ParsedMessage} req Request object.
@@ -188,7 +191,6 @@ export class HostAPIHandler {
             res.end();
         }
     }
- 
 
     /**
      * Handles delete Sequence request.
@@ -208,10 +210,10 @@ export class HostAPIHandler {
         const force = req.headers[HostHeaders.SEQUENCE_FORCE_REMOVE];
 
         try {
-            this.host.deleteSequence(id, !!force && force !== "false");
+            await this.host.deleteSequence(id, !!force && force !== "false");
 
             return { opStatus: ReasonPhrases.OK, id };
-        } catch(e: unknown) {
+        } catch (e: unknown) {
             if (!(e instanceof HostError)) {
                 return {
                     opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR,
@@ -242,7 +244,7 @@ export class HostAPIHandler {
             this.host.heartBeatInterval.unref();
             out.unpipe(ret);
             ret.end();
-        }
+        };
 
         req.socket.on("end", unpipe);
         req.socket.on("error", unpipe);
@@ -389,9 +391,8 @@ export class HostAPIHandler {
                     return {
                         opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR,
                         error: error.message,
-                    }; 
+                    };
             }
         }
     }
-
 }

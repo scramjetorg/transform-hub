@@ -32,7 +32,6 @@ export class ManagerClient implements ClientProvider {
         return this.client.get<MRestAPI.GetHostInfoResponse[]>("list");
     }
 
-
     /**
      * Returns list of all entities on Host.
      * @param {string} sequenceUrl base url exposed from sequence.

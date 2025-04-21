@@ -9,12 +9,12 @@ import {
     IObjectLogger,
     K8SAdapterConfiguration,
     MonitoringMessageData,
+    RunnerConnectInfo,
     SequenceInfo,
-    STHConfiguration,
+    STHConfiguration
 } from "@scramjet/types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerConnectInfo } from "@scramjet/types";
 import { createReadStream } from "fs";
 import path from "path";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
@@ -27,9 +27,9 @@ import { RunnerExitCode } from "@scramjet/symbols";
  * Adapter for running Instance by Runner executed in separate process.
  */
 class KubernetesInstanceAdapter implements
-ILifeCycleAdapterMain,
-ILifeCycleAdapterRun,
-IComponent {
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterRun,
+    IComponent {
     logger: IObjectLogger;
     name = "KubernetesInstanceAdapter";
 
@@ -103,7 +103,7 @@ IComponent {
 
         this.limits = config.limits;
 
-        const runnerName = this._runnerName = `runner-${ instanceId }`;
+        const runnerName = this._runnerName = `runner-${instanceId}`;
 
         this.logger.debug("Creating Runner Pod");
 
@@ -180,7 +180,7 @@ IComponent {
     async waitUntilExit(_config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
         this.logger.info("Waiting for pod exit...");
 
-        this._runnerName ||= `runner-${ instanceId }`;
+        this._runnerName ||= `runner-${instanceId}`;
 
         const exitPodStatus = await this.kubeClient.waitForPodStatus(this._runnerName!, ["Succeeded", "Failed", "Unknown"]);
 

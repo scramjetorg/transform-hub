@@ -298,7 +298,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                             message: "Exited before established",
                             exitcode: -1,
                             status: InstanceStatus.ERRORED
-                        }
+                        };
                     })
             )
         ]);

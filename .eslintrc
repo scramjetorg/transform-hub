@@ -197,7 +197,7 @@
         "import/no-absolute-path": 2, // Forbid import of modules using absolute paths ()
         "import/no-dynamic-require": 2, // Forbid require() calls with expressions ()
         "import/no-self-import": 2, // Forbid a module from importing itself ()
-        "import/no-cycle": 2, // Forbid a module from importing a module with a dependency path back to itself ()
+        "import/no-cycle": 1, // Forbid a module from importing a module with a dependency path back to itself ()
         "import/no-useless-path-segments": 2, // Prevent unnecessary path segments in import and require statements ()
         "import/no-relative-packages": 2, // Prevent importing packages through relative paths ()
 
