@@ -6,7 +6,7 @@
   "include": [
     "./src",
     "./test"
-, "../adapters-common/src/validate-sequence-package-json.ts"  ],
+  ],
   "exclude": [
     "node_modules"
   ],

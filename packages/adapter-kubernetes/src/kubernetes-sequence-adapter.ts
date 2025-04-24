@@ -9,12 +9,14 @@ import {
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { createReadStream, createWriteStream } from "fs";
-import fs from "fs/promises";
-import path from "path";
-import { exec } from "child_process";
+import fs, { stat } from "fs/promises";
+import path, { join } from "path";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters";
+import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-common";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+import { SequenceAdapterError } from "@scramjet/model";
+import { COMPRESSED_DIR } from "./constants";
+import { x } from "tar";
 
 /**
  * Returns existing Sequence configuration.
@@ -25,6 +27,11 @@ import { adapterConfigDecoder } from "./kubernetes-config-decoder";
  */
 async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<KubernetesSequenceConfig> {
     const sequenceDir = path.join(sequencesRoot, id);
+
+    if (!(await stat(sequenceDir)).isDirectory()) {
+        throw new Error(`Not a directory: ${sequenceDir}`);
+    }
+
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
 
@@ -57,6 +64,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
     name = "KubernetesSequenceAdapter";
 
     private adapterConfig: K8SAdapterConfiguration;
+    sequenceWorkdir: string;
 
     constructor(sthConfig: STHConfiguration) {
         const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.adapters.kubernetes);
@@ -66,6 +74,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
         }
 
         this.adapterConfig = decodedAdapterConfig.value;
+        this.sequenceWorkdir = join(this.adapterConfig.sequencesRoot, COMPRESSED_DIR);
         this.logger = new ObjLogger(this);
     }
 
@@ -77,6 +86,12 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
     async init(): Promise<void> {
         await fs.access(this.adapterConfig.sequencesRoot)
             .catch(() => fs.mkdir(this.adapterConfig.sequencesRoot));
+
+        const sequenceWorkdir = await stat(this.sequenceWorkdir).catch(() => fs.mkdir(this.sequenceWorkdir));
+
+        if (sequenceWorkdir && !sequenceWorkdir.isDirectory()) {
+            throw new SequenceAdapterError("CONFIGURATION_ERROR", `Kubernetes sequence workdir exists and is not a directory: ${this.sequenceWorkdir}`);
+        }
 
         this.logger.info("Kubernetes adapter initialized with options", {
             "runner images": this.adapterConfig.runnerImages,
@@ -94,6 +109,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
         const storedSequencesIds = await fs.readdir(this.adapterConfig.sequencesRoot);
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
+                .filter((id) => !id.startsWith("."))
                 .map((id) => getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id))
                 .map((configPromised) => configPromised.catch(() => null))
         ))
@@ -123,15 +139,22 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
 
         await fs.mkdir(sequenceDir);
 
-        const compressedOut = createWriteStream(path.join(sequenceDir, "compressed.tar.gz"));
+        const compressedOut = createWriteStream(path.join(this.sequenceWorkdir, `${id}.tar.gz`));
 
         // @TODO unpack only package.json
-        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir}`);
+        const uncompressingInput = x({ z: true, C: sequenceDir });
 
-        stream.pipe(uncompressingProc.stdin!);
+        stream.pipe(uncompressingInput);
         stream.pipe(compressedOut);
 
-        await new Promise(res => uncompressingProc.on("close", res));
+        await new Promise(res => {
+            uncompressingInput.on("error", (err) => {
+                this.logger.error("Error unpacking sequence", err);
+                compressedOut.close();
+                throw new SequenceAdapterError("PRERUNNER_ERROR", `Error unpacking sequence: ${err.message}`);
+            });
+            uncompressingInput.on("close", res);
+        });
 
         return getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id);
     }

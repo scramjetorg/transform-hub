@@ -8,11 +8,11 @@ import {
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { createReadStream } from "fs";
-import fs from "fs/promises";
+import fs, { stat } from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters";
+import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-common";
 import { SequenceAdapterError } from "@scramjet/model";
 
 /**
@@ -25,6 +25,11 @@ import { SequenceAdapterError } from "@scramjet/model";
 // eslint-disable-next-line complexity
 async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
     const sequenceDir = path.join(sequencesRoot, id);
+
+    if (!(await stat(sequenceDir)).isDirectory()) {
+        throw new Error(`Not a directory: ${sequenceDir}`);
+    }
+
     const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
 
@@ -86,6 +91,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
+                .filter((id) => !id.startsWith("."))
                 .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
                 .map((configPromised) => configPromised.catch(() => null))
         ))

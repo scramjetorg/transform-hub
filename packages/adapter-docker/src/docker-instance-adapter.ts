@@ -21,7 +21,7 @@ import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolum
 import { FreePortsFinder, defer, streamToString } from "@scramjet/utility";
 import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { getRunnerEnvEntries } from "@scramjet/adapters";
+import { getRunnerEnvEntries } from "@scramjet/adapters-common";
 import { Readable } from "stream";
 
 /**

@@ -18,7 +18,7 @@ import { ChildProcess, spawn } from "child_process";
 import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
-import { getRunnerEnvVariables } from "@scramjet/adapters";
+import { getRunnerEnvVariables } from "@scramjet/adapters-common";
 import { development } from "@scramjet/sth-config";
 
 const isTSNode =

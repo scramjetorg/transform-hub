@@ -1,1 +1,1 @@
-export type SequenceAdapterErrorCode = "DOCKER_ERROR" | "PRERUNNER_ERROR"
+export type SequenceAdapterErrorCode = "DOCKER_ERROR" | "PRERUNNER_ERROR" | "CONFIGURATION_ERROR";

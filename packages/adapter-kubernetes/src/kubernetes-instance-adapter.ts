@@ -15,13 +15,17 @@ import {
 } from "@scramjet/types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { createReadStream } from "fs";
-import path from "path";
+import { createReadStream, createWriteStream } from "fs";
+import path, { join } from "path";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { getRunnerEnvEntries } from "@scramjet/adapters";
-import { PassThrough } from "stream";
+import { getRunnerEnvEntries } from "@scramjet/adapters-common";
+import { PassThrough, Readable } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
+import { SequenceAdapterError } from "@scramjet/model";
+import { mkdir, stat, unlink } from "fs/promises";
+import { COMPRESSED_DIR } from "./constants";
+import { c } from "tar";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -41,6 +45,7 @@ class KubernetesInstanceAdapter implements
     private _limits?: InstanceLimits = {};
 
     stdErrorStream?: PassThrough;
+    sequenceWorkdir: string;
 
     get limits() { return this._limits || {} as InstanceLimits; }
     private set limits(value: InstanceLimits) { this._limits = value; }
@@ -57,6 +62,7 @@ class KubernetesInstanceAdapter implements
         }
 
         this.adapterConfig = decodedAdapterConfig.value;
+        this.sequenceWorkdir = join(this.adapterConfig.sequencesRoot, COMPRESSED_DIR);
         this.logger = new ObjLogger(this);
     }
 
@@ -70,6 +76,12 @@ class KubernetesInstanceAdapter implements
     }
 
     async init(): Promise<void> {
+        const sequenceWorkdir = await stat(this.sequenceWorkdir).catch(() => mkdir(this.sequenceWorkdir));
+
+        if (sequenceWorkdir && !sequenceWorkdir.isDirectory()) {
+            throw new SequenceAdapterError("CONFIGURATION_ERROR", `Kubernetes sequence workdir exists and is not a directory: ${this.sequenceWorkdir}`);
+        }
+
         this.kubeClient.logger.pipe(this.logger);
     }
 
@@ -92,6 +104,7 @@ class KubernetesInstanceAdapter implements
             }
         };
     }
+
     async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<number> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
@@ -165,12 +178,41 @@ class KubernetesInstanceAdapter implements
 
         this.logger.debug("Copy sequence files to Runner");
 
-        const compressedStream = createReadStream(path.join(config.sequenceDir, "compressed.tar.gz"));
+        const compressedSequence = path.join(this.sequenceWorkdir, `${ config.id }.tar.gz`);
+        const compressedStat = await stat(compressedSequence).catch(() => null);
+        let compressedStream: Readable
+
+        if (!compressedStat) {
+            this.logger.info("Sequence not found, creating compressed stream from sequence dir");
+            compressedStream = c({ z: true, C: path.join(this.adapterConfig.sequencesRoot, config.id) })
+                .pipe(new PassThrough());
+
+            compressedStream.pipe(createWriteStream(compressedSequence))
+                .on("error", async (e) => {
+                    this.logger.warn("Error creating compressed sequence", e);
+                    await unlink(compressedSequence).catch(() => {
+                        this.logger.error("Error deleting compressed sequence", e);
+                    });
+                })
+                .on("finish", () => {
+                    this.logger.debug("Compressed sequence created");
+                });
+        } else {
+            compressedStream = createReadStream(compressedSequence);
+        }
 
         this.stdErrorStream = new PassThrough();
         this.stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
 
-        await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, this.stdErrorStream, compressedStream, 2);
+        await this.kubeClient.exec(
+            runnerName, 
+            runnerName, 
+            ["unpack.sh", "/package"], 
+            process.stdout, 
+            this.stdErrorStream, 
+            compressedStream, 
+            0
+        );
 
         this.logger.debug("Copy command done");
 

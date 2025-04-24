@@ -20,9 +20,10 @@
     "@scramjet/python-runner": "^1.0.1",
     "@scramjet/runner": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
-    "@scramjet/adapters": "1.0.1",
+    "@scramjet/adapters-common": "1.0.1",
     "@scramjet/sth-config": "^1.0.1",
     "scramjet": "^4.37.0",
+    "tar": "^7.4.3",
     "ws": "^7.3.1"
   },
   "devDependencies": {
