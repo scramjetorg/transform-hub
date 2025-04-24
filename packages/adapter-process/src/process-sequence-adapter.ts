@@ -1,60 +1,17 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
-    ProcessSequenceConfig,
     ISequenceAdapter,
     STHConfiguration,
     SequenceConfig,
     IObjectLogger,
 } from "@scramjet/types";
 import { Readable } from "stream";
-import { createReadStream } from "fs";
-import fs, { stat } from "fs/promises";
+import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
-import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-common";
+import { isDefined } from "@scramjet/utility";
 import { SequenceAdapterError } from "@scramjet/model";
-
-/**
- * Returns existing Sequence configuration.
- *
- * @param {string} sequencesRoot Folder where sequences are located.
- * @param {string} id Sequence Id.
- * @returns {ProcessSequenceConfig} Sequence configuration.
- */
-// eslint-disable-next-line complexity
-async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
-    const sequenceDir = path.join(sequencesRoot, id);
-
-    if (!(await stat(sequenceDir)).isDirectory()) {
-        throw new Error(`Not a directory: ${sequenceDir}`);
-    }
-
-    const packageJsonPath = path.join(sequenceDir, "package.json");
-    const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
-
-    const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
-    const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
-
-    return {
-        type: "process",
-        engines,
-        entrypointPath: validPackageJson.main,
-        version: validPackageJson.version ?? "",
-        name: validPackageJson.name ?? "",
-        id,
-        sequenceDir,
-        description: validPackageJson.description,
-        author: validPackageJson.author,
-        keywords: validPackageJson.keywords,
-        args: validPackageJson.args,
-        repository: validPackageJson.repository,
-        exposePath: validPackageJson.exposePath,
-        exposeHost: validPackageJson.exposeHost,
-        tags: validPackageJson.tags,
-        language: detectLanguage(validPackageJson)
-    };
-}
+import { getRunnerConfigForStoredSequence } from "@scramjet/adapters-common";
 
 /**
  * Adapter for preparing Sequence to be run in process.
@@ -92,7 +49,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .filter((id) => !id.startsWith("."))
-                .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesRoot, id))
+                .map((id) => getRunnerConfigForStoredSequence("process", this.config.sequencesRoot, id))
                 .map((configPromised) => configPromised.catch(() => null))
         ))
             .filter(isDefined);
@@ -148,7 +105,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         this.logger.debug("Unpacking sequence succeeded", stderrOutput);
 
-        return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id);
+        return getRunnerConfigForStoredSequence("process", this.config.sequencesRoot, id);
     }
 
     /**

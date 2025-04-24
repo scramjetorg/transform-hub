@@ -15,6 +15,7 @@
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
     "dependencies": {
+      "@scramjet/utility": "^1.0.1",
       "ts.data.json": "^2.2.0"
     },
     "devDependencies": {

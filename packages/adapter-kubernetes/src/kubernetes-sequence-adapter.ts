@@ -4,56 +4,18 @@ import {
     STHConfiguration,
     SequenceConfig,
     IObjectLogger,
-    KubernetesSequenceConfig,
     K8SAdapterConfiguration,
 } from "@scramjet/types";
 import { Readable } from "stream";
-import { createReadStream, createWriteStream } from "fs";
+import { createWriteStream } from "fs";
 import fs, { stat } from "fs/promises";
 import path, { join } from "path";
-import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-common";
+import { isDefined } from "@scramjet/utility";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 import { SequenceAdapterError } from "@scramjet/model";
 import { COMPRESSED_DIR } from "./constants";
 import { x } from "tar";
-
-/**
- * Returns existing Sequence configuration.
- *
- * @param {string} sequencesRoot Folder where sequences are located.
- * @param {string} id Sequence Id.
- * @returns {ProcessSequenceConfig} Sequence configuration.
- */
-async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<KubernetesSequenceConfig> {
-    const sequenceDir = path.join(sequencesRoot, id);
-
-    if (!(await stat(sequenceDir)).isDirectory()) {
-        throw new Error(`Not a directory: ${sequenceDir}`);
-    }
-
-    const packageJsonPath = path.join(sequenceDir, "package.json");
-    const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
-
-    const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
-    const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
-
-    return {
-        type: "kubernetes",
-        entrypointPath: validPackageJson.main,
-        version: validPackageJson.version ?? "",
-        name: validPackageJson.name ?? "",
-        id,
-        sequenceDir,
-        engines,
-        description: validPackageJson.description,
-        author: validPackageJson.author,
-        keywords: validPackageJson.keywords,
-        args: validPackageJson.args,
-        repository: validPackageJson.repository,
-        language: detectLanguage(validPackageJson)
-    };
-}
+import { getRunnerConfigForStoredSequence } from "@scramjet/adapters-common";
 
 /**
  * Adapter for preparing Sequence to be run in process.
@@ -110,7 +72,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
         const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .filter((id) => !id.startsWith("."))
-                .map((id) => getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id))
+                .map((id) => getRunnerConfigForStoredSequence("kubernetes", this.adapterConfig.sequencesRoot, id))
                 .map((configPromised) => configPromised.catch(() => null))
         ))
             .filter(isDefined);
@@ -156,7 +118,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
             uncompressingInput.on("close", res);
         });
 
-        return getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id);
+        return getRunnerConfigForStoredSequence("kubernetes", this.adapterConfig.sequencesRoot, id);
     }
 
     /**

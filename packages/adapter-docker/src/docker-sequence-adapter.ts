@@ -98,6 +98,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
         this.logger.info("Attempting to identify volume", volume);
 
+        // TODO: Reimplement this using a local mount instead of volume
+
         try {
             const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.dockerConfig.prerunner?.image || "",
