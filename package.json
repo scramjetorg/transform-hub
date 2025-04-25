@@ -32,6 +32,7 @@
     "clean:refapps": "rm refapps/*.tar.gz",
     "lint:full": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=3072\" eslint . --ext .ts --cache --cache-strategy=content --cache-location=.eslintcache_scramjet-csi",
     "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --cache --cache-strategy=content\"",
+    "lint:fix": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --fix --ext .ts --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && yarn lint",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
     "start:dev": "tsx packages/sth/src/bin/hub.ts",

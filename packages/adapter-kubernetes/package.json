@@ -19,6 +19,7 @@
     "@scramjet/adapters-common": "1.0.1",
     "@scramjet/obj-logger": "^1.0.1",
     "@scramjet/symbols": "^1.0.1",
+    "@scramjet/model": "^1.0.1",
     "@scramjet/utility": "^1.0.1",
     "tar": "^7.4.3",
     "ts.data.json": "^2.2.0",

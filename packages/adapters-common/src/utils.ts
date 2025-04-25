@@ -24,7 +24,7 @@ export const detectLanguage = (packageJson: {[key: string]: any}) => {
 
 type Adapters = "process" | "kubernetes" | "docker";
 
-type SequenceConfig<T extends Adapters> = 
+type SequenceConfig<T extends Adapters> =
     T extends "process" ? ProcessSequenceConfig :
     T extends "kubernetes" ? KubernetesSequenceConfig :
     // T extends "docker" ? DockerSequenceConfig :

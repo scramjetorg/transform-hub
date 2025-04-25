@@ -180,7 +180,7 @@ class KubernetesInstanceAdapter implements
 
         const compressedSequence = path.join(this.sequenceWorkdir, `${ config.id }.tar.gz`);
         const compressedStat = await stat(compressedSequence).catch(() => null);
-        let compressedStream: Readable
+        let compressedStream: Readable;
 
         if (!compressedStat) {
             this.logger.info("Sequence not found, creating compressed stream from sequence dir");
@@ -205,12 +205,12 @@ class KubernetesInstanceAdapter implements
         this.stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
 
         await this.kubeClient.exec(
-            runnerName, 
-            runnerName, 
-            ["unpack.sh", "/package"], 
-            process.stdout, 
-            this.stdErrorStream, 
-            compressedStream, 
+            runnerName,
+            runnerName,
+            ["unpack.sh", "/package"],
+            process.stdout,
+            this.stdErrorStream,
+            compressedStream,
             0
         );
 

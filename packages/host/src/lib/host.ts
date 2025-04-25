@@ -897,7 +897,8 @@ export class Host implements IComponent {
             const config = {
                 ...sequence.config,
                 ...requestConfig,
-            }
+            };
+
             // TODO replace this with a proper implementation in process adapters
             if (!config.exposeHost)
                 config.exposeHost = "localhost";

@@ -320,4 +320,3 @@ export class ObjLogger implements IObjectLogger {
         this.inputStringifiedLogStream.end();
     }
 }
-
