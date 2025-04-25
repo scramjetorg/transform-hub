@@ -165,8 +165,6 @@ export class VerserClient extends TypedEmitter<Events> {
                 socket.unref ||= () => socket;
                 socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
 
-                this.logger.info("Creating muxed channel in verser connection");
-
                 return socket;
             } catch (error) {
                 const ret = new Socket();
