@@ -9,6 +9,8 @@
     "build": "yarn build:only",
     "clean": "rm -rf dist/",
     "build:docker": "docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../",
+    "preexport:docker": "mkdir -p ../../dist/docker && rm -rf ../../dist/docker/scramjetorg-runner-py.tar.gz",
+    "export:docker": "npm run build:docker && docker save scramjetorg/runner-py:$(git rev-parse HEAD) | gzip > ../../dist/docker/scramjetorg-runner-py.tar.gz",
     "build:docker-tf": "docker build -t scramjetorg/runner-py-tf:$(git rev-parse HEAD) -f Dockerfile-tf-gpu ../../"
   },
   "assets": [

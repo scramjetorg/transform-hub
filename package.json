@@ -20,6 +20,7 @@
     "build:packages": "scripts/build-all.js -v -w modules --ts-config tsconfig.build.json",
     "build:docker": "scripts/run-script.js -w modules build:docker",
     "build:readme": "node ./scripts/mk-readme",
+    "build:runner-images": "scripts/run-script.js -v -w packages export:docker",
     "build:docs": "scripts/run-script.js -w modules build:docs && NODE_ENV=development yarn run start:dev:cli dev cmdToMd -o docs/cli/commands-description.md",
     "build:all-docs": "yarn build:readme && yarn build:docs",
     "prepack:pub": "scripts/run-script.js -w '!bdd' build:only",

@@ -462,6 +462,14 @@ yarn build:packages   # optionally 'build:all' if you want all dockerfiles.
 
 ## Docker commands :whale:
 
+To build and save docker images for runners, execute this command:
+
+```bash
+yarn build:runner-images
+```
+
+The output files will be placed in `dist/docker` folder.
+
 During development, some artifacts may be leftover in docker. See how to clean them:
 
 ```bash

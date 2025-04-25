@@ -8,10 +8,10 @@ import {
 import { Readable } from "stream";
 import fs from "fs/promises";
 import path from "path";
-import { exec } from "child_process";
 import { isDefined } from "@scramjet/utility";
 import { SequenceAdapterError } from "@scramjet/model";
 import { getRunnerConfigForStoredSequence } from "@scramjet/adapters-common";
+import { x } from "tar";
 
 /**
  * Adapter for preparing Sequence to be run in process.
@@ -76,34 +76,21 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         await fs.mkdir(sequenceDir, { recursive: true });
 
-        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir} >/dev/null 2>&1 || echo >&2 '{"error":"Invalid pkg tar.gz archive"}' && exit 1`);
+        const uncompress = stream.pipe(x({ C: sequenceDir }));
 
-        stream.pipe(uncompressingProc.stdin!);
-
-        const stderrChunks: string[] = [];
-
-        uncompressingProc.stderr!.on("data", (chunk: Buffer) => {
-            stderrChunks.push(chunk.toString());
-        });
-
-        await new Promise(res => uncompressingProc.on("close", res));
-
-        const stderrOutput = stderrChunks.join("");
-
-        if (stderrOutput) {
-            let preRunnenrError;
-
-            try {
-                preRunnenrError = JSON.parse(stderrOutput);
-                this.logger.error("Unpacking sequence failed", stderrOutput);
-            } catch (e) {
-                throw new SequenceAdapterError("PRERUNNER_ERROR", `Error parsing ${stderrOutput}`);
-            }
-
-            throw new SequenceAdapterError("PRERUNNER_ERROR", preRunnenrError.error);
+        try {
+            await new Promise((res, rej) => {
+                uncompress.on("done", res);
+                uncompress.on("error", (err) => {
+                    this.logger.error("Unpacking sequence failed", err);
+                    rej(err);
+                });
+            });
+        } catch (e) {
+            this.logger.info("Unpacking sequence failed", e);
+            await fs.rm(sequenceDir, { recursive: true, force: true });
+            throw new SequenceAdapterError("PRERUNNER_ERROR", `Error unpacking sequence: ${e}`);
         }
-
-        this.logger.debug("Unpacking sequence succeeded", stderrOutput);
 
         return getRunnerConfigForStoredSequence("process", this.config.sequencesRoot, id);
     }

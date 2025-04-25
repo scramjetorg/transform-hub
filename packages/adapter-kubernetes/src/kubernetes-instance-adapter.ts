@@ -184,9 +184,11 @@ class KubernetesInstanceAdapter implements
 
         if (!compressedStat) {
             this.logger.info("Sequence not found, creating compressed stream from sequence dir");
-            compressedStream = c({ z: true, C: path.join(this.adapterConfig.sequencesRoot, config.id) })
-                .pipe(new PassThrough());
+            const compressedProcess = c({ z: true, C: path.join(this.adapterConfig.sequencesRoot, config.id) }, ["."]);
 
+            compressedStream = compressedProcess
+                .pipe(new PassThrough());
+            compressedProcess.on("error", (e) => compressedStream.emit("error", e));
             compressedStream.pipe(createWriteStream(compressedSequence))
                 .on("error", async (e) => {
                     this.logger.warn("Error creating compressed sequence", e);
@@ -201,18 +203,28 @@ class KubernetesInstanceAdapter implements
             compressedStream = createReadStream(compressedSequence);
         }
 
-        this.stdErrorStream = new PassThrough();
-        this.stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
+        await new Promise((resolve, reject) => {
+            compressedStream.on("error", (e) => {
+                this.logger.error("Error creating compressed sequence", e);
+                reject(e);
+            });
 
-        await this.kubeClient.exec(
-            runnerName,
-            runnerName,
-            ["unpack.sh", "/package"],
-            process.stdout,
-            this.stdErrorStream,
-            compressedStream,
-            0
-        );
+            const stdErrorStream = new PassThrough();
+
+            stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
+
+            this.kubeClient
+                .exec(
+                    runnerName,
+                    runnerName,
+                    ["unpack.sh", "/package"],
+                    process.stdout,
+                    stdErrorStream,
+                    compressedStream,
+                    0
+                )
+                .then(reject, resolve);
+        });
 
         this.logger.debug("Copy command done");
 
@@ -225,8 +237,6 @@ class KubernetesInstanceAdapter implements
         this._runnerName ||= `runner-${instanceId}`;
 
         const exitPodStatus = await this.kubeClient.waitForPodStatus(this._runnerName!, ["Succeeded", "Failed", "Unknown"]);
-
-        this.stdErrorStream?.end();
 
         if (exitPodStatus.status !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
