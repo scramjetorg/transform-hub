@@ -137,12 +137,18 @@ class KubernetesInstanceAdapter implements
             ? this.adapterConfig.runnerImages.python3
             : this.adapterConfig.runnerImages.node;
 
+        const tagLabels = Object.fromEntries((sequenceInfo.config.tags || []).map((tag) => [`tag.${tag}`, "true"]));
+
+        const labels = {
+            app: "runner",
+            sequence: sequenceInfo.id,
+            ...tagLabels
+        };
+
         await this.kubeClient.createPod(
             {
                 name: runnerName,
-                labels: {
-                    app: "runner"
-                }
+                labels
             },
             {
                 containers: [{
