@@ -16,6 +16,7 @@ import { HostUtils } from "../../lib/host-utils";
 
 const freeport = promisify(require("freeport"));
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const AWAITING_POLL_DEFER_TIME = 250;
 
 const spawned: Set<ChildProcess> = new Set();
@@ -75,7 +76,26 @@ When("I send a {string} request to {string}", async function(method, path) {
     assert.ok(response.ok, `Request failed with status ${response.status}`);
 });
 
-Then("the response body should be {string}", async function(string) {
+When('I send a {string} direct request to {string} on port {int}', async function (method, path, port) {
+    
+    const originalUrl = new URL(process.env.LOCAL_HOST_BASE_URL + path);
+    
+    originalUrl.port = port;
+    originalUrl.pathname = path;
+
+    const url = originalUrl.toString();
+    const options: RequestInit = { method };
+
+    // Send the request and store the response for later steps
+    await sleep(1000);
+    const response = await fetch(url, options);
+
+    this.response = response;
+
+    assert.ok(response.ok, `Request failed with status ${response.status}`);
+});
+
+Then('the response body should be {string}', async function (string) {
     assert.strictEqual(await this.response.text(), string);
 });
 
@@ -126,6 +146,12 @@ Then("I get list of instances", async function(this: CustomWorld) {
     const hostClient = getHostClient();
 
     this.cliResources.instances = await hostClient.listInstances();
+});
+
+Then("I get list of {string} instances", async function(this: CustomWorld, tag: string) {
+    // fails to conenct to cpm
+    const hostClient = getHostClient();
+    this.cliResources.instances = await hostClient.client.get(`rpc/monitor/api/instances`);
 });
 
 Then("there are some instances", async function() {
