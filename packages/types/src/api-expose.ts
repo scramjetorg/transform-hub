@@ -5,6 +5,7 @@ import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
+import { ListenOptions } from "net";
 
 export type ParsedMessage = IncomingMessage & {
     body?: any;
@@ -95,6 +96,26 @@ export type IDuplexStream = Duplex & {
     input: Readable;
     output: Writable;
 };
+
+
+// listen(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): this;
+// listen(port?: number, hostname?: string, listeningListener?: () => void): this;
+// listen(port?: number, backlog?: number, listeningListener?: () => void): this;
+// listen(port?: number, listeningListener?: () => void): this;
+// listen(path: string, backlog?: number, listeningListener?: () => void): this;
+// listen(path: string, listeningListener?: () => void): this;
+// listen(options: ListenOptions, listeningListener?: () => void): this;
+// listen(handle: any, backlog?: number, listeningListener?: () => void): this;
+// listen(handle: any, listeningListener?: () => void): this;
+
+export type ListenArgs = 
+    [ number, string?, number? ] |
+    [ number, number ] |
+    [ string, number? ] |
+    [ ListenOptions ] |
+    [ any, number? ] |
+    []
+;
 
 export interface APIBase {
     /**
@@ -194,4 +215,17 @@ export type APIMethods = "create" | "delete" | "update" | "read" | "use" | "op" 
 
 export interface APIRoute extends APIBase {
     lookup: Middleware;
+}
+
+export interface APIServer extends APIExpose {
+
+    /**
+     * Listens for connections on the specified host and port or path.
+     * 
+     * Resolves when the server is ready to accept connections.
+     * 
+     * @example
+     * await router.listen(3000, "localhost");
+     */
+    listen: (...args: ListenArgs) => Promise<void>;
 }

@@ -1,7 +1,8 @@
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
 import { ClientError, QueryError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig, GetStreamOptions } from "./types";
+import { Headers, HttpClient, RequestLogger, SendStreamOptions, GetStreamOptions } from "./types";
+import { HttpMethod, RequestConfig } from "@scramjet/types";
 
 /**
  * Provides HTTP communication methods.
@@ -103,6 +104,10 @@ export abstract class ClientUtilsBase implements HttpClient {
                 return response.body as Promise<T>;
             }
 
+            if (options.parse === "response") {
+                return response as T;
+            }
+
             throw new ClientError("BAD_PARAMETERS", `Unknown parse option: ${options.parse}`);
         } catch (error: any) {
             throw ClientError.from(error);
@@ -118,6 +123,21 @@ export abstract class ClientUtilsBase implements HttpClient {
      */
     async get<T>(url: string, requestInit: RequestInit = {}): Promise<T> {
         return this.safeRequest<T>(this.normalizeUrlFn(`${this.apiBase}/${url}`), requestInit, { parse: "json" });
+    }
+
+    async request(
+        method: HttpMethod,
+        url: string,
+        requestInit: RequestInit = {}
+    ): Promise<Response> {
+        return this.safeRequest<Response>(
+            this.normalizeUrlFn(`${this.apiBase}/${url}`),
+            {
+                ...requestInit,
+                method
+            },
+            { parse: "response", throwOnErrorHttpCode: false }
+        );
     }
 
     /**

@@ -12,6 +12,7 @@ export * from "./application";
 export * from "./cpm-connector";
 export * from "./communication-handler";
 export * from "./component";
+export * from "./client-utils";
 export * from "./csh-connector";
 export * from "./functions";
 export * from "./logger";

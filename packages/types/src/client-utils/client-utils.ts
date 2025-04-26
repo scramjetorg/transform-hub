@@ -3,6 +3,7 @@
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
 import { Readable } from "stream";
+import { HttpMethod } from "../api-expose";
 
 export declare class QueryError extends Error {
     readonly url: string;
@@ -43,7 +44,7 @@ export declare class RequestLogger {
 }
 
 export declare type RequestConfig = {
-    parse: "json" | "text" | "stream";
+    parse: "json" | "text" | "stream" | "response";
     json?: boolean;
     throwOnErrorHttpCode?: boolean;
 }
@@ -55,9 +56,11 @@ export declare class HttpClient {
     post<T>(url: string, data: any, requestInit?: RequestInit, options?: {
         json: boolean;
     } & RequestConfig): Promise<T>;
+    request(method: HttpMethod, url: string, requestInit?: RequestInit): Promise<Response>;
     delete<T>(url: string, requestInit?: RequestInit): Promise<T>;
     sendStream<T>(url: string, stream: any, requestInit?: RequestInit, options?: SendStreamOptions): Promise<T>;
 }
+export interface IHttpClient extends HttpClient {};
 
 export declare class ClientUtilsBase extends HttpClient {
     static headers: Headers;

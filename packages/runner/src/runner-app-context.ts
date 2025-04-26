@@ -51,7 +51,7 @@ implements AppContext<AppConfigType, State> {
         this.instanceId = id;
         this.api = api;
         this.localStorage = localStorage;
-        this.logger = new ObjLogger("Sequence", {}, logLevel);
+        this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
     }
 
     private handleSave(_state: any): void {

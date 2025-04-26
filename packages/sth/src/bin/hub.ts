@@ -193,21 +193,12 @@ const options = augmentOptions(unaugmentedOptions)
 
     await configService.selectRuntimeAdapter();
 
-    const tips = [
-        ["Run Sequences in our cloud.", { "Find out": "more about Scramjet Cloud Platform", here: "https://scramjet.org/" }],
-        ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scramjet.org/" }]
-    ];
-
     const config = configService.getConfig();
 
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.
     return require("@scramjet/host").startHost({}, config)
         .then(async (host: Host) => {
-            const [message, extra] = tips[~~(Math.random() * 100 * tips.length) % tips.length] as [string, object];
-
-            host.logger.info(message, extra);
-
             // Host..main is done, so we can now wait until all sequences exited.
             // If no sequences started, we exit as well...
             if (options.exitWithLastInstance) {

@@ -1,10 +1,8 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
-import { DuplexStream, roundRobinStrategy } from "@scramjet/api-server";
+import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
 import { ObjLogger } from "@scramjet/obj-logger";
 
 import { Host } from "../host";
-import { corsMiddleware } from "../middlewares/cors";
-import { optionsMiddleware } from "../middlewares/options";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "../middlewares/audit";
 import { Duplex, PassThrough } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";

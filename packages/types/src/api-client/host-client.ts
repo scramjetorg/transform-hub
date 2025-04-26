@@ -24,6 +24,7 @@ export declare class InstanceClient {
     getNextEvent(eventName: string): Promise<any>;
     getEvent(eventName: string): Promise<any>;
     getEventStream(eventName: string): Promise<import("stream").Readable>;
+    getRPCClient(): HttpClient;
     getHealth(): Promise<STHRestAPI.GetHealthResponse>;
     getInfo(): Promise<STHRestAPI.GetInstanceResponse>;
     getStream(streamId: InstanceOutputStream): ReturnType<HttpClient["getStream"]>;
@@ -46,7 +47,7 @@ export declare class SequenceClient {
     overwrite(stream: Readable): Promise<SequenceClient>;
 }
 
-export declare class HostClient {
+export declare class HostClient implements ClientProvider {
     apiBase: string;
     client: ClientUtils;
 

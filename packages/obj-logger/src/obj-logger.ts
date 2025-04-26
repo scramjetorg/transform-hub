@@ -288,7 +288,7 @@ export class ObjLogger implements IObjectLogger {
      * or an instance of class fulfiling IObjectLogger interface.
      *
      * @param {Writable | IObjectLogger} target Target for log stream.
-     * @param {ObjLogPipeOptions} [options] Pipe options. Should be the same as passed to @see ObjectLogger.pipe
+     * @param {ObjLogPipeOptions} [options] Pipe options. Should be the same as passed to @see ObjLogger.pipe
      * @returns {Writable} Unpiped stream
      */
     unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {

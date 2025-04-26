@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, APIRoute, ForwardStrategy, MaybePromise, Middleware, NextCallback, ParsedMessage } from "@scramjet/types";
+import { APIRoute, APIServer, ForwardStrategy, ListenArgs, MaybePromise, Middleware, NextCallback, ParsedMessage } from "@scramjet/types";
 import { IncomingMessage, ServerResponse, createServer as createHttpServer } from "http";
 import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
@@ -94,7 +94,7 @@ export function getRouter(): APIRoute {
     };
 }
 
-export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterConfig): APIExpose {
+export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterConfig): APIServer {
     const log = new DataStream();
     const config: CeroRouterConfig = {
         defaultRoute: (_req, res) => {
@@ -139,8 +139,18 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
 
     let paused = false;
 
+    function listen(...args: ListenArgs) {
+        return new Promise<void>((res, rej) => {
+            srv
+                .on("error", rej)
+                .listen(...args, res)
+            ;
+        });
+    }
+
     return {
         server: srv,
+        listen,
         get,
         op,
         duplex,
@@ -169,3 +179,5 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
 export * from "./lib/definitions";
 export { DuplexStream } from "./lib/duplex-stream";
 
+export { corsMiddleware } from "./middlewares/cors";
+export { optionsMiddleware } from "./middlewares/options";

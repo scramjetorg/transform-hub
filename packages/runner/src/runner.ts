@@ -26,7 +26,7 @@ import {
 import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
-import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
@@ -670,7 +670,7 @@ export class Runner<X extends AppConfig> implements IComponent {
      * @param config Configuration for App.
      */
     initAppContext(config: X) {
-        const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
+        const hostClientUtils: ClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
         const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
         const localStorageHost: LocalStorageAgentHost = {
