@@ -40,10 +40,11 @@ export type RequestLogger = {
  * Environmentally independent HttpClient interface.
  */
 export interface HttpClient {
-    addLogger(logger: RequestLogger): void;
+    addLogger(logger: Partial<RequestLogger>): void;
     get<T>(url: string, requestInit?: RequestInit): Promise<T>;
     getStream(url: string, requestInit?: RequestInit): Promise<any>;
     post<T>(url: string, data: any, requestInit?: RequestInit, options?: { json: boolean } & RequestConfig): Promise<T>;
+    put<T>(url: string, data: any, requestInit?: RequestInit, options?: { json: boolean } & RequestConfig): Promise<T>;
     delete<T>(url: string, requestInit?: RequestInit): Promise<T>;
     request(method: HttpMethod, url: string, requestInit?: RequestInit, options?: RequestConfig): Promise<Response>;
     sendStream<T>(url: string, stream: any, requestInit?: RequestInit, options?: SendStreamOptions): Promise<T>;

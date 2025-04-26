@@ -16,7 +16,7 @@ Feature: Verify the checksums of payloads are correct
     Scenario: PT-004 TC-002 Checksum of binary payload
         Given file in the location "data/sequences/bin-out-seq/random.bin" exists on hard drive
         And host is running
-        When I execute CLI with "seq pack data/sequences/bin-out-seq/dist -o data/sequences/bin-out-seq.tar.gz"
+        When I execute CLI with "seq pack data/sequences/bin-out-seq/built -o data/sequences/bin-out-seq.tar.gz"
         When sequence "data/sequences/bin-out-seq.tar.gz" loaded
         And instance started
         When wait for instance healthy is "true"

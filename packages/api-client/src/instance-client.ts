@@ -142,11 +142,12 @@ export class InstanceClient {
         const rewriteURL = (url: string) => {
             if (url.startsWith("/")) url = url.slice(1);
             return `${instanceURL}/rpc/${url}`;
-        }
+        };
 
         return {
             get: (url: string, ...args) => clientUtils.get(rewriteURL(url), ...args),
             post: (url: string, ...args) => clientUtils.post(rewriteURL(url), ...args),
+            put: (url: string, ...args) => clientUtils.put(rewriteURL(url), ...args),
             delete: (url: string, ...args) => clientUtils.delete(rewriteURL(url), ...args),
             getStream: (url: string, ...args) => clientUtils.getStream(rewriteURL(url), ...args),
             sendStream: (url: string, ...args) => clientUtils.sendStream(rewriteURL(url), ...args),

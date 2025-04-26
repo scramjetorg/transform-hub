@@ -63,6 +63,18 @@ export class ClientError extends Error {
         if (reason instanceof QueryError) this.body = reason.body;
     }
 
+    get stack(): string {
+        let stack = super.stack || "";
+
+        if (this.reason instanceof Error) {
+            stack += "\n\n--\nCaused by" + this.reason.stack;
+        }
+        if (this.source instanceof Error) {
+            stack += "\n\n--\nCaused by" + this.source.stack;
+        }
+        return stack;
+    }
+
     // eslint-disable-next-line complexity
     static from(error: Error | QueryError, message?: string, source?: Error): ClientError {
         if (error instanceof QueryError) {

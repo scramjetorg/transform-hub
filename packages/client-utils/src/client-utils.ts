@@ -59,6 +59,8 @@ export abstract class ClientUtilsBase implements HttpClient {
 
         options.throwOnErrorHttpCode ??= true;
 
+        const requestStack = new Error();
+
         try {
             const response = await this.fetch(input, fetchInit)
                 .then(async (result: any) => {
@@ -110,7 +112,7 @@ export abstract class ClientUtilsBase implements HttpClient {
 
             throw new ClientError("BAD_PARAMETERS", `Unknown parse option: ${options.parse}`);
         } catch (error: any) {
-            throw ClientError.from(error);
+            throw ClientError.from(error, error.message, requestStack);
         }
     }
 

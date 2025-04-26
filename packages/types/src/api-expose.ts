@@ -97,7 +97,6 @@ export type IDuplexStream = Duplex & {
     output: Writable;
 };
 
-
 // listen(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): this;
 // listen(port?: number, hostname?: string, listeningListener?: () => void): this;
 // listen(port?: number, backlog?: number, listeningListener?: () => void): this;
@@ -108,7 +107,7 @@ export type IDuplexStream = Duplex & {
 // listen(handle: any, backlog?: number, listeningListener?: () => void): this;
 // listen(handle: any, listeningListener?: () => void): this;
 
-export type ListenArgs = 
+export type ListenArgs =
     [ number, string?, number? ] |
     [ number, number ] |
     [ string, number? ] |
