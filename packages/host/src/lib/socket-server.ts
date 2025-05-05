@@ -18,6 +18,20 @@ type Events = {
     connect: (id: string, streams: DownstreamStreamsConfig) => void
 }
 
+async function readBytes(length: number, connection: net.Socket) {
+    return await new Promise<string>((resolve) => {
+        const immediateData = connection.read(length);
+
+        if (!immediateData) {
+            connection.once("readable", () => {
+                resolve(connection.read(length).toString());
+            });
+        } else {
+            resolve(immediateData);
+        }
+    });
+}
+
 /**
  * Server for incoming connections from Runners
  */
@@ -45,17 +59,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     this.logger.error("Error on connection from runner", err);
                 });
 
-                const id = await new Promise<string>((resolve) => {
-                    const immediateData = connection.read(36);
-
-                    if (!immediateData) {
-                        connection.once("readable", () => {
-                            resolve(connection.read(36).toString());
-                        });
-                    } else {
-                        resolve(immediateData);
-                    }
-                });
+                const id = await readBytes(36, connection);
 
                 const channel = await new Promise<number>((resolve) => {
                     connection.once("readable", () => {
@@ -64,7 +68,9 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 });
 
                 connection
-                    .on("error", (err) => this.logger.error("Error on Instance in stream", id, channel, err))
+                    .on("error", (err) => this.logger.error(
+                        "Error on Instance in stream", id, channel, err
+                    ))
                     .on("end", () => this.logger.debug(
                         `Channel [${id}:${channel}] ended. tx/rx: ${connection.bytesWritten}/${connection.bytesRead}`
                     ));

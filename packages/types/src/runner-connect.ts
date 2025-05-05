@@ -8,6 +8,7 @@ export type RunnerConnectInfo = {
     outputTopic?: string;
     inputTopic?: string;
     limits?: InstanceLimits;
+    writeDegraded?: boolean;
     instanceId?: string;
     exposePath?: string;
     exposeHost?: string;

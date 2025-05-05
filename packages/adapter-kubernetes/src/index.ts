@@ -9,7 +9,8 @@ export function augmentOptions(options: Command): Command {
         .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
         .option("--k8s-quota-name <name>", "Quota object name used in Instance adapter.")
         .option("--k8s-auth-config-path <path>", "Kubernetes authorization config path. If not supplied the mounted service account will be used.")
-        .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.")
+        .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to (or :auto to attempt autodetection).")
+        .option("--k8s-default-pull-policy <policy>", "Default pull policy for the runner images. If not supplied, the default value is 'IfNotPresent'.")
         .option("--k8s-runner-image <image>", "Runner image spawned in Nodejs Pod.")
         .option("--k8s-runner-py-image <image>", "Runner image spawned in Python Pod.")
         .option("--k8s-sequences-root <path>", "Specifies a location where Kubernetes Process Adapter saves new Sequences. The support of this option will be deprecated in the near future. Please use the option '--sequences-root <path>' instead.")
@@ -31,6 +32,7 @@ export async function initialize(config: AdapterConfig) {
 export function augmentConfig(config: STHConfiguration) {
     config.adapters.kubernetes = {
         name: "kubernetes",
+        defaultPullPolicy: config.kubernetes?.defaultPullPolicy || "IfNotPresent",
         sequencesRoot: config.sequencesRoot,
         ...config.kubernetes
     };

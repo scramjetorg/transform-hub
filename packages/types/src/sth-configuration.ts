@@ -97,6 +97,11 @@ export type K8SAdapterConfiguration = {
     quotaName?: string;
 
     /**
+     * Default pull policy for the runner images.
+     */
+    defaultPullPolicy?: "IfNotPresent" | "Always" | "Never";
+
+    /**
      * Authentication configuration path
      */
     authConfigPath?: string,
@@ -112,7 +117,7 @@ export type K8SAdapterConfiguration = {
      * Path to store sequences
      */
     sequencesRoot: string,
-    timeout?: string,
+    timeout?: number,
     runnerResourcesRequestsMemory?: string,
     runnerResourcesRequestsCpu?: string,
     runnerResourcesLimitsMemory?: string,
@@ -277,6 +282,11 @@ export type STHConfiguration = {
      * to be started along with the host
      */
     startupConfig: string,
+
+    /**
+     * Should the hub kill all instances when it exits
+     */
+    killOnExit: boolean,
 
     /**
      * Should the hub exit when the last instance ends

@@ -1,5 +1,5 @@
 import { DataStream, StringStream } from "scramjet";
-import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
+import { IObjectLogger, IObjectLoggerOptions, LogEntry, LogLevel } from "@scramjet/types";
 import { PassThrough, Readable, Writable } from "stream";
 import { LogLevelStrings } from "@scramjet/utility";
 
@@ -265,7 +265,7 @@ export class ObjLogger implements IObjectLogger {
      */
     pipe(
         target: Writable | IObjectLogger,
-        { end = false, stringified }: { end?: boolean, stringified?: boolean } = {}
+        { end = false, stringified }: IObjectLoggerOptions = {}
     ): typeof target {
         if (target instanceof ObjLogger) {
             this.baseLog.id ||= target.baseLog.id;
@@ -277,8 +277,9 @@ export class ObjLogger implements IObjectLogger {
 
         target = target as Writable;
 
-        if (stringified || !target.writableObjectMode)
+        if (stringified || !target.writableObjectMode) {
             return this.stringifiedOutput.pipe(target, { end });
+        }
 
         return this.output.pipe(target, { end });
     }

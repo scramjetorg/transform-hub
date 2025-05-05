@@ -60,9 +60,10 @@ export const defaultConfig: STHConfiguration = {
             node: "",
         },
         sequencesRoot: join(homedir(), ".scramjet_sequences"),
-        timeout: "0"
+        timeout: 0
     },
     startupConfig: "",
+    killOnExit: false,
     exitWithLastInstance: false,
     timings: {
         heartBeatInterval: 10000,

@@ -283,8 +283,8 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.upstreams[CC.IN].pipe(this.downstreams[CC.IN]);
         this.downstreams[CC.OUT].pipe(this.upstreams[CC.OUT]);
 
-        if (this.upstreams[CC.PACKAGE] && this.downstreams[CC.PACKAGE] !== undefined) {
-            this.upstreams[CC.PACKAGE]?.pipe(this.downstreams[CC.PACKAGE] as WritableStream<any>);
+        if (this.upstreams[CC.REQUESTS] && this.downstreams[CC.REQUESTS] !== undefined) {
+            this.upstreams[CC.REQUESTS]?.pipe(this.downstreams[CC.REQUESTS] as WritableStream<any>);
         }
 
         return this;

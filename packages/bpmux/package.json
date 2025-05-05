@@ -1,0 +1,49 @@
+{
+  "name": "@scramjet/bpmux",
+  "description": "Node stream multiplexing with back-pressure on each stream",
+  "version": "9.0.0",
+  "homepage": "https://github.com/davedoesdev/bpmux",
+  "authors": {
+    "name": "David Halls",
+    "email": "dave@davedoesdev.com",
+    "url": "http://www.davedoesdev.com"
+  },
+  "assets": [
+    { "src": "index.js", "dest": "index.js" },
+    { "src": "index.d.ts", "dest": "index.d.ts" }
+  ],
+  "contributors": [
+    { "name": "Scramjet Team", "email": "open-source@scramjet.org" }
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt lint test-fast",
+    "lint": "grunt lint"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "types": "index.d.ts",
+  "keywords": [
+    "stream",
+    "back-pressure",
+    "backpressure",
+    "high-water mark",
+    "duplex",
+    "readable",
+    "writable",
+    "multiplex",
+    "mux",
+    "demux"
+  ],
+  "engines": {
+    "node": ">= 14"
+  },
+  "dependencies": {
+    "frame-stream": "^5.0.0"
+  },
+  "devDependencies": {
+    "@scramjet/utility": "^1.1.0"
+  }
+}

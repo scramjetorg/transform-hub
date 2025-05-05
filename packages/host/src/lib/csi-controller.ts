@@ -46,13 +46,14 @@ import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitt
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
+import { BPMux } from "@scramjet/bpmux";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
  * before we delete pod or it will fail with 404
  * and instance adapter will throw an error even when everything was ok.
  */
-const runnerExitDelay = 15000;
+const runnerExitDelay = 5000;
 
 type Events = {
     ping: (pingMessage: MessageDataType<RunnerMessageCode.PING>) => void;
@@ -64,8 +65,6 @@ type Events = {
     end: (code: number) => void;
     terminated: (code: number) => void;
 };
-
-const BPMux = require("bpmux").BPMux;
 
 export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; ended?: Date; };
 /**
@@ -402,11 +401,11 @@ export class CSIController extends TypedEmitter<Events> {
 
     get isRunning() { return !this.finalizingPromise; }
 
-    async finalize() {
+    async finalize(immediate: boolean = false) {
         this.upStreams![CC.STDIN].unpipe();
         this.upStreams![CC.IN].unpipe();
 
-        await defer(runnerExitDelay);
+        if (!immediate) await defer(runnerExitDelay);
 
         this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
         this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
@@ -687,12 +686,14 @@ export class CSIController extends TypedEmitter<Events> {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
-            this.bpmux = new BPMux(streams[8]);
-            this.bpmux.on("error", (e: any) => {
-                this.logger.warn("Instance client multiplex connection errored", e.message);
-                streams[8]?.end();
-            });
-            this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
+            if (streams[CC.REQUESTS]) {
+                this.bpmux = new BPMux(streams[CC.REQUESTS]!);
+                this.bpmux.on("error", (e: any) => {
+                    this.logger.warn("Instance client multiplex connection errored", e.message);
+                    streams[8]?.end();
+                });
+                this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
+            }
 
             await once(this, "pang");
             this.initResolver?.res();

@@ -1,17 +1,16 @@
 import { Duplex, Writable } from "stream";
 import {
     request as httpRequest,
-    Agent,
     IncomingHttpHeaders,
     IncomingMessage,
     RequestOptions,
     ServerResponse,
 } from "http";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { createConnection, Socket } from "net";
-import { VerserRequestResult } from "../types";
-
-const BPMux = require("bpmux").BPMux;
+import { Socket } from "net";
+import { VerserRequestResult, VerserAgent } from "../types";
+import { Agent } from "http";
+import { BPMux } from "@scramjet/bpmux";
 
 /**
  * VerserConnection class.
@@ -22,10 +21,10 @@ export class VerserConnection {
     logger = new ObjLogger(this);
 
     private request: IncomingMessage;
-    private bpmux?: { [key: string]: any };
+    private bpmux?: BPMux;
 
     private _socket: Duplex;
-    private agent?: Agent & { createConnection: typeof createConnection };
+    private agent?: VerserAgent;
     private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
     get connected() {
@@ -42,7 +41,8 @@ export class VerserConnection {
 
         this.socket.on("error", (error: Error) => {
             this.logger.error("Socket request error:", error);
-            // TODO: handle error.
+
+            // TODO: handle error - this is caused by BPMux on EPIPE - perhaps wait for the other side to reconnect?
         });
 
         this.request.on("error", (error: Error) => {
@@ -208,34 +208,47 @@ export class VerserConnection {
 
     reconnect() {
         this.logger.debug("Reconnecting...");
+
+        // TODO: remove all listeners from the old BPMux instance
+        // TODO: remove all listeners from the old socket instance
+        // TODO: Remove all consumers from the streams
+        this.bpmux?.removeAllListeners();
+
         this.bpmux = this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
             this.logger.error("BPMux Error", error.message);
             // TODO: Error handling?
         });
 
-        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
-        this.agent.createConnection = () => {
-            try {
-                const socket = this.bpmux!.multiplex() as Socket;
+        this.agent = Object.assign(
+            new Agent(),
+            {
+                createConnection: () => {
+                    try {
+                        const socket = Object.assign(
+                            this.bpmux!.multiplex(),
+                            {
+                                setKeepAlive: (_enable: boolean, _initialDelay?: number) => {},
+                                setTimeout: (_timeout: number, _callback?: () => void) => {},
+                                setNoDelay: (_noDelay: boolean) => {},
+                                unref: () => {}
+                            }
+                        );
 
-                socket.on("error", () => {
-                    this.logger.error("Muxed stream error");
-                });
+                        socket.on("error", () => {
+                            this.logger.error("Muxed stream error");
+                        });
 
-                // some libs call it but it is not here, in BPMux.
-                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-                socket.unref ||= () => socket;
-                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
+                        this.logger.debug("Created new muxed stream");
+                        return socket;
+                    } catch (e) {
+                        const ret = new Socket();
 
-                this.logger.debug("Created new muxed stream");
-                return socket;
-            } catch (e) {
-                const ret = new Socket();
-
-                setImmediate(() => ret.emit("error", e));
-                return ret;
+                        setImmediate(() => ret.emit("error", e));
+                        return ret;
+                    }
+                }
             }
-        };
+        );
 
         this.bpmux!.on("peer_multiplex", (socket: Duplex, data: any) => {
             this.channelListeners.forEach((listener) => {
@@ -255,6 +268,6 @@ export class VerserConnection {
     }
 
     getAgent() {
-        return this.agent as Agent;
+        return this.agent as VerserAgent;
     }
 }

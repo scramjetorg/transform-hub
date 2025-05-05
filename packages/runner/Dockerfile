@@ -18,6 +18,7 @@ FROM node:18-bullseye-slim AS builder
 
 WORKDIR /app/
 
+COPY ./dist/bpmux ./dist/bpmux
 COPY ./dist/docker-runner/api-client ./dist/api-client
 COPY ./dist/docker-runner/client-utils ./dist/client-utils
 COPY ./dist/docker-runner/utility ./dist/utility

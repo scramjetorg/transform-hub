@@ -1,4 +1,5 @@
 /* eslint-disable dot-notation */
+import { BPMux } from "@scramjet/bpmux";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig, } from "@scramjet/types";
@@ -10,8 +11,6 @@ import { PassThrough } from "stream";
 type HostOpenConnections = [
     Socket, Socket, Socket, Socket, Socket, Socket, Socket, Socket, Socket
 ]
-
-const BPMux = require("bpmux").BPMux;
 
 /**
  * Connects to Host and exposes streams per channel (stdin, monitor etc.)
@@ -107,39 +106,43 @@ class HostClient implements IHostClient {
         //this._streams[CC.STDIN] = this._streams[CC.STDIN].pipe(new PassThrough({ emitClose: false }), { end: false });
 
         try {
-            this.bpmux = new BPMux(this._streams[CC.PACKAGE]);
+            if (this._streams[CC.REQUESTS]) {
+                this.logger.debug("Using BPMux for requests stream");
+
+                this.bpmux = new BPMux(this._streams[CC.REQUESTS]!);
+
+                const agent = new Agent() as Agent & {
+                    createConnection: typeof createConnection
+                }; // lack of types?;
+
+                agent.createConnection = () => {
+                    try {
+                        const socket = this.bpmux!.multiplex() as Socket;
+
+                        socket.on("error", () => {
+                            this.logger.error("Muxed stream error");
+                        });
+
+                        // some libs call it but it is not here, in BPMux.
+                        socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+
+                        this.logger.trace("Creating connection to verser server");
+
+                        return socket;
+                    } catch (error) {
+                        const ret = new Socket();
+
+                        setImmediate(() => ret.emit("error", error));
+                        return ret;
+                    }
+                };
+
+                this.agent = agent;
+            }
         } catch (e) {
             // eslint-disable-next-line no-console
             console.error(e);
         }
-
-        const agent = new Agent() as Agent & {
-            createConnection: typeof createConnection
-        }; // lack of types?;
-
-        agent.createConnection = () => {
-            try {
-                const socket = this.bpmux!.multiplex() as Socket;
-
-                socket.on("error", () => {
-                    this.logger.error("Muxed stream error");
-                });
-
-                // some libs call it but it is not here, in BPMux.
-                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-
-                this.logger.info("Creating connection to verser server");
-
-                return socket;
-            } catch (error) {
-                const ret = new Socket();
-
-                setImmediate(() => ret.emit("error", error));
-                return ret;
-            }
-        };
-
-        this.agent = agent;
 
         this.logger.debug("Connected to host");
     }
@@ -206,8 +209,8 @@ class HostClient implements IHostClient {
         return this.streams[CC.LOG];
     }
 
-    get packageStream() {
-        return this.streams[CC.PACKAGE];
+    get requestsStream() {
+        return this.streams[CC.REQUESTS];
     }
 }
 

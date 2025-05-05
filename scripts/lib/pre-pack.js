@@ -214,7 +214,7 @@ class PrePack {
 
         const dependencies = this.localizeDependencies(content.dependencies);
         const {
-            bin: _bin, main: _main, browser: _browser,
+            bin: _bin, main: _main, browser: _browser, types: _types, 
             name, version, description, keywords,
             files = this.rootPackageJson.files,
             license = this.rootPackageJson.license,
@@ -235,20 +235,26 @@ class PrePack {
             peerDependenciesMeta, bundledDependencies, optionalDependencies, postBuildOverride
         } = content;
         const priv = !this.options.public && this.rootPackageJson.private;
-        const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
+        const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/\.ts$/, rp);
         const main = _main && srcRe(_main);
         const browser = _browser && srcRe(_browser);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
             : Object.entries(_bin)
-                .map(([k, v]) => [k, srcRe(v)])
-                // eslint-disable-next-line no-return-assign,no-sequences
-                .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
+            .map(([k, v]) => [k, srcRe(v)])
+            // eslint-disable-next-line no-return-assign,no-sequences
+            .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
         );
-        const types = content.types || !_main || !_main.endsWith(".ts")
-            ? content.types
-            : srcRe(_main, ".d.ts")
-        ;
+
+        let types;
+
+        if (_types) {
+            types = _types && srcRe(_types, ".ts");
+        } else if (main && main.endsWith(".ts")) {
+            types = _types;
+        } else {
+            types = main && srcRe(main, ".d.ts");
+        }
 
         if (typeof bin === "object") await this.fixShebang(bin);
 

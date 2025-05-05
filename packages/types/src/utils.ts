@@ -62,7 +62,9 @@ export interface WritableStream<Consumes> extends Writable {
     end(str: never, encoding: never, cb?: () => void): this;
 }
 
-export type DuplexStream<Consumes, Produces> = WritableStream<Consumes> & ReadableStream<Produces>;
+export type DuplexStream<Consumes, Produces> = WritableStream<Consumes> & ReadableStream<Produces> & {
+    allowHalfOpen: boolean;
+};
 export type PassThoughStream<Passes> = DuplexStream<Passes, Passes>;
 
 /**
@@ -86,7 +88,7 @@ export type HasTopicInformation = {
 export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & HasTopicInformation;
 /**
  * Represents all readable stream types that will be accepted as return values
- * from {@see TFunction}
+ * from @see {TFunction}
  */
 export type Streamable<Produces> = MaybePromise<SynchronousStreamable<Produces>>;
 

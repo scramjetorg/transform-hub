@@ -165,21 +165,21 @@ export class HostAPIHandler {
     spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
         const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
 
-        this.logger.info("SPACE REQUEST", req.url, url, this.apiBase);
+        this.logger.debug("SPACE REQUEST", req.url, url, this.apiBase);
 
         const clientRequest = this.host.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
 
         if (clientRequest) {
             clientRequest.on("response", (response: IncomingMessage) => {
                 response.on("end", () => {
-                    this.logger.info("Space response ended", url, response.statusCode);
+                    this.logger.debug("Space response ended", url, response.statusCode);
                 });
 
                 res.writeHead(response.statusCode!, response.statusMessage || "", response.headers);
 
                 response.pipe(res);
             }).on("error", (error) => {
-                this.logger.error("Error requesting CPM", error);
+                this.logger.warn("Error requesting CPM", error);
             });
 
             clientRequest.flushHeaders();

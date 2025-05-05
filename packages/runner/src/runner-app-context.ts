@@ -126,6 +126,7 @@ implements AppContext<AppConfigType, State> {
     }
 
     keepAlive(milliseconds?: number): this {
+        this.runner.keepAliveIssued();
         this.runner.sendKeepAlive({ keepAlive: milliseconds || 0 });
         return this;
     }

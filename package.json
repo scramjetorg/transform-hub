@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/transform-hub",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "description": "A development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
@@ -19,6 +19,7 @@
     "prebuild:packages": "scripts/run-script.js -v -w modules build:only",
     "build:packages": "scripts/build-all.js -v -w modules --ts-config tsconfig.build.json",
     "build:docker": "scripts/run-script.js -w modules build:docker",
+    "build:docker:runners": "scripts/run-script.js -w runners build:docker",
     "build:readme": "node ./scripts/mk-readme",
     "build:runner-images": "scripts/run-script.js -v -w packages export:docker",
     "build:docs": "scripts/run-script.js -w modules build:docs && NODE_ENV=development yarn run start:dev:cli dev cmdToMd -o docs/cli/commands-description.md",
@@ -32,6 +33,7 @@
     "clean:modules": "find -name node_modules -or -name __pypackages__ -prune -exec rm -rf {} ';' 2> /dev/null",
     "clean:refapps": "rm refapps/*.tar.gz",
     "lint:full": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=3072\" eslint . --ext .ts --cache --cache-strategy=content --cache-location=.eslintcache_scramjet-csi",
+    "lint:quick": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=3072\" eslint --ext .ts $(git diff --name-only HEAD | grep -E '.*\\.ts$')",
     "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --cache --cache-strategy=content\"",
     "lint:fix": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --fix --ext .ts --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && yarn lint",
@@ -40,7 +42,6 @@
     "start:dev:cli": "DEVELOPMENT=true tsx packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "scripts/run-script.js -v -w modules install:deps",
-    "prepare": "npx husky install",
     "download:refapps": "cd refapps && wget -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' -O - | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(sysctl -n hw.ncpu 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 1)} wget -q -nc",
     "test": "yarn test:packages",
     "test:packages": "scripts/run-script.js test",
@@ -84,17 +85,16 @@
     "fs-extra": "^9.1.0",
     "glob": "^7.2.3",
     "globrex": "^0.1.2",
-    "husky": "^9.1.7",
+    "minimist": "^1.2.8",
+    "npm": "10",
     "nyc": "^17.1.0",
     "semver": "^7.7.1",
     "tar": "^6.2.1",
     "toposort": "^2.0.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
     "typescript": "~4.7.4",
-    "yarn": "^1.22.22",
-    "minimist": "^1.2.8",
-    "npm": "10",
-    "tsx": "^4.19.3"
+    "yarn": "^1.22.22"
   },
   "workspaces": {
     "packages": [
@@ -103,6 +103,11 @@
     ],
     "modules": [
       "packages/*"
+    ],
+    "runners": [
+      "packages/runner",
+      "packages/python-runner",
+      "packages/pre-runner"
     ],
     "bdd": [
       "bdd/"

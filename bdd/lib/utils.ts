@@ -175,6 +175,10 @@ export async function getStreamsFromSpawn(
         throw error;
     });
 
+    if (process.env.SCRAMJET_TEST_LOG) {
+        console.error("Exit command", { statusCode }, command, ...options);
+    }
+
     return [stdout, stderr, statusCode];
 }
 

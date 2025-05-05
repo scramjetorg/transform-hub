@@ -45,6 +45,8 @@ export type LogEntry = Partial<{
     from: string;
 }>
 
+export type IObjectLoggerOptions = { end?: boolean; stringified?: boolean };
+
 export interface IObjectLogger {
     inputLogStream: PassThrough;
     inputStringifiedLogStream: PassThrough;
@@ -68,7 +70,7 @@ export interface IObjectLogger {
     addObjectLoggerSource(source: IObjectLogger): void;
     addSerializedLoggerSource(source: Readable): void;
 
-    pipe(target: Writable | IObjectLogger, options?: { end?: boolean; stringified?: boolean }): void;
+    pipe(target: Writable | IObjectLogger, options?: IObjectLoggerOptions): void;
     unpipe(target?: Writable | IObjectLogger): void;
 
     updateBaseLog(entry: LogEntry): void;

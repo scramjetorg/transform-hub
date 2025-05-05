@@ -8,8 +8,7 @@ import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-
-const BPMux = require("bpmux").BPMux;
+import { BPMux } from "@scramjet/bpmux";
 
 type Events = {
     error: (err: Error) => void;
@@ -133,7 +132,7 @@ export class VerserClient extends TypedEmitter<Events> {
      * otherwise stream will be passed to the server.
      */
     private mux() {
-        this.bpmux = new BPMux(this.socket)
+        this.bpmux = new BPMux(this.socket!)
             .on("peer_multiplex", async (mSocket: Duplex & { _chan: number }) => {
                 const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
 

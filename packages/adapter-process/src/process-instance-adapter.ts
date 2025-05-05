@@ -163,6 +163,7 @@ class ProcessInstanceAdapter implements
             payload
         }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
+            EXPOSE_HOST: "127.0.0.1",
             ...this.sthConfig.runnerEnvs,
             ...extraEnvs
         });

@@ -1,3 +1,5 @@
+import { setTimeout as setTimeoutPromise } from "timers/promises";
+
 /**
  * Returns a promise that resolves after the specified duration.
  * @example
@@ -7,8 +9,7 @@
  * @param {number} timeout - timeout in milliseconds.
  * @returns {Promise<void>} - promise that resolves after timeout.
  */
-export const defer = (timeout?: number): Promise<void> =>
-    timeout ? new Promise(res => setTimeout(res, timeout)) : Promise.resolve();
+export const defer = setTimeoutPromise;
 
 export type CancellablePromise = Promise<void> & {
     cancel(): boolean;

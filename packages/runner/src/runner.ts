@@ -21,8 +21,11 @@ import {
     SequenceInfo,
     StopSequenceMessageData,
     Streamable,
-    SynchronousStreamable
-    , SetMessageData, StorageMessageData, StorageUpdateMessageData } from "@scramjet/types";
+    SynchronousStreamable,
+    SetMessageData,
+    StorageMessageData,
+    StorageUpdateMessageData
+} from "@scramjet/types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
@@ -31,7 +34,7 @@ import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { EventEmitter } from "events";
-import { WriteStream, createWriteStream, writeFileSync } from "fs";
+import { WriteStream, constants, createWriteStream, writeFileSync } from "fs";
 import { Readable, Writable } from "stream";
 
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
@@ -40,8 +43,12 @@ import { MessageUtils } from "./message-utils";
 import { createServer } from "@scramjet/api-server";
 import { AddressInfo } from "net";
 import { LocalStorageAgent, LocalStorageAgentHost } from "./local-storage-agent";
+import { setTimeout as setTimeoutPromise } from "timers/promises";
+import { writeFile, unlink, access } from "fs/promises";
 
 let exitHandled = false;
+
+const TIMEOUT = Symbol("timeout");
 
 function onBeforeExit(code: number) {
     if (exitHandled) return;
@@ -54,25 +61,13 @@ function onBeforeExit(code: number) {
 }
 
 function onException(_error: Error) {
-    console.error(_error);
+    console.error({ _error, stack: _error?.stack });
     onBeforeExit(RunnerExitCode.UNCAUGHT_EXCEPTION);
 }
 
 process.once("beforeExit", onBeforeExit);
 process.once("uncaughtException", onException);
-
-// async function flushStream(source: Readable | undefined, target: Writable) {
-//     if (!source) return;
-
-//     source
-//         .unpipe(target)
-//         .pause();
-
-//     if (source.readableLength > 0) {
-//         target.end(source.readableLength);
-//     }
-//     await new Promise(res => target.once("close", res));
-// }
+process.once("unhandledRejection", onException);
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -183,6 +178,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     instanceId: string;
     api: APIExpose;
     reconnect: boolean;
+    shouldWriteDegraded: boolean;
 
     constructor({
         sequencePath,
@@ -197,10 +193,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.sequenceInfo = connectInfo;
         this.emitter = new EventEmitter();
         this.reconnect = !!runnerConnectInfo.reconnect;
+        this.shouldWriteDegraded = !!runnerConnectInfo.writeDegraded;
 
         this.api = createServer(undefined, {
             defaultRoute: (req, res) => {
-                this.logger.debug("API 404 request", req.url);
+                this.logger.debug("API unhandled request", req.url);
 
                 res.writeHead(404);
                 res.end("Not Found");
@@ -350,22 +347,88 @@ export class Runner<X extends AppConfig> implements IComponent {
         }, 1000 / data.monitoringRate);//.unref();
     }
 
-    private async reportHealth(timeout?: number) {
-        // this.logger.info("Report health");
+    private async wasDegraded(): Promise<boolean> {
+        try {
+            await access("/tmp/degraded", constants.R_OK);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
 
-        const { healthy } = await this.context.monitor();
-
-        if (timeout) {
-            this.monitoringMessageReplyTimeout = setTimeout(async () => {
-                this.logger.warn("Monitoring Reply Timeout");
-
-                await this.handleDisconnect();
-            }, timeout);
+    private async writeDegraded(degraded: boolean) {
+        if (!this.shouldWriteDegraded) {
+            return;
         }
 
-        MessageUtils.writeMessageOnStream(
-            [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
-        );
+        try {
+            const wasDegraded = await this.wasDegraded();
+
+            if (wasDegraded === degraded) {
+                return;
+            }
+
+            if (degraded) {
+                await unlink("/tmp/degraded").catch(() => { });
+            } else {
+                await writeFile("/tmp/degraded", "true");
+            }
+        } catch (e: any) {
+            this.logger.error("Error while writing degraded message", e);
+        }
+    }
+
+    private async reportHealth(timeout?: number): Promise<void> {
+        // this.logger.info("Report health");
+
+        let healthy = false;
+
+        try {
+            const message = timeout
+                ? await promiseTimeout(this.context.monitor(), timeout, TIMEOUT)
+                : await this.context.monitor();
+
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.MONITORING, message], this.hostClient.monitorStream
+            );
+
+            healthy = message.healthy;
+        } catch (e: any) {
+            if (e === TIMEOUT) {
+                this.logger.error("Timeout while waiting for monitoring message reply");
+
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.MONITORING, {
+                        healthy: false, error: {
+                            code: "E_TIMEOUT",
+                            message: "Timeout while waiting for monitoring message reply"
+                        }
+                    }], this.hostClient.monitorStream
+                );
+            } else if (e.message) {
+                this.logger.error("Error while waiting for monitoring message reply", e.message);
+
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.MONITORING, {
+                        healthy: false, error: {
+                            code: `${e.code || "E_UNKNOWN"}`,
+                            message: `${e.message}`,
+                            stack: `${e.stack}`
+                        }
+                    }], this.hostClient.monitorStream
+                );
+            } else {
+                this.logger.error("Error while waiting for monitoring message reply", e);
+
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.MONITORING, { healthy: false }], this.hostClient.monitorStream
+                );
+            }
+
+            healthy = false;
+        }
+
+        this.writeDegraded(healthy).catch(() => {});
     }
 
     async handleDisconnect() {
@@ -471,7 +534,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             .finally(() => { onBeforeExit(process.exitCode!); process.exit(); });
     }
 
-    async premain(): Promise<{ appConfig: AppConfig, args: any}> {
+    async premain(): Promise<{ appConfig: AppConfig, args: any }> {
         this.logger.debug("premain");
 
         try {
@@ -509,17 +572,27 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.debug("Streams initialized");
 
-        const { args, appConfig, exposePath, exposeHost } = this.runnerConnectInfo;
+        const { args, appConfig, exposePath, exposeHost } = {
+            exposeHost: process.env.EXPOSE_HOST,
+            ...this.runnerConnectInfo,
+        };
 
         if (exposePath && !this.api.server.listening) {
-            this.runnerConnectInfo.exposePort = await new Promise((res) => {
-                this.api.server.listen(0, exposeHost || "localhost", () => {
-                    const port = (this.api.server.address() as AddressInfo).port;
+            this.logger.debug("Starting API server", { exposePath, exposeHost, envHost: process.env.EXPOSE_HOST });
 
-                    this.logger.debug("API server started", port);
-                    res(port);
+            const [port, host] = await new Promise<[number, string]>((res) => {
+                this.api.server.listen(0, exposeHost || "localhost", () => {
+                    const address = this.api.server.address() as AddressInfo;
+                    const port = address.port;
+                    const host = address.address;
+
+                    this.logger.debug("API server started", [port, host]);
+                    res([port, host]);
                 });
             });
+
+            this.runnerConnectInfo.exposePort = port;
+            this.runnerConnectInfo.exposeHost = host;
         }
 
         this.sendHandshakeMessage();
@@ -538,7 +611,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.initAppContext(appConfig as X);
 
         await this.reportHealth();
-        await this.handleMonitoringRequest({ monitoringRate: 1 });
+        await this.handleMonitoringRequest({ monitoringRate: 10000 });
 
         let sequence: any[] = [];
 
@@ -582,6 +655,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
 
             this.status = InstanceStatus.ERRORED;
+
+            await setTimeoutPromise(10000);
 
             return this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
@@ -862,10 +937,10 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.info("Piping Sequence output", typeof this.instanceOutput);
 
                 this.shouldSerialize = this.instanceOutput.contentType &&
-                ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType) ||
-                this.instanceOutput instanceof DataStream && !(
-                    this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream
-                );
+                    ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType) ||
+                    this.instanceOutput instanceof DataStream && !(
+                        this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream
+                    );
 
                 if (!this.shouldSerialize && this.instanceOutput.readableEncoding) {
                     this.hostClient.outputStream.setDefaultEncoding(this.instanceOutput.readableEncoding);
@@ -903,7 +978,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.hostClient.monitorStream,
                 );
             } else {
-            // TODO: this should push a PANG message with the sequence description
+                // TODO: this should push a PANG message with the sequence description
                 this.logger.info("Sequence did not output a stream");
                 res();
             }

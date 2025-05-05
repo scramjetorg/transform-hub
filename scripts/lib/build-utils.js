@@ -116,6 +116,7 @@ function getPackagesInWorkspace(pkgLocation, workspaces = []) {
     const dir = dirname(pkgLocation);
 
     if (!workspaces.length) {
+        if (!pkg.workspaces) return [];
         workspaces.push(...Object.values(pkg.workspaces).flat());
     } else {
         const nre = [];

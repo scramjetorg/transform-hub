@@ -7,6 +7,7 @@ COPY ./dist/adapter-process ./dist/adapter-process
 COPY ./dist/adapter-kubernetes ./dist/adapter-kubernetes
 COPY ./dist/adapter-docker ./dist/adapter-docker
 COPY ./dist/api-client ./dist/api-client
+COPY ./dist/bpmux ./dist/bpmux
 COPY ./dist/client-utils ./dist/client-utils
 COPY ./dist/api-server ./dist/api-server
 COPY ./dist/sth-config ./dist/sth-config

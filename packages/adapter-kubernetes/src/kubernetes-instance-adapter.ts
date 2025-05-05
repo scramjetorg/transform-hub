@@ -15,17 +15,21 @@ import {
 } from "@scramjet/types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { createReadStream, createWriteStream } from "fs";
+import { createWriteStream, readFileSync } from "fs";
 import path, { join } from "path";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 import { getRunnerEnvEntries } from "@scramjet/adapters-common";
-import { PassThrough, Readable } from "stream";
+import { PassThrough } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
 import { SequenceAdapterError } from "@scramjet/model";
 import { mkdir, stat, unlink } from "fs/promises";
 import { COMPRESSED_DIR } from "./constants";
 import { c } from "tar";
+import { load as loadYaml } from "js-yaml";
+import { isIPv4 } from "net";
+import { hostname, networkInterfaces } from "os";
+import { defer } from "@scramjet/utility";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -40,6 +44,7 @@ class KubernetesInstanceAdapter implements
     private sthConfig: STHConfiguration;
     private _runnerName?: string;
     private _kubeClient?: KubernetesClientAdapter;
+    private sthHost: string;
 
     private adapterConfig: K8SAdapterConfiguration;
     private _limits?: InstanceLimits = {};
@@ -54,6 +59,7 @@ class KubernetesInstanceAdapter implements
         // @TODO this is a redundant check (it was already checked in sequence adapter)
         // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
         this.sthConfig = sthConfig;
+        this.logger = new ObjLogger(this);
 
         const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.adapters.kubernetes);
 
@@ -62,8 +68,56 @@ class KubernetesInstanceAdapter implements
         }
 
         this.adapterConfig = decodedAdapterConfig.value;
+
         this.sequenceWorkdir = join(this.adapterConfig.sequencesRoot, COMPRESSED_DIR);
-        this.logger = new ObjLogger(this);
+
+        this.sthHost = this.adapterConfig.sthPodHost === ":auto" ? this.obtainHost() : this.adapterConfig.sthPodHost;
+    }
+
+    private obtainHost(): string {
+        const authConfig = this.adapterConfig.authConfigPath;
+
+        if (!authConfig) {
+            throw new Error("Cannot determine host. No auth config path provided.");
+        }
+
+        const yaml: any = loadYaml(readFileSync(authConfig, "utf8"));
+        const hostFromYaml = yaml?.clusters?.[0]?.cluster?.server;
+
+        if (!hostFromYaml) {
+            throw new Error("Cannot determine host. No host found in auth config.");
+        }
+
+        const url = new URL(hostFromYaml);
+        const host = url.hostname;
+
+        if (host === "localhost") return "localhost";
+
+        if (isIPv4(host)) {
+            const interfaces = networkInterfaces();
+            const hostParts = host.split(".").map((_, i, all) => all.slice(0, i + 1).join("."));
+
+            const bestInterface = Object.values(interfaces).flatMap((addresses) => {
+                if (!addresses) return [];
+
+                return addresses.filter((address) => {
+                    return address.family === "IPv4";
+                }).map((address) => {
+                    return {
+                        score: hostParts.findIndex((part) => address.address.startsWith(part)),
+                        address: address.address,
+                        internal: address.internal
+                    };
+                });
+            }).sort((a, b) => b.score - a.score)[0];
+
+            if (bestInterface) {
+                return bestInterface.address;
+            }
+        }
+
+        this.logger.warn("Cannot determine IP address, using hostname instead.");
+        return hostname();
     }
 
     private get kubeClient() {
@@ -120,15 +174,17 @@ class KubernetesInstanceAdapter implements
 
         this.logger.debug("Creating Runner Pod");
 
+        const writeDegraded = "writeDegraded" in payload ? payload.writeDegraded : true;
+
         const env =
             getRunnerEnvEntries({
                 sequencePath: path.join("/package", config.entrypointPath),
                 instancesServerPort,
-                instancesServerHost: this.adapterConfig.sthPodHost,
+                instancesServerHost: this.sthHost,
                 instanceId,
                 pipesPath: "",
                 sequenceInfo,
-                payload
+                payload: { writeDegraded, ...payload }
             }, {
                 ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
@@ -145,6 +201,8 @@ class KubernetesInstanceAdapter implements
             ...tagLabels
         };
 
+        this.logger.debug("Runner Pod labels", labels, sequenceInfo.config);
+
         await this.kubeClient.createPod(
             {
                 name: runnerName,
@@ -152,12 +210,25 @@ class KubernetesInstanceAdapter implements
             },
             {
                 containers: [{
-                    env,
+                    env: [...env,
+                        {
+                            name: "EXPOSE_HOST",
+                            valueFrom: { fieldRef: { fieldPath: "status.podIP" } }
+                        }
+                    ],
                     name: runnerName,
                     image: runnerImage,
                     stdin: true,
+                    readinessProbe: writeDegraded ? {
+                        exec: {
+                            command: ["test", "!", "-e", "/tmp/degraded"]
+                        },
+                        initialDelaySeconds: 5,
+                        periodSeconds: 10,
+                        timeoutSeconds: 1
+                    } : undefined,
                     command: ["wait-for-sequence-and-start.sh"],
-                    imagePullPolicy: "Always",
+                    imagePullPolicy: "IfNotPresent",
                     resources: this.runnerResourcesConfig
                 }],
                 restartPolicy: "Never",
@@ -185,34 +256,32 @@ class KubernetesInstanceAdapter implements
         this.logger.debug("Copy sequence files to Runner");
 
         const compressedSequence = path.join(this.sequenceWorkdir, `${ config.id }.tar.gz`);
-        const compressedStat = await stat(compressedSequence).catch(() => null);
-        let compressedStream: Readable;
 
-        if (!compressedStat) {
-            this.logger.info("Sequence not found, creating compressed stream from sequence dir");
-            const compressedProcess = c({ z: true, C: path.join(this.adapterConfig.sequencesRoot, config.id) }, ["."]);
+        this.logger.info("Sequence not found, creating compressed stream from sequence dir");
 
-            compressedStream = compressedProcess
-                .pipe(new PassThrough());
-            compressedProcess.on("error", (e) => compressedStream.emit("error", e));
-            compressedStream.pipe(createWriteStream(compressedSequence))
-                .on("error", async (e) => {
-                    this.logger.warn("Error creating compressed sequence", e);
-                    await unlink(compressedSequence).catch(() => {
-                        this.logger.error("Error deleting compressed sequence", e);
-                    });
-                })
-                .on("finish", () => {
-                    this.logger.debug("Compressed sequence created");
+        const compressedProcess = c({ z: true, C: path.join(this.adapterConfig.sequencesRoot, config.id) }, ["."]);
+        const compressedStream = compressedProcess.pipe(new PassThrough());
+        const fileStream = compressedProcess.pipe(new PassThrough());
+
+        compressedProcess.on("error", (e) => compressedStream.emit("error", e));
+        fileStream.pipe(createWriteStream(compressedSequence))
+            .on("error", async (e) => {
+                this.logger.warn("Error creating compressed sequence", e);
+                await unlink(compressedSequence).catch(() => {
+                    this.logger.error("Error deleting compressed sequence", e);
                 });
-        } else {
-            compressedStream = createReadStream(compressedSequence);
-        }
+            })
+            .on("finish", () => {
+                this.logger.debug("Compressed sequence created");
+            });
 
         await new Promise((resolve, reject) => {
             compressedStream.on("error", (e) => {
                 this.logger.error("Error creating compressed sequence", e);
                 reject(e);
+            });
+            compressedStream.on("end", () => {
+                this.logger.debug("Compressed sequence stream ended");
             });
 
             const stdErrorStream = new PassThrough();
@@ -229,7 +298,7 @@ class KubernetesInstanceAdapter implements
                     compressedStream,
                     0
                 )
-                .then(reject, resolve);
+                .then(resolve, reject);
         });
 
         this.logger.debug("Copy command done");
@@ -246,7 +315,8 @@ class KubernetesInstanceAdapter implements
 
         if (exitPodStatus.status !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
-            this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(this._runnerName!));
+
+            await defer(200);
 
             return exitPodStatus.code || 137;
         }
@@ -273,16 +343,12 @@ class KubernetesInstanceAdapter implements
         /** ignore */
     }
 
-    async timeout(ms: string) {
-        return new Promise(resolve => setTimeout(resolve, parseInt(ms, 10)));
-    }
-
     // Forcefully stops Runner process.
-    async remove(ms: string = "0") {
+    async remove(ms: number = 0) {
         if (!this._runnerName) {
             this.logger.error("Trying to stop non existent runner", this._runnerName);
         } else {
-            await this.timeout(ms);
+            if (ms) await defer(ms);
             await this.kubeClient.deletePod(this._runnerName, 2)
                 .catch((e) => {
                     this.logger.error("Error deleting pod", e, this._runnerName);

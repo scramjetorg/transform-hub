@@ -2,6 +2,7 @@ import { IObjectLogger } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defer } from "@scramjet/utility";
 import { Writable, Readable } from "stream";
+import { k8sGetter } from "./k8s";
 import http from "http";
 
 type KubeConfig = import("@kubernetes/client-node").KubeConfig;
@@ -15,7 +16,7 @@ const POD_STATUS_FAIL_LIMIT = 10;
 let k8s: typeof import("@kubernetes/client-node");
 
 async function initializeImports() {
-    k8s = await import("@kubernetes/client-node");
+    k8s = await k8sGetter();
 }
 
 class KubernetesClientAdapter {
@@ -206,7 +207,7 @@ class KubernetesClientAdapter {
         let success = false;
         let result: any = null;
 
-        this.logger.debug(`Starting: ${name}...`);
+        // this.logger.debug(`Starting: ${name}...`);
 
         while (!success && tries <= retries) {
             tries++;

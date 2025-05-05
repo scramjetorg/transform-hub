@@ -1,7 +1,8 @@
 import {
     ReadableStream,
     WritableStream,
-    PassThoughStream
+    PassThoughStream,
+    DuplexStream
 } from "./utils";
 
 import { RunnerMessageCode, CPMMessageCode } from "@scramjet/symbols";
@@ -132,8 +133,7 @@ export type DownstreamStreamsConfig<serialized extends boolean = true> = [
     input: WritableStream<any>,
     output: ReadableStream<any>,
     log: ReadableStream<any>,
-    // @TODO investigate, it seems not to be used anywhere
-    pkg?: WritableStream<Buffer> | undefined,
+    requests?: DuplexStream<Buffer, Buffer>
 ];
 
 export type DownstreamStdioConfig = [ stdin: WritableStream<string>,
@@ -149,7 +149,7 @@ export type UpstreamStreamsConfig<serialized extends boolean = true> = [
     input: ReadableStream<any>,
     output: WritableStream<any>,
     log: WritableStream<any>,
-    pkg?: ReadableStream<Buffer>
+    requests?: DuplexStream<Buffer, Buffer>
 ];
 
 export type PassThroughStreamsConfig<serialized extends boolean = true> = [

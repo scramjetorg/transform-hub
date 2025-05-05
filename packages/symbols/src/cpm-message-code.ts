@@ -15,5 +15,6 @@ export enum CPMMessageCode {
 
     KEY_REVOKED = 9001,
     LIMIT_EXCEEDED = 9002,
-    ID_DROP = 9003
+    ID_DROP = 9003,
+    DO_RECONNECT = 9004,
 }

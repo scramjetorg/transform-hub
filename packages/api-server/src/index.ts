@@ -104,7 +104,11 @@ export function createServer(conf: ServerConfig = {}, routerConfig?: CeroRouterC
         errorHandler: (err, req, res) => {
             log.write({ date: Date.now(), method: req.method, url: req.url, errorMessage: res.errorMessage, error: err.stack } as any);
             if (!res.headersSent) {
-                res.writeHead(err.code || 500, err.httpMessage);
+                if (typeof err.code === "number") {
+                    res.writeHead(err.code || 500, err.httpMessage);
+                } else if (err.code) {
+                    res.writeHead(500, `${err.code}: ${err.httpMessage || err.message}`);
+                }
             }
             if (conf.verbose) res.end(err.stack);
             else res.end();

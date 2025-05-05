@@ -6,6 +6,11 @@ export const adapterConfigDecoder = JsonDecoder.object<K8SAdapterConfiguration>(
     namespace: JsonDecoder.string,
     quotaName: JsonDecoder.optional(JsonDecoder.string),
     sthPodHost: JsonDecoder.string,
+    defaultPullPolicy: JsonDecoder.optional(JsonDecoder.oneOf([
+        JsonDecoder.isExactly("IfNotPresent"),
+        JsonDecoder.isExactly("Always"),
+        JsonDecoder.isExactly("Never")
+    ], "PullPolicy")),
     runnerImages: JsonDecoder.object({
         python3: JsonDecoder.string,
         node: JsonDecoder.string

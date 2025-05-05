@@ -8,6 +8,12 @@ export type MonitoringMessageFromRunnerData = {
 
     /** Calculated backpressure: processing * throughput / buffer. */
     healthy: boolean;
+
+    error?: {
+        stack?: string;
+        message: string;
+        code?: string;
+    }
 }
 
 export type MonitoringMessageData = MonitoringMessageFromRunnerData & {

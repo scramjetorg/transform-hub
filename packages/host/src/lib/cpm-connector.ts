@@ -290,6 +290,10 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.isAbandoned = true;
                 }
 
+                if (messageCode === CPMMessageCode.DO_RECONNECT) {
+                    this.logger.info("CPM is asking to reconnect");
+                }
+
                 return message;
             }).catch((e: any) => {
                 this.logger.warn("communicationChannel error", e.message);
@@ -622,7 +626,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         //@TODO: Disconnecting/error handling
         const url = `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
 
-        this.logger.info("make HTTP Req to CPM", url);
+        this.logger.debug("make HTTP Req to CPM", url);
 
         return http.request(
             url,

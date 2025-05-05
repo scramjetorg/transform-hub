@@ -8,7 +8,7 @@ import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { getValidStorageAdapters, Host } from "@scramjet/host";
-import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
+import { defer, FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions } from "@scramjet/adapters";
 
@@ -150,6 +150,7 @@ const options = augmentOptions(unaugmentedOptions)
         sequencesRoot: resolveFile(options.sequencesRoot),
         startupConfig: resolveFile(options.startupConfig),
         identifyExisting: options.identifyExisting,
+        killOnExit: options.killOnExit,
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
@@ -165,7 +166,7 @@ const options = augmentOptions(unaugmentedOptions)
             },
             sequencesRoot:
                 options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
-            timeout: options.k8sRunnerCleanupTimeout,
+            timeout: isNaN(+options.k8sRunnerCleanupTimeout) ? 0 : parseInt(options.k8sRunnerCleanupTimeout, 10),
             runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
             runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
             runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
@@ -197,11 +198,13 @@ const options = augmentOptions(unaugmentedOptions)
 
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.
-    return require("@scramjet/host").startHost({}, config)
+    return require("@scramjet/host").startHost({
+        verbose: ["DEBUG", "TRACE"].includes(config.logLevel),
+    }, config)
         .then(async (host: Host) => {
             // Host..main is done, so we can now wait until all sequences exited.
             // If no sequences started, we exit as well...
-            if (options.exitWithLastInstance) {
+            if (config.exitWithLastInstance) {
                 if (host.instancesStore.length === 0) {
                     process.exit(101);
                 }
@@ -223,28 +226,26 @@ const options = augmentOptions(unaugmentedOptions)
                 host.logger.info("Telemetry is active. If you don't want to send anonymous telemetry data use '--no-telemetry' when starting STH or set it in the config file.");
             }
 
-            if (options.killOnExit) {
-                let killing = false;
-                const kill = (signal: NodeJS.Signals) => {
-                    if (killing) return process.exit(constants.signals[signal]);
-                    killing = true;
+            let killing = false;
+            const kill = (signal: NodeJS.Signals) => {
+                process.removeListener("SIGINT", kill);
+                process.removeListener("SIGTERM", kill);
 
-                    host.logger.warn("Kill on exit is enabled. Killing all instances and exiting.");
-                    host.stop()
-                        .then(() => {
-                            host.logger.info("All instances killed. Exiting.");
-                            process.exit(constants.signals[signal]);
-                        }, (e) => {
-                            host.logger.error("Error killing instances", e);
-                            process.exit(constants.signals[signal]);
-                        });
+                host.cleanup();
 
-                    return undefined;
-                };
+                if (killing) return process.exit(constants.signals[signal]);
+                killing = true;
 
-                process.on("SIGINT", kill);
-                process.on("SIGTERM", kill);
-            }
+                host.logger.info("Received kill signal, stopping host...");
+                host.stop()
+                    .then(() => defer(100))
+                    .then(() => host.logger.info("Host stopped, exiting..."))
+                    .catch((e: any) => host.logger.error("Error while exiting", e && e.stack))
+                    .then(() => process.exit(constants.signals[signal]));
+            };
+
+            process.on("SIGINT", kill);
+            process.on("SIGTERM", kill);
         });
 })()
     .catch((e: (Error | HostError) & { exitCode?: number }) => {

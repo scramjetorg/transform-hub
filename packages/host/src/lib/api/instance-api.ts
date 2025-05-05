@@ -196,7 +196,7 @@ export class InstanceAPI {
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
-        const { body: { timeout = 7000, canCallKeepalive = false } = { timeout: 7000, canCallKeepalive: false } } = req;
+        const { body: { timeout, canCallKeepalive } = { timeout: 7000, canCallKeepalive: false } } = req;
 
         if (typeof timeout !== "number") {
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid timeout format" };

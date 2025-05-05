@@ -80,7 +80,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         try {
             await new Promise((res, rej) => {
-                uncompress.on("done", res);
+                uncompress.on("end", res);
                 uncompress.on("error", (err) => {
                     this.logger.error("Unpacking sequence failed", err);
                     rej(err);

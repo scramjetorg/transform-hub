@@ -13,7 +13,6 @@ import {
     EventMessageData,
     HostProxy,
     IComponent,
-    IMonitoringServerConstructor,
     IObjectLogger,
     Instance,
     LogLevel,
@@ -57,8 +56,6 @@ import { existsSync, mkdirSync, readFileSync } from "fs";
 
 import SequenceStore from "./sequenceStore";
 
-import { loadModule, logger as loadModuleLogger } from "@scramjet/module-loader";
-
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
@@ -67,6 +64,7 @@ import { HostAPIHandler } from "./api/host-api";
 import { CSIController } from "./csi-controller";
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
+import { MonitoringServer } from "@scramjet/monitoring-server";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -244,7 +242,6 @@ export class Host implements IComponent {
         if (this.localStorage instanceof MemoryStorageAdapter) {
             this.logger.warn("LocalStorage path not configured, using no-op adapter");
         }
-        loadModuleLogger.pipe(this.logger);
 
         this.config.host.id ||= this.getId();
         this.logger.updateBaseLog({ id: this.config.host.id });
@@ -328,8 +325,6 @@ export class Host implements IComponent {
     }
 
     private async startMonitoringServer(config: MonitoringServerConfig): Promise<MonitoringServerConfig> {
-        const { MonitoringServer } = await loadModule<{ MonitoringServer: IMonitoringServerConstructor }>({ name: "@scramjet/monitoring-server" });
-
         this.logger.info("Starting monitoring server with config", config);
 
         config.host ||= "localhost";
@@ -632,7 +627,6 @@ export class Host implements IComponent {
                     args: sequenceConfig.args,
                     instanceId: sequenceConfig.instanceId,
                     exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
-                    exposeHost: "localhost",
                     logLevel: this.logger.logLevel
                 });
 
@@ -899,10 +893,6 @@ export class Host implements IComponent {
                 ...requestConfig,
             };
 
-            // TODO replace this with a proper implementation in process adapters
-            if (!config.exposeHost)
-                config.exposeHost = "localhost";
-
             const runner = await this.csiDispatcher.startRunner(sequence, config);
 
             if (runner && "id" in runner) {
@@ -1070,13 +1060,20 @@ export class Host implements IComponent {
     /**
      * Stops running servers.
      */
-    async cleanup() {
+    async cleanup(immediate = false) {
         this.logger.info("Cleaning up");
 
         const instancesStore = this.instancesStore;
 
+        if (this.config.killOnExit) {
+            this.logger.info("Killing all instances");
+            await Promise.all(instancesStore.map(
+                async (csi) => csi.kill({ removeImmediately: immediate })
+            ));
+        }
+
         this.logger.trace("Finalizing remaining instances");
-        await Promise.all(instancesStore.map((csi) => csi.finalize()));
+        await Promise.all(instancesStore.map((csi) => csi.finalize(immediate)));
 
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();

@@ -1,7 +1,21 @@
 import { ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server } from "http";
-import { Socket } from "net";
+import { NetConnectOpts, Socket } from "net";
 import { Duplex } from "stream";
 import { URL } from "url";
+import { Agent as NodeAgent } from "http";
+
+export interface AlmostSocket extends Duplex {
+    setKeepAlive(enable: boolean, initialDelay?: number): void 
+    setTimeout(timeout: number, callback?: () => void): void
+    setNoDelay(noDelay: boolean): void
+    unref(): void
+}
+
+export interface VerserAgent<X extends AlmostSocket = AlmostSocket> extends NodeAgent {
+    createConnection(options: NetConnectOpts, connectionListener?: () => void): X
+    createConnection(port: number, host?: string, connectionListener?: () => void): X
+    createConnection(path: string, connectionListener?: () => void): X
+}
 
 /**
  * VerserClient options type.

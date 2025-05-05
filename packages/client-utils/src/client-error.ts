@@ -59,8 +59,25 @@ export class ClientError extends Error {
         this.status = status;
         if (reason instanceof Error) this.reason = reason;
         if (source instanceof Error) this.source = source;
-        if (reason instanceof QueryError) this.message = reason.message;
-        if (reason instanceof QueryError) this.body = reason.body;
+        if (reason instanceof QueryError) {
+            this.message = reason.message;
+            this.body = reason.body;
+        }
+
+        let stack = this.stack || "";
+
+        if (this.reason instanceof Error) {
+            stack += "\n\n--\nCaused by " + this.reason.stack;
+        }
+        if (this.source instanceof Error) {
+            stack += "\n\n--\nSourced in " + this.source.stack;
+        }
+
+        Object.defineProperty(this, "stack", {
+            get: function() {
+                return stack;
+            }
+        });
     }
 
     get stack(): string {
