@@ -10,7 +10,8 @@
   },
   "assets": [
     { "src": "index.js", "dest": "index.js" },
-    { "src": "index.d.ts", "dest": "index.d.ts" }
+    { "src": "index.d.ts", "dest": "index.d.ts" },
+    { "src": "LICENCE", "dest": "LICENCE" }
   ],
   "contributors": [
     { "name": "Scramjet Team", "email": "open-source@scramjet.org" }
@@ -20,9 +21,6 @@
   "scripts": {
     "test": "grunt lint test-fast",
     "lint": "grunt lint"
-  },
-  "directories": {
-    "test": "test"
   },
   "types": "index.d.ts",
   "keywords": [
