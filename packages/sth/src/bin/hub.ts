@@ -34,7 +34,7 @@ const unaugmentedOptions = program
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
     .option("-R, --instance-reconnect", "Signal runners to attempt to reconnect", false)
-    .option("-K, --kill-on-exit", "Kills all instances on exit")
+    .option("-K, --kill-on-exit", "Kills all instances on exit", false)
     .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
     .option("--platform-api-version <version>", "Platform API version", "v1")
     .option("--platform-api-key <string>", "Platform API Key")

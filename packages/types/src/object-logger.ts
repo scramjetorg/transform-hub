@@ -1,6 +1,4 @@
-import { PassThrough, Readable, Writable } from "stream";
-
-import { DataStream } from "scramjet";
+import { Readable, Writable } from "stream";
 
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
 
@@ -48,10 +46,10 @@ export type LogEntry = Partial<{
 export type IObjectLoggerOptions = { end?: boolean; stringified?: boolean };
 
 export interface IObjectLogger {
-    inputLogStream: PassThrough;
-    inputStringifiedLogStream: PassThrough;
-    outputLogStream: PassThrough;
-    output: DataStream;
+    inputLogStream: Writable;
+    inputStringifiedLogStream: Writable;
+    outputLogStream: Readable;
+    output: Readable;
 
     logLevel: LogLevel;
 

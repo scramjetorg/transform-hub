@@ -237,6 +237,23 @@ export class CPMConnector extends TypedEmitter<Events> {
     init() {
     }
 
+    disconnect() {
+        this.logger.info("Disconnecting from Manager");
+        this.isAbandoned = true;
+
+        this.handleCommunicationRequestEnd();
+
+        if (this.connection) {
+            this.connection.destroy();
+            this.connection = undefined;
+        }
+
+        this.verserClient.close();
+        this.verserClient = undefined as any;
+
+        this.logger.info("Disconnected from Manager");
+    }
+
     handleCommunicationRequestEnd() {
         this.communicationStream?.end();
 
@@ -364,6 +381,8 @@ export class CPMConnector extends TypedEmitter<Events> {
                     await this.handleConnectionClose(connection.res.statusCode || -1);
                 });
         } catch (error: any) {
+            if (this.isAbandoned) return;
+
             this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
 
             await this.reconnect();
@@ -513,7 +532,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.loadInterval = setInterval(async () => {
             await this.sendLoad();
-        }, 5000);
+        }, 10000);
     }
 
     /**

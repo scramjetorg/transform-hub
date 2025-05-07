@@ -22,6 +22,7 @@ export type STHCommandOptions = {
     platformSpace: string;
     platformApiVersion: string;
     id?: string;
+    killOnExit: boolean;
     runtimeAdapter: string;
     localStorageAdapter: string;
     localStoragePath: string;

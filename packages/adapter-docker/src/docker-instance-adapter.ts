@@ -279,9 +279,7 @@ IComponent {
      */
     async cleanup(): Promise<void> {
         if (this.resources.volumeId) {
-            this.logger.debug("Volume will be removed in 60 sec");
-
-            await defer(60000); // @TODO: one sec?
+            await defer(1000);
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
             this.logger.debug("Volume removed");

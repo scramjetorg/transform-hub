@@ -4,7 +4,7 @@ import { NextCallback, ParsedMessage } from "@scramjet/types";
 import { ServerResponse } from "http";
 import { AuditedRequest, Auditor } from "../auditor";
 
-const ACTIVE_REQUEST_AUDIT_INTERVAL = 1000;
+const ACTIVE_REQUEST_AUDIT_INTERVAL = 10_000;
 
 export const logger = new ObjLogger("AuditMiddleware");
 export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {

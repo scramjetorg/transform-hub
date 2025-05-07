@@ -405,12 +405,15 @@ export class CSIController extends TypedEmitter<Events> {
         this.upStreams![CC.STDIN].unpipe();
         this.upStreams![CC.IN].unpipe();
 
-        if (!immediate) await defer(runnerExitDelay);
-
-        this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
-        this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
-
-        await this.finalizingPromise;
+        if (immediate) {
+            await defer(runnerExitDelay);
+        } else {
+            if (this.instanceLifetimeExtensionDelay > 0) {
+                this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
+                this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
+                await this.finalizingPromise;
+            }
+        }
 
         this.downStreams![CC.STDOUT].unpipe();
         this.downStreams![CC.STDERR].unpipe();
@@ -733,7 +736,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
     }
 
-    async kill(opts = { removeImmediately: false }) {
+    async kill({ removeImmediately } = { removeImmediately: false }) {
         if (this.status === InstanceStatus.KILLING) {
             await this.instanceAdapter.remove();
 
@@ -748,7 +751,7 @@ export class CSIController extends TypedEmitter<Events> {
         promiseTimeout(this.endOfSequence, runnerExitDelay)
             .catch(() => this.instanceAdapter.remove());
 
-        if (opts.removeImmediately) {
+        if (removeImmediately) {
             this.instanceLifetimeExtensionDelay = 0;
 
             if (this.finalizingPromise) {

@@ -1,10 +1,8 @@
-import { DataStream, StringStream } from "scramjet";
 import { IObjectLogger, IObjectLoggerOptions, LogEntry, LogLevel } from "@scramjet/types";
-import { PassThrough, Readable, Writable } from "stream";
+import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { LogLevelStrings } from "@scramjet/utility";
-
 import { getName } from "./utils/get-name";
-import { JSONParserStream } from "./utils/streams";
+import { JSONParserStream, JSONStringifierStream } from "./utils/streams";
 
 type ObjLogPipeOptions = {
     stringified?: boolean;
@@ -27,6 +25,14 @@ const getCircularReplacer = () => {
         return value;
     };
 };
+
+const stringifier = (line: any): string => {
+    try {
+        return JSON.stringify(line) + "\n";
+    } catch (e) {
+        return JSON.stringify(line, getCircularReplacer()) + "\n";
+    }
+}
 
 export class ObjLogger implements IObjectLogger {
     /**
@@ -52,7 +58,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Output stream in object mode.
      */
-    output = new DataStream({ objectMode: true }).resume();
+    output = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Name used to indicate the source of the log.
@@ -158,9 +164,9 @@ export class ObjLogger implements IObjectLogger {
 
         if (optionalParams.length) {
             try {
-                paramsCopy = JSON.parse(JSON.stringify(optionalParams));
+                paramsCopy = optionalParams.map((x) => structuredClone(x));
             } catch {
-                paramsCopy = JSON.parse(JSON.stringify(optionalParams, getCircularReplacer()));
+                paramsCopy = JSON.parse(JSON.stringify(optionalParams));
             }
         }
 
@@ -184,7 +190,7 @@ export class ObjLogger implements IObjectLogger {
             if (output.writableObjectMode) {
                 output.write(a);
             } else {
-                output.write(JSON.stringify(a) + "\n");
+                output.write(stringifier(a) + "\n");
             }
         });
 
@@ -223,20 +229,15 @@ export class ObjLogger implements IObjectLogger {
         Object.assign(this.baseLog, baseLog);
     }
 
-    private _stringifiedOutput?: StringStream;
+    private _stringifiedOutput?: Duplex;
 
-    get stringifiedOutput(): StringStream {
+    get stringifiedOutput(): Readable {
         if (!this._stringifiedOutput)
             this._stringifiedOutput = this.output
-                .stringify((chunk) => {
-                    try {
-                        return JSON.stringify(chunk) + "\n";
-                    } catch (e) {
-                        return JSON.stringify(chunk, getCircularReplacer()) + "\n";
-                    }
-                })
-                // eslint-disable-next-line no-console
-                .catch((e: any) => { console.error(e?.cause); });
+                .pipe(new JSONStringifierStream({
+                    stringifier
+                }))
+                .on("error", (e: any) => { console.error(e); });
 
         return this._stringifiedOutput;
     }

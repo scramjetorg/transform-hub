@@ -6,7 +6,7 @@ import { AddressInfo, Socket } from "net";
 import { Duplex, Readable } from "stream";
 
 import { CommunicationHandler, HostError } from "@scramjet/model";
-import { InstanceMessageCode, InstanceStatus, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { InstanceMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
     CPMConnectorOptions,
@@ -84,6 +84,9 @@ const isDevelopment = development();
  */
 export class Host implements IComponent {
     apiHandler: HostAPIHandler;
+    private _stopping: boolean = false;
+    private _cleaning: boolean = false;
+
     getSequenceAdapter() {
         return getSequenceAdapter(this.adapterName, this.config);
     }
@@ -501,7 +504,7 @@ export class Host implements IComponent {
             .resume();
 
         this.logger.info("Log Level", this.config.logLevel);
-        this.logger.trace("Host main called", { version });
+        this.logger.info("Host main called", { version });
 
         if (this.config.identifyExisting) {
             await this.identifyExistingSequences();
@@ -554,18 +557,17 @@ export class Host implements IComponent {
                 this.connectToCPM(),
                 defer(2500)
             ]);
+            this.s3Client = new S3Client({
+                host: `${this.config.cpmUrl}/api/v1`,
+                bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`,
+            });
+
+            this.s3Client.logger.pipe(this.logger);
         }
-
-        this.s3Client = new S3Client({
-            host: `${this.config.cpmUrl}/api/v1`,
-            bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`,
-        });
-
-        this.s3Client.logger.pipe(this.logger);
 
         await this.performStartup();
 
-        this.logger.info("Running!");
+        this.logger.info("Host running!");
     }
 
     private async startListening() {
@@ -961,8 +963,6 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetInstancesResponse} List of Instances.
      */
     getInstances(): STHRestAPI.GetInstancesResponse {
-        this.logger.info("List Instances");
-
         return this.instancesStore.map((csiController) => csiController.getInfo());
     }
 
@@ -1001,8 +1001,6 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetSequencesResponse} List of Sequences.
      */
     getSequences(): STHRestAPI.GetSequencesResponse {
-        this.logger.info("List Sequences");
-
         return this.sequenceStore.sequences;
     }
 
@@ -1026,8 +1024,6 @@ export class Host implements IComponent {
     }
 
     getTopics() {
-        this.logger.info("List topics");
-
         return this.serviceDiscovery.getTopics();
     }
 
@@ -1044,13 +1040,19 @@ export class Host implements IComponent {
      * using its CSIController {@link CSIController}
      */
     async stop() {
+        if (this._stopping) {
+            this.logger.warn("Already stopping");
+            return;
+        }
+        this._stopping = true;
+
         this.logger.trace("Stopping instances");
 
-        await Promise.all(
-            Object.values(this.instancesStore).map(async (csiController) =>
-                await csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {})
-            )
-        );
+        if (this.config.killOnExit) {
+            await Promise.all(
+                this.instancesStore.map(async (csiController) => csiController.kill({ removeImmediately: true }))
+            );
+        }
 
         this.logger.info("Instances stopped");
 
@@ -1060,23 +1062,24 @@ export class Host implements IComponent {
     /**
      * Stops running servers.
      */
-    async cleanup(immediate = false) {
-        this.logger.info("Cleaning up");
-
-        const instancesStore = this.instancesStore;
-
-        if (this.config.killOnExit) {
-            this.logger.info("Killing all instances");
-            await Promise.all(instancesStore.map(
-                async (csi) => csi.kill({ removeImmediately: immediate })
-            ));
+    async cleanup() {
+        if (this._cleaning) {
+            this.logger.warn("Already cleaning");
+            return;
         }
+        this._cleaning = true;
 
-        this.logger.trace("Finalizing remaining instances");
-        await Promise.all(instancesStore.map((csi) => csi.finalize(immediate)));
+        this.logger.info("Cleaning up", this.config.killOnExit);
 
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();
+
+        this.logger.debug("Disconnecting from CPM");
+
+        if (this.cpmConnector) {
+            this.cpmConnector.disconnect();
+            this.cpmConnector = undefined;
+        }
 
         this.logger.trace("Stopping API server");
 

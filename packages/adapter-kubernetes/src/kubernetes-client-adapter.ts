@@ -139,6 +139,13 @@ class KubernetesClientAdapter {
                         this.logger.error("Pod not found", podName);
                         throw Error("Pod not found");
                     }
+                } else if (err instanceof k8s.ApiException) {
+                    this.logger.error(`Status for "${podName}" pod responded with error`, err?.message);
+
+                    if (err.code === 404) {
+                        this.logger.error("Pod not found", podName);
+                        throw Error("Pod not found");
+                    }
                 } else {
                     this.logger.error(`Failed to get pod status: ${podName}.`, err);
                 }

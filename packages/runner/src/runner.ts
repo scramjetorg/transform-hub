@@ -342,7 +342,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
 
             working = true;
-            await this.reportHealth(1000);
+            await this.reportHealth(5_000);
             working = false;
         }, 1000 / data.monitoringRate);//.unref();
     }
@@ -539,7 +539,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.debug("connecting...");
-            await promiseTimeout(this.hostClient.init(this.instanceId), 10000);
+            await promiseTimeout(this.hostClient.init(this.instanceId), 10_000);
             this.logger.debug("connected");
             this.connected = true;
 
@@ -548,7 +548,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.connected = false;
             this.logger.warn("Can't connect to Host", e);
 
-            await defer(10000);
+            await defer(10_000);
 
             return await this.premain();
         }

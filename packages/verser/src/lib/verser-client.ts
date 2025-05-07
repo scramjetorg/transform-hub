@@ -8,7 +8,7 @@ import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-import { BPMux } from "@scramjet/bpmux";
+import { BPDuplex, BPMux } from "@scramjet/bpmux";
 
 type Events = {
     error: (err: Error) => void;
@@ -24,7 +24,7 @@ export class VerserClient extends TypedEmitter<Events> {
     /**
      * BPMux instance.
      */
-    private bpmux: any;
+    private bpmux?: BPMux;
 
     /**
      * VerserClient options.
@@ -44,6 +44,8 @@ export class VerserClient extends TypedEmitter<Events> {
      * HTTP Agent but on BPMux'ed stream.
      */
     private _verserAgent?: HttpAgent & { createConnection: typeof createConnection };
+
+    private verserConnections: WeakSet<BPDuplex & Partial<Socket>> = new WeakSet();
 
     /**
      * Connection socket.
@@ -83,6 +85,12 @@ export class VerserClient extends TypedEmitter<Events> {
             ? this.opts.verserUrl : new URL(this.opts.verserUrl)).protocol === "https:";
 
         this.httpAgent = this.opts.https ? new HttpsAgent() : new HttpAgent();
+    }
+
+    public async close(reason?: string) {
+        if (this.socket) {
+            this.socket.destroy();
+        }
     }
 
     /**
@@ -152,7 +160,8 @@ export class VerserClient extends TypedEmitter<Events> {
 
         this._verserAgent.createConnection = () => {
             try {
-                const socket = this.bpmux!.multiplex() as Socket;
+                const socket = this.bpmux!.multiplex() as BPDuplex & Partial<Socket>;
+                this.verserConnections.add(socket);
 
                 socket.on("error", () => {
                     this.logger.error("Muxed stream error");
@@ -160,11 +169,11 @@ export class VerserClient extends TypedEmitter<Events> {
 
                 // this socket is to be used as net.Socket but it is not one
                 // and it lacks of following net.Socket methods:
-                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-                socket.unref ||= () => socket;
-                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
+                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket as Socket;
+                socket.unref ||= () => socket as Socket;
+                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket as Socket;
 
-                return socket;
+                return socket as unknown as Socket;
             } catch (error) {
                 const ret = new Socket();
 
