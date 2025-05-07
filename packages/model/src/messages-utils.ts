@@ -12,10 +12,10 @@ import { getMessage } from "./get-message";
  **/
 
 export function serializeMessage<T extends RunnerMessageCode | CPMMessageCode>(
-    { msgCode, ...msg }: MessageType<T>): RunnerMessage| CPMMessage {
+    { msgCode, ...msg }: MessageType<T>): RunnerMessage | CPMMessage {
     // DO TYPEGUARDS...
 
-    const json = JSON.parse(JSON.stringify(msg));
+    const json = structuredClone(msg);
 
     return [msgCode, json];
 }

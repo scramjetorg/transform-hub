@@ -126,7 +126,7 @@ export class LoadCheck implements IComponent {
                 while (true) {
                     yield _this.getLoadCheck();
 
-                    await defer(1000);
+                    await defer(10_000);
                 }
             }
         ).JSONStringify();
