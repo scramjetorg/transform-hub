@@ -496,7 +496,7 @@ export class Host implements IComponent {
 
         this.api.log
             .each(({ date, method, url, status }) =>
-                this.logger.info(
+                this.logger.debug(
                     "Request",
                     { date: new Date(date).toISOString(), method, url, status }
                 )

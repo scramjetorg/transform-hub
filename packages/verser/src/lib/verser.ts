@@ -26,17 +26,17 @@ export class Verser extends TypedEmitter<Events> {
 
         this.server.on("connect", (req, socket: Socket) => {
             socket.setNoDelay(true);
-            this.logger.info("New connection:", req.url);
+            this.logger.debug("New connection:", req.url);
 
             const connection = new VerserConnection(req, socket);
 
             this.connections.push(connection);
-            this.logger.info("Total connections:", this.connections.length);
+            this.logger.debug("Total connections:", this.connections.length);
 
             this.emit("connect", connection);
 
             socket.once("close", () => {
-                this.logger.info("Connect request closed");
+                this.logger.debug("Connect request closed");
             });
         });
     }

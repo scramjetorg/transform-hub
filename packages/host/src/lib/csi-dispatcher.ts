@@ -85,7 +85,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 this.emit("error", { id, err });
             })
             .on("event", async (event: EventMessageData) => {
-                this.logger.info("Received event", event);
                 this.emit("event", { event, id: csiController.id });
             })
             .on("hourChime", () => {
@@ -135,8 +134,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 }
             })
             .on("ping", (pingMessage: PingMessageData) => {
-                this.logger.info("Ping received", JSON.stringify(pingMessage));
-
                 if (pingMessage.sequenceInfo.config.type !== this.STHConfig.runtimeAdapter) {
                     this.logger.error("Incorrect Instance adapter");
 

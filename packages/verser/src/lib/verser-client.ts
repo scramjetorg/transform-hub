@@ -121,7 +121,7 @@ export class VerserClient extends TypedEmitter<Events> {
             });
 
             connectRequest.once("connect", (res, socket, head) => {
-                this.logger.info("HEAD", head.toString());
+                this.logger.debug("HEAD", head.toString());
                 this.socket = socket;
                 this.mux();
 

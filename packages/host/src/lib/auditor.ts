@@ -26,10 +26,10 @@ export class Auditor {
     outStream = new ReReadable({ length: 1e6 });
 
     getOutputStream(req: IncomingMessage, res: ServerResponse) {
-        this.logger.info("request", req.url, req.method);
+        this.logger.debug("request", req.url, req.method);
 
         req.socket.on("end", () => {
-            this.logger.info("request close", req.url, req.method);
+            this.logger.debug("request close", req.url, req.method);
             res.end();
         });
 
@@ -111,7 +111,7 @@ export class Auditor {
     }
 
     auditInstanceHeartBeat(id: string, lastStats: InstanceStats) {
-        this.logger.info("Instance heartbeat", id);
+        this.logger.debug("Instance heartbeat", id);
         this.write({
             opState: "ACTIVE",
             opCode: OpRecordCode.INSTANCE_HEARTBEAT,
@@ -123,7 +123,7 @@ export class Auditor {
     }
 
     auditHostHeartBeat() {
-        this.logger.info("Host heartbeat");
+        this.logger.debug("Host heartbeat");
         this.write({
             opState: "ACTIVE",
             opCode: OpRecordCode.HOST_HEARTBEAT,
