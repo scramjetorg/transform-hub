@@ -65,6 +65,7 @@ export const defaultConfig: STHConfiguration = {
     startupConfig: "",
     killOnExit: false,
     exitWithLastInstance: false,
+    strictPlatformConnection: false,
     timings: {
         heartBeatInterval: 10000,
         instanceLifetimeExtensionDelay: 180e3,

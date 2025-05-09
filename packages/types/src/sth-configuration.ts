@@ -323,6 +323,8 @@ export type STHConfiguration = {
     adapters: Record<string, AdapterConfig>;
 
     couchdb?: CouchDbAdapterConf;
+
+    strictPlatformConnection?: boolean;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

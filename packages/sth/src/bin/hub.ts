@@ -28,13 +28,14 @@ const unaugmentedOptions = program
     .option("--tags <tags>", "Specifies tags in the format \"tag1, tag2\"", "")
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
+    .option("--colors", "Enable colors in output", true)
     .option("--no-colors", "Disable colors in output", false)
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
-    .option("-R, --instance-reconnect", "Signal runners to attempt to reconnect", false)
-    .option("-K, --kill-on-exit", "Kills all instances on exit", false)
+    .option("-R, --instance-reconnect", "Signal runners to attempt to reconnect")
+    .option("-K, --kill-on-exit", "Kills all instances on exit")
     .option("--platform-api <url>", "Platform API url, ie. https://api.scramjet.org/api/v1")
     .option("--platform-api-version <version>", "Platform API version", "v1")
     .option("--platform-api-key <string>", "Platform API Key")
@@ -43,8 +44,8 @@ const unaugmentedOptions = program
     .option("-X, --exit-with-last-instance", "Exits host when no more instances exist.")
     .option("-S, --startup-config <path>", "Only works with process adapter. The configuration of startup sequences.")
     .option("-D, --sequences-root <path>", "Works with --runtime-adapter='process' or --runtime-adapter='kubernetes' options. Specifies a location where the Sequence Adapter saves new Sequences.")
-    .option("--debug", "Runners are spawned with debuggers", false)
-    .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
+    .option("--runner-debug", "Runners are spawned with debuggers")
+    .option("--no-docker", "Shorthand for --runtime-adapter=process")
     .option("--instance-lifetime-extension-delay <ms>", "Instance lifetime extension delay in ms")
     .addOption(new Option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation").argParser(stringToIntSanitizer))
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
@@ -54,8 +55,9 @@ const unaugmentedOptions = program
     .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")
     .option("--cpm-reconnection-delay <number>", "Time to wait before next reconnection attempt")
     .option("--environment-name <name>", "Sets the environment name for telemetry reporting (defaults to SCP_ENV_VALUE env var or 'not-set')")
-    .option("--telemetry", "Enables telemetry", false)
-    .option("--enable-federation-control", "Enables federation control", false)
+    .option("--telemetry", "Enables telemetry")
+    .option("--federation-control", "Enables federation control")
+    .option("--no-federation-control", "Enables federation control")
     .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port")
     .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
     .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
@@ -64,7 +66,8 @@ const unaugmentedOptions = program
     .option("--couchdb-name <couchdb-name>", "CouchDB database name")
     .option("--couchdb-user <couchdb-user>", "CouchDB user")
     .option("--couchdb-pass <couchdb-pass>", "CouchDB password")
-    .option("--localstorage-path <path>", "Storage path for file-based localStorage adapter");
+    .option("--localstorage-path <path>", "Storage path for file-based localStorage adapter")
+    .option("--strict-platform-connection", "Strictly check platform connection");
 
 const validStorageAdapters = getValidStorageAdapters();
 
@@ -115,7 +118,7 @@ const options = augmentOptions(unaugmentedOptions)
             reconnectionDelay: options.cpmReconnectionDelay,
             maxReconnections: options.cpmMaxReconnections
         },
-        debug: options.debug,
+        debug: options.runnerDebug,
         platform: {
             apiKey: options.platformApiKey,
             api: options.platformApi,
@@ -142,7 +145,7 @@ const options = augmentOptions(unaugmentedOptions)
             port: options.port,
             hostname: options.hostname,
             id: options.id,
-            federationControl: options.enableFederationControl
+            federationControl: options.federationControl
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
         localStorageAdapter: options.localstorageAdapter as StorageAdapterType,
@@ -189,7 +192,8 @@ const options = augmentOptions(unaugmentedOptions)
             dbName: options.couchdbName,
             user: options.couchdbUser,
             pass: options.couchdbPass
-        }
+        },
+        strictPlatformConnection: options.strictPlatformConnection
     });
 
     await configService.selectRuntimeAdapter();

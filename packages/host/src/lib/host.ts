@@ -526,7 +526,11 @@ export class Host implements IComponent {
 
         await this.startListening();
 
-        if ((this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space)) {
+        if (!this.isCPMConfigured()) {
+            if (this.config.strictPlatformConnection) {
+                throw new HostError("PLATFORM_CONNECTION_LOST", "Strict platform connection is set, but no CPM URL or ID provided.");
+            }
+        } else {
             const cpmHostName = this.config.platform?.api || this.config.cpmUrl;
             const cpmId = this.config.platform?.space || `:${this.config.cpmId}`;
             const cpmConnectorConfig: CPMConnectorOptions = {
@@ -553,6 +557,23 @@ export class Host implements IComponent {
 
             this.serviceDiscovery.setConnector(this.cpmConnector);
 
+            if (this.config.strictPlatformConnection) {
+                this.cpmConnector.on("disconnect", (code) => {
+                    this.logger.error(
+                        `Platform connection lost [code: ${code}].
+                        Exiting due to 'strictPlatformConnection' flag set.`
+                    );
+                    throw new HostError("PLATFORM_CONNECTION_LOST", "Connection to the platform lost.");
+                });
+
+                await this.connectToCPM();
+            } else {
+                await Promise.race([
+                    this.connectToCPM(),
+                    defer(2500)
+                ]);
+            }
+
             await Promise.race([
                 this.connectToCPM(),
                 defer(2500)
@@ -568,6 +589,10 @@ export class Host implements IComponent {
         await this.performStartup();
 
         this.logger.info("Host running!");
+    }
+
+    private isCPMConfigured() {
+        return (this.config.cpmUrl || this.config.platform?.api) && (this.config.cpmId || this.config.platform?.space);
     }
 
     private async startListening() {

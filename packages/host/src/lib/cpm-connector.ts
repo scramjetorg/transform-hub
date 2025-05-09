@@ -35,6 +35,7 @@ type Events = {
     connect: () => void,
     "log_connect": (logStream: NodeJS.WritableStream) => void;
     id: (id: string) => void;
+    disconnect: (statusCode: number) => void;
 }
 
 /**
@@ -474,6 +475,10 @@ export class CPMConnector extends TypedEmitter<Events> {
                     await this.connect().then(resolve, reject);
                 }, this.config.reconnectionDelay);
             });
+        } else {
+            // actual 'connectionStatusCode' is logged before in 'handleConnectionClose'
+            // 4001 as temporary code?
+            this.emit("disconnect", 4001);
         }
     }
 
