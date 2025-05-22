@@ -2,6 +2,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { Agent, IncomingHttpHeaders } from "http";
 import { PicoS3, CLOUD_PROVIDERS, getObject, S3GetOptions } from "pico-s3";
 import { Readable } from "stream";
+import { AxiosRequestConfig } from "axios";
 
 type SequenceStoreClientConfig = {
     host: string;
@@ -11,8 +12,6 @@ type SequenceStoreClientConfig = {
     secretAccessKey: string;
     provider: CLOUD_PROVIDERS;
 };
-
-type AxiosRequestConfig = import("axios").AxiosRequestConfig;
 
 export class S3Client {
     agent = new Agent({ keepAlive: true });

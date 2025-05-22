@@ -21,6 +21,8 @@ type Encoding = 'utf8' | 'ascii' | 'latin1' | 'base64' | 'hex' | 'binary';
 declare class BPDuplex extends Duplex {
     constructor(options: DuplexOptions, mux: BPMux, chan: number);
 
+    readonly _chan: number;
+
     private _check_remove(): void
     private _send_handshake(handshake_data?: Buffer): void
     get_channel(): number
@@ -37,7 +39,7 @@ export type PeerMultiplexOptions = {
 
 export type BPMuxOptions = {
     /** When your `BPMux` object detects a new multiplexed stream from the peer on the carrier, it creates a new `Duplex` and emits a [`peer_multiplex`](#bpmuxeventspeer_multiplexduplex) event. When it creates the `Duplex`, it uses `peer_multiplex_options` to configure it with the following options: */
-    peer_multiplex_options: PeerMultiplexOptions;   
+    peer_multiplex_options: PeerMultiplexOptions;
     /** When a new stream is multiplexed, the `BPMux` objects at each end of the carrier exchange a handshake message. You can supply application-specific handshake data to add to the handshake message (see [`BPMux.prototype.multiplex`](#bpmuxprototypemultiplexoptions) and [`BPMux.events.handshake`](#bpmuxeventshandshakeduplex-handshake_data-delay_handshake)). By default, when handshake data from the peer is received, it's passed to your application as a raw [`Buffer`](https://nodejs.org/api/buffer.html#buffer_buffer). Use `parse_handshake_data` to specify a custom parser. It will receive the `Buffer` as an argument and should return a value which makes sense to your application. */
     parse_handshake_data: (handshake_data: any) => void
     /** Whether to batch together writes to the carrier. When the carrier indicates it's ready to receive data, its spare capacity is shared equally between the multiplexed streams. By default, the data from each stream is written separately to the carrier. Specify `true` to write all the data to the carrier in a single write. Depending on the carrier, this can be more performant. */
@@ -54,7 +56,7 @@ export type BPMuxOptions = {
 
 type Events = {
     error(error: Error): void;
-    peer_multiplex(duplex: Duplex, data: any): void;
+    peer_multiplex(duplex: BPDuplex, data: any): void;
     handshake(duplex, handshake_data, delay_handshake);
     handshake_sent(duplex, complete);
     drain();

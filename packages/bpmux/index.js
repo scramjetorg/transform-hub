@@ -141,7 +141,7 @@ http.createServer(function (req, res)
             multiplex(i);
         }
     });
-    
+
     console.log('Point your browser to http://localhost:7500/loader.html');
 });
 ```
@@ -233,7 +233,7 @@ When the first stream is paused, backpressure is applied to the second stream
 too, even though it hasn't been paused. If you run this example, you'll see:
 
 ```bash
-$ node multiplex.js 
+$ node multiplex.js
 data 0 65536
 data 1 65536
 ```
@@ -431,7 +431,7 @@ var util = require('util'),
     Duplex = stream.Duplex,
     Writable = stream.Writable,
     EventEmitter = require('events').EventEmitter,
-    frame = require('frame-stream'),
+    frame = require('@scramjet/frame-stream'),
     max_seq = Math.pow(2, 32),
     TYPE_END = 0,
     TYPE_HANDSHAKE = 1,
@@ -795,6 +795,7 @@ function BPMux(carrier, options)
                 duplex._ended = true; // we won't get any more messages for it
                 const err = new Error('carrier stream ended before end message received');
                 err.carrier_done = true;
+                err.chan = duplex._chan;
                 duplex.destroy(err);
             }
         }
@@ -871,7 +872,7 @@ function BPMux(carrier, options)
             }
             else
             {
-                if ((ths._max_header_size <= 0) || 
+                if ((ths._max_header_size <= 0) ||
                     (ths._header_buffer_len < ths._max_header_size))
                 {
                     ths._header_buffers.push(data);
@@ -1139,7 +1140,7 @@ BPMux.prototype._send_handshake = function (duplex, handshake_data)
 {
     if (this._finished) { return; }
     if (duplex._handshake_sent) { return this._send(); }
-    
+
     var buf, size = 1 + 4 + 4;
 
     if (handshake_data)
@@ -1172,7 +1173,7 @@ BPMux.prototype._send_status = function (duplex)
 {
     // Note: Status messages are sent regardless of remote_free
     // (if the remote peer isn't doing anything it could never be sent and it
-    // could be waiting for a status update). 
+    // could be waiting for a status update).
     // This means every time the app calls read(), a status message wlll be sent
     // to the remote peer. If you want to control when status messages are
     // sent then use the second parameter of read(), send_status.
@@ -1264,7 +1265,7 @@ BPMux.prototype.__send = function ()
             cb;
 
         info.duplex._seq = (info.duplex._seq + size) % max_seq;
-        
+
         buf.writeUInt8(TYPE_DATA, 0, true);
         buf.writeUInt32BE(info.duplex._chan, 1, true);
         buf.writeUInt32BE(info.duplex._seq, 5, true);
@@ -1303,9 +1304,9 @@ BPMux.prototype.__send = function ()
         {
             break;
         }
-        
+
         this.duplexes.forEach(push_output);
-        
+
         n = output.length;
 
         if (n === 0)
@@ -1321,7 +1322,7 @@ BPMux.prototype.__send = function ()
         }
 
         output.forEach(write_output);
-        
+
         if (this._coalesce_writes)
         {
             this.carrier.uncork();
@@ -1354,13 +1355,13 @@ Multiplex a new `stream.Duplex` over the carrier.
 
 @param {Object} [options] Configuration options:
 - `{Buffer} [handshake_data]` Application-specific handshake data to send to the peer. When a new stream is multiplexed, the `BPMux` objects at each end of the carrier exchange a handshake message. You can optionally supply handshake data to add to the handshake message here. The peer application will receive this when its `BPMux` object emits a [`handshake`](#bpmuxeventshandshakeduplex-handshake_data-delay_handshake) event. Defaults to a zero-length `Buffer`.
-  
+
 - `{Integer} [max_write_size]` Maximum number of bytes to write to the `Duplex` at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
 
 - `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the `Duplex`'s high-water mark for reading is exceeded then the `Duplex` emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
 
 - `{Integer} [channel]` Unique number for the new stream. `BPMux` identifies each multiplexed stream by giving it a unique number, which it allocates automatically. If you want to do the allocation yourself, specify a channel number here. It's very unlikely you'll need to do this but the option is there. `Duplex` objects managed by `BPMux` expose a `get_channel` method to retrieve their channel number. Defaults to automatic allocation.
-  
+
 @return {Duplex} The new `Duplex` which is multiplexed over the carrier. This supports back-pressure using the stream [`readable`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_event_readable) event and [`write`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_writable_write_chunk_encoding_callback) method.
 
 @throws {Error} If there are no channel numbers left to allocate to the new stream, the maximum number of open multiplexed streams would be exceeded or the carrier has finished or ended.

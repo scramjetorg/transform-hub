@@ -7,7 +7,7 @@
 ### Enumeration Members
 
 - [INSTANCE\_CONNECTED](InstanceMessageCode.md#instance_connected)
-- [INSTANCE\_ENDED](InstanceMessageCode.md#instance_ended)
+- [INSTANCE\_ENDED](InstanceMessageCode.md#instance_bpended)
 - [INSTANCE\_STARTED](InstanceMessageCode.md#instance_started)
 - [INSTANCE\_STOPPED](InstanceMessageCode.md#instance_stopped)
 - [INSTANCE\_TERMINATED](InstanceMessageCode.md#instance_terminated)

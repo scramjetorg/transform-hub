@@ -26,7 +26,8 @@ import {
     SequenceInfo,
     StartInstanceReturnType,
     StartSequenceDTO,
-    IStorageAdapter
+    IStorageAdapter,
+    InstanceId
 } from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
@@ -54,17 +55,17 @@ import { S3Client } from "./s3-client";
 
 import { existsSync, mkdirSync, readFileSync } from "fs";
 
-import SequenceStore from "./sequenceStore";
+import SequenceStore from "./sequence-store";
 
 import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
 
-import { CSIController } from "./csi-controller";
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
 import { MonitoringServer } from "@scramjet/monitoring-server";
+import { ICSI, IHost } from "./types";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -82,7 +83,7 @@ const isDevelopment = development();
  * Using provided servers to set up API and server for communicating with Instance controllers.
  * Can communicate with Manager.
  */
-export class Host implements IComponent {
+export class Host implements IHost, IComponent {
     apiHandler: HostAPIHandler;
     private _stopping: boolean = false;
     private _cleaning: boolean = false;
@@ -574,10 +575,6 @@ export class Host implements IComponent {
                 ]);
             }
 
-            await Promise.race([
-                this.connectToCPM(),
-                defer(2500)
-            ]);
             this.s3Client = new S3Client({
                 host: `${this.config.cpmUrl}/api/v1`,
                 bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`,
@@ -976,7 +973,7 @@ export class Host implements IComponent {
         // Send the event to all instances except the source of the event.
         await Promise.all(
             this.instancesStore
-                .map((inst: CSIController) => {
+                .map((inst: ICSI) => {
                     return event.source !== inst.id ? inst.emitEvent(event) : true;
                 })
         );
@@ -994,13 +991,12 @@ export class Host implements IComponent {
     /**
      * Returns Sequence information.
      *
-     * @param {ParsedMessage} req Request object that should contain id parameter inside.
+     * @param {InstanceId} id Request object that should contain id parameter inside.
      * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
      */
-    getSequence(req: ParsedMessage): OpResponse<STHRestAPI.GetSequenceResponse> {
-        if (!req.params?.id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
+    getSequence(id: InstanceId): OpResponse<STHRestAPI.GetSequenceResponse> {
+        if (!id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
 
-        const id = req.params.id;
         const sequence = this.sequenceStore.getById(id);
 
         if (!sequence) {
@@ -1062,7 +1058,7 @@ export class Host implements IComponent {
 
     /**
      * Stops all running Instances by sending KILL command to every Instance
-     * using its CSIController {@link CSIController}
+     * using its CSIController
      */
     async stop() {
         if (this._stopping) {
@@ -1099,10 +1095,9 @@ export class Host implements IComponent {
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();
 
-        this.logger.debug("Disconnecting from CPM");
-
         if (this.cpmConnector) {
-            this.cpmConnector.disconnect();
+            this.logger.debug("Disconnecting from CPM");
+            await this.cpmConnector.disconnect();
             this.cpmConnector = undefined;
         }
 

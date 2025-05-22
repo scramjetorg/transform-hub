@@ -238,7 +238,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     init() {
     }
 
-    disconnect() {
+    async disconnect() {
         this.logger.info("Disconnecting from Manager");
         this.isAbandoned = true;
 
@@ -249,7 +249,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.connection = undefined;
         }
 
-        this.verserClient.close();
+        await this.verserClient.close();
         this.verserClient = undefined as any;
 
         this.logger.info("Disconnected from Manager");
@@ -267,6 +267,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
     async handleCommunicationRequest(duplex: DuplexStream, _headers: http.IncomingHttpHeaders) {
         if (this.communicationStream) {
+            this.logger.warn("Already connected to Manager", this.communicationStream);
             return {
                 opStatus: ReasonPhrases.CONFLICT
             };
@@ -317,7 +318,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 this.logger.warn("communicationChannel error", e.message);
             });
 
-        this.communicationStream = new StringStream().JSONStringify().resume();
+        this.communicationStream = new StringStream().JSONStringify();
         this.communicationStream.pipe(duplex.output);
 
         await this.setLoadCheckMessageSender();
@@ -362,6 +363,8 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {Promise<void>} Promise that resolves when connection is established.
      */
     async connect(): Promise<void> {
+        this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
+
         this.isReconnecting = false;
 
         if (this.info.id) {
@@ -371,7 +374,6 @@ export class CPMConnector extends TypedEmitter<Events> {
         let connection: VerserClientConnection;
 
         try {
-            this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
             connection = await this.verserClient.connect();
 
             connection.socket

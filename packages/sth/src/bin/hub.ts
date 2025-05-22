@@ -235,17 +235,19 @@ const options = augmentOptions(unaugmentedOptions)
                 process.removeListener("SIGINT", kill);
                 process.removeListener("SIGTERM", kill);
 
-                host.cleanup();
-
-                if (killing) return process.exit(constants.signals[signal]);
+                if (killing) {
+                    process.exit(constants.signals[signal]);
+                }
                 killing = true;
 
                 host.logger.info("Received kill signal, stopping host...");
+
                 host.stop()
                     .then(() => defer(100))
                     .then(() => host.logger.info("Host stopped, exiting..."))
                     .catch((e: any) => host.logger.error("Error while exiting", e && e.stack))
-                    .then(() => process.exit(constants.signals[signal]));
+                    .finally(() => process.exit(constants.signals[signal]))
+                ;
             };
 
             process.on("SIGINT", kill);

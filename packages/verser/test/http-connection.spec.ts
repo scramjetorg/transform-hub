@@ -20,7 +20,7 @@ async function connectVerserClientAToVerserB(
     verserB.on("connect", (verserConnection) => {
         verserConnection.respond(200);
         // @TODO we have to do that, which means that verser api is a bit off
-        verserConnection.reconnect();
+        verserConnection.connect();
         connectionResolver.res(verserConnection);
     });
 

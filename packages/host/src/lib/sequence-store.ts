@@ -1,6 +1,7 @@
 import { SequenceInfo } from "@scramjet/types";
+import { ISequenceStore } from "./types/sequence-store";
 
-class SequenceStore {
+class SequenceStore implements ISequenceStore {
     private store: Map<string, SequenceInfo>;
 
     constructor() {

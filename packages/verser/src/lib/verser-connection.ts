@@ -3,14 +3,16 @@ import {
     request as httpRequest,
     IncomingHttpHeaders,
     IncomingMessage,
+    OutgoingHttpHeaders,
     RequestOptions,
     ServerResponse,
-} from "http";
+    Agent } from "http";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Socket } from "net";
 import { VerserRequestResult, VerserAgent } from "../types";
-import { Agent } from "http";
-import { BPMux } from "@scramjet/bpmux";
+import { BPDuplex, BPMux } from "@scramjet/bpmux";
+import { IObjectLogger } from "@scramjet/types";
+import { once } from "events";
 
 /**
  * VerserConnection class.
@@ -18,12 +20,10 @@ import { BPMux } from "@scramjet/bpmux";
  * Provides methods for handling connection to Verser server and streams in connection socket.
  */
 export class VerserConnection {
-    logger = new ObjLogger(this);
+    logger: IObjectLogger = new ObjLogger(this);
 
-    private request: IncomingMessage;
     private bpmux?: BPMux;
 
-    private _socket: Duplex;
     private agent?: VerserAgent;
     private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
@@ -35,14 +35,9 @@ export class VerserConnection {
         return this._socket;
     }
 
-    constructor(request: IncomingMessage, socket: Duplex) {
-        this.request = request;
-        this._socket = socket;
-
-        this.socket.on("error", (error: Error) => {
-            this.logger.error("Socket request error:", error);
-
-            // TODO: handle error - this is caused by BPMux on EPIPE - perhaps wait for the other side to reconnect?
+    constructor(private request: IncomingMessage, private _socket: Duplex) {
+        this.socket.on("error", (error: any) => {
+            this.logger.debug("Socket request error:", { code: error.code, message: error.message });
         });
 
         this.request.on("error", (error: Error) => {
@@ -157,6 +152,25 @@ export class VerserConnection {
         }
     }
 
+    getHeaderFromRequestOptions({ headers }: RequestOptions, header: string): number | string | string[] | undefined {
+        if (!headers) return undefined;
+
+        if (Array.isArray(headers)) {
+            return headers.find((h) => h.toLowerCase() === header.toLowerCase());
+        }
+
+        if (typeof headers === "object") {
+            const ret = (headers as OutgoingHttpHeaders)[header.toLowerCase()];
+
+            if (Array.isArray(ret)) {
+                return ret[0];
+            }
+            return ret;
+        }
+
+        return undefined;
+    }
+
     /**
      * Creates new HTTP request to VerserClient over VerserConnection.
      *
@@ -166,30 +180,31 @@ export class VerserConnection {
     public async makeRequest(options: RequestOptions): Promise<VerserRequestResult> {
         if (!this.connected) throw new Error("Not connected");
 
-        return new Promise((resolve, reject) => {
-            let expectedEvent = "response";
+        let expectedEvent = "response";
 
-            if (options.headers?.Expect) {
-                expectedEvent = "continue";
+        if (this.getHeaderFromRequestOptions(options, "expect") === "100-continue") {
+            expectedEvent = "continue";
+        }
+
+        this.logger.debug("making request and waiting for event", options, expectedEvent);
+
+        const clientRequest = httpRequest({ ...options, agent: this.agent });
+
+        clientRequest.setSocketKeepAlive(true);
+        clientRequest.flushHeaders();
+
+        clientRequest.on("error", (error: Error & { code?: string }) => {
+            if (error.code === "ECONNRESET") {
+                this.logger.debug("Carrier disconnected", (clientRequest.socket as any as BPDuplex)._chan);
+                return;
             }
-
-            this.logger.debug("making request and waiting for event", options, expectedEvent);
-
-            const clientRequest = httpRequest({ ...options, agent: this.agent })
-                .on(expectedEvent, (incomingMessage: IncomingMessage) => {
-                    this.logger.debug(`Got event ${expectedEvent}`);
-                    resolve({ incomingMessage, clientRequest });
-                })
-                .on("error", (error: Error) => {
-                    this.logger.error("Request error", options, error);
-                    reject(error);
-                });
-
-            clientRequest.setSocketKeepAlive(true);
-            clientRequest.flushHeaders();
-
-            this.logger.debug("makeRequest headers sent", options);
+            this.logger.error("Client request error", error.message);
         });
+
+        return once(clientRequest, expectedEvent)
+            .then(([response]) => {
+                return { incomingMessage: response as IncomingMessage, clientRequest };
+            });
     }
 
     /**
@@ -206,16 +221,16 @@ export class VerserConnection {
         return this.bpmux.multiplex({ channel: id });
     }
 
-    reconnect() {
-        this.logger.debug("Reconnecting...");
+    connect() {
+        this.logger.debug("Connecting...");
 
         // TODO: remove all listeners from the old BPMux instance
         // TODO: remove all listeners from the old socket instance
         // TODO: Remove all consumers from the streams
-        this.bpmux?.removeAllListeners();
 
-        this.bpmux = this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
-            this.logger.error("BPMux Error", error.message);
+        this.bpmux = new BPMux(this.socket).on("error", (error: any) => {
+            if (error.code !== "ECONNRESET")
+                this.logger.debug("BPMux Error", error.message);
             // TODO: Error handling?
         });
 
@@ -235,10 +250,8 @@ export class VerserConnection {
                         );
 
                         socket.on("error", () => {
-                            this.logger.error("Muxed stream error");
+                            this.logger.trace("Muxed stream error");
                         });
-
-                        this.logger.debug("Created new muxed stream");
                         return socket;
                     } catch (e) {
                         const ret = new Socket();

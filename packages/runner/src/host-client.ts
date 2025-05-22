@@ -120,7 +120,7 @@ class HostClient implements IHostClient {
                         const socket = this.bpmux!.multiplex() as Socket;
 
                         socket.on("error", () => {
-                            this.logger.error("Muxed stream error");
+                            this.logger.trace("Muxed stream error");
                         });
 
                         // some libs call it but it is not here, in BPMux.

@@ -152,9 +152,11 @@ class PrePack {
     async copyFiles() {
         // we should copy these from packages if exist.
         const copies = [
-            this.copyToDist(this.rootDir, this.LICENSE_FILENAME)
         ];
 
+        if (await this.isReadable(path.join(this.currDir, this.LICENSE_FILENAME))) {
+            copies.push(this.copyToDist(this.rootDir, this.LICENSE_FILENAME));
+        }
         if (await this.isReadable(path.join(this.currDir, "README.md"))) {
             copies.push(this.copyToDist(this.currDir, "README.md"));
         }
@@ -214,7 +216,7 @@ class PrePack {
 
         const dependencies = this.localizeDependencies(content.dependencies);
         const {
-            bin: _bin, main: _main, browser: _browser, types: _types, 
+            bin: _bin, main: _main, browser: _browser, types: _types,
             name, version, description, keywords,
             files = this.rootPackageJson.files,
             license = this.rootPackageJson.license,

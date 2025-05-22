@@ -1,10 +1,10 @@
 import { HostError } from "@scramjet/model";
 import { APIRoute, EventMessageData, ICommunicationHandler, IDuplexStream, IObjectLogger, OpResponse, ParsedMessage, STHRestAPI } from "@scramjet/types";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { CSIController } from "../csi-controller";
 import { ReasonPhrases } from "http-status-codes";
 import { development } from "@scramjet/sth-config";
 import { PassThrough } from "stream";
+import { ICSI } from "../types";
 import { isSetSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { IncomingHttpHeaders, ServerResponse } from "http";
 import { DataStream } from "scramjet";
@@ -12,7 +12,7 @@ import EventEmitter from "events";
 
 export class InstanceAPI {
     constructor(
-        private csi: CSIController,
+        private csi: ICSI,
         private logger: IObjectLogger,
         private localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } }
     ) {

@@ -32,7 +32,7 @@ const stringifier = (line: any): string => {
     } catch (e) {
         return JSON.stringify(line, getCircularReplacer()) + "\n";
     }
-}
+};
 
 export class ObjLogger implements IObjectLogger {
     /**
@@ -237,6 +237,7 @@ export class ObjLogger implements IObjectLogger {
                 .pipe(new JSONStringifierStream({
                     stringifier
                 }))
+                // eslint-disable-next-line no-console
                 .on("error", (e: any) => { console.error(e); });
 
         return this._stringifiedOutput;

@@ -8,7 +8,7 @@ import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
-import SequenceStore from "./sequenceStore";
+import SequenceStore from "./sequence-store";
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 

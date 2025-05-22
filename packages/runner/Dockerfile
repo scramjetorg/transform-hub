@@ -1,4 +1,4 @@
-FROM node:18-bullseye-slim AS target
+FROM node:22-bullseye-slim AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub \
@@ -14,11 +14,12 @@ RUN apt-get update \
     && apt-get install -y gosu tini --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-FROM node:18-bullseye-slim AS builder
+FROM node:22-bullseye-slim AS builder
 
 WORKDIR /app/
 
-COPY ./dist/bpmux ./dist/bpmux
+COPY ./dist/docker-runner/bpmux ./dist/bpmux
+COPY ./dist/docker-runner/frame-stream ./dist/frame-stream
 COPY ./dist/docker-runner/api-client ./dist/api-client
 COPY ./dist/docker-runner/client-utils ./dist/client-utils
 COPY ./dist/docker-runner/utility ./dist/utility

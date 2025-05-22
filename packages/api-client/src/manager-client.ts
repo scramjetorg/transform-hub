@@ -92,32 +92,32 @@ export class ManagerClient implements ClientProvider {
         return this.client.get<MRestAPI.GetTopicsResponse>("topics");
     }
 
-    async getStoreItems() {
+    async getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse> {
         return this.client.get<MRestAPI.GetStoreItemsResponse>("s3");
     }
 
     async putStoreItem(
         sequencePackage: Readable,
         id: string = ""
-    ) {
+    ): Promise<MRestAPI.PutStoreItemResponse> {
         return this.client.sendStream<MRestAPI.PutStoreItemResponse>(`s3/${id}`, sequencePackage, { method: "put" }, {
             parseResponse: "json"
         });
     }
 
-    async deleteStoreItem(id: string) {
+    async deleteStoreItem(id: string): Promise<void> {
         await this.client.delete<any>(`s3/${id}`);
     }
 
-    async clearStore() {
+    async clearStore(): Promise<void> {
         await this.client.delete<any>("store");
     }
 
-    async disconnectHubs(opts: MRestAPI.PostDisconnectPayload) {
+    async disconnectHubs(opts: MRestAPI.PostDisconnectPayload): Promise<MRestAPI.PostDisconnectResponse> {
         return this.client.post<MRestAPI.PostDisconnectResponse>("disconnect", opts, {}, { json: true, parse: "json" });
     }
 
-    async deleteHub(id: string, force: boolean) {
+    async deleteHub(id: string, force: boolean): Promise<MRestAPI.HubDeleteResponse> {
         return this.client.delete<MRestAPI.HubDeleteResponse>(`sth/${id}`, {
             headers: { "x-force": force.toString(), "content-type": "application/json" }
         });

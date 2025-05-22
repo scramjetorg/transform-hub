@@ -62,7 +62,9 @@ function onBeforeExit(code: number) {
 
 function onException(_error: Error) {
     console.error({ _error, stack: _error?.stack });
+    process.exitCode = RunnerExitCode.UNCAUGHT_EXCEPTION;
     onBeforeExit(RunnerExitCode.UNCAUGHT_EXCEPTION);
+    process.exit();
 }
 
 process.once("beforeExit", onBeforeExit);
@@ -211,9 +213,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         hostClient.logger.pipe(this.logger);
         inputStreamInitLogger.pipe(this.logger);
 
-        if (process.env.PRINT_TO_STDOUT) {
-            this.logger.addOutput(process.stdout);
-        }
+        // if (process.env.PRINT_TO_STDOUT) {
+        //     this.logger.addOutput(process.stdout);
+        // }
 
         if (process.env.RUNNER_LOG_FILE) {
             this.logFile ||= createWriteStream(process.env.RUNNER_LOG_FILE);
@@ -338,13 +340,13 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.monitoringInterval = setInterval(async () => {
             if (working) {
-                //return;
+                return;
             }
 
             working = true;
             await this.reportHealth(5_000);
             working = false;
-        }, 1000 / data.monitoringRate);//.unref();
+        }, data.monitoringRate).unref();
     }
 
     private async wasDegraded(): Promise<boolean> {
@@ -531,7 +533,12 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.cleanup()
             .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
-            .finally(() => { onBeforeExit(process.exitCode!); process.exit(); });
+            .finally(() => {
+                if (typeof process.exitCode === "number")
+                    onBeforeExit(process.exitCode);
+
+                process.exit();
+            });
     }
 
     async premain(): Promise<{ appConfig: AppConfig, args: any }> {
@@ -580,7 +587,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (exposePath && !this.api.server.listening) {
             this.logger.debug("Starting API server", { exposePath, exposeHost, envHost: process.env.EXPOSE_HOST });
 
-            const [port, host] = await new Promise<[number, string]>((res) => {
+            const [exposedPort, exposedHost] = await new Promise<[number, string]>((res) => {
                 this.api.server.listen(0, exposeHost || "localhost", () => {
                     const address = this.api.server.address() as AddressInfo;
                     const port = address.port;
@@ -591,8 +598,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 });
             });
 
-            this.runnerConnectInfo.exposePort = port;
-            this.runnerConnectInfo.exposeHost = host;
+            this.runnerConnectInfo.exposePort = exposedPort;
+            this.runnerConnectInfo.exposeHost = exposedHost;
         }
 
         this.sendHandshakeMessage();
@@ -729,7 +736,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             .JSONStringify()
             .pipe(this.hostClient.outputStream);
 
-        if (process.env.PRINT_TO_STDOUT) {
+        if (process.env.PRINT_TO_STDOUT && this.logFile) {
             process.stdout.pipe(this.logFile!);
             process.stderr.pipe(this.logFile!);
         }

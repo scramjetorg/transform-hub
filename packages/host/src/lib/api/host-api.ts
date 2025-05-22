@@ -1,8 +1,8 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
 import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { IHost } from "../types";
 
-import { Host } from "../host";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "../middlewares/audit";
 import { Duplex, PassThrough } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
@@ -15,7 +15,12 @@ import { AuditedRequest } from "../auditor";
 export class HostAPIHandler {
     logger: ObjLogger;
 
-    constructor(private api: APIExpose, private host: Host, private version: string, private build: string) {
+    constructor(
+        private api: APIExpose,
+        private host: IHost,
+        private version: string,
+        private build: string
+    ) {
         this.logger = new ObjLogger(this);
         this.logger.pipe(this.host.logger);
     }
@@ -63,7 +68,7 @@ export class HostAPIHandler {
 
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
 
-        this.api.get(`${this.apiBase}/sequence/:id`, (req) => host.getSequence(req));
+        this.api.get(`${this.apiBase}/sequence/:id`, (req) => host.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => host.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => host.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => host.getInstances());
@@ -91,7 +96,6 @@ export class HostAPIHandler {
 
         this.api.upstream(`${this.apiBase}/log`, () => host.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
-            this.logger.debug("Platform request");
             return host.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
         });
 

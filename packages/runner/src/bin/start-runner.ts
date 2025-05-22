@@ -6,7 +6,7 @@ import { AppConfig, SequenceInfo, RunnerConnectInfo } from "@scramjet/types";
 import { HostClient } from "../host-client";
 import { RunnerExitCode } from "@scramjet/symbols";
 
-const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
+const sequencePath: string = `${process.env.SEQUENCE_PATH?.replace(/(?<!\.m?js|\.ts)$/, ".js")}`;
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
 const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;

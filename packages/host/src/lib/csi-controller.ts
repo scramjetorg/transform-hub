@@ -47,6 +47,7 @@ import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { BPMux } from "@scramjet/bpmux";
+import { CSIEvents } from "./types";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -55,24 +56,13 @@ import { BPMux } from "@scramjet/bpmux";
  */
 const runnerExitDelay = 5000;
 
-type Events = {
-    ping: (pingMessage: MessageDataType<RunnerMessageCode.PING>) => void;
-    pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
-    event: (payload: EventMessageData) => void;
-    hourChime: () => void;
-    error: (error: any) => void;
-    stop: (code: number) => void;
-    end: (code: number) => void;
-    terminated: (code: number) => void;
-};
-
 export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; ended?: Date; };
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  *
  * @todo write interface for CSIController and CSIDispatcher
  */
-export class CSIController extends TypedEmitter<Events> {
+export class CSIController extends TypedEmitter<CSIEvents> {
     id: string;
     private sharedLocalStorage: Record<string, string | null> = {};
     private localStorageAdapter: IStorageAdapter;
@@ -407,12 +397,10 @@ export class CSIController extends TypedEmitter<Events> {
 
         if (immediate) {
             await defer(runnerExitDelay);
-        } else {
-            if (this.instanceLifetimeExtensionDelay > 0) {
-                this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
-                this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
-                await this.finalizingPromise;
-            }
+        } else if (this.instanceLifetimeExtensionDelay > 0) {
+            this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
+            this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
+            await this.finalizingPromise;
         }
 
         this.downStreams![CC.STDOUT].unpipe();
@@ -578,9 +566,15 @@ export class CSIController extends TypedEmitter<Events> {
 
     async broadcastUpdate(key: string, value: string | null) {
         return Promise.all(
-            this.instanceStore.map(async (csi) => {
-                await csi.communicationHandler.sendControlMessage(RunnerMessageCode.STORAGE_UPDATE, { key, value });
-            })
+            this.instanceStore.map(async (csi) => csi.sendStorageUpdate(key, value))
+        );
+    }
+
+    async sendStorageUpdate(key: string, value: string | null) {
+        this.logger.debug("Sending storage update to Runner", key, value);
+        await this.communicationHandler.sendControlMessage(
+            RunnerMessageCode.STORAGE_UPDATE,
+            { key, value }
         );
     }
 

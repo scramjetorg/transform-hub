@@ -1,6 +1,6 @@
-import { CSIController } from "./csi-controller";
+import { ICSI } from "./types";
 
-export class InstancesStore extends Map<string, CSIController> {
+export class InstancesStore extends Map<string, ICSI> {
     private exposePathMap: Map<string, Set<string>> = new Map();
 
     get length() {
@@ -14,17 +14,17 @@ export class InstancesStore extends Map<string, CSIController> {
         this.exposePathMap.get(path)?.add(instanceId);
     }
 
-    map<X>(mapper: (csiController: CSIController) => X): X[] {
+    map<X>(mapper: (csiController: ICSI) => X): X[] {
         const values = this.values();
 
         return Array.from(values).map(mapper);
     }
 
-    getByInstanceId(instanceId: string): CSIController | undefined {
+    getByInstanceId(instanceId: string): ICSI | undefined {
         return this.get(instanceId);
     }
 
-    getByExposePath(exposePath: string): CSIController[] {
+    getByExposePath(exposePath: string): ICSI[] {
         const set = Array.from(this.exposePathMap)
             .find(([path]) => exposePath.startsWith(path))?.[1];
 
@@ -34,13 +34,10 @@ export class InstancesStore extends Map<string, CSIController> {
 
         return Array.from(set)
             .map(instanceId => this.get(instanceId))
-            .filter((instance): instance is CSIController => !!instance);
+            .filter((instance): instance is ICSI => !!instance);
     }
 
-    set(instanceId: string, value: CSIController): this {
-        if (!(value instanceof CSIController)) {
-            throw new Error("value must be an instance of CSIController");
-        }
+    set(instanceId: string, value: ICSI): this {
         return super.set(instanceId, value);
     }
 
