@@ -164,7 +164,11 @@ export class ObjLogger implements IObjectLogger {
 
         if (optionalParams.length) {
             try {
-                paramsCopy = optionalParams.map((x) => structuredClone(x));
+                paramsCopy = optionalParams.map(
+                    (x) => x instanceof Error
+                        ? { Error: x.message, stack: x.stack }
+                        : structuredClone(x)
+                );
             } catch {
                 paramsCopy = JSON.parse(JSON.stringify(optionalParams));
             }
