@@ -206,6 +206,12 @@ export interface APIExpose extends APIBase {
     delete(path: string | RegExp, handler: Middleware): void;
     update(path: string | RegExp, handler: Middleware): void;
     read(path: string | RegExp, handler: Middleware): void;
+    all(path: string | RegExp, handler: Middleware): void;
+    head(path: string | RegExp, handler: Middleware): void;
+    patch(path: string | RegExp, handler: Middleware): void;
+    options(path: string | RegExp, handler: Middleware): void;
+    connect(path: string | RegExp, handler: Middleware): void;
+    trace(path: string | RegExp, handler: Middleware): void;
 
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;
 }
@@ -220,9 +226,9 @@ export interface APIServer extends APIExpose {
 
     /**
      * Listens for connections on the specified host and port or path.
-     * 
+     *
      * Resolves when the server is ready to accept connections.
-     * 
+     *
      * @example
      * await router.listen(3000, "localhost");
      */
