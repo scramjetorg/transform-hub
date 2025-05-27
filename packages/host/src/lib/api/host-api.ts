@@ -184,6 +184,7 @@ export class HostAPIHandler {
                 response.pipe(res);
             }).on("error", (error) => {
                 this.logger.warn("Error requesting CPM", error);
+                res.destroy(error);
             });
 
             clientRequest.flushHeaders();
