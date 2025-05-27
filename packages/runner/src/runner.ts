@@ -550,7 +550,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.debug("connected");
             this.connected = true;
 
-            await this.handleMonitoringRequest({ monitoringRate: 1 });
+            await this.handleMonitoringRequest({ monitoringRate: 10000 });
         } catch (e) {
             this.connected = false;
             this.logger.warn("Can't connect to Host", e);
