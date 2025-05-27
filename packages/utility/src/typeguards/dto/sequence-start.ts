@@ -4,7 +4,7 @@ import { LogLevelStrings } from "../../constants";
 // eslint-disable-next-line complexity
 export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof arg !== "object") throw new Error("DTO is not an object");
-    const { id, name, appConfig, args, instanceId, logLevel, keepAlive, ...rest } = arg;
+    const { id, name, appConfig, args, instanceId, logLevel, keepAlive, exposePath, ...rest } = arg;
 
     if (typeof id !== "string") throw new Error("DTO id is not string");
     if (!["object", "undefined"].includes(typeof appConfig))
@@ -24,6 +24,7 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof keepAlive !== "undefined" && typeof keepAlive !== "boolean")
         throw new Error("DTO keepAlive is not boolean");
     if (name && typeof name !== "string") throw new Error("DTO name is not string");
+    if (exposePath && typeof exposePath !== "string") throw new Error("DTO exposePath is not string");
 
     if (Object.keys(rest).length > 0) throw new Error(`DTO has unknown ${Object.keys(rest)} keys`);
 
