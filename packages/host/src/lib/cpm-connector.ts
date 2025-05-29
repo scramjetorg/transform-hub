@@ -455,6 +455,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     async reconnect(): Promise<void> {
         if (this.isReconnecting || this.isAbandoned) {
+            this.emit("disconnect", 4002);
             return;
         }
 
