@@ -152,7 +152,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 this.emit("established", { id: pingMessage.id, sequence: pingMessage.sequenceInfo });
             })
             .on("end", async (code: number) => {
-                this.logger.trace("csiControllerontrolled ended", `id: ${csiController.id}`, `Exit code: ${code}`);
+                this.logger.trace("csiController ended", `id: ${csiController.id}`, `Exit code: ${code}`);
 
                 if (csiController.provides && csiController.provides !== "") {
                     csiController.getOutputStream().unpipe(this.serviceDiscovery.getData(
