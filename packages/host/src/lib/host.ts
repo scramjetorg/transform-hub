@@ -4,6 +4,7 @@ import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, Server } from "http";
 import { AddressInfo, Socket } from "net";
 import { Duplex, Readable } from "stream";
+import { constants } from "os";
 
 import { CommunicationHandler, HostError } from "@scramjet/model";
 import { InstanceMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
@@ -564,7 +565,8 @@ export class Host implements IHost, IComponent {
                         `Platform connection lost [code: ${code}].
                         Exiting due to 'strictPlatformConnection' flag set.`
                     );
-                    throw new HostError("PLATFORM_CONNECTION_LOST", "Connection to the platform lost.");
+
+                    this.performStop(constants.signals.SIGHUP);
                 });
 
                 await this.connectToCPM();
@@ -586,6 +588,28 @@ export class Host implements IHost, IComponent {
         await this.performStartup();
 
         this.logger.info("Host running!");
+    }
+
+    public performStop(signal: number): void {
+        if (this._stopping) {
+            this.logger.warn("Host is already stopping, but got second signal", {
+                prev: process.exitCode,
+                signal
+            });
+
+            process.exit();
+        }
+
+        Promise.resolve()
+            .then(async () => {
+                process.exitCode = signal;
+                await this.stop();
+                await defer(100); // Wait for all logs to be flushed
+                this.logger.info("Host stopped, exiting...");
+            })
+            .finally(() => {
+                process.exit();
+            })
     }
 
     private isCPMConfigured() {

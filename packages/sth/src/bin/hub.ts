@@ -8,7 +8,7 @@ import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { getValidStorageAdapters, Host } from "@scramjet/host";
-import { defer, FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
+import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions } from "@scramjet/adapters";
 
@@ -242,12 +242,7 @@ const options = augmentOptions(unaugmentedOptions)
 
                 host.logger.info("Received kill signal, stopping host...");
 
-                host.stop()
-                    .then(() => defer(100))
-                    .then(() => host.logger.info("Host stopped, exiting..."))
-                    .catch((e: any) => host.logger.error("Error while exiting", e && e.stack))
-                    .finally(() => process.exit(constants.signals[signal]))
-                ;
+                host.performStop(constants.signals[signal]);
             };
 
             process.on("SIGINT", kill);
