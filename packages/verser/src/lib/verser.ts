@@ -7,6 +7,7 @@ import { Socket } from "net";
 
 type Events = {
     connect: (connection: VerserConnection) => void;
+    close: (connection: VerserConnection) => void;
 }
 
 /**
@@ -48,6 +49,7 @@ export class Verser extends TypedEmitter<Events> {
             this.emit("connect", connection);
 
             socket.once("close", () => {
+                this.emit("close", connection);
                 this.connections.delete(connection);
                 this.logger.debug("Connect request closed, total connections:", this.connections.size);
             });
