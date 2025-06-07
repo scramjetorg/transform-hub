@@ -153,7 +153,10 @@ export class VerserClient extends TypedEmitter<Events> {
                 .on("error", (err: Error) => {
                     this.emit("error", err);
                 })
-                .on("handshake", () => resolve());
+                .once("handshake", () => {
+                    this.logger.info("BPMux handshake complete");
+                    resolve()
+                });
 
             this._verserAgent = new HttpAgent() as HttpAgent & {
                 createConnection: typeof createConnection

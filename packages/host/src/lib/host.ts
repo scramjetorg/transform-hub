@@ -631,7 +631,10 @@ export class Host implements IHost, IComponent {
     }
 
     async performStartup() {
-        if (!this.config.startupConfig) return;
+        if (!this.config.startupConfig) {
+            this.logger.info("No startup config provided, skipping startup sequences");
+            return;
+        }
 
         let _config;
 

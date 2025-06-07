@@ -17,7 +17,7 @@ type Events = {
  */
 export class Verser extends TypedEmitter<Events> {
     private server: Server;
-    private connections: VerserConnection[] = [];
+    private connections: Set<VerserConnection> = new Set<VerserConnection>();
     logger = new ObjLogger(this);
 
     constructor(server: Server) {
@@ -26,25 +26,38 @@ export class Verser extends TypedEmitter<Events> {
 
         this.server.on("connect", (req, socket: Socket) => {
             socket.setNoDelay(true);
-            this.logger.debug("New connection:", req.url);
+            const sthTags = req.headers["x-sth-tags"];
+            const managerId = req.headers["x-manager-id"];
+            const sthId = req.headers["x-sth-id"];
+            const orgId = req.headers["x-org-id"];
+
+
+            this.logger.info("New connection:", req.url, {
+                orgId,
+                managerId,
+                sthId,
+                sthTags
+            });
+
 
             const connection = new VerserConnection(req, socket);
 
-            this.connections.push(connection);
-            this.logger.debug("Total connections:", this.connections.length);
+            this.connections.add(connection);
+            this.logger.info("Total connections:", this.connections.size);
 
             this.emit("connect", connection);
 
             socket.once("close", () => {
-                this.logger.debug("Connect request closed");
+                this.connections.delete(connection);
+                this.logger.debug("Connect request closed, total connections:", this.connections.size);
             });
         });
     }
 
     async disconnect() {
-        this.connections.map(connection => connection.close());
+        [...this.connections].map(connection => connection.close());
 
-        this.connections = [];
+        this.connections = new Set<VerserConnection>();
     }
 
     async stop() {
