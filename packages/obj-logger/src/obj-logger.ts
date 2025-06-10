@@ -133,7 +133,7 @@ export class ObjLogger implements IObjectLogger {
      * @param {LogEntry} baseLog Default log object.
      * @param {LogLevel} logLevel Log level.
      */
-    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "TRACE") {
+    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "INFO", keep: number = 10_000) {
         this.name = getName(reference);
 
         this.baseLog = baseLog;
