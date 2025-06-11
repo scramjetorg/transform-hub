@@ -3,6 +3,7 @@ import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { LogLevelStrings } from "@scramjet/utility";
 import { getName } from "./utils/get-name";
 import { JSONParserStream, JSONStringifierStream } from "./utils/streams";
+import { StringStream } from "scramjet";
 
 type ObjLogPipeOptions = {
     stringified?: boolean;
@@ -43,37 +44,38 @@ export class ObjLogger implements IObjectLogger {
     /**
      * @type {PassThrough} Stream used to write logs.
      */
-    outputLogStream = new PassThrough({ objectMode: true });
+    readonly outputLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Input log stream in object mode.
      */
-    inputLogStream = new PassThrough({ objectMode: true }).resume();
+    readonly inputLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: true }).resume();
+    readonly inputStringifiedLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Output stream in object mode.
      */
-    output = new PassThrough({ objectMode: true }).resume();
+    readonly output = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Name used to indicate the source of the log.
      */
-    name: string;
+    readonly name: string;
 
     /**
      * Default log object.
      */
-    baseLog: LogEntry;
+    readonly baseLog: LogEntry;
 
     /**
      * Log level.
      */
     private _logLevel: LogLevel = "TRACE";
+    readonly targets: Set<IObjectLogger> = new Set();
 
     public get logLevel(): LogLevel {
         return this._logLevel;
@@ -120,7 +122,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Other logger sources
      */
-    sources: Set<Readable | IObjectLogger> = new Set();
+    private sources: Set<Readable | IObjectLogger> = new Set();
 
     /**
      * Logging levels hierarchy.
@@ -258,7 +260,11 @@ export class ObjLogger implements IObjectLogger {
         if (this.sources.has(source)) return;
 
         this.sources.add(source);
-        source.on("data", (entry) => this.inputStringifiedLogStream.write(entry));
+        StringStream.from(source)
+            .lines()
+            .on("data", (line: string) => {
+                this.inputStringifiedLogStream.write(`${line}\n`);
+            })
     }
 
     /**
@@ -276,6 +282,8 @@ export class ObjLogger implements IObjectLogger {
         if (target instanceof ObjLogger) {
             this.baseLog.id ||= target.baseLog.id;
             this.logLevel = target.logLevel;
+
+            this.targets.add(target);
 
             target.addObjectLoggerSource(this);
             return target;

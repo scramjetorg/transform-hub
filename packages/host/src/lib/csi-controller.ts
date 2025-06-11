@@ -47,7 +47,7 @@ import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { BPMux } from "@scramjet/bpmux";
-import { CSIEvents } from "./types";
+import { CSIEvents, ICSI } from "./types";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -62,7 +62,7 @@ export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; e
  *
  * @todo write interface for CSIController and CSIDispatcher
  */
-export class CSIController extends TypedEmitter<CSIEvents> {
+export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     id: string;
     private sharedLocalStorage: Record<string, string | null> = {};
     private localStorageAdapter: IStorageAdapter;
@@ -248,7 +248,7 @@ export class CSIController extends TypedEmitter<CSIEvents> {
     }
 
     async start(): Promise<void> {
-        const i = new Promise<void>((res, rej) => {
+        const initialized = new Promise<void>((res, rej) => {
             this.initResolver = { res, rej };
             this.startInstance();
         });
@@ -256,7 +256,7 @@ export class CSIController extends TypedEmitter<CSIEvents> {
         this.sharedLocalStorage = await this.localStorageAdapter.getAllItems();
         await this.sendFullStorageState(this.id, this.sharedLocalStorage);
 
-        i.then(() => this.main()).catch(async (e) => {
+        initialized.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
 
             this.status ||= InstanceStatus.ERRORED;
@@ -273,12 +273,14 @@ export class CSIController extends TypedEmitter<CSIEvents> {
             this.emit("end", e.exitcode);
         });
 
-        return i;
+        return initialized;
     }
 
     async main() {
         this.status = InstanceStatus.RUNNING;
         this.logger.trace("Main. Current status:", this.status);
+
+        this.logger.addSerializedLoggerSource(this.getLogStream());
 
         let code = -1;
 
@@ -701,9 +703,8 @@ export class CSIController extends TypedEmitter<CSIEvents> {
 
     private createInstanceAPIRouter() {
         const router = this.router = getRouter();
-        const mux = this.logMux = new PassThrough();
 
-        this.api.attach(router, this.communicationHandler!, mux);
+        this.api.attach(router, this.communicationHandler!);
     }
 
     public async emitEvent({ source, eventName, message }: EventMessageData) {

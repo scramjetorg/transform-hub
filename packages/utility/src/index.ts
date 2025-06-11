@@ -11,6 +11,7 @@ export * from "./process-env";
 export * from "./read-json-file";
 export * from "./read-streamed-json";
 export * from "./stream-to-string";
+export * from "./stream-graph";
 export * from "./typed-emitter";
 export * from "./typeguards";
 export * from "./validators";

@@ -3,12 +3,12 @@ import { APIRoute, EventMessageData, ICommunicationHandler, IDuplexStream, IObje
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ReasonPhrases } from "http-status-codes";
 import { development } from "@scramjet/sth-config";
-import { PassThrough } from "stream";
 import { ICSI } from "../types";
 import { isSetSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { IncomingHttpHeaders, ServerResponse } from "http";
 import { DataStream } from "scramjet";
 import EventEmitter from "events";
+import { ReReadable } from "rereadable-stream";
 
 export class InstanceAPI {
     constructor(
@@ -18,7 +18,7 @@ export class InstanceAPI {
     ) {
     }
 
-    attach(router: APIRoute, communicationHandler: ICommunicationHandler, mux: PassThrough) {
+    attach(router: APIRoute, communicationHandler: ICommunicationHandler) {
         router.get("/", () => this.csi.getInfo());
 
         /**
@@ -34,26 +34,20 @@ export class InstanceAPI {
 
         const logStream = this.csi.getLogStream();
 
-        logStream.pipe(mux, { end: false });
-        logStream.on("end", () => logStream.unpipe(mux));
+        this.logger.addSerializedLoggerSource(logStream);
 
-        this.logger.pipe(mux);
+        const logHistory = new ReReadable({ objectMode: true, length: 10_000 });
+        logHistory.tail(0).resume(); // resume stream
 
-        mux.unpipe = (...args) => {
-            logStream.unpipe(mux);
-            this.logger.unpipe(mux);
+        this.logger.pipe(logHistory, { stringified: true });
 
-            return PassThrough.prototype.unpipe.call(mux, ...args);
-        };
-
-        router.upstream("/log", mux);
+        router.upstream("/log", () => logHistory.rewind());
 
         if (development()) {
             router.upstream("/monitoring", this.csi.getMonitoringStream());
         }
 
         router.upstream("/output", this.csi.getOutputStream(), { encoding: this.csi.outputEncoding });
-
         router.downstream("/input", this.handleInput.bind(this), { checkContentType: false, end: true, encoding: "binary" });
 
         // monitoring data
