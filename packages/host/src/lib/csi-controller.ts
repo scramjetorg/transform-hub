@@ -280,8 +280,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.status = InstanceStatus.RUNNING;
         this.logger.trace("Main. Current status:", this.status);
 
-        this.logger.addSerializedLoggerSource(this.getLogStream());
-
         let code = -1;
 
         const interval = setInterval(() => this.emit("hourChime"), 3600e3);
@@ -444,7 +442,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
-            this.logger.addSerializedLoggerSource(streams[CC.LOG]);
         }
 
         this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {

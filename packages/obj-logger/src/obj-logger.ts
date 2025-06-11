@@ -250,14 +250,18 @@ export class ObjLogger implements IObjectLogger {
     }
 
     addObjectLoggerSource(source: IObjectLogger): void {
-        if (this.sources.has(source)) return;
+        if (this.sources.has(source)) {
+            return;
+        }
 
         this.sources.add(source);
         source.outputLogStream.on("data", (entry) => this.inputLogStream.write(entry));
     }
 
     addSerializedLoggerSource(source: Readable): void {
-        if (this.sources.has(source)) return;
+        if (this.sources.has(source)) {
+            return;
+        }
 
         this.sources.add(source);
         StringStream.from(source)

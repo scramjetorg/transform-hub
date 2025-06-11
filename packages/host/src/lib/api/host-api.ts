@@ -14,6 +14,7 @@ import { AuditedRequest } from "../auditor";
 
 export class HostAPIHandler {
     logger: ObjLogger;
+    topicRouter?: TopicRouter;
 
     constructor(
         private api: APIExpose,
@@ -90,9 +91,7 @@ export class HostAPIHandler {
         this.api.get(`${this.apiBase}/config`, () => host.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => host.getStatus());
 
-        const topicLogger = new TopicRouter(this.logger, this.api, this.apiBase, host.serviceDiscovery).logger;
-
-        topicLogger.pipe(this.logger);
+        this.topicRouter = new TopicRouter(this.logger, this.api, this.apiBase, host.serviceDiscovery);
 
         this.api.upstream(`${this.apiBase}/log`, () => host.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
