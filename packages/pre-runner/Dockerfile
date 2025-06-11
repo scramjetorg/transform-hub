@@ -1,4 +1,4 @@
-FROM node:lts-bullseye-slim
+FROM node:22-bookworm-slim
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub

@@ -1,4 +1,4 @@
-FROM node:22-bullseye-slim AS target
+FROM node:22-bookworm-slim AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub \
@@ -14,7 +14,7 @@ RUN apt-get update \
     && apt-get install -y gosu tini --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-FROM node:22-bullseye-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app/
 
