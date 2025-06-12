@@ -681,6 +681,7 @@ export class Host implements IHost, IComponent {
                     logLevel: this.logger.logLevel
                 });
 
+                this.logger.info("Starting sequence", { name: sequence.config.name, version: sequence.config.version, sequenceId: sequence.id, instanceId: sequenceConfig.instanceId })
                 this.logger.debug("Starting sequence based on config", sequenceConfig);
             })
             .run();
