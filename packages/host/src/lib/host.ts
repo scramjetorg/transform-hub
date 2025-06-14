@@ -684,6 +684,10 @@ export class Host implements IHost, IComponent {
                 this.logger.info("Starting sequence", { name: sequence.config.name, version: sequence.config.version, sequenceId: sequence.id, instanceId: sequenceConfig.instanceId })
                 this.logger.debug("Starting sequence based on config", sequenceConfig);
             })
+            .catch((err: any) => {
+                this.logger.error("Error starting startup sequences", err);
+                throw new HostError("SEQUENCE_STARTUP_ERROR", "Error starting startup sequences");
+            })
             .run();
     }
 

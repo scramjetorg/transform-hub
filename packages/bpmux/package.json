@@ -38,6 +38,7 @@
     "@scramjet/frame-stream": "^5.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.0",
     "@scramjet/utility": "^1.1.0"
   }
 }
