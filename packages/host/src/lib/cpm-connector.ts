@@ -276,6 +276,10 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.info(`Hub ${this.config.id} connected to ${this.cpmId}`);
 
         StringStream.from(duplex.input as Readable)
+            .on("error", (e: Error) => {
+                this.logger.error("Communication stream error", e.message);
+                this.reconnect();
+            })
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
                 this.logger.trace("Received message", message);
