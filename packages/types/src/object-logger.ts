@@ -1,5 +1,3 @@
-import { Readable, Writable } from "stream";
-
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
 
 /**
@@ -46,14 +44,14 @@ export type LogEntry = Partial<{
 export type IObjectLoggerOptions = { end?: boolean; stringified?: boolean };
 
 export interface IObjectLogger {
-    inputLogStream: Writable;
-    inputStringifiedLogStream: Writable;
-    outputLogStream: Readable;
-    output: Readable;
+    inputLogStream: NodeJS.WritableStream;
+    inputStringifiedLogStream: NodeJS.WritableStream;
+    outputLogStream: NodeJS.ReadableStream;
+    output: NodeJS.ReadableStream;
 
     logLevel: LogLevel;
 
-    addOutput(output: Writable): void;
+    addOutput(output: NodeJS.WritableStream): void;
 
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
     end(): void;
@@ -66,10 +64,10 @@ export interface IObjectLogger {
     warn(entry: LogEntry | string, ...optionalParams: any[]): void;
 
     addObjectLoggerSource(source: IObjectLogger): void;
-    addSerializedLoggerSource(source: Readable): void;
+    addSerializedLoggerSource(source: NodeJS.ReadableStream): void;
 
-    pipe(target: Writable | IObjectLogger, options?: IObjectLoggerOptions): void;
-    unpipe(target?: Writable | IObjectLogger): void;
+    pipe(target: NodeJS.WritableStream | IObjectLogger, options?: IObjectLoggerOptions): void;
+    unpipe(target?: NodeJS.WritableStream | IObjectLogger): void;
 
     updateBaseLog(entry: LogEntry): void;
 }

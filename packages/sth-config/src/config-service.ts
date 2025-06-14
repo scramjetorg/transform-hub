@@ -1,7 +1,6 @@
 import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
 
 import { merge } from "@scramjet/utility";
-import { updateAdaptersConfig } from "@scramjet/adapters";
 import { defaultConfig as _defaultConfig } from "./default-config";
 
 const imageConfig = require("./image-config.json");
@@ -42,7 +41,14 @@ export class ConfigService {
     }
 
     async selectRuntimeAdapter() {
-        await updateAdaptersConfig(this.config.runtimeAdapter, this.config);
+        let updateAdaptersConfig: ((runtimeAdapter: string, config: STHConfiguration) => Awaited<void>) | undefined = undefined;
+
+        try {
+            updateAdaptersConfig = (await import("@scramjet/adapters")).updateAdaptersConfig;
+        } catch (error) {
+            // ignore
+        }
+        updateAdaptersConfig && await updateAdaptersConfig(this.config.runtimeAdapter, this.config);
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
