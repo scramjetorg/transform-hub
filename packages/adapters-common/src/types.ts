@@ -1,5 +1,4 @@
-import { InstanceId, SequenceInfo } from "@scramjet/types";
-import { StartSequencePayload } from "@scramjet/types/src/rest-api-sth";
+import { InstanceId, SequenceInfo, STHRestAPI } from "@scramjet/types";
 
 export type InstanceAdapterOptions = {
     exitDelay: number;
@@ -13,7 +12,7 @@ export type RunnerEnvConfig = {
     instancesServerHost: string;
     instanceId: InstanceId;
     sequenceInfo: SequenceInfo
-    payload: StartSequencePayload
+    payload: STHRestAPI.StartSequencePayload
 }
 
 export type RunnerEnvironmentVariables = Partial<{

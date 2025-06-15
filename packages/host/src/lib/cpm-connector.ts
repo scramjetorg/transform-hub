@@ -23,7 +23,7 @@ import { TypedEmitter, generateSTHKey, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
-import { VerserClientConnection } from "@scramjet/verser/src/types";
+import { VerserClientConnection } from "@scramjet/verser";
 import { networkInterfaces } from "os";
 import { HostError } from "@scramjet/model";
 

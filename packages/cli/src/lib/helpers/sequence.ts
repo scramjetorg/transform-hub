@@ -1,5 +1,5 @@
 
-import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
+import { STHRestAPI } from "@scramjet/types";
 import { AppConfig, InstanceLimits } from "@scramjet/types";
 import { constants, createReadStream, createWriteStream, PathLike } from "fs";
 import { readdir, access, lstat } from "fs/promises";
@@ -215,7 +215,7 @@ export const sequenceDelete = async (
     return deleteSequenceResponse;
 };
 
-export const waitForInstanceKills = (seq: GetSequenceResponse, timeout: number) => {
+export const waitForInstanceKills = (seq: STHRestAPI.GetSequenceResponse, timeout: number) => {
     return promiseTimeout((async () => {
         let l;
 

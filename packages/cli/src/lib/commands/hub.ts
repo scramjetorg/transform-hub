@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { PostDisconnectPayload } from "@scramjet/types/src/rest-api-manager";
+import { MRestAPI } from "@scramjet/types";
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";
@@ -73,7 +73,7 @@ export const hub: CommandDefinition = (program) => {
             .option("--all", "Disconnects all self-hosted Hubs connected to Space", false)
             .action(async (spaceName: string, options: { id: string, all: boolean }) => {
                 const managerClient = mwClient.getManagerClient(spaceName);
-                let opts = { } as PostDisconnectPayload;
+                let opts = { } as MRestAPI.PostDisconnectPayload;
 
                 if (typeof options.id === "string") {
                     opts = { id: options.id };
