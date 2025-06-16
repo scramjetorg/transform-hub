@@ -35,7 +35,7 @@ type Events = {
     connect: () => void,
     "log_connect": (logStream: NodeJS.WritableStream) => void;
     id: (id: string) => void;
-    disconnect: (statusCode: number) => void;
+    disconnect: (statusCode: number, given_up: boolean) => void;
 }
 
 /**
@@ -458,10 +458,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {void}
      */
     async reconnect(): Promise<void> {
-        if (this.isReconnecting || this.isAbandoned) {
-            this.emit("disconnect", 4002);
-            return;
-        }
 
         this.connectionAttempts++;
 
@@ -470,6 +466,13 @@ export class CPMConnector extends TypedEmitter<Events> {
         if (~this.config.maxReconnections && this.connectionAttempts > this.config.maxReconnections) {
             shouldReconnect = false;
             this.logger.warn("Maximum reconnection attempts reached. Giving up.");
+            this.emit("disconnect", 4002, true);
+            return;
+        }
+
+        if (this.isReconnecting || this.isAbandoned) {
+            this.emit("disconnect", 4002, false);
+            return;
         }
 
         if (shouldReconnect) {
@@ -485,7 +488,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         } else {
             // actual 'connectionStatusCode' is logged before in 'handleConnectionClose'
             // 4001 as temporary code?
-            this.emit("disconnect", 4001);
+            this.emit("disconnect", 4001, false);
         }
     }
 

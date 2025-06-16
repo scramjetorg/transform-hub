@@ -560,13 +560,15 @@ export class Host implements IHost, IComponent {
             this.serviceDiscovery.setConnector(this.cpmConnector);
 
             if (this.config.strictPlatformConnection) {
-                this.cpmConnector.on("disconnect", (code) => {
-                    this.logger.error(
-                        `Platform connection lost [code: ${code}].
-                        Exiting due to 'strictPlatformConnection' flag set.`
-                    );
+                this.cpmConnector.on("disconnect", (code, given_up) => {
+                    if (given_up) {
+                        this.logger.error(
+                            `Platform connection lost [code: ${code}].
+                            Exiting due to 'strictPlatformConnection' flag set.`
+                        );
 
-                    this.performStop(constants.signals.SIGHUP);
+                        this.performStop(constants.signals.SIGHUP);
+                    }
                 });
 
                 await this.connectToCPM();
