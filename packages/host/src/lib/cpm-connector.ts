@@ -13,7 +13,8 @@ import {
     STHIDMessageData,
     IObjectLogger,
     STHTopicEventData,
-    AddSTHTopicEventData
+    AddSTHTopicEventData,
+    SpaceEventMessageData
 } from "@scramjet/types";
 
 import { StringStream } from "scramjet";
@@ -33,10 +34,16 @@ type STHInformation = {
 
 type Events = {
     connect: () => void,
-    "log_connect": (logStream: NodeJS.WritableStream) => void;
     id: (id: string) => void;
+    event: (event: SpaceEventMessageData) => void;
     disconnect: (statusCode: number, given_up: boolean) => void;
 }
+
+const dropMessageCodes = [
+    CPMMessageCode.KEY_REVOKED,
+    CPMMessageCode.LIMIT_EXCEEDED,
+    CPMMessageCode.ID_DROP
+];
 
 /**
  * Provides communication with Manager.
@@ -277,6 +284,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         StringStream.from(duplex.input as Readable)
             .on("error", (e: Error) => {
+                if (this.isAbandoned) return;
                 this.logger.error("Communication stream error", e.message);
                 this.reconnect();
             })
@@ -302,12 +310,6 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 
-                const dropMessageCodes = [
-                    CPMMessageCode.KEY_REVOKED,
-                    CPMMessageCode.LIMIT_EXCEEDED,
-                    CPMMessageCode.ID_DROP
-                ];
-
                 if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
                     this.isAbandoned = true;
@@ -317,10 +319,18 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.logger.info("CPM is asking to reconnect");
                 }
 
+                if (messageCode === CPMMessageCode.EVENT) {
+                    const event = message[1] as SpaceEventMessageData;
+
+                    await this.receiveEvent(event);
+                }
+
                 return message;
-            }).catch((e: any) => {
+            })
+            .catch((e: any) => {
                 this.logger.warn("communicationChannel error", e.message);
-            });
+            })
+            .run();
 
         this.communicationStream = new StringStream().JSONStringify();
         this.communicationStream.pipe(duplex.output);
@@ -527,6 +537,19 @@ export class CPMConnector extends TypedEmitter<Events> {
         }
 
         return ifs;
+    }
+
+    async receiveEvent(event: SpaceEventMessageData): Promise<void> {
+        this.logger.debug("Received event", event.eventName);
+
+        this.emit("event", event);
+    }
+
+    async sendEvent(event: SpaceEventMessageData): Promise<void> {
+        await this.communicationStream?.whenWrote(
+            [CPMMessageCode.EVENT, event]
+        );
+        this.logger.debug("Sent event", event);
     }
 
     async sendLoad() {

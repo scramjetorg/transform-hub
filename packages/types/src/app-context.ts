@@ -163,6 +163,8 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     emit(ev: string, message?: any): this;
     emit(ev: "error", message: AppError): this;
 
+    emitToSpace(ev: string, message?: any): this;
+
     /**
      * Provides automated definition as understood by the system
      */

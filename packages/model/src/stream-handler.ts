@@ -31,6 +31,7 @@ export type ConfiguredMessageHandler<T extends RunnerMessageCode | CPMMessageCod
     blocking: boolean
 };
 
+
 type MonitoringMessageHandlerList = {
     [RunnerMessageCode.ACKNOWLEDGE]: ConfiguredMessageHandler<RunnerMessageCode.ACKNOWLEDGE>[];
     [RunnerMessageCode.DESCRIBE_SEQUENCE]: ConfiguredMessageHandler<RunnerMessageCode.DESCRIBE_SEQUENCE>[];
@@ -43,13 +44,14 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
     [RunnerMessageCode.SEQUENCE_COMPLETED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_COMPLETED>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
+    [CPMMessageCode.EVENT]: ConfiguredMessageHandler<CPMMessageCode.EVENT>[];
     [CPMMessageCode.LOAD]: ConfiguredMessageHandler<CPMMessageCode.LOAD>[];
     [CPMMessageCode.NETWORK_INFO]: ConfiguredMessageHandler<CPMMessageCode.NETWORK_INFO>[];
     [RunnerMessageCode.STORAGE]: ConfiguredMessageHandler<RunnerMessageCode.STORAGE>[];
     [RunnerMessageCode.STORAGE_UPDATE]: ConfiguredMessageHandler<RunnerMessageCode.STORAGE_UPDATE>[];
 };
 
-type ControlMessageHandlerList = {
+type ControlMessageHandlerList<T extends ControlMessageCode = ControlMessageCode> = Record<T, ConfiguredMessageHandler<T>[]> & {
     [RunnerMessageCode.KILL]: ConfiguredMessageHandler<RunnerMessageCode.KILL>[];
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
     [RunnerMessageCode.MONITORING_REPLY]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_REPLY>[];
@@ -58,13 +60,13 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.SET]: ConfiguredMessageHandler<RunnerMessageCode.SET>[];
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
+    [CPMMessageCode.EVENT]: ConfiguredMessageHandler<CPMMessageCode.EVENT>[];
     [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
     [CPMMessageCode.KEY_REVOKED]: ConfiguredMessageHandler<CPMMessageCode.KEY_REVOKED>[];
     [CPMMessageCode.LIMIT_EXCEEDED]: ConfiguredMessageHandler<CPMMessageCode.LIMIT_EXCEEDED>[];
     [CPMMessageCode.ID_DROP]: ConfiguredMessageHandler<CPMMessageCode.ID_DROP>[];
     [RunnerMessageCode.STORAGE] : ConfiguredMessageHandler<RunnerMessageCode.STORAGE>[];
     [RunnerMessageCode.STORAGE_UPDATE] : ConfiguredMessageHandler<RunnerMessageCode.STORAGE_UPDATE>[];
-
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -82,8 +84,41 @@ export class CommunicationHandler implements ICommunicationHandler {
     // private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
     // private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
 
-    private monitoringHandlerHash: MonitoringMessageHandlerList;
-    private controlHandlerHash: ControlMessageHandlerList;
+    private monitoringHandlerHash: MonitoringMessageHandlerList = {
+        [RunnerMessageCode.ACKNOWLEDGE]: [],
+        [RunnerMessageCode.DESCRIBE_SEQUENCE]: [],
+        [RunnerMessageCode.STATUS]: [],
+        [RunnerMessageCode.ALIVE]: [],
+        [RunnerMessageCode.ERROR]: [],
+        [RunnerMessageCode.MONITORING]: [],
+        [RunnerMessageCode.EVENT]: [],
+        [RunnerMessageCode.PING]: [],
+        [RunnerMessageCode.PANG]: [],
+        [RunnerMessageCode.SEQUENCE_STOPPED]: [],
+        [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
+        [CPMMessageCode.EVENT]: [],
+        [CPMMessageCode.LOAD]: [],
+        [CPMMessageCode.NETWORK_INFO]: [],
+        [RunnerMessageCode.STORAGE]: [],
+        [RunnerMessageCode.STORAGE_UPDATE]: [],
+    };
+    private controlHandlerHash: ControlMessageHandlerList = {
+        [RunnerMessageCode.KILL]: [],
+        [RunnerMessageCode.MONITORING_RATE]: [],
+        [RunnerMessageCode.MONITORING_REPLY]: [],
+        [RunnerMessageCode.STOP]: [],
+        [RunnerMessageCode.EVENT]: [],
+        [RunnerMessageCode.PONG]: [],
+        [RunnerMessageCode.SET]: [],
+        [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
+        [CPMMessageCode.EVENT]: [],
+        [CPMMessageCode.STH_ID]: [],
+        [CPMMessageCode.KEY_REVOKED]: [],
+        [CPMMessageCode.LIMIT_EXCEEDED]: [],
+        [CPMMessageCode.ID_DROP]: [],
+        [RunnerMessageCode.STORAGE]: [],
+        [RunnerMessageCode.STORAGE_UPDATE]: [],
+    };
 
     constructor() {
         this.logger = new ObjLogger(this);
@@ -91,39 +126,6 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlPassThrough = new DataStream();
         this.monitoringPassThrough = new DataStream();
         this.loggerPassThrough = new PassThrough();
-        this.controlHandlerHash = {
-            [RunnerMessageCode.KILL]: [],
-            [RunnerMessageCode.MONITORING_RATE]: [],
-            [RunnerMessageCode.MONITORING_REPLY]: [],
-            [RunnerMessageCode.STOP]: [],
-            [RunnerMessageCode.EVENT]: [],
-            [RunnerMessageCode.PONG]: [],
-            [RunnerMessageCode.SET]: [],
-            [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
-            [CPMMessageCode.STH_ID]: [],
-            [CPMMessageCode.KEY_REVOKED]: [],
-            [CPMMessageCode.LIMIT_EXCEEDED]: [],
-            [CPMMessageCode.ID_DROP]: [],
-            [RunnerMessageCode.STORAGE]: [],
-            [RunnerMessageCode.STORAGE_UPDATE]: [],
-        };
-        this.monitoringHandlerHash = {
-            [RunnerMessageCode.ACKNOWLEDGE]: [],
-            [RunnerMessageCode.DESCRIBE_SEQUENCE]: [],
-            [RunnerMessageCode.STATUS]: [],
-            [RunnerMessageCode.ALIVE]: [],
-            [RunnerMessageCode.ERROR]: [],
-            [RunnerMessageCode.MONITORING]: [],
-            [RunnerMessageCode.EVENT]: [],
-            [RunnerMessageCode.PING]: [],
-            [RunnerMessageCode.PANG]: [],
-            [RunnerMessageCode.SEQUENCE_STOPPED]: [],
-            [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
-            [CPMMessageCode.LOAD]: [],
-            [CPMMessageCode.NETWORK_INFO]: [],
-            [RunnerMessageCode.STORAGE]: [],
-            [RunnerMessageCode.STORAGE_UPDATE]: [],
-        };
 
         this.logger.trace("CommunicationHandler created");
     }

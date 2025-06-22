@@ -152,8 +152,14 @@ implements AppContext<AppConfigType, State> {
     }
 
     emit(eventName: string, message?: any) {
-        this.runner.sendEvent({ eventName, message });
+        this.runner.sendEvent({ eventName, message, scope: "host" });
         // this.emitter.emit(eventName, message);
+        return this;
+    }
+
+    emitToSpace(ev: string, message?: any): this {
+        this.runner.sendEvent({ eventName: ev, message, scope: "space" });
+
         return this;
     }
 }

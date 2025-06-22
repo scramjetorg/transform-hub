@@ -10,6 +10,7 @@ export enum CPMMessageCode {
     SEQUENCE = 7006,
 
     TOPIC = 7007,
+    EVENT = 7008,
 
     CONFIRM_MSG = 8000,
 

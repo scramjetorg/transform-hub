@@ -2,7 +2,7 @@ export { AcknowledgeMessage, AcknowledgeMessageData } from "./acknowledge";
 export { FunctionDefinition, DescribeSequenceMessage, DescribeSequenceMessageData } from "./describe-sequence";
 export { StatusMessageData, StatusMessage } from "./status";
 export { ErrorMessage, ErrorMessageData } from "./error";
-export { EventMessage, EventMessageData, StorageMessage, StorageMessageData, StorageUpdateMessage, StorageUpdateMessageData } from "./event";
+export { SpaceEventMessageData, SpaceEventMessage, EventMessage, EventMessageData, StorageMessage, StorageMessageData, StorageUpdateMessage, StorageUpdateMessageData } from "./event";
 export { PangMessageData, PingMessageData, HandshakeMessage } from "./handshake";
 export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./handshake-acknowledge";
 export { SetMessage, SetMessageData } from "./set";

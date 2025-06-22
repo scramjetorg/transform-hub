@@ -10,6 +10,11 @@ export type ManagerConfiguration = {
     logColors: boolean;
 
     /**
+     * Log level for the manager.
+     */
+    logLevel: "debug" | "info" | "warn" | "error" | "fatal";
+
+    /**
      * MultiManager api base.
      */
     apiBase: string;

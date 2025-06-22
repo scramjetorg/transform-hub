@@ -10,7 +10,8 @@ import {
     MessageDataType,
     DownstreamStreamsConfig,
     APIRoute,
-    InstanceId
+    InstanceId,
+    SequenceInfo
 } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 
@@ -52,6 +53,8 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
 
     readonly isRunning: boolean;
     readonly heartBeatPromise?: Promise<InstanceId>;
+
+    readonly sequence: SequenceInfo;
 
     /** GET “/” → instance info */
     getInfo(): STHRestAPI.GetInstanceResponse;

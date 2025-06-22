@@ -28,7 +28,8 @@ import {
     StartInstanceReturnType,
     StartSequenceDTO,
     IStorageAdapter,
-    InstanceId
+    InstanceId,
+    SpaceEventMessageData
 } from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
@@ -346,7 +347,7 @@ export class Host implements IHost, IComponent {
     attachDispatcherEvents() {
         this.csiDispatcher
             .on("event", async ({ event, id }) => {
-                await this.eventBus({ source: id, ...event });
+                await this.eventBus({ ...event, source: id });
             })
             .on("end", async (eventData: DispatcherInstanceEndEventData) => {
                 await this.handleDispatcherEndEvent(eventData);
@@ -555,6 +556,16 @@ export class Host implements IHost, IComponent {
             this.cpmConnector.on("id", (id) => {
                 this.config.host.id = id;
                 this.logger.updateBaseLog({ id });
+            });
+
+            this.cpmConnector.on("event", async (event: SpaceEventMessageData) => {
+                this.logger.debug("Event received from CPM", event);
+
+                if (typeof event.source === "string") {
+                    await this.eventBus(event);
+                } else {
+                    this.logger.warn("Event received from unknown source", event);
+                }
             });
 
             this.serviceDiscovery.setConnector(this.cpmConnector);
@@ -1001,16 +1012,44 @@ export class Host implements IHost, IComponent {
         });
     }
 
-    async eventBus(event: EventMessageData) {
+    async eventBus(event: EventMessageData & { source: InstanceId, sourceHost?: string }): Promise<void> {
         this.logger.debug("Got event", event);
 
-        // Send the event to all instances except the source of the event.
-        await Promise.all(
-            this.instancesStore
-                .map((inst: ICSI) => {
-                    return event.source !== inst.id ? inst.emitEvent(event) : true;
-                })
-        );
+        const scope = event.scope || "host";
+        const incoming = event.sourceHost;
+
+        switch (scope) {
+            case "instance":
+                return;
+            case "sequence":
+                const sequence = this.instancesStore.get(event.source);
+                if (!sequence) {
+                    this.logger.warn("Event for unknown sequence", event);
+                    return;
+                }
+
+                break;
+            default:
+                if (!incoming && scope === "space") {
+                    if (!this.cpmConnector?.connected) {
+                        this.logger.warn("Event for space, but not connected to CPM", event);
+                        return;
+                    }
+                    this.cpmConnector.sendEvent({
+                        ...event,
+                        scope,
+                        sourceHost: this.config.host.id!,
+                    });
+                }
+                // Send the event to all instances except the source of the event.
+                await Promise.all(
+                    this.instancesStore
+                        .map((inst: ICSI) => {
+                            return event.source !== inst.id ? inst.emitEvent(event) : true;
+                        })
+                );
+                break;
+        }
     }
 
     /**

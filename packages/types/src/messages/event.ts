@@ -1,15 +1,25 @@
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
+import { InstanceId } from "../instance";
 
 export type EventMessageData = {
 
     /** Name of the event. */
     eventName: string;
 
-    source?: string;
+    source?: InstanceId;
 
-    /** TODO update Informs if keepAlive can be called to prolong the running of the Sequence. */
+    scope?: "space" | "host" | "sequence" | "instance";
+
     message: any;
 }
+
+export type SpaceEventMessageData = EventMessageData & {
+    scope: "space";
+    source: InstanceId;
+    sourceHost?: string;
+}
+
+export type SpaceEventMessage = { msgCode: CPMMessageCode.EVENT } & SpaceEventMessageData;
 
 /**
  * TODO update
