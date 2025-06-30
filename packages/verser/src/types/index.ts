@@ -38,7 +38,9 @@ export type VerserClientOptions = {
      */
     server?: Server;
 
-    https?: false | true | { ca: (string | Buffer)[] }
+    https?: false | true | { ca: (string | Buffer)[] };
+
+    timeout?: number;
 };
 
 /**

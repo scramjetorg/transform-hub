@@ -110,8 +110,15 @@ export class VerserClient extends TypedEmitter<Events> {
                 path: pathname,
                 href,
                 port,
+                timeout: this.opts.timeout || 5000, // default timeout 5 seconds
                 protocol: this.opts.https ? "https:" : "http:",
                 ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
+            });
+
+            connectRequest.on("timeout", () => {
+                this.logger.error("Connect request timed out");
+                connectRequest.destroy();
+                reject(new Error("Connection timeout"));
             });
 
             connectRequest.on("error", (err) => {
