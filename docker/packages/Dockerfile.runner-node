@@ -1,0 +1,57 @@
+ARG FROM_BUILDER_VERSION=latest
+
+FROM node:22-bookworm-slim AS target
+
+ENV PACKAGE_DIR=/package \
+    HUB_DIR=/opt/transform-hub \
+    RUNNER_USER=runner \
+    RUNNER_GROUP=runner
+
+RUN groupadd -g 1200 ${RUNNER_GROUP} \
+    && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/false ${RUNNER_USER} \
+    && mkdir -p ${PACKAGE_DIR} \
+    && chown ${RUNNER_USER}:${RUNNER_GROUP} ${PACKAGE_DIR}
+
+RUN apt-get update \
+    && apt-get install -y gosu tini --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM sth-builder:${FROM_BUILDER_VERSION} AS builder
+
+FROM node:22-bookworm-slim AS builder-local
+
+WORKDIR /app/
+
+COPY --from=builder /build/dist/bpmux ./bpmux
+COPY --from=builder /build/dist/frame-stream ./frame-stream
+COPY --from=builder /build/dist/api-client ./api-client
+COPY --from=builder /build/dist/client-utils ./client-utils
+COPY --from=builder /build/dist/utility ./utility
+COPY --from=builder /build/dist/symbols ./symbols
+COPY --from=builder /build/dist/obj-logger ./obj-logger
+COPY --from=builder /build/dist/model ./model
+COPY --from=builder /build/dist/runner ./runner
+COPY --from=builder /build/dist/api-server ./api-server
+
+COPY --from=builder /build/dist/package.json ./package.json
+COPY --from=builder /build/dist/package-lock.json ./package-lock.json
+
+RUN npm install -ws --omit=dev
+
+FROM target
+
+COPY --from=builder-local /app ${HUB_DIR}
+
+WORKDIR ${HUB_DIR}/runner
+
+RUN chmod +x ./bin/start-runner.js
+
+COPY ./packages/runner/docker-entrypoint.sh /usr/local/bin/
+COPY ./packages/runner/unpack.sh /usr/local/bin/
+COPY ./packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
+
+RUN mkdir /pipes \
+    && chown ${RUNNER_USER}:${RUNNER_GROUP} /pipes
+
+ENTRYPOINT [ "/usr/bin/tini", "--", "docker-entrypoint.sh" ]
+CMD [ "start-runner" ]
