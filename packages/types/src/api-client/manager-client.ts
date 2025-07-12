@@ -21,7 +21,8 @@ export declare class ManagerClient {
     getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getConfig(): Promise<PublicSTHConfiguration>;
-    getSequences(sequenceId: string): Promise<MRestAPI.GetSequencesResponse>;
+    getAllSequences(): Promise<MRestAPI.GetSequencesResponse>;
+    getSequences(sequenceId?: string): Promise<MRestAPI.GetSequencesResponse>;
     getInstances(): Promise<MRestAPI.GetInstancesResponse>;
     getTopics(): Promise<MRestAPI.GetTopicsResponse>;
     getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse>
