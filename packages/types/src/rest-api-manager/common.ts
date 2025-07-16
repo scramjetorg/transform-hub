@@ -1,7 +1,7 @@
 export type ConnectedSTHInfoDetails = {
-    created?: Date;
-    lastConnected?: Date;
-    lastDisconnected?: Date;
+    created?: string;
+    lastConnected?: string;
+    lastDisconnected?: string;
 }
 
 export type ConnectedSTHInfo = {
