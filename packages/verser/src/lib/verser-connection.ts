@@ -198,7 +198,7 @@ export class VerserConnection {
                 this.logger.debug("Carrier disconnected", (clientRequest.socket as any as BPDuplex)._chan);
                 return;
             }
-            this.logger.error("Client request error", error.message);
+            this.logger.error("Client request error", { url: options.path, message: error.message});
         });
 
         return once(clientRequest, expectedEvent)

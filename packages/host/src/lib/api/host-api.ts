@@ -182,7 +182,7 @@ export class HostAPIHandler {
 
                 response.pipe(res);
             }).on("error", (error) => {
-                this.logger.warn("Error requesting CPM", error);
+                this.logger.warn("Error requesting CPM", req.method!, url, error);
                 res.destroy(error);
             });
 
