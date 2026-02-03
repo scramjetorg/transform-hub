@@ -12,6 +12,7 @@ type V1Pod = import("@kubernetes/client-node").V1Pod;
 
 const POD_STATUS_CHECK_INTERVAL_MS = 500;
 const POD_STATUS_FAIL_LIMIT = 10;
+const AUTH_RELOAD_COOLDOWN_MS = 5000;
 
 let k8s: typeof import("@kubernetes/client-node");
 
@@ -26,6 +27,7 @@ class KubernetesClientAdapter {
     private _configPath: string;
     private _config?: KubeConfig;
     private _namespace: string;
+    private _lastAuthReload: number = 0;
 
     constructor(configPath: string = "", namespace: string = "default") {
         this.logger = new ObjLogger(this.name);
@@ -58,6 +60,45 @@ class KubernetesClientAdapter {
         } catch (err: any) {
             this.logger.error("Unable to load kubeconfig", err);
         }
+    }
+
+    public reloadCredentials(): boolean {
+        const now = Date.now();
+
+        if (now - this._lastAuthReload < AUTH_RELOAD_COOLDOWN_MS) {
+            return false;
+        }
+
+        this._lastAuthReload = now;
+
+        const kc = new k8s.KubeConfig();
+
+        try {
+            if (this._configPath && this._configPath.length) {
+                kc.loadFromFile(this._configPath);
+            } else {
+                kc.loadFromCluster();
+            }
+
+            this._config = kc;
+            this.logger.info("Kubernetes credentials reloaded successfully");
+            return true;
+        } catch (err: any) {
+            this.logger.error("Failed to reload kubeconfig", err);
+            return false;
+        }
+    }
+
+    private isAuthError(err: any): boolean {
+        if (err instanceof k8s.ApiException) {
+            return err.code === 401;
+        }
+
+        if (err instanceof k8s.FetchError) {
+            return err.message?.includes("401") || err.message?.includes("Unauthorized");
+        }
+
+        return false;
     }
 
     async createPod(metadata: V1ObjectMeta, spec: V1PodSpec, retries: number = 0) {
@@ -132,6 +173,13 @@ class KubernetesClientAdapter {
                     };
                 }
             } catch (err: any) {
+                if (this.isAuthError(err)) {
+                    this.logger.warn(`Authentication error for "${podName}" pod, attempting credential reload`);
+                    if (this.reloadCredentials()) {
+                        continue;
+                    }
+                }
+
                 if (err instanceof k8s.FetchError) {
                     this.logger.error(`Status for "${podName}" pod responded with error`, err?.message);
 
@@ -224,6 +272,13 @@ class KubernetesClientAdapter {
 
                 success = true;
             } catch (err: any) {
+                if (this.isAuthError(err)) {
+                    this.logger.warn(`Authentication error during "${name}", attempting credential reload`);
+                    if (this.reloadCredentials()) {
+                        continue;
+                    }
+                }
+
                 if (err instanceof k8s.FetchError) {
                     this.logger.error(`Running "${name}" responded with error`, err?.message);
                 } else {
