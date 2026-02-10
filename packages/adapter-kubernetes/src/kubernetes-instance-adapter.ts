@@ -318,6 +318,13 @@ class KubernetesInstanceAdapter implements
 
             await defer(200);
 
+            // Capture crash log before removing the pod
+            const crashLog = await this.getCrashLog();
+
+            this.logger.error("Runner crash log", crashLog);
+
+            await this.remove(this.adapterConfig.timeout);
+
             return exitPodStatus.code || 137;
         }
 
@@ -325,7 +332,6 @@ class KubernetesInstanceAdapter implements
 
         await this.remove(this.adapterConfig.timeout);
 
-        // @TODO handle error status
         return 0;
     }
 
