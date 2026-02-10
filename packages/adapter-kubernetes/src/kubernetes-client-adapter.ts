@@ -66,7 +66,7 @@ class KubernetesClientAdapter {
         const now = Date.now();
 
         if (now - this._lastAuthReload < AUTH_RELOAD_COOLDOWN_MS) {
-            return false;
+            return true;
         }
 
         this._lastAuthReload = now;
@@ -102,10 +102,8 @@ class KubernetesClientAdapter {
     }
 
     async createPod(metadata: V1ObjectMeta, spec: V1PodSpec, retries: number = 0) {
-        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
-
         const result = await this.runWithRetries(retries, "Create Pod", () =>
-            kubeApi.createNamespacedPod({
+            this.config.makeApiClient(k8s.CoreV1Api).createNamespacedPod({
                 namespace: this._namespace,
                 body: {
                     apiVersion: "v1",
@@ -123,10 +121,8 @@ class KubernetesClientAdapter {
     }
 
     async deletePod(podName: string, retries: number = 0) {
-        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
-
         const result = await this.runWithRetries(retries, "Delete Pod", () =>
-            kubeApi.deleteNamespacedPod({
+            this.config.makeApiClient(k8s.CoreV1Api).deleteNamespacedPod({
                 name: podName,
                 namespace: this._namespace,
                 gracePeriodSeconds: 0
@@ -151,12 +147,12 @@ class KubernetesClientAdapter {
     }
 
     async waitForPodStatus(podName: string, expectedStatuses: string[]): Promise<{ status: string, code?: number }> {
-        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
-
         let failCount = 0;
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
+            const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+
             try {
                 const response = await kubeApi.readNamespacedPodStatus({
                     name: podName,
