@@ -1132,7 +1132,7 @@
   resolved "https://registry.npmjs.org/@rtsao/scc/-/scc-1.1.0.tgz"
   integrity sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==
 
-"@scramjet/adapter-docker@^1.1.0", "@scramjet/adapter-docker@file:/home/michal/src/hubs/sth/packages/adapter-docker":
+"@scramjet/adapter-docker@^1.1.0", "@scramjet/adapter-docker@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/adapter-docker":
   version "1.1.0"
   resolved "file:packages/adapter-docker"
   dependencies:
@@ -1147,7 +1147,7 @@
     tar "^7.4.3"
     ts.data.json "^2.2.0"
 
-"@scramjet/adapter-kubernetes@^1.1.0", "@scramjet/adapter-kubernetes@file:/home/michal/src/hubs/sth/packages/adapter-kubernetes":
+"@scramjet/adapter-kubernetes@^1.1.0", "@scramjet/adapter-kubernetes@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/adapter-kubernetes":
   version "1.1.0"
   resolved "file:packages/adapter-kubernetes"
   dependencies:
@@ -1163,7 +1163,7 @@
     ts.data.json "^2.2.0"
     ws "^7.3.1"
 
-"@scramjet/adapter-process@^1.1.0", "@scramjet/adapter-process@file:/home/michal/src/hubs/sth/packages/adapter-process":
+"@scramjet/adapter-process@^1.1.0", "@scramjet/adapter-process@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/adapter-process":
   version "1.1.0"
   resolved "file:packages/adapter-process"
   dependencies:
@@ -1178,14 +1178,14 @@
     tar "^7.4.3"
     ws "^7.3.1"
 
-"@scramjet/adapters-common@1.1.0", "@scramjet/adapters-common@file:/home/michal/src/hubs/sth/packages/adapters-common":
+"@scramjet/adapters-common@1.1.0", "@scramjet/adapters-common@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/adapters-common":
   version "1.1.0"
   resolved "file:packages/adapters-common"
   dependencies:
     "@scramjet/utility" "^1.1.0"
     ts.data.json "^2.2.0"
 
-"@scramjet/adapters@^1.1.0", "@scramjet/adapters@1.1.0", "@scramjet/adapters@file:/home/michal/src/hubs/sth/packages/adapters":
+"@scramjet/adapters@^1.1.0", "@scramjet/adapters@1.1.0", "@scramjet/adapters@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/adapters":
   version "1.1.0"
   resolved "file:packages/adapters"
   dependencies:
@@ -1194,7 +1194,7 @@
     "@scramjet/adapter-process" "^1.1.0"
     ts.data.json "^2.2.0"
 
-"@scramjet/api-client@^1.1.0", "@scramjet/api-client@file:/home/michal/src/hubs/sth/packages/api-client":
+"@scramjet/api-client@^1.1.0", "@scramjet/api-client@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/api-client":
   version "1.1.0"
   resolved "file:packages/api-client"
   dependencies:
@@ -1203,7 +1203,7 @@
     n-readlines "^1.0.1"
     scramjet "^4.37.0"
 
-"@scramjet/api-server@^1.1.0", "@scramjet/api-server@file:/home/michal/src/hubs/sth/packages/api-server":
+"@scramjet/api-server@^1.1.0", "@scramjet/api-server@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/api-server":
   version "1.1.0"
   resolved "file:packages/api-server"
   dependencies:
@@ -1215,13 +1215,13 @@
     http-status-codes "^2.2.0"
     scramjet "^4.37.0"
 
-"@scramjet/bpmux@^9.0.0", "@scramjet/bpmux@file:/home/michal/src/hubs/sth/packages/bpmux":
+"@scramjet/bpmux@^9.0.0", "@scramjet/bpmux@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/bpmux":
   version "9.0.0"
   resolved "file:packages/bpmux"
   dependencies:
     "@scramjet/frame-stream" "^5.0.0"
 
-"@scramjet/cli@file:/home/michal/src/hubs/sth/packages/cli":
+"@scramjet/cli@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/cli":
   version "1.1.0"
   resolved "file:packages/cli"
   dependencies:
@@ -1238,7 +1238,7 @@
     tar "^6.2.1"
     validator "^13.7.0"
 
-"@scramjet/client-utils@^1.1.0", "@scramjet/client-utils@file:/home/michal/src/hubs/sth/packages/client-utils":
+"@scramjet/client-utils@^1.1.0", "@scramjet/client-utils@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/client-utils":
   version "1.1.0"
   resolved "file:packages/client-utils"
   dependencies:
@@ -1246,18 +1246,18 @@
     "@scramjet/obj-logger" "^1.1.0"
     "@scramjet/symbols" "^1.1.0"
     "@scramjet/utility" "^1.1.0"
-    "@types/node-fetch" "^2.6.4"
+    "@types/node-fetch" "^2.6.12"
     abort-controller "^3.0.0"
     n-readlines "^1.0.1"
     node-fetch "^2.6.7"
     normalize-url "4"
     scramjet "^4.37.0"
 
-"@scramjet/frame-stream@^5.0.0", "@scramjet/frame-stream@file:/home/michal/src/hubs/sth/packages/frame-stream":
+"@scramjet/frame-stream@^5.0.0", "@scramjet/frame-stream@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/frame-stream":
   version "5.0.0"
   resolved "file:packages/frame-stream"
 
-"@scramjet/host@^1.1.0", "@scramjet/host@file:/home/michal/src/hubs/sth/packages/host":
+"@scramjet/host@^1.1.0", "@scramjet/host@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/host":
   version "1.1.0"
   resolved "file:packages/host"
   dependencies:
@@ -1282,7 +1282,7 @@
     rereadable-stream "^1.4.14"
     scramjet "^4.37.0"
 
-"@scramjet/load-check@^1.1.0", "@scramjet/load-check@file:/home/michal/src/hubs/sth/packages/load-check":
+"@scramjet/load-check@^1.1.0", "@scramjet/load-check@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/load-check":
   version "1.1.0"
   resolved "file:packages/load-check"
   dependencies:
@@ -1293,13 +1293,13 @@
     scramjet "^4.37.0"
     uuid "^8.3.2"
 
-"@scramjet/logger@^1.1.0", "@scramjet/logger@file:/home/michal/src/hubs/sth/packages/logger":
+"@scramjet/logger@^1.1.0", "@scramjet/logger@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/logger":
   version "1.1.0"
   resolved "file:packages/logger"
   dependencies:
     scramjet "^4.37.0"
 
-"@scramjet/middleware-api-client@^1.1.0", "@scramjet/middleware-api-client@file:/home/michal/src/hubs/sth/packages/middleware-api-client":
+"@scramjet/middleware-api-client@^1.1.0", "@scramjet/middleware-api-client@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/middleware-api-client":
   version "1.1.0"
   resolved "file:packages/middleware-api-client"
   dependencies:
@@ -1307,7 +1307,7 @@
     "@scramjet/client-utils" "^1.1.0"
     "@scramjet/multi-manager-api-client" "^1.1.0"
 
-"@scramjet/model@^1.1.0", "@scramjet/model@file:/home/michal/src/hubs/sth/packages/model":
+"@scramjet/model@^1.1.0", "@scramjet/model@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/model":
   version "1.1.0"
   resolved "file:packages/model"
   dependencies:
@@ -1316,41 +1316,41 @@
     scramjet "^4.37.0"
     uuid "^8.3.2"
 
-"@scramjet/module-loader@^1.1.0", "@scramjet/module-loader@file:/home/michal/src/hubs/sth/packages/module-loader":
+"@scramjet/module-loader@^1.1.0", "@scramjet/module-loader@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/module-loader":
   version "1.1.0"
   resolved "file:packages/module-loader"
   dependencies:
     "@scramjet/obj-logger" "^1.1.0"
 
-"@scramjet/monitoring-server@^1.1.0", "@scramjet/monitoring-server@file:/home/michal/src/hubs/sth/packages/monitoring-server":
+"@scramjet/monitoring-server@^1.1.0", "@scramjet/monitoring-server@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/monitoring-server":
   version "1.1.0"
   resolved "file:packages/monitoring-server"
   dependencies:
     "@scramjet/utility" "^1.1.0"
 
-"@scramjet/multi-manager-api-client@^1.1.0", "@scramjet/multi-manager-api-client@file:/home/michal/src/hubs/sth/packages/multi-manager-api-client":
+"@scramjet/multi-manager-api-client@^1.1.0", "@scramjet/multi-manager-api-client@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/multi-manager-api-client":
   version "1.1.0"
   resolved "file:packages/multi-manager-api-client"
   dependencies:
     "@scramjet/api-client" "^1.1.0"
     "@scramjet/client-utils" "^1.1.0"
 
-"@scramjet/obj-logger@^1.1.0", "@scramjet/obj-logger@file:/home/michal/src/hubs/sth/packages/obj-logger":
+"@scramjet/obj-logger@^1.1.0", "@scramjet/obj-logger@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/obj-logger":
   version "1.1.0"
   resolved "file:packages/obj-logger"
   dependencies:
     "@scramjet/utility" "^1.1.0"
     scramjet "^4.37.0"
 
-"@scramjet/pre-runner@^1.1.0", "@scramjet/pre-runner@file:/home/michal/src/hubs/sth/packages/pre-runner":
+"@scramjet/pre-runner@^1.1.0", "@scramjet/pre-runner@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/pre-runner":
   version "1.1.0"
   resolved "file:packages/pre-runner"
 
-"@scramjet/python-runner@^1.1.0", "@scramjet/python-runner@file:/home/michal/src/hubs/sth/packages/python-runner":
+"@scramjet/python-runner@^1.1.0", "@scramjet/python-runner@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/python-runner":
   version "1.1.0"
   resolved "file:packages/python-runner"
 
-"@scramjet/runner@^1.1.0", "@scramjet/runner@file:/home/michal/src/hubs/sth/packages/runner":
+"@scramjet/runner@^1.1.0", "@scramjet/runner@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/runner":
   version "1.1.0"
   resolved "file:packages/runner"
   dependencies:
@@ -1364,14 +1364,13 @@
     "@scramjet/utility" "^1.1.0"
     scramjet "^4.37.0"
 
-"@scramjet/sth-config@^1.1.0", "@scramjet/sth-config@file:/home/michal/src/hubs/sth/packages/sth-config":
+"@scramjet/sth-config@^1.1.0", "@scramjet/sth-config@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/sth-config":
   version "1.1.0"
   resolved "file:packages/sth-config"
   dependencies:
-    "@scramjet/adapters" "^1.1.0"
     "@scramjet/utility" "^1.1.0"
 
-"@scramjet/sth@file:/home/michal/src/hubs/sth/packages/sth":
+"@scramjet/sth@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/sth":
   version "1.1.0"
   resolved "file:packages/sth"
   dependencies:
@@ -1382,11 +1381,11 @@
     "@scramjet/utility" "^1.1.0"
     commander "^8.3.0"
 
-"@scramjet/symbols@^1.1.0", "@scramjet/symbols@file:/home/michal/src/hubs/sth/packages/symbols":
+"@scramjet/symbols@^1.1.0", "@scramjet/symbols@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/symbols":
   version "1.1.0"
   resolved "file:packages/symbols"
 
-"@scramjet/telemetry@^1.1.0", "@scramjet/telemetry@file:/home/michal/src/hubs/sth/packages/telemetry":
+"@scramjet/telemetry@^1.1.0", "@scramjet/telemetry@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/telemetry":
   version "1.1.0"
   resolved "file:packages/telemetry"
   dependencies:
@@ -1395,21 +1394,21 @@
     winston "^3.8.2"
     winston-loki "^6.0.6"
 
-"@scramjet/types@^1.1.0", "@scramjet/types@file:/home/michal/src/hubs/sth/packages/types":
+"@scramjet/types@^1.1.0", "@scramjet/types@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/types":
   version "1.1.0"
   resolved "file:packages/types"
   dependencies:
     "@scramjet/symbols" "^1.1.0"
     http-status-codes "^2.2.0"
 
-"@scramjet/utility@^1.1.0", "@scramjet/utility@file:/home/michal/src/hubs/sth/packages/utility":
+"@scramjet/utility@^1.1.0", "@scramjet/utility@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/utility":
   version "1.1.0"
   resolved "file:packages/utility"
   dependencies:
     normalize-url "4"
     yaml "^2.2.2"
 
-"@scramjet/verser@^1.1.0", "@scramjet/verser@file:/home/michal/src/hubs/sth/packages/verser":
+"@scramjet/verser@^1.1.0", "@scramjet/verser@file:/home/michal/vibe/1rail/drumwave-integration/sth/packages/verser":
   version "1.1.0"
   resolved "file:packages/verser"
   dependencies:
@@ -7938,7 +7937,7 @@ safe-stable-stringify@^2.3.1:
   resolved "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
-"scramjet-bdd@file:/home/michal/src/hubs/sth/bdd":
+"scramjet-bdd@file:/home/michal/vibe/1rail/drumwave-integration/sth/bdd":
   version "1.1.0"
   resolved "file:bdd"
   dependencies:
