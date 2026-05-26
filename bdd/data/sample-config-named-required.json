@@ -1,0 +1,12 @@
+{
+  "sequences": [
+    {
+      "id": "api-server",
+      "sequenceName": "api-server",
+      "instanceName": "orders-rpc",
+      "required": true,
+      "restartLimit": 2,
+      "args": ["orders"]
+    }
+  ]
+}

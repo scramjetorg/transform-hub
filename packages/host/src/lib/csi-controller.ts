@@ -96,6 +96,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     appConfig: AppConfig;
     instancePromise?: Promise<{ message: string, exitcode: number; status: InstanceStatus }>;
     args: Array<any> | undefined;
+    instanceName?: string;
     controlDataStream?: DataStream;
     router?: APIRoute;
     info: CSIControllerInfo = {};
@@ -187,6 +188,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.sequence = this.handshakeMessage.sequenceInfo;
         this.appConfig = this.handshakeMessage.payload.appConfig;
         this.args = this.handshakeMessage.payload.args;
+        this.instanceName = this.handshakeMessage.payload.instanceName;
         this.outputTopic = this.handshakeMessage.payload.outputTopic;
         this.inputTopic = this.handshakeMessage.payload.inputTopic;
         this.limits = {
@@ -228,6 +230,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             args: this.args,
             provides: this.provides,
             requires: this.requires,
+            instanceName: this.instanceName,
             sequence: {
                 id: this.sequence.id,
                 config: this.sequence.config,
@@ -632,6 +635,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.info.ports = message[1].ports;
         this.sequence = message[1].sequenceInfo;
         this.appConfig = message[1].payload.appConfig;
+        this.instanceName = message[1].payload.instanceName;
         this.inputTopic = message[1].payload?.inputTopic;
         this.outputTopic = message[1].payload?.outputTopic;
         // TODO: add message to initiate the instance adapter

@@ -38,6 +38,9 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
     /** the instance id */
     readonly id: InstanceId;
 
+    /** stable instance alias, if configured */
+    readonly instanceName?: string;
+
     /** RPC expose info (used by instance-api router.forward) */
     readonly expose?: {
         path?: string;

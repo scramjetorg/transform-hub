@@ -10,6 +10,7 @@ export type RunnerConnectInfo = {
     limits?: InstanceLimits;
     writeDegraded?: boolean;
     instanceId?: string;
+    instanceName?: string;
     exposePath?: string;
     exposeHost?: string;
     exposePort?: number;

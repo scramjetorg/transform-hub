@@ -181,6 +181,8 @@ export const sequence: CommandDefinition = (program) => {
                 args: startupConfig.args,
                 limits: startupConfig.limits,
                 instanceId: startupConfig.instanceId,
+                instanceName: startupConfig.instanceName,
+                sequenceName: startupConfig.sequenceName,
                 outputTopic: startupConfig.outputTopic,
                 inputTopic: startupConfig.inputTopic
             });
@@ -257,6 +259,8 @@ export const sequence: CommandDefinition = (program) => {
                 args: startupConfig.args,
                 limits: startupConfig.limits,
                 instanceId: startupConfig.instanceId,
+                instanceName: startupConfig.instanceName,
+                sequenceName: startupConfig.sequenceName,
                 outputTopic: startupConfig.outputTopic,
                 inputTopic: startupConfig.inputTopic
             });

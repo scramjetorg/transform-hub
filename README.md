@@ -561,6 +561,34 @@ The purpose of having two branches is to keep important bugfixes separate from
 new features, so that a bugfix version (a release without new features, just
 bugfixes) can be published immediately if needed.
 
+## Startup config stable naming and restart behavior
+
+Startup config keeps the existing `id` field but now supports additive stable naming and restart controls:
+
+- `sequenceName` - stable sequence name used together with `id`
+- `instanceName` - stable instance alias preserved across required restarts
+- `required` - host should repair the startup-managed instance after unexpected exit
+- `restartLimit` - bounded restart attempts after the initial launch
+
+Existing `/api/v1/sequence/:id` and `/api/v1/instance/:id/*` routes are unchanged. Their selector token may now be an exact ID or a stable name, and exact IDs still win when a token could match both.
+
+Example startup config:
+
+```json
+{
+  "sequences": [
+    {
+      "id": "api-server",
+      "sequenceName": "api-server",
+      "instanceName": "orders-rpc",
+      "required": true,
+      "restartLimit": 2,
+      "args": ["orders"]
+    }
+  ]
+}
+```
+
 # Sample usage :sunglasses:
 
 ## "Hello World!" sample :wave:

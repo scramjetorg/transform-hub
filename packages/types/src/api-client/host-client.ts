@@ -60,8 +60,10 @@ export declare class HostClient implements ClientProvider {
     getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, update?: boolean): Promise<SequenceClient>;
+    /** Accepts a sequence ID or a stable sequence name. */
     getSequence(sequenceId: string): Promise<STHRestAPI.GetSequenceResponse>;
     deleteSequence(sequenceId: string, opts?: { force: boolean }): Promise<STHRestAPI.DeleteSequenceResponse>;
+    /** Accepts an instance ID or a stable instance name. */
     getInstanceInfo(instanceId: string): Promise<STHRestAPI.GetInstanceResponse>;
     getLoadCheck(): Promise<LoadCheckStat>;
     getVersion(): Promise<STHRestAPI.GetVersionResponse>;
@@ -74,7 +76,9 @@ export declare class HostClient implements ClientProvider {
     createTopic(topic: string, contentType: string): Promise<{ topicName: string }>;
     deleteTopic(topic: string): Promise<{ message: string }>;
     getTopics(): Promise<STHRestAPI.GetTopicsResponse>;
+    /** Reuses the existing client name; selector may be an instance ID or stable instance name. */
     getInstanceClient(id: string): InstanceClient;
+    /** Reuses the existing client name; selector may be a sequence ID or stable sequence name. */
     getSequenceClient(id: string): SequenceClient;
     getManagerClient(apiBase: string, utils: ClientUtils | undefined): import("./manager-client").ManagerClient;
 }

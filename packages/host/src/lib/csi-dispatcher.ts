@@ -1,5 +1,5 @@
 import { getInstanceAdapter } from "@scramjet/adapters";
-import { IDProvider } from "@scramjet/model";
+import { HostError, IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/types";
@@ -222,6 +222,30 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             memory: payload.limits?.memory || this.STHConfig.docker.runner.maxMem
         };
         const id = payload.instanceId || IDProvider.generate();
+        let reservedInstanceId = false;
+        let reservedInstanceName = false;
+
+        if (this.instanceStore.hasName(id)) {
+            throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID conflicts with an existing instance name");
+        }
+
+        if (!this.instanceStore.reserveId(id)) {
+            throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID already taken");
+        }
+
+        reservedInstanceId = true;
+
+        if (payload.instanceName) {
+            if (this.instanceStore.has(payload.instanceName) || this.instanceStore.hasReservedId(payload.instanceName)) {
+                throw new HostError("INSTANCE_NAME_CONFLICT", "Instance name conflicts with an existing instance ID");
+            }
+
+            if (!this.instanceStore.reserveName(payload.instanceName, id)) {
+                throw new HostError("INSTANCE_NAME_CONFLICT", "Instance with a given name already exists");
+            }
+
+            reservedInstanceName = true;
+        }
 
         const instanceAdapter = getInstanceAdapter(this.STHConfig.runtimeAdapter, this.STHConfig, id);
         const instanceConfig: InstanceConfig = {
@@ -242,62 +266,83 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload.reconnect = this.STHConfig.instanceReconnect;
         }
 
-        const dispatchResultCode = await instanceAdapter.dispatch(
-            instanceConfig,
-            this.STHConfig.host.instancesServerPort,
-            id,
-            sequence,
-            payload
-        );
-
-        if (dispatchResultCode !== 0) {
-            this.logger.warn("Dispatch result code:", dispatchResultCode);
-            throw await mapRunnerExitCode(dispatchResultCode, sequence);
-        }
-
-        this.logger.debug("Dispatched. Waiting for connection...", id);
-
-        let established = false;
-
-        return await Promise.race([
-            new Promise<void>((resolve, _reject) => {
-                const resolveFunction = (instance: Instance) => {
-                    if (instance.id === id) {
-                        this.logger.debug("Established", id);
-
-                        this.off("established", resolveFunction);
-                        established = true;
-                        resolve();
-                    }
-                };
-
-                this.on("established", resolveFunction);
-            }).then(() => ({
+        try {
+            const dispatchResultCode = await instanceAdapter.dispatch(
+                instanceConfig,
+                this.STHConfig.host.instancesServerPort,
                 id,
-                appConfig: payload.appConfig,
-                args: payload.args,
-                sequenceId: sequence.id,
-                info: {},
-                limits,
-                sequence
-            })),
-            // handle fast fail - before connection is established.
-            Promise.resolve().then(
-                () => instanceAdapter.waitUntilExit(undefined, id, sequence)
-                    .then(async (exitCode: number) => {
-                        if (!established) {
-                            this.logger.info("Exited before established", id, exitCode);
+                sequence,
+                payload
+            );
 
-                            return mapRunnerExitCode(exitCode, sequence);
+            if (dispatchResultCode !== 0) {
+                this.logger.warn("Dispatch result code:", dispatchResultCode);
+                throw await mapRunnerExitCode(dispatchResultCode, sequence);
+            }
+
+            this.logger.debug("Dispatched. Waiting for connection...", id);
+
+            let established = false;
+
+            const result = await Promise.race([
+                new Promise<void>((resolve, _reject) => {
+                    const resolveFunction = (instance: Instance) => {
+                        if (instance.id === id) {
+                            this.logger.debug("Established", id);
+
+                            this.off("established", resolveFunction);
+                            established = true;
+                            resolve();
                         }
+                    };
 
-                        return {
-                            message: "Exited before established",
-                            exitcode: -1,
-                            status: InstanceStatus.ERRORED
-                        };
-                    })
-            )
-        ]);
+                    this.on("established", resolveFunction);
+                }).then(() => ({
+                    id,
+                    appConfig: payload.appConfig,
+                    args: payload.args,
+                    sequenceId: sequence.id,
+                    info: {},
+                    limits,
+                    sequence
+                })),
+                Promise.resolve().then(
+                    () => instanceAdapter.waitUntilExit(undefined, id, sequence)
+                        .then(async (exitCode: number) => {
+                            if (!established) {
+                                this.logger.info("Exited before established", id, exitCode);
+
+                                return mapRunnerExitCode(exitCode, sequence);
+                            }
+
+                            return {
+                                message: "Exited before established",
+                                exitcode: -1,
+                                status: InstanceStatus.ERRORED
+                            };
+                        })
+                )
+            ]);
+
+            if (reservedInstanceName && !("id" in result) && payload.instanceName) {
+                this.instanceStore.unregisterName(payload.instanceName, id);
+            }
+
+            if (!("id" in result) && reservedInstanceId) {
+                this.instanceStore.releaseId(id);
+            }
+
+            return result;
+        } catch (error) {
+            if (reservedInstanceId) {
+                this.instanceStore.releaseId(id);
+            }
+
+            if (reservedInstanceName && payload.instanceName) {
+                this.instanceStore.unregisterName(payload.instanceName, id);
+            }
+
+            throw error;
+        }
     }
 }

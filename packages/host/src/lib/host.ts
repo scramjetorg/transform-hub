@@ -6,7 +6,7 @@ import { AddressInfo, Socket } from "net";
 import { Duplex, Readable } from "stream";
 import { constants } from "os";
 
-import { CommunicationHandler, HostError } from "@scramjet/model";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
@@ -21,7 +21,6 @@ import {
     OpResponse,
     ParsedMessage,
     PublicSTHConfiguration,
-    RunnerConnectInfo,
     STHConfiguration,
     STHRestAPI,
     SequenceInfo,
@@ -75,6 +74,15 @@ const version = packageFile.value?.version || "unknown";
 const name = packageFile.value?.name || "unknown";
 
 const PARALLEL_SEQUENCE_STARTUP = 4;
+
+type RequiredStartupEntry = {
+    key: string;
+    sequenceId: string;
+    config: StartSequenceDTO;
+    restartAttemptsRemaining: number;
+    currentInstanceId?: string;
+    launching: boolean;
+};
 
 type HostSizes = "xs" | "s" | "m" | "l" | "xl";
 const GigaByte = 1024 << 20;
@@ -137,6 +145,8 @@ export class Host implements IHost, IComponent {
      * Object to store CSIControllers.
      */
     instancesStore = new InstancesStore();
+    private requiredStartupEntries = new Map<string, RequiredStartupEntry>();
+    private requiredStartupEntriesByInstanceId = new Map<string, string>();
 
     /**
      * Sequences store.
@@ -375,6 +385,12 @@ export class Host implements IHost, IComponent {
     async handleDispatcherEstablishedEvent(instance: DispatcherInstanceEstablishedEventData) {
         this.logger.info("Checking Sequence...");
 
+        const csiController = this.instancesStore.get(instance.id);
+
+        if (csiController?.instanceName) {
+            this.instancesStore.registerName(csiController.instanceName, csiController.id);
+        }
+
         const seq = this.sequenceStore.getById(instance.sequence.id);
 
         if (!seq && this.cpmConnector?.connected) {
@@ -400,6 +416,15 @@ export class Host implements IHost, IComponent {
             id: instance.id,
             seqId: instance.sequence.id
         });
+
+        const requiredEntryKey = this.requiredStartupEntriesByInstanceId.get(instance.id);
+
+        if (requiredEntryKey) {
+            this.logger.info("Required startup instance established", {
+                instanceId: instance.id,
+                startupKey: requiredEntryKey
+            });
+        }
     }
 
     /**
@@ -422,6 +447,8 @@ export class Host implements IHost, IComponent {
             code: instance.code.toString(),
             seqId: instance.sequence.id
         });
+
+        await this.handleRequiredStartupInstanceExit(instance.id, `required startup instance ended with code ${instance.code}`);
     }
 
     /**
@@ -440,6 +467,281 @@ export class Host implements IHost, IComponent {
             code: (eventData.code || -2).toString(),
             seqId: eventData.sequence.id
         });
+
+        const instance = this.instancesStore.get(eventData.id);
+
+        if (instance?.instanceName) {
+            this.instancesStore.unregisterName(instance.instanceName, eventData.id);
+        }
+
+        await this.handleRequiredStartupInstanceExit(eventData.id, `required startup instance terminated with code ${eventData.code}`);
+    }
+
+    private buildStartupRunnerConfig(sequence: SequenceInfo, sequenceConfig: StartSequenceDTO): STHRestAPI.StartSequencePayload {
+        return {
+            appConfig: sequenceConfig.appConfig || {},
+            args: sequenceConfig.args,
+            instanceId: sequenceConfig.instanceId,
+            instanceName: sequenceConfig.instanceName,
+            sequenceName: sequenceConfig.sequenceName,
+            exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
+            logLevel: this.logger.logLevel
+        };
+    }
+
+    private async resolveStartupSequence(sequenceConfig: StartSequenceDTO): Promise<SequenceInfo | undefined> {
+        const sequence = this.sequenceStore.getByNameOrId(sequenceConfig.id);
+
+        if (!sequence) {
+            return undefined;
+        }
+
+        if (sequenceConfig.sequenceName) {
+            const namedSequence = this.sequenceStore.getByNameOrId(sequenceConfig.sequenceName);
+
+            if (!namedSequence) {
+                throw new HostError(
+                    "SEQUENCE_STARTUP_ERROR",
+                    `Sequence selector not found for startup config: ${sequenceConfig.sequenceName}`
+                );
+            }
+
+            if (namedSequence.id !== sequence.id) {
+                throw new HostError(
+                    "SEQUENCE_STARTUP_ERROR",
+                    `Startup sequence selector conflict for ${sequenceConfig.id} and ${sequenceConfig.sequenceName}`
+                );
+            }
+        }
+
+        return sequence;
+    }
+
+    private async resolveSequenceForStart(sequenceSelector: string): Promise<SequenceInfo | undefined> {
+        let sequence = this.sequenceStore.getByNameOrId(sequenceSelector);
+
+        if (!sequence && this.cpmConnector?.connected) {
+            sequence ||= await this.getExternalSequence(sequenceSelector).catch((error: ReasonPhrases) => {
+                this.logger.error("Error getting sequence from external sources", error);
+
+                return undefined;
+            });
+        }
+
+        return sequence;
+    }
+
+    private createRequiredStartupEntry(sequence: SequenceInfo, sequenceConfig: StartSequenceDTO, index: number): RequiredStartupEntry {
+        return {
+            key: sequenceConfig.instanceName || sequenceConfig.instanceId || `required-startup:${sequence.id}:${index}`,
+            sequenceId: sequence.id,
+            config: { ...sequenceConfig },
+            restartAttemptsRemaining: sequenceConfig.restartLimit ?? 0,
+            launching: false
+        };
+    }
+
+    private clearRequiredStartupInstanceTracking(entry: RequiredStartupEntry) {
+        if (!entry.currentInstanceId) {
+            return;
+        }
+
+        this.requiredStartupEntriesByInstanceId.delete(entry.currentInstanceId);
+        entry.currentInstanceId = undefined;
+    }
+
+    private validateStartupConfigUniqueness(startupConfig: StartSequenceDTO[]) {
+        const instanceIds = new Set<string>();
+        const instanceNames = new Set<string>();
+        const requiredKeys = new Set<string>();
+
+        startupConfig.forEach((sequenceConfig, index) => {
+            if (sequenceConfig.instanceId) {
+                if (instanceNames.has(sequenceConfig.instanceId)) {
+                    throw new HostError(
+                        "SEQUENCE_STARTUP_ERROR",
+                        `Startup config instanceId conflicts with another instanceName: ${sequenceConfig.instanceId}`
+                    );
+                }
+
+                if (instanceIds.has(sequenceConfig.instanceId)) {
+                    throw new HostError(
+                        "SEQUENCE_STARTUP_ERROR",
+                        `Duplicate instanceId in startup config: ${sequenceConfig.instanceId}`
+                    );
+                }
+
+                instanceIds.add(sequenceConfig.instanceId);
+            }
+
+            if (sequenceConfig.instanceName) {
+                if (instanceIds.has(sequenceConfig.instanceName)) {
+                    throw new HostError(
+                        "SEQUENCE_STARTUP_ERROR",
+                        `Startup config instanceName conflicts with another instanceId: ${sequenceConfig.instanceName}`
+                    );
+                }
+
+                if (instanceNames.has(sequenceConfig.instanceName)) {
+                    throw new HostError(
+                        "SEQUENCE_STARTUP_ERROR",
+                        `Duplicate instanceName in startup config: ${sequenceConfig.instanceName}`
+                    );
+                }
+
+                instanceNames.add(sequenceConfig.instanceName);
+            }
+
+            if (sequenceConfig.required) {
+                const key = sequenceConfig.instanceName
+                    || sequenceConfig.instanceId
+                    || `required-startup:${sequenceConfig.id}:${index}`;
+
+                if (requiredKeys.has(key)) {
+                    throw new HostError(
+                        "SEQUENCE_STARTUP_ERROR",
+                        `Duplicate required startup entry key: ${key}`
+                    );
+                }
+
+                requiredKeys.add(key);
+            }
+        });
+    }
+
+    private trackRequiredStartupInstance(entry: RequiredStartupEntry, instanceId: string) {
+        if (entry.currentInstanceId) {
+            this.requiredStartupEntriesByInstanceId.delete(entry.currentInstanceId);
+        }
+
+        entry.currentInstanceId = instanceId;
+        this.requiredStartupEntriesByInstanceId.set(instanceId, entry.key);
+    }
+
+    private takeRequiredStartupEntryByInstanceId(instanceId: string): RequiredStartupEntry | undefined {
+        const key = this.requiredStartupEntriesByInstanceId.get(instanceId);
+
+        if (!key) {
+            return undefined;
+        }
+
+        this.requiredStartupEntriesByInstanceId.delete(instanceId);
+
+        const entry = this.requiredStartupEntries.get(key);
+
+        if (entry?.currentInstanceId === instanceId) {
+            entry.currentInstanceId = undefined;
+        }
+
+        return entry;
+    }
+
+    private async startConfiguredSequence(sequence: SequenceInfo, sequenceConfig: StartSequenceDTO) {
+        const runner = await this.csiDispatcher.startRunner(sequence, this.buildStartupRunnerConfig(sequence, sequenceConfig));
+
+        this.logger.info("Starting sequence", {
+            name: sequence.config.name,
+            version: sequence.config.version,
+            sequenceId: sequence.id,
+            instanceId: sequenceConfig.instanceId,
+            required: sequenceConfig.required,
+            restartLimit: sequenceConfig.restartLimit
+        });
+        this.logger.debug("Starting sequence based on config", sequenceConfig);
+
+        return runner;
+    }
+
+    private async handleRequiredStartupFailure(entry: RequiredStartupEntry, reason: string) {
+        if (this._stopping) {
+            return;
+        }
+
+        if (entry.restartAttemptsRemaining > 0) {
+            entry.restartAttemptsRemaining -= 1;
+
+            this.logger.warn("Restarting required startup entry", {
+                reason,
+                required: true,
+                restartLimit: entry.config.restartLimit,
+                restartAttemptsRemaining: entry.restartAttemptsRemaining,
+                startupKey: entry.key
+            });
+
+            queueMicrotask(() => {
+                void this.launchRequiredStartupEntry(entry, reason);
+            });
+            return;
+        }
+
+        this.logger.error("Required startup entry exhausted restartLimit, fail fast", {
+            reason,
+            required: true,
+            restartLimit: entry.config.restartLimit,
+            startupKey: entry.key
+        });
+
+        this.performStop(1);
+    }
+
+    private async launchRequiredStartupEntry(entry: RequiredStartupEntry, reason: string) {
+        if (this._stopping || entry.launching) {
+            return;
+        }
+
+        entry.launching = true;
+        const launchInstanceId = entry.config.instanceId || IDProvider.generate();
+        const launchConfig = { ...entry.config, instanceId: launchInstanceId };
+
+        this.trackRequiredStartupInstance(entry, launchInstanceId);
+
+        try {
+            const sequence = this.sequenceStore.getById(entry.sequenceId);
+
+            if (!sequence) {
+                throw new HostError("SEQUENCE_STARTUP_ERROR", `Required startup sequence not found: ${entry.sequenceId}`);
+            }
+
+            if (launchConfig.instanceName) {
+                if (this.instancesStore.hasName(launchConfig.instanceName) || this.instancesStore.has(launchConfig.instanceName)) {
+                    throw new HostError(
+                        "SEQUENCE_STARTUP_ERROR",
+                        `Instance name conflict for startup config: ${launchConfig.instanceName}`
+                    );
+                }
+            }
+
+            const runner = await this.startConfiguredSequence(sequence, launchConfig);
+
+            if (!("id" in runner)) {
+                this.clearRequiredStartupInstanceTracking(entry);
+                await this.handleRequiredStartupFailure(entry, `${reason}: startup exited before establishment`);
+                return;
+            }
+
+            this.trackRequiredStartupInstance(entry, runner.id);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : `${error}`;
+
+            this.clearRequiredStartupInstanceTracking(entry);
+            await this.handleRequiredStartupFailure(entry, `${reason}: ${message}`);
+        } finally {
+            entry.launching = false;
+        }
+    }
+
+    private async handleRequiredStartupInstanceExit(instanceId: string, reason: string) {
+        if (this._stopping) {
+            return;
+        }
+
+        const entry = this.takeRequiredStartupEntryByInstanceId(instanceId);
+
+        if (!entry) {
+            return;
+        }
+
+        await this.handleRequiredStartupFailure(entry, reason);
     }
 
     getId() {
@@ -675,27 +977,38 @@ export class Host implements IHost, IComponent {
         }
 
         const startupConfig: StartSequenceDTO[] = _config.sequences;
+        this.validateStartupConfigUniqueness(startupConfig);
+        const startupEntries = startupConfig.map((sequenceConfig, index) => ({ sequenceConfig, index }));
 
-        await DataStream.from(startupConfig)
+        await DataStream.from(startupEntries)
             .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
-            .map(async (sequenceConfig: StartSequenceDTO) => {
-                const sequence = this.sequenceStore.getById(sequenceConfig.id);
+            .map(async ({ sequenceConfig, index }: { sequenceConfig: StartSequenceDTO; index: number }) => {
+                const sequence = await this.resolveStartupSequence(sequenceConfig);
 
                 if (!sequence) {
                     this.logger.warn("Sequence id not found for startup config", sequenceConfig);
                     return;
                 }
 
-                await this.csiDispatcher.startRunner(sequence, {
-                    appConfig: sequenceConfig.appConfig || {},
-                    args: sequenceConfig.args,
-                    instanceId: sequenceConfig.instanceId,
-                    exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
-                    logLevel: this.logger.logLevel
-                });
+                if (sequenceConfig.instanceName) {
+                    if (this.instancesStore.hasName(sequenceConfig.instanceName) || this.instancesStore.has(sequenceConfig.instanceName)) {
+                        throw new HostError(
+                            "SEQUENCE_STARTUP_ERROR",
+                            `Instance name conflict for startup config: ${sequenceConfig.instanceName}`
+                        );
+                    }
+                }
 
-                this.logger.info("Starting sequence", { name: sequence.config.name, version: sequence.config.version, sequenceId: sequence.id, instanceId: sequenceConfig.instanceId })
-                this.logger.debug("Starting sequence based on config", sequenceConfig);
+                if (sequenceConfig.required) {
+                    const entry = this.createRequiredStartupEntry(sequence, sequenceConfig, index);
+
+                    this.requiredStartupEntries.set(entry.key, entry);
+
+                    await this.launchRequiredStartupEntry(entry, "initial required startup launch");
+                    return;
+                }
+
+                await this.startConfiguredSequence(sequence, sequenceConfig);
             })
             .catch((err: any) => {
                 this.logger.error("Error starting startup sequences", err);
@@ -929,29 +1242,50 @@ export class Host implements IHost, IComponent {
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
     // eslint-disable-next-line complexity
-    async startSequence(sequenceId: string, requestConfig: Omit<Omit<RunnerConnectInfo, "adapter">, "inputContentType">): Promise<StartInstanceReturnType> {
+    async startSequence(sequenceId: string, requestConfig: STHRestAPI.StartSequencePayload): Promise<StartInstanceReturnType> {
         if (await this.loadCheck.overloaded()) {
             throw new HostError("HOST_OVERLOAD", "Host overloaded");
         }
 
         if (requestConfig.instanceId) {
-            if (this.instancesStore.has(requestConfig.instanceId)) {
+            if (this.instancesStore.has(requestConfig.instanceId) || this.instancesStore.hasReservedId(requestConfig.instanceId)) {
                 throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID already taken");
+            }
+
+            if (this.instancesStore.hasName(requestConfig.instanceId)) {
+                throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID conflicts with an existing instance name");
             }
         }
 
-        let sequence = this.sequenceStore.getByNameOrId(sequenceId);
+        if (requestConfig.instanceName) {
+            if (this.instancesStore.hasName(requestConfig.instanceName)) {
+                throw new HostError("INSTANCE_NAME_CONFLICT", "Instance with a given name already exists");
+            }
 
-        if (!sequence && this.cpmConnector?.connected) {
-            sequence ||= await this.getExternalSequence(sequenceId).catch((error: ReasonPhrases) => {
-                this.logger.error("Error getting sequence from external sources", error);
-
-                return undefined;
-            });
+            if (this.instancesStore.has(requestConfig.instanceName) || this.instancesStore.hasReservedId(requestConfig.instanceName)) {
+                throw new HostError("INSTANCE_NAME_CONFLICT", "Instance name conflicts with an existing instance ID");
+            }
         }
+
+        const sequence = await this.resolveSequenceForStart(sequenceId);
 
         if (!sequence) {
             throw new HostError("UNKNOWN_SEQUENCE", `Unknown Sequence: ${sequenceId}`);
+        }
+
+        if (requestConfig.sequenceName) {
+            const namedSequence = await this.resolveSequenceForStart(requestConfig.sequenceName);
+
+            if (!namedSequence) {
+                throw new HostError("UNKNOWN_SEQUENCE", `Unknown Sequence: ${requestConfig.sequenceName}`);
+            }
+
+            if (namedSequence.id !== sequence.id) {
+                throw new HostError(
+                    "SEQUENCE_SELECTOR_CONFLICT",
+                    `Conflicting sequence selectors: ${sequenceId} and ${requestConfig.sequenceName}`
+                );
+            }
         }
 
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
@@ -975,6 +1309,16 @@ export class Host implements IHost, IComponent {
         } catch (error: any) {
             this.pushTelemetry("Instance start failed", { error: error.message }, "error");
             this.logger.error(error.message);
+
+            if (error instanceof HostError) {
+                switch (error.code) {
+                    case "UNKNOWN_SEQUENCE":
+                    case "SEQUENCE_SELECTOR_CONFLICT":
+                    case "INSTANCE_ID_CONFLICT":
+                    case "INSTANCE_NAME_CONFLICT":
+                        throw error;
+                }
+            }
 
             throw new HostError("INSTANCE_STARTUP_ERROR", error.message);
         }
@@ -1070,7 +1414,7 @@ export class Host implements IHost, IComponent {
     getSequence(id: InstanceId): OpResponse<STHRestAPI.GetSequenceResponse> {
         if (!id) return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Missing id parameter" };
 
-        const sequence = this.sequenceStore.getById(id);
+        const sequence = this.sequenceStore.getByNameOrId(id);
 
         if (!sequence) {
             return {
@@ -1105,7 +1449,7 @@ export class Host implements IHost, IComponent {
      * @returns List of Instances.
      */
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
-        const sequence = this.sequenceStore.getById(sequenceId);
+        const sequence = this.sequenceStore.getByNameOrId(sequenceId);
 
         if (!sequence) {
             return {
