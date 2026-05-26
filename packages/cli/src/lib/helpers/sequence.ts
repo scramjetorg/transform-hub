@@ -166,21 +166,23 @@ export const sequenceParseConfig = async (configFile: string = "", configString:
 };
 
 export const sequenceStart = async (
-    id: string, { appConfig, args, outputTopic, inputTopic, limits, instanceId }:
+    id: string, { appConfig, args, outputTopic, inputTopic, limits, instanceId, instanceName, sequenceName }:
         {
             appConfig: AppConfig,
             args?: any[],
             outputTopic?: string,
             inputTopic?: string,
             limits?: InstanceLimits,
-            instanceId?: string
+            instanceId?: string,
+            instanceName?: string,
+            sequenceName?: string
         }
 ): Promise<InstanceClient> => {
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
     try {
         const instance = await sequenceClient.start({
-            appConfig, args: args?.length ? args : undefined, outputTopic, inputTopic, limits, instanceId
+            appConfig, args: args?.length ? args : undefined, outputTopic, inputTopic, limits, instanceId, instanceName, sequenceName
         });
 
         sessionConfig.setLastInstanceId(instance.id);

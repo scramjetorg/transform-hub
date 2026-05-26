@@ -1,6 +1,7 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
 import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { isStartSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { IHost } from "../types";
 
 import { auditMiddleware, logger as auditMiddlewareLogger } from "../middlewares/audit";
@@ -140,7 +141,7 @@ export class HostAPIHandler {
             return next(new HostError("UNKNOWN_INSTANCE"));
         }
 
-        const instance = this.host.instancesStore.get(params.id);
+        const instance = this.host.instancesStore.getByNameOrId(params.id);
 
         if (instance) {
             if (!instance.router) {
@@ -314,14 +315,53 @@ export class HostAPIHandler {
      */
     // eslint-disable-next-line complexity
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
-        const sequenceId = req.params?.id as string;
+        if (!req.params?.id || typeof req.params.id !== "string") {
+            return {
+                opStatus: ReasonPhrases.BAD_REQUEST,
+                error: "Missing id parameter"
+            };
+        }
+
+        const sequenceId = req.params.id;
         const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
 
-        if (this.host.instancesStore.has(payload.instanceId)) {
+        try {
+            isStartSequenceEndpointPayloadDTO(payload);
+        } catch (error) {
+            return {
+                opStatus: ReasonPhrases.BAD_REQUEST,
+                error: error instanceof Error ? error.message : "Invalid start sequence payload"
+            };
+        }
+
+        if (payload.instanceId && (this.host.instancesStore.has(payload.instanceId) || this.host.instancesStore.hasReservedId(payload.instanceId))) {
             return {
                 opStatus: ReasonPhrases.CONFLICT,
                 error: "Instance with a given ID already exists"
             };
+        }
+
+        if (payload.instanceId && this.host.instancesStore.hasName(payload.instanceId)) {
+            return {
+                opStatus: ReasonPhrases.CONFLICT,
+                error: "Instance ID conflicts with an existing instance name"
+            };
+        }
+
+        if (payload.instanceName) {
+            if (this.host.instancesStore.hasName(payload.instanceName)) {
+                return {
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Instance with a given name already exists"
+                };
+            }
+
+            if (this.host.instancesStore.has(payload.instanceName) || this.host.instancesStore.hasReservedId(payload.instanceName)) {
+                return {
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Instance name conflicts with an existing instance ID"
+                };
+            }
         }
 
         try {
@@ -345,7 +385,11 @@ export class HostAPIHandler {
             switch (e.code) {
                 case "UNKNOWN_SEQUENCE":
                     return { opStatus: ReasonPhrases.NOT_FOUND, error: e.message };
+                case "SEQUENCE_SELECTOR_CONFLICT":
+                    return { opStatus: ReasonPhrases.CONFLICT, error: e.message };
                 case "INSTANCE_ID_CONFLICT":
+                    return { opStatus: ReasonPhrases.CONFLICT, error: e.message };
+                case "INSTANCE_NAME_CONFLICT":
                     return { opStatus: ReasonPhrases.CONFLICT, error: e.message };
                 case "INSTANCE_STARTUP_ERROR":
                     return { opStatus: ReasonPhrases.BAD_REQUEST, error: e.message };

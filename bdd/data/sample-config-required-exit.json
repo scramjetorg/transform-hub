@@ -1,0 +1,12 @@
+{
+  "sequences": [
+    {
+      "id": "args-config-test",
+      "instanceName": "required-exit-instance",
+      "required": true,
+      "restartLimit": 1,
+      "args": ["123", "false", "abc", "{\"a\": 1}"],
+      "appConfig": { "x": 1, "exit": true }
+    }
+  ]
+}

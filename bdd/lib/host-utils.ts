@@ -14,6 +14,8 @@ type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter"|"in
 export class HostUtils {
     hostProcessStopped = false;
     host?: ChildProcess;
+    expectedExitCode?: number;
+    output = "";
 
     hostUrl: string;
 
@@ -71,6 +73,9 @@ export class HostUtils {
             }
 
             const decoder = new StringDecoder();
+            const outputListener = (data: Buffer) => {
+                this.output += data.toString();
+            };
 
             let decodedData = "";
             const listener = (data: Buffer) => {
@@ -78,20 +83,22 @@ export class HostUtils {
 
                 decodedData += last;
 
-                if (last.match(/Running/)) {
+                if (last.match(/running/i)) {
                     hub.stdout?.off("data", listener);
                     resolve(decodedData);
                 }
             };
 
+            hub.stdout?.on("data", outputListener);
+            hub.stderr?.on("data", outputListener);
             hub.stdout?.on("data", listener);
 
-            this.host.on("exit", (code, signal) => {
+            this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                 // eslint-disable-next-line no-console
                 console.log("host process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
 
-                if (code === 1) {
+                if (code === 1 && this.expectedExitCode !== 1) {
                     assert.fail();
                 }
             });

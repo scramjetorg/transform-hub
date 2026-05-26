@@ -28,6 +28,17 @@ const host = new HostClient("http://192.168.0.34:8000/api/v1");
 host.getSequence("3e989fe7-a3b7-401e-a269-2fa0a7ac70f4")
 ```
 
+The existing client method names stay unchanged. Wherever the client accepts a sequence or instance selector string, you can now pass IDs or stable names.
+
+This includes the existing `getInstanceClient` and `getSequenceClient` helpers, which now accept IDs or stable names without any rename.
+
+Startup-config and start-request payloads accept additive stable naming fields, while restart supervision stays in startup config:
+
+- `sequenceName` - stable sequence selector used alongside the existing `id` token
+- `instanceName` - stable runtime alias for the started instance
+- `required` - startup-config-only flag marking startup-managed entries that must be repaired by the host
+- `restartLimit` - startup-config-only bounded restart attempts after the initial launch
+
 ## Docs
 
 See the code documentation here: [scramjetorg/transform-hub/docs/api-client/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/modules.md)
@@ -342,6 +353,8 @@ ___
 | ----------- | ------ | ----------------------------------------------------- | -------- |
 | `appConfig` | `json` | additional package.json config file                   | no       |
 | `args`      | `json` | additional arguments that instance should starts with | no       |
+| `sequenceName` | `string` | optional stable sequence name used to confirm the selected Sequence | no |
+| `instanceName` | `string` | optional stable runtime alias exposed on instance endpoints | no |
 
 <strong>Responses</strong>
 
@@ -439,10 +452,13 @@ ___
 ```json
 {
   "created": "2021-10-29T16:08:36.524Z",
+  "instanceName": "orders-rpc",
   "started": "2021-10-29T16:08:38.701Z",
   "sequenceId": "b0c02fdc-b05f-4f26-9d68-43a702eb7b44"
 }
 ```
+
+`/api/v1/sequence/:id` and `/api/v1/instance/:id/*` keep the same route shapes. The `:id` token may now be an exact ID or a stable name, with exact ID matches taking precedence.
 
 </details>
 
@@ -794,6 +810,3 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 * There's also a Paypal donation link if you prefer that:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-

@@ -21,7 +21,7 @@ const AWAITING_POLL_DEFER_TIME = 250;
 
 const spawned: Set<ChildProcess> = new Set();
 
-process.on("exit", (sig) => {
+process.on("exit", (sig: number) => {
     spawned.forEach(child => {
         try {
             if (child.pid) child.kill(sig);
@@ -34,13 +34,21 @@ process.on("exit", (sig) => {
 
 async function startHubWithParams({ resources }: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
     const hostUtils = new HostUtils();
+    const expectedHubExitCode = resources.expectedHubExitCode as number | undefined;
+
+    hostUtils.expectedExitCode = expectedHubExitCode;
     const out = await hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
 
     if (!hostUtils.host) throw new Error("Missing host from utils.");
 
     spawned.add(hostUtils.host);
+    hostUtils.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+        resources.hubExit = { code, signal };
+        spawned.delete(hostUtils.host!);
+    });
 
     resources.hub = hostUtils.host;
+    resources.hostUtils = hostUtils;
     resources.startOutput = out;
 }
 
@@ -105,6 +113,24 @@ Then("the response status should be {int}", async function(int) {
 
 When("hub process is started with random ports and parameters {string}",
     async function(this: CustomWorld, params: string) {
+        this.resources.expectedHubExitCode = undefined;
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
+
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+        process.env.SCRAMJET_HOST_BASE_URL =
+            process.env.LOCAL_HOST_BASE_URL =
+                `http://127.0.0.1:${apiPort}/api/v1`;
+
+        this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        return startHubWithParams(this, params.split(" "));
+    });
+
+When("hub process is started with random ports expecting exit code {int} and parameters {string}",
+    async function(this: CustomWorld, expectedExitCode: number, params: string) {
+        this.resources.expectedHubExitCode = expectedExitCode;
+
         const apiPort = await freeport();
         const instancesServerPort = await freeport();
 
@@ -146,6 +172,30 @@ Then("I get list of instances", async function(this: CustomWorld) {
     const hostClient = getHostClient();
 
     this.cliResources.instances = await hostClient.listInstances();
+});
+
+Then("I use instance client for stable name {string}", async function(this: CustomWorld, instanceName: string) {
+    const hostClient = getHostClient();
+
+    this.resources.instance = InstanceClient.from(instanceName, hostClient);
+});
+
+Then("stable instance name {string} becomes available", { timeout: 10000 }, async function(this: CustomWorld, instanceName: string) {
+    const hostClient = getHostClient();
+
+    let instance;
+    const start = Date.now();
+
+    do {
+        const instances = await hostClient.listInstances();
+        instance = instances.find((candidate) => candidate.instanceName === instanceName || candidate.id === instanceName);
+
+        if (!instance) {
+            await defer(100);
+        }
+    } while (!instance && Date.now() - start < 10000);
+
+    assert.ok(instance, `Stable instance name ${instanceName} not registered`);
 });
 
 Then("I get list of {string} instances", async function(this: CustomWorld, tag: string) {
@@ -213,6 +263,66 @@ Then("exit hub process", async function(this: CustomWorld) {
     });
 
     spawned.delete(hub);
+});
+
+Then("hub process exits on its own with code {int} within {int} ms", async function(this: CustomWorld, expectedCode: number, timeoutMs: number) {
+    const hub = this.resources.hub as ChildProcess;
+
+    if (!hub) {
+        assert.fail("Hub process not found");
+    }
+
+    const existingCode = hub.exitCode ?? this.resources.hubExit?.code;
+
+    if (existingCode !== null && typeof existingCode !== "undefined") {
+        assert.strictEqual(existingCode, expectedCode);
+        return;
+    }
+
+    const exitResult = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            hub.off("exit", onExit);
+            reject(new Error(`Hub process did not exit within ${timeoutMs} ms`));
+        }, timeoutMs);
+
+        const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
+            clearTimeout(timer);
+            resolve({ code, signal });
+        };
+
+        hub.once("exit", onExit);
+    });
+
+    this.resources.hubExit = exitResult;
+    assert.strictEqual(exitResult.code, expectedCode);
+});
+
+Then("hub logs should contain {string} within {int} ms", async function(this: CustomWorld, expectedText: string, timeoutMs: number) {
+    const hostUtils = this.resources.hostUtils as HostUtils | undefined;
+
+    if (!hostUtils) {
+        assert.fail("Host utils not found");
+    }
+
+    const start = Date.now();
+
+    while (!hostUtils.output.includes(expectedText) && Date.now() - start < timeoutMs) {
+        await defer(100);
+    }
+
+    assert.ok(hostUtils.output.includes(expectedText), `Expected host logs to contain: ${expectedText}`);
+});
+
+Then("hub logs should contain {string} exactly {int} times", function(this: CustomWorld, expectedText: string, expectedCount: number) {
+    const hostUtils = this.resources.hostUtils as HostUtils | undefined;
+
+    if (!hostUtils) {
+        assert.fail("Host utils not found");
+    }
+
+    const actualCount = hostUtils.output.split(expectedText).length - 1;
+
+    assert.strictEqual(actualCount, expectedCount, `Expected host logs to contain ${expectedText} exactly ${expectedCount} times, got ${actualCount}`);
 });
 
 Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {
@@ -285,4 +395,3 @@ Then("last container memory limit is {int}", async function(this: CustomWorld, m
         assert.equal(inspect.HostConfig?.Memory, maxMem * 1024 * 1024);
     }
 });
-
