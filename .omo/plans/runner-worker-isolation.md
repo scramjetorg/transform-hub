@@ -77,7 +77,9 @@ Responsibilities:
 - JSON/base64 request/response aggregation for exposed APIs.
 - Function-handler rejection in `context.api` caused by the runner boundary.
 - New host channel numbers or `RunnerMessageCode` values.
-- Changes to `packages/host`, `packages/symbols`, adapters, `python-runner`, `pre-runner`, or `packages/runner/src/bin/start-runner.ts`.
+- Changes to `packages/host`, `packages/symbols`, adapters, `python-runner`, or `pre-runner`.
+- Changes to `packages/runner/package.json` `main`, the adapter-facing `start-runner` environment contract (`SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`, `INSTANCES_SERVER_PORT`, `INSTANCES_SERVER_HOST`, `INSTANCE_ID`), or the existing `RunnerExitCode` mapping.
+- `packages/runner/src/bin/start-runner.ts` may be edited only to preserve its current env parsing/validation surface and replace direct in-process `Runner` execution with the new outer-runner launcher path that spawns `runner-node`.
 
 ## Deliverables
 
@@ -145,8 +147,11 @@ Move or factor current sequence-runtime behaviour into `runner-node`:
 
 Acceptance:
 
-- Unit tests compare devel runner behaviour and runner-node behaviour for primitive output, stream output, NDJSON serialization, metadata, stop handlers, keepAlive, and events.
-- No test requires changes to sequence fixture source.
+- Add paired AVA tests that run the same fixture through the legacy devel `Runner` harness and the new `runner-node` harness for primitive output, `DataStream`, `StringStream`, `BufferStream`, NDJSON serialization, `topic`, `contentType`, `readableEncoding`, PANG metadata, stop handlers, keepAlive, and events.
+- `cd packages/runner-node && npx ava -m "*app-context parity*"` passes and proves `this.api.use(path, handler)`, `this.hub`, `this.space`, and `this.localStorage` are available inside the sequence without fixture source changes.
+- `cd packages/runner-node && npx ava -m "*run-sequence parity*"` passes and asserts byte-for-byte output payloads plus metadata equality against the devel `Runner` harness for primitive, stream, and PANG-returning fixtures.
+- `cd packages/runner-node && npx ava -m "*stop keepalive parity*"` passes and asserts STOP timeout and `canCallKeepalive` values observed by fixture handlers match current devel behaviour.
+- `rg "api.use\([^,]+,[^)]*=>|function" packages/runner-node/src/test packages/runner/src/test` returns at least one fixture-backed expose-API handler test, and no test requires changes to sequence fixture source.
 
 ### Wave 4 - Outer Runner Hookup
 
@@ -161,9 +166,12 @@ Refactor `packages/runner` to spawn `runner-node` and forward pipes:
 
 Acceptance:
 
-- Parent `process.stdout`/`process.stderr` are not overridden in the new Node path.
-- Host stdout/stderr streams remain writable after child exit.
-- Existing host-facing channel order remains compatible.
+- `cd packages/runner && npx ava -m "*process executor forwarding*"` passes and asserts parent `process.stdout`/`process.stderr` are not overridden in the new Node path.
+- `cd packages/runner && npx ava -m "*stream forwarder non closing*"` passes and writes sentinel bytes to host stdout/stderr after child exit to prove host streams remain writable.
+- `cd packages/runner && npx ava -m "*control monitoring passthrough*"` passes and uses a fixture child to echo framed control bytes from host -> fd 4 -> host and monitoring bytes from child fd 5 -> host without JSON/base64 transformation.
+- `cd packages/runner && npx ava -m "*runner lifecycle ordering*"` passes and asserts stdout/stderr bytes emitted by a throw-after-stdout fixture are observed before the terminal `SEQUENCE_STOPPED`/failure lifecycle message.
+- `yarn test:bdd --name="Sequence stdout bytes arrive before SEQUENCE_STOPPED"` passes against the adapter-launched `@scramjet/runner` entrypoint, proving the unchanged `packages/runner/package.json` main path and `start-runner` env contract hook the new outer runner correctly.
+- `rg "overrideStandardStream|redirectOutputs|process\.stdout\s*=" packages/runner/src` has no production matches in the new Node execution path.
 
 ### Wave 5 - Regression Tests
 
