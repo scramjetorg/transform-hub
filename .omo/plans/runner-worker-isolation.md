@@ -8,10 +8,11 @@ Core decisions:
 
 - Preserve current behaviour. Existing sequences require no adoption.
 - Use `spawn`, not `worker_threads`, because Node 18 workers do not support arbitrary extra fd pipes.
-- Do not use `fork()` IPC; the transport is pipes only.
+- Do not use `fork()`. Reserve fd 3 as an unused `ipc` slot for Node compatibility; semantic transport remains pipes only.
 - Child fd 0/1/2 carry stdin/stdout/stderr.
-- Child fd 3 carries control passthrough.
-- Child fd 4 carries monitoring passthrough.
+- Child fd 3 is `ipc` for compatibility with older Node fd quirks and is intentionally unused.
+- Child fd 4 carries control passthrough.
+- Child fd 5 carries monitoring passthrough.
 - Do not proxy exposed API handlers, HTTP bodies, input chunks, or output chunks over JSON/base64 messages.
 
 ## Findings From The Failed Plan
@@ -22,7 +23,7 @@ The failed plan made the wrong boundary explicit:
 - Exposed API request bodies and responses were converted to one-shot base64 payloads. That changes streaming, backpressure, ordering, and memory usage.
 - Sequence output was reduced to `OUTPUT_CHUNK` messages instead of preserving `runSequence()` stream metadata and serialization rules.
 - STOP/keepAlive behaviour depended on sequence-local handlers and was not preserved by the proxy model.
-- `worker_threads` can redirect stdin/stdout/stderr and use `parentPort`, but it cannot expose fd 3/fd 4 pipes. Extra pipes require `child_process.spawn()` with a `stdio` array.
+- `worker_threads` can redirect stdin/stdout/stderr and use `parentPort`, but it cannot expose arbitrary fd pipes. Extra pipes require `child_process.spawn()` with a `stdio` array.
 
 ## Correct Architecture
 
@@ -32,10 +33,10 @@ Responsibilities:
 
 - Stay the executable launched by adapters.
 - Own only launcher plumbing, stdio hookup, raw control/monitoring passthrough, logging needed for the outer process, and outer process lifecycle.
-- Start `packages/runner-node` with `spawn(process.execPath, [entry, bootConfig], { stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"] })`.
+- Start `packages/runner-node` with `spawn(process.execPath, [entry, bootConfig], { stdio: ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"] })`.
 - Forward host stdin to child stdin.
 - Forward child stdout/stderr to host stdout/stderr without closing host streams when the child exits.
-- Forward host control and monitoring streams as raw bytes to fd 3/fd 4 with minimal parsing only where required for outer lifecycle safety.
+- Forward host control and monitoring streams as raw bytes to fd 4/fd 5 with minimal parsing only where required for outer lifecycle safety.
 - Do not own BPMux, exposed API handlers, `hub`/`space` clients, sequence input/output transformation, or `RunnerAppContext` semantics.
 - Translate child process exit/signal to existing `RunnerMessageCode` messages only when the child cannot report first.
 
@@ -51,7 +52,7 @@ Responsibilities:
 - Preserve `runSequence()` stream handling: `DataStream`, `StringStream`, `BufferStream`, primitive return, `topic`, `contentType`, `readableEncoding`, PANG metadata, and serialization decisions.
 - Write sequence stdout/stderr naturally to fd 1/fd 2.
 - Read sequence stdin from fd 0.
-- Use fd 3/fd 4 for the same framed control and monitoring data the current in-process runner consumes/produces; do not replace these streams with JSON RPC.
+- Use fd 4/fd 5 for the same framed control and monitoring data the current in-process runner consumes/produces; do not replace these streams with JSON RPC.
 
 ## Non-Negotiable Invariants
 
@@ -71,7 +72,7 @@ Responsibilities:
 
 - Production `worker_threads` executor.
 - `parentPort` protocol for sequence execution.
-- `child_process.fork()` IPC channel.
+- `child_process.fork()` or semantic use of the reserved fd 3 IPC channel.
 - `API_REQUEST`, `EXECUTOR_API_INVOKE`, `OUTPUT_CHUNK`, or `INPUT_CHUNK` as the main runtime transport.
 - JSON/base64 request/response aggregation for exposed APIs.
 - Function-handler rejection in `context.api` caused by the runner boundary.
@@ -81,7 +82,7 @@ Responsibilities:
 ## Deliverables
 
 - `packages/runner-node` workspace containing the spawned Node runtime entry.
-- `packages/runner/src/executor/process-executor.ts` using `spawn` with fd 0-4 and no IPC.
+- `packages/runner/src/executor/process-executor.ts` using `spawn` with fd 0-5, fd 3 reserved as unused IPC, and fd 4/5 as pipes.
 - `packages/runner/src/executor/stream-forwarder.ts` for non-closing stdout/stderr forwarding.
 - Shared or copied sequence runtime code preserving current `RunnerAppContext`, `HostClient`/BPMux API-client transport, expose API, and `runSequence()` semantics, with tests before deduplication.
 - AVA specs in `packages/runner` and `packages/runner-node`.
@@ -106,23 +107,24 @@ Acceptance:
 
 Add RED/GREEN AVA tests proving the transport before refactoring runner code:
 
-- parent spawns a child with `stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"]`;
-- fd 3 is duplex control;
-- fd 4 is duplex monitoring;
+- parent spawns a child with `stdio: ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"]`;
+- fd 3 is IPC-reserved and unused;
+- fd 4 is duplex control;
+- fd 5 is duplex monitoring;
 - fd 1/fd 2 remain independent stdout/stderr;
-- `process.send` is undefined and no IPC channel exists.
+- `process.send` may exist because fd 3 is reserved as `ipc`, but production code never calls it.
 
 Acceptance:
 
 - `cd packages/runner && npx ava -m "*five-pipe*"` passes.
-- Test fails if stdio includes `"ipc"` or if fd 3/fd 4 are missing.
+- Test fails if stdio omits reserved `"ipc"` at fd 3 or if fd 4/fd 5 pipes are missing.
 
 ### Wave 2 - Runner-Node Runtime Skeleton
 
 Create `packages/runner-node` and a child entry that can:
 
 - read boot config from a private file path or inherited fd, not runner-owned env vars;
-- open fd 0-4 as Node streams;
+- open fd 0-5, ignoring fd 3 and using fd 4/5 as Node streams;
 - send a startup-ready monitoring frame only after sequence runtime is initialized;
 - load and call a trivial sequence with a sequence-local context.
 
@@ -153,8 +155,8 @@ Refactor `packages/runner` to spawn `runner-node` and forward pipes:
 - host stdin -> child fd 0;
 - child fd 1 -> host stdout;
 - child fd 2 -> host stderr;
-- host control <-> child fd 3 as raw passthrough;
-- host monitoring <-> child fd 4 as raw passthrough;
+- host control <-> child fd 4 as raw passthrough;
+- host monitoring <-> child fd 5 as raw passthrough;
 - child exit/signal -> existing lifecycle messages when needed.
 
 Acceptance:
@@ -211,7 +213,7 @@ Use signed, atomic commits:
 2. `test(runner): prove five-pipe child transport`
 3. `feat(runner-node): scaffold spawned node runtime`
 4. `feat(runner-node): preserve app context and sequence stream semantics`
-5. `feat(runner): spawn runner-node with stdio and control pipes`
+5. `feat(runner): spawn runner-node with stdio and reserved ipc pipes`
 6. `test(bdd): cover exposed API streaming under runner-node`
 7. `docs(roadmap): update runner isolation transport decision`
 

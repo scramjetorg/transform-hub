@@ -26,7 +26,7 @@ The Node runner currently mixes host communication, lifecycle reporting, and use
 - A JavaScript-level sequence failure terminates the child process and is reported as a sequence failure, while the outer runner remains alive long enough to relay stdout/stderr and last-resort diagnostics to the hub.
 - Node sequence stdout and stderr are captured from the child process directly and forwarded to existing host STDOUT/STDERR streams without replacing parent-process stdio.
 - Sequence execution does not receive runner-owned boot data through process environment variables. The outer runner passes boot metadata through a private config handoff and streams control/monitoring over pipes.
-- Communication between the sequence wrapper and the main runner uses OS pipes, not `worker_threads` `parentPort` or `fork()` IPC. Stdio uses fd 0/1/2, and control/monitoring passthrough uses two additional pipes.
+- Communication between the sequence wrapper and the main runner uses OS pipes, not `worker_threads` `parentPort` or `fork()`. Stdio uses fd 0/1/2, fd 3 is reserved as unused `ipc` for Node compatibility, and control/monitoring passthrough uses fd 4/5 pipes.
 - The new executor boundary leaves a clear path for future `runner-python` and `runner-bun` wrappers without changing the host-facing runner executable.
 
 ## Proposed Change
@@ -37,7 +37,7 @@ The Node runner currently mixes host communication, lifecycle reporting, and use
 2. For Node sequences, have the main runner create the child through an executor abstraction and pass only the data needed to run the sequence plus host connection metadata required by runner-node to preserve current communication semantics.
 3. Replace runner-to-sequence environment variables such as `SEQUENCE_PATH`, `SEQUENCE_INFO`, and `RUNNER_CONNECT_INFO` with an internal executor protocol. Adapter-level environment can still launch `packages/runner`, but sequence wrappers should receive execution metadata from the runner, not from inherited process env.
 4. Define a pipe-based contract between the main runner and sequence wrappers for stdio, control, monitoring, lifecycle completion, and failure reporting without proxying exposed API handlers or streaming HTTP bodies.
-5. Use Node `child_process.spawn()` for the first `runner-node` implementation with `stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"]`. Pipe child stdout/stderr to the existing host STDOUT/STDERR streams and reserve fd 3/fd 4 for control and monitoring passthrough.
+5. Use Node `child_process.spawn()` for the first `runner-node` implementation with `stdio: ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"]`. Pipe child stdout/stderr to the existing host STDOUT/STDERR streams and reserve fd 3 as unused IPC and fd 4/fd 5 for control and monitoring passthrough.
 6. Replace parent-process stdout/stderr overrides in the Node path with per-child stream forwarding. Parent runner logs should continue to use the log channel, not sequence stdout/stderr.
 7. Convert child process termination events into existing runner lifecycle messages when the child cannot report first: normal completion, thrown error, unhandled rejection, explicit `process.exit()`, non-zero exit, signal exit, and forced shutdown.
 8. Preserve the host-side protocol. The hub and `csi-controller` should continue receiving the same stream channels and lifecycle messages; this change is internal to the runner package boundary.
@@ -73,4 +73,4 @@ No breaking changes. The host still launches `packages/runner` as the executable
 
 ## Correction Note
 
-The implementation plan for this request is corrected in `.omo/plans/runner-worker-isolation.md`. The corrected design rejects the earlier `worker_threads`/`parentPort` RPC approach because it cannot provide extra fd pipes and it changes sequence API streaming semantics. The planned transport is `child_process.spawn()` with fd 0/1/2 for stdio and fd 3/4 for control/monitoring passthrough.
+The implementation plan for this request is corrected in `.omo/plans/runner-worker-isolation.md`. The corrected design rejects the earlier `worker_threads`/`parentPort` RPC approach because it cannot provide extra fd pipes and it changes sequence API streaming semantics. The planned transport is `child_process.spawn()` with fd 0/1/2 for stdio, fd 3 reserved as unused IPC, and fd 4/5 for control/monitoring passthrough.
