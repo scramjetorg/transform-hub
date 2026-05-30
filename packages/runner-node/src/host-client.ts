@@ -16,26 +16,23 @@ export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
     CC.IN, CC.OUT, CC.LOG, CC.REQUESTS,
 ]);
 
-/** Channels owned by the outer `packages/runner` process under split ownership. */
-export const OUTER_RUNNER_CHANNELS: ReadonlySet<CC> = new Set<CC>([
-    CC.STDIN, CC.STDOUT, CC.STDERR, CC.CONTROL, CC.MONITORING,
-]);
-
 /**
  * Connects to Host and exposes streams per channel (stdin, monitor etc.).
  *
- * Selective channel opening: when `channels` is provided to {@link init},
- * only the listed channel slots are populated; the rest stay `undefined`.
- * {@link disconnect} tolerates the gaps. This supports split ownership
- * between the outer runner (which owns launcher plumbing + STDIN/STDOUT/
- * STDERR/CONTROL/MONITORING) and runner-node (which owns the semantic
- * IN/OUT/LOG/REQUESTS channels).
+ * Owned by runner-node: the child runtime is responsible for opening sockets,
+ * wrapping the IN channel with a PassThrough, and initializing BPMux on the
+ * REQUESTS channel so the API client transport stays sequence-local.
+ *
+ * Selective channel opening: when `channels` is provided to {@link init} or
+ * {@link initWithStreams}, only the listed channel slots are populated; the
+ * rest stay `undefined`. {@link disconnect} tolerates the gaps.
  */
 class HostClient implements IHostClient {
     private _streams?: Array<Socket | PassThrough | undefined>;
     public agent?: Agent;
     logger: IObjectLogger;
-    bpmux: any;
+    bpmux?: BPMux;
+    public inputEndDeferMs = 500;
 
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = new ObjLogger(this);
@@ -99,7 +96,15 @@ class HostClient implements IHostClient {
     }
 
     async init(id: string, channels: ReadonlySet<CC> = ALL_CHANNELS): Promise<void> {
-        this._streams = await this.connect(id, channels);
+        const streams = await this.connect(id, channels);
+
+        this.initWithStreams(streams as unknown as UpstreamStreamsConfig);
+    }
+
+    initWithStreams(streams: UpstreamStreamsConfig): void {
+        // Tolerate sparse arrays for selective channel opening. Cast through
+        // a private union so the rest of the file can branch on undefined.
+        this._streams = streams as unknown as Array<Socket | PassThrough | undefined>;
 
         const outStream = this._streams[CC.OUT];
 
@@ -118,7 +123,7 @@ class HostClient implements IHostClient {
             const inputTarget = new PassThrough({ emitClose: false });
 
             input.on("end", async () => {
-                await defer(500);
+                await defer(this.inputEndDeferMs);
 
                 const control = this._streams![CC.CONTROL] as net.Socket | undefined;
 
@@ -136,7 +141,6 @@ class HostClient implements IHostClient {
             input.pipe(inputTarget, { end: false });
 
             this._streams[CC.IN] = inputTarget;
-            //this._streams[CC.STDIN] = this._streams[CC.STDIN].pipe(new PassThrough({ emitClose: false }), { end: false });
         }
 
         try {
@@ -149,13 +153,12 @@ class HostClient implements IHostClient {
 
                 agent.createConnection = () => {
                     try {
-                        const socket = this.bpmux!.multiplex() as Socket;
+                        const socket = this.bpmux!.multiplex() as unknown as Socket;
 
                         socket.on("error", () => {
                             this.logger.trace("Muxed stream error");
                         });
 
-                        // some libs call it but it is not here, in BPMux.
                         socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
 
                         this.logger.trace("Creating connection to verser server");
@@ -199,6 +202,7 @@ class HostClient implements IHostClient {
                     if (!hard && "writable" in stream) {
                         stream
                             .on("error", (e) => {
+                                // eslint-disable-next-line no-console
                                 console.error("Error on stream", i, e.stack);
                             })
                             .on("close", () => {

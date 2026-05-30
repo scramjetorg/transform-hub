@@ -95,6 +95,28 @@ In the situation like this above, when you want to execute tests with `@ci` tag 
 yarn test:bdd --tags="@ci" --tags="not @starts-host"
 ```
 
+### Safe BDD wrapper
+
+Use the safe wrapper when a scenario may hang or leave child processes behind:
+
+```bash
+yarn test:bdd:safe --name="E2E-001 TC-002"
+yarn test:bdd:ts:safe --name="E2E-001 TC-002"
+```
+
+The safe wrapper runs Cucumber in its own process group. If the run exceeds `BDD_TIMEOUT_MS` it sends `SIGTERM` to that group, waits `BDD_GRACE_MS`, then sends `SIGKILL` if anything is still running. A wrapper timeout exits with code `124`.
+
+On Linux, set `BDD_MEMORY_LIMIT_MB` to cap aggregate RSS for the BDD process group. When the process group stays over the limit for `BDD_MEMORY_SOFT_TRIPS` samples, checked every `BDD_MEMORY_POLL_MS`, the wrapper uses the same `SIGTERM` to `SIGKILL` cleanup and exits with code `137`. This is a guardrail to keep the developer or CI host alive; it does not fix the underlying test or runner memory issue.
+
+The harness timeout fixture is excluded from normal runs with the `@harness-selftest` tag. To verify the wrapper itself, run:
+
+```bash
+yarn test:bdd:safe:selftest
+yarn test:bdd:safe:memory-selftest
+```
+
+Those commands intentionally run synthetic fixtures through the safe wrapper and pass only when the wrapper returns the expected timeout or memory-limit exit code.
+
 ### Results :bar_chart:
 
 The results of the performed test will be displayed in the console as a summary of executed tests. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a BDD test, those html's are saved in `bdd/reports` folder.

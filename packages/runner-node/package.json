@@ -1,0 +1,50 @@
+{
+  "name": "@scramjet/runner-node",
+  "version": "1.1.0",
+  "description": "Node sequence runtime for Scramjet Transform Hub runner isolation.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build:docs": "typedoc",
+    "clean": "rm -rf ./dist .bic_cache",
+    "test": "ava"
+  },
+  "author": "Scramjet <opensource@scramjet.org>",
+  "license": "MIT",
+  "dependencies": {
+    "@scramjet/api-client": "^1.1.0",
+    "@scramjet/api-server": "^1.1.0",
+    "@scramjet/bpmux": "^9.0.0",
+    "@scramjet/client-utils": "^1.1.0",
+    "@scramjet/model": "^1.1.0",
+    "@scramjet/obj-logger": "^1.1.0",
+    "@scramjet/symbols": "^1.1.0",
+    "@scramjet/utility": "^1.1.0",
+    "scramjet": "^4.37.0"
+  },
+  "devDependencies": {
+    "@scramjet/types": "^1.1.0",
+    "@types/node": "^22.15.0",
+    "ava": "^3.15.0",
+    "nyc": "^15.1.0",
+    "ts-node": "^10.9.1",
+    "typedoc": "0.23.17",
+    "typedoc-plugin-markdown": "3.13.6",
+    "typescript": "~4.7.4"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "**/*.spec.ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}

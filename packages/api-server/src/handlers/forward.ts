@@ -1,7 +1,13 @@
 import http, { IncomingMessage, ServerResponse } from "http";
 import { ForwardStrategy, NextCallback } from "@scramjet/types";
 import https from "https";
+import * as fs from "fs";
 import { CeroError } from "../lib/definitions";
+
+const dbg = (m: string) => { try { fs.appendFileSync("/tmp/forward-debug.log", `${Date.now()} ${m}\n`); } catch {} };
+
+dbg("forward.ts module loaded");
+console.error("FORWARD_TS_MODULE_LOADED");
 
 /**
  * Creates a forwarding controller that forwards requests to one of the provided URLs.
@@ -59,6 +65,14 @@ export function createForwardController(
             proxyRes.pipe(res, { end: true });
         });
 
+        // Disable Nagle on both ends of the proxy hop so request body chunks
+        // and streaming response chunks reach the upstream / downstream
+        // peer immediately instead of being coalesced by TCP.
+        proxyReq.on("socket", (socket) => {
+            if (typeof socket.setNoDelay === "function") socket.setNoDelay(true);
+        });
+        if (typeof res.socket?.setNoDelay === "function") res.socket.setNoDelay(true);
+
         proxyReq.on("error", (err: Error & { code: any }) => {
             if (typeof err.code === "string") {
                 err.code = 500;
@@ -68,9 +82,16 @@ export function createForwardController(
         });
 
         // Pipe the incoming request body to proxy request if needed.
-        if (req.readableEnded)
+        if (req.readableEnded) {
             proxyReq.end();
-        else
-            req.pipe(proxyReq, { end: true });
+        } else {
+            dbg(`forward: setup data listener url=${req.url}`);
+            req.on("data", (chunk: Buffer) => {
+                dbg(`forward: data from client size=${chunk.length}`);
+                proxyReq.write(chunk);
+            });
+            req.once("end", () => { dbg("forward: client end"); proxyReq.end(); });
+            req.once("error", (e) => proxyReq.destroy(e));
+        }
     };
 }

@@ -4,7 +4,7 @@
 | ----- | ----- |
 | Title | Runner worker isolation |
 | Category | feature-request |
-| Scope | packages/runner, packages/types, packages/host |
+| Scope | packages/runner, packages/runner-node |
 | Breaking | no |
 
 ## Problem Statement
@@ -26,7 +26,7 @@ The Node runner currently mixes host communication, lifecycle reporting, and use
 - A JavaScript-level sequence failure terminates the child process and is reported as a sequence failure, while the outer runner remains alive long enough to relay stdout/stderr and last-resort diagnostics to the hub.
 - Node sequence stdout and stderr are captured from the child process directly and forwarded to existing host STDOUT/STDERR streams without replacing parent-process stdio.
 - Sequence execution does not receive runner-owned boot data through process environment variables. The outer runner passes boot metadata through a private config handoff and streams control/monitoring over pipes.
-- Communication between the sequence wrapper and the main runner uses OS pipes, not `worker_threads` `parentPort` or `fork()`. Stdio uses fd 0/1/2, fd 3 is reserved as unused `ipc` for Node compatibility, and control/monitoring passthrough uses fd 4/5 pipes.
+- Communication between the sequence wrapper and the main runner uses `child_process.spawn()` with real OS pipes. Stdio uses fd 0/1/2, fd 3 is reserved as unused `ipc` for Node compatibility, and control/monitoring passthrough uses fd 4/5 pipes.
 - The new executor boundary leaves a clear path for future `runner-python` and `runner-bun` wrappers without changing the host-facing runner executable.
 
 ## Proposed Change
@@ -73,4 +73,4 @@ No breaking changes. The host still launches `packages/runner` as the executable
 
 ## Correction Note
 
-The implementation plan for this request is corrected in `.omo/plans/runner-worker-isolation.md`. The corrected design rejects the earlier `worker_threads`/`parentPort` RPC approach because it cannot provide extra fd pipes and it changes sequence API streaming semantics. The planned transport is `child_process.spawn()` with fd 0/1/2 for stdio, fd 3 reserved as unused IPC, and fd 4/5 for control/monitoring passthrough.
+The implementation plan for this request is corrected in `.omo/plans/runner-worker-isolation.md`. Current `devel` at `1e4a5a20921f517dcb2a6e7bbc940c10a7f3a5a6` is the spawn point for the implementation branch. The corrected design rejects thread or RPC-style sequence execution because that boundary cannot provide the required extra fd pipes and would change sequence API streaming semantics. The planned transport is `child_process.spawn()` with fd 0/1/2 for stdio, fd 3 reserved as unused IPC, and fd 4/5 for control/monitoring passthrough.

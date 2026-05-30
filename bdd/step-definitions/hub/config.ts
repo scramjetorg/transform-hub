@@ -21,10 +21,10 @@ const AWAITING_POLL_DEFER_TIME = 250;
 
 const spawned: Set<ChildProcess> = new Set();
 
-process.on("exit", (sig: number) => {
+process.on("exit", () => {
     spawned.forEach(child => {
         try {
-            if (child.pid) child.kill(sig);
+            HostUtils.killProcessGroup(child, SIGTERM);
         } catch {
             // eslint-disable-next-line no-console
             console.error(`Had problems killing PID: ${child.pid}`);
@@ -259,7 +259,7 @@ Then("exit hub process", async function(this: CustomWorld) {
 
     await new Promise<void>((resolve) => {
         hub.on("exit", resolve);
-        hub.kill(SIGTERM);
+        HostUtils.killProcessGroup(hub, SIGTERM);
     });
 
     spawned.delete(hub);
