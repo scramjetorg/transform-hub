@@ -21,31 +21,31 @@ The Node runner currently mixes host communication, lifecycle reporting, and use
 
 ## Expected Behavior
 
-- `packages/runner` remains the executable launched by the host adapters and continues to own host communication, stream wiring, lifecycle reporting, and shutdown coordination.
-- Node sequence execution moves into a separate `runner-node` wrapper module that is spawned by the main runner as an isolated execution worker.
-- A JavaScript-level sequence failure terminates the worker and is reported by the main runner as a sequence failure, while the runner control-plane remains alive long enough to relay status, stdout/stderr, and diagnostics to the hub.
-- Node sequence stdout and stderr are captured from the worker directly and forwarded to existing host STDOUT/STDERR streams without replacing parent-process stdio.
-- Sequence execution does not receive runner control data through process environment variables. The runner passes execution metadata through a private executor protocol instead.
-- Communication between the sequence wrapper and the main runner is abstracted behind an executor protocol rather than direct access to `HostClient`, process stdio mutation, or runner-owned environment variables.
+- `packages/runner` remains the executable launched by the host adapters and continues to own launch supervision, stdio hookup, raw control/monitoring passthrough, lifecycle reporting, and shutdown coordination.
+- Node sequence execution moves into a separate `runner-node` wrapper module that is spawned by the main runner as an isolated Node child process.
+- A JavaScript-level sequence failure terminates the child process and is reported as a sequence failure, while the outer runner remains alive long enough to relay stdout/stderr and last-resort diagnostics to the hub.
+- Node sequence stdout and stderr are captured from the child process directly and forwarded to existing host STDOUT/STDERR streams without replacing parent-process stdio.
+- Sequence execution does not receive runner-owned boot data through process environment variables. The outer runner passes boot metadata through a private config handoff and streams control/monitoring over pipes.
+- Communication between the sequence wrapper and the main runner uses OS pipes, not `worker_threads` `parentPort` or `fork()` IPC. Stdio uses fd 0/1/2, and control/monitoring passthrough uses two additional pipes.
 - The new executor boundary leaves a clear path for future `runner-python` and `runner-bun` wrappers without changing the host-facing runner executable.
 
 ## Proposed Change
 
 1. Split runner responsibilities into two layers:
-   - `packages/runner`: executable control-plane, `HostClient`, host stream protocol, monitoring, lifecycle, shutdown, and executor orchestration.
-   - `runner-node`: Node sequence executor wrapper responsible for loading the sequence module and running user code inside the worker context.
-2. For Node sequences, have the main runner create the worker through an executor abstraction and pass only the data needed to run the sequence: sequence path, app config, arguments, input/output wiring metadata, and lifecycle commands.
+   - `packages/runner`: executable launcher, stdio hookup, raw control/monitoring pipe passthrough, lifecycle supervision, shutdown, and executor orchestration.
+   - `runner-node`: Node sequence runtime responsible for loading the sequence module, owning sequence-facing communication semantics, and running user code inside the child process.
+2. For Node sequences, have the main runner create the child through an executor abstraction and pass only the data needed to run the sequence plus host connection metadata required by runner-node to preserve current communication semantics.
 3. Replace runner-to-sequence environment variables such as `SEQUENCE_PATH`, `SEQUENCE_INFO`, and `RUNNER_CONNECT_INFO` with an internal executor protocol. Adapter-level environment can still launch `packages/runner`, but sequence wrappers should receive execution metadata from the runner, not from inherited process env.
-4. Define a runtime-neutral communication contract between the main runner and sequence wrappers for input, output, monitoring, lifecycle commands, stdout, stderr, completion, and failure reporting.
-5. Use Node `worker_threads` for the first `runner-node` implementation. Create workers with stdout/stderr capture enabled and pipe `worker.stdout` / `worker.stderr` to the existing host STDOUT/STDERR streams.
-6. Replace parent-process stdout/stderr overrides in the Node path with per-worker stream forwarding. Parent runner logs should continue to use the log channel, not sequence stdout/stderr.
-7. Convert worker termination events into structured runner messages: normal completion, thrown error, unhandled rejection, explicit worker `process.exit()`, non-zero exit, and forced shutdown.
+4. Define a pipe-based contract between the main runner and sequence wrappers for stdio, control, monitoring, lifecycle completion, and failure reporting without proxying exposed API handlers or streaming HTTP bodies.
+5. Use Node `child_process.spawn()` for the first `runner-node` implementation with `stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"]`. Pipe child stdout/stderr to the existing host STDOUT/STDERR streams and reserve fd 3/fd 4 for control and monitoring passthrough.
+6. Replace parent-process stdout/stderr overrides in the Node path with per-child stream forwarding. Parent runner logs should continue to use the log channel, not sequence stdout/stderr.
+7. Convert child process termination events into existing runner lifecycle messages when the child cannot report first: normal completion, thrown error, unhandled rejection, explicit `process.exit()`, non-zero exit, signal exit, and forced shutdown.
 8. Preserve the host-side protocol. The hub and `csi-controller` should continue receiving the same stream channels and lifecycle messages; this change is internal to the runner package boundary.
 9. Define the executor interface so future runtime wrappers can be added without changing the host-facing contract:
-   - `runner-node` for Node workers in this proposal.
+   - `runner-node` for spawned Node child processes in this proposal.
    - `runner-python` as a later wrapper around Python execution.
    - `runner-bun` as a later wrapper for Bun execution once Bun support is designed.
-10. Document the isolation boundary: worker threads improve JavaScript-level fault isolation and stdout/stderr capture, but they are not an OS sandbox and do not guarantee survival from native crashes, process aborts, or whole-process fatal errors.
+10. Document the isolation boundary: spawned child processes provide a real process boundary for Node sequence execution and stdio capture, but they are not an OS sandbox and do not replace Docker/Kubernetes isolation for untrusted code.
 
 ## Backwards Compatibility
 
@@ -53,10 +53,10 @@ No breaking changes. The host still launches `packages/runner` as the executable
 
 ## Testing Plan
 
-- Unit test: main runner selects the Node executor for Node sequences and passes the expected sequence path, args, config, and lifecycle data through the executor protocol, not environment variables.
-- Unit test: `runner-node` reports normal completion, thrown errors, unhandled rejections, explicit worker exits, and forced shutdowns through the executor interface.
-- Unit test: worker stdout and stderr are forwarded to separate host STDOUT/STDERR streams without mutating parent `process.stdout` or `process.stderr`.
-- Unit test: sequence wrapper startup does not read runner-owned values from `process.env`; metadata comes from the executor protocol.
+- Unit test: main runner selects the Node process executor for Node sequences and passes the expected sequence path, args, config, and lifecycle data through private boot config plus pipes, not runner-owned environment variables.
+- Unit test: `runner-node` reports normal completion, thrown errors, unhandled rejections, explicit child exits, signal exits, and forced shutdowns through pipe-based lifecycle handling.
+- Unit test: child stdout and stderr are forwarded to separate host STDOUT/STDERR streams without mutating parent `process.stdout` or `process.stderr`.
+- Unit test: sequence wrapper startup does not read runner-owned values from `process.env`; metadata comes from private boot config and pipe wiring.
 - Integration test: start a Node sequence that throws after writing to stdout/stderr; verify the hub receives both streams and a structured failure instead of losing communication immediately.
 - Integration test: start a successful Node sequence and verify existing output, monitoring, and lifecycle behavior remain compatible with current host endpoints.
 - Manual verification: run `yarn start:dev -- --runtime-adapter=process`, deploy a simple Node sequence, then repeat with a sequence that throws and confirm diagnostics are relayed before cleanup.
@@ -70,3 +70,7 @@ No breaking changes. The host still launches `packages/runner` as the executable
 - `packages/adapter-process/src/process-instance-adapter.ts`
 - `packages/adapters-common/src/get-runner-env.ts`
 - `docs/roadmap/011-feature-request-sequence-lifecycle-hooks.md`
+
+## Correction Note
+
+The implementation plan for this request is corrected in `.omo/plans/runner-worker-isolation.md`. The corrected design rejects the earlier `worker_threads`/`parentPort` RPC approach because it cannot provide extra fd pipes and it changes sequence API streaming semantics. The planned transport is `child_process.spawn()` with fd 0/1/2 for stdio and fd 3/4 for control/monitoring passthrough.
