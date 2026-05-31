@@ -2,21 +2,37 @@
 import { BPMux } from "@scramjet/bpmux";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
-import { IHostClient, IObjectLogger, UpstreamStreamsConfig, } from "@scramjet/types";
+import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 import { Agent } from "http";
 import net, { Socket, createConnection } from "net";
 import { PassThrough } from "stream";
 
-type HostOpenConnections = [
-    Socket, Socket, Socket, Socket, Socket, Socket, Socket, Socket, Socket
-]
+type AgentWithCreateConnection = Agent & { createConnection: typeof createConnection };
+
+/** Default channel set: every host channel (legacy parity). */
+export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
+    CC.STDIN, CC.STDOUT, CC.STDERR, CC.CONTROL, CC.MONITORING,
+    CC.IN, CC.OUT, CC.LOG, CC.REQUESTS,
+]);
+
+/** Channels owned by the outer `packages/runner` process under split ownership. */
+export const OUTER_RUNNER_CHANNELS: ReadonlySet<CC> = new Set<CC>([
+    CC.STDIN, CC.STDOUT, CC.STDERR, CC.CONTROL, CC.MONITORING,
+]);
 
 /**
- * Connects to Host and exposes streams per channel (stdin, monitor etc.)
+ * Connects to Host and exposes streams per channel (stdin, monitor etc.).
+ *
+ * Selective channel opening: when `channels` is provided to {@link init},
+ * only the listed channel slots are populated; the rest stay `undefined`.
+ * {@link disconnect} tolerates the gaps. This supports split ownership
+ * between the outer runner (which owns launcher plumbing + STDIN/STDOUT/
+ * STDERR/CONTROL/MONITORING) and runner-node (which owns the semantic
+ * IN/OUT/LOG/REQUESTS channels).
  */
 class HostClient implements IHostClient {
-    private _streams?: UpstreamStreamsConfig;
+    private _streams?: Array<Socket | PassThrough | undefined>;
     public agent?: Agent;
     logger: IObjectLogger;
     bpmux: any;
@@ -25,7 +41,7 @@ class HostClient implements IHostClient {
         this.logger = new ObjLogger(this);
     }
 
-    private get streams(): UpstreamStreamsConfig {
+    private get streams(): Array<Socket | PassThrough | undefined> {
         if (!this._streams) {
             throw new Error("Accessing streams before initialization");
         }
@@ -61,59 +77,75 @@ class HostClient implements IHostClient {
         });
     }
 
-    private async connect(id: string): Promise<HostOpenConnections> {
-        return Promise.all(
-            Array.from(Array(9))
-                .map((_e: void, i: number) => this.connectOne(i))
-                .map((connPromised, index) => {
-                    return connPromised.then((connection) => {
-                        // Assuming id is exactly 36 bytes
-                        connection.write(id);
-                        // Assuming number is from 0-7, sending 1 byte
-                        connection.write(index.toString());
+    private async connect(id: string, channels: ReadonlySet<CC>): Promise<Array<Socket | undefined>> {
+        const slots: Array<Socket | undefined> = new Array(9).fill(undefined);
+        const opened = await Promise.all(
+            Array.from(channels.values()).map(async (channelIdx) => {
+                const conn = await this.connectOne(channelIdx);
 
-                        return connection;
-                    });
-                })
-        ) as Promise<unknown> as Promise<HostOpenConnections>;
+                // Assuming id is exactly 36 bytes
+                conn.write(id);
+                // Channel index 0-8 fits one ASCII byte
+                conn.write(channelIdx.toString());
+                return [channelIdx, conn] as const;
+            })
+        );
+
+        for (const [channelIdx, conn] of opened) {
+            slots[channelIdx] = conn;
+        }
+
+        return slots;
     }
 
-    async init(id: string): Promise<void> {
-        this._streams = await this.connect(id);
+    async init(id: string, channels: ReadonlySet<CC> = ALL_CHANNELS): Promise<void> {
+        this._streams = await this.connect(id, channels);
 
-        this._streams[CC.OUT].on("end", () => {
-            this.logger.info("Total data written to instance output", (this.streams[CC.OUT] as net.Socket).bytesWritten);
-        });
+        const outStream = this._streams[CC.OUT];
+
+        if (outStream) {
+            outStream.on("end", () => {
+                this.logger.info(
+                    "Total data written to instance output",
+                    (outStream as net.Socket).bytesWritten
+                );
+            });
+        }
 
         const input = this._streams[CC.IN];
 
-        const inputTarget = new PassThrough({ emitClose: false });
+        if (input) {
+            const inputTarget = new PassThrough({ emitClose: false });
 
-        input.on("end", async () => {
-            await defer(500);
+            input.on("end", async () => {
+                await defer(500);
 
-            if ((this._streams![CC.CONTROL] as net.Socket).readableEnded) {
-                this.logger.info("Input end. Control is also ended... We are disconnected.");
-            } else {
-                this.logger.info("Input end. Control not ended. We are online. Desired input end.");
-                inputTarget.end();
-            }
-        });
+                const control = this._streams![CC.CONTROL] as net.Socket | undefined;
 
-        input.pipe(inputTarget, { end: false });
+                if (control && control.readableEnded) {
+                    this.logger.info("Input end. Control is also ended... We are disconnected.");
+                } else if (control) {
+                    this.logger.info("Input end. Control not ended. We are online. Desired input end.");
+                    inputTarget.end();
+                } else {
+                    // No CONTROL channel owned by this client - just propagate.
+                    inputTarget.end();
+                }
+            });
 
-        this._streams[CC.IN] = inputTarget;
-        //this._streams[CC.STDIN] = this._streams[CC.STDIN].pipe(new PassThrough({ emitClose: false }), { end: false });
+            input.pipe(inputTarget, { end: false });
+
+            this._streams[CC.IN] = inputTarget;
+            //this._streams[CC.STDIN] = this._streams[CC.STDIN].pipe(new PassThrough({ emitClose: false }), { end: false });
+        }
 
         try {
             if (this._streams[CC.REQUESTS]) {
                 this.logger.debug("Using BPMux for requests stream");
 
-                this.bpmux = new BPMux(this._streams[CC.REQUESTS]!);
+                this.bpmux = new BPMux(this._streams[CC.REQUESTS] as unknown as net.Socket);
 
-                const agent = new Agent() as Agent & {
-                    createConnection: typeof createConnection
-                }; // lack of types?;
+                const agent = new Agent() as AgentWithCreateConnection;
 
                 agent.createConnection = () => {
                     try {
@@ -151,14 +183,25 @@ class HostClient implements IHostClient {
         this.logger.trace("Disconnecting from host");
 
         const streamsExitedPromised: Promise<void>[] = this.streams.map((stream, i) =>
-            new Promise(
+            new Promise<void>(
                 (res) => {
+                    if (!stream) {
+                        // Channel was not opened by this client (split ownership).
+                        res();
+                        return;
+                    }
+
                     if ([CC.IN, CC.STDIN, CC.CONTROL].includes(i)) {
                         res();
                         return;
                     }
 
-                    if (!hard && "writable" in stream!) {
+                    if ((stream as net.Socket).destroyed || (stream as net.Socket).closed) {
+                        res();
+                        return;
+                    }
+
+                    if (!hard && "writable" in stream) {
                         stream
                             .on("error", (e) => {
                                 console.error("Error on stream", i, e.stack);
@@ -168,7 +211,7 @@ class HostClient implements IHostClient {
                             })
                             .end();
                     } else {
-                        stream!.destroy();
+                        stream.destroy();
                         res();
                     }
                 }
@@ -177,40 +220,50 @@ class HostClient implements IHostClient {
         await Promise.all(streamsExitedPromised);
     }
 
+    private requireStream<T>(idx: CC): T {
+        const s = this.streams[idx];
+
+        if (!s) {
+            throw new Error(`Channel ${CC[idx]} not opened on this HostClient`);
+        }
+
+        return s as unknown as T;
+    }
+
     get stdinStream() {
-        return this.streams[CC.STDIN];
+        return this.requireStream<UpstreamStreamsConfig[CC.STDIN]>(CC.STDIN);
     }
 
     get stdoutStream() {
-        return this.streams[CC.STDOUT];
+        return this.requireStream<UpstreamStreamsConfig[CC.STDOUT]>(CC.STDOUT);
     }
 
     get stderrStream() {
-        return this.streams[CC.STDERR];
+        return this.requireStream<UpstreamStreamsConfig[CC.STDERR]>(CC.STDERR);
     }
 
     get controlStream() {
-        return this.streams[CC.CONTROL];
+        return this.requireStream<UpstreamStreamsConfig[CC.CONTROL]>(CC.CONTROL);
     }
 
     get monitorStream() {
-        return this.streams[CC.MONITORING];
+        return this.requireStream<UpstreamStreamsConfig[CC.MONITORING]>(CC.MONITORING);
     }
 
     get inputStream() {
-        return this.streams[CC.IN];
+        return this.requireStream<UpstreamStreamsConfig[CC.IN]>(CC.IN);
     }
 
     get outputStream() {
-        return this.streams[CC.OUT];
+        return this.requireStream<UpstreamStreamsConfig[CC.OUT]>(CC.OUT);
     }
 
     get logStream() {
-        return this.streams[CC.LOG];
+        return this.requireStream<UpstreamStreamsConfig[CC.LOG]>(CC.LOG);
     }
 
     get requestsStream() {
-        return this.streams[CC.REQUESTS];
+        return this.streams[CC.REQUESTS] as UpstreamStreamsConfig[CC.REQUESTS] | undefined;
     }
 }
 

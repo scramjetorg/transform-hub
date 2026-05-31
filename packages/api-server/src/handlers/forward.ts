@@ -59,6 +59,14 @@ export function createForwardController(
             proxyRes.pipe(res, { end: true });
         });
 
+        // Disable Nagle on both ends of the proxy hop so request body chunks
+        // and streaming response chunks reach the upstream / downstream
+        // peer immediately instead of being coalesced by TCP.
+        proxyReq.on("socket", (socket) => {
+            if (typeof socket.setNoDelay === "function") socket.setNoDelay(true);
+        });
+        if (typeof res.socket?.setNoDelay === "function") res.socket.setNoDelay(true);
+
         proxyReq.on("error", (err: Error & { code: any }) => {
             if (typeof err.code === "string") {
                 err.code = 500;
@@ -67,10 +75,6 @@ export function createForwardController(
             next(err);
         });
 
-        // Pipe the incoming request body to proxy request if needed.
-        if (req.readableEnded)
-            proxyReq.end();
-        else
-            req.pipe(proxyReq, { end: true });
+        req.pipe(proxyReq, { end: true });
     };
 }

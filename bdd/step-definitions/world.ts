@@ -7,6 +7,10 @@ import { Readable } from "stream";
 import * as dns from "dns";
 
 const DEFAULT_TIMEOUT = 20000;
+const configuredTimeout = Number(process.env.BDD_STEP_TIMEOUT_MS);
+const defaultTimeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0
+    ? configuredTimeout
+    : DEFAULT_TIMEOUT;
 
 export class CustomWorld implements World {
     readonly attach: ICreateAttachment;
@@ -59,4 +63,4 @@ export class CustomWorld implements World {
 }
 
 setWorldConstructor(CustomWorld);
-setDefaultTimeout(DEFAULT_TIMEOUT);
+setDefaultTimeout(defaultTimeout);

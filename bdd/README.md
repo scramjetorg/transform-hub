@@ -95,6 +95,62 @@ In the situation like this above, when you want to execute tests with `@ci` tag 
 yarn test:bdd --tags="@ci" --tags="not @starts-host"
 ```
 
+### Running BDD in a container
+
+The `yarn test:bdd` command now runs through `scripts/run-bdd-docker.js`, which launches Cucumber inside a Docker container. This isolates the test from the host and prevents orphaned processes.
+
+**Prerequisites**
+
+- Docker daemon is running
+- Your current user is in the `docker` group
+
+**Default invocation**
+
+By default, `yarn test:bdd` starts a `node:22` container with `--memory=4096m` (and `--memory-swap` set to the same value). You don't need to change anything to get the containerized behavior.
+
+**Environment variables**
+
+You can tune the wrapper with these variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `BDD_NODE_IMAGE` | `node:22` | Docker image to use |
+| `BDD_DOCKER_MEMORY` | `4096m` | Container memory cap (`--memory` + `--memory-swap`) |
+| `BDD_DOCKER_CPUS` | (unset) | CPU limit (`--cpus`); unset = unlimited |
+| `BDD_TIMEOUT_MS` | `0` | Wrapper wall-clock timeout in ms; `0` = disabled |
+| `BDD_GRACE_MS` | `15000` | Grace period before SIGKILL after SIGTERM |
+
+**Environment passthrough**
+
+The wrapper forwards variables that match the following allowlist into the container: `SCRAMJET_*`, `NO_HOST`, `TEST_REPORT`, `DEVELOPMENT`, `PACKAGES_DIR`, `SCP_ENV_VALUE`, `BDD_*`, `CI`.
+
+**Exit codes**
+
+The wrapper uses these exit codes to signal specific failures:
+
+- `124` = wrapper wall-clock timeout
+- `137` = container OOM kill
+- `127` = wrapper preflight failure (docker not found or docker group GID not resolvable)
+- Other = container's own exit code
+
+**Cleaning up orphaned containers**
+
+If a run is interrupted and leaves a container behind, you can kill all BDD runner containers with one command:
+
+```bash
+docker ps --filter name=bdd-runner- -q | xargs -r docker kill
+```
+
+**Known risk**
+
+Native Node.js addons in `node_modules` must be linux-x64 glibc compatible. If you see an ABI mismatch error, rebuild the dependencies inside a Linux container:
+
+```bash
+yarn --cwd=./bdd install
+```
+
+This ensures the native modules match the container's runtime.
+
 ### Results :bar_chart:
 
 The results of the performed test will be displayed in the console as a summary of executed tests. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a BDD test, those html's are saved in `bdd/reports` folder.

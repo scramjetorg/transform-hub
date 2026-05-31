@@ -1,10 +1,30 @@
 #!/usr/bin/env node
 
-import { Runner } from "../runner";
-import fs from "fs";
-import { AppConfig, SequenceInfo, RunnerConnectInfo } from "@scramjet/types";
-import { HostClient } from "../host-client";
+import * as fs from "fs";
+import * as os from "os";
+import { dirname, resolve } from "path";
+import { Readable, Writable } from "stream";
+
+import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
 import { RunnerExitCode } from "@scramjet/symbols";
+
+import { HostClient, OUTER_RUNNER_CHANNELS } from "../host-client";
+import {
+    spawnRunnerNode,
+    RunnerNodeProcessHandles
+} from "../executor/process-executor";
+import { forwardChildStdio } from "../executor/stream-forwarder";
+import {
+    translateChildClose,
+    writeTerminalLifecycleFrame
+} from "../executor/exit-translation";
+import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
+import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
+
+// ---------------------------------------------------------------------------
+// Adapter-facing env validation. Preserved verbatim from the legacy entry so
+// adapters do not need to change. Same env names, same exit codes.
+// ---------------------------------------------------------------------------
 
 const sequencePath: string = `${process.env.SEQUENCE_PATH?.replace(/(?<!\.m?js|\.ts)$/, ".js")}`;
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
@@ -32,6 +52,11 @@ try {
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
+// connectInfo is parsed and validated above to preserve the adapter-facing
+// failure semantics; the new pipe-based runner-node entry does not consume
+// it directly today (boot config carries sequencePath + args).
+void connectInfo;
+
 if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
     console.error("Incorrect run argument: instancesServerPort");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
@@ -52,28 +77,162 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(RunnerExitCode.INVALID_SEQUENCE_PATH);
 }
 
-const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
+// ---------------------------------------------------------------------------
+// Boot config: a private absolute file passed to runner-node as argv[2].
+// runner-node owns its own runtime; runner-owned env vars are NOT forwarded.
+// ---------------------------------------------------------------------------
 
-/**
- * Start runner script.
- *
- * * Creates an instance of a runner.
- * * Runs a sequence.
- *
- * @param sequencePath - sequence file path
- * @param fifosPath - fifo files path
- */
+interface RunnerNodeBootConfigShape {
+    sequencePath: string;
+    sequenceArgs?: unknown[];
+    instanceId: string;
+    instancesServerPort: number;
+    instancesServerHost: string;
+    appConfig?: AppConfig;
+    sequenceInfo: SequenceInfo;
+    instanceName?: string;
+    logLevel?: LogLevel;
+    exposePath?: string;
+    exposeHost?: string;
+}
 
-const runner: Runner<AppConfig> = new Runner({
-    sequencePath,
-    hostClient,
-    instanceId,
-    connectInfo,
-    runnerConnectInfo: parsedRunnerConnectInfo
-});
+function writeBootConfig(): string {
+    const dir = fs.mkdtempSync(resolve(os.tmpdir(), "runner-node-boot-"));
+    const file = resolve(dir, "boot-config.json");
 
-runner.main()
-    .catch(e => {
-        process.exitCode = e.errorCode || 11;
-        process.exit();
+    const payload: RunnerNodeBootConfigShape = {
+        sequencePath: resolve(sequencePath),
+        instanceId: instanceId!,
+        instancesServerPort: parseInt(instancesServerPort!, 10),
+        instancesServerHost: instancesServerHost!,
+        sequenceInfo: connectInfo
+    };
+
+    if (Array.isArray(parsedRunnerConnectInfo.args)) {
+        payload.sequenceArgs = parsedRunnerConnectInfo.args;
+    }
+
+    if (parsedRunnerConnectInfo.appConfig) payload.appConfig = parsedRunnerConnectInfo.appConfig;
+    if (parsedRunnerConnectInfo.instanceName) payload.instanceName = parsedRunnerConnectInfo.instanceName;
+    if (parsedRunnerConnectInfo.logLevel) payload.logLevel = parsedRunnerConnectInfo.logLevel;
+    if (parsedRunnerConnectInfo.exposePath) payload.exposePath = parsedRunnerConnectInfo.exposePath;
+
+    const exposeHostResolved = parsedRunnerConnectInfo.exposeHost ?? process.env.EXPOSE_HOST;
+
+    if (exposeHostResolved) payload.exposeHost = exposeHostResolved;
+
+    fs.writeFileSync(file, JSON.stringify(payload), { encoding: "utf8", mode: 0o600 });
+
+    return file;
+}
+
+function tryRemove(file: string): void {
+    try {
+        fs.rmSync(file, { force: true });
+        fs.rmdirSync(dirname(file));
+    } catch {
+        // best-effort cleanup
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Stream wiring helpers. fd4/fd5 are raw passthrough; no JSON / base64
+// aggregation, no V1 protocol names.
+// ---------------------------------------------------------------------------
+
+function pipeRaw(src: Readable, dst: Writable): void {
+    src.on("error", () => { /* swallow - host stream errors are non-fatal here */ });
+    src.pipe(dst, { end: false });
+}
+
+async function main(): Promise<void> {
+    const hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
+
+    await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
+
+    const bootConfigPath = writeBootConfig();
+    const entry = resolveRunnerNodeEntry(__dirname);
+
+    const childEnv: NodeJS.ProcessEnv = {};
+
+    if (entry.needsTsNode) {
+        // ts-node fallback for source-tree development. Inherit the parent's
+        // PATH/HOME/NODE_PATH so ts-node and resolved modules stay reachable;
+        // anything runner-owned (SEQUENCE_PATH, RUNNER_CONNECT_INFO, ...) is
+        // NOT forwarded - the boot config file replaces that channel.
+        childEnv.NODE_OPTIONS = "--require ts-node/register/transpile-only";
+        if (process.env.PATH) childEnv.PATH = process.env.PATH;
+        if (process.env.HOME) childEnv.HOME = process.env.HOME;
+        if (process.env.NODE_PATH) childEnv.NODE_PATH = process.env.NODE_PATH;
+    }
+
+    let handles: RunnerNodeProcessHandles;
+
+    try {
+        handles = spawnRunnerNode({
+            runnerNodeEntry: entry.entry,
+            bootConfigPath,
+            env: childEnv
+        });
+    } catch (err) {
+        tryRemove(bootConfigPath);
+        await hostClient.disconnect(true).catch(() => undefined);
+        console.error("Failed to spawn runner-node:", err instanceof Error ? err.message : err);
+        process.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
+    }
+
+    // host stdin -> child stdin (fd0). Use end:true so EOF on host stdin is
+    // forwarded to the sequence; the parent process owns the pipe lifetime.
+    if (handles.child.stdin) {
+        hostClient.stdinStream.on("error", () => undefined);
+        hostClient.stdinStream.pipe(handles.child.stdin);
+    }
+
+    // child stdout/stderr -> host stdout/stderr (raw, end:false)
+    forwardChildStdio(handles.child, {
+        hostStdout: hostClient.stdoutStream,
+        hostStderr: hostClient.stderrStream
     });
+
+    // host control -> child fd4 (raw)
+    pipeRaw(hostClient.controlStream, handles.control);
+
+    // child fd5 -> host monitoring (raw)
+    pipeRaw(handles.monitoring, hostClient.monitorStream);
+
+    // Track whether the child already emitted a terminal lifecycle frame
+    // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
+    // destructive; bytes still flow to host monitoring unchanged.
+    const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+
+    handles.child.once("error", err => {
+        console.error("runner-node child errored:", err instanceof Error ? err.message : err);
+    });
+
+    handles.child.once("close", (code, signal) => {
+        const translated = translateChildClose(code, signal);
+
+        if (!lifecycle.observed()) {
+            try {
+                writeTerminalLifecycleFrame(hostClient.monitorStream, translated);
+            } catch {
+                // never fail child cleanup on a failed frame write
+            }
+        }
+
+        tryRemove(bootConfigPath);
+
+        hostClient.disconnect(translated.exitCode !== RunnerExitCode.SUCCESS)
+            .catch(() => undefined)
+            .finally(() => {
+                process.exitCode = translated.exitCode;
+                process.exit();
+            });
+    });
+}
+
+main().catch(err => {
+    console.error("start-runner failed:", err instanceof Error ? err.stack ?? err.message : err);
+    process.exitCode = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
+    process.exit();
+});

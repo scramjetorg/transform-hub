@@ -1,0 +1,13 @@
+{
+  "name": "@scramjet/test-node-completes",
+  "version": "0.1.0",
+  "description": "BDD fixture: Node sequence that completes successfully (runner-node spawn-isolation regression).",
+  "main": "index.js",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "private": true
+}

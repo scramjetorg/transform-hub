@@ -1,0 +1,14 @@
+{
+  "name": "@scramjet/test-api-streaming",
+  "version": "0.1.0",
+  "description": "BDD fixture: streaming API request/response (runner-node spawn-isolation regression).",
+  "main": "index.js",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "exposePath": "/streaming",
+  "private": true
+}

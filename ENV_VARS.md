@@ -41,6 +41,38 @@ Used to connect to host already running instead of spawning new one.
 Used to show host logs and more verbose tests logs.
 
 ---
+`SCRAMJET_TEST_OUTPUT_MAX_BYTES: number (default: 1048576)`
+Maximum number of recent host output bytes retained in memory by BDD host helpers.
+
+---
+`BDD_TIMEOUT_MS: number (default: 600000)`
+Hard timeout for `yarn test:bdd:safe` and `yarn test:bdd:ts:safe`. When the timeout is reached, the safe wrapper sends `SIGTERM` to the BDD process group.
+
+---
+`BDD_GRACE_MS: number (default: 15000)`
+Grace period after `BDD_TIMEOUT_MS` before the safe wrapper escalates from `SIGTERM` to `SIGKILL` for the BDD process group.
+
+---
+`BDD_MEMORY_LIMIT_MB: number (default: 0)`
+Aggregate RSS ceiling for the safe wrapper's BDD process group, in MiB. A value of `0` disables memory limiting. When the process group exceeds this ceiling, the wrapper sends `SIGTERM`, then escalates to `SIGKILL` after `BDD_GRACE_MS`, and exits with code `137`.
+
+---
+`BDD_MEMORY_POLL_MS: number (default: 1000)`
+Polling interval for `BDD_MEMORY_LIMIT_MB` on Linux.
+
+---
+`BDD_MEMORY_SOFT_TRIPS: number (default: 2)`
+Number of consecutive over-limit memory samples required before the safe wrapper terminates the BDD process group.
+
+---
+`BDD_STEP_TIMEOUT_MS: number (default: 20000)`
+Default Cucumber step timeout. Overrides the BDD world's default timeout when set to a positive number.
+
+---
+`BDD_INCLUDE_HARNESS_SELFTEST: boolean (default: false)`
+Set to `1` or `true` to include scenarios tagged `@harness-selftest`. These scenarios are excluded from normal BDD runs.
+
+---
 `NO_HOST: boolean (default: true)`
 Should host not be spawned
 
