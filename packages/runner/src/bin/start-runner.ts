@@ -89,6 +89,8 @@ interface RunnerNodeBootConfigShape {
     instancesServerPort: number;
     instancesServerHost: string;
     appConfig?: AppConfig;
+    sequenceInfo: SequenceInfo;
+    instanceName?: string;
     logLevel?: LogLevel;
     exposePath?: string;
     exposeHost?: string;
@@ -102,7 +104,8 @@ function writeBootConfig(): string {
         sequencePath: resolve(sequencePath),
         instanceId: instanceId!,
         instancesServerPort: parseInt(instancesServerPort!, 10),
-        instancesServerHost: instancesServerHost!
+        instancesServerHost: instancesServerHost!,
+        sequenceInfo: connectInfo
     };
 
     if (Array.isArray(parsedRunnerConnectInfo.args)) {
@@ -110,6 +113,7 @@ function writeBootConfig(): string {
     }
 
     if (parsedRunnerConnectInfo.appConfig) payload.appConfig = parsedRunnerConnectInfo.appConfig;
+    if (parsedRunnerConnectInfo.instanceName) payload.instanceName = parsedRunnerConnectInfo.instanceName;
     if (parsedRunnerConnectInfo.logLevel) payload.logLevel = parsedRunnerConnectInfo.logLevel;
     if (parsedRunnerConnectInfo.exposePath) payload.exposePath = parsedRunnerConnectInfo.exposePath;
 

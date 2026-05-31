@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { isAbsolute, resolve } from "path";
-import { AppConfig, LogLevel } from "@scramjet/types";
+import { AppConfig, LogLevel, SequenceInfo } from "@scramjet/types";
 
 /**
  * Boot configuration handed to a runner-node child process via a private
@@ -27,6 +27,8 @@ export interface RunnerNodeBootConfig {
     instancesServerHost?: string;
     /** Sequence app config (mirrors legacy `RunnerConnectInfo.appConfig`). */
     appConfig?: AppConfig;
+    sequenceInfo?: SequenceInfo;
+    instanceName?: string;
     /** Initial logger log level (mirrors legacy `RunnerConnectInfo.logLevel`). */
     logLevel?: LogLevel;
     /** Optional path prefix under which `context.api.use(...)` handlers are exposed. */
@@ -68,7 +70,7 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
     }
 
     const { sequencePath, sequenceArgs, instanceId, instancesServerPort, instancesServerHost,
-        appConfig, logLevel, exposePath, exposeHost } = value;
+        appConfig, sequenceInfo, instanceName, logLevel, exposePath, exposeHost } = value;
 
     if (typeof sequencePath !== "string" || sequencePath.length === 0) {
         throw new Error("runner-node: boot config field 'sequencePath' must be a non-empty string");
@@ -102,6 +104,18 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
         throw new Error("runner-node: boot config field 'appConfig' must be an object when provided");
     }
 
+    if (sequenceInfo !== undefined && !isObject(sequenceInfo)) {
+        throw new Error("runner-node: boot config field 'sequenceInfo' must be an object");
+    }
+
+    if (isObject(sequenceInfo) && (typeof sequenceInfo.id !== "string" || sequenceInfo.id.length === 0)) {
+        throw new Error("runner-node: boot config field 'sequenceInfo.id' must be a non-empty string");
+    }
+
+    if (instanceName !== undefined && (typeof instanceName !== "string" || instanceName.length === 0)) {
+        throw new Error("runner-node: boot config field 'instanceName' must be a non-empty string when provided");
+    }
+
     if (logLevel !== undefined && (typeof logLevel !== "string" || logLevel.length === 0)) {
         throw new Error("runner-node: boot config field 'logLevel' must be a non-empty string when provided");
     }
@@ -120,6 +134,8 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
     if (typeof instancesServerPort === "number") result.instancesServerPort = instancesServerPort;
     if (typeof instancesServerHost === "string") result.instancesServerHost = instancesServerHost;
     if (appConfig !== undefined) result.appConfig = appConfig as AppConfig;
+    if (sequenceInfo !== undefined) result.sequenceInfo = sequenceInfo as unknown as SequenceInfo;
+    if (instanceName !== undefined) result.instanceName = instanceName as string;
     if (logLevel !== undefined) result.logLevel = logLevel as LogLevel;
     if (exposePath !== undefined) result.exposePath = exposePath as string;
     if (exposeHost !== undefined) result.exposeHost = exposeHost as string;
