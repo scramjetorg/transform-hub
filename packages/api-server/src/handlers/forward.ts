@@ -1,13 +1,7 @@
 import http, { IncomingMessage, ServerResponse } from "http";
 import { ForwardStrategy, NextCallback } from "@scramjet/types";
 import https from "https";
-import * as fs from "fs";
 import { CeroError } from "../lib/definitions";
-
-const dbg = (m: string) => { try { fs.appendFileSync("/tmp/forward-debug.log", `${Date.now()} ${m}\n`); } catch {} };
-
-dbg("forward.ts module loaded");
-console.error("FORWARD_TS_MODULE_LOADED");
 
 /**
  * Creates a forwarding controller that forwards requests to one of the provided URLs.
@@ -81,17 +75,6 @@ export function createForwardController(
             next(err);
         });
 
-        // Pipe the incoming request body to proxy request if needed.
-        if (req.readableEnded) {
-            proxyReq.end();
-        } else {
-            dbg(`forward: setup data listener url=${req.url}`);
-            req.on("data", (chunk: Buffer) => {
-                dbg(`forward: data from client size=${chunk.length}`);
-                proxyReq.write(chunk);
-            });
-            req.once("end", () => { dbg("forward: client end"); proxyReq.end(); });
-            req.once("error", (e) => proxyReq.destroy(e));
-        }
+        req.pipe(proxyReq, { end: true });
     };
 }
