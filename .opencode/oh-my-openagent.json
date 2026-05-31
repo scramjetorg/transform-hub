@@ -87,10 +87,10 @@
   },
   "categories": {
     "visual-engineering": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
+      "model": "openai/gpt-5.4",
       "variant": "high",
       "fallback_models": [
-        { "model": "openai/gpt-5.4", "variant": "high" }
+        { "model": "github-copilot/gemini-3.1-pro-preview", "variant": "high" }
       ]
     },
     "ultrabrain": {
@@ -110,10 +110,10 @@
       ]
     },
     "artistry": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
+      "model": "openai/gpt-5.4",
       "variant": "high",
       "fallback_models": [
-        { "model": "openai/gpt-5.4", "variant": "high" }
+        { "model": "github-copilot/gemini-3.1-pro-preview", "variant": "high" }
       ]
     },
     "quick": {

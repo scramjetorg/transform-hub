@@ -185,6 +185,7 @@ export class HostUtils {
         if (extraArgs.length) command.push(...extraArgs);
 
         if (process.env.RUNNER_IMGS_TAG) {
+            // Keep the Python runner image flag aligned with the image built from packages/runner-python/Dockerfile.
             command.push(
                 `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,
                 `--prerunner-image=scramjetorg/pre-runner:${process.env.RUNNER_IMGS_TAG}`,

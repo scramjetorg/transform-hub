@@ -24,8 +24,7 @@ jobs:
           ref: ${{ inputs.git-revision }}
 
       - name: Build image
-        run: docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../
-        working-directory: packages/python-runner
+        run: docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f packages/runner-python/Dockerfile ../../
 
       - name: Export image
         run: >
