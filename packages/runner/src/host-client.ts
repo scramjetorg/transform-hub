@@ -196,6 +196,11 @@ class HostClient implements IHostClient {
                         return;
                     }
 
+                    if ((stream as net.Socket).destroyed || (stream as net.Socket).closed) {
+                        res();
+                        return;
+                    }
+
                     if (!hard && "writable" in stream) {
                         stream
                             .on("error", (e) => {

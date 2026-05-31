@@ -33,6 +33,7 @@ class HostClient implements IHostClient {
     logger: IObjectLogger;
     bpmux?: BPMux;
     public inputEndDeferMs = 500;
+    private inputSource?: Socket;
 
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = new ObjLogger(this);
@@ -120,6 +121,7 @@ class HostClient implements IHostClient {
         const input = this._streams[CC.IN];
 
         if (input) {
+            this.inputSource = input as Socket;
             const inputTarget = new PassThrough({ emitClose: false });
 
             input.on("end", async () => {
@@ -194,21 +196,39 @@ class HostClient implements IHostClient {
                         return;
                     }
 
-                    if ([CC.IN, CC.STDIN, CC.CONTROL].includes(i)) {
+                    if (i === CC.IN) {
+                        this.inputSource?.destroy();
+                        stream.destroy();
+                        res();
+                        return;
+                    }
+
+                    if ([CC.STDIN, CC.CONTROL].includes(i)) {
+                        res();
+                        return;
+                    }
+
+                    if ((stream as net.Socket).destroyed || (stream as net.Socket).closed) {
                         res();
                         return;
                     }
 
                     if (!hard && "writable" in stream) {
+                        let done = false;
+                        const finish = () => {
+                            if (!done) {
+                                done = true;
+                                res();
+                            }
+                        };
+
                         stream
                             .on("error", (e) => {
                                 // eslint-disable-next-line no-console
                                 console.error("Error on stream", i, e.stack);
                             })
-                            .on("close", () => {
-                                res();
-                            })
-                            .end();
+                            .on("close", finish)
+                            .end(finish);
                     } else {
                         stream.destroy();
                         res();
