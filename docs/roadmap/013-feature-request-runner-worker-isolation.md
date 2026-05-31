@@ -6,6 +6,7 @@
 | Category | feature-request |
 | Scope | packages/runner, packages/runner-node |
 | Breaking | no |
+| Status | completed |
 
 ## Problem Statement
 
