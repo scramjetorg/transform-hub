@@ -331,3 +331,46 @@
 - Build/install risk is separate from BDD runtime: root `build:packages` runs `prebuild:packages` (`scripts/run-script.js -v -w modules build:only`) and then `scripts/build-all.js -v -w modules --ts-config tsconfig.build.json`; `build-all.js` copies packages to `dist/` and, unless `NO_INSTALL`/`--no-install`, executes `cd dist && npx npm@8 install -q -ws --no-audit`.
 - Root `postinstall` runs `scripts/run-script.js -v -w modules install:deps`; `packages/python-runner/package.json` has `install:deps` that runs `pip3 install --upgrade -r requirements.txt --target __pypackages__`.
 - Some BDD fixture package scripts can run npm installs when their build/deploy scripts are invoked (`bin-out-seq`, `deploy-app`, `event-sequence`), but the new E2E-017 startup-config fixtures (`api-streaming`, `node-completes`, `throw-after-stdout`) do not contain install hooks.
+
+## 2026-05-31: E2E-017 TC-001 get runner PID / ESRCH / health fix
+
+- Reproduced `SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=900000 yarn test:bdd:ts --name="Node sequence completes successfully under runner-node spawn isolation"` failing in `get runner PID`. The original late failure was not in the process adapter itself: the spawned runner-node connected to the host as an unknown instance because its PING frame lacked the top-level `id` expected by `CSIDispatcher`'s established listener.
+- `ProcessInstanceAdapter.waitUntilExit()` has two adapter instances in this flow: the dispatcher-owned adapter tracks the outer runner process, while the CSIController-owned adapter never dispatched a process and relies on `setRunner()` plus `/tmp/runner-<processPID>` for completion. Runner-node reported its own PID but did not create the legacy exit-code file, so the CSIController adapter eventually hit `process.kill(pid, 0)` after runner-node exited, logged `kill ESRCH`, rejected with `pid not exists`, and `CSIController.instanceMain()` mapped that untyped rejection to exit `213`.
+- Fixed in allowed runner-node/runner test scope only; no adapter/host/symbol changes. `packages/runner-node/src/handshake.ts` now restores legacy PING fields `id` and `created`, `packages/runner-node/src/bin/runner-node.ts` writes `/tmp/runner-<pid>` with the exit code before returning or failed bootstrap exit, and runner transport tests assert PING `id` plus the health frame ordering.
+- After the exit-file fix, TC-001 still timed out at `get runner PID` because the `/health` route is backed by the last observed `MONITORING` frame rather than an on-demand request. Legacy runner emits initial health before sequence execution; runner-node only emitted PING/PANG/terminal. Added an initial `[MONITORING, { healthy: true }]` immediately after PING so the host can cache health and augment it with `processId` through the existing process adapter `stats()` path.
+- Verification after the fix:
+  - `SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=900000 yarn test:bdd:ts --name="Node sequence completes successfully under runner-node spawn isolation"` passes; health returned `{ healthy: true, processId: <runner-node pid> }`, `runner has ended execution` passed, stdout matched `NODE_COMPLETES_OK\n`, and no ESRCH/213 failure appeared.
+  - `cd packages/runner && TS_NODE_IGNORE_DIAGNOSTICS=5023 npx ava` passes 34 tests.
+  - `cd packages/runner-node && npx ava` passes 64 tests.
+  - `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` and `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` pass.
+  - Forbidden-pattern scan over `packages/runner/src packages/runner-node/src` for `worker_threads|parentPort|child_process.fork|API_REQUEST|EXECUTOR_API_INVOKE|OUTPUT_CHUNK|INPUT_CHUNK|bodyBase64` returns no matches.
+
+## Legacy exit-file hardening (security review blocker resolved)
+
+`packages/runner-node/src/bin/runner-node.ts` previously used `writeFileSync("/tmp/runner-${pid}", ...)`, which followed symlinks and clobbered pre-existing files at a predictable, world-writable-directory path.
+
+Resolution: extracted `writeLegacyExitFileSecure(path, code, logger?)` (exported for tests) using `openSync` with `O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW` (when supported) and mode `0o600`, then `writeSync` and a finally-block `closeSync`. `legacyExitFilePath(pid?)` keeps the adapter-compatible `/tmp/runner-<pid>` contract so `ProcessInstanceAdapter.waitUntilExit()` still finds the file.
+
+Key behavior:
+- Pre-existing file → `EEXIST` → skipped, original content preserved (verified by test).
+- Path is a symlink → `ELOOP` → skipped, target untouched (verified by test).
+- Any other failure (missing dir, EACCES) → swallowed with optional `logger.warn`; runner-node never crashes a successful sequence because of legacy-compat write failure.
+- Mode `0o600` enforced (verified by stat).
+
+Tests: `packages/runner-node/test/exit-file-secure.spec.ts` (6 tests covering create, EEXIST refusal, symlink refusal, missing dir tolerance, warn logger, path contract). Full `npx ava` suite: 70 tests pass. `tsc --noEmit -p tsconfig.build.json`: clean.
+
+No architecture constraint regressed: no `worker_threads`, no `parentPort`, no `fork()` semantic transport, no JSON/base64 body aggregation. Only `runner-node.ts` and a new test file were touched.
+
+## 2026-05-31: runner-node PING shared-contract alignment
+
+- Late code-quality review found that the restored runner-node PING fields were still not fully legacy/type-compatible: `created` was a `Date`, `payload.system.processPID` was a number, and required `status` / `inputHeadersSent` fields from `PingMessageData` were absent.
+- Fixed `packages/runner-node/src/handshake.ts` to return `[RunnerMessageCode.PING, PingMessageData]` directly, with `created: Date.now()`, string `system.processPID`, `status: InstanceStatus.STARTING`, and `inputHeadersSent: false`, matching the legacy runner handshake shape used before `runSequence()` transitions to running.
+- Strengthened runner transport tests to assert the shared contract: numeric `created`, startup `status`, `inputHeadersSent === false`, and string `processPID` that parses to a positive number.
+- Verification after the contract fix:
+  - `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` passes.
+  - `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` passes.
+  - `cd packages/runner && npx ava test/transport/split-runner-communication-metadata.spec.ts test/transport/split-runner-communication-ordering.spec.ts` passes 2 tests.
+  - `cd packages/runner-node && npx ava` passes 70 tests.
+  - `cd packages/runner && TS_NODE_IGNORE_DIAGNOSTICS=5023 npx ava` passes 34 tests.
+  - `SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=900000 yarn test:bdd:ts --name="Node sequence completes successfully under runner-node spawn isolation"` passes 1 scenario / 9 steps, with PING showing numeric `created`, string `processPID`, `status:"starting"`, and `inputHeadersSent:false`.
+  - Forbidden-pattern scan over `packages/runner/src packages/runner-node/src` remains clean for `worker_threads|parentPort|child_process.fork|API_REQUEST|EXECUTOR_API_INVOKE|OUTPUT_CHUNK|INPUT_CHUNK|bodyBase64`.
