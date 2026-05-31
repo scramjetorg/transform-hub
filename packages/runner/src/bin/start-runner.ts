@@ -8,11 +8,10 @@ import { Readable, Writable } from "stream";
 import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
 import { RunnerExitCode } from "@scramjet/symbols";
 
+import { RuntimeProcessHandles } from "@scramjet/types";
+
 import { HostClient, OUTER_RUNNER_CHANNELS } from "../host-client";
-import {
-    spawnRunnerNode,
-    RunnerNodeProcessHandles
-} from "../executor/process-executor";
+import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
 import {
     translateChildClose,
@@ -166,11 +165,14 @@ async function main(): Promise<void> {
         if (process.env.NODE_PATH) childEnv.NODE_PATH = process.env.NODE_PATH;
     }
 
-    let handles: RunnerNodeProcessHandles;
+    let handles: RuntimeProcessHandles;
 
     try {
-        handles = spawnRunnerNode({
-            runnerNodeEntry: entry.entry,
+        const engines = (parsedRunnerConnectInfo.appConfig?.engines as Record<string, string> | undefined) || {};
+        const executor = selectExecutor({ engines });
+
+        handles = executor.spawn({
+            runtimeEntry: entry.entry,
             bootConfigPath,
             env: childEnv
         });
