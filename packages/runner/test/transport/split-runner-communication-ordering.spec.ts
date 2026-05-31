@@ -2,7 +2,7 @@ import test from "ava";
 import path from "path";
 import { spawn } from "child_process";
 import { createFakeInstancesServer } from "./fake-instances-server";
-import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
+import { RunnerMessageCode, CommunicationChannel as CC, InstanceStatus } from "@scramjet/symbols";
 
 const INSTANCE_ID = "00000000-0000-0000-0000-0000000000aa";
 const startRunner = path.resolve(__dirname, "../../src/bin/start-runner.ts");
@@ -88,19 +88,30 @@ test("split runner communication: sends PING before any later monitoring or term
     const monitoringFrames = server.frames.monitoring;
     const firstFrame = monitoringFrames[0];
     const firstPayload = firstFrame?.[1] as {
+        id?: string;
+        created?: number;
+        status?: InstanceStatus;
+        inputHeadersSent?: boolean;
         sequenceInfo?: { id?: string };
-        payload?: { system?: { processPID?: number } };
+        payload?: { system?: { processPID?: string } };
     } | undefined;
     const pingIndex = monitoringFrames.findIndex(f => f[0] === RunnerMessageCode.PING);
+    const monitoringIndex = monitoringFrames.findIndex(f => f[0] === RunnerMessageCode.MONITORING);
     const pangIndex = monitoringFrames.findIndex(f => f[0] === RunnerMessageCode.PANG);
     const terminals = monitoringFrames.filter(f => f[0] === RunnerMessageCode.SEQUENCE_COMPLETED || f[0] === RunnerMessageCode.SEQUENCE_STOPPED);
 
     t.true(server.channels.has(CC.MONITORING), "monitoring channel opened");
     t.true(monitoringFrames.length > 0, "at least one monitoring frame received");
     t.is(firstFrame?.[0], RunnerMessageCode.PING, "first monitoring frame must be PING");
+    t.is(firstPayload?.id, INSTANCE_ID, "PING id matches INSTANCE_ID");
+    t.is(typeof firstPayload?.created, "number", "PING created is numeric");
+    t.true((firstPayload?.created ?? 0) > 0, "PING created timestamp is present");
+    t.is(firstPayload?.status, InstanceStatus.STARTING, "PING status matches legacy startup state");
+    t.is(firstPayload?.inputHeadersSent, false, "PING inputHeadersSent defaults to false");
     t.is(firstPayload?.sequenceInfo?.id, INSTANCE_ID, "PING sequenceInfo.id matches INSTANCE_ID");
-    t.is(typeof firstPayload?.payload?.system?.processPID, "number", "PING payload.system.processPID is a number");
-    t.true((firstPayload?.payload?.system?.processPID ?? 0) > 0, "processPID > 0");
+    t.is(typeof firstPayload?.payload?.system?.processPID, "string", "PING payload.system.processPID is a string");
+    t.true(Number(firstPayload?.payload?.system?.processPID ?? 0) > 0, "processPID > 0");
+    t.true(monitoringIndex > pingIndex, "initial MONITORING follows PING");
     t.true(pangIndex === -1 || (pingIndex !== -1 && pangIndex > pingIndex), "PANG frame, when present, follows PING");
     t.is(terminals.length, 1, "exactly one terminal frame");
 });

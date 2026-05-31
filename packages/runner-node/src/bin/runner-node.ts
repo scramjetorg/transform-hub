@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 import { EventEmitter } from "events";
+import { closeSync, constants as fsConstants, openSync, writeSync } from "fs";
 import { AddressInfo } from "net";
 import { PassThrough, Readable, Writable } from "stream";
 
@@ -56,6 +57,48 @@ type SequenceModule =
     | SequenceFunction
     | SequenceFunction[]
     | { default?: SequenceFunction | SequenceFunction[] };
+
+let exitFileWritten = false;
+
+export function legacyExitFilePath(pid: number = process.pid): string {
+    return `/tmp/runner-${pid.toString()}`;
+}
+
+// Hardened legacy exit-file write. O_EXCL refuses pre-existing files,
+// O_NOFOLLOW (when supported) refuses symlinks, mode 0o600 keeps it owner-only.
+// Failure is best-effort: never crash an otherwise-successful runner just
+// because the adapter-compat file could not be created safely.
+export function writeLegacyExitFileSecure(
+    path: string,
+    code: number,
+    logger?: { warn: (...args: unknown[]) => void }
+): boolean {
+    const noFollow = typeof (fsConstants as { O_NOFOLLOW?: number }).O_NOFOLLOW === "number"
+        ? (fsConstants as { O_NOFOLLOW: number }).O_NOFOLLOW
+        : 0;
+    const flags = fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow;
+
+    let fd: number | undefined;
+
+    try {
+        fd = openSync(path, flags, 0o600);
+        writeSync(fd, code.toString());
+        return true;
+    } catch (err) {
+        logger?.warn("runner-node: legacy exit-file write skipped", { path, err });
+        return false;
+    } finally {
+        if (fd !== undefined) {
+            try { closeSync(fd); } catch { /* best-effort close */ }
+        }
+    }
+}
+
+function writeProcessExitFile(code: number): void {
+    if (exitFileWritten) return;
+    exitFileWritten = true;
+    writeLegacyExitFileSecure(legacyExitFilePath(), code);
+}
 
 export function resolveSequenceFunctions(mod: SequenceModule): SequenceFunction[] {
     let candidate: unknown = mod;
@@ -434,6 +477,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         await new Promise<void>((resolveWrite) => {
             MessageUtils.writeMessageOnStream(
                 buildPing({
+                    instanceId: bootConfig.instanceId,
                     sequenceInfo,
                     appConfig,
                     args,
@@ -443,6 +487,8 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             );
             resolveWrite();
         });
+
+        writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { healthy: true }]);
     } else {
         const built = buildSequenceContext({
             bootConfig,
@@ -522,6 +568,8 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         }
     }
 
+    writeProcessExitFile(exitCode);
+
     return exitCode;
 }
 
@@ -535,6 +583,7 @@ if (require.main === module) {
                 "runner-node bootstrap failed:",
                 err instanceof Error ? err.stack ?? err.message : err
             );
+            writeProcessExitFile(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
             process.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
         });
 }
