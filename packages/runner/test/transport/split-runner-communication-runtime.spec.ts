@@ -6,7 +6,7 @@ import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols
 
 const INSTANCE_ID = "00000000-0000-0000-0000-0000000000aa";
 const startRunner = path.resolve(__dirname, "../../src/bin/start-runner.ts");
-const fixturesDir = path.resolve(__dirname, "../fixtures");
+const fixturesDir = path.resolve(__dirname, "../../../runner-node/test/fixtures");
 
 function buildEnv(port: number, sequenceName: string): NodeJS.ProcessEnv {
     const sequenceDir = path.resolve(fixturesDir, sequenceName);
