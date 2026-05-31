@@ -32,6 +32,7 @@ import { LocalStorageAgent, LocalStorageAgentHost } from "../local-storage-agent
 import { HostClient } from "../host-client";
 import { mapToInputDataStream, readInputStreamHeaders } from "../input-stream";
 import { RunnerAppContext, RunnerProxy } from "../runner-app-context";
+import { buildPing } from "../handshake";
 
 export interface SequenceLocalContext {
     bootConfig: RunnerNodeBootConfig;
@@ -359,7 +360,16 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         typeof bootConfig.instancesServerPort === "number" &&
         typeof bootConfig.instancesServerHost === "string";
 
+    const appConfig: AppConfig = bootConfig.appConfig ?? {};
+    const args = bootConfig.sequenceArgs ?? [];
+
     if (hasHost) {
+        if (!bootConfig.sequenceInfo) {
+            throw new Error("runner-node: boot config field 'sequenceInfo' is required when host channels are configured");
+        }
+
+        const sequenceInfo = bootConfig.sequenceInfo;
+
         hostClient = new HostClient(bootConfig.instancesServerPort!, bootConfig.instancesServerHost!);
 
         try {
@@ -420,6 +430,19 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                 logger.warn("readInputStreamHeaders failed; closing input", err);
                 inputDataStream.end();
             });
+
+        await new Promise<void>((resolveWrite) => {
+            MessageUtils.writeMessageOnStream(
+                buildPing({
+                    sequenceInfo,
+                    appConfig,
+                    args,
+                    instanceName: bootConfig.instanceName,
+                }) as EncodedMonitoringMessage,
+                streams.monitoringOut
+            );
+            resolveWrite();
+        });
     } else {
         const built = buildSequenceContext({
             bootConfig,
@@ -462,7 +485,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             inputDataStream,
             outputDataStream,
             hostClient: hostAdapter,
-            args: bootConfig.sequenceArgs ?? [],
+            args,
             logger,
         });
 
