@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { isAbsolute, resolve } from "path";
 import { AppConfig, LogLevel, SequenceInfo } from "@scramjet/types";
+import { isObject } from "./utils";
 
 /**
  * Boot configuration handed to a runner-node child process via a private
@@ -54,10 +55,6 @@ export function parseBootConfigPathFromArgv(argv: readonly string[]): string {
     }
 
     return isAbsolute(candidate) ? candidate : resolve(candidate);
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**

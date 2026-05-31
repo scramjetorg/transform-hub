@@ -1,365 +1,49 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 import { EventEmitter } from "events";
-import { closeSync, constants as fsConstants, openSync, writeSync } from "fs";
 import { AddressInfo } from "net";
-import { PassThrough, Readable, Writable } from "stream";
+import { Readable, Writable } from "stream";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";
-import {
-    APIExpose,
-    AppConfig,
-    AppError,
-    EncodedControlMessage,
-    EncodedMonitoringMessage,
-    EventMessageData,
-    KeepAliveMessageData,
-    LogLevel,
-    StopSequenceMessageData,
-    StorageUpdateMessageData,
-} from "@scramjet/types";
-import { RunnerMessageCode, RunnerExitCode, CommunicationChannel as CC } from "@scramjet/symbols";
-import { createServer } from "@scramjet/api-server";
-import { HostClient as ApiHostClient } from "@scramjet/api-client";
-import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import type { APIExpose, AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
+import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
-import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig } from "../boot-config";
-import { createFdStreams, RunnerNodeFdStreams } from "../fd-streams";
-import { runSequence, RunSequenceHostClient } from "../run-sequence";
-import { RunnerLifecycle, LifecycleContext } from "../lifecycle";
-import { MessageUtils } from "../message-utils";
-import { LocalStorageAgent, LocalStorageAgentHost } from "../local-storage-agent";
+import { parseBootConfigPathFromArgv, readBootConfig } from "../boot-config";
+import { buildAppContext, buildSequenceContext } from "../context";
+import { createFdStreams } from "../fd-streams";
+import { buildPing } from "../handshake";
 import { HostClient } from "../host-client";
 import { mapToInputDataStream, readInputStreamHeaders } from "../input-stream";
-import { RunnerAppContext, RunnerProxy } from "../runner-app-context";
-import { buildPing } from "../handshake";
+import { RunnerLifecycle } from "../lifecycle";
+import type { LifecycleContext } from "../lifecycle";
+import { MessageUtils } from "../message-utils";
+import { runSequence } from "../run-sequence";
+import type { RunSequenceHostClient } from "../run-sequence";
+import type { BootstrapOverrides } from "../types";
+import {
+    legacyExitFilePath,
+    loadSequenceModule,
+    makeOutputDiscard,
+    resolveSequenceFunctions,
+    RUNNER_NODE_CHANNELS,
+    wireControlStream,
+    writeLegacyExitFileSecure,
+    writeMonitoring,
+    writeProcessExitFile,
+} from "../utils";
 
-export interface SequenceLocalContext {
-    bootConfig: RunnerNodeBootConfig;
-    streams: RunnerNodeFdStreams;
-    instanceId: string | undefined;
-    logger: ObjLogger;
-    emitter: EventEmitter;
-    localStorage: LocalStorageAgent;
-    monitorStream: Writable;
-    keepAlive(milliseconds?: number): SequenceLocalContext;
-    end(): SequenceLocalContext;
-    destroy(error?: AppError | Error): SequenceLocalContext;
-    on(eventName: string, handler: (msg?: unknown) => void): SequenceLocalContext;
-    emit(eventName: string, message?: unknown): SequenceLocalContext;
-    addStopHandler(handler: (timeout: number, canCallKeepalive: boolean) => Promise<void> | void): SequenceLocalContext;
-    addKillHandler(handler: () => void): SequenceLocalContext;
-}
+export {
+    buildAppContext,
+    buildSequenceContext,
+    legacyExitFilePath,
+    loadSequenceModule,
+    resolveSequenceFunctions,
+    wireControlStream,
+    writeLegacyExitFileSecure,
+};
 
-type SequenceFunction = (this: unknown, instanceOutput: unknown, ...args: unknown[]) => unknown;
-type SequenceModule =
-    | SequenceFunction
-    | SequenceFunction[]
-    | { default?: SequenceFunction | SequenceFunction[] };
-
-let exitFileWritten = false;
-
-export function legacyExitFilePath(pid: number = process.pid): string {
-    return `/tmp/runner-${pid.toString()}`;
-}
-
-// Hardened legacy exit-file write. O_EXCL refuses pre-existing files,
-// O_NOFOLLOW (when supported) refuses symlinks, mode 0o600 keeps it owner-only.
-// Failure is best-effort: never crash an otherwise-successful runner just
-// because the adapter-compat file could not be created safely.
-export function writeLegacyExitFileSecure(
-    path: string,
-    code: number,
-    logger?: { warn: (...args: unknown[]) => void }
-): boolean {
-    const noFollow = typeof (fsConstants as { O_NOFOLLOW?: number }).O_NOFOLLOW === "number"
-        ? (fsConstants as { O_NOFOLLOW: number }).O_NOFOLLOW
-        : 0;
-    const flags = fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow;
-
-    let fd: number | undefined;
-
-    try {
-        fd = openSync(path, flags, 0o600);
-        writeSync(fd, code.toString());
-        return true;
-    } catch (err) {
-        logger?.warn("runner-node: legacy exit-file write skipped", { path, err });
-        return false;
-    } finally {
-        if (fd !== undefined) {
-            try { closeSync(fd); } catch { /* best-effort close */ }
-        }
-    }
-}
-
-function writeProcessExitFile(code: number): void {
-    if (exitFileWritten) return;
-    exitFileWritten = true;
-    writeLegacyExitFileSecure(legacyExitFilePath(), code);
-}
-
-export function resolveSequenceFunctions(mod: SequenceModule): SequenceFunction[] {
-    let candidate: unknown = mod;
-
-    if (candidate && typeof candidate === "object" && "default" in (candidate as Record<string, unknown>)) {
-        const next = (candidate as { default?: unknown }).default;
-
-        if (next !== undefined) candidate = next;
-    }
-
-    if (Array.isArray(candidate)) {
-        return candidate.filter((fn): fn is SequenceFunction => typeof fn === "function");
-    }
-
-    if (typeof candidate === "function") {
-        return [candidate as SequenceFunction];
-    }
-
-    return [];
-}
-
-export function loadSequenceModule(sequencePath: string): SequenceFunction[] {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
-    const loaded: SequenceModule = require(sequencePath);
-
-    return resolveSequenceFunctions(loaded);
-}
-
-function writeMonitoring(monitor: Writable, msg: EncodedMonitoringMessage): void {
-    MessageUtils.writeMessageOnStream(msg, monitor);
-}
-
-export interface ControlDispatch {
-    onStop(data: StopSequenceMessageData): Promise<void>;
-    onKill(): Promise<void>;
-    onEvent(data: EventMessageData): void;
-    onStorageUpdate(data: StorageUpdateMessageData): void;
-}
-
-export function wireControlStream(
-    controlIn: Readable,
-    dispatch: ControlDispatch,
-    logger?: ObjLogger
-): void {
-    let buffer = "";
-
-    controlIn.setEncoding("utf8");
-    controlIn.on("data", chunk => {
-        buffer += chunk;
-
-        let nlIndex = buffer.indexOf("\n");
-
-        while (nlIndex !== -1) {
-            const line = buffer.slice(0, nlIndex).replace(/\r$/, "");
-
-            buffer = buffer.slice(nlIndex + 1);
-            nlIndex = buffer.indexOf("\n");
-
-            if (line.length === 0) continue;
-
-            let parsed: EncodedControlMessage;
-
-            try {
-                parsed = JSON.parse(line) as EncodedControlMessage;
-            } catch (err) {
-                logger?.warn("control: invalid JSON frame", err);
-                continue;
-            }
-
-            const [code, data] = parsed;
-
-            switch (code) {
-                case RunnerMessageCode.STOP:
-                    void dispatch.onStop(data as StopSequenceMessageData);
-                    break;
-                case RunnerMessageCode.KILL:
-                    void dispatch.onKill();
-                    break;
-                case RunnerMessageCode.EVENT:
-                    dispatch.onEvent(data as EventMessageData);
-                    break;
-                case RunnerMessageCode.STORAGE_UPDATE:
-                    dispatch.onStorageUpdate(data as StorageUpdateMessageData);
-                    break;
-                default:
-                    break;
-            }
-        }
-    });
-    controlIn.on("error", err => logger?.warn("control: stream error", err));
-}
-
-interface BuildContextDeps {
-    bootConfig: RunnerNodeBootConfig;
-    streams: RunnerNodeFdStreams;
-    emitter: EventEmitter;
-    logger: ObjLogger;
-    onKeepAliveIssued: () => void;
-}
-
-export function buildSequenceContext(deps: BuildContextDeps): {
-    context: SequenceLocalContext & LifecycleContext;
-    localStorage: LocalStorageAgent;
-} {
-    const { bootConfig, streams, emitter, logger, onKeepAliveIssued } = deps;
-    const monitorStream = streams.monitoringOut;
-
-    const localCache: Record<string, string | null> = {};
-    const storageHost: LocalStorageAgentHost = {
-        writeMonitoringMessage: (msg) => writeMonitoring(monitorStream, msg),
-        localCache,
-    };
-    const localStorage = new LocalStorageAgent(storageHost);
-
-    const stopHandlers: Array<(timeout: number, canCallKeepalive: boolean) => Promise<void> | void> = [];
-    const killHandlers: Array<() => void> = [];
-
-    const ctx: SequenceLocalContext & LifecycleContext = {
-        bootConfig,
-        streams,
-        instanceId: bootConfig.instanceId,
-        logger,
-        emitter,
-        localStorage,
-        monitorStream,
-        keepAlive(milliseconds?: number) {
-            onKeepAliveIssued();
-            const data: KeepAliveMessageData = { keepAlive: milliseconds || 0 };
-
-            writeMonitoring(monitorStream, [RunnerMessageCode.ALIVE, data]);
-            return ctx;
-        },
-        end() {
-            writeMonitoring(monitorStream, [
-                RunnerMessageCode.SEQUENCE_STOPPED,
-                { sequenceError: undefined },
-            ]);
-            return ctx;
-        },
-        destroy(error) {
-            writeMonitoring(monitorStream, [
-                RunnerMessageCode.SEQUENCE_STOPPED,
-                { sequenceError: error },
-            ]);
-            return ctx;
-        },
-        on(eventName, handler) {
-            emitter.on(eventName, handler);
-            return ctx;
-        },
-        emit(eventName, message) {
-            const ev: EventMessageData = { eventName, message, scope: "host" };
-
-            writeMonitoring(monitorStream, [RunnerMessageCode.EVENT, ev]);
-            return ctx;
-        },
-        addStopHandler(handler) {
-            stopHandlers.push(handler);
-            return ctx;
-        },
-        addKillHandler(handler) {
-            killHandlers.push(handler);
-            return ctx;
-        },
-        async stopHandler(timeout, canCallKeepalive) {
-            for (const handler of stopHandlers) {
-                await handler(timeout, canCallKeepalive);
-            }
-        },
-        killHandler() {
-            for (const handler of killHandlers) handler();
-        },
-    };
-
-    return { context: ctx, localStorage };
-}
-
-interface BuildAppContextDeps {
-    bootConfig: RunnerNodeBootConfig;
-    monitorStream: Writable;
-    emitter: EventEmitter;
-    logger: ObjLogger;
-    hostClient: HostClient;
-    onKeepAliveIssued: () => void;
-}
-
-interface BuildAppContextResult {
-    context: RunnerAppContext<AppConfig, unknown> & LifecycleContext;
-    api: APIExpose;
-    localStorage: LocalStorageAgent;
-}
-
-export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResult {
-    const { bootConfig, monitorStream, emitter, logger, hostClient, onKeepAliveIssued } = deps;
-
-    const api: APIExpose = createServer(undefined, {
-        defaultRoute: (req, res) => {
-            logger.debug("API unhandled request", req.url);
-            res.writeHead(404);
-            res.end("Not Found");
-        },
-    });
-
-    const localCache: Record<string, string | null> = {};
-    const storageHost: LocalStorageAgentHost = {
-        writeMonitoringMessage: (msg) => writeMonitoring(monitorStream, msg),
-        localCache,
-    };
-    const localStorage = new LocalStorageAgent(storageHost);
-
-    const apiBase = "http://scramjet-host/api/v1";
-    const hostClientUtils = new ClientUtilsCustomAgent(apiBase, hostClient.getAgent());
-    const hub = new ApiHostClient(apiBase, hostClientUtils);
-    const space = hub.getManagerClient("/api/v1");
-
-    const proxy: RunnerProxy = {
-        keepAliveIssued: () => onKeepAliveIssued(),
-        sendKeepAlive: (data) =>
-            writeMonitoring(monitorStream, [RunnerMessageCode.ALIVE, data]),
-        sendStop: (err) =>
-            writeMonitoring(monitorStream, [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: err }]),
-        sendEvent: (ev) =>
-            writeMonitoring(monitorStream, [RunnerMessageCode.EVENT, ev]),
-    };
-
-    const logLevel: LogLevel = bootConfig.logLevel ?? "DEBUG";
-    const appConfig: AppConfig = bootConfig.appConfig ?? {};
-    const instanceId = bootConfig.instanceId;
-
-    const context = new RunnerAppContext<AppConfig, unknown>(
-        appConfig,
-        monitorStream,
-        emitter,
-        proxy,
-        hub,
-        space,
-        instanceId,
-        logLevel,
-        api,
-        localStorage
-    ) as RunnerAppContext<AppConfig, unknown> & LifecycleContext;
-
-    emitter.on("error", (e) => logger.error("Sequence emitted an error event", e));
-
-    return { context, api, localStorage };
-}
-
-const RUNNER_NODE_CHANNELS: ReadonlySet<CC> = new Set<CC>([
-    CC.IN, CC.OUT, CC.LOG, CC.REQUESTS,
-]);
-
-function makeOutputDiscard(): RunSequenceHostClient["outputStream"] {
-    const sink = new PassThrough();
-
-    sink.resume();
-    return sink as unknown as RunSequenceHostClient["outputStream"];
-}
-
-export interface BootstrapOverrides {
-    loadSequence?: (sequencePath: string) => SequenceFunction[];
-}
+export type { BootstrapOverrides, ControlDispatch, SequenceLocalContext } from "../types";
 
 async function startApiServer(
     api: APIExpose,

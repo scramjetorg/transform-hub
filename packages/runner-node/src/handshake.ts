@@ -1,13 +1,6 @@
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { SequenceInfo, AppConfig, PingMessageData } from "@scramjet/types";
-
-export interface RunnerHandshakeInputs {
-    instanceId: string;
-    sequenceInfo: SequenceInfo;
-    appConfig: AppConfig;
-    args: unknown[];
-    instanceName?: string;
-}
+import type { PingMessageData } from "@scramjet/types";
+import type { RunnerHandshakeInputs } from "./types";
 
 export function buildPing(inputs: RunnerHandshakeInputs): [
     RunnerMessageCode.PING,
