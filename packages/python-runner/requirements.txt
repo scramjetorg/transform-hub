@@ -1,2 +1,0 @@
-pyee==9.0.4
-scramjet-framework-py

@@ -5,10 +5,10 @@
   "main": "./src/index.ts",
   "scripts": {
     "clean": "rm -rf ./dist .bic_cache",
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build": "yarn clean && yarn build:only && node ../../node_modules/typescript/bin/tsc -p ./tsconfig.build.json",
     "build:docs": "typedoc",
     "test:expose": "scripts/generate.js",
-    "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit",
+    "test": "yarn run test:expose && node ../../node_modules/typescript/bin/tsc -p ./tsconfig.test.json --noEmit",
     "build:only": "npm run test:expose"
   },
   "author": "Scramjet <open-source@scramjet.org>",

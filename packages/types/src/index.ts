@@ -28,6 +28,8 @@ export * from "./op-response";
 export * from "./runner-config";
 export * from "./runner-connect";
 export * from "./runner";
+export * from "./runtime-executor";
+export type { RuntimeExecutor } from "./runtime-executor";
 export * from "./sequence";
 export * from "./utils";
 export * from "./sth-configuration";
