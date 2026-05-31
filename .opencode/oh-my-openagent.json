@@ -1,34 +1,27 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "git_master": {
+    "commit_footer": false,
+    "include_co_authored_by": false,
+    "git_env_prefix": "GIT_MASTER=1"
+  },
   "agents": {
     "sisyphus": {
       "model": "openai/gpt-5.5",
       "variant": "max",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
+          "model": "opencode-go/glm-5.1",
           "variant": "max"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "medium"
-        },
-        {
-          "model": "github-copilot/gpt-5.5",
-          "variant": "medium"
         }
       ]
     },
     "hephaestus": {
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.3-codex",
       "variant": "medium",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "github-copilot/gpt-5.5",
+          "model": "opencode-go/glm-5.1",
           "variant": "medium"
         }
       ]
@@ -38,19 +31,7 @@
       "variant": "high",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
-          "variant": "high"
-        },
-        {
-          "model": "opencode/claude-opus-4-7",
-          "variant": "max"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
-        },
-        {
-          "model": "github-copilot/gemini-3.1-pro-preview",
+          "model": "opencode-go/glm-5.1",
           "variant": "high"
         }
       ]
@@ -59,10 +40,10 @@
       "model": "openai/gpt-5.4-mini",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.4-mini"
+          "model": "openai/gpt-5.4-nano"
         },
         {
-          "model": "openai/gpt-5.4-nano"
+          "model": "opencode-go/deepseek-v4-flash"
         }
       ]
     },
@@ -70,10 +51,10 @@
       "model": "openai/gpt-5.4-mini",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.4-mini"
+          "model": "openai/gpt-5.4-nano"
         },
         {
-          "model": "openai/gpt-5.4-nano"
+          "model": "opencode-go/deepseek-v4-flash"
         }
       ]
     },
@@ -82,52 +63,27 @@
       "variant": "medium",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
+          "model": "github-copilot/gemini-3.1-pro-preview",
           "variant": "medium"
-        },
-        {
-          "model": "github-copilot/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "openai/gpt-5-nano"
         }
       ]
     },
     "prometheus": {
-      "model": "github-copilot/claude-opus-4.7",
-      "variant": "max",
+      "model": "openai/gpt-5.5",
+      "variant": "high",
       "fallback_models": [
         {
-          "model": "opencode/claude-opus-4-7",
+          "model": "opencode-go/glm-5.1",
           "variant": "max"
-        },
-        {
-          "model": "openai/gpt-5.5",
-          "variant": "high"
-        },
-        {
-          "model": "opencode/gpt-5.5",
-          "variant": "high"
-        },
-        {
-          "model": "github-copilot/gemini-3.1-pro-preview"
         }
       ]
     },
     "metis": {
-      "model": "github-copilot/claude-sonnet-4.6",
+      "model": "openai/gpt-5.5",
+      "variant": "medium",
       "fallback_models": [
         {
-          "model": "opencode/claude-sonnet-4-6"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
-        },
-        {
-          "model": "openai/gpt-5.5",
-          "variant": "high"
+          "model": "opencode-go/glm-5.1"
         }
       ]
     },
@@ -136,79 +92,42 @@
       "variant": "xhigh",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
+          "model": "opencode-go/glm-5.1",
           "variant": "xhigh"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
-        },
-        {
-          "model": "github-copilot/gemini-3.1-pro-preview",
-          "variant": "high"
         }
       ]
     },
     "atlas": {
-      "model": "github-copilot/claude-sonnet-4.6",
+      "model": "openai/gpt-5.4-mini",
       "fallback_models": [
         {
-          "model": "opencode/claude-sonnet-4-6"
+          "model": "opencode-go/deepseek-v4-flash"
         },
         {
-          "model": "opencode-go/kimi-k2.6"
-        },
-        {
-          "model": "openai/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "github-copilot/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
+          "model": "github-copilot/gpt-5.4-mini"
         }
       ]
     },
     "sisyphus-junior": {
-      "model": "github-copilot/claude-sonnet-4.6",
+      "model": "openai/gpt-5.4-mini",
       "fallback_models": [
         {
-          "model": "opencode/claude-sonnet-4-6"
+          "model": "opencode-go/glm-5.1"
         },
         {
-          "model": "opencode-go/kimi-k2.6"
-        },
-        {
-          "model": "openai/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "github-copilot/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
-        },
-        {
-          "model": "opencode/big-pickle"
+          "model": "github-copilot/gpt-5.4-mini"
         }
       ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
+      "model": "openai/gpt-5.5",
       "variant": "high",
       "fallback_models": [
         {
-          "model": "opencode/gemini-3.1-pro",
+          "model": "github-copilot/gemini-3.1-pro-preview",
           "variant": "high"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
         }
       ]
     },
@@ -217,48 +136,18 @@
       "variant": "xhigh",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
+          "model": "opencode-go/glm-5.1",
           "variant": "xhigh"
-        },
-        {
-          "model": "github-copilot/gemini-3.1-pro-preview",
-          "variant": "high"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
-        },
-        {
-          "model": "opencode/gemini-3.1-pro",
-          "variant": "high"
-        },
-        {
-          "model": "opencode-go/glm-5.1"
         }
       ]
     },
     "deep": {
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.3-codex",
       "variant": "medium",
       "fallback_models": [
         {
-          "model": "opencode/gpt-5.5",
+          "model": "openai/gpt-5.4",
           "variant": "medium"
-        },
-        {
-          "model": "github-copilot/gpt-5.5",
-          "variant": "medium"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
-        },
-        {
-          "model": "opencode/gemini-3.1-pro",
-          "variant": "high"
-        },
-        {
-          "model": "opencode-go/kimi-k2.6"
         },
         {
           "model": "opencode-go/glm-5.1"
@@ -266,88 +155,46 @@
       ]
     },
     "artistry": {
-      "model": "github-copilot/gemini-3.1-pro-preview",
+      "model": "openai/gpt-5.5",
       "variant": "high",
       "fallback_models": [
         {
-          "model": "opencode/gemini-3.1-pro",
+          "model": "github-copilot/gemini-3.1-pro-preview",
           "variant": "high"
-        },
-        {
-          "model": "github-copilot/claude-opus-4.7",
-          "variant": "max"
-        },
-        {
-          "model": "openai/gpt-5.5"
         }
       ]
     },
     "quick": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "openai/gpt-5.4-mini",
       "fallback_models": [
         {
-          "model": "opencode-go/glm-5.1"
-        },
-        {
-          "model": "openai/gpt-5.4-mini"
-        },
-        {
-          "model": "github-copilot/gpt-5.4-mini"
-        },
-        {
-          "model": "github-copilot/claude-haiku-4.5"
+          "model": "opencode-go/deepseek-v4-flash"
         }
       ]
     },
     "unspecified-low": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "openai/gpt-5.4-mini",
       "fallback_models": [
-        {
-          "model": "github-copilot/claude-sonnet-4.6"
-        },
-        {
-          "model": "opencode/claude-sonnet-4-6"
-        },
         {
           "model": "github-copilot/gemini-3-flash-preview"
         }
       ]
     },
     "unspecified-high": {
-      "model": "github-copilot/claude-opus-4.7",
-      "variant": "max",
+      "model": "openai/gpt-5.5",
+      "variant": "high",
       "fallback_models": [
         {
-          "model": "opencode/claude-opus-4-7",
-          "variant": "max"
-        },
-        {
-          "model": "openai/gpt-5.5",
+          "model": "opencode-go/glm-5.1",
           "variant": "high"
-        },
-        {
-          "model": "opencode/gpt-5.5",
-          "variant": "high"
-        },
-        {
-          "model": "opencode-go/glm-5.1"
-        },
-        {
-          "model": "opencode-go/kimi-k2.6"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
         }
       ]
     },
     "writing": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "openai/gpt-5.4-mini",
       "fallback_models": [
         {
           "model": "github-copilot/gemini-3-flash-preview"
-        },
-        {
-          "model": "github-copilot/claude-sonnet-4.6"
         }
       ]
     }
