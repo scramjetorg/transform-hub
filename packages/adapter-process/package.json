@@ -5,7 +5,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build": "NO_INSTALL=1 ../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
@@ -17,7 +17,6 @@
   "dependencies": {
     "@scramjet/model": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
-    "@scramjet/python-runner": "^1.1.0",
     "@scramjet/runner": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "@scramjet/adapters-common": "1.1.0",

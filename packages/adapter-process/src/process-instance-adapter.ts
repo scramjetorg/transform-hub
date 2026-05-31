@@ -24,7 +24,6 @@ import { development } from "@scramjet/sth-config";
 const isTSNode =
     !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) ||
     !!(process as any)[Symbol.for("ts-node.register.instance")];
-const gotPython = "Python available";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -86,21 +85,8 @@ class ProcessInstanceAdapter implements
                 "'engines' field can't contain more than one element");
         }
 
-        if ("python3" in config.engines) {
-            this.logger.trace(gotPython);
-            const runnerPath = path.resolve(__dirname, require.resolve("@scramjet/python-runner"));
+        this.logger.trace("Detected sequence engines", engines);
 
-            if (this.sthConfig.debug)
-                debugFlags = ["-m", "pdb", "-c", "continue"];
-
-            return [
-                "/usr/bin/env",
-                "python3",
-                ...debugFlags,
-                path.resolve(__dirname, runnerPath),
-                "./python-runner-startup.log",
-            ];
-        }
         if (this.sthConfig.debug)
             debugFlags = ["--inspect-brk=9229"];
 
@@ -109,21 +95,6 @@ class ProcessInstanceAdapter implements
             ...debugFlags,
             path.resolve(__dirname, require.resolve("@scramjet/runner"))
         ];
-    }
-
-    getPythonpath(sequenceDir: string) {
-        // This is for running from source. When the package is built, dependencies
-        // are installed next to runner.py script (rather than in __pypackages__),
-        // but that directory is automatically included in PYTHONPATH.
-        let pythonpath = path.resolve(
-            __dirname, require.resolve("@scramjet/python-runner"), "../__pypackages__"
-        );
-
-        if (process.env.PYTHONPATH) pythonpath += `:${process.env.PYTHONPATH}`;
-
-        pythonpath += `:${sequenceDir}/__pypackages__`;
-
-        return pythonpath;
     }
 
     setRunner(system: Record<string, string>): void {
@@ -162,7 +133,6 @@ class ProcessInstanceAdapter implements
             sequenceInfo,
             payload
         }, {
-            PYTHONPATH: this.getPythonpath(config.sequenceDir),
             EXPOSE_HOST: "127.0.0.1",
             ...this.sthConfig.runnerEnvs,
             ...extraEnvs
