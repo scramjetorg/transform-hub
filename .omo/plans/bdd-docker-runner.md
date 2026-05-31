@@ -61,10 +61,10 @@ Replace the in-process BDD invocation path with a docker-based wrapper so that r
 - Updated `bdd/README.md` (docker section replaces safe-wrapper section).
 
 ### Definition of Done
-- [ ] `yarn test:bdd --name="<previously-crashing-scenario>"` runs inside a container; if the scenario crashes the container, opencode (parent shell) keeps running and reports a non-zero exit code.
+- [x] `yarn test:bdd --name="<previously-crashing-scenario>"` runs inside a container; if the scenario crashes the container, opencode (parent shell) keeps running and reports a non-zero exit code.
 - [ ] `docker run` with synthetic OOM allocation exits 137 through the wrapper.
 - [ ] `kill -INT <wrapper_pid>` cleans up the named container (no orphan visible via `docker ps`).
-- [ ] All preserved CI script names (`test:bdd-ci-hub`, `test:bdd-ci-api`, `test:bdd-ci-api-node`, `test:bdd-ci-api-topic`, `test:bdd-ci-python`, `test:bdd-ci-node`, `test:unified-py`, `test:unified-js`) resolve and invoke the wrapper.
+- [x] All preserved CI script names (`test:bdd-ci-hub`, `test:bdd-ci-api`, `test:bdd-ci-api-node`, `test:bdd-ci-api-topic`, `test:bdd-ci-python`, `test:bdd-ci-node`, `test:unified-py`, `test:unified-js`) resolve and invoke the wrapper.
 - [ ] No retained references to `run-bdd-safe.js` or deleted scripts anywhere except CHANGELOG/git history.
 
 ### Must Have
@@ -231,15 +231,15 @@ Max Concurrent: 3 (Wave 1).
   - Step files using dockerode — justify (and document) the socket mount in code comments.
 
   **Acceptance Criteria**:
-  - [ ] `node --check scripts/run-bdd-docker.js` exits 0.
-  - [ ] `head -1 scripts/run-bdd-docker.js` is `#!/usr/bin/env node`.
-  - [ ] `test -x scripts/run-bdd-docker.js` succeeds (file is executable).
-  - [ ] `grep -E "^const (BDD_NODE_IMAGE|BDD_DOCKER_MEMORY|BDD_TIMEOUT_MS|BDD_GRACE_MS)" scripts/run-bdd-docker.js` matches at least 4 lines (env defaults declared).
-  - [ ] `grep -c 'docker kill --signal' scripts/run-bdd-docker.js` ≥ 1 (signal forwarding present).
-  - [ ] `grep -c 'docker rm -f' scripts/run-bdd-docker.js` ≥ 1 (cleanup present).
-  - [ ] `grep -c 'getent group docker' scripts/run-bdd-docker.js` ≥ 1 (gid resolution present).
-  - [ ] `grep -c '/tmp:/tmp' scripts/run-bdd-docker.js` = 0 (forbidden mount absent).
-  - [ ] `grep -cE "(--detach|'--detach')" scripts/run-bdd-docker.js` ≥ 1 (detached run pattern).
+  - [x] `node --check scripts/run-bdd-docker.js` exits 0.
+  - [x] `head -1 scripts/run-bdd-docker.js` is `#!/usr/bin/env node`.
+  - [x] `test -x scripts/run-bdd-docker.js` succeeds (file is executable).
+  - [x] `grep -E "^const (BDD_NODE_IMAGE|BDD_DOCKER_MEMORY|BDD_TIMEOUT_MS|BDD_GRACE_MS)" scripts/run-bdd-docker.js` matches at least 4 lines (env defaults declared).
+  - [x] `grep -c 'docker kill --signal' scripts/run-bdd-docker.js` ≥ 1 (signal forwarding present).
+  - [x] `grep -c 'docker rm -f' scripts/run-bdd-docker.js` ≥ 1 (cleanup present).
+  - [x] `grep -c 'getent group docker' scripts/run-bdd-docker.js` ≥ 1 (gid resolution present).
+  - [x] `grep -c '/tmp:/tmp' scripts/run-bdd-docker.js` = 0 (forbidden mount absent).
+  - [x] `grep -cE "(--detach|'--detach')" scripts/run-bdd-docker.js` ≥ 1 (detached run pattern).
 
   **QA Scenarios** (MANDATORY):
 
@@ -299,9 +299,9 @@ Max Concurrent: 3 (Wave 1).
   - These three files are the entire footprint of the prior wrapper attempt. They are coupled only to the four `test:bdd:safe*` script keys (also deleted in Task 4), so removal is safe and isolated.
 
   **Acceptance Criteria**:
-  - [ ] `test ! -e scripts/run-bdd-safe.js` exits 0.
-  - [ ] `test ! -e scripts/test-bdd-safe-selftest.js` exits 0.
-  - [ ] `test ! -e scripts/test-bdd-safe-memory.js` exits 0.
+  - [x] `test ! -e scripts/run-bdd-safe.js` exits 0.
+  - [x] `test ! -e scripts/test-bdd-safe-selftest.js` exits 0.
+  - [x] `test ! -e scripts/test-bdd-safe-memory.js` exits 0.
   - [ ] `git status --porcelain scripts/run-bdd-safe.js scripts/test-bdd-safe-selftest.js scripts/test-bdd-safe-memory.js` shows `D ` for each (staged deletion).
   - [ ] `ls scripts/ | wc -l` decreased by exactly 3 vs main.
 
@@ -373,13 +373,13 @@ Max Concurrent: 3 (Wave 1).
   - The legacy script's header block is the easiest place to identify which env vars are being retired.
 
   **Acceptance Criteria**:
-  - [ ] `grep -c run-bdd-docker bdd/README.md` ≥ 1.
-  - [ ] `grep -c run-bdd-safe bdd/README.md` = 0.
-  - [ ] `grep -c 'test:bdd:safe' bdd/README.md` = 0.
-  - [ ] `grep -cE 'BDD_(NODE_IMAGE|DOCKER_MEMORY|DOCKER_CPUS|TIMEOUT_MS|GRACE_MS)' bdd/README.md` ≥ 5 (all five env vars documented).
-  - [ ] `grep -c '4096' bdd/README.md` ≥ 1 (memory default documented).
-  - [ ] `grep -cE '\b(124|137|127)\b' bdd/README.md` ≥ 3 (exit-code key documented).
-  - [ ] `grep -c 'docker ps --filter name=bdd-runner-' bdd/README.md` ≥ 1 (escape hatch documented).
+  - [x] `grep -c run-bdd-docker bdd/README.md` ≥ 1.
+  - [x] `grep -c run-bdd-safe bdd/README.md` = 0.
+  - [x] `grep -c 'test:bdd:safe' bdd/README.md` = 0.
+  - [x] `grep -cE 'BDD_(NODE_IMAGE|DOCKER_MEMORY|DOCKER_CPUS|TIMEOUT_MS|GRACE_MS)' bdd/README.md` ≥ 5 (all five env vars documented).
+  - [x] `grep -c '4096' bdd/README.md` ≥ 1 (memory default documented).
+  - [x] `grep -cE '\b(124|137|127)\b' bdd/README.md` ≥ 3 (exit-code key documented).
+  - [x] `grep -c 'docker ps --filter name=bdd-runner-' bdd/README.md` ≥ 1 (escape hatch documented).
 
   **QA Scenarios**:
 
@@ -464,11 +464,11 @@ Max Concurrent: 3 (Wave 1).
   - The CI YAML is the contract for script-name preservation.
 
   **Acceptance Criteria**:
-  - [ ] `node -e "const s=require('./package.json').scripts; for (const k of ['test:bdd:safe','test:bdd:ts:safe','test:bdd:safe:selftest','test:bdd:safe:memory-selftest']) if (s[k]) { console.error('leftover',k); process.exit(1); } console.log('OK')"` → "OK".
-  - [ ] `node -e "const s=require('./package.json').scripts; const keep=['test:bdd','test:bdd:ts','test:bdd-ci-hub','test:bdd-ci-api','test:bdd-ci-api-node','test:bdd-ci-api-topic','test:bdd-ci-python','test:bdd-ci-node','test:unified-py','test:unified-js']; for (const k of keep) if (!s[k]) { console.error('missing',k); process.exit(1); } console.log('OK')"` → "OK".
-  - [ ] `node -e "const s=require('./package.json').scripts; const expectWrapped=['test:bdd','test:bdd:ts','test:bdd-ci-hub','test:bdd-ci-api-node','test:bdd-ci-api-topic','test:bdd-ci-python','test:bdd-ci-node','test:unified-py','test:unified-js']; for (const k of expectWrapped) if (!s[k].includes('scripts/run-bdd-docker.js')) { console.error('not routed',k,'=',s[k]); process.exit(1); } console.log('OK')"` → "OK".
-  - [ ] `node -e "const s=require('./package.json').scripts; if (s['test:bdd-ci-api']!=='yarn test:bdd-ci-api-node') { console.error('alias broken'); process.exit(1); } console.log('OK')"` → "OK".
-  - [ ] `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"` → exit 0 (valid JSON preserved).
+  - [x] `node -e "const s=require('./package.json').scripts; for (const k of ['test:bdd:safe','test:bdd:ts:safe','test:bdd:safe:selftest','test:bdd:safe:memory-selftest']) if (s[k]) { console.error('leftover',k); process.exit(1); } console.log('OK')"` → "OK".
+  - [x] `node -e "const s=require('./package.json').scripts; const keep=['test:bdd','test:bdd:ts','test:bdd-ci-hub','test:bdd-ci-api','test:bdd-ci-api-node','test:bdd-ci-api-topic','test:bdd-ci-python','test:bdd-ci-node','test:unified-py','test:unified-js']; for (const k of keep) if (!s[k]) { console.error('missing',k); process.exit(1); } console.log('OK')"` → "OK".
+  - [x] `node -e "const s=require('./package.json').scripts; const expectWrapped=['test:bdd','test:bdd:ts','test:bdd-ci-hub','test:bdd-ci-api-node','test:bdd-ci-api-topic','test:bdd-ci-python','test:bdd-ci-node','test:unified-py','test:unified-js']; for (const k of expectWrapped) if (!s[k].includes('scripts/run-bdd-docker.js')) { console.error('not routed',k,'=',s[k]); process.exit(1); } console.log('OK')"` → "OK".
+  - [x] `node -e "const s=require('./package.json').scripts; if (s['test:bdd-ci-api']!=='yarn test:bdd-ci-api-node') { console.error('alias broken'); process.exit(1); } console.log('OK')"` → "OK".
+  - [x] `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"` → exit 0 (valid JSON preserved).
   - [ ] `git diff --stat package.json | grep -E '^ package.json' | awk '{print $4}'` (insertions) reasonable (< 40 lines changed total).
   - [ ] Outside scripts block, `git diff package.json` shows no changes (verify with `node -e` comparing parsed `dependencies`, `devDependencies`, `version`, etc. against HEAD).
 

@@ -6,7 +6,7 @@
 >
 > **Deliverables**:
 > - Reusable `fake-instances-server.ts` harness under `packages/runner/test/transport/`
-> - Four sequence fixtures at `packages/runner/test/fixtures/`: `trivial-sequence/` (exits immediately), `delayed-sequence/` (~2s lifetime, no outputs), `output-sequence/` (~2s lifetime, emits a handful of items as sequence outputs), `input-sequence/` (consumes input items from CC.IN, emits one output per input item)
+> - Four sequence fixtures at `packages/runner-node/test/fixtures/`: `trivial-sequence/` (exits immediately), `delayed-sequence/` (~2s lifetime, no outputs), `output-sequence/` (~2s lifetime, emits a handful of items as sequence outputs), `input-sequence/` (consumes input items from CC.IN, emits one output per input item)
 > - Five runner-level spec files: `split-runner-communication-{ordering,lifecycle,metadata,runtime,input}.spec.ts`
 > - `RunnerHandshakeBuilder` helper in `packages/runner-node/src/handshake.ts`
 > - PING emission wired into `packages/runner-node/src/bin/runner-node.ts` before any PANG
@@ -59,10 +59,10 @@ Prove and enforce, with runner-level TDD, that `packages/runner` (outer) + `pack
 
 ### Concrete Deliverables
 - `packages/runner/test/transport/fake-instances-server.ts` — reusable TCP harness (read-all + minimal write-via-socket on CC.IN/CC.STDIN)
-- `packages/runner/test/fixtures/trivial-sequence/{index.js,package.json}` — exits immediately
-- `packages/runner/test/fixtures/delayed-sequence/{index.js,package.json}` — lives ~2s, returns without producing items
-- `packages/runner/test/fixtures/output-sequence/{index.js,package.json}` — lives ~2s, emits 3-5 items as sequence outputs
-- `packages/runner/test/fixtures/input-sequence/{index.js,package.json}` — consumes input items from CC.IN, emits one output item per input item, then exits when input ends
+- `packages/runner-node/test/fixtures/trivial-sequence/{index.js,package.json}` — exits immediately
+- `packages/runner-node/test/fixtures/delayed-sequence/{index.js,package.json}` — lives ~2s, returns without producing items
+- `packages/runner-node/test/fixtures/output-sequence/{index.js,package.json}` — lives ~2s, emits 3-5 items as sequence outputs
+- `packages/runner-node/test/fixtures/input-sequence/{index.js,package.json}` — consumes input items from CC.IN, emits one output item per input item, then exits when input ends
 - `packages/runner/test/transport/split-runner-communication-ordering.spec.ts`
 - `packages/runner/test/transport/split-runner-communication-lifecycle.spec.ts`
 - `packages/runner/test/transport/split-runner-communication-metadata.spec.ts`
@@ -74,12 +74,12 @@ Prove and enforce, with runner-level TDD, that `packages/runner` (outer) + `pack
 - Modified `packages/runner/src/executor/lifecycle-observer.ts` (or whichever module owns the outer-runner terminal-frame fallback) — suppress fallback when child already emitted a terminal frame
 
 ### Definition of Done
-- [ ] `cd packages/runner && npx ava -m "*split runner communication*"` → 5/5 pass
+- [x] `cd packages/runner && npx ava -m "*split runner communication*"` → 5/5 pass
 - [ ] `cd packages/runner && npx ava` → all green (existing tests unaffected)
-- [ ] `cd packages/runner-node && npx ava` → all green
-- [ ] `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` → 0 errors
-- [ ] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors
-- [ ] BDD scenario `Node sequence completes successfully under runner-node spawn isolation` completes without `Get info [seq, info] [ undefined, ... ]`, prints `NODE_COMPLETES_OK`, emits `SEQUENCE_COMPLETED` exactly once, and runner process exits (no exit 137)
+- [x] `cd packages/runner-node && npx ava` → all green
+- [x] `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` → 0 errors
+- [x] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors
+- [x] BDD scenario `Node sequence completes successfully under runner-node spawn isolation` completes without `Get info [seq, info] [ undefined, ... ]`, prints `NODE_COMPLETES_OK`, emits `SEQUENCE_COMPLETED` exactly once, and runner process exits (no exit 137)
 
 ### Must Have
 - PING emitted on the MONITORING channel **before any PANG** by construction.
@@ -230,7 +230,7 @@ Max Concurrent: 5 (Wave 2)
   - **Monitoring frame format**: `packages/runner-node/src/message-utils.ts:12` — `JSON.stringify([code, data]) + "\r\n"`. Confirms CRLF-delimited JSON arrays.
 
   **Acceptance Criteria**:
-  - [ ] File compiles: `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
+  - [x] File compiles: `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
   - [ ] Exports verified via ts-node smoke: returned object has `port`, `sockets`, `channels`, `frames`, `harnessErrors`, `awaitChannel`, `close`.
   - [ ] No hardcoded port number (`grep -nE "listen\\(\\s*[0-9]" packages/runner/test/transport/fake-instances-server.ts` returns no port literal except `0`).
 
@@ -601,7 +601,7 @@ Max Concurrent: 5 (Wave 2)
   - **Codes**: `@scramjet/symbols` `RunnerMessageCode`.
 
   **Acceptance Criteria**:
-  - [ ] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
+  - [x] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
   - [ ] Smoke: `node -r ts-node/register -e 'const {buildPing} = require("./packages/runner-node/src/handshake"); const f = buildPing({sequenceInfo:{id:"x",config:{},instances:[],location:"/"}, appConfig:{}, args:[], instanceName:"t"}); console.log(JSON.stringify(f));'` prints valid `[code, payload]`.
 
   **QA Scenarios**:
@@ -657,11 +657,11 @@ Max Concurrent: 5 (Wave 2)
   - **Why**: this is the entire RCA fix — without PING, `CSIController.handleHandshake()` never runs, `this.sequence` stays `{}`, `getInfo()` logs `undefined`.
 
   **Acceptance Criteria**:
-  - [ ] T3 spec passes (GREEN): `cd packages/runner && npx ava packages/runner/test/transport/split-runner-communication-ordering.spec.ts` → 1 passed.
-  - [ ] T5 spec passes (GREEN): `cd packages/runner && npx ava packages/runner/test/transport/split-runner-communication-metadata.spec.ts` → 1 passed.
-  - [ ] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
-  - [ ] `cd packages/runner-node && npx ava` → all green (no regression).
-  - [ ] `git diff packages/runner-node/src/fd-streams.ts` empty (no fd4/fd5 changes).
+  - [x] T3 spec passes (GREEN): `cd packages/runner && npx ava packages/runner/test/transport/split-runner-communication-ordering.spec.ts` → 1 passed.
+  - [x] T5 spec passes (GREEN): `cd packages/runner && npx ava packages/runner/test/transport/split-runner-communication-metadata.spec.ts` → 1 passed.
+  - [x] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
+  - [x] `cd packages/runner-node && npx ava` → all green (no regression).
+  - [x] `git diff packages/runner-node/src/fd-streams.ts` empty (no fd4/fd5 changes).
 
   **QA Scenarios**:
 
@@ -727,9 +727,9 @@ Max Concurrent: 5 (Wave 2)
   - **Evidence in BDD logs**: child stayed alive past `SEQUENCE_COMPLETED`; Docker killed with 137 (oom=false).
 
   **Acceptance Criteria**:
-  - [ ] T4 spec passes (GREEN): `cd packages/runner && npx ava packages/runner/test/transport/split-runner-communication-lifecycle.spec.ts` → 1 passed.
-  - [ ] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
-  - [ ] `cd packages/runner-node && npx ava` → all green.
+  - [x] T4 spec passes (GREEN): `cd packages/runner && npx ava packages/runner/test/transport/split-runner-communication-lifecycle.spec.ts` → 1 passed.
+  - [x] `cd packages/runner-node && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
+  - [x] `cd packages/runner-node && npx ava` → all green.
   - [ ] Diff scope: `git diff --stat packages/runner-node/src/host-client.ts` shows a small change (~1-3 lines added/removed) — proves no refactor sprawl.
 
   **QA Scenarios**:
@@ -792,10 +792,10 @@ Max Concurrent: 5 (Wave 2)
   - **Why**: T3 asserts exactly ONE terminal frame; today the outer runner may add a fallback even when the child already emitted one, creating a duplicate on the wire and confusing the Hub-side state machine.
 
   **Acceptance Criteria**:
-  - [ ] T3 spec assertion "exactly one terminal frame" passes.
-  - [ ] `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
+  - [x] T3 spec assertion "exactly one terminal frame" passes.
+  - [x] `cd packages/runner && npx tsc --noEmit -p tsconfig.build.json` → 0 errors.
   - [ ] `cd packages/runner && npx ava` → all green (no regression on existing executor tests).
-  - [ ] Crash-path coverage retained: any existing executor test for non-zero exit code still passes.
+  - [x] Crash-path coverage retained: any existing executor test for non-zero exit code still passes.
 
   **QA Scenarios**:
 
@@ -859,7 +859,7 @@ Max Concurrent: 5 (Wave 2)
 
   **Acceptance Criteria**:
   - [ ] RED: spec fails — most likely on the "first monitoring frame must be PING" precondition (since no PING is emitted today). Capture the assertion message.
-  - [ ] GREEN (after T7 + T9): both tests pass.
+  - [x] GREEN (after T7 + T9): both tests pass.
 
   **QA Scenarios**:
 
@@ -926,7 +926,7 @@ Max Concurrent: 5 (Wave 2)
 
   **Acceptance Criteria**:
   - [ ] RED: spec fails — most likely on "first monitoring frame must be PING" or `awaitChannel(CC.IN)` timing out, depending on which bug surfaces first.
-  - [ ] GREEN (after T7 + T8): spec passes; 3 echoed items observed on CC.OUT.
+  - [x] GREEN (after T7 + T8): spec passes; 3 echoed items observed on CC.OUT.
 
   **QA Scenarios**:
 
@@ -1042,8 +1042,8 @@ SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=900000 yarn test:bdd:ts \
 ### Final Checklist
 - [ ] All "Must Have" present and verified by command
 - [ ] All "Must NOT Have" absent and verified by grep
-- [ ] Five new specs pass (`*split runner communication*`)
+- [x] Five new specs pass (`*split runner communication*`)
 - [ ] Full `npx ava` green in both packages
-- [ ] `tsc --noEmit` clean in both packages
-- [ ] BDD scenario passes without undefined-metadata log and without exit 137
+- [x] `tsc --noEmit` clean in both packages
+- [x] BDD scenario passes without undefined-metadata log and without exit 137
 - [ ] Evidence files saved under `.omo/evidence/`
