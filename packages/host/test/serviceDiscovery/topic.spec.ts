@@ -134,7 +134,7 @@ describe("Data flow", () => {
         }
 
         const createStreamProvider =
-            (name: string, from: number, to: number): [Readable, Promise<void>] => {
+            (from: number, to: number): [Readable, Promise<void>] => {
                 const gen = generator(from, to);
                 const provider = Readable.from(gen).setEncoding("ascii");
                 const [streamEndPromise, streamEnd, streamError] = createWaitingPromise();
@@ -143,9 +143,9 @@ describe("Data flow", () => {
                 return [provider, streamEndPromise];
             };
 
-        const [provider1, provider1End] = createStreamProvider("TestReadStream1", 1, 10);
-        const [provider2, provider2End] = createStreamProvider("TestReadStream2", 11, 20);
-        const [provider3, provider3End] = createStreamProvider("TestReadStream3", 21, 30);
+        const [provider1, provider1End] = createStreamProvider(1, 10);
+        const [provider2, provider2End] = createStreamProvider(11, 20);
+        const [provider3, provider3End] = createStreamProvider(21, 30);
 
         provider1.pipe(testTopic, { end: false });
         provider2.pipe(testTopic, { end: false });
@@ -196,5 +196,24 @@ describe("Data flow", () => {
         expect(result[0]).toBe(testText);
         expect(result[1]).toBe(testText);
         expect(result[2]).toBe(testText);
+    });
+});
+
+describe("TopicId validation", () => {
+    test("accepts dotted topic names", () => {
+        expect(TopicId.validate("receipt.request.v1")).toBe(true);
+        expect(TopicId.validate("receipt.response.v1")).toBe(true);
+        expect(TopicId.validate("receipt.signed.v1")).toBe(true);
+    });
+
+    test("keeps existing underscore and dash names valid", () => {
+        expect(TopicId.validate("plain_topic")).toBe(true);
+        expect(TopicId.validate("plain-topic+v1")).toBe(true);
+    });
+
+    test("rejects whitespace empty strings and backslashes", () => {
+        expect(TopicId.validate("bad space")).toBe(false);
+        expect(TopicId.validate("")).toBe(false);
+        expect(TopicId.validate("bad\\topic")).toBe(false);
     });
 });
