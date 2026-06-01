@@ -26,7 +26,7 @@ class PrePack {
         const packageDirName = this.currDir.split("/").pop();
 
         if (this.options.distPackDir) {
-            this.rootDistPackPath = join(this.options.distPackDir, packageDirName);
+            this.rootDistPackPath = join(this.options.outDir, packageDirName);
         } else if (this.options.rootDistPack) {
             this.rootDistPackPath = this.options.rootDistPack;
         } else if (this.options.localCopy) {
@@ -52,7 +52,7 @@ class PrePack {
                 if (!this.currPackageJson.name)
                     throw new Error("Package has no name!");
 
-                this.rootDistPackPath = path.join(this.rootDir, "dist", this.currPackageJson.name.replace(/[^\w\d]+/g, "-").replace(/^\-|\-$/, ""));
+                this.rootDistPackPath = path.join(this.options.outDir, this.currPackageJson.name.replace(/[^\w\d]+/g, "-").replace(/^\-|\-$/, ""));
             }
 
             await this.readRootPackage();

@@ -31,6 +31,23 @@ function getDirectoriesFromGlobs(wd, globs, configName) {
     return packages;
 }
 
+function findClosestWorkspacePackageJSONLocation(_cwd = ".") {
+    const wd = path.resolve(_cwd);
+    const pathParts = wd.split(path.sep);
+
+    while (pathParts.length) {
+        const pkg = path.resolve(pathParts.join(path.sep), "package.json");
+
+        if (existsSync(pkg)) {
+            const contents = JSON.parse(readFileSync(pkg));
+            if (contents.workspaces) return pkg;
+        }
+        pathParts.pop();
+    }
+
+    return findClosestPackageJSONLocation(wd);
+}
+
 const exists = async (name) => {
     try {
         await access(name);
@@ -39,6 +56,10 @@ const exists = async (name) => {
         return false;
     }
 };
+
+function toAbsolutePackageDirs(baseDir, packages) {
+    return packages.map((pkgDir) => path.resolve(baseDir, pkgDir));
+}
 
 function makeTypescriptSolutionForPackageList(packages, configName) {
     const nodeSystem = createSolutionBuilderHost(sys);
@@ -61,7 +82,9 @@ function makeTypescriptSolutionForPackageList(packages, configName) {
 }
 
 function getTSDirectoriesFromPackage(_cwd = ".", pkg, workspaceFilter = [], tsConfigName = "tsconfig.json") {
-    if (!pkg.workspaces) return [_cwd];
+    const baseDir = path.resolve(_cwd);
+
+    if (!pkg.workspaces) return [baseDir];
 
     const workspaces = Array.isArray(pkg.workspaces) ? { default: pkg.workspaces } : pkg.workspaces;
     const globs = Object.entries(workspaces)
@@ -73,7 +96,7 @@ function getTSDirectoriesFromPackage(_cwd = ".", pkg, workspaceFilter = [], tsCo
             return entries;
         });
 
-    return getDirectoriesFromGlobs(cwd(), globs, tsConfigName);
+    return toAbsolutePackageDirs(baseDir, getDirectoriesFromGlobs(baseDir, globs, tsConfigName));
 }
 
 const findClosestPackageJSONLocation = (_cwd = ".") => {
@@ -104,7 +127,7 @@ function getPackageList(pkg, configName, opts) {
     if (opts.config) {
         packages = getTSDirectoriesFromPackage(dirname(opts.config), pkg, workspaceFilter, configName);
     } else if (opts.dirs) {
-        packages = getDirectoriesFromGlobs(cwd(), opts._, configName);
+        packages = toAbsolutePackageDirs(cwd(), getDirectoriesFromGlobs(cwd(), opts._, configName));
     } else {
         packages = getTSDirectoriesFromPackage(opts._[0], pkg, workspaceFilter, configName);
     }
@@ -116,7 +139,7 @@ function getPackagesInWorkspace(pkgLocation, workspaces = []) {
     const dir = dirname(pkgLocation);
 
     if (!workspaces.length) {
-        if (!pkg.workspaces) return [];
+        if (!pkg.workspaces) return [dir];
         workspaces.push(...Object.values(pkg.workspaces).flat());
     } else {
         const nre = [];
@@ -143,7 +166,7 @@ function getPackagesInWorkspace(pkgLocation, workspaces = []) {
             .flat();
     }
 
-    return getDirectoriesFromGlobs(dir, workspaces, "package.json");
+    return toAbsolutePackageDirs(dir, getDirectoriesFromGlobs(dir, workspaces, "package.json"));
 }
 
 async function runCommand(cmd, verbose) {
@@ -171,6 +194,7 @@ module.exports = {
     exists,
     getPackageList,
     findClosestPackageJSONLocation,
+    findClosestWorkspacePackageJSONLocation,
     readClosestPackageJSON,
     getPackagesInWorkspace,
     getTSDirectoriesFromPackage,
