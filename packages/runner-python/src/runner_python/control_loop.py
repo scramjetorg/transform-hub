@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
 from collections.abc import Callable, Iterable
 from typing import Any, cast
+
+from runner_python.utils import maybe_await
 
 
 logger = logging.getLogger(__name__)
@@ -58,13 +59,6 @@ async def _get_frames_async(control_decoder: Any) -> list[tuple[int, Any]]:
     decode = cast(Callable[[bytes], Iterable[tuple[int, Any]]], decode_frames)
     raw_line = await asyncio.to_thread(_get_control_line_reader(control_decoder))
     return list(decode(_normalize_control_line(raw_line)))
-
-
-async def _maybe_await(result: Any) -> Any:
-    if inspect.isawaitable(result):
-        return await result
-
-    return result
 
 
 def _replace_app_config(app_context: Any, app_config: dict[str, Any]) -> None:
@@ -129,12 +123,12 @@ async def _dispatch_stop(app_context: Any, terminator: Any, payload: Any) -> Non
     handlers = list(getattr(app_context, "_stop_handlers", []))
     if handlers:
         for handler in handlers:
-            await _maybe_await(handler(stop_payload))
+            await maybe_await(handler(stop_payload))
         return
 
     stop = getattr(terminator, "stop", None)
     if callable(stop):
-        await _maybe_await(stop(stop_payload))
+        await maybe_await(stop(stop_payload))
 
 
 async def _dispatch_event(app_context: Any, payload: Any) -> None:
@@ -157,7 +151,7 @@ async def _dispatch_event(app_context: Any, payload: Any) -> None:
     if not callable(emit):
         raise TypeError("App context must expose emit()")
 
-    await _maybe_await(emit(event_name, payload.get("message")))
+    await maybe_await(emit(event_name, payload.get("message")))
 
 
 async def control_loop(control_decoder: Any, app_context: Any, terminator: Any) -> None:

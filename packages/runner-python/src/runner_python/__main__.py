@@ -12,7 +12,6 @@ import logging
 import sys
 import time
 import traceback
-from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +28,6 @@ def _add_local_packages() -> None:
 
 _add_local_packages()
 
-from scramjet.streams import Stream
-
 from runner_python.app_context import AppContext
 from runner_python.boot_config import load_boot_config
 from runner_python.control_codec import ControlFrameDecoder
@@ -43,6 +40,15 @@ from runner_python.lifecycle import perform_shutdown
 from runner_python.monitoring_codec import MonitoringWriter
 from runner_python.output_stream import PANG, forward_output_stream
 from runner_python.sequence_loader import SequenceLoadError, SequenceModule, load_sequence
+from runner_python.utils import (
+    as_output_stream,
+    build_input_stream,
+    build_runtime_pangs,
+    get_input_content_type,
+    get_output_content_type,
+    maybe_await,
+    resolve_sequence_result,
+)
 
 
 logger = logging.getLogger("runner_python")
@@ -164,12 +170,6 @@ def _configure_logging(log_writer: asyncio.StreamWriter, level_name: str) -> log
     return runtime_logger
 
 
-def _maybe_await(result: Any):
-    if inspect.isawaitable(result):
-        return result
-    return None
-
-
 def _wrap_stop_handler(handler: Any):
     try:
         signature = inspect.signature(handler)
@@ -207,9 +207,7 @@ def _wrap_stop_handler(handler: Any):
                 normalized_payload["canCallKeepalive"],
             )
 
-        awaited = _maybe_await(result)
-        if awaited is not None:
-            await awaited
+        await maybe_await(result)
 
     return wrapped
 
@@ -259,103 +257,6 @@ def _build_control_context(shared_context: AppContext, control_logger: logging.L
     return control_context
 
 
-def _get_input_content_type(sequence: SequenceModule) -> str:
-    requires = getattr(sequence.module, "requires", None)
-    if isinstance(requires, dict):
-        content_type = requires.get("contentType")
-        if isinstance(content_type, str) and content_type:
-            return content_type
-    return "text/plain"
-
-
-def _build_input_stream(input_reader: asyncio.StreamReader, content_type: str) -> Stream:
-    if content_type == "application/octet-stream":
-        return Stream.read_from(input_reader, chunk_size=CHUNK_SIZE)
-
-    stream = Stream.read_from(input_reader)
-
-    return stream.decode("utf-8")
-
-
-def _build_runtime_pangs(sequence: SequenceModule, result: Any) -> list[dict[str, str]]:
-    pangs: list[dict[str, str]] = []
-    result_content_type = getattr(result, "content_type", "")
-    if not isinstance(result_content_type, str):
-        result_content_type = ""
-
-    result_provides = getattr(result, "provides", None)
-    if isinstance(result_provides, str):
-        pangs.append(
-            {
-                "provides": result_provides,
-                "contentType": result_content_type,
-            }
-        )
-    else:
-        provides = getattr(sequence.module, "provides", None)
-        if isinstance(provides, dict) and "provides" in provides:
-            pangs.append(
-                {
-                    "provides": str(provides.get("provides", "")),
-                    "contentType": str(provides.get("contentType", "")),
-                }
-            )
-
-    result_requires = getattr(result, "requires", None)
-    if isinstance(result_requires, str):
-        pangs.append(
-            {
-                "requires": result_requires,
-                "contentType": result_content_type,
-            }
-        )
-    else:
-        requires = getattr(sequence.module, "requires", None)
-        if isinstance(requires, dict) and "requires" in requires:
-            pangs.append(
-                {
-                    "requires": str(requires.get("requires", "")),
-                    "contentType": str(requires.get("contentType", "")),
-                }
-            )
-
-    return pangs
-
-
-def _get_output_content_type(sequence: SequenceModule, result: Any) -> str:
-    content_type = getattr(result, "content_type", None)
-    if not isinstance(content_type, str) or not content_type:
-        provides = getattr(sequence.module, "provides", None)
-        if isinstance(provides, dict):
-            raw_content_type = provides.get("contentType")
-            if isinstance(raw_content_type, str):
-                content_type = raw_content_type
-
-    if content_type in {"application/octet-stream", "application/x-ndjson"}:
-        return content_type
-
-    return ""
-
-
-async def _resolve_sequence_result(result: Any) -> Any:
-    current = result
-    while (
-        inspect.isawaitable(current)
-        and not inspect.isasyncgen(current)
-        and not hasattr(current, "__aiter__")
-    ):
-        current = await current
-    return current
-
-
-def _as_output_stream(result: Any) -> Any:
-    if result is None:
-        return None
-    if hasattr(result, "__aiter__"):
-        return result
-    return Stream.from_iterable([result])
-
-
 async def _open_host_streams(host_channels: HostChannels):
     input_reader, input_writer = await asyncio.open_connection(sock=host_channels.input_sock)
     _output_reader, output_writer = await asyncio.open_connection(sock=host_channels.output_sock)
@@ -379,13 +280,13 @@ async def _run_sequence_output(
     output_writer: asyncio.StreamWriter,
     monitoring_writer: MonitoringWriter,
 ) -> None:
-    resolved = await _resolve_sequence_result(result)
-    output_stream = _as_output_stream(resolved)
+    resolved = await resolve_sequence_result(result)
+    output_stream = as_output_stream(resolved)
 
     if output_stream is None:
         return
 
-    content_type = _get_output_content_type(sequence, resolved)
+    content_type = get_output_content_type(sequence, resolved)
 
     if content_type == "application/x-ndjson":
         async for item in output_stream:
@@ -479,7 +380,7 @@ async def main() -> int:
         )
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)
-        input_stream = _build_input_stream(input_reader, _get_input_content_type(sequence))
+        input_stream = build_input_stream(input_reader, get_input_content_type(sequence))
 
         monitoring_writer.write_frame(PANG, {"requires": "", "contentType": ""})
 
@@ -494,7 +395,7 @@ async def main() -> int:
             traceback.print_exc()
             return 1
 
-        for payload in _build_runtime_pangs(sequence, raw_result):
+        for payload in build_runtime_pangs(sequence, raw_result):
             monitoring_writer.write_frame(PANG, payload)
 
         handshake_writer.flush()

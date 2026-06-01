@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import inspect
 import logging
 from typing import Any
+
+from runner_python.utils import maybe_await
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +32,6 @@ class _KeepAliveState:
         self.updated.set()
 
 
-async def _maybe_await(result: Any) -> Any:
-    if inspect.isawaitable(result):
-        return await result
-
-    return result
-
-
 def _normalize_stop_payload(stop_payload: dict[str, Any]) -> tuple[dict[str, Any], int, bool]:
     payload = dict(stop_payload)
 
@@ -56,7 +50,7 @@ def _normalize_stop_payload(stop_payload: dict[str, Any]) -> tuple[dict[str, Any
 
 async def _run_stop_handler(handler: Any, stop_payload: dict[str, Any]) -> None:
     try:
-        await _maybe_await(handler(dict(stop_payload)))
+        await maybe_await(handler(dict(stop_payload)))
     except Exception as exc:
         logger.error("Stop handler error: %s", exc)
 
@@ -148,7 +142,7 @@ async def perform_shutdown(
     async def tracked_keep_alive(timeout: int = 0) -> Any:
         result = None
         if callable(original_keep_alive):
-            result = await _maybe_await(original_keep_alive(timeout))
+            result = await maybe_await(original_keep_alive(timeout))
 
         if can_call_keepalive:
             try:
