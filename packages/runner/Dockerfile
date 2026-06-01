@@ -27,6 +27,8 @@ COPY ./dist/docker-runner/symbols ./dist/symbols
 COPY ./dist/docker-runner/obj-logger ./dist/obj-logger
 COPY ./dist/docker-runner/model ./dist/model
 COPY ./dist/docker-runner/runner ./dist/runner
+COPY ./dist/docker-runner/runner-node ./dist/runner-node
+COPY ./dist/docker-runner/runner-bun ./dist/runner-bun
 COPY ./dist/docker-runner/api-server ./dist/api-server
 
 FROM target
@@ -48,4 +50,3 @@ RUN mkdir /pipes \
 
 ENTRYPOINT [ "/usr/bin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]
-

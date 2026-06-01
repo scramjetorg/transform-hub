@@ -6,3 +6,4 @@ export {
     RunnerLifecycle,
 } from "./lifecycle";
 
+export { bootstrap } from "./bin/runner-node";
