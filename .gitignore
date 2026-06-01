@@ -157,10 +157,6 @@ bdd/timing-log.ndjson
 timing-log.ndjson
 .all-deps
 
-# Python runner parity capture outputs
-packages/runner-python/tests/parity/fixtures/**/recorded.json
-packages/runner-python/tests/parity/fixtures/**/expected_summary.md
-
 # private working directories
 /temp
 
