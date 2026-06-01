@@ -2,17 +2,16 @@
 
 ## Responsibility
 
-Outer launcher for sequences. Validates adapter env, writes boot config, connects to host, and spawns the runtime-specific child process.
+Outer runtime launcher for adapter-launched sequences. Validates env, writes boot config, opens host transport, and selects the Bun/Node/Python child runtime.
 
-## Design Patterns
+## Design/Patterns
 
-Split-owner transport: this package owns stdin/stdout/stderr/control/monitoring and delegates semantic sequence execution to runner-node or python.
-Runtime selection is strategy-based via `selectExecutor()` and shell-compatible boot config handoff.
+Transport-owner wrapper: this package owns stdio/control/monitoring wiring while runtime packages own sequence execution. Runtime choice is strategy-based via `selectExecutor()` and per-runtime launcher resolution.
 
 ## Data & Control Flow
 
-Env vars are parsed into `SequenceInfo` and `RunnerConnectInfo`, then a private boot JSON file is written and passed to the child. Host channels are opened first; child stdio is wired through raw pipes; lifecycle frames are observed and translated back into host disconnect/exit handling.
+Adapter env is parsed into `SequenceInfo`/`RunnerConnectInfo`, persisted to a private boot JSON file, then passed to the selected child entry. Host channels are initialized first; child pipes are forwarded raw; terminal lifecycle frames drive cleanup and exit translation.
 
 ## Integration Points
 
-Uses `@scramjet/api-client`, `@scramjet/api-server`, `@scramjet/client-utils`, host client transport, executor selection, and runner-node entry resolution.
+Uses `@scramjet/api-client`, `@scramjet/api-server`, `@scramjet/client-utils`, `@scramjet/runner-bun`, `@scramjet/runner-node`, host client transport, and child-process spawning.

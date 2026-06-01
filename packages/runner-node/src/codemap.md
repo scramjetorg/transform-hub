@@ -2,15 +2,15 @@
 
 ## Responsibility
 
-Core runtime implementation for runner-node: boot config, fd streams, host client, contexts, handshake, lifecycle, and sequence execution.
+Core Node runtime implementation: boot config, fd streams, host client, contexts, handshake, lifecycle, and sequence execution.
 
-## Design Patterns
+## Design/Patterns
 
-Modular bootstrap pipeline with narrow helpers. Uses context builders and small protocol adapters instead of one monolithic runner class.
+Modular bootstrap pipeline with narrow helpers and protocol adapters rather than one monolithic runtime class.
 
 ## Data & Control Flow
 
-Boot config drives sequence loading and host connection. `context.ts` builds either host-backed or local sequence context, `wireControlStream()` dispatches STOP/KILL/EVENT/SET frames, `runSequence()` executes functions, and `lifecycle.ts` coordinates shutdown and keepalive semantics.
+Boot config drives sequence loading and host connection. Context builders prepare the execution environment, control wiring dispatches STOP/KILL/EVENT/SET frames, `runSequence()` executes the entry, and lifecycle helpers coordinate shutdown and keepalive behavior.
 
 ## Integration Points
 

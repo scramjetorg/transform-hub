@@ -2,16 +2,16 @@
 
 ## Responsibility
 
-Implements config defaults, merge/update semantics, runtime-adapter selection, and safe export of public config data.
+Implements config defaults, image defaults, merge/update semantics, adapter selection, and public config extraction.
 
-## Design Patterns
+## Design/Patterns
 
-Singleton-like default config object mutated by deep merge; optional dynamic import avoids hard dependency on adapter package during startup.
+Mutable in-memory default config hydrated by deep merge; adapter resolution is deferred so startup avoids a hard dependency when adapters are unused.
 
 ## Data & Control Flow
 
-`default-config` is seeded with baked-in image values, `ConfigService.update()` merges CLI/file overrides, `selectRuntimeAdapter()` delegates adapter-specific augmentation, and `getConfigInfo()` strips local-only fields.
+`default-config.ts` seeds host/docker/kubernetes/runtime defaults, `image-config.json` provides baked image tags, update calls overlay CLI/file config, and public getters strip local-only fields before exposure.
 
 ## Integration Points
 
-Consumes `@scramjet/types` and `@scramjet/utility`; optionally imports `@scramjet/adapters` for runtime-specific configuration.
+Consumes `@scramjet/types` and `@scramjet/utility`; may import `@scramjet/adapters` for runtime-specific augmentation.

@@ -2,16 +2,16 @@
 
 ## Responsibility
 
-Shared type surface for STH configuration, command options, adapter contracts, and cross-package DTOs.
+Shared type package for CLI options, merged STH config, runtime executor contracts, and adapter-facing DTOs.
 
-## Design Patterns
+## Design/Patterns
 
-Type-only package; uses structural types, partial/public variants, and narrow config shapes to keep runtime packages decoupled.
+Pure type surface with structural config models, partial-update friendly shapes, and explicit runtime-kind/image mappings.
 
 ## Data & Control Flow
 
-Defines the canonical `STHConfiguration`/`STHCommandOptions` shapes that CLI/config code merges into runtime config and passes to host/adapter code.
+`STHCommandOptions` models parsed CLI flags, `STHConfiguration` models merged runtime state, and runtime executor types describe boot config plus spawn/handle contracts for node, python3, and bun wrappers.
 
 ## Integration Points
 
-Consumed by `@scramjet/sth-config`, `@scramjet/sth`, `@scramjet/host`, and CLI/adapter packages.
+Consumed by `@scramjet/sth-config`, `@scramjet/sth`, `@scramjet/host`, adapters, and runtime wrapper packages.
