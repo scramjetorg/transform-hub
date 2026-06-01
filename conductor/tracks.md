@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: runner-bun fixes after python fixes, please inspect the review comments for the python runner PR and see if we can address them here.**
+- [~] **Track: runner-bun fixes after python fixes, please inspect the review comments for the python runner PR and see if we can address them here.**
 *Link: [./tracks/runner_bun_build_node_parity_20260601/](./tracks/runner_bun_build_node_parity_20260601/)*
