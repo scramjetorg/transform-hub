@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["oh-my-openagent-slim@latest", "opencode-conductor-plugin@latest"],
+  "permission": {
+    "bash": "allow",
+    "edit": "allow",
+    "write": "allow",
+    "read": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "patch": "allow",
+    "skill": "allow",
+    "task": "allow",
+    "todowrite": "allow",
+    "todoread": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "question": "allow"
+  }
+}
