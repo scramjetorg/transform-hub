@@ -1,3 +1,4 @@
+import { NodeSpawnOptions, RuntimeExecutor } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { isAbsolute } from "path";
 import { Duplex, Readable } from "stream";
@@ -18,15 +19,6 @@ import { Duplex, Readable } from "stream";
 export const RUNNER_NODE_STDIO = ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"] as const;
 
 export type RunnerNodeStdio = typeof RUNNER_NODE_STDIO;
-
-export interface SpawnRunnerNodeOptions {
-    runnerNodeEntry: string;
-    bootConfigPath: string;
-    /** Override the node executable; defaults to `process.execPath`. */
-    nodeExecPath?: string;
-    cwd?: string;
-    env?: NodeJS.ProcessEnv;
-}
 
 export interface RunnerNodeProcessHandles {
     child: ChildProcess;
@@ -66,14 +58,14 @@ function assertInternalPath(name: string, path: string): void {
  * fd3 is intentionally reserved as IPC purely so Node creates the child with
  * its IPC send function defined; this executor never sends an IPC message.
  */
-export function spawnRunnerNode(opts: SpawnRunnerNodeOptions): RunnerNodeProcessHandles {
-    const { runnerNodeEntry, bootConfigPath, cwd, env } = opts;
+export function spawnRunnerNode(opts: NodeSpawnOptions): RunnerNodeProcessHandles {
+    const { runtimeEntry, bootConfigPath, cwd, env } = opts;
     const nodeExecPath = opts.nodeExecPath ?? process.execPath;
 
-    assertInternalPath("runnerNodeEntry", runnerNodeEntry);
+    assertInternalPath("runtimeEntry", runtimeEntry);
     assertInternalPath("bootConfigPath", bootConfigPath);
 
-    const child = spawn(nodeExecPath, [runnerNodeEntry, bootConfigPath], {
+    const child = spawn(nodeExecPath, [runtimeEntry, bootConfigPath], {
         stdio: [...RUNNER_NODE_STDIO],
         cwd,
         env: env ?? {}
@@ -109,3 +101,9 @@ export function spawnRunnerNode(opts: SpawnRunnerNodeOptions): RunnerNodeProcess
 
     return { child, stdout, stderr, control, monitoring };
 }
+
+export const nodeExecutor: RuntimeExecutor<NodeSpawnOptions> = {
+    kind: "node",
+    spawn: spawnRunnerNode,
+};
+

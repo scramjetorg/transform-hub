@@ -4,7 +4,7 @@ import { ChildProcess } from "child_process";
 import { join } from "path";
 import { Duplex, Readable } from "stream";
 
-import { RUNNER_NODE_STDIO, spawnRunnerNode } from "../../src/executor/process-executor";
+import { RUNNER_NODE_STDIO, spawnRunnerNode } from "../../src/executor/node-process-executor";
 
 const fixtureChild = join(__dirname, "..", "fixtures", "five-pipe-child.js");
 
@@ -48,7 +48,7 @@ test.serial("RUNNER_NODE_STDIO is the exact six-slot layout", t => {
 test.serial("process executor forwarding: spawnRunnerNode returns typed handles for stdout/stderr/fd4/fd5", async t => {
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null"
     });
 
@@ -80,7 +80,7 @@ test.serial("process executor forwarding: parent process.stdout/stderr reference
 
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null"
     });
 
@@ -106,7 +106,7 @@ test.serial("process executor forwarding: parent process.stdout/stderr reference
 test.serial("control monitoring passthrough: fd4 echoes raw bytes byte-for-byte", async t => {
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null"
     });
 
@@ -123,7 +123,7 @@ test.serial("control monitoring passthrough: fd4 echoes raw bytes byte-for-byte"
 test.serial("control monitoring passthrough: fd5 echoes raw bytes byte-for-byte and is independent from fd4", async t => {
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null"
     });
 
@@ -146,7 +146,7 @@ test.serial("control monitoring passthrough: fd5 echoes raw bytes byte-for-byte 
 test.serial("process executor forwarding: exposes fd4 and fd5 under the locked layout", async t => {
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null"
     });
 
@@ -161,13 +161,13 @@ test.serial("process executor forwarding: exposes fd4 and fd5 under the locked l
 test.serial("process executor forwarding: rejects non-absolute runner-node entry and boot config paths", t => {
     t.throws(() => spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: "relative-entry.js",
+        runtimeEntry: "relative-entry.js",
         bootConfigPath: "/dev/null"
-    }), { message: /runnerNodeEntry must be an absolute path/ });
+    }), { message: /runtimeEntry must be an absolute path/ });
 
     t.throws(() => spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "relative-boot.json"
     }), { message: /bootConfigPath must be an absolute path/ });
 });
@@ -179,7 +179,7 @@ test.serial("process executor forwarding: does not inherit parent environment by
 
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null"
     });
 
@@ -201,7 +201,7 @@ test.serial("process executor forwarding: does not inherit parent environment by
 test.serial("process executor forwarding: uses explicit environment when provided", async t => {
     const handles = spawnRunnerNode({
         nodeExecPath: process.execPath,
-        runnerNodeEntry: fixtureChild,
+        runtimeEntry: fixtureChild,
         bootConfigPath: "/dev/null",
         env: { RUNNER_EXECUTOR_SECRET: "explicit-value" }
     });

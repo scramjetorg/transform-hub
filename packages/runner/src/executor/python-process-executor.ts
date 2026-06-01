@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { Duplex } from "stream";
-import { RuntimeExecutor, RuntimeProcessHandles, SpawnOptions } from "@scramjet/types";
+import { PythonSpawnOptions, RuntimeExecutor, RuntimeProcessHandles } from "@scramjet/types";
 
 /**
  * Exact stdio layout for the runner-python child - same 6-slot layout as the Node runner.
@@ -33,7 +33,7 @@ export type RunnerPythonStdio = typeof RUNNER_PYTHON_STDIO;
  * are stripped from the child environment - the boot-config file is the
  * single source of truth for the Python runner.
  */
-export function spawnRunnerPython(opts: SpawnOptions): RuntimeProcessHandles {
+export function spawnRunnerPython(opts: PythonSpawnOptions): RuntimeProcessHandles {
     const pythonBin = process.env.PYTHON_BIN || "python3";
 
     const argv = opts.runtimeEntry
@@ -69,7 +69,7 @@ export function spawnRunnerPython(opts: SpawnOptions): RuntimeProcessHandles {
 }
 
 /** RuntimeExecutor instance for the `python3` runtime kind. */
-export const pythonExecutor: RuntimeExecutor = {
+export const pythonExecutor: RuntimeExecutor<PythonSpawnOptions> = {
     kind: "python3",
     spawn: spawnRunnerPython,
 };

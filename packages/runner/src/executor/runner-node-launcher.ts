@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
 
 /**
@@ -58,13 +58,23 @@ export function resolveRunnerNodeEntry(callerDir: string): ResolvedRunnerNodeEnt
         throw new Error("runner: cannot resolve @scramjet/runner-node package root");
     }
 
+    const srcEntry = resolve(pkgRoot, "src/bin/runner-node.ts");
+
+    try {
+        const pkg = JSON.parse(readFileSync(resolve(pkgRoot, "package.json"), "utf8"));
+
+        if (typeof pkg.main === "string" && pkg.main.includes("src/") && existsSync(srcEntry)) {
+            return { entry: srcEntry, needsTsNode: true };
+        }
+    } catch {
+        // Fall through to the dist/source probing below.
+    }
+
     const distEntry = resolve(pkgRoot, "dist/bin/runner-node.js");
 
     if (existsSync(distEntry)) {
         return { entry: distEntry, needsTsNode: false };
     }
-
-    const srcEntry = resolve(pkgRoot, "src/bin/runner-node.ts");
 
     if (existsSync(srcEntry)) {
         return { entry: srcEntry, needsTsNode: true };

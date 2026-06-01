@@ -1,5 +1,5 @@
 import test from "ava";
-import { selectExecutor } from "../src/executor/select";
+import { selectExecutor } from "../../src/executor/select";
 
 test("selectExecutor returns node executor when engines.node is set", (t) => {
     const executor = selectExecutor({ engines: { node: ">=16" } });

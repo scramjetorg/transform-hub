@@ -67,6 +67,12 @@ export interface SpawnOptions {
  */
 export interface PythonSpawnOptions extends SpawnOptions {}
 
+/**
+ * Node wrapper spawn options.
+ * Mirrors {@link SpawnOptions} so the Node wrapper can share the canonical launch contract.
+ */
+export interface NodeSpawnOptions extends SpawnOptions {}
+
 /** Handles returned after spawning a runtime child process. */
 export interface RuntimeProcessHandles {
     /** The child process instance. */
@@ -82,7 +88,7 @@ export interface RuntimeProcessHandles {
 }
 
 /** Runtime executor interface. Exactly two members per design constraint. */
-export interface RuntimeExecutor {
+export interface RuntimeExecutor<T extends SpawnOptions = SpawnOptions> {
     /**
      * The runtime kind this executor produces.
      * See `docs/architecture/runner-runtime-wrappers.md` for the runtime-wrapper contract.
@@ -92,5 +98,5 @@ export interface RuntimeExecutor {
      * Spawn a runtime child process with the given options.
      * See `docs/architecture/runner-runtime-wrappers.md` for the runtime-wrapper contract.
      */
-    spawn(opts: SpawnOptions): RuntimeProcessHandles;
+    spawn(opts: T): RuntimeProcessHandles;
 }
