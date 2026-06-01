@@ -62,12 +62,19 @@
     - [x] Add an AppContext/API surface smoke fixture that checks `this.api`, `this.hub`, `this.space`, `this.localStorage`, `this.instanceId`, and config visibility under Bun host mode.
     - [x] Do not add full public API HTTP routing E2E unless an existing stable discovery path for the delegated API server port is available.
     - Note: Host-mode delegation smoke was added as `packages/runner/test/transport/split-runner-communication-bun.spec.ts`, covering Bun-engine selection, Node-compatible PING metadata, app config/args/instance name, and opened control/monitoring/stdin channels. Full API HTTP routing E2E was intentionally not added.
+- [ ] Task: Add Bun-engine transport variants for canonical runner-node fixtures
+    - [ ] Reuse `packages/runner-node/test/fixtures/trivial-sequence` through the outer runner with `SEQUENCE_INFO.config.engines = { bun: "*" }` to prove Bun selection can run the canonical trivial Node fixture package.
+    - [ ] Reuse `packages/runner-node/test/fixtures/input-sequence` through the Bun-selected outer runner path and assert host `CC.IN` input is received and output appears on `CC.OUT` consistently with the Node transport input test.
+    - [ ] Reuse `packages/runner-node/test/fixtures/output-sequence` through the Bun-selected outer runner path and assert output items are forwarded on `CC.OUT` consistently with the Node transport runtime test.
+    - [ ] Reuse `packages/runner-node/test/fixtures/delayed-sequence` through the Bun-selected outer runner path and assert no premature terminal frame before the delayed sequence completes or controlled shutdown occurs.
+    - [ ] Keep these tests under `packages/runner/test/transport/` so they exercise the Transform Hub-adjacent outer-runner path rather than duplicating fixtures under `packages/runner-bun`.
+    - [ ] Do not copy runner-node fixtures into runner-bun; treat runner-node fixture packages as canonical hub-compatible runtime fixture packages.
 - [x] Task: Add fixture residue and build-output guards
     - [x] Ensure runtime fixture tests write outputs only under per-test OS temp directories and clean them up after each test.
     - [x] Add a guard that no generated `.json`, `.out`, or temp files are left under `packages/runner-bun/test/fixtures/**`.
     - [x] Verify Docker prebuild output includes both delegated `runner-node` artifacts and `runner-bun` artifacts without running the full Docker image build.
     - Validation: `npm run prebuild:docker --workspace @scramjet/runner-bun` previously validated that both `runner-bun` and delegated `runner-node` artifacts are included in `dist/docker-runner`.
-- [x] Task: Conductor - User Manual Verification 'Node API Parity Discovery and Tests' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Node API Parity Discovery and Tests' (Protocol in workflow.md)
 
 ## Phase 4: Node Parity Fixes and Protocol Validation
 
@@ -77,10 +84,10 @@
     - [x] Document any intentional Bun limitation that cannot match Node behavior.
     - [x] Keep direct no-host Bun assertions scoped to the current Bun-owned call shape unless the implementation is intentionally changed to use Node `runSequence` semantics.
     - Note: Host-mode delegation was fixed by spawning the resolved `runner-node` entry as a child with inherited runner fd layout instead of importing Node bootstrap inside Bun. Source-tree launcher resolution now prefers `runner-bun/src` when `package.json` points to source, avoiding stale `dist` during tests.
-- [x] Task: Run protocol-focused validation
+- [ ] Task: Run protocol-focused validation
     - [x] Run relevant Bun runner tests.
-    - [x] Run affected `packages/runner` tests if Bun host-mode delegation or outer-runner transport tests are added or changed.
-    - [x] Run `npm run check:runtime-invariants` when runner protocol behavior changes.
+    - [ ] Run affected `packages/runner` tests if Bun host-mode delegation or outer-runner transport tests are added or changed.
+    - [ ] Run `npm run check:runtime-invariants` when runner protocol behavior changes.
     - [x] Record any skipped Node-internal parity tests with rationale that host mode delegates to `@scramjet/runner-node`.
     - Validation: `npm run test --workspace @scramjet/runner-bun`, `npx ava test/transport/split-runner-communication-bun.spec.ts`, `npx ava test/transport/split-runner-communication-metadata.spec.ts`, `npm run build --workspace @scramjet/runner-bun`, and focused runner Bun executor/transport AVA tests passed. Node-internal lifecycle/host-client/run-sequence parity tests were not duplicated because Bun host mode delegates those concerns to `@scramjet/runner-node`.
 - [x] Task: Run smoke validation for integration behavior
@@ -88,7 +95,7 @@
     - [x] Prefer Node/Bun-focused smoke where available; otherwise document the nearest valid smoke command and any missing Bun-specific BDD coverage.
     - [x] Record skipped Docker or Kubernetes validation with reason.
     - Note: BDD/Docker/Kubernetes smoke validation skipped because implementation changed package scripts/tests/docs only; there is no Bun-specific BDD smoke path in this track.
-- [x] Task: Conductor - User Manual Verification 'Node Parity Fixes and Protocol Validation' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Node Parity Fixes and Protocol Validation' (Protocol in workflow.md)
 
 ## Phase 5: Documentation and Final Review
 
