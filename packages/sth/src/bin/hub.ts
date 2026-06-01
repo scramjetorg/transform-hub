@@ -136,7 +136,8 @@ const options = augmentOptions(unaugmentedOptions)
             },
             runnerImages: {
                 node: options.runnerImage,
-                python3: options.runnerPyImage
+                python3: options.runnerPyImage,
+                bun: options.runnerBunImage
             }
         },
         host: {
@@ -165,7 +166,8 @@ const options = augmentOptions(unaugmentedOptions)
             sthPodHost: options.k8sSthPodHost,
             runnerImages: {
                 node: options.k8sRunnerImage,
-                python3: options.k8sRunnerPyImage
+                python3: options.k8sRunnerPyImage,
+                bun: options.k8sRunnerBunImage
             },
             sequencesRoot:
                 options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
@@ -263,4 +265,3 @@ const options = augmentOptions(unaugmentedOptions)
         process.exitCode = e.exitCode || 1;
         process.exit();
     });
-

@@ -29,6 +29,7 @@ export type STHCommandOptions = {
     localStoragePath: string;
     runnerImage: string;
     runnerPyImage: string;
+    runnerBunImage: string;
     runnerMaxMem: number;
     safeOperationLimit: number;
     prerunnerImage: string;
@@ -43,6 +44,7 @@ export type STHCommandOptions = {
     k8sSthPodHost: string;
     k8sRunnerImage: string;
     k8sRunnerPyImage: string
+    k8sRunnerBunImage: string;
     k8sSequencesRoot: string;
     runnerDebug: boolean;
     docker: boolean;

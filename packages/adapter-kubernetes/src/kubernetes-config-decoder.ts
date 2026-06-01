@@ -13,7 +13,8 @@ export const adapterConfigDecoder = JsonDecoder.object<K8SAdapterConfiguration>(
     ], "PullPolicy")),
     runnerImages: JsonDecoder.object({
         python3: JsonDecoder.string,
-        node: JsonDecoder.string
+        node: JsonDecoder.string,
+        bun: JsonDecoder.string
     }, "K8SImagesDecoder"),
     sequencesRoot: JsonDecoder.string,
     timeout: JsonDecoder.optional(JsonDecoder.number),

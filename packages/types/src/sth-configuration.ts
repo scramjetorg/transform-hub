@@ -112,7 +112,7 @@ export type K8SAdapterConfiguration = {
     /**
      * Runner images to use
      */
-    runnerImages: { python3: string, node: string },
+    runnerImages: { python3: string, node: string, bun: string },
     /**
      * Path to store sequences
      */
@@ -136,6 +136,7 @@ export type DockerAdapterConfiguration = {
     runnerImages: {
         python3: string;
         node: string;
+        bun: string;
     };
 };
 

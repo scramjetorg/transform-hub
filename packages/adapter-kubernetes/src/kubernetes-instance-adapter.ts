@@ -31,6 +31,17 @@ import { isIPv4 } from "net";
 import { hostname, networkInterfaces } from "os";
 import { defer } from "@scramjet/utility";
 
+function selectKubernetesRunnerImage(
+    engines: Record<string, string>,
+    runnerImages: { bun: string; python3: string; node: string }
+): string {
+    return "bun" in engines
+        ? runnerImages.bun
+        : "python3" in engines
+            ? runnerImages.python3
+            : runnerImages.node;
+}
+
 /**
  * Adapter for running Instance by Runner executed in separate process.
  */
@@ -189,9 +200,7 @@ class KubernetesInstanceAdapter implements
                 ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
 
-        const runnerImage = config.engines.python3
-            ? this.adapterConfig.runnerImages.python3
-            : this.adapterConfig.runnerImages.node;
+        const runnerImage = selectKubernetesRunnerImage(config.engines, this.adapterConfig.runnerImages);
 
         const tagLabels = Object.fromEntries((sequenceInfo.config?.tags || []).map((tag) => [`tag.${tag}`, "true"]));
 
@@ -373,4 +382,4 @@ class KubernetesInstanceAdapter implements
     }
 }
 
-export { KubernetesInstanceAdapter };
+export { KubernetesInstanceAdapter, selectKubernetesRunnerImage };

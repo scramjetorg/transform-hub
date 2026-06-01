@@ -15,6 +15,7 @@ import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
  */
 export const detectLanguage = (packageJson: {[key: string]: any}) => {
     if (packageJson.engines) {
+        if ("bun" in packageJson.engines) return "bun";
         if ("python3" in packageJson.engines) return "py";
         if ("node" in packageJson.engines) return "js";
     }

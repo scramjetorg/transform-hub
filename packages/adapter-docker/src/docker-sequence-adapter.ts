@@ -23,6 +23,17 @@ import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-c
 
 const PACKAGE_DIR = "/package";
 
+function selectDockerRunnerImage(
+    engines: Record<string, string>,
+    runnerImages: { bun: string; python3: string; node: string }
+): string {
+    return "bun" in engines
+        ? runnerImages.bun
+        : "python3" in engines
+            ? runnerImages.python3
+            : runnerImages.node;
+}
+
 /**
  * Adapter for preparing Sequence to be run in Docker container.
  */
@@ -259,9 +270,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const container = Object.assign({}, this.dockerConfig.runner);
 
-        container.image = "python3" in engines
-            ? this.dockerConfig.runnerImages.python3
-            : this.dockerConfig.runnerImages.node;
+        container.image = selectDockerRunnerImage(engines, this.dockerConfig.runnerImages);
 
         return {
             type: "docker",
@@ -298,4 +307,4 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     }
 }
 
-export { DockerSequenceAdapter };
+export { DockerSequenceAdapter, selectDockerRunnerImage };
