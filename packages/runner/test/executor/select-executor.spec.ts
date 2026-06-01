@@ -30,15 +30,15 @@ test("selectExecutor defaults to node when engines is undefined", (t) => {
     t.is(executor.kind, "node");
 });
 
-test("selectExecutor prefers python3 over node when both engines are set", (t) => {
+test("selectExecutor prefers explicit node over python3", (t) => {
     const executor = selectExecutor({ engines: { python3: "3.9", node: ">=16" } });
-    t.is(executor.kind, "python3");
+    t.is(executor.kind, "node");
 });
 
-test("selectExecutor prefers bun over python3 and node when multiple engines are set", (t) => {
+test("selectExecutor prefers explicit node over bun and python3", (t) => {
     const executor = selectExecutor({ engines: { bun: "1.x", python3: "3.9", node: ">=16" } });
 
-    t.is(executor.kind, "bun");
+    t.is(executor.kind, "node");
 });
 
 test("selectExecutor returned executor has spawn method", (t) => {

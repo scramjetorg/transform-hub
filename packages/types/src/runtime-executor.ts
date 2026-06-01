@@ -1,11 +1,11 @@
 import { ChildProcess } from "child_process";
 import { Duplex, Readable } from "stream";
+import type { RuntimeKind } from "@scramjet/symbols";
 import { AppConfig } from "./app-config";
 import { LogLevel } from "./object-logger";
 import { SequenceInfo } from "./sequence-adapter";
-
-/** Supported runtime kinds for sequence execution. */
-export type RuntimeKind = "node" | "python3" | "bun";
+export { selectRuntimeKind } from "@scramjet/symbols";
+export type { RuntimeKind } from "@scramjet/symbols";
 
 /**
  * Boot configuration passed to a runtime child process via a private JSON file.

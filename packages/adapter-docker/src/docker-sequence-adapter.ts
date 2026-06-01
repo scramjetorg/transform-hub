@@ -19,20 +19,9 @@ import {
 } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-common";
+import { sequencePackageJSONDecoder, detectLanguage, selectRunnerImageForEngines } from "@scramjet/adapters-common";
 
 const PACKAGE_DIR = "/package";
-
-function selectDockerRunnerImage(
-    engines: Record<string, string>,
-    runnerImages: { bun: string; python3: string; node: string }
-): string {
-    return "bun" in engines
-        ? runnerImages.bun
-        : "python3" in engines
-            ? runnerImages.python3
-            : runnerImages.node;
-}
 
 /**
  * Adapter for preparing Sequence to be run in Docker container.
@@ -270,7 +259,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const container = Object.assign({}, this.dockerConfig.runner);
 
-        container.image = selectDockerRunnerImage(engines, this.dockerConfig.runnerImages);
+        container.image = selectRunnerImageForEngines(engines, this.dockerConfig.runnerImages);
 
         return {
             type: "docker",
@@ -307,4 +296,4 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     }
 }
 
-export { DockerSequenceAdapter, selectDockerRunnerImage };
+export { DockerSequenceAdapter };
