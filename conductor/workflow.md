@@ -36,6 +36,52 @@ Choose the narrowest sufficient validation:
 - BDD python smoke: `npm run test:bdd-ci-python`
 - BDD API node smoke: `npm run test:bdd-ci-api-node`
 
+## Failure Recovery Policy
+
+Validate every tool call result, but distinguish incorrect invocation from a
+real product or code failure.
+
+### Test and Validation Failures
+
+When a test, build, lint, or validation command exits non-zero, do not halt
+solely because the command failed. Instead:
+
+1. Inspect the failure output.
+2. Determine whether the command was invoked correctly.
+3. If the command was invoked incorrectly:
+   - Correct the invocation and rerun it.
+   - If the incorrect command mutated files or generated artifacts, revert only
+     those artifacts before continuing.
+4. If the command was invoked correctly:
+   - First check whether the test is correct and aligned with the intended
+     behavior.
+   - If the test is incorrect, fix the test.
+   - If the test is correct, fix the implementation.
+5. Rerun the narrowest relevant validation after each fix.
+6. Halt and ask the user only when:
+   - the failure requires product or behavior clarification;
+   - repeated fixes do not converge;
+   - continuing would require destructive cleanup;
+   - unrelated user or worktree changes directly conflict with the fix.
+
+### Tool Invocation Failures
+
+If a tool fails because it was wrongly invoked, correct the invocation and
+continue. Examples include a wrong working directory, wrong package-specific
+test command, missing CLI flags, direct command used instead of a package's
+configured runner, or stale/generated output selected because the source-tree
+invocation was wrong.
+
+If the wrongly invoked tool mutated files, generated output, or changed state:
+
+1. Identify exactly what the bad invocation changed.
+2. Revert only those changes.
+3. Do not revert unrelated user or agent work.
+4. Retry with the corrected invocation.
+
+If the tool failed despite correct invocation, treat it as a real validation
+failure and follow the test and validation failure policy above.
+
 ## Commit Policy
 
 - Commit after each completed task.
