@@ -75,3 +75,34 @@ No breaking changes. The host still launches `packages/runner` as the executable
 ## Correction Note
 
 The implementation plan for this request is corrected in `.omo/plans/runner-worker-isolation.md`. Current `devel` at `1e4a5a20921f517dcb2a6e7bbc940c10a7f3a5a6` is the spawn point for the implementation branch. The corrected design rejects thread or RPC-style sequence execution because that boundary cannot provide the required extra fd pipes and would change sequence API streaming semantics. The planned transport is `child_process.spawn()` with fd 0/1/2 for stdio, fd 3 reserved as unused IPC, and fd 4/5 for control/monitoring passthrough.
+
+## Implementation Findings
+
+### Architecture Decisions
+
+- **Transport**: Used `child_process.spawn()` with `stdio: ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"]`. fd 3 reserved as unused IPC for Node compatibility; fd 4 for control passthrough; fd 5 for monitoring passthrough. Thread or RPC approaches rejected — they cannot provide the required extra fd pipes and would change sequence API streaming semantics.
+- **Boot config**: Runner-owned env vars (`SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`) replaced with a private JSON config file in `os.tmpdir()` (mode `0o600`). Passed as argv[2] to the runner-node entry. Removed best-effort on child `close`. This prevents leaking host bootstrap data to sequence code.
+- **Channel ownership split**: `HostClient.init()` accepts an optional `channels: ReadonlySet<CommunicationChannel>`. Outer runner (`packages/runner`) owns `{STDIN, STDOUT, STDERR, CONTROL, MONITORING}`; runner-node owns `{IN, OUT, LOG, REQUESTS}`. Both connect to the same instance ID on the host, which already keys by `(id, channelIdx)`, so no host changes were needed.
+- **Stdio forwarding**: Replaced legacy `overrideStandardStream()` / `revertStandardStream()` (which mutated `process.stdout` / `process.stderr`) with `forwardChildStdio()` using `child.stdout.pipe(hostStdout, { end: false })` and `child.stderr.pipe(hostStderr, { end: false })`. The `{ end: false }` pattern keeps parent stdio handles alive after child exit.
+- **Lifecycle barrier**: Used `child.on("close", ...)` (not `exit`) as the terminal barrier because `close` fires only after the process ends *and* all stdio has been flushed, guaranteeing stdout/stderr bytes land before the terminal lifecycle frame.
+- **Duplicate frame prevention**: Added `lifecycle-observer.ts` that non-destructively inspects data on the child's monitoring fd5. The parent only emits a fallback terminal frame (`SEQUENCE_COMPLETED` / `SEQUENCE_STOPPED`) if the child did not already report one, preventing double terminal frames on the host.
+- **Exit code hardening**: Legacy exit-file write (`/tmp/runner-<pid>`) used `writeFileSync` which follows symlinks. Replaced with `writeLegacyExitFileSecure()` using `openSync` with `O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW` and mode `0o600`. Pre-existing files or symlinks cause a skip rather than a crash.
+- **Sequence-facing context**: Initial implementation uses `SequenceLocalContext` (native runner-node class exposing `keepAlive/end/destroy/on/emit/addStopHandler/addKillHandler` plus `instanceId`, `logger`, `emitter`). Full `RunnerAppContext` with `hub`/`space`/`api` deferred to a later slice.
+- **RunnerAppContext wiring**: When `instancesServerPort` + `instancesServerHost` are present in boot config, runner-node constructs a real `RunnerAppContext` with `ApiHostClient` / `ManagerClient` over BPMux REQUESTS. Falls back to `SequenceLocalContext` for unit-test spawns without an instances-server.
+
+### Issues Encountered
+
+1. **Boot config gap (resolved)**: Initial `RunnerNodeBootConfig` lacked `instancesServerPort` and `instancesServerHost`. Without them runner-node could not construct a real `HostClient`. Extended boot config with these fields; `start-runner.ts` now writes them from environment.
+2. **No separate IN/OUT sockets in fd layout (resolved)**: Runner-node initially had no way to receive sequence input or send output beyond fd4/fd5. Resolved via route (a): runner-node opens its own IN/OUT/LOG/REQUESTS sockets to the instances-server using the `HostClient` initiated with `{IN, OUT, LOG, REQUESTS}` channels. The fd layout `["pipe","pipe","pipe","ipc","pipe","pipe"]` remained unchanged.
+3. **TS5023 compiler option (resolved)**: `tsconfig.base.json` contained `"ignoreDeprecations": "6.0"` (a TS 5.0+ option) incompatible with the repo's pinned `typescript@~4.7.4`. This caused `ts-node/register` to fail before any test could execute. Fixed by removing the offending option from the base tsconfig.
+4. **Double terminal lifecycle frames (resolved)**: The outer runner always emitted a translated terminal frame on child `close`, but if runner-node already reported `SEQUENCE_COMPLETED` / `SEQUENCE_STOPPED` on fd5, the host observed two terminal frames. Fixed with `lifecycle-observer.ts` (non-destructive inspection of fd5 data before deciding whether to emit the fallback).
+5. **Legacy exit-file security (resolved)**: `writeFileSync("/tmp/runner-${pid}")` followed symlinks and clobbered pre-existing files at a predictable world-writable path. Fixed with `writeLegacyExitFileSecure()` using exclusive-create + nofollow flags.
+6. **PING shared-contract alignment (resolved)**: Initial runner-node PING frame used bare fields that did not match `PingMessageData` shape. Fixed to emit numeric `created`, string `processPID`, `status: InstanceStatus.STARTING`, and `inputHeadersSent: false`.
+7. **RunnerAppContext / API exposure (deferred)**: Full `RunnerAppContext` with `hub`/`space`/`api` and `@scramjet/api-server` integration remains unimplemented. BDD scenarios for exposed sequence API streaming ("Exposed sequence API streams response chunks", "Exposed sequence API request body streams into the handler") remain blocked on this. Planned for a future slice.
+
+### Testing Outcomes
+
+- **Unit tests**: 70 tests in `packages/runner-node`, 34 tests in `packages/runner` (AVA). All passing.
+- **BDD**: `E2E-017-runner-node-spawn.feature` added with 5 scenarios. TC-001 ("Node sequence completes successfully under runner-node spawn isolation") passes end-to-end. The API-streaming scenarios require the deferred `RunnerAppContext` slice.
+- **Type verification**: `tsc --noEmit -p tsconfig.build.json` clean for both `packages/runner` and `packages/runner-node`.
+- **Forbidden-pattern scan**: Clean of `worker_threads`, `parentPort`, `child_process.fork`, `API_REQUEST`, `EXECUTOR_API_INVOKE`, `OUTPUT_CHUNK`, `INPUT_CHUNK`, `bodyBase64`.
