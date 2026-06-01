@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
 
 export interface ResolvedRunnerBunEntry {
@@ -42,6 +42,18 @@ export function resolveRunnerBunEntry(callerDir: string): ResolvedRunnerBunEntry
         throw new Error("runner: cannot resolve @scramjet/runner-bun package root");
     }
 
+    const srcEntry = resolve(pkgRoot, "src/bin/runner-bun.ts");
+
+    try {
+        const pkg = JSON.parse(readFileSync(resolve(pkgRoot, "package.json"), "utf8"));
+
+        if (typeof pkg.main === "string" && pkg.main.includes("src/") && existsSync(srcEntry)) {
+            return { entry: srcEntry };
+        }
+    } catch {
+        // Fall through to dist/package/source probing below.
+    }
+
     const distEntry = resolve(pkgRoot, "dist/bin/runner-bun.js");
 
     if (existsSync(distEntry)) {
@@ -53,8 +65,6 @@ export function resolveRunnerBunEntry(callerDir: string): ResolvedRunnerBunEntry
     if (existsSync(packagedEntry)) {
         return { entry: packagedEntry };
     }
-
-    const srcEntry = resolve(pkgRoot, "src/bin/runner-bun.ts");
 
     if (existsSync(srcEntry)) {
         return { entry: srcEntry };

@@ -13,6 +13,19 @@ bun <runner-bun-entry> <bootConfigPath>
 The boot config file is the source of runtime metadata. The Bun child must not
 depend on inherited `SEQUENCE_PATH`, `SEQUENCE_INFO`, or `RUNNER_CONNECT_INFO`.
 
+When host connection fields are present in the boot config, `runner-bun`
+validates the Bun boot contract and delegates to `@scramjet/runner-node` for the
+shared host-channel, AppContext, and exposed API behavior. This keeps Bun's
+host endpoint calls and API serving aligned with the Node runtime wrapper.
+
+## Build and Docker prebuild
+
+The package build includes the local `@scramjet/runner-node` dependency closure
+so package-level builds create a dist workspace that can install without
+fetching unpublished Scramjet workspace packages from the public registry. The
+Docker prebuild targets `packages/runner-bun` so the Docker runner artifact
+contains both `runner-bun` and the delegated Node runtime dependency set.
+
 ## Sequence dependency bundling
 
 Bun sequences are expected to be uploaded with runtime dependencies already
