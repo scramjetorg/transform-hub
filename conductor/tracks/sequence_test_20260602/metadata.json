@@ -1,0 +1,8 @@
+{
+  "track_id": "sequence_test_20260602",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-02T18:01:28Z",
+  "updated_at": "2026-06-02T18:01:28Z",
+  "description": "Construct a new track for a Scramjet sequence testing harness package."
+}
