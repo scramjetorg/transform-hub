@@ -101,6 +101,14 @@ export {
 
 export { createInputDriver } from "./input-driver";
 
+export {
+    createLogCapture,
+    createMonitoringCapture,
+    createOutputCapture,
+    createSequenceAssertions,
+    waitForCompletion
+} from "./captures";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
@@ -109,6 +117,14 @@ export type {
 } from "./runner-launcher";
 
 export type { InputDriver } from "./input-driver";
+
+export type {
+    ByteCapture,
+    LogCapture,
+    MonitoringCapture,
+    OutputCapture,
+    SequenceAssertions
+} from "./captures";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);

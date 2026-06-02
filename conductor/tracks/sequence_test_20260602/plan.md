@@ -78,11 +78,11 @@
     - [x] Test log capture on the `LOG` channel.
     - [x] Test monitoring frame capture and lifecycle waiters.
     - [x] Test error reporting for stopped/failed runtime frames.
-- [ ] Task: Implement output, logs, monitoring, and assertions
-    - [ ] Implement `output.raw()`, `output.text()`, `output.lines()`, and `output.ndjson()`.
-    - [ ] Implement log capture helpers.
-    - [ ] Implement monitoring frame storage and `waitForCompletion()`.
-    - [ ] Implement minimal assertions including `completed()` and `noRuntimeErrors()`.
+- [x] Task: Implement output, logs, monitoring, and assertions
+    - [x] Implement `output.raw()`, `output.text()`, `output.lines()`, and `output.ndjson()`.
+    - [x] Implement log capture helpers.
+    - [x] Implement monitoring frame storage and `waitForCompletion()`.
+    - [x] Implement minimal assertions including `completed()` and `noRuntimeErrors()`.
 - [ ] Task: Write and pass one-shot Node sequence tests
     - [ ] Add a simple Node fixture that maps NDJSON input to output.
     - [ ] Test `runSequence()` with the fixture.
