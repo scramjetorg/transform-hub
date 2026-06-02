@@ -104,10 +104,10 @@
     - [x] Parse exposed API connection details from runtime data.
     - [x] Implement `harness.request.fetch()`.
     - [x] Implement convenience `get()` and `post()` helpers.
-- [ ] Task: Validate Phase 4
-    - [ ] Run focused package tests for sequence API requests.
-    - [ ] Run runner-node tests if API exposure assumptions touch existing behavior.
-    - [ ] Record any unsupported runtime behavior.
+- [x] Task: Validate Phase 4
+    - [x] Run focused package tests for sequence API requests.
+    - [x] Run runner-node tests if API exposure assumptions touch existing behavior.
+    - [x] Record any unsupported runtime behavior.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Sequence API Request Testing' (Protocol in workflow.md)
 
 ## Phase 5: Mock Hub Requests over REQUESTS/BPMux
