@@ -2,11 +2,11 @@
 
 ## Phase 1: Package Foundation and Existing Protocol Inventory
 
-- [ ] Task: Confirm affected packages, entrypoints, and protocol contracts
-    - [ ] Read `packages/runner-node/codemap.md`, `packages/runner/codemap.md`, `packages/runner-python/codemap.md`, and `packages/runner-bun/codemap.md`.
-    - [ ] Confirm runtime wrapper entrypoints for Node, Python, and Bun.
-    - [ ] Confirm boot config, fd/control/monitoring, and instances-server channel contracts.
-    - [ ] Confirm existing fake host test utilities and reusable implementation boundaries.
+- [x] Task: Confirm affected packages, entrypoints, and protocol contracts
+    - [x] Read `packages/runner-node/codemap.md`, `packages/runner/codemap.md`, `packages/runner-python/codemap.md`, and `packages/runner-bun/codemap.md`.
+    - [x] Confirm runtime wrapper entrypoints for Node, Python, and Bun.
+    - [x] Confirm boot config, fd/control/monitoring, and instances-server channel contracts.
+    - [x] Confirm existing fake host test utilities and reusable implementation boundaries.
 - [ ] Task: Inventory reusable fixtures before adding new ones
     - [ ] Node fixtures from `packages/runner-node/test/fixtures`.
     - [ ] Fake instances server behavior from `packages/runner/test/transport/fake-instances-server.ts`.
