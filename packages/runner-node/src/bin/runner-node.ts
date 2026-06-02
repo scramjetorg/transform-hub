@@ -118,9 +118,9 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         api = built.api;
         context = built.context as unknown as typeof context;
 
-        if (bootConfig.exposePath) {
-            await startApiServer(built.api, bootConfig.exposePath, bootConfig.exposeHost, logger);
-        }
+        const exposed = bootConfig.exposePath
+            ? await startApiServer(built.api, bootConfig.exposePath, bootConfig.exposeHost, logger)
+            : undefined;
 
         outputDataStream
             .JSONStringify()
@@ -166,6 +166,9 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                     appConfig,
                     args,
                     instanceName: bootConfig.instanceName,
+                    exposePath: bootConfig.exposePath,
+                    exposeHost: exposed?.host,
+                    exposePort: exposed?.port,
                 }) as EncodedMonitoringMessage,
                 streams.monitoringOut
             );
