@@ -170,25 +170,25 @@
     - [x] Confirm examples match the public API implemented by earlier phases.
     - [x] Confirm examples avoid starting a real STH, Docker adapter, or Kubernetes adapter.
     - [x] Confirm examples use existing or documented fixture helpers.
-- [ ] Task: Conductor - User Manual Verification 'Phase 7: AVA Usage Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 7: AVA Usage Documentation' (Protocol in workflow.md)
 
 ## Phase 7a: Documentation Reframe for Sequence Developers
 
-- [ ] Task: Reframe README for sequence-developer audience
-    - [ ] Replace emphasis on harness internals (hub mock, input driver, runner env, launch plans) with sequence-author usage.
-    - [ ] Keep README short: install/AVA setup, basic "maps NDJSON input" example, and links to package docs.
-    - [ ] Move internal/protocol-oriented details (input driver, runner env, launch plans, fake instances server) into `packages/sequence-test/docs/runner-behavior.md`.
-    - [ ] Remove hub mock examples from README; hub mock is supporting infrastructure, not a thing to test.
-    - [ ] Prefer examples framed as testing a sequence's behavior: input/output, appcontext, host calls, lifecycle calls, events, and exposed API.
+- [x] Task: Reframe README for sequence-developer audience
+    - [x] Replace emphasis on harness internals (hub mock, input driver, runner env, launch plans) with sequence-author usage.
+    - [x] Keep README short: install/AVA setup, basic "maps NDJSON input" example, and links to package docs.
+    - [x] Move internal/protocol-oriented details (input driver, runner env, launch plans, fake instances server) into `packages/sequence-test/docs/runner-behavior.md`.
+    - [x] Remove hub mock examples from README; hub mock is supporting infrastructure, not a thing to test.
+    - [x] Prefer examples framed as testing a sequence's behavior: input/output, appcontext, host calls, lifecycle calls, events, and exposed API.
 - [ ] Task: Create sequence-developer docs folder
-    - [ ] Create `packages/sequence-test/docs/` directory.
-    - [ ] Add `testing-input-output.md` with examples exercising fixture sequences.
-    - [ ] Add `testing-appcontext.md` with examples exercising fixture sequences.
-    - [ ] Add `testing-hub-calls.md` with examples exercising fixture sequences.
-    - [ ] Add `testing-lifecycle-calls.md` with examples exercising fixture sequences.
-    - [ ] Add `testing-events.md` with examples exercising fixture sequences.
-    - [ ] Add `testing-exposed-api.md` with examples exercising fixture sequences.
-    - [ ] Add `runner-behavior.md` for protocol-level helpers (input driver, runner env, launch plans, fake instances server).
+    - [x] Create `packages/sequence-test/docs/` directory.
+    - [x] Add `testing-input-output.md` with examples exercising fixture sequences.
+    - [x] Add `testing-appcontext.md` with examples exercising fixture sequences.
+    - [x] Add `testing-hub-calls.md` with examples exercising fixture sequences.
+    - [x] Add `testing-lifecycle-calls.md` with examples exercising fixture sequences.
+    - [x] Add `testing-events.md` with examples exercising fixture sequences.
+    - [x] Add `testing-exposed-api.md` with examples exercising fixture sequences.
+    - [x] Add `runner-behavior.md` for protocol-level helpers (input driver, runner env, launch plans, fake instances server).
     - [ ] Ensure all non-`runner-behavior.md` examples are AVA tests for fixture sequences, not unit tests for harness internals.
 - [ ] Task: Validate Phase 7a documentation reframe
     - [ ] Confirm README examples test sequences, not harness internals.
