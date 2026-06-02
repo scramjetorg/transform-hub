@@ -134,10 +134,10 @@
 
 ## Phase 6: Python and Bun Node-Authored Sequence Tests
 
-- [ ] Task: Write tests for Python sequence fixtures from Node tests
-    - [ ] Add a minimal Python sequence fixture.
-    - [ ] Test input/output and lifecycle behavior through the Node-authored harness.
-    - [ ] Test clear reporting for unsupported Python Hub mock behavior if applicable.
+- [x] Task: Write tests for Python sequence fixtures from Node tests
+    - [x] Add a minimal Python sequence fixture.
+    - [x] Test input/output and lifecycle behavior through the Node-authored harness.
+    - [x] Test clear reporting for unsupported Python Hub mock behavior if applicable.
 - [ ] Task: Write tests for Bun sequence fixtures from Node tests
     - [ ] Add a minimal Bun sequence fixture.
     - [ ] Test supported no-host or delegated hosted behavior explicitly.
