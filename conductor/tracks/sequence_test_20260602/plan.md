@@ -67,12 +67,12 @@
     - [x] Test bytes/buffer input framing and completion.
     - [x] Test NDJSON input serialization and completion.
     - [x] Test stream input where practical.
-- [ ] Task: Implement input driver
-    - [ ] Implement `input.text()`.
-    - [ ] Implement `input.bytes()`.
-    - [ ] Implement `input.ndjson()`.
-    - [ ] Implement `input.stream()` where practical.
-    - [ ] Implement `input.end()` and safe repeated-end handling.
+- [x] Task: Implement input driver
+    - [x] Implement `input.text()`.
+    - [x] Implement `input.bytes()`.
+    - [x] Implement `input.ndjson()`.
+    - [x] Implement `input.stream()` where practical.
+    - [x] Implement `input.end()` and safe repeated-end handling.
 - [ ] Task: Write tests for output, logs, and monitoring capture
     - [ ] Test raw, text, line, and NDJSON output helpers.
     - [ ] Test log capture on the `LOG` channel.

@@ -99,12 +99,16 @@ export {
     resolveRunnerEntry
 } from "./runner-launcher";
 
+export { createInputDriver } from "./input-driver";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
     RunnerInstancesServerOptions,
     RunnerLaunchPlan
 } from "./runner-launcher";
+
+export type { InputDriver } from "./input-driver";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);
