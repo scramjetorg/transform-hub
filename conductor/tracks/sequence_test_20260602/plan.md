@@ -87,10 +87,10 @@
     - [x] Add a simple Node fixture that maps NDJSON input to output.
     - [x] Test `runSequence()` with the fixture.
     - [x] Confirm AVA usage example matches public API.
-- [ ] Task: Validate Phase 3
-    - [ ] Run focused `@scramjet/sequence-test` package tests.
-    - [ ] Run build for affected packages.
-    - [ ] Run lint if source changes require it.
+- [x] Task: Validate Phase 3
+    - [x] Run focused `@scramjet/sequence-test` package tests.
+    - [x] Run build for affected packages.
+    - [x] Run lint if source changes require it.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Input, Output, Logs, Monitoring, and Control' (Protocol in workflow.md)
 
 ## Phase 4: Sequence API Request Testing
