@@ -1,0 +1,13 @@
+{
+  "name": "@scramjet/test-logging-sequence",
+  "version": "0.1.0",
+  "description": "BDD fixture: emits AppContext logs plus stdout/stderr for process-adapter log forwarding demos.",
+  "main": "index.js",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "private": true
+}

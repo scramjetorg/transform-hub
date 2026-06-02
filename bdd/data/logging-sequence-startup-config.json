@@ -1,0 +1,11 @@
+{
+  "sequences": [
+    {
+      "id": "logging-sequence",
+      "sequenceName": "logging-sequence",
+      "instanceName": "logging-sequence-instance",
+      "args": ["sth-log-demo"],
+      "required": true
+    }
+  ]
+}
