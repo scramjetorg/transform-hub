@@ -95,10 +95,10 @@
 
 ## Phase 4: Sequence API Request Testing
 
-- [ ] Task: Write tests for exposed sequence API discovery
-    - [ ] Add a Node sequence fixture that registers an API endpoint.
-    - [ ] Test that the harness discovers expose host/port from monitoring/handshake data.
-    - [ ] Test request behavior against the direct sequence API server.
+- [x] Task: Write tests for exposed sequence API discovery
+    - [x] Add a Node sequence fixture that registers an API endpoint.
+    - [x] Test that the harness discovers expose host/port from monitoring/handshake data.
+    - [x] Test request behavior against the direct sequence API server.
 - [ ] Task: Implement sequence request client
     - [ ] Add `expose` option handling and boot config fields.
     - [ ] Parse exposed API connection details from runtime data.
