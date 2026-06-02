@@ -156,9 +156,9 @@
 
 ## Phase 7: AVA Usage Documentation
 
-- [ ] Task: Consult Oracle for documentation wording
-    - [ ] Ask `@oracle` to review the intended README/example wording for clarity, accuracy, and developer usefulness.
-    - [ ] Incorporate Oracle guidance into the final documentation wording before publishing examples.
+- [x] Task: Consult Oracle for documentation wording
+    - [x] Ask `@oracle` to review the intended README/example wording for clarity, accuracy, and developer usefulness.
+    - [x] Incorporate Oracle guidance into the final documentation wording before publishing examples.
 - [ ] Task: Document how to use `@scramjet/sequence-test` with AVA
     - [ ] Add a package README section or dedicated docs page showing AVA setup for `@scramjet/sequence-test`.
     - [ ] Include a minimal one-shot AVA example using `runSequence()`.
