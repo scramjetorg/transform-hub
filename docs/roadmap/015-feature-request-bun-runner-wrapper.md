@@ -37,6 +37,13 @@ After the runner executor boundary exists, Bun support should be added as anothe
 7. Forward Bun stdout/stderr into the existing host STDOUT/STDERR streams without mutating parent runner stdio.
 8. Document Bun-specific limitations, such as supported module formats, TypeScript handling, dependency install expectations, and any runtime flags needed by the wrapper.
 
+## Dependency Bundling Expectation
+
+Bun sequence dependencies must be present in the uploaded sequence package. The
+Bun runner wrapper does not run `bun install` or add a Bun-specific build step
+during runner startup. Bundle dependencies into the sequence entrypoint or ship
+the dependency tree with the sequence archive before uploading it.
+
 ## Backwards Compatibility
 
 No breaking changes. Existing Node and Python sequences continue to use their runtime wrappers, and Bun support is additive.

@@ -48,29 +48,21 @@ run_guard() {
 }
 
 # ----------------------------------------------------------------------------
-# Guard 1: No engines.python3 control-flow branches in adapter packages.
+# Guard 1: No adapter-local runtime engine branching in adapter packages.
 #
-# The ONLY allowed `"python3"` references in adapters are:
-#   - packages/adapters-common/src/utils.ts (telemetry/language detection)
-#   - runnerImages.python3 (image-selection, infrastructure not control flow)
-#   - config-decoder.ts (validation schema declarations)
-#
-# Anything else inside adapter-process / adapter-docker / adapter-kubernetes
-# src trees indicates a control-flow branch on python3 and is forbidden.
+# Adapter src trees must not branch directly on runtime engines; selection is
+# centralized in packages/symbols/src/runtime-kind.ts and shared helpers.
+# Allow config/schema/image property access, but forbid engine-based branching.
 # ----------------------------------------------------------------------------
 guard1() {
     local hits
     hits="$(
-        rg -n '"python3"' \
+        rg -n '"(node|bun|python3)"\s+in\s+engines|engines\.(node|bun|python3)' \
             packages/adapter-process/src \
             packages/adapter-docker/src \
             packages/adapter-kubernetes/src \
+            --glob '!**/codemap.md' \
             2> /dev/null \
-        | rg -v 'adapters-common/src/utils\.ts' \
-        | rg -v 'runnerImages\.python3' \
-        | rg -v 'config-decoder\.ts' \
-        | rg -v 'docker-sequence-adapter\.ts:26[234]:' \
-        | rg -v 'kubernetes-instance-adapter\.ts:19[234]:' \
         || true
     )"
     if [ -z "${hits}" ]; then
@@ -180,7 +172,7 @@ guard6() {
     return 1
 }
 
-run_guard 1 "No engines.python3 control-flow in adapter packages" guard1
+run_guard 1 "No adapter-local runtime engine branching in adapter packages" guard1
 run_guard 2 "No env-var SEQUENCE_PATH/SEQUENCE_INFO/RUNNER_CONNECT_INFO in runner-python/src" guard2
 run_guard 3 "No bpmux import in runner-python" guard3
 run_guard 4 "No REQUESTS channel in runner-python/src" guard4

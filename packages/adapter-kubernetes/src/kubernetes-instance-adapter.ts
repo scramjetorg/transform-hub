@@ -30,6 +30,7 @@ import { load as loadYaml } from "js-yaml";
 import { isIPv4 } from "net";
 import { hostname, networkInterfaces } from "os";
 import { defer } from "@scramjet/utility";
+import { selectRunnerImageForEngines } from "@scramjet/adapters-common";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -189,9 +190,7 @@ class KubernetesInstanceAdapter implements
                 ...this.sthConfig.runnerEnvs
             }).map(([name, value]) => ({ name, value }));
 
-        const runnerImage = config.engines.python3
-            ? this.adapterConfig.runnerImages.python3
-            : this.adapterConfig.runnerImages.node;
+        const runnerImage = selectRunnerImageForEngines(config.engines, this.adapterConfig.runnerImages);
 
         const tagLabels = Object.fromEntries((sequenceInfo.config?.tags || []).map((tag) => [`tag.${tag}`, "true"]));
 

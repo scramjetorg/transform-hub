@@ -2,15 +2,15 @@
 
 ## Responsibility
 
-Executable entrypoint for the node runtime. Boots the sequence runtime and exits with the derived runner code.
+Executable entrypoint for the Node runtime. Boots the runtime and exits with the derived runner code.
 
-## Design Patterns
+## Design/Patterns
 
-Single async bootstrap function with explicit cleanup and best-effort teardown. Keeps process-global side effects localized to startup/shutdown.
+Single async bootstrap with explicit cleanup and best-effort teardown. Keeps process-global side effects localized to startup and shutdown.
 
 ## Data & Control Flow
 
-Reads boot config from `argv[2]`, loads the sequence module, sets up fd streams, optionally starts the exposed API server, wires host channels, performs ping/handshake, runs the sequence, then closes streams and writes the exit file.
+Reads boot config from `argv[2]`, loads the sequence module, sets up fd streams, optionally starts the exposed API server, wires host channels, performs handshake, runs the sequence, then closes streams and writes the exit file.
 
 ## Integration Points
 

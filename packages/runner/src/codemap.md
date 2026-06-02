@@ -2,17 +2,16 @@
 
 ## Responsibility
 
-Legacy runner implementation and launcher plumbing. Contains the outer `Runner`, host client, executor selection, and support helpers for stream and storage mediation.
+Runner launcher and runtime-executor plumbing. Contains the outer startup entrypoint, host client mediation, runtime selection, and child-process helpers.
 
-## Design Patterns
+## Design/Patterns
 
-Event-driven control plane with a mutable runner context, stream override wrappers, and adapter-style helpers around host communication.
-Executor selection is data-driven from `engines`, defaulting to Node.
+Small adapter-style modules around host transport and `child_process.spawn`. Executor selection is data-driven from sequence `engines`, defaulting to Node when Bun/Python are not requested.
 
 ## Data & Control Flow
 
-Startup validates env and host connectivity, then `Runner` bridges input/output/monitoring streams, handles control messages, and forwards storage updates. The executor layer spawns runtime children and translates exit codes and lifecycle frames.
+Startup validates adapter env, writes boot config, initializes host channels, then spawns the selected runtime child with fixed fd wiring. Control and monitoring frames remain raw byte streams; lifecycle observers translate child termination into host disconnect and exit propagation.
 
 ## Integration Points
 
-Integrates with `@scramjet` model/symbols/types/utility, host API client/server, BPMux, and child-process execution.
+Integrates with host API client/server code, `@scramjet/types`, `@scramjet/symbols`, `@scramjet/runner-node`, `@scramjet/runner-bun`, `@scramjet/runner-python`, and Node stream/process APIs.

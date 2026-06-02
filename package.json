@@ -108,6 +108,7 @@
     ],
     "runners": [
       "packages/runner",
+      "packages/runner-bun",
       "packages/python-runner",
       "packages/pre-runner"
     ],

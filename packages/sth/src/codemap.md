@@ -2,15 +2,15 @@
 
 ## Responsibility
 
-Runtime entry and wrapper code for starting STH with a provided configuration.
+Runtime wrapper code for starting STH from a configuration object.
 
-## Design Patterns
+## Design/Patterns
 
-Minimal orchestration layer plus constant export for shared process identity.
+Minimal orchestration layer plus shared identity exports for process-wide lookup.
 
 ## Data & Control Flow
 
-`STH` stores config and delegates to `startHost`; `lib/index.ts` exports the hub symbol used for process-wide instance discovery.
+`STH` stores config and delegates to `startHost`; shared exports expose the hub symbol used for instance discovery and CLI/bootstrap coordination.
 
 ## Integration Points
 

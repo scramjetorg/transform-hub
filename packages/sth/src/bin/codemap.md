@@ -2,15 +2,15 @@
 
 ## Responsibility
 
-Command-line entrypoint that parses flags, builds `STHConfiguration`, and launches the host process.
+CLI bootstrap that parses flags, builds `STHConfiguration`, selects the runtime adapter, and launches the host process.
 
-## Design Patterns
+## Design/Patterns
 
-Imperative bootstrap pipeline: parse options, load/merge config, normalize paths, then start host and install signal handlers.
+Imperative startup pipeline: parse options, merge config file and CLI overlays, normalize paths/ports/images, then install signal handlers after host start.
 
 ## Data & Control Flow
 
-CLI options and optional config file are merged into `ConfigService`; derived fields such as runner images, storage paths, telemetry, and adapter settings are normalized before `startHost()`.
+Parsed options feed `ConfigService.update()`, derived fields populate host/docker/kubernetes/telemetry/couchdb sections, and `selectRuntimeAdapter()` finalizes runtime-specific config before `startHost()` runs.
 
 ## Integration Points
 

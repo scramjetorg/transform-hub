@@ -1,6 +1,8 @@
 import { RuntimeExecutor } from "@scramjet/types";
+import { selectRuntimeKind } from "@scramjet/symbols";
 import { nodeExecutor } from "./node-process-executor";
 import { pythonExecutor } from "./python-process-executor";
+import { bunExecutor } from "./bun-process-executor";
 
 /**
  * Select the appropriate RuntimeExecutor based on sequence config engines.
@@ -9,10 +11,12 @@ import { pythonExecutor } from "./python-process-executor";
  * @returns A RuntimeExecutor instance for the requested runtime.
  */
 export function selectExecutor(config: { engines?: Record<string, string> }): RuntimeExecutor {
-    if (config.engines?.python3) {
-        return pythonExecutor;
+    switch (selectRuntimeKind(config.engines)) {
+        case "bun":
+            return bunExecutor;
+        case "python3":
+            return pythonExecutor;
+        default:
+            return nodeExecutor;
     }
-
-    // Default to Node executor for no engines or node engine.
-    return nodeExecutor;
 }

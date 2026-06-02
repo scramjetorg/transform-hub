@@ -1,11 +1,11 @@
 import { ChildProcess } from "child_process";
 import { Duplex, Readable } from "stream";
+import type { RuntimeKind } from "@scramjet/symbols";
 import { AppConfig } from "./app-config";
 import { LogLevel } from "./object-logger";
 import { SequenceInfo } from "./sequence-adapter";
-
-/** Supported runtime kinds for sequence execution. */
-export type RuntimeKind = "node" | "python3";
+export { selectRuntimeKind } from "@scramjet/symbols";
+export type { RuntimeKind } from "@scramjet/symbols";
 
 /**
  * Boot configuration passed to a runtime child process via a private JSON file.
@@ -49,6 +49,7 @@ export interface SpawnOptions {
      * For Node: absolute path to the runner-node entry script.
      * For Python: ignored (production uses `-m runner_python`);
      * set to non-empty for test-only override (`python3 <runtimeEntry> <bootConfigPath>`).
+     * For Bun: path to the runner-bun TypeScript entry.
      */
     runtimeEntry: string;
     /** Absolute path to the boot config JSON file. */
@@ -72,6 +73,12 @@ export interface PythonSpawnOptions extends SpawnOptions {}
  * Mirrors {@link SpawnOptions} so the Node wrapper can share the canonical launch contract.
  */
 export interface NodeSpawnOptions extends SpawnOptions {}
+
+/**
+ * Bun wrapper spawn options.
+ * Mirrors {@link SpawnOptions} so the Bun wrapper can share the canonical launch contract.
+ */
+export interface BunSpawnOptions extends SpawnOptions {}
 
 /** Handles returned after spawning a runtime child process. */
 export interface RuntimeProcessHandles {

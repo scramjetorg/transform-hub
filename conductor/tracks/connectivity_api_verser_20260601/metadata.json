@@ -1,0 +1,8 @@
+{
+  "track_id": "connectivity_api_verser_20260601",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-01T21:29:46Z",
+  "updated_at": "2026-06-01T21:29:46Z",
+  "description": "I'd like to stabilize the connectivity and API calling between host and sequences and improve verser."
+}

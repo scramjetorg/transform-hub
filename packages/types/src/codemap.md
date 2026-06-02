@@ -2,16 +2,16 @@
 
 ## Responsibility
 
-Core configuration and integration types used to assemble, validate, and transport runner/host configuration.
+Defines the canonical configuration, adapter, and runtime-executor types shared across STH packages.
 
-## Design Patterns
+## Design/Patterns
 
-Mostly discriminated-by-shape object types plus `DeepPartial`-friendly config models; includes public-safe projections that omit local-only secrets and paths.
+Structural object types and narrow union/string-literal contracts; config models stay `DeepPartial`-friendly for file/CLI overlay merges.
 
 ## Data & Control Flow
 
-`STHCommandOptions` captures CLI input, `STHConfiguration` captures merged runtime state, and adapter-specific sub-shapes model docker/kubernetes runner image settings.
+CLI options flow into `STHCommandOptions`, merge into `STHConfiguration`, and runtime execution uses `BootConfig`, `SpawnOptions`, `RuntimeProcessHandles`, and `RuntimeExecutor` to launch child processes and exchange control/monitoring streams.
 
 ## Integration Points
 
-Imported by `sth-config`, `sth`, `host`, adapters, and CLI entrypoints for option parsing and config assembly.
+Imported by `sth-config`, `sth`, host/adapter code, and runtime wrappers; package metadata now includes bun runtime support in the shared type surface.

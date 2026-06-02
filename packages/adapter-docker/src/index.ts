@@ -7,6 +7,7 @@ function augmentOptions(options: Command): Command {
         // .option("--docker-host <host>", "Docker host:port (will override socket connection)")
         .option("--runner-image <image name>", "Image used by docker runner for Node.js")
         .option("--runner-py-image <image>", "Image used by docker runner for Python")
+        .option("--runner-bun-image <image>", "Image used by docker runner for Bun")
         .option("--runner-max-mem <mb>", "Maximum mem used by runner")
         .option("--prerunner-image <image name>", "Image used by prerunner")
         .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner");

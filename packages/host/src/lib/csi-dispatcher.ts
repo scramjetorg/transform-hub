@@ -312,6 +312,10 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                             if (!established) {
                                 this.logger.info("Exited before established", id, exitCode);
 
+                                if (exitCode > 0) {
+                                    this.logger.error("Crashlog", await instanceAdapter.getCrashLog());
+                                }
+
                                 return mapRunnerExitCode(exitCode, sequence);
                             }
 

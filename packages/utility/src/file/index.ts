@@ -2,9 +2,10 @@ import { extname } from "path";
 import { TextFile } from "./textFile";
 import { JsonFile } from "./jsonFile";
 import { YamlFile } from "./yamlFile";
-import { File } from "./file";
+import type { File } from "./file";
 
-export { File, TextFile, JsonFile, YamlFile };
+export { TextFile, JsonFile, YamlFile };
+export type { File };
 
 export const FileBuilder = (path: string): File => {
     switch (extname(path)) {

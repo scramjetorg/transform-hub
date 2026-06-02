@@ -13,6 +13,7 @@ export function augmentOptions(options: Command): Command {
         .option("--k8s-default-pull-policy <policy>", "Default pull policy for the runner images. If not supplied, the default value is 'IfNotPresent'.")
         .option("--k8s-runner-image <image>", "Runner image spawned in Nodejs Pod.")
         .option("--k8s-runner-py-image <image>", "Runner image spawned in Python Pod.")
+        .option("--k8s-runner-bun-image <image>", "Runner image spawned in Bun Pod.")
         .option("--k8s-sequences-root <path>", "Specifies a location where Kubernetes Process Adapter saves new Sequences. The support of this option will be deprecated in the near future. Please use the option '--sequences-root <path>' instead.")
         .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
         .option("--k8s-runner-resources-requests-cpu <cpu_unit>", "Requests CPU for pod in cpu units [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")

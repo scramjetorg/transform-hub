@@ -1,4 +1,5 @@
-import { KubernetesSequenceConfig, ProcessSequenceConfig } from "@scramjet/types";
+import { selectRuntimeKind } from "@scramjet/symbols";
+import type { KubernetesSequenceConfig, ProcessSequenceConfig, RuntimeKind } from "@scramjet/types";
 import { readStreamedJSON } from "@scramjet/utility";
 import { createReadStream } from "fs";
 import { stat } from "fs/promises";
@@ -15,12 +16,19 @@ import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
  */
 export const detectLanguage = (packageJson: {[key: string]: any}) => {
     if (packageJson.engines) {
+        if ("bun" in packageJson.engines) return "bun";
         if ("python3" in packageJson.engines) return "py";
         if ("node" in packageJson.engines) return "js";
     }
 
     return (packageJson.main?.match(/(?:\.)([^.\\/:*?"<>|\r\n]+$)/) || { 1: undefined })[1] || "unknown";
 };
+
+export type RunnerImages = Record<RuntimeKind, string>;
+
+export function selectRunnerImageForEngines(engines: Record<string, string> | undefined, runnerImages: RunnerImages): string {
+    return runnerImages[selectRuntimeKind(engines)];
+}
 
 type Adapters = "process" | "kubernetes" | "docker";
 

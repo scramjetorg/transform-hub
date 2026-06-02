@@ -1,13 +1,13 @@
 # packages/adapters-common/
 
 ## Responsibility
-Shared adapter utilities for sequence metadata loading, language detection, and runner env shaping used by Docker and Kubernetes adapters.
+Shared adapter helpers for stored-sequence metadata loading, language detection, and runner env shaping for runtime adapters.
 
-## Design
-Small pure helpers plus a shared JSON decoder. Types are adapter-agnostic where possible; adapter-specific config is selected via conditional typing.
+## Design/Patterns
+Small functional helpers with a shared `package.json` decoder. Adapter-specific sequence types are selected with conditional typing; env shaping is data-in/data-out.
 
 ## Data & Control Flow
-`getRunnerConfigForStoredSequence()` reads `package.json`, validates it, derives `language`, and materializes a typed `SequenceConfig`. `detectLanguage()` prefers `engines.python3` / `engines.node`, then falls back to `main` extension. `getRunnerEnv*()` maps a `RunnerEnvConfig` into container-friendly env vars.
+`getRunnerConfigForStoredSequence()` validates stored `package.json`, copies known fields into a typed `SequenceConfig`, and derives `language` from `engines`/`main`. `detectLanguage()` now treats `bun`, `python3`, and `node` engine hints explicitly before falling back to the entrypoint extension. `getRunnerEnv*()` converts `RunnerEnvConfig` into serialized env entries.
 
 ## Integration Points
-Consumed by `adapter-docker` and `adapter-kubernetes` for sequence config reconstruction and runner env construction. Uses `@scramjet/types`, `@scramjet/utility`, and `ts.data.json`.
+Consumed by `adapter-docker` and `adapter-kubernetes` for sequence reconstruction and runner env construction. Uses `@scramjet/types`, `@scramjet/utility`, filesystem APIs, and `ts.data.json`.

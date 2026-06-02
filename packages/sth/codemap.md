@@ -2,15 +2,15 @@
 
 ## Responsibility
 
-Top-level STH wrapper: owns process-facing lifecycle around a configured host instance.
+Top-level STH wrapper that owns process-facing lifecycle around a configured host instance.
 
-## Design Patterns
+## Design/Patterns
 
-Thin façade over host startup/stop; stores the active host instance and propagates startup failures to process exit.
+Thin façade over host startup/stop; caches the active host instance and lets startup failures surface to the process entrypoint.
 
 ## Data & Control Flow
 
-Receives `STHConfiguration`, calls `startHost`, caches the returned host, and forwards `stop()` to the host instance.
+Receives `STHConfiguration`, invokes `startHost`, stores the returned host, and delegates `stop()` back to that host instance.
 
 ## Integration Points
 

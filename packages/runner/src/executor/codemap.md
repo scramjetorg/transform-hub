@@ -2,16 +2,16 @@
 
 ## Responsibility
 
-Runtime spawning and lifecycle helpers for child processes, including Node and Python executors plus stdio/control forwarding utilities.
+Child-process runtime executors and launch helpers for Node, Bun, and Python, plus runtime selection and lifecycle/stdio forwarding support.
 
-## Design Patterns
+## Design/Patterns
 
-Small adapter layer around `child_process.spawn`; explicit fd layout, runtime-kind strategy selection, and fail-fast validation of paths/handles.
+Strategy-based executor selection over a fixed fd layout. Each executor is a thin spawn wrapper with strict handle expectations and runtime-specific env sanitization.
 
 ## Data & Control Flow
 
-`select.ts` picks a `RuntimeExecutor` from sequence engines. `process-executor.ts` spawns `runner-node`, `python-process-executor.ts` spawns `runner-python`, and the launcher/forwarder helpers manage entry resolution and byte-stream handoff.
+`select.ts` picks an executor from `engines` (`bun` first, then `python3`, else Node). Launcher helpers resolve runtime entrypoints; `node-process-executor.ts`, `bun-process-executor.ts`, and `python-process-executor.ts` spawn children and expose stdout/stderr/control/monitoring handles for the outer runner.
 
 ## Integration Points
 
-Touches `@scramjet/types`, Node child-process APIs, the runner-node package, and Python runtime entry resolution.
+Touches `@scramjet/types`, Node child-process APIs, runner-bun/runner-node package entrypoints, Python module entry resolution, and stream/lifecycle helpers.

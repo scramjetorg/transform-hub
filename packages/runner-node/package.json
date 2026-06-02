@@ -3,6 +3,9 @@
   "version": "1.1.0",
   "description": "Node sequence runtime for Scramjet Transform Hub runner isolation.",
   "main": "./src/index.ts",
+  "bin": {
+    "runner-node": "./src/bin/runner-node.ts"
+  },
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
