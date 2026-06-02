@@ -21,6 +21,12 @@ import path from "path";
 import { getRunnerEnvVariables } from "@scramjet/adapters-common";
 import { development } from "@scramjet/sth-config";
 
+const CRASH_LOG_TAIL_BYTES = 4096;
+
+function tailLog(value: string): string {
+    return value.slice(-CRASH_LOG_TAIL_BYTES);
+}
+
 const isTSNode =
     !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) ||
     !!(process as any)[Symbol.for("ts-node.register.instance")];
@@ -192,6 +198,7 @@ class ProcessInstanceAdapter implements
 
             if (statusCode > 0) {
                 this.logger.debug("Process returned non-zero status code", statusCode);
+                await this.logCrashContext("instance-runtime", statusCode, signal, _instanceId, _sequenceInfo);
             }
 
             return statusCode;
@@ -269,6 +276,41 @@ class ProcessInstanceAdapter implements
         if (!this.crashLogStreams) return [];
 
         return this.crashLogStreams;
+    }
+
+    private getRuntime(sequenceInfo: SequenceInfo): string {
+        const engines = sequenceInfo.config?.engines || {};
+        const runtime = Object.keys(engines)[0];
+
+        return runtime || "unknown";
+    }
+
+    private async logCrashContext(
+        phase: "runner-connect" | "instance-runtime",
+        exitCode: number,
+        signal: NodeJS.Signals | null,
+        instanceId: string,
+        sequenceInfo: SequenceInfo
+    ): Promise<void> {
+        const [stdout = "", stderr = ""] = await this.getCrashLog();
+
+        const stdoutTail = tailLog(stdout);
+        const stderrTail = tailLog(stderr);
+
+        this.logger.error(
+            `STH runtime error phase=${phase} adapter=process runtime=${this.getRuntime(sequenceInfo)} sequenceId=${sequenceInfo.id} instanceId=${instanceId} exitCode=${exitCode} stderrTail=${stderrTail}`,
+            {
+                phase,
+                adapter: "process",
+                runtime: this.getRuntime(sequenceInfo),
+                sequenceId: sequenceInfo.id,
+                instanceId,
+                exitCode,
+                signal,
+                stdoutTail,
+                stderrTail
+            }
+        );
     }
 }
 

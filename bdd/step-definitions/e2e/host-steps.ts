@@ -378,6 +378,42 @@ When("start Instance by name {string} with JSON arguments {string}", async funct
     });
 });
 
+When("starting Instance by name {string} fails", async function(this: CustomWorld, name: string) {
+    this.resources.sequence = hostClient.getSequenceClient(name);
+
+    try {
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: []
+        });
+    } catch (error) {
+        this.resources.lastError = error;
+        return;
+    }
+
+    assert.fail(`Expected instance ${name} to fail during start`);
+});
+
+When("starting Instance by name {string} with JSON arguments {string} fails", async function(this: CustomWorld, name: string, args: string) {
+    const instanceArgs: any = JSON.parse(args);
+
+    if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
+
+    this.resources.sequence = hostClient.getSequenceClient(name);
+
+    try {
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: instanceArgs
+        });
+    } catch (error) {
+        this.resources.lastError = error;
+        return;
+    }
+
+    assert.fail(`Expected instance ${name} to fail during start`);
+});
+
 When("remember last instance as {string}", function(this: CustomWorld, seq: string) {
     if (!this.resources.instance) throw new Error("No instance client set");
 

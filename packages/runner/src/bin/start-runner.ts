@@ -21,6 +21,8 @@ import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
 
+const STDERR_TAIL_BYTES = 4096;
+
 // ---------------------------------------------------------------------------
 // Adapter-facing env validation. Preserved verbatim from the legacy entry so
 // adapters do not need to change. Same env names, same exit codes.
@@ -51,11 +53,6 @@ try {
     console.error("Error while parsing connection information.");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
-
-// connectInfo is parsed and validated above to preserve the adapter-facing
-// failure semantics; the new pipe-based runner-node entry does not consume
-// it directly today (boot config carries sequencePath + args).
-void connectInfo;
 
 if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
     console.error("Incorrect run argument: instancesServerPort");
@@ -145,6 +142,10 @@ function pipeRaw(src: Readable, dst: Writable): void {
     src.pipe(dst, { end: false });
 }
 
+function appendTail(current: string, chunk: Buffer | string): string {
+    return (current + chunk.toString()).slice(-STDERR_TAIL_BYTES);
+}
+
 async function main(): Promise<void> {
     const hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
 
@@ -216,6 +217,11 @@ async function main(): Promise<void> {
     // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
     // destructive; bytes still flow to host monitoring unchanged.
     const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+    let childStderrTail = "";
+
+    handles.child.stderr?.on("data", chunk => {
+        childStderrTail = appendTail(childStderrTail, chunk);
+    });
 
     handles.child.once("error", err => {
         console.error("runner-node child errored:", err instanceof Error ? err.message : err);
@@ -223,6 +229,19 @@ async function main(): Promise<void> {
 
     handles.child.once("close", (code, signal) => {
         const translated = translateChildClose(code, signal);
+
+        if (translated.exitCode !== RunnerExitCode.SUCCESS) {
+            console.error(`STH runtime error phase=runner-runtime adapter=${process.env.RUNTIME_ADAPTER || "unknown"} runtime=node instanceId=${instanceId} exitCode=${translated.exitCode}`, {
+                phase: "runner-runtime",
+                adapter: process.env.RUNTIME_ADAPTER || "unknown",
+                runtime: "node",
+                instanceId,
+                exitCode: translated.exitCode,
+                childExitCode: code,
+                signal,
+                stderrTail: childStderrTail
+            });
+        }
 
         if (!lifecycle.observed()) {
             try {

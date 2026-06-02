@@ -56,6 +56,21 @@ import { CSIEvents, ICSI } from "./types";
  */
 const runnerExitDelay = 5000;
 
+function describeSequenceError(error: unknown): string {
+    if (error instanceof Error) return error.stack || error.message;
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object") {
+        const candidate = error as { name?: unknown; message?: unknown; stack?: unknown; data?: unknown };
+        const dataDetails = candidate.data ? describeSequenceError(candidate.data) : undefined;
+
+        return [candidate.name, candidate.message, candidate.stack, dataDetails]
+            .filter((value): value is string => typeof value === "string" && value.length > 0)
+            .join(" ") || JSON.stringify(error);
+    }
+
+    return String(error);
+}
+
 export type CSIControllerInfo = { ports?: any; created?: Date; started?: Date; ended?: Date; };
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
@@ -802,6 +817,23 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
         this.logger.trace("Sequence ended, sending kill");
+
+        const sequenceError = message[1]?.sequenceError;
+
+        if (sequenceError) {
+            const errorDetails = describeSequenceError(sequenceError);
+
+            this.logger.error(
+                `STH runtime error phase=instance-runtime adapter=${this.adapter} sequenceId=${this.sequence.id} instanceId=${this.id} error=${errorDetails}`,
+                {
+                    phase: "instance-runtime",
+                    adapter: this.adapter,
+                    sequenceId: this.sequence.id,
+                    instanceId: this.id,
+                    error: sequenceError
+                }
+            );
+        }
 
         try {
             await promiseTimeout(this.endOfSequence, runnerExitDelay);

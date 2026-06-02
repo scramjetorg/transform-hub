@@ -98,7 +98,7 @@ export async function runSequence(
         } catch (error) {
             logger?.error("Function errored", idx + 1, (error as Error)?.stack);
             setStatus("ERRORED");
-            throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
+            throw new RunnerError("SEQUENCE_RUNTIME_ERROR", error);
         }
 
         if (itemsLeftInSequence > 0) {

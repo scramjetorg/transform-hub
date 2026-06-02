@@ -61,6 +61,19 @@ async function startApiServer(
     });
 }
 
+function serializeError(error: unknown): unknown {
+    if (!(error instanceof Error)) return error;
+
+    const data = (error as Error & { data?: unknown }).data;
+
+    return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        data: serializeError(data)
+    };
+}
+
 export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<number> {
     const bootConfigPath = parseBootConfigPathFromArgv(process.argv);
     const bootConfig = readBootConfig(bootConfigPath);
@@ -68,12 +81,25 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     const logger = new ObjLogger(`runner-node:${bootConfig.instanceId ?? "unknown"}`, {}, bootConfig.logLevel ?? "DEBUG");
 
     const loader = overrides.loadSequence ?? loadSequenceModule;
-    const sequenceFns = loader(bootConfig.sequencePath);
+    let sequenceFns: ReturnType<typeof loadSequenceModule>;
+
+    try {
+        sequenceFns = loader(bootConfig.sequencePath);
+    } catch (err) {
+        logger.error(`STH runtime error phase=sequence-load runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId}`, {
+            phase: "sequence-load",
+            runtime: "node",
+            sequenceId: bootConfig.sequenceInfo?.id,
+            instanceId: bootConfig.instanceId,
+            sequencePath: bootConfig.sequencePath,
+            error: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err
+        });
+        throw err;
+    }
 
     const emitter = new EventEmitter();
     let exitCode: RunnerExitCode = RunnerExitCode.SUCCESS;
-    let lifecycleRef: RunnerLifecycle | undefined;
-
+    const lifecycleRef: { current?: RunnerLifecycle } = {};
     let hostClient: HostClient | undefined;
     let hostAdapter: RunSequenceHostClient;
     let inputDataStream: DataStream;
@@ -112,7 +138,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             emitter,
             logger,
             hostClient,
-            onKeepAliveIssued: () => lifecycleRef?.keepAliveIssued(),
+            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued(),
         });
 
         api = built.api;
@@ -182,7 +208,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             streams,
             emitter,
             logger,
-            onKeepAliveIssued: () => lifecycleRef?.keepAliveIssued(),
+            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued(),
         });
 
         context = built.context as unknown as typeof context;
@@ -203,7 +229,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         },
     });
 
-    lifecycleRef = lifecycle;
+    lifecycleRef.current = lifecycle;
 
     wireControlStream(streams.controlIn, {
         onStop: (data) => lifecycle.handleStopRequest(data),
@@ -227,10 +253,17 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             { timeout: 0 },
         ]);
     } catch (err) {
+        logger.error(`STH runtime error phase=instance-runtime runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId}`, {
+            phase: "instance-runtime",
+            runtime: "node",
+            sequenceId: bootConfig.sequenceInfo?.id,
+            instanceId: bootConfig.instanceId,
+            error: serializeError(err)
+        });
         logger.error("Sequence failed", err);
         writeMonitoring(streams.monitoringOut, [
             RunnerMessageCode.SEQUENCE_STOPPED,
-            { sequenceError: err as Error },
+            { sequenceError: serializeError(err) },
         ]);
         exitCode = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
     } finally {

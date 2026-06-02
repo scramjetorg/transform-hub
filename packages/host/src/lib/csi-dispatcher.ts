@@ -313,7 +313,17 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                                 this.logger.info("Exited before established", id, exitCode);
 
                                 if (exitCode > 0) {
-                                    this.logger.error("Crashlog", await instanceAdapter.getCrashLog());
+                                    this.logger.error(
+                                        `STH runtime error phase=runner-connect adapter=${this.STHConfig.runtimeAdapter} sequenceId=${sequence.id} instanceId=${id} exitCode=${exitCode}`,
+                                        {
+                                            phase: "runner-connect",
+                                            adapter: this.STHConfig.runtimeAdapter,
+                                            sequenceId: sequence.id,
+                                            instanceId: id,
+                                            exitCode,
+                                            crashLog: await instanceAdapter.getCrashLog()
+                                        }
+                                    );
                                 }
 
                                 return mapRunnerExitCode(exitCode, sequence);
