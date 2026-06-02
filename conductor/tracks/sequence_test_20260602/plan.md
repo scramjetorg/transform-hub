@@ -112,11 +112,11 @@
 
 ## Phase 5: Mock Hub Requests over REQUESTS/BPMux
 
-- [ ] Task: Write tests for Hub mock routing and capture
-    - [ ] Add a Node sequence fixture that calls `this.hub` or `this.space`.
-    - [ ] Test route registration and JSON response behavior.
-    - [ ] Test request capture including method, path, headers, and body.
-    - [ ] Test assertion helper for expected Hub calls.
+- [x] Task: Write tests for Hub mock routing and capture
+    - [x] Add a Node sequence fixture that calls `this.hub` or `this.space`.
+    - [x] Test route registration and JSON response behavior.
+    - [x] Test request capture including method, path, headers, and body.
+    - [x] Test assertion helper for expected Hub calls.
 - [ ] Task: Implement Hub mock transport
     - [ ] Attach a BPMux peer to the fake host `REQUESTS` channel where supported.
     - [ ] Feed multiplexed HTTP streams into a local mock router/server implementation.
