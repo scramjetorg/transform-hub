@@ -147,13 +147,37 @@ test("throwing fixture exits non-zero and logs runner-bun failed", async () => {
     try {
         const bootPath = writeBootConfig(tempDir, {
             sequencePath: fixturePath("throwing"),
-            instanceId: "throwing"
+            instanceId: "throwing",
+            sequenceInfo: { id: "throwing" }
         });
 
         const result = await runRunnerBun(bootPath);
 
         expect(result.code).toBe(1);
+        expect(result.stderr).toContain("STH runtime error phase=instance-runtime runtime=bun");
+        expect(result.stderr).toContain("sequenceId=throwing");
+        expect(result.stderr).toContain("fixture boom");
         expect(result.stderr).toContain("runner-bun failed:");
+    } finally {
+        cleanupTempDir(tempDir);
+    }
+});
+
+test("missing import fixture exits non-zero and logs sequence-load context", async () => {
+    const tempDir = makeTempDir("runner-bun-missing-import-");
+    try {
+        const bootPath = writeBootConfig(tempDir, {
+            sequencePath: fixturePath("missing-import"),
+            instanceId: "missing-import",
+            sequenceInfo: { id: "missing-import" }
+        });
+
+        const result = await runRunnerBun(bootPath);
+
+        expect(result.code).toBe(1);
+        expect(result.stderr).toContain("STH runtime error phase=sequence-load runtime=bun");
+        expect(result.stderr).toContain("sequenceId=missing-import");
+        expect(result.stderr).toContain("Cannot find module");
     } finally {
         cleanupTempDir(tempDir);
     }

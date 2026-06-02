@@ -55,6 +55,45 @@ logger = logging.getLogger("runner_python")
 _STDIO_GUARDS: list[Any] = []
 
 
+def _serialize_exception(exc: BaseException | None) -> Any:
+    if exc is None:
+        return None
+
+    return {
+        "name": exc.__class__.__name__,
+        "message": str(exc),
+        "stack": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+        "cause": _serialize_exception(exc.__cause__),
+    }
+
+
+def _format_exception_message(exc: BaseException) -> str:
+    messages = [str(exc)]
+    cause = exc.__cause__
+
+    while cause is not None:
+        messages.append(str(cause))
+        cause = cause.__cause__
+
+    return " ".join(message for message in messages if message)
+
+
+def _log_sth_runtime_error(phase: str, boot_config: Any, exc: BaseException) -> None:
+    sequence_info = getattr(boot_config, "sequenceInfo", {}) or {}
+    sequence_id = sequence_info.get("id") if isinstance(sequence_info, dict) else None
+    instance_id = getattr(boot_config, "instanceId", None)
+    details = json.dumps(_serialize_exception(exc), separators=(", ", ": "))
+
+    logger.error(
+        "STH runtime error phase=%s runtime=python sequenceId=%s instanceId=%s error=%s details=%s",
+        phase,
+        sequence_id,
+        instance_id,
+        _format_exception_message(exc),
+        details,
+    )
+
+
 class LiveControlDecoder:
     def __init__(self, streams: FdStreams) -> None:
         self._decoder = ControlFrameDecoder()
@@ -369,6 +408,7 @@ async def main() -> int:
         try:
             sequence = load_sequence(boot_config.sequencePath, boot_config.pythonPath)
         except SequenceLoadError as exc:
+            _log_sth_runtime_error("sequence-load", boot_config, exc)
             logger.error("Sequence load error: %s", exc)
             return 1
 
@@ -386,12 +426,13 @@ async def main() -> int:
 
         try:
             raw_result = sequence.run(sequence_context, input_stream, *handshake_result.args)
-        except Exception:
+        except Exception as exc:
             handshake_writer.flush()
             with contextlib.suppress(Exception):
                 sys.stdout.flush()
             with contextlib.suppress(Exception):
                 sys.stderr.flush()
+            _log_sth_runtime_error("instance-runtime", boot_config, exc)
             traceback.print_exc()
             return 1
 
@@ -430,6 +471,7 @@ async def main() -> int:
                         sys.stdout.flush()
                     with contextlib.suppress(Exception):
                         sys.stderr.flush()
+                    _log_sth_runtime_error("instance-runtime", boot_config, sequence_exception)
                     traceback.print_exception(sequence_exception)
                     return 1
                 if terminator.is_set() and not control_task.done():

@@ -52,6 +52,30 @@ function makeBootConfig(seqPath: string, extra: Record<string, unknown> = {}): s
     return path;
 }
 
+async function runRunnerNodeChild(bootPath: string, env: NodeJS.ProcessEnv = {}): Promise<{ exitCode: number; stderr: string; monitoring: string }> {
+    const child = spawn(
+        process.execPath,
+        ["-r", "ts-node/register/transpile-only", ENTRY, bootPath],
+        {
+            stdio: ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"],
+            env: { ...process.env, ...env },
+        }
+    );
+
+    let stderr = "";
+    let monitoring = "";
+
+    child.stderr!.on("data", (c: Buffer) => { stderr += c.toString("utf8"); });
+    getStdioStream(child, 5).on("data", (c: Buffer) => { monitoring += c.toString("utf8"); });
+
+    const exitCode: number = await new Promise((resolveExit, rejectExit) => {
+        child.once("error", rejectExit);
+        child.once("exit", code => resolveExit(code ?? -1));
+    });
+
+    return { exitCode, stderr, monitoring };
+}
+
 test("resolveSequenceFunctions accepts function, array, default-export, default-array", t => {
     const fn = () => 1;
 
@@ -67,6 +91,60 @@ test("loadSequenceModule resolves a real fixture file via require", t => {
 
     t.is(fnsDirect.length, 1);
     t.is(typeof fnsDirect[0], "function");
+});
+
+test("runner-node child logs sequence-load error context", async t => {
+    const dir = mkdtempSync(join(tmpdir(), "runner-node-missing-import-"));
+    const fixturePath = join(dir, "missing-import.js");
+
+    writeFileSync(fixturePath, [
+        'require("./definitely-missing-module");',
+        "module.exports = function() {};",
+        ""
+    ].join("\n"));
+
+    const bootPath = makeBootConfig(fixturePath, {
+        instanceId: "missing-import-instance",
+        sequenceInfo: { id: "missing-import" }
+    });
+
+    const result = await runRunnerNodeChild(bootPath);
+
+    t.not(result.exitCode, 0);
+    t.true(result.stderr.includes("STH runtime error phase=sequence-load runtime=node"), result.stderr);
+    t.true(result.stderr.includes("sequenceId=missing-import"), result.stderr);
+    t.true(result.stderr.includes("instanceId=missing-import-instance"), result.stderr);
+    t.true(result.stderr.includes("Cannot find module"), result.stderr);
+});
+
+test("runner-node child logs instance-runtime error context", async t => {
+    const dir = mkdtempSync(join(tmpdir(), "runner-node-runtime-error-"));
+    const fixturePath = join(dir, "runtime-error.js");
+
+    writeFileSync(fixturePath, [
+        "module.exports = function() {",
+        '    throw new Error("runner-node fixture boom");',
+        "};",
+        ""
+    ].join("\n"));
+
+    const bootPath = makeBootConfig(fixturePath, {
+        instanceId: "runtime-error-instance",
+        sequenceInfo: { id: "runtime-error" }
+    });
+
+    const result = await runRunnerNodeChild(bootPath);
+
+    t.not(result.exitCode, 0);
+    t.true(result.stderr.includes("STH runtime error phase=instance-runtime runtime=node"), result.stderr);
+    t.true(result.stderr.includes("sequenceId=runtime-error"), result.stderr);
+    t.true(result.stderr.includes("instanceId=runtime-error-instance"), result.stderr);
+    t.true(result.stderr.includes("runner-node fixture boom"), result.stderr);
+
+    const frames = parseFrames(result.monitoring);
+    const stopped = frames.find(([code]) => code === RunnerMessageCode.SEQUENCE_STOPPED);
+
+    t.truthy(stopped, `expected SEQUENCE_STOPPED; frames=${result.monitoring}`);
 });
 
 test("buildSequenceContext: keepAlive issues monitoring frame and triggers onKeepAliveIssued", t => {

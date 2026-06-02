@@ -9,7 +9,7 @@ import { DataStream } from "scramjet";
 import type { APIExpose, AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
 import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
-import { parseBootConfigPathFromArgv, readBootConfig } from "../boot-config";
+import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig } from "../boot-config";
 import { buildAppContext, buildSequenceContext } from "../context";
 import { createFdStreams } from "../fd-streams";
 import { buildPing } from "../handshake";
@@ -74,6 +74,32 @@ function serializeError(error: unknown): unknown {
     };
 }
 
+function formatErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return JSON.stringify(error);
+}
+
+function logRuntimeError(
+    logger: ObjLogger,
+    phase: "sequence-load" | "instance-runtime",
+    bootConfig: RunnerNodeBootConfig,
+    error: unknown
+): void {
+    const message = `STH runtime error phase=${phase} runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId} error=${formatErrorMessage(error)}`;
+    const details = {
+        phase,
+        runtime: "node",
+        sequenceId: bootConfig.sequenceInfo?.id,
+        instanceId: bootConfig.instanceId,
+        sequencePath: bootConfig.sequencePath,
+        error: serializeError(error)
+    };
+
+    logger.error(message, details);
+    console.error(message, details);
+}
+
 export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<number> {
     const bootConfigPath = parseBootConfigPathFromArgv(process.argv);
     const bootConfig = readBootConfig(bootConfigPath);
@@ -86,14 +112,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     try {
         sequenceFns = loader(bootConfig.sequencePath);
     } catch (err) {
-        logger.error(`STH runtime error phase=sequence-load runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId}`, {
-            phase: "sequence-load",
-            runtime: "node",
-            sequenceId: bootConfig.sequenceInfo?.id,
-            instanceId: bootConfig.instanceId,
-            sequencePath: bootConfig.sequencePath,
-            error: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err
-        });
+        logRuntimeError(logger, "sequence-load", bootConfig, err);
         throw err;
     }
 
@@ -253,13 +272,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             { timeout: 0 },
         ]);
     } catch (err) {
-        logger.error(`STH runtime error phase=instance-runtime runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId}`, {
-            phase: "instance-runtime",
-            runtime: "node",
-            sequenceId: bootConfig.sequenceInfo?.id,
-            instanceId: bootConfig.instanceId,
-            error: serializeError(err)
-        });
+        logRuntimeError(logger, "instance-runtime", bootConfig, err);
         logger.error("Sequence failed", err);
         writeMonitoring(streams.monitoringOut, [
             RunnerMessageCode.SEQUENCE_STOPPED,

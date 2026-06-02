@@ -5,8 +5,7 @@ import { spawn } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { Readable } from "stream";
-import { RunnerExitCode } from "@scramjet/symbols";
-import { parseBootConfigPathFromArgv, readBootConfig } from "../boot-config";
+import { parseBootConfigPathFromArgv, readBootConfig, RunnerBunBootConfig } from "../boot-config";
 
 interface RunnerNodeEntry {
     entry: string;
@@ -76,6 +75,36 @@ function runRunnerNode(bootConfigPath: string): Promise<number> {
     });
 }
 
+function serializeError(error: unknown): unknown {
+    if (!(error instanceof Error)) return error;
+
+    const data = (error as Error & { data?: unknown }).data;
+
+    return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        data: serializeError(data)
+    };
+}
+
+function formatErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return JSON.stringify(error);
+}
+
+function logRuntimeError(phase: "sequence-load" | "instance-runtime", bootConfig: RunnerBunBootConfig, error: unknown): void {
+    console.error(`STH runtime error phase=${phase} runtime=bun sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId} error=${formatErrorMessage(error)}`, {
+        phase,
+        runtime: "bun",
+        sequenceId: bootConfig.sequenceInfo?.id,
+        instanceId: bootConfig.instanceId,
+        sequencePath: bootConfig.sequencePath,
+        error: serializeError(error)
+    });
+}
+
 export async function bootstrap(): Promise<number> {
     const bootConfigPath = parseBootConfigPathFromArgv(process.argv);
 
@@ -85,21 +114,41 @@ export async function bootstrap(): Promise<number> {
     const bootConfig = readBootConfig(bootConfigPath);
 
     if (bootConfig.instancesServerPort === undefined && bootConfig.instancesServerHost === undefined) {
-        const loaded = require(bootConfig.sequencePath);
-        const candidate = loaded?.default ?? loaded;
-        const fns = Array.isArray(candidate) ? candidate : [candidate];
-        const input = Readable.from([]);
+        let loaded: unknown;
 
-        for (const fn of fns) {
-            if (typeof fn === "function") {
-                await fn(input, ...(bootConfig.sequenceArgs ?? []));
-            }
+        try {
+            // eslint-disable-next-line import/no-dynamic-require, @typescript-eslint/no-var-requires
+            loaded = require(bootConfig.sequencePath);
+        } catch (err) {
+            logRuntimeError("sequence-load", bootConfig, err);
+            throw err;
         }
 
-        return RunnerExitCode.SUCCESS;
+        const candidate = (loaded as { default?: unknown })?.default ?? loaded;
+        const fns = Array.isArray(candidate) ? candidate : [candidate];
+        const input = Readable.from([]);
+        const sequenceArgs = bootConfig.sequenceArgs ?? [];
+
+        try {
+            for (const fn of fns) {
+                if (typeof fn === "function") {
+                    await fn(input, ...sequenceArgs);
+                }
+            }
+        } catch (err) {
+            logRuntimeError("instance-runtime", bootConfig, err);
+            throw err;
+        }
+
+        return 0;
     }
 
-    return runRunnerNode(bootConfigPath);
+    try {
+        return await runRunnerNode(bootConfigPath);
+    } catch (err) {
+        logRuntimeError("instance-runtime", bootConfig, err);
+        throw err;
+    }
 }
 
 if (require.main === module) {
