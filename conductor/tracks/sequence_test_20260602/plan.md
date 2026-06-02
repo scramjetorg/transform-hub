@@ -122,10 +122,10 @@
     - [x] Feed multiplexed HTTP streams into a local mock router/server implementation.
     - [x] Implement route registration, default responses, and request capture.
     - [x] Expose `harness.hub.requests()` and minimal hub assertion helpers.
-- [ ] Task: Document runtime limitations for Hub mocking
-    - [ ] Document Node first-class support.
-    - [ ] Document Python behavior when `REQUESTS` transport is unavailable.
-    - [ ] Document Bun hosted delegation behavior and any strict-runtime handling.
+- [x] Task: Document runtime limitations for Hub mocking
+    - [x] Document Node first-class support.
+    - [x] Document Python behavior when `REQUESTS` transport is unavailable.
+    - [x] Document Bun hosted delegation behavior and any strict-runtime handling.
 - [ ] Task: Validate Phase 5
     - [ ] Run focused package tests for Hub mock behavior.
     - [ ] Run build for affected packages.
