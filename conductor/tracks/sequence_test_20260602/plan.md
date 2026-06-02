@@ -172,7 +172,31 @@
     - [x] Confirm examples use existing or documented fixture helpers.
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: AVA Usage Documentation' (Protocol in workflow.md)
 
-## Phase 8: Fixtures, Documentation, and Final Validation
+## Phase 7a: Documentation Reframe for Sequence Developers
+
+- [ ] Task: Reframe README for sequence-developer audience
+    - [ ] Replace emphasis on harness internals (hub mock, input driver, runner env, launch plans) with sequence-author usage.
+    - [ ] Keep README short: install/AVA setup, basic "maps NDJSON input" example, and links to package docs.
+    - [ ] Move internal/protocol-oriented details (input driver, runner env, launch plans, fake instances server) into `packages/sequence-test/docs/runner-behavior.md`.
+    - [ ] Remove hub mock examples from README; hub mock is supporting infrastructure, not a thing to test.
+    - [ ] Prefer examples framed as testing a sequence's behavior: input/output, appcontext, host calls, lifecycle calls, events, and exposed API.
+- [ ] Task: Create sequence-developer docs folder
+    - [ ] Create `packages/sequence-test/docs/` directory.
+    - [ ] Add `testing-input-output.md` with examples exercising fixture sequences.
+    - [ ] Add `testing-appcontext.md` with examples exercising fixture sequences.
+    - [ ] Add `testing-hub-calls.md` with examples exercising fixture sequences.
+    - [ ] Add `testing-lifecycle-calls.md` with examples exercising fixture sequences.
+    - [ ] Add `testing-events.md` with examples exercising fixture sequences.
+    - [ ] Add `testing-exposed-api.md` with examples exercising fixture sequences.
+    - [ ] Add `runner-behavior.md` for protocol-level helpers (input driver, runner env, launch plans, fake instances server).
+    - [ ] Ensure all non-`runner-behavior.md` examples are AVA tests for fixture sequences, not unit tests for harness internals.
+- [ ] Task: Validate Phase 7a documentation reframe
+    - [ ] Confirm README examples test sequences, not harness internals.
+    - [ ] Confirm hub mock examples are absent from README and only appear in `docs/` as supporting infrastructure.
+    - [ ] Confirm `docs/testing-*.md` examples use fixture sequences and demonstrate real sequence behavior.
+    - [ ] Confirm `docs/runner-behavior.md` surfaces protocol-level details without implying they are the primary use case.
+
+## Phase 8: Sequence Fixtures, AGENTS.md Guidance, and Final Validation
 
 - [ ] Task: Write tests for fixture helpers
     - [ ] Test temporary Node fixture directory creation and cleanup.
@@ -182,12 +206,25 @@
     - [ ] Implement file-map based fixture creation.
     - [ ] Implement runtime-specific fixture helper aliases.
     - [ ] Implement cleanup integration with harness lifecycle.
-- [ ] Task: Add documentation and examples
-    - [ ] Add README or package docs for `@scramjet/sequence-test`.
-    - [ ] Include AVA examples for one-shot sequence tests.
-    - [ ] Include AVA examples for interactive tests with sequence API requests.
-    - [ ] Include AVA examples for mocked Hub calls.
-    - [ ] Document out-of-scope areas and runtime limitations.
+- [ ] Task: Add appcontext sequence fixture and test
+    - [ ] Create fixture sequence that reads/writes `appcontext`.
+    - [ ] Write AVA test demonstrating appcontext behavior.
+- [ ] Task: Add hub-call sequence fixture and test
+    - [ ] Create fixture sequence that makes outbound requests to the Hub (e.g. GET version, POST events).
+    - [ ] Write AVA test using hub mock to capture and assert on those requests.
+- [ ] Task: Add lifecycle-call sequence fixture and test
+    - [ ] Create fixture sequence that calls stop/start or similar lifecycle operations.
+    - [ ] Write AVA test demonstrating lifecycle interaction.
+- [ ] Task: Add events sequence fixture and test
+    - [ ] Create fixture sequence that uses the events mechanism.
+    - [ ] Write AVA test demonstrating event emission/consumption.
+- [ ] Task: Add exposed-api sequence fixture and test
+    - [ ] Create fixture sequence that registers an HTTP API endpoint.
+    - [ ] Write AVA test using `createSequenceRequestClient` to call the exposed endpoint.
+- [ ] Task: Update AGENTS.md for sequence-test package status
+    - [ ] Add a note that `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
+    - [ ] Instruct agents to keep using each package's existing AVA tests and package build/lint validation.
+    - [ ] Instruct agents not to replace package tests, BDD tests, or runtime validation with `@scramjet/sequence-test` unless explicitly directed.
 - [ ] Task: Run final validation
     - [ ] Run focused `@scramjet/sequence-test` tests.
     - [ ] Run `npm run build:packages` or the narrowest sufficient package build.
@@ -195,8 +232,10 @@
     - [ ] Run `npm run check:runtime-invariants` if runtime protocol surfaces changed.
     - [ ] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
     - [ ] Confirm no default-path imports or orchestration from @scramjet/sth, @scramjet/host, Docker adapter, Kubernetes adapter, or BDD workflows.
+    - [ ] Confirm README examples test sequences, not harness internals.
+    - [ ] Confirm AGENTS.md includes sequence-test status note.
 - [ ] Task: Final review and handoff
     - [ ] Confirm requirements and acceptance criteria are satisfied.
     - [ ] Confirm docs, tests, and implementation are aligned.
     - [ ] Prepare concise implementation summary and known limitations.
-- [ ] Task: Conductor - User Manual Verification 'Phase 8: Fixtures, Documentation, and Final Validation' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 8: Sequence Fixtures, AGENTS.md Guidance, and Final Validation' (Protocol in workflow.md)
