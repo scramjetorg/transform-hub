@@ -99,11 +99,11 @@
     - [x] Add a Node sequence fixture that registers an API endpoint.
     - [x] Test that the harness discovers expose host/port from monitoring/handshake data.
     - [x] Test request behavior against the direct sequence API server.
-- [ ] Task: Implement sequence request client
-    - [ ] Add `expose` option handling and boot config fields.
-    - [ ] Parse exposed API connection details from runtime data.
-    - [ ] Implement `harness.request.fetch()`.
-    - [ ] Implement convenience `get()` and `post()` helpers.
+- [x] Task: Implement sequence request client
+    - [x] Add `expose` option handling and boot config fields.
+    - [x] Parse exposed API connection details from runtime data.
+    - [x] Implement `harness.request.fetch()`.
+    - [x] Implement convenience `get()` and `post()` helpers.
 - [ ] Task: Validate Phase 4
     - [ ] Run focused package tests for sequence API requests.
     - [ ] Run runner-node tests if API exposure assumptions touch existing behavior.

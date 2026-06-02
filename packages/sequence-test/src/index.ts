@@ -124,6 +124,11 @@ export {
     waitForCompletion
 } from "./captures";
 
+export {
+    createSequenceRequestClient,
+    createSequenceRequestClientFromMonitoring
+} from "./request-client";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
@@ -140,6 +145,12 @@ export type {
     OutputCapture,
     SequenceAssertions
 } from "./captures";
+
+export type {
+    SequenceRequestClient,
+    SequenceRequestClientOptions,
+    SequenceRequestResponse
+} from "./request-client";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);
