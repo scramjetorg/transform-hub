@@ -104,8 +104,8 @@
     - [x] Update `packages/runner-bun/README.md` if build, dependency bundling, startup, API parity, or limitations change.
     - [x] Update package scripts/docs comments when command behavior changes.
     - [x] Keep docs aligned with actual build and runtime behavior.
-- [ ] Task: Final quality review
-    - [ ] Confirm no unrelated runtime wrapper behavior changed.
-    - [ ] Confirm no generated fixture/output residue is left behind.
-    - [ ] Run final narrow validation and record results.
-- [ ] Task: Conductor - User Manual Verification 'Documentation and Final Review' (Protocol in workflow.md)
+- [x] Task: Final quality review
+    - [x] Confirm no unrelated runtime wrapper behavior changed.
+    - [x] Confirm no generated fixture/output residue is left behind.
+    - [x] Run final narrow validation and record results.
+- [x] Task: Conductor - User Manual Verification 'Documentation and Final Review' (Protocol in workflow.md)
