@@ -8,17 +8,17 @@ import { Readable, Writable } from "stream";
 import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
 import { RunnerExitCode } from "@scramjet/symbols";
 
+import { RuntimeProcessHandles } from "@scramjet/types";
+
 import { HostClient, OUTER_RUNNER_CHANNELS } from "../host-client";
-import {
-    spawnRunnerNode,
-    RunnerNodeProcessHandles
-} from "../executor/process-executor";
+import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
 import {
     translateChildClose,
     writeTerminalLifecycleFrame
 } from "../executor/exit-translation";
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
+import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
 
 // ---------------------------------------------------------------------------
@@ -151,33 +151,45 @@ async function main(): Promise<void> {
     await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
 
     const bootConfigPath = writeBootConfig();
-    const entry = resolveRunnerNodeEntry(__dirname);
 
-    const childEnv: NodeJS.ProcessEnv = {};
-
-    if (entry.needsTsNode) {
-        // ts-node fallback for source-tree development. Inherit the parent's
-        // PATH/HOME/NODE_PATH so ts-node and resolved modules stay reachable;
-        // anything runner-owned (SEQUENCE_PATH, RUNNER_CONNECT_INFO, ...) is
-        // NOT forwarded - the boot config file replaces that channel.
-        childEnv.NODE_OPTIONS = "--require ts-node/register/transpile-only";
-        if (process.env.PATH) childEnv.PATH = process.env.PATH;
-        if (process.env.HOME) childEnv.HOME = process.env.HOME;
-        if (process.env.NODE_PATH) childEnv.NODE_PATH = process.env.NODE_PATH;
-    }
-
-    let handles: RunnerNodeProcessHandles;
+    let handles: RuntimeProcessHandles;
 
     try {
-        handles = spawnRunnerNode({
-            runnerNodeEntry: entry.entry,
+        const engines = connectInfo.config?.engines ||
+            (parsedRunnerConnectInfo.appConfig?.engines as Record<string, string> | undefined) ||
+            {};
+        const executor = selectExecutor({ engines });
+        const childEnv: NodeJS.ProcessEnv = {};
+        let runtimeEntry = "";
+
+        if (executor.kind === "bun") {
+            runtimeEntry = resolveRunnerBunEntry(__dirname).entry;
+        } else if (executor.kind === "node") {
+            const entry = resolveRunnerNodeEntry(__dirname);
+
+            runtimeEntry = entry.entry;
+
+            if (entry.needsTsNode) {
+                // ts-node fallback for source-tree development. Inherit the parent's
+                // PATH/HOME/NODE_PATH so ts-node and resolved modules stay reachable;
+                // anything runner-owned (SEQUENCE_PATH, RUNNER_CONNECT_INFO, ...) is
+                // NOT forwarded - the boot config file replaces that channel.
+                childEnv.NODE_OPTIONS = "--require ts-node/register/transpile-only";
+                if (process.env.PATH) childEnv.PATH = process.env.PATH;
+                if (process.env.HOME) childEnv.HOME = process.env.HOME;
+                if (process.env.NODE_PATH) childEnv.NODE_PATH = process.env.NODE_PATH;
+            }
+        }
+
+        handles = executor.spawn({
+            runtimeEntry,
             bootConfigPath,
             env: childEnv
         });
     } catch (err) {
         tryRemove(bootConfigPath);
         await hostClient.disconnect(true).catch(() => undefined);
-        console.error("Failed to spawn runner-node:", err instanceof Error ? err.message : err);
+        console.error("Failed to spawn runtime runner:", err instanceof Error ? err.message : err);
         process.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
     }
 

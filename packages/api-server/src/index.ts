@@ -9,7 +9,7 @@ import { createOperationHandler } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
 import { CeroRouterConfig } from "./lib/definitions";
-import { ServerConfig } from "./types/ServerConfig";
+import type { ServerConfig } from "./types/ServerConfig";
 import { createForwardController } from "./handlers/forward";
 import { roundRobinStrategy } from "./strategies/round-robin";
 export { createForwardController } from "./handlers/forward";
@@ -17,7 +17,7 @@ export { roundRobinStrategy } from "./strategies/round-robin";
 export { consistentHashStrategy } from "./strategies/consistent-hash";
 
 export { ServerConfiguration } from "./config/ServerConfiguration";
-export { ServerConfig } from "./types";
+export type { ServerConfig } from "./types";
 
 export { cero, sequentialRouter };
 

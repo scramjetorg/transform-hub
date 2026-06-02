@@ -20,7 +20,6 @@
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/pre-runner": "^1.1.0",
     "@scramjet/runner": "^1.1.0",
-    "@scramjet/python-runner": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "tar": "^7.4.3",
     "dockerode": "^4.0.2",

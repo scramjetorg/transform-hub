@@ -1,0 +1,12 @@
+{
+    "name": "@scramjet/runner-python",
+    "version": "1.1.0",
+    "description": "Python runtime wrapper for packages/runner",
+    "private": true,
+    "scripts": {
+        "install:deps": "pip install -r requirements.txt -r requirements-dev.txt --target __pypackages__",
+        "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH pytest",
+        "build": "pip install -r requirements.txt --target dist/__pypackages__",
+        "clean": "rm -rf __pypackages__ dist"
+    }
+}

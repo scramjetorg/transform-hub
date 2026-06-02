@@ -4,10 +4,11 @@
 
 const {
     runCommand, getPackagesInWorkspace,
-    makeTypescriptSolutionForPackageList, findClosestPackageJSONLocation
+    makeTypescriptSolutionForPackageList, findClosestPackageJSONLocation,
+    findClosestWorkspacePackageJSONLocation
 } = require("./lib/build-utils");
 const minimist = require("minimist");
-const { join, resolve, relative } = require("path");
+const { join, resolve, relative, dirname } = require("path");
 
 const { DataStream } = require("scramjet");
 const PrePack = require("./lib/pre-pack");
@@ -89,7 +90,15 @@ console.time(BUILD_NAME);
 (async function() {
     let exitcode;
 
-    const pkg = findClosestPackageJSONLocation(opts.root);
+    const workspacePkg = findClosestWorkspacePackageJSONLocation(opts.root);
+    const workspaceRoot = dirname(workspacePkg);
+    const wantsWorkspaceSelection = !!opts.workspace || !!opts.dependencies;
+    const pkg = wantsWorkspaceSelection
+        ? workspacePkg
+        : findClosestPackageJSONLocation(opts.root);
+
+    opts.root = workspaceRoot;
+
     const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));
     let packages = allPackages;
 
@@ -97,19 +106,25 @@ console.time(BUILD_NAME);
         const depTypeObject = opts["dep-types"] ? Object.fromEntries([...opts["dep-types"]].map(k => [k, true])) : { a: true };
         const depTypes = getDepTypes(depTypeObject);
 
-        packages = await getDeepDeps(opts.root, depTypes, [opts.dependencies].flat(), packages);
+        const dependencyInputs = [opts.dependencies].flat()
+            .map((input) => input === "."
+                ? relative(opts.root, dirname(findClosestPackageJSONLocation(cwd())))
+                : input);
+
+        packages = (await getDeepDeps(opts.root, depTypes, dependencyInputs, packages))
+            .map((pkgDir) => resolve(opts.root, pkgDir));
         // potentially is there reason not to build all dependency types?
     }
 
     if (opts.list) {
-        console.log(packages.join("\n"));
+        console.log(packages.map((pkgDir) => relative(workspaceRoot, pkgDir) || ".").join("\n"));
         process.exit();
     }
 
     if (opts.build) {
         console.timeLog(BUILD_NAME, "Finding packages to build typescript.");
 
-        const configName = opts["ts-config"] || "tsconfig.json";
+        const configName = opts["ts-config"] || opts["config-name"] || "tsconfig.json";
         const tsPackages = packages
             .filter((pkgDir) => existsSync(join(pkgDir, configName)));
 
@@ -149,7 +164,7 @@ console.time(BUILD_NAME);
         await DataStream.from(prepacks)
             .do(pack => { pack.startTs = Date.now(); })
             .do(pack => pack.build())
-            .do(pack => console.error(`${pack.currDir} done in ${Date.now() - pack.startTs} millis`))
+            .do(pack => console.error(`*** ${pack.currDir} -> ${pack.rootDistPackPath} done in ${Date.now() - pack.startTs} millis`))
             .run()
             .catch(async (e) => {
                 process.once("beforeExit", () => {

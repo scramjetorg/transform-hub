@@ -561,7 +561,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         this.logger.debug("Redirecting outputs");
-        this.redirectOutputs();
+        this.setupOutputs();
 
         this.logger.debug("Defining control stream");
         this.defineControlStream();
@@ -725,7 +725,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.addOutput(process.stderr);
     }
 
-    private redirectOutputs() {
+    private setupOutputs() {
         this.logger.pipe(this.hostClient.logStream, { stringified: true });
 
         if (!this.shouldSerialize) {

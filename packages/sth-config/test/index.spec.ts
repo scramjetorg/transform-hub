@@ -16,6 +16,7 @@ test("Check the imageConfig test", async t => {
     t.is(typeof dockerConfig, "object", "Imageconfig is an object");
     t.is(typeof dockerConfig.prerunner.image, "string", "Exposes prerunner");
     t.is(typeof dockerConfig.runner.image, "string", "Exposes runner");
+    t.true("bun" in dockerConfig.runnerImages, "Exposes Bun runner image");
 });
 
 test("Check if the tags of the images match packages version", async t => {

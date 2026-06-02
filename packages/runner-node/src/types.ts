@@ -88,4 +88,7 @@ export interface RunnerHandshakeInputs {
     appConfig: AppConfig;
     args: unknown[];
     instanceName?: string;
+    exposePath?: string;
+    exposeHost?: string;
+    exposePort?: number;
 }

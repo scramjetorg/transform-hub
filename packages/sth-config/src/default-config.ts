@@ -30,6 +30,7 @@ export const defaultConfig: STHConfiguration = {
         runnerImages: {
             python3: "",
             node: "",
+            bun: "",
         },
     },
     identifyExisting: false,
@@ -58,6 +59,7 @@ export const defaultConfig: STHConfiguration = {
         runnerImages: {
             python3: "",
             node: "",
+            bun: "",
         },
         sequencesRoot: join(homedir(), ".scramjet_sequences"),
         timeout: 0

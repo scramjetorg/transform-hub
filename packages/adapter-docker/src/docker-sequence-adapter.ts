@@ -19,7 +19,7 @@ import {
 } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { sequencePackageJSONDecoder, detectLanguage } from "@scramjet/adapters-common";
+import { sequencePackageJSONDecoder, detectLanguage, selectRunnerImageForEngines } from "@scramjet/adapters-common";
 
 const PACKAGE_DIR = "/package";
 
@@ -55,8 +55,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         await this.fetch(this.dockerConfig.prerunner.image);
 
         this.logger.info("Docker adapter initialized with options", {
-            "python3 runner image": this.dockerConfig.runnerImages.python3,
-            "node runner image": this.dockerConfig.runnerImages.node,
+            "py runner image": this.dockerConfig.runnerImages.python3,
+            "js runner image": this.dockerConfig.runnerImages.node,
             "prerunner image": this.dockerConfig.prerunner.image
         });
     }
@@ -259,9 +259,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const container = Object.assign({}, this.dockerConfig.runner);
 
-        container.image = "python3" in engines
-            ? this.dockerConfig.runnerImages.python3
-            : this.dockerConfig.runnerImages.node;
+        container.image = selectRunnerImageForEngines(engines, this.dockerConfig.runnerImages);
 
         return {
             type: "docker",

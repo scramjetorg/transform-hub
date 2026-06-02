@@ -1,0 +1,38 @@
+# Agent Notes
+
+## First reads
+- Read `codemap.md` before code changes; it lists the real entrypoints and package responsibilities.
+- For deep work in a package, read that package's `codemap.md` when present.
+
+## Package manager
+- Use `npm`, not `yarn`, for agent-run commands in this repo.
+- A root `package-lock.json` exists, but many historical scripts/CI snippets still mention `yarn`; do not copy those blindly. Prefer `npm ci`, `npm install`, `npm run <script>`, or the underlying `node scripts/...` command.
+
+## High-value commands
+- Install deps: `npm ci` for a clean install, `npm install` when updating the lockfile.
+- Build packages only: `npm run build:packages` (`scripts/build-all.js -v -w modules --ts-config tsconfig.build.json`).
+- Full build is expensive: `npm run build` includes packages, downloaded refapps, and Docker builds.
+- Unit/package tests: `npm run test:packages-no-concurrent` is the CI-safe serial variant; `npm run test:packages` runs package tests concurrently.
+- BDD smoke paths: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, or `npm run test:bdd`.
+- Lint: `npm run lint`; quick changed-file lint script uses `git diff --name-only HEAD`.
+- Runtime invariant check: `npm run check:runtime-invariants`.
+- Dev hub: `npm run start:dev`; built hub: `npm run start` after building `dist/`.
+
+## Monorepo wiring
+- Workspaces are `packages/*` plus `bdd/`; custom workspace groups in `package.json` include `modules`, `runners`, and `bdd`.
+- `scripts/run-script.js` runs a package script across workspaces; useful flags: `-w <group>`, `-s <package path|name>`, `-j <jobs>`, `-d <package>`, `-e <command>`.
+- `scripts/build-all.js` builds TypeScript solution configs and pre-packs packages into `dist/`; useful flags: `-w <group>`, `-d <package>`, `--ts-config <file>`, `--no-install`, `--no-distws`.
+- Main STH CLI source is `packages/sth/src/bin/hub.ts`; published/root bin points to `dist/sth/bin/hub.js`.
+- Adapter-launched runner entrypoint is `packages/runner/src/bin/start-runner.ts`; executor selection is in `packages/runner/src/executor/select.ts`.
+- Runtime wrapper packages (`runner-node`, `runner-python`) are protocol references for child process execution.
+
+## Testing and generated files
+- Most package tests use AVA with `ts-node/register` and match `**/*.spec.ts`.
+- `packages/types` generates exposed type files via `packages/types/scripts/generate.js`; its `build:only` runs that generator.
+- BDD tests use `bdd/` (`cucumber-js`) and often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
+- Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
+
+## Toolchain constraints
+- TypeScript base is strict CommonJS targeting ES2019, with `allowJs`, decorators, declarations, and `noUnusedLocals` enabled.
+- ESLint parses with `./tsconfig.base.json`; `dist/` and `node_modules/` are ignored.
+- Prettier config only sets `trailingComma: none`.
