@@ -73,11 +73,11 @@
     - [x] Implement `input.ndjson()`.
     - [x] Implement `input.stream()` where practical.
     - [x] Implement `input.end()` and safe repeated-end handling.
-- [ ] Task: Write tests for output, logs, and monitoring capture
-    - [ ] Test raw, text, line, and NDJSON output helpers.
-    - [ ] Test log capture on the `LOG` channel.
-    - [ ] Test monitoring frame capture and lifecycle waiters.
-    - [ ] Test error reporting for stopped/failed runtime frames.
+- [x] Task: Write tests for output, logs, and monitoring capture
+    - [x] Test raw, text, line, and NDJSON output helpers.
+    - [x] Test log capture on the `LOG` channel.
+    - [x] Test monitoring frame capture and lifecycle waiters.
+    - [x] Test error reporting for stopped/failed runtime frames.
 - [ ] Task: Implement output, logs, monitoring, and assertions
     - [ ] Implement `output.raw()`, `output.text()`, `output.lines()`, and `output.ndjson()`.
     - [ ] Implement log capture helpers.
