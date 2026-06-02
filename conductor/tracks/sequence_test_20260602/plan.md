@@ -48,12 +48,12 @@
     - [x] Test creation of adapter-compatible env for the existing runner.
     - [x] Test runtime command resolution in source and built-tree modes where feasible.
     - [x] Test child process cleanup on normal completion, timeout, and errors.
-- [ ] Task: Implement runner-compatible launch foundation
-    - [ ] Build adapter-compatible env for `@scramjet/runner`: `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`, `INSTANCES_SERVER_HOST`, `INSTANCES_SERVER_PORT`, and `INSTANCE_ID`.
-    - [ ] Resolve and spawn the existing runner entrypoint in source-tree and built-tree modes.
-    - [ ] Let `@scramjet/runner` write boot config, select executor, and spawn runtime wrappers.
-    - [ ] Capture runner stdout/stderr, exit code, signal, lifecycle frames, and cleanup errors.
-    - [ ] Ensure child processes and temp files are cleaned up.
+- [x] Task: Implement runner-compatible launch foundation
+    - [x] Build adapter-compatible env for `@scramjet/runner`: `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`, `INSTANCES_SERVER_HOST`, `INSTANCES_SERVER_PORT`, and `INSTANCE_ID`.
+    - [x] Resolve and spawn the existing runner entrypoint in source-tree and built-tree modes.
+    - [x] Let `@scramjet/runner` write boot config, select executor, and spawn runtime wrappers.
+    - [x] Capture runner stdout/stderr, exit code, signal, lifecycle frames, and cleanup errors.
+    - [x] Ensure child processes and temp files are cleaned up.
 - [ ] Task: Validate Phase 2
     - [ ] Run focused `@scramjet/sequence-test` package tests.
     - [ ] Run relevant runner-node tests if fake host behavior was extracted or shared.

@@ -27,7 +27,7 @@ function isSupportedRuntime(runtime: string): runtime is SequenceTestRuntime {
     return supportedRuntimes.includes(runtime as SequenceTestRuntime);
 }
 
-function validateRuntime(runtime: string): SequenceTestRuntime {
+export function validateSequenceTestRuntime(runtime: string): SequenceTestRuntime {
     if (!isSupportedRuntime(runtime)) {
         throw new Error(
             `unsupported runtime "${runtime}"; supported runtimes are: ${supportedRuntimes.join(", ")}`
@@ -38,7 +38,7 @@ function validateRuntime(runtime: string): SequenceTestRuntime {
 }
 
 export async function createSequenceTest(options: SequenceTestOptions): Promise<SequenceTestHarness> {
-    const runtime = validateRuntime(options.runtime);
+    const runtime = validateSequenceTestRuntime(options.runtime);
 
     let started = false;
 
@@ -92,6 +92,19 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
         assert,
     };
 }
+
+export {
+    createRunnerEnv,
+    createRunnerLaunchPlan,
+    resolveRunnerEntry
+} from "./runner-launcher";
+
+export type {
+    RunnerConnectInfoOptions,
+    RunnerEnvOptions,
+    RunnerInstancesServerOptions,
+    RunnerLaunchPlan
+} from "./runner-launcher";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);
