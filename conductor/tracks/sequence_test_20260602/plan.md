@@ -83,10 +83,10 @@
     - [x] Implement log capture helpers.
     - [x] Implement monitoring frame storage and `waitForCompletion()`.
     - [x] Implement minimal assertions including `completed()` and `noRuntimeErrors()`.
-- [ ] Task: Write and pass one-shot Node sequence tests
-    - [ ] Add a simple Node fixture that maps NDJSON input to output.
-    - [ ] Test `runSequence()` with the fixture.
-    - [ ] Confirm AVA usage example matches public API.
+- [x] Task: Write and pass one-shot Node sequence tests
+    - [x] Add a simple Node fixture that maps NDJSON input to output.
+    - [x] Test `runSequence()` with the fixture.
+    - [x] Confirm AVA usage example matches public API.
 - [ ] Task: Validate Phase 3
     - [ ] Run focused `@scramjet/sequence-test` package tests.
     - [ ] Run build for affected packages.

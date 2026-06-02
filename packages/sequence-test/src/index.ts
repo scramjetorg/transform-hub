@@ -1,3 +1,16 @@
+import { RunnerMessageCode } from "@scramjet/symbols";
+
+import {
+    createLogCapture,
+    createMonitoringCapture,
+    createOutputCapture,
+    createSequenceAssertions,
+    LogCapture,
+    MonitoringCapture,
+    OutputCapture,
+    SequenceAssertions
+} from "./captures";
+
 export const sequenceTestPackageName = "@scramjet/sequence-test";
 
 export type SequenceTestRuntime = "node" | "python" | "bun";
@@ -5,7 +18,16 @@ export type SequenceTestRuntime = "node" | "python" | "bun";
 export interface SequenceTestOptions {
     runtime: SequenceTestRuntime | string;
     sequencePath: string;
+    input?: {
+        contentType: string;
+        body: unknown;
+    };
 }
+
+export type CallableOutputCapture = OutputCapture & ((..._args: unknown[]) => unknown);
+export type CallableLogCapture = LogCapture & ((..._args: unknown[]) => unknown);
+export type CallableMonitoringCapture = MonitoringCapture & ((..._args: unknown[]) => unknown);
+export type CallableSequenceAssertions = SequenceAssertions & ((..._args: unknown[]) => unknown);
 
 export interface SequenceTestHarness {
     runtime: SequenceTestRuntime;
@@ -13,10 +35,10 @@ export interface SequenceTestHarness {
     close: () => Promise<void> | void;
     waitForCompletion: () => Promise<void> | void;
     input: (..._args: unknown[]) => unknown;
-    output: (..._args: unknown[]) => unknown;
-    logs: (..._args: unknown[]) => unknown;
-    monitoring: (..._args: unknown[]) => unknown;
-    assert: (..._args: unknown[]) => unknown;
+    output: CallableOutputCapture;
+    logs: CallableLogCapture;
+    monitoring: CallableMonitoringCapture;
+    assert: CallableSequenceAssertions;
 }
 
 export type SequenceTestResult = SequenceTestHarness;
@@ -39,6 +61,10 @@ export function validateSequenceTestRuntime(runtime: string): SequenceTestRuntim
 
 export async function createSequenceTest(options: SequenceTestOptions): Promise<SequenceTestHarness> {
     const runtime = validateSequenceTestRuntime(options.runtime);
+    const outputCapture = createOutputCapture();
+    const logCapture = createLogCapture();
+    const monitoringCapture = createMonitoringCapture();
+    const assertions = createSequenceAssertions({ monitoring: monitoringCapture });
 
     let started = false;
 
@@ -64,21 +90,10 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
         return Promise.resolve();
     };
 
-    const output = () => {
-        return Promise.resolve();
-    };
-
-    const logs = () => {
-        return Promise.resolve();
-    };
-
-    const monitoring = () => {
-        return Promise.resolve();
-    };
-
-    const assert = () => {
-        return Promise.resolve();
-    };
+    const output = Object.assign(() => Promise.resolve(), outputCapture);
+    const logs = Object.assign(() => Promise.resolve(), logCapture);
+    const monitoring = Object.assign(() => Promise.resolve(), monitoringCapture);
+    const assert = Object.assign(() => Promise.resolve(), assertions);
 
     return {
         runtime,
@@ -130,6 +145,25 @@ export async function runSequence(options: SequenceTestOptions): Promise<Sequenc
     const harness = await createSequenceTest(options);
 
     await harness.start();
+
+    if (options.runtime === "node") {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require, import/no-dynamic-require
+        const loaded = require(options.sequencePath) as unknown;
+        const fn = typeof loaded === "function"
+            ? loaded
+            : (loaded as { default?: unknown }).default;
+
+        if (typeof fn !== "function") {
+            throw new Error(`Sequence module ${options.sequencePath} does not export a function`);
+        }
+
+        const result = await (fn as (input: unknown) => unknown)(options.input?.body);
+        const records = Array.isArray(result) ? result : [result];
+
+        await harness.output.write(records.map(record => JSON.stringify(record)).join("\n"));
+        await harness.monitoring.write(`${JSON.stringify([RunnerMessageCode.SEQUENCE_COMPLETED, {}])}\r\n`);
+    }
+
     await harness.waitForCompletion();
 
     return harness;
