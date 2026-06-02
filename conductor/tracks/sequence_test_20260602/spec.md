@@ -28,15 +28,18 @@ The harness should run sequence code through the existing runtime wrapper protoc
 
 ### Fake Host and Runtime Protocol
 
-- Use the existing runner/runtime protocol rather than inventing a separate test-only execution path.
+- Use the existing `@scramjet/runner`/runtime protocol flow as the default architecture, matching package `@scramjet/runner` behavior with added test-harness capabilities and no STH/host overlord.
+- Add a default harness launch path that spawns the existing `@scramjet/runner` outer runner process and passes adapter-compatible environment variables, including `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`, `INSTANCES_SERVER_HOST`, `INSTANCES_SERVER_PORT`, and `INSTANCE_ID`.
+- Replace only the Host/instances-server side with a fake protocol endpoint for tests; the fake endpoint must not implement a parallel runtime executor path or boot-config writer for the default harness path.
 - Generalize the fake instances server behavior currently present in runner tests so the harness can:
   - accept instance/channel handshakes;
   - provide `IN`, `OUT`, `LOG`, and `REQUESTS` channels where supported;
   - capture raw channel data;
   - parse monitoring frames;
   - expose channel waiters and deterministic cleanup.
-- Write appropriate boot configuration for launched runtime wrappers.
+- For the default launch path, expose runner-compatible adapter environment and allow `@scramjet/runner` to write boot config and choose runtime executors.
 - Manage runtime process lifecycle, timeouts, cleanup, and error reporting.
+- A direct runtime-wrapper launch mode may be provided only as an explicitly documented low-level/internal option; it must not be the MVP default path.
 
 ### Input, Output, Logs, and Monitoring
 
@@ -68,7 +71,7 @@ The harness should run sequence code through the existing runtime wrapper protoc
   - register routes and responses;
   - capture method, path, headers, and body;
   - assert that expected Hub calls were made;
-  - provide common default STH-like responses where useful.
+  - use an explicit minimal mock route table, avoiding broad STH-like emulation.
 - Python and Bun Hub mocking should be supported only where their runtime path can use the same request transport through the Node-based harness/wrapper. Missing support must be documented rather than hidden.
 
 ### Fixtures
@@ -76,6 +79,12 @@ The harness should run sequence code through the existing runtime wrapper protoc
 - Provide fixture helpers for creating temporary sequence directories/files from tests.
 - Support Node, Python, and Bun fixture creation from Node-authored tests.
 - Do not require stored-sequence packaging or tarball creation for the MVP.
+- Reuse existing repository fixtures before adding new ones, especially:
+  - `packages/runner-node/test/fixtures`
+  - `packages/runner/test/transport/fake-instances-server.ts`
+  - `packages/runner-python/tests/parity/fixtures`
+  - `packages/runner-bun/test/fixtures`
+- Add new fixtures only where existing fixtures do not already cover sequence API exposure or outbound Hub request mocking needs.
 
 ## Non-Functional Requirements
 
@@ -93,7 +102,7 @@ The harness should run sequence code through the existing runtime wrapper protoc
 - The planned package exposes test-runner-agnostic APIs with AVA-oriented examples.
 - The planned package supports Node sequence tests with input/output, monitoring, logs, sequence API requests, fixtures, and mocked Hub calls.
 - The planned package includes a path for Python and Bun sequence tests authored from Node, with limitations documented clearly.
-- The plan uses existing repo integration points including `runner-node`, runtime boot config, fake instances server behavior, monitoring/control frames, and REQUESTS/BPMux where available.
+- The plan uses existing repo integration points including `runner-node`, harness-provided runner environment, runner-managed boot-config and executor behavior, fake instances server behavior, monitoring/control frames, and REQUESTS/BPMux where available.
 - The feature does not require starting a real STH, Docker adapter, or Kubernetes adapter.
 
 ## Out of Scope

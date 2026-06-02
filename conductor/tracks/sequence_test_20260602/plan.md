@@ -7,6 +7,12 @@
     - [ ] Confirm runtime wrapper entrypoints for Node, Python, and Bun.
     - [ ] Confirm boot config, fd/control/monitoring, and instances-server channel contracts.
     - [ ] Confirm existing fake host test utilities and reusable implementation boundaries.
+- [ ] Task: Inventory reusable fixtures before adding new ones
+    - [ ] Node fixtures from `packages/runner-node/test/fixtures`.
+    - [ ] Fake instances server behavior from `packages/runner/test/transport/fake-instances-server.ts`.
+    - [ ] Python parity fixtures from `packages/runner-python/tests/parity/fixtures`.
+    - [ ] Bun fixtures from `packages/runner-bun/test/fixtures`.
+    - [ ] Identify only missing fixture cases for API exposure and Hub-request mocking.
 - [ ] Task: Create `@scramjet/sequence-test` workspace package skeleton
     - [ ] Add `packages/sequence-test/package.json` with build/test scripts aligned to workspace conventions.
     - [ ] Add `tsconfig.json`, `tsconfig.build.json` or package-level references as needed.
@@ -38,14 +44,15 @@
     - [ ] Move or reimplement `packages/runner/test/transport/fake-instances-server.ts` behavior in `packages/sequence-test/src`.
     - [ ] Support `IN`, `OUT`, `LOG`, and `REQUESTS` channels where runtime support exists.
     - [ ] Expose deterministic `awaitChannel()`, raw capture, parsed monitoring frames, harness errors, and `close()`.
-- [ ] Task: Write tests for boot config and runtime process launching
-    - [ ] Test creation of valid boot config for Node runtime.
+- [ ] Task: Write tests for runner-compatible env and process launching
+    - [ ] Test creation of adapter-compatible env for the existing runner.
     - [ ] Test runtime command resolution in source and built-tree modes where feasible.
     - [ ] Test child process cleanup on normal completion, timeout, and errors.
-- [ ] Task: Implement runtime launcher foundation
-    - [ ] Write boot config files into temporary directories.
-    - [ ] Spawn `runner-node` directly for Node sequence tests.
-    - [ ] Capture process exit code, stderr/stdout where applicable, and runtime errors.
+- [ ] Task: Implement runner-compatible launch foundation
+    - [ ] Build adapter-compatible env for `@scramjet/runner`: `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`, `INSTANCES_SERVER_HOST`, `INSTANCES_SERVER_PORT`, and `INSTANCE_ID`.
+    - [ ] Resolve and spawn the existing runner entrypoint in source-tree and built-tree modes.
+    - [ ] Let `@scramjet/runner` write boot config, select executor, and spawn runtime wrappers.
+    - [ ] Capture runner stdout/stderr, exit code, signal, lifecycle frames, and cleanup errors.
     - [ ] Ensure child processes and temp files are cleaned up.
 - [ ] Task: Validate Phase 2
     - [ ] Run focused `@scramjet/sequence-test` package tests.
@@ -131,27 +138,41 @@
     - [ ] Add a minimal Python sequence fixture.
     - [ ] Test input/output and lifecycle behavior through the Node-authored harness.
     - [ ] Test clear reporting for unsupported Python Hub mock behavior if applicable.
-- [ ] Task: Implement Python runtime support
-    - [ ] Resolve Python runtime wrapper command and environment.
-    - [ ] Generate compatible boot config.
-    - [ ] Reuse fake host, input/output, monitoring, and cleanup helpers.
-    - [ ] Document prerequisites and limitations.
 - [ ] Task: Write tests for Bun sequence fixtures from Node tests
     - [ ] Add a minimal Bun sequence fixture.
     - [ ] Test supported no-host or delegated hosted behavior explicitly.
     - [ ] Test clear strict-runtime or delegation messaging.
-- [ ] Task: Implement Bun runtime support
-    - [ ] Resolve Bun runtime wrapper command and environment.
-    - [ ] Generate compatible boot config.
-    - [ ] Surface delegation behavior clearly.
-    - [ ] Add `strictRuntime` or equivalent option if needed.
+- [ ] Task: Add Python/Bun runner-env support
+    - [ ] Map `runtime` option to `SequenceInfo.config.engines`.
+    - [ ] Reuse existing `@scramjet/runner` executor selection.
+    - [ ] Reuse fake host, input/output, monitoring, and cleanup helpers.
+    - [ ] Document local tooling prerequisites and skipped-test behavior.
+    - [ ] Surface Bun delegation behavior clearly and add `strictRuntime` or equivalent option if needed.
 - [ ] Task: Validate Phase 6
     - [ ] Run focused package tests for Python and Bun paths where local tooling is available.
     - [ ] Run relevant runtime parity tests if runtime wrapper assumptions changed.
     - [ ] Record skipped validation when Python or Bun tooling is unavailable.
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Python and Bun Node-Authored Sequence Tests' (Protocol in workflow.md)
 
-## Phase 7: Fixtures, Documentation, and Final Validation
+## Phase 7: AVA Usage Documentation
+
+- [ ] Task: Consult Oracle for documentation wording
+    - [ ] Ask `@oracle` to review the intended README/example wording for clarity, accuracy, and developer usefulness.
+    - [ ] Incorporate Oracle guidance into the final documentation wording before publishing examples.
+- [ ] Task: Document how to use `@scramjet/sequence-test` with AVA
+    - [ ] Add a package README section or dedicated docs page showing AVA setup for `@scramjet/sequence-test`.
+    - [ ] Include a minimal one-shot AVA example using `runSequence()`.
+    - [ ] Include an interactive AVA example using `createSequenceTest()` with input, output, and lifecycle assertions.
+    - [ ] Include an AVA example for calling a sequence-exposed API endpoint.
+    - [ ] Include an AVA example for mocked Hub calls with explicit route registration and request assertions.
+    - [ ] Explain cleanup expectations, timeouts, fixture usage, and skipped runtime behavior for Python/Bun tooling.
+- [ ] Task: Validate Phase 7 documentation
+    - [ ] Confirm examples match the public API implemented by earlier phases.
+    - [ ] Confirm examples avoid starting a real STH, Docker adapter, or Kubernetes adapter.
+    - [ ] Confirm examples use existing or documented fixture helpers.
+- [ ] Task: Conductor - User Manual Verification 'Phase 7: AVA Usage Documentation' (Protocol in workflow.md)
+
+## Phase 8: Fixtures, Documentation, and Final Validation
 
 - [ ] Task: Write tests for fixture helpers
     - [ ] Test temporary Node fixture directory creation and cleanup.
@@ -173,8 +194,9 @@
     - [ ] Run `npm run lint` if required for changed files.
     - [ ] Run `npm run check:runtime-invariants` if runtime protocol surfaces changed.
     - [ ] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
+    - [ ] Confirm no default-path imports or orchestration from @scramjet/sth, @scramjet/host, Docker adapter, Kubernetes adapter, or BDD workflows.
 - [ ] Task: Final review and handoff
     - [ ] Confirm requirements and acceptance criteria are satisfied.
     - [ ] Confirm docs, tests, and implementation are aligned.
     - [ ] Prepare concise implementation summary and known limitations.
-- [ ] Task: Conductor - User Manual Verification 'Phase 7: Fixtures, Documentation, and Final Validation' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 8: Fixtures, Documentation, and Final Validation' (Protocol in workflow.md)
