@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Create documentation and JSON schemas for STH config and startup-config files under schemas/, and create base agentic docs from docs/roadmap/001-docs-agentic-usage.md on how to write a sequence and start STH with it in production mode using local built sources, npm, or GitHub Packages.**
+- [~] **Track: Create documentation and JSON schemas for STH config and startup-config files under schemas/, and create base agentic docs from docs/roadmap/001-docs-agentic-usage.md on how to write a sequence and start STH with it in production mode using local built sources, npm, or GitHub Packages.**
 *Link: [./tracks/sth_config_schemas_agentic_docs_20260602/](./tracks/sth_config_schemas_agentic_docs_20260602/)*

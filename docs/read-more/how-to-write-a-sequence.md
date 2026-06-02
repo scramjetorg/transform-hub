@@ -1,5 +1,8 @@
 # Scramjet Sequence - how to write a program?
 
+For headless automation and production startup flows, see
+[Agentic usage and production startup](./agentic-usage.md).
+
 - [Producing data (output stream)](#producing-data-output-stream)
 - [Consuming data (input stream)](#consuming-data-input-stream)
 - [Transforming data](#transforming-data)

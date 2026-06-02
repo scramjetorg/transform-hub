@@ -136,6 +136,7 @@ Some important links 👀:
 - Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
 - You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
 - You can see the [CLI documentation here](./docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
+- For automated environments, see [Agentic usage and production startup](./docs/read-more/agentic-usage.md).
 - Don't forget to ⭐ this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 - You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 

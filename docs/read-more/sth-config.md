@@ -4,6 +4,38 @@ Starting a self-hosted Transform Hub with `--config` argument will allow you to 
 
 The contents of such file can be `yml` or `json` with the following default values:
 
+For JSON editor completion and validation, use the machine-readable schemas in
+the repository root:
+
+- [`schemas/sth-config.schema.json`](../../schemas/sth-config.schema.json) for
+  the Hub configuration file passed with `--config`.
+- [`schemas/startup-config.schema.json`](../../schemas/startup-config.schema.json)
+  for the host startup-config file passed with `--startup-config`.
+
+The startup-config schema describes the launch-time file whose top-level shape
+is `{ "sequences": [...] }`. It is separate from per-sequence CLI start/deploy
+payload fragments.
+
+Example JSON config header:
+
+```json
+{
+  "$schema": "../../schemas/sth-config.schema.json",
+  "runtimeAdapter": "process",
+  "identifyExisting": true,
+  "startupConfig": "./startup-config.json"
+}
+```
+
+Example JSON startup-config header:
+
+```json
+{
+  "$schema": "../../schemas/startup-config.schema.json",
+  "sequences": []
+}
+```
+
 ```yaml
 # Logging level
 # Acceptable values: "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE"
