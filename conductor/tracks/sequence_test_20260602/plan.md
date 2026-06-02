@@ -198,14 +198,14 @@
 
 ## Phase 8: Sequence Fixtures, AGENTS.md Guidance, and Final Validation
 
-- [ ] Task: Write tests for fixture helpers
-    - [ ] Test temporary Node fixture directory creation and cleanup.
-    - [ ] Test temporary Python fixture directory creation and cleanup.
-    - [ ] Test temporary Bun fixture directory creation and cleanup.
-- [ ] Task: Implement fixture helpers
-    - [ ] Implement file-map based fixture creation.
-    - [ ] Implement runtime-specific fixture helper aliases.
-    - [ ] Implement cleanup integration with harness lifecycle.
+- [x] Task: Write tests for fixture helpers
+    - [x] Test temporary Node fixture directory creation and cleanup.
+    - [x] Test temporary Python fixture directory creation and cleanup.
+    - [x] Test temporary Bun fixture directory creation and cleanup.
+- [x] Task: Implement fixture helpers
+    - [x] Implement file-map based fixture creation.
+    - [x] Implement runtime-specific fixture helper aliases.
+    - [x] Implement cleanup integration with harness lifecycle.
 - [x] Task: Add appcontext sequence fixture and test
     - [x] Create fixture sequence that reads/writes `appcontext`.
     - [x] Write AVA test demonstrating appcontext behavior.
@@ -225,13 +225,13 @@
     - [x] Add a note that `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
     - [x] Instruct agents to keep using each package's existing AVA tests and package build/lint validation.
     - [x] Instruct agents not to replace package tests, BDD tests, or runtime validation with `@scramjet/sequence-test` unless explicitly directed.
-- [ ] Task: Run final validation
+- [x] Task: Run final validation
     - [x] Run focused `@scramjet/sequence-test` tests.
     - [x] Run `npm run build:packages` or the narrowest sufficient package build.
     - [x] Run `npm run lint` if required for changed files.
     - [x] Confirm `npm run check:runtime-invariants` is not required because runtime protocol surfaces did not change.
-    - [ ] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
-    - [ ] Confirm no default-path imports or orchestration from @scramjet/sth, @scramjet/host, Docker adapter, Kubernetes adapter, or BDD workflows.
+    - [x] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
+    - [x] Confirm no default-path imports or orchestration from @scramjet/sth, @scramjet/host, Docker adapter, Kubernetes adapter, or BDD workflows.
     - [x] Confirm README examples test sequences, not harness internals.
     - [x] Confirm AGENTS.md includes sequence-test status note.
 - [ ] Task: Final review and handoff

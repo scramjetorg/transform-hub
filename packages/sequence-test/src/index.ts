@@ -132,6 +132,13 @@ export {
 
 export { createHubMock } from "./hub-mock";
 
+export {
+    createBunSequenceFixture,
+    createNodeSequenceFixture,
+    createPythonSequenceFixture,
+    createSequenceFixture
+} from "./fixtures";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
@@ -161,6 +168,12 @@ export type {
     HubMockResponse,
     HubRouteBuilder
 } from "./hub-mock";
+
+export type {
+    SequenceFixture,
+    SequenceFixtureFiles,
+    SequenceFixtureOptions
+} from "./fixtures";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);
