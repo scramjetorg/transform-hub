@@ -138,10 +138,10 @@
     - [x] Add a minimal Python sequence fixture.
     - [x] Test input/output and lifecycle behavior through the Node-authored harness.
     - [x] Test clear reporting for unsupported Python Hub mock behavior if applicable.
-- [ ] Task: Write tests for Bun sequence fixtures from Node tests
-    - [ ] Add a minimal Bun sequence fixture.
-    - [ ] Test supported no-host or delegated hosted behavior explicitly.
-    - [ ] Test clear strict-runtime or delegation messaging.
+- [x] Task: Write tests for Bun sequence fixtures from Node tests
+    - [x] Add a minimal Bun sequence fixture.
+    - [x] Test supported no-host or delegated hosted behavior explicitly.
+    - [x] Test clear strict-runtime or delegation messaging.
 - [ ] Task: Add Python/Bun runner-env support
     - [ ] Map `runtime` option to `SequenceInfo.config.engines`.
     - [ ] Reuse existing `@scramjet/runner` executor selection.
