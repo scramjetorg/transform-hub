@@ -129,6 +129,8 @@ export {
     createSequenceRequestClientFromMonitoring
 } from "./request-client";
 
+export { createHubMock } from "./hub-mock";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
@@ -151,6 +153,13 @@ export type {
     SequenceRequestClientOptions,
     SequenceRequestResponse
 } from "./request-client";
+
+export type {
+    HubMock,
+    HubMockRequest,
+    HubMockResponse,
+    HubRouteBuilder
+} from "./hub-mock";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);

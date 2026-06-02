@@ -117,11 +117,11 @@
     - [x] Test route registration and JSON response behavior.
     - [x] Test request capture including method, path, headers, and body.
     - [x] Test assertion helper for expected Hub calls.
-- [ ] Task: Implement Hub mock transport
-    - [ ] Attach a BPMux peer to the fake host `REQUESTS` channel where supported.
-    - [ ] Feed multiplexed HTTP streams into a local mock router/server implementation.
-    - [ ] Implement route registration, default responses, and request capture.
-    - [ ] Expose `harness.hub.requests()` and minimal hub assertion helpers.
+- [x] Task: Implement Hub mock transport
+    - [x] Attach a BPMux peer to the fake host `REQUESTS` channel where supported.
+    - [x] Feed multiplexed HTTP streams into a local mock router/server implementation.
+    - [x] Implement route registration, default responses, and request capture.
+    - [x] Expose `harness.hub.requests()` and minimal hub assertion helpers.
 - [ ] Task: Document runtime limitations for Hub mocking
     - [ ] Document Node first-class support.
     - [ ] Document Python behavior when `REQUESTS` transport is unavailable.
