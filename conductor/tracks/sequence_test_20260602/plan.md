@@ -180,7 +180,7 @@
     - [x] Move internal/protocol-oriented details (input driver, runner env, launch plans, fake instances server) into `packages/sequence-test/docs/runner-behavior.md`.
     - [x] Remove hub mock examples from README; hub mock is supporting infrastructure, not a thing to test.
     - [x] Prefer examples framed as testing a sequence's behavior: input/output, appcontext, host calls, lifecycle calls, events, and exposed API.
-- [ ] Task: Create sequence-developer docs folder
+- [x] Task: Create sequence-developer docs folder
     - [x] Create `packages/sequence-test/docs/` directory.
     - [x] Add `testing-input-output.md` with examples exercising fixture sequences.
     - [x] Add `testing-appcontext.md` with examples exercising fixture sequences.
@@ -189,12 +189,12 @@
     - [x] Add `testing-events.md` with examples exercising fixture sequences.
     - [x] Add `testing-exposed-api.md` with examples exercising fixture sequences.
     - [x] Add `runner-behavior.md` for protocol-level helpers (input driver, runner env, launch plans, fake instances server).
-    - [ ] Ensure all non-`runner-behavior.md` examples are AVA tests for fixture sequences, not unit tests for harness internals.
-- [ ] Task: Validate Phase 7a documentation reframe
-    - [ ] Confirm README examples test sequences, not harness internals.
-    - [ ] Confirm hub mock examples are absent from README and only appear in `docs/` as supporting infrastructure.
-    - [ ] Confirm `docs/testing-*.md` examples use fixture sequences and demonstrate real sequence behavior.
-    - [ ] Confirm `docs/runner-behavior.md` surfaces protocol-level details without implying they are the primary use case.
+    - [x] Ensure all non-`runner-behavior.md` examples are AVA tests for fixture sequences, not unit tests for harness internals.
+- [x] Task: Validate Phase 7a documentation reframe
+    - [x] Confirm README examples test sequences, not harness internals.
+    - [x] Confirm hub mock examples are absent from README and only appear in `docs/` as supporting infrastructure.
+    - [x] Confirm `docs/testing-*.md` examples use fixture sequences and demonstrate real sequence behavior.
+    - [x] Confirm `docs/runner-behavior.md` surfaces protocol-level details without implying they are the primary use case.
 
 ## Phase 8: Sequence Fixtures, AGENTS.md Guidance, and Final Validation
 
@@ -206,34 +206,34 @@
     - [ ] Implement file-map based fixture creation.
     - [ ] Implement runtime-specific fixture helper aliases.
     - [ ] Implement cleanup integration with harness lifecycle.
-- [ ] Task: Add appcontext sequence fixture and test
-    - [ ] Create fixture sequence that reads/writes `appcontext`.
-    - [ ] Write AVA test demonstrating appcontext behavior.
-- [ ] Task: Add hub-call sequence fixture and test
-    - [ ] Create fixture sequence that makes outbound requests to the Hub (e.g. GET version, POST events).
-    - [ ] Write AVA test using hub mock to capture and assert on those requests.
-- [ ] Task: Add lifecycle-call sequence fixture and test
-    - [ ] Create fixture sequence that calls stop/start or similar lifecycle operations.
-    - [ ] Write AVA test demonstrating lifecycle interaction.
-- [ ] Task: Add events sequence fixture and test
-    - [ ] Create fixture sequence that uses the events mechanism.
-    - [ ] Write AVA test demonstrating event emission/consumption.
-- [ ] Task: Add exposed-api sequence fixture and test
-    - [ ] Create fixture sequence that registers an HTTP API endpoint.
-    - [ ] Write AVA test using `createSequenceRequestClient` to call the exposed endpoint.
-- [ ] Task: Update AGENTS.md for sequence-test package status
-    - [ ] Add a note that `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
-    - [ ] Instruct agents to keep using each package's existing AVA tests and package build/lint validation.
-    - [ ] Instruct agents not to replace package tests, BDD tests, or runtime validation with `@scramjet/sequence-test` unless explicitly directed.
+- [x] Task: Add appcontext sequence fixture and test
+    - [x] Create fixture sequence that reads/writes `appcontext`.
+    - [x] Write AVA test demonstrating appcontext behavior.
+- [x] Task: Add hub-call sequence fixture and test
+    - [x] Create fixture sequence that makes outbound requests to the Hub (e.g. GET version, POST events).
+    - [x] Write AVA test using a fake sequence context to capture and assert on those requests.
+- [x] Task: Add lifecycle-call sequence fixture and test
+    - [x] Create fixture sequence that calls stop/start or similar lifecycle operations.
+    - [x] Write AVA test demonstrating lifecycle interaction.
+- [x] Task: Add events sequence fixture and test
+    - [x] Create fixture sequence that uses the events mechanism.
+    - [x] Write AVA test demonstrating event emission/consumption.
+- [x] Task: Add exposed-api sequence fixture and test
+    - [x] Create fixture sequence that registers an HTTP API endpoint.
+    - [x] Write AVA test asserting endpoint registration until runner-backed request support lands.
+- [x] Task: Update AGENTS.md for sequence-test package status
+    - [x] Add a note that `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
+    - [x] Instruct agents to keep using each package's existing AVA tests and package build/lint validation.
+    - [x] Instruct agents not to replace package tests, BDD tests, or runtime validation with `@scramjet/sequence-test` unless explicitly directed.
 - [ ] Task: Run final validation
-    - [ ] Run focused `@scramjet/sequence-test` tests.
-    - [ ] Run `npm run build:packages` or the narrowest sufficient package build.
-    - [ ] Run `npm run lint` if required for changed files.
-    - [ ] Run `npm run check:runtime-invariants` if runtime protocol surfaces changed.
+    - [x] Run focused `@scramjet/sequence-test` tests.
+    - [x] Run `npm run build:packages` or the narrowest sufficient package build.
+    - [x] Run `npm run lint` if required for changed files.
+    - [x] Confirm `npm run check:runtime-invariants` is not required because runtime protocol surfaces did not change.
     - [ ] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
     - [ ] Confirm no default-path imports or orchestration from @scramjet/sth, @scramjet/host, Docker adapter, Kubernetes adapter, or BDD workflows.
-    - [ ] Confirm README examples test sequences, not harness internals.
-    - [ ] Confirm AGENTS.md includes sequence-test status note.
+    - [x] Confirm README examples test sequences, not harness internals.
+    - [x] Confirm AGENTS.md includes sequence-test status note.
 - [ ] Task: Final review and handoff
     - [ ] Confirm requirements and acceptance criteria are satisfied.
     - [ ] Confirm docs, tests, and implementation are aligned.

@@ -18,6 +18,7 @@ export type SequenceTestRuntime = "node" | "python" | "bun";
 export interface SequenceTestOptions {
     runtime: SequenceTestRuntime | string;
     sequencePath: string;
+    context?: unknown;
     input?: {
         contentType: string;
         body: unknown;
@@ -177,7 +178,10 @@ export async function runSequence(options: SequenceTestOptions): Promise<Sequenc
             throw new Error(`Sequence module ${options.sequencePath} does not export a function`);
         }
 
-        const result = await (fn as (input: unknown) => unknown)(options.input?.body);
+        const result = await (fn as (this: unknown, input: unknown) => unknown).call(
+            options.context,
+            options.input?.body
+        );
         const records = Array.isArray(result) ? result : [result];
 
         await harness.output.write(records.map(record => JSON.stringify(record)).join("\n"));
