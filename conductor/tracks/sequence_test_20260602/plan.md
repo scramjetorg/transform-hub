@@ -58,7 +58,7 @@
     - [x] Run focused `@scramjet/sequence-test` package tests.
     - [x] Run relevant runner-node tests if fake host behavior was extracted or shared.
     - [x] Run package build for affected packages.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Fake Host, Boot Config, and Runtime Launching' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Fake Host, Boot Config, and Runtime Launching' (Protocol in workflow.md)
 
 ## Phase 3: Input, Output, Logs, Monitoring, and Control
 
