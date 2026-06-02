@@ -41,6 +41,13 @@ Choose the narrowest sufficient validation:
 Validate every tool call result, but distinguish incorrect invocation from a
 real product or code failure.
 
+Before deciding on a recovery path for a recurring or recognizable failure,
+consult `conductor/known-solutions.md`. If an entry matches the observed
+problem, follow its Solution, Constraints, and Ignore-If rules. If no entry
+matches, use the general recovery policy below. When a new repeatable recovery
+path is learned, update `known-solutions.md` with a fixed five-line problem
+entry.
+
 ### Test and Validation Failures
 
 When a test, build, lint, or validation command exits non-zero, do not halt

@@ -7,6 +7,7 @@
 
 ## Workflow
 - [Workflow](./workflow.md)
+- [Known Solutions](./known-solutions.md)
 - [Code Style Guides](./code_styleguides/)
 
 ## Management
