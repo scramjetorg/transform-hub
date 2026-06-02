@@ -62,11 +62,11 @@
 
 ## Phase 3: Input, Output, Logs, Monitoring, and Control
 
-- [ ] Task: Write tests for input helpers
-    - [ ] Test text input framing and completion.
-    - [ ] Test bytes/buffer input framing and completion.
-    - [ ] Test NDJSON input serialization and completion.
-    - [ ] Test stream input where practical.
+- [x] Task: Write tests for input helpers
+    - [x] Test text input framing and completion.
+    - [x] Test bytes/buffer input framing and completion.
+    - [x] Test NDJSON input serialization and completion.
+    - [x] Test stream input where practical.
 - [ ] Task: Implement input driver
     - [ ] Implement `input.text()`.
     - [ ] Implement `input.bytes()`.
