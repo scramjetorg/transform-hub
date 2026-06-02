@@ -7,12 +7,12 @@
     - [x] Confirm runtime wrapper entrypoints for Node, Python, and Bun.
     - [x] Confirm boot config, fd/control/monitoring, and instances-server channel contracts.
     - [x] Confirm existing fake host test utilities and reusable implementation boundaries.
-- [ ] Task: Inventory reusable fixtures before adding new ones
-    - [ ] Node fixtures from `packages/runner-node/test/fixtures`.
-    - [ ] Fake instances server behavior from `packages/runner/test/transport/fake-instances-server.ts`.
-    - [ ] Python parity fixtures from `packages/runner-python/tests/parity/fixtures`.
-    - [ ] Bun fixtures from `packages/runner-bun/test/fixtures`.
-    - [ ] Identify only missing fixture cases for API exposure and Hub-request mocking.
+- [x] Task: Inventory reusable fixtures before adding new ones
+    - [x] Node fixtures from `packages/runner-node/test/fixtures`.
+    - [x] Fake instances server behavior from `packages/runner/test/transport/fake-instances-server.ts`.
+    - [x] Python parity fixtures from `packages/runner-python/tests/parity/fixtures`.
+    - [x] Bun fixtures from `packages/runner-bun/test/fixtures`.
+    - [x] Identify only missing fixture cases for API exposure and Hub-request mocking.
 - [ ] Task: Create `@scramjet/sequence-test` workspace package skeleton
     - [ ] Add `packages/sequence-test/package.json` with build/test scripts aligned to workspace conventions.
     - [ ] Add `tsconfig.json`, `tsconfig.build.json` or package-level references as needed.
