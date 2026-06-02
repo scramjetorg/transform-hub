@@ -40,10 +40,10 @@
     - [x] Test channel waiters and timeout behavior.
     - [x] Test monitoring frame parsing from CRLF-delimited JSON frames.
     - [x] Test raw channel capture for output/log streams.
-- [ ] Task: Generalize fake instances server behavior
-    - [ ] Move or reimplement `packages/runner/test/transport/fake-instances-server.ts` behavior in `packages/sequence-test/src`.
-    - [ ] Support `IN`, `OUT`, `LOG`, and `REQUESTS` channels where runtime support exists.
-    - [ ] Expose deterministic `awaitChannel()`, raw capture, parsed monitoring frames, harness errors, and `close()`.
+- [x] Task: Generalize fake instances server behavior
+    - [x] Move or reimplement `packages/runner/test/transport/fake-instances-server.ts` behavior in `packages/sequence-test/src`.
+    - [x] Support `IN`, `OUT`, `LOG`, and `REQUESTS` channels where runtime support exists.
+    - [x] Expose deterministic `awaitChannel()`, raw capture, parsed monitoring frames, harness errors, and `close()`.
 - [ ] Task: Write tests for runner-compatible env and process launching
     - [ ] Test creation of adapter-compatible env for the existing runner.
     - [ ] Test runtime command resolution in source and built-tree modes where feasible.
