@@ -108,7 +108,7 @@
     - [x] Run focused package tests for sequence API requests.
     - [x] Run runner-node tests if API exposure assumptions touch existing behavior.
     - [x] Record any unsupported runtime behavior.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Sequence API Request Testing' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Sequence API Request Testing' (Protocol in workflow.md)
 
 ## Phase 5: Mock Hub Requests over REQUESTS/BPMux
 
