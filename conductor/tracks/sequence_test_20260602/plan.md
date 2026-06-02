@@ -35,11 +35,11 @@
 
 ## Phase 2: Fake Host, Boot Config, and Runtime Launching
 
-- [ ] Task: Write tests for fake host and channel behavior
-    - [ ] Test instance/channel handshake validation.
-    - [ ] Test channel waiters and timeout behavior.
-    - [ ] Test monitoring frame parsing from CRLF-delimited JSON frames.
-    - [ ] Test raw channel capture for output/log streams.
+- [x] Task: Write tests for fake host and channel behavior
+    - [x] Test instance/channel handshake validation.
+    - [x] Test channel waiters and timeout behavior.
+    - [x] Test monitoring frame parsing from CRLF-delimited JSON frames.
+    - [x] Test raw channel capture for output/log streams.
 - [ ] Task: Generalize fake instances server behavior
     - [ ] Move or reimplement `packages/runner/test/transport/fake-instances-server.ts` behavior in `packages/sequence-test/src`.
     - [ ] Support `IN`, `OUT`, `LOG`, and `REQUESTS` channels where runtime support exists.
