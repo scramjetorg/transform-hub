@@ -15,6 +15,11 @@ export interface ResolvedRunnerNodeEntry {
     needsTsNode: boolean;
 }
 
+interface RunnerNodePackageJson {
+    main?: string;
+    bin?: string | Record<string, string>;
+}
+
 function tryResolvePackageRoot(): string | undefined {
     try {
         // require.resolve respects the workspace symlink under
@@ -59,15 +64,32 @@ export function resolveRunnerNodeEntry(callerDir: string): ResolvedRunnerNodeEnt
     }
 
     const srcEntry = resolve(pkgRoot, "src/bin/runner-node.ts");
+    let pkg: RunnerNodePackageJson | undefined;
 
     try {
-        const pkg = JSON.parse(readFileSync(resolve(pkgRoot, "package.json"), "utf8"));
+        pkg = JSON.parse(readFileSync(resolve(pkgRoot, "package.json"), "utf8"));
 
-        if (typeof pkg.main === "string" && pkg.main.includes("src/") && existsSync(srcEntry)) {
+        if (typeof pkg?.main === "string" && pkg.main.includes("src/") && existsSync(srcEntry)) {
             return { entry: srcEntry, needsTsNode: true };
         }
     } catch {
-        // Fall through to the dist/source probing below.
+        // Fall through to the bin/dist/source probing below.
+    }
+
+    const packageBin = typeof pkg?.bin === "string" ? pkg.bin : pkg?.bin?.["runner-node"];
+
+    if (packageBin) {
+        const packageBinEntry = resolve(pkgRoot, packageBin);
+
+        if (existsSync(packageBinEntry)) {
+            return { entry: packageBinEntry, needsTsNode: false };
+        }
+    }
+
+    const packagedEntry = resolve(pkgRoot, "bin/runner-node.js");
+
+    if (existsSync(packagedEntry)) {
+        return { entry: packagedEntry, needsTsNode: false };
     }
 
     const distEntry = resolve(pkgRoot, "dist/bin/runner-node.js");
@@ -81,6 +103,6 @@ export function resolveRunnerNodeEntry(callerDir: string): ResolvedRunnerNodeEnt
     }
 
     throw new Error(
-        `runner: cannot resolve runner-node entry under ${pkgRoot} (looked for dist/bin/runner-node.js and src/bin/runner-node.ts)`
+        `runner: cannot resolve runner-node entry under ${pkgRoot} (looked for bin.runner-node, bin/runner-node.js, dist/bin/runner-node.js, and src/bin/runner-node.ts)`
     );
 }

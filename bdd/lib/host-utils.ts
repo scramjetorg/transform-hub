@@ -148,7 +148,7 @@ export class HostUtils {
 
                 decodedData += last;
 
-                if (last.match(/running/i)) {
+                if (decodedData.includes("Host running!")) {
                     hub.stdout?.off("data", listener);
                     resolve(decodedData);
                 }
