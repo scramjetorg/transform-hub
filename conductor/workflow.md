@@ -46,7 +46,7 @@ real product or code failure.
 When a test, build, lint, or validation command exits non-zero, do not halt
 solely because the command failed. Instead:
 
-1. Inspect the failure output.
+1. Inspect the failure output, identify the root cause.
 2. Determine whether the command was invoked correctly.
 3. If the command was invoked incorrectly:
    - Correct the invocation and rerun it.
@@ -63,6 +63,28 @@ solely because the command failed. Instead:
    - repeated fixes do not converge;
    - continuing would require destructive cleanup;
    - unrelated user or worktree changes directly conflict with the fix.
+
+## Validation and Tool Failure Continuation Protocol
+
+When a validation, test, or tool command fails, do not halt automatically. First classify the failure before deciding whether to continue:
+
+1. Identify the failing command or tool invocation.
+2. Identify the specific error, symptom, or failing assertion.
+3. Identify the likely root cause before taking corrective action.
+4. Classify the failure as one of:
+   - session-introduced,
+   - preexisting but in scope,
+   - preexisting and out of scope,
+   - environment/tooling/transient,
+   - or known in the current session.
+
+Continue without additional user confirmation when fixing session-introduced failures, fixing preexisting in-scope failures, or carrying forward failures already marked known in the current session. Briefly note when a failure appears preexisting but in scope, or when a known failure is not treated as a blocker.
+
+Pause for user guidance only when the failure appears preexisting and unrelated to the active track/session scope, the root cause cannot be classified after reasonable investigation, or the fix would require scope expansion, architecture changes, or edits to user-controlled files.
+
+Distinguish command failures from tool misuse. Command and test failures with meaningful output follow the classification rules above. Malformed tool invocations, missing permissions, or unavailable tooling should be corrected if the fix is obvious; otherwise pause for guidance. Read-only diagnostic retries are allowed when the original tool choice or arguments were wrong.
+
+When continuing past a non-blocking failure, record it in the track notes, validation summary, or handoff with the failed command, root cause, classification, and whether it was fixed, ignored as known, or deferred.
 
 ### Tool Invocation Failures
 
