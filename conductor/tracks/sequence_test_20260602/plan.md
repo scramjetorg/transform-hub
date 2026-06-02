@@ -166,10 +166,10 @@
     - [x] Include an AVA example for calling a sequence-exposed API endpoint.
     - [x] Include an AVA example for mocked Hub calls with explicit route registration and request assertions.
     - [x] Explain cleanup expectations, timeouts, fixture usage, and skipped runtime behavior for Python/Bun tooling.
-- [ ] Task: Validate Phase 7 documentation
-    - [ ] Confirm examples match the public API implemented by earlier phases.
-    - [ ] Confirm examples avoid starting a real STH, Docker adapter, or Kubernetes adapter.
-    - [ ] Confirm examples use existing or documented fixture helpers.
+- [x] Task: Validate Phase 7 documentation
+    - [x] Confirm examples match the public API implemented by earlier phases.
+    - [x] Confirm examples avoid starting a real STH, Docker adapter, or Kubernetes adapter.
+    - [x] Confirm examples use existing or documented fixture helpers.
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: AVA Usage Documentation' (Protocol in workflow.md)
 
 ## Phase 8: Fixtures, Documentation, and Final Validation
