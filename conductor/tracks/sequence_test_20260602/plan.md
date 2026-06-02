@@ -152,7 +152,7 @@
     - [x] Run focused package tests for Python and Bun paths where local tooling is available.
     - [x] Run relevant runtime parity tests if runtime wrapper assumptions changed.
     - [x] Record skipped validation when Python or Bun tooling is unavailable.
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: Python and Bun Node-Authored Sequence Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 6: Python and Bun Node-Authored Sequence Tests' (Protocol in workflow.md)
 
 ## Phase 7: AVA Usage Documentation
 
