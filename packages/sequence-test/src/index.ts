@@ -53,7 +53,10 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
     const waitForCompletion = () => {
         // Placeholder completion handler for phase 1 shell.
         // Kept as an immediate resolution path and reads `started` to signal lifecycle support.
-        void started;
+        if (!started) {
+            return Promise.resolve();
+        }
+
         return Promise.resolve();
     };
 
@@ -92,6 +95,7 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);
+
     await harness.start();
     await harness.waitForCompletion();
 

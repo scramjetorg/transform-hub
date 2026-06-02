@@ -27,10 +27,10 @@
     - [x] Implement public option/result types for `createSequenceTest()` and `runSequence()`.
     - [x] Implement lifecycle shell with start/close/wait placeholders wired for later phases.
     - [x] Implement timeout and cleanup primitives.
-- [ ] Task: Validate Phase 1
-    - [ ] Run the narrowest relevant package build/test command for `packages/sequence-test`.
-    - [ ] Run lint or targeted TypeScript validation if available for the package.
-    - [ ] Record skipped validation and reasons.
+- [x] Task: Validate Phase 1
+    - [x] Run the narrowest relevant package build/test command for `packages/sequence-test`.
+    - [x] Run lint or targeted TypeScript validation if available for the package.
+    - [x] Record skipped validation and reasons.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Package Foundation and Existing Protocol Inventory' (Protocol in workflow.md)
 
 ## Phase 2: Fake Host, Boot Config, and Runtime Launching
