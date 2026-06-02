@@ -1,8 +1,8 @@
 {
   "track_id": "sth_config_schemas_agentic_docs_20260602",
   "type": "feature",
-  "status": "new",
+  "status": "completed",
   "created_at": "2026-06-02T15:37:30Z",
-  "updated_at": "2026-06-02T15:37:30Z",
+  "updated_at": "2026-06-02T16:24:06Z",
   "description": "Create documentation and JSON schemas for STH config and startup-config files under schemas/, and create base agentic docs from docs/roadmap/001-docs-agentic-usage.md on how to write a sequence and start STH with it in production mode using local built sources, npm, or GitHub Packages."
 }

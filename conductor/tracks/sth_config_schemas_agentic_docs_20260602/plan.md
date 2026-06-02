@@ -73,7 +73,7 @@
 - [x] Task: Final review and cleanup
     - [x] Inspect git diff to confirm only intended docs/schema files changed.
     - [x] Confirm acceptance criteria from `spec.md` are satisfied.
-- [ ] Task: Commit completed implementation
-    - [ ] Stage only intended files after validation and in-scope Oracle feedback are complete.
-    - [ ] Commit with a concise task-scoped message before the final phase manual verification checkpoint.
-- [ ] Task: Conductor - User Manual Verification 'Validation, Oracle Review, and Commit' (Protocol in workflow.md)
+- [x] Task: Commit completed implementation
+    - [x] Stage only intended files after validation and in-scope Oracle feedback are complete.
+    - [x] Commit with a concise task-scoped message before the final phase manual verification checkpoint.
+- [x] Task: Conductor - User Manual Verification 'Validation, Oracle Review, and Commit' (Protocol in workflow.md)
