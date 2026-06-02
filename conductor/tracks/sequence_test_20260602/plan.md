@@ -13,12 +13,12 @@
     - [x] Python parity fixtures from `packages/runner-python/tests/parity/fixtures`.
     - [x] Bun fixtures from `packages/runner-bun/test/fixtures`.
     - [x] Identify only missing fixture cases for API exposure and Hub-request mocking.
-- [ ] Task: Create `@scramjet/sequence-test` workspace package skeleton
-    - [ ] Add `packages/sequence-test/package.json` with build/test scripts aligned to workspace conventions.
-    - [ ] Add `tsconfig.json`, `tsconfig.build.json` or package-level references as needed.
-    - [ ] Add `src/index.ts` public exports.
-    - [ ] Add package codemap or README placeholder if consistent with package conventions.
-    - [ ] Wire the package into workspace build/test flows if required by existing scripts.
+- [x] Task: Create `@scramjet/sequence-test` workspace package skeleton
+    - [x] Add `packages/sequence-test/package.json` with build/test scripts aligned to workspace conventions.
+    - [x] Add `tsconfig.json`, `tsconfig.build.json` or package-level references as needed.
+    - [x] Add `src/index.ts` public exports.
+    - [x] Add package codemap or README placeholder if consistent with package conventions.
+    - [x] Wire the package into workspace build/test flows if required by existing scripts.
 - [ ] Task: Write initial package tests before implementation
     - [ ] Add AVA-style TypeScript tests for public API shape.
     - [ ] Add tests for deterministic cleanup behavior using placeholder/minimal fixtures.
