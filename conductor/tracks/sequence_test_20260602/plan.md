@@ -159,13 +159,13 @@
 - [x] Task: Consult Oracle for documentation wording
     - [x] Ask `@oracle` to review the intended README/example wording for clarity, accuracy, and developer usefulness.
     - [x] Incorporate Oracle guidance into the final documentation wording before publishing examples.
-- [ ] Task: Document how to use `@scramjet/sequence-test` with AVA
-    - [ ] Add a package README section or dedicated docs page showing AVA setup for `@scramjet/sequence-test`.
-    - [ ] Include a minimal one-shot AVA example using `runSequence()`.
-    - [ ] Include an interactive AVA example using `createSequenceTest()` with input, output, and lifecycle assertions.
-    - [ ] Include an AVA example for calling a sequence-exposed API endpoint.
-    - [ ] Include an AVA example for mocked Hub calls with explicit route registration and request assertions.
-    - [ ] Explain cleanup expectations, timeouts, fixture usage, and skipped runtime behavior for Python/Bun tooling.
+- [x] Task: Document how to use `@scramjet/sequence-test` with AVA
+    - [x] Add a package README section or dedicated docs page showing AVA setup for `@scramjet/sequence-test`.
+    - [x] Include a minimal one-shot AVA example using `runSequence()`.
+    - [x] Include an interactive AVA example using `createSequenceTest()` with input, output, and lifecycle assertions.
+    - [x] Include an AVA example for calling a sequence-exposed API endpoint.
+    - [x] Include an AVA example for mocked Hub calls with explicit route registration and request assertions.
+    - [x] Explain cleanup expectations, timeouts, fixture usage, and skipped runtime behavior for Python/Bun tooling.
 - [ ] Task: Validate Phase 7 documentation
     - [ ] Confirm examples match the public API implemented by earlier phases.
     - [ ] Confirm examples avoid starting a real STH, Docker adapter, or Kubernetes adapter.
