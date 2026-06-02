@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Improve logging in STH around runtime errors in sequences, driven by new HUB-* BDD coverage for missing imports, runtime stderr tails, wrong parameters, and exhaustive error logging.**
+- [x] **Track: Improve logging in STH around runtime errors in sequences, driven by new HUB-* BDD coverage for missing imports, runtime stderr tails, wrong parameters, and exhaustive error logging.**
 *Link: [./tracks/sth_logging_errors_20260602/](./tracks/sth_logging_errors_20260602/)*
