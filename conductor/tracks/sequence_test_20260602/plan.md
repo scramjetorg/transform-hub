@@ -142,12 +142,12 @@
     - [x] Add a minimal Bun sequence fixture.
     - [x] Test supported no-host or delegated hosted behavior explicitly.
     - [x] Test clear strict-runtime or delegation messaging.
-- [ ] Task: Add Python/Bun runner-env support
-    - [ ] Map `runtime` option to `SequenceInfo.config.engines`.
-    - [ ] Reuse existing `@scramjet/runner` executor selection.
-    - [ ] Reuse fake host, input/output, monitoring, and cleanup helpers.
-    - [ ] Document local tooling prerequisites and skipped-test behavior.
-    - [ ] Surface Bun delegation behavior clearly and add `strictRuntime` or equivalent option if needed.
+- [x] Task: Add Python/Bun runner-env support
+    - [x] Map `runtime` option to `SequenceInfo.config.engines`.
+    - [x] Reuse existing `@scramjet/runner` executor selection.
+    - [x] Reuse fake host, input/output, monitoring, and cleanup helpers.
+    - [x] Document local tooling prerequisites and skipped-test behavior.
+    - [x] Surface Bun delegation behavior clearly and add `strictRuntime` or equivalent option if needed.
 - [ ] Task: Validate Phase 6
     - [ ] Run focused package tests for Python and Bun paths where local tooling is available.
     - [ ] Run relevant runtime parity tests if runtime wrapper assumptions changed.
