@@ -44,10 +44,10 @@
     - [x] Move or reimplement `packages/runner/test/transport/fake-instances-server.ts` behavior in `packages/sequence-test/src`.
     - [x] Support `IN`, `OUT`, `LOG`, and `REQUESTS` channels where runtime support exists.
     - [x] Expose deterministic `awaitChannel()`, raw capture, parsed monitoring frames, harness errors, and `close()`.
-- [ ] Task: Write tests for runner-compatible env and process launching
-    - [ ] Test creation of adapter-compatible env for the existing runner.
-    - [ ] Test runtime command resolution in source and built-tree modes where feasible.
-    - [ ] Test child process cleanup on normal completion, timeout, and errors.
+- [x] Task: Write tests for runner-compatible env and process launching
+    - [x] Test creation of adapter-compatible env for the existing runner.
+    - [x] Test runtime command resolution in source and built-tree modes where feasible.
+    - [x] Test child process cleanup on normal completion, timeout, and errors.
 - [ ] Task: Implement runner-compatible launch foundation
     - [ ] Build adapter-compatible env for `@scramjet/runner`: `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO`, `INSTANCES_SERVER_HOST`, `INSTANCES_SERVER_PORT`, and `INSTANCE_ID`.
     - [ ] Resolve and spawn the existing runner entrypoint in source-tree and built-tree modes.
