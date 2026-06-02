@@ -1,0 +1,8 @@
+{
+  "track_id": "sth_logging_errors_20260602",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-02T11:33:29Z",
+  "updated_at": "2026-06-02T11:33:29Z",
+  "description": "Improve logging in STH around runtime errors in sequences, driven by new HUB-* BDD coverage for missing imports, runtime stderr tails, wrong parameters, and exhaustive error logging."
+}
