@@ -101,3 +101,5 @@ export async function runSequence(options: SequenceTestOptions): Promise<Sequenc
 
     return harness;
 }
+
+export { createFakeInstancesServer, FakeInstancesServer } from "./fake-instances-server";
