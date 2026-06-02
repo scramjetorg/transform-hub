@@ -54,10 +54,10 @@
     - [x] Let `@scramjet/runner` write boot config, select executor, and spawn runtime wrappers.
     - [x] Capture runner stdout/stderr, exit code, signal, lifecycle frames, and cleanup errors.
     - [x] Ensure child processes and temp files are cleaned up.
-- [ ] Task: Validate Phase 2
-    - [ ] Run focused `@scramjet/sequence-test` package tests.
-    - [ ] Run relevant runner-node tests if fake host behavior was extracted or shared.
-    - [ ] Run package build for affected packages.
+- [x] Task: Validate Phase 2
+    - [x] Run focused `@scramjet/sequence-test` package tests.
+    - [x] Run relevant runner-node tests if fake host behavior was extracted or shared.
+    - [x] Run package build for affected packages.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Fake Host, Boot Config, and Runtime Launching' (Protocol in workflow.md)
 
 ## Phase 3: Input, Output, Logs, Monitoring, and Control
