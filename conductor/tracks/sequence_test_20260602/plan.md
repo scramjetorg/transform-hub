@@ -23,10 +23,10 @@
     - [x] Add AVA-style TypeScript tests for public API shape.
     - [x] Add tests for deterministic cleanup behavior using placeholder/minimal fixtures.
     - [x] Add tests that verify unsupported runtime limitations are reported clearly.
-- [ ] Task: Implement minimal package foundation
-    - [ ] Implement public option/result types for `createSequenceTest()` and `runSequence()`.
-    - [ ] Implement lifecycle shell with start/close/wait placeholders wired for later phases.
-    - [ ] Implement timeout and cleanup primitives.
+- [x] Task: Implement minimal package foundation
+    - [x] Implement public option/result types for `createSequenceTest()` and `runSequence()`.
+    - [x] Implement lifecycle shell with start/close/wait placeholders wired for later phases.
+    - [x] Implement timeout and cleanup primitives.
 - [ ] Task: Validate Phase 1
     - [ ] Run the narrowest relevant package build/test command for `packages/sequence-test`.
     - [ ] Run lint or targeted TypeScript validation if available for the package.
