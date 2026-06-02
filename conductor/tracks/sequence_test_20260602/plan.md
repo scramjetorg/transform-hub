@@ -130,7 +130,7 @@
     - [x] Run focused package tests for Hub mock behavior.
     - [x] Run build for affected packages.
     - [x] Run runtime invariant checks if protocol/channel behavior changed.
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Mock Hub Requests over REQUESTS/BPMux' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Mock Hub Requests over REQUESTS/BPMux' (Protocol in workflow.md)
 
 ## Phase 6: Python and Bun Node-Authored Sequence Tests
 
