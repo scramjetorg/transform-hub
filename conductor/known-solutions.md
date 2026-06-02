@@ -17,3 +17,9 @@ Problem: A read or validation step expects root `tsconfig.json` or `tsconfig.bui
 Solution: Treat the missing root files as an invocation/discovery issue; read `tsconfig.base.json` and the relevant package-level `tsconfig.json`/`tsconfig.build.json`, then continue using package conventions.
 Constraints: Only apply when package-level configs exist and the task is package setup or package validation; do not create root config files unless explicitly required by the track.
 Ignore-If: The task explicitly requires root TypeScript config files; package-level configs are also missing; the missing file is not a TypeScript config discovery issue.
+
+### AVA binary mismatch in newly added workspace package
+Problem: A new workspace package test script using `ava` exits with “Test files must be run with the AVA CLI” because the root `.bin/ava` symlink points at another workspace AVA copy while imports resolve the root AVA package.
+Solution: In the new package only, invoke the root AVA CLI file directly with `node ../../node_modules/ava/cli.js` so the CLI and imported `ava` package match.
+Constraints: Only apply to newly added packages that lack a local `.bin/ava` and reproduce this exact CLI/import mismatch; keep existing package scripts unchanged.
+Ignore-If: The package has a working local AVA binary; the failure is an assertion failure or intentional red TDD case; a broader dependency install strategy is being changed intentionally.

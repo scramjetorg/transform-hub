@@ -19,10 +19,10 @@
     - [x] Add `src/index.ts` public exports.
     - [x] Add package codemap or README placeholder if consistent with package conventions.
     - [x] Wire the package into workspace build/test flows if required by existing scripts.
-- [ ] Task: Write initial package tests before implementation
-    - [ ] Add AVA-style TypeScript tests for public API shape.
-    - [ ] Add tests for deterministic cleanup behavior using placeholder/minimal fixtures.
-    - [ ] Add tests that verify unsupported runtime limitations are reported clearly.
+- [x] Task: Write initial package tests before implementation
+    - [x] Add AVA-style TypeScript tests for public API shape.
+    - [x] Add tests for deterministic cleanup behavior using placeholder/minimal fixtures.
+    - [x] Add tests that verify unsupported runtime limitations are reported clearly.
 - [ ] Task: Implement minimal package foundation
     - [ ] Implement public option/result types for `createSequenceTest()` and `runSequence()`.
     - [ ] Implement lifecycle shell with start/close/wait placeholders wired for later phases.

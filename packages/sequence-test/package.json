@@ -7,7 +7,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "ava"
+    "test": "node ../../node_modules/ava/cli.js"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
