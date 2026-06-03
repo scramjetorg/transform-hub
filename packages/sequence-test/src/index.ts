@@ -131,6 +131,7 @@ export {
 } from "./request-client";
 
 export { createHubMock } from "./hub-mock";
+export { createHubHarness } from "./hub-harness";
 
 export {
     createBunSequenceFixture,
@@ -138,6 +139,8 @@ export {
     createPythonSequenceFixture,
     createSequenceFixture
 } from "./fixtures";
+
+export { resolveSequenceFixtureMetadata } from "./fixtures";
 
 export type {
     RunnerConnectInfoOptions,
@@ -163,16 +166,21 @@ export type {
 } from "./request-client";
 
 export type {
+    HubCallMatch,
+    HubHarness,
     HubMock,
     HubMockRequest,
     HubMockResponse,
-    HubRouteBuilder
-} from "./hub-mock";
+    HubRouteBuilder,
+    HubTimelineEntry
+} from "./hub-harness";
 
 export type {
     SequenceFixture,
     SequenceFixtureFiles,
-    SequenceFixtureOptions
+    SequenceFixtureOptions,
+    ResolvedSequenceFixtureMetadata,
+    SequenceFixtureMetadata
 } from "./fixtures";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {

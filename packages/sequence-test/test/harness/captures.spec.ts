@@ -45,15 +45,15 @@ type CapturesApi = {
 
 const capturesApi = (() => {
     try {
-        return require("../src/captures") as CapturesApi;
+        return require("../../src/captures") as CapturesApi;
     } catch {
-        return require("../src/index") as CapturesApi;
+        return require("../../src/index") as CapturesApi;
     }
 })();
 
 const getOrThrow = <T>(name: string, value: T | undefined): T => {
     if (!value) {
-        throw new Error(`Expected ${name} export from ../src/captures or ../src/index`);
+        throw new Error(`Expected ${name} export from ../../src/captures or ../../src/index`);
     }
 
     return value;

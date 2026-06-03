@@ -1,0 +1,8 @@
+{
+  "name": "sequence-fixture-exposed-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "engines": {
+    "node": ">=16"
+  }
+}

@@ -3,7 +3,7 @@ import path from "node:path";
 
 import test from "ava";
 
-const runnerLauncher = require("../src/runner-launcher") as {
+const runnerLauncher = require("../../src/runner-launcher") as {
     createRunnerEnv?: (options: unknown) => Record<string, string> | Promise<Record<string, string>>;
     resolveRunnerEntry?: () => string;
     createRunnerLaunchPlan?: (options: unknown) => {
@@ -25,7 +25,7 @@ const runnerLauncher = require("../src/runner-launcher") as {
 
 const getFunction = <T>(name: string, fn: T | undefined): T => {
     if (!fn) {
-        throw new Error(`Expected ${name} export from ../src/runner-launcher`);
+        throw new Error(`Expected ${name} export from ../../src/runner-launcher`);
     }
 
     return fn;

@@ -35,7 +35,7 @@ type HubMock = {
 };
 
 const loadHubMockModule = (): { createHubMock?: () => HubMock } => {
-    const candidates = ["../src/hub-mock", "../src/index"];
+    const candidates = ["../../src/hub-mock", "../../src/index"];
 
     for (const candidate of candidates) {
         try {
@@ -46,7 +46,7 @@ const loadHubMockModule = (): { createHubMock?: () => HubMock } => {
         }
     }
 
-    throw new Error("Unable to load createHubMock from ../src/hub-mock or ../src/index");
+    throw new Error("Unable to load createHubMock from ../../src/hub-mock or ../../src/index");
 };
 
 const createHubMock = (): HubMock => {

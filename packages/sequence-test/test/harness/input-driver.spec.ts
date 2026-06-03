@@ -13,13 +13,13 @@ type CreateInputDriver = (socketLike: Writable) => InputDriver;
 
 const createInputDriverModule = (() => {
     try {
-        return require("../src/input-driver") as { createInputDriver?: CreateInputDriver };
+        return require("../../src/input-driver") as { createInputDriver?: CreateInputDriver };
     } catch {
         return {} as { createInputDriver?: CreateInputDriver };
     }
 })();
 
-const publicExports = require("../src/index") as {
+const publicExports = require("../../src/index") as {
     createInputDriver?: CreateInputDriver;
 };
 
@@ -28,7 +28,7 @@ const createInputDriver: CreateInputDriver | undefined =
 
 const resolveCreateInputDriver = (): CreateInputDriver => {
     if (!createInputDriver) {
-        throw new Error("Expected createInputDriver export from ../src/input-driver or ../src/index");
+        throw new Error("Expected createInputDriver export from ../../src/input-driver or ../../src/index");
     }
 
     return createInputDriver;

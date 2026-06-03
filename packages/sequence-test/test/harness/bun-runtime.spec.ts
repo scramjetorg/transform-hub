@@ -2,10 +2,10 @@ import path from "node:path";
 
 import test from "ava";
 
-import { createRunnerEnv, createRunnerLaunchPlan } from "../src/index";
+import { createRunnerEnv, createRunnerLaunchPlan } from "../../src/index";
 
 test("Bun sequence fixtures can be described from Node-authored tests", t => {
-    const sequencePath = path.resolve(__dirname, "fixtures/bun-direct/index.js");
+    const sequencePath = path.resolve(__dirname, "../fixtures/bun-direct/index.js");
     const env = createRunnerEnv({
         runtime: "bun",
         sequencePath,
@@ -20,7 +20,7 @@ test("Bun sequence fixtures can be described from Node-authored tests", t => {
 });
 
 test("Bun runtime launch planning preserves hosted delegation visibility", t => {
-    const sequencePath = path.resolve(__dirname, "fixtures/bun-direct/index.js");
+    const sequencePath = path.resolve(__dirname, "../fixtures/bun-direct/index.js");
     const plan = createRunnerLaunchPlan({
         runtime: "bun",
         sequencePath,

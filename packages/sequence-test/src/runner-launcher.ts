@@ -15,6 +15,24 @@ function validateRunnerRuntime(runtime: string): RunnerRuntime {
     return runtime as RunnerRuntime;
 }
 
+function validateEngines(engines?: Record<string, string>): Record<string, string> {
+    if (engines === undefined) {
+        return {};
+    }
+
+    const normalized: Record<string, string> = {};
+
+    for (const [name, value] of Object.entries(engines)) {
+        if (typeof value !== "string") {
+            throw new Error(`Runner metadata engines.${name} must be a string`);
+        }
+
+        normalized[name] = value;
+    }
+
+    return normalized;
+}
+
 export interface RunnerInstancesServerOptions {
     host: string;
     port: number;
@@ -32,6 +50,7 @@ export interface RunnerConnectInfoOptions {
 export interface RunnerEnvOptions {
     runtime: RunnerRuntime | string;
     sequencePath: string;
+    engines?: Record<string, string>;
     sequenceId?: string;
     instanceId?: string;
     instancesServer: RunnerInstancesServerOptions;
@@ -62,6 +81,14 @@ function runtimeEngines(runtime: RunnerRuntime): Record<string, string> {
     return { node: ">=16" };
 }
 
+function resolveFixtureEngines(runtime: RunnerRuntime | string, engines?: Record<string, string>): Record<string, string> {
+    if (engines !== undefined) {
+        return validateEngines(engines);
+    }
+
+    return runtimeEngines(validateRunnerRuntime(runtime));
+}
+
 function defaultId(prefix: string): string {
     return `00000000-0000-0000-0000-${prefix.padEnd(12, "0").slice(0, 12)}`;
 }
@@ -71,13 +98,14 @@ export function createRunnerEnv(options: RunnerEnvOptions): NodeJS.ProcessEnv {
     const sequenceId = options.sequenceId ?? defaultId("sequence");
     const instanceId = options.instanceId ?? defaultId("instance");
     const runnerConnectInfo = options.runnerConnectInfo ?? {};
+    const engines = resolveFixtureEngines(runtime, options.engines);
 
     return {
         SEQUENCE_PATH: options.sequencePath,
         SEQUENCE_INFO: JSON.stringify({
             id: sequenceId,
             config: {
-                engines: runtimeEngines(runtime)
+                engines
             }
         }),
         RUNNER_CONNECT_INFO: JSON.stringify(runnerConnectInfo),
