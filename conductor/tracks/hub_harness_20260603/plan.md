@@ -45,27 +45,31 @@
 
 ## Phase 2: Targeted Hub Harness Core and Compatibility Replacement
 
-- [ ] Task: Write tests for Hub harness core behavior
-    - [ ] Test `createHubHarness()` exposes `context`, `hub`, minimal `space`, routes/defaults, calls timeline, and assertions.
-    - [ ] Test host metadata methods return sensible default success payloads and record normalized paths.
-    - [ ] Test sequence and instance API methods record separate paths and bodies.
-    - [ ] Test topic creation succeeds and records a topic even if no later sequence depends on it.
-    - [ ] Test call count, payload, and path assertion helpers.
-    - [ ] Test ordered call assertions against the ordered timeline.
-- [ ] Task: Implement Hub harness core
-    - [ ] Add `createHubHarness()` and public types.
-    - [ ] Implement normalized call timeline with monotonic sequence numbers.
-    - [ ] Implement sensible default responses for common HostClient-style endpoints.
-    - [ ] Implement route/response override support where tests need explicit behavior.
-    - [ ] Implement assertion helpers for called, call count, payload/body matching, and order.
-- [ ] Task: Replace simple Hub mock API
-    - [ ] Remove or replace the old simple `createHubMock()` implementation.
-    - [ ] Update exports, docs, and tests to use the targeted Hub harness API.
-    - [ ] Ensure legacy simple route-table tests are either removed or rewritten as Hub harness tests.
-- [ ] Task: Validate Phase 2
-    - [ ] Run focused Hub harness tests.
-    - [ ] Run all `@scramjet/sequence-test` tests.
-    - [ ] Run package build for `@scramjet/sequence-test`.
+- [x] Task: Write tests for Hub harness core behavior
+    - [x] Test `createHubHarness()` exposes `context`, `hub`, minimal `space`, routes/defaults, calls timeline, and assertions.
+    - [x] Test host metadata methods return sensible default success payloads and record normalized paths.
+    - [x] Test sequence and instance API methods record separate paths and bodies.
+    - [x] Test topic creation succeeds and records a topic even if no later sequence depends on it.
+    - [x] Test call count, payload, and path assertion helpers.
+    - [x] Test ordered call assertions against the ordered timeline.
+    - Notes: Added targeted Phase 2 coverage in `packages/sequence-test/test/harness/hub-harness.spec.ts`.
+- [x] Task: Implement Hub harness core
+    - [x] Add `createHubHarness()` and public types.
+    - [x] Implement normalized call timeline with monotonic sequence numbers.
+    - [x] Implement sensible default responses for common HostClient-style endpoints.
+    - [x] Implement route/response override support where tests need explicit behavior.
+    - [x] Implement assertion helpers for called, call count, payload/body matching, and order.
+    - Notes: Added deterministic in-memory `createHubHarness()` in `packages/sequence-test/src/hub-harness.ts`.
+- [x] Task: Replace simple Hub mock API
+    - [x] Remove or replace the old simple `createHubMock()` implementation.
+    - [x] Update exports, docs, and tests to use the targeted Hub harness API.
+    - [x] Ensure legacy simple route-table tests are either removed or rewritten as Hub harness tests.
+    - Notes: `createHubMock()` now wraps the targeted harness hub while preserving low-level route-table compatibility.
+- [x] Task: Validate Phase 2
+    - [x] Run focused Hub harness tests.
+    - [x] Run all `@scramjet/sequence-test` tests.
+    - [x] Run package build for `@scramjet/sequence-test`.
+    - Notes: Passed `npm test --workspace @scramjet/sequence-test -- --match '*hub*'`, `npm test --workspace @scramjet/sequence-test`, `npx eslint "packages/sequence-test/src" --ext .ts`, and `npm run build --workspace @scramjet/sequence-test`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Targeted Hub Harness Core and Compatibility Replacement' (Protocol in workflow.md)
 
 ## Phase 3: RPC, Topics, and Core Streaming Support
