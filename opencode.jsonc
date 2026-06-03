@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-openagent-slim@latest", "opencode-conductor-plugin@latest"],
+  "plugin": ["oh-my-opencode-slim@latest", "opencode-conductor-plugin@latest"],
   "permission": {
     "bash": "allow",
     "edit": "allow",

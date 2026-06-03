@@ -32,6 +32,11 @@
 - BDD tests use `bdd/` (`cucumber-js`) and often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
+## Sequence-test package status
+- `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
+- Keep using each package's existing AVA tests plus package build/lint validation unless the task explicitly asks for `@scramjet/sequence-test`.
+- Do not replace package tests, BDD tests, adapter tests, or runtime invariant checks with `@scramjet/sequence-test` unless explicitly directed.
+
 ## Toolchain constraints
 - TypeScript base is strict CommonJS targeting ES2019, with `allowJs`, decorators, declarations, and `noUnusedLocals` enabled.
 - ESLint parses with `./tsconfig.base.json`; `dist/` and `node_modules/` are ignored.
