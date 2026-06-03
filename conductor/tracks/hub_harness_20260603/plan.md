@@ -2,6 +2,11 @@
 
 ## Phase 1: API Inventory, Metadata Semantics, and Test Reorganization
 
+- [ ] Task: Create review PR for the track
+    - [ ] Confirm the current implementation branch and remote tracking branch.
+    - [ ] Push the current branch if the PR branch is not already available on GitHub.
+    - [ ] Create or update a GitHub PR for this track at the beginning of work for easier review.
+    - [ ] Record the PR URL in the track handoff or plan notes.
 - [ ] Task: Confirm affected package and API-client surfaces
     - [ ] Read `packages/sequence-test/codemap.md` and relevant `packages/sequence-test/src` files.
     - [ ] Read `packages/runner-node/src/context.ts` and `packages/runner-node/src/runner-app-context.ts` for real sequence context behavior.
