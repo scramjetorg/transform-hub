@@ -139,6 +139,8 @@ export {
     createSequenceFixture
 } from "./fixtures";
 
+export { resolveSequenceFixtureMetadata } from "./fixtures";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
@@ -172,7 +174,9 @@ export type {
 export type {
     SequenceFixture,
     SequenceFixtureFiles,
-    SequenceFixtureOptions
+    SequenceFixtureOptions,
+    ResolvedSequenceFixtureMetadata,
+    SequenceFixtureMetadata
 } from "./fixtures";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {

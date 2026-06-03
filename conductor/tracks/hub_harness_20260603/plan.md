@@ -14,18 +14,20 @@
     - [x] Inventory `packages/api-client` HostClient, ManagerClient, InstanceClient, and RPC/stream methods needed by the harness.
     - [x] Confirm no default-path dependency on `@scramjet/sth`, `@scramjet/host`, Docker adapter, Kubernetes adapter, or BDD workflows.
     - Notes: Inventory confirmed `packages/sequence-test` is package-local and currently depends on runner protocol surfaces only; relevant sequence context surfaces are `hub`, `space`, lifecycle, events, local storage, logging/monitoring, and exposed API registration. API-client coverage should target host metadata, sequence/instance/topic operations, manager named data/store/listing, and instance RPC/stream/event/control helpers.
-- [ ] Task: Write tests for package metadata semantics
-    - [ ] Test `package.json.main` is required and resolves to an existing file.
-    - [ ] Test `main` path safety rejects paths outside the fixture directory.
-    - [ ] Test missing engines defaults to Node-compatible behavior.
-    - [ ] Test Node-first precedence for multi-engine package metadata.
-    - [ ] Test invalid engines metadata fails clearly.
-    - [ ] Test fixture-generated `SEQUENCE_INFO.config.engines` matches resolved runtime.
-- [ ] Task: Implement package metadata resolver
-    - [ ] Add a resolver/helper for fixture package metadata.
-    - [ ] Validate `main` existence and path safety.
-    - [ ] Resolve engines with Node-first precedence.
-    - [ ] Integrate resolved metadata with fixture helpers and runner planning where appropriate.
+- [x] Task: Write tests for package metadata semantics
+    - [x] Test `package.json.main` is required and resolves to an existing file.
+    - [x] Test `main` path safety rejects paths outside the fixture directory.
+    - [x] Test missing engines defaults to Node-compatible behavior.
+    - [x] Test Node-first precedence for multi-engine package metadata.
+    - [x] Test invalid engines metadata fails clearly.
+    - [x] Test fixture-generated `SEQUENCE_INFO.config.engines` matches resolved runtime.
+    - Notes: Added focused metadata semantics coverage in `packages/sequence-test/test/harness/metadata.semantics.spec.ts`.
+- [x] Task: Implement package metadata resolver
+    - [x] Add a resolver/helper for fixture package metadata.
+    - [x] Validate `main` existence and path safety.
+    - [x] Resolve engines with Node-first precedence.
+    - [x] Integrate resolved metadata with fixture helpers and runner planning where appropriate.
+    - Notes: Added `resolveSequenceFixtureMetadata()` and `engines` support in runner launch planning; package metadata remains package-local to `@scramjet/sequence-test`.
 - [ ] Task: Reorganize tests into harness and fixture behavior directories
     - [ ] Create `packages/sequence-test/test/harness/` for harness/helper tests.
     - [ ] Create or normalize `packages/sequence-test/test/fixtures/` for live sequence behavior tests and fixture sources.
