@@ -2,15 +2,31 @@ import path from "node:path";
 
 import test from "ava";
 
-import { runSequence } from "../../src";
-import { createHubHarness } from "../../src";
+import { runSequence, createHubHarness, resolveSequenceFixtureMetadata } from "../../src";
 
-const fixture = (name: string) => path.resolve(__dirname, name, "index.js");
+const fixtureMetadataPath = async (name: string): Promise<string> => {
+    const directory = path.resolve(__dirname, name);
+    const metadata = await resolveSequenceFixtureMetadata(directory);
+
+    return metadata.mainPath;
+};
+
+const collectStreamText = async (stream: AsyncIterable<unknown>): Promise<string> => {
+    const chunks: string[] = [];
+
+    for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk as Buffer | string).toString("utf8"));
+    }
+
+    return chunks.join("");
+};
 
 test("appcontext fixture uses sequence app context", async t => {
+    const sequencePath = await fixtureMetadataPath("appcontext");
+
     const result = await runSequence({
         runtime: "node",
-        sequencePath: fixture("appcontext"),
+        sequencePath,
         context: {
             config: { multiplier: 3 },
             instanceId: "instance-1"
@@ -24,12 +40,41 @@ test("appcontext fixture uses sequence app context", async t => {
     t.deepEqual(result.output.ndjson(), [{ id: 1, value: 6, instanceId: "instance-1" }]);
 });
 
-test("hub-calls fixture makes expected host calls", async t => {
+test("metadata resolves package-backed fixture runtime", async t => {
+    const sequencePath = await fixtureMetadataPath("ordered-behavior");
     const harness = createHubHarness();
 
     const result = await runSequence({
         runtime: "node",
-        sequencePath: fixture("hub-calls"),
+        sequencePath,
+        context: harness.context,
+        input: {
+            contentType: "application/x-ndjson",
+            body: [{ id: "meta-1" }]
+        }
+    });
+
+    t.deepEqual(result.output.ndjson(), [
+        {
+            id: "meta-1",
+            metadata: "dev",
+            topic: "fixture-topic-payload",
+            rpc: "ordered",
+            rpcChunk: "rpc-stream",
+            topicChunk: "fixture-topic-payload"
+        }
+    ]);
+
+    t.deepEqual(harness.lifecycle().map(entry => entry.action), ["keepAlive", "end"]);
+});
+
+test("hub-calls fixture makes expected host calls", async t => {
+    const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("hub-calls");
+
+    const result = await runSequence({
+        runtime: "node",
+        sequencePath,
         context: harness.context,
         input: {
             contentType: "application/x-ndjson",
@@ -58,10 +103,11 @@ test("hub-calls fixture makes expected host calls", async t => {
 
 test("lifecycle-calls fixture uses keepAlive and end", async t => {
     const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("lifecycle-calls");
 
     const result = await runSequence({
         runtime: "node",
-        sequencePath: fixture("lifecycle-calls"),
+        sequencePath,
         context: harness.context,
         input: {
             contentType: "application/x-ndjson",
@@ -78,10 +124,11 @@ test("lifecycle-calls fixture uses keepAlive and end", async t => {
 
 test("events fixture emits host and space events", async t => {
     const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("events");
 
     const result = await runSequence({
         runtime: "node",
-        sequencePath: fixture("events"),
+        sequencePath,
         context: harness.context,
         input: {
             contentType: "application/x-ndjson",
@@ -102,10 +149,11 @@ test("events fixture emits host and space events", async t => {
 
 test("exposed-api fixture registers an endpoint", async t => {
     const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("exposed-api");
 
     const result = await runSequence({
         runtime: "node",
-        sequencePath: fixture("exposed-api"),
+        sequencePath,
         context: harness.context,
         input: {
             contentType: "application/x-ndjson",
@@ -117,4 +165,107 @@ test("exposed-api fixture registers an endpoint", async t => {
     t.is(harness.apiRoutes().length, 1);
     t.is(harness.apiRoutes()[0].path, "/health");
     t.true(typeof harness.apiRoutes()[0].handler === "function");
+});
+
+test("ordered fixture asserts ordered timeline across hub and behavior", async t => {
+    const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("ordered-behavior");
+
+    const result = await runSequence({
+        runtime: "node",
+        sequencePath,
+        context: harness.context,
+        input: {
+            contentType: "application/x-ndjson",
+            body: [{ id: "ordered-1" }]
+        }
+    });
+
+    t.deepEqual(result.output.ndjson(), [{
+        id: "ordered-1",
+        metadata: "dev",
+        topic: "fixture-topic-payload",
+        rpc: "ordered",
+        rpcChunk: "rpc-stream",
+        topicChunk: "fixture-topic-payload"
+    }]);
+
+    harness.assert.order([
+        { method: "POST", path: "/api/v1/topics" },
+        { method: "POST", path: "/api/v1/topics/ordered-behavior-topic" },
+        { method: "GET", path: "/api/v1/topics/ordered-behavior-topic/stream" },
+        { method: "GET", path: "/api/v1/version" },
+        { method: "POST", path: "/api/v1/rpc/ordered" },
+        { method: "POST", path: "/api/v1/rpc/ordered-stream/stream" }
+    ]);
+
+    t.deepEqual(harness.lifecycle().map(entry => entry.action), ["keepAlive", "end"]);
+    t.deepEqual(harness.events().map(entry => `${entry.scope}:${entry.name}`), ["host:item.processed", "space:item.processed"]);
+    t.deepEqual(harness.storage().map(entry => entry.action), ["setItem", "getItem", "removeItem"]);
+    t.deepEqual(harness.logs().map(entry => entry.level), ["info"]);
+    t.deepEqual(harness.apiRoutes().map(entry => entry.path), ["/health"]);
+    t.deepEqual(harness.spaceCalls().map(entry => `${entry.method} ${entry.path}`), ["GET /v1/ping"]);
+
+});
+
+test("stream fixture captures streamed RPC and topic responses", async t => {
+    const sequencePath = await fixtureMetadataPath("stream-behavior");
+    const harness = createHubHarness({
+        streamDefaults: {
+            rpc: "ordered-rpc",
+            topic: "ordered-topic-stream"
+        }
+    });
+
+    const result = await runSequence({
+        runtime: "node",
+        sequencePath,
+        context: harness.context,
+        input: {
+            contentType: "application/x-ndjson",
+            body: [{ id: "stream-1" }]
+        }
+    });
+
+    t.deepEqual(result.output.ndjson(), [{
+        id: "stream-1",
+        topicChunk: "payload",
+        rpcChunk: "ordered-rpc"
+    }]);
+
+    t.deepEqual(harness.calls().map(entry => `${entry.method} ${entry.path}`), [
+        "POST /api/v1/topics",
+        "POST /api/v1/topics/stream-behavior-topic",
+        "GET /api/v1/topics/stream-behavior-topic/stream",
+        "POST /api/v1/rpc/stream-behavior-stream/stream"
+    ]);
+
+    const directRpcStream = await harness.hub.callHostRpcStream("stream-behavior-stream");
+    const directTopicStream = await harness.hub.getNamedData("stream-behavior-topic");
+
+    t.is(await collectStreamText(directRpcStream), "ordered-rpc");
+    t.is(await collectStreamText(directTopicStream), "payload");
+});
+
+test("space context supports minimal invocation", async t => {
+    const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("space-minimal");
+
+    const result = await runSequence({
+        runtime: "node",
+        sequencePath,
+        context: harness.context,
+        input: {
+            contentType: "application/x-ndjson",
+            body: [{ id: "space-1" }]
+        }
+    });
+
+    t.deepEqual(result.output.ndjson(), [{ id: "space-1", spaceCallsRecorded: true }]);
+    t.deepEqual(harness.spaceCalls().map(entry => `${entry.method} ${entry.path}`), [
+        "GET /space/ping",
+        "GET /space/echo",
+        "POST /space/echo",
+        "POST /space/send"
+    ]);
 });

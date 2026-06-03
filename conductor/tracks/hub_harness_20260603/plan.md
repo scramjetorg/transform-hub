@@ -124,20 +124,23 @@
 
 ## Phase 5: Live Fixture Sequences and Ordered Behavior Assertions
 
-- [ ] Task: Write live sequence fixture tests against the new harness
-    - [ ] Add or update package-json-backed fixture sequences for metadata/runtime resolution.
-    - [ ] Add fixture sequence that calls host metadata, topics, RPC, events, storage, logging, lifecycle, and exposed API registration in known order.
-    - [ ] Add fixture tests that execute sequence code through `runSequence()` and assert call timeline order.
-    - [ ] Add fixture tests for streamed RPC/topic behavior using live sequence code.
-    - [ ] Add fixture tests proving `this.space` can be called minimally without crashing.
-- [ ] Task: Implement or update fixture sequences
-    - [ ] Add package.json files to fixture sequences where relevant.
-    - [ ] Add sequence fixtures for Hub APIs, RPC, topics, storage/logging/events, and stream usage.
-    - [ ] Update docs examples to reference fixture behavior rather than harness internals.
-- [ ] Task: Validate Phase 5
-    - [ ] Run fixture behavior tests.
-    - [ ] Run all `@scramjet/sequence-test` tests.
-    - [ ] Run source lint and package build for changed package files.
+- [x] Task: Write live sequence fixture tests against the new harness
+    - [x] Add or update package-json-backed fixture sequences for metadata/runtime resolution.
+    - [x] Add fixture sequence that calls host metadata, topics, RPC, events, storage, logging, lifecycle, and exposed API registration in known order.
+    - [x] Add fixture tests that execute sequence code through `runSequence()` and assert call timeline order.
+    - [x] Add fixture tests for streamed RPC/topic behavior using live sequence code.
+    - [x] Add fixture tests proving `this.space` can be called minimally without crashing.
+    - Notes: Added package-backed ordered behavior, stream behavior, and minimal space fixture tests using `runSequence()` with `createHubHarness().context`.
+- [x] Task: Implement or update fixture sequences
+    - [x] Add package.json files to fixture sequences where relevant.
+    - [x] Add sequence fixtures for Hub APIs, RPC, topics, storage/logging/events, and stream usage.
+    - [x] Update docs examples to reference fixture behavior rather than harness internals.
+    - Notes: Added package metadata to relevant fixtures, added ordered/stream/space fixture sources, and updated package docs examples to reference fixture-backed harness behavior.
+- [x] Task: Validate Phase 5
+    - [x] Run fixture behavior tests.
+    - [x] Run all `@scramjet/sequence-test` tests.
+    - [x] Run source lint and package build for changed package files.
+    - Notes: Passed focused fixture/ordered/stream AVA matches, full `npm test --workspace @scramjet/sequence-test`, `npx eslint "packages/sequence-test/src" --ext .ts`, and `npm run build --workspace @scramjet/sequence-test`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Live Fixture Sequences and Ordered Behavior Assertions' (Protocol in workflow.md)
 
 ## Phase 6: Documentation, Final Validation, and Handoff

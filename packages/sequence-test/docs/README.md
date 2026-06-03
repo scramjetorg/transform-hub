@@ -10,5 +10,6 @@ Start with sequence behavior:
 - [`testing-lifecycle-calls.md`](testing-lifecycle-calls.md): test sequences that call lifecycle operations.
 - [`testing-events.md`](testing-events.md): test event usage.
 - [`testing-exposed-api.md`](testing-exposed-api.md): test exposed HTTP APIs.
+- [`runner-behavior.md`](runner-behavior.md): adapter and runner details.
 
 Runner protocol details live in [`runner-behavior.md`](runner-behavior.md). Use those details when extending the harness or diagnosing protocol behavior, not as the primary sequence test style.

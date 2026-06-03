@@ -1008,6 +1008,34 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         delete: async (path: string): Promise<unknown> => contextHub.request("DELETE", path)
     };
 
+    const contextHubExtended = {
+        ...contextHub,
+        getVersion: async () => hub.getVersion(),
+        getStatus: async () => hub.getStatus(),
+        getConfig: async () => hub.getConfig(),
+        getLoadCheck: async () => hub.getLoadCheck(),
+        listSequences: async () => hub.listSequences(),
+        sendSequence: async (sequencePackage: unknown) => hub.sendSequence(sequencePackage),
+        getSequence: async (sequenceId: string) => hub.getSequence(sequenceId),
+        deleteSequence: async (sequenceId: string) => hub.deleteSequence(sequenceId),
+        startSequence: async (sequenceId: string, body?: unknown) => hub.startSequence(sequenceId, body),
+        listInstances: async () => hub.listInstances(),
+        getInstanceInfo: async (instanceId: string) => hub.getInstanceInfo(instanceId),
+        callHostRpc: async <T>(name: string, body?: unknown): Promise<T> => hub.callHostRpc<T>(name, body),
+        callInstanceRpc: async <T>(instanceId: string, name: string, body?: unknown): Promise<T> =>
+            hub.callInstanceRpc<T>(instanceId, name, body),
+        callHostRpcStream: async (name: string, body?: unknown) => hub.callHostRpcStream(name, body),
+        callInstanceRpcStream: async (instanceId: string, name: string, body?: unknown) =>
+            hub.callInstanceRpcStream(instanceId, name, body),
+        createTopic: async (name?: string, contentType?: string) => hub.createTopic(name, contentType),
+        listTopics: async () => hub.listTopics(),
+        deleteTopic: async (name: string) => hub.deleteTopic(name),
+        sendTopic: async (name: string, data?: unknown) => hub.sendTopic(name, data),
+        getTopic: async (name: string) => hub.getTopic(name),
+        sendNamedData: async (name: string, data?: unknown) => hub.sendNamedData(name, data),
+        getNamedData: async (name: string) => hub.getNamedData(name)
+    };
+
     const callLookup = (entry: HubTimelineEntry): HubTimelineEntry => ({
         sequence: entry.sequence,
         method: entry.method,
@@ -1062,7 +1090,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     };
 
     const context = {
-        hub: contextHub,
+        hub: contextHubExtended,
         keepAlive(milliseconds?: number) {
             recordLifecycle("keepAlive", milliseconds);
 
