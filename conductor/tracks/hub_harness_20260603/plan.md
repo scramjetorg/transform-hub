@@ -7,7 +7,7 @@
     - [x] Push the current branch if the PR branch is not already available on GitHub.
     - [x] Create or update a GitHub PR for this track at the beginning of work for easier review.
     - [x] Record the PR URL in the track handoff or plan notes.
-    - Notes: Existing open PR for `feature/sequence-test-harness`: https://github.com/0rail/transform-hub/pull/7
+    - Notes: Separate track PR branch created from `feature/sequence-test-harness`: `feature/hub-harness-track`.
 - [ ] Task: Confirm affected package and API-client surfaces
     - [ ] Read `packages/sequence-test/codemap.md` and relevant `packages/sequence-test/src` files.
     - [ ] Read `packages/runner-node/src/context.ts` and `packages/runner-node/src/runner-app-context.ts` for real sequence context behavior.
