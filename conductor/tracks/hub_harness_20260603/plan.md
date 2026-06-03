@@ -99,23 +99,26 @@
 
 ## Phase 4: Sequence Context Harness for Lifecycle, Storage, Events, Logs, and API Registration
 
-- [ ] Task: Write tests for context behavior
-    - [ ] Test `keepAlive()`, `end()`, and `destroy()` record lifecycle actions and monitoring-style data.
-    - [ ] Test stop/start or control-intent sequence fixture behavior can be asserted through the harness.
-    - [ ] Test `emit()` and `emitToSpace()` record event scope, name, message, and order.
-    - [ ] Test localStorage `getItem`, `setItem`, `removeItem`, and `clear` update state and timeline.
-    - [ ] Test logger calls are captured by level and message/details.
-    - [ ] Test exposed API registration records path and handler metadata.
-    - [ ] Test minimal `space` mock allows calls without crashing.
-- [ ] Task: Implement context harness
-    - [ ] Build AppContext-compatible `context` around the Hub harness.
-    - [ ] Add lifecycle, events, localStorage, logger, and API registration captures.
-    - [ ] Add minimal `space` mock behavior and document that detailed `space` assertions are out of scope.
-    - [ ] Integrate context with `runSequence()` examples and sequence fixture tests.
-- [ ] Task: Validate Phase 4
-    - [ ] Run focused context harness tests.
-    - [ ] Run all `@scramjet/sequence-test` tests.
-    - [ ] Run source lint and package build for changed package files.
+- [x] Task: Write tests for context behavior
+    - [x] Test `keepAlive()`, `end()`, and `destroy()` record lifecycle actions and monitoring-style data.
+    - [x] Test stop/start or control-intent sequence fixture behavior can be asserted through the harness.
+    - [x] Test `emit()` and `emitToSpace()` record event scope, name, message, and order.
+    - [x] Test localStorage `getItem`, `setItem`, `removeItem`, and `clear` update state and timeline.
+    - [x] Test logger calls are captured by level and message/details.
+    - [x] Test exposed API registration records path and handler metadata.
+    - [x] Test minimal `space` mock allows calls without crashing.
+    - Notes: Expanded harness and fixture behavior tests for context lifecycle, events, storage, logging, API registration, and minimal space calls.
+- [x] Task: Implement context harness
+    - [x] Build AppContext-compatible `context` around the Hub harness.
+    - [x] Add lifecycle, events, localStorage, logger, and API registration captures.
+    - [x] Add minimal `space` mock behavior and document that detailed `space` assertions are out of scope.
+    - [x] Integrate context with `runSequence()` examples and sequence fixture tests.
+    - Notes: Added context inspectors (`lifecycle`, `events`, `logs`, `storage`, `apiRoutes`, `spaceCalls`) and migrated fixture behavior assertions to `createHubHarness().context` where practical.
+- [x] Task: Validate Phase 4
+    - [x] Run focused context harness tests.
+    - [x] Run all `@scramjet/sequence-test` tests.
+    - [x] Run source lint and package build for changed package files.
+    - Notes: Passed focused context/lifecycle/storage/event/logger/API AVA matches, full `npm test --workspace @scramjet/sequence-test`, `npx eslint "packages/sequence-test/src" --ext .ts`, and `npm run build --workspace @scramjet/sequence-test`. A repo-wide `npm run lint` attempt failed on unrelated pre-existing `packages/host` lint issues and was not treated as a blocker for package-local Phase 4.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Sequence Context Harness for Lifecycle, Storage, Events, Logs, and API Registration' (Protocol in workflow.md)
 
 ## Phase 5: Live Fixture Sequences and Ordered Behavior Assertions

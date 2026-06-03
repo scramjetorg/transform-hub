@@ -3,6 +3,7 @@ import path from "node:path";
 import test from "ava";
 
 import { runSequence } from "../../src";
+import { createHubHarness } from "../../src";
 
 const fixture = (name: string) => path.resolve(__dirname, name, "index.js");
 
@@ -24,16 +25,12 @@ test("appcontext fixture uses sequence app context", async t => {
 });
 
 test("hub-calls fixture makes expected host calls", async t => {
-    const calls: Array<{ method: string; path: string; body?: unknown }> = [];
+    const harness = createHubHarness();
+
     const result = await runSequence({
         runtime: "node",
         sequencePath: fixture("hub-calls"),
-        context: {
-            hub: {
-                get: async (route: string) => calls.push({ method: "GET", path: route }),
-                post: async (route: string, body: unknown) => calls.push({ method: "POST", path: route, body })
-            }
-        },
+        context: harness.context,
         input: {
             contentType: "application/x-ndjson",
             body: [{ id: "job-1" }]
@@ -41,21 +38,31 @@ test("hub-calls fixture makes expected host calls", async t => {
     });
 
     t.deepEqual(result.output.ndjson(), [{ id: "job-1", reported: true }]);
-    t.deepEqual(calls, [
-        { method: "GET", path: "/api/v1/version" },
-        { method: "POST", path: "/api/v1/events", body: { type: "item.processed", id: "job-1" } }
-    ]);
+
+    const hubCalls = harness.calls().map(entry => ({
+        method: entry.method,
+        path: entry.path,
+        body: entry.body
+    }));
+
+    t.true(hubCalls.some(
+        entry => entry.method === "GET" && entry.path === "/api/v1/version" && entry.body === undefined
+    ));
+    t.true(hubCalls.some(
+        entry => entry.method === "POST" && entry.path === "/api/v1/events" &&
+            typeof entry.body === "object" && !!entry.body &&
+            (entry.body as { type: string; id: string }).type === "item.processed" &&
+            (entry.body as { type: string; id: string }).id === "job-1"
+    ));
 });
 
 test("lifecycle-calls fixture uses keepAlive and end", async t => {
-    const lifecycle: Array<{ name: string; value?: unknown }> = [];
+    const harness = createHubHarness();
+
     const result = await runSequence({
         runtime: "node",
         sequencePath: fixture("lifecycle-calls"),
-        context: {
-            keepAlive: (milliseconds: number) => lifecycle.push({ name: "keepAlive", value: milliseconds }),
-            end: () => lifecycle.push({ name: "end" })
-        },
+        context: harness.context,
         input: {
             contentType: "application/x-ndjson",
             body: [{ command: "stop" }]
@@ -63,21 +70,19 @@ test("lifecycle-calls fixture uses keepAlive and end", async t => {
     });
 
     t.deepEqual(result.output.ndjson(), [{ command: "stop", handled: true }]);
-    t.deepEqual(lifecycle, [
-        { name: "keepAlive", value: 250 },
-        { name: "end" }
-    ]);
+    t.deepEqual(
+        harness.lifecycle().map((entry) => entry.action),
+        ["keepAlive", "end"]
+    );
 });
 
 test("events fixture emits host and space events", async t => {
-    const events: Array<{ scope: string; name: string; message: unknown }> = [];
+    const harness = createHubHarness();
+
     const result = await runSequence({
         runtime: "node",
         sequencePath: fixture("events"),
-        context: {
-            emit: (name: string, message: unknown) => events.push({ scope: "host", name, message }),
-            emitToSpace: (name: string, message: unknown) => events.push({ scope: "space", name, message })
-        },
+        context: harness.context,
         input: {
             contentType: "application/x-ndjson",
             body: [{ id: "order-1" }]
@@ -85,22 +90,23 @@ test("events fixture emits host and space events", async t => {
     });
 
     t.deepEqual(result.output.ndjson(), [{ id: "order-1", emitted: true }]);
-    t.deepEqual(events, [
+    t.deepEqual(harness.events().map((entry) => ({
+        scope: entry.scope,
+        name: entry.name,
+        message: entry.message
+    })), [
         { scope: "host", name: "item.received", message: { id: "order-1" } },
         { scope: "space", name: "item.received", message: { id: "order-1", scope: "space" } }
     ]);
 });
 
 test("exposed-api fixture registers an endpoint", async t => {
-    const routes: Array<{ path: string; handler: unknown }> = [];
+    const harness = createHubHarness();
+
     const result = await runSequence({
         runtime: "node",
         sequencePath: fixture("exposed-api"),
-        context: {
-            api: {
-                use: (route: string, handler: unknown) => routes.push({ path: route, handler })
-            }
-        },
+        context: harness.context,
         input: {
             contentType: "application/x-ndjson",
             body: [{ id: "api-1" }]
@@ -108,7 +114,7 @@ test("exposed-api fixture registers an endpoint", async t => {
     });
 
     t.deepEqual(result.output.ndjson(), [{ id: "api-1", apiRegistered: true }]);
-    t.is(routes.length, 1);
-    t.is(routes[0].path, "/health");
-    t.is(typeof routes[0].handler, "function");
+    t.is(harness.apiRoutes().length, 1);
+    t.is(harness.apiRoutes()[0].path, "/health");
+    t.true(typeof harness.apiRoutes()[0].handler === "function");
 });

@@ -1,10 +1,13 @@
 import test from "ava";
 import { Readable } from "node:stream";
+import path from "node:path";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 import {
     HubCallMatch,
     createHubHarness
 } from "../../src";
+import { runSequence } from "../../src";
 
 const isMatch = (entry: HubCallMatch, expected: HubCallMatch): boolean => {
     if (expected.method && entry.method && entry.method.toUpperCase() !== expected.method.toUpperCase()) {
@@ -21,7 +24,7 @@ const isMatch = (entry: HubCallMatch, expected: HubCallMatch): boolean => {
 test("createHubHarness exposes context.hub and minimal space", t => {
     const harness = createHubHarness();
 
-    t.is(harness.context.hub, harness.hub);
+    t.not(harness.context.hub as unknown, harness.hub as unknown);
     t.truthy(harness.context.space);
     t.true("host" in harness.context.space);
     t.true("port" in harness.context.space);
@@ -31,6 +34,134 @@ test("createHubHarness exposes context.hub and minimal space", t => {
     t.is(typeof harness.assert.callCount, "function");
     t.is(typeof harness.assert.body, "function");
     t.is(typeof harness.assert.order, "function");
+});
+
+test("context captures lifecycle actions and monitoring frames", t => {
+    const harness = createHubHarness();
+
+    harness.context.keepAlive(321);
+    harness.context.end();
+    harness.context.destroy(new Error("fatal"));
+
+    const lifecycle = harness.lifecycle();
+
+    t.is(lifecycle.length, 3);
+    t.deepEqual(lifecycle.map((entry) => entry.action), ["keepAlive", "end", "destroy"]);
+    t.deepEqual(lifecycle[0].monitoringFrame[0], RunnerMessageCode.ALIVE);
+    t.deepEqual(lifecycle[1].monitoringFrame[0], RunnerMessageCode.SEQUENCE_STOPPED);
+    t.deepEqual(lifecycle[2].monitoringFrame[0], RunnerMessageCode.SEQUENCE_STOPPED);
+
+    t.true(lifecycle[0].keepAlive === 321);
+    t.is((lifecycle[2].reason as Error).message, "fatal");
+});
+
+test("fixture lifecycle behavior can be asserted through harness context", async t => {
+    const fixture = path.resolve(__dirname, "../fixtures/lifecycle-calls/index.js");
+    const harness = createHubHarness();
+
+    const result = await runSequence({
+        runtime: "node",
+        sequencePath: fixture,
+        context: harness.context,
+        input: {
+            contentType: "application/x-ndjson",
+            body: [{ command: "stop" }]
+        }
+    });
+
+    t.deepEqual(result.output.ndjson(), [{ command: "stop", handled: true }]);
+
+    const lifecycle = harness.lifecycle();
+    t.is(lifecycle.length, 2);
+    t.deepEqual(lifecycle.map((entry) => entry.action), ["keepAlive", "end"]);
+
+    const ordered = lifecycle[0].monitoringFrame[0] === RunnerMessageCode.ALIVE &&
+        lifecycle[1].monitoringFrame[0] === RunnerMessageCode.SEQUENCE_STOPPED;
+
+    t.true(ordered);
+});
+
+test("context event capture records scope/name/message order", t => {
+    const harness = createHubHarness();
+
+    harness.context.emit("item.processed", { id: 1 });
+    harness.context.emitToSpace("item.processed", { id: 1, scope: "space" });
+
+    const events = harness.events();
+    t.deepEqual(events.map((entry) => entry.scope), ["host", "space"]);
+    t.deepEqual(events.map((entry) => entry.name), ["item.processed", "item.processed"]);
+    t.deepEqual(events[1].message, { id: 1, scope: "space" });
+    t.is(events[0].sequence < events[1].sequence, true);
+});
+
+test("context localStorage records entries and storage state", async t => {
+    const harness = createHubHarness();
+
+    await harness.context.localStorage.setItem("alpha", "A");
+    t.is(await harness.context.localStorage.getItem("alpha"), "A");
+    await harness.context.localStorage.setItem("beta", "B");
+    t.deepEqual(harness.localStorageEntries(), { alpha: "A", beta: "B" });
+
+    await harness.context.localStorage.removeItem("alpha");
+    t.deepEqual(harness.localStorageEntries(), { beta: "B" });
+
+    await harness.context.localStorage.clear();
+    t.deepEqual(harness.localStorageEntries(), {});
+
+    const storage = harness.storage();
+
+    t.true(storage.some((entry) => entry.action === "setItem" && entry.key === "alpha" && entry.value === "A"));
+    t.true(storage.some((entry) => entry.action === "removeItem" && entry.key === "alpha"));
+    t.true(storage.some((entry) => entry.action === "clear"));
+});
+
+test("context logger captures level, message, and details", t => {
+    const harness = createHubHarness();
+
+    harness.context.logger.info("boot", { phase: 1 });
+    harness.context.logger.debug("state", "x", 1);
+    harness.context.logger.error("failure", new Error("boom"));
+
+    const logs = harness.logs();
+    t.true(logs.length >= 3);
+
+    t.deepEqual(logs[0], {
+        sequence: logs[0].sequence,
+        level: "info",
+        message: "boot",
+        details: [{ phase: 1 }],
+        timestamp: logs[0].timestamp
+    });
+
+    t.is(logs[2].level, "error");
+    t.is(logs[2].message, "failure");
+    t.truthy(logs[2].details.length > 0);
+});
+
+test("context exposes API registrations with route metadata", t => {
+    const harness = createHubHarness();
+    const handler = (req: unknown, res: unknown) => ({ req, res });
+
+    harness.context.api.use("/health", handler);
+
+    const routes = harness.apiRoutes();
+    t.is(routes.length, 1);
+    t.is(routes[0].path, "/health");
+    t.is(routes[0].handlerName, handler.name);
+    t.is(routes[0].argsCount, handler.length);
+});
+
+test("minimal space mock handles calls without crashing", async t => {
+    const harness = createHubHarness();
+
+    await harness.context.space.get("/api/v1/version");
+    await harness.context.space.post("/api/v1/events", { status: "ok" });
+    await harness.context.space.request("POST", "/api/v1/topics", { id: "t1" });
+
+    const spaceCalls = harness.spaceCalls();
+    t.is(spaceCalls.length, 3);
+    t.is(spaceCalls[1].path, "/api/v1/events");
+    t.is(spaceCalls[2].method, "POST");
 });
 
 test("metadata endpoints return defaults and record normalized paths", async t => {

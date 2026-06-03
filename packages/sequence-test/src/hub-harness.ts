@@ -1,4 +1,5 @@
 import { Readable } from "node:stream";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 export interface HubMockRequest {
     method: string;
@@ -90,17 +91,131 @@ export interface HubMock extends HubApiExtensions {
     handle(request: HubMockRequest): Promise<HubMockResponse>;
 }
 
+type LogLevel = "trace" | "debug" | "info" | "warn" | "error";
+
+interface HubContextSpaceCall {
+    sequence: number;
+    method: string;
+    path: string;
+    body?: unknown;
+    headers?: Record<string, string | string[] | undefined>;
+}
+
 interface HubHarnessSpace {
+    host: string;
+    port: number;
+    timeline?: HubContextSpaceCall[];
+    request(
+        method: string,
+        path: string,
+        body?: unknown,
+        headers?: Record<string, string | string[] | undefined>
+    ): Promise<unknown>;
+    get(path: string): Promise<unknown>;
+    post(path: string, body?: unknown, headers?: Record<string, string | string[] | undefined>): Promise<unknown>;
     [key: string]: unknown;
+}
+
+interface HubContextLoggerCall {
+    sequence: number;
+    level: LogLevel;
+    message: unknown;
+    details: unknown[];
+    timestamp: number;
+}
+
+interface HubContextEventRecord {
+    sequence: number;
+    scope: "host" | "space";
+    name: string;
+    message: unknown;
+    timestamp: number;
+}
+
+type HubContextLifecycleAction = "keepAlive" | "end" | "destroy";
+
+interface HubContextLifecycleRecord {
+    sequence: number;
+    action: HubContextLifecycleAction;
+    keepAlive?: number;
+    reason?: unknown;
+    timestamp: number;
+    monitoringFrame: unknown[];
+}
+
+interface HubContextStorageRecord {
+    sequence: number;
+    action: "getItem" | "setItem" | "removeItem" | "clear";
+    key?: string;
+    value?: string | null;
+    previousValue?: string | null;
+    state?: Record<string, string | null>;
+    timestamp: number;
+}
+
+interface HubContextApiRoute {
+    sequence: number;
+    path: string;
+    handler: unknown;
+    handlerName?: string;
+    argsCount?: number;
+}
+
+interface HubContextLogger {
+    trace: (...args: unknown[]) => void;
+    debug: (...args: unknown[]) => void;
+    info: (...args: unknown[]) => void;
+    warn: (...args: unknown[]) => void;
+    error: (...args: unknown[]) => void;
+}
+
+interface HubContext {
+    hub: {
+        get(path: string): Promise<unknown>;
+        post(path: string, body?: unknown): Promise<unknown>;
+        delete(path: string): Promise<unknown>;
+        request(method: string, path: string, body?: unknown): Promise<unknown>;
+    };
+    keepAlive(milliseconds?: number): HubContext;
+    end(): HubContext;
+    destroy(error?: unknown): HubContext;
+    emit(name: string, message: unknown): HubContext;
+    emitToSpace(name: string, message: unknown): HubContext;
+    localStorage: {
+        getItem(key: string): Promise<string | null>;
+        setItem(key: string, value: string): Promise<void>;
+        removeItem(key: string): Promise<void>;
+        clear(): Promise<void>;
+        _state?: Record<string, string | null>;
+    };
+    logger: HubContextLogger;
+    api: {
+        use(path: string, handler: unknown): void;
+    };
+    space: HubHarnessSpace;
+}
+
+interface HubContextInspectors {
+    lifecycle(): HubContextLifecycleRecord[];
+    events(): HubContextEventRecord[];
+    logs(): HubContextLoggerCall[];
+    localStorageEntries(): Record<string, string | null>;
+    storage(): HubContextStorageRecord[];
+    apiRoutes(): HubContextApiRoute[];
+    spaceCalls(): HubContextSpaceCall[];
 }
 
 export interface HubHarness {
     hub: HubMock;
-    context: {
-        hub: HubMock;
-        space: HubHarnessSpace;
-    };
+    context: HubContext & HubContextInspectors;
     calls(): HubTimelineEntry[];
+    lifecycle(): HubContextLifecycleRecord[];
+    events(): HubContextEventRecord[];
+    logs(): HubContextLoggerCall[];
+    localStorageEntries(): Record<string, string | null>;
+    storage(): HubContextStorageRecord[];
+    apiRoutes(): HubContextApiRoute[];
+    spaceCalls(): HubContextSpaceCall[];
     assert: HubAssertions;
 }
 
@@ -288,6 +403,14 @@ function createMatcherAssertionError(message: string): never {
 export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHarness {
     const routes: Route[] = [];
     const timeline: HubTimelineEntry[] = [];
+    let contextSequence = 0;
+    const lifecycleTimeline: HubContextLifecycleRecord[] = [];
+    const eventTimeline: HubContextEventRecord[] = [];
+    const loggerTimeline: HubContextLoggerCall[] = [];
+    const storageTimeline: HubContextStorageRecord[] = [];
+    const apiRouteTimeline: HubContextApiRoute[] = [];
+    const spaceTimeline: HubContextSpaceCall[] = [];
+    const localStorageState: Record<string, string | null> = {};
     const topics = new Map<string, StoredTopic>();
     const sequences = new Map<string, unknown>();
     const instances = new Map<string, { id: string; sequenceId?: string }>();
@@ -297,6 +420,101 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     const basePath = normalizePath(_options.basePath ?? "/api/v1");
     const defaultRpcStreamData = _options.streamDefaults?.rpc ?? "rpc-stream";
     const defaultTopicStreamData = _options.streamDefaults?.topic ?? "topic-stream";
+
+    const nextContextSequence = () => {
+        contextSequence += 1;
+
+        return contextSequence;
+    };
+
+    const serializeErrorPayload = (error: unknown): unknown => {
+        if (error === null || error === undefined) {
+            return error;
+        }
+
+        if (error instanceof Error) {
+            return {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            };
+        }
+
+        return error;
+    };
+
+    const now = () => Date.now();
+
+    const recordLifecycle = (action: HubContextLifecycleAction, value?: number, reason?: unknown): void => {
+        const monitoringPayload = action === "keepAlive"
+            ? [RunnerMessageCode.ALIVE, { keepAlive: value || 0 }]
+            : [RunnerMessageCode.SEQUENCE_STOPPED, { action, reason: serializeErrorPayload(reason), keepAlive: value || 0 }];
+
+        lifecycleTimeline.push({
+            sequence: nextContextSequence(),
+            action,
+            keepAlive: value,
+            reason,
+            timestamp: now(),
+            monitoringFrame: monitoringPayload
+        });
+    };
+
+    const recordEvent = (scope: "host" | "space", name: string, message: unknown): void => {
+        eventTimeline.push({
+            sequence: nextContextSequence(),
+            scope,
+            name,
+            message,
+            timestamp: now()
+        });
+    };
+
+    const recordLogger = (level: LogLevel, args: unknown[]): void => {
+        const [message, ...details] = args;
+
+        loggerTimeline.push({
+            sequence: nextContextSequence(),
+            level,
+            message,
+            details,
+            timestamp: now()
+        });
+    };
+
+    const recordStorage = (action: HubContextStorageRecord["action"], key: string | undefined, value?: string | null): void => {
+        const previousValue = key === undefined ? undefined : localStorageState[key] ?? null;
+
+        storageTimeline.push({
+            sequence: nextContextSequence(),
+            action,
+            key,
+            value,
+            previousValue,
+            state: key ? { ...localStorageState } : { ...localStorageState },
+            timestamp: now()
+        });
+    };
+
+    const recordApiRoute = (path: string, handler: unknown): void => {
+        apiRouteTimeline.push({
+            sequence: nextContextSequence(),
+            path,
+            handler,
+            handlerName: typeof handler === "function" ? handler.name : undefined,
+            argsCount: typeof handler === "function" ? handler.length : undefined
+        });
+    };
+
+    const recordSpaceCall = (method: string, path: string, body?: unknown, headers?: Record<string, string | string[] | undefined>): void => {
+        spaceTimeline.push({
+            sequence: nextContextSequence(),
+            method: normalizeMethod(method),
+            path: normalizePath(path),
+            body,
+            headers: cloneHeaders(headers)
+        });
+    };
 
     const recordCall = async (
         method: string,
@@ -774,6 +992,22 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         }
     };
 
+    const contextHub = {
+        request: async (method: string, path: string, body?: unknown): Promise<unknown> => {
+            const normalizedMethod = method.toUpperCase();
+
+            return parseJson(await hub.handle({
+                method: normalizedMethod,
+                path,
+                headers: normalizedMethod === "GET" ? {} : { "content-type": inferContentType(body) },
+                body
+            }));
+        },
+        get: async (path: string): Promise<unknown> => contextHub.request("GET", path),
+        post: async (path: string, body?: unknown): Promise<unknown> => contextHub.request("POST", path, body),
+        delete: async (path: string): Promise<unknown> => contextHub.request("DELETE", path)
+    };
+
     const callLookup = (entry: HubTimelineEntry): HubTimelineEntry => ({
         sequence: entry.sequence,
         method: entry.method,
@@ -828,19 +1062,129 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     };
 
     const context = {
-        hub,
+        hub: contextHub,
+        keepAlive(milliseconds?: number) {
+            recordLifecycle("keepAlive", milliseconds);
+
+            return context;
+        },
+        end() {
+            recordLifecycle("end");
+
+            return context;
+        },
+        destroy(error?: unknown) {
+            recordLifecycle("destroy", undefined, error);
+
+            return context;
+        },
+        emit(name: string, message: unknown) {
+            recordEvent("host", name, message);
+
+            return context;
+        },
+        emitToSpace(name: string, message: unknown) {
+            recordEvent("space", name, message);
+
+            return context;
+        },
+        localStorage: {
+            getItem: async (key: string): Promise<string | null> => {
+                const value = localStorageState[key] ?? null;
+
+                recordStorage("getItem", key, value);
+
+                return value;
+            },
+            setItem: async (key: string, value: string): Promise<void> => {
+                recordStorage("setItem", key, value);
+                localStorageState[key] = value;
+
+                return undefined;
+            },
+            removeItem: async (key: string): Promise<void> => {
+                recordStorage("removeItem", key);
+                delete localStorageState[key];
+
+                return undefined;
+            },
+            clear: async (): Promise<void> => {
+                recordStorage("clear", undefined);
+
+                for (const key of Object.keys(localStorageState)) {
+                    delete localStorageState[key];
+                }
+
+                return undefined;
+            }
+        },
+        logger: {
+            trace: (...args: unknown[]) => {
+                recordLogger("trace", args);
+            },
+            debug: (...args: unknown[]) => {
+                recordLogger("debug", args);
+            },
+            info: (...args: unknown[]) => {
+                recordLogger("info", args);
+            },
+            warn: (...args: unknown[]) => {
+                recordLogger("warn", args);
+            },
+            error: (...args: unknown[]) => {
+                recordLogger("error", args);
+            }
+        },
+        api: {
+            use: (path: string, handler: unknown) => {
+                recordApiRoute(path, handler);
+            }
+        },
+        lifecycle: () => lifecycleTimeline.map((entry) => ({ ...entry })),
+        events: () => eventTimeline.map((entry) => ({ ...entry })),
+        logs: () => loggerTimeline.map((entry) => ({ ...entry })),
+        localStorageEntries: () => ({ ...localStorageState }),
+        storage: () => storageTimeline.map((entry) => ({ ...entry })),
+        apiRoutes: () => apiRouteTimeline.map((entry) => ({ ...entry })),
+        spaceCalls: () => spaceTimeline.map((entry) => ({ ...entry })),
         space: {
             host: "host-test",
             port: 0,
-            timeline: timeline
+            request: async (_method: string, path: string, body?: unknown, headers?: Record<string, string | string[] | undefined>) => {
+                recordSpaceCall(_method, path, body, headers);
+
+                return {
+                    method: normalizeMethod(_method),
+                    path,
+                    body,
+                    headers
+                };
+            },
+            get: async (path: string) => {
+                recordSpaceCall("GET", path);
+
+                return { path };
+            },
+            post: async (path: string, body?: unknown, headers?: Record<string, string | string[] | undefined>) => {
+                recordSpaceCall("POST", path, body, headers);
+
+                return { path, body, headers };
+            }
         }
-    };
+    } as HubContext & HubContextInspectors;
 
     return {
         hub,
         context,
         calls: () => timeline.map(callLookup),
-        assert
+        assert,
+        lifecycle: () => context.lifecycle(),
+        events: () => context.events(),
+        logs: () => context.logs(),
+        localStorageEntries: () => context.localStorageEntries(),
+        storage: () => context.storage(),
+        apiRoutes: () => context.apiRoutes(),
+        spaceCalls: () => context.spaceCalls()
     };
 }
 
