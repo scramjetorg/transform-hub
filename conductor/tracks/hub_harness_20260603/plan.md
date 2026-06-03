@@ -40,7 +40,8 @@
     - [x] Run package build for `@scramjet/sequence-test`.
     - [x] Record any skipped broader validation and reasons.
     - Notes: Passed `npm test --workspace @scramjet/sequence-test -- --match '*metadata*'`, `npm test --workspace @scramjet/sequence-test`, `npx eslint "packages/sequence-test/src" --ext .ts`, and `npm run build --workspace @scramjet/sequence-test`. Broader Docker/Kubernetes/BDD validation skipped as out of scope for package-local Phase 1 metadata/test-organization changes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: API Inventory, Metadata Semantics, and Test Reorganization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: API Inventory, Metadata Semantics, and Test Reorganization' (Protocol in workflow.md)
+    - Notes: User approved proceeding to Phase 2 after Phase 1 validation.
 
 ## Phase 2: Targeted Hub Harness Core and Compatibility Replacement
 
