@@ -8,11 +8,12 @@
     - [x] Create or update a GitHub PR for this track at the beginning of work for easier review.
     - [x] Record the PR URL in the track handoff or plan notes.
     - Notes: Separate stacked track PR: https://github.com/0rail/transform-hub/pull/8 (base: `feature/sequence-test-harness`, head: `feature/hub-harness-track`).
-- [ ] Task: Confirm affected package and API-client surfaces
-    - [ ] Read `packages/sequence-test/codemap.md` and relevant `packages/sequence-test/src` files.
-    - [ ] Read `packages/runner-node/src/context.ts` and `packages/runner-node/src/runner-app-context.ts` for real sequence context behavior.
-    - [ ] Inventory `packages/api-client` HostClient, ManagerClient, InstanceClient, and RPC/stream methods needed by the harness.
-    - [ ] Confirm no default-path dependency on `@scramjet/sth`, `@scramjet/host`, Docker adapter, Kubernetes adapter, or BDD workflows.
+- [x] Task: Confirm affected package and API-client surfaces
+    - [x] Read `packages/sequence-test/codemap.md` and relevant `packages/sequence-test/src` files.
+    - [x] Read `packages/runner-node/src/context.ts` and `packages/runner-node/src/runner-app-context.ts` for real sequence context behavior.
+    - [x] Inventory `packages/api-client` HostClient, ManagerClient, InstanceClient, and RPC/stream methods needed by the harness.
+    - [x] Confirm no default-path dependency on `@scramjet/sth`, `@scramjet/host`, Docker adapter, Kubernetes adapter, or BDD workflows.
+    - Notes: Inventory confirmed `packages/sequence-test` is package-local and currently depends on runner protocol surfaces only; relevant sequence context surfaces are `hub`, `space`, lifecycle, events, local storage, logging/monitoring, and exposed API registration. API-client coverage should target host metadata, sequence/instance/topic operations, manager named data/store/listing, and instance RPC/stream/event/control helpers.
 - [ ] Task: Write tests for package metadata semantics
     - [ ] Test `package.json.main` is required and resolves to an existing file.
     - [ ] Test `main` path safety rejects paths outside the fixture directory.
