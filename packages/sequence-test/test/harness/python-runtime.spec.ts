@@ -2,10 +2,10 @@ import path from "node:path";
 
 import test from "ava";
 
-import { createRunnerEnv, createRunnerLaunchPlan } from "../src/index";
+import { createRunnerEnv, createRunnerLaunchPlan } from "../../src/index";
 
 test("Python sequence fixtures can be described from Node-authored tests", t => {
-    const sequencePath = path.resolve(__dirname, "fixtures/python-echo/sequence/main.py");
+    const sequencePath = path.resolve(__dirname, "../fixtures/python-echo/sequence/main.py");
     const env = createRunnerEnv({
         runtime: "python",
         sequencePath,
@@ -20,7 +20,7 @@ test("Python sequence fixtures can be described from Node-authored tests", t => 
 });
 
 test("Python runtime uses existing runner launch planning", t => {
-    const sequencePath = path.resolve(__dirname, "fixtures/python-echo/sequence/main.py");
+    const sequencePath = path.resolve(__dirname, "../fixtures/python-echo/sequence/main.py");
     const plan = createRunnerLaunchPlan({
         runtime: "python",
         sequencePath,

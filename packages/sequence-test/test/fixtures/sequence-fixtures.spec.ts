@@ -2,9 +2,9 @@ import path from "node:path";
 
 import test from "ava";
 
-import { runSequence } from "../src";
+import { runSequence } from "../../src";
 
-const fixture = (name: string) => path.resolve(__dirname, "fixtures", name, "index.js");
+const fixture = (name: string) => path.resolve(__dirname, name, "index.js");
 
 test("appcontext fixture uses sequence app context", async t => {
     const result = await runSequence({

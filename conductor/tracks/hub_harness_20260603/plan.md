@@ -28,16 +28,18 @@
     - [x] Resolve engines with Node-first precedence.
     - [x] Integrate resolved metadata with fixture helpers and runner planning where appropriate.
     - Notes: Added `resolveSequenceFixtureMetadata()` and `engines` support in runner launch planning; package metadata remains package-local to `@scramjet/sequence-test`.
-- [ ] Task: Reorganize tests into harness and fixture behavior directories
-    - [ ] Create `packages/sequence-test/test/harness/` for harness/helper tests.
-    - [ ] Create or normalize `packages/sequence-test/test/fixtures/` for live sequence behavior tests and fixture sources.
-    - [ ] Move harness tests separately from sequence fixture behavior tests without changing behavior.
-    - [ ] Keep package AVA test discovery working after moves.
-- [ ] Task: Validate Phase 1
-    - [ ] Run focused `@scramjet/sequence-test` tests.
-    - [ ] Run source lint for changed `packages/sequence-test/src` files.
-    - [ ] Run package build for `@scramjet/sequence-test`.
-    - [ ] Record any skipped broader validation and reasons.
+- [x] Task: Reorganize tests into harness and fixture behavior directories
+    - [x] Create `packages/sequence-test/test/harness/` for harness/helper tests.
+    - [x] Create or normalize `packages/sequence-test/test/fixtures/` for live sequence behavior tests and fixture sources.
+    - [x] Move harness tests separately from sequence fixture behavior tests without changing behavior.
+    - [x] Keep package AVA test discovery working after moves.
+    - Notes: Harness/helper specs now live under `test/harness/`; live sequence behavior specs live under `test/fixtures/` alongside fixture sources.
+- [x] Task: Validate Phase 1
+    - [x] Run focused `@scramjet/sequence-test` tests.
+    - [x] Run source lint for changed `packages/sequence-test/src` files.
+    - [x] Run package build for `@scramjet/sequence-test`.
+    - [x] Record any skipped broader validation and reasons.
+    - Notes: Passed `npm test --workspace @scramjet/sequence-test -- --match '*metadata*'`, `npm test --workspace @scramjet/sequence-test`, `npx eslint "packages/sequence-test/src" --ext .ts`, and `npm run build --workspace @scramjet/sequence-test`. Broader Docker/Kubernetes/BDD validation skipped as out of scope for package-local Phase 1 metadata/test-organization changes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: API Inventory, Metadata Semantics, and Test Reorganization' (Protocol in workflow.md)
 
 ## Phase 2: Targeted Hub Harness Core and Compatibility Replacement

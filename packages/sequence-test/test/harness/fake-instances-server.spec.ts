@@ -14,7 +14,7 @@ interface FakeInstancesServer {
     close(): Promise<void>;
 }
 
-const { createFakeInstancesServer } = require("../src/fake-instances-server") as {
+const { createFakeInstancesServer } = require("../../src/fake-instances-server") as {
     createFakeInstancesServer: (expectedInstanceId: string) => Promise<FakeInstancesServer>;
 };
 

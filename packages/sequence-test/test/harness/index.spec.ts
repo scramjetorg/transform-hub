@@ -1,6 +1,6 @@
 import test from "ava";
 
-import * as sequenceTest from "../src/index";
+import * as sequenceTest from "../../src/index";
 
 type AnyModule = Record<string, unknown>;
 

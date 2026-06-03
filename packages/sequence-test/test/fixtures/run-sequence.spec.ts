@@ -2,10 +2,10 @@ import path from "node:path";
 
 import test from "ava";
 
-import { runSequence } from "../src/index";
+import { runSequence } from "../../src/index";
 
 test("runSequence executes a simple Node fixture and captures NDJSON output", async t => {
-    const sequencePath = path.resolve(__dirname, "fixtures/map-ndjson/index.js");
+    const sequencePath = path.resolve(__dirname, "map-ndjson/index.js");
     const result = await runSequence({
         runtime: "node",
         sequencePath,

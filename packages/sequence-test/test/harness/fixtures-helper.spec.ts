@@ -8,7 +8,7 @@ import {
     createNodeSequenceFixture,
     createPythonSequenceFixture,
     createSequenceFixture
-} from "../src";
+} from "../../src";
 
 test("createSequenceFixture creates files and cleans up", async t => {
     const fixture = await createSequenceFixture({

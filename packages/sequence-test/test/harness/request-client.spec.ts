@@ -28,7 +28,7 @@ type RequestClientModule = {
 };
 
 const loadRequestClientModule = (): RequestClientModule => {
-    const candidates = ["../src/request-client", "../src"];
+    const candidates = ["../../src/request-client", "../../src"];
 
     for (const candidate of candidates) {
         try {
