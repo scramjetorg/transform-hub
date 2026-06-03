@@ -75,22 +75,25 @@
 
 ## Phase 3: RPC, Topics, and Core Streaming Support
 
-- [ ] Task: Write tests for RPC and topic behavior
-    - [ ] Test normal instance/sequence RPC calls record method, target, path, body, and response.
-    - [ ] Test host-level and instance-level RPC paths remain distinct.
-    - [ ] Test topic create/list/delete/send/get behavior with sensible defaults.
-    - [ ] Test streamed RPC request body capture from string, Buffer, and Readable inputs where practical.
-    - [ ] Test streamed RPC/topic response returns a Readable with configured/default data.
-- [ ] Task: Implement RPC and topic harness behavior
-    - [ ] Implement RPC client stubs or in-memory transport for normal RPC methods.
-    - [ ] Implement core streamed request body capture.
-    - [ ] Implement Readable response streams for core streamed RPC/topic methods.
-    - [ ] Implement topic registry defaults and path-specific recording.
-    - [ ] Preserve deterministic behavior and avoid full STH/host startup.
-- [ ] Task: Validate Phase 3
-    - [ ] Run focused RPC/topic/stream tests.
-    - [ ] Run all `@scramjet/sequence-test` tests.
-    - [ ] Run source lint and package build for changed package files.
+- [x] Task: Write tests for RPC and topic behavior
+    - [x] Test normal instance/sequence RPC calls record method, target, path, body, and response.
+    - [x] Test host-level and instance-level RPC paths remain distinct.
+    - [x] Test topic create/list/delete/send/get behavior with sensible defaults.
+    - [x] Test streamed RPC request body capture from string, Buffer, and Readable inputs where practical.
+    - [x] Test streamed RPC/topic response returns a Readable with configured/default data.
+    - Notes: Added RPC/topic/stream coverage to `packages/sequence-test/test/harness/hub-harness.spec.ts`.
+- [x] Task: Implement RPC and topic harness behavior
+    - [x] Implement RPC client stubs or in-memory transport for normal RPC methods.
+    - [x] Implement core streamed request body capture.
+    - [x] Implement Readable response streams for core streamed RPC/topic methods.
+    - [x] Implement topic registry defaults and path-specific recording.
+    - [x] Preserve deterministic behavior and avoid full STH/host startup.
+    - Notes: Added deterministic in-memory RPC, topic registry, named/topic data, and stream handling to `createHubHarness()`.
+- [x] Task: Validate Phase 3
+    - [x] Run focused RPC/topic/stream tests.
+    - [x] Run all `@scramjet/sequence-test` tests.
+    - [x] Run source lint and package build for changed package files.
+    - Notes: Passed focused RPC/topic/stream AVA matches, full `npm test --workspace @scramjet/sequence-test`, `npx eslint "packages/sequence-test/src" --ext .ts`, and `npm run build --workspace @scramjet/sequence-test`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: RPC, Topics, and Core Streaming Support' (Protocol in workflow.md)
 
 ## Phase 4: Sequence Context Harness for Lifecycle, Storage, Events, Logs, and API Registration

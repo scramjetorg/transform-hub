@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+
 export interface HubMockRequest {
     method: string;
     path: string;
@@ -11,6 +13,7 @@ export interface HubMockResponse {
     body?: unknown;
     text(): Promise<string>;
     json(): Promise<unknown>;
+    stream?: Readable;
 }
 
 export interface HubRouteBuilder {
@@ -58,7 +61,17 @@ interface HubApiExtensions {
     startSequence(sequenceId: string, body?: unknown): Promise<unknown>;
     listInstances(): Promise<unknown>;
     getInstanceInfo(instanceId: string): Promise<unknown>;
+    callHostRpc<T = unknown>(name: string, body?: unknown): Promise<T>;
+    callInstanceRpc<T = unknown>(instanceId: string, name: string, body?: unknown): Promise<T>;
+    callHostRpcStream(name: string, body?: unknown): Promise<Readable>;
+    callInstanceRpcStream(instanceId: string, name: string, body?: unknown): Promise<Readable>;
     createTopic(name?: string, contentType?: string): Promise<unknown>;
+    listTopics(): Promise<unknown>;
+    deleteTopic(name: string): Promise<unknown>;
+    sendTopic(name: string, data?: unknown): Promise<unknown>;
+    getTopic(name: string): Promise<unknown>;
+    sendNamedData(name: string, data?: unknown): Promise<unknown>;
+    getNamedData(name: string): Promise<Readable>;
     requests(): HubMockRequest[];
     assertCalled(method: string, path: string): Promise<void>;
     assert: {
@@ -93,7 +106,24 @@ export interface HubHarness {
 
 interface CreateHubHarnessOptions {
     basePath?: string;
+    streamDefaults?: {
+        rpc?: string | Buffer;
+        topic?: string | Buffer;
+    };
 }
+
+type CapturedStreamBody = {
+    kind: "stream";
+    chunks: string[];
+    totalLength: number;
+};
+
+type StoredTopic = {
+    name: string;
+    contentType: string;
+    data?: unknown;
+    defaultData?: string;
+};
 
 function normalizeMethod(method: string): string {
     return method.toUpperCase();
@@ -113,14 +143,20 @@ function normalizePath(rawPath: string): string {
 }
 
 function cloneHeaders(headers?: Record<string, string | string[] | undefined>): Record<string, string | string[] | undefined> | undefined {
-    if (!headers) return headers;
+    if (!headers) {
+        return headers;
+    }
 
     return { ...headers };
 }
 
-function resolveResponseBodyText(body: unknown): string {
+function toText(body: unknown): string {
     if (typeof body === "string") {
         return body;
+    }
+
+    if (Buffer.isBuffer(body)) {
+        return body.toString("utf8");
     }
 
     if (body === undefined) {
@@ -130,17 +166,25 @@ function resolveResponseBodyText(body: unknown): string {
     return JSON.stringify(body);
 }
 
-function createResponse(status: number, body?: unknown, headers?: Record<string, string>): HubMockResponse {
-    const textBody = resolveResponseBodyText(body);
+function createResponse(status: number, body?: unknown, headers?: Record<string, string>, stream?: Readable): HubMockResponse {
+    const textBody = toText(body);
     const responseHeaders = cloneHeaders(headers);
+    let responseBody: unknown = textBody;
+
+    if (stream && textBody.length > 0) {
+        responseBody = textBody;
+    } else if (stream) {
+        responseBody = undefined;
+    }
 
     return {
         status,
         headers: responseHeaders,
-        body: textBody,
+        body: responseBody,
+        stream,
         text: async () => textBody,
         json: async () => {
-            if (textBody === "") {
+            if (!textBody) {
                 return undefined;
             }
 
@@ -153,8 +197,66 @@ function createResponse(status: number, body?: unknown, headers?: Record<string,
     };
 }
 
-function normalizeBodyValue(request: HubMockRequest): unknown {
+function createReadableFromPayload(payload: string | Buffer): Readable {
+    return Readable.from([payload]);
+}
+
+function inferContentType(body: unknown): string {
+    if (body instanceof Readable) {
+        return "application/octet-stream";
+    }
+
+    if (Buffer.isBuffer(body)) {
+        return "application/octet-stream";
+    }
+
+    if (typeof body === "string") {
+        return "text/plain";
+    }
+
+    return "application/json";
+}
+
+function collectStreamBody(stream: Readable): Promise<CapturedStreamBody> {
+    const chunks: string[] = [];
+    let totalLength = 0;
+
+    return new Promise((resolve, reject) => {
+        stream.on("error", error => {
+            reject(error);
+        });
+
+        stream.on("data", chunk => {
+            const value = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk));
+
+            totalLength += value.length;
+            chunks.push(value.toString("utf8"));
+        });
+
+        stream.on("end", () => {
+            resolve({ kind: "stream", chunks, totalLength });
+        });
+    });
+}
+
+async function normalizeBodyValue(request: HubMockRequest): Promise<unknown> {
     const contentType = request.headers?.["content-type"] ?? request.headers?.["Content-Type"];
+
+    if (request.body instanceof Readable) {
+        return collectStreamBody(request.body);
+    }
+
+    if (Buffer.isBuffer(request.body)) {
+        if (contentType === "application/json") {
+            try {
+                return JSON.parse(request.body.toString("utf8"));
+            } catch (_error) {
+                return request.body;
+            }
+        }
+
+        return request.body;
+    }
 
     if (typeof request.body === "string" && contentType === "application/json") {
         try {
@@ -186,14 +288,15 @@ function createMatcherAssertionError(message: string): never {
 export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHarness {
     const routes: Route[] = [];
     const timeline: HubTimelineEntry[] = [];
-    const topics = new Map<string, { name: string; contentType: string }>();
+    const topics = new Map<string, StoredTopic>();
     const sequences = new Map<string, unknown>();
     const instances = new Map<string, { id: string; sequenceId?: string }>();
-
     let callSequence = 0;
     let sequenceCounter = 0;
 
     const basePath = normalizePath(_options.basePath ?? "/api/v1");
+    const defaultRpcStreamData = _options.streamDefaults?.rpc ?? "rpc-stream";
+    const defaultTopicStreamData = _options.streamDefaults?.topic ?? "topic-stream";
 
     const recordCall = async (
         method: string,
@@ -253,7 +356,11 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
     // Route dispatch intentionally mirrors the supported harness endpoint matrix.
     // eslint-disable-next-line complexity
-    const defaultResponse = async (method: string, requestPath: string, requestBody: unknown): Promise<HubMockResponse> => {
+    const defaultResponse = async (
+        method: string,
+        requestPath: string,
+        requestBody: unknown
+    ): Promise<HubMockResponse> => {
         const normalized = normalizePath(requestPath);
         const methodUpper = normalizeMethod(method);
         const normalizedBase = normalizePath(basePath);
@@ -346,10 +453,15 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             return createResponse(200, { id: info.id, sequenceId: info.sequenceId });
         }
 
+        if (normalized === `${normalizedBase}/topics` && methodUpper === "GET") {
+            return createResponse(200, Array.from(topics.values()));
+        }
+
         if (normalized === `${normalizedBase}/topics` && methodUpper === "POST") {
             const payload = typeof requestBody === "object" && requestBody !== null
                 ? requestBody as Record<string, unknown>
                 : {};
+
             const topicName = typeof payload.id === "string" && payload.id.length > 0
                 ? payload.id
                 : `topic-${topics.size + 1}`;
@@ -357,13 +469,104 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
                 ? payload["content-type"]
                 : "text/plain";
 
-            topics.set(topicName, { name: topicName, contentType });
+            topics.set(topicName, { name: topicName, contentType, defaultData: undefined, data: undefined });
 
             return createResponse(200, {
                 topicName,
                 id: topicName,
                 contentType
             });
+        }
+
+        if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && normalized.endsWith("/stream") && methodUpper === "GET") {
+            const topicName = normalized.slice(`${normalizedBase}/topics/`.length, -"/stream".length);
+            const topic = topics.get(topicName);
+
+            return createResponse(
+                200,
+                topic?.defaultData ?? undefined,
+                { "content-type": "text/plain" },
+                createReadableFromPayload(topic?.defaultData ?? defaultTopicStreamData)
+            );
+        }
+
+        if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && methodUpper === "GET") {
+            const topicName = normalized.slice(`${normalizedBase}/topics/`.length);
+            const topic = topics.get(topicName);
+
+            if (!topic) {
+                return createResponse(404, { error: `topic ${topicName} not found` });
+            }
+
+            return createResponse(200, { topicName: topic.name, id: topic.name, contentType: topic.contentType, data: topic.data });
+        }
+
+        if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && methodUpper === "POST") {
+            const topicName = normalized.slice(`${normalizedBase}/topics/`.length);
+            const topic = topics.get(topicName) ?? {
+                name: topicName,
+                contentType: "text/plain",
+                defaultData: undefined,
+                data: undefined
+            };
+
+            topic.data = requestBody;
+
+            if (typeof requestBody === "string") {
+                topic.defaultData = requestBody;
+            } else if (Buffer.isBuffer(requestBody)) {
+                topic.defaultData = requestBody.toString("utf8");
+            }
+
+            topics.set(topicName, topic);
+
+            return createResponse(200, { topicName, id: topicName, opStatus: "OK", data: requestBody });
+        }
+
+        if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && methodUpper === "DELETE") {
+            const topicName = normalized.slice(`${normalizedBase}/topics/`.length);
+            const removed = topics.delete(topicName);
+
+            return createResponse(200, { opStatus: removed ? "OK" : "NOT_FOUND" });
+        }
+
+        if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/rpc/`) && normalized.endsWith("/stream") && methodUpper === "POST") {
+            const rpcName = normalized.slice(`${normalizedBase}/rpc/`.length, -"/stream".length);
+
+            return createResponse(200, `rpc-stream:${rpcName}`, { "content-type": "text/plain" }, createReadableFromPayload(defaultRpcStreamData));
+        }
+
+        if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/rpc/`) && methodUpper === "POST") {
+            const rpcName = normalized.slice(`${normalizedBase}/rpc/`.length);
+
+            return createResponse(200, { rpc: rpcName, scope: "host", method: methodUpper, body: requestBody });
+        }
+
+        if (normalizedBase !== "/" && normalized.includes(`${normalizedBase}/instance/`) && normalized.includes("/rpc/") && normalized.endsWith("/stream") && methodUpper === "POST") {
+            return createResponse(
+                200,
+                "instance-stream",
+                { "content-type": "text/plain" },
+                createReadableFromPayload(defaultRpcStreamData)
+            );
+        }
+
+        if (normalizedBase !== "/" && normalized.includes(`${normalizedBase}/instance/`) && normalized.includes("/rpc/") && methodUpper === "POST") {
+            const instanceRest = normalized.slice(`${normalizedBase}/instance/`.length);
+            const separatorIndex = instanceRest.indexOf("/rpc/");
+
+            if (separatorIndex >= 0) {
+                const instanceId = instanceRest.slice(0, separatorIndex);
+                const rpcName = instanceRest.slice(separatorIndex + "/rpc/".length);
+
+                return createResponse(200, {
+                    rpc: rpcName,
+                    scope: "instance",
+                    instanceId,
+                    method: methodUpper,
+                    body: requestBody
+                });
+            }
         }
 
         return createResponse(404, "");
@@ -376,13 +579,24 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         handle: async (request: HubMockRequest): Promise<HubMockResponse> => {
             const normalizedMethod = normalizeMethod(request.method || "GET");
             const normalizedPath = normalizePath(request.path || "/");
-            const normalizedBody = normalizeBodyValue(request);
-            const responseFromRoute = routeResponse(normalizedMethod, normalizedPath);
-            const response = responseFromRoute
-                ? createResponse(responseFromRoute.status, responseFromRoute.body, responseFromRoute.headers)
-                : await defaultResponse(normalizedMethod, normalizedPath, normalizedBody);
+            const normalizedBody = await normalizeBodyValue(request);
+            const normalizedHeaders = cloneHeaders(request.headers);
 
-            await recordCall(normalizedMethod, normalizedPath, normalizedBody, cloneHeaders(request.headers), response);
+            const responseFromRoute = routeResponse(normalizedMethod, normalizedPath);
+
+            if (responseFromRoute) {
+                const response = responseFromRoute.body instanceof Readable
+                    ? createResponse(responseFromRoute.status, undefined, responseFromRoute.headers, responseFromRoute.body)
+                    : createResponse(responseFromRoute.status, responseFromRoute.body, responseFromRoute.headers);
+
+                await recordCall(normalizedMethod, normalizedPath, normalizedBody, normalizedHeaders, response);
+
+                return response;
+            }
+
+            const response = await defaultResponse(normalizedMethod, normalizedPath, normalizedBody);
+
+            await recordCall(normalizedMethod, normalizedPath, normalizedBody, normalizedHeaders, response);
 
             return response;
         },
@@ -427,12 +641,79 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             headers: {},
             body: undefined
         })),
+        callHostRpc: async <T>(name: string, body?: unknown): Promise<T> => parseJson(await hub.handle({
+            method: "POST",
+            path: `${basePath}/rpc/${name}`,
+            headers: { "content-type": inferContentType(body) },
+            body
+        })) as Promise<T>,
+        callInstanceRpc: async <T>(instanceId: string, name: string, body?: unknown): Promise<T> => parseJson(await hub.handle({
+            method: "POST",
+            path: `${basePath}/instance/${instanceId}/rpc/${name}`,
+            headers: { "content-type": inferContentType(body) },
+            body
+        })) as Promise<T>,
+        callHostRpcStream: async (name: string, body?: unknown): Promise<Readable> => {
+            const response = await hub.handle({
+                method: "POST",
+                path: `${basePath}/rpc/${name}/stream`,
+                headers: { "content-type": inferContentType(body) },
+                body
+            });
+
+            return response.stream ?? createReadableFromPayload("{}");
+        },
+        callInstanceRpcStream: async (instanceId: string, name: string, body?: unknown): Promise<Readable> => {
+            const response = await hub.handle({
+                method: "POST",
+                path: `${basePath}/instance/${instanceId}/rpc/${name}/stream`,
+                headers: { "content-type": inferContentType(body) },
+                body
+            });
+
+            return response.stream ?? createReadableFromPayload("{}");
+        },
         createTopic: async (name?: string, contentType = "text/plain") => parseJson(await hub.handle({
             method: "POST",
             path: `${basePath}/topics`,
             headers: { "content-type": "application/json" },
             body: { id: name, "content-type": contentType }
         })),
+        listTopics: async () => parseJson(await hub.handle({
+            method: "GET",
+            path: `${basePath}/topics`,
+            headers: {},
+            body: undefined
+        })),
+        deleteTopic: async (name: string) => parseJson(await hub.handle({
+            method: "DELETE",
+            path: `${basePath}/topics/${name}`,
+            headers: {},
+            body: undefined
+        })),
+        sendTopic: async (name: string, data?: unknown) => parseJson(await hub.handle({
+            method: "POST",
+            path: `${basePath}/topics/${name}`,
+            headers: { "content-type": inferContentType(data) },
+            body: data
+        })),
+        getTopic: async (name: string) => parseJson(await hub.handle({
+            method: "GET",
+            path: `${basePath}/topics/${name}`,
+            headers: {},
+            body: undefined
+        })),
+        sendNamedData: (name: string, data?: unknown) => hub.sendTopic(name, data),
+        getNamedData: async (name: string): Promise<Readable> => {
+            const response = await hub.handle({
+                method: "GET",
+                path: `${basePath}/topics/${name}/stream`,
+                headers: {},
+                body: undefined
+            });
+
+            return response.stream ?? createReadableFromPayload("{}");
+        },
         requests: () => timeline.map((entry) => ({
             method: entry.method,
             path: entry.path,
@@ -466,7 +747,9 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
                     : (body: unknown) => body === expected || JSON.stringify(body) === JSON.stringify(expected);
 
                 const hasBodyMatch = timeline.some(entry => {
-                    if (!makeMatch(match, entry)) return false;
+                    if (!makeMatch(match, entry)) {
+                        return false;
+                    }
 
                     return expectedFn(entry.body);
                 });
