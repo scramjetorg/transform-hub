@@ -1,6 +1,6 @@
 # Testing Hub Calls
 
-Test Hub calls as sequence behavior: register the specific endpoints the sequence should call, run the sequence, then assert that those calls happened.
+Test Hub calls as sequence behavior: run the sequence with `createHubHarness().context`, then assert that the expected calls happened.
 
 Do not test the Hub mock itself in sequence-level docs. The mock is supporting infrastructure.
 

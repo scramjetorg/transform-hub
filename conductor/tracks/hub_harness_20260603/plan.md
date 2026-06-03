@@ -146,19 +146,22 @@
 
 ## Phase 6: Documentation, Final Validation, and Handoff
 
-- [ ] Task: Update documentation
-    - [ ] Update README to point sequence developers to the new Hub harness for Hub/context behavior tests.
-    - [ ] Update docs for Hub APIs, RPC, topics, streams, lifecycle, storage, events, logging, and exposed API registration.
-    - [ ] Document package metadata/runtime resolution behavior and Node-first multi-engine precedence.
-    - [ ] Document limitations: minimal `space`, no full STH/Docker/Kubernetes/BDD default path, and experimental package status.
-- [ ] Task: Run final validation
-    - [ ] Run all focused `@scramjet/sequence-test` tests.
-    - [ ] Run `npm run build --workspace @scramjet/sequence-test` or the narrowest sufficient package build.
-    - [ ] Run `npx eslint "packages/sequence-test/src" --ext .ts` or equivalent changed-source lint.
-    - [ ] Confirm runtime invariant check is unnecessary unless runtime protocol surfaces changed; otherwise run `npm run check:runtime-invariants`.
-    - [ ] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
-- [ ] Task: Final review and handoff
-    - [ ] Confirm requirements and acceptance criteria are satisfied.
-    - [ ] Confirm tests, docs, exports, and fixture layout are aligned.
-    - [ ] Prepare concise implementation summary and known limitations.
+- [x] Task: Update documentation
+    - [x] Update README to point sequence developers to the new Hub harness for Hub/context behavior tests.
+    - [x] Update docs for Hub APIs, RPC, topics, streams, lifecycle, storage, events, logging, and exposed API registration.
+    - [x] Document package metadata/runtime resolution behavior and Node-first multi-engine precedence.
+    - [x] Document limitations: minimal `space`, no full STH/Docker/Kubernetes/BDD default path, and experimental package status.
+    - Notes: Added `docs/testing-hub-harness.md` and updated package README/docs index plus behavior-specific docs.
+- [x] Task: Run final validation
+    - [x] Run all focused `@scramjet/sequence-test` tests.
+    - [x] Run `npm run build --workspace @scramjet/sequence-test` or the narrowest sufficient package build.
+    - [x] Run `npx eslint "packages/sequence-test/src" --ext .ts` or equivalent changed-source lint.
+    - [x] Confirm runtime invariant check is unnecessary unless runtime protocol surfaces changed; otherwise run `npm run check:runtime-invariants`.
+    - [x] Record skipped Docker/Kubernetes/BDD validation as out of scope unless later required.
+    - Notes: Passed full `npm test --workspace @scramjet/sequence-test`, `npm run build --workspace @scramjet/sequence-test`, and `npx eslint "packages/sequence-test/src" --ext .ts`. Runtime invariant check, Docker/Kubernetes, and BDD validation were skipped because this track stayed package-local to the experimental sequence behavior harness and did not change runtime protocol or adapter surfaces.
+- [x] Task: Final review and handoff
+    - [x] Confirm requirements and acceptance criteria are satisfied.
+    - [x] Confirm tests, docs, exports, and fixture layout are aligned.
+    - [x] Prepare concise implementation summary and known limitations.
+    - Notes: Implemented targeted `createHubHarness()` replacing the simple Hub mock with compatibility wrapper, package metadata resolution, Hub/context/RPC/topic/stream coverage, live package-backed fixtures, docs, and package-local validation. Known limitations remain intentional: experimental package, minimal `this.space`, direct Node `runSequence()` path only, and no full STH/Docker/Kubernetes/BDD execution by default.
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Documentation, Final Validation, and Handoff' (Protocol in workflow.md)

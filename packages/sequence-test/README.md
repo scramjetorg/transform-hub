@@ -7,7 +7,7 @@ The package is for tests that ask questions like:
 - Does my sequence map input records correctly?
 - Does my sequence use app context as expected?
 - Does my sequence call the Hub endpoints I expect?
-- Does my sequence emit events or expose an API?
+- Does my sequence emit events, use local storage, log details, call RPC/topics, or expose an API?
 
 It is not a replacement for package unit tests, BDD tests, Docker/Kubernetes adapter tests, or runtime invariant checks.
 
@@ -63,6 +63,7 @@ The package docs are organized around sequence behavior:
 
 - [`docs/testing-input-output.md`](docs/testing-input-output.md)
 - [`docs/testing-appcontext.md`](docs/testing-appcontext.md)
+- [`docs/testing-hub-harness.md`](docs/testing-hub-harness.md)
 - [`docs/testing-hub-calls.md`](docs/testing-hub-calls.md)
 - [`docs/testing-lifecycle-calls.md`](docs/testing-lifecycle-calls.md)
 - [`docs/testing-events.md`](docs/testing-events.md)
@@ -70,9 +71,16 @@ The package docs are organized around sequence behavior:
 
 Lower-level runner/protocol helpers are documented separately in [`docs/runner-behavior.md`](docs/runner-behavior.md). Those helpers exist to support sequence tests; they should not be the main thing sequence authors test.
 
+## Hub And Context Harness
+
+Use `createHubHarness()` when a sequence needs `this.hub`, lifecycle methods, events, local storage, logging, API registration, RPC, topics, streams, or minimal `this.space` behavior during direct `runSequence()` tests. The harness records normalized Hub calls and context interactions so tests can assert payloads, call counts, and ordered behavior without starting a full Scramjet Transform Hub.
+
+Package-backed fixtures can use `resolveSequenceFixtureMetadata()` to validate `package.json.main`, keep fixture paths inside the fixture directory, default missing engines to Node-compatible metadata, and apply Node-first multi-engine precedence.
+
 ## Current Limits
 
 - `runSequence()` currently executes the direct Node path only.
 - `createSequenceTest()` currently exposes harness-shaped lifecycle and capture helpers, but does not yet spawn the full runner by itself.
+- `createHubHarness()` provides deterministic in-memory Hub/context behavior for sequence tests; it is not a full Transform Hub and `this.space` coverage is intentionally minimal.
 - Python and Bun options are available for runner-planning support, but local runtime execution depends on the runtime wrapper/tooling being available.
 - Full Transform Hub, Docker adapter, Kubernetes adapter, and BDD workflows remain outside this package's default path.

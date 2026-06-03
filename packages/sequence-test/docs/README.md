@@ -6,6 +6,7 @@ Start with sequence behavior:
 
 - [`testing-input-output.md`](testing-input-output.md): map input records and assert output records.
 - [`testing-appcontext.md`](testing-appcontext.md): test sequences that use app context.
+- [`testing-hub-harness.md`](testing-hub-harness.md): test Hub/context calls, RPC, topics, streams, storage, logging, and ordered behavior.
 - [`testing-hub-calls.md`](testing-hub-calls.md): test expected outbound Hub calls.
 - [`testing-lifecycle-calls.md`](testing-lifecycle-calls.md): test sequences that call lifecycle operations.
 - [`testing-events.md`](testing-events.md): test event usage.
