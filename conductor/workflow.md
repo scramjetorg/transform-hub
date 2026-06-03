@@ -16,6 +16,59 @@ For each task:
 6. Update documentation or Conductor artifacts when behavior changes.
 7. Commit after the task is complete with a concise message.
 
+## Implementation Delegation
+
+Use the `fixer` agent for less complex implementation tasks when the work is
+bounded, mostly local to one package, and can be described with clear expected
+changes and verification.
+
+Prefer delegating to `fixer` when all of these are true:
+
+1. The affected package or local area is known.
+2. The task can be completed mostly within a single package.
+3. The desired behavior is already defined by the track, issue, test, or prior investigation.
+4. The expected changes can be described as a bounded set of edits.
+5. The verification can be stated as concrete package-level commands or checks.
+6. The task does not require product clarification, architecture decisions, or cross-track planning.
+
+Allow the `fixer` agent to perform small local discovery inside the package or
+area it was assigned, but do not delegate broad repository exploration or
+multi-package design decisions to it.
+
+Split implementation work into multiple `fixer` delegations when the change
+touches several packages or interdependent areas. Each delegation should have a
+single-package or otherwise tightly bounded scope. After the delegated chunks
+complete, the parent agent must perform integration review and run the narrowest
+sufficient integration-level validation.
+
+When delegating to `fixer`, provide:
+
+1. A concise task description.
+2. The relevant package, files, entrypoints, and constraints.
+3. The expected set of changes.
+4. The verification command(s) or checks to run.
+5. Known failure classifications, known-solution constraints, or files that must not be touched.
+
+Do not delegate to `fixer` when the task requires:
+
+1. Choosing between competing designs.
+2. Broad repository exploration before implementation.
+3. Changing public contracts, runtime protocol behavior, or operational defaults without prior approval.
+4. Resolving unclear product behavior.
+5. Editing user-controlled or unrelated files.
+6. Handling destructive cleanup or risky migrations.
+
+Delegations should generally be completed once started. If a delegated task
+encounters unclear behavior, scope expansion, conflicting worktree changes, or a
+non-converging failure, the parent agent should resolve the blocker, ask the user
+when required, then either resume the delegation or split it into a clearer
+bounded task.
+
+The parent agent remains responsible for reviewing delegated changes, confirming
+or running verification, performing integration-level validation after related
+delegations complete, updating Conductor artifacts, asking the user when
+required, and committing only scoped completed work.
+
 ## Testing Requirements
 
 - Maintain greater than 80% meaningful test coverage for changed behavior.
@@ -44,9 +97,19 @@ real product or code failure.
 Before deciding on a recovery path for a recurring or recognizable failure,
 consult `conductor/known-solutions.md`. If an entry matches the observed
 problem, follow its Solution, Constraints, and Ignore-If rules. If no entry
-matches, use the general recovery policy below. When a new repeatable recovery
-path is learned, update `known-solutions.md` with a fixed five-line problem
-entry.
+matches, use the general recovery policy below.
+
+When a new repeatable recovery path is discovered:
+
+1. Apply it without user confirmation only when it is safe, local to the active
+   task, non-destructive, and within the current track scope.
+2. Before adding or updating `conductor/known-solutions.md`, pause and ask the
+   user whether the proposed solution should be recorded.
+3. Present the observed problem, proposed solution, constraints, and ignore
+   conditions in the question.
+4. If approved, update `known-solutions.md` with a fixed five-line problem entry.
+5. If rejected, continue the current task if possible, but do not record the
+   solution as known.
 
 ### Test and Validation Failures
 
@@ -85,7 +148,7 @@ When a validation, test, or tool command fails, do not halt automatically. First
    - environment/tooling/transient,
    - or known in the current session.
 
-Continue without additional user confirmation when fixing session-introduced failures, fixing preexisting in-scope failures, or carrying forward failures already marked known in the current session. Briefly note when a failure appears preexisting but in scope, or when a known failure is not treated as a blocker.
+Continue without additional user confirmation when fixing session-introduced failures, fixing preexisting in-scope failures, or carrying forward failures already marked known in the current session, provided the fix is safe, local, non-destructive, and within scope. Briefly note when a failure appears preexisting but in scope, or when a known failure is not treated as a blocker.
 
 Pause for user guidance only when the failure appears preexisting and unrelated to the active track/session scope, the root cause cannot be classified after reasonable investigation, or the fix would require scope expansion, architecture changes, or edits to user-controlled files.
 

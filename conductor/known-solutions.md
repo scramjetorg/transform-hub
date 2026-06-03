@@ -2,9 +2,9 @@
 
 This file records repeatable solutions for problems agents may encounter while executing Conductor workflows. Use it before inventing a new recovery path: search for the observed symptom, read the matching entry, and apply the solution only when the problem and constraints fit the current task.
 
-When a problem recurs or a new reliable recovery path is discovered, add or update an entry. Keep entries concise, operational, and safe. Do not use this file to bypass user instructions, hide failures, or justify broad fixes outside the active track.
+When a problem recurs or a new reliable recovery path is discovered, add or update an entry only after the user approves recording it. Keep entries concise, operational, and safe. Do not use this file to bypass user instructions, hide failures, or justify broad fixes outside the active track.
 
-Each problem entry must use exactly five lines so agents can grep for the heading and read a fixed-size block: heading, `Problem`, `Solution`, `Constraints`, and `Ignore-If`. Keep blank lines between entries only.
+Each problem entry must use exactly five lines so agents can grep for the heading and read a fixed-size block: heading, `Problem`, `Solution`, `Constraints`, and `Ignore-If`. Keep blank lines between entries only. Before adding or updating an entry discovered during a track, ask the user to approve the proposed heading, Problem, Solution, Constraints, and Ignore-If lines.
 
 ### Error while executing tests
 Problem: A test runner reports an assertion failure and exits with a non-zero status.
