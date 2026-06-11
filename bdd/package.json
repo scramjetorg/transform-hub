@@ -5,12 +5,16 @@
   "main": "_cucumber.js",
   "dependencies": {
     "@scramjet/api-client": "^1.1.0",
+    "@scramjet/client-utils": "^1.1.0",
     "@scramjet/logger": "^1.1.0",
+    "@scramjet/multi-manager-api-client": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/sth-config": "^1.1.0",
+    "@scramjet/utility": "^1.1.0",
     "dockerode": "^3.3.4",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
+    "glob": "^7.2.3",
     "n-readlines": "^1.0.1",
     "scramjet": "^4.37.0"
   },
