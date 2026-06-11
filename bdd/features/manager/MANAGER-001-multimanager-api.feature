@@ -25,14 +25,14 @@ Feature: MANAGER-001 MultiManager API
         When MultiManager with id "mm3", "start" POST endpoint queried with data "{ \"manager\": { \"id\": \"Mgr1\" } }"
         Then it responds with "{ \"id\": \"Mgr1\" }"
 
-    @local @api @cleanupmm @cleanupmh @parallel
+    @local @api @cleanupmm @cleanupmh @parallel @requires-multi-host
     Scenario: API-001 TC-004 MultiManager API /msth/.../version endpoint
         Given MultiManager with options "--id mm4 --server-api-port 20004" is started
         When started MultiHost with options "--id mh4 --server-api-port 21004 --multi-manager-url http://0.0.0.0:20004"
         When MultiManager with id "mm4", "msth/mh4/api/v1/version" GET endpoint queried
         Then it responds with "version"
 
-    @local @api @cleanupmm @cleanupmh
+    @local @api @cleanupmm @cleanupmh @requires-multi-host
     Scenario: API-001 TC-005 MultiManager API /msth/.../start and stop endpoints
         Given MultiManager with options "--id mm5 --server-api-port 20005" is started
         When started MultiHost with options "--id mh5 --server-api-port 21005 --multi-manager-url http://0.0.0.0:20005"
@@ -56,7 +56,7 @@ Feature: MANAGER-001 MultiManager API
         When MultiManager with id "mm7", "list" GET endpoint queried
         Then it lists manager with response "[{ \"id\": \"Mgr7\" }]"
 
-    @local @api @cleanupmm @cleanupmh
+    @local @api @cleanupmm @cleanupmh @requires-multi-host
     Scenario: API-001 TC-008 Send sequence to host
         Given MultiManager with options "--id mm8 --server-api-port 20008" is started
         When Manager started on MultiManager "mm8" with config "{\"id\": \"Mgr8\"}"
@@ -81,7 +81,7 @@ Feature: MANAGER-001 MultiManager API
     #     Then it lists manager with 2 sequences
     #     Then MultiManager with id "mm9" is still running
 
-    @local @api @cleanupmm @cleanupmh
+    @local @api @cleanupmm @cleanupmh @requires-multi-host
     Scenario: API-001 TC-010 Log from Manager
         Given MultiManager with options "--id mm10 --server-api-port 20010" is started
         When Manager started on MultiManager "mm10" with config "{\"id\": \"Mgr10\"}"
@@ -106,7 +106,7 @@ Feature: MANAGER-001 MultiManager API
         Then instance "instance-hello-input-out-11-1" output is expected response "names"
         Then MultiManager with id "mm11" is still running
 
-    @local @api @cleanupmm @cleanupm
+    @local @api @cleanupmm @cleanupm @requires-multi-host
     Scenario: API-001 TC-012 MultiManager API Manager - Host connection
         Given MultiManager with options "--id mm12 --server-api-port 20012" is started
         When started MultiHost with options "--id mh12 --server-api-port 21012 --multi-manager-url http://0.0.0.0:20012"

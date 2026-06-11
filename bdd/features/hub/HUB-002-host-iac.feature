@@ -20,10 +20,11 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
 
     @ci-hub @starts-host
     Scenario: HUB-002 TC-003 Start host with hubclient controller
-        When hub process is started with random ports and parameters "--sequences-root iac-test-data/sequences/ --identify-existing --startup-config iac-test-data/start-config-hubclient.json --runtime-adapter=process"
+        When hub process is started with random ports and parameters "--sequences-root iac-test-data/sequences/ --identify-existing --startup-config iac-test-data/start-config-hubclient.json --runtime-adapter=process -K"
         Then host is running
         Then I get list of instances
         And there are some instances
+        And instances of sequence "hub-client" are available
         And send kill message to instances of sequence "hub-client"
         And wait for "500" ms
         And host is running

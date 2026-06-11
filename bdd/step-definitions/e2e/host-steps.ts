@@ -597,6 +597,19 @@ When("send kill message to instances of sequence {string}", async function(id) {
     }
 });
 
+Then("instances of sequence {string} are available", { timeout: 10000 }, async function(id: string) {
+    const seqClient = hostClient.getSequenceClient(id);
+    const startedAt = Date.now();
+    let instanceIds = await seqClient.listInstances();
+
+    while (!instanceIds.length && Date.now() - startedAt < 10000) {
+        await defer(100);
+        instanceIds = await seqClient.listInstances();
+    }
+
+    assert.ok(instanceIds.length, `No instances found for sequence ${id}`);
+});
+
 When("send kill message to instance", async function(this: CustomWorld) {
     const resp = await this.resources.instance?.kill();
 

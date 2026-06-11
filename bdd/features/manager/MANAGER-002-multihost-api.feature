@@ -6,7 +6,7 @@ Feature: MANAGER-002 MultiHost API
 # Each test should use MM and MH on different ports since tests are run in parallel.
 # This test suit uses port starting from 22000 for MultiManagers and 23000 for MultiHosts.
 
-    @local @api @cleanupmh @cleanupmm
+    @local @api @cleanupmh @cleanupmm @requires-multi-host
     Scenario: MultiHost API correctly handles MultiManager disconnecting
         Given MultiManager with options "--id mm1 --server-api-port 22000" is started
         When started MultiHost with options "--id mh1 --server-api-port 23000 --multi-manager-url http://0.0.0.0:22000"

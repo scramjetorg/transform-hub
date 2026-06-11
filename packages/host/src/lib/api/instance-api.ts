@@ -205,7 +205,7 @@ export class InstanceAPI {
     }
 
     private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
-        if (this.csi.status !== InstanceStatus.RUNNING) {
+        if (![InstanceStatus.STARTING, InstanceStatus.RUNNING].includes(this.csi.status)) {
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Instance not running" };
         }
 

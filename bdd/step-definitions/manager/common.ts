@@ -25,10 +25,13 @@ function getExecutableCmd(packageName: string): string[] {
     const sourcePath = packageName === "multi-host"
         ? `../../cpm/packages/${ packageName }/src/bin/start.ts`
         : `../packages/${ packageName }/src/bin/start.ts`;
+    const builtPath = packageName === "multi-host"
+        ? `../../dist/${ packageName }/bin/start.js`
+        : `../dist/${ packageName }/bin/start.js`;
 
     return process.env.SCRAMJET_SPAWN_TS
         ? ["npx", "ts-node", path.resolve(process.cwd(), sourcePath)]
-        : ["node", path.resolve(process.cwd(), `../dist/${ packageName }/bin/start.js`)];
+        : ["node", path.resolve(process.cwd(), builtPath)];
 }
 
 function spawnProcess(

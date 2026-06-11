@@ -31,7 +31,7 @@ BDD tests are located in a `bdd` folder, to execute them simply follow the steps
 Before start running any test, please make sure that all the packages are installed and built. In order to do that please run the following command:
 
 ```bash
-yarn clean && yarn install && yarn build:all
+npm run clean && npm install && npm run build:all
 ```
 
 This command will remove all the 'dist' folders (if there were any), after that it will install dependencies, compile the code in all the packages including 'reference-apps' package, which contains all the Sequences that we use in our BDD tests. After executing the command from above, every Sequence will be also compressed into `.tar.gz` file. Those compressed files are ready-to-use Sequence packages, that we use in BDD tests scenarios.
@@ -46,7 +46,7 @@ Every scenario has its own title and unique index number. We can use those index
 > :bulb: **NOTE:** Commands for executing tests must be run from the root of the repository.
 
 ```bash
-yarn test:bdd --name="E2E-001 TC-002"
+npm run test:bdd -- --name="E2E-001 TC-002"
 ```
 
 This is the output after running this single test:
@@ -56,7 +56,7 @@ This is the output after running this single test:
 - to execute a bulk of scenarios, for example from the same feature file, you can simply use the substring of their index like "E2E-001", run the following command:
 
 ```bash
-yarn test:bdd --name="E2E-001"
+npm run test:bdd -- --name="E2E-001"
 ```
 
 This command will run all the scenarios that have the substring "E2E-001" in their index, whether they are in the same feature file or not. Cucumber will search all the files.
@@ -68,13 +68,13 @@ Three tests scenarios were found and executed:
 When you want to execute a group of tests you can do it using the substring of their name, for example, to execute all E2E tests:
 
 ```bash
-yarn test:BDD --name="E2E"
+npm run test:bdd -- --name="E2E"
 ```
 
 - you can also execute a bulk of tests by using their `--tag` (`@tag_name`). Tags are used to group related features, independent of your file and directory structure. For example:
 
 ```bash
-yarn test:bdd --tags="@ci"
+npm run test:bdd -- --tags="@ci"
 ```
 
 The list of scenarios marked with `@ci` tag is quite long so I will paste only start of the test and the summary of the test execution:
@@ -92,12 +92,42 @@ Scenario can have more that one tag, can have two or even more, for example:
 In the situation like this above, when you want to execute tests with `@ci` tag but without `@starts-host` tag, command like this below will do the job:
 
 ```bash
-yarn test:bdd --tags="@ci" --tags="not @starts-host"
+npm run test:bdd -- --tags="@ci" --tags="not @starts-host"
+```
+
+### Docker-required HUB scenarios
+
+The default STH HUB BDD command excludes scenarios tagged `@requires-docker`:
+
+```bash
+npm run test:bdd-ci-hub
+```
+
+Use the explicit Docker command only in an environment where the Docker runtime adapter can be initialized by the BDD runner:
+
+```bash
+npm run test:bdd-ci-hub-docker
+```
+
+The current Docker-required HUB scenarios are `HUB-001 TC-012` and `HUB-001 TC-013`, which assert prerunner container image and memory configuration. Older `@docker-specific` scenarios `HUB-001 TC-009`, `HUB-001 TC-010`, and `HUB-001 TC-011` remain outside `@ci-hub` and still need a separate review before becoming CI signals.
+
+### Manager migration scenarios
+
+Manager/MultiManager migration scenarios live under `bdd/features/manager` and are tagged `@manager-migration`. Build packages first, then run them against built modules with:
+
+```bash
+npm run test:bdd-manager-migration
+```
+
+The default Manager migration command excludes scenarios tagged `@requires-multi-host`; those need a built root `dist/multi-host` from the CPM MultiHost package. To include them after root MultiHost is buildable, run:
+
+```bash
+npm run test:bdd-manager-migration-all
 ```
 
 ### Running BDD in a container
 
-The `yarn test:bdd` command now runs through `scripts/run-bdd-docker.js`, which launches Cucumber inside a Docker container. This isolates the test from the host and prevents orphaned processes.
+The root `npm run test:bdd` command runs through `scripts/run-bdd-docker.js`, which launches Cucumber inside a Docker container. This isolates the test from the host and prevents orphaned processes.
 
 **Prerequisites**
 
