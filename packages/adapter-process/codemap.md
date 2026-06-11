@@ -1,23 +1,24 @@
-# Package Atlas: adapter-process
+# package adapter-process
 
 ## Responsibility
+Local process runtime adapter package that runs sequences as direct host processes for development/edge execution.
 
-Process adapter runtime package for Scramjet Transform Hub. It bridges host-side adapter contracts to process-based execution and packaging, with runtime helpers exposed from `src/`.
+- Registers adapter configuration/defaults (`sequencesRoot`, safe-operation limits, instance requirements).
+- Delegates lifecycle to `ProcessSequenceAdapter` and `ProcessInstanceAdapter`.
 
 ## Design/Patterns
-
-- Thin package shell over TypeScript sources in `src/`.
-- Uses the shared workspace dependency graph from `@scramjet/*` packages.
-- Publishes source entrypoints directly from package `main` and package scripts.
+- Light-weight implementation of the adapter augmentation interface.
+- Minimal orchestration layer: sequence metadata + process execution with `@scramjet/runner` utilities.
+- Uses shared environment helpers from `@scramjet/adapters-common` (runner config + env serialization).
 
 ## Data & Control Flow
-
-- Package scripts drive local start, test, build, docs, and publish flows.
-- Runtime code is loaded from `src/index.ts` via the package entrypoint.
-- Build/publish uses the monorepo build script and `prepack` hook.
+- `augment` injects sequence directory settings and `instanceRequirements`.
+- `identify`/`list` leverage adapters-common decoders and package file scanning to surface runnable sequence configs.
+- `dispatch` resolves runtime env, spawns the selected runner binary/process, and attaches stdin/stdout/stderr/cancel handlers.
+- Instance state and cleanup are derived from process exit/kill paths and `waitFor` completion.
+- Failure handling preserves return codes and writes diagnostic logs via host logger adapter interface.
 
 ## Integration Points
-
-- Consumes `@scramjet/model`, `@scramjet/runner`, `@scramjet/utility`, `@scramjet/adapters-common`, and `@scramjet/sth-config`.
-- Tests use AVA with `ts-node/register`.
-- Documentation generation uses TypeDoc.
+- Shared packages: `@scramjet/runner`, `@scramjet/model`, `@scramjet/adapters-common`, `@scramjet/sth-config`.
+- Host discovers and executes this adapter via runner package registration.
+- Used as non-containerized execution path and thus bypasses Docker/Kubernetes orchestration.

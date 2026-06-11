@@ -2,16 +2,25 @@
 
 ## Responsibility
 
-Bun sequence runtime wrapper for the outer runner. Owns boot-config validation, optional direct sequence execution, and delegation to the Node runtime when host integration is required.
+Bun runtime facade package for the outer runner. Validates Bun boot config, supports direct no-host execution path, and delegates host-integrated execution to `runner-node`.
 
-## Design/Patterns
+## Design / Patterns
 
-Boot-config first startup with a split execution path: local Bun-only invocation for no-host cases, or protocol-compatible delegation to `runner-node` for full host/monitoring behavior.
+- **Path bifurcation by host presence**:
+  - no host channels in boot config → direct sequence require/invocation in Bun;
+  - host channels present → spawn `runner-node` process for protocol compatibility.
+- **Strict contract reuse**: Bun runtime reads/writes the same boot config shape as Node and reuses the same monitoring/control semantics.
+- **Runtime resolution strategy**: resolves bundled or source `runner-node` entry dynamically for source-tree and package usage.
 
 ## Data & Control Flow
 
-`runner-bun.ts` reads argv[2], validates the JSON boot config, loads the sequence module directly when no host connection is present, otherwise resolves and invokes the Node bootstrap. The package exposes runtime constants and boot-config helpers for reuse.
+`bin/runner-bun.ts` reads `argv[2]`, validates boot config, then:
+
+- **Direct mode** (no host): `require(sequencePath)`, invoke exported functions with input stream + args.
+- **Delegation mode**: spawn Node with resolved `runner-node` entry and forwarded boot-config path.
+
+Monitoring and exit behavior follows Node's status model; Bun acts as an execution decision layer.
 
 ## Integration Points
 
-Depends on the outer runner boot-config contract, `@scramjet/runner-node` for delegated runtime execution, `@scramjet/symbols`, and Bun/Node module loading.
+Depends on boot-config contract and parser from `@scramjet/runner-bun`, delegate contract to `@scramjet/runner-node`, and runtime symbols/messaging shared with the outer runner stack.

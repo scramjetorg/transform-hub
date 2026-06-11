@@ -2,16 +2,20 @@
 
 ## Responsibility
 
-Bun runtime implementation helpers: boot config parsing/validation, runtime constants, and bootstrap delegation logic.
+Runtime helpers for Bun execution mode: boot-config parsing/validation and the top-level helper surface used by Bun bootstrap and other packages.
 
-## Design/Patterns
+## Design / Patterns
 
-Small validation and adapter helpers around JSON boot state. Keeps Bun-specific checks isolated from the runtime bootstrap entry.
+- **Strict parser/validator** for Bun boot JSON mirroring Node runtime schema.
+- **Small utility module boundary** so Bun CLI logic stays lightweight.
+- **Purely functional exports** (`readBootConfig`, `parseBootConfigPathFromArgv`, `validateBootConfig`) used both by runtime and tests.
 
 ## Data & Control Flow
 
-`boot-config.ts` parses argv[2], validates the boot JSON shape, and returns a typed config. `index.ts` exports runtime identity and helpers, while the Bun entry uses them to choose between direct sequence execution and Node-runtime delegation.
+`boot-config.ts` ingests `argv[2]`, resolves absolute path when needed, parses JSON, validates required/optional fields (IDs, ports, instance metadata, arrays/objects), and returns strongly typed `RunnerBunBootConfig`.
+
+`index.ts` exposes contract symbols/types so dependent tooling can share runtime identity and parser helpers.
 
 ## Integration Points
 
-Uses `@scramjet/types`, filesystem/path APIs, Bun/Node module loading, and the `@scramjet/runner-node` bootstrap contract.
+Uses `@scramjet/types` schema fields and aligns with `@scramjet/runner-node` contract for delegated runs (`instancesServerHost/Port`, monitoring/context fields, log level and expose settings).

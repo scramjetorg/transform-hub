@@ -1,13 +1,22 @@
 # packages/adapters-common/src/
 
 ## Responsibility
-Implementation of shared adapter helpers: runner env generation, sequence package validation, and stored-sequence config reconstruction.
+Implementation layer for shared adapter utilities used during sequence bootstrap and runtime process creation.
+
+- Package `package.json` validation/decoding.
+- Runner config reconstruction.
+- Runner env serialization and runtime/image selection.
 
 ## Design/Patterns
-Functional helpers with minimal state. Validation is centralized in `sequencePackageJSONDecoder`; config reconstruction reuses the same decoded schema across adapters.
+- File-scoped utilities with no runtime side effects.
+- Shared JSON decoders (`validate-sequence-package-json.ts`) are source of truth for required sequence fields.
+- Helper composition (`utils.ts` + `get-runner-env.ts`) avoids adapter-specific duplication.
 
 ## Data & Control Flow
-`validate-sequence-package-json.ts` defines the shared `package.json` schema. `utils.ts` reads and validates stored sequence metadata, then builds adapter-specific config plus detected language. `get-runner-env.ts` serializes runtime config into env entries.
+- `validate-sequence-package-json.ts` defines and validates the schema for stored sequence metadata.
+- `utils.ts` provides `getRunnerConfigForStoredSequence()`, `selectRunnerImageForEngines()`, and `detectLanguage()` to produce a normalized runtime config.
+- `get-runner-env.ts` converts normalized config into env array payload expected by all runtimes.
 
 ## Integration Points
-Imported by Docker/Kubernetes sequence and instance adapters. Relies on `@scramjet/types`, `@scramjet/utility`, filesystem APIs, and `ts.data.json`.
+- Consumed by `adapter-docker`, `adapter-kubernetes`, and `adapter-process` source adapters.
+- Uses `@scramjet/types`, `@scramjet/utility`, and `ts.data.json` codecs for type-safe data conversion.

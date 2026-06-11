@@ -2,16 +2,32 @@
 
 ## Responsibility
 
-Child-process runtime executors and launch helpers for Node, Bun, and Python, plus runtime selection and lifecycle/stdio forwarding support.
+Child-process launch/execution adapters for Node/Bun/Python and the runtime-selection layer used by outer startup.
 
-## Design/Patterns
+## Design / Patterns
 
-Strategy-based executor selection over a fixed fd layout. Each executor is a thin spawn wrapper with strict handle expectations and runtime-specific env sanitization.
+- **Strategy pattern**: `selectExecutor(...)` returns one of `nodeExecutor`, `bunExecutor`, or `pythonExecutor`.
+- **Uniform contract**: each executor exposes a `RuntimeExecutor` with a `spawn()` method and returns `RuntimeProcessHandles`.
+- **Runtime-specific guardrails**:
+  - Node: absolute-path validation and optional ts-node setup (`--require` when `needsTsNode` is resolved).
+  - Bun/Python: strips outer-runner env (`SEQUENCE_*`, `RUNNER_CONNECT_INFO`) and injects runtime binary (`BUN_BIN`/`PYTHON_BIN` defaults).
+- **Strict stream validation**: stdio slots 0–5 are enforced and control/monitoring handles are guaranteed duplex-capable before return.
+
+The module also contains stream-forward/inspection helpers used by the outer runtime:
+- `stream-forwarder.ts` for host passthrough of child `stdout`/`stderr`
+- `lifecycle-observer.ts` for non-destructive monitoring scan of terminal frames
+- `exit-translation.ts` for `close` → `RunnerExitCode`/`RunnerMessageCode` mapping
 
 ## Data & Control Flow
 
-`select.ts` picks an executor from `engines` (`bun` first, then `python3`, else Node). Launcher helpers resolve runtime entrypoints; `node-process-executor.ts`, `bun-process-executor.ts`, and `python-process-executor.ts` spawn children and expose stdout/stderr/control/monitoring handles for the outer runner.
+`start-runner` passes `engines` and spawn options into `selectExecutor`. Launcher modules choose runtime; executor `spawn` functions then:
+
+- spawn child with fixed stdio layout (`[pipe,pipe,pipe,ipc,pipe,pipe]`).
+- return validated handles (`stdout`, `stderr`, `control`, `monitoring`, `child`)
+- leave channel framing untouched for outer runner to forward raw bytes.
+
+Lifecycle helpers inspect the child monitoring stream for terminal markers and translate process close outcomes into canonical runner exit semantics.
 
 ## Integration Points
 
-Touches `@scramjet/types`, Node child-process APIs, runner-bun/runner-node package entrypoints, Python module entry resolution, and stream/lifecycle helpers.
+Depends on `@scramjet/types` runtime interfaces, `@scramjet/symbols` runtime selection + message codes, Node `child_process`/`stream` modules, and `@scramjet/runner-node`/`@scramjet/runner-bun` entry resolvers.

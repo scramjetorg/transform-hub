@@ -1,13 +1,30 @@
 # packages/adapter-docker/
 
 ## Responsibility
-Docker adapter package for stored-sequence identification, runner container execution, config augmentation, and network bootstrap.
+Implements the Docker runtime adapter plugin for sequence storage and execution.
+
+- Exposes Docker-specific config/CLI augmentation.
+- Validates/initializes Docker environment at startup.
+- Implements sequence and instance adapters used by the host runtime.
 
 ## Design/Patterns
-Two-stage runtime: the sequence adapter inspects stored package metadata and selects a runner image; the instance adapter starts that image with computed env, ports, mounts, and cleanup. `DockerodeDockerHelper` keeps Docker API access isolated.
+- Uses the host adapter augmentation contract (`augment`, `augmentOptions`, `initialize`).
+- Splits concerns into `DockerSequenceAdapter` (identify/list/metadata) and `DockerInstanceAdapter` (run/remove/inspect).
+- Centralizes Docker API calls in `DockerodeDockerHelper` to keep adapter logic thin.
 
 ## Data & Control Flow
-`augment()` wires CLI options, config defaults, and adapter classes. Sequence flow pulls the prerunner, runs identification, decodes `package.json`, detects `bun`/`python3`/`node` engine hints, and selects the matching runner image. Instance flow derives env, ports, and network state, starts the runner container, waits for completion, captures crash logs, and removes volumes.
+Sequence flow:
+1. `initialize` checks daemon connectivity and prepares helper/network state.
+2. `identify` mounts an uploaded archive into a temporary volume, runs prerunner, and reads identification JSON.
+3. Runtime config is decoded via adapters-common package decoders and runner image is chosen by `selectRunnerImageForEngines`.
+4. `list` discovers labeled sequence volumes and reconstructs metadata from stored package configuration.
+
+Instance flow:
+1. `dispatch` resolves ports, runner environment and bridge/network mode, then launches runner container.
+2. Streaming/logging and lifecycle status are observed through helper methods (`waitForContainer`, `getContainerOutput`, `getContainerInfo`, `getContainerStats`).
+3. Cleanup routines remove containers and related sequence volumes.
 
 ## Integration Points
-Depends on `@scramjet/adapters-common`, `@scramjet/types`, `@scramjet/model`, `@scramjet/obj-logger`, `dockerode`, and Docker networking. Uses Docker labels/volumes/network `transformhub0` to discover resources and connect STH to runners.
+- `@scramjet/adapters-common`: runner env config + package decoding + image selection.
+- Docker bridge `transformhub0` and host-container linking logic in `setupDockerNetworking` for cross-container reachability.
+- Shared sequence abstraction packages (`@scramjet/types`, `@scramjet/model`, `@scramjet/utility`).

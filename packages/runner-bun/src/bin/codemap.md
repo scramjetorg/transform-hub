@@ -2,16 +2,21 @@
 
 ## Responsibility
 
-Executable Bun runtime entrypoint. Loads boot config, executes local sequences when possible, or hands off to the Node runtime bootstrap.
+Executable Bun entrypoint (`runner-bun`). Normalizes boot config and executes either direct Bun sequence invocation or delegated Node runtime execution.
 
-## Design/Patterns
+## Design / Patterns
 
-Conditional bootstrap with explicit runtime delegation. The entry keeps Bun-specific validation local and reuses the Node runtime for host-backed execution.
+- **Conditional branching** on host transport presence in boot config.
+- **Separation of concerns**: Bun-specific runtime validation and logging isolated from Node delegation code path.
+- **Error normalization**: failure paths consistently serialize error details and map to process exit codes.
 
 ## Data & Control Flow
 
-Reads boot config path from `argv[2]`, validates the JSON payload, then either requires the sequence module directly or resolves `@scramjet/runner-node` and calls its bootstrap. Errors are surfaced to stderr and converted to process exit codes.
+- `parseBootConfigPathFromArgv(process.argv)` and `readBootConfig` validate runtime contract before execution.
+- If both `instancesServerHost` and `instancesServerPort` are absent, run directly in Bun by requiring `sequencePath` and executing exported functions with args over an empty input stream.
+- If host is configured, spawn a `node` process with resolved runner-node entry (ts-node fallback when needed), pass boot-config path, and preserve required stdio channels.
+- Pipe through `stdio: [inherit, inherit, inherit, ipc, inherit, inherit]` and convert exit signal/code to entry exit status.
 
 ## Integration Points
 
-Depends on `boot-config`, `@scramjet/runner-node`, `@scramjet/symbols`, and Bun/Node process and module resolution APIs.
+Relies on Bun/Node process spawning, `@scramjet/runner-node` entry resolution, and shared error/logging conventions used by outer and node runtimes.

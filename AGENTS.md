@@ -41,3 +41,14 @@
 - TypeScript base is strict CommonJS targeting ES2019, with `allowJs`, decorators, declarations, and `noUnusedLocals` enabled.
 - ESLint parses with `./tsconfig.base.json`; `dist/` and `node_modules/` are ignored.
 - Prettier config only sets `trailingComma: none`.
+
+## Repository Map
+
+A full codemap is available at `codemap.md` in the project root.
+
+Before working on any task, read `codemap.md` to understand:
+- Project architecture and entry points
+- Directory responsibilities and design patterns
+- Data flow and integration points between modules
+
+For deep work on a specific folder, also read that folder's `codemap.md`.

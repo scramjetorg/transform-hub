@@ -1,13 +1,21 @@
 # packages/adapters-common/
 
 ## Responsibility
-Shared adapter helpers for stored-sequence metadata loading, language detection, and runner env shaping for runtime adapters.
+Cross-adapter helper library for stored-sequence metadata, runtime detection, and runner-environment shaping.
 
 ## Design/Patterns
-Small functional helpers with a shared `package.json` decoder. Adapter-specific sequence types are selected with conditional typing; env shaping is data-in/data-out.
+- Decoder-first architecture: validate and normalize sequence `package.json` once via shared codecs.
+- Small functional helpers with typed outputs (`detectLanguage`, `selectRunnerImageForEngines`, `getRunnerConfigForStoredSequence`).
+- Language/image/env decisions are centralized so every runtime adapter behaves consistently.
 
 ## Data & Control Flow
-`getRunnerConfigForStoredSequence()` validates stored `package.json`, copies known fields into a typed `SequenceConfig`, and derives `language` from `engines`/`main`. `detectLanguage()` now treats `bun`, `python3`, and `node` engine hints explicitly before falling back to the entrypoint extension. `getRunnerEnv*()` converts `RunnerEnvConfig` into serialized env entries.
+- `sequencePackageJSONDecoder` validates `package.json` metadata before any adapter dispatch.
+- `getRunnerConfigForStoredSequence()` merges package data with adapter conventions (entrypoint, runner env vars, ports, command metadata).
+- `detectLanguage()` resolves runtime preference using `engines.bun` -> `engines.python3` -> `engines.node` with extension fallback.
+- `selectRunnerImageForEngines()` chooses the effective runner image from available overrides/defaults.
+- `getRunnerEnvEntries()` serializes runner environment into container/process env arrays.
 
 ## Integration Points
-Consumed by `adapter-docker` and `adapter-kubernetes` for sequence reconstruction and runner env construction. Uses `@scramjet/types`, `@scramjet/utility`, filesystem APIs, and `ts.data.json`.
+- Shared by `adapter-docker`, `adapter-kubernetes`, and `adapter-process`.
+- Provides the canonical data contracts used by adapter sequence and instance flows.
+- Depends on `@scramjet/types`, `@scramjet/utility`, filesystem utilities, and `ts.data.json`.

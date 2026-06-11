@@ -2,16 +2,23 @@
 
 ## Responsibility
 
-Executable entrypoint for the Node runtime. Boots the runtime and exits with the derived runner code.
+Runtime executable entrypoint for Node child execution. It is the concrete bootstrap command invoked by outer runners (directly or via Bun delegate) and returns the final runner exit code.
 
-## Design/Patterns
+## Design / Patterns
 
-Single async bootstrap with explicit cleanup and best-effort teardown. Keeps process-global side effects localized to startup and shutdown.
+- **Single async bootstrap** with explicit try/finally cleanup sequencing.
+- **Error funneling**: errors are mapped to runtime logging + process exit via `writeProcessExitFile` and exit codes.
+- **Exported utility surface**: re-exports internal context/build helpers for testability/use by callers.
 
 ## Data & Control Flow
 
-Reads boot config from `argv[2]`, loads the sequence module, sets up fd streams, optionally starts the exposed API server, wires host channels, performs handshake, runs the sequence, then closes streams and writes the exit file.
+- Parses boot config path from `argv` and validates via `readBootConfig`.
+- Opens fd streams (`stdin/stdout/stderr/control/monitoring`) and determines host-backed mode.
+- Loads sequence module and builds app/sequence context.
+- Establishes host connectivity + BPMux (if host ports configured), sets up ping/control handlers, writes monitoring/keepalive frames.
+- Executes sequence, writes terminal monitoring frame for completion/failure.
+- Disconnects host, tears down streams, writes legacy/secure process exit artifacts, returns numeric exit status.
 
 ## Integration Points
 
-Uses `boot-config`, `context`, `fd-streams`, `handshake`, `host-client`, `lifecycle`, `run-sequence`, and `utils` helpers plus Node process/stdin/stdout/stderr.
+Uses package internals: `boot-config`, `context`, `fd-streams`, `handshake`, `host-client`, `lifecycle`, `run-sequence`, `utils`, plus Node process stdio descriptors and `@scramjet` protocol symbols.

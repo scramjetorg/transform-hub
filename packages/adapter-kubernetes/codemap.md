@@ -1,13 +1,30 @@
 # packages/adapter-kubernetes/
 
 ## Responsibility
-Kubernetes adapter package for sequence storage, runner pod execution, CLI/config augmentation, and client initialization.
+Implements the Kubernetes runtime adapter package:
+
+- Registers Kubernetes adapter CLI/config surfaces.
+- Decodes and validates adapter runtime config (`namespace`, host URL, images, resource/quota settings).
+- Provides sequence/instance adapters and Kubernetes client initialization.
 
 ## Design/Patterns
-Sequence and instance adapters share a decoded adapter config. `KubernetesClientAdapter` wraps client-node APIs with retry/auth-refresh logic; pod/image selection is centralized in a small helper and driven by engine hints.
+- `adapterConfigDecoder` is strict and normalized in package scope (`kubernetes-config-decoder.ts`).
+- `KubernetesClientAdapter` encapsulates Kubernetes API client creation and namespace-specific interactions.
+- `selectRunnerImageForEngines` and adapters-common decoders provide shared runtime decision logic.
 
 ## Data & Control Flow
-`augment()` registers CLI options, config defaults, and adapters. `adapterConfigDecoder` validates required namespace/host/image settings plus optional quota, timeout, and resource overrides. Instance flow validates config, checks quota, chooses the runner image (`bun`/`python3`/node), creates a runner pod, streams the sequence archive via `tar`, waits for pod completion, and removes the pod.
+1. `augmentOptions` merges adapter defaults (pod/namespace/cpu/memory/resource settings, timeouts, image map).
+2. `initialize` loads kube context and resolves config from CLI/env (`namespace`, `sthPodHost`, runner images, `sequencesRoot`).
+3. Sequence adapter (`identify`/`list`) decodes package metadata, writes/reads sequence payload archives, and keeps cached compressed metadata in `.compressed`.
+4. Instance adapter dispatch:
+   - validates runner config and quota/limits,
+   - creates a runner pod with declared labels/env/cmd,
+   - streams packed sequence directory into runner container entrypoint (`untar` path),
+   - waits for running state and then returns lifecycle completion code.
+5. Monitoring hooks expose pod status, crash logs, and explicit cleanup by pod deletion.
 
 ## Integration Points
-Uses `@scramjet/adapters-common`, `@scramjet/types`, `@scramjet/model`, `@scramjet/symbols`, `@scramjet/utility`, `@kubernetes/client-node`, `tar`, and YAML/OS networking helpers. Depends on cluster auth config/service account, namespace/quota settings, and STH host connectivity.
+- `@scramjet/adapters-common` for runtime env, image decision, and package JSON decoders.
+- `@kubernetes/client-node` for core cluster operations and `tar` stream compression/decompression utilities.
+- Host-level adapter wiring (`packages/runner`) via `IAdapterAugmentation` contract.
+- Kubernetes control plane config (namespace/auth/limits), plus startup defaults from package config and CLI.

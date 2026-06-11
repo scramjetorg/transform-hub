@@ -2,16 +2,26 @@
 
 ## Responsibility
 
-Runner launcher and runtime-executor plumbing. Contains the outer startup entrypoint, host client mediation, runtime selection, and child-process helpers.
+Core launcher implementation used by outer `start-runner` entry. It owns env parsing, host-transport bootstrap, runtime selection/switching, child spawn orchestration, and child/host channel plumbing.
 
-## Design/Patterns
+## Design / Patterns
 
-Small adapter-style modules around host transport and `child_process.spawn`. Executor selection is data-driven from sequence `engines`, defaulting to Node when Bun/Python are not requested.
+- **Boundary module decomposition**:
+  - `bin/start-runner.ts`: CLI/bootstrap flow.
+  - `executor/*`: spawn strategies and stdio contracts per runtime.
+  - `host-client.ts`: partial channel client exposing upstream/downstream sockets.
+  - `runner.ts` + context/input/message utilities: runtime-agnostic sequence execution helpers.
+- **Strict channel contract**: child processes are started with 6-slot stdio and only channels 0–2 and 4–5 are actively used for runtime transport.
+- **Validation-first startup**: malformed adapter env/paths/ports are rejected before process launch.
 
 ## Data & Control Flow
 
-Startup validates adapter env, writes boot config, initializes host channels, then spawns the selected runtime child with fixed fd wiring. Control and monitoring frames remain raw byte streams; lifecycle observers translate child termination into host disconnect and exit propagation.
+`start-runner.ts` composes: env validation -> boot-config writing -> host `HostClient.init(OUTER_RUNNER_CHANNELS)` -> runtime resolver -> executor spawn -> bidirectional pipe setup (`STDIN`, `STDOUT`, `STDERR`, `CONTROL`, `MONITORING`) -> lifecycle observation/translation -> host disconnect and cleanup.
+
+Monitoring stream observation is read-only and non-destructive; stdout/stderr are forwarded as raw bytes to preserve existing host expectations.
 
 ## Integration Points
 
-Integrates with host API client/server code, `@scramjet/types`, `@scramjet/symbols`, `@scramjet/runner-node`, `@scramjet/runner-bun`, `@scramjet/runner-python`, and Node stream/process APIs.
+- Uses `@scramjet/types`/`@scramjet/symbols` contracts and runtime wrappers (`runner-node`, `runner-bun`, `runner-python`).
+- Uses host transport and Node process primitives (`child_process.spawn`, `stream`, `fs`, `net`-style sockets via `HostClient`).
+- Keeps compatibility surfaces for `@scramjet/api-client`/`@scramjet/api-server` patterns used by the inner runtime package.
