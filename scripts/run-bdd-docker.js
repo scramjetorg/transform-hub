@@ -117,8 +117,8 @@ dockerRunArgs.push(...collectEnvForwardArgs());
 
 const escapedPassthrough = passthroughArgs.map(shellEscape).join(" ");
 const innerCommand = escapedPassthrough.length > 0
-    ? `PATH=/work/node_modules/.bin:$PATH yarn --cwd=./bdd run test:bdd ${escapedPassthrough}`
-    : "PATH=/work/node_modules/.bin:$PATH yarn --cwd=./bdd run test:bdd";
+    ? `PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
+    : "PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd";
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 

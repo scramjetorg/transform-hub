@@ -12,7 +12,7 @@
     "test": "npm run test:jest",
     "test:ava": "ava",
     "test:jest": "jest --verbose",
-    "prebuild": "yarn savehash",
+    "prebuild": "npm run savehash",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
   "author": "Scramjet <open-source@scramjet.org>",

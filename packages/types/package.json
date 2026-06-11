@@ -8,7 +8,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "test:expose": "scripts/generate.js",
-    "test": "yarn run test:expose && node ../../node_modules/typescript/bin/tsc -p ./tsconfig.test.json --noEmit",
+    "test": "npm run test:expose && node ../../node_modules/typescript/bin/tsc -p ./tsconfig.test.json --noEmit",
     "build:only": "npm run test:expose"
   },
   "author": "Scramjet <open-source@scramjet.org>",
