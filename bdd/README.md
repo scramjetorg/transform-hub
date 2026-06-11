@@ -119,11 +119,7 @@ Manager/MultiManager migration scenarios live under `bdd/features/manager` and a
 npm run test:bdd-manager-migration
 ```
 
-The default Manager migration command excludes scenarios tagged `@requires-multi-host`; those need a built root `dist/multi-host` from the CPM MultiHost package. To include them after root MultiHost is buildable, run:
-
-```bash
-npm run test:bdd-manager-migration-all
-```
+The default Manager migration command excludes scenarios tagged `@requires-multi-host`; those depend on CPM MultiHost and are intentionally not part of the STH build/test path.
 
 ### Running BDD in a container
 
