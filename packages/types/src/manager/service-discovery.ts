@@ -1,5 +1,5 @@
-import { ISTHController } from "./sth-connection-store";
-import { IObjectLogger, ReadableStream, WritableStream } from "@scramjet/types";
+import type { IObjectLogger, ReadableStream, WritableStream } from "../index";
+import type { ISTHController } from "./sth-connection-store";
 import { ActorRole, ActorType } from "./service-discovery-symbols";
 
 export type ActorStreamType<R> = R extends ActorRole.PROVIDER ? ReadableStream<any> : WritableStream<any>;

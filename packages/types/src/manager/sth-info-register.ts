@@ -1,8 +1,7 @@
-import { IObjectLogger, Instance, SequenceConfig, SequenceInfo } from "@scramjet/types";
+import type { IObjectLogger, Instance, InstanceId, SequenceConfig, SequenceInfo } from "../index";
 
 export type HostId = string;
 export type SequenceId = string;
-export type InstanceId = string;
 
 export interface ISTHInfoRegister {
     logger: IObjectLogger;
@@ -16,7 +15,6 @@ export interface ISTHInfoRegister {
     getSequences(): SequenceInfo[];
     getSequencesByHub(hostId: string): string[];
     getInstances(): Instance[];
-    // getInstancesBySeq(hostId: HostId, seqId: SequenceId): InstanceId[];
     getInstancesByHub(hostId: HostId): any;
 
     /**

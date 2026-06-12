@@ -1,4 +1,4 @@
-import { DisconnectReason, ISTHConnectionStore, ISTHController, SthConnectionStoreErrors } from "@scramjet/platform-types";
+import { DisconnectReason, ISTHConnectionStore, ISTHController, SthConnectionStoreErrors } from "@scramjet/types";
 import { DisconnectHubErrors } from "@scramjet/symbols";
 import { MRestAPI } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";

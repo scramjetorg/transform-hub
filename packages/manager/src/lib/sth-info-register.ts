@@ -1,4 +1,4 @@
-import { ISTHInfoRegister, HostId, SequenceId, InstanceId } from "@scramjet/platform-types";
+import { ISTHInfoRegister, HostId, SequenceId, InstanceId } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Instance, SequenceConfig, CommonSequenceConfig, SequenceInfo } from "@scramjet/types";
 

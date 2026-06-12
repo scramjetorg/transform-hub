@@ -1,19 +1,12 @@
-import { Readable, Writable } from "stream";
-import { MRestAPI, LoadCheckStatMessage, NetworkInfo, IObjectLogger, SequenceMessageData, InstanceMessageData, SpaceEventMessageData } from "@scramjet/types";
-import { VerserConnection } from "@scramjet/verser";
-import { TypedEmitter } from "@scramjet/utility";
+import type { Readable, Writable } from "stream";
+import type TypedEmitter from "typed-emitter";
+import type { VerserConnection } from "@scramjet/verser";
+import type { InstanceMessageData, LoadCheckStatMessage, MRestAPI, NetworkInfo, SequenceMessageData, SpaceEventMessageData } from "../index";
+import type { STHTopicEventData } from "../messages";
+import type { IObjectLogger } from "../object-logger";
 
 export type NotFoundResponse = {
     status: 404
-}
-
-export type STHTopicEventData = {
-    requires?: string;
-    provides?: string;
-    contentType: string;
-    topicName: string;
-    status: "add" | "remove";
-    localProvider?: string;
 }
 
 export type STHControllerEvents = {

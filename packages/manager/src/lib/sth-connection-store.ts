@@ -1,4 +1,4 @@
-import { ISTHConnectionStore, ISTHController, SthConnectionStoreErrors } from "@scramjet/platform-types";
+import { ISTHConnectionStore, ISTHController, SthConnectionStoreErrors } from "@scramjet/types";
 import { IObjectLogger, MRestAPI } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 

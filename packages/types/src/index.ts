@@ -19,6 +19,7 @@ export * from "./logger";
 export * from "./lifecycle";
 export * from "./lifecycle-adapters";
 export * from "./manager-configuration";
+export * from "./manager";
 export * from "./message-streams";
 export * from "./messages";
 export * from "./monitoring-server";

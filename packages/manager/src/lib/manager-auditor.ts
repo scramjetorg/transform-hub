@@ -1,4 +1,4 @@
-import { ISTHConnectionStore } from "@scramjet/platform-types";
+import { ISTHConnectionStore } from "@scramjet/types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { OpRecordCode } from "@scramjet/symbols";
 import { OpRecord } from "@scramjet/types";

@@ -1,4 +1,4 @@
-import { DisconnectReason, ISTHController, STHControllerEvents, STHTopicEventData } from "@scramjet/platform-types";
+import { DisconnectReason, ISTHController, STHControllerEvents, STHTopicEventData } from "@scramjet/types";
 import {
     CPMMessageSTHID,
     EncodedCPMSTHMessage,

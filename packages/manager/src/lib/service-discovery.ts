@@ -10,7 +10,7 @@ import {
     ISTHController,
     ITopicActor,
     Topic,
-} from "@scramjet/platform-types";
+} from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 
 type TopicActorEvents = {

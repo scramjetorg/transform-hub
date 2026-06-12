@@ -14,7 +14,7 @@ import {
     SpaceEventMessageData,
     LogLevel
 } from "@scramjet/types";
-import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/platform-types";
+import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
 import { CeroError, getRouter } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
 import { ClientRequest, IncomingMessage, ServerResponse, request } from "http";
