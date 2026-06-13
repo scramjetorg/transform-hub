@@ -28,21 +28,21 @@
     - [x] Define Broker route-table handling: route-control frames replace the full route table; shorter or empty frames retract previous routes.
     - [x] Require Broker startup paths to use `waitForRoute(domain)` or an equivalent timeout-aware readiness gate before sending routed requests.
     - [x] Define certificate SAN/URI identity conventions aligned with verser2 documentation, including `DNS:<route-hostname>` and `URI:urn:verser:client:<peerId>` where client identity is needed.
-- [ ] Task: Define TLS/CA, authorization, and certificate provisioning model
-    - [ ] Define Manager/MultiManager Host TLS behavior for platform-connected deployments; Host TLS is mandatory and the server certificate must be valid for the hostname/IP used in each peer `hostUrl`.
-    - [ ] Define STH local CA behavior for standalone deployments.
-    - [ ] Define delegated STH CA behavior for runner and runtime certificate issuance when connected to Manager/MultiManager.
-    - [ ] Define Guest/Broker trust behavior using `ca`/`caFile`, noting that explicit CA configuration replaces Node's default CA set for that connection.
-    - [ ] Decide where mTLS is required versus optional; when enabled, define Host `tls.clientAuth.caFile` and client `certFile`/`keyFile` or PFX/PKCS12 delivery.
-    - [ ] Define registration-time authorization with verser2 `authorizeRegistration(context)`, preferring certificate fingerprints over common names for allowlisting.
-    - [ ] Document that verser2 has registration-time authorization only; any per-request authorization must live in STH application-level Broker/Guest wrappers.
-    - [ ] Define per-runner and per-runtime certificate generation, delivery, rotation, revocation, and cleanup.
-    - [ ] Document that `reloadTlsCertificate()` reloads Host server identity only; client CA, mTLS policy, `requestCert`, and `rejectUnauthorized` changes require Host restart.
-    - [ ] Define private-key file permission requirements, including `0600` on POSIX for key files.
-    - [ ] Define process adapter certificate file delivery.
-    - [ ] Define Docker adapter read-only certificate mount behavior.
-    - [ ] Define Kubernetes adapter per-instance Secret behavior.
-    - [ ] Define Node >=20 enforcement points.
+- [x] Task: Define TLS/CA, authorization, and certificate provisioning model
+    - [x] Define Manager/MultiManager Host TLS behavior for platform-connected deployments; Host TLS is mandatory and the server certificate must be valid for the hostname/IP used in each peer `hostUrl`.
+    - [x] Define STH local CA behavior for standalone deployments.
+    - [x] Define delegated STH CA behavior for runner and runtime certificate issuance when connected to Manager/MultiManager.
+    - [x] Define Guest/Broker trust behavior using `ca`/`caFile`, noting that explicit CA configuration replaces Node's default CA set for that connection.
+    - [x] Decide where mTLS is required versus optional; when enabled, define Host `tls.clientAuth.caFile` and client `certFile`/`keyFile` or PFX/PKCS12 delivery.
+    - [x] Define registration-time authorization with verser2 `authorizeRegistration(context)`, preferring certificate fingerprints over common names for allowlisting.
+    - [x] Document that verser2 has registration-time authorization only; any per-request authorization must live in STH application-level Broker/Guest wrappers.
+    - [x] Define per-runner and per-runtime certificate generation, delivery, rotation, revocation, and cleanup.
+    - [x] Document that `reloadTlsCertificate()` reloads Host server identity only; client CA, mTLS policy, `requestCert`, and `rejectUnauthorized` changes require Host restart.
+    - [x] Define private-key file permission requirements, including `0600` on POSIX for key files.
+    - [x] Define process adapter certificate file delivery.
+    - [x] Define Docker adapter read-only certificate mount behavior.
+    - [x] Define Kubernetes adapter per-instance Secret behavior.
+    - [x] Define Node >=20 enforcement points.
 - [ ] Task: Define transport abstractions around verser2 roles and leases
     - [ ] Specify Manager/STH transport abstractions in terms of `Host`, `Broker`, `Guest`, route registration, `broker.request({ targetId, method, path, headers, body })`, and route readiness; do not expose raw HTTP/2 sessions or old `VerserConnection` equivalents.
     - [ ] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays and from BPMux; map old channel semantics to routed HTTP requests and streaming bodies.

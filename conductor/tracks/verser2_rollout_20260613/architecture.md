@@ -89,6 +89,85 @@ Certificate identities must bind the route hostname and the peer identity used b
 - Manager, MultiManager, STH, runner, and sequence certificates must not rely on common name matching for authorization;
 - authorization allowlists should use certificate fingerprints and route/peer IDs rather than mutable display names.
 
+## TLS, CA, authorization, and certificate provisioning
+
+### CA hierarchy by deployment mode
+
+Platform-connected deployments use the Manager/MultiManager selected Host as the TLS HTTP/2 `verser2` Host. Host TLS is mandatory. The Host server certificate must be valid for every DNS name or IP address used by peers in `hostUrl`; Docker and Kubernetes internal names must be included when those are the actual connection targets. A platform CA anchors Manager/MultiManager Host identity.
+
+In platform-connected mode, STH receives or manages a delegated, scoped CA for runner and runtime peer certificates. That delegated CA must issue only runner/runtime identities and must not be accepted for Manager, MultiManager, or STH server identities. The Manager/MultiManager Host trust bundle may include both platform and delegated CA roots/intermediates, but role authorization must still verify that the issuer is valid for the registering role.
+
+Standalone STH deployments use a local STH CA. STH creates or loads this CA and uses it for the local `verser2` Host server certificate, STH Broker/Guest identity when needed, and per-runner/per-runtime certificates. Standalone remains TLS-only; a non-TLS `verser2` path is test-only and must not become a product mode.
+
+### Guest and Broker trust behavior
+
+Guest and Broker clients must use explicit trust material with `ca` or `caFile`. In Node TLS, configuring `ca` replaces the default CA set for that connection. Deployments that need both public WebPKI and private platform CA trust must provide a combined CA bundle. `rejectUnauthorized: false` and `NODE_TLS_REJECT_UNAUTHORIZED=0` are prohibited outside isolated tests.
+
+### mTLS policy
+
+The final architecture requires mTLS for all `verser2` peers:
+
+- STH Broker/Guest connecting to Manager/MultiManager Host;
+- Manager/MultiManager Broker/Guest peers when they connect to another Host;
+- outer runner Guest;
+- runtime Guest;
+- runtime Broker clients used for sequence to STH API calls.
+
+The Host must configure client authentication using the accepted CA bundle. Clients receive `certFile`/`keyFile` or PFX/PKCS12 material. Any temporary optional-mTLS migration mode must require an alternative registration credential and must be removed or explicitly narrowed before the default switch. Unauthenticated runner/runtime registration is not allowed in the final model.
+
+### Registration-time authorization
+
+`authorizeRegistration(context)` is the registration-time authorization boundary. It must validate:
+
+- peer ID format and role;
+- exact route domain ownership for the registering role;
+- `URI:urn:verser:client:<peerId>` when peer identity is required;
+- `DNS:<route-hostname>` SAN coverage for every registered Guest route;
+- certificate fingerprint or serial allowlist membership;
+- issuer CA acceptance for the registering role;
+- duplicate peer ID or duplicate active route rejection.
+
+Common names must not be used for authorization. Dynamically generated runner/runtime certificates must have their expected fingerprint or serial recorded in an active-instance registry before process launch.
+
+### Per-request authorization
+
+`verser2` registration authorization does not replace application authorization. Manager, STH, runner, and runtime wrappers must enforce per-request permissions in their Broker/Guest handlers. Handlers must derive caller identity from authenticated peer context, not from spoofable request headers, and must check caller role, instance ID, target route, and operation. A valid runner or runtime certificate must not authorize calls to unrelated STH or Manager APIs.
+
+### Per-runner and per-runtime certificate lifecycle
+
+Each instance launch should receive separate, least-privilege material:
+
+- outer runner Guest certificate for `runner.<instanceId>.scramjet.internal`;
+- runtime Guest certificate for `sequence.<instanceId>.scramjet.internal`;
+- runtime Broker client certificate for sequence to STH API calls when required;
+- CA bundle for the selected Host.
+
+Certificates should be short-lived and instance-scoped. Delivery uses files, not raw PEM/PFX values in environment variables or command arguments. Rotation issues new certificates and reconnects peers; keeping the same peer ID requires coordinated disconnect/reconnect because duplicate peer registration is fatal. Revocation removes allowlist entries and closes active connections; do not assume CRL/OCSP support unless the selected `verser2` package explicitly provides it. Cleanup removes key/cert files, Docker mount directories, and Kubernetes Secrets when the instance exits or is deleted.
+
+### Host certificate reload behavior
+
+`reloadTlsCertificate()` reloads Host server identity only. It does not reload client CA trust, `requestCert`, `rejectUnauthorized`, mTLS policy, existing client certificates, or Broker/Guest client identity. Client CA or mTLS policy changes require Host restart. Broker/Guest certificate rotation requires recreating client connections.
+
+### Key and certificate file handling
+
+- Private key files: POSIX `0600` or stricter; Docker-mounted key files should be read-only and may use `0400`.
+- Private key directories: POSIX `0700`.
+- CA bundle files: `0644` is acceptable when they contain only public certificates.
+- Write key material atomically with restrictive modes and never log PEM/PFX values.
+- Windows deployments require equivalent ACL restrictions.
+
+### Adapter certificate injection
+
+Process adapter launches use a per-instance state directory containing `ca.pem`, `cert.pem`, and `key.pem`, pass file paths through boot config or environment, and delete the directory during process cleanup.
+
+Docker adapter launches use a per-instance host certificate directory mounted read-only into the runner container. Certificates are never baked into images. Boot config/environment carries only mounted paths, and the host directory is removed with container lifecycle cleanup.
+
+Kubernetes adapter launches use a per-instance Secret mounted read-only with restrictive `defaultMode`, for example `0400`. Secrets must not be shared across instances. Owner references, labels, and finalizers should drive cleanup. A ConfigMap may hold a public CA bundle only when no private material is included. Namespace and RBAC boundaries must remain explicit.
+
+### Node >=20 enforcement
+
+Node-based STH and runner components must fail fast on Node versions below 20 before attempting TLS or `verser2` startup. Enforcement points include package/root `engines`, STH CLI startup, `packages/runner` `start-runner`, Node runtime bootstrap, Docker image build/runtime validation, and Kubernetes runner image selection or admission where available.
+
 ## Connectivity flows
 
 ### Manager/MultiManager ⇄ STH
