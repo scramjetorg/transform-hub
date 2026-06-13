@@ -105,9 +105,10 @@
     - [ ] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
 - [ ] Task: Run automated reviews and validation for Phase 2
     - [x] Run local Manager/MultiManager/Host package tests added in this phase.
-    - [ ] Run targeted transport abstraction tests.
+    - [x] Run targeted transport abstraction tests.
     - [x] Run the narrowest relevant build or typecheck for changed packages.
-    - [ ] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
+    - [x] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
+        - Review result: do not wire/default Manager/STH verser2 transport yet without addressing stale route state on close/disconnect/reconnect, TLS policy enforcement at the abstraction/product-config boundary, timed-out route waiter cleanup risk, request/response streaming and abort coverage, route replacement edge cases, legacy `100-continue` compatibility decisions, and header normalization from `IncomingHttpHeaders`.
     - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
 - [ ] Task: Conductor - User Manual Verification 'Manager/STH Migration and Transport Foundation' (Protocol in workflow.md)
 
