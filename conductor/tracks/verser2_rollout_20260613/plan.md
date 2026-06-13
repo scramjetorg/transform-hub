@@ -1,0 +1,169 @@
+# Plan: verser2 rollout
+
+## Phase 1: Architecture, Contracts, and Safety Rails
+
+- [ ] Task: Start rollout branch and initial PR
+    - [ ] Create a dedicated branch for the verser2 rollout work.
+    - [ ] Add the initial architecture/specification commit for the rollout branch.
+    - [ ] Push the branch and create a draft PR for continuous review.
+    - [ ] Use the PR as the shared review surface for automated reviews and phase checkpoints.
+- [ ] Task: Define final verser2 connectivity architecture
+    - [ ] Read current codemaps and affected entrypoints for Manager, MultiManager, Host, Runner, Node, Python, Bun, API server, and shared types.
+    - [ ] Document Manager/MultiManager ⇄ STH topology over verser2.
+    - [ ] Document STH ⇄ global runner topology over verser2.
+    - [ ] Document global runner ⇄ stack-specific runtime wrapper responsibilities.
+    - [ ] Document sequence → STH API and STH → sequence API routing.
+    - [ ] Define temporary migration flag behavior and final no-flag architecture.
+- [ ] Task: Define route naming and identity contracts
+    - [ ] Specify `manager.<managerId>.scramjet.internal` route semantics.
+    - [ ] Specify `multimanager.<multiManagerId>.scramjet.internal` route semantics.
+    - [ ] Specify `sth.<sthId>.scramjet.internal` route semantics.
+    - [ ] Specify `runner.<instanceId>.scramjet.internal` route semantics.
+    - [ ] Specify `sequence.<instanceId>.scramjet.internal` route semantics.
+    - [ ] Define certificate SAN/URI identity conventions for Manager, MultiManager, STH, runner, and sequence routes.
+- [ ] Task: Define TLS/CA and runner certificate provisioning model
+    - [ ] Define Manager/MultiManager CA behavior for platform-connected deployments.
+    - [ ] Define STH local CA behavior for standalone deployments.
+    - [ ] Define delegated STH CA behavior for runner certificate issuance when connected to Manager/MultiManager.
+    - [ ] Define per-runner certificate generation, delivery, rotation, revocation, and cleanup.
+    - [ ] Define process adapter certificate file delivery.
+    - [ ] Define Docker adapter read-only certificate mount behavior.
+    - [ ] Define Kubernetes adapter per-instance Secret behavior.
+    - [ ] Define Node >=20 enforcement points.
+- [ ] Task: Define transport abstractions
+    - [ ] Specify Manager/STH transport abstraction replacing direct `VerserConnection` exposure.
+    - [ ] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays.
+    - [ ] Specify stack-specific runtime transport capabilities for Node, Python, and Bun.
+    - [ ] Specify verser2-aware API forwarding and stream helper contracts.
+- [ ] Task: Add architecture safety checks and automated review prompts
+    - [ ] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
+    - [ ] Add automated review checklist for architecture, TLS/CA, route naming, and transport contracts.
+    - [ ] Record upstream verser2 halt-and-report workflow for missing or incorrect verser2 behavior.
+- [ ] Task: Conductor - User Manual Verification 'Architecture, Contracts, and Safety Rails' (Protocol in workflow.md)
+
+## Phase 2: Manager/STH Migration and Transport Foundation
+
+- [ ] Task: Establish local tests for Manager/STH current behavior
+    - [ ] Add focused tests for STH registration with Manager/MultiManager.
+    - [ ] Add focused tests for Manager → STH request forwarding.
+    - [ ] Add focused tests for STH → Manager request forwarding.
+    - [ ] Add focused tests for platform, log, audit, and topic stream behavior.
+    - [ ] Add focused tests for reconnect, disconnect, and unhealthy-state behavior.
+- [ ] Task: Implement verser2 Manager/MultiManager transport
+    - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with verser2 host/broker roles.
+    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the new Manager/STH transport abstraction.
+    - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with verser2 requests and streams.
+    - [ ] Replace `CPMConnector` old `VerserClient` usage with verser2 STH-side connector behavior.
+    - [ ] Preserve temporary legacy mode only where needed during this phase.
+- [ ] Task: Migrate Manager/STH streams
+    - [ ] Migrate `/platform` communication stream to explicit verser2 stream semantics.
+    - [ ] Migrate log stream behavior.
+    - [ ] Migrate audit stream behavior.
+    - [ ] Migrate topic upstream request behavior.
+    - [ ] Migrate topic downstream request behavior.
+    - [ ] Preserve streaming and backpressure expectations in tests.
+- [ ] Task: Migrate MultiHost or retire legacy MultiHost path
+    - [ ] Review `MultiHostController` use of old `createChannel(0)`, `createChannel(1)`, and `forward(req, res)`.
+    - [ ] Decide whether MultiHost remains a first-class concept or folds into STH route semantics.
+    - [ ] Implement the selected verser2 route/stream behavior.
+    - [ ] Add tests for `/msth/:id` behavior when retained, or removal/compatibility behavior when retired.
+- [ ] Task: Introduce runner transport foundation
+    - [ ] Add `RunnerTransport` interfaces in shared types or an appropriate package.
+    - [ ] Adapt host-side instance lifecycle code to depend on `RunnerTransport` instead of raw channel arrays where possible.
+    - [ ] Add `LegacyRunnerTransport` wrapping existing socket/BPMux behavior for parity.
+    - [ ] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
+- [ ] Task: Run automated reviews and validation for Phase 2
+    - [ ] Run local Manager/MultiManager/Host package tests added in this phase.
+    - [ ] Run targeted transport abstraction tests.
+    - [ ] Run the narrowest relevant build or typecheck for changed packages.
+    - [ ] Complete automated review for streaming/backpressure, reconnect semantics, and legacy compatibility.
+    - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
+- [ ] Task: Conductor - User Manual Verification 'Manager/STH Migration and Transport Foundation' (Protocol in workflow.md)
+
+## Phase 3: Global Runner and Runtime Migration
+
+- [ ] Task: Establish targeted hub tests for runner connectivity
+    - [ ] Add targeted hub test for runner startup and PING/PONG lifecycle over the transport abstraction.
+    - [ ] Add targeted hub test for STOP/KILL/control messages.
+    - [ ] Add targeted hub test for stdout and stderr streaming.
+    - [ ] Add targeted hub test for monitoring frames.
+    - [ ] Add targeted hub test for input and output streams.
+    - [ ] Add targeted hub test for runner disconnect and reconnect behavior.
+- [ ] Task: Implement global runner verser2 transport
+    - [ ] Make `packages/runner` own the global verser2 runner connection and runner certificate material.
+    - [ ] Move stdin, stdout, stderr, control, monitoring, input, output, and log channels to explicit verser2 endpoints/streams.
+    - [ ] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
+    - [ ] Preserve temporary legacy mode only until runtime migrations are complete.
+    - [ ] Update runtime boot config to carry verser2 route and certificate information needed by stack-specific runners.
+- [ ] Task: Migrate Node runtime
+    - [ ] Add or update runner-node tests for `context.hub` over verser2.
+    - [ ] Add or update runner-node tests for non-listening `context.api` exposure over verser2 Guest routes.
+    - [ ] Replace BPMux-backed runner-node `HostClient` path with verser2 runtime transport.
+    - [ ] Verify keepalive, events, lifecycle, input, output, and logs remain user-compatible.
+- [ ] Task: Migrate Python runtime
+    - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls.
+    - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
+    - [ ] Wire Python runtime to runner-provided routes and certificate files.
+    - [ ] Verify streaming request and response bodies across Python runtime paths.
+- [ ] Task: Migrate Bun runtime
+    - [ ] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls.
+    - [ ] Add or update runner-bun tests for Bun Guest fetch/routes STH → sequence API exposure.
+    - [ ] Wire Bun runtime to runner-provided routes and certificate files.
+    - [ ] Verify streaming and binary request/response bodies across Bun runtime paths.
+- [ ] Task: Harden API forwarding and stream semantics
+    - [ ] Add API-server or transport tests for verser2 request forwarding.
+    - [ ] Cover streaming request bodies.
+    - [ ] Cover streaming response bodies.
+    - [ ] Cover binary payloads.
+    - [ ] Cover `100-continue` behavior.
+    - [ ] Cover abort/cancellation and route-unavailable behavior.
+- [ ] Task: Run automated reviews and validation for Phase 3
+    - [ ] Run targeted hub connectivity tests for Manager/STH plus runner paths.
+    - [ ] Run local package tests for runner, runner-node, runner-python, runner-bun, host, and api-server as changed.
+    - [ ] Run `npm run check:runtime-invariants` when runtime protocol wiring changes.
+    - [ ] Run relevant BDD smoke tests for Node, Python, API, and Bun if available.
+    - [ ] Complete automated cross-runtime parity, API streaming, and lifecycle reviews.
+    - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
+- [ ] Task: Conductor - User Manual Verification 'Global Runner and Runtime Migration' (Protocol in workflow.md)
+
+## Phase 4: Default Switch, Legacy Removal, and Final Validation
+
+- [ ] Task: Make verser2 the default connectivity path
+    - [ ] Switch Manager/STH connectivity defaults to verser2.
+    - [ ] Switch global runner connectivity defaults to verser2.
+    - [ ] Switch Node/Python/Bun runtime API connectivity defaults to verser2.
+    - [ ] Remove or narrow temporary migration flags according to the approved migration window.
+- [ ] Task: Remove BPMux from active repository usage
+    - [ ] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.
+    - [ ] Remove BPMux imports and implementation paths.
+    - [ ] Remove BPMux-backed HostClient code.
+    - [ ] Remove BPMux-specific tests or rewrite them as verser2 tests.
+    - [ ] Add static check proving no active `@scramjet/bpmux` imports remain.
+- [ ] Task: Remove old verser from active repository usage
+    - [ ] Remove `@scramjet/verser` dependencies from migrated packages.
+    - [ ] Remove or archive `packages/verser` from active workspace usage.
+    - [ ] Remove old `VerserConnection` from shared types.
+    - [ ] Remove old `VerserClient` CPM connector paths.
+    - [ ] Remove old `Verser` server paths in MultiManager.
+    - [ ] Add static check proving no active `@scramjet/verser` imports remain.
+- [ ] Task: Remove legacy runner socket protocol
+    - [ ] Remove or archive `SocketServer` when no active path uses it.
+    - [ ] Remove raw channel-index connection logic.
+    - [ ] Remove legacy raw socket host clients.
+    - [ ] Remove migration-only config after final default switch.
+- [ ] Task: Run final automated validation
+    - [ ] Run `npm run build:packages`.
+    - [ ] Run `npm run check:runtime-invariants`.
+    - [ ] Run `npm run test:packages-no-concurrent`.
+    - [ ] Run `npm run test:bdd-ci-node`.
+    - [ ] Run `npm run test:bdd-ci-python`.
+    - [ ] Run `npm run test:bdd-ci-api-node`.
+    - [ ] Run Bun BDD or smoke validation if available.
+    - [ ] Record any skipped broad Docker/Kubernetes validation and reason.
+- [ ] Task: Complete final automated reviews and documentation
+    - [ ] Complete dependency removal review.
+    - [ ] Complete dead-code review.
+    - [ ] Complete security review for TLS/CA/cert handling.
+    - [ ] Complete final architecture conformance review.
+    - [ ] Update docs and package guidance for final verser2 connectivity architecture.
+- [ ] Task: Conductor - User Manual Verification 'Default Switch, Legacy Removal, and Final Validation' (Protocol in workflow.md)
