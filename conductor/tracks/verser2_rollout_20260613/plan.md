@@ -58,7 +58,7 @@
     - [x] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
     - [x] Add automated review checklist for Host/Guest/Broker role use, flat topology, lease lifecycle, route exact-match behavior, TLS/CA, mTLS authorization, and transport contracts.
     - [x] Record upstream verser2 halt-and-report workflow for missing or incorrect verser2 behavior.
-- [ ] Task: Conductor - User Manual Verification 'Architecture, Contracts, and Safety Rails' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Architecture, Contracts, and Safety Rails' (Protocol in workflow.md)
 
 ## Phase 2: Manager/STH Migration and Transport Foundation
 
