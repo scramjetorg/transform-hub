@@ -197,6 +197,75 @@ Node-based STH and runner components must fail fast on Node versions below 20 be
 - Sequence code calls STH APIs through runtime-provided `context.hub` helpers backed by `verser2` Broker/request or Broker/fetch behavior.
 - Exposed sequence APIs are non-listening local handlers attached to runtime Guest routes; they do not open additional public HTTP servers.
 
+## Transport abstraction contracts
+
+### Manager/STH transport
+
+Manager, MultiManager, and STH code must depend on an application transport abstraction rather than on old-verser classes or raw `verser2` session internals. The abstraction may expose:
+
+- Host lifecycle configuration for the selected Manager/MultiManager or standalone STH Host;
+- Broker startup and shutdown;
+- Guest route registration and handler attachment;
+- `waitForRoute(domain, timeout)` readiness;
+- routed request helpers equivalent to `broker.request({ targetId, method, path, headers, body })`;
+- streaming request and response body support;
+- route-unavailable, duplicate-registration, and registration-rejected error classes.
+
+The abstraction must not expose raw HTTP/2 sessions, old `VerserConnection` equivalents, BPMux channels, channel indexes, or lease objects to Manager/STH application logic.
+
+### RunnerTransport
+
+Host-side instance lifecycle code should depend on `RunnerTransport` rather than raw socket channel arrays. The migration should introduce a legacy implementation first, then a `verser2` implementation:
+
+- `LegacyRunnerTransport` wraps current `SocketServer`, `HostClient`, `CommunicationChannel`, and BPMux behavior to preserve parity while callers move behind the interface.
+- `Verser2RunnerTransport` targets `runner.<instanceId>.scramjet.internal` and sequence routes through Broker requests over the selected Host.
+- The interface owns route readiness, route unavailable classification, reconnect/disconnect state, and stream lifecycle cleanup.
+
+Legacy channel semantics map to explicit routes and streaming bodies:
+
+| Legacy channel | Final transport meaning |
+| --- | --- |
+| `STDIN` | Routed streaming request or long-lived stream endpoint from Host/STH to runner stdin. |
+| `STDOUT` | Routed streaming response or runner-pushed stream for stdout. |
+| `STDERR` | Routed streaming response or runner-pushed stream for stderr. |
+| `CONTROL` | Routed request/response control operations such as STOP, KILL, SET, EVENT, and health probes. |
+| `MONITORING` | Routed streaming body for lifecycle, health, and monitoring frames. |
+| `IN` | Routed stream for sequence input. |
+| `OUT` | Routed stream for sequence output. |
+| `LOG` | Routed streaming body for sequence logs. |
+| `REQUESTS` | Replaced by Broker requests/fetch helpers for API calls; no BPMux compatibility object in final transport. |
+
+### Lease lifecycle and timeouts
+
+`verser2` routed streams are modeled as one-use leases. Guests keep a lease pool for incoming routed requests; each request consumes one lease. Implementations must open replacement leases after use and must keep enough waiting leases for expected concurrency. Lease exhaustion is a backpressure and availability signal, not a reason to buffer unlimited bodies in memory.
+
+Default settings should be explicit and package-configurable:
+
+- minimum waiting leases per Guest route;
+- maximum lease pool size per route;
+- lease acquire timeout for Broker requests;
+- route readiness timeout;
+- idle stream timeout;
+- request body and response body cancellation behavior.
+
+Timeouts must classify failures as route unavailable, lease unavailable, stream aborted, or peer disconnected. Retrying is allowed only for idempotent operations or operations whose handlers explicitly support retry.
+
+### Stack-specific runtime capabilities
+
+Runtime wrappers must use the published runtime packages and shared helpers instead of reimplementing Guest/Broker transport:
+
+- Node: `@signicode/verser2-guest-node` for Guest attachment and Broker helpers, plus shared `@signicode/verser-common` / `@signicode/verser2-guest-js-common` where public APIs require them.
+- Python: `@signicode/verser2-guest-python` or the published Python package name for Guest and Broker/request behavior; Python Guests must always receive explicit routed domains because they do not default domains to Guest ID.
+- Bun: `@signicode/verser2-guest-bun` for Guest `fetch`/routes and Broker/fetch behavior, plus shared JS common packages where public APIs require them.
+
+If these package names or public APIs differ at implementation time, stop the current subtask and produce the upstream `verser2` report unless the fix is a local dependency-name correction with no architecture impact.
+
+### API forwarding and unsupported features
+
+API forwarding helpers must preserve streaming and backpressure for request and response bodies. They may adapt HTTP method, path, headers, status, and body streams to the selected Broker request/fetch API. They must not require full response buffering or rely on direct/test-only dispatch paths in production.
+
+The rollout explicitly excludes unsupported forwarding behavior from the `verser2` capability set: WebSocket upgrade, CONNECT tunneling, HTTP trailers, and informational 1xx responses such as `100-continue`. If public API handlers receive these requests, they should reject them clearly or keep them on a documented non-`verser2` path until a future upstream capability exists.
+
 ## Migration flags
 
 - Temporary migration flags may choose between legacy and `verser2` transports only while a phase still needs parity coverage.

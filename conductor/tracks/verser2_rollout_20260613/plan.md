@@ -43,13 +43,13 @@
     - [x] Define Docker adapter read-only certificate mount behavior.
     - [x] Define Kubernetes adapter per-instance Secret behavior.
     - [x] Define Node >=20 enforcement points.
-- [ ] Task: Define transport abstractions around verser2 roles and leases
-    - [ ] Specify Manager/STH transport abstractions in terms of `Host`, `Broker`, `Guest`, route registration, `broker.request({ targetId, method, path, headers, body })`, and route readiness; do not expose raw HTTP/2 sessions or old `VerserConnection` equivalents.
-    - [ ] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays and from BPMux; map old channel semantics to routed HTTP requests and streaming bodies.
-    - [ ] Specify one-use lease stream semantics: Guests keep a lease pool, each routed request consumes a lease, and replacements must be opened after use.
-    - [ ] Define lease pool and timeout settings, including minimum waiting leases and lease-acquire timeout handling for runner and sequence requests.
-    - [ ] Specify stack-specific runtime transport capabilities for Node, Python, and Bun using the published packages: `@signicode/verser2-guest-node`, `@signicode/verser2-guest-python`, `@signicode/verser2-guest-bun`, plus shared `@signicode/verser-common` / `@signicode/verser2-guest-js-common` where appropriate.
-    - [ ] Specify verser2-aware API forwarding and stream helper contracts, explicitly excluding unsupported WebSocket upgrade, CONNECT tunneling, trailers, and informational 1xx forwarding as verser2 capabilities.
+- [x] Task: Define transport abstractions around verser2 roles and leases
+    - [x] Specify Manager/STH transport abstractions in terms of `Host`, `Broker`, `Guest`, route registration, `broker.request({ targetId, method, path, headers, body })`, and route readiness; do not expose raw HTTP/2 sessions or old `VerserConnection` equivalents.
+    - [x] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays and from BPMux; map old channel semantics to routed HTTP requests and streaming bodies.
+    - [x] Specify one-use lease stream semantics: Guests keep a lease pool, each routed request consumes a lease, and replacements must be opened after use.
+    - [x] Define lease pool and timeout settings, including minimum waiting leases and lease-acquire timeout handling for runner and sequence requests.
+    - [x] Specify stack-specific runtime transport capabilities for Node, Python, and Bun using the published packages: `@signicode/verser2-guest-node`, `@signicode/verser2-guest-python`, `@signicode/verser2-guest-bun`, plus shared `@signicode/verser-common` / `@signicode/verser2-guest-js-common` where appropriate.
+    - [x] Specify verser2-aware API forwarding and stream helper contracts, explicitly excluding unsupported WebSocket upgrade, CONNECT tunneling, trailers, and informational 1xx forwarding as verser2 capabilities.
 - [ ] Task: Add architecture safety checks and automated review prompts
     - [ ] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
     - [ ] Add automated review checklist for Host/Guest/Broker role use, flat topology, lease lifecycle, route exact-match behavior, TLS/CA, mTLS authorization, and transport contracts.
