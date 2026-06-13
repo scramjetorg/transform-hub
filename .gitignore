@@ -167,3 +167,4 @@ timing-log.ndjson
 
 # Docs
 .nojekyll
+.env
