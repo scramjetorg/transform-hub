@@ -7,16 +7,16 @@
     - [x] Add the initial architecture/specification commit for the rollout branch.
     - [x] Push the branch and create a draft PR for continuous review.
     - [x] Use the PR as the shared review surface for automated reviews and phase checkpoints.
-- [ ] Task: Define final verser2 connectivity architecture
-    - [ ] Read current codemaps and affected entrypoints for Manager, MultiManager, Host, Runner, Node, Python, Bun, API server, and shared types.
-    - [ ] Document the verser2 role model: Manager/MultiManager owns the TLS HTTP/2 `Host`; STH connects outbound as a `Broker` and, where Manager-originated requests need to reach STH, also as a `Guest`.
-    - [ ] Document the flat route topology: all peers connect directly to one selected Host; STH does not run an intermediate verser2 Host for runner or sequence routing.
-    - [ ] Document that route state is per Host instance and per connected peer set; multi-Host, HA, and shared route-state behavior are deployment architecture/future work, not built into verser2.
-    - [ ] Document STH → global runner routing as STH Broker → Host → runner Guest.
-    - [ ] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
-    - [ ] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
-    - [ ] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
-    - [ ] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
+- [x] Task: Define final verser2 connectivity architecture
+    - [x] Read current codemaps and affected entrypoints for Manager, MultiManager, Host, Runner, Node, Python, Bun, API server, and shared types.
+    - [x] Document the verser2 role model: Manager/MultiManager owns the TLS HTTP/2 `Host`; STH connects outbound as a `Broker` and, where Manager-originated requests need to reach STH, also as a `Guest`.
+    - [x] Document the flat route topology: all peers connect directly to one selected Host; STH does not run an intermediate verser2 Host for runner or sequence routing.
+    - [x] Document that route state is per Host instance and per connected peer set; multi-Host, HA, and shared route-state behavior are deployment architecture/future work, not built into verser2.
+    - [x] Document STH → global runner routing as STH Broker → Host → runner Guest.
+    - [x] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
+    - [x] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
+    - [x] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
+    - [x] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
 - [ ] Task: Define route naming, identity, and route-state contracts
     - [ ] Specify `manager.<managerId>.scramjet.internal` route semantics for Manager-reachable endpoints when registered as Guests.
     - [ ] Specify `multimanager.<multiManagerId>.scramjet.internal` route semantics for MultiManager-reachable endpoints when registered as Guests.
