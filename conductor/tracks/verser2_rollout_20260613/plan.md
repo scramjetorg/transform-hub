@@ -16,7 +16,7 @@
     - [x] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
     - [x] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
     - [x] Clarify that Manager-connected STH must expose an STH Guest for Manager-callable STH APIs.
-    - [x] Document the interim H2 Guest/Broker path for Manager/STH-owned APIs and the desired upstream in-process Host-side Guest/Broker optimization.
+    - [x] Document the local peer attachment path as the primary colocated Manager/STH API path (verser2 upstream delivered in-process `host.attachLocalBroker()`/`attachLocalGuest()`); H2 Guest/Broker remains for remote participants.
     - [x] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
     - [x] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
 - [x] Task: Define route naming, identity, and route-state contracts
@@ -47,7 +47,7 @@
     - [x] Define Kubernetes adapter per-instance Secret behavior.
     - [x] Define Node >=20 enforcement points.
 - [x] Task: Define transport abstractions around verser2 roles and leases
-    - [x] Specify Manager/STH transport abstractions in terms of `Host`, `Broker`, `Guest`, route registration, `broker.request({ targetId, method, path, headers, body })`, and route readiness; do not expose raw HTTP/2 sessions or old `VerserConnection` equivalents.
+    - [x] Specify Manager/STH transport abstractions in terms of `Host`, `Broker`, `Guest`, route registration, `broker.request({ targetId, method, path, headers, body })`, and route readiness; local peers are the primary colocated attachment path; do not expose raw HTTP/2 sessions or old `VerserConnection` equivalents.
     - [x] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays and from BPMux; map old channel semantics to routed HTTP requests and streaming bodies.
     - [x] Specify one-use lease stream semantics: Guests keep a lease pool, each routed request consumes a lease, and replacements must be opened after use.
     - [x] Define lease pool and timeout settings, including minimum waiting leases and lease-acquire timeout handling for runner and sequence requests.
@@ -76,11 +76,19 @@
     - [x] Add a helper that loads `GITHUB_PACKAGES_TOKEN` from `.env` or the environment, uses it as ephemeral `GH_TOKEN`/`NODE_AUTH_TOKEN`, and does not replace persisted `gh` auth.
     - [x] Verify required verser2 packages resolve through GitHub Packages.
     - [x] Add dependency wiring for resolved package versions in affected workspaces.
+- [ ] Task: Harden verser2 Manager/STH transport abstraction
+    - [ ] Prevent stale route state on close/disconnect: clear route cache on `close()`, add tests for close→request, disconnect→reconnect, and broker-error paths.
+    - [ ] Prevent route waiter leak under repeated timeout: track inflight `waitForRoute` promises, cancel/resolve on close, or deduplicate repeated calls.
+    - [ ] Add transport tests for request/response body streaming, backpressure propagation, `AbortController` propagation, and stream error handling.
+    - [ ] Add transport tests for route replacement edge cases: shorter non-empty replacement, duplicate domains, replacement during `waitForRoute`, replacement during in-flight `request`.
+    - [ ] Handle `100-continue` locally in Manager forwarding layer before verser2 request dispatch.
+    - [ ] Normalize `IncomingHttpHeaders` to `Record<string, string>` at Manager forwarding call site (join arrays with `,`, drop `undefined` keys).
 - [ ] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
     - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
-    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over verser2 Host/Broker/Guest roles.
+    - [ ] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.
+    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over local peers (primary) or H2 Broker/Guest (remote fallback).
     - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with Broker route lookup plus `broker.request({ targetId, method, path, headers, body })`.
-    - [ ] Replace `CPMConnector` old `VerserClient` usage with STH-side `createVerserBroker()` behavior from `@signicode/verser2-guest-node`, and STH-side Guest registration where inbound Manager requests are required.
+    - [ ] Replace `CPMConnector` old `VerserClient` usage with STH-side local Broker/Guest attachment where colocated, or `createVerserBroker()` from `@signicode/verser2-guest-node` for remote.
     - [ ] Add dependency wiring for `@signicode/verser2-host`, `@signicode/verser2-guest-node`, and common packages in the affected workspaces.
     - [ ] Preserve temporary legacy mode only where needed during this phase, and only outside the verser2 TLS path.
 - [ ] Task: Migrate Manager/STH request and streaming semantics
@@ -108,7 +116,7 @@
     - [x] Run targeted transport abstraction tests.
     - [x] Run the narrowest relevant build or typecheck for changed packages.
     - [x] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
-        - Review result: do not wire/default Manager/STH verser2 transport yet without addressing stale route state on close/disconnect/reconnect, TLS policy enforcement at the abstraction/product-config boundary, timed-out route waiter cleanup risk, request/response streaming and abort coverage, route replacement edge cases, legacy `100-continue` compatibility decisions, and header normalization from `IncomingHttpHeaders`.
+        - Review result: do not wire/default Manager/STH verser2 transport yet without addressing stale route state on close/disconnect/reconnect, timed-out route waiter cleanup risk, request/response streaming and abort coverage, and route replacement edge cases. Header normalization and local `100-continue` handling deferred to hardening task. TLS/mTLS enforcement gap resolved by local peer attachment for colocated components.
     - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
 - [ ] Task: Conductor - User Manual Verification 'Manager/STH Migration and Transport Foundation' (Protocol in workflow.md)
 

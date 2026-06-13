@@ -9,8 +9,8 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - Runner/runtime peers initiate H2 connections to the owning STH local Host; STH initiates H2 connections to Manager/MultiManager.
 - Manager/MultiManager does not connect directly to runner/runtime peers, and runner/runtime peers do not connect directly to Manager/MultiManager.
 - STH terminates and authorizes runner-side H2 connections; it is not a transparent H2 tunnel.
-- Manager/MultiManager Host owners still expose routed Manager APIs through explicit Guest/Broker roles; loopback/local H2 attachment is acceptable during rollout.
-- Reviews may recommend upstream in-process Host-side Guest/Broker attachment for performance, but must not block Transform Hub rollout on it unless the networked H2 path cannot satisfy required semantics.
+- Manager/MultiManager Host owners expose routed Manager APIs through local peers for colocated components (`host.attachLocalBroker()`/`host.attachLocalGuest()`); networked H2 Guest/Broker is used for remote participants.
+- Local peers remove loopback TLS/mTLS overhead and `local: true` metadata cannot be spoofed by remote callers.
 - Runtime wrappers use published Guest/Broker packages instead of local reimplementations.
 - No new raw HTTP/2 session, old `VerserConnection`, or BPMux objects leak into application logic.
 
