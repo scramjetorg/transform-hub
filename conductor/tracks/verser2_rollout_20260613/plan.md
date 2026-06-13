@@ -62,12 +62,18 @@
 
 ## Phase 2: Manager/STH Migration and Transport Foundation
 
-- [ ] Task: Establish local tests for Manager/STH current behavior
-    - [ ] Add focused tests for STH registration with Manager/MultiManager.
-    - [ ] Add focused tests for Manager → STH request forwarding.
-    - [ ] Add focused tests for STH → Manager request forwarding.
-    - [ ] Add focused tests for platform, log, audit, and topic request/stream behavior.
+- [~] Task: Establish local tests for Manager/STH current behavior
+    - [x] Add focused tests for STH registration with Manager/MultiManager.
+    - [x] Add focused tests for Manager → STH request forwarding.
+    - [x] Add focused tests for STH → Manager request forwarding.
+    - [x] Add focused tests for platform, log, audit, and topic request/stream behavior.
     - [ ] Add focused tests for route readiness, reconnect, disconnect, duplicate peer IDs, route retraction, and unhealthy-state behavior.
+- [x] Task: Configure authenticated verser2 package resolution
+    - [x] Infer required `@signicode/*` package names from the `/tmp/opencode/verser2` checkout.
+    - [x] Add npm scope configuration for `@signicode` GitHub Packages without committing token values.
+    - [x] Add a helper that loads `GITHUB_PACKAGES_TOKEN` from `.env` or the environment, uses it as ephemeral `GH_TOKEN`/`NODE_AUTH_TOKEN`, and does not replace persisted `gh` auth.
+    - [x] Verify required verser2 packages resolve through GitHub Packages.
+    - [x] Add dependency wiring for resolved package versions in affected workspaces.
 - [ ] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
     - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
     - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over verser2 Host/Broker/Guest roles.
@@ -96,11 +102,11 @@
     - [ ] Define `Verser2RunnerTransport` route contracts using runner Guest endpoints and Broker requests over one-use leases.
     - [ ] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
 - [ ] Task: Run automated reviews and validation for Phase 2
-    - [ ] Run local Manager/MultiManager/Host package tests added in this phase.
+    - [x] Run local Manager/MultiManager/Host package tests added in this phase.
     - [ ] Run targeted transport abstraction tests.
-    - [ ] Run the narrowest relevant build or typecheck for changed packages.
+    - [x] Run the narrowest relevant build or typecheck for changed packages.
     - [ ] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
-    - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
+    - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
 - [ ] Task: Conductor - User Manual Verification 'Manager/STH Migration and Transport Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Global Runner and Runtime Migration

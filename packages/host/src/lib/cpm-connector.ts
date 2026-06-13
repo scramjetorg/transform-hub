@@ -267,6 +267,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
+            this.loadInterval = undefined;
         }
 
         this.communicationStream = undefined;

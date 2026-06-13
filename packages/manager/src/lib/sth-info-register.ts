@@ -56,8 +56,11 @@ export class STHInfoRegister implements ISTHInfoRegister {
         const sequencesMap = this.hostsMap.get(hostId);
         const sequencesArray = this.sequencesStore.get(hostId);
 
-        if (sequencesMap && sequencesArray) {
+        if (sequencesMap) {
             sequencesMap.delete(seqId);
+        }
+
+        if (sequencesArray) {
             const updatedSequencesArray = sequencesArray.filter(sequence => sequence.id !== seqId);
 
             if (updatedSequencesArray.length === 0) {
@@ -65,7 +68,9 @@ export class STHInfoRegister implements ISTHInfoRegister {
             } else {
                 this.sequencesStore.set(hostId, updatedSequencesArray);
             }
-        } else {
+        }
+
+        if (!sequencesMap && !sequencesArray) {
             this.logger.error(`Host with id: ${hostId} does not exist.`);
         }
     }
@@ -162,19 +167,23 @@ export class STHInfoRegister implements ISTHInfoRegister {
 
     clearHostEntities(id: string) {
         this.logger.info("cleaning host entities", id);
+        if (!this.hostsMap.has(id)) {
+            return;
+        }
+
         this.hostsMap.get(id)?.forEach((instancesSet, sequenceId) => {
             instancesSet.forEach((instanceId) => {
                 this.instancesStore.delete(instanceId);
             });
-            this.sequencesStore.delete(sequenceId);
         });
 
+        this.sequencesStore.delete(id);
         this.hostsMap.set(id, new Map());
     }
 
     handleHubDisconnect(id: HostId) {
         this.logger.debug(`Handling hub disconnect [${id}]`);
-        this.sequencesStore.delete(id);
+        this.clearHostEntities(id);
     }
 
     getInstancesByHub(hostId: HostId) {

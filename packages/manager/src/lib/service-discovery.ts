@@ -194,6 +194,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
     }
 
     private updatedTopics: Set<string> = new Set();
+    private topicUpdateRunning = false;
     /**
      * Dispatcher: Connects unconnected topic Actors or cleans up connected ones.
      *
@@ -207,9 +208,10 @@ export class ServiceDiscovery implements IServiceDiscovery {
     }
 
     private runTopicUpdate() {
-        if (this.updatedTopics.size === 0)
+        if (this.topicUpdateRunning || this.updatedTopics.size === 0)
             return;
 
+        this.topicUpdateRunning = true;
         const topics = this.updatedTopics;
 
         this.updatedTopics = new Set();
@@ -224,7 +226,10 @@ export class ServiceDiscovery implements IServiceDiscovery {
                     }
                 }
             })
-            .finally(() => this.runTopicUpdate());
+            .finally(() => {
+                this.topicUpdateRunning = false;
+                this.runTopicUpdate();
+            });
     }
 
     /**
@@ -266,7 +271,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
         const consumers = this.findRole(ActorRole.CONSUMER, topicName);
 
         await Promise.all(providers.map(async (provider) => {
-            await consumers.map(async (consumer) => {
+            await Promise.all(consumers.map(async (consumer) => {
                 if (provider.handled && consumer.handled) {
                     return;
                 }
@@ -274,7 +279,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
                 consumer.handled = true;
 
                 await provider.connectoTo(consumer);
-            });
+            }));
 
             provider.handled = true;
         }));

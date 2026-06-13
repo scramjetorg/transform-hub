@@ -1,118 +1,136 @@
+import test from "ava";
 // eslint-disable-next-line import/no-useless-path-segments
 import { CouchdbLocalStorageAdapter } from "../../..";
 import { CouchDbAdapterConf } from "@scramjet/types";
 
 const TEST_DB_PREFIX = "localstorage_test_";
-const COUCHDB_URL = "http://localhost:5984";
+const COUCHDB_URL = process.env.SCRAMJET_TEST_COUCHDB_URL || "http://localhost:5984";
+const runCouchdbTests = ["1", "true", "yes"].includes((process.env.SCRAMJET_TEST_COUCHDB || "").toLowerCase());
+const couchdbTest = runCouchdbTests ? test : test.skip;
 
 function getRandomDbName(): string {
     return TEST_DB_PREFIX + Date.now() + "_" + Math.floor(Math.random() * 1000);
 }
 
-describe("CouchdbLocalStorageAdapter Tests", () => {
-    let adapter: CouchdbLocalStorageAdapter;
-    let dbName: string;
-    const options: CouchDbAdapterConf = { url: COUCHDB_URL, dbName: "", pass: "", user: "" };
+// Factory to create per-test adapter instances
+const createAdapter = async (): Promise<{ adapter: CouchdbLocalStorageAdapter; dbName: string }> => {
+    const dbName = getRandomDbName();
+    const options: CouchDbAdapterConf = { url: COUCHDB_URL, dbName, pass: "", user: "" };
+    const adapter = new CouchdbLocalStorageAdapter(options);
+    await adapter.init();
+    return { adapter, dbName };
+};
 
-    beforeAll(async () => {
-        try {
-            dbName = getRandomDbName();
-            options.dbName = dbName;
-            adapter = new CouchdbLocalStorageAdapter(options);
-            await adapter.init();
-        } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error("Failed to initialize CouchDB adapter:", error);
-            throw error;
-        }
-    });
+couchdbTest("CouchdbLocalStorageAdapter: setItem() and getItem() work correctly", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-    afterEach(async () => {
-        await adapter.clear();
-    });
+    await adapter.setItem("scram", "jet");
+    const value = await adapter.getItem("scram");
 
-    afterAll(async () => {
-        await adapter.destroy();
-    });
+    t.is(value, "jet");
+});
 
-    test("setItem() and getItem() work correctly", async () => {
-        await adapter.setItem("scram", "jet");
-        const value = await adapter.getItem("scram");
+couchdbTest("CouchdbLocalStorageAdapter: overwriting a key updates its value", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-        expect(value).toBe("jet");
-    });
+    await adapter.setItem("scram", "jet");
+    await adapter.setItem("scram", "test");
+    const value = await adapter.getItem("scram");
 
-    test("Overwriting a key updates its value", async () => {
-        await adapter.setItem("scram", "jet");
-        await adapter.setItem("scram", "test");
-        const value = await adapter.getItem("scram");
+    t.is(value, "test");
+});
 
-        expect(value).toBe("test");
-    });
+couchdbTest("CouchdbLocalStorageAdapter: removeItem() should remove a key", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-    test("removeItem() should remove a key", async () => {
-        await adapter.setItem("temp", "val");
-        await adapter.removeItem("temp");
-        const value = await adapter.getItem("temp");
+    await adapter.setItem("temp", "val");
+    await adapter.removeItem("temp");
+    const value = await adapter.getItem("temp");
 
-        expect(value).toBeNull();
-    });
+    t.is(value, null);
+});
 
-    test("clear() should remove all keys", async () => {
-        await adapter.setItem("a", "1");
-        await adapter.setItem("b", "2");
-        await adapter.clear();
-        const allItems = await adapter.getAllItems();
+couchdbTest("CouchdbLocalStorageAdapter: clear() should remove all keys", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-        expect(allItems).toEqual({});
-    });
+    await adapter.setItem("a", "1");
+    await adapter.setItem("b", "2");
+    await adapter.clear();
+    const allItems = await adapter.getAllItems();
 
-    test("getAllItems() returns complete key-value mapping", async () => {
-        await adapter.setItem("key1", "val1");
-        await adapter.setItem("key2", "val2");
-        const items = await adapter.getAllItems();
+    t.deepEqual(allItems, {});
+});
 
-        expect(items).toEqual({ key1: "val1", key2: "val2" });
-    });
+couchdbTest("CouchdbLocalStorageAdapter: getAllItems() returns complete key-value mapping", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-    test("length() returns correct number of keys", async () => {
-        await adapter.clear();
-        expect(await adapter.length()).toBe(0);
-        await adapter.setItem("a", "1");
-        expect(await adapter.length()).toBe(1);
-        await adapter.setItem("b", "2");
-        expect(await adapter.length()).toBe(2);
-        await adapter.removeItem("a");
-        expect(await adapter.length()).toBe(1);
-    });
+    await adapter.setItem("key1", "val1");
+    await adapter.setItem("key2", "val2");
+    const items = await adapter.getAllItems();
 
-    test("handles special characters in keys and values", async () => {
-        const key = "spécial_键_😊";
-        const value = "välüe_测试_🚀";
+    t.deepEqual(items, { key1: "val1", key2: "val2" });
+});
 
-        await adapter.setItem(key, value);
-        const retrieved = await adapter.getItem(key);
+couchdbTest("CouchdbLocalStorageAdapter: length() returns correct number of keys", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-        expect(retrieved).toBe(value);
-    });
+    await adapter.clear();
+    t.is(await adapter.length(), 0);
+    await adapter.setItem("a", "1");
+    t.is(await adapter.length(), 1);
+    await adapter.setItem("b", "2");
+    t.is(await adapter.length(), 2);
+    await adapter.removeItem("a");
+    t.is(await adapter.length(), 1);
+});
 
-    test("concurrent setItem operations", async () => {
-        const numItems = 100;
-        const keys = Array.from({ length: numItems }, (_, i) => `key_${i}`);
+couchdbTest("CouchdbLocalStorageAdapter: handles special characters in keys and values", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
 
-        await Promise.all(keys.map(key => adapter.setItem(key, `value_${key}`)));
-        const items = await adapter.getAllItems();
+    const key = "spécial_键_😊";
+    const value = "välüe_测试_🚀";
 
-        for (const key of keys) {
-            expect(items[key]).toBe(`value_${key}`);
-        }
-    });
+    await adapter.setItem(key, value);
+    const retrieved = await adapter.getItem(key);
 
-    test("setItem() rejects when insert fails", async () => {
-        const backup = (adapter as any).db.insert;
+    t.is(retrieved, value);
+});
 
-        (adapter as any).db.insert = () => { throw new Error("Simulated insert error"); };
-        await expect(adapter.setItem("fail", "value")).rejects.toThrow("Simulated insert error");
+couchdbTest("CouchdbLocalStorageAdapter: concurrent setItem operations", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
+
+    const numItems = 100;
+    const keys = Array.from({ length: numItems }, (_, i) => `key_${i}`);
+
+    await Promise.all(keys.map(key => adapter.setItem(key, `value_${key}`)));
+    const items = await adapter.getAllItems();
+
+    for (const key of keys) {
+        t.is(items[key], `value_${key}`);
+    }
+});
+
+couchdbTest("CouchdbLocalStorageAdapter: setItem() rejects when insert fails", async t => {
+    const { adapter } = await createAdapter();
+    t.teardown(() => adapter.destroy());
+
+    const backup = (adapter as any).db.insert;
+    (adapter as any).db.insert = () => { throw new Error("Simulated insert error"); };
+
+    try {
+        await adapter.setItem("fail", "value");
+        t.fail("Expected setItem to reject");
+    } catch (err: any) {
+        t.is(err.message, "Simulated insert error");
+    } finally {
         (adapter as any).db.insert = backup;
-    });
+    }
 });

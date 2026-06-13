@@ -63,7 +63,7 @@ export class SthConnectionStore implements ISTHConnectionStore {
 
         if (sthController.verserConnection.connected) {
             if (force) {
-                this.sthControllers.get(id)?.disconnect("id_drop");
+                await sthController.disconnect("id_drop");
             } else {
                 throw new Error(SthConnectionStoreErrors.CONNECTED);
             }

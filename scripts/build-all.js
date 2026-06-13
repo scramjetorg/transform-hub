@@ -187,7 +187,9 @@ console.time(BUILD_NAME);
         if (opts.install) {
             console.timeLog(BUILD_NAME, `Done, installing packages in ${outDir}...`);
 
-            const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -q -ws --no-audit`;
+            const rootNpmrc = join(opts.root, ".npmrc");
+            const npmUserconfig = existsSync(rootNpmrc) ? ` --userconfig ${JSON.stringify(rootNpmrc)}` : "";
+            const cmd = `cd ${JSON.stringify(outDir)} && pwd >&2 && npx npm@8 install -q -ws --no-audit${npmUserconfig}`;
 
             await runCommand(cmd, opts.verbose);
         }

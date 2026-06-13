@@ -199,12 +199,16 @@ guard7() {
             packages/host/package.json|\
             packages/host/src/lib/cpm-connector.ts|\
             packages/host/src/lib/csi-controller.ts|\
+            packages/host/test/cpm-connector.test.ts|\
             packages/manager/package.json|\
             packages/manager/src/lib/manager.ts|\
             packages/manager/src/lib/sth-controller.ts|\
+            packages/manager/test/sth-controller.spec.ts|\
             packages/multi-manager/package.json|\
             packages/multi-manager/src/lib/multi-manager.ts|\
             packages/multi-manager/src/lib/multi-host-controller.ts|\
+            packages/multi-manager/test/lib/multi-host-controller-store.spec.ts|\
+            packages/multi-manager/test/lib/multi-host-controller.spec.ts|\
             packages/runner/package.json|\
             packages/runner/src/host-client.ts|\
             packages/runner-node/package.json|\

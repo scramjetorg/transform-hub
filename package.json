@@ -38,6 +38,7 @@
     "lint:fix": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --fix --ext .ts --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && npm run lint",
     "check:runtime-invariants": "bash scripts/check-runtime-wrapper-invariants.sh",
+    "check:verser2-packages": "node scripts/check-verser2-github-packages.js",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
     "start:dev": "tsx packages/sth/src/bin/hub.ts",
     "start:dev:cli": "DEVELOPMENT=true tsx packages/cli/src/bin/index.ts",
