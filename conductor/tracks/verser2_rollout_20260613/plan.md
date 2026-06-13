@@ -9,35 +9,50 @@
     - [ ] Use the PR as the shared review surface for automated reviews and phase checkpoints.
 - [ ] Task: Define final verser2 connectivity architecture
     - [ ] Read current codemaps and affected entrypoints for Manager, MultiManager, Host, Runner, Node, Python, Bun, API server, and shared types.
-    - [ ] Document Manager/MultiManager ⇄ STH topology over verser2.
-    - [ ] Document STH ⇄ global runner topology over verser2.
-    - [ ] Document global runner ⇄ stack-specific runtime wrapper responsibilities.
-    - [ ] Document sequence → STH API and STH → sequence API routing.
-    - [ ] Define temporary migration flag behavior and final no-flag architecture.
-- [ ] Task: Define route naming and identity contracts
-    - [ ] Specify `manager.<managerId>.scramjet.internal` route semantics.
-    - [ ] Specify `multimanager.<multiManagerId>.scramjet.internal` route semantics.
-    - [ ] Specify `sth.<sthId>.scramjet.internal` route semantics.
-    - [ ] Specify `runner.<instanceId>.scramjet.internal` route semantics.
-    - [ ] Specify `sequence.<instanceId>.scramjet.internal` route semantics.
-    - [ ] Define certificate SAN/URI identity conventions for Manager, MultiManager, STH, runner, and sequence routes.
-- [ ] Task: Define TLS/CA and runner certificate provisioning model
-    - [ ] Define Manager/MultiManager CA behavior for platform-connected deployments.
+    - [ ] Document the verser2 role model: Manager/MultiManager owns the TLS HTTP/2 `Host`; STH connects outbound as a `Broker` and, where Manager-originated requests need to reach STH, also as a `Guest`.
+    - [ ] Document the flat route topology: all peers connect directly to one selected Host; STH does not run an intermediate verser2 Host for runner or sequence routing.
+    - [ ] Document that route state is per Host instance and per connected peer set; multi-Host, HA, and shared route-state behavior are deployment architecture/future work, not built into verser2.
+    - [ ] Document STH → global runner routing as STH Broker → Host → runner Guest.
+    - [ ] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
+    - [ ] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
+    - [ ] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
+    - [ ] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
+- [ ] Task: Define route naming, identity, and route-state contracts
+    - [ ] Specify `manager.<managerId>.scramjet.internal` route semantics for Manager-reachable endpoints when registered as Guests.
+    - [ ] Specify `multimanager.<multiManagerId>.scramjet.internal` route semantics for MultiManager-reachable endpoints when registered as Guests.
+    - [ ] Specify `sth.<sthId>.scramjet.internal` route semantics for STH Guest endpoints.
+    - [ ] Specify `runner.<instanceId>.scramjet.internal` route semantics for outer-runner Guest endpoints.
+    - [ ] Specify `sequence.<instanceId>.scramjet.internal` route semantics for stack-specific runtime Guest endpoints.
+    - [ ] Specify that Host route matching is exact hostname equality only: no wildcard, prefix, suffix, or `*.domain` matching.
+    - [ ] Define unique peer ID conventions for every Broker and Guest, and treat duplicate peer registration as a rollout error.
+    - [ ] Define Broker route-table handling: route-control frames replace the full route table; shorter or empty frames retract previous routes.
+    - [ ] Require Broker startup paths to use `waitForRoute(domain)` or an equivalent timeout-aware readiness gate before sending routed requests.
+    - [ ] Define certificate SAN/URI identity conventions aligned with verser2 documentation, including `DNS:<route-hostname>` and `URI:urn:verser:client:<peerId>` where client identity is needed.
+- [ ] Task: Define TLS/CA, authorization, and certificate provisioning model
+    - [ ] Define Manager/MultiManager Host TLS behavior for platform-connected deployments; Host TLS is mandatory and the server certificate must be valid for the hostname/IP used in each peer `hostUrl`.
     - [ ] Define STH local CA behavior for standalone deployments.
-    - [ ] Define delegated STH CA behavior for runner certificate issuance when connected to Manager/MultiManager.
-    - [ ] Define per-runner certificate generation, delivery, rotation, revocation, and cleanup.
+    - [ ] Define delegated STH CA behavior for runner and runtime certificate issuance when connected to Manager/MultiManager.
+    - [ ] Define Guest/Broker trust behavior using `ca`/`caFile`, noting that explicit CA configuration replaces Node's default CA set for that connection.
+    - [ ] Decide where mTLS is required versus optional; when enabled, define Host `tls.clientAuth.caFile` and client `certFile`/`keyFile` or PFX/PKCS12 delivery.
+    - [ ] Define registration-time authorization with verser2 `authorizeRegistration(context)`, preferring certificate fingerprints over common names for allowlisting.
+    - [ ] Document that verser2 has registration-time authorization only; any per-request authorization must live in STH application-level Broker/Guest wrappers.
+    - [ ] Define per-runner and per-runtime certificate generation, delivery, rotation, revocation, and cleanup.
+    - [ ] Document that `reloadTlsCertificate()` reloads Host server identity only; client CA, mTLS policy, `requestCert`, and `rejectUnauthorized` changes require Host restart.
+    - [ ] Define private-key file permission requirements, including `0600` on POSIX for key files.
     - [ ] Define process adapter certificate file delivery.
     - [ ] Define Docker adapter read-only certificate mount behavior.
     - [ ] Define Kubernetes adapter per-instance Secret behavior.
     - [ ] Define Node >=20 enforcement points.
-- [ ] Task: Define transport abstractions
-    - [ ] Specify Manager/STH transport abstraction replacing direct `VerserConnection` exposure.
-    - [ ] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays.
-    - [ ] Specify stack-specific runtime transport capabilities for Node, Python, and Bun.
-    - [ ] Specify verser2-aware API forwarding and stream helper contracts.
+- [ ] Task: Define transport abstractions around verser2 roles and leases
+    - [ ] Specify Manager/STH transport abstractions in terms of `Host`, `Broker`, `Guest`, route registration, `broker.request({ targetId, method, path, headers, body })`, and route readiness; do not expose raw HTTP/2 sessions or old `VerserConnection` equivalents.
+    - [ ] Specify `RunnerTransport` abstraction decoupled from raw socket channel arrays and from BPMux; map old channel semantics to routed HTTP requests and streaming bodies.
+    - [ ] Specify one-use lease stream semantics: Guests keep a lease pool, each routed request consumes a lease, and replacements must be opened after use.
+    - [ ] Define lease pool and timeout settings, including minimum waiting leases and lease-acquire timeout handling for runner and sequence requests.
+    - [ ] Specify stack-specific runtime transport capabilities for Node, Python, and Bun using the published packages: `@signicode/verser2-guest-node`, `@signicode/verser2-guest-python`, `@signicode/verser2-guest-bun`, plus shared `@signicode/verser-common` / `@signicode/verser2-guest-js-common` where appropriate.
+    - [ ] Specify verser2-aware API forwarding and stream helper contracts, explicitly excluding unsupported WebSocket upgrade, CONNECT tunneling, trailers, and informational 1xx forwarding as verser2 capabilities.
 - [ ] Task: Add architecture safety checks and automated review prompts
     - [ ] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
-    - [ ] Add automated review checklist for architecture, TLS/CA, route naming, and transport contracts.
+    - [ ] Add automated review checklist for Host/Guest/Broker role use, flat topology, lease lifecycle, route exact-match behavior, TLS/CA, mTLS authorization, and transport contracts.
     - [ ] Record upstream verser2 halt-and-report workflow for missing or incorrect verser2 behavior.
 - [ ] Task: Conductor - User Manual Verification 'Architecture, Contracts, and Safety Rails' (Protocol in workflow.md)
 
@@ -47,91 +62,102 @@
     - [ ] Add focused tests for STH registration with Manager/MultiManager.
     - [ ] Add focused tests for Manager → STH request forwarding.
     - [ ] Add focused tests for STH → Manager request forwarding.
-    - [ ] Add focused tests for platform, log, audit, and topic stream behavior.
-    - [ ] Add focused tests for reconnect, disconnect, and unhealthy-state behavior.
-- [ ] Task: Implement verser2 Manager/MultiManager transport
-    - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with verser2 host/broker roles.
-    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the new Manager/STH transport abstraction.
-    - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with verser2 requests and streams.
-    - [ ] Replace `CPMConnector` old `VerserClient` usage with verser2 STH-side connector behavior.
-    - [ ] Preserve temporary legacy mode only where needed during this phase.
-- [ ] Task: Migrate Manager/STH streams
-    - [ ] Migrate `/platform` communication stream to explicit verser2 stream semantics.
-    - [ ] Migrate log stream behavior.
-    - [ ] Migrate audit stream behavior.
-    - [ ] Migrate topic upstream request behavior.
-    - [ ] Migrate topic downstream request behavior.
-    - [ ] Preserve streaming and backpressure expectations in tests.
+    - [ ] Add focused tests for platform, log, audit, and topic request/stream behavior.
+    - [ ] Add focused tests for route readiness, reconnect, disconnect, duplicate peer IDs, route retraction, and unhealthy-state behavior.
+- [ ] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
+    - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
+    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over verser2 Host/Broker/Guest roles.
+    - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with Broker route lookup plus `broker.request({ targetId, method, path, headers, body })`.
+    - [ ] Replace `CPMConnector` old `VerserClient` usage with STH-side `createVerserBroker()` behavior from `@signicode/verser2-guest-node`, and STH-side Guest registration where inbound Manager requests are required.
+    - [ ] Add dependency wiring for `@signicode/verser2-host`, `@signicode/verser2-guest-node`, and common packages in the affected workspaces.
+    - [ ] Preserve temporary legacy mode only where needed during this phase, and only outside the verser2 TLS path.
+- [ ] Task: Migrate Manager/STH request and streaming semantics
+    - [ ] Map `/platform` communication to an explicit Guest route plus Broker request/streaming-body pattern.
+    - [ ] Map log behavior to explicit Guest routes and streaming request or response bodies.
+    - [ ] Map audit behavior to explicit Guest routes and streaming request or response bodies.
+    - [ ] Map topic upstream request behavior to explicit routed requests.
+    - [ ] Map topic downstream request behavior to explicit routed requests.
+    - [ ] Preserve streaming and backpressure expectations in tests without relying on persistent numbered channels.
+    - [ ] Verify no Manager/STH path depends on WebSocket upgrade, CONNECT tunneling, trailers, or forwarded informational responses.
 - [ ] Task: Migrate MultiHost or retire legacy MultiHost path
     - [ ] Review `MultiHostController` use of old `createChannel(0)`, `createChannel(1)`, and `forward(req, res)`.
-    - [ ] Decide whether MultiHost remains a first-class concept or folds into STH route semantics.
-    - [ ] Implement the selected verser2 route/stream behavior.
+    - [ ] Decide whether MultiHost remains a first-class deployment concept, noting that verser2 does not provide built-in multi-Host shared route state.
+    - [ ] If retained, define application-owned route distribution, lease usage, and Host selection semantics.
+    - [ ] If retired or folded into STH route semantics, define removal and compatibility behavior.
     - [ ] Add tests for `/msth/:id` behavior when retained, or removal/compatibility behavior when retired.
 - [ ] Task: Introduce runner transport foundation
     - [ ] Add `RunnerTransport` interfaces in shared types or an appropriate package.
     - [ ] Adapt host-side instance lifecycle code to depend on `RunnerTransport` instead of raw channel arrays where possible.
     - [ ] Add `LegacyRunnerTransport` wrapping existing socket/BPMux behavior for parity.
+    - [ ] Define `Verser2RunnerTransport` route contracts using runner Guest endpoints and Broker requests over one-use leases.
     - [ ] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
 - [ ] Task: Run automated reviews and validation for Phase 2
     - [ ] Run local Manager/MultiManager/Host package tests added in this phase.
     - [ ] Run targeted transport abstraction tests.
     - [ ] Run the narrowest relevant build or typecheck for changed packages.
-    - [ ] Complete automated review for streaming/backpressure, reconnect semantics, and legacy compatibility.
+    - [ ] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
     - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
 - [ ] Task: Conductor - User Manual Verification 'Manager/STH Migration and Transport Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Global Runner and Runtime Migration
 
 - [ ] Task: Establish targeted hub tests for runner connectivity
-    - [ ] Add targeted hub test for runner startup and PING/PONG lifecycle over the transport abstraction.
+    - [ ] Add targeted hub test for runner startup and route registration/readiness over the transport abstraction.
+    - [ ] Add targeted hub test for PING/PONG or replacement lifecycle health behavior over routed requests.
     - [ ] Add targeted hub test for STOP/KILL/control messages.
     - [ ] Add targeted hub test for stdout and stderr streaming.
     - [ ] Add targeted hub test for monitoring frames.
     - [ ] Add targeted hub test for input and output streams.
-    - [ ] Add targeted hub test for runner disconnect and reconnect behavior.
+    - [ ] Add targeted hub test for runner disconnect, route retraction, reconnect, and route-unavailable behavior.
 - [ ] Task: Implement global runner verser2 transport
-    - [ ] Make `packages/runner` own the global verser2 runner connection and runner certificate material.
-    - [ ] Move stdin, stdout, stderr, control, monitoring, input, output, and log channels to explicit verser2 endpoints/streams.
+    - [ ] Make `packages/runner` own the global verser2 runner Guest connection, route registration, Host URL, trust material, and optional client certificate material.
+    - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
+    - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
     - [ ] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
     - [ ] Preserve temporary legacy mode only until runtime migrations are complete.
-    - [ ] Update runtime boot config to carry verser2 route and certificate information needed by stack-specific runners.
+    - [ ] Update runtime boot config to carry `hostUrl`, peer IDs, routed domains, CA file/value, optional client cert/key or PFX settings, and route/lease timeout settings needed by stack-specific runtimes.
 - [ ] Task: Migrate Node runtime
-    - [ ] Add or update runner-node tests for `context.hub` over verser2.
-    - [ ] Add or update runner-node tests for non-listening `context.api` exposure over verser2 Guest routes.
-    - [ ] Replace BPMux-backed runner-node `HostClient` path with verser2 runtime transport.
+    - [ ] Add or update runner-node tests for `context.hub` over verser2 Broker helpers from `@signicode/verser2-guest-node`.
+    - [ ] Add or update runner-node tests for non-listening `context.api` exposure by attaching a Node Guest route with `createVerserNodeGuest()`.
+    - [ ] Replace BPMux-backed runner-node `HostClient` path with verser2 runtime transport; avoid reimplementing the published Guest/Broker transport.
+    - [ ] Verify Node route domain behavior, including attach-time domain precedence and the default-to-guestId behavior where intentionally used.
     - [ ] Verify keepalive, events, lifecycle, input, output, and logs remain user-compatible.
 - [ ] Task: Migrate Python runtime
-    - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls.
+    - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls using `verser2-guest-python`.
     - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
-    - [ ] Wire Python runtime to runner-provided routes and certificate files.
-    - [ ] Verify streaming request and response bodies across Python runtime paths.
+    - [ ] Wire Python runtime to runner-provided `host_url`, explicit `routed_domains`, CA file, and optional client cert/key or PFX files.
+    - [ ] Ensure Python Guests always provide `routed_domains`; unlike Node/Bun, Python does not default route domains to the Guest ID.
+    - [ ] Verify ASGI 3 behavior, one-shot response bodies, and streaming request/response bodies across Python runtime paths.
 - [ ] Task: Migrate Bun runtime
-    - [ ] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls.
-    - [ ] Add or update runner-bun tests for Bun Guest fetch/routes STH → sequence API exposure.
+    - [ ] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls using `@signicode/verser2-guest-bun`.
+    - [ ] Add or update runner-bun tests for Bun Guest `fetch`/`routes` STH → sequence API exposure.
     - [ ] Wire Bun runtime to runner-provided routes and certificate files.
+    - [ ] Verify Bun local route matching precedence: exact path, `:param`, `*`, then `fetch` fallback.
     - [ ] Verify streaming and binary request/response bodies across Bun runtime paths.
+    - [ ] Verify no Bun runtime path depends on WebSocket upgrade; verser2 Bun upgrade support is not available.
 - [ ] Task: Harden API forwarding and stream semantics
-    - [ ] Add API-server or transport tests for verser2 request forwarding.
+    - [ ] Add API-server or transport tests for verser2 request forwarding through leased routing.
     - [ ] Cover streaming request bodies.
     - [ ] Cover streaming response bodies.
     - [ ] Cover binary payloads.
-    - [ ] Cover `100-continue` behavior.
-    - [ ] Cover abort/cancellation and route-unavailable behavior.
+    - [ ] Cover abort/cancellation, route-unavailable behavior, duplicate peer rejection, and route retraction.
+    - [ ] Test and document unsupported forwarding behavior for WebSocket upgrade, CONNECT tunneling, trailers, and informational responses such as `100-continue` instead of treating them as required verser2 capabilities.
+    - [ ] Avoid production reliance on direct/test-only dispatch paths that buffer full responses and enforce `maxResponseBytes`.
 - [ ] Task: Run automated reviews and validation for Phase 3
     - [ ] Run targeted hub connectivity tests for Manager/STH plus runner paths.
     - [ ] Run local package tests for runner, runner-node, runner-python, runner-bun, host, and api-server as changed.
     - [ ] Run `npm run check:runtime-invariants` when runtime protocol wiring changes.
     - [ ] Run relevant BDD smoke tests for Node, Python, API, and Bun if available.
-    - [ ] Complete automated cross-runtime parity, API streaming, and lifecycle reviews.
+    - [ ] Complete automated cross-runtime parity, API streaming, lease lifecycle, route readiness, and lifecycle reviews.
     - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
 - [ ] Task: Conductor - User Manual Verification 'Global Runner and Runtime Migration' (Protocol in workflow.md)
 
 ## Phase 4: Default Switch, Legacy Removal, and Final Validation
 
 - [ ] Task: Make verser2 the default connectivity path
-    - [ ] Switch Manager/STH connectivity defaults to verser2.
-    - [ ] Switch global runner connectivity defaults to verser2.
-    - [ ] Switch Node/Python/Bun runtime API connectivity defaults to verser2.
+    - [ ] Switch Manager/STH connectivity defaults to verser2 Host/Broker/Guest roles.
+    - [ ] Switch global runner connectivity defaults to verser2 runner Guest routes.
+    - [ ] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
     - [ ] Remove or narrow temporary migration flags according to the approved migration window.
 - [ ] Task: Remove BPMux from active repository usage
     - [ ] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.
@@ -146,6 +172,10 @@
     - [ ] Remove old `VerserClient` CPM connector paths.
     - [ ] Remove old `Verser` server paths in MultiManager.
     - [ ] Add static check proving no active `@scramjet/verser` imports remain.
+- [ ] Task: Confirm final verser2 package dependencies
+    - [ ] Ensure affected TypeScript packages depend on the needed `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, `@signicode/verser-common`, and `@signicode/verser2-guest-js-common` packages.
+    - [ ] Ensure Python runtime packaging includes the `verser2-guest-python` dependency and documents required TLS file inputs.
+    - [ ] Ensure no package references unpublished or internal verser2 APIs when a public Host/Guest/Broker API exists.
 - [ ] Task: Remove legacy runner socket protocol
     - [ ] Remove or archive `SocketServer` when no active path uses it.
     - [ ] Remove raw channel-index connection logic.
@@ -163,7 +193,7 @@
 - [ ] Task: Complete final automated reviews and documentation
     - [ ] Complete dependency removal review.
     - [ ] Complete dead-code review.
-    - [ ] Complete security review for TLS/CA/cert handling.
-    - [ ] Complete final architecture conformance review.
+    - [ ] Complete security review for TLS/CA/cert handling, mTLS registration authorization, private-key permissions, and per-runner cert cleanup.
+    - [ ] Complete final architecture conformance review for flat topology, exact-match routes, lease lifecycle, and no unsupported protocol assumptions.
     - [ ] Update docs and package guidance for final verser2 connectivity architecture.
 - [ ] Task: Conductor - User Manual Verification 'Default Switch, Legacy Removal, and Final Validation' (Protocol in workflow.md)
