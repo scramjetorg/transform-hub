@@ -17,17 +17,17 @@
     - [x] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
     - [x] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
     - [x] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
-- [ ] Task: Define route naming, identity, and route-state contracts
-    - [ ] Specify `manager.<managerId>.scramjet.internal` route semantics for Manager-reachable endpoints when registered as Guests.
-    - [ ] Specify `multimanager.<multiManagerId>.scramjet.internal` route semantics for MultiManager-reachable endpoints when registered as Guests.
-    - [ ] Specify `sth.<sthId>.scramjet.internal` route semantics for STH Guest endpoints.
-    - [ ] Specify `runner.<instanceId>.scramjet.internal` route semantics for outer-runner Guest endpoints.
-    - [ ] Specify `sequence.<instanceId>.scramjet.internal` route semantics for stack-specific runtime Guest endpoints.
-    - [ ] Specify that Host route matching is exact hostname equality only: no wildcard, prefix, suffix, or `*.domain` matching.
-    - [ ] Define unique peer ID conventions for every Broker and Guest, and treat duplicate peer registration as a rollout error.
-    - [ ] Define Broker route-table handling: route-control frames replace the full route table; shorter or empty frames retract previous routes.
-    - [ ] Require Broker startup paths to use `waitForRoute(domain)` or an equivalent timeout-aware readiness gate before sending routed requests.
-    - [ ] Define certificate SAN/URI identity conventions aligned with verser2 documentation, including `DNS:<route-hostname>` and `URI:urn:verser:client:<peerId>` where client identity is needed.
+- [x] Task: Define route naming, identity, and route-state contracts
+    - [x] Specify `manager.<managerId>.scramjet.internal` route semantics for Manager-reachable endpoints when registered as Guests.
+    - [x] Specify `multimanager.<multiManagerId>.scramjet.internal` route semantics for MultiManager-reachable endpoints when registered as Guests.
+    - [x] Specify `sth.<sthId>.scramjet.internal` route semantics for STH Guest endpoints.
+    - [x] Specify `runner.<instanceId>.scramjet.internal` route semantics for outer-runner Guest endpoints.
+    - [x] Specify `sequence.<instanceId>.scramjet.internal` route semantics for stack-specific runtime Guest endpoints.
+    - [x] Specify that Host route matching is exact hostname equality only: no wildcard, prefix, suffix, or `*.domain` matching.
+    - [x] Define unique peer ID conventions for every Broker and Guest, and treat duplicate peer registration as a rollout error.
+    - [x] Define Broker route-table handling: route-control frames replace the full route table; shorter or empty frames retract previous routes.
+    - [x] Require Broker startup paths to use `waitForRoute(domain)` or an equivalent timeout-aware readiness gate before sending routed requests.
+    - [x] Define certificate SAN/URI identity conventions aligned with verser2 documentation, including `DNS:<route-hostname>` and `URI:urn:verser:client:<peerId>` where client identity is needed.
 - [ ] Task: Define TLS/CA, authorization, and certificate provisioning model
     - [ ] Define Manager/MultiManager Host TLS behavior for platform-connected deployments; Host TLS is mandatory and the server certificate must be valid for the hostname/IP used in each peer `hostUrl`.
     - [ ] Define STH local CA behavior for standalone deployments.

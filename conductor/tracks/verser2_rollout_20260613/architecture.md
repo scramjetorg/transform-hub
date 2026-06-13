@@ -45,6 +45,50 @@ This document is the Phase 1 design record for replacing legacy STH connectivity
 - Multi-Host high availability, shared route-state replication, and cross-Host route distribution are deployment architecture or future work; they are not assumed to be built into `verser2`.
 - Implementation code must therefore model Host selection explicitly and treat route-unavailable responses as normal operational states.
 
+## Route naming, peer identity, and route state
+
+### Route hostnames
+
+Routes are deterministic DNS-style hostnames. Host route matching is exact hostname equality only: no wildcard, prefix, suffix, glob, regular expression, or `*.domain` matching is part of the rollout contract.
+
+| Route | Registered by | Purpose |
+| --- | --- | --- |
+| `manager.<managerId>.scramjet.internal` | Manager Guest, when Manager exposes Manager-reachable handlers | Manager-reachable control, platform, and service endpoints that must be called by STH or other peers. |
+| `multimanager.<multiManagerId>.scramjet.internal` | MultiManager Guest, when MultiManager exposes MultiManager-reachable handlers | MultiManager-level routing, coordination, and deployment endpoints. |
+| `sth.<sthId>.scramjet.internal` | STH Guest | Manager/MultiManager to STH request forwarding and STH-exposed platform handlers. |
+| `runner.<instanceId>.scramjet.internal` | Outer runner Guest | Global runner lifecycle, control, stdio, monitoring, input, output, and log routes. |
+| `sequence.<instanceId>.scramjet.internal` | Stack-specific runtime Guest | Sequence-exposed API routes reached by STH. |
+
+Route IDs are deployment-stable for the lifetime of the connected component. `sthId`, `managerId`, `multiManagerId`, and `instanceId` must be normalized before route construction and must not contain dots or characters outside the approved hostname label subset. Duplicate route registration for the same active peer set is a rollout error.
+
+### Peer IDs
+
+Every Broker and Guest has a unique peer ID within the selected Host's connected peer set. Recommended peer IDs are:
+
+- `manager:<managerId>:broker` and `manager:<managerId>:guest`;
+- `multimanager:<multiManagerId>:broker` and `multimanager:<multiManagerId>:guest`;
+- `sth:<sthId>:broker` and `sth:<sthId>:guest`;
+- `runner:<instanceId>:guest`;
+- `sequence:<instanceId>:guest`;
+- runtime-native Broker clients as `sequence:<instanceId>:<runtime>:broker` where `<runtime>` is `node`, `python`, or `bun`.
+
+Duplicate peer registration is fatal for the registering component. Recovery requires disconnecting the duplicate peer, issuing fresh identity material if needed, and reconnecting with a unique peer ID.
+
+### Route table semantics
+
+Brokers must treat route-control frames from the Host as a replacement of the full known route table, not as incremental patches. Shorter frames retract omitted routes, and empty frames retract all previously known routes for that Broker. Broker code must handle route loss as normal operational state and must not keep sending to cached stale routes.
+
+Broker startup paths must use `waitForRoute(domain)` or an equivalent timeout-aware readiness gate before sending routed requests. Readiness gates must classify timeout as route unavailable rather than as protocol corruption.
+
+### Certificate identity conventions
+
+Certificate identities must bind the route hostname and the peer identity used by registration/authorization:
+
+- route-serving Guest certificates include `DNS:<route-hostname>` for every route registered by that peer;
+- client/peer identity certificates include `URI:urn:verser:client:<peerId>` where client identity is required;
+- Manager, MultiManager, STH, runner, and sequence certificates must not rely on common name matching for authorization;
+- authorization allowlists should use certificate fingerprints and route/peer IDs rather than mutable display names.
+
 ## Connectivity flows
 
 ### Manager/MultiManager ⇄ STH
