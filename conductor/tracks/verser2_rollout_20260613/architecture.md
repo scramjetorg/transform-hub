@@ -24,6 +24,10 @@ This document is the Phase 1 design record for replacing legacy STH connectivity
 4. Manager-side code dispatches Manager to STH traffic through the Host/Broker/Guest routing surface instead of exposing old `VerserConnection`, raw HTTP/2 sessions, or BPMux channels to application code.
 5. MultiManager follows the same selected-Host model. It may own or select the upstream Host for STH peers, but it must not assume that `verser2` provides shared route state across multiple Host processes.
 
+In the current `verser2` API shape, even a component that owns the Host attaches callable surfaces through normal Guest/Broker roles. Therefore Manager/MultiManager should attach a Manager-side Broker for outbound routed calls and, when STH-callable Manager APIs are required, a Manager-side Guest. STH similarly attaches a Broker for STH-originated calls and a Guest for Manager-callable STH APIs. These attachments may use ordinary TLS HTTP/2 connections, including loopback/local connections when the Host and Manager live in the same process. This is acceptable for Phase 1 and initial rollout, but it is not the desired long-term performance shape.
+
+Transform Hub should request a `verser2` API for in-process Host-side Guest/Broker attachment. The desired API would let the Host owner register Guest handlers and Broker request capability directly against the Host route/lease machinery without creating an extra HTTP/2 client connection, while preserving the same authorization, route table, lease lifecycle, streaming, and error semantics as networked Guest/Broker clients. This is a performance and simplicity improvement, not a blocker for the current rollout unless the H2 path proves functionally insufficient.
+
 ### Standalone STH mode
 
 1. STH still uses the same `verser2` Broker/Guest transport abstractions.
@@ -32,9 +36,9 @@ This document is the Phase 1 design record for replacing legacy STH connectivity
 
 ### Runner and runtime mode
 
-1. The outer runner initiates an outbound mTLS HTTP/2 connection to the owning STH local Host and registers `runner.<instanceId>.scramjet.internal` as a Guest.
-2. Stack-specific runtimes initiate outbound mTLS HTTP/2 connections to the owning STH local Host and register `sequence.<instanceId>.scramjet.internal` as Guests only when sequence API exposure is enabled by explicit normalized configuration.
-3. The outer runner owns global runner connectivity: Host URL, CA/trust material, optional client identity, runner route registration, process lifecycle, certificate delivery, reconnect/disconnect, and global streams such as stdio, control, monitoring, input, output, and logs.
+1. The outer runner initiates an outbound TLS HTTP/2 connection to the owning STH local Host and registers `runner.<instanceId>.scramjet.internal` as a Guest. Client mTLS is used when required by STH or Manager policy.
+2. Stack-specific runtimes initiate outbound TLS HTTP/2 connections to the owning STH local Host and register `sequence.<instanceId>.scramjet.internal` as Guests only when sequence API exposure is enabled by explicit normalized configuration. Client mTLS is used when required by STH or Manager policy.
+3. The outer runner owns global runner connectivity: Host URL, CA/trust material, optional client identity, runner route registration, process lifecycle, certificate or alternate registration credential delivery, reconnect/disconnect, and global streams such as stdio, control, monitoring, input, output, and logs.
 4. Stack-specific runtimes own runtime-native sequence behavior: app context, non-listening `context.api` exposure, `context.hub`/sequence-to-STH API clients, framework adapters, and runtime-specific stream handling.
 
 ## Hierarchical H2 connection topology
@@ -116,15 +120,18 @@ Guest and Broker clients must use explicit trust material with `ca` or `caFile`.
 
 ### mTLS policy
 
-The final architecture requires mTLS for all `verser2` peers:
+TLS server authentication is mandatory for every production `verser2` connection. Client mTLS is configurable by deployment policy because per-instance certificate issuance and rotation can be too costly for short-lived sequences.
 
-- STH Broker/Guest connecting to Manager/MultiManager Host;
-- Manager/MultiManager Broker/Guest peers when they connect to another Host;
-- outer runner Guest;
-- runtime Guest;
-- runtime Broker clients used for sequence to STH API calls.
+Policy is evaluated per connection class:
 
-The Host must configure client authentication using the accepted CA bundle. Clients receive `certFile`/`keyFile` or PFX/PKCS12 material. Any temporary optional-mTLS migration mode must require an alternative registration credential and must be removed or explicitly narrowed before the default switch. Unauthenticated runner/runtime registration is not allowed in the final model.
+- Manager/MultiManager may require mTLS for STH Broker/Guest connections to the Manager/MultiManager Host.
+- Manager/MultiManager may separately require that runner/runtime/sequence connections under an STH use mTLS.
+- STH may be configured in mTLS-required mode for its local runner/runtime Host.
+- STH may allow non-mTLS runner/runtime connections when policy permits, but registration must still be authenticated by an approved alternate credential such as a scoped launch/enrollment token or signed registration assertion.
+
+When mTLS is required, the Host configures client authentication using the accepted CA bundle, and clients receive `certFile`/`keyFile` or PFX/PKCS12 material. When mTLS is not required, `authorizeRegistration(context)` must still authenticate the peer, bind it to the expected peer ID, route domain, instance/sequence record, and launch scope, and reject unauthenticated registration.
+
+STH must report the effective runner/runtime/sequence transport-auth mode to Manager. If Manager policy requires sequence-level mTLS and STH reports non-mTLS sequence peers, Manager may reject the STH, reject affected launches, mark the STH or instances noncompliant, or restrict operations according to deployment policy.
 
 ### Registration-time authorization
 
@@ -132,10 +139,11 @@ The Host must configure client authentication using the accepted CA bundle. Clie
 
 - peer ID format and role;
 - exact route domain ownership for the registering role;
-- `URI:urn:verser:client:<peerId>` when peer identity is required;
-- `DNS:<route-hostname>` SAN coverage for every registered Guest route;
-- certificate fingerprint or serial allowlist membership;
-- issuer CA acceptance for the registering role;
+- `URI:urn:verser:client:<peerId>` when client mTLS identity is required;
+- alternate registration credential validity and binding when client mTLS is not required;
+- `DNS:<route-hostname>` SAN coverage for every registered Guest route when certificates are used for route identity;
+- certificate fingerprint or serial allowlist membership where applicable;
+- issuer CA acceptance for the registering role when certificates are used;
 - duplicate peer ID or duplicate active route rejection.
 
 Common names must not be used for authorization. Dynamically generated runner/runtime certificates must have their expected fingerprint or serial recorded in an active-instance registry before process launch.
@@ -155,11 +163,11 @@ Each instance launch receives or references least-privilege material:
 
 Certificates are short-lived and proactively rotated. The default certificate lifetime is 48 hours, the default rotation interval is 24 hours, and renewal is forced no later than 6 hours before expiry. These values must be configurable, for example `tls.certLifetime`, `tls.certRotationInterval`, `tls.certRenewBefore`, and `tls.certRotationJitter`. Rotation starts when the configured interval elapses or when the certificate enters the renew-before window. A small jitter should be applied to avoid thundering-herd renewal.
 
-Expired certificates are invalid for new TLS handshakes and registration. Hosts must reject expired peer certificates during handshake or `authorizeRegistration(context)`. Because TLS stacks may not terminate already-established sessions exactly at `notAfter`, each component must track certificate expiry itself and proactively rotate, close, and reconnect before expiry. If rotation is missed, runner/sequence routes become unavailable until a valid certificate is issued and the peer reconnects. There is no unauthenticated fallback.
+Expired certificates are invalid for new TLS handshakes and registration. Hosts must reject expired peer certificates during handshake or `authorizeRegistration(context)`. Because TLS stacks may not terminate already-established sessions exactly at `notAfter`, each component must track certificate expiry itself and proactively rotate, close, and reconnect before expiry. If rotation is missed in mTLS-required mode, runner/sequence routes become unavailable until a valid certificate is issued and the peer reconnects. Components must not silently downgrade from mTLS-required mode to non-mTLS. Non-mTLS operation is allowed only when explicitly permitted by policy and backed by an approved alternate registration credential.
 
 Certificate issuance is owned by the immediate upstream authority for the connection being made. Manager/MultiManager platform identity and Host server certificates come from the platform CA or deployment PKI. STH certificates for the STH -> Manager/MM connection come from the platform enrollment path. Runner and runtime certificates are issued by the owning STH local CA in standalone mode, or by a delegated runner/runtime CA provisioned to STH in platform-connected mode.
 
-CSR enrollment is used when the private key should be generated inside the component that will use it. The peer generates a private key and CSR containing only the expected SANs: `URI:urn:verser:client:<peerId>` for each peer identity the certificate may authenticate and the exact `DNS:<route-hostname>` values required for its role. Common Name is ignored. The CSR is sent to the immediate upstream issuer using a one-time launch enrollment credential for first issuance, or the current valid mTLS identity for rotation. STH signs runner/runtime CSRs only when they match an active launch, sequence, or instance record: expected STH, sequence ID, instance ID when instance-scoped, peer ID, role, route domains, SAN set, and issuer scope. Extra SANs or mismatched peer IDs are rejected. After signing, STH records the certificate serial/fingerprint in its active registry before allowing registration.
+CSR enrollment is used when the private key should be generated inside the component that will use it. The peer generates a private key and CSR containing only the expected SANs: `URI:urn:verser:client:<peerId>` for each peer identity the certificate may authenticate and the exact `DNS:<route-hostname>` values required for its role. Common Name is ignored. The CSR is sent to the immediate upstream issuer using a one-time launch enrollment credential for first issuance, or the current valid peer identity for rotation. In mTLS mode the peer identity is the current valid client certificate; in non-mTLS mode it must be an approved scoped rotation credential. STH signs runner/runtime CSRs only when they match an active launch, sequence, or instance record: expected STH, sequence ID, instance ID when instance-scoped, peer ID, role, route domains, SAN set, and issuer scope. Extra SANs or mismatched peer IDs are rejected. After signing, STH records the certificate serial/fingerprint in its active registry before allowing registration.
 
 Leaf certificates may be reused by instances of the same sequence on a single STH only when the certificate is explicitly sequence-scoped, still valid, still allowlisted on that STH, and its SAN set covers both identity and route requirements for every peer using it. That means the certificate must include the exact `URI:urn:verser:client:<peerId>` SAN for each active or pre-authorized peer ID and the exact `DNS:<route-hostname>` SAN for each route registered with that certificate. Unique peer IDs are still required for concurrent instances; certificate reuse does not permit duplicate peer registration. Reuse must not cross STH boundaries, sequence identities, or trust domains. If a new instance has an instance-specific peer ID or route hostname that is not already covered by the reusable certificate, STH must issue or rotate a certificate before registration. Revoking a reused sequence-scoped certificate invalidates all local instances using it, so operators may choose stricter per-instance certificates for smaller blast radius.
 
@@ -195,6 +203,7 @@ Node-based STH and runner components must fail fast on Node versions below 20 be
 
 - Manager-connected STH always registers `sth.<sthId>.scramjet.internal` as a Guest for Manager-callable STH APIs. Without this Guest, Manager cannot call STH APIs over `verser2`.
 - STH registers a Broker identity for STH-originated Manager requests.
+- For Phase 1 implementation, Manager-owned APIs and STH-owned APIs are both modeled as ordinary `verser2` routed endpoints: each side has a Broker for outbound calls and a Guest for inbound callable APIs. If Manager owns the Host in the same process, the Manager Guest/Broker may still connect through the normal H2 client path until upstream `verser2` provides an in-process attachment API.
 - Manager/MultiManager routes requests through Broker/Guest APIs and application-owned handlers.
 - Platform, log, audit, and topic communication become explicit routed requests with streaming request or response bodies instead of implicit old-verser channels.
 
@@ -207,7 +216,7 @@ Node-based STH and runner components must fail fast on Node versions below 20 be
 
 ### Global runner ⇄ stack-specific runtime
 
-- The global runner supplies a boot config containing the owning STH local Host URL, peer IDs, route domains, CA/trust material, optional client cert/key or PFX settings, CSR/enrollment settings where used, route timeouts, and lease pool settings.
+- The global runner supplies a boot config containing the owning STH local Host URL, peer IDs, route domains, CA/trust material, optional client cert/key or PFX settings, alternate registration/enrollment credentials where used, route timeouts, and lease pool settings.
 - Runtime wrappers attach runtime-specific Guests for sequence APIs and create runtime-native Broker clients for sequence-to-STH API calls.
 - Node uses the published Node guest/broker helpers; Python uses Python Guest and Broker/request APIs; Bun uses Bun Guest and Broker/fetch APIs.
 - If a public package API is missing or differs from this model, pause implementation and produce the upstream `verser2` report rather than adding brittle local transport workarounds.

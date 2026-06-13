@@ -16,6 +16,7 @@
     - [x] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
     - [x] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
     - [x] Clarify that Manager-connected STH must expose an STH Guest for Manager-callable STH APIs.
+    - [x] Document the interim H2 Guest/Broker path for Manager/STH-owned APIs and the desired upstream in-process Host-side Guest/Broker optimization.
     - [x] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
     - [x] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
 - [x] Task: Define route naming, identity, and route-state contracts
@@ -35,6 +36,7 @@
     - [x] Define delegated STH CA behavior for runner and runtime certificate issuance when connected to Manager/MultiManager.
     - [x] Define Guest/Broker trust behavior using `ca`/`caFile`, noting that explicit CA configuration replaces Node's default CA set for that connection.
     - [x] Decide where mTLS is required versus optional; when enabled, define Host `tls.clientAuth.caFile` and client `certFile`/`keyFile` or PFX/PKCS12 delivery.
+    - [x] Define Manager/STH policy enforcement for optional runner/runtime client mTLS, including STH reporting of non-mTLS sequence peers and Manager rejection/noncompliance handling when policy requires mTLS.
     - [x] Define registration-time authorization with verser2 `authorizeRegistration(context)`, preferring certificate fingerprints over common names for allowlisting.
     - [x] Document that verser2 has registration-time authorization only; any per-request authorization must live in STH application-level Broker/Guest wrappers.
     - [x] Define per-runner and per-runtime certificate generation, delivery, rotation, revocation, and cleanup.

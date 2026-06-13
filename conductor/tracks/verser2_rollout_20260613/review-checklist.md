@@ -9,6 +9,8 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - Runner/runtime peers initiate H2 connections to the owning STH local Host; STH initiates H2 connections to Manager/MultiManager.
 - Manager/MultiManager does not connect directly to runner/runtime peers, and runner/runtime peers do not connect directly to Manager/MultiManager.
 - STH terminates and authorizes runner-side H2 connections; it is not a transparent H2 tunnel.
+- Manager/MultiManager Host owners still expose routed Manager APIs through explicit Guest/Broker roles; loopback/local H2 attachment is acceptable during rollout.
+- Reviews may recommend upstream in-process Host-side Guest/Broker attachment for performance, but must not block Transform Hub rollout on it unless the networked H2 path cannot satisfy required semantics.
 - Runtime wrappers use published Guest/Broker packages instead of local reimplementations.
 - No new raw HTTP/2 session, old `VerserConnection`, or BPMux objects leak into application logic.
 
@@ -31,10 +33,12 @@ Use this checklist for automated reviews between subphases and at every phase ga
 
 - Host TLS is mandatory and server certificate SANs match the peer `hostUrl` values actually used.
 - Guest/Broker clients use explicit `ca`/`caFile`; combined CA bundles are documented when public WebPKI and private CAs are both needed.
-- mTLS is required in final architecture; any exception is a temporary migration path with alternate credentials.
-- `authorizeRegistration(context)` validates peer ID, exact route ownership, URI SAN, DNS SAN, issuer role, fingerprint/serial allowlist, and duplicates.
+- TLS is mandatory; client mTLS is enforced when required by Manager/STH policy, and non-mTLS registration uses approved alternate credentials rather than anonymous registration.
+- Manager policy can independently require mTLS for STH-to-Manager connections and for sequence/runner/runtime connections reported by STH.
+- STH reports effective runner/runtime/sequence transport-auth mode to Manager; Manager rejects, restricts, or marks noncompliant peers when reported mode violates policy.
+- `authorizeRegistration(context)` validates peer ID, exact route ownership, URI SAN when mTLS identity is required, alternate credential binding when mTLS is not required, DNS SAN for Guest routes when certificates are used, issuer role, fingerprint/serial allowlist where applicable, and duplicates.
 - Certificate expiry is proactively tracked; default rotation is configurable around a 24h interval, with renew-before and jitter settings.
-- CSR enrollment uses one-time launch credentials for first issuance and current valid mTLS identity for rotation; CSRs with extra SANs or mismatched peer IDs are rejected.
+- CSR enrollment uses one-time launch credentials for first issuance and current valid peer identity or scoped rotation credential for rotation; CSRs with extra SANs or mismatched peer IDs are rejected.
 - Runner/runtime leaf certificates may be reused only by instances of the same sequence on the same STH when the SAN set and allowlist match every peer URI identity and exact local route; peer IDs remain unique for concurrent instances.
 - Per-request authorization exists in application wrappers and does not trust spoofable headers.
 - Private keys are delivered as files with restrictive permissions and are not logged, passed in command arguments, or baked into images.
@@ -66,3 +70,5 @@ Halt the current subtask and produce an upstream report when missing or incorrec
 6. temporary workaround, if any, and why it is or is not acceptable.
 
 Do not add brittle Transform Hub-specific workarounds for upstream `verser2` issues without explicit approval.
+
+Performance-only requests, such as in-process Host-side Guest/Broker attachment to avoid local H2 connections, should be recorded as upstream `verser2` enhancement requests but should not halt the current Transform Hub subtask unless the existing H2 Guest/Broker path is functionally incorrect, unsafe, or unable to preserve required streaming/lease semantics.
