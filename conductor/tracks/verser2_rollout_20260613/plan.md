@@ -2,11 +2,11 @@
 
 ## Phase 1: Architecture, Contracts, and Safety Rails
 
-- [ ] Task: Start rollout branch and initial PR
-    - [ ] Create a dedicated branch for the verser2 rollout work.
-    - [ ] Add the initial architecture/specification commit for the rollout branch.
-    - [ ] Push the branch and create a draft PR for continuous review.
-    - [ ] Use the PR as the shared review surface for automated reviews and phase checkpoints.
+- [x] Task: Start rollout branch and initial PR
+    - [x] Create a dedicated branch for the verser2 rollout work.
+    - [x] Add the initial architecture/specification commit for the rollout branch.
+    - [x] Push the branch and create a draft PR for continuous review.
+    - [x] Use the PR as the shared review surface for automated reviews and phase checkpoints.
 - [ ] Task: Define final verser2 connectivity architecture
     - [ ] Read current codemaps and affected entrypoints for Manager, MultiManager, Host, Runner, Node, Python, Bun, API server, and shared types.
     - [ ] Document the verser2 role model: Manager/MultiManager owns the TLS HTTP/2 `Host`; STH connects outbound as a `Broker` and, where Manager-originated requests need to reach STH, also as a `Guest`.
