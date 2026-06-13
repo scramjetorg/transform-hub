@@ -172,12 +172,69 @@ guard6() {
     return 1
 }
 
+# ----------------------------------------------------------------------------
+# Guard 7: No new active BPMux / old-verser usage outside the explicit legacy
+# migration allowlist. Existing paths are still present during the verser2
+# rollout, but new paths must not be added while transports move behind
+# verser2 abstractions.
+# ----------------------------------------------------------------------------
+guard7() {
+    local files
+    files="$(
+        rg -l '@scramjet/bpmux|@scramjet/verser|from .*bpmux|require\(["'\''`]bpmux|import .*BPMux|new BPMux|new Verser|VerserClient|VerserConnection' \
+            packages package.json \
+            --glob '!**/codemap.md' \
+            --glob '!package-lock.json' \
+            2> /dev/null \
+        || true
+    )"
+
+    local forbidden=()
+    local file
+    while IFS= read -r file; do
+        [ -z "${file}" ] && continue
+        case "${file}" in
+            packages/bpmux/*|\
+            packages/verser/*|\
+            packages/host/package.json|\
+            packages/host/src/lib/cpm-connector.ts|\
+            packages/host/src/lib/csi-controller.ts|\
+            packages/manager/package.json|\
+            packages/manager/src/lib/manager.ts|\
+            packages/manager/src/lib/sth-controller.ts|\
+            packages/multi-manager/package.json|\
+            packages/multi-manager/src/lib/multi-manager.ts|\
+            packages/multi-manager/src/lib/multi-host-controller.ts|\
+            packages/runner/package.json|\
+            packages/runner/src/host-client.ts|\
+            packages/runner-node/package.json|\
+            packages/runner-node/src/host-client.ts|\
+            packages/runner-node/test/host-client-parity.spec.ts|\
+            packages/types/package.json|\
+            packages/types/src/manager/sth-connection-store.ts)
+                ;;
+            *)
+                forbidden+=("${file}")
+                ;;
+        esac
+    done <<< "${files}"
+
+    if [ "${#forbidden[@]}" -eq 0 ]; then
+        return 0
+    fi
+
+    echo "  unexpected BPMux / old-verser references:"
+    printf '    %s\n' "${forbidden[@]}"
+    return 1
+}
+
 run_guard 1 "No adapter-local runtime engine branching in adapter packages" guard1
 run_guard 2 "No env-var SEQUENCE_PATH/SEQUENCE_INFO/RUNNER_CONNECT_INFO in runner-python/src" guard2
 run_guard 3 "No bpmux import in runner-python" guard3
 run_guard 4 "No REQUESTS channel in runner-python/src" guard4
 run_guard 5 "No @scramjet/python-runner references outside CHANGELOG/docs/roadmap/lockfiles" guard5
 run_guard 6 "No process.stdout reassignment or redirectOutputs in runner/src" guard6
+run_guard 7 "No new BPMux or old-verser references outside the verser2 migration allowlist" guard7
 
 echo "---"
 echo "RESULTS: ${PASS} passed, ${FAIL} failed"

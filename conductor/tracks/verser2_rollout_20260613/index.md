@@ -3,4 +3,5 @@
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
 - [Architecture](./architecture.md)
+- [Automated Review Checklist](./review-checklist.md)
 - [Metadata](./metadata.json)

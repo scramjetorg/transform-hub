@@ -50,10 +50,10 @@
     - [x] Define lease pool and timeout settings, including minimum waiting leases and lease-acquire timeout handling for runner and sequence requests.
     - [x] Specify stack-specific runtime transport capabilities for Node, Python, and Bun using the published packages: `@signicode/verser2-guest-node`, `@signicode/verser2-guest-python`, `@signicode/verser2-guest-bun`, plus shared `@signicode/verser-common` / `@signicode/verser2-guest-js-common` where appropriate.
     - [x] Specify verser2-aware API forwarding and stream helper contracts, explicitly excluding unsupported WebSocket upgrade, CONNECT tunneling, trailers, and informational 1xx forwarding as verser2 capabilities.
-- [ ] Task: Add architecture safety checks and automated review prompts
-    - [ ] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
-    - [ ] Add automated review checklist for Host/Guest/Broker role use, flat topology, lease lifecycle, route exact-match behavior, TLS/CA, mTLS authorization, and transport contracts.
-    - [ ] Record upstream verser2 halt-and-report workflow for missing or incorrect verser2 behavior.
+- [x] Task: Add architecture safety checks and automated review prompts
+    - [x] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
+    - [x] Add automated review checklist for Host/Guest/Broker role use, flat topology, lease lifecycle, route exact-match behavior, TLS/CA, mTLS authorization, and transport contracts.
+    - [x] Record upstream verser2 halt-and-report workflow for missing or incorrect verser2 behavior.
 - [ ] Task: Conductor - User Manual Verification 'Architecture, Contracts, and Safety Rails' (Protocol in workflow.md)
 
 ## Phase 2: Manager/STH Migration and Transport Foundation
