@@ -203,7 +203,10 @@ guard7() {
             packages/manager/package.json|\
             packages/manager/src/lib/manager.ts|\
             packages/manager/src/lib/sth-controller.ts|\
+            packages/manager/src/lib/verser2-transport.ts|\
+            packages/manager/test/manager-connection.spec.ts|\
             packages/manager/test/sth-controller.spec.ts|\
+            packages/manager/test/verser2-transport.spec.ts|\
             packages/multi-manager/package.json|\
             packages/multi-manager/src/lib/multi-manager.ts|\
             packages/multi-manager/src/lib/multi-host-controller.ts|\

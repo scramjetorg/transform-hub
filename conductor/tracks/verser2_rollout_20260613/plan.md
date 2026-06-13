@@ -67,9 +67,9 @@
     - [x] Add focused tests for Manager → STH request forwarding.
     - [x] Add focused tests for STH → Manager request forwarding.
     - [x] Add focused tests for platform, log, audit, and topic request/stream behavior.
-    - [ ] Add focused tests for route readiness, reconnect, disconnect, duplicate peer IDs, route retraction, and unhealthy-state behavior.
+    - [x] Add focused tests for route readiness, reconnect, disconnect, duplicate peer IDs, route retraction, and unhealthy-state behavior.
         - [x] Cover Manager/STH reconnect, disconnect, duplicate active STH ID, and unhealthy-state legacy baselines.
-        - [ ] Cover route readiness and route retraction behavior at the verser2 abstraction boundary.
+        - [x] Cover route readiness and route retraction behavior at the verser2 abstraction boundary.
 - [x] Task: Configure authenticated verser2 package resolution
     - [x] Infer required `@signicode/*` package names from the `/tmp/opencode/verser2` checkout.
     - [x] Add npm scope configuration for `@signicode` GitHub Packages without committing token values.
