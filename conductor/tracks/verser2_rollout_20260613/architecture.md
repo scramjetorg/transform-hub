@@ -18,32 +18,43 @@ This document is the Phase 1 design record for replacing legacy STH connectivity
 
 ### Platform-connected Manager/MultiManager mode
 
-1. A selected Manager/MultiManager owns the TLS HTTP/2 `verser2` `Host` for its connected peer set.
+1. A selected Manager/MultiManager owns the upstream TLS HTTP/2 `verser2` `Host` for STH control-plane connections.
 2. STH connects outbound to that Host as a `Broker` for STH-originated requests and streams.
-3. When Manager-originated requests must reach STH, STH also registers a `Guest` route.
+3. STH also connects outbound to that Host as a `Guest` for the Manager-callable STH API surface. Manager-originated STH API calls route through the Manager/MultiManager Host to the STH Guest route; Manager/MultiManager does not need to initiate an inbound connection to STH.
 4. Manager-side code dispatches Manager to STH traffic through the Host/Broker/Guest routing surface instead of exposing old `VerserConnection`, raw HTTP/2 sessions, or BPMux channels to application code.
-5. MultiManager follows the same selected-Host model. It may own or select a Host, but it must not assume that `verser2` provides shared route state across multiple Host processes.
+5. MultiManager follows the same selected-Host model. It may own or select the upstream Host for STH peers, but it must not assume that `verser2` provides shared route state across multiple Host processes.
 
 ### Standalone STH mode
 
 1. STH still uses the same `verser2` Broker/Guest transport abstractions.
-2. If no external Manager/MultiManager Host exists, STH may own a local Host for standalone runner and sequence routing.
-3. The local Host is an STH deployment concern, not an intermediate relay in platform-connected mode.
+2. STH owns the local runner-side Host for runner and runtime peers.
+3. If no external Manager/MultiManager Host exists, STH has no upstream Manager/MM connection but still uses the local runner-side Host for instances.
 
 ### Runner and runtime mode
 
-1. Host/STH reaches the outer runner as `STH Broker -> selected Host -> runner Guest`.
-2. Host/STH reaches sequence-exposed APIs as `STH Broker -> selected Host -> sequence Guest` where the Guest is attached by the stack-specific runtime wrapper.
+1. The outer runner initiates an outbound mTLS HTTP/2 connection to the owning STH local Host and registers `runner.<instanceId>.scramjet.internal` as a Guest.
+2. Stack-specific runtimes initiate outbound mTLS HTTP/2 connections to the owning STH local Host and register `sequence.<instanceId>.scramjet.internal` as Guests only when sequence API exposure is enabled by explicit normalized configuration.
 3. The outer runner owns global runner connectivity: Host URL, CA/trust material, optional client identity, runner route registration, process lifecycle, certificate delivery, reconnect/disconnect, and global streams such as stdio, control, monitoring, input, output, and logs.
 4. Stack-specific runtimes own runtime-native sequence behavior: app context, non-listening `context.api` exposure, `context.hub`/sequence-to-STH API clients, framework adapters, and runtime-specific stream handling.
 
-## Flat route topology
+## Hierarchical H2 connection topology
 
-- All peers in a connected deployment attach directly to one selected `verser2` Host.
-- STH does not run an intermediate Host between Manager/MultiManager and runner/sequence routes in platform-connected mode.
-- Route state is scoped to one Host instance and its connected peer set.
+HTTP/2 connection establishment is downstream-to-upstream by control-plane ownership:
+
+```text
+runtime/sequence Guest/Broker  ->  owning STH local verser2 Host
+outer runner Guest             ->  owning STH local verser2 Host
+STH Broker/Guest               ->  selected Manager/MultiManager verser2 Host
+```
+
+- Instance runners and runtime wrappers connect to their owning STH, not directly to Manager/MultiManager.
+- STH connects to Manager/MultiManager as the next upstream control plane.
+- Manager/MultiManager does not establish direct H2 connections to runner/runtime peers.
+- Manager-originated STH API calls are routed through the Manager/MultiManager Host to the STH Guest. Manager-originated runner or sequence commands reach STH first; STH then performs the corresponding runner or sequence operation over its local runner-side transport.
+- STH is not a transparent TCP/H2 tunnel. It terminates and authorizes runner-side connections, then issues separate routed requests upstream or downstream as application transport operations.
+- Route state is scoped to each Host instance and connected peer set. Manager/MM route state and STH-local runner route state are separate.
 - Multi-Host high availability, shared route-state replication, and cross-Host route distribution are deployment architecture or future work; they are not assumed to be built into `verser2`.
-- Implementation code must therefore model Host selection explicitly and treat route-unavailable responses as normal operational states.
+- Implementation code must model upstream/downstream Host selection explicitly and treat route-unavailable responses as normal operational states.
 
 ## Route naming, peer identity, and route state
 
@@ -55,11 +66,11 @@ Routes are deterministic DNS-style hostnames. Host route matching is exact hostn
 | --- | --- | --- |
 | `manager.<managerId>.scramjet.internal` | Manager Guest, when Manager exposes Manager-reachable handlers | Manager-reachable control, platform, and service endpoints that must be called by STH or other peers. |
 | `multimanager.<multiManagerId>.scramjet.internal` | MultiManager Guest, when MultiManager exposes MultiManager-reachable handlers | MultiManager-level routing, coordination, and deployment endpoints. |
-| `sth.<sthId>.scramjet.internal` | STH Guest | Manager/MultiManager to STH request forwarding and STH-exposed platform handlers. |
+| `sth.<sthId>.scramjet.internal` | STH Guest, required for Manager-connected STHs | Manager/MultiManager to STH API calls and STH-exposed platform handlers. |
 | `runner.<instanceId>.scramjet.internal` | Outer runner Guest | Global runner lifecycle, control, stdio, monitoring, input, output, and log routes. |
-| `sequence.<instanceId>.scramjet.internal` | Stack-specific runtime Guest | Sequence-exposed API routes reached by STH. |
+| `sequence.<instanceId>.scramjet.internal` | Stack-specific runtime Guest, only when sequence API exposure is enabled | Sequence-exposed API routes reached by STH. |
 
-Route IDs are deployment-stable for the lifetime of the connected component. `sthId`, `managerId`, `multiManagerId`, and `instanceId` must be normalized before route construction and must not contain dots or characters outside the approved hostname label subset. Duplicate route registration for the same active peer set is a rollout error.
+Route IDs are deployment-stable for the lifetime of the connected component. `sthId`, `managerId`, `multiManagerId`, and `instanceId` must be normalized before route construction and must not contain dots or characters outside the approved hostname label subset. Duplicate route registration for the same active peer set is a rollout error. Route hostnames remain instance-specific even when certificate material is reused for instances of the same sequence on one STH.
 
 ### Peer IDs
 
@@ -135,14 +146,24 @@ Common names must not be used for authorization. Dynamically generated runner/ru
 
 ### Per-runner and per-runtime certificate lifecycle
 
-Each instance launch should receive separate, least-privilege material:
+Each instance launch receives or references least-privilege material:
 
 - outer runner Guest certificate for `runner.<instanceId>.scramjet.internal`;
 - runtime Guest certificate for `sequence.<instanceId>.scramjet.internal`;
 - runtime Broker client certificate for sequence to STH API calls when required;
 - CA bundle for the selected Host.
 
-Certificates should be short-lived and instance-scoped. Delivery uses files, not raw PEM/PFX values in environment variables or command arguments. Rotation issues new certificates and reconnects peers; keeping the same peer ID requires coordinated disconnect/reconnect because duplicate peer registration is fatal. Revocation removes allowlist entries and closes active connections; do not assume CRL/OCSP support unless the selected `verser2` package explicitly provides it. Cleanup removes key/cert files, Docker mount directories, and Kubernetes Secrets when the instance exits or is deleted.
+Certificates are short-lived and proactively rotated. The default certificate lifetime is 48 hours, the default rotation interval is 24 hours, and renewal is forced no later than 6 hours before expiry. These values must be configurable, for example `tls.certLifetime`, `tls.certRotationInterval`, `tls.certRenewBefore`, and `tls.certRotationJitter`. Rotation starts when the configured interval elapses or when the certificate enters the renew-before window. A small jitter should be applied to avoid thundering-herd renewal.
+
+Expired certificates are invalid for new TLS handshakes and registration. Hosts must reject expired peer certificates during handshake or `authorizeRegistration(context)`. Because TLS stacks may not terminate already-established sessions exactly at `notAfter`, each component must track certificate expiry itself and proactively rotate, close, and reconnect before expiry. If rotation is missed, runner/sequence routes become unavailable until a valid certificate is issued and the peer reconnects. There is no unauthenticated fallback.
+
+Certificate issuance is owned by the immediate upstream authority for the connection being made. Manager/MultiManager platform identity and Host server certificates come from the platform CA or deployment PKI. STH certificates for the STH -> Manager/MM connection come from the platform enrollment path. Runner and runtime certificates are issued by the owning STH local CA in standalone mode, or by a delegated runner/runtime CA provisioned to STH in platform-connected mode.
+
+CSR enrollment is used when the private key should be generated inside the component that will use it. The peer generates a private key and CSR containing only the expected SANs: `URI:urn:verser:client:<peerId>` for each peer identity the certificate may authenticate and the exact `DNS:<route-hostname>` values required for its role. Common Name is ignored. The CSR is sent to the immediate upstream issuer using a one-time launch enrollment credential for first issuance, or the current valid mTLS identity for rotation. STH signs runner/runtime CSRs only when they match an active launch, sequence, or instance record: expected STH, sequence ID, instance ID when instance-scoped, peer ID, role, route domains, SAN set, and issuer scope. Extra SANs or mismatched peer IDs are rejected. After signing, STH records the certificate serial/fingerprint in its active registry before allowing registration.
+
+Leaf certificates may be reused by instances of the same sequence on a single STH only when the certificate is explicitly sequence-scoped, still valid, still allowlisted on that STH, and its SAN set covers both identity and route requirements for every peer using it. That means the certificate must include the exact `URI:urn:verser:client:<peerId>` SAN for each active or pre-authorized peer ID and the exact `DNS:<route-hostname>` SAN for each route registered with that certificate. Unique peer IDs are still required for concurrent instances; certificate reuse does not permit duplicate peer registration. Reuse must not cross STH boundaries, sequence identities, or trust domains. If a new instance has an instance-specific peer ID or route hostname that is not already covered by the reusable certificate, STH must issue or rotate a certificate before registration. Revoking a reused sequence-scoped certificate invalidates all local instances using it, so operators may choose stricter per-instance certificates for smaller blast radius.
+
+Delivery uses files, not raw PEM/PFX values in environment variables or command arguments. Rotation writes new material atomically, updates the allowlist, and reconnects peers. Keeping the same peer ID requires coordinated disconnect/reconnect because duplicate peer registration is fatal. Revocation removes allowlist entries and closes active connections; do not assume CRL/OCSP support unless the selected `verser2` package explicitly provides it. Cleanup removes key/cert files, Docker mount directories, and Kubernetes Secrets when the sequence/instance exits or is deleted and no same-sequence local instance still references reusable material.
 
 ### Host certificate reload behavior
 
@@ -158,11 +179,11 @@ Certificates should be short-lived and instance-scoped. Delivery uses files, not
 
 ### Adapter certificate injection
 
-Process adapter launches use a per-instance state directory containing `ca.pem`, `cert.pem`, and `key.pem`, pass file paths through boot config or environment, and delete the directory during process cleanup.
+Process adapter launches use a per-instance or STH-local sequence-scoped state directory containing `ca.pem`, `cert.pem`, and `key.pem`, pass file paths through boot config or environment, and delete unreferenced material during process cleanup.
 
-Docker adapter launches use a per-instance host certificate directory mounted read-only into the runner container. Certificates are never baked into images. Boot config/environment carries only mounted paths, and the host directory is removed with container lifecycle cleanup.
+Docker adapter launches use a per-instance or STH-local sequence-scoped host certificate directory mounted read-only into the runner container. Certificates are never baked into images. Boot config/environment carries only mounted paths, and the host directory is removed when no live local sequence instance references it.
 
-Kubernetes adapter launches use a per-instance Secret mounted read-only with restrictive `defaultMode`, for example `0400`. Secrets must not be shared across instances. Owner references, labels, and finalizers should drive cleanup. A ConfigMap may hold a public CA bundle only when no private material is included. Namespace and RBAC boundaries must remain explicit.
+Kubernetes adapter launches use per-instance or STH-local sequence-scoped Secrets mounted read-only with restrictive `defaultMode`, for example `0400`. Reused Secrets must be limited to instances of the same sequence on the same STH. Owner references, labels, and finalizers should drive cleanup only after the last referencing local instance exits. A ConfigMap may hold a public CA bundle only when no private material is included. Namespace and RBAC boundaries must remain explicit.
 
 ### Node >=20 enforcement
 
@@ -172,30 +193,41 @@ Node-based STH and runner components must fail fast on Node versions below 20 be
 
 ### Manager/MultiManager ⇄ STH
 
-- STH registers `sth.<sthId>.scramjet.internal` as a Guest when inbound Manager requests are required.
+- Manager-connected STH always registers `sth.<sthId>.scramjet.internal` as a Guest for Manager-callable STH APIs. Without this Guest, Manager cannot call STH APIs over `verser2`.
 - STH registers a Broker identity for STH-originated Manager requests.
 - Manager/MultiManager routes requests through Broker/Guest APIs and application-owned handlers.
 - Platform, log, audit, and topic communication become explicit routed requests with streaming request or response bodies instead of implicit old-verser channels.
 
 ### STH ⇄ global runner
 
-- The outer runner registers `runner.<instanceId>.scramjet.internal` as a Guest.
+- The outer runner initiates the H2 connection to the owning STH local Host and registers `runner.<instanceId>.scramjet.internal` as a Guest.
 - Host-side instance lifecycle code depends on a `RunnerTransport` abstraction rather than a raw socket array.
 - Legacy channel meanings map to explicit route paths and streaming bodies while migration is in progress.
 - Route readiness is mandatory before lifecycle actions: startup must wait for the runner route or fail with a timeout classified as route unavailable.
 
 ### Global runner ⇄ stack-specific runtime
 
-- The global runner supplies a boot config containing Host URL, peer IDs, route domains, CA/trust material, optional client cert/key or PFX settings, route timeouts, and lease pool settings.
+- The global runner supplies a boot config containing the owning STH local Host URL, peer IDs, route domains, CA/trust material, optional client cert/key or PFX settings, CSR/enrollment settings where used, route timeouts, and lease pool settings.
 - Runtime wrappers attach runtime-specific Guests for sequence APIs and create runtime-native Broker clients for sequence-to-STH API calls.
 - Node uses the published Node guest/broker helpers; Python uses Python Guest and Broker/request APIs; Bun uses Bun Guest and Broker/fetch APIs.
 - If a public package API is missing or differs from this model, pause implementation and produce the upstream `verser2` report rather than adding brittle local transport workarounds.
 
 ### STH ⇄ sequence API and sequence → STH API
 
-- STH calls sequence APIs by sending routed Broker requests to `sequence.<instanceId>.scramjet.internal`.
+- STH calls sequence APIs by sending routed Broker requests to `sequence.<instanceId>.scramjet.internal` only when the runtime registered that Guest route.
 - Sequence code calls STH APIs through runtime-provided `context.hub` helpers backed by `verser2` Broker/request or Broker/fetch behavior.
 - Exposed sequence APIs are non-listening local handlers attached to runtime Guest routes; they do not open additional public HTTP servers.
+
+### Sequence API exposure configuration
+
+Sequence Guest startup must be driven by a normalized explicit configuration model rather than by the current quirky implicit behavior. The migration should introduce one resolved runtime exposure decision before transport startup:
+
+- `sequenceApi.enabled`: starts a `sequence.<instanceId>.scramjet.internal` Guest when true and skips it when false;
+- `sequenceApi.routes` or equivalent route metadata: declares the local handlers to expose;
+- `sequenceApi.required`: fails startup if exposure is enabled but the runtime cannot attach the Guest;
+- `hubApi.enabled`: controls whether runtime-native sequence -> STH API helpers start a Broker client for `context.hub`.
+
+Runtimes that do not expose a sequence API should not register a sequence Guest. STH callers must treat the missing sequence route as a configured capability absence, not as a transport failure. Sequence -> STH API access remains independent from STH -> sequence API exposure: a sequence may need `context.hub` without exposing any inbound API route.
 
 ## Transport abstraction contracts
 
@@ -218,7 +250,7 @@ The abstraction must not expose raw HTTP/2 sessions, old `VerserConnection` equi
 Host-side instance lifecycle code should depend on `RunnerTransport` rather than raw socket channel arrays. The migration should introduce a legacy implementation first, then a `verser2` implementation:
 
 - `LegacyRunnerTransport` wraps current `SocketServer`, `HostClient`, `CommunicationChannel`, and BPMux behavior to preserve parity while callers move behind the interface.
-- `Verser2RunnerTransport` targets `runner.<instanceId>.scramjet.internal` and sequence routes through Broker requests over the selected Host.
+- `Verser2RunnerTransport` targets `runner.<instanceId>.scramjet.internal` and sequence routes through Broker requests over the owning STH local Host.
 - The interface owns route readiness, route unavailable classification, reconnect/disconnect state, and stream lifecycle cleanup.
 
 Legacy channel semantics map to explicit routes and streaming bodies:

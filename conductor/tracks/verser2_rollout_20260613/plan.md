@@ -15,6 +15,7 @@
     - [x] Document STH → global runner routing as STH Broker → Host → runner Guest.
     - [x] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
     - [x] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
+    - [x] Clarify that Manager-connected STH must expose an STH Guest for Manager-callable STH APIs.
     - [x] Document global runner versus stack-specific runtime responsibilities: the outer runner manages process lifecycle, certificates, boot config, and global control/IO routes; runtime wrappers expose runtime-native sequence handlers and sequence → STH API clients.
     - [x] Define temporary migration flag behavior and final no-flag architecture without introducing a non-TLS verser2 path.
 - [x] Task: Define route naming, identity, and route-state contracts
@@ -50,6 +51,7 @@
     - [x] Define lease pool and timeout settings, including minimum waiting leases and lease-acquire timeout handling for runner and sequence requests.
     - [x] Specify stack-specific runtime transport capabilities for Node, Python, and Bun using the published packages: `@signicode/verser2-guest-node`, `@signicode/verser2-guest-python`, `@signicode/verser2-guest-bun`, plus shared `@signicode/verser-common` / `@signicode/verser2-guest-js-common` where appropriate.
     - [x] Specify verser2-aware API forwarding and stream helper contracts, explicitly excluding unsupported WebSocket upgrade, CONNECT tunneling, trailers, and informational 1xx forwarding as verser2 capabilities.
+    - [x] Specify normalized explicit sequence API exposure configuration so runtimes skip sequence Guest registration when no inbound API is exposed, independently from sequence → STH hub API access.
 - [x] Task: Add architecture safety checks and automated review prompts
     - [x] Add or plan invariant checks preventing new BPMux and old-verser usage during migration.
     - [x] Add automated review checklist for Host/Guest/Broker role use, flat topology, lease lifecycle, route exact-match behavior, TLS/CA, mTLS authorization, and transport contracts.

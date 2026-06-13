@@ -4,15 +4,17 @@ Use this checklist for automated reviews between subphases and at every phase ga
 
 ## Host / Guest / Broker role use
 
-- Manager/MultiManager owns the selected TLS HTTP/2 Host in platform-connected mode.
-- STH connects outbound as Broker and registers a Guest only for inbound Manager-originated traffic.
-- Standalone STH local Host behavior remains explicitly standalone and does not become an intermediate platform relay.
+- Manager/MultiManager owns the selected upstream TLS HTTP/2 Host in platform-connected mode.
+- STH connects outbound as Broker and, when Manager-connected, registers an STH Guest for Manager-callable STH APIs.
+- Runner/runtime peers initiate H2 connections to the owning STH local Host; STH initiates H2 connections to Manager/MultiManager.
+- Manager/MultiManager does not connect directly to runner/runtime peers, and runner/runtime peers do not connect directly to Manager/MultiManager.
+- STH terminates and authorizes runner-side H2 connections; it is not a transparent H2 tunnel.
 - Runtime wrappers use published Guest/Broker packages instead of local reimplementations.
 - No new raw HTTP/2 session, old `VerserConnection`, or BPMux objects leak into application logic.
 
-## Flat topology and route state
+## Hierarchical topology and route state
 
-- Peers connect directly to one selected Host for the deployment peer set.
+- Peers connect to their immediate upstream Host: runner/runtime -> STH, STH -> Manager/MultiManager.
 - Route matching uses exact hostname equality only.
 - Brokers replace their full route table on route-control frames; omitted routes are retracted.
 - Startup paths wait for required routes with timeout-aware readiness checks.
@@ -31,6 +33,9 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - Guest/Broker clients use explicit `ca`/`caFile`; combined CA bundles are documented when public WebPKI and private CAs are both needed.
 - mTLS is required in final architecture; any exception is a temporary migration path with alternate credentials.
 - `authorizeRegistration(context)` validates peer ID, exact route ownership, URI SAN, DNS SAN, issuer role, fingerprint/serial allowlist, and duplicates.
+- Certificate expiry is proactively tracked; default rotation is configurable around a 24h interval, with renew-before and jitter settings.
+- CSR enrollment uses one-time launch credentials for first issuance and current valid mTLS identity for rotation; CSRs with extra SANs or mismatched peer IDs are rejected.
+- Runner/runtime leaf certificates may be reused only by instances of the same sequence on the same STH when the SAN set and allowlist match every peer URI identity and exact local route; peer IDs remain unique for concurrent instances.
 - Per-request authorization exists in application wrappers and does not trust spoofable headers.
 - Private keys are delivered as files with restrictive permissions and are not logged, passed in command arguments, or baked into images.
 
@@ -40,6 +45,7 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - `RunnerTransport` callers do not depend on raw channel arrays or BPMux.
 - `LegacyRunnerTransport` is compatibility-only and covered by parity tests before `Verser2RunnerTransport` replaces it.
 - Node, Python, and Bun runtime paths receive Host URL, explicit route domains, CA/trust material, optional client identity, and timeout settings through boot config.
+- Sequence Guest startup is controlled by normalized explicit configuration; runtimes skip sequence Guest registration when no sequence API is exposed, while `context.hub` Broker access is configured independently.
 - Unsupported features are rejected or documented: WebSocket upgrade, CONNECT tunneling, HTTP trailers, and informational 1xx forwarding.
 
 ## Dependency and dead-code safety
