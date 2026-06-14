@@ -150,6 +150,7 @@ export class MultiManagerConfig extends ReadOnlyConfig<MultiManagerOptions> {
     get id() { return this.configuration.id; }
     get server() { return this.configuration.server; }
     get manager() { return this.configuration.manager; }
+    get verser2() { return this.configuration.verser2; }
     get loadCheckRequirements(): LoadCheckRequirements {
         const { safeOperationLimit, instanceRequirements, fsPaths } = this.configuration;
 

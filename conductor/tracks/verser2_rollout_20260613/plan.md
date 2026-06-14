@@ -94,7 +94,7 @@
     - [x] Extend `STHConfiguration`, `PublicSTHConfiguration`, `STHCommandOptions`, `CPMConnectorOptions`, MultiManager/Manager config types/defaults, and connector handoff types to carry the validated verser2 settings needed by the transport implementation.
     - [x] Add focused MultiManager and STH config tests proving source precedence, config-file values, CLI overrides, env aliases, valid falsy values, secret masking/public-safe config, validation errors, and legacy compatibility/alias behavior.
     - [x] Run affected config/package tests plus build/typecheck before starting transport replacement.
-- [ ] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
+- [~] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
     - [ ] Consume the validated Manager/MultiManager verser2 Host TLS/endpoint configuration from the new config surface; do not rely on implicit/self-signed Host TLS defaults.
     - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
     - [ ] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.

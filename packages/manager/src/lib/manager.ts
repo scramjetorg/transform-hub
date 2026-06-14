@@ -29,6 +29,7 @@ import { SthConnectionStore } from "./sth-connection-store";
 import { getDefaultConfig } from "@scramjet/manager-config";
 import { defer, merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
+import { ManagerSthBrokerTransport } from "./verser2-transport";
 
 import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -69,6 +70,7 @@ export class Manager implements IComponent {
     private sthConnectionStore: ISTHConnectionStore = new SthConnectionStore();
     private serviceDiscovery: ServiceDiscovery = new ServiceDiscovery();
     private readonly _config: ManagerConfiguration = getDefaultConfig();
+    private sthBrokerTransport?: ManagerSthBrokerTransport;
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
@@ -90,6 +92,14 @@ export class Manager implements IComponent {
 
     public get router(): APIRoute {
         return this._apiRouter;
+    }
+
+    public setSthBrokerTransport(transport: ManagerSthBrokerTransport) {
+        this.sthBrokerTransport = transport;
+    }
+
+    public getSthBrokerTransport(): ManagerSthBrokerTransport | undefined {
+        return this.sthBrokerTransport;
     }
 
     public get service(): string {

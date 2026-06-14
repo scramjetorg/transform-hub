@@ -23,3 +23,9 @@ Problem: A new workspace package test script using `ava` exits with “Test file
 Solution: In the new package only, invoke the root AVA CLI file directly with `node ../../node_modules/ava/cli.js` so the CLI and imported `ava` package match.
 Constraints: Only apply to newly added packages that lack a local `.bin/ava` and reproduce this exact CLI/import mismatch; keep existing package scripts unchanged.
 Ignore-If: The package has a working local AVA binary; the failure is an assertion failure or intentional red TDD case; a broader dependency install strategy is being changed intentionally.
+
+### Gitignored node_modules search misses installed packages
+Problem: File search or glob tools report no files under `node_modules` even though installed packages exist, because ignored paths may be skipped by search tooling.
+Solution: Verify installed package contents with direct known-path reads such as `node_modules/<scope>/<package>/package.json` and package `dist/` directories, or use package manager resolution checks before concluding files are missing.
+Constraints: Only apply when package metadata or install output indicates the package is installed or resolvable; do not assume missing source files are present without direct path verification.
+Ignore-If: The install or package resolution actually failed; direct reads of known package paths fail; the task requires searching non-ignored source files rather than installed dependencies.
