@@ -236,6 +236,9 @@
         - [x] Validated runner split communication for lifecycle ordering, input round-trip, runtime output, delayed terminal behavior, and verser2 route streams for stdin/stdout/stderr/control/monitoring/input/output/log.
         - [x] Validation passed: `npm test -- test/app-context-parity.spec.ts test/host-client-parity.spec.ts test/host-client-channels.spec.ts` in `packages/runner-node`; `npm exec -- ava test/transport/split-runner-communication-lifecycle.spec.ts test/transport/split-runner-communication-input.spec.ts test/transport/split-runner-communication-runtime.spec.ts test/transport/split-runner-communication-ordering.spec.ts test/transport/verser2-runner-transport.spec.ts` in `packages/runner`; `npm test -- test/runner-transport.spec.ts` in `packages/host`.
 - [ ] Task: Migrate Python runtime
+    - [x] Add Python boot-config support for runner-provided verser2 runtime details.
+        - Added `Verser2RuntimeConfig` parsing/validation for `hostUrl`, explicit `runnerGuestId`, explicit `runnerRouteDomain`, `hubBrokerId`, optional `hubTargetDomain`, TLS object, lease timeout, and minimum waiting leases. Python validation requires explicit routed domains because Python Guests do not default route domains to Guest ID.
+        - Validation passed: `npm test -- tests/test_boot_config.py -v` and `npm run build` in `packages/runner-python`. Build completed with preexisting pip target-directory warnings because `dist/__pypackages__` already contained installed packages.
     - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls using `verser2-guest-python`.
     - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
     - [ ] Wire Python runtime to runner-provided `host_url`, explicit `routed_domains`, CA file, and optional client cert/key or PFX files.
