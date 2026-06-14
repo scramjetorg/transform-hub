@@ -148,45 +148,45 @@
 
 - [x] Task: Push branch before manual verification
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Replace Old Package Surfaces And Commander Coupling' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Replace Old Package Surfaces And Commander Coupling' (Protocol in workflow.md)
 
 ## Phase 4: Verification, Cleanup, Documentation, And Handoff
 
-- [ ] Task: Complete compatibility review
-    - [ ] Compare migrated defaults, config file shapes, env vars, CLI flags, aliases, and masked outputs against the Phase 1 inventory.
-    - [ ] Confirm no valid falsy values are lost during merge or fallback behavior.
-    - [ ] Confirm unknown-key behavior matches the design.
-    - [ ] Confirm old config services remain only where intentionally wrapped or deferred.
+- [x] Task: Complete compatibility review
+    - [x] Compare migrated defaults, config file shapes, env vars, CLI flags, aliases, and masked outputs against the Phase 1 inventory.
+    - [x] Confirm no valid falsy values are lost during merge or fallback behavior.
+    - [x] Confirm unknown-key behavior matches the design.
+    - [x] Confirm old config services remain only where intentionally wrapped or deferred.
 
-- [ ] Task: Complete Commander removal review
-    - [ ] Confirm no direct `commander` imports remain outside `@scramjet/config` internals and documented temporary allowlist.
-    - [ ] Confirm no public `commander.Command` references remain in `packages/types`.
-    - [ ] Confirm Docker, Kubernetes, and process adapters use only Scramjet-owned option registry APIs.
-    - [ ] Confirm parser implementation details do not leak into public APIs.
+- [x] Task: Complete Commander removal review
+    - [x] Confirm no direct `commander` imports remain outside `@scramjet/config` internals and documented temporary allowlist.
+    - [x] Confirm no public `commander.Command` references remain in `packages/types`.
+    - [x] Confirm Docker, Kubernetes, and process adapters use only Scramjet-owned option registry APIs.
+    - [x] Confirm parser implementation details do not leak into public APIs.
 
-- [ ] Task: Update docs and generated artifacts
-    - [ ] Update package README/docs for `@scramjet/config`.
-    - [ ] Update migration notes for config aliases, CLI flag aliases, and any temporary allowlist items.
-    - [ ] Update schema/docs generation notes if JSON Schema generation is included or deferred.
-    - [ ] Update Conductor artifacts with validation results, risks, and deferred follow-ups.
+- [x] Task: Update docs and generated artifacts
+    - [x] Update package README/docs for `@scramjet/config`.
+    - [x] Update migration notes for config aliases, CLI flag aliases, and any temporary allowlist items.
+    - [x] Update schema/docs generation notes if JSON Schema generation is included or deferred.
+    - [x] Update Conductor artifacts with validation results, risks, and deferred follow-ups.
 
-- [ ] Task: Final validation
-    - [ ] Run `npm --prefix packages/config test`.
-    - [ ] Run all relevant migrated package-local tests that exist.
-    - [ ] Run `npm run build:packages`.
-    - [ ] Run `npm run check:runtime-invariants`.
-    - [ ] Run `npm run lint` if changed files require repository-level lint validation.
-    - [ ] Run BDD smoke tests only if migration crosses runtime execution behavior and package-level tests are insufficient.
-    - [ ] Record failures using the workflow failure classification rules and fix session-introduced or in-scope failures.
+- [x] Task: Final validation
+    - [x] Run `npm --prefix packages/config test`.
+    - [x] Run all relevant migrated package-local tests that exist.
+    - [x] Run `npm run build:packages`.
+    - [x] Run `npm run check:runtime-invariants`.
+    - [x] Run `npm run lint` if changed files require repository-level lint validation.
+    - [x] Run BDD smoke tests only if migration crosses runtime execution behavior and package-level tests are insufficient.
+    - [x] Record failures using the workflow failure classification rules and fix session-introduced or in-scope failures.
 
-- [ ] Task: Final handoff
-    - [ ] Summarize implemented config package APIs.
-    - [ ] Summarize migrated package surfaces and remaining allowlist/deferred items.
-    - [ ] Summarize compatibility guarantees and known risks.
-    - [ ] Identify the exact extension points for resuming `verser2_rollout_20260613`.
-    - [ ] Confirm whether a follow-up `@scramjet/cli` full migration track is still needed.
+- [x] Task: Final handoff
+    - [x] Summarize implemented config package APIs.
+    - [x] Summarize migrated package surfaces and remaining allowlist/deferred items.
+    - [x] Summarize compatibility guarantees and known risks.
+    - [x] Identify the exact extension points for resuming `verser2_rollout_20260613`.
+    - [x] Confirm whether a follow-up `@scramjet/cli` full migration track is still needed.
 
-- [ ] Task: Push branch before manual verification
+- [x] Task: Push branch before manual verification
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Verification, Cleanup, Documentation, And Handoff' (Protocol in workflow.md)
 
@@ -205,5 +205,5 @@
 
 - Concrete verser2 Host endpoint/TLS config fields are deferred to `verser2_rollout_20260613`.
 - Direct verser2 transport behavior changes are deferred to `verser2_rollout_20260613`.
-- Full `@scramjet/cli` migration may be deferred only if Phase 1 records a temporary allowlist and follow-up plan.
+- Full `@scramjet/cli` migration was completed in this track; no Commander allowlist remains.
 - Removal of old config services is deferred until compatibility and parity are proven.
