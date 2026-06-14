@@ -16,6 +16,8 @@ export function getRunnerTransportEnv(
             hostUrl: sthConfig.verser2.hostUrl,
             guestId: `runner.${instanceId}.guest`,
             routeDomain: `runner.${instanceId}.scramjet.internal`,
+            hubBrokerId: `runner.${instanceId}.hub.broker`,
+            hubTargetDomain: sthConfig.verser2.guest.routeDomain,
             tls: sthConfig.verser2.tls,
             leaseAcquireTimeoutMs: sthConfig.verser2.timeouts.leaseAcquireMs,
             minWaitingStreams: sthConfig.verser2.leases.minimumWaitingLeases

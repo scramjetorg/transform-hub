@@ -30,6 +30,8 @@ test("getRunnerTransportEnv builds per-instance verser2 runner transport config"
         hostUrl: "https://verser2.example",
         guestId: "runner.inst-42.guest",
         routeDomain: "runner.inst-42.scramjet.internal",
+        hubBrokerId: "runner.inst-42.hub.broker",
+        hubTargetDomain: "sth.internal",
         tls: { caFile: "/ca.pem", certFile: "/cert.pem", keyFile: "/key.pem" },
         leaseAcquireTimeoutMs: 2000,
         minWaitingStreams: 4

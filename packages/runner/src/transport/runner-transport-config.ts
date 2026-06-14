@@ -6,7 +6,8 @@
  *
  * Environment variable shape (JSON):
  *   { kind: "verser2", hostUrl: string, routeDomain?: string, tls?: {...},
- *     leaseAcquireTimeoutMs?: number, minWaitingStreams?: number, guestId?: string }
+ *     leaseAcquireTimeoutMs?: number, minWaitingStreams?: number, guestId?: string,
+ *     hubBrokerId?: string, hubTargetDomain?: string }
  *
  * Derivation rules:
  *   - Absent / empty / whitespace env → { kind: "legacy" }
@@ -33,6 +34,8 @@ export type RunnerTransportConfigVerser2Input = {
     leaseAcquireTimeoutMs?: number;
     minWaitingStreams?: number;
     guestId?: string;
+    hubBrokerId?: string;
+    hubTargetDomain?: string;
 };
 
 /** Fully resolved verser2 config with derived defaults. */
@@ -44,6 +47,8 @@ export type RunnerTransportConfigVerser2 = {
     tls?: RunnerTransportConfigTls;
     leaseAcquireTimeoutMs?: number;
     minWaitingStreams?: number;
+    hubBrokerId: string;
+    hubTargetDomain?: string;
 };
 
 export type RunnerTransportConfigLegacy = {
@@ -128,6 +133,14 @@ export function parseRunnerTransportConfig(
         typeof parsed.routeDomain === "string" && parsed.routeDomain.trim() !== ""
             ? parsed.routeDomain.trim()
             : `runner.${instanceId}.scramjet.internal`;
+    const hubBrokerId =
+        typeof parsed.hubBrokerId === "string" && parsed.hubBrokerId.trim() !== ""
+            ? parsed.hubBrokerId.trim()
+            : `runner.${instanceId}.hub.broker`;
+    const hubTargetDomain =
+        typeof parsed.hubTargetDomain === "string" && parsed.hubTargetDomain.trim() !== ""
+            ? parsed.hubTargetDomain.trim()
+            : undefined;
 
     const tls = parsed.tls;
     const leaseAcquireTimeoutMs =
@@ -144,6 +157,8 @@ export function parseRunnerTransportConfig(
         hostUrl: hostUrl.trim(),
         routeDomain,
         guestId,
+        hubBrokerId,
+        ...(hubTargetDomain !== undefined ? { hubTargetDomain } : {}),
         ...(tls !== undefined ? { tls: tls as RunnerTransportConfigTls } : {}),
         ...(leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs } : {}),
         ...(minWaitingStreams !== undefined ? { minWaitingStreams } : {})

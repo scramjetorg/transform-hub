@@ -7,6 +7,7 @@ import {
 const TEST_ID = "550e8400-e29b-41d4-a716-446655440000";
 const DEFAULT_ROUTE_DOMAIN = `runner.${TEST_ID}.scramjet.internal`;
 const DEFAULT_GUEST_ID = `runner.${TEST_ID}.guest`;
+const DEFAULT_HUB_BROKER_ID = `runner.${TEST_ID}.hub.broker`;
 
 // ---------------------------------------------------------------------------
 // Absent / empty / whitespace env => legacy
@@ -71,6 +72,8 @@ test("returns verser2 config with minimal valid env", t => {
     t.is(result.hostUrl, "https://verser2.example.com:443");
     t.is(result.routeDomain, DEFAULT_ROUTE_DOMAIN);
     t.is(result.guestId, DEFAULT_GUEST_ID);
+    t.is(result.hubBrokerId, DEFAULT_HUB_BROKER_ID);
+    t.is(result.hubTargetDomain, undefined);
     t.is(result.tls, undefined);
     t.is(result.leaseAcquireTimeoutMs, undefined);
     t.is(result.minWaitingStreams, undefined);
@@ -104,6 +107,8 @@ test("returns verser2 config with all optional fields", t => {
         hostUrl: "https://verser2.example.com:443",
         guestId: "my.guest",
         routeDomain: "my.domain.internal",
+        hubBrokerId: "my.hub.broker",
+        hubTargetDomain: "sth.domain.internal",
         tls: { caFile: "/etc/ca.pem", certFile: "/etc/cert.pem", keyFile: "/etc/key.pem" },
         leaseAcquireTimeoutMs: 5000,
         minWaitingStreams: 3
@@ -115,6 +120,8 @@ test("returns verser2 config with all optional fields", t => {
     t.is(result.hostUrl, "https://verser2.example.com:443");
     t.is(result.guestId, "my.guest");
     t.is(result.routeDomain, "my.domain.internal");
+    t.is(result.hubBrokerId, "my.hub.broker");
+    t.is(result.hubTargetDomain, "sth.domain.internal");
     t.deepEqual(result.tls, { caFile: "/etc/ca.pem", certFile: "/etc/cert.pem", keyFile: "/etc/key.pem" });
     t.is(result.leaseAcquireTimeoutMs, 5000);
     t.is(result.minWaitingStreams, 3);

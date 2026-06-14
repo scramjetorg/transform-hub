@@ -104,6 +104,16 @@ interface RunnerNodeBootConfigShape {
     exposePath?: string;
     exposeHost?: string;
     requestsUnsupported?: string;
+    verser2Runtime?: {
+        hostUrl: string;
+        runnerGuestId: string;
+        runnerRouteDomain: string;
+        hubBrokerId: string;
+        hubTargetDomain?: string;
+        tls?: unknown;
+        leaseAcquireTimeoutMs?: number;
+        minWaitingStreams?: number;
+    };
 }
 
 function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesServerPort: number): string {
@@ -133,6 +143,16 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
 
     if (runnerTransportConfig.kind === "verser2") {
         payload.requestsUnsupported = "context.hub is not yet available over verser2 runner transport";
+        payload.verser2Runtime = {
+            hostUrl: runnerTransportConfig.hostUrl,
+            runnerGuestId: runnerTransportConfig.guestId,
+            runnerRouteDomain: runnerTransportConfig.routeDomain,
+            hubBrokerId: runnerTransportConfig.hubBrokerId,
+            ...(runnerTransportConfig.hubTargetDomain ? { hubTargetDomain: runnerTransportConfig.hubTargetDomain } : {}),
+            ...(runnerTransportConfig.tls ? { tls: runnerTransportConfig.tls } : {}),
+            ...(runnerTransportConfig.leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs: runnerTransportConfig.leaseAcquireTimeoutMs } : {}),
+            ...(runnerTransportConfig.minWaitingStreams !== undefined ? { minWaitingStreams: runnerTransportConfig.minWaitingStreams } : {})
+        };
     }
 
     fs.writeFileSync(file, JSON.stringify(payload), { encoding: "utf8", mode: 0o600 });

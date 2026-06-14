@@ -210,7 +210,9 @@
         - Fixed global runner review blockers by synthesizing a CSIController attach for verser2 runner launches, routing verser2 stream bodies through downstream streams so `CommunicationHandler` still parses PING/PANG/lifecycle messages, using downstream input/control/stdin request streams, and propagating verser2 transport connection failures to startup.
         - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed. Oracle re-check reported no commit-blocking blockers; instance request/RPC expose parity remains deferred.
     - [ ] Preserve temporary legacy mode only until runtime migrations are complete.
-    - [ ] Update runtime boot config to carry `hostUrl`, peer IDs, routed domains, CA file/value, optional client cert/key or PFX settings, and route/lease timeout settings needed by stack-specific runtimes.
+    - [x] Update runtime boot config to carry `hostUrl`, peer IDs, routed domains, CA file/value, optional client cert/key or PFX settings, and route/lease timeout settings needed by stack-specific runtimes.
+        - Added adapter env and runner parser fields for per-instance runtime hub Broker ID and STH target route domain, then passed a `verser2Runtime` object through runner-node boot config with Host URL, runner Guest ID/domain, runtime hub Broker ID, target route domain, TLS file config, lease timeout, and minimum waiting leases.
+        - Validation: `npm exec -- ava test/transport/runner-transport-config.spec.ts`, `npm test -- test/skeleton.spec.ts test/host-client-channels.spec.ts` in `packages/runner-node`, `npm exec -- ava test/runner-transport-env.spec.ts`, `npm run build` in `packages/runner`, and `npm run build` in `packages/adapters-common` passed.
 - [ ] Task: Migrate Node runtime
     - [ ] Add or update runner-node tests for `context.hub` over verser2 Broker helpers from `@signicode/verser2-guest-node`.
     - [ ] Add or update runner-node tests for non-listening `context.api` exposure by attaching a Node Guest route with `createVerserNodeGuest()`.
