@@ -1,4 +1,5 @@
 import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
+import { maskConfig, sthOutboundVerser2Options } from "@scramjet/config";
 
 import { merge } from "@scramjet/utility";
 import { defaultConfig as _defaultConfig } from "./default-config";
@@ -60,7 +61,11 @@ export class ConfigService {
         } = config;
 
         const { authConfigPath: optionsAuthConfigPath, sequencesRoot: optionsSequencesRoot, ...kubernetes } = kubeFull;
+        const masked = maskConfig({ ...safe, kubernetes }, sthOutboundVerser2Options) as PublicSTHConfiguration;
 
-        return { ...safe, kubernetes };
+        if (masked.platform?.apiKey) masked.platform.apiKey = "********";
+        if (masked.couchdb?.pass) masked.couchdb.pass = "********";
+
+        return masked;
     }
 }

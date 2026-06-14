@@ -3,6 +3,7 @@ import { Duplex, PassThrough } from "stream";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { DownstreamStreamsConfig, PassThroughStreamsConfig } from "@scramjet/types";
 import { LegacyRunnerTransport } from "../src/lib/runner-transport";
+import { createVerser2ClientTlsOptions } from "../src/lib/cpm-connector";
 
 function streams(): { upstreams: PassThroughStreamsConfig; downstreams: DownstreamStreamsConfig } {
     const upstreams = Array.from({ length: 9 }, () => new PassThrough()) as unknown as PassThroughStreamsConfig;
@@ -93,4 +94,13 @@ test("LegacyRunnerTransport ends request stream on BPMux errors and removes list
 
     await transport.disconnect();
     t.true(removed);
+});
+
+test("createVerser2ClientTlsOptions rejects partial PEM identity", t => {
+    t.throws(() => createVerser2ClientTlsOptions({ certFile: "/safe/cert.pem" }), {
+        message: "Both verser2 TLS certFile and keyFile must be provided together"
+    });
+    t.throws(() => createVerser2ClientTlsOptions({ keyFile: "/secret/key.pem" }), {
+        message: "Both verser2 TLS certFile and keyFile must be provided together"
+    });
 });

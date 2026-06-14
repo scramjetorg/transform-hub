@@ -86,7 +86,9 @@ export class MultiManager {
         this.apiServer = apiServer;
         if (this.usesVerser2Transport()) {
             this.verser2Host = createVerserHost(createVerser2HostOptions(config.verser2));
-        } else {
+        }
+
+        if (this.usesLegacyVerserTransport()) {
             this.apiVerser = new Verser(this.apiServer.server);
         }
 
@@ -327,6 +329,14 @@ export class MultiManager {
         return this.config.verser2.enabled && this.config.verser2.migrationMode !== "legacy";
     }
 
+    private usesLegacyVerserTransport() {
+        return !this.config.verser2.enabled || this.config.verser2.migrationMode !== "verser2";
+    }
+
+    private usesVerser2OnlyTransport() {
+        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
+    }
+
     private async attachManagerVerser2Peers(manager: Manager) {
         if (!this.verser2Host || !manager.config.verser2.enabled || manager.config.verser2.migrationMode === "legacy") {
             return;
@@ -366,7 +376,7 @@ export class MultiManager {
     attachMultiHostAPI(id: string, verserConnection: VerserConnection) {
         this.logger.info(`MultiHost API incoming connection with id: ${id}.`);
 
-        if (this.usesVerser2Transport()) {
+        if (this.usesVerser2OnlyTransport()) {
             this.logger.warn("Refusing legacy MultiHost connection in verser2 mode", id);
             verserConnection.end(410, "Legacy MultiHost path is retired in verser2 mode");
 
@@ -433,7 +443,7 @@ export class MultiManager {
     async forwardMultiHostRequest(req: ParsedMessage, res: ServerResponse) {
         const id = (req.params || {}).id;
 
-        if (this.usesVerser2Transport()) {
+        if (this.usesVerser2OnlyTransport()) {
             res.writeHead(410, { "content-type": "application/json" });
             res.end(JSON.stringify({
                 opStatus: ReasonPhrases.GONE,

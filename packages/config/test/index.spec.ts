@@ -145,6 +145,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
         env: {
             SCRAMJET_VERSER2_HOST_URL: "https://manager.example:2443",
             CPM_SSL_CA_PATH: "/ca/from-alias.pem",
+            SCRAMJET_VERSER2_CERT_FILE: "/safe/cert.pem",
             SCRAMJET_VERSER2_KEY_FILE: "/secret/key.pem"
         },
         cli: {
@@ -165,6 +166,57 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
     t.is(loaded.config.verser2.tls.caFile, "/ca/from-cli.pem");
     t.is(loaded.config.verser2.tls.keyFile, "/secret/key.pem");
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
+});
+
+test("verser2 schema requires usable routed config in verser2 mode", t => {
+    const error = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
+        enabled: true,
+        migrationMode: "verser2",
+        hostUrl: "",
+        broker: { peerId: "", targetDomain: "" },
+        guest: { peerId: "", routeDomain: "" },
+        tls: {},
+        enrollment: {},
+        timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
+        leases: { minimumWaitingLeases: 1 }
+    }));
+
+    t.true(error instanceof z.ZodError);
+    t.deepEqual((error as z.ZodError).issues.map(issue => issue.path.join(".")), [
+        "hostUrl",
+        "broker.peerId",
+        "broker.targetDomain",
+        "guest.peerId",
+        "guest.routeDomain"
+    ]);
+});
+
+test("verser2 schema requires PEM cert and key together", t => {
+    const certOnly = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
+        enabled: false,
+        migrationMode: "legacy",
+        hostUrl: "",
+        broker: { peerId: "", targetDomain: "" },
+        guest: { peerId: "", routeDomain: "" },
+        tls: { certFile: "/safe/cert.pem" },
+        enrollment: {},
+        timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
+        leases: { minimumWaitingLeases: 1 }
+    }));
+    const keyOnly = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
+        enabled: false,
+        migrationMode: "legacy",
+        hostUrl: "",
+        broker: { peerId: "", targetDomain: "" },
+        guest: { peerId: "", routeDomain: "" },
+        tls: { keyFile: "/secret/key.pem" },
+        enrollment: {},
+        timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
+        leases: { minimumWaitingLeases: 1 }
+    }));
+
+    t.is((certOnly as z.ZodError).issues[0].path.join("."), "tls.keyFile");
+    t.is((keyOnly as z.ZodError).issues[0].path.join("."), "tls.certFile");
 });
 
 test("verser2 schema rejects invalid migration mode", t => {

@@ -34,3 +34,42 @@ test("Check if the tags of the images match packages version", async t => {
     }
     t.is(preRunnerTagPackageJson, preRunnerTagImageConfig, "Prerunner tag is eqal");
 });
+
+test("getConfigInfo masks public verser2 client secrets", t => {
+    const config = new ConfigService({
+        platform: {
+            apiKey: "platform-secret"
+        },
+        couchdb: {
+            pass: "couchdb-secret"
+        },
+        verser2: {
+            enabled: true,
+            migrationMode: "verser2",
+            hostUrl: "https://manager.example.test:8443",
+            broker: { peerId: "sth.broker", targetDomain: "manager.example.test" },
+            guest: { peerId: "sth.guest", routeDomain: "sth.example.test" },
+            tls: {
+                caFile: "/safe/ca.pem",
+                certFile: "/safe/cert.pem",
+                keyFile: "/secret/key.pem",
+                pfxFile: "/secret/client.p12",
+                passphrase: "secret-passphrase"
+            },
+            enrollment: { token: "enrollment-token" },
+            timeouts: { routeReadinessMs: 100, leaseAcquireMs: 200, requestMs: 300 },
+            leases: { minimumWaitingLeases: 2 }
+        }
+    }).getConfig();
+
+    const publicConfig = ConfigService.getConfigInfo(config);
+
+    t.is(publicConfig.verser2.tls.caFile, "/safe/ca.pem");
+    t.is(publicConfig.verser2.tls.certFile, "/safe/cert.pem");
+    t.is(publicConfig.verser2.tls.keyFile, "********");
+    t.is(publicConfig.verser2.tls.pfxFile, "********");
+    t.is(publicConfig.verser2.tls.passphrase, "********");
+    t.is(publicConfig.verser2.enrollment.token, "********");
+    t.is(publicConfig.platform?.apiKey, "********");
+    t.is(publicConfig.couchdb?.pass, "********");
+});

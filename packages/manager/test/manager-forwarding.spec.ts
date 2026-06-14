@@ -43,7 +43,7 @@ function installHttpRequestStub() {
 installHttpRequestStub();
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { Manager, normalizeForwardedHeaders } = require("../src/lib/manager");
+const { Manager, maskManagerConfig, normalizeForwardedHeaders } = require("../src/lib/manager");
 
 function tick(): Promise<void> {
     return new Promise(resolve => setImmediate(resolve));
@@ -58,6 +58,52 @@ function createManagerWithSth(sth: any) {
 
     return manager;
 }
+
+test("maskManagerConfig masks public Manager verser2 and S3 secrets", t => {
+    const safe = maskManagerConfig({
+        id: "manager-test",
+        apiBase: "/api/v1",
+        s3: {
+            accessKey: "access-key",
+            secretKey: "secret-key"
+        },
+        verser2: {
+            enabled: true,
+            migrationMode: "verser2",
+            host: {
+                bindHost: "0.0.0.0",
+                bindPort: 8443,
+                publicUrl: "https://manager.example.test:8443",
+                tls: {
+                    certFile: "/safe/cert.pem",
+                    keyFile: "/secret/key.pem",
+                    pfxFile: "/secret/host.p12",
+                    passphrase: "secret-passphrase",
+                    clientAuthCaFile: "/safe/client-ca.pem",
+                    mtlsRequired: true
+                }
+            },
+            registration: {
+                allowLocalPeers: true,
+                token: "registration-token",
+                allowedClientFingerprints: []
+            },
+            localBroker: { peerId: "manager.broker", routeDomain: "manager.example.test" },
+            localGuest: { peerId: "manager.guest", routeDomain: "manager.example.test" },
+            timeouts: { routeReadinessMs: 100, leaseAcquireMs: 200, requestMs: 300 },
+            leases: { minimumWaitingLeases: 1 }
+        }
+    });
+
+    t.is(safe.s3.accessKey, "********");
+    t.is(safe.s3.secretKey, "********");
+    t.is(safe.verser2.host.tls.certFile, "/safe/cert.pem");
+    t.is(safe.verser2.host.tls.clientAuthCaFile, "/safe/client-ca.pem");
+    t.is(safe.verser2.host.tls.keyFile, "********");
+    t.is(safe.verser2.host.tls.pfxFile, "********");
+    t.is(safe.verser2.host.tls.passphrase, "********");
+    t.is(safe.verser2.registration.token, "********");
+});
 
 function createReq(overrides: Partial<any> = {}) {
     const req = new PassThrough() as PassThrough & any;
@@ -242,6 +288,8 @@ test.serial("Manager.handleRequestToSTH routes through verser2 broker transport 
         verserConnection: { getAgent: () => ({}) },
     });
 
+    manager.config.verser2.enabled = true;
+    manager.config.verser2.migrationMode = "verser2";
     manager.config.verser2.timeouts.routeReadinessMs = 1234;
 
     manager.setSthBrokerTransport({
@@ -288,6 +336,41 @@ test.serial("Manager.handleRequestToSTH routes through verser2 broker transport 
     t.is(res.bodyText(), "verser2 body");
 });
 
+test.serial("Manager.handleRequestToSTH falls back to legacy forwarding in dual mode", async t => {
+    let requestCalled = false;
+    const agent = { agent: "sth-agent" };
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => agent },
+    });
+
+    manager.config.verser2.enabled = true;
+    manager.config.verser2.migrationMode = "dual";
+    manager.setSthBrokerTransport({
+        connect: async () => undefined,
+        close: async () => undefined,
+        getRoutes: () => [],
+        isRouteReady: () => true,
+        waitForRoute: async () => undefined,
+        request: async () => {
+            requestCalled = true;
+            throw new Error("dual mode should use legacy forwarding");
+        }
+    });
+
+    const req = createReq();
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+
+    t.false(requestCalled);
+    const calls = sthForwardingCalls();
+
+    t.is(calls.length, 1);
+    t.is(calls[0].options.agent, agent);
+});
+
 test.serial("Manager.handleRequestToSTH rejects direct STH payloads before 100-continue", async t => {
     let requestCalled = false;
     const manager = createManagerWithSth({
@@ -296,6 +379,8 @@ test.serial("Manager.handleRequestToSTH rejects direct STH payloads before 100-c
         verserConnection: { getAgent: () => ({}) },
     });
 
+    manager.config.verser2.enabled = true;
+    manager.config.verser2.migrationMode = "verser2";
     manager.setSthBrokerTransport({
         connect: async () => undefined,
         close: async () => undefined,
@@ -332,6 +417,8 @@ test.serial("Manager.handleRequestToSTH maps verser2 broker failures to 503", as
         verserConnection: { getAgent: () => ({}) },
     });
 
+    manager.config.verser2.enabled = true;
+    manager.config.verser2.migrationMode = "verser2";
     manager.setSthBrokerTransport({
         connect: async () => undefined,
         close: async () => undefined,
@@ -361,6 +448,8 @@ test.serial("Manager.handleRequestToSTH maps verser2 route readiness failures to
         verserConnection: { getAgent: () => ({}) },
     });
 
+    manager.config.verser2.enabled = true;
+    manager.config.verser2.migrationMode = "verser2";
     manager.setSthBrokerTransport({
         connect: async () => undefined,
         close: async () => undefined,
@@ -395,6 +484,8 @@ test.serial("Manager.handleRequestToSTH passes aborted signal to verser2 transpo
         verserConnection: { getAgent: () => ({}) },
     });
 
+    manager.config.verser2.enabled = true;
+    manager.config.verser2.migrationMode = "verser2";
     manager.setSthBrokerTransport({
         connect: async () => undefined,
         close: async () => undefined,

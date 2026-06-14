@@ -164,14 +164,15 @@
     - [x] Define `Verser2RunnerTransport` route contracts using runner Guest endpoints and Broker requests over one-use leases.
     - [x] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
         - Validation: `npm test -- test/runner-transport.spec.ts` in `packages/host`, `npm test` in `packages/types`, and `npm run build` in `packages/host` passed.
-- [ ] Task: Run automated reviews and validation for Phase 2
+- [x] Task: Run automated reviews and validation for Phase 2
     - [x] Run local Manager/MultiManager/Host package tests added in this phase.
     - [x] Run targeted transport abstraction tests.
     - [x] Run the narrowest relevant build or typecheck for changed packages.
-    - [ ] Run automated review for config schema/source precedence, public-safe masking, TLS/private-key handling, legacy alias behavior, and no implicit/self-signed verser2 defaults.
+    - [x] Run automated review for config schema/source precedence, public-safe masking, TLS/private-key handling, legacy alias behavior, and no implicit/self-signed verser2 defaults.
     - [x] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
         - Post-hardening review result: no blockers found. Residual accepted risks: identical route signatures can remain suppressed after reconnect without an observed route-set change, passive broker disconnects require caller lifecycle handling until the Broker API exposes disconnect state/events, post-dispatch abort is best-effort within current Broker API limits, and generic comma-joined header normalization may need future special cases.
     - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
+    - Validation/review summary: fixed automated review blockers for STH verser2 source precedence, STH/Manager public-safe masking, dual migration-mode semantics, and partial PEM TLS identity handling. Follow-up automated review found no blockers. Passed `npm run build:packages`, affected focused tests/builds for config, sth-config, manager, multi-manager, host, and sth, and memory-capped package validation for changed packages. Full `test:packages-no-concurrent` was attempted with `NODE_OPTIONS="--max-old-space-size=1536"`; unrelated `@scramjet/api-server` AVA tests still exceeded the heap cap even with `--serial`, and unrelated old `@scramjet/verser` HTTP connection tests timed out. These are recorded as out-of-scope validation-runner/package limitations, not Phase 2 blockers.
 
 ## Phase 3: Global Runner and Runtime Migration
 

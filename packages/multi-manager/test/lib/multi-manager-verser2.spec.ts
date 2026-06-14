@@ -163,6 +163,79 @@ test("forwardMultiHostRequest rejects legacy /msth forwarding in verser2 mode", 
     });
 });
 
+test("forwardMultiHostRequest keeps legacy /msth path available in dual mode", async t => {
+    const multiManager: any = Object.create(MultiManager.prototype);
+    const req: any = {
+        params: { id: "multi-host-1" },
+        method: "GET",
+        url: "/api/v1/msth/multi-host-1/status"
+    };
+    const res: any = new PassThrough();
+
+    multiManager.config = {
+        verser2: {
+            enabled: true,
+            migrationMode: "dual"
+        }
+    };
+    multiManager.apiBase = "/api/v1";
+    multiManager.multiHostControllerStore = {
+        getById: () => undefined
+    };
+    multiManager.logger = {
+        debug: () => undefined
+    };
+    res.writeHead = (statusCode: number) => {
+        res.statusCode = statusCode;
+    };
+    res.end = () => {
+        res.endCalled = true;
+    };
+
+    await multiManager.forwardMultiHostRequest(req, res);
+
+    t.is(res.statusCode, 404);
+    t.true(res.endCalled);
+});
+
+test("attachMultiHostAPI keeps legacy MultiHost connections available in dual mode", t => {
+    const multiManager: any = Object.create(MultiManager.prototype);
+    const endCalls: any[] = [];
+    const respondCalls: any[] = [];
+    const verserConnection: any = {
+        end: (statusCode: number, message: string) => endCalls.push({ statusCode, message }),
+        respond: (statusCode: number) => respondCalls.push(statusCode),
+        connect: () => undefined,
+        createChannel: () => new PassThrough(),
+        addChannelListener: () => undefined,
+        socket: new PassThrough(),
+        logger: { pipe: () => undefined }
+    };
+
+    multiManager.config = {
+        verser2: {
+            enabled: true,
+            migrationMode: "dual"
+        }
+    };
+    multiManager.multiHostControllerStore = {
+        getById: () => undefined,
+        add: () => undefined
+    };
+    multiManager.commonLogsPipe = {
+        addInStream: () => undefined
+    };
+    multiManager.logger = {
+        info: () => undefined,
+        warn: () => undefined
+    };
+
+    multiManager.attachMultiHostAPI("multi-host-1", verserConnection);
+
+    t.deepEqual(endCalls, []);
+    t.deepEqual(respondCalls, [202]);
+});
+
 test("attachMultiHostAPI rejects legacy MultiHost connections in verser2 mode", t => {
     const multiManager: any = Object.create(MultiManager.prototype);
     const endCalls: any[] = [];

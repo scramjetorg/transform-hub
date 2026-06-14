@@ -56,7 +56,41 @@ export const sthOutboundVerser2ConfigSchema = z.object({
     enrollment: z.object({ token: optionalFileSchema }).strict(),
     timeouts: timeoutsSchema,
     leases: leasesSchema
-}).strict();
+}).strict().superRefine((config, ctx) => {
+    if (config.tls.certFile && !config.tls.keyFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["tls", "keyFile"],
+            message: "keyFile is required when certFile is provided"
+        });
+    }
+
+    if (config.tls.keyFile && !config.tls.certFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["tls", "certFile"],
+            message: "certFile is required when keyFile is provided"
+        });
+    }
+
+    if (!(config.enabled && config.migrationMode === "verser2")) return;
+
+    ([
+        ["hostUrl", config.hostUrl],
+        ["broker.peerId", config.broker.peerId],
+        ["broker.targetDomain", config.broker.targetDomain],
+        ["guest.peerId", config.guest.peerId],
+        ["guest.routeDomain", config.guest.routeDomain]
+    ] as const).forEach(([path, value]) => {
+        if (value.trim().length) return;
+
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: path.split("."),
+            message: `${path} is required when verser2 mode is enabled`
+        });
+    });
+});
 
 const managerPath = (path: string) => `verser2.${path}`;
 const sthPath = (path: string) => `verser2.${path}`;

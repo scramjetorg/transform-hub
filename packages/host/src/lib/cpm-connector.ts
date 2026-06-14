@@ -53,7 +53,7 @@ const dropMessageCodes = [
     CPMMessageCode.ID_DROP
 ];
 
-function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): VerserClientTlsOptions {
+export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): VerserClientTlsOptions {
     if (tls.pfxFile) {
         return {
             caFile: tls.caFile,
@@ -63,6 +63,10 @@ function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): VerserClien
     }
 
     if (tls.certFile || tls.keyFile) {
+        if (!tls.certFile || !tls.keyFile) {
+            throw new Error("Both verser2 TLS certFile and keyFile must be provided together");
+        }
+
         return {
             caFile: tls.caFile,
             certFile: tls.certFile,
@@ -274,7 +278,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     private get usesVerser2() {
-        return this.config.verser2.enabled && this.config.verser2.migrationMode !== "legacy";
+        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
     }
 
     /**

@@ -31,6 +31,7 @@ import { defer, merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
 import { ManagerSthBrokerTransport } from "./verser2-transport";
 import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
+import { managerVerser2Options, maskConfig } from "@scramjet/config";
 
 import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -64,6 +65,19 @@ export function normalizeForwardedHeaders(headers: IncomingHttpHeaders): Record<
     return normalized;
 }
 
+export function maskManagerConfig(config: ManagerConfiguration): ManagerConfiguration {
+    const safe = {} as ManagerConfiguration;
+
+    merge(safe, config);
+
+    if (safe.s3) {
+        if (safe.s3.accessKey) safe.s3.accessKey = "********";
+        if (safe.s3.secretKey) safe.s3.secretKey = "********";
+    }
+
+    return maskConfig(safe, managerVerser2Options) as ManagerConfiguration;
+}
+
 export class Manager implements IComponent {
     id: string;
     private _apiRouter: APIRoute;
@@ -91,6 +105,10 @@ export class Manager implements IComponent {
         return this._config;
     }
 
+    public get publicConfig(): ManagerConfiguration {
+        return maskManagerConfig(this._config);
+    }
+
     public get router(): APIRoute {
         return this._apiRouter;
     }
@@ -101,6 +119,10 @@ export class Manager implements IComponent {
 
     public getSthBrokerTransport(): ManagerSthBrokerTransport | undefined {
         return this.sthBrokerTransport;
+    }
+
+    private usesVerser2OnlyTransport(): boolean {
+        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
     }
 
     public get service(): string {
@@ -140,7 +162,7 @@ export class Manager implements IComponent {
         this.logger = new ObjLogger(this, { id: this.id });
         this.logger.logLevel = (this._config.logLevel || "info").toLocaleUpperCase() as LogLevel;
 
-        this.logger.debug("Manager config: ", this._config);
+        this.logger.debug("Manager config: ", this.publicConfig);
 
         this.serviceDiscovery.logger.pipe(this.logger);
 
@@ -159,7 +181,7 @@ export class Manager implements IComponent {
         this.commonLogsPipe.logger.pipe(this.logger);
 
         if (this.config.s3 && this.config.s3.endPoint) {
-            this.logger.info("Config", this.config.s3);
+            this.logger.info("Config", this.publicConfig.s3);
             this.s3Client = new MinioClient({
                 region: this.config.s3.region,
                 endPoint: this.config.s3.endPoint,
@@ -208,7 +230,7 @@ export class Manager implements IComponent {
             })
         );
 
-        this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.config }));
+        this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.publicConfig }));
         this._apiRouter.get(`${apiBase}/list`, (req:ParsedMessage): MRestAPI.GetListResponse => {
             let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
             let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
@@ -662,7 +684,7 @@ export class Manager implements IComponent {
 
         req.url = forwarding.path;
 
-        if (this.sthBrokerTransport) {
+        if (this.sthBrokerTransport && this.usesVerser2OnlyTransport()) {
             await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
         } else {
             await this.handleLocalPeerRequestToSTH(sth, req, res, headers, expectsContinue);

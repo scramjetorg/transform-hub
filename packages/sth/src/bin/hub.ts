@@ -1,7 +1,15 @@
 #!/usr/bin/env ts-node
 /* eslint-disable complexity */
 
-import { ConfigOptionDescriptor, createOptionRegistry, parseCliOptions, sthOutboundVerser2Options } from "@scramjet/config";
+import {
+    ConfigOptionDescriptor,
+    createOptionRegistry,
+    loadConfig,
+    parseCliOptions,
+    sthOutboundVerser2ConfigSchema,
+    sthOutboundVerser2Options,
+    z
+} from "@scramjet/config";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
 import { DeepPartial, STHCommandOptions, STHConfiguration, StorageAdapterType } from "@scramjet/types";
 import { resolve } from "path";
@@ -95,6 +103,14 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
 (async () => {
     const configService = new ConfigService();
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
+    const verser2 = loadConfig<{ verser2: STHConfiguration["verser2"] }>({
+        schema: z.object({ verser2: sthOutboundVerser2ConfigSchema }).passthrough() as z.ZodType<{ verser2: STHConfiguration["verser2"] }>,
+        defaults: { verser2: configService.getConfig().verser2 },
+        configFilePath: options.config,
+        env: process.env,
+        cli: options as unknown as Record<string, unknown>,
+        options: sthOutboundVerser2Options
+    }).config.verser2;
 
     if (options.config) {
         const configFile = FileBuilder(options.config);
@@ -204,37 +220,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
             pass: options.couchdbPass
         },
         strictPlatformConnection: options.strictPlatformConnection,
-        verser2: {
-            enabled: options.verser2Enabled,
-            migrationMode: options.verser2MigrationMode,
-            hostUrl: options.verser2HostUrl,
-            tls: {
-                caFile: options.verser2CaFile,
-                certFile: options.verser2CertFile,
-                keyFile: options.verser2KeyFile,
-                pfxFile: options.verser2PfxFile,
-                passphrase: options.verser2Passphrase
-            },
-            enrollment: {
-                token: options.verser2EnrollmentToken
-            },
-            broker: {
-                peerId: options.verser2BrokerPeerId,
-                targetDomain: options.verser2BrokerTargetDomain
-            },
-            guest: {
-                peerId: options.verser2GuestPeerId,
-                routeDomain: options.verser2GuestRouteDomain
-            },
-            timeouts: {
-                routeReadinessMs: options.verser2RouteReadinessMs,
-                leaseAcquireMs: options.verser2LeaseAcquireMs,
-                requestMs: options.verser2RequestMs
-            },
-            leases: {
-                minimumWaitingLeases: options.verser2MinimumWaitingLeases
-            }
-        }
+        verser2
     });
 
     await configService.selectRuntimeAdapter();

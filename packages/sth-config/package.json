@@ -39,6 +39,7 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "dependencies": {
+    "@scramjet/config": "^1.1.0",
     "@scramjet/utility": "^1.1.0"
   },
   "peerDependencies": {
