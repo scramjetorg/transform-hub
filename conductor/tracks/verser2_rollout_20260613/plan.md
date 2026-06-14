@@ -141,7 +141,7 @@
     - [x] Run the narrowest relevant package build/typecheck.
     - [x] Run an automated architecture review for route classification, direct-only STH-to-STH constraints, and future verser2 native follow replacement.
         - Validation: `npm test` in `packages/manager` passed 152 tests; `npm run build` in `packages/manager` passed. Follow-up architecture review found no blockers. Non-blocking risks: `cpm` header provenance should be hardened later, encoded reserved URL characters may need stricter preservation, and dynamic topic membership still uses coarse actor-level handled state.
-- [ ] Task: Conductor - User Manual Verification 'Route Classification and Redirect-Readiness Forwarding' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Route Classification and Redirect-Readiness Forwarding' (Protocol in workflow.md)
 - [ ] Task: Migrate Manager/STH request and streaming semantics
     - [ ] Map `/platform` communication to an explicit Guest route plus Broker request/streaming-body pattern.
     - [ ] Map log behavior to explicit Guest routes and streaming request or response bodies.
