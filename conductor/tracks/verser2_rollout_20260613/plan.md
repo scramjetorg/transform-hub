@@ -127,11 +127,11 @@
     - [x] Keep topic streams uncached while preserving current live fan-in/fan-out semantics.
     - [x] Support multiple downstream consumers and upstream providers according to current topic behavior.
     - [x] Add tests for API-to-STH, STH-to-API, and many-to-many topic cases where Manager multiplexing remains required.
-- [ ] Task: Rewrite forwarding based on classified routes
-    - [ ] Replace generic Manager-to-STH forwarding decisions with classifier-driven routing.
-    - [ ] Route follow-safe endpoints through the dummy internal redirect handler.
-    - [ ] Route Manager aggregate, storage, control, and topic fan-in/fan-out paths through Manager-owned handlers or multiplexers.
-    - [ ] Prove direct STH-to-STH payload requests do not fall back through Manager data-plane proxying.
+- [x] Task: Rewrite forwarding based on classified routes
+    - [x] Replace generic Manager-to-STH forwarding decisions with classifier-driven routing.
+    - [x] Route follow-safe endpoints through the dummy internal redirect handler.
+    - [x] Route Manager aggregate, storage, control, and topic fan-in/fan-out paths through Manager-owned handlers or multiplexers.
+    - [x] Prove direct STH-to-STH payload requests do not fall back through Manager data-plane proxying.
 - [ ] Task: Replace legacy Manager/STH forwarding after route classification
     - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with classifier-driven Manager/STH transport over local peers or H2 Broker/Guest.
     - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage only through classified follow or Manager-multiplex paths.

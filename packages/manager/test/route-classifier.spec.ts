@@ -93,3 +93,22 @@ test("prepareManagerFollowForwarding returns route metadata for direct STH-origi
         targetPath: "/config"
     });
 });
+
+test("classifyManagerRoute separates /sth forwarding families for classifier-driven rewrite", t => {
+    t.deepEqual(
+        classifyManagerRoute("GET", "/api/v1/sth/sth-1/config").kind,
+        "follow"
+    );
+    t.deepEqual(
+        classifyManagerRoute("GET", "/api/v1/sth/sth-1/topic/orders").kind,
+        "manager-multiplex"
+    );
+    t.deepEqual(
+        classifyManagerRoute("GET", "/api/v1/sth/sth-1/platform").kind,
+        "unsupported-bidirectional"
+    );
+    t.deepEqual(
+        classifyManagerRoute("GET", "/api/v1/sth/sth-1/info").kind,
+        "manager-owned"
+    );
+});
