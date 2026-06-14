@@ -188,6 +188,8 @@
 - [ ] Task: Implement global runner verser2 transport
     - [ ] Make `packages/runner` own the global verser2 runner Guest connection, route registration, Host URL, trust material, and optional client certificate material.
         - [x] Added pure internal `SCRAMJET_RUNNER_TRANSPORT_CONFIG` parser in `packages/runner` with legacy default behavior, verser2 `hostUrl` validation, TLS/lease/min-waiting fields, and derived `runner.<instanceId>.scramjet.internal` route domain plus `runner.<instanceId>.guest` Guest ID defaults.
+        - [x] Added a runner-local channel bridge server that binds `127.0.0.1:0`, accepts the existing 37-byte runtime child header, validates instance ID/channel indexes, retains IN/OUT/LOG streams plus reserved REQUESTS, preserves same-segment payload data, rejects invalid sockets safely, and cleans up waiters/sockets on close.
+            - Validation: `npm exec -- ava test/transport/local-channel-server.spec.ts` and `npm run build` in `packages/runner` passed.
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
         - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
     - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
