@@ -541,6 +541,11 @@ export class Manager implements IComponent {
             res.writeContinue();
         }
 
+        if (this.sthBrokerTransport) {
+            await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
+            return;
+        }
+
         requestToHost = request({
             headers,
             method: req.method,
@@ -577,6 +582,30 @@ export class Manager implements IComponent {
         req.pipe(requestToHost);
 
         requestToHost.setTimeout(0);
+    }
+
+    private async handleVerser2RequestToSTH(id: string, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
+        try {
+            const response = await this.sthBrokerTransport!.request({
+                domain: this.getSthRouteDomain(id),
+                method: req.method || "GET",
+                path: req.url || "/",
+                headers,
+                body: req
+            });
+
+            res.writeHead(response.statusCode, response.headers as Record<string, string>);
+            res.flushHeaders();
+            response.body.pipe(res);
+        } catch (error) {
+            this.logger.warn("M -> STH verser2 request error", { id, url: req.url, error });
+            res.writeHead(503);
+            res.end();
+        }
+    }
+
+    private getSthRouteDomain(id: string) {
+        return `sth.${id}.scramjet.internal`;
     }
 
     attachSTHEventHandlers(sth: ISTHController) {

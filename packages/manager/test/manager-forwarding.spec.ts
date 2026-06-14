@@ -99,10 +99,14 @@ function createRes() {
     res.writeContinueCalled = false;
     res.flushHeadersCalled = false;
     res.endCalled = false;
-    res.writeHead = (statusCode: number, statusMessage?: string, headers?: Record<string, string>) => {
+    res.writeHead = (statusCode: number, statusMessage?: string | Record<string, string>, headers?: Record<string, string>) => {
         res.statusCode = statusCode;
-        res.statusMessage = statusMessage;
-        res.headers = headers;
+        if (typeof statusMessage === "object") {
+            res.headers = statusMessage;
+        } else {
+            res.statusMessage = statusMessage;
+            res.headers = headers;
+        }
         return res;
     };
     res.flushHeaders = () => {
@@ -226,6 +230,82 @@ test.serial("Manager.handleRequestToSTH normalizes forwarded headers", async t =
     const calls = sthForwardingCalls();
     t.is(calls.length, 1);
     t.deepEqual(calls[0].options.headers, { "x-test": "a, b", "x-keep": "yes" });
+});
+
+test.serial("Manager.handleRequestToSTH routes through verser2 broker transport when configured", async t => {
+    const responseBody = new PassThrough();
+    const requests: any[] = [];
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => ({}) },
+    });
+
+    manager.setSthBrokerTransport({
+        connect: async () => undefined,
+        close: async () => undefined,
+        getRoutes: () => [],
+        isRouteReady: () => true,
+        waitForRoute: async () => undefined,
+        request: async (request: any) => {
+            requests.push(request);
+            return {
+                requestId: "request-1",
+                statusCode: 202,
+                headers: { "x-from-verser2": "ok" },
+                body: responseBody
+            };
+        }
+    });
+
+    const req = createReq({ headers: { "x-test": ["a", "b"], expect: "100-continue" } });
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+    responseBody.end("verser2 body");
+    await tick();
+
+    t.true(res.writeContinueCalled);
+    t.is(requests.length, 1);
+    t.is(sthForwardingCalls().length, 0);
+    t.deepEqual(requests[0], {
+        domain: "sth.sth-1.scramjet.internal",
+        method: "POST",
+        path: "/config?verbose=1",
+        headers: { "x-test": "a, b" },
+        body: req
+    });
+    t.is(res.statusCode, 202);
+    t.deepEqual(res.headers, { "x-from-verser2": "ok" });
+    t.is(res.bodyText(), "verser2 body");
+});
+
+test.serial("Manager.handleRequestToSTH maps verser2 broker failures to 503", async t => {
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => ({}) },
+    });
+
+    manager.setSthBrokerTransport({
+        connect: async () => undefined,
+        close: async () => undefined,
+        getRoutes: () => [],
+        isRouteReady: () => false,
+        waitForRoute: async () => undefined,
+        request: async () => {
+            throw new Error("route unavailable");
+        }
+    });
+
+    const req = createReq();
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+
+    t.is(res.statusCode, 503);
+    t.true(res.endCalled);
+    t.is(sthForwardingCalls().length, 0);
 });
 
 test("normalizeForwardedHeaders drops undefined values and joins arrays", t => {
