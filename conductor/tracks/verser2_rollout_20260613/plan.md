@@ -196,6 +196,7 @@
             - Validation: `npm exec -- ava test/transport/runner-transport-config.spec.ts test/transport/local-channel-server.spec.ts test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner` passed.
         - [x] Addressed runner transport review blockers for persistent request-body route responses, repeated control messages, delayed local runtime channel waits, Python newline-delimited runtime handshakes, startup-failure cleanup, and shutdown ordering with active routed streams.
             - Validation: `npm exec -- ava test/transport/runner-transport-config.spec.ts test/transport/local-channel-server.spec.ts test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner` passed.
+            - Review: Oracle re-check found no remaining blockers for continuing; `REQUESTS`/`context.hub` remains an explicit deferred runtime migration item. Host runner transport regression `npm test -- test/runner-transport.spec.ts` in `packages/host` passed.
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
         - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
     - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
