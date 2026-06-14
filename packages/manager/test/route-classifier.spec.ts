@@ -1,5 +1,5 @@
 import test from "ava";
-import { classifyManagerRoute } from "../src/lib/route-classifier";
+import { classifyManagerRoute, prepareManagerFollowForwarding } from "../src/lib/route-classifier";
 
 test("classifyManagerRoute follows explicit STH read routes with target metadata", t => {
     const decision = classifyManagerRoute("GET", "/api/v1/sth/sth-1/config?verbose=1");
@@ -71,4 +71,25 @@ test("classifyManagerRoute follows RPC and instance single-owner routes", t => {
     t.is(instanceDecision.target?.instanceId, "inst-1");
     t.is(controlDecision.kind, "follow");
     t.is(controlDecision.family, "instance-control");
+});
+
+test("prepareManagerFollowForwarding keeps dummy redirect dispatch internal and preserves query", t => {
+    const decision = classifyManagerRoute("POST", "/api/v1/sth/sth-1/sequence/seq-1/start?trace=1");
+    const forwarding = prepareManagerFollowForwarding(decision, "/sequence/seq-1/start?trace=1", {});
+
+    t.deepEqual(forwarding, {
+        kind: "dispatch",
+        path: "/sequence/seq-1/start?trace=1"
+    });
+});
+
+test("prepareManagerFollowForwarding returns route metadata for direct STH-originated payloads", t => {
+    const decision = classifyManagerRoute("POST", "/api/v1/sth/sth-1/config?verbose=1");
+    const forwarding = prepareManagerFollowForwarding(decision, "/config?verbose=1", { cpm: "true" });
+
+    t.deepEqual(forwarding, {
+        kind: "direct-route-metadata",
+        routeDomain: "sth.sth-1.scramjet.internal",
+        targetPath: "/config"
+    });
 });

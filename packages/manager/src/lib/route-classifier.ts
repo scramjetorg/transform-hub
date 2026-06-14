@@ -19,6 +19,17 @@ export type ClassifyManagerRouteOptions = {
     apiBase?: string;
 };
 
+export type ManagerFollowForwardingDecision =
+    | {
+        kind: "dispatch";
+        path: string;
+    }
+    | {
+        kind: "direct-route-metadata";
+        routeDomain?: string;
+        targetPath?: string;
+    };
+
 const DEFAULT_API_BASE = "/api/v1";
 
 export function classifyManagerRoute(
@@ -61,6 +72,25 @@ export function classifyManagerRoute(
     }
 
     return classifyManagerOwnedRoute(requestMethod, segments);
+}
+
+export function prepareManagerFollowForwarding(
+    decision: ManagerRouteDecision,
+    currentUrl: string | undefined,
+    headers: Record<string, string>
+): ManagerFollowForwardingDecision {
+    if (headers.cpm === "true") {
+        return {
+            kind: "direct-route-metadata",
+            routeDomain: decision.target?.routeDomain,
+            targetPath: decision.target?.targetPath,
+        };
+    }
+
+    return {
+        kind: "dispatch",
+        path: applyOriginalQuery(decision.target?.targetPath || currentUrl || "/", currentUrl)
+    };
 }
 
 function classifySthRoute(method: string, segments: string[]): ManagerRouteDecision {
@@ -221,4 +251,14 @@ function stripApiBase(path: string, apiBase: string): string {
     }
 
     return path.startsWith(`${apiBase}/`) ? path.slice(apiBase.length) : path;
+}
+
+function applyOriginalQuery(targetPath: string, currentUrl: string | undefined): string {
+    if (!currentUrl || targetPath.includes("?")) {
+        return targetPath;
+    }
+
+    const queryStart = currentUrl.indexOf("?");
+
+    return queryStart === -1 ? targetPath : `${targetPath}${currentUrl.slice(queryStart)}`;
 }

@@ -115,12 +115,13 @@
     - [x] Return a route decision of `follow`, `manager-multiplex`, `manager-owned`, or `unsupported-bidirectional` with enough target metadata for forwarding.
     - [x] Add focused tests proving classification is based on route action semantics and not method alone.
     - [x] Include explicit unsupported classifications for `/platform` duplex and instance `/inout` until dedicated protocols are implemented.
-- [ ] Task: Implement dummy internal redirect handler
-    - [ ] Implement a temporary Manager-side handler for Manager API `follow` decisions that resolves the target route and returns the target response or stream directly to the external caller.
-    - [ ] Keep the handler shaped so it can later be replaced with a verser2-followable `307` or `308` response.
-    - [ ] Ensure the temporary handler does not expose verser2-internal hostnames to ordinary clients.
-    - [ ] Ensure the temporary handler is not used for direct STH-originated payloads to another STH; those flows must receive route metadata and use the target STH route directly.
-    - [ ] Add tests for a follow-safe read route and a follow-safe state-changing single-owner route.
+- [x] Task: Implement dummy internal redirect handler
+    - [x] Implement a temporary Manager-side handler for Manager API `follow` decisions that resolves the target route and returns the target response or stream directly to the external caller.
+    - [x] Keep the handler shaped so it can later be replaced with a verser2-followable `307` or `308` response.
+    - [x] Ensure the temporary handler does not expose verser2-internal hostnames to ordinary clients.
+    - [x] Ensure the temporary handler is not used for direct STH-originated payloads to another STH; those flows must receive route metadata and use the target STH route directly.
+    - [x] Add tests for a follow-safe read route and a follow-safe state-changing single-owner route.
+        - Focused classifier/forwarding-preparation tests pass; direct Manager AVA imports currently hit preexisting `sth-connection-store.ts` ts-node strictness/timeout behavior, so Manager integration is also covered by package build/typecheck for this task.
 - [ ] Task: Implement Manager topic multiplexing readiness
     - [ ] Define Manager-owned topic multiplexer behavior for Manager API topic routes.
     - [ ] Keep topic streams uncached while preserving current live fan-in/fan-out semantics.

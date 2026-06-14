@@ -30,6 +30,7 @@ import { getDefaultConfig } from "@scramjet/manager-config";
 import { defer, merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
 import { ManagerSthBrokerTransport } from "./verser2-transport";
+import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
 
 import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -492,6 +493,7 @@ export class Manager implements IComponent {
     async handleRequestToSTH(req: ParsedMessage, res: ServerResponse) {
         const params = req.params || {};
         const sth = this.sthConnectionStore.getById(params.id);
+        const originalUrl = req.url;
 
         if (!sth) {
             this.logger.error("Request to STH Not Found", req.method, req.url);
@@ -542,7 +544,16 @@ export class Manager implements IComponent {
         }
 
         if (this.sthBrokerTransport) {
-            await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
+            const decision = classifyManagerRoute(req.method, originalUrl, { apiBase: this._config.apiBase });
+
+            if (decision.kind === "follow") {
+                await this.handleDummyInternalRedirectToSTH(sth.id, decision, req, res, headers);
+
+                return;
+            }
+
+            this.writeUnsupportedRouteDecision(decision, res);
+
             return;
         }
 
@@ -627,6 +638,51 @@ export class Manager implements IComponent {
                 clearTimeout(requestTimeout);
             }
         }
+    }
+
+    private async handleDummyInternalRedirectToSTH(
+        id: string,
+        decision: ManagerRouteDecision,
+        req: ParsedMessage,
+        res: ServerResponse,
+        headers: Record<string, string>
+    ) {
+        const forwarding = prepareManagerFollowForwarding(decision, req.url, headers);
+
+        if (forwarding.kind === "direct-route-metadata") {
+            this.writeDirectRouteMetadata(decision, res);
+
+            return;
+        }
+
+        req.url = forwarding.path;
+
+        await this.handleVerser2RequestToSTH(id, req, res, headers);
+    }
+
+    private writeDirectRouteMetadata(decision: ManagerRouteDecision, res: ServerResponse) {
+        const payload = JSON.stringify({
+            opStatus: ReasonPhrases.CONFLICT,
+            routeDecision: decision.kind,
+            routeDomain: decision.target?.routeDomain,
+            targetPath: decision.target?.targetPath,
+            error: "Direct STH-to-STH payloads must use the target route directly"
+        });
+
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(payload);
+    }
+
+    private writeUnsupportedRouteDecision(decision: ManagerRouteDecision, res: ServerResponse) {
+        const payload = JSON.stringify({
+            opStatus: ReasonPhrases.NOT_IMPLEMENTED,
+            routeDecision: decision.kind,
+            routeFamily: decision.family,
+            error: decision.reason
+        });
+
+        res.writeHead(decision.kind === "unsupported-bidirectional" ? 501 : 409, { "content-type": "application/json" });
+        res.end(payload);
     }
 
     private getSthRouteDomain(id: string) {
