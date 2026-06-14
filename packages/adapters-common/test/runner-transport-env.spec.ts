@@ -32,8 +32,14 @@ test("getRunnerTransportEnv builds per-instance verser2 runner transport config"
         routeDomain: "runner.inst-42.scramjet.internal",
         hubBrokerId: "runner.inst-42.hub.broker",
         hubTargetDomain: "sth.internal",
-        tls: { caFile: "/ca.pem", certFile: "/cert.pem", keyFile: "/key.pem" },
         leaseAcquireTimeoutMs: 2000,
         minWaitingStreams: 4
     });
+});
+
+test("getRunnerTransportEnv does not propagate STH TLS identity material to runners", t => {
+    const env = getRunnerTransportEnv({ verser2: baseVerser2 }, "inst-secret");
+    const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
+
+    t.is(parsed.tls, undefined);
 });

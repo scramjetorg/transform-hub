@@ -217,6 +217,8 @@
     - [x] Add or update runner-node tests for `context.hub` over verser2 Broker helpers from `@signicode/verser2-guest-node`.
         - Added runner-node HostClient support for `verser2Runtime.hubTargetDomain`: it creates/connects a verser2 Broker, uses `createAgent()` for `context.hub`, switches the API base to the routed STH domain, omits the legacy `REQUESTS` BPMux channel, and closes the Broker on disconnect. If no target domain is available, existing fail-fast unsupported behavior remains.
         - Validation: `npm test -- test/host-client-channels.spec.ts` and `npm run build` in `packages/runner-node` passed.
+        - Review hardening: adapter-generated runner transport envs no longer propagate STH TLS client identity material or passphrases into runner process/container/pod envs; explicit runtime TLS identity distribution remains a separate security design item if mTLS-only runner connectivity is required.
+        - Validation: `npm exec -- ava test/runner-transport-env.spec.ts` and `npm run build` in `packages/adapters-common` passed.
     - [ ] Add or update runner-node tests for non-listening `context.api` exposure by attaching a Node Guest route with `createVerserNodeGuest()`.
     - [ ] Replace BPMux-backed runner-node `HostClient` path with verser2 runtime transport; avoid reimplementing the published Guest/Broker transport.
     - [ ] Verify Node route domain behavior, including attach-time domain precedence and the default-to-guestId behavior where intentionally used.
