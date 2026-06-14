@@ -84,3 +84,51 @@ The only safe local work that can continue before the upstream artifacts are ava
 - keeping legacy `@scramjet/verser` behavior behind a temporary implementation.
 
 These preparatory steps do not replace the required upstream packages and should not be treated as the actual verser2 transport implementation.
+
+---
+
+## Python package distribution blocker during Phase 3
+
+### Observed Transform Hub use case
+
+Phase 3 needs `packages/runner-python` to use the published Python verser2 Guest/Broker implementation for:
+
+- Python sequence → STH API calls through Broker/request semantics;
+- STH → Python sequence API exposure through an ASGI Guest;
+- explicit runner route domains, CA trust, optional client identity files, and lease/waiting-stream settings from runner boot config.
+
+Transform Hub can parse and map the needed boot config locally, but the runtime must not vendor or reimplement the Python verser2 transport.
+
+### Failing or missing verser2 behavior
+
+The upstream source checkout contains `packages/verser2-guest-python` with the expected public API (`verser2_guest_python`, `create_verser_broker`, `create_verser_guest`, `VerserBrokerResponse`, ASGI Guest support, TLS options, and explicit `routed_domains`). However, the package is currently available to this development flow as an npm/GitHub Packages artifact, not as a directly installable Python distribution from PyPI.
+
+Local availability check failed:
+
+```sh
+python3 -m pip index versions verser2-guest-python
+# ERROR: No matching distribution found for verser2-guest-python
+```
+
+### Affected package/API
+
+- Upstream source package: `@signicode/verser2-guest-python` / `packages/verser2-guest-python`.
+- Python import expected by Transform Hub: `verser2_guest_python`.
+- Public APIs needed: `create_verser_broker(...)`, `create_verser_guest(...)`, Broker request helpers, ASGI Guest routing, TLS CA/client identity options, and explicit `routed_domains`.
+
+### Minimal desired change
+
+Provide a clear, CI-safe installation and versioning path for the Python package, either by:
+
+1. publishing an installable Python distribution/wheel for `verser2-guest-python`; or
+2. documenting and supporting consumption of the Python wheel from the npm/GitHub Packages artifact, including how Transform Hub should install it during development, CI, packaging, and runtime image builds.
+
+The package version should be aligned with the `@signicode/verser2-guest-python` npm artifact so Transform Hub can pin it reproducibly alongside the TypeScript verser2 packages.
+
+### Blocking impact on the rollout
+
+Python runtime wiring beyond local boot-config and adapter/helper tests is blocked. Transform Hub should not ship a runtime path that imports `verser2_guest_python` unless the dependency can be installed in package tests, CI, and runtime packaging without relying on an ad hoc local checkout.
+
+### Temporary workaround
+
+No production workaround is acceptable without explicit approval. Safe preparatory work may continue only where it does not import the unavailable package at module import time and uses injected fakes in tests.

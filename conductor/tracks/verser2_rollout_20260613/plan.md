@@ -243,6 +243,7 @@
         - Added `PythonHubClient` and `create_python_hub_client()` wrappers around the published `create_verser_broker` API, including STH API URL construction, Broker connection, TLS option mapping, and close behavior. `AppContext.hub` is now populated when `verser2Runtime` is configured.
     - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
         - [x] Added `create_python_sequence_guest()` helper tests proving the runtime passes ASGI app, Host URL, runner Guest ID, explicit route domain, waiting stream count, and TLS identity options to the published `create_verser_guest` API.
+        - [~] Blocked before full runtime Guest startup: `verser2-guest-python` source exists upstream and is available as an npm/GitHub Packages artifact during development, but `python3 -m pip index versions verser2-guest-python` reports no installable Python distribution. Logged this as a Python package distribution blocker in `upstream-verser2-api-availability-report.md`; runtime wiring must pause until upstream confirms a CI/runtime install path.
     - [ ] Wire Python runtime to runner-provided `host_url`, explicit `routed_domains`, CA file, and optional client cert/key or PFX files.
         - [x] Broker-backed `context.hub` wiring now consumes runner-provided `hostUrl`, `hubBrokerId`, `hubTargetDomain`, CA, PEM client identity, PFX client identity, and passphrase fields.
         - [ ] Runtime ASGI Guest startup for inbound sequence API exposure remains to be wired to sequence expose metadata.
