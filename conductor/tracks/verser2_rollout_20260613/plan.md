@@ -239,10 +239,16 @@
     - [x] Add Python boot-config support for runner-provided verser2 runtime details.
         - Added `Verser2RuntimeConfig` parsing/validation for `hostUrl`, explicit `runnerGuestId`, explicit `runnerRouteDomain`, `hubBrokerId`, optional `hubTargetDomain`, TLS object, lease timeout, and minimum waiting leases. Python validation requires explicit routed domains because Python Guests do not default route domains to Guest ID.
         - Validation passed: `npm test -- tests/test_boot_config.py -v` and `npm run build` in `packages/runner-python`. Build completed with preexisting pip target-directory warnings because `dist/__pypackages__` already contained installed packages.
-    - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls using `verser2-guest-python`.
+    - [x] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls using `verser2-guest-python`.
+        - Added `PythonHubClient` and `create_python_hub_client()` wrappers around the published `create_verser_broker` API, including STH API URL construction, Broker connection, TLS option mapping, and close behavior. `AppContext.hub` is now populated when `verser2Runtime` is configured.
     - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
+        - [x] Added `create_python_sequence_guest()` helper tests proving the runtime passes ASGI app, Host URL, runner Guest ID, explicit route domain, waiting stream count, and TLS identity options to the published `create_verser_guest` API.
     - [ ] Wire Python runtime to runner-provided `host_url`, explicit `routed_domains`, CA file, and optional client cert/key or PFX files.
-    - [ ] Ensure Python Guests always provide `routed_domains`; unlike Node/Bun, Python does not default route domains to the Guest ID.
+        - [x] Broker-backed `context.hub` wiring now consumes runner-provided `hostUrl`, `hubBrokerId`, `hubTargetDomain`, CA, PEM client identity, PFX client identity, and passphrase fields.
+        - [ ] Runtime ASGI Guest startup for inbound sequence API exposure remains to be wired to sequence expose metadata.
+    - [x] Ensure Python Guests always provide `routed_domains`; unlike Node/Bun, Python does not default route domains to the Guest ID.
+        - `create_python_sequence_guest()` always passes `routed_domains=[runnerRouteDomain]`; no Python path relies on Guest ID defaulting.
+        - Validation passed: `npm test -- tests/test_boot_config.py tests/test_verser2_runtime.py tests/test_app_context.py -v`, full `npm test`, and `npm run build` in `packages/runner-python`. Build completed with preexisting pip target-directory warnings because `dist/__pypackages__` already contained installed packages.
     - [ ] Verify ASGI 3 behavior, one-shot response bodies, and streaming request/response bodies across Python runtime paths.
 - [ ] Task: Migrate Bun runtime
     - [ ] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls using `@signicode/verser2-guest-bun`.

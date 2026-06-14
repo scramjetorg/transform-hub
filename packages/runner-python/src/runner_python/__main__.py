@@ -49,6 +49,7 @@ from runner_python.utils import (
     maybe_await,
     resolve_sequence_result,
 )
+from runner_python.verser2_runtime import PythonHubClient, create_python_hub_client
 
 
 logger = logging.getLogger("runner_python")
@@ -256,6 +257,7 @@ def _build_sequence_context(
     runtime_logger: logging.Logger,
     app_config: dict[str, Any],
     log_level: str,
+    hub_client: PythonHubClient | None = None,
 ) -> AppContext:
     app_context = AppContext()
     app_context.logger = runtime_logger
@@ -263,6 +265,7 @@ def _build_sequence_context(
     app_context.config.clear()
     app_context.config.update(app_config)
     app_context._app_config = app_context.config
+    app_context.hub = hub_client
 
     def emit(event_name: str, message: Any = "") -> None:
         monitoring_writer.write_frame(
@@ -380,6 +383,7 @@ async def main() -> int:
     heartbeat_task: asyncio.Task[None] | None = None
     control_task: asyncio.Task[None] | None = None
     sequence_task: asyncio.Task[None] | None = None
+    hub_client: PythonHubClient | None = None
 
     try:
         try:
@@ -406,17 +410,22 @@ async def main() -> int:
             return 2
 
         try:
+            hub_client = await create_python_hub_client(boot_config.verser2Runtime)
             sequence = load_sequence(boot_config.sequencePath, boot_config.pythonPath)
         except SequenceLoadError as exc:
             _log_sth_runtime_error("sequence-load", boot_config, exc)
             logger.error("Sequence load error: %s", exc)
             return 1
+        except Exception as exc:
+            _write_boot_error(f"Verser2 runtime error: {exc}")
+            return 2
 
         sequence_context = _build_sequence_context(
             monitoring_writer,
             runtime_logger,
             dict(handshake_result.appConfig),
             handshake_result.logLevel,
+            hub_client,
         )
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)
@@ -516,6 +525,10 @@ async def main() -> int:
 
         if sequence is not None:
             sequence.cleanup()
+
+        if hub_client is not None:
+            with contextlib.suppress(Exception):
+                await hub_client.close()
 
         await _close_writer(input_writer)
         await _close_writer(output_writer)

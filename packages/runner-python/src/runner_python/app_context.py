@@ -28,6 +28,7 @@ class AppContext:
         self._keep_alive_timeout: int = 0
         self.config: dict[str, Any] = {}
         self._app_config = self.config
+        self.hub: Any | None = None
         self.logger = logging.getLogger("runner_python.app_context")
         self.logger.setLevel(logging.INFO)
 
