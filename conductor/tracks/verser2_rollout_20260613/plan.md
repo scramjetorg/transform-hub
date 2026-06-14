@@ -228,7 +228,9 @@
         - [x] `HostClient` now initializes the published verser2 Broker agent whenever `verser2Runtime` is present, instead of requiring the legacy `REQUESTS` BPMux channel or a `hubTargetDomain` guard. Legacy BPMux remains only for non-verser2 paths.
         - [x] `start-runner` no longer writes a verser2-only `requestsUnsupported` fail-fast reason when `hubTargetDomain` is absent; verser2 boot config always lets runner-node own the Broker transport.
         - [x] Validation passed: `npm test -- test/host-client-channels.spec.ts`, `npm test -- test/host-client-parity.spec.ts test/host-client-channels.spec.ts`, `npm run build` in `packages/runner-node`, and `npm run build` in `packages/runner`.
-    - [ ] Verify Node route domain behavior, including attach-time domain precedence and the default-to-guestId behavior where intentionally used.
+    - [x] Verify Node route domain behavior, including attach-time domain precedence and the default-to-guestId behavior where intentionally used.
+        - [x] Added runner transport coverage proving explicit `routeDomain` is passed both as `routedDomains` and the attached server domain even when `guestId` differs; the global runner path does not rely on Node Guest default-to-guestId route behavior.
+        - [x] Validation passed: `npm exec -- ava test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner`.
     - [ ] Verify keepalive, events, lifecycle, input, output, and logs remain user-compatible.
 - [ ] Task: Migrate Python runtime
     - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls using `verser2-guest-python`.

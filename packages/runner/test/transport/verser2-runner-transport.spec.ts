@@ -118,6 +118,25 @@ test("init starts local channel bridge and attaches/connects verser2 guest", asy
     t.is(fake.state().closedReason, "disconnect");
 });
 
+test("init uses explicit runner route domain for routedDomains and attach even when guestId differs", async t => {
+    const calls: RunnerVerser2GuestFactoryOptions[] = [];
+    const fake = fakeGuestFactory(calls);
+    const explicitConfig = {
+        ...config(),
+        guestId: "custom.runner.guest",
+        routeDomain: "runner.explicit.scramjet.internal"
+    };
+    const transport = new RunnerVerser2Transport({ config: explicitConfig, instanceId: INSTANCE_ID, createGuest: fake.createGuest });
+
+    await transport.init();
+
+    t.is(calls[0].guestId, "custom.runner.guest");
+    t.deepEqual(calls[0].routedDomains, ["runner.explicit.scramjet.internal"]);
+    t.is(fake.state().attachedDomain, "runner.explicit.scramjet.internal");
+
+    await transport.disconnect(false);
+});
+
 test("POST stdin and control routes stream request bodies to outer runner streams", async t => {
     const fake = fakeGuestFactory([]);
     const transport = new RunnerVerser2Transport({ config: config(), instanceId: INSTANCE_ID, createGuest: fake.createGuest });
