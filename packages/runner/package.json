@@ -27,6 +27,7 @@
     "@scramjet/runner-node": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
+    "@signicode/verser2-guest-node": "0.0.0-sha.f2c83d754654",
     "@scramjet/bpmux": "^9.0.0",
     "scramjet": "^4.37.0"
   },
