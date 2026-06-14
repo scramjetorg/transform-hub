@@ -145,9 +145,10 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         hostClient = new HostClient(
             bootConfig.instancesServerPort!,
             bootConfig.instancesServerHost!,
-            bootConfig.requestsUnsupported
+            bootConfig.requestsUnsupported,
+            bootConfig.verser2Runtime
         );
-        const channels = bootConfig.requestsUnsupported
+        const channels = bootConfig.requestsUnsupported || bootConfig.verser2Runtime
             ? new Set(Array.from(RUNNER_NODE_CHANNELS).filter(channel => channel !== CC.REQUESTS))
             : RUNNER_NODE_CHANNELS;
 

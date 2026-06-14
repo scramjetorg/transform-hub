@@ -1,4 +1,5 @@
 import test from "ava";
+import { Agent } from "http";
 import net from "net";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 
@@ -109,5 +110,54 @@ test("runner-node HostClient exposes fail-fast agent when REQUESTS is unsupporte
     t.is(error.message, "requests disabled");
 
     await client.disconnect(true);
+    await closeAll();
+});
+
+test("runner-node HostClient uses verser2 Broker agent and omits REQUESTS channel", async t => {
+    const { port, accepted, closeAll } = await startRecordingServer();
+    const id = "00000000-0000-0000-0000-00000000cccc";
+    const agent = new Agent();
+    let connectCalled = 0;
+    let closeReason = "";
+    const brokerOptions: unknown[] = [];
+    const client = new RunnerNodeHostClient(
+        port,
+        "127.0.0.1",
+        undefined,
+        {
+            hostUrl: "https://verser2.example",
+            runnerGuestId: "runner.guest",
+            runnerRouteDomain: "runner.domain",
+            hubBrokerId: "runner.hub.broker",
+            hubTargetDomain: "sth.domain",
+            tls: { caFile: "/ca.pem" },
+            leaseAcquireTimeoutMs: 1234
+        },
+        (options) => {
+            brokerOptions.push(options);
+            return {
+                async connect() { connectCalled += 1; },
+                async close(reason?: string) { closeReason = reason || ""; },
+                createAgent() { return agent; }
+            };
+        }
+    );
+
+    await client.init(id, new Set<CC>([CC.IN, CC.OUT, CC.LOG]));
+    await new Promise(res => setTimeout(res, 30));
+
+    t.is(client.getApiBase(), "http://sth.domain/api/v1");
+    t.is(client.getAgent(), agent);
+    t.is(connectCalled, 1);
+    t.deepEqual(brokerOptions, [{
+        hostUrl: "https://verser2.example",
+        brokerId: "runner.hub.broker",
+        leaseAcquireTimeoutMs: 1234,
+        tls: { caFile: "/ca.pem" }
+    }]);
+    t.false(new Set(accepted.map(a => a.channel)).has(CC.REQUESTS));
+
+    await client.disconnect(false);
+    t.is(closeReason, "disconnect");
     await closeAll();
 });

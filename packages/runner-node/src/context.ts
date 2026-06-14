@@ -108,7 +108,7 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     };
     const localStorage = new LocalStorageAgent(storageHost);
 
-    const apiBase = "http://scramjet-host/api/v1";
+    const apiBase = hostClient.getApiBase();
     const hostClientUtils = new ClientUtilsCustomAgent(apiBase, hostClient.getAgent());
     const hub = new ApiHostClient(apiBase, hostClientUtils);
     const space = hub.getManagerClient("/api/v1");

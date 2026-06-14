@@ -142,7 +142,10 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
     if (exposeHostResolved) payload.exposeHost = exposeHostResolved;
 
     if (runnerTransportConfig.kind === "verser2") {
-        payload.requestsUnsupported = "context.hub is not yet available over verser2 runner transport";
+        if (!runnerTransportConfig.hubTargetDomain) {
+            payload.requestsUnsupported = "context.hub is not yet available over verser2 runner transport";
+        }
+
         payload.verser2Runtime = {
             hostUrl: runnerTransportConfig.hostUrl,
             runnerGuestId: runnerTransportConfig.guestId,

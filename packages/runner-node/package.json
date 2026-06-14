@@ -23,6 +23,7 @@
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
+    "@signicode/verser2-guest-node": "0.0.0-sha.f2c83d754654",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

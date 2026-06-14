@@ -4,11 +4,25 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
+import { createVerserBroker } from "@signicode/verser2-guest-node";
 import { Agent } from "http";
 import net, { Socket, createConnection } from "net";
 import { PassThrough } from "stream";
+import { RunnerNodeBootConfig } from "./boot-config";
 
 type AgentWithCreateConnection = Agent & { createConnection: typeof createConnection };
+type Verser2RuntimeConfig = NonNullable<RunnerNodeBootConfig["verser2Runtime"]>;
+type Verser2BrokerLike = {
+    connect(): Promise<void>;
+    close(reason?: string): Promise<void>;
+    createAgent(): Agent;
+};
+type Verser2BrokerFactory = (options: {
+    hostUrl: string;
+    brokerId: string;
+    leaseAcquireTimeoutMs?: number;
+    tls?: Record<string, unknown>;
+}) => Verser2BrokerLike;
 
 /** Default channel set: every host channel (legacy parity). */
 export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
@@ -32,13 +46,16 @@ class HostClient implements IHostClient {
     public agent?: Agent;
     logger: IObjectLogger;
     bpmux?: BPMux;
+    verser2Broker?: Verser2BrokerLike;
     public inputEndDeferMs = 500;
     private inputSource?: Socket;
 
     constructor(
         private instancesServerPort: number,
         private instancesServerHost: string,
-        private requestsUnsupported?: string
+        private requestsUnsupported?: string,
+        private verser2Runtime?: Verser2RuntimeConfig,
+        private createBroker: Verser2BrokerFactory = createVerserBroker as unknown as Verser2BrokerFactory
     ) {
         this.logger = new ObjLogger(this);
     }
@@ -62,6 +79,12 @@ class HostClient implements IHostClient {
         }
 
         throw new Error("No HTTP Agent set");
+    }
+
+    getApiBase(): string {
+        return this.verser2Runtime?.hubTargetDomain
+            ? `http://${this.verser2Runtime.hubTargetDomain}/api/v1`
+            : "http://scramjet-host/api/v1";
     }
 
     private async connectOne(i: number): Promise<Socket> {
@@ -109,6 +132,7 @@ class HostClient implements IHostClient {
         const streams = await this.connect(id, channels);
 
         this.initWithStreams(streams as unknown as UpstreamStreamsConfig);
+        await this.initVerser2BrokerAgent();
     }
 
     initWithStreams(streams: UpstreamStreamsConfig): void {
@@ -193,6 +217,21 @@ class HostClient implements IHostClient {
         this.logger.debug("Connected to host");
     }
 
+    private async initVerser2BrokerAgent(): Promise<void> {
+        if (!this.verser2Runtime?.hubTargetDomain) {
+            return;
+        }
+
+        this.verser2Broker = this.createBroker({
+            hostUrl: this.verser2Runtime.hostUrl,
+            brokerId: this.verser2Runtime.hubBrokerId,
+            leaseAcquireTimeoutMs: this.verser2Runtime.leaseAcquireTimeoutMs,
+            tls: this.verser2Runtime.tls
+        });
+        await this.verser2Broker.connect();
+        this.agent = this.verser2Broker.createAgent();
+    }
+
     private createUnsupportedRequestsAgent(message: string): Agent {
         const agent = new Agent() as AgentWithCreateConnection;
 
@@ -259,6 +298,8 @@ class HostClient implements IHostClient {
             ));
 
         await Promise.all(streamsExitedPromised);
+        await this.verser2Broker?.close(hard ? "hard-disconnect" : "disconnect");
+        this.verser2Broker = undefined;
     }
 
     private requireStream<T>(idx: CC): T {
