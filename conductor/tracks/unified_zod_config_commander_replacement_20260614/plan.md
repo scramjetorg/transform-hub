@@ -146,7 +146,7 @@
     - [x] Run `npm run check:runtime-invariants` after adding the Commander guard.
     - [x] Record any unavailable package scripts or skipped validations with reasons.
 
-- [ ] Task: Push branch before manual verification
+- [x] Task: Push branch before manual verification
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Replace Old Package Surfaces And Commander Coupling' (Protocol in workflow.md)
 
