@@ -231,7 +231,10 @@
     - [x] Verify Node route domain behavior, including attach-time domain precedence and the default-to-guestId behavior where intentionally used.
         - [x] Added runner transport coverage proving explicit `routeDomain` is passed both as `routedDomains` and the attached server domain even when `guestId` differs; the global runner path does not rely on Node Guest default-to-guestId route behavior.
         - [x] Validation passed: `npm exec -- ava test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner`.
-    - [ ] Verify keepalive, events, lifecycle, input, output, and logs remain user-compatible.
+    - [x] Verify keepalive, events, lifecycle, input, output, and logs remain user-compatible.
+        - [x] Validated runner-node context parity for keepalive, stop/destroy lifecycle, host/space events, local storage, input wrapping, HostClient channel selection, and verser2 Broker agent setup.
+        - [x] Validated runner split communication for lifecycle ordering, input round-trip, runtime output, delayed terminal behavior, and verser2 route streams for stdin/stdout/stderr/control/monitoring/input/output/log.
+        - [x] Validation passed: `npm test -- test/app-context-parity.spec.ts test/host-client-parity.spec.ts test/host-client-channels.spec.ts` in `packages/runner-node`; `npm exec -- ava test/transport/split-runner-communication-lifecycle.spec.ts test/transport/split-runner-communication-input.spec.ts test/transport/split-runner-communication-runtime.spec.ts test/transport/split-runner-communication-ordering.spec.ts test/transport/verser2-runner-transport.spec.ts` in `packages/runner`; `npm test -- test/runner-transport.spec.ts` in `packages/host`.
 - [ ] Task: Migrate Python runtime
     - [ ] Add or update runner-python tests for Python verser2 Broker/request sequence → STH API calls using `verser2-guest-python`.
     - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
