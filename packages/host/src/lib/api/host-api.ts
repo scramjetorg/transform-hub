@@ -12,30 +12,13 @@ import { HostError, IDProvider } from "@scramjet/model";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { HostHeaders } from "@scramjet/symbols";
 import { AuditedRequest } from "../auditor";
+import {
+    matchesRpcExposePath,
+    normalizeRpcForwardPath,
+    stripRpcExposePath
+} from "../rpc-path";
 
-export function normalizeRpcForwardPath(rpcPath: string, exposePath?: string, apiVersion?: string): string {
-    const normalizedRpcPath = rpcPath.startsWith("/") ? rpcPath : `/${rpcPath}`;
-
-    if (
-        apiVersion === "v1" &&
-        exposePath?.startsWith("/api/v1") &&
-        !normalizedRpcPath.startsWith("/api/v1")
-    ) {
-        return `/api/v1${normalizedRpcPath}`;
-    }
-
-    return normalizedRpcPath;
-}
-
-export function stripRpcExposePath(rpcPath: string, exposePath?: string): string {
-    if (exposePath && rpcPath.startsWith(exposePath)) {
-        const stripped = rpcPath.slice(exposePath.length) || "/";
-
-        return stripped.startsWith("?") ? `/${stripped}` : stripped;
-    }
-
-    return rpcPath || "/";
-}
+export { matchesRpcExposePath, normalizeRpcForwardPath, stripRpcExposePath };
 
 export class HostAPIHandler {
     logger: ObjLogger;

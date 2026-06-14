@@ -1,4 +1,5 @@
 import { BPMux } from "@scramjet/bpmux";
+import type { RoutedForwardTransport } from "@scramjet/api-server";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { Readable } from "stream";
 import {
@@ -100,6 +101,34 @@ class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
 
 export function createVerser2RunnerBrokerTransport(broker: Verser2RunnerBrokerLike): Verser2RunnerBroker {
     return new PollingVerser2RunnerBroker(broker);
+}
+
+export function createRunnerBrokerRpcTransport(broker: Verser2RunnerBroker): RoutedForwardTransport {
+    return {
+        waitForRoute: (domain, timeoutMs) => broker.waitForRoute(domain, timeoutMs),
+        request: async (request) => {
+            const route = broker.getRoutes().find(candidate => candidate.domain === request.domain);
+
+            if (!route) {
+                throw new Error(`Runner route unavailable: ${request.domain}`);
+            }
+
+            const response = await broker.request({
+                targetId: route.targetId,
+                method: request.method,
+                path: request.path,
+                headers: request.headers,
+                body: request.body,
+                signal: request.signal
+            });
+
+            return {
+                statusCode: response.statusCode || 200,
+                headers: response.headers,
+                body: response.body
+            };
+        }
+    };
 }
 
 export type Verser2RunnerTransportOptions = {

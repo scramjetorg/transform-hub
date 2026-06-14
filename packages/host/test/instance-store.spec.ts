@@ -261,6 +261,40 @@ test("InstancesStore getByExposePath: registers an RPC path and finds instance b
     t.is(result[0], inst);
 });
 
+test("InstancesStore getByExposePath: does not match partial path prefixes", t => {
+    const store = new InstancesStore();
+    const inst = mockInstance("rpc-inst");
+    store.set("rpc-inst", inst);
+    store.registerRpc("/api/v1/users", "rpc-inst");
+
+    t.deepEqual(store.getByExposePath("/api/v1/users2"), []);
+    t.deepEqual(store.getByExposePath("/api/v1/users-extra/path"), []);
+    t.deepEqual(store.getByExposePath("/api/v1/users?expand=1"), [inst]);
+    t.deepEqual(store.getByExposePath("/api/v1/users/1"), [inst]);
+});
+
+test("InstancesStore getByExposePath: root expose path catches arbitrary paths", t => {
+    const store = new InstancesStore();
+    const inst = mockInstance("root-rpc");
+    store.set("root-rpc", inst);
+    store.registerRpc("/", "root-rpc");
+
+    t.deepEqual(store.getByExposePath("/anything"), [inst]);
+});
+
+test("InstancesStore getByExposePath: longest matching expose path wins", t => {
+    const store = new InstancesStore();
+    const generic = mockInstance("generic");
+    const specific = mockInstance("specific");
+    store.set("generic", generic);
+    store.set("specific", specific);
+    store.registerRpc("/api/v1", "generic");
+    store.registerRpc("/api/v1/users", "specific");
+
+    t.deepEqual(store.getByExposePath("/api/v1/users/1"), [specific]);
+    t.deepEqual(store.getByExposePath("/api/v1/other"), [generic]);
+});
+
 test("InstancesStore getByExposePath: handles multiple instances sharing the same path", t => {
     const store = new InstancesStore();
     const a = mockInstance("a");

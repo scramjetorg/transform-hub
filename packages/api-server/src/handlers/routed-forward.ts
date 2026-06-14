@@ -61,36 +61,58 @@ export async function forwardRoutedRequest({
         ? setTimeout(() => abortController.abort(), requestTimeoutMs)
         : undefined;
     let responseBody: Readable | undefined;
+    const throwIfAborted = () => {
+        if (abortController.signal.aborted) {
+            throw new Error("Routed forward request aborted");
+        }
+    };
+    const abortPromise = new Promise<never>((_, reject) => {
+        abortController.signal.addEventListener("abort", () => reject(new Error("Routed forward request aborted")), { once: true });
+    });
+    let cleanedUp = false;
+    const cleanup = () => {
+        if (cleanedUp) {
+            return;
+        }
+
+        cleanedUp = true;
+        res.off("close", abortRequest);
+        if (requestTimeout) clearTimeout(requestTimeout);
+    };
     const abortRequest = () => {
         if (res.writableEnded || res.writableFinished) {
             return;
         }
 
         abortController.abort();
-        responseBody?.destroy(new Error("Routed forward response closed"));
+        responseBody?.destroy();
+        cleanup();
     };
 
     try {
         res.once("close", abortRequest);
-        await transport.waitForRoute(domain, routeReadinessMs);
+        await Promise.race([transport.waitForRoute(domain, routeReadinessMs), abortPromise]);
+        throwIfAborted();
 
-        const response = await transport.request({
+        const response = await Promise.race([transport.request({
             domain,
             method: req.method || "GET",
             path,
             headers,
             body: req,
             signal: abortController.signal
-        });
+        }), abortPromise]);
+        throwIfAborted();
 
         responseBody = response.body;
-        responseBody.once("end", () => {
-            if (requestTimeout) clearTimeout(requestTimeout);
+        responseBody.once("end", cleanup);
+        res.once("finish", cleanup);
+        responseBody.once("error", (error) => {
+            if (!res.writableEnded && !res.writableFinished) {
+                res.destroy(error);
+            }
+            abortRequest();
         });
-        res.once("finish", () => {
-            if (requestTimeout) clearTimeout(requestTimeout);
-        });
-        responseBody.once("error", abortRequest);
 
         res.writeHead(response.statusCode, response.headers || {});
         res.flushHeaders();
@@ -103,9 +125,8 @@ export async function forwardRoutedRequest({
         }
 
         res.end();
+        cleanup();
     } finally {
-        res.off("close", abortRequest);
-
         if (requestTimeout && !responseBody) {
             clearTimeout(requestTimeout);
         }

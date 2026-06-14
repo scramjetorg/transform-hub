@@ -37,8 +37,7 @@ import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageA
 import { PassThrough, Readable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 
-import { getRouter } from "@scramjet/api-server";
-import { forwardRoutedRequest, normalizeForwardedHeaders } from "@scramjet/api-server";
+import { forwardRoutedRequest, getRouter, normalizeForwardedHeaders } from "@scramjet/api-server";
 import { EventEmitter, once } from "events";
 import { DataStream } from "scramjet";
 
@@ -50,7 +49,7 @@ import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { CSIEvents, ICSI } from "./types";
-import { LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
+import { createRunnerBrokerRpcTransport, LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -726,31 +725,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         await forwardRoutedRequest({
-            transport: {
-                waitForRoute: (domain, timeoutMs) => broker.waitForRoute(domain, timeoutMs),
-                request: async (request) => {
-                    const route = broker.getRoutes().find(candidate => candidate.domain === request.domain);
-
-                    if (!route) {
-                        throw new Error(`Runner route unavailable: ${request.domain}`);
-                    }
-
-                    const response = await broker.request({
-                        targetId: route.targetId,
-                        method: request.method,
-                        path: request.path,
-                        headers: request.headers,
-                        body: request.body,
-                        signal: request.signal
-                    });
-
-                    return {
-                        statusCode: response.statusCode || 200,
-                        headers: response.headers,
-                        body: response.body
-                    };
-                }
-            },
+            transport: createRunnerBrokerRpcTransport(broker),
             domain: Verser2RunnerTransport.getRouteDomain(this.id),
             req,
             res,
