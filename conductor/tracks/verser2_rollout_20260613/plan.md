@@ -157,12 +157,13 @@
     - [x] If retired or folded into STH route semantics, define removal and compatibility behavior.
     - [x] Add tests for `/msth/:id` behavior when retained, or removal/compatibility behavior when retired.
         - Decision: legacy MultiHost is retired for verser2 mode because verser2 does not provide shared multi-Host route state. Legacy mode keeps the existing `MultiHostController` path; verser2 mode rejects MultiHost connections and `/msth/:id` forwarding with HTTP 410 compatibility responses.
-- [ ] Task: Introduce runner transport foundation
-    - [ ] Add `RunnerTransport` interfaces in shared types or an appropriate package.
-    - [ ] Adapt host-side instance lifecycle code to depend on `RunnerTransport` instead of raw channel arrays where possible.
-    - [ ] Add `LegacyRunnerTransport` wrapping existing socket/BPMux behavior for parity.
-    - [ ] Define `Verser2RunnerTransport` route contracts using runner Guest endpoints and Broker requests over one-use leases.
-    - [ ] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
+- [x] Task: Introduce runner transport foundation
+    - [x] Add `RunnerTransport` interfaces in shared types or an appropriate package.
+    - [x] Adapt host-side instance lifecycle code to depend on `RunnerTransport` instead of raw channel arrays where possible.
+    - [x] Add `LegacyRunnerTransport` wrapping existing socket/BPMux behavior for parity.
+    - [x] Define `Verser2RunnerTransport` route contracts using runner Guest endpoints and Broker requests over one-use leases.
+    - [x] Add tests proving legacy transport abstraction preserves current behavior before verser2 swap.
+        - Validation: `npm test -- test/runner-transport.spec.ts` in `packages/host`, `npm test` in `packages/types`, and `npm run build` in `packages/host` passed.
 - [ ] Task: Run automated reviews and validation for Phase 2
     - [x] Run local Manager/MultiManager/Host package tests added in this phase.
     - [x] Run targeted transport abstraction tests.

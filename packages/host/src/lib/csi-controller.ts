@@ -33,7 +33,7 @@ import {
     IStorageAdapter
 } from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
-import { Duplex, PassThrough, Readable } from "stream";
+import { PassThrough, Readable } from "stream";
 
 import { getRouter } from "@scramjet/api-server";
 import { EventEmitter, once } from "events";
@@ -46,8 +46,8 @@ import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitt
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
-import { BPMux } from "@scramjet/bpmux";
 import { CSIEvents, ICSI } from "./types";
+import { LegacyRunnerTransport } from "./runner-transport";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -85,7 +85,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
-    private bpmux: any;
+    private runnerTransport?: LegacyRunnerTransport;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
     private inputContentType: string | undefined;
     api: InstanceAPI;
@@ -466,12 +466,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.logger.error("Downstream error on channel", i, err);
         }));
 
-        this.communicationHandler.hookUpstreamStreams(this.upStreams);
-        this.communicationHandler.hookDownstreamStreams(this.downStreams);
-
-        this.communicationHandler.pipeStdio();
-        this.communicationHandler.pipeMessageStreams();
-        this.communicationHandler.pipeDataStreams();
+        this.runnerTransport = new LegacyRunnerTransport(this.upStreams, this.communicationHandler, this.hostProxy);
+        this.runnerTransport.connect({ instanceId: this.id, streams }).catch((error) => {
+            this.logger.error("Legacy runner transport connection failed", error);
+        });
 
         this.controlDataStream = new DataStream();
         this.controlDataStream
@@ -683,10 +681,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     async handleInstanceDisconnect() {
-        this.bpmux?.removeAllListeners();
-        if (this.downStreams) this.unhookStreams();
+        await this.runnerTransport?.disconnect();
 
-        this.bpmux = null;
+        this.runnerTransport = undefined;
         this.downStreams = null;
     }
 
@@ -700,15 +697,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         try {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
-
-            if (streams[CC.REQUESTS]) {
-                this.bpmux = new BPMux(streams[CC.REQUESTS]!);
-                this.bpmux.on("error", (e: any) => {
-                    this.logger.warn("Instance client multiplex connection errored", e.message);
-                    streams[8]?.end();
-                });
-                this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
-            }
 
             await once(this, "pang");
             this.initResolver?.res();
