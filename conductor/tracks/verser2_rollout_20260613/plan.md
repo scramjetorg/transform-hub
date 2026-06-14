@@ -194,6 +194,8 @@
             - Validation: `npm exec -- ava test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner` passed.
         - [x] Wired `SCRAMJET_RUNNER_TRANSPORT_CONFIG` into `packages/runner/src/bin/start-runner.ts`: absent/legacy config keeps the legacy `HostClient` path and legacy host/port validation; explicit `kind: "verser2"` starts the runner-side Guest transport and points runtime child boot config at the local channel bridge.
             - Validation: `npm exec -- ava test/transport/runner-transport-config.spec.ts test/transport/local-channel-server.spec.ts test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner` passed.
+        - [x] Addressed runner transport review blockers for persistent request-body route responses, repeated control messages, delayed local runtime channel waits, Python newline-delimited runtime handshakes, startup-failure cleanup, and shutdown ordering with active routed streams.
+            - Validation: `npm exec -- ava test/transport/runner-transport-config.spec.ts test/transport/local-channel-server.spec.ts test/transport/verser2-runner-transport.spec.ts` and `npm run build` in `packages/runner` passed.
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
         - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
     - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.

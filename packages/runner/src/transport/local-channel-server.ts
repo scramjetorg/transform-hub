@@ -20,6 +20,7 @@ const SUPPORTED_CHANNELS = new Set<CC>([CC.IN, CC.OUT, CC.LOG]);
 const RESERVED_CHANNELS = new Set<CC>([CC.REQUESTS]);
 
 const HEADER_LEN = 37;
+const PYTHON_HEADER_LEN = 38;
 const ID_LEN = 36;
 
 export interface LocalChannelServerOptions {
@@ -222,9 +223,16 @@ export class LocalChannelServer {
 
             // ---- Parse header ----
             const id = headerBuffer.slice(0, ID_LEN).toString("utf8");
-            const chDigit = headerBuffer.slice(ID_LEN, HEADER_LEN).toString("utf8");
+            const separatorOrChannel = headerBuffer.slice(ID_LEN, HEADER_LEN).toString("utf8");
+            const usesPythonSeparator = separatorOrChannel === "\n";
+
+            if (usesPythonSeparator && headerBuffer.length < PYTHON_HEADER_LEN) return;
+
+            const channelOffset = usesPythonSeparator ? HEADER_LEN : ID_LEN;
+            const headerLength = usesPythonSeparator ? PYTHON_HEADER_LEN : HEADER_LEN;
+            const chDigit = headerBuffer.slice(channelOffset, headerLength).toString("utf8");
             const parsed = parseInt(chDigit, 10);
-            const tail = headerBuffer.slice(HEADER_LEN);
+            const tail = headerBuffer.slice(headerLength);
 
             // Discard reference; no longer needed.
             headerBuffer = Buffer.alloc(0);

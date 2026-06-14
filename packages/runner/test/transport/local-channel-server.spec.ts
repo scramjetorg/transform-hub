@@ -17,6 +17,10 @@ function buildHeader(id: string, channel: number): Buffer {
     return Buffer.concat([idBuf, chBuf]);
 }
 
+function buildPythonHeader(id: string, channel: number): Buffer {
+    return Buffer.from(`${id.padEnd(ID_LEN, " ").slice(0, ID_LEN)}\n${channel}`, "utf8");
+}
+
 /**
  * Connect a client socket to the server, send the header, and return the socket.
  */
@@ -173,6 +177,33 @@ test("data arriving in the same TCP segment as the header is not lost", async (t
     });
 
     t.is(data.toString(), "same-segment-data");
+
+    (await sock).destroy();
+    await server.close();
+});
+
+test("accepts Python runtime newline-delimited channel handshake", async (t) => {
+    const server = new LocalChannelServer({ expectedInstanceId: INSTANCE_ID });
+
+    await server.start();
+
+    const payload = Buffer.from("python payload");
+    const sock = new Promise<net.Socket>((resolve, reject) => {
+        const s = net.createConnection(server.port, "127.0.0.1", () => {
+            s.write(Buffer.concat([buildPythonHeader(INSTANCE_ID, CC.OUT), payload]));
+            resolve(s);
+        });
+
+        s.on("error", reject);
+    });
+
+    const stream = await server.waitForStream(CC.OUT);
+    const data = await new Promise<Buffer>((resolve) => {
+        stream.once("data", (chunk: Buffer) => resolve(chunk));
+        stream.resume();
+    });
+
+    t.is(data.toString(), "python payload");
 
     (await sock).destroy();
     await server.close();

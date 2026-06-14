@@ -136,6 +136,12 @@ test("POST stdin and control routes stream request bodies to outer runner stream
     t.is(controlResponse.statusCode, 204);
     t.is((await controlData)[0].toString(), "stop");
 
+    const secondControlData = once(transport.controlStream, "data") as Promise<[Buffer]>;
+    const secondControlResponse = await request(port, "POST", "/control", "kill");
+
+    t.is(secondControlResponse.statusCode, 204);
+    t.is((await secondControlData)[0].toString(), "kill");
+
     await transport.disconnect(true);
 });
 

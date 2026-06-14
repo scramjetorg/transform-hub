@@ -60,10 +60,12 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
     private readonly localChannels: LocalChannelServer;
     private guest?: RunnerVerser2Guest;
     private started = false;
+    private readonly localChannelWaitMs: number;
 
     constructor(private readonly options: RunnerVerser2TransportOptions) {
         this.localChannels = new LocalChannelServer({ expectedInstanceId: options.instanceId });
         this.server = http.createServer((req, res) => this.handleRequest(req, res));
+        this.localChannelWaitMs = Math.max(options.config.leaseAcquireTimeoutMs ?? 0, 60_000);
     }
 
     get localChannelPort(): number {
@@ -79,33 +81,29 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
             throw new Error("RunnerVerser2Transport already started");
         }
 
-        await this.localChannels.start();
+        try {
+            await this.localChannels.start();
 
-        const createGuest = this.options.createGuest ?? createVerserNodeGuest as RunnerVerser2GuestFactory;
+            const createGuest = this.options.createGuest ?? createVerserNodeGuest as RunnerVerser2GuestFactory;
 
-        this.guest = createGuest({
-            hostUrl: this.options.config.hostUrl,
-            guestId: this.options.config.guestId,
-            routedDomains: [this.options.config.routeDomain],
-            minWaitingStreams: this.options.config.minWaitingStreams,
-            leaseAcquireTimeoutMs: this.options.config.leaseAcquireTimeoutMs,
-            tls: this.options.config.tls
-        }).attach(this.server, this.options.config.routeDomain);
+            this.guest = createGuest({
+                hostUrl: this.options.config.hostUrl,
+                guestId: this.options.config.guestId,
+                routedDomains: [this.options.config.routeDomain],
+                minWaitingStreams: this.options.config.minWaitingStreams,
+                leaseAcquireTimeoutMs: this.options.config.leaseAcquireTimeoutMs,
+                tls: this.options.config.tls
+            }).attach(this.server, this.options.config.routeDomain);
 
-        await this.guest.connect();
-        this.started = true;
+            await this.guest.connect();
+            this.started = true;
+        } catch (error) {
+            await this.disconnect(true, "startup-failed").catch(() => undefined);
+            throw error;
+        }
     }
 
     async disconnect(hard: boolean, reason = hard ? "hard-disconnect" : "disconnect"): Promise<void> {
-        await this.guest?.close(reason).catch(() => undefined);
-        this.guest = undefined;
-
-        await this.localChannels.close();
-
-        if (this.server.listening) {
-            await new Promise<void>((resolve) => this.server.close(() => resolve()));
-        }
-
         for (const stream of [
             this.stdinStream,
             this.stdoutStream,
@@ -117,6 +115,14 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
             else stream.end();
         }
 
+        await this.localChannels.close();
+        await this.guest?.close(reason).catch(() => undefined);
+        this.guest = undefined;
+
+        if (this.server.listening) {
+            await new Promise<void>((resolve) => this.server.close(() => resolve()));
+        }
+
         this.started = false;
     }
 
@@ -125,12 +131,12 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
             const path = req.url?.split("?")[0] || "/";
 
             if (req.method === "POST" && path === DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.stdinPath) {
-                this.pipeRequest(req, res, this.stdinStream);
+                this.pipeRequest(req, res, this.stdinStream, true);
                 return;
             }
 
             if (req.method === "POST" && path === DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.controlPath) {
-                this.pipeRequest(req, res, this.controlStream);
+                this.pipeRequest(req, res, this.controlStream, false);
                 return;
             }
 
@@ -152,16 +158,16 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
             const requestBodyChannel = REQUEST_BODY_ROUTES.get(path);
 
             if (req.method === "POST" && requestBodyChannel !== undefined) {
-                const stream = await this.localChannels.waitForStream(requestBodyChannel);
+                const stream = await this.localChannels.waitForStream(requestBodyChannel, this.localChannelWaitMs);
 
-                this.pipeRequest(req, res, stream);
+                this.pipeRequest(req, res, stream, true);
                 return;
             }
 
             const responseBodyChannel = RESPONSE_BODY_ROUTES.get(path);
 
             if (req.method === "GET" && responseBodyChannel !== undefined) {
-                const stream = await this.localChannels.waitForStream(responseBodyChannel);
+                const stream = await this.localChannels.waitForStream(responseBodyChannel, this.localChannelWaitMs);
 
                 this.pipeResponse(res, stream);
                 return;
@@ -178,11 +184,16 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         }
     }
 
-    private pipeRequest(req: http.IncomingMessage, res: http.ServerResponse, target: Writable): void {
+    private pipeRequest(req: http.IncomingMessage, res: http.ServerResponse, target: Writable, endTargetOnRequestEnd: boolean): void {
+        this.writeStatus(res, 204);
         req.on("error", error => target.destroy(error));
         target.on("error", () => req.destroy());
-        req.pipe(target);
-        req.once("end", () => this.writeStatus(res, 204));
+        req.pipe(target, { end: endTargetOnRequestEnd });
+        req.once("end", () => {
+            if (!endTargetOnRequestEnd) {
+                req.unpipe(target);
+            }
+        });
     }
 
     private pipeResponse(res: http.ServerResponse, source: Readable): void {
