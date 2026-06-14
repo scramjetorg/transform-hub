@@ -17,7 +17,7 @@ import {
 import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
 import { CeroError, getRouter } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
-import { ClientRequest, IncomingHttpHeaders, IncomingMessage, ServerResponse, request } from "http";
+import { IncomingHttpHeaders, IncomingMessage, ServerResponse, request } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -515,26 +515,6 @@ export class Manager implements IComponent {
 
         this.logger.debug("Request to STH", req.method, req.url, this._config.apiBase);
 
-        let hostResponse: IncomingMessage | null = null;
-        let requestToHost: ClientRequest | null = null;
-        let disconnectCalled = false;
-
-        const disconnect = (reason: string) => {
-            if (!disconnectCalled) {
-                this.logger.warn("Disconnecting forwarded request", req.url, reason);
-
-                hostResponse?.unpipe(res);
-
-                res.end();
-                req.unpipe(requestToHost!);
-
-                requestToHost?.end();
-                requestToHost?.destroy();
-            }
-
-            disconnectCalled = true;
-        };
-
         const headers = normalizeForwardedHeaders(req.headers);
         const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
 
@@ -543,64 +523,15 @@ export class Manager implements IComponent {
             res.writeContinue();
         }
 
-        if (this.sthBrokerTransport) {
-            const decision = classifyManagerRoute(req.method, originalUrl, { apiBase: this._config.apiBase });
+        const decision = classifyManagerRoute(req.method, originalUrl, { apiBase: this._config.apiBase });
 
-            if (decision.kind === "follow") {
-                await this.handleDummyInternalRedirectToSTH(sth.id, decision, req, res, headers);
-
-                return;
-            }
-
-            this.writeUnsupportedRouteDecision(decision, res);
+        if (decision.kind === "follow") {
+            await this.handleClassifiedFollowRequestToSTH(sth, decision, req, res, headers);
 
             return;
         }
 
-        if (!sth.verserConnection) {
-            this.logger.warn("Request to STH without legacy connection", req.method, req.url);
-            res.writeHead(503);
-            res.end();
-
-            return;
-        }
-
-        requestToHost = request({
-            headers,
-            method: req.method,
-            path: req.url,
-            agent: sth.verserConnection.getAgent()
-        })
-            .on("error", (error: Error) => {
-                this.logger.warn("M -> STH Request error", { id: sth.id, url: req.url, error });
-                disconnect("error");
-            })
-            .on("continue", () => {
-                if (!expectsContinue) {
-                    res.writeContinue();
-                }
-                req.resume();
-            })
-            .on("response", (response) => {
-                hostResponse = response;
-
-                this.logger.debug("Response from STH", hostResponse.url, hostResponse.statusCode);
-
-                res.writeHead(response.statusCode!, response.statusMessage, response.headers);
-                res.flushHeaders();
-                response.pipe(res);
-            });
-
-        req.socket.on("close", () => {
-            if (!res.writableFinished || !req.readableEnded) {
-                disconnect("Request aborted");
-            }
-        });
-
-        requestToHost.flushHeaders();
-        req.pipe(requestToHost);
-
-        requestToHost.setTimeout(0);
+        this.writeUnsupportedRouteDecision(decision, res);
     }
 
     private async handleVerser2RequestToSTH(id: string, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
@@ -640,8 +571,83 @@ export class Manager implements IComponent {
         }
     }
 
-    private async handleDummyInternalRedirectToSTH(
-        id: string,
+    private async handleLocalPeerRequestToSTH(
+        sth: ISTHController,
+        req: ParsedMessage,
+        res: ServerResponse,
+        headers: Record<string, string>
+    ) {
+        if (!sth.verserConnection) {
+            this.logger.warn("Request to STH without local peer connection", req.method, req.url);
+            res.writeHead(503);
+            res.end();
+
+            return;
+        }
+
+        let hostResponse: IncomingMessage | null = null;
+        let requestToHost: ReturnType<typeof request> | null = null;
+        let disconnectCalled = false;
+
+        const disconnect = (reason: string) => {
+            if (!disconnectCalled) {
+                this.logger.warn("Disconnecting local peer request", req.url, reason);
+
+                hostResponse?.unpipe(res);
+
+                res.end();
+                req.unpipe(requestToHost!);
+
+                requestToHost?.end();
+                requestToHost?.destroy();
+            }
+
+            disconnectCalled = true;
+        };
+
+        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
+
+        requestToHost = request({
+            headers,
+            method: req.method,
+            path: req.url,
+            agent: sth.verserConnection.getAgent()
+        })
+            .on("error", (error: Error) => {
+                this.logger.warn("M -> STH local peer request error", { id: sth.id, url: req.url, error });
+                disconnect("error");
+            })
+            .on("continue", () => {
+                if (!expectsContinue) {
+                    res.writeContinue();
+                }
+
+                req.resume();
+            })
+            .on("response", (response) => {
+                hostResponse = response;
+
+                this.logger.debug("Response from local peer STH", hostResponse.url, hostResponse.statusCode);
+
+                res.writeHead(response.statusCode!, response.statusMessage, response.headers);
+                res.flushHeaders();
+                response.pipe(res);
+            });
+
+        req.socket.on("close", () => {
+            if (!res.writableFinished || !req.readableEnded) {
+                disconnect("Request aborted");
+            }
+        });
+
+        requestToHost.flushHeaders();
+        req.pipe(requestToHost);
+
+        requestToHost.setTimeout(0);
+    }
+
+    private async handleClassifiedFollowRequestToSTH(
+        sth: ISTHController,
         decision: ManagerRouteDecision,
         req: ParsedMessage,
         res: ServerResponse,
@@ -657,7 +663,11 @@ export class Manager implements IComponent {
 
         req.url = forwarding.path;
 
-        await this.handleVerser2RequestToSTH(id, req, res, headers);
+        if (this.sthBrokerTransport) {
+            await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
+        } else {
+            await this.handleLocalPeerRequestToSTH(sth, req, res, headers);
+        }
     }
 
     private writeDirectRouteMetadata(decision: ManagerRouteDecision, res: ServerResponse) {

@@ -465,7 +465,11 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
             };
         }
 
-        return this.verserConnection!.makeRequest({ method, path, headers });
+        if (this.verserConnection) {
+            return this.verserConnection.makeRequest({ method, path, headers });
+        }
+
+        throw new Error("No transport available for STH request — need verser2 broker or legacy verser connection");
     }
 
     async askToReconnect() {

@@ -132,9 +132,9 @@
     - [x] Route follow-safe endpoints through the dummy internal redirect handler.
     - [x] Route Manager aggregate, storage, control, and topic fan-in/fan-out paths through Manager-owned handlers or multiplexers.
     - [x] Prove direct STH-to-STH payload requests do not fall back through Manager data-plane proxying.
-- [ ] Task: Replace legacy Manager/STH forwarding after route classification
-    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with classifier-driven Manager/STH transport over local peers or H2 Broker/Guest.
-    - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage only through classified follow or Manager-multiplex paths.
+- [x] Task: Replace legacy Manager/STH forwarding after route classification
+    - [x] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with classifier-driven Manager/STH transport over local peers or H2 Broker/Guest.
+    - [x] Replace `STHController` old-verser agent, `makeRequest`, and stream usage only through classified follow or Manager-multiplex paths.
 - [ ] Task: Validate redirect-readiness phase
     - [ ] Run focused route-classifier and dummy redirect handler tests.
     - [ ] Run affected Manager package tests or document known preexisting AVA timeout behavior with focused passing tests.
