@@ -7,7 +7,7 @@ import {
     PassThroughStreamsConfig,
     RunnerTransportRouteContracts
 } from "@scramjet/types";
-import { LegacyRunnerTransport, Verser2RunnerTransport } from "../src/lib/runner-transport";
+import { LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "../src/lib/runner-transport";
 import { createVerser2ClientTlsOptions } from "../src/lib/cpm-connector";
 
 function streams(): { upstreams: PassThroughStreamsConfig; downstreams: DownstreamStreamsConfig } {
@@ -28,6 +28,28 @@ function communicationHandler() {
         pipeMessageStreams: () => calls.push("pipe-message"),
         pipeDataStreams: () => calls.push("pipe-data")
     } as any;
+}
+
+function fakeRunnerBroker(routeDomain = "runner.inst-1.scramjet.internal") {
+    const requests: any[] = [];
+    const responseBodies: PassThrough[] = [];
+    const waitForRouteCalls: string[] = [];
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: routeDomain }],
+        waitForRoute: async (domain: string) => {
+            waitForRouteCalls.push(domain);
+        },
+        request: async (request: any) => {
+            const body = new PassThrough();
+
+            requests.push(request);
+            responseBodies.push(body);
+
+            return { body };
+        }
+    };
+
+    return { broker, requests, responseBodies, waitForRouteCalls };
 }
 
 test("LegacyRunnerTransport preserves legacy communication handler wiring order", async t => {
@@ -203,7 +225,7 @@ test("Verser2RunnerTransport disconnect is safe on fresh instance (idempotent co
     await t.notThrowsAsync(transport.disconnect("cleanup"));
 });
 
-test("Verser2RunnerTransport connect contract: throws not-implemented until route-backed implementation lands", async t => {
+test("Verser2RunnerTransport connect requires injected broker and upstreams", async t => {
     const transport = new Verser2RunnerTransport();
     const { downstreams } = streams();
     const err = await t.throwsAsync(
@@ -211,19 +233,85 @@ test("Verser2RunnerTransport connect contract: throws not-implemented until rout
     );
 
     t.truthy(err!.message);
-    t.true(err!.message.includes("not implemented yet"));
+    t.true(err!.message.includes("requires broker and upstreams"));
 });
 
-test("Verser2RunnerTransport reconnect contract: connect remains throw after disconnect", async t => {
-    const transport = new Verser2RunnerTransport();
+test("Verser2RunnerTransport waits for runner route and opens routed stream requests", async t => {
     const { downstreams } = streams();
+    const upstreams = streams().upstreams;
+    const { broker, requests, waitForRouteCalls } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
 
-    await transport.disconnect();
-    const err = await t.throwsAsync(
-        transport.connect({ instanceId: "inst-2", streams: downstreams })
-    );
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
 
-    t.true(err!.message.includes("not implemented yet"));
+    t.deepEqual(waitForRouteCalls, ["runner.inst-1.scramjet.internal"]);
+    t.deepEqual(requests.map(request => [request.method, request.path]), [
+        ["POST", "/stdin"],
+        ["POST", "/control"],
+        ["POST", "/input"],
+        ["GET", "/stdout"],
+        ["GET", "/stderr"],
+        ["GET", "/monitoring"],
+        ["GET", "/output"],
+        ["GET", "/log"]
+    ]);
+    t.true(requests.slice(0, 3).every(request => request.targetId === "runner.guest.inst-1"));
+    t.deepEqual(requests.slice(0, 3).map(request => request.body), [
+        upstreams[CC.STDIN],
+        upstreams[CC.CONTROL],
+        upstreams[CC.IN]
+    ]);
+    t.true(requests.slice(3).every(request => request.body === undefined));
+});
+
+test("Verser2RunnerTransport pipes routed response bodies into host upstream streams", async t => {
+    const { downstreams } = streams();
+    const upstreams = streams().upstreams;
+    const { broker, responseBodies } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    const monitoringChunks: Buffer[] = [];
+
+    upstreams[CC.STDOUT].on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
+    upstreams[CC.STDERR].on("data", (chunk: Buffer) => stderrChunks.push(chunk));
+    upstreams[CC.MONITORING].on("data", (chunk: Buffer) => monitoringChunks.push(chunk));
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+
+    responseBodies[3].write("stdout");
+    responseBodies[4].write("stderr");
+    responseBodies[5].write("monitoring");
+
+    t.is(Buffer.concat(stdoutChunks).toString("utf8"), "stdout");
+    t.is(Buffer.concat(stderrChunks).toString("utf8"), "stderr");
+    t.is(Buffer.concat(monitoringChunks).toString("utf8"), "monitoring");
+});
+
+test("Verser2RunnerTransport reports route unavailable after readiness wait", async t => {
+    const { downstreams, upstreams } = streams();
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [],
+        waitForRoute: async () => undefined,
+        request: async () => {
+            throw new Error("request should not be called without route");
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const error = await t.throwsAsync(transport.connect({ instanceId: "missing", streams: downstreams }));
+
+    t.is(error!.message, "Runner route unavailable: runner.missing.scramjet.internal");
+});
+
+test("Verser2RunnerTransport disconnect tears down routed response bodies", async t => {
+    const { downstreams, upstreams } = streams();
+    const { broker, responseBodies } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+    await transport.disconnect("test cleanup");
+
+    t.true(responseBodies.every(body => body.destroyed));
 });
 
 test("unknown instanceId produces well-formed but route-unresolvable domain (route unavailable contract)", t => {

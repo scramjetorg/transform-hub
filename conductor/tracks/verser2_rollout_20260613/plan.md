@@ -188,6 +188,7 @@
 - [ ] Task: Implement global runner verser2 transport
     - [ ] Make `packages/runner` own the global verser2 runner Guest connection, route registration, Host URL, trust material, and optional client certificate material.
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
+        - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
     - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
     - [ ] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
     - [ ] Preserve temporary legacy mode only until runtime migrations are complete.

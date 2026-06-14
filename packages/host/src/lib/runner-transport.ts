@@ -1,5 +1,6 @@
 import { BPMux } from "@scramjet/bpmux";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
+import { Readable } from "stream";
 import {
     DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS,
     DownstreamStreamsConfig,
@@ -12,6 +13,35 @@ import {
     RunnerTransportConnectOptions,
     RunnerTransportRouteContracts
 } from "@scramjet/types";
+
+type Verser2RunnerRoute = {
+    targetId: string;
+    domain: string;
+};
+
+type Verser2RunnerBrokerRequest = {
+    targetId: string;
+    method: string;
+    path: string;
+    headers?: Record<string, string>;
+    body?: Readable;
+};
+
+type Verser2RunnerBrokerResponse = {
+    body: Readable;
+};
+
+export type Verser2RunnerBroker = {
+    getRoutes(): Verser2RunnerRoute[];
+    waitForRoute(domain: string): Promise<void>;
+    request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse>;
+};
+
+export type Verser2RunnerTransportOptions = {
+    broker?: Verser2RunnerBroker;
+    upstreams?: PassThroughStreamsConfig;
+    routeContracts?: RunnerTransportRouteContracts;
+};
 
 export class LegacyRunnerTransport implements RunnerTransport {
     readonly kind = "legacy" as const;
@@ -62,8 +92,16 @@ export class LegacyRunnerTransport implements RunnerTransport {
 
 export class Verser2RunnerTransport implements RunnerTransport {
     readonly kind = "verser2" as const;
+    readonly routeContracts: RunnerTransportRouteContracts;
+    private broker?: Verser2RunnerBroker;
+    private upstreams?: PassThroughStreamsConfig;
+    private responseBodies: Readable[] = [];
 
-    constructor(readonly routeContracts: RunnerTransportRouteContracts = DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS) {}
+    constructor(options: Verser2RunnerTransportOptions = {}) {
+        this.broker = options.broker;
+        this.upstreams = options.upstreams;
+        this.routeContracts = options.routeContracts || DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS;
+    }
 
     /**
      * Derives the runner domain for a given instance ID.
@@ -77,11 +115,62 @@ export class Verser2RunnerTransport implements RunnerTransport {
         return `runner.${instanceId}.scramjet.internal`;
     }
 
-    async connect(_options: RunnerTransportConnectOptions): Promise<void> {
-        throw new Error("Verser2RunnerTransport route-backed connect is defined by contract but not implemented yet");
+    async connect(options: RunnerTransportConnectOptions): Promise<void> {
+        if (!this.broker || !this.upstreams) {
+            throw new Error("Verser2RunnerTransport requires broker and upstreams before connect");
+        }
+
+        const domain = Verser2RunnerTransport.getRouteDomain(options.instanceId);
+
+        await this.broker.waitForRoute(domain);
+
+        const route = this.broker.getRoutes().find(candidate => candidate.domain === domain);
+
+        if (!route) {
+            throw new Error(`Runner route unavailable: ${domain}`);
+        }
+
+        await Promise.all([
+            this.openRequestBodyRoute(route.targetId, this.routeContracts.stdinPath, this.upstreams[CC.STDIN]),
+            this.openRequestBodyRoute(route.targetId, this.routeContracts.controlPath, this.upstreams[CC.CONTROL]),
+            this.openRequestBodyRoute(route.targetId, this.routeContracts.inputPath, this.upstreams[CC.IN]),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.stdoutPath, this.upstreams[CC.STDOUT]),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.stderrPath, this.upstreams[CC.STDERR]),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.monitoringPath, this.upstreams[CC.MONITORING]),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.outputPath, this.upstreams[CC.OUT]),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.logPath, this.upstreams[CC.LOG])
+        ]);
     }
 
     async disconnect(_reason?: string): Promise<void> {
-        // Route-backed runner transport has no legacy socket arrays to tear down yet.
+        this.responseBodies.forEach(body => {
+            body.unpipe();
+            body.destroy();
+        });
+        this.responseBodies = [];
+    }
+
+    private async openRequestBodyRoute(targetId: string, path: string, body: Readable): Promise<void> {
+        const response = await this.broker!.request({
+            targetId,
+            method: "POST",
+            path,
+            headers: { "content-type": "application/octet-stream" },
+            body
+        });
+
+        response.body.resume();
+        this.responseBodies.push(response.body);
+    }
+
+    private async openResponseBodyRoute(targetId: string, path: string, target: NodeJS.WritableStream): Promise<void> {
+        const response = await this.broker!.request({
+            targetId,
+            method: "GET",
+            path
+        });
+
+        response.body.pipe(target, { end: false });
+        this.responseBodies.push(response.body);
     }
 }
