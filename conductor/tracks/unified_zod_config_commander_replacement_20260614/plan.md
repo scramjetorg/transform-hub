@@ -52,45 +52,47 @@
 
 ## Phase 2: New `@scramjet/config` Package Implementation
 
-- [ ] Task: Add package skeleton
-    - [ ] Add `packages/config` with workspace manifest, TypeScript config, exports, source entrypoint, README or package docs, and AVA test setup matching existing package conventions.
-    - [ ] Add Zod dependency and selected parser/file-loader dependencies.
-    - [ ] Wire package build scripts into existing workspace build conventions.
-    - [ ] Keep package output compatible with CommonJS and ES2019 repository settings.
+- [x] Task: Add package skeleton
+    - [x] Add `packages/config` with workspace manifest, TypeScript config, exports, source entrypoint, README or package docs, and AVA test setup matching existing package conventions.
+    - [x] Add Zod dependency and selected parser/file-loader dependencies.
+    - [x] Wire package build scripts into existing workspace build conventions.
+    - [x] Keep package output compatible with CommonJS and ES2019 repository settings.
 
-- [ ] Task: Implement core config declarations
-    - [ ] Implement schema/option declaration APIs finalized in Phase 1.
-    - [ ] Implement option metadata for env vars, CLI flags, descriptions, aliases, defaults, and secret masking.
-    - [ ] Implement typed config loading result and formatted validation errors.
-    - [ ] Implement explicit runtime override source support.
+- [x] Task: Implement core config declarations
+    - [x] Implement schema/option declaration APIs finalized in Phase 1.
+    - [x] Implement option metadata for env vars, CLI flags, descriptions, aliases, defaults, and secret masking.
+    - [x] Implement typed config loading result and formatted validation errors.
+    - [x] Implement explicit runtime override source support.
 
-- [ ] Task: Implement source readers and precedence
-    - [ ] Implement defaults extraction.
-    - [ ] Implement config file loading for JSON and YAML.
-    - [ ] Implement JSONC loading if selected in Phase 1.
-    - [ ] Implement optional package.json config section loading if selected in Phase 1.
-    - [ ] Implement `.env` and `process.env` overlay support with explicit precedence.
-    - [ ] Implement CLI overlay support through the parser abstraction.
-    - [ ] Implement nullish/defined-aware deep merge that preserves valid falsy values.
-    - [ ] Implement explicit array merge behavior.
+- [x] Task: Implement source readers and precedence
+    - [x] Implement defaults extraction.
+    - [x] Implement config file loading for JSON and YAML.
+    - [x] Implement JSONC loading if selected in Phase 1.
+    - [x] Implement optional package.json config section loading if selected in Phase 1.
+    - [x] Implement `.env` and `process.env` overlay support with explicit precedence.
+    - [x] Implement CLI overlay support through the parser abstraction.
+    - [x] Implement nullish/defined-aware deep merge that preserves valid falsy values.
+    - [x] Implement explicit array merge behavior.
 
-- [ ] Task: Implement parser abstraction
-    - [ ] Hide `cac` or the selected parser behind Scramjet-owned APIs.
-    - [ ] Support long flags, existing short aliases, booleans, strings, numbers, repeated/list flags, help, version, and async handler needs required by migrated packages.
-    - [ ] Ensure parser behavior is testable without mutating `process.argv` or process state.
-    - [ ] Ensure parser types do not leak into package public APIs.
+- [x] Task: Implement parser abstraction
+    - [x] Hide `cac` or the selected parser behind Scramjet-owned APIs.
+    - [x] Support long flags, existing short aliases, booleans, strings, numbers, repeated/list flags, help, version, and async handler needs required by migrated packages.
+    - [x] Ensure parser behavior is testable without mutating `process.argv` or process state.
+    - [x] Ensure parser types do not leak into package public APIs.
 
-- [ ] Task: Implement masking and compatibility aliases
-    - [ ] Implement masked public config output.
-    - [ ] Implement config key aliases.
-    - [ ] Implement env var aliases.
-    - [ ] Implement CLI flag aliases.
-    - [ ] Add migration/deprecation metadata if selected in Phase 1.
+- [x] Task: Implement masking and compatibility aliases
+    - [x] Implement masked public config output.
+    - [x] Implement config key aliases.
+    - [x] Implement env var aliases.
+    - [x] Implement CLI flag aliases.
+    - [x] Add migration/deprecation metadata if selected in Phase 1.
 
-- [ ] Task: Validate package behavior
-    - [ ] Run `npm --prefix packages/config test`.
-    - [ ] Run package build validation for the new package or `npm run build:packages` if required by workspace wiring.
-    - [ ] Fix any session-introduced failures before proceeding.
+- [x] Task: Validate package behavior
+    - [x] Run `npm --prefix packages/config test`.
+    - [x] Run package build validation for the new package or `npm run build:packages` if required by workspace wiring.
+    - [x] Fix any session-introduced failures before proceeding.
+
+- [x] Task: Push branch before manual verification
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: New @scramjet/config Package Implementation' (Protocol in workflow.md)
 
@@ -144,6 +146,8 @@
     - [ ] Run `npm run check:runtime-invariants` after adding the Commander guard.
     - [ ] Record any unavailable package scripts or skipped validations with reasons.
 
+- [ ] Task: Push branch before manual verification
+
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Replace Old Package Surfaces And Commander Coupling' (Protocol in workflow.md)
 
 ## Phase 4: Verification, Cleanup, Documentation, And Handoff
@@ -181,6 +185,8 @@
     - [ ] Summarize compatibility guarantees and known risks.
     - [ ] Identify the exact extension points for resuming `verser2_rollout_20260613`.
     - [ ] Confirm whether a follow-up `@scramjet/cli` full migration track is still needed.
+
+- [ ] Task: Push branch before manual verification
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Verification, Cleanup, Documentation, And Handoff' (Protocol in workflow.md)
 
