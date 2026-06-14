@@ -100,7 +100,7 @@
     - [ ] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.
     - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over local peers (primary) or H2 Broker/Guest (remote fallback).
     - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with Broker route lookup plus `broker.request({ targetId, method, path, headers, body })`.
-    - [ ] Replace `CPMConnector` old `VerserClient` usage with STH-side local Broker/Guest attachment where colocated, or `createVerserBroker()` from `@signicode/verser2-guest-node` for remote.
+    - [x] Replace `CPMConnector` old `VerserClient` usage with STH-side local Broker/Guest attachment where colocated, or `createVerserBroker()` from `@signicode/verser2-guest-node` for remote.
     - [x] Add dependency wiring for `@signicode/verser2-host`, `@signicode/verser2-guest-node`, and common packages in the affected workspaces.
     - [ ] Preserve temporary legacy mode only where needed during this phase, and only outside the verser2 TLS path.
 - [ ] Task: Migrate Manager/STH request and streaming semantics

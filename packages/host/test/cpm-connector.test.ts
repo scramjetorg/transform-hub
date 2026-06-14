@@ -72,6 +72,20 @@ const mockVerserLogger = {
     debug: mockFn(),
 };
 const mockVerserAgent = { mock: "verser-agent-obj" } as any;
+const mockVerser2Agent = { mock: "verser2-agent-obj" } as any;
+const mockCreateVerserBroker = mockFn();
+const mockCreateVerserNodeGuest = mockFn();
+const mockVerser2BrokerConnect = mockFn();
+const mockVerser2BrokerClose = mockFn();
+const mockVerser2CreateAgent = mockFn();
+const mockVerser2GuestConnect = mockFn();
+const mockVerser2GuestClose = mockFn();
+const mockVerser2GuestAttach = mockFn();
+const mockVerser2Guest = {
+    connect: mockVerser2GuestConnect,
+    close: mockVerser2GuestClose,
+    attach: mockVerser2GuestAttach
+};
 const mockWriteFileSync = mockFn();
 const mockReadFileSync = mockFn();
 const mockHttpRequest = mockFn();
@@ -83,12 +97,20 @@ function clearAllMocks() {
         mockVerserConnect, mockVerserClose, mockUpdateHeaders, mockVerserOnce,
         mockVerserLogger.pipe, mockVerserLogger.trace, mockVerserLogger.info,
         mockVerserLogger.warn, mockVerserLogger.error, mockVerserLogger.debug,
-        mockWriteFileSync, mockReadFileSync, mockHttpRequest,
+        mockCreateVerserBroker, mockCreateVerserNodeGuest, mockVerser2BrokerConnect,
+        mockVerser2BrokerClose, mockVerser2CreateAgent, mockVerser2GuestConnect,
+        mockVerser2GuestClose, mockVerser2GuestAttach, mockWriteFileSync, mockReadFileSync, mockHttpRequest,
     ];
     allMocks.forEach((m: any) => m.mockClear());
 }
 
 mockVerserClose.mockImplementation(() => Promise.resolve());
+mockVerser2BrokerConnect.mockImplementation(() => Promise.resolve());
+mockVerser2BrokerClose.mockImplementation(() => Promise.resolve());
+mockVerser2CreateAgent.mockReturnValue(mockVerser2Agent);
+mockVerser2GuestConnect.mockImplementation(() => Promise.resolve());
+mockVerser2GuestClose.mockImplementation(() => Promise.resolve());
+mockVerser2GuestAttach.mockReturnValue(mockVerser2Guest);
 mockReadFileSync.mockReturnValue("mock-ca-cert");
 
 // ── Module cache stubbing (run once before all tests) ───────────
@@ -113,6 +135,23 @@ test.before(() => {
                 logger = mockVerserLogger;
                 verserAgent = mockVerserAgent;
             }
+        },
+    } as NodeJS.Module;
+
+    const verser2GuestNodePath = require.resolve("@signicode/verser2-guest-node");
+    delete require.cache[verser2GuestNodePath];
+
+    require.cache[verser2GuestNodePath] = {
+        id: verser2GuestNodePath,
+        filename: verser2GuestNodePath,
+        loaded: true,
+        exports: {
+            createVerserBroker: mockCreateVerserBroker.mockReturnValue({
+                connect: mockVerser2BrokerConnect,
+                close: mockVerser2BrokerClose,
+                createAgent: mockVerser2CreateAgent
+            }),
+            createVerserNodeGuest: mockCreateVerserNodeGuest.mockReturnValue(mockVerser2Guest)
         },
     } as NodeJS.Module;
 
@@ -172,6 +211,26 @@ const createConnector = (overrides: Partial<CPMConnectorOptions> = {}): any => {
         {} as any
     );
 };
+
+const verser2Options = (): CPMConnectorOptions => ({
+    ...defaultOptions,
+    verser2: {
+        enabled: true,
+        migrationMode: "verser2",
+        hostUrl: "https://verser2.example:8443",
+        broker: { peerId: "sth-broker-test", targetDomain: "manager.test.internal" },
+        guest: { peerId: "sth-guest-test", routeDomain: "sth.test.internal" },
+        tls: {
+            caFile: "/certs/ca.pem",
+            certFile: "/certs/client.pem",
+            keyFile: "/certs/client.key",
+            passphrase: "secret"
+        },
+        enrollment: { token: "enroll-token" },
+        timeouts: { routeReadinessMs: 2000, leaseAcquireMs: 3000, requestMs: 4000 },
+        leases: { minimumWaitingLeases: 2 }
+    }
+});
 
 const mockLoadCheck = {
     getLoadCheck: mockFn().mockResolvedValueOnce({
@@ -233,6 +292,79 @@ test.serial("CPMConnector connect() does not set connected when verserClient.con
     t.false(connector.connected);
     // reconnect should NOT have been called because isAbandoned short-circuits
     t.false(connector.isReconnecting);
+});
+
+test.serial("CPMConnector creates verser2 Broker and Guest from config when enabled", t => {
+    createConnector(verser2Options());
+
+    t.is(mockCreateVerserBroker._calls.length, 1);
+    t.deepEqual(mockCreateVerserBroker._calls[0], [{
+        hostUrl: "https://verser2.example:8443",
+        brokerId: "sth-broker-test",
+        leaseAcquireTimeoutMs: 3000,
+        tls: {
+            caFile: "/certs/ca.pem",
+            certFile: "/certs/client.pem",
+            keyFile: "/certs/client.key",
+            passphrase: "secret"
+        }
+    }]);
+
+    t.is(mockCreateVerserNodeGuest._calls.length, 1);
+    t.deepEqual(mockCreateVerserNodeGuest._calls[0], [{
+        hostUrl: "https://verser2.example:8443",
+        guestId: "sth-guest-test",
+        routedDomains: ["sth.test.internal"],
+        minWaitingStreams: 2,
+        leaseAcquireTimeoutMs: 3000,
+        tls: {
+            caFile: "/certs/ca.pem",
+            certFile: "/certs/client.pem",
+            keyFile: "/certs/client.key",
+            passphrase: "secret"
+        }
+    }]);
+    t.deepEqual(mockVerser2GuestAttach._calls[0], [{}, "sth.test.internal"]);
+    t.is(mockVerserLogger.pipe._calls.length, 0);
+});
+
+test.serial("CPMConnector creates verser2 TLS options with pfx identity when configured", t => {
+    createConnector({
+        ...verser2Options(),
+        verser2: {
+            ...verser2Options().verser2,
+            tls: {
+                caFile: "/certs/ca.pem",
+                pfxFile: "/certs/client.pfx",
+                passphrase: "secret"
+            }
+        }
+    });
+
+    t.deepEqual(mockCreateVerserBroker._calls[0][0].tls, {
+        caFile: "/certs/ca.pem",
+        pfxFile: "/certs/client.pfx",
+        passphrase: "secret"
+    });
+});
+
+test.serial("CPMConnector connect() connects verser2 Broker and Guest when enabled", async t => {
+    const connector = createConnector(verser2Options());
+    let emitted = false;
+
+    connector.on("connect", () => {
+        emitted = true;
+    });
+    connector.connectionAttempts = 7;
+
+    await connector.connect();
+
+    t.is(mockVerser2BrokerConnect._calls.length, 1);
+    t.is(mockVerser2GuestConnect._calls.length, 1);
+    t.true(connector.connected);
+    t.is(connector.connectionAttempts, 0);
+    t.true(emitted);
+    t.is(mockVerserConnect._calls.length, 0);
 });
 
 // ── handleConnectionClose() ─────────────────────────────────────
@@ -299,6 +431,14 @@ test.serial("CPMConnector getHttpAgent() returns verser client agent", t => {
     t.is(agent, mockVerserAgent);
 });
 
+test.serial("CPMConnector getHttpAgent() returns verser2 broker agent when enabled", t => {
+    const connector = createConnector(verser2Options());
+    const agent = connector.getHttpAgent();
+
+    t.is(agent, mockVerser2Agent);
+    t.is(mockVerser2CreateAgent._calls.length, 1);
+});
+
 test.serial("CPMConnector makeHttpRequestToCpm() routes STH-originated Manager requests through verser agent", t => {
     const connector = createConnector();
     const fakeRequest = { end: mockFn() } as any;
@@ -312,6 +452,21 @@ test.serial("CPMConnector makeHttpRequestToCpm() routes STH-originated Manager r
     t.deepEqual(mockHttpRequest._calls[0], [
         "http://scramjet-space/api/v1/cpm/my-manager/api/v1/topic/my-topic",
         { method: "POST", agent: mockVerserAgent, headers: { "x-test": "yes" } }
+    ]);
+});
+
+test.serial("CPMConnector makeHttpRequestToCpm() routes STH-originated Manager requests through verser2 broker agent", t => {
+    const connector = createConnector(verser2Options());
+    const fakeRequest = { end: mockFn() } as any;
+
+    mockHttpRequest.mockReturnValue(fakeRequest);
+
+    const result = connector.makeHttpRequestToCpm("GET", "sequence-store/seq-1", { "x-test": "yes" });
+
+    t.is(result, fakeRequest);
+    t.deepEqual(mockHttpRequest._calls[0], [
+        "http://manager.test.internal/api/v1/sequence-store/seq-1",
+        { method: "GET", agent: mockVerser2Agent, headers: { "x-test": "yes" } }
     ]);
 });
 
@@ -427,6 +582,16 @@ test.serial("CPMConnector disconnect() closes verserClient and cleans up", async
     t.is(mockEnd._calls.length, 1);
     t.is(mockVerserClose._calls.length, 1);
     t.is(connector.verserClient, undefined);
+});
+
+test.serial("CPMConnector disconnect() closes verser2 Broker and Guest", async t => {
+    const connector = createConnector(verser2Options());
+
+    await connector.disconnect();
+
+    t.is(mockVerserClose._calls.length, 0);
+    t.deepEqual(mockVerser2BrokerClose._calls[0], ["disconnect"]);
+    t.deepEqual(mockVerser2GuestClose._calls[0], ["disconnect"]);
 });
 
 // ── getId ───────────────────────────────────────────────────────
