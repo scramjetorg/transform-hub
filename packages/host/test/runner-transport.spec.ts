@@ -33,11 +33,11 @@ function communicationHandler() {
 function fakeRunnerBroker(routeDomain = "runner.inst-1.scramjet.internal") {
     const requests: any[] = [];
     const responseBodies: PassThrough[] = [];
-    const waitForRouteCalls: string[] = [];
+    const waitForRouteCalls: Array<{ domain: string; timeoutMs?: number }> = [];
     const broker: Verser2RunnerBroker = {
         getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: routeDomain }],
-        waitForRoute: async (domain: string) => {
-            waitForRouteCalls.push(domain);
+        waitForRoute: async (domain: string, timeoutMs?: number) => {
+            waitForRouteCalls.push({ domain, timeoutMs });
         },
         request: async (request: any) => {
             const body = new PassThrough();
@@ -244,7 +244,7 @@ test("Verser2RunnerTransport waits for runner route and opens routed stream requ
 
     await transport.connect({ instanceId: "inst-1", streams: downstreams });
 
-    t.deepEqual(waitForRouteCalls, ["runner.inst-1.scramjet.internal"]);
+    t.deepEqual(waitForRouteCalls, [{ domain: "runner.inst-1.scramjet.internal", timeoutMs: undefined }]);
     t.deepEqual(requests.map(request => [request.method, request.path]), [
         ["POST", "/stdin"],
         ["POST", "/control"],
@@ -262,6 +262,35 @@ test("Verser2RunnerTransport waits for runner route and opens routed stream requ
         upstreams[CC.IN]
     ]);
     t.true(requests.slice(3).every(request => request.body === undefined));
+});
+
+test("Verser2RunnerTransport hooks communication handler before routed requests", async t => {
+    const { downstreams } = streams();
+    const upstreams = streams().upstreams;
+    const handler = communicationHandler();
+    const { broker, requests } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams, communicationHandler: handler });
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+
+    t.deepEqual(handler.calls, [
+        "hook-upstream",
+        "hook-downstream",
+        "pipe-stdio",
+        "pipe-message",
+        "pipe-data"
+    ]);
+    t.is(requests.length, 8);
+});
+
+test("Verser2RunnerTransport passes route readiness timeout to Broker waitForRoute", async t => {
+    const { downstreams, upstreams } = streams();
+    const { broker, waitForRouteCalls } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams, routeReadinessMs: 4321 });
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+
+    t.deepEqual(waitForRouteCalls, [{ domain: "runner.inst-1.scramjet.internal", timeoutMs: 4321 }]);
 });
 
 test("Verser2RunnerTransport pipes routed response bodies into host upstream streams", async t => {

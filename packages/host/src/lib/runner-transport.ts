@@ -33,13 +33,15 @@ type Verser2RunnerBrokerResponse = {
 
 export type Verser2RunnerBroker = {
     getRoutes(): Verser2RunnerRoute[];
-    waitForRoute(domain: string): Promise<void>;
+    waitForRoute(domain: string, timeoutMs?: number): Promise<void>;
     request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse>;
 };
 
 export type Verser2RunnerTransportOptions = {
     broker?: Verser2RunnerBroker;
     upstreams?: PassThroughStreamsConfig;
+    communicationHandler?: ICommunicationHandler;
+    routeReadinessMs?: number;
     routeContracts?: RunnerTransportRouteContracts;
 };
 
@@ -95,11 +97,15 @@ export class Verser2RunnerTransport implements RunnerTransport {
     readonly routeContracts: RunnerTransportRouteContracts;
     private broker?: Verser2RunnerBroker;
     private upstreams?: PassThroughStreamsConfig;
+    private communicationHandler?: ICommunicationHandler;
+    private routeReadinessMs?: number;
     private responseBodies: Readable[] = [];
 
     constructor(options: Verser2RunnerTransportOptions = {}) {
         this.broker = options.broker;
         this.upstreams = options.upstreams;
+        this.communicationHandler = options.communicationHandler;
+        this.routeReadinessMs = options.routeReadinessMs;
         this.routeContracts = options.routeContracts || DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS;
     }
 
@@ -122,7 +128,13 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
         const domain = Verser2RunnerTransport.getRouteDomain(options.instanceId);
 
-        await this.broker.waitForRoute(domain);
+        this.communicationHandler?.hookUpstreamStreams(this.upstreams);
+        this.communicationHandler?.hookDownstreamStreams(options.streams);
+        this.communicationHandler?.pipeStdio();
+        this.communicationHandler?.pipeMessageStreams();
+        this.communicationHandler?.pipeDataStreams();
+
+        await this.broker.waitForRoute(domain, this.routeReadinessMs);
 
         const route = this.broker.getRoutes().find(candidate => candidate.domain === domain);
 
