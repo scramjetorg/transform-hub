@@ -24,7 +24,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     id: string,
     description?: string;
     tags?: string[];
-    verserConnection: VerserConnection;
+    verserConnection?: VerserConnection;
     info: {
         created?: Date,
         lastConnected?: Date
@@ -44,7 +44,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     init(): Promise<void>;
     disconnectAuditStream: () => void;
     getAuditStream(): Promise<Readable>;
-    reconnect: (verserConnection: VerserConnection) => Promise<void>;
+    reconnect: (verserConnection?: VerserConnection) => Promise<void>;
     main: () => void;
     sendId: () => void;
     getInfo: () => MRestAPI.ConnectedSTHInfo;

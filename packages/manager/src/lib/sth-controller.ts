@@ -14,7 +14,7 @@ import {
     SequenceMessageData,
     SpaceEventMessageData
 } from "@scramjet/types";
-import { Duplex, Readable, Writable } from "stream";
+import { Duplex, PassThrough, Readable, Writable } from "stream";
 
 import { CPMMessageCode } from "@scramjet/symbols";
 
@@ -23,10 +23,18 @@ import { configService } from "@scramjet/manager-config";
 
 import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { ClientRequest } from "http";
 import { TypedEmitter, defer } from "@scramjet/utility";
 import { HostClient } from "@scramjet/api-client";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ManagerSthBrokerTransport } from "./verser2-transport";
+
+export type STHControllerVerser2Options = {
+    brokerTransport: ManagerSthBrokerTransport;
+    routeDomain: string;
+    accessKey?: string;
+    description?: string;
+    tags?: string[];
+};
 
 const handleConnResetErrors = (stream: Readable | Writable, callback: (e: Error) => void) => {
     stream.on("error", (e: Error & { code?: string, cause?: { code?: string } }) => {
@@ -43,7 +51,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     description?: string;
     tags: string[] = [];
 
-    verserConnection: VerserConnection;
+    verserConnection?: VerserConnection;
     communicationStream?: StringStream;
     communicationChannel?: Duplex;
     logStream?: Readable;
@@ -104,31 +112,37 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     private readonly config: ManagerConfiguration;
 
     auditStream?: Readable;
-    private auditStreamRequest?: ClientRequest;
+    private auditStreamRequest?: Writable;
+    private readonly verser2?: STHControllerVerser2Options;
 
     get accessKey() {
+        if (!this.verserConnection) {
+            return this.verser2?.accessKey || "";
+        }
+
         const accessKeyHeader = this.verserConnection.getHeader("x-self-hosted") as string || "";
         const daughterKeyId = accessKeyHeader.length >= 32 ? accessKeyHeader.substring(16, 32) : undefined;
 
         return daughterKeyId || "";
     }
 
-    constructor(id: string, verserConnection: VerserConnection) {
+    constructor(id: string, verserConnection?: VerserConnection, verser2?: STHControllerVerser2Options) {
         super();
 
-        const tags = verserConnection.getHeader("x-sth-tags") as string;
-        const description = verserConnection.getHeader("x-sth-description") as string;
+        const tags = verserConnection?.getHeader("x-sth-tags") as string | undefined;
+        const description = verserConnection?.getHeader("x-sth-description") as string | undefined;
 
-        this.description = description;
-        this.tags = JSON.parse(tags);
+        this.description = description || verser2?.description;
+        this.tags = tags ? JSON.parse(tags) : verser2?.tags || [];
         this.id = id;
         this.verserConnection = verserConnection;
+        this.verser2 = verser2;
 
         this.config = configService.getConfig();
 
         this.logger = new ObjLogger(this, { id: this.id });
         this.info.created = new Date();
-        this.selfHosted = !!verserConnection.getHeader("x-self-hosted");
+        this.selfHosted = !!verserConnection?.getHeader("x-self-hosted") || !!verser2?.accessKey;
     }
     created?: Date | undefined;
     disconnected?: Date | undefined;
@@ -143,7 +157,11 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     }
 
     get isConnectionActive() {
-        return !this.verserConnection.socket.destroyed;
+        if (this.verserConnection) {
+            return !this.verserConnection.socket.destroyed;
+        }
+
+        return this.verser2 ? this.verser2.brokerTransport.isRouteReady(this.verser2.routeDomain) : false;
     }
 
     disconnectAuditStream() {
@@ -162,11 +180,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.logger.debug("Getting audit stream", !!this.auditStream);
 
         if (!this.auditStream) {
-            const { incomingMessage, clientRequest } = await this.verserConnection.makeRequest({
-                method: "GET",
-                path: "/api/v1/audit",
-                headers: { cpm: "true" },
-            });
+            const { incomingMessage, clientRequest } = await this.makeSthRequest("GET", "/api/v1/audit", { cpm: "true" });
 
             this.auditStreamRequest = clientRequest;
 
@@ -208,17 +222,25 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.hookupStream();
     }
 
-    async reconnect(verserConnection: VerserConnection) {
+    async reconnect(verserConnection?: VerserConnection) {
         this.logger.info("STH CONTROLLER RECONNECT");
-        this.verserConnection = verserConnection;
+        if (verserConnection) {
+            this.verserConnection = verserConnection;
+        }
+
         this.healthy = true;
 
         this.startLoadTimeout();
+        if (!this.verserConnection) {
+            this.info.lastConnected = new Date();
+            return;
+        }
+
         this.verserConnection.connect();
 
         this.logger.info("Requesting /platform and /logs");
 
-        this._hostClient = new HostClient("http://host/api/v1", new ClientUtilsCustomAgent("http://host/api/v1", verserConnection.getAgent()));
+        this._hostClient = new HostClient("http://host/api/v1", new ClientUtilsCustomAgent("http://host/api/v1", this.verserConnection.getAgent()));
 
         const [{ incomingMessage: upstream, clientRequest: downstream }, logRequest] = await Promise.all([
             this.verserConnection.makeRequest({ method: "POST", path: "/api/v1/platform", headers: { "Content-Type": "application/x-ndjson" } }),
@@ -290,13 +312,17 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.logger.debug("Hooking up stream");
 
         this._verserErrorAbort = false;
+        if (!this.verserConnection) {
+            return;
+        }
+
         this.verserConnection.socket
             .on("end", () => {
                 this.info.lastDisconnected = new Date();
 
                 // TODO: killing STH while active BPMux items are active kills CPM.
                 this.communicationStream?.end();
-                this.verserConnection.socket.emit("close", true);
+                this.verserConnection!.socket.emit("close", true);
                 this.logger.trace("STH connection ended", this.id);
             })
             .on("error", (err: any) => {
@@ -308,7 +334,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
             })
             .on("close", (emit?: boolean) => {
                 this.info.lastDisconnected = new Date();
-                this.verserConnection.socket.destroy();
+                this.verserConnection!.socket.destroy();
                 this.logger.warn("STH connection closed", this.id, emit);
                 this.disconnected = new Date();
                 this.emit("disconnected");
@@ -405,11 +431,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.logger.debug("Creating upstream topic request", name);
 
         return (
-            await this.verserConnection.makeRequest({
-                method: "GET",
-                path: `/api/v1/topic/${name}`,
-                headers: { cpm: "true", contentType },
-            })
+            await this.makeSthRequest("GET", `/api/v1/topic/${name}`, { cpm: "true", contentType })
         ).incomingMessage;
     }
 
@@ -417,17 +439,33 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.logger.debug("Creating downstream topic request", name, contentType);
 
         return (
-            await this.verserConnection.makeRequest({
-                method: "POST",
-                headers: {
-                    "Transfer-Encoding": "chunked",
-                    "Content-Type": contentType,
-                    cpm: "true",
-                    Expect: "100-continue",
-                },
-                path: `/api/v1/topic/${name}`,
+            await this.makeSthRequest("POST", `/api/v1/topic/${name}`, {
+                "Transfer-Encoding": "chunked",
+                "Content-Type": contentType,
+                cpm: "true",
+                Expect: "100-continue",
             })
         ).clientRequest;
+    }
+
+    private async makeSthRequest(method: string, path: string, headers: Record<string, string>): Promise<{ incomingMessage: Readable; clientRequest: Writable }> {
+        if (this.verser2) {
+            const clientRequest = new PassThrough();
+            const response = await this.verser2.brokerTransport.request({
+                domain: this.verser2.routeDomain,
+                method,
+                path,
+                headers,
+                body: method === "GET" ? undefined : clientRequest
+            });
+
+            return {
+                incomingMessage: response.body,
+                clientRequest
+            };
+        }
+
+        return this.verserConnection!.makeRequest({ method, path, headers });
     }
 
     async askToReconnect() {
@@ -463,7 +501,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         if (reason !== "disconnected") {
-            this.verserConnection.close();
+            this.verserConnection?.close();
         }
     }
 

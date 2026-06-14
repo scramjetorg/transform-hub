@@ -16,6 +16,7 @@ export class ManagerAuditor {
     sthConnectionStore: ISTHConnectionStore;
     selfAuditStream = new StringStream();
     managerId: string;
+    private heartbeatTimer?: NodeJS.Timeout;
 
     flowing = false;
 
@@ -79,9 +80,10 @@ export class ManagerAuditor {
     }
 
     heartbeatStart() {
-        setInterval(() => {
+        this.heartbeatTimer = setInterval(() => {
             this.writeHeartBeatMessage();
         }, this.heartbeatInterval);
+        this.heartbeatTimer.unref?.();
     }
 
     async attachSTH(sthController: STHController) {

@@ -105,6 +105,38 @@ function createController(
     };
 }
 
+function createVerser2Controller() {
+    const requests: any[] = [];
+    const responseBodies: PassThrough[] = [];
+    const controller = new STHController("test-id", undefined, {
+        routeDomain: "sth.test-id.scramjet.internal",
+        description: "verser2-sth",
+        tags: ["v2"],
+        brokerTransport: {
+            connect: async () => undefined,
+            close: async () => undefined,
+            getRoutes: () => [{ targetId: "sth.test-id.guest", domain: "sth.test-id.scramjet.internal" }],
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined,
+            request: async request => {
+                const body = new PassThrough();
+
+                requests.push(request);
+                responseBodies.push(body);
+
+                return {
+                    requestId: "request-1",
+                    statusCode: 200,
+                    headers: {},
+                    body
+                };
+            }
+        }
+    });
+
+    return { controller, requests, responseBodies };
+}
+
 /**
  * Returns after the microtask queue has settled.
  * Useful for letting stream pipe chains flush.
@@ -283,6 +315,56 @@ test("createDownstreamTopicRequest: makes POST /api/v1/topic/:name with chunked/
     t.is(topicReq.headers["Content-Type"], "application/octet-stream");
     t.is(topicReq.headers.cpm, "true");
     t.is(topicReq.headers.Expect, "100-continue");
+});
+
+test("verser2 controller routes audit and topic requests through broker transport", async t => {
+    const { controller, requests, responseBodies } = createVerser2Controller();
+
+    const auditStream = await controller.getAuditStream();
+    const upstream = await controller.createUpstreamTopicRequest("my-topic", "application/json");
+    const downstream = await controller.createDownstreamTopicRequest("my-topic", "application/octet-stream");
+
+    downstream.write("payload");
+    downstream.end();
+    responseBodies.forEach(body => body.end("{}"));
+
+    t.is(auditStream, controller.auditStream);
+    t.is(upstream, responseBodies[1]);
+    t.is(requests.length, 3);
+    t.deepEqual(requests.map(request => ({
+        domain: request.domain,
+        method: request.method,
+        path: request.path,
+        headers: request.headers,
+        body: !!request.body
+    })), [
+        {
+            domain: "sth.test-id.scramjet.internal",
+            method: "GET",
+            path: "/api/v1/audit",
+            headers: { cpm: "true" },
+            body: false
+        },
+        {
+            domain: "sth.test-id.scramjet.internal",
+            method: "GET",
+            path: "/api/v1/topic/my-topic",
+            headers: { cpm: "true", contentType: "application/json" },
+            body: false
+        },
+        {
+            domain: "sth.test-id.scramjet.internal",
+            method: "POST",
+            path: "/api/v1/topic/my-topic",
+            headers: {
+                "Transfer-Encoding": "chunked",
+                "Content-Type": "application/octet-stream",
+                cpm: "true",
+                Expect: "100-continue"
+            },
+            body: true
+        }
+    ]);
 });
 
 // ---------------------------------------------------------------------------

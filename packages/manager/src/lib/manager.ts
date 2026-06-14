@@ -546,6 +546,14 @@ export class Manager implements IComponent {
             return;
         }
 
+        if (!sth.verserConnection) {
+            this.logger.warn("Request to STH without legacy connection", req.method, req.url);
+            res.writeHead(503);
+            res.end();
+
+            return;
+        }
+
         requestToHost = request({
             headers,
             method: req.method,
