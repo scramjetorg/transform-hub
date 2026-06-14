@@ -207,6 +207,8 @@
     - [x] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
         - Added a polling adapter for the shared CPM verser2 Broker routes, injected a runner broker provider from Host → CSIDispatcher → CSIController, and selected `Verser2RunnerTransport` in verser2-only mode while preserving `LegacyRunnerTransport` for legacy/dual modes.
         - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
+        - Fixed global runner review blockers by synthesizing a CSIController attach for verser2 runner launches, routing verser2 stream bodies through downstream streams so `CommunicationHandler` still parses PING/PANG/lifecycle messages, using downstream input/control/stdin request streams, and propagating verser2 transport connection failures to startup.
+        - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed. Oracle re-check reported no commit-blocking blockers; instance request/RPC expose parity remains deferred.
     - [ ] Preserve temporary legacy mode only until runtime migrations are complete.
     - [ ] Update runtime boot config to carry `hostUrl`, peer IDs, routed domains, CA file/value, optional client cert/key or PFX settings, and route/lease timeout settings needed by stack-specific runtimes.
 - [ ] Task: Migrate Node runtime

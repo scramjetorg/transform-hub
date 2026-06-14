@@ -205,14 +205,14 @@ export class Verser2RunnerTransport implements RunnerTransport {
         }
 
         await Promise.all([
-            this.openRequestBodyRoute(route.targetId, this.routeContracts.stdinPath, this.upstreams[CC.STDIN]),
-            this.openRequestBodyRoute(route.targetId, this.routeContracts.controlPath, this.upstreams[CC.CONTROL]),
-            this.openRequestBodyRoute(route.targetId, this.routeContracts.inputPath, this.upstreams[CC.IN]),
-            this.openResponseBodyRoute(route.targetId, this.routeContracts.stdoutPath, this.upstreams[CC.STDOUT]),
-            this.openResponseBodyRoute(route.targetId, this.routeContracts.stderrPath, this.upstreams[CC.STDERR]),
-            this.openResponseBodyRoute(route.targetId, this.routeContracts.monitoringPath, this.upstreams[CC.MONITORING]),
-            this.openResponseBodyRoute(route.targetId, this.routeContracts.outputPath, this.upstreams[CC.OUT]),
-            this.openResponseBodyRoute(route.targetId, this.routeContracts.logPath, this.upstreams[CC.LOG])
+            this.openRequestBodyRoute(route.targetId, this.routeContracts.stdinPath, options.streams[CC.STDIN] as unknown as Readable),
+            this.openRequestBodyRoute(route.targetId, this.routeContracts.controlPath, options.streams[CC.CONTROL] as unknown as Readable),
+            this.openRequestBodyRoute(route.targetId, this.routeContracts.inputPath, options.streams[CC.IN] as unknown as Readable),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.stdoutPath, options.streams[CC.STDOUT] as unknown as NodeJS.WritableStream),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.stderrPath, options.streams[CC.STDERR] as unknown as NodeJS.WritableStream),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.monitoringPath, options.streams[CC.MONITORING] as unknown as NodeJS.WritableStream),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.outputPath, options.streams[CC.OUT] as unknown as NodeJS.WritableStream),
+            this.openResponseBodyRoute(route.targetId, this.routeContracts.logPath, options.streams[CC.LOG] as unknown as NodeJS.WritableStream)
         ]);
     }
 

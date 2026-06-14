@@ -470,6 +470,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         const runnerBroker = this.usesVerser2RunnerTransport ? this.runnerBrokerProvider?.() : undefined;
 
+        if (this.usesVerser2RunnerTransport && !runnerBroker) {
+            throw new CSIControllerError("UNINITIALIZED_STREAM", "verser2 runner broker");
+        }
+
         this.runnerTransport = runnerBroker
             ? new Verser2RunnerTransport({
                 broker: runnerBroker,
@@ -480,6 +484,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             : new LegacyRunnerTransport(this.upStreams, this.communicationHandler, this.hostProxy);
         this.runnerTransport.connect({ instanceId: this.id, streams }).catch((error) => {
             this.logger.error(`${this.runnerTransport?.kind || "unknown"} runner transport connection failed`, error);
+            this.initResolver?.rej(error);
         });
 
         this.controlDataStream = new DataStream();

@@ -263,9 +263,9 @@ test("Verser2RunnerTransport waits for runner route and opens routed stream requ
     ]);
     t.true(requests.slice(0, 3).every(request => request.targetId === "runner.guest.inst-1"));
     t.deepEqual(requests.slice(0, 3).map(request => request.body), [
-        upstreams[CC.STDIN],
-        upstreams[CC.CONTROL],
-        upstreams[CC.IN]
+        downstreams[CC.STDIN],
+        downstreams[CC.CONTROL],
+        downstreams[CC.IN]
     ]);
     t.true(requests.slice(3).every(request => request.body === undefined));
 });
@@ -299,7 +299,7 @@ test("Verser2RunnerTransport passes route readiness timeout to Broker waitForRou
     t.deepEqual(waitForRouteCalls, [{ domain: "runner.inst-1.scramjet.internal", timeoutMs: 4321 }]);
 });
 
-test("Verser2RunnerTransport pipes routed response bodies into host upstream streams", async t => {
+test("Verser2RunnerTransport pipes routed response bodies into host downstream streams", async t => {
     const { downstreams } = streams();
     const upstreams = streams().upstreams;
     const { broker, responseBodies } = fakeRunnerBroker();
@@ -308,9 +308,9 @@ test("Verser2RunnerTransport pipes routed response bodies into host upstream str
     const stderrChunks: Buffer[] = [];
     const monitoringChunks: Buffer[] = [];
 
-    upstreams[CC.STDOUT].on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
-    upstreams[CC.STDERR].on("data", (chunk: Buffer) => stderrChunks.push(chunk));
-    upstreams[CC.MONITORING].on("data", (chunk: Buffer) => monitoringChunks.push(chunk));
+    downstreams[CC.STDOUT].on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
+    downstreams[CC.STDERR].on("data", (chunk: Buffer) => stderrChunks.push(chunk));
+    downstreams[CC.MONITORING].on("data", (chunk: Buffer) => monitoringChunks.push(chunk));
 
     await transport.connect({ instanceId: "inst-1", streams: downstreams });
 
