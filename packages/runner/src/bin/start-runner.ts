@@ -20,6 +20,8 @@ import {
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
+import { parseRunnerTransportConfig, RunnerTransportConfigResult } from "../transport/runner-transport-config";
+import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
 
 const STDERR_TAIL_BYTES = 4096;
 
@@ -37,6 +39,7 @@ const runnerConnectInfo = process.env.RUNNER_CONNECT_INFO;
 
 let connectInfo: SequenceInfo;
 let parsedRunnerConnectInfo: RunnerConnectInfo;
+let runnerTransportConfig: RunnerTransportConfigResult;
 
 try {
     if (!runnerConnectInfo) throw new Error("Connection JSON is required.");
@@ -54,19 +57,28 @@ try {
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
-if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
-    console.error("Incorrect run argument: instancesServerPort");
-    process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
-
-if (!instancesServerHost) {
-    console.error("Incorrect run argument: instancesServerHost");
-    process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
-
 if (!instanceId) {
     console.error("Incorrect run argument: instanceId");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
+}
+
+try {
+    runnerTransportConfig = parseRunnerTransportConfig(instanceId);
+} catch (error) {
+    console.error(error instanceof Error ? error.message : "Incorrect run argument: runner transport config");
+    process.exit(RunnerExitCode.INVALID_ENV_VARS);
+}
+
+if (runnerTransportConfig.kind === "legacy") {
+    if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
+        console.error("Incorrect run argument: instancesServerPort");
+        process.exit(RunnerExitCode.INVALID_ENV_VARS);
+    }
+
+    if (!instancesServerHost) {
+        console.error("Incorrect run argument: instancesServerHost");
+        process.exit(RunnerExitCode.INVALID_ENV_VARS);
+    }
 }
 
 if (!fs.existsSync(sequencePath)) {
@@ -93,15 +105,15 @@ interface RunnerNodeBootConfigShape {
     exposeHost?: string;
 }
 
-function writeBootConfig(): string {
+function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesServerPort: number): string {
     const dir = fs.mkdtempSync(resolve(os.tmpdir(), "runner-node-boot-"));
     const file = resolve(dir, "boot-config.json");
 
     const payload: RunnerNodeBootConfigShape = {
         sequencePath: resolve(sequencePath),
         instanceId: instanceId!,
-        instancesServerPort: parseInt(instancesServerPort!, 10),
-        instancesServerHost: instancesServerHost!,
+        instancesServerPort: resolvedInstancesServerPort,
+        instancesServerHost: resolvedInstancesServerHost,
         sequenceInfo: connectInfo
     };
 
@@ -147,11 +159,29 @@ function appendTail(current: string, chunk: Buffer | string): string {
 }
 
 async function main(): Promise<void> {
-    const hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
+    let hostClient: HostClient | RunnerVerser2Transport;
+    let resolvedInstancesServerHost: string;
+    let resolvedInstancesServerPort: number;
 
-    await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
+    if (runnerTransportConfig.kind === "verser2") {
+        hostClient = new RunnerVerser2Transport({
+            config: runnerTransportConfig,
+            instanceId: instanceId!
+        });
+        await hostClient.init();
+        resolvedInstancesServerHost = hostClient.localChannelHost;
+        resolvedInstancesServerPort = hostClient.localChannelPort;
+    } else {
+        hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
+        await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
+        resolvedInstancesServerHost = instancesServerHost!;
+        resolvedInstancesServerPort = parseInt(instancesServerPort!, 10);
+    }
 
-    const bootConfigPath = writeBootConfig();
+    const bootConfigPath = writeBootConfig(
+        resolvedInstancesServerHost,
+        resolvedInstancesServerPort
+    );
 
     let handles: RuntimeProcessHandles;
 
