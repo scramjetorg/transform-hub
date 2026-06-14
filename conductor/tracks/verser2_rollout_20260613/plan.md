@@ -172,7 +172,7 @@
     - [x] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
         - Post-hardening review result: no blockers found. Residual accepted risks: identical route signatures can remain suppressed after reconnect without an observed route-set change, passive broker disconnects require caller lifecycle handling until the Broker API exposes disconnect state/events, post-dispatch abort is best-effort within current Broker API limits, and generic comma-joined header normalization may need future special cases.
     - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
-    - Validation/review summary: fixed automated review blockers for STH verser2 source precedence, STH/Manager public-safe masking, dual migration-mode semantics, and partial PEM TLS identity handling. Follow-up automated review found no blockers. Passed `npm run build:packages`, affected focused tests/builds for config, sth-config, manager, multi-manager, host, and sth, and memory-capped package validation for changed packages. Full `test:packages-no-concurrent` was attempted with `NODE_OPTIONS="--max-old-space-size=1536"`; unrelated `@scramjet/api-server` AVA tests still exceeded the heap cap even with `--serial`, and unrelated old `@scramjet/verser` HTTP connection tests timed out. These are recorded as out-of-scope validation-runner/package limitations, not Phase 2 blockers.
+    - Validation/review summary: fixed automated review blockers for STH verser2 source precedence, STH/Manager public-safe masking, dual migration-mode semantics, and partial PEM TLS identity handling. Follow-up automated review found no blockers. Passed `npm run build:packages`, affected focused tests/builds for config, sth-config, manager, multi-manager, host, and sth, and memory-capped package validation for changed packages. Full `test:packages-no-concurrent` was attempted with `NODE_OPTIONS="--max-old-space-size=1536"`; `@scramjet/api-server` AVA tests still exceeded the heap cap even with `--serial`, and old `@scramjet/verser` HTTP connection tests timed out. Per user instruction, skip those two problematic suites for Phase 2 and defer fixes to the pre-final-phase validation-hardening task.
 
 ## Phase 3: Global Runner and Runtime Migration
 
@@ -225,6 +225,11 @@
     - [ ] Run relevant BDD smoke tests for Node, Python, API, and Bun if available.
     - [ ] Complete automated cross-runtime parity, API streaming, lease lifecycle, route readiness, and lifecycle reviews.
     - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
+- [ ] Task: Fix skipped package validation suites before final phase
+    - [ ] Fix `@scramjet/api-server` AVA memory pressure so its package tests can run under the standard serial package validation without OOM; investigate heavy `test/rest-methods.spec.ts`, `test/server.spec.ts`, and `test/stream-methods.spec.ts` workers.
+    - [ ] Fix old `@scramjet/verser` HTTP connection test timeouts or remove/archive the suite if the package has already been retired by the rollout plan.
+    - [ ] Re-enable both suites in broad package validation before entering Phase 4.
+    - [ ] Record the chosen fix and validation command results in this plan before starting the final phase.
 - [ ] Task: Conductor - User Manual Verification 'Global Runner and Runtime Migration' (Protocol in workflow.md)
 
 ## Phase 4: Default Switch, Legacy Removal, and Final Validation
