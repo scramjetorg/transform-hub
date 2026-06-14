@@ -43,6 +43,16 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - Per-request authorization exists in application wrappers and does not trust spoofable headers.
 - Private keys are delivered as files with restrictive permissions and are not logged, passed in command arguments, or baked into images.
 
+## Config Schema And CLI Surface
+
+- New `verser2` transport settings use `@scramjet/config` descriptors and Zod validation instead of adding another ad-hoc manual merge path.
+- Config source precedence follows the documented model: defaults < config file < package.json section < `.env` < process environment < CLI < explicit runtime overrides.
+- API server TLS (`sslKeyPath`/`sslCertPath`) remains separate from `verser2` Host TLS; production `verser2` Host startup has no implicit/self-signed TLS defaults.
+- Manager/MultiManager config includes Host bind host/port, TLS identity file paths, optional client-auth CA, mTLS-required mode, registration authorization inputs, local peer policy, peer IDs, route domains, and timeout settings.
+- STH outbound config includes Manager/MultiManager `hostUrl`, CA trust, optional client identity files, enrollment credential for approved non-mTLS mode, STH Broker/Guest peer IDs, STH route domain, target Manager/MultiManager route domain or derivation inputs, and timeout settings.
+- Descriptor secret markers and public-safe masking hide private key material, PFX passphrases, enrollment credentials, API keys, and any inline secret values; private key/PFX paths are masked where deployment policy treats them as sensitive.
+- Config tests cover source precedence, CLI overrides, environment aliases, valid falsy values, validation errors, public-safe masking, and legacy compatibility aliases.
+
 ## Transport contracts
 
 - Manager/STH transport abstractions expose route registration, Broker request helpers, readiness, and stream support only.

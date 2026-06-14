@@ -183,6 +183,45 @@ Delivery uses files, not raw PEM/PFX values in environment variables or command 
 - Write key material atomically with restrictive modes and never log PEM/PFX values.
 - Windows deployments require equivalent ACL restrictions.
 
+## Validated configuration surface
+
+The rollout must introduce explicit, validated `verser2` configuration before replacing old `Verser` wiring. Post-`@scramjet/config` migration code can parse CLI descriptors without exposing parser internals, and new `verser2` fields should use Scramjet-owned descriptors, Zod validation, documented source precedence, compatibility aliases, and descriptor-marked secrets. Existing legacy config loaders may remain for unrelated settings during migration, but new `verser2` transport settings must not be added as another ad-hoc manual merge path.
+
+### Manager and MultiManager Host config
+
+Manager/MultiManager `verser2` Host settings are distinct from HTTP API server settings. API server TLS options such as `sslKeyPath` and `sslCertPath` secure the public API server and must not be implicitly reused for the `verser2` TLS H2 Host. The `verser2` Host config must explicitly define:
+
+- bind host and port for the selected Manager/MultiManager `verser2` Host;
+- server identity file paths, using `certFile`/`keyFile` or `pfxFile` plus secret passphrase where needed;
+- client-auth CA file or bundle, mTLS-required mode, and registration authorization inputs;
+- local peer policy for colocated Manager/MultiManager Broker and Guest attachment;
+- Manager/MultiManager local Broker and Guest peer IDs;
+- exact Manager/MultiManager route domains, such as `manager.<managerId>.scramjet.internal` and `multimanager.<multiManagerId>.scramjet.internal`;
+- route readiness, lease acquire, request, and idle timeout settings;
+- temporary migration mode selecting legacy compatibility versus `verser2` where still required.
+
+Host startup must fail clearly when the selected `verser2` mode requires TLS material and the validated config does not provide it. Production code must not silently generate implicit self-signed Host TLS material or downgrade to non-TLS `verser2`.
+
+### STH outbound Manager/MultiManager config
+
+STH-to-Manager/MultiManager `verser2` config must be explicit and separate from legacy `cpmUrl` / `cpmSslCaPath` unless a compatibility alias is deliberately documented. The outbound config must include:
+
+- selected Manager/MultiManager `hostUrl` for remote TLS H2 connections;
+- CA trust through `caFile` or an explicit CA bundle;
+- optional client identity file paths for mTLS (`certFile`/`keyFile` or `pfxFile`) plus secret passphrase where needed;
+- registration/enrollment credential when non-mTLS operation is allowed by policy;
+- STH Broker and Guest peer IDs;
+- STH Guest route domain `sth.<sthId>.scramjet.internal`;
+- target Manager/MultiManager route domain or IDs used to derive it;
+- route readiness, lease acquire, request, and idle timeout settings;
+- temporary migration mode selecting legacy compatibility versus `verser2` where still required.
+
+The STH connector handoff (`STHConfiguration`, `CPMConnectorOptions`, and related types) must carry the validated values needed by the transport implementation instead of reconstructing protocol identity or TLS policy from loosely related legacy CPM settings.
+
+### Public-safe masking and source precedence
+
+`verser2` config must follow the documented precedence model for new descriptor-backed settings: defaults < config file < package.json section < `.env` < process environment < CLI < explicit runtime overrides. Valid falsy values such as `false`, `0`, and `""` must be preserved. Public config views and masked logs must hide private key material, PFX passphrases, enrollment credentials, API keys, and any inline secret values. File paths to private key or PFX material should be treated as sensitive where deployment policy requires it. Config tests must cover CLI overrides, config-file values, environment aliases, secret masking, validation errors, and legacy compatibility aliases.
+
 ### Adapter certificate injection
 
 Process adapter launches use a per-instance or STH-local sequence-scoped state directory containing `ca.pem`, `cert.pem`, and `key.pem`, pass file paths through boot config or environment, and delete unreferenced material during process cleanup.
@@ -201,7 +240,7 @@ Node-based STH and runner components must fail fast on Node versions below 20 be
 
 - Manager-connected STH always registers `sth.<sthId>.scramjet.internal` as a Guest for Manager-callable STH APIs. Without this Guest, Manager cannot call STH APIs over `verser2`.
 - STH registers a Broker identity for STH-originated Manager requests.
-- For Phase 1 implementation, Manager-owned APIs and STH-owned APIs are both modeled as ordinary `verser2` routed endpoints: each side has a Broker for outbound calls and a Guest for inbound callable APIs. If Manager owns the Host in the same process, the Manager Guest/Broker may still connect through the normal H2 client path until upstream `verser2` provides an in-process attachment API.
+- Manager-owned APIs and STH-owned APIs are both modeled as ordinary `verser2` routed endpoints: each side has a Broker for outbound calls and a Guest for inbound callable APIs. When Manager/MultiManager code is colocated with its owned Host, the Manager/MultiManager Broker and Guest attach as Host-side local peers through `attachLocalBroker()` and `attachLocalGuest()` rather than opening loopback H2 connections. Networked TLS H2 Guest/Broker remains the path for remote STH participants.
 - Manager/MultiManager routes requests through Broker/Guest APIs and application-owned handlers.
 - Platform, log, audit, and topic communication become explicit routed requests with streaming request or response bodies instead of implicit old-verser channels.
 

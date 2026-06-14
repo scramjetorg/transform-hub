@@ -83,8 +83,19 @@
     - [x] Add transport tests for route replacement edge cases: shorter non-empty replacement, duplicate domains, replacement during `waitForRoute`, replacement during in-flight `request`.
     - [x] Handle `100-continue` locally in Manager forwarding layer before verser2 request dispatch.
     - [x] Normalize `IncomingHttpHeaders` to `Record<string, string>` at Manager forwarding call site (join arrays with `,`, drop `undefined` keys).
+- [ ] Task: Add validated verser2 config and CLI surface for Manager/STH transport
+    - [ ] Define shared Manager/MultiManager/STH verser2 transport config types and Zod schemas using `@scramjet/config` descriptors with explicit `path`, env, aliases, defaults, validation, and secret markers.
+    - [ ] Define Manager/MultiManager verser2 Host config shape, keeping API server TLS (`sslKeyPath`/`sslCertPath`) separate from verser2 H2 Host TLS.
+    - [ ] Add Manager/MultiManager Host TLS and registration policy config: bind host/port, server `certFile`/`keyFile` or `pfxFile`, secret passphrases, client-auth CA, mTLS-required mode, registration authorization inputs, local-peer policy, route/lease/request timeouts, and migration mode.
+    - [ ] Add Manager/MultiManager local Broker/Guest config for peer IDs, exact route domains (`manager.*` / `multimanager.*`), readiness timeouts, and lease settings.
+    - [ ] Load and validate MultiManager config through the post-rewrite `loadConfig()`/Zod descriptor path, preserving documented source precedence and valid falsy values; do not add another manual merge path for verser2 settings.
+    - [ ] Add STH outbound verser2 config shape for Manager/MultiManager connection: `hostUrl`, CA trust (`caFile`/bundle), optional client identity files, registration/enrollment credential where non-mTLS is allowed, Broker/Guest peer IDs, STH route domain, target Manager/MultiManager route domain or IDs used to derive it, route readiness timeout, lease/request timeouts, and migration mode.
+    - [ ] Add STH CLI descriptors for outbound verser2 settings in `packages/sth/src/bin/hub.ts` with descriptor paths/aliases/secrets; preserve legacy `cpmUrl`/`cpmId`/`cpmSslCaPath` only for the temporary legacy path or explicit compatibility aliases.
+    - [ ] Extend `STHConfiguration`, `PublicSTHConfiguration`, `STHCommandOptions`, `CPMConnectorOptions`, MultiManager/Manager config types/defaults, and connector handoff types to carry the validated verser2 settings needed by the transport implementation.
+    - [ ] Add focused MultiManager and STH config tests proving source precedence, config-file values, CLI overrides, env aliases, valid falsy values, secret masking/public-safe config, validation errors, and legacy compatibility/alias behavior.
+    - [ ] Run affected config/package tests plus build/typecheck before starting transport replacement.
 - [ ] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
-    - [ ] Define and validate Manager/MultiManager verser2 Host TLS configuration before replacing old `Verser`; do not rely on implicit/self-signed Host TLS defaults.
+    - [ ] Consume the validated Manager/MultiManager verser2 Host TLS/endpoint configuration from the new config surface; do not rely on implicit/self-signed Host TLS defaults.
     - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
     - [ ] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.
     - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over local peers (primary) or H2 Broker/Guest (remote fallback).
@@ -116,6 +127,7 @@
     - [x] Run local Manager/MultiManager/Host package tests added in this phase.
     - [x] Run targeted transport abstraction tests.
     - [x] Run the narrowest relevant build or typecheck for changed packages.
+    - [ ] Run automated review for config schema/source precedence, public-safe masking, TLS/private-key handling, legacy alias behavior, and no implicit/self-signed verser2 defaults.
     - [x] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
         - Post-hardening review result: no blockers found. Residual accepted risks: identical route signatures can remain suppressed after reconnect without an observed route-set change, passive broker disconnects require caller lifecycle handling until the Broker API exposes disconnect state/events, post-dispatch abort is best-effort within current Broker API limits, and generic comma-joined header normalization may need future special cases.
     - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
