@@ -83,7 +83,7 @@ export function prepareManagerFollowForwarding(
         return {
             kind: "direct-route-metadata",
             routeDomain: decision.target?.routeDomain,
-            targetPath: decision.target?.targetPath,
+            targetPath: applyOriginalQuery(decision.target?.targetPath || currentUrl || "/", currentUrl),
         };
     }
 
@@ -127,11 +127,11 @@ function classifyHostRoute(method: string, segments: string[], target: ManagerRo
     }
 
     if (family === "topic") {
-        return managerMultiplex("host-topic", "Manager API topic routes require live multiplexing unless a single direct peer is resolved", target);
+        return follow("host-topic", "Explicit STH topic routes target one selected STH", target);
     }
 
     if (family === "log" || family === "audit") {
-        return managerMultiplex(`host-${family}`, `Manager aggregate ${family} routes require fan-in multiplexing`, target);
+        return follow(`host-${family}`, `Explicit STH ${family} routes target one selected STH`, target);
     }
 
     if (family === "instance") {
@@ -173,7 +173,7 @@ function classifyInstanceRoute(
     }
 
     if (["stdout", "stderr", "log", "monitoring", "output", "stdin", "input", "events"].includes(op)) {
-        return managerMultiplex("instance-stream", "Instance streams may require fan-in/fan-out unless a direct single target is selected", target);
+        return follow("instance-stream", "Explicit instance streams target one selected instance", target);
     }
 
     if (op === "rpc") {

@@ -313,7 +313,7 @@ test("ServiceDiscovery: same-host provider and consumer are not connected to the
   });
 });
 
-test("ServiceDiscovery: provider-consumer on different hosts do not self-skip", (t) => {
+test("ServiceDiscovery: exact host-to-host topic pair does not use Manager data-plane pipe", (t) => {
   const sd = new ServiceDiscovery();
   const hostCtrl1 = mockHostController("host-1");
   const hostCtrl2 = mockHostController("host-2");
@@ -326,10 +326,10 @@ test("ServiceDiscovery: provider-consumer on different hosts do not self-skip", 
 
   return new Promise<void>((resolve) => {
     setImmediate(() => {
-      t.is(hostCtrl1.calls.upstream, 1);
-      t.is(hostCtrl2.calls.downstream, 1);
-      t.truthy(provider.stream);
-      t.truthy(consumer.stream);
+      t.is(hostCtrl1.calls.upstream, 0);
+      t.is(hostCtrl2.calls.downstream, 0);
+      t.is(provider.stream, undefined);
+      t.is(consumer.stream, undefined);
       resolve();
     });
   });

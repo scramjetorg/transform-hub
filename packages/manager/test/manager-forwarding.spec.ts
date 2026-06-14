@@ -288,6 +288,43 @@ test.serial("Manager.handleRequestToSTH routes through verser2 broker transport 
     t.is(res.bodyText(), "verser2 body");
 });
 
+test.serial("Manager.handleRequestToSTH rejects direct STH payloads before 100-continue", async t => {
+    let requestCalled = false;
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => ({}) },
+    });
+
+    manager.setSthBrokerTransport({
+        connect: async () => undefined,
+        close: async () => undefined,
+        getRoutes: () => [],
+        isRouteReady: () => true,
+        waitForRoute: async () => undefined,
+        request: async () => {
+            requestCalled = true;
+            throw new Error("should not dispatch direct STH payload");
+        }
+    });
+
+    const req = createReq({ headers: { cpm: "true", expect: "100-continue" } });
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+
+    t.false(requestCalled);
+    t.false(res.writeContinueCalled);
+    t.is(res.statusCode, 409);
+    t.deepEqual(JSON.parse(res.bodyText()), {
+        opStatus: "Conflict",
+        routeDecision: "follow",
+        routeDomain: "sth.sth-1.scramjet.internal",
+        targetPath: "/config?verbose=1",
+        error: "Direct STH-to-STH payloads must use the target route directly"
+    });
+});
+
 test.serial("Manager.handleRequestToSTH maps verser2 broker failures to 503", async t => {
     const manager = createManagerWithSth({
         id: "sth-1",

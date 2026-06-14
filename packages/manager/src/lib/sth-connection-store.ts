@@ -61,7 +61,7 @@ export class SthConnectionStore implements ISTHConnectionStore {
             throw new Error(SthConnectionStoreErrors.NATIVE_HUB);
         }
 
-        if (sthController.verserConnection?.connected) {
+        if (sthController.isConnectionActive || sthController.verserConnection?.connected) {
             if (force) {
                 await sthController.disconnect("id_drop");
             } else {

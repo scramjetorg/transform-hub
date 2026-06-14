@@ -516,13 +516,6 @@ export class Manager implements IComponent {
         this.logger.debug("Request to STH", req.method, req.url, this._config.apiBase);
 
         const headers = normalizeForwardedHeaders(req.headers);
-        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
-
-        if (expectsContinue) {
-            delete headers.expect;
-            res.writeContinue();
-        }
-
         const decision = classifyManagerRoute(req.method, originalUrl, { apiBase: this._config.apiBase });
 
         if (decision.kind === "follow") {
@@ -575,7 +568,8 @@ export class Manager implements IComponent {
         sth: ISTHController,
         req: ParsedMessage,
         res: ServerResponse,
-        headers: Record<string, string>
+        headers: Record<string, string>,
+        expectsContinue: boolean
     ) {
         if (!sth.verserConnection) {
             this.logger.warn("Request to STH without local peer connection", req.method, req.url);
@@ -604,8 +598,6 @@ export class Manager implements IComponent {
 
             disconnectCalled = true;
         };
-
-        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
 
         requestToHost = request({
             headers,
@@ -656,9 +648,16 @@ export class Manager implements IComponent {
         const forwarding = prepareManagerFollowForwarding(decision, req.url, headers);
 
         if (forwarding.kind === "direct-route-metadata") {
-            this.writeDirectRouteMetadata(decision, res);
+            this.writeDirectRouteMetadata(forwarding.routeDomain, forwarding.targetPath, res);
 
             return;
+        }
+
+        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
+
+        if (expectsContinue) {
+            delete headers.expect;
+            res.writeContinue();
         }
 
         req.url = forwarding.path;
@@ -666,16 +665,16 @@ export class Manager implements IComponent {
         if (this.sthBrokerTransport) {
             await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
         } else {
-            await this.handleLocalPeerRequestToSTH(sth, req, res, headers);
+            await this.handleLocalPeerRequestToSTH(sth, req, res, headers, expectsContinue);
         }
     }
 
-    private writeDirectRouteMetadata(decision: ManagerRouteDecision, res: ServerResponse) {
+    private writeDirectRouteMetadata(routeDomain: string | undefined, targetPath: string | undefined, res: ServerResponse) {
         const payload = JSON.stringify({
             opStatus: ReasonPhrases.CONFLICT,
-            routeDecision: decision.kind,
-            routeDomain: decision.target?.routeDomain,
-            targetPath: decision.target?.targetPath,
+            routeDecision: "follow",
+            routeDomain,
+            targetPath,
             error: "Direct STH-to-STH payloads must use the target route directly"
         });
 

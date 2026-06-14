@@ -90,7 +90,7 @@ test("prepareManagerFollowForwarding returns route metadata for direct STH-origi
     t.deepEqual(forwarding, {
         kind: "direct-route-metadata",
         routeDomain: "sth.sth-1.scramjet.internal",
-        targetPath: "/config"
+        targetPath: "/config?verbose=1"
     });
 });
 
@@ -101,7 +101,15 @@ test("classifyManagerRoute separates /sth forwarding families for classifier-dri
     );
     t.deepEqual(
         classifyManagerRoute("GET", "/api/v1/sth/sth-1/topic/orders").kind,
-        "manager-multiplex"
+        "follow"
+    );
+    t.deepEqual(
+        classifyManagerRoute("GET", "/api/v1/sth/sth-1/log").kind,
+        "follow"
+    );
+    t.deepEqual(
+        classifyManagerRoute("GET", "/api/v1/sth/sth-1/instance/inst-1/stdout").kind,
+        "follow"
     );
     t.deepEqual(
         classifyManagerRoute("GET", "/api/v1/sth/sth-1/platform").kind,
