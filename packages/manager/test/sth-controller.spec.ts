@@ -367,6 +367,42 @@ test("verser2 controller routes audit and topic requests through broker transpor
     ]);
 });
 
+test("verser2 controller reconnect opens platform and log streams over broker transport", async t => {
+    const { controller, requests, responseBodies } = createVerser2Controller();
+
+    await controller.reconnect();
+
+    responseBodies[1].end("{}\n");
+
+    t.true(controller.healthy);
+    t.true(controller.info.lastConnected instanceof Date);
+    t.not(controller.communicationStream, undefined);
+    t.not(controller.communicationChannel, undefined);
+    t.not(controller.logStream, undefined);
+    t.deepEqual(requests.map(request => ({
+        domain: request.domain,
+        method: request.method,
+        path: request.path,
+        headers: request.headers,
+        body: !!request.body
+    })), [
+        {
+            domain: "sth.test-id.scramjet.internal",
+            method: "POST",
+            path: "/api/v1/platform",
+            headers: { "Content-Type": "application/x-ndjson" },
+            body: true
+        },
+        {
+            domain: "sth.test-id.scramjet.internal",
+            method: "GET",
+            path: "/api/v1/log",
+            headers: { "Content-Type": "application/x-ndjson" },
+            body: false
+        }
+    ]);
+});
+
 // ---------------------------------------------------------------------------
 //  sendId / sendEvent — data written to communication stream
 // ---------------------------------------------------------------------------

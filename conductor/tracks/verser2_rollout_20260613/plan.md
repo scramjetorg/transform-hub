@@ -142,14 +142,14 @@
     - [x] Run an automated architecture review for route classification, direct-only STH-to-STH constraints, and future verser2 native follow replacement.
         - Validation: `npm test` in `packages/manager` passed 152 tests; `npm run build` in `packages/manager` passed. Follow-up architecture review found no blockers. Non-blocking risks: `cpm` header provenance should be hardened later, encoded reserved URL characters may need stricter preservation, and dynamic topic membership still uses coarse actor-level handled state.
 - [x] Task: Conductor - User Manual Verification 'Route Classification and Redirect-Readiness Forwarding' (Protocol in workflow.md)
-- [ ] Task: Migrate Manager/STH request and streaming semantics
-    - [ ] Map `/platform` communication to an explicit Guest route plus Broker request/streaming-body pattern.
-    - [ ] Map log behavior to explicit Guest routes and streaming request or response bodies.
-    - [ ] Map audit behavior to explicit Guest routes and streaming request or response bodies.
-    - [ ] Map topic upstream request behavior to explicit routed requests.
-    - [ ] Map topic downstream request behavior to explicit routed requests.
-    - [ ] Preserve streaming and backpressure expectations in tests without relying on persistent numbered channels.
-    - [ ] Verify no Manager/STH path depends on WebSocket upgrade, CONNECT tunneling, trailers, or forwarded informational responses.
+- [x] Task: Migrate Manager/STH request and streaming semantics
+    - [x] Map `/platform` communication to an explicit Guest route plus Broker request/streaming-body pattern.
+    - [x] Map log behavior to explicit Guest routes and streaming request or response bodies.
+    - [x] Map audit behavior to explicit Guest routes and streaming request or response bodies.
+    - [x] Map topic upstream request behavior to explicit routed requests.
+    - [x] Map topic downstream request behavior to explicit routed requests.
+    - [x] Preserve streaming and backpressure expectations in tests without relying on persistent numbered channels.
+    - [x] Verify no Manager/STH path depends on WebSocket upgrade, CONNECT tunneling, trailers, or forwarded informational responses.
 - [ ] Task: Migrate MultiHost or retire legacy MultiHost path
     - [ ] Review `MultiHostController` use of old `createChannel(0)`, `createChannel(1)`, and `forward(req, res)`.
     - [ ] Decide whether MultiHost remains a first-class deployment concept, noting that verser2 does not provide built-in multi-Host shared route state.
