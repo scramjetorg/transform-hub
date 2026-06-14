@@ -83,7 +83,7 @@
     - [x] Add transport tests for route replacement edge cases: shorter non-empty replacement, duplicate domains, replacement during `waitForRoute`, replacement during in-flight `request`.
     - [x] Handle `100-continue` locally in Manager forwarding layer before verser2 request dispatch.
     - [x] Normalize `IncomingHttpHeaders` to `Record<string, string>` at Manager forwarding call site (join arrays with `,`, drop `undefined` keys).
-- [ ] Task: Add validated verser2 config and CLI surface for Manager/STH transport
+- [~] Task: Add validated verser2 config and CLI surface for Manager/STH transport
     - [ ] Define shared Manager/MultiManager/STH verser2 transport config types and Zod schemas using `@scramjet/config` descriptors with explicit `path`, env, aliases, defaults, validation, and secret markers.
     - [ ] Define Manager/MultiManager verser2 Host config shape, keeping API server TLS (`sslKeyPath`/`sslCertPath`) separate from verser2 H2 Host TLS.
     - [ ] Add Manager/MultiManager Host TLS and registration policy config: bind host/port, server `certFile`/`keyFile` or `pfxFile`, secret passphrases, client-auth CA, mTLS-required mode, registration authorization inputs, local-peer policy, route/lease/request timeouts, and migration mode.
