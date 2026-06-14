@@ -1,5 +1,27 @@
 import path from "path";
+import { STHConfiguration } from "@scramjet/types";
 import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
+
+export function getRunnerTransportEnv(
+    sthConfig: Pick<STHConfiguration, "verser2">,
+    instanceId: string
+): Record<string, string> {
+    if (!sthConfig.verser2.enabled || sthConfig.verser2.migrationMode !== "verser2") {
+        return {};
+    }
+
+    return {
+        SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({
+            kind: "verser2",
+            hostUrl: sthConfig.verser2.hostUrl,
+            guestId: `runner.${instanceId}.guest`,
+            routeDomain: `runner.${instanceId}.scramjet.internal`,
+            tls: sthConfig.verser2.tls,
+            leaseAcquireTimeoutMs: sthConfig.verser2.timeouts.leaseAcquireMs,
+            minWaitingStreams: sthConfig.verser2.leases.minimumWaitingLeases
+        })
+    };
+}
 
 /**
  * Genrates the required runner env variables
@@ -39,4 +61,3 @@ export function getRunnerEnvVariables({
 export function getRunnerEnvEntries(conf: RunnerEnvConfig, extra: Record<string, string> = {}) {
     return Object.entries(getRunnerEnvVariables(conf, extra));
 }
-

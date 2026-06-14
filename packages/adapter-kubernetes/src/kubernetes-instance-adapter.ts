@@ -19,7 +19,7 @@ import { createWriteStream, readFileSync } from "fs";
 import path, { join } from "path";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
-import { getRunnerEnvEntries } from "@scramjet/adapters-common";
+import { getRunnerEnvEntries, getRunnerTransportEnv } from "@scramjet/adapters-common";
 import { PassThrough } from "stream";
 import { RunnerExitCode } from "@scramjet/symbols";
 import { SequenceAdapterError } from "@scramjet/model";
@@ -187,7 +187,8 @@ class KubernetesInstanceAdapter implements
                 sequenceInfo,
                 payload: { writeDegraded, ...payload }
             }, {
-                ...this.sthConfig.runnerEnvs
+                ...this.sthConfig.runnerEnvs,
+                ...getRunnerTransportEnv(this.sthConfig, instanceId)
             }).map(([name, value]) => ({ name, value }));
 
         const runnerImage = selectRunnerImageForEngines(config.engines, this.adapterConfig.runnerImages);

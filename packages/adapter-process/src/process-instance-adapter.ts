@@ -18,7 +18,7 @@ import { ChildProcess, spawn } from "child_process";
 import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
-import { getRunnerEnvVariables } from "@scramjet/adapters-common";
+import { getRunnerEnvVariables, getRunnerTransportEnv } from "@scramjet/adapters-common";
 import { development } from "@scramjet/sth-config";
 
 const CRASH_LOG_TAIL_BYTES = 4096;
@@ -141,6 +141,7 @@ class ProcessInstanceAdapter implements
         }, {
             EXPOSE_HOST: "127.0.0.1",
             ...this.sthConfig.runnerEnvs,
+            ...getRunnerTransportEnv(this.sthConfig, instanceId),
             ...extraEnvs
         });
 
