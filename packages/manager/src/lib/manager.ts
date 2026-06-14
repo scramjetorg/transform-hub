@@ -15,9 +15,9 @@ import {
     LogLevel
 } from "@scramjet/types";
 import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
-import { CeroError, getRouter } from "@scramjet/api-server";
+import { CeroError, forwardRoutedRequest, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
-import { IncomingHttpHeaders, IncomingMessage, ServerResponse, request } from "http";
+import { IncomingMessage, ServerResponse, request } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -51,19 +51,7 @@ const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
 
-export function normalizeForwardedHeaders(headers: IncomingHttpHeaders): Record<string, string> {
-    const normalized: Record<string, string> = {};
-
-    for (const [name, value] of Object.entries(headers)) {
-        if (value === undefined) {
-            continue;
-        }
-
-        normalized[name] = Array.isArray(value) ? value.join(", ") : value;
-    }
-
-    return normalized;
-}
+export const normalizeForwardedHeaders = normalizeApiForwardedHeaders;
 
 export function maskManagerConfig(config: ManagerConfiguration): ManagerConfiguration {
     const safe = {} as ManagerConfiguration;
@@ -551,39 +539,18 @@ export class Manager implements IComponent {
 
     private async handleVerser2RequestToSTH(id: string, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
         const domain = this.getSthRouteDomain(id);
-        const abortController = new AbortController();
-        const requestTimeout = this.config.verser2.timeouts.requestMs > 0
-            ? setTimeout(() => abortController.abort(), this.config.verser2.timeouts.requestMs)
-            : undefined;
-        const abortRequest = () => abortController.abort();
 
-        try {
-            req.once("close", abortRequest);
-            await this.sthBrokerTransport!.waitForRoute(domain, this.config.verser2.timeouts.routeReadinessMs);
-
-            const response = await this.sthBrokerTransport!.request({
-                domain,
-                method: req.method || "GET",
-                path: req.url || "/",
-                headers,
-                body: req,
-                signal: abortController.signal
-            });
-
-            res.writeHead(response.statusCode, response.headers as Record<string, string>);
-            res.flushHeaders();
-            response.body.pipe(res);
-        } catch (error) {
-            this.logger.warn("M -> STH verser2 request error", { id, url: req.url, error });
-            res.writeHead(503);
-            res.end();
-        } finally {
-            req.off("close", abortRequest);
-
-            if (requestTimeout) {
-                clearTimeout(requestTimeout);
-            }
-        }
+        await forwardRoutedRequest({
+            transport: this.sthBrokerTransport!,
+            domain,
+            req,
+            res,
+            path: req.url || "/",
+            headers,
+            routeReadinessMs: this.config.verser2.timeouts.routeReadinessMs,
+            requestTimeoutMs: this.config.verser2.timeouts.requestMs,
+            onError: (error) => this.logger.warn("M -> STH verser2 request error", { id, url: req.url, error })
+        });
     }
 
     private async handleLocalPeerRequestToSTH(

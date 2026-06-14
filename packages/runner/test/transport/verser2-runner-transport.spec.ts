@@ -19,6 +19,7 @@ function config() {
         hostUrl: "http://verser2.local",
         routeDomain: `runner.${INSTANCE_ID}.scramjet.internal`,
         guestId: `runner.${INSTANCE_ID}.guest`,
+        hubBrokerId: `runner.${INSTANCE_ID}.hub.broker`,
         minWaitingStreams: 2,
         leaseAcquireTimeoutMs: 1234,
         tls: { caFile: "/tmp/ca.pem" }
@@ -216,8 +217,32 @@ test("unknown and reserved routes return explicit errors", async t => {
     const unknown = await request(port, "GET", "/missing");
     const reserved = await request(port, "GET", "/requests");
 
-    t.is(unknown.statusCode, 404);
+    t.is(unknown.statusCode, 503);
     t.is(reserved.statusCode, 501);
 
+    await transport.disconnect(true);
+});
+
+test("non-channel routes proxy to configured runner-node RPC target", async t => {
+    const fake = fakeGuestFactory([]);
+    const transport = new RunnerVerser2Transport({ config: config(), instanceId: INSTANCE_ID, createGuest: fake.createGuest });
+    const rpcServer = http.createServer((req, res) => {
+        t.is(req.url, "/hello?x=1");
+        res.writeHead(201, { "x-rpc": "ok" });
+        req.pipe(res);
+    });
+
+    await transport.init();
+    const routePort = await listen(transport.server);
+    const rpcPort = await listen(rpcServer);
+
+    transport.setRpcTarget("127.0.0.1", rpcPort);
+
+    const response = await request(routePort, "POST", "/hello?x=1", "payload");
+
+    t.is(response.statusCode, 201);
+    t.is(response.body.toString(), "payload");
+
+    await new Promise<void>(resolve => rpcServer.close(() => resolve()));
     await transport.disconnect(true);
 });

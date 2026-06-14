@@ -13,6 +13,30 @@ import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { HostHeaders } from "@scramjet/symbols";
 import { AuditedRequest } from "../auditor";
 
+export function normalizeRpcForwardPath(rpcPath: string, exposePath?: string, apiVersion?: string): string {
+    const normalizedRpcPath = rpcPath.startsWith("/") ? rpcPath : `/${rpcPath}`;
+
+    if (
+        apiVersion === "v1" &&
+        exposePath?.startsWith("/api/v1") &&
+        !normalizedRpcPath.startsWith("/api/v1")
+    ) {
+        return `/api/v1${normalizedRpcPath}`;
+    }
+
+    return normalizedRpcPath;
+}
+
+export function stripRpcExposePath(rpcPath: string, exposePath?: string): string {
+    if (exposePath && rpcPath.startsWith(exposePath)) {
+        const stripped = rpcPath.slice(exposePath.length) || "/";
+
+        return stripped.startsWith("?") ? `/${stripped}` : stripped;
+    }
+
+    return rpcPath || "/";
+}
+
 export class HostAPIHandler {
     logger: ObjLogger;
     topicRouter?: TopicRouter;
@@ -103,6 +127,7 @@ export class HostAPIHandler {
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
 
+        this.api.use(`${this.apiBase}/rpc`, (req, res, next) => this.rpcMiddleware(req, res, next));
         this.api.forward(`${this.apiBase}/rpc`, [], this.createRPCForwarder());
     }
 
@@ -120,6 +145,35 @@ export class HostAPIHandler {
 
             return [instance?.rpcUrl, url] as [string, string];
         };
+    }
+
+    async rpcMiddleware(req: IncomingMessage, res: ServerResponse, next: NextCallback) {
+        const rpcPath = req.url?.startsWith(`${this.apiBase}/rpc`)
+            ? req.url.slice(`${this.apiBase}/rpc`.length) || "/"
+            : req.url || "/";
+        const [instance] = roundRobinStrategy(req, this.host.instancesStore.getByExposePath(rpcPath));
+        const normalizedRpcPath = instance
+            ? rpcPath
+            : normalizeRpcForwardPath(rpcPath, "/api/v1", this.host.apiVersion);
+        const [resolvedInstance] = instance
+            ? [instance]
+            : roundRobinStrategy(req, this.host.instancesStore.getByExposePath(normalizedRpcPath));
+
+        if (!resolvedInstance?.forwardRpcRequest) {
+            next();
+            return;
+        }
+
+        const url = stripRpcExposePath(
+            normalizeRpcForwardPath(rpcPath, resolvedInstance.expose?.path, this.host.apiVersion),
+            resolvedInstance.expose?.path
+        );
+
+        if (await resolvedInstance.forwardRpcRequest(req, res, url)) {
+            return;
+        }
+
+        next();
     }
 
     /**

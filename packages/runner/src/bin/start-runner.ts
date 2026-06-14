@@ -6,7 +6,7 @@ import { dirname, resolve } from "path";
 import { Readable, Writable } from "stream";
 
 import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
-import { RunnerExitCode } from "@scramjet/symbols";
+import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
 import { RuntimeProcessHandles } from "@scramjet/types";
 
@@ -24,6 +24,7 @@ import { parseRunnerTransportConfig, RunnerTransportConfigResult } from "../tran
 import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
 
 const STDERR_TAIL_BYTES = 4096;
+const CR = 0x0d;
 
 // ---------------------------------------------------------------------------
 // Adapter-facing env validation. Preserved verbatim from the legacy entry so
@@ -186,6 +187,38 @@ function appendTail(current: string, chunk: Buffer | string): string {
     return (current + chunk.toString()).slice(-STDERR_TAIL_BYTES);
 }
 
+function observeRpcExpose(stream: Readable, transport: RunnerVerser2Transport): void {
+    let pending = "";
+
+    stream.on("data", (chunk: Buffer | string) => {
+        pending += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+
+        for (;;) {
+            const lfIdx = pending.indexOf("\n");
+
+            if (lfIdx === -1) break;
+
+            let endIdx = lfIdx;
+
+            if (endIdx > 0 && pending.charCodeAt(endIdx - 1) === CR) endIdx -= 1;
+
+            const line = pending.slice(0, endIdx);
+
+            pending = pending.slice(lfIdx + 1);
+
+            try {
+                const parsed = JSON.parse(line) as [number, { payload?: { exposeHost?: string; exposePort?: number } }];
+
+                if (parsed[0] === RunnerMessageCode.PING && parsed[1]?.payload?.exposePort !== undefined) {
+                    transport.setRpcTarget(parsed[1].payload.exposeHost || "localhost", parsed[1].payload.exposePort);
+                }
+            } catch {
+                // ignore non-frame lines
+            }
+        }
+    });
+}
+
 async function main(): Promise<void> {
     let hostClient: HostClient | RunnerVerser2Transport;
     let resolvedInstancesServerHost: string;
@@ -268,13 +301,16 @@ async function main(): Promise<void> {
     // host control -> child fd4 (raw)
     pipeRaw(hostClient.controlStream, handles.control);
 
-    // child fd5 -> host monitoring (raw)
-    pipeRaw(handles.monitoring, hostClient.monitorStream);
-
     // Track whether the child already emitted a terminal lifecycle frame
     // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
     // destructive; bytes still flow to host monitoring unchanged.
     const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+    if (hostClient instanceof RunnerVerser2Transport) {
+        observeRpcExpose(handles.monitoring, hostClient);
+    }
+
+    // child fd5 -> host monitoring (raw)
+    pipeRaw(handles.monitoring, hostClient.monitorStream);
     let childStderrTail = "";
 
     handles.child.stderr?.on("data", chunk => {

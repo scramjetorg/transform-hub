@@ -61,6 +61,7 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
     private guest?: RunnerVerser2Guest;
     private started = false;
     private readonly localChannelWaitMs: number;
+    private rpcTarget?: { host: string; port: number };
 
     constructor(private readonly options: RunnerVerser2TransportOptions) {
         this.localChannels = new LocalChannelServer({ expectedInstanceId: options.instanceId });
@@ -126,6 +127,10 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         this.started = false;
     }
 
+    setRpcTarget(host: string, port: number): void {
+        this.rpcTarget = { host, port };
+    }
+
     private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
         try {
             const path = req.url?.split("?")[0] || "/";
@@ -178,10 +183,34 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
                 return;
             }
 
-            this.writeStatus(res, 404, "Runner route not found");
+            if (this.rpcTarget) {
+                this.proxyRpcRequest(req, res, req.url || "/");
+                return;
+            }
+
+            this.writeStatus(res, 503, "Runner RPC target is not ready");
         } catch (error) {
             this.writeStatus(res, 503, error instanceof Error ? error.message : String(error));
         }
+    }
+
+    private proxyRpcRequest(req: http.IncomingMessage, res: http.ServerResponse, path: string): void {
+        const target = this.rpcTarget!;
+        const proxyReq = http.request({
+            host: target.host,
+            port: target.port,
+            method: req.method,
+            path,
+            headers: req.headers
+        }, proxyRes => {
+            res.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
+            proxyRes.pipe(res);
+        });
+
+        proxyReq.on("error", error => {
+            this.writeStatus(res, 503, error.message);
+        });
+        req.pipe(proxyReq);
     }
 
     private pipeRequest(req: http.IncomingMessage, res: http.ServerResponse, target: Writable, endTargetOnRequestEnd: boolean): void {

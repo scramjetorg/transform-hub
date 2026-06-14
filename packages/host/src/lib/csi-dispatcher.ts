@@ -38,6 +38,7 @@ type CSIDispatcherOpts = {
     STHConfig: STHConfiguration,
     localStorageAdapter: IStorageAdapter
     runnerBrokerProvider?: () => Verser2RunnerBroker | undefined
+    hostProxy?: HostProxy
 }
 
 export class CSIDispatcher extends TypedEmitter<Events> {
@@ -48,6 +49,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     private serviceDiscovery: ServiceDiscovery;
     private localStorageAdapter: IStorageAdapter;
     private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined;
+    private hostProxy?: HostProxy;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -59,6 +61,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.serviceDiscovery = opts.serviceDiscovery;
         this.localStorageAdapter = opts.localStorageAdapter;
         this.runnerBrokerProvider = opts.runnerBrokerProvider;
+        this.hostProxy = opts.hostProxy;
     }
 
     async createCSIController(
@@ -294,7 +297,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     payload,
                     new CommunicationHandler(),
                     this.STHConfig,
-                    { onInstanceRequest: () => undefined, onRPCExpose: () => undefined } as HostProxy
+                    this.hostProxy || { onInstanceRequest: () => undefined, onRPCExpose: () => undefined } as HostProxy
                 );
                 const streams = Array.from({ length: 9 }, () => new PassThrough()) as unknown as DownstreamStreamsConfig;
 

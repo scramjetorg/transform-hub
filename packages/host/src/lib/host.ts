@@ -323,6 +323,7 @@ export class Host implements IHost, IComponent {
             runnerBrokerProvider: () => this.cpmConnector?.verser2Broker
                 ? createVerser2RunnerBrokerTransport(this.cpmConnector.verser2Broker)
                 : undefined,
+            hostProxy: this.instanceProxy,
         });
 
         this.csiDispatcher.logger.pipe(this.logger);

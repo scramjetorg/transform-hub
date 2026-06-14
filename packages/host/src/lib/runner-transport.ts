@@ -25,10 +25,13 @@ type Verser2RunnerBrokerRequest = {
     path: string;
     headers?: Record<string, string>;
     body?: Readable;
+    signal?: AbortSignal;
 };
 
 type Verser2RunnerBrokerResponse = {
     body: Readable;
+    statusCode?: number;
+    headers?: Record<string, string | string[] | number | undefined>;
 };
 
 export type Verser2RunnerBroker = {

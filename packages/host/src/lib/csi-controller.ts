@@ -35,8 +35,10 @@ import {
 } from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
+import { IncomingMessage, ServerResponse } from "http";
 
 import { getRouter } from "@scramjet/api-server";
+import { forwardRoutedRequest, normalizeForwardedHeaders } from "@scramjet/api-server";
 import { EventEmitter, once } from "events";
 import { DataStream } from "scramjet";
 
@@ -710,6 +712,56 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     async handleInstanceReconnect(streams: DownstreamStreamsConfig) {
         await this.handleInstanceDisconnect();
         await this.handleInstanceConnect(streams);
+    }
+
+    async forwardRpcRequest(req: IncomingMessage, res: ServerResponse, path: string): Promise<boolean> {
+        if (!this.usesVerser2RunnerTransport) {
+            return false;
+        }
+
+        const broker = this.runnerBrokerProvider?.();
+
+        if (!broker) {
+            return false;
+        }
+
+        await forwardRoutedRequest({
+            transport: {
+                waitForRoute: (domain, timeoutMs) => broker.waitForRoute(domain, timeoutMs),
+                request: async (request) => {
+                    const route = broker.getRoutes().find(candidate => candidate.domain === request.domain);
+
+                    if (!route) {
+                        throw new Error(`Runner route unavailable: ${request.domain}`);
+                    }
+
+                    const response = await broker.request({
+                        targetId: route.targetId,
+                        method: request.method,
+                        path: request.path,
+                        headers: request.headers,
+                        body: request.body,
+                        signal: request.signal
+                    });
+
+                    return {
+                        statusCode: response.statusCode || 200,
+                        headers: response.headers,
+                        body: response.body
+                    };
+                }
+            },
+            domain: Verser2RunnerTransport.getRouteDomain(this.id),
+            req,
+            res,
+            path,
+            headers: normalizeForwardedHeaders(req.headers),
+            routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs,
+            requestTimeoutMs: this.sthConfig.verser2.timeouts.requestMs,
+            onError: (error) => this.logger.warn("Host -> runner verser2 RPC request error", { id: this.id, path, error })
+        });
+
+        return true;
     }
 
     //@TODO: ! unhookup ! set proper state for reconnecting !
