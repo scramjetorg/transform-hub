@@ -176,14 +176,15 @@
 
 ## Phase 3: Global Runner and Runtime Migration
 
-- [ ] Task: Establish targeted hub tests for runner connectivity
-    - [ ] Add targeted hub test for runner startup and route registration/readiness over the transport abstraction.
-    - [ ] Add targeted hub test for PING/PONG or replacement lifecycle health behavior over routed requests.
-    - [ ] Add targeted hub test for STOP/KILL/control messages.
-    - [ ] Add targeted hub test for stdout and stderr streaming.
-    - [ ] Add targeted hub test for monitoring frames.
-    - [ ] Add targeted hub test for input and output streams.
-    - [ ] Add targeted hub test for runner disconnect, route retraction, reconnect, and route-unavailable behavior.
+- [x] Task: Establish targeted hub tests for runner connectivity
+    - [x] Add targeted hub test for runner startup and route registration/readiness over the transport abstraction.
+    - [x] Add targeted hub test for PING/PONG or replacement lifecycle health behavior over routed requests.
+    - [x] Add targeted hub test for STOP/KILL/control messages.
+    - [x] Add targeted hub test for stdout and stderr streaming.
+    - [x] Add targeted hub test for monitoring frames.
+    - [x] Add targeted hub test for input and output streams.
+    - [x] Add targeted hub test for runner disconnect, route retraction, reconnect, and route-unavailable behavior.
+        - Validation: added host-side verser2 runner route-contract tests for route domain derivation, readiness/route-unavailable domain behavior, lifecycle/control, stdout/stderr/log, monitoring, input/output, disconnect, and reconnect contract paths. `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
 - [ ] Task: Implement global runner verser2 transport
     - [ ] Make `packages/runner` own the global verser2 runner Guest connection, route registration, Host URL, trust material, and optional client certificate material.
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.

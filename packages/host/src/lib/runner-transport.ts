@@ -1,6 +1,7 @@
 import { BPMux } from "@scramjet/bpmux";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import {
+    DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS,
     DownstreamStreamsConfig,
     HostProxy,
     ICommunicationHandler,
@@ -8,7 +9,8 @@ import {
     LegacyRunnerTransportMultiplex,
     PassThroughStreamsConfig,
     RunnerTransport,
-    RunnerTransportConnectOptions
+    RunnerTransportConnectOptions,
+    RunnerTransportRouteContracts
 } from "@scramjet/types";
 
 export class LegacyRunnerTransport implements RunnerTransport {
@@ -60,6 +62,20 @@ export class LegacyRunnerTransport implements RunnerTransport {
 
 export class Verser2RunnerTransport implements RunnerTransport {
     readonly kind = "verser2" as const;
+
+    constructor(readonly routeContracts: RunnerTransportRouteContracts = DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS) {}
+
+    /**
+     * Derives the runner domain for a given instance ID.
+     * The domain follows the pattern: runner.<instanceId>.scramjet.internal
+     */
+    static getRouteDomain(instanceId: string): string {
+        if (!instanceId) {
+            throw new Error("Runner route domain requires a non-empty instanceId");
+        }
+
+        return `runner.${instanceId}.scramjet.internal`;
+    }
 
     async connect(_options: RunnerTransportConnectOptions): Promise<void> {
         throw new Error("Verser2RunnerTransport route-backed connect is defined by contract but not implemented yet");
