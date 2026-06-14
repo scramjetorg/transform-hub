@@ -2,53 +2,53 @@
 
 ## Phase 1: Setup, Discovery, Design, And TDD Baseline
 
-- [ ] Task: Confirm package entrypoints, current behavior, and compatibility constraints
-    - [ ] Read root `codemap.md` and relevant package codemaps before editing package code.
-    - [ ] Inspect all initial files listed in `spec.md`.
-    - [ ] Inventory all current config sources, consumers, config file formats, env vars, CLI flags, defaults, merge behavior, and masking behavior.
-    - [ ] Inventory all `commander` imports and public `commander.Command` type references.
-    - [ ] Identify which CLI flags and config fields are stable public API and must be preserved as aliases.
-    - [ ] Identify persisted config compatibility constraints for STH, MultiManager, Manager, runner boot config, and CLI profile/session config.
+- [x] Task: Confirm package entrypoints, current behavior, and compatibility constraints
+    - [x] Read root `codemap.md` and relevant package codemaps before editing package code.
+    - [x] Inspect all initial files listed in `spec.md`.
+    - [x] Inventory all current config sources, consumers, config file formats, env vars, CLI flags, defaults, merge behavior, and masking behavior.
+    - [x] Inventory all `commander` imports and public `commander.Command` type references.
+    - [x] Identify which CLI flags and config fields are stable public API and must be preserved as aliases.
+    - [x] Identify persisted config compatibility constraints for STH, MultiManager, Manager, runner boot config, and CLI profile/session config.
 
-- [ ] Task: Finalize `@scramjet/config` architecture
-    - [ ] Decide final package name and workspace path, preferring `packages/config` / `@scramjet/config` unless a conflict exists.
-    - [ ] Decide final Zod schema/metadata model: wrapper API versus descriptor map beside Zod schemas.
-    - [ ] Decide default representation: Zod `.default()` versus external defaults map.
-    - [ ] Define nested path representation and typed access conventions.
-    - [ ] Define secret masking metadata and masked output behavior.
-    - [ ] Define unknown-key policy, including reject-by-default product config behavior and intentional escape hatches.
-    - [ ] Define array merge behavior.
-    - [ ] Define compatibility alias behavior for old config keys, CLI flags, and env vars.
-    - [ ] Document verser2 extension hooks without implementing concrete verser2 Host/TLS fields in this track.
+- [x] Task: Finalize `@scramjet/config` architecture
+    - [x] Decide final package name and workspace path, preferring `packages/config` / `@scramjet/config` unless a conflict exists.
+    - [x] Decide final Zod schema/metadata model: wrapper API versus descriptor map beside Zod schemas.
+    - [x] Decide default representation: Zod `.default()` versus external defaults map.
+    - [x] Define nested path representation and typed access conventions.
+    - [x] Define secret masking metadata and masked output behavior.
+    - [x] Define unknown-key policy, including reject-by-default product config behavior and intentional escape hatches.
+    - [x] Define array merge behavior.
+    - [x] Define compatibility alias behavior for old config keys, CLI flags, and env vars.
+    - [x] Document verser2 extension hooks without implementing concrete verser2 Host/TLS fields in this track.
 
-- [ ] Task: Finalize library decisions
-    - [ ] Validate `cac` against required CLI behavior: long flags, short aliases, booleans, strings, numbers, repeated/list flags, help, version, async handlers, and process-independent parsing.
-    - [ ] Select config file loader: `c12`, `confbox`, existing `FileBuilder`, or a focused custom loader.
-    - [ ] If using `c12`, document adopted and disabled features.
-    - [ ] Decide whether JSONC support is included in the initial implementation.
-    - [ ] Record the decisions in an architecture/design document.
+- [x] Task: Finalize library decisions
+    - [x] Validate `cac` against required CLI behavior: long flags, short aliases, booleans, strings, numbers, repeated/list flags, help, version, async handlers, and process-independent parsing.
+    - [x] Select config file loader: `c12`, `confbox`, existing `FileBuilder`, or a focused custom loader.
+    - [x] If using `c12`, document adopted and disabled features.
+    - [x] Decide whether JSONC support is included in the initial implementation.
+    - [x] Record the decisions in an architecture/design document.
 
-- [ ] Task: Establish tests before or alongside implementation
-    - [ ] Add or plan package-local AVA tests for precedence: defaults < config file < package.json config section < .env < process.env < CLI < explicit runtime overrides.
-    - [ ] Add tests for preserving valid falsy values: `false`, `0`, and `""`.
-    - [ ] Add tests for validation error formatting.
-    - [ ] Add tests for env and CLI coercion of booleans, numbers, strings, arrays, and structured values where supported.
-    - [ ] Add tests for secret masking.
-    - [ ] Add tests for unknown-key rejection and intentional allow behavior.
-    - [ ] Add tests for compatibility aliases.
-    - [ ] Add tests for adapter-specific option registration and final parse behavior.
+- [x] Task: Establish tests before or alongside implementation
+    - [x] Add or plan package-local AVA tests for precedence: defaults < config file < package.json config section < .env < process.env < CLI < explicit runtime overrides.
+    - [x] Add tests for preserving valid falsy values: `false`, `0`, and `""`.
+    - [x] Add tests for validation error formatting.
+    - [x] Add tests for env and CLI coercion of booleans, numbers, strings, arrays, and structured values where supported.
+    - [x] Add tests for secret masking.
+    - [x] Add tests for unknown-key rejection and intentional allow behavior.
+    - [x] Add tests for compatibility aliases.
+    - [x] Add tests for adapter-specific option registration and final parse behavior.
 
-- [ ] Task: Produce architecture artifacts
-    - [ ] Write the `@scramjet/config` architecture/design document.
-    - [ ] Write the config and Commander inventory document.
-    - [ ] Write the migration plan and risk register.
-    - [ ] Document deferred work for concrete verser2 config fields and, if needed, full `@scramjet/cli` migration.
+- [x] Task: Produce architecture artifacts
+    - [x] Write the `@scramjet/config` architecture/design document.
+    - [x] Write the config and Commander inventory document.
+    - [x] Write the migration plan and risk register.
+    - [x] Document deferred work for concrete verser2 config fields and, if needed, full `@scramjet/cli` migration.
 
-- [ ] Task: Run phase validation
-    - [ ] Run the narrowest validation available for discovery/design artifacts, such as lint or markdown/schema checks if present.
-    - [ ] Record any skipped validation and the reason.
+- [x] Task: Run phase validation
+    - [x] Run the narrowest validation available for discovery/design artifacts, such as lint or markdown/schema checks if present.
+    - [x] Record any skipped validation and the reason.
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Setup, Discovery, Design, And TDD Baseline' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Setup, Discovery, Design, And TDD Baseline' (Protocol in workflow.md)
 
 ## Phase 2: New `@scramjet/config` Package Implementation
 
