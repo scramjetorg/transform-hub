@@ -150,12 +150,13 @@
     - [x] Map topic downstream request behavior to explicit routed requests.
     - [x] Preserve streaming and backpressure expectations in tests without relying on persistent numbered channels.
     - [x] Verify no Manager/STH path depends on WebSocket upgrade, CONNECT tunneling, trailers, or forwarded informational responses.
-- [ ] Task: Migrate MultiHost or retire legacy MultiHost path
-    - [ ] Review `MultiHostController` use of old `createChannel(0)`, `createChannel(1)`, and `forward(req, res)`.
-    - [ ] Decide whether MultiHost remains a first-class deployment concept, noting that verser2 does not provide built-in multi-Host shared route state.
-    - [ ] If retained, define application-owned route distribution, lease usage, and Host selection semantics.
-    - [ ] If retired or folded into STH route semantics, define removal and compatibility behavior.
-    - [ ] Add tests for `/msth/:id` behavior when retained, or removal/compatibility behavior when retired.
+- [x] Task: Migrate MultiHost or retire legacy MultiHost path
+    - [x] Review `MultiHostController` use of old `createChannel(0)`, `createChannel(1)`, and `forward(req, res)`.
+    - [x] Decide whether MultiHost remains a first-class deployment concept, noting that verser2 does not provide built-in multi-Host shared route state.
+    - [x] If retained, define application-owned route distribution, lease usage, and Host selection semantics.
+    - [x] If retired or folded into STH route semantics, define removal and compatibility behavior.
+    - [x] Add tests for `/msth/:id` behavior when retained, or removal/compatibility behavior when retired.
+        - Decision: legacy MultiHost is retired for verser2 mode because verser2 does not provide shared multi-Host route state. Legacy mode keeps the existing `MultiHostController` path; verser2 mode rejects MultiHost connections and `/msth/:id` forwarding with HTTP 410 compatibility responses.
 - [ ] Task: Introduce runner transport foundation
     - [ ] Add `RunnerTransport` interfaces in shared types or an appropriate package.
     - [ ] Adapt host-side instance lifecycle code to depend on `RunnerTransport` instead of raw channel arrays where possible.

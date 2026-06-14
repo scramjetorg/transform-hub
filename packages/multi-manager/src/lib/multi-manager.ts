@@ -366,6 +366,13 @@ export class MultiManager {
     attachMultiHostAPI(id: string, verserConnection: VerserConnection) {
         this.logger.info(`MultiHost API incoming connection with id: ${id}.`);
 
+        if (this.usesVerser2Transport()) {
+            this.logger.warn("Refusing legacy MultiHost connection in verser2 mode", id);
+            verserConnection.end(410, "Legacy MultiHost path is retired in verser2 mode");
+
+            return;
+        }
+
         let instance = this.multiHostControllerStore.getById(id);
 
         if (instance?.isConnectionActive) {
@@ -425,6 +432,17 @@ export class MultiManager {
 
     async forwardMultiHostRequest(req: ParsedMessage, res: ServerResponse) {
         const id = (req.params || {}).id;
+
+        if (this.usesVerser2Transport()) {
+            res.writeHead(410, { "content-type": "application/json" });
+            res.end(JSON.stringify({
+                opStatus: ReasonPhrases.GONE,
+                error: "Legacy MultiHost /msth forwarding is retired in verser2 mode"
+            }));
+
+            return;
+        }
+
         const controller = this.multiHostControllerStore.getById(id);
 
         this.logger.debug("Request to MultiHost", req.method, req.url);

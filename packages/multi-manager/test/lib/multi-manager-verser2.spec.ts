@@ -127,3 +127,64 @@ test("attachManagerVerser2Peers skips legacy Manager transport", async t => {
 
     t.deepEqual(attachLocalBrokerCalls, []);
 });
+
+test("forwardMultiHostRequest rejects legacy /msth forwarding in verser2 mode", async t => {
+    const multiManager: any = Object.create(MultiManager.prototype);
+    const chunks: Buffer[] = [];
+    const req: any = {
+        params: { id: "multi-host-1" },
+        method: "GET",
+        url: "/api/v1/msth/multi-host-1/status"
+    };
+    const res: any = new PassThrough();
+
+    multiManager.config = {
+        verser2: {
+            enabled: true,
+            migrationMode: "verser2"
+        }
+    };
+    res.writeHead = (statusCode: number, headers: Record<string, string>) => {
+        res.statusCode = statusCode;
+        res.headers = headers;
+    };
+    res.end = (chunk?: string) => {
+        if (chunk) chunks.push(Buffer.from(chunk));
+        res.endCalled = true;
+    };
+
+    await multiManager.forwardMultiHostRequest(req, res);
+
+    t.is(res.statusCode, 410);
+    t.deepEqual(res.headers, { "content-type": "application/json" });
+    t.deepEqual(JSON.parse(Buffer.concat(chunks).toString("utf8")), {
+        opStatus: "Gone",
+        error: "Legacy MultiHost /msth forwarding is retired in verser2 mode"
+    });
+});
+
+test("attachMultiHostAPI rejects legacy MultiHost connections in verser2 mode", t => {
+    const multiManager: any = Object.create(MultiManager.prototype);
+    const endCalls: any[] = [];
+    const verserConnection: any = {
+        end: (statusCode: number, message: string) => endCalls.push({ statusCode, message })
+    };
+
+    multiManager.config = {
+        verser2: {
+            enabled: true,
+            migrationMode: "verser2"
+        }
+    };
+    multiManager.logger = {
+        info: () => undefined,
+        warn: () => undefined
+    };
+
+    multiManager.attachMultiHostAPI("multi-host-1", verserConnection);
+
+    t.deepEqual(endCalls, [{
+        statusCode: 410,
+        message: "Legacy MultiHost path is retired in verser2 mode"
+    }]);
+});
