@@ -243,6 +243,32 @@ run_guard 5 "No @scramjet/python-runner references outside CHANGELOG/docs/roadma
 run_guard 6 "No process.stdout reassignment or redirectOutputs in runner/src" guard6
 run_guard 7 "No new BPMux or old-verser references outside the verser2 migration allowlist" guard7
 
+# ----------------------------------------------------------------------------
+# Guard 8: No direct Commander usage in package source or package manifests.
+# CLI and adapter option handling must go through Scramjet-owned config and
+# command descriptors instead of leaking Commander types or imports.
+# ----------------------------------------------------------------------------
+guard8() {
+    local hits
+    hits="$(
+        rg -n 'from ["'\''`]commander["'\''`]|require\(["'\''`]commander["'\''`]\)|import\(["'\''`]commander["'\''`]\)|"commander"\s*:' \
+            packages \
+            --glob '!**/node_modules/**' \
+            --glob '!**/dist/**' \
+            --glob '!**/*.md' \
+            2> /dev/null \
+        || true
+    )"
+    if [ -z "${hits}" ]; then
+        return 0
+    fi
+    echo "  forbidden Commander references:"
+    printf '    %s\n' "${hits}"
+    return 1
+}
+
+run_guard 8 "No direct Commander imports or package dependencies in packages" guard8
+
 echo "---"
 echo "RESULTS: ${PASS} passed, ${FAIL} failed"
 if [ "${FAIL}" -gt 0 ]; then

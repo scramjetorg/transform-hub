@@ -1,13 +1,29 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
-import { Command } from "commander";
+import { ConfigOptionDescriptor, parseCliOptions } from "@scramjet/config";
 import { MultiManager as MultiManager } from "../lib/multi-manager";
 import { createServer, ServerConfiguration } from "@scramjet/api-server";
 import { MultiManagerCommandOptions } from "../types/multi-manager-types";
 import { MultiManagerConfig } from "../config/multi-manager-configuration";
 import * as v8 from "v8";
 
-const program = new Command();
+const cliOptions: ConfigOptionDescriptor[] = [
+    { name: "config", flag: "config", short: "c", type: "string", description: "Specify path to json configuration file" },
+    { name: "colors", flag: "colors", type: "boolean", description: "Disable colors in output", defaultValue: true, negatable: true },
+    { name: "id", flag: "id", type: "string", description: "Specify MultiManager id" },
+    { name: "serverApiBase", flag: "server-api-base", short: "b", type: "string", description: "Specify MultiManager API server base path" },
+    { name: "serverApiPort", flag: "server-api-port", short: "P", type: "number", description: "Specify MultiManager API server port" },
+    { name: "serverApiHost", flag: "host", short: "H", type: "string", description: "Host IP to listen on" },
+    { name: "serverVersion", flag: "server-version", type: "string", description: "Specify MultiManager API server version" },
+    { name: "logLevel", flag: "log-level", type: "string", description: "Specify log level" },
+    { name: "dumpHeap", flag: "dump-heap", type: "number", description: "Dump heap to file >once< allocation exceeds given size", defaultValue: 0 },
+    { name: "sslKeyPath", flag: "ssl-key-path", type: "string", description: "SSL Key path to encrypt Manager <-> Host communication" },
+    { name: "sslCertPath", flag: "ssl-cert-path", type: "string", description: "SSL Certficate path to encrypt Manager <-> Host communication" },
+    { name: "manager", flag: "manager", type: "string", description: "Immediately start manager with given id" },
+    { name: "healtzPort", flag: "healtz-port", type: "number", description: "Starts monitoring sever on a selected port" },
+    { name: "healtzHost", flag: "healtz-host", type: "string", description: "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port" },
+    { name: "healtzPath", flag: "healtz-path", type: "string", description: "Exposes monitoring endpoint on specified path. Requires --healtz-port" }
+];
 
 function startMultiManager(options: MultiManagerCommandOptions) {
     try {
@@ -47,22 +63,4 @@ function startMultiManager(options: MultiManagerCommandOptions) {
         });
 }
 
-program
-    .description("https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/dictionary.md")
-    .option("-c, --config <path>", "Specify path to json configuration file")
-    .option("--no-colors", "Disable colors in output")
-    .option("--id <id>", "Specify MultiManager id")
-    .option("-b, --server-api-base <base>", "Specify MultiManager API server base path")
-    .option("-P, --server-api-port <port>", "Specify MultiManager API server port", parseInt)
-    .option("-H, --host <host-ip>", "Host IP to listen on")
-    .option("--server-version <version>", "Specify MultiManager API server version")
-    .option("--log-level <level>", "Specify log level")
-    .option("--dump-heap <megabytes>", "Dump heap to file >once< allocation exceeds given size", parseInt, 0)
-    .option("--ssl-key-path <path>", "SSL Key path to encrypt Manager <-> Host communication")
-    .option("--ssl-cert-path <path>", "SSL Certficate path to encrypt Manager <-> Host communication")
-    .option("--manager <id|config>", "Immediately start manager with given id")
-    .option("--healtz-port <healtz-port>", "Starts monitoring sever on a selected port", parseInt)
-    .option("--healtz-host <healtz-host>", "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port")
-    .option("--healtz-path <healtz-path>", "Exposes monitoring endpoint on specified path. Requires --healtz-port")
-    .action(startMultiManager)
-    .parse(process.argv);
+startMultiManager(parseCliOptions({ argv: process.argv, options: cliOptions }) as Partial<MultiManagerCommandOptions> as MultiManagerCommandOptions);

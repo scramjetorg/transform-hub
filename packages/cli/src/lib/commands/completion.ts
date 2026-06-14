@@ -1,12 +1,25 @@
-import { CommandDefinition } from "../../types";
+import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { Completion } from "../../handlers/completion";
-import { isCompletionScript } from "../../utils/envs";
 
-export const completion: CommandDefinition = (program) => {
-    const completionCmd = program.command("completion").addHelpCommand(false).description("Completion operations");
-
-    if (isCompletionScript()) completionCmd.action(() => Completion.complete(program));
-
-    completionCmd.command("install").description("Installs bash completion script").action(Completion.install);
-    completionCmd.command("uninstall").description("Uninstalls bash completion script").action(Completion.uninstall);
-};
+/**
+ * Builds the `completion` command descriptor.
+ * When running in completion script context, `si completion` calls Completion.complete()
+ * which uses the root descriptor from commands/index.
+ * We accept the root as a parameter since we need access to the full tree.
+ */
+export const completionCommand: CommandDescriptor = cmd("completion", (b) => {
+    b
+        .desc("Completion operations")
+        .children(
+            cmd("install", (c) => {
+                c
+                    .desc("Installs bash completion script")
+                    .action(Completion.install);
+            }),
+            cmd("uninstall", (c) => {
+                c
+                    .desc("Uninstalls bash completion script")
+                    .action(Completion.uninstall);
+            })
+        );
+});

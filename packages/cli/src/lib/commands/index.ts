@@ -1,32 +1,30 @@
-import { CommandDefinition } from "../../types";
-import { config } from "./config";
-import { hub } from "./hub";
-import { instance } from "./instance";
-import { scope } from "./scope";
-import { sequence } from "./sequence";
-import { space } from "./space";
-import { topic } from "./topic";
-import { completion } from "./completion";
-import { util } from "./util";
-import { init } from "./init";
+import type { CommandDescriptor } from "@scramjet/config";
+import { configCommand } from "./config";
+import { hubCommand } from "./hub";
+import { instanceCommand } from "./instance";
+import { scopeCommand } from "./scope";
+import { sequenceCommand } from "./sequence";
+import { spaceCommand } from "./space";
+import { topicCommand } from "./topic";
+import { completionCommand } from "./completion";
+import { utilCommand } from "./util";
+import { initCommand } from "./init";
 import { isDevelopment } from "../../utils/envs";
-import { store } from "./store";
-import { developerTools } from "./developerTools";
-import { si } from "./si";
+import { storeCommand } from "./store";
+import { developerToolsCommand } from "./developerTools";
 import { isLinuxOS } from "../helpers/isLinux";
 
-export const commands: CommandDefinition[] = [
-    si,
-    isLinuxOS() ? completion : () => {},
-    config,
-    scope,
-    space,
-    hub,
-    sequence,
-    instance,
-    topic,
-    init,
-    store,
-    util,
-    isDevelopment() ? developerTools : () => {}
+export const commandDescriptors: CommandDescriptor[] = [
+    configCommand,
+    scopeCommand,
+    spaceCommand,
+    hubCommand,
+    sequenceCommand,
+    instanceCommand,
+    topicCommand,
+    initCommand,
+    storeCommand,
+    utilCommand,
+    ...(isLinuxOS() ? [completionCommand] : []),
+    ...(isDevelopment() ? [developerToolsCommand] : [])
 ];

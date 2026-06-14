@@ -21,11 +21,11 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/host": "^1.1.0",
+    "@scramjet/config": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/sth-config": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "@scramjet/adapters": "1.1.0",
-    "commander": "^8.3.0"
+    "@scramjet/adapters": "1.1.0"
   },
   "devDependencies": {
     "@scramjet/model": "^1.1.0",

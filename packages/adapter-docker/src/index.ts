@@ -1,16 +1,15 @@
-import { IAdapterAugmentation, STHConfiguration } from "@scramjet/types";
+import { IAdapterAugmentation, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
 
-type Command = import("commander").Command;
-function augmentOptions(options: Command): Command {
+function augmentOptions(options: RuntimeOptionRegistry): RuntimeOptionRegistry {
     return options
         // .option("--docker-socket <socket>", "Docker socket path", "/var/run/docker.sock")
         // .option("--docker-host <host>", "Docker host:port (will override socket connection)")
-        .option("--runner-image <image name>", "Image used by docker runner for Node.js")
-        .option("--runner-py-image <image>", "Image used by docker runner for Python")
-        .option("--runner-bun-image <image>", "Image used by docker runner for Bun")
-        .option("--runner-max-mem <mb>", "Maximum mem used by runner")
-        .option("--prerunner-image <image name>", "Image used by prerunner")
-        .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner");
+        .option({ name: "runnerImage", flag: "runner-image", type: "string", description: "Image used by docker runner for Node.js" })
+        .option({ name: "runnerPyImage", flag: "runner-py-image", type: "string", description: "Image used by docker runner for Python" })
+        .option({ name: "runnerBunImage", flag: "runner-bun-image", type: "string", description: "Image used by docker runner for Bun" })
+        .option({ name: "runnerMaxMem", flag: "runner-max-mem", type: "number", description: "Maximum mem used by runner" })
+        .option({ name: "prerunnerImage", flag: "prerunner-image", type: "string", description: "Image used by prerunner" })
+        .option({ name: "prerunnerMaxMem", flag: "prerunner-max-mem", type: "number", description: "Maximum mem used by prerunner" });
 }
 
 async function initialize() {

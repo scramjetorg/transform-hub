@@ -28,6 +28,25 @@ Values are applied only when they are not `undefined`, so `false`, `0`, and `""`
 - `maskConfig()` applies descriptor metadata to redact secrets in public config output.
 - `formatZodError()` returns operator-readable validation errors.
 
+## Native CLI Command Model
+
+The CLI migration must be a full replacement, not a wrapper around Commander. `@scramjet/config` should expose Scramjet-owned command descriptors and a small command runner that maps the existing `si command subcommand --arg` style onto a native command tree.
+
+Required model:
+
+- A command is a descriptor with `name`, optional `alias`, optional `description`, optional `hidden`, `arguments`, `options`, hooks, event/completion metadata, child commands, and an async action.
+- A command path is resolved by walking positional tokens from left to right, preserving the existing style such as `si config profile use default`, `si sequence send`, and `si instance input --content-type text/plain`.
+- Options are parsed only after the command path is resolved, using the command's local options plus inherited global options where enabled.
+- Arguments are consumed positionally according to command descriptors, including required and optional arguments and choices.
+- Completion and developer documentation read the Scramjet command tree directly rather than inspecting parser internals.
+- Help/version output is generated from descriptors. It does not need to reproduce Commander byte-for-byte, but command names, aliases, public options, argument names, and action behavior must remain compatible.
+
+Forbidden model:
+
+- Do not re-export Commander classes from `@scramjet/config`.
+- Do not create local classes named like Commander drop-in replacements (`Command`, `Option`, `Argument`) whose purpose is to preserve the old fluent Commander API.
+- Do not keep `packages/cli` on a Commander compatibility layer.
+
 ## Adapter Option Flow
 
 1. STH registers common options in a `RuntimeOptionRegistry`.

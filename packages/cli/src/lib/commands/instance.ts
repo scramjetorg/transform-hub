@@ -1,233 +1,223 @@
 /* eslint-disable no-console */
+import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { instanceKill, instanceRestart } from "../helpers/instance";
-import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { getInstanceId, profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { ClientError } from "@scramjet/client-utils";
-import { Option } from "commander";
-import { initPlatform } from "../platform";
-import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
+
 /**
- * Initializes `instance` command.
- *
- * @param {Command} program Commander object.
+ * Builds the `instance` command descriptor tree.
  */
-export const instance: CommandDefinition = (program) => {
-    const instanceCmd = program
-        .command("instance [command]")
-        .hook("preAction", initPlatform)
-        .addHelpCommand(false)
-        .configureHelp({ showGlobalOptions: true })
+export const instanceCommand: CommandDescriptor = cmd("instance", (b) => {
+    b
         .alias("inst")
         .usage("[command] [options...]")
-        .description("Operations on the running Sequence");
+        .desc("Operations on the running Sequence")
+        .children(
+            cmd("list", (c) => {
+                c
+                    .alias("ls")
+                    .desc("List all Instances")
+                    .action(async () => displayEntity(getHostClient().listInstances(), profileManager.getProfileConfig().format));
+            }),
+            cmd("use", (c) => {
+                c
+                    .argument("<id>", "Instance id")
+                    .desc("Select the Instance to communicate with by using '-' alias instead of Instance id")
+                    .action(async (id: string) => {
+                        try {
+                            await getHostClient().getInstanceInfo(id);
+                        } catch (error) {
+                            if (error instanceof ClientError && error.code === "NOT_FOUND") {
+                                error.message = `Unable to find instance ${id}`;
+                            }
+                            throw error;
+                        }
 
-    instanceCmd
-        .command("list")
-        .alias("ls")
-        .description("List all Instances")
-        .action(async () => displayEntity(getHostClient().listInstances(), profileManager.getProfileConfig().format));
+                        sessionConfig.setLastInstanceId(id);
+                    });
+            }),
+            cmd("info", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Display a basic information about the Instance")
+                    .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
+                        profileManager.getProfileConfig().format));
+            }),
+            cmd("health", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started")
+                    .desc("Display Instance health status")
+                    .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth(),
+                        profileManager.getProfileConfig().format));
+            }),
+            cmd("log", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Pipe the running Instance log to stdout")
+                    .action((id: string) => {
+                        return displayStream(getInstance(getInstanceId(id)).getLogStream());
+                    });
+            }),
+            cmd("kill", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started")
+                    .option("--removeImmediately", "Remove instance from all flows right after kill")
+                    .desc("Kill the Instance without waiting for the unfinished task")
+                    .action(async (id: string, options: Record<string, unknown>) => {
+                        const removeImmediately = options.removeImmediately as boolean || false;
+                        const instanceKillResponse = await instanceKill(id, removeImmediately);
 
-    instanceCmd
-        .command("use")
-        .argument("<id>", "Instance id")
-        .description("Select the Instance to communicate with by using '-' alias instead of Instance id")
-        .addHelpText("after", `\nCurrent Instance id saved under '-' : ${sessionConfig.lastInstanceId}`)
-        .action(async (id: string) => {
-            try {
-                await getHostClient().getInstanceInfo(id);
-            } catch (error) {
-                if (error instanceof ClientError && error.code === "NOT_FOUND") {
-                    error.message = `Unable to find instance ${id}`;
-                }
-                throw error;
-            }
+                        displayObject(instanceKillResponse, profileManager.getProfileConfig().format);
+                    });
+            }),
+            cmd("stop", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started")
+                    .argument("<timeout>", "Timeout in milliseconds")
+                    .desc("End the Instance gracefully waiting for the unfinished tasks")
+                    .action(async (id: string, timeout: string) =>
+                        displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true),
+                            profileManager.getProfileConfig().format));
+            }),
+            cmd("restart", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Kills the instance and start the new one from root sequence")
+                    .action(async (id: string) => {
+                        const instanceId = await getInstanceId(id);
+                        const instanceRestartResponse = await instanceRestart(instanceId);
 
-            sessionConfig.setLastInstanceId(id);
-        });
+                        displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
 
-    instanceCmd
-        .command("info")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Display a basic information about the Instance")
-        .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
-            profileManager.getProfileConfig().format));
+                        sessionConfig.setLastInstanceId(instanceId);
+                    });
+            }),
+            cmd("input", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .argument("[file]", "File with data")
+                    .option("-t, --content-type <value>", "Content-Type")
+                    .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header")
+                    .desc("Send a file to input, if no file given the data will be read directly from the console input (stdin)")
+                    .completer({ file: "filenames" })
+                    .action(async (id: string, filename: string, options: Record<string, unknown>) => {
+                        const contentType = options.contentType as string || "text/plain";
+                        const end = options.end as boolean || false;
+                        const instanceClient = getInstance(getInstanceId(id));
 
-    instanceCmd
-        .command("health")
-        .argument("<id>", "Instance id or '-' for the last one started")
-        .description("Display Instance health status")
-        .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth(),
-            profileManager.getProfileConfig().format));
+                        await instanceClient.sendInput(filename ? await getReadStreamFromFile(filename) : process.stdin, {},
+                            { type: contentType, end });
+                    });
+            }),
+            cmd("inout", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .argument("[file]", "File with data")
+                    .option("-t, --content-type <content-type>", "Content-Type")
+                    .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header")
+                    .completer({ file: "filenames" })
+                    .desc("See input and output")
+                    .action(async (id: string, filename: string, options: Record<string, unknown>) => {
+                        const contentType = options.contentType as string || "text/plain";
+                        const end = options.end as boolean || false;
+                        const instanceClient = getInstance(getInstanceId(id));
 
-    instanceCmd
-        .command("log")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Pipe the running Instance log to stdout")
-        .action((id: string) => {
-            return displayStream(getInstance(getInstanceId(id)).getLogStream());
-        });
+                        return displayStream(
+                            await instanceClient.inout(
+                                filename ? await getReadStreamFromFile(filename) : process.stdin, {
+                                    headers: { "content-type": contentType },
+                                },
+                                { type: contentType, end }
+                            )
+                        );
+                    });
+            }),
+            cmd("output", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Pipe the running Instance output to stdout")
+                    .action((id: string) => {
+                        return displayStream(getInstance(getInstanceId(id)).getStream("output"));
+                    });
+            }),
+            cmd("stdio", (c) => {
+                c
+                    .alias("attach")
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Listen to all stdio - stdin, stdout, stderr of the running Instance")
+                    .action(async (id: string) => {
+                        const inst = getInstance(getInstanceId(id));
 
-    instanceCmd
-        .command("kill")
-        .argument("<id>", "Instance id or '-' for the last one started")
-        .option("--removeImmediately", "Remove instance from all flows right after kill")
-        .description("Kill the Instance without waiting for the unfinished task")
-        .action(async (id: string, { removeImmediately = false }: { removeImmediately: boolean }) => {
-            const instanceKillResponse = await instanceKill(id, removeImmediately);
+                        await attachStdio(inst);
+                    });
+            }),
+            cmd("event", (eventCmd) => {
+                eventCmd
+                    .desc("Show event commands")
+                    .children(
+                        cmd("emit", (c) => {
+                            c
+                                .alias("invoke")
+                                .argument("<id>", "Instance id or '-' for the last one started or selected")
+                                .argument("<eventName>", "The event name")
+                                .argument("[payload]", "Pass a JSON data to the Instance")
+                                .desc("Send event with eventName and a JSON formatted event payload")
+                                .action(async (id: string, eventName: string, message: string) => {
+                                    const instanceClient = getInstance(getInstanceId(id));
 
-            displayObject(instanceKillResponse, profileManager.getProfileConfig().format);
-        }
+                                    return displayEntity(instanceClient.sendEvent(eventName, message),
+                                        profileManager.getProfileConfig().format);
+                                });
+                        }),
+                        cmd("on", (c) => {
+                            c
+                                .argument("<id>", "The instance id or '-' for the last one started or selected")
+                                .argument("<eventName>", "The event name")
+                                .option("-n, --next", "Wait for the next event occurrence")
+                                .option("-s, --stream", "Stream the events (the stream will start with last event)")
+                                .desc("Get the last event occurrence (will wait for the first one if not yet retrieved)")
+                                .action(async (id: string, event: string, options: Record<string, unknown>) => {
+                                    const next = options.next as boolean;
+                                    const stream = options.stream as boolean;
+
+                                    if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
+                                    if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event),
+                                        "json");
+                                    return displayEntity(
+                                        getInstance(getInstanceId(id)).getEvent(event), "json"
+                                    );
+                                });
+                        })
+                    );
+            }),
+            cmd("stdin", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .argument("[file]", "The input file (stdin if not given default)")
+                    .desc("Send a file to stdin, if no file given the data will be read from stdin")
+                    .completer({ file: "filenames" })
+                    .action(async (id: string, file: string) => {
+                        const instanceClient = getInstance(getInstanceId(id));
+
+                        return displayEntity(instanceClient.sendStdin(file ? await getReadStreamFromFile(file) : process.stdin),
+                            profileManager.getProfileConfig().format);
+                    });
+            }),
+            cmd("stderr", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Pipe the running Instance stderr stream to stdout")
+                    .action((id: string) => displayStream(getInstance(getInstanceId(id)).getStream("stderr")));
+            }),
+            cmd("stdout", (c) => {
+                c
+                    .argument("<id>", "Instance id or '-' for the last one started or selected")
+                    .desc("Pipe the running Instance stdout stream to stdout")
+                    .action((id: string) => {
+                        return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
+                    });
+            })
         );
-
-    /**
-     * @canCallKeepAlive
-     * if true Instance can prolong its lifetime
-     * if false Instance will end after timeout
-     */
-    instanceCmd
-        .command("stop")
-        .argument("<id>", "Instance id or '-' for the last one started")
-        .argument("<timeout>", "Timeout in milliseconds")
-        .description("End the Instance gracefully waiting for the unfinished tasks")
-        .action(async (id: string, timeout: string) =>
-            displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true),
-                profileManager.getProfileConfig().format));
-
-    instanceCmd
-        .command("restart")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Kills the instance and start the new one from root sequence")
-        .action(async (id: string) => {
-            const instanceId = await getInstanceId(id);
-            const instanceRestartResponse = await instanceRestart(instanceId);
-
-            displayObject(instanceRestartResponse, profileManager.getProfileConfig().format);
-
-            sessionConfig.setLastInstanceId(instanceId);
-        });
-
-    instanceCmd
-        .command("input")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .argument("[file]", "File with data")
-        .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
-        .description("Send a file to input, if no file given the data will be read directly from the console input (stdin)")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
-            complDetails.file = "filenames";
-        })
-        .action(async (id: string, filename: string, { contentType, end }) => {
-            const instanceClient = getInstance(getInstanceId(id));
-
-            await instanceClient.sendInput(filename ? await getReadStreamFromFile(filename) : process.stdin, {},
-                { type: contentType, end });
-        });
-
-    instanceCmd
-        .command("inout")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .argument("[file]", "File with data")
-        .addOption(new Option("-t,--content-type <content-type>", "Content-Type").choices(["text/plain", "application/octet-stream", "application/x-ndjson"]))
-        .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
-            complDetails.file = "filenames";
-        })
-        .description("See input and output")
-        .action(async (id: string, filename: string, { contentType, end }) => {
-            const instanceClient = getInstance(getInstanceId(id));
-
-            return displayStream(
-                await instanceClient.inout(
-                    filename ? await getReadStreamFromFile(filename) : process.stdin, {
-                        headers: { "content-type": contentType },
-                    },
-                    { type: contentType, end }
-                )
-            );
-        });
-
-    instanceCmd
-        .command("output")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Pipe the running Instance output to stdout")
-        .action((id: string) => {
-            return displayStream(getInstance(getInstanceId(id)).getStream("output"));
-        });
-
-    instanceCmd
-        .command("stdio")
-        .alias("attach")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Listen to all stdio - stdin, stdout, stderr of the running Instance")
-        .action(async (id: string) => {
-            const inst = getInstance(getInstanceId(id));
-
-            await attachStdio(inst);
-        });
-
-    const eventCmd = instanceCmd
-        .command("event")
-        .addHelpCommand(false)
-        .description("Show event commands");
-
-    eventCmd
-        .command("emit")
-        .alias("invoke")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .argument("<eventName>", "The event name")
-        .argument("[payload]", "Pass a JSON data to the Instance")
-        .description("Send event with eventName and a JSON formatted event payload")
-        .action(async (id: string, eventName: string, message: string) => {
-            const instanceClient = getInstance(getInstanceId(id));
-
-            return displayEntity(instanceClient.sendEvent(eventName, message),
-                profileManager.getProfileConfig().format);
-        });
-
-    eventCmd
-        .command("on")
-        .argument("<id>", "The instance id or '-' for the last one started or selected")
-        .argument("<eventName>", "The event name")
-        .option("-n, --next", "Wait for the next event occurrence")
-        .option("-s, --stream", "Stream the events (the stream will start with last event)")
-        .description("Get the last event occurrence (will wait for the first one if not yet retrieved)")
-        .action(async (id: string, event: string, { next, stream }) => {
-            if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
-            if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event),
-                "json");
-            return displayEntity(
-                getInstance(getInstanceId(id)).getEvent(event), "json"
-            );
-        });
-
-    instanceCmd
-        .command("stdin")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .argument("[file]", "The input file (stdin if not given default)")
-        .description("Send a file to stdin, if no file given the data will be read from stdin")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
-            complDetails.file = "filenames";
-        })
-        .action(async (id: string, file: string) => {
-            const instanceClient = getInstance(getInstanceId(id));
-
-            return displayEntity(instanceClient.sendStdin(file ? await getReadStreamFromFile(file) : process.stdin),
-                profileManager.getProfileConfig().format);
-        });
-
-    instanceCmd
-        .command("stderr")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Pipe the running Instance stderr stream to stdout")
-        .action((id: string) => displayStream(getInstance(getInstanceId(id)).getStream("stderr")));
-
-    instanceCmd
-        .command("stdout")
-        .argument("<id>", "Instance id or '-' for the last one started or selected")
-        .description("Pipe the running Instance stdout stream to stdout")
-        .action((id: string) => {
-            return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
-        });
-};
+});

@@ -1,6 +1,5 @@
 import test from "ava";
-import { InvalidOptionArgumentError } from "commander";
-import { portsParser } from "../../src/lib/ports-parser";
+import { InvalidOptionArgumentError, portsParser } from "../../src/lib/ports-parser";
 
 test("portsParser parses valid range 8000-8010", (t) => {
     const result = portsParser("8000-8010");

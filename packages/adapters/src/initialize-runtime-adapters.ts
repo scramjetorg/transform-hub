@@ -1,4 +1,4 @@
-import { IObjectLogger, STHConfiguration } from "@scramjet/types";
+import { IObjectLogger, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
 import { getAdapter, getValidAdapters } from "./get-adapters";
 
 export function updateAdaptersConfig(adapter: string, config: STHConfiguration) {
@@ -20,24 +20,21 @@ export function updateAdaptersConfig(adapter: string, config: STHConfiguration) 
     getAdapter(adapter).augmentConfig(config);
 }
 
-type Command = import("commander").Command;
-export function augmentOptions(options: Command): Command {
+export function registerRuntimeAdapterOption(options: RuntimeOptionRegistry): RuntimeOptionRegistry {
     const validAdapters = getValidAdapters();
 
-    options.option("-a,--runtime-adapter <adapter>", `Runtime adapter to use (${validAdapters.map(x => JSON.stringify(x))},"detect")`, (value) => {
-        if (!value || value === "detect") {
-            return "detect";
-        }
-        if (!validAdapters.includes(value)) {
-            throw new Error(`Invalid runtime adapter: ${value}`);
-        }
-
-        return value;
+    return options.option({
+        name: "runtimeAdapter",
+        flag: "runtime-adapter",
+        short: "a",
+        type: "string",
+        description: `Runtime adapter to use (${validAdapters.map(x => JSON.stringify(x))},"detect")`,
+        choices: ["detect", ...validAdapters]
     });
+}
 
-    options.parseOptions(process.argv);
-
-    const runtimeAdapterValue: string = options.getOptionValue("runtimeAdapter") || "detect";
+export function augmentOptions(options: RuntimeOptionRegistry, runtimeAdapterValue: string = "detect"): RuntimeOptionRegistry {
+    const validAdapters = getValidAdapters();
 
     if (runtimeAdapterValue === "detect") {
         if (validAdapters.includes("docker"))

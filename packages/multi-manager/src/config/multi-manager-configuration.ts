@@ -52,37 +52,37 @@ const mergeConfigs = (
     fileConfiguration: Record<string, any>
 ): MultiManagerOptions => {
     return {
-        logLevel: options.logLevel || fileConfiguration?.logLevel || defaultConfig.logLevel,
-        logColors: (typeof fileConfiguration?.logColors === "boolean" ? fileConfiguration?.logColors : defaultConfig.logColors) && options.colors!,
-        id: options.id || fileConfiguration?.id || defaultConfig.id,
+        logLevel: options.logLevel ?? fileConfiguration?.logLevel ?? defaultConfig.logLevel,
+        logColors: (options.colors ?? true) && (fileConfiguration?.logColors ?? defaultConfig.logColors),
+        id: options.id ?? fileConfiguration?.id ?? defaultConfig.id,
         server: {
-            apiBase: options?.serverApiBase || fileConfiguration?.server?.apiBase || defaultConfig.server.apiBase,
-            apiPort: options?.serverApiPort || fileConfiguration?.server?.apiPort || defaultConfig.server.apiPort,
-            apiHost: options?.serverApiHost || fileConfiguration?.server?.apiHost || defaultConfig.server.apiHost,
-            version: options?.serverVersion || fileConfiguration?.server?.version || defaultConfig.server.version,
+            apiBase: options?.serverApiBase ?? fileConfiguration?.server?.apiBase ?? defaultConfig.server.apiBase,
+            apiPort: options?.serverApiPort ?? fileConfiguration?.server?.apiPort ?? defaultConfig.server.apiPort,
+            apiHost: options?.serverApiHost ?? fileConfiguration?.server?.apiHost ?? defaultConfig.server.apiHost,
+            version: options?.serverVersion ?? fileConfiguration?.server?.version ?? defaultConfig.server.version,
         },
-        manager: options.manager || fileConfiguration?.manager,
+        manager: options.manager ?? fileConfiguration?.manager,
         instanceRequirements: {
-            freeMem: fileConfiguration?.instanceRequirements?.freeMem || defaultConfig.instanceRequirements.freeMem,
-            cpuLoad: fileConfiguration?.instanceRequirements?.cpuLoad || defaultConfig.instanceRequirements.cpuLoad,
-            freeSpace: fileConfiguration?.instanceRequirements?.freeSpace ||
+            freeMem: fileConfiguration?.instanceRequirements?.freeMem ?? defaultConfig.instanceRequirements.freeMem,
+            cpuLoad: fileConfiguration?.instanceRequirements?.cpuLoad ?? defaultConfig.instanceRequirements.cpuLoad,
+            freeSpace: fileConfiguration?.instanceRequirements?.freeSpace ??
                 defaultConfig.instanceRequirements.freeSpace,
         },
-        safeOperationLimit: fileConfiguration?.safeOperationLimit || defaultConfig.safeOperationLimit,
+        safeOperationLimit: fileConfiguration?.safeOperationLimit ?? defaultConfig.safeOperationLimit,
         s3: {
-            endPoint: fileConfiguration?.s3?.endPoint || defaultConfig.s3?.endPoint,
-            accessKey: fileConfiguration?.s3?.accessKey || defaultConfig.s3?.accessKey,
-            secretKey: fileConfiguration?.s3?.secretKey || defaultConfig.s3?.secretKey,
-            bucket: fileConfiguration?.s3?.bucket || defaultConfig.s3?.bucket,
-            port: fileConfiguration?.s3?.port || defaultConfig.s3?.port,
-            useSSL: fileConfiguration?.s3?.useSSL || defaultConfig.s3?.useSSL,
-            region: fileConfiguration?.s3?.region || defaultConfig.s3?.region,
-            bucketLimit: fileConfiguration?.s3?.bucketLimit || defaultConfig.s3?.bucketLimit
+            endPoint: fileConfiguration?.s3?.endPoint ?? defaultConfig.s3?.endPoint,
+            accessKey: fileConfiguration?.s3?.accessKey ?? defaultConfig.s3?.accessKey,
+            secretKey: fileConfiguration?.s3?.secretKey ?? defaultConfig.s3?.secretKey,
+            bucket: fileConfiguration?.s3?.bucket ?? defaultConfig.s3?.bucket,
+            port: fileConfiguration?.s3?.port ?? defaultConfig.s3?.port,
+            useSSL: fileConfiguration?.s3?.useSSL ?? defaultConfig.s3?.useSSL,
+            region: fileConfiguration?.s3?.region ?? defaultConfig.s3?.region,
+            bucketLimit: fileConfiguration?.s3?.bucketLimit ?? defaultConfig.s3?.bucketLimit
         },
         monitoringServer: {
-            host: fileConfiguration?.monitoringServer?.host || options?.healtzHost,
-            path: fileConfiguration?.monitoringServer?.path || options?.healtzPath,
-            port: fileConfiguration?.monitoringServer?.port || options?.healtzPort
+            host: fileConfiguration?.monitoringServer?.host ?? options?.healtzHost,
+            path: fileConfiguration?.monitoringServer?.path ?? options?.healtzPath,
+            port: fileConfiguration?.monitoringServer?.port ?? options?.healtzPort
         },
         fsPaths: defaultConfig.fsPaths
     };

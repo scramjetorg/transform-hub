@@ -1,4 +1,9 @@
-import { InvalidOptionArgumentError } from "commander";
+export class InvalidOptionArgumentError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "InvalidOptionArgumentError";
+    }
+}
 
 /**
  * Parses ports range in [0-9]-[0-9] format to array of numbers

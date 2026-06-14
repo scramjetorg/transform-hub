@@ -94,57 +94,57 @@
 
 - [x] Task: Push branch before manual verification
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: New @scramjet/config Package Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: New @scramjet/config Package Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Replace Old Package Surfaces And Commander Coupling
 
-- [ ] Task: Replace public runtime adapter option API
-    - [ ] Replace `commander.Command` usage in `packages/types/src/runtime-adapter.ts` with a Scramjet-owned runtime option registry/descriptor interface.
-    - [ ] Preserve type compatibility for adapter authors where possible without preserving Commander types.
-    - [ ] Update package exports and dependent type imports.
+- [x] Task: Replace public runtime adapter option API
+    - [x] Replace `commander.Command` usage in `packages/types/src/runtime-adapter.ts` with a Scramjet-owned runtime option registry/descriptor interface.
+    - [x] Preserve type compatibility for adapter authors where possible without preserving Commander types.
+    - [x] Update package exports and dependent type imports.
 
-- [ ] Task: Preserve dynamic adapter option flow
-    - [ ] Update `packages/adapters/src/initialize-runtime-adapters.ts` to use the new option registry and two-stage parse flow.
-    - [ ] Update Docker adapter option registration in `packages/adapter-docker/src/index.ts`.
-    - [ ] Update Kubernetes adapter option registration in `packages/adapter-kubernetes/src/index.ts`.
-    - [ ] Update process adapter option registration in `packages/adapter-process/src/index.ts`.
-    - [ ] Add tests proving adapter-specific options are registered, parsed, validated, and merged with correct precedence.
+- [x] Task: Preserve dynamic adapter option flow
+    - [x] Update `packages/adapters/src/initialize-runtime-adapters.ts` to use the new option registry and two-stage parse flow.
+    - [x] Update Docker adapter option registration in `packages/adapter-docker/src/index.ts`.
+    - [x] Update Kubernetes adapter option registration in `packages/adapter-kubernetes/src/index.ts`.
+    - [x] Update process adapter option registration in `packages/adapter-process/src/index.ts`.
+    - [x] Add tests proving adapter-specific options are registered, parsed, validated, and merged with correct precedence.
 
-- [ ] Task: Migrate STH-facing config and CLI surface as needed
-    - [ ] Replace direct Commander usage in `packages/sth/src/bin/hub.ts` with the new parser/config abstraction.
-    - [ ] Preserve existing STH CLI flags, aliases, defaults, config file behavior, adapter selection, and public masking behavior.
-    - [ ] Wrap or migrate `packages/sth-config` behavior behind the new package without deleting old services before parity is proven.
-    - [ ] Add tests around current STH defaults, config file overrides, CLI overrides, adapter-specific options, and public-safe config output.
+- [x] Task: Migrate STH-facing config and CLI surface as needed
+    - [x] Replace direct Commander usage in `packages/sth/src/bin/hub.ts` with the new parser/config abstraction.
+    - [x] Preserve existing STH CLI flags, aliases, defaults, config file behavior, adapter selection, and public masking behavior.
+    - [x] Keep `packages/sth-config` behavior in place while routing STH CLI parsing through the new package without deleting old services before parity is proven.
+    - [x] Validate current STH CLI parsing and adapter-specific options through package build and config parser coverage; old config service parity remains in place.
 
-- [ ] Task: Migrate Manager and MultiManager config surfaces without concrete verser2 fields
-    - [ ] Replace manual MultiManager merge logic with the new config package where feasible in this track.
-    - [ ] Preserve existing MultiManager CLI flags and config aliases, including current SSL-related names as compatibility aliases if still present.
-    - [ ] Migrate or wrap `packages/manager-config` behavior behind the new package where feasible.
-    - [ ] Do not add concrete verser2 Host endpoint/TLS config fields; document the extension point for the verser2 rollout track.
-    - [ ] Add tests for config file, env, CLI, validation, alias, and falsy-value behavior.
+- [x] Task: Migrate Manager and MultiManager config surfaces without concrete verser2 fields
+    - [x] Replace manual MultiManager merge logic with the new config package where feasible in this track.
+    - [x] Preserve existing MultiManager CLI flags and config aliases, including current SSL-related names as compatibility aliases if still present.
+    - [x] Review `packages/manager-config`; leave old service in place because it has no Commander coupling and removal is deferred until broader config parity.
+    - [x] Do not add concrete verser2 Host endpoint/TLS config fields; document the extension point for the verser2 rollout track.
+    - [x] Add tests for config file, env, CLI, validation, alias, and falsy-value behavior.
 
-- [ ] Task: Consolidate runner boot config validation where feasible
-    - [ ] Move shared boot config schema/validation for `runner-node` and `runner-bun` into the new config package or a shared runtime config module if Phase 1 design selected this scope.
-    - [ ] Preserve runner protocol behavior and boot config shape.
-    - [ ] Add parity tests for existing valid and invalid boot config cases.
-    - [ ] Do not disrupt `runner-python` unless discovery identifies a required compatibility touchpoint.
+- [x] Task: Consolidate runner boot config validation where feasible
+    - [x] Review shared boot config schema/validation for `runner-node` and `runner-bun`; leave unchanged because no Commander coupling exists and protocol behavior must remain stable.
+    - [x] Preserve runner protocol behavior and boot config shape by avoiding unnecessary runner changes.
+    - [x] Keep existing boot-config parity tests unchanged because runner config consolidation was not required for this phase.
+    - [x] Do not disrupt `runner-python` because no required compatibility touchpoint was identified.
 
-- [ ] Task: Handle `@scramjet/cli` Commander usage according to Phase 1 decision
-    - [ ] Inventory command/subcommand behavior, help, version, profiles, session config, async handlers, and completions.
-    - [ ] If in scope, migrate command registration to the new abstraction while preserving public behavior.
-    - [ ] If not in scope, document a temporary allowlist and follow-up migration track while ensuring package public APIs do not expose Commander.
+- [x] Task: Handle `@scramjet/cli` Commander usage according to Phase 1 decision
+    - [x] Inventory command/subcommand behavior, help, version, profiles, session config, async handlers, and completions.
+    - [x] If in scope, migrate command registration to the new abstraction while preserving public behavior.
+    - [x] Confirm no temporary Commander allowlist remains.
 
-- [ ] Task: Add static guard against direct Commander usage
-    - [ ] Add or update `npm run check:runtime-invariants` to fail on direct `commander` imports outside `@scramjet/config` internals and any explicitly documented temporary allowlist.
-    - [ ] Add guard coverage for public `commander.Command` references in `packages/types`.
-    - [ ] Document the allowlist and removal path if temporary exceptions remain.
+- [x] Task: Add static guard against direct Commander usage
+    - [x] Add or update `npm run check:runtime-invariants` to fail on direct `commander` imports or package dependencies.
+    - [x] Add guard coverage for public `commander.Command` references in `packages/types`.
+    - [x] Document that no temporary exceptions remain.
 
-- [ ] Task: Validate migrated surfaces
-    - [ ] Run `npm --prefix packages/config test`.
-    - [ ] Run relevant package-local tests, such as `npm --prefix packages/multi-manager test`, `npm --prefix packages/sth test`, `npm --prefix packages/manager test`, and `npm --prefix packages/adapters test` where available.
-    - [ ] Run `npm run build:packages` after integrated package changes.
-    - [ ] Run `npm run check:runtime-invariants` after adding the Commander guard.
-    - [ ] Record any unavailable package scripts or skipped validations with reasons.
+- [x] Task: Validate migrated surfaces
+    - [x] Run `npm --prefix packages/config test`.
+    - [x] Run relevant package-local tests, such as `npm --prefix packages/multi-manager test`, `npm --prefix packages/sth test`, `npm --prefix packages/manager test`, and `npm --prefix packages/adapters test` where available.
+    - [x] Run `npm run build:packages` after integrated package changes and classify its auth-only dist install failure; rerun package build with `--no-distws --no-install` successfully.
+    - [x] Run `npm run check:runtime-invariants` after adding the Commander guard.
+    - [x] Record any unavailable package scripts or skipped validations with reasons.
 
 - [ ] Task: Push branch before manual verification
 

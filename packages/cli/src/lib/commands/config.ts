@@ -1,21 +1,19 @@
 /* eslint-disable no-console */
 
-import { CommandDefinition } from "../../types";
+import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { stringToBoolean } from "../../utils/stringToBoolean";
 import { profileManager, siConfig, sessionConfig, isProfileConfig, ProfileConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
-import commander from "commander";
 
 /**
- * Initializes `config` command.
- *
- * @param {Command} program Commander object.
+ * Builds the `config` command descriptor tree.
  */
-export const config: CommandDefinition = (program) => {
+export const configCommand: CommandDescriptor = cmd("config", (b) => {
     const profileConfig = profileManager.getProfileConfig();
     const defaultConfig = profileConfig.getDefault();
 
-    const { apiUrl: defaultApiUrl,
+    const {
+        apiUrl: defaultApiUrl,
         middlewareApiUrl: defaulMiddlewareApiUrl,
         env: defaultEnv,
         token: defaultToken,
@@ -25,229 +23,240 @@ export const config: CommandDefinition = (program) => {
         }
     } = defaultConfig;
 
-    const configCmd = program
-        .command("config")
-        .addHelpCommand(false)
-        .configureHelp({ showGlobalOptions: true })
+    b
         .alias("c")
         .usage("[command] ")
-        .description("Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
+        .desc("Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings")
+        .children(
+            cmd("print", (c) => {
+                c
+                    .alias("p")
+                    .desc("Print out the current profile configuration")
+                    .action(() => {
+                        const configuration = profileManager.getProfileConfig().get();
 
-    configCmd
-        .command("print")
-        .alias("p")
-        .description("Print out the current profile configuration")
-        .action(() => {
-            const configuration = profileManager.getProfileConfig().get();
+                        if (profileManager.isPathSource())
+                            displayMessage(`Current configuration: ${profileConfig.path}\n`);
+                        else
+                            displayMessage(`Current profile: ${profileManager.getProfileName()}\n`);
+                        displayObject(configuration, configuration.log.format);
+                    });
+            }),
+            cmd("session", (c) => {
+                c
+                    .alias("s")
+                    .desc("Print out the current session configuration")
+                    .action(() => {
+                        const configuration = profileConfig.get();
 
-            if (profileManager.isPathSource())
-                displayMessage(`Current configuration: ${profileConfig.path}\n`);
-            else
-                displayMessage(`Current profile: ${profileManager.getProfileName()}\n`);
-            displayObject(configuration, configuration.log.format);
-        });
+                        displayObject(sessionConfig.get(), configuration.log.format);
+                    });
+            }),
+            ...(isProfileConfig(profileConfig)
+                ? [
+                    cmd("set", (setCmd) => {
+                        setCmd
+                            .desc("Set property value in the current profile config")
+                            .children(
+                                cmd("json", (c) => {
+                                    c
+                                        .argument("<json>")
+                                        .desc("Set configuration properties from a json object")
+                                        .action((json: string) => {
+                                            let jsonConfig = {};
 
-    configCmd
-        .command("session")
-        .alias("s")
-        .description("Print out the current session configuration")
-        .action(() => {
-            const configuration = profileConfig.get();
+                                            try {
+                                                jsonConfig = JSON.parse(json);
+                                            } catch (_) {
+                                                throw new Error("Parsing error: Invalid JSON format");
+                                            }
+                                            if (!(profileConfig as ProfileConfig).set(jsonConfig)) {
+                                                throw new Error("Invalid configuration in json object");
+                                            }
+                                        });
+                                }),
+                                cmd("apiUrl", (c) => {
+                                    c
+                                        .argument("<url>")
+                                        .desc("Specify the Hub API Url")
+                                        .action((url: string) => {
+                                            if (!(profileConfig as ProfileConfig).setApiUrl(url)) {
+                                                throw new Error("Invalid url");
+                                            }
+                                        });
+                                }),
+                                cmd("log", (c) => {
+                                    c
+                                        .option("--debug <boolean>", "Specify log to show extended view")
+                                        .option("--format <format>", "Specify format between \"pretty\" or \"json\"")
+                                        .desc("Specify log options")
+                                        .action((options: Record<string, unknown>) => {
+                                            const debug = options.debug as string | undefined;
+                                            const newFormat = options.format as string | undefined;
 
-            displayObject(sessionConfig.get(), configuration.log.format);
-        });
+                                            if (debug) {
+                                                const debugVal = stringToBoolean(debug);
 
-    if (isProfileConfig(profileConfig)) {
-        const setCmd = configCmd
-            .command("set")
-            .addHelpCommand(false)
-            .description("Set property value in the current profile config");
+                                                if (typeof debugVal === "undefined") {
+                                                    throw new Error("Invalid debug value");
+                                                }
+                                                if (!(profileConfig as ProfileConfig).setDebug(debugVal as boolean)) {
+                                                    throw new Error("Unable to set debug value");
+                                                }
+                                            }
+                                            if (newFormat && !(profileConfig as ProfileConfig).setFormat(newFormat)) {
+                                                throw new Error("Unable to set format value");
+                                            }
+                                        });
+                                }),
+                                cmd("middlewareApiUrl", (c) => {
+                                    c
+                                        .argument("<url>")
+                                        .desc("Specify middleware API url")
+                                        .action((url: string) => {
+                                            if (!(profileConfig as ProfileConfig).setMiddlewareApiUrl(url)) {
+                                                throw new Error("Invalid url");
+                                            }
+                                        });
+                                }),
+                                cmd("scope", (c) => {
+                                    c
+                                        .argument("<name>")
+                                        .desc("Specify default scope that should be used when session start")
+                                        .action((scope: string) => {
+                                            if (!(profileConfig as ProfileConfig).setScope(scope)) {
+                                                throw new Error(`Invalid name: ${scope}`);
+                                            }
+                                        });
+                                }),
+                                cmd("token", (c) => {
+                                    c
+                                        .argument("<jwt>")
+                                        .desc("Specify platform authorization token")
+                                        .action((token: string) => {
+                                            if (!(profileConfig as ProfileConfig).setToken(token)) {
+                                                throw new Error("Invalid token");
+                                            }
+                                        });
+                                }),
+                                cmd("env", (c) => {
+                                    c
+                                        .argument("<production|development>", "Specify environment", true)
+                                        .desc("Specify the environment")
+                                        .action((env: string) => {
+                                            if (!["production", "development"].includes(env)) {
+                                                throw new Error("Invalid environment: must be 'production' or 'development'");
+                                            }
+                                            if (!(profileConfig as ProfileConfig).setEnv(env as any)) {
+                                                throw new Error("Invalid environment");
+                                            }
+                                        });
+                                })
+                            );
+                    }),
+                    cmd("reset", (resetCmd) => {
+                        const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
+                            if (!setCallback(defaultValue)) {
+                                throw new Error("Reset failed.");
+                            }
+                        };
 
-        setCmd
-            .command("json")
-            .argument("<json>")
-            .description("Set configuration properties from a json object")
-            .action(json => {
-                let jsonConfig = {};
+                        resetCmd
+                            .desc("Reset property value to default in the current profile config")
+                            .children(
+                                cmd("apiUrl", (c) => {
+                                    c
+                                        .desc("Reset apiUrl")
+                                        .action(() => resetValue(defaultApiUrl, v => (profileConfig as ProfileConfig).setApiUrl(v)));
+                                }),
+                                cmd("log", (c) => {
+                                    c
+                                        .desc("Reset logger")
+                                        .action(() => resetValue({ defaultFormat, defaultDebug },
+                                            ({ defaultFormat: f, defaultDebug: d }) =>
+                                                (profileConfig as ProfileConfig).setFormat(f) && (profileConfig as ProfileConfig).setDebug(d)));
+                                }),
+                                cmd("middlewareApiUrl", (c) => {
+                                    c
+                                        .desc("Reset middlewareApiUrl")
+                                        .action(() => resetValue(defaulMiddlewareApiUrl, v =>
+                                            (profileConfig as ProfileConfig).setMiddlewareApiUrl(v)));
+                                }),
+                                cmd("token", (c) => {
+                                    c
+                                        .desc("Reset token")
+                                        .action(() => resetValue(defaultToken, v => (profileConfig as ProfileConfig).setToken(v)));
+                                }),
+                                cmd("env", (c) => {
+                                    c
+                                        .desc("Reset env")
+                                        .action(() => resetValue(defaultEnv, v => (profileConfig as ProfileConfig).setEnv(v)));
+                                }),
+                                cmd("all", (c) => {
+                                    c
+                                        .desc("Reset all configuration")
+                                        .action(() => {
+                                            (profileConfig as ProfileConfig).restoreDefault();
+                                            sessionConfig.restoreDefault();
+                                        });
+                                })
+                            );
+                    })
+                ]
+                : []
+            ),
+            cmd("profile", (profileCmd) => {
+                profileCmd
+                    .alias("pr")
+                    .desc("Select and work with user profiles")
+                    .children(
+                        cmd("list", (c) => {
+                            c
+                                .alias("ls")
+                                .desc("Show available configuration profiles")
+                                .action(() => {
+                                    const currentProfile = profileManager.getProfileName();
 
-                try {
-                    jsonConfig = JSON.parse(json);
-                } catch (_) {
-                    throw new Error("Parsing error: Invalid JSON format");
-                }
-                if (!(profileConfig as ProfileConfig).set(jsonConfig)) {
-                    throw new Error("Invalid configuration in json object");
-                }
-            });
+                                    displayMessage("Available profiles:");
+                                    profileManager.listProfiles().sort().forEach((profile: string) => {
+                                        displayMessage(`${profile === currentProfile ? "-> " : "   "}${profile}`);
+                                    });
+                                });
+                        }),
+                        cmd("use", (c) => {
+                            c
+                                .argument("<name>")
+                                .desc("Set configuration profile as default to use")
+                                .action((name: string) => {
+                                    if (!profileManager.profileExists(name)) throw Error(`Unknown profile: ${name}`);
+                                    if (!profileManager.profileIsValid(name)) throw Error(`Profile ${name} contain errors`);
+                                    const currentProfile = siConfig.profile;
 
-        setCmd
-            .command("apiUrl")
-            .argument("<url>")
-            .description("Specify the Hub API Url")
-            .action(url => {
-                if (!(profileConfig as ProfileConfig).setApiUrl(url)) {
-                    throw new Error("Invalid url");
-                }
-            });
+                                    if (name === currentProfile) return;
 
-        setCmd
-            .command("log")
-            .option("--debug <boolean>", "Specify log to show extended view")
-            .option("--format <format>", "Specify format between \"pretty\" or \"json\"")
-            .description("Specify log options")
-            .action(({ debug, format: newFormat }) => {
-                if (debug) {
-                    const debugVal = stringToBoolean(debug);
+                                    sessionConfig.restoreDefault();
+                                    siConfig.setProfile(name);
+                                });
+                        }),
+                        cmd("create", (c) => {
+                            c
+                                .argument("<name>")
+                                .desc("Create new configuration profile")
+                                .action((name: string) => { profileManager.createProfile(name); });
+                        }),
+                        cmd("remove", (c) => {
+                            c
+                                .argument("<name>")
+                                .desc("Remove existing profile configuration")
+                                .action((name: string) => {
+                                    if (profileManager.getProfileName() === name) {
+                                        siConfig.setProfile("default");
+                                    }
 
-                    if (typeof debugVal === "undefined") {
-                        throw new Error("Invalid debug value");
-                    }
-                    if (!(profileConfig as ProfileConfig).setDebug(debugVal as boolean)) {
-                        throw new Error("Unable to set debug value");
-                    }
-                }
-                if (newFormat && !(profileConfig as ProfileConfig).setFormat(newFormat)) {
-                    throw new Error("Unable to set format value");
-                }
-            });
-
-        setCmd
-            .command("middlewareApiUrl")
-            .argument("<url>")
-            .description("Specify middleware API url")
-            .action(url => {
-                if (!(profileConfig as ProfileConfig).setMiddlewareApiUrl(url)) {
-                    throw new Error("Invalid url");
-                }
-            });
-
-        setCmd
-            .command("scope")
-            .argument("<name>")
-            .description("Specify default scope that should be used when session start")
-            .action(scope => {
-                if (!(profileConfig as ProfileConfig).setScope(scope)) {
-                    throw new Error(`Invalid name: ${scope}`);
-                }
-            });
-
-        setCmd
-            .command("token")
-            .argument("<jwt>")
-            .description("Specify platform authorization token")
-            .action(token => {
-                if (!(profileConfig as ProfileConfig).setToken(token)) {
-                    throw new Error("Invalid token");
-                }
-            });
-
-        setCmd
-            .command("env")
-            .addArgument(new commander.Argument("<production|development>").choices(["production", "development"]))
-            .description("Specify the environment")
-            .action(env => {
-                if (!(profileConfig as ProfileConfig).setEnv(env)) {
-                    throw new Error("Invalid environment");
-                }
-            });
-
-        const resetCmd = configCmd
-            .command("reset")
-            .addHelpCommand(false)
-            .description("Reset property value to default in the current profile config");
-
-        const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
-            if (!setCallback(defaultValue)) {
-                throw new Error("Reset failed.");
-            }
-        };
-
-        resetCmd
-            .command("apiUrl")
-            .description("Reset apiUrl")
-            .action(() => resetValue(defaultApiUrl, v => (profileConfig as ProfileConfig).setApiUrl(v)));
-
-        resetCmd
-            .command("log")
-            .description("Reset logger")
-            .action(() => resetValue({ defaultFormat, defaultDebug },
-                ({ defaultFormat: f, defaultDebug: d }) =>
-                    (profileConfig as ProfileConfig).setFormat(f) && (profileConfig as ProfileConfig).setDebug(d)));
-
-        resetCmd
-            .command("middlewareApiUrl")
-            .description("Reset middlewareApiUrl")
-            .action(() => resetValue(defaulMiddlewareApiUrl, v =>
-                (profileConfig as ProfileConfig).setMiddlewareApiUrl(v)));
-
-        resetCmd
-            .command("token")
-            .description("Reset token")
-            .action(() => resetValue(defaultToken, v => (profileConfig as ProfileConfig).setToken(v)));
-
-        resetCmd
-            .command("env")
-            .description("Reset env")
-            .action(() => resetValue(defaultEnv, v => (profileConfig as ProfileConfig).setEnv(v)));
-
-        resetCmd
-            .command("all")
-            .description("Reset all configuration")
-            .action(() => {
-                (profileConfig as ProfileConfig).restoreDefault();
-                sessionConfig.restoreDefault();
-            });
-    }
-    const profileCmd = configCmd
-        .command("profile")
-        .alias("pr")
-        .addHelpCommand(false)
-        .description("Select and work with user profiles");
-
-    profileCmd
-        .command("list")
-        .alias("ls")
-        .description("Show available configuration profiles")
-        .action(() => {
-            const currentProfile = profileManager.getProfileName();
-
-            displayMessage("Available profiles:");
-            profileManager.listProfiles().sort().forEach((profile) => {
-                displayMessage(`${profile === currentProfile ? "-> " : "   "}${profile}`);
-            });
-        });
-
-    profileCmd
-        .command("use")
-        .argument("<name>")
-        .description("Set configuration profile as default to use")
-        .action((name) => {
-            if (!profileManager.profileExists(name)) throw Error(`Unknown profile: ${name}`);
-            if (!profileManager.profileIsValid(name)) throw Error(`Profile ${name} contain errors`);
-            const currentProfile = siConfig.profile;
-
-            if (name === currentProfile)
-                return;
-
-            sessionConfig.restoreDefault();
-            siConfig.setProfile(name);
-        });
-
-    profileCmd
-        .command("create")
-        .argument("<name>")
-        .description("Create new configuration profile")
-        .action((name) => { profileManager.createProfile(name); });
-
-    profileCmd
-        .command("remove")
-        .argument("<name>")
-        .description("Remove existing profile configuration")
-        .action((name) => {
-            if (profileManager.getProfileName() === name) {
-                siConfig.setProfile("default");
-            }
-
-            profileManager.removeProfile(name);
-        });
-};
+                                    profileManager.removeProfile(name);
+                                });
+                        })
+                    );
+            })
+        );
+});

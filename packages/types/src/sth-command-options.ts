@@ -59,9 +59,13 @@ export type STHCommandOptions = {
     environmentName?: string;
     telemetry: TelemetryConfig["status"]
     monitoringServer: { port: number };
+    healtzPort?: string;
+    healtzHost?: string;
+    healtzPath?: string;
     runnerEnvs?: string;
     couchdbUrl?: string;
     couchdbName?: string;
     couchdbUser?: string;
     couchdbPass?: string;
+    strictPlatformConnection?: boolean;
 }

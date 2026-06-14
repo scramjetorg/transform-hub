@@ -1,22 +1,21 @@
-import { Argument, Command, Option } from "commander";
+import type { ArgumentDescriptor, CommandDescriptor, OptionDescriptor } from "@scramjet/config";
 import { CommandIterator } from "../../helpers/commandIterator";
 import { CompWordsIterator } from "./compWordsIterator";
-import EventEmitter from "events";
-import { CommandCompleterDetails, CompleterDetailsEvent, CompleterParams } from "../../events/completerDetails";
+import { CommandCompleterDetails, CompleterParams } from "../../events/completerDetails";
 
-export class CommanderCompleter {
-    private rootCommand: Command;
+export class CommandCompleter {
+    private rootCommand: CommandDescriptor;
 
-    constructor(cmd: Command) {
+    constructor(cmd: CommandDescriptor) {
         this.rootCommand = new CommandIterator(cmd).root().command;
     }
 
-    private commandMatch(cmdName: string, cmd: Command) {
-        return cmd.name() === cmdName || cmd.alias() === cmdName;
+    private commandMatch(cmdName: string, cmd: CommandDescriptor) {
+        return cmd.name === cmdName || cmd.alias === cmdName;
     }
 
-    private optionMatch(option: Option, name: string) {
-        return option.long === name || option.short === name;
+    private optionMatch(option: OptionDescriptor, name: string) {
+        return `--${option.flag || option.name}` === name || (option.short ? `-${option.short}` === name : false);
     }
 
     private findCommandHorizontal = (cmdName: string, cmdIt: CommandIterator) => {
@@ -29,7 +28,7 @@ export class CommanderCompleter {
     };
 
     private findLastKnownCommand = (commandIt: CommandIterator, compWordsIt: CompWordsIterator) => {
-        let lastFound: Command | null = null;
+        let lastFound: CommandDescriptor | null = null;
 
         for (; compWordsIt.valid(); compWordsIt.next()) {
             const searchedCmdName = compWordsIt.word();
@@ -48,41 +47,43 @@ export class CommanderCompleter {
         return lastFound;
     };
 
-    private getSubcommandsNames(command: Command, subcommandNameStart: string = "") {
+    private getSubcommandsNames(command: CommandDescriptor, subcommandNameStart: string = "") {
         const subcommands: string[] = [];
 
-        command.commands.forEach((cmd) => {
-            const name = cmd.name();
+        (command.children || []).forEach((cmd) => {
+            const name = cmd.name;
 
             if (name.startsWith(subcommandNameStart)) subcommands.push(name);
         });
         return subcommands;
     }
 
-    private getOptionsNames(command: Command, optionNameStart: string = "") {
+    private getOptionsNames(command: CommandDescriptor, optionNameStart: string = "") {
         const optionFlags: string[] = [];
 
-        // @ts-ignore:
-        command.options.forEach((option: Option) => {
-            const optFlag = option.long || option.short || "";
+        (command.options || []).forEach((option: OptionDescriptor) => {
+            const optFlag = `--${option.flag || option.name}`;
 
             if (optFlag && optFlag.startsWith(optionNameStart)) optionFlags.push(optFlag);
+            if (option.short && `-${option.short}`.startsWith(optionNameStart)) optionFlags.push(`-${option.short}`);
         });
         return optionFlags;
     }
 
-    private getCommandCompleterDetails(command: Command, argOrOptionName: string) {
-        const emiter = command as unknown as EventEmitter;
+    private getCommandCompleterDetails(command: CommandDescriptor, argOrOptionName: string) {
         const completerDetails: CommandCompleterDetails = {};
+        const meta = command.completerMeta || {};
 
-        emiter.emit(CompleterDetailsEvent, completerDetails);
+        if (argOrOptionName in meta) {
+            completerDetails[argOrOptionName] = meta[argOrOptionName];
+        }
 
         if (!(argOrOptionName in completerDetails)) return null;
 
         return completerDetails[argOrOptionName];
     }
 
-    private getFilteredCommandCompleterDetails(command: Command, argOrOptionName: string, valueStart: string = "") {
+    private getFilteredCommandCompleterDetails(command: CommandDescriptor, argOrOptionName: string, valueStart: string = "") {
         const detail = this.getCommandCompleterDetails(command, argOrOptionName);
 
         if (Array.isArray(detail) && valueStart) {
@@ -91,7 +92,7 @@ export class CommanderCompleter {
         return detail;
     }
 
-    private findArgument(args: Argument[], compWordsIt: CompWordsIterator) {
+    private findArgument(args: ArgumentDescriptor[], compWordsIt: CompWordsIterator) {
         for (const arg of args) {
             if (compWordsIt.wordsLeft() > 0) compWordsIt.next();
             else if (compWordsIt.wordsLeft() === 0) return arg;
@@ -104,9 +105,8 @@ export class CommanderCompleter {
         return name.startsWith("-");
     }
 
-    private findOption(command: Command, optionName: string) {
-        // @ts-ignore
-        const cmdOptions: Option[] = command.options;
+    private findOption(command: CommandDescriptor, optionName: string) {
+        const cmdOptions: OptionDescriptor[] = command.options || [];
         const found = cmdOptions.find((opt) => this.optionMatch(opt, optionName));
 
         return found || null;
@@ -116,7 +116,6 @@ export class CommanderCompleter {
         return choices.filter((choice) => choice.startsWith(matchingStart));
     }
 
-    // eslint-disable-next-line complexity
     public complete(compWords: string[], compCword: number): CompleterParams {
         const cmdIt = new CommandIterator(this.rootCommand);
         const compWordsIt = new CompWordsIterator(compWords, compCword);
@@ -124,33 +123,24 @@ export class CommanderCompleter {
 
         const cmd = this.findLastKnownCommand(cmdIt, compWordsIt);
 
-        // not found = wrong command name in compWords
         if (!cmd) return [];
 
-        // have child commands = children are completer params (else left compWords are arguments or options of command)
-        if (cmd.commands.length) return this.getSubcommandsNames(cmd, cursorWord);
+        if (cmd.children && cmd.children.length > 0) return this.getSubcommandsNames(cmd, cursorWord);
 
-        // @ts-ignore
-        const cmdArgs: Argument[] = cmd._args;
-        // we assume that required arguments are always declared first on list.
+        const cmdArgs: ArgumentDescriptor[] = cmd.arguments || [];
         const arg = this.findArgument(cmdArgs, compWordsIt);
 
-        // compWord is required or optional argument = return argument value details if given
         if (arg && (arg.required || !this.hasOptionStart(compWordsIt.word()))) {
-            // @ts-ignore
-            const choices: string[] | undefined = arg.argChoices;
+            const choices: string[] | undefined = arg.choices as string[] | undefined;
 
             if (choices) return this.filterMatchingChoices(choices, compWordsIt.word());
-            return this.getFilteredCommandCompleterDetails(cmd, arg.name(), compWordsIt.word()) || [];
+            return this.getFilteredCommandCompleterDetails(cmd, arg.name, compWordsIt.word()) || [];
         }
 
-        // compWord must be option or option value
         const currentWord = compWordsIt.cursor().word();
 
-        //option value
         if (this.hasOptionStart(currentWord)) return this.getOptionsNames(cmd, currentWord);
 
-        //maybe word is value of previous option
         const previousWord = compWordsIt.previous().word();
 
         if (this.hasOptionStart(previousWord)) {
@@ -158,8 +148,8 @@ export class CommanderCompleter {
 
             if (!option) return [];
 
-            if (option.argChoices) return this.filterMatchingChoices(option.argChoices, currentWord);
-            return this.getFilteredCommandCompleterDetails(cmd, option.name(), currentWord) || [];
+            if (option.choices) return this.filterMatchingChoices([...option.choices], currentWord);
+            return this.getFilteredCommandCompleterDetails(cmd, option.name, currentWord) || [];
         }
 
         return [];

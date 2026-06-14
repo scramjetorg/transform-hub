@@ -10,11 +10,15 @@ export type CliOptionType = "string" | "number" | "boolean" | "string[]" | "numb
 
 export interface ConfigOptionDescriptor {
     name: string;
+    flag?: string;
     path?: ConfigPath;
     description?: string;
     type?: CliOptionType;
     short?: string;
     aliases?: readonly string[];
+    flagAliases?: readonly string[];
+    choices?: readonly string[];
+    parse?: (value: string) => unknown;
     env?: string;
     envAliases?: readonly string[];
     defaultValue?: unknown;
@@ -85,14 +89,15 @@ export function parseCliOptions(input: ParseCliOptionsInput): Record<string, unk
     const values: Record<string, unknown> = {};
 
     input.options.forEach(option => {
-        const keys = [option.name, ...(option.aliases || [])];
+        const keys = [option.name, option.flag, ...(option.aliases || []), ...(option.flagAliases || [])]
+            .filter(Boolean) as string[];
         const key = keys.find(candidate => parsed.options[normalizeOptionKey(candidate)] !== undefined);
 
         if (!key) return;
 
         const raw = parsed.options[normalizeOptionKey(key)];
 
-        values[option.name] = coerceValue(raw, option.type || "string");
+        values[option.name] = coerceCliValue(raw, option);
     });
 
     return values;
@@ -172,11 +177,11 @@ export function formatZodError(error: ZodError): string {
 }
 
 function formatFlags(option: ConfigOptionDescriptor): string {
-    const longFlag = `--${option.name}`;
+    const longFlag = `--${option.flag || option.name}`;
     const typedLongFlag = option.type === "boolean" ? longFlag : `${longFlag} <value>`;
     const flags = option.short ? [`-${option.short}`, typedLongFlag] : [typedLongFlag];
 
-    (option.aliases || []).forEach(alias => {
+    (option.flagAliases || []).forEach(alias => {
         flags.push(option.type === "boolean" ? `--${alias}` : `--${alias} <value>`);
     });
 
@@ -198,6 +203,17 @@ function optionConfig(option: ConfigOptionDescriptor): Record<string, unknown> {
     if (option.multiple || option.type === "string[]" || option.type === "number[]") config.default = [];
 
     return config;
+}
+
+function coerceCliValue(value: unknown, option: ConfigOptionDescriptor): unknown {
+    const type = option.type || "string";
+    const coerced = option.parse && typeof value === "string" ? option.parse(value) : coerceValue(value, type);
+
+    if (option.choices && typeof coerced === "string" && !option.choices.includes(coerced)) {
+        throw new Error(`Invalid value for --${option.flag || option.name}: ${coerced}`);
+    }
+
+    return coerced;
 }
 
 function coerceValue(value: unknown, type: CliOptionType): unknown {
@@ -342,5 +358,8 @@ function cloneValue(value: unknown): unknown {
 function isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+
+// Re-export Native CLI Command Model
+export * from "./command-model";
 
 export { z };
