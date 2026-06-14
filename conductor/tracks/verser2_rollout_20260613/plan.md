@@ -187,6 +187,7 @@
         - Validation: added host-side verser2 runner route-contract tests for route domain derivation, readiness/route-unavailable domain behavior, lifecycle/control, stdout/stderr/log, monitoring, input/output, disconnect, and reconnect contract paths. `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
 - [ ] Task: Implement global runner verser2 transport
     - [ ] Make `packages/runner` own the global verser2 runner Guest connection, route registration, Host URL, trust material, and optional client certificate material.
+        - [x] Added pure internal `SCRAMJET_RUNNER_TRANSPORT_CONFIG` parser in `packages/runner` with legacy default behavior, verser2 `hostUrl` validation, TLS/lease/min-waiting fields, and derived `runner.<instanceId>.scramjet.internal` route domain plus `runner.<instanceId>.guest` Guest ID defaults.
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
         - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
     - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
