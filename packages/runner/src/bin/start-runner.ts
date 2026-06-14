@@ -103,6 +103,7 @@ interface RunnerNodeBootConfigShape {
     logLevel?: LogLevel;
     exposePath?: string;
     exposeHost?: string;
+    requestsUnsupported?: string;
 }
 
 function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesServerPort: number): string {
@@ -129,6 +130,10 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
     const exposeHostResolved = parsedRunnerConnectInfo.exposeHost ?? process.env.EXPOSE_HOST;
 
     if (exposeHostResolved) payload.exposeHost = exposeHostResolved;
+
+    if (runnerTransportConfig.kind === "verser2") {
+        payload.requestsUnsupported = "context.hub is not yet available over verser2 runner transport";
+    }
 
     fs.writeFileSync(file, JSON.stringify(payload), { encoding: "utf8", mode: 0o600 });
 

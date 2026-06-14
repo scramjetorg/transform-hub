@@ -7,7 +7,7 @@ import { Readable, Writable } from "stream";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";
 import type { APIExpose, AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
-import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
 import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig } from "../boot-config";
 import { buildAppContext, buildSequenceContext } from "../context";
@@ -142,10 +142,17 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
         const sequenceInfo = bootConfig.sequenceInfo;
 
-        hostClient = new HostClient(bootConfig.instancesServerPort!, bootConfig.instancesServerHost!);
+        hostClient = new HostClient(
+            bootConfig.instancesServerPort!,
+            bootConfig.instancesServerHost!,
+            bootConfig.requestsUnsupported
+        );
+        const channels = bootConfig.requestsUnsupported
+            ? new Set(Array.from(RUNNER_NODE_CHANNELS).filter(channel => channel !== CC.REQUESTS))
+            : RUNNER_NODE_CHANNELS;
 
         try {
-            await hostClient.init(bootConfig.instanceId, RUNNER_NODE_CHANNELS);
+            await hostClient.init(bootConfig.instanceId, channels);
         } catch (err) {
             logger.error("Failed to connect runner-node host channels", err);
             throw err;

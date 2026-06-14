@@ -35,7 +35,11 @@ class HostClient implements IHostClient {
     public inputEndDeferMs = 500;
     private inputSource?: Socket;
 
-    constructor(private instancesServerPort: number, private instancesServerHost: string) {
+    constructor(
+        private instancesServerPort: number,
+        private instancesServerHost: string,
+        private requestsUnsupported?: string
+    ) {
         this.logger = new ObjLogger(this);
     }
 
@@ -49,6 +53,11 @@ class HostClient implements IHostClient {
 
     getAgent() {
         if (this.agent) {
+            return this.agent;
+        }
+
+        if (this.requestsUnsupported) {
+            this.agent = this.createUnsupportedRequestsAgent(this.requestsUnsupported);
             return this.agent;
         }
 
@@ -182,6 +191,19 @@ class HostClient implements IHostClient {
         }
 
         this.logger.debug("Connected to host");
+    }
+
+    private createUnsupportedRequestsAgent(message: string): Agent {
+        const agent = new Agent() as AgentWithCreateConnection;
+
+        agent.createConnection = () => {
+            const socket = new Socket();
+
+            setImmediate(() => socket.emit("error", new Error(message)));
+            return socket;
+        };
+
+        return agent;
     }
 
     async disconnect(hard: boolean) {
