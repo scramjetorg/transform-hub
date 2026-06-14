@@ -94,15 +94,52 @@
     - [x] Extend `STHConfiguration`, `PublicSTHConfiguration`, `STHCommandOptions`, `CPMConnectorOptions`, MultiManager/Manager config types/defaults, and connector handoff types to carry the validated verser2 settings needed by the transport implementation.
     - [x] Add focused MultiManager and STH config tests proving source precedence, config-file values, CLI overrides, env aliases, valid falsy values, secret masking/public-safe config, validation errors, and legacy compatibility/alias behavior.
     - [x] Run affected config/package tests plus build/typecheck before starting transport replacement.
-- [~] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
+- [x] Task: Implement initial verser2 Manager/MultiManager Host and STH Broker/Guest transport
     - [x] Consume the validated Manager/MultiManager verser2 Host TLS/endpoint configuration from the new config surface; do not rely on implicit/self-signed Host TLS defaults.
     - [x] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
     - [x] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.
-    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over local peers (primary) or H2 Broker/Guest (remote fallback).
-    - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with Broker route lookup plus `broker.request({ targetId, method, path, headers, body })`.
     - [x] Replace `CPMConnector` old `VerserClient` usage with STH-side local Broker/Guest attachment where colocated, or `createVerserBroker()` from `@signicode/verser2-guest-node` for remote.
     - [x] Add dependency wiring for `@signicode/verser2-host`, `@signicode/verser2-guest-node`, and common packages in the affected workspaces.
     - [x] Preserve temporary legacy mode only where needed during this phase, and only outside the verser2 TLS path.
+
+## Phase 2A: Route Classification and Redirect-Readiness Forwarding
+
+- [x] Task: Document route forwarding classification
+    - [x] Add `route-forwarding-classification.md` to the track context.
+    - [x] Classify Manager, Host, instance, storage, topic, RPC, and duplex routes by action semantics rather than HTTP method.
+    - [x] Define `follow` versus `manager-multiplex` semantics.
+    - [x] Record that direct STH-to-STH payloads must not route through Manager data-plane forwarding.
+    - [x] Link the upstream verser2 native follow feature request in `signicode/verser2#20`.
+- [ ] Task: Add redirect-readiness route classifier
+    - [ ] Add a Manager-side classifier for `/sth/:id/*`, topic, instance, storage, RPC, and Manager-owned route families.
+    - [ ] Return a route decision of `follow`, `manager-multiplex`, `manager-owned`, or `unsupported-bidirectional` with enough target metadata for forwarding.
+    - [ ] Add focused tests proving classification is based on route action semantics and not method alone.
+    - [ ] Include explicit unsupported classifications for `/platform` duplex and instance `/inout` until dedicated protocols are implemented.
+- [ ] Task: Implement dummy internal redirect handler
+    - [ ] Implement a temporary Manager-side handler for Manager API `follow` decisions that resolves the target route and returns the target response or stream directly to the external caller.
+    - [ ] Keep the handler shaped so it can later be replaced with a verser2-followable `307` or `308` response.
+    - [ ] Ensure the temporary handler does not expose verser2-internal hostnames to ordinary clients.
+    - [ ] Ensure the temporary handler is not used for direct STH-originated payloads to another STH; those flows must receive route metadata and use the target STH route directly.
+    - [ ] Add tests for a follow-safe read route and a follow-safe state-changing single-owner route.
+- [ ] Task: Implement Manager topic multiplexing readiness
+    - [ ] Define Manager-owned topic multiplexer behavior for Manager API topic routes.
+    - [ ] Keep topic streams uncached while preserving current live fan-in/fan-out semantics.
+    - [ ] Support multiple downstream consumers and upstream providers according to current topic behavior.
+    - [ ] Add tests for API-to-STH, STH-to-API, and many-to-many topic cases where Manager multiplexing remains required.
+- [ ] Task: Rewrite forwarding based on classified routes
+    - [ ] Replace generic Manager-to-STH forwarding decisions with classifier-driven routing.
+    - [ ] Route follow-safe endpoints through the dummy internal redirect handler.
+    - [ ] Route Manager aggregate, storage, control, and topic fan-in/fan-out paths through Manager-owned handlers or multiplexers.
+    - [ ] Prove direct STH-to-STH payload requests do not fall back through Manager data-plane proxying.
+- [ ] Task: Replace legacy Manager/STH forwarding after route classification
+    - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with classifier-driven Manager/STH transport over local peers or H2 Broker/Guest.
+    - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage only through classified follow or Manager-multiplex paths.
+- [ ] Task: Validate redirect-readiness phase
+    - [ ] Run focused route-classifier and dummy redirect handler tests.
+    - [ ] Run affected Manager package tests or document known preexisting AVA timeout behavior with focused passing tests.
+    - [ ] Run the narrowest relevant package build/typecheck.
+    - [ ] Run an automated architecture review for route classification, direct-only STH-to-STH constraints, and future verser2 native follow replacement.
+- [ ] Task: Conductor - User Manual Verification 'Route Classification and Redirect-Readiness Forwarding' (Protocol in workflow.md)
 - [ ] Task: Migrate Manager/STH request and streaming semantics
     - [ ] Map `/platform` communication to an explicit Guest route plus Broker request/streaming-body pattern.
     - [ ] Map log behavior to explicit Guest routes and streaming request or response bodies.
@@ -131,7 +168,6 @@
     - [x] Complete automated review for streaming/backpressure, route state replacement, reconnect semantics, TLS assumptions, and legacy compatibility.
         - Post-hardening review result: no blockers found. Residual accepted risks: identical route signatures can remain suppressed after reconnect without an observed route-set change, passive broker disconnects require caller lifecycle handling until the Broker API exposes disconnect state/events, post-dispatch abort is best-effort within current Broker API limits, and generic comma-joined header normalization may need future special cases.
     - [x] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
-- [ ] Task: Conductor - User Manual Verification 'Manager/STH Migration and Transport Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Global Runner and Runtime Migration
 
