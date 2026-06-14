@@ -1,4 +1,5 @@
 import { IdString } from "./utils";
+import { ManagerVerser2Config } from "./verser2-transport-configuration";
 
 /**
  * Manager configuration type definition.
@@ -44,5 +45,7 @@ export type ManagerConfiguration = {
         region: string
         port: number,
         bucketLimit: number
-    }
+    };
+
+    verser2: ManagerVerser2Config;
 };

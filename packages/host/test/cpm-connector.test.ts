@@ -141,6 +141,17 @@ const defaultOptions: CPMConnectorOptions = {
     maxReconnections: 5,
     reconnectionDelay: 100,
     apiVersion: "v1",
+    verser2: {
+        enabled: false,
+        migrationMode: "legacy",
+        hostUrl: "",
+        broker: { peerId: "", targetDomain: "" },
+        guest: { peerId: "", routeDomain: "" },
+        tls: {},
+        enrollment: {},
+        timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
+        leases: { minimumWaitingLeases: 1 }
+    }
 };
 
 const mockConnection = (overrides: Partial<{ statusCode: number; statusMessage: string }> = {}) => {

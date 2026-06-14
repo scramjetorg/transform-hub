@@ -4,7 +4,7 @@ import { ConfigOptionDescriptor, parseCliOptions } from "@scramjet/config";
 import { MultiManager as MultiManager } from "../lib/multi-manager";
 import { createServer, ServerConfiguration } from "@scramjet/api-server";
 import { MultiManagerCommandOptions } from "../types/multi-manager-types";
-import { MultiManagerConfig } from "../config/multi-manager-configuration";
+import { MultiManagerConfig, multiManagerCliOptions } from "../config/multi-manager-configuration";
 import * as v8 from "v8";
 
 const cliOptions: ConfigOptionDescriptor[] = [
@@ -22,7 +22,9 @@ const cliOptions: ConfigOptionDescriptor[] = [
     { name: "manager", flag: "manager", type: "string", description: "Immediately start manager with given id" },
     { name: "healtzPort", flag: "healtz-port", type: "number", description: "Starts monitoring sever on a selected port" },
     { name: "healtzHost", flag: "healtz-host", type: "string", description: "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port" },
-    { name: "healtzPath", flag: "healtz-path", type: "string", description: "Exposes monitoring endpoint on specified path. Requires --healtz-port" }
+    { name: "healtzPath", flag: "healtz-path", type: "string", description: "Exposes monitoring endpoint on specified path. Requires --healtz-port" },
+    ...multiManagerCliOptions
+        .filter(option => !["colors", "id", "serverApiBase", "serverApiPort", "serverApiHost", "serverVersion", "logLevel", "manager", "healtzPort", "healtzHost", "healtzPath"].includes(option.name))
 ];
 
 function startMultiManager(options: MultiManagerCommandOptions) {

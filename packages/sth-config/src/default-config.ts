@@ -68,6 +68,29 @@ export const defaultConfig: STHConfiguration = {
     killOnExit: false,
     exitWithLastInstance: false,
     strictPlatformConnection: false,
+    verser2: {
+        enabled: false,
+        migrationMode: "legacy",
+        hostUrl: "",
+        broker: {
+            peerId: "",
+            targetDomain: ""
+        },
+        guest: {
+            peerId: "",
+            routeDomain: ""
+        },
+        tls: {},
+        enrollment: {},
+        timeouts: {
+            routeReadinessMs: 10_000,
+            leaseAcquireMs: 10_000,
+            requestMs: 30_000
+        },
+        leases: {
+            minimumWaitingLeases: 1
+        }
+    },
     timings: {
         heartBeatInterval: 10000,
         instanceLifetimeExtensionDelay: 180e3,

@@ -68,4 +68,21 @@ export type STHCommandOptions = {
     couchdbUser?: string;
     couchdbPass?: string;
     strictPlatformConnection?: boolean;
+    verser2Enabled?: boolean;
+    verser2MigrationMode?: "legacy" | "dual" | "verser2";
+    verser2HostUrl?: string;
+    verser2CaFile?: string;
+    verser2CertFile?: string;
+    verser2KeyFile?: string;
+    verser2PfxFile?: string;
+    verser2Passphrase?: string;
+    verser2EnrollmentToken?: string;
+    verser2BrokerPeerId?: string;
+    verser2BrokerTargetDomain?: string;
+    verser2GuestPeerId?: string;
+    verser2GuestRouteDomain?: string;
+    verser2RouteReadinessMs?: number;
+    verser2LeaseAcquireMs?: number;
+    verser2RequestMs?: number;
+    verser2MinimumWaitingLeases?: number;
 }

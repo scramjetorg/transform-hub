@@ -363,3 +363,4 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 export * from "./command-model";
 
 export { z };
+export * from "./verser2-config";

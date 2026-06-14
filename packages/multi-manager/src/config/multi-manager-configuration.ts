@@ -1,4 +1,5 @@
-import { ReadOnlyConfig, JsonFile, isLogLevel, merge } from "@scramjet/utility";
+import { loadConfig, managerVerser2ConfigSchema, managerVerser2Options, maskConfig, z } from "@scramjet/config";
+import { ReadOnlyConfig, isLogLevel, merge } from "@scramjet/utility";
 import { LoadCheckRequirements } from "@scramjet/types";
 import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-manager-types";
 import { MultiManagerServerConfig } from "./multi-manager-server-configuration";
@@ -32,70 +33,114 @@ const defaultMultiManagerConfig: MultiManagerOptions = {
         useSSL: false,
         region: "",
         bucketLimit: DEFAULT_BUCKET_SPACE_QUOTA
+    },
+    verser2: {
+        enabled: false,
+        migrationMode: "legacy",
+        host: {
+            bindHost: "0.0.0.0",
+            bindPort: 0,
+            publicUrl: "",
+            tls: {
+                mtlsRequired: false
+            }
+        },
+        registration: {
+            allowLocalPeers: true,
+            allowedClientFingerprints: []
+        },
+        localBroker: {
+            peerId: "multimanager.default.broker",
+            routeDomain: "multimanager.default.scramjet.internal"
+        },
+        localGuest: {
+            peerId: "multimanager.default.guest",
+            routeDomain: "multimanager.default.scramjet.internal"
+        },
+        timeouts: {
+            routeReadinessMs: 10_000,
+            leaseAcquireMs: 10_000,
+            requestMs: 30_000
+        },
+        leases: {
+            minimumWaitingLeases: 1
+        }
     }
 };
 
-const getFileConfig = (filePath: string | undefined) => {
-    let fileConfig = {};
-    const configFile: JsonFile = new JsonFile(filePath || "");
+export const multiManagerCliOptions = [
+    { name: "colors", path: "logColors", type: "boolean" as const },
+    { name: "id", path: "id", type: "string" as const },
+    { name: "serverApiBase", path: "server.apiBase", type: "string" as const },
+    { name: "serverApiPort", path: "server.apiPort", type: "number" as const },
+    { name: "serverApiHost", path: "server.apiHost", type: "string" as const },
+    { name: "serverVersion", path: "server.version", type: "string" as const },
+    { name: "logLevel", path: "logLevel", type: "string" as const },
+    { name: "manager", path: "manager", type: "json" as const },
+    { name: "healtzPort", path: "monitoringServer.port", type: "number" as const },
+    { name: "healtzHost", path: "monitoringServer.host", type: "string" as const },
+    { name: "healtzPath", path: "monitoringServer.path", type: "string" as const },
+    ...managerVerser2Options
+];
 
-    if (configFile.exists() && configFile.isReadable())
-        fileConfig = configFile.read();
+const multiManagerConfigSchema = z.object({
+    logLevel: z.string(),
+    logColors: z.boolean(),
+    id: z.string(),
+    server: z.object({
+        apiBase: z.string(),
+        apiPort: z.number(),
+        apiHost: z.string(),
+        version: z.string()
+    }).strict(),
+    manager: z.any().optional(),
+    instanceRequirements: z.object({
+        freeMem: z.number(),
+        cpuLoad: z.number(),
+        freeSpace: z.number()
+    }).strict(),
+    fsPaths: z.array(z.string()),
+    safeOperationLimit: z.number(),
+    s3: z.object({
+        endPoint: z.string(),
+        accessKey: z.string(),
+        secretKey: z.string(),
+        bucket: z.string(),
+        port: z.number(),
+        useSSL: z.boolean(),
+        region: z.string(),
+        bucketLimit: z.number()
+    }).strict(),
+    monitoringServer: z.object({
+        port: z.number().optional(),
+        host: z.string().optional(),
+        path: z.string().optional()
+    }).partial().optional(),
+    verser2: managerVerser2ConfigSchema
+}).strict();
 
-    return fileConfig;
-};
+const cliConfig = (options: MultiManagerCommandOptions): Record<string, unknown> => {
+    const cli = { ...options } as Record<string, unknown>;
 
-// eslint-disable-next-line complexity
-const mergeConfigs = (
-    defaultConfig: MultiManagerOptions,
-    options: MultiManagerCommandOptions,
-    fileConfiguration: Record<string, any>
-): MultiManagerOptions => {
-    return {
-        logLevel: options.logLevel ?? fileConfiguration?.logLevel ?? defaultConfig.logLevel,
-        logColors: (options.colors ?? true) && (fileConfiguration?.logColors ?? defaultConfig.logColors),
-        id: options.id ?? fileConfiguration?.id ?? defaultConfig.id,
-        server: {
-            apiBase: options?.serverApiBase ?? fileConfiguration?.server?.apiBase ?? defaultConfig.server.apiBase,
-            apiPort: options?.serverApiPort ?? fileConfiguration?.server?.apiPort ?? defaultConfig.server.apiPort,
-            apiHost: options?.serverApiHost ?? fileConfiguration?.server?.apiHost ?? defaultConfig.server.apiHost,
-            version: options?.serverVersion ?? fileConfiguration?.server?.version ?? defaultConfig.server.version,
-        },
-        manager: options.manager ?? fileConfiguration?.manager,
-        instanceRequirements: {
-            freeMem: fileConfiguration?.instanceRequirements?.freeMem ?? defaultConfig.instanceRequirements.freeMem,
-            cpuLoad: fileConfiguration?.instanceRequirements?.cpuLoad ?? defaultConfig.instanceRequirements.cpuLoad,
-            freeSpace: fileConfiguration?.instanceRequirements?.freeSpace ??
-                defaultConfig.instanceRequirements.freeSpace,
-        },
-        safeOperationLimit: fileConfiguration?.safeOperationLimit ?? defaultConfig.safeOperationLimit,
-        s3: {
-            endPoint: fileConfiguration?.s3?.endPoint ?? defaultConfig.s3?.endPoint,
-            accessKey: fileConfiguration?.s3?.accessKey ?? defaultConfig.s3?.accessKey,
-            secretKey: fileConfiguration?.s3?.secretKey ?? defaultConfig.s3?.secretKey,
-            bucket: fileConfiguration?.s3?.bucket ?? defaultConfig.s3?.bucket,
-            port: fileConfiguration?.s3?.port ?? defaultConfig.s3?.port,
-            useSSL: fileConfiguration?.s3?.useSSL ?? defaultConfig.s3?.useSSL,
-            region: fileConfiguration?.s3?.region ?? defaultConfig.s3?.region,
-            bucketLimit: fileConfiguration?.s3?.bucketLimit ?? defaultConfig.s3?.bucketLimit
-        },
-        monitoringServer: {
-            host: fileConfiguration?.monitoringServer?.host ?? options?.healtzHost,
-            path: fileConfiguration?.monitoringServer?.path ?? options?.healtzPath,
-            port: fileConfiguration?.monitoringServer?.port ?? options?.healtzPort
-        },
-        fsPaths: defaultConfig.fsPaths
-    };
+    delete cli.config;
+    delete cli.dumpHeap;
+    delete cli.sslKeyPath;
+    delete cli.sslCertPath;
+    if (cli.colors === true) delete cli.colors;
+
+    return cli;
 };
 
 export class MultiManagerConfig extends ReadOnlyConfig<MultiManagerOptions> {
-    constructor(options: MultiManagerCommandOptions) {
-        const fileConfig = getFileConfig(options.config);
-
-        if (typeof fileConfig !== "object")
-            throw new Error("Invalid file configuration");
-
-        const multiManagerConfig = mergeConfigs(defaultMultiManagerConfig, options, fileConfig);
+    constructor(options: MultiManagerCommandOptions, env: Record<string, string | undefined> = process.env) {
+        const multiManagerConfig = loadConfig<MultiManagerOptions>({
+            schema: multiManagerConfigSchema as unknown as z.ZodType<MultiManagerOptions>,
+            defaults: defaultMultiManagerConfig as unknown as Record<string, unknown>,
+            configFilePath: options.config,
+            env,
+            cli: cliConfig(options),
+            options: multiManagerCliOptions
+        }).config;
 
         super(multiManagerConfig);
     }
@@ -130,7 +175,7 @@ export class MultiManagerConfig extends ReadOnlyConfig<MultiManagerOptions> {
             config.s3.region = this._maskValue(config.s3.region);
         }
 
-        return config as MultiManagerOptions;
+        return maskConfig(config, multiManagerCliOptions) as MultiManagerOptions;
     }
 
     protected validateEntry(key: string, value: any): boolean | null {

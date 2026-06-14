@@ -11,4 +11,5 @@ export type CPMConnectorOptions = {
     apiKey?: string;
     apiVersion: string;
     hostType?: NonNullable<STHConfiguration["platform"]>["hostType"];
+    verser2: STHConfiguration["verser2"];
 }

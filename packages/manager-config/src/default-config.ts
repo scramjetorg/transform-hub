@@ -7,5 +7,37 @@ export const defaultConfig: ManagerConfiguration = {
     id: "cpm-manager",
     sthController: {
         unhealthyTimeoutMs: 61_000,
+    },
+    verser2: {
+        enabled: false,
+        migrationMode: "legacy",
+        host: {
+            bindHost: "0.0.0.0",
+            bindPort: 0,
+            publicUrl: "",
+            tls: {
+                mtlsRequired: false
+            }
+        },
+        registration: {
+            allowLocalPeers: true,
+            allowedClientFingerprints: []
+        },
+        localBroker: {
+            peerId: "manager.cpm-manager.broker",
+            routeDomain: "manager.cpm-manager.scramjet.internal"
+        },
+        localGuest: {
+            peerId: "manager.cpm-manager.guest",
+            routeDomain: "manager.cpm-manager.scramjet.internal"
+        },
+        timeouts: {
+            routeReadinessMs: 10_000,
+            leaseAcquireMs: 10_000,
+            requestMs: 30_000
+        },
+        leases: {
+            minimumWaitingLeases: 1
+        }
     }
 };

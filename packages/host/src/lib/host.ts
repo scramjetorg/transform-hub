@@ -848,7 +848,8 @@ export class Host implements IHost, IComponent {
                 reconnectionDelay: this.config.cpm.reconnectionDelay,
                 apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,
                 apiVersion: this.config.platform?.apiVersion || "v1",
-                hostType: this.config.platform?.hostType
+                hostType: this.config.platform?.hostType,
+                verser2: this.config.verser2
             };
 
             this.cpmConnector = new CPMConnector(cpmHostName, cpmId, cpmConnectorConfig, this.api.server);
