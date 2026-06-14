@@ -43,7 +43,7 @@ function installHttpRequestStub() {
 installHttpRequestStub();
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { Manager } = require("../src/lib/manager");
+const { Manager, normalizeForwardedHeaders } = require("../src/lib/manager");
 
 function tick(): Promise<void> {
     return new Promise(resolve => setImmediate(resolve));
@@ -193,7 +193,7 @@ test.serial("Manager.handleRequestToSTH forwards method headers stripped path an
     t.is(res.bodyText(), "sth body");
 });
 
-test.serial("Manager.handleRequestToSTH pauses expect-continue requests until continue event", async t => {
+test.serial("Manager.handleRequestToSTH handles expect-continue locally before forwarding", async t => {
     const manager = createManagerWithSth({
         id: "sth-1",
         isConnectionActive: true,
@@ -204,14 +204,33 @@ test.serial("Manager.handleRequestToSTH pauses expect-continue requests until co
 
     await manager.handleRequestToSTH(req, res);
 
-    t.true(req.pauseCalled);
-    const resumeCallsBeforeContinue = req.resumeCalls;
+    t.true(res.writeContinueCalled);
+    t.false(req.pauseCalled);
 
     const calls = sthForwardingCalls();
     t.is(calls.length, 1);
-    calls[0].request.emit("continue");
+    t.deepEqual(calls[0].options.headers, {});
+});
 
-    t.true(res.writeContinueCalled);
-    t.true(req.resumeCalled);
-    t.true(req.resumeCalls > resumeCallsBeforeContinue);
+test.serial("Manager.handleRequestToSTH normalizes forwarded headers", async t => {
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => ({}) },
+    });
+    const req = createReq({ headers: { "x-test": ["a", "b"], "x-drop": undefined, "x-keep": "yes" } });
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+
+    const calls = sthForwardingCalls();
+    t.is(calls.length, 1);
+    t.deepEqual(calls[0].options.headers, { "x-test": "a, b", "x-keep": "yes" });
+});
+
+test("normalizeForwardedHeaders drops undefined values and joins arrays", t => {
+    t.deepEqual(
+        normalizeForwardedHeaders({ "x-list": ["a", "b"], "x-empty": undefined, "x-one": "1" }),
+        { "x-list": "a, b", "x-one": "1" }
+    );
 });

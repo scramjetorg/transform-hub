@@ -74,6 +74,8 @@ Authenticated package resolution now succeeds for the Phase 2 packages at `0.0.0
 
 The `.env` token can read package metadata but does not have private repository metadata access; the helper treats repository metadata as informational and package metadata as the authoritative dependency-resolution gate.
 
+Follow-up authenticated package checks found local peer support published at `0.0.0-sha.f2c83d754654`. Transform Hub now pins the Phase 2 `@signicode` packages to that SHA so `@signicode/verser2-host` exposes `host.attachLocalBroker()` and `host.attachLocalGuest()` for colocated Manager/STH peers.
+
 The only safe local work that can continue before the upstream artifacts are available is preparatory work that does not depend on concrete verser2 signatures, such as:
 
 - defining internal transport interfaces around the already-approved contracts;

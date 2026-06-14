@@ -17,7 +17,7 @@ import {
 import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
 import { CeroError, getRouter } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
-import { ClientRequest, IncomingMessage, ServerResponse, request } from "http";
+import { ClientRequest, IncomingHttpHeaders, IncomingMessage, ServerResponse, request } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -47,6 +47,20 @@ const version = packageFile.value?.version || "unknown";
 const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
+
+export function normalizeForwardedHeaders(headers: IncomingHttpHeaders): Record<string, string> {
+    const normalized: Record<string, string> = {};
+
+    for (const [name, value] of Object.entries(headers)) {
+        if (value === undefined) {
+            continue;
+        }
+
+        normalized[name] = Array.isArray(value) ? value.join(", ") : value;
+    }
+
+    return normalized;
+}
 
 export class Manager implements IComponent {
     id: string;
@@ -509,8 +523,16 @@ export class Manager implements IComponent {
             disconnectCalled = true;
         };
 
+        const headers = normalizeForwardedHeaders(req.headers);
+        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
+
+        if (expectsContinue) {
+            delete headers.expect;
+            res.writeContinue();
+        }
+
         requestToHost = request({
-            headers: req.headers,
+            headers,
             method: req.method,
             path: req.url,
             agent: sth.verserConnection.getAgent()
@@ -520,7 +542,9 @@ export class Manager implements IComponent {
                 disconnect("error");
             })
             .on("continue", () => {
-                res.writeContinue();
+                if (!expectsContinue) {
+                    res.writeContinue();
+                }
                 req.resume();
             })
             .on("response", (response) => {
@@ -541,10 +565,6 @@ export class Manager implements IComponent {
 
         requestToHost.flushHeaders();
         req.pipe(requestToHost);
-
-        if (req.headers.expect === "100-continue") {
-            req.pause();
-        }
 
         requestToHost.setTimeout(0);
     }
