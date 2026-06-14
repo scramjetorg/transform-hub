@@ -96,13 +96,13 @@
     - [x] Run affected config/package tests plus build/typecheck before starting transport replacement.
 - [~] Task: Implement verser2 Manager/MultiManager Host and STH Broker/Guest transport
     - [x] Consume the validated Manager/MultiManager verser2 Host TLS/endpoint configuration from the new config surface; do not rely on implicit/self-signed Host TLS defaults.
-    - [ ] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
-    - [ ] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.
+    - [x] Replace old `Verser` server setup in `packages/multi-manager/src/lib/multi-manager.ts` with `createVerserHost()` from `@signicode/verser2-host`.
+    - [x] Attach colocated Manager/STH peers as local peers via `host.attachLocalBroker()`/`host.attachLocalGuest()`; use networked TLS H2 Guest/Broker only for non-colocated STH.
     - [ ] Replace old `VerserConnection` handling in `packages/manager/src/lib/manager.ts` with the Manager/STH transport abstraction over local peers (primary) or H2 Broker/Guest (remote fallback).
     - [ ] Replace `STHController` old-verser agent, `makeRequest`, and stream usage with Broker route lookup plus `broker.request({ targetId, method, path, headers, body })`.
     - [x] Replace `CPMConnector` old `VerserClient` usage with STH-side local Broker/Guest attachment where colocated, or `createVerserBroker()` from `@signicode/verser2-guest-node` for remote.
     - [x] Add dependency wiring for `@signicode/verser2-host`, `@signicode/verser2-guest-node`, and common packages in the affected workspaces.
-    - [ ] Preserve temporary legacy mode only where needed during this phase, and only outside the verser2 TLS path.
+    - [x] Preserve temporary legacy mode only where needed during this phase, and only outside the verser2 TLS path.
 - [ ] Task: Migrate Manager/STH request and streaming semantics
     - [ ] Map `/platform` communication to an explicit Guest route plus Broker request/streaming-body pattern.
     - [ ] Map log behavior to explicit Guest routes and streaming request or response bodies.

@@ -195,7 +195,7 @@ export class MultiManager {
                 try {
                     const managerMain = manager.main();
 
-                    await this.attachManagerVerser2Broker(manager);
+                    await this.attachManagerVerser2Peers(manager);
 
                     manager.setupHealthEndpoint(this.healthCheck);
 
@@ -327,14 +327,25 @@ export class MultiManager {
         return this.config.verser2.enabled && this.config.verser2.migrationMode !== "legacy";
     }
 
-    private async attachManagerVerser2Broker(manager: Manager) {
+    private async attachManagerVerser2Peers(manager: Manager) {
         if (!this.verser2Host || !manager.config.verser2.enabled || manager.config.verser2.migrationMode === "legacy") {
             return;
         }
 
+        await manager.startedPromise;
+
         const broker = await this.verser2Host.attachLocalBroker({ brokerId: manager.config.verser2.localBroker.peerId });
 
         manager.setSthBrokerTransport(createManagerSthLocalBrokerTransport(broker));
+
+        await this.verser2Host.attachLocalGuest({
+            guestId: manager.config.verser2.localGuest.peerId,
+            routedDomains: [manager.config.verser2.localGuest.routeDomain],
+            listener: (req, res) => manager.router.lookup(req as ParsedMessage, res as ServerResponse, () => {
+                res.statusCode = 404;
+                res.end();
+            })
+        });
     }
 
     async attachHostAPI(id: string, verserConnection: VerserConnection) {
@@ -466,7 +477,7 @@ export class MultiManager {
         try {
             await manager.main();
 
-            await this.attachManagerVerser2Broker(manager);
+            await this.attachManagerVerser2Peers(manager);
 
             manager.setupHealthEndpoint(this.healthCheck);
 

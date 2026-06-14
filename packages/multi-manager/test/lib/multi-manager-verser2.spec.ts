@@ -1,0 +1,129 @@
+import test from "ava";
+import { PassThrough } from "stream";
+import { MultiManager } from "../../src/lib/multi-manager";
+
+function createManager(overrides: Partial<any> = {}) {
+    const manager: any = {
+        config: {
+            verser2: {
+                enabled: true,
+                migrationMode: "verser2",
+                localBroker: {
+                    peerId: "manager.test.broker",
+                    routeDomain: "manager.test.scramjet.internal"
+                },
+                localGuest: {
+                    peerId: "manager.test.guest",
+                    routeDomain: "manager.test.scramjet.internal"
+                }
+            }
+        },
+        startedPromise: Promise.resolve(),
+        router: {
+            lookup: (_req: any, res: any) => {
+                res.statusCode = 204;
+                res.end();
+            }
+        },
+        setSthBrokerTransport(transport: any) {
+            this.transport = transport;
+        },
+        ...overrides
+    };
+
+    return manager;
+}
+
+test("attachManagerVerser2Peers attaches local Broker and Guest for colocated Manager", async t => {
+    const localBroker = {
+        close: async () => undefined,
+        getRoutes: () => [{ targetId: "sth.test.guest", domain: "sth.test.scramjet.internal" }],
+        request: async () => ({ requestId: "request-1", statusCode: 200, headers: {}, body: new PassThrough() })
+    };
+    const brokerOptions: any[] = [];
+    const guestOptions: any[] = [];
+    const multiManager: any = Object.create(MultiManager.prototype);
+
+    multiManager.verser2Host = {
+        attachLocalBroker: async (options: any) => {
+            brokerOptions.push(options);
+            return localBroker;
+        },
+        attachLocalGuest: async (options: any) => {
+            guestOptions.push(options);
+            return { close: async () => undefined };
+        }
+    };
+
+    const manager = createManager();
+
+    await multiManager.attachManagerVerser2Peers(manager);
+
+    t.deepEqual(brokerOptions, [{ brokerId: "manager.test.broker" }]);
+    t.is(manager.transport.getRoutes()[0].domain, "sth.test.scramjet.internal");
+    t.is(guestOptions.length, 1);
+    t.deepEqual(guestOptions[0].routedDomains, ["manager.test.scramjet.internal"]);
+    t.is(guestOptions[0].guestId, "manager.test.guest");
+});
+
+test("attachManagerVerser2Peers local Guest dispatches routed requests through Manager router", async t => {
+    const guestOptions: any[] = [];
+    const multiManager: any = Object.create(MultiManager.prototype);
+    const req = new PassThrough() as any;
+    const res = new PassThrough() as any;
+    const manager = createManager({
+        router: {
+            lookup: (receivedReq: any, receivedRes: any) => {
+                t.is(receivedReq, req);
+                t.is(receivedRes, res);
+                receivedRes.statusCode = 202;
+                receivedRes.end("accepted");
+            }
+        }
+    });
+
+    multiManager.verser2Host = {
+        attachLocalBroker: async () => ({ close: async () => undefined, getRoutes: () => [], request: async () => undefined }),
+        attachLocalGuest: async (options: any) => {
+            guestOptions.push(options);
+            return { close: async () => undefined };
+        }
+    };
+
+    await multiManager.attachManagerVerser2Peers(manager);
+
+    const body = new Promise<string>(resolve => {
+        const chunks: Buffer[] = [];
+
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("finish", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    });
+
+    guestOptions[0].listener(req, res);
+
+    t.is(res.statusCode, 202);
+    t.is(await body, "accepted");
+});
+
+test("attachManagerVerser2Peers skips legacy Manager transport", async t => {
+    const multiManager: any = Object.create(MultiManager.prototype);
+    const attachLocalBrokerCalls: any[] = [];
+
+    multiManager.verser2Host = {
+        attachLocalBroker: async (options: any) => {
+            attachLocalBrokerCalls.push(options);
+        },
+        attachLocalGuest: async () => undefined
+    };
+
+    await multiManager.attachManagerVerser2Peers(createManager({
+        config: {
+            verser2: {
+                enabled: true,
+                migrationMode: "legacy"
+            }
+        }
+    }));
+
+    t.deepEqual(attachLocalBrokerCalls, []);
+});
