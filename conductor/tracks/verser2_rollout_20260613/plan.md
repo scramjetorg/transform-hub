@@ -110,11 +110,11 @@
     - [x] Define `follow` versus `manager-multiplex` semantics.
     - [x] Record that direct STH-to-STH payloads must not route through Manager data-plane forwarding.
     - [x] Link the upstream verser2 native follow feature request in `signicode/verser2#20`.
-- [ ] Task: Add redirect-readiness route classifier
-    - [ ] Add a Manager-side classifier for `/sth/:id/*`, topic, instance, storage, RPC, and Manager-owned route families.
-    - [ ] Return a route decision of `follow`, `manager-multiplex`, `manager-owned`, or `unsupported-bidirectional` with enough target metadata for forwarding.
-    - [ ] Add focused tests proving classification is based on route action semantics and not method alone.
-    - [ ] Include explicit unsupported classifications for `/platform` duplex and instance `/inout` until dedicated protocols are implemented.
+- [x] Task: Add redirect-readiness route classifier
+    - [x] Add a Manager-side classifier for `/sth/:id/*`, topic, instance, storage, RPC, and Manager-owned route families.
+    - [x] Return a route decision of `follow`, `manager-multiplex`, `manager-owned`, or `unsupported-bidirectional` with enough target metadata for forwarding.
+    - [x] Add focused tests proving classification is based on route action semantics and not method alone.
+    - [x] Include explicit unsupported classifications for `/platform` duplex and instance `/inout` until dedicated protocols are implemented.
 - [ ] Task: Implement dummy internal redirect handler
     - [ ] Implement a temporary Manager-side handler for Manager API `follow` decisions that resolves the target route and returns the target response or stream directly to the external caller.
     - [ ] Keep the handler shaped so it can later be replaced with a verser2-followable `307` or `308` response.

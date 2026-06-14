@@ -7,3 +7,4 @@ export * from "./lib/health-check";
 export * from "./lib/service-discovery";
 export * from "./lib/manager-auditor";
 export * from "./lib/verser2-transport";
+export * from "./lib/route-classifier";
