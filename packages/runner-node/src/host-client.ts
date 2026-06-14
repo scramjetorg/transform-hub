@@ -218,7 +218,7 @@ class HostClient implements IHostClient {
     }
 
     private async initVerser2BrokerAgent(): Promise<void> {
-        if (!this.verser2Runtime?.hubTargetDomain) {
+        if (!this.verser2Runtime) {
             return;
         }
 

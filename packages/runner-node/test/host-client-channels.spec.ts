@@ -161,3 +161,47 @@ test("runner-node HostClient uses verser2 Broker agent and omits REQUESTS channe
     t.is(closeReason, "disconnect");
     await closeAll();
 });
+
+test("runner-node HostClient creates verser2 Broker agent even without hub target domain", async t => {
+    const { port, accepted, closeAll } = await startRecordingServer();
+    const id = "00000000-0000-0000-0000-00000000dddd";
+    const agent = new Agent();
+    let connectCalled = 0;
+    const brokerOptions: unknown[] = [];
+    const client = new RunnerNodeHostClient(
+        port,
+        "127.0.0.1",
+        undefined,
+        {
+            hostUrl: "https://verser2.example",
+            runnerGuestId: "runner.guest",
+            runnerRouteDomain: "runner.domain",
+            hubBrokerId: "runner.hub.broker"
+        },
+        (options) => {
+            brokerOptions.push(options);
+            return {
+                async connect() { connectCalled += 1; },
+                async close() {},
+                createAgent() { return agent; }
+            };
+        }
+    );
+
+    await client.init(id, new Set<CC>([CC.IN, CC.OUT, CC.LOG]));
+    await new Promise(res => setTimeout(res, 30));
+
+    t.is(client.getApiBase(), "http://scramjet-host/api/v1");
+    t.is(client.getAgent(), agent);
+    t.is(connectCalled, 1);
+    t.deepEqual(brokerOptions, [{
+        hostUrl: "https://verser2.example",
+        brokerId: "runner.hub.broker",
+        leaseAcquireTimeoutMs: undefined,
+        tls: undefined
+    }]);
+    t.false(new Set(accepted.map(a => a.channel)).has(CC.REQUESTS));
+
+    await client.disconnect(true);
+    await closeAll();
+});
