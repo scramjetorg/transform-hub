@@ -5,6 +5,7 @@
 - `createOptionRegistry()` and `RuntimeOptionRegistry` collect Scramjet-owned option descriptors for STH and runtime adapter option registration.
 - `parseCliOptions()` parses option descriptors without exposing parser implementation types.
 - `loadConfig()` applies the documented precedence model and validates through Zod.
+- `loadConfig()` supports explicit runtime overrides as the highest-precedence load source.
 - `mergeConfig()` preserves valid falsy values and replaces arrays explicitly.
 - `maskConfig()` masks descriptor-marked secret values for public-safe output.
 - `formatZodError()` formats Zod validation failures for operator-facing errors.
@@ -26,6 +27,10 @@
 - Dynamic adapter option registration remains two-stage: parse runtime adapter, register selected adapter options, parse final options.
 - Runner protocol and boot config shapes were intentionally left unchanged.
 - Concrete verser2 Host endpoint/TLS fields remain deferred to `verser2_rollout_20260613`.
+
+## Runtime Change Limitation
+
+The new config package supports runtime overrides only at load time. It does not implement live config mutation, file watchers, or automatic revalidation of already-loaded config objects. Consumers that need runtime changes must reload config explicitly or own a separate update lifecycle.
 
 ## Validation Summary
 

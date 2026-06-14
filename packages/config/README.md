@@ -14,6 +14,12 @@ defaults < config file < package.json config section < .env < process.env < CLI 
 
 Object values are deep-merged, arrays replace earlier arrays, and only `undefined` is ignored. Valid falsy values such as `false`, `0`, and `""` are preserved.
 
+## Runtime Overrides
+
+`loadConfig()` accepts explicit runtime overrides as the highest-precedence source. These overrides are applied during a config load operation and are intended for callers that already have in-process values they need to layer above files, env, and CLI values.
+
+This package does not provide live runtime reconfiguration, file watchers, or automatic mutation of already-loaded config objects. Consumers that need runtime changes must call `loadConfig()` again with a new override set or own their own reload/update lifecycle.
+
 ## CLI Command Model
 
 The native command model supports:

@@ -25,6 +25,7 @@ Values are applied only when they are not `undefined`, so `false`, `0`, and `""`
 - `createOptionRegistry()` collects Scramjet-owned CLI option descriptors and replaces public `commander.Command` adapter augmentation.
 - `parseCliOptions()` parses descriptors with the internal parser and returns plain option values.
 - `loadConfig()` merges declared sources, applies compatibility aliases, validates with Zod, and returns typed config plus masked public output helpers.
+- `loadConfig()` accepts explicit runtime overrides as the highest-precedence source during a load operation; live runtime reconfiguration is outside this package's current scope.
 - `maskConfig()` applies descriptor metadata to redact secrets in public config output.
 - `formatZodError()` returns operator-readable validation errors.
 
