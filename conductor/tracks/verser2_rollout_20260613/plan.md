@@ -122,11 +122,11 @@
     - [x] Ensure the temporary handler is not used for direct STH-originated payloads to another STH; those flows must receive route metadata and use the target STH route directly.
     - [x] Add tests for a follow-safe read route and a follow-safe state-changing single-owner route.
         - Focused classifier/forwarding-preparation tests pass; direct Manager AVA imports currently hit preexisting `sth-connection-store.ts` ts-node strictness/timeout behavior, so Manager integration is also covered by package build/typecheck for this task.
-- [ ] Task: Implement Manager topic multiplexing readiness
-    - [ ] Define Manager-owned topic multiplexer behavior for Manager API topic routes.
-    - [ ] Keep topic streams uncached while preserving current live fan-in/fan-out semantics.
-    - [ ] Support multiple downstream consumers and upstream providers according to current topic behavior.
-    - [ ] Add tests for API-to-STH, STH-to-API, and many-to-many topic cases where Manager multiplexing remains required.
+- [x] Task: Implement Manager topic multiplexing readiness
+    - [x] Define Manager-owned topic multiplexer behavior for Manager API topic routes.
+    - [x] Keep topic streams uncached while preserving current live fan-in/fan-out semantics.
+    - [x] Support multiple downstream consumers and upstream providers according to current topic behavior.
+    - [x] Add tests for API-to-STH, STH-to-API, and many-to-many topic cases where Manager multiplexing remains required.
 - [ ] Task: Rewrite forwarding based on classified routes
     - [ ] Replace generic Manager-to-STH forwarding decisions with classifier-driven routing.
     - [ ] Route follow-safe endpoints through the dummy internal redirect handler.

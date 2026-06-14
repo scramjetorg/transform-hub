@@ -167,6 +167,16 @@ export class ServiceDiscovery implements IServiceDiscovery {
     }
 
     /**
+     * Manager-owned topic multiplexer.
+     *
+     * Topic actors are live providers and consumers. The Manager does not cache,
+     * replay, or otherwise persist topic payloads; it only wires every active
+     * provider stream to every active consumer stream while the actors remain
+     * connected. Host actors lazily open the required STH topic stream when a
+     * matching peer appears.
+     */
+
+    /**
      * Creates topic with provided name and content type.
      *
      * @param {string} topicName Topic name

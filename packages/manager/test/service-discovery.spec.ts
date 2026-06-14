@@ -6,21 +6,63 @@ import { PassThrough } from "stream";
 /**
  * Minimal mock ISTHController needed for host-type actors.
  */
-function mockHostController(id: string): ISTHController & { calls: { upstream: number; downstream: number } } {
+function mockHostController(id: string): ISTHController & {
+  calls: { upstream: number; downstream: number };
+  streams: { upstream: PassThrough[]; downstream: PassThrough[] };
+} {
   const calls = { upstream: 0, downstream: 0 };
+  const streams = { upstream: [] as PassThrough[], downstream: [] as PassThrough[] };
 
   return {
     id,
     calls,
+    streams,
     createDownstreamTopicRequest: async (_name: string, _contentType: string) => {
       calls.downstream += 1;
-      return new PassThrough() as any;
+      const stream = new PassThrough();
+
+      streams.downstream.push(stream);
+
+      return stream as any;
     },
     createUpstreamTopicRequest: async (_name: string, _contentType: string) => {
       calls.upstream += 1;
-      return new PassThrough() as any;
+      const stream = new PassThrough();
+
+      streams.upstream.push(stream);
+
+      return stream as any;
     },
-  } as any as ISTHController & { calls: { upstream: number; downstream: number } };
+  } as any as ISTHController & {
+    calls: { upstream: number; downstream: number };
+    streams: { upstream: PassThrough[]; downstream: PassThrough[] };
+  };
+}
+
+function waitImmediate(): Promise<void> {
+  return new Promise(resolve => setImmediate(resolve));
+}
+
+function readChunk(stream: PassThrough): Promise<string> {
+  return new Promise(resolve => {
+    stream.once("data", chunk => resolve(Buffer.from(chunk).toString("utf8")));
+  });
+}
+
+function readChunks(stream: PassThrough, count: number): Promise<string[]> {
+  return new Promise(resolve => {
+    const chunks: string[] = [];
+    const onData = (chunk: Buffer) => {
+      chunks.push(Buffer.from(chunk).toString("utf8"));
+
+      if (chunks.length === count) {
+        stream.off("data", onData);
+        resolve(chunks);
+      }
+    };
+
+    stream.on("data", onData);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -323,6 +365,80 @@ test("ServiceDiscovery: api-type provider stream reaches consumer stream", (t) =
         .catch(reject);
     });
   });
+});
+
+test("ServiceDiscovery: Manager topic multiplexer routes API provider to STH consumer live", async (t) => {
+  const sd = new ServiceDiscovery();
+  const hostCtrl = mockHostController("host-1");
+  const provider = new TopicActor("topic-api-to-sth", ActorRole.PROVIDER, ActorType.API, "text/plain", undefined as any);
+  const consumer = new TopicActor("topic-api-to-sth", ActorRole.CONSUMER, ActorType.HOST, "text/plain", hostCtrl as any);
+  const providerStream = new PassThrough();
+
+  provider.addStream(providerStream);
+  sd.register(provider);
+  sd.register(consumer);
+  await waitImmediate();
+
+  t.is(hostCtrl.calls.downstream, 1);
+  t.is(hostCtrl.streams.downstream.length, 1);
+
+  const received = readChunk(hostCtrl.streams.downstream[0]);
+  providerStream.write("api-to-sth");
+
+  t.is(await received, "api-to-sth");
+});
+
+test("ServiceDiscovery: Manager topic multiplexer routes STH provider to API consumer live", async (t) => {
+  const sd = new ServiceDiscovery();
+  const hostCtrl = mockHostController("host-1");
+  const provider = new TopicActor("topic-sth-to-api", ActorRole.PROVIDER, ActorType.HOST, "text/plain", hostCtrl as any);
+  const consumer = new TopicActor("topic-sth-to-api", ActorRole.CONSUMER, ActorType.API, "text/plain", undefined as any);
+  const consumerStream = new PassThrough();
+
+  consumer.addStream(consumerStream);
+  sd.register(provider);
+  sd.register(consumer);
+  await waitImmediate();
+
+  t.is(hostCtrl.calls.upstream, 1);
+  t.is(hostCtrl.streams.upstream.length, 1);
+
+  const received = readChunk(consumerStream);
+  hostCtrl.streams.upstream[0].write("sth-to-api");
+
+  t.is(await received, "sth-to-api");
+});
+
+test("ServiceDiscovery: Manager topic multiplexer supports many-to-many live streams", async (t) => {
+  const sd = new ServiceDiscovery();
+  const providerA = new TopicActor("topic-many", ActorRole.PROVIDER, ActorType.API, "text/plain", undefined as any);
+  const providerB = new TopicActor("topic-many", ActorRole.PROVIDER, ActorType.API, "text/plain", undefined as any);
+  const consumerA = new TopicActor("topic-many", ActorRole.CONSUMER, ActorType.API, "text/plain", undefined as any);
+  const consumerB = new TopicActor("topic-many", ActorRole.CONSUMER, ActorType.API, "text/plain", undefined as any);
+  const providerAStream = new PassThrough();
+  const providerBStream = new PassThrough();
+  const consumerAStream = new PassThrough();
+  const consumerBStream = new PassThrough();
+
+  providerA.addStream(providerAStream);
+  providerB.addStream(providerBStream);
+  consumerA.addStream(consumerAStream);
+  consumerB.addStream(consumerBStream);
+
+  sd.register(providerA);
+  sd.register(providerB);
+  sd.register(consumerA);
+  sd.register(consumerB);
+  await waitImmediate();
+
+  const consumerAChunks = readChunks(consumerAStream, 2);
+  const consumerBChunks = readChunks(consumerBStream, 2);
+
+  providerAStream.write("from-a");
+  providerBStream.write("from-b");
+
+  t.deepEqual(await consumerAChunks, ["from-a", "from-b"]);
+  t.deepEqual(await consumerBChunks, ["from-a", "from-b"]);
 });
 
 test("ServiceDiscovery: list shows retired actors after removal via onTopicUpdate", (t) => {
