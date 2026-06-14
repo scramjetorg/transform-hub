@@ -37,6 +37,68 @@ export type Verser2RunnerBroker = {
     request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse>;
 };
 
+export type Verser2RunnerBrokerLike = {
+    getRoutes(): Verser2RunnerRoute[];
+    request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse>;
+};
+
+export class Verser2RunnerRouteUnavailableError extends Error {
+    constructor(domain: string, message = `Runner verser2 route is unavailable: ${domain}`) {
+        super(message);
+        this.name = "Verser2RunnerRouteUnavailableError";
+    }
+}
+
+class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
+    constructor(private readonly broker: Verser2RunnerBrokerLike) {}
+
+    getRoutes(): Verser2RunnerRoute[] {
+        return this.broker.getRoutes();
+    }
+
+    request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse> {
+        return this.broker.request(request);
+    }
+
+    async waitForRoute(domain: string, timeoutMs?: number): Promise<void> {
+        if (this.getRoutes().some(route => route.domain === domain)) {
+            return;
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            let finished = false;
+            const finish = (error?: Error) => {
+                if (finished) return;
+                finished = true;
+                clearInterval(interval);
+                if (timeout) clearTimeout(timeout);
+                if (error) reject(error);
+                else resolve();
+            };
+            const check = () => {
+                try {
+                    if (this.getRoutes().some(route => route.domain === domain)) finish();
+                } catch (error) {
+                    finish(error instanceof Error ? error : new Error(String(error)));
+                }
+            };
+            const interval = setInterval(check, 10);
+            const timeout = timeoutMs === undefined ? undefined : setTimeout(() => {
+                finish(new Verser2RunnerRouteUnavailableError(
+                    domain,
+                    `Timed out waiting for runner verser2 route: ${domain}`
+                ));
+            }, timeoutMs);
+
+            check();
+        });
+    }
+}
+
+export function createVerser2RunnerBrokerTransport(broker: Verser2RunnerBrokerLike): Verser2RunnerBroker {
+    return new PollingVerser2RunnerBroker(broker);
+}
+
 export type Verser2RunnerTransportOptions = {
     broker?: Verser2RunnerBroker;
     upstreams?: PassThroughStreamsConfig;

@@ -37,6 +37,7 @@ import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
+import { createVerser2RunnerBrokerTransport } from "./runner-transport";
 import { InstancesStore } from "./instance-store";
 
 import { ConfigService, development } from "@scramjet/sth-config";
@@ -319,6 +320,9 @@ export class Host implements IHost, IComponent {
             serviceDiscovery: this.serviceDiscovery,
             STHConfig: sthConfig,
             localStorageAdapter: this.localStorage,
+            runnerBrokerProvider: () => this.cpmConnector?.verser2Broker
+                ? createVerser2RunnerBrokerTransport(this.cpmConnector.verser2Broker)
+                : undefined,
         });
 
         this.csiDispatcher.logger.pipe(this.logger);

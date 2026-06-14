@@ -200,7 +200,9 @@
     - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
         - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
     - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
-    - [ ] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
+    - [x] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
+        - Added a polling adapter for the shared CPM verser2 Broker routes, injected a runner broker provider from Host → CSIDispatcher → CSIController, and selected `Verser2RunnerTransport` in verser2-only mode while preserving `LegacyRunnerTransport` for legacy/dual modes.
+        - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
     - [ ] Preserve temporary legacy mode only until runtime migrations are complete.
     - [ ] Update runtime boot config to carry `hostUrl`, peer IDs, routed domains, CA file/value, optional client cert/key or PFX settings, and route/lease timeout settings needed by stack-specific runtimes.
 - [ ] Task: Migrate Node runtime

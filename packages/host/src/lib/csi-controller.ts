@@ -30,7 +30,8 @@ import {
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
-    IStorageAdapter
+    IStorageAdapter,
+    RunnerTransport
 } from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -47,7 +48,7 @@ import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { CSIEvents, ICSI } from "./types";
-import { LegacyRunnerTransport } from "./runner-transport";
+import { LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -85,7 +86,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
-    private runnerTransport?: LegacyRunnerTransport;
+    private runnerTransport?: RunnerTransport;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
     private inputContentType: string | undefined;
     api: InstanceAPI;
@@ -195,6 +196,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
         private instanceStore: InstancesStore,
         localStorageAdapter: IStorageAdapter,
+        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined,
     ) {
         super();
         this.instanceStore = instanceStore;
@@ -466,9 +468,18 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.logger.error("Downstream error on channel", i, err);
         }));
 
-        this.runnerTransport = new LegacyRunnerTransport(this.upStreams, this.communicationHandler, this.hostProxy);
+        const runnerBroker = this.usesVerser2RunnerTransport ? this.runnerBrokerProvider?.() : undefined;
+
+        this.runnerTransport = runnerBroker
+            ? new Verser2RunnerTransport({
+                broker: runnerBroker,
+                upstreams: this.upStreams,
+                communicationHandler: this.communicationHandler,
+                routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs
+            })
+            : new LegacyRunnerTransport(this.upStreams, this.communicationHandler, this.hostProxy);
         this.runnerTransport.connect({ instanceId: this.id, streams }).catch((error) => {
-            this.logger.error("Legacy runner transport connection failed", error);
+            this.logger.error(`${this.runnerTransport?.kind || "unknown"} runner transport connection failed`, error);
         });
 
         this.controlDataStream = new DataStream();
@@ -564,6 +575,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
 
         this.upStreams[CC.MONITORING].resume();
+    }
+
+    private get usesVerser2RunnerTransport(): boolean {
+        return this.sthConfig.verser2.enabled && this.sthConfig.verser2.migrationMode === "verser2";
     }
 
     async applyUpdate(key: string, value: string | null): Promise<void> {

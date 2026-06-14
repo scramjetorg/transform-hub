@@ -5,6 +5,7 @@ import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
+import { Verser2RunnerBroker } from "./runner-transport";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
@@ -35,6 +36,7 @@ type CSIDispatcherOpts = {
     serviceDiscovery: ServiceDiscovery,
     STHConfig: STHConfiguration,
     localStorageAdapter: IStorageAdapter
+    runnerBrokerProvider?: () => Verser2RunnerBroker | undefined
 }
 
 export class CSIDispatcher extends TypedEmitter<Events> {
@@ -44,6 +46,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
     private localStorageAdapter: IStorageAdapter;
+    private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -54,6 +57,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.STHConfig = opts.STHConfig;
         this.serviceDiscovery = opts.serviceDiscovery;
         this.localStorageAdapter = opts.localStorageAdapter;
+        this.runnerBrokerProvider = opts.runnerBrokerProvider;
     }
 
     async createCSIController(
@@ -71,7 +75,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload,
             status: InstanceStatus.INITIALIZING,
             inputHeadersSent: false
-        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.instanceStore, this.localStorageAdapter);
+        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.instanceStore, this.localStorageAdapter, this.runnerBrokerProvider);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 

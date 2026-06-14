@@ -7,7 +7,13 @@ import {
     PassThroughStreamsConfig,
     RunnerTransportRouteContracts
 } from "@scramjet/types";
-import { LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "../src/lib/runner-transport";
+import {
+    createVerser2RunnerBrokerTransport,
+    LegacyRunnerTransport,
+    Verser2RunnerBroker,
+    Verser2RunnerRouteUnavailableError,
+    Verser2RunnerTransport
+} from "../src/lib/runner-transport";
 import { createVerser2ClientTlsOptions } from "../src/lib/cpm-connector";
 
 function streams(): { upstreams: PassThroughStreamsConfig; downstreams: DownstreamStreamsConfig } {
@@ -341,6 +347,31 @@ test("Verser2RunnerTransport disconnect tears down routed response bodies", asyn
     await transport.disconnect("test cleanup");
 
     t.true(responseBodies.every(body => body.destroyed));
+});
+
+test("createVerser2RunnerBrokerTransport waits for raw broker routes", async t => {
+    const routes: { targetId: string; domain: string; }[] = [];
+    const broker = createVerser2RunnerBrokerTransport({
+        getRoutes: () => routes,
+        request: async () => ({ body: new PassThrough() })
+    });
+    const wait = broker.waitForRoute("runner.delayed.scramjet.internal", 200);
+
+    setTimeout(() => routes.push({ targetId: "runner-1", domain: "runner.delayed.scramjet.internal" }), 25);
+
+    await t.notThrowsAsync(wait);
+});
+
+test("createVerser2RunnerBrokerTransport times out for missing raw broker route", async t => {
+    const broker = createVerser2RunnerBrokerTransport({
+        getRoutes: () => [],
+        request: async () => ({ body: new PassThrough() })
+    });
+
+    await t.throwsAsync(
+        broker.waitForRoute("runner.missing.scramjet.internal", 10),
+        { instanceOf: Verser2RunnerRouteUnavailableError }
+    );
 });
 
 test("unknown instanceId produces well-formed but route-unresolvable domain (route unavailable contract)", t => {
