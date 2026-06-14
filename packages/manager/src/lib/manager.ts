@@ -585,13 +585,24 @@ export class Manager implements IComponent {
     }
 
     private async handleVerser2RequestToSTH(id: string, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
+        const domain = this.getSthRouteDomain(id);
+        const abortController = new AbortController();
+        const requestTimeout = this.config.verser2.timeouts.requestMs > 0
+            ? setTimeout(() => abortController.abort(), this.config.verser2.timeouts.requestMs)
+            : undefined;
+        const abortRequest = () => abortController.abort();
+
         try {
+            req.once("close", abortRequest);
+            await this.sthBrokerTransport!.waitForRoute(domain, this.config.verser2.timeouts.routeReadinessMs);
+
             const response = await this.sthBrokerTransport!.request({
-                domain: this.getSthRouteDomain(id),
+                domain,
                 method: req.method || "GET",
                 path: req.url || "/",
                 headers,
-                body: req
+                body: req,
+                signal: abortController.signal
             });
 
             res.writeHead(response.statusCode, response.headers as Record<string, string>);
@@ -601,6 +612,12 @@ export class Manager implements IComponent {
             this.logger.warn("M -> STH verser2 request error", { id, url: req.url, error });
             res.writeHead(503);
             res.end();
+        } finally {
+            req.off("close", abortRequest);
+
+            if (requestTimeout) {
+                clearTimeout(requestTimeout);
+            }
         }
     }
 

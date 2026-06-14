@@ -235,18 +235,23 @@ test.serial("Manager.handleRequestToSTH normalizes forwarded headers", async t =
 test.serial("Manager.handleRequestToSTH routes through verser2 broker transport when configured", async t => {
     const responseBody = new PassThrough();
     const requests: any[] = [];
+    const waitForRouteCalls: any[] = [];
     const manager = createManagerWithSth({
         id: "sth-1",
         isConnectionActive: true,
         verserConnection: { getAgent: () => ({}) },
     });
 
+    manager.config.verser2.timeouts.routeReadinessMs = 1234;
+
     manager.setSthBrokerTransport({
         connect: async () => undefined,
         close: async () => undefined,
         getRoutes: () => [],
         isRouteReady: () => true,
-        waitForRoute: async () => undefined,
+        waitForRoute: async (domain: string, timeoutMs?: number) => {
+            waitForRouteCalls.push({ domain, timeoutMs });
+        },
         request: async (request: any) => {
             requests.push(request);
             return {
@@ -266,14 +271,17 @@ test.serial("Manager.handleRequestToSTH routes through verser2 broker transport 
     await tick();
 
     t.true(res.writeContinueCalled);
+    t.deepEqual(waitForRouteCalls, [{ domain: "sth.sth-1.scramjet.internal", timeoutMs: 1234 }]);
     t.is(requests.length, 1);
     t.is(sthForwardingCalls().length, 0);
-    t.deepEqual(requests[0], {
+    t.true(requests[0].signal instanceof AbortSignal);
+    t.deepEqual({ ...requests[0], signal: undefined }, {
         domain: "sth.sth-1.scramjet.internal",
         method: "POST",
         path: "/config?verbose=1",
         headers: { "x-test": "a, b" },
-        body: req
+        body: req,
+        signal: undefined
     });
     t.is(res.statusCode, 202);
     t.deepEqual(res.headers, { "x-from-verser2": "ok" });
@@ -306,6 +314,75 @@ test.serial("Manager.handleRequestToSTH maps verser2 broker failures to 503", as
     t.is(res.statusCode, 503);
     t.true(res.endCalled);
     t.is(sthForwardingCalls().length, 0);
+});
+
+test.serial("Manager.handleRequestToSTH maps verser2 route readiness failures to 503 before dispatch", async t => {
+    let requestCalled = false;
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => ({}) },
+    });
+
+    manager.setSthBrokerTransport({
+        connect: async () => undefined,
+        close: async () => undefined,
+        getRoutes: () => [],
+        isRouteReady: () => false,
+        waitForRoute: async () => {
+            throw new Error("route not ready");
+        },
+        request: async () => {
+            requestCalled = true;
+            throw new Error("should not dispatch");
+        }
+    });
+
+    const req = createReq();
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+
+    t.is(res.statusCode, 503);
+    t.true(res.endCalled);
+    t.false(requestCalled);
+    t.is(sthForwardingCalls().length, 0);
+});
+
+test.serial("Manager.handleRequestToSTH passes aborted signal to verser2 transport on request close", async t => {
+    let capturedSignal: AbortSignal | undefined;
+    const responseBody = new PassThrough();
+    const manager = createManagerWithSth({
+        id: "sth-1",
+        isConnectionActive: true,
+        verserConnection: { getAgent: () => ({}) },
+    });
+
+    manager.setSthBrokerTransport({
+        connect: async () => undefined,
+        close: async () => undefined,
+        getRoutes: () => [],
+        isRouteReady: () => true,
+        waitForRoute: async () => undefined,
+        request: async (request: any) => {
+            capturedSignal = request.signal;
+            request.body.emit("close");
+
+            return {
+                requestId: "request-1",
+                statusCode: 200,
+                headers: {},
+                body: responseBody
+            };
+        }
+    });
+
+    const req = createReq();
+    const res = createRes();
+
+    await manager.handleRequestToSTH(req, res);
+
+    t.true(capturedSignal?.aborted);
 });
 
 test("normalizeForwardedHeaders drops undefined values and joins arrays", t => {
