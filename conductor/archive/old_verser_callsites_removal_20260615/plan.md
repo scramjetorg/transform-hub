@@ -127,7 +127,7 @@
 
 ## Track Notes
 
-- Draft PR: https://github.com/0rail/transform-hub/pull/11
+- PR: https://github.com/0rail/transform-hub/pull/11 (merged into `feat/manager-oss` by fast-forwarding the base branch to this track's tip)
 
 ### Phase 1 Inventory
 
@@ -188,6 +188,6 @@
 
 ### Track Completion Notes
 
-- Track marked complete after Phases 1 through 4 were implemented, validated, manually verified, committed, and pushed to PR #11.
+- Track marked complete after Phases 1 through 4 were implemented, validated, manually verified, committed, pushed to PR #11, and merged into `feat/manager-oss`.
 - Remaining Phase 2 and Phase 3 Conductor manual verification gates were closed during track completion after user approval.
 - Final completed state preserves standalone `packages/verser` and `packages/bpmux` while removing active old-verser/BPMux/socket/MultiHost paths outside those standalone packages.
