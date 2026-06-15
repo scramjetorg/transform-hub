@@ -91,6 +91,27 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function (
 });
 
 When(
+    "I execute CLI with {string} and accept already completed instance cleanup",
+    { timeout: 30000 },
+    async function (this: CustomWorld, args: string) {
+        const res = this.cliResources;
+
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
+            ...si,
+            ...args.split(" "),
+        ]);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            logger.debug(res.stdio);
+        }
+
+        if (res.stdio[2] !== 0) {
+            assert.match(`${res.stdio[0]}\n${res.stdio[1]}`, /Instance not running/);
+        }
+    }
+);
+
+When(
     "I execute CLI with {string} without waiting for the end",
     { timeout: 30000 },
     async function (this: CustomWorld, args: string) {
@@ -219,12 +240,16 @@ Then("I get Instance id after deployment", function () {
     assert.equal(typeof json._id !== "undefined", true);
 });
 
-Then("I wait for Instance to end", { timeout: 25e4 }, async function () {
+const BDD_MAX_STEP_TIMEOUT_MS = 30000;
+const CLI_POLL_INTERVAL_MS = 1000;
+
+Then("I wait for Instance to end", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function () {
     const res = (this as CustomWorld).cliResources;
+    const startedAt = Date.now();
 
     let success = false;
 
-    while (!success) {
+    while (!success && Date.now() - startedAt < BDD_MAX_STEP_TIMEOUT_MS) {
         res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
             "inst",
@@ -238,8 +263,10 @@ Then("I wait for Instance to end", { timeout: 25e4 }, async function () {
             success = true;
             assert.equal(data.apiStatusCode, "404");
         }
-        await defer(5000);
+        if (!success) await defer(CLI_POLL_INTERVAL_MS);
     }
+
+    assert.ok(success, "Instance did not end before the BDD timeout");
 });
 
 Then("I send input data {string} with options {string}", async function (
@@ -298,7 +325,7 @@ Then("I confirm data named {string} will be received", async function (
 
     assert.equal(response, true);
 
-    // this.cliResources!.commandInProgress!.kill();
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I confirm all topic data named {string} received", async function (
@@ -321,15 +348,16 @@ Then("kill process {string}", async function (
     await killProcessByName(processName);
 });
 
-Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function (
+Then("I wait for {string} list to be empty", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
     this: CustomWorld,
     entity: string
 ) {
     const res = this.cliResources!;
+    const startedAt = Date.now();
 
     let success = false;
 
-    while (!success) {
+    while (!success && Date.now() - startedAt < BDD_MAX_STEP_TIMEOUT_MS) {
         if (entity === "Sequence") {
             res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
                 ...si,
@@ -352,8 +380,10 @@ Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function (
             success = true;
             assert.ok(true);
         }
-        await defer(5000);
+        if (!success) await defer(CLI_POLL_INTERVAL_MS);
     }
+
+    assert.ok(success, `${entity} list did not become empty before the BDD timeout`);
 });
 
 Then("I confirm {string} list is empty", async function (
@@ -415,12 +445,14 @@ Then("I confirm instance logs received", async function (this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
 
     await waitUntilStreamContains(stdout, "");
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I confirm Hub logs received", async function (this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
 
     await waitUntilStreamContains(stdout, "");
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I confirm apiUrl has changed to {string}", async function (

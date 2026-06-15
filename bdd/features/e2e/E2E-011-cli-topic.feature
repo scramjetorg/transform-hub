@@ -17,7 +17,7 @@ This feature checks topic functionalities over CLI
         Then I confirm data named "endless-names-10" will be received
         And kill process "topic get"
 
-    @ci-topic @cli
+    @ci-topic @cli @slow
     Scenario: E2E-011 TC-003 API to Instance
         # Given I set config for local Hub
         When I execute CLI with "topic send avengers data/data.json" without waiting for the end
@@ -29,7 +29,7 @@ This feature checks topic functionalities over CLI
         When I execute CLI with "inst kill - --removeImmediately"
 
     # TODO: need to test this via separate two sequences
-    @ci-topic @cli
+    @ci-topic @cli @slow
     Scenario: E2E-011 TC-004 Instance to Instance
         When I execute CLI with "seq send ../refapps/endless-names-output.tar.gz"
         When I execute CLI with "seq start -"

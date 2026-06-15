@@ -206,7 +206,7 @@ export function removeBoundaryQuotes(str: string) {
     return str;
 }
 
-export async function waitUntilStreamContains(stream: Readable, expected: string): Promise<boolean> {
+export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 30000): Promise<boolean> {
     let response = "";
 
     return Promise.race([
@@ -218,7 +218,8 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
                 if (response.includes(expected)) return true;
             }
             throw new Error("End of stream reached");
-        })()
+        })(),
+        defer(timeout).then(() => { throw new Error(`Stream did not contain ${JSON.stringify(expected)} before timeout`); })
     ]);
 }
 

@@ -1,6 +1,6 @@
 Feature: Verify the checksums of payloads are correct
 
-    @ci-performance
+    @ci-performance @perf @slow
     Scenario: PT-004 TC-001 Checksum of JSON payload
         Given file in the location "../dist/checksum-sequence/data.json" exists on hard drive
         And host is running
@@ -12,7 +12,7 @@ Feature: Verify the checksums of payloads are correct
         When runner has ended execution
         Then host is still running
 
-    @ci-performance
+    @ci-performance @perf @slow
     Scenario: PT-004 TC-002 Checksum of binary payload
         Given file in the location "data/sequences/bin-out-seq/random.bin" exists on hard drive
         And host is running
@@ -24,4 +24,3 @@ Feature: Verify the checksums of payloads are correct
         And confirm file checksum match output checksum
         When runner has ended execution
         Then host is still running
-

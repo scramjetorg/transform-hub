@@ -25,7 +25,7 @@ Feature: HUB-001 Host configuration
         * exit hub process
 
     # Needs to be fixed.
-    @starts-host @docker-specific
+    @starts-host @docker-specific @needs-fix @slow
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "-P 9002 --instances-server-port 19002 --runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
         And sequence "../packages/js-inert-function.tar.gz" is loaded
@@ -35,7 +35,7 @@ Feature: HUB-001 Host configuration
         * exit hub process
 
     # Needs to be fixed.
-    @starts-host @docker-specific
+    @starts-host @docker-specific @needs-fix @slow
     Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
         When hub process is started with parameters "-P 9002 --instances-server-port 19002"
         And sequence "../packages/js-inert-function.tar.gz" is loaded
@@ -45,7 +45,7 @@ Feature: HUB-001 Host configuration
         * exit hub process
 
     # Needs to be fixed.
-    @starts-host @docker-specific
+    @starts-host @docker-specific @needs-fix @slow
     Scenario: HUB-001 TC-011  Set runner memory limit (--runner-max-mem)
         When hub process is started with random ports and parameters "--runner-max-mem 128"
         And sequence "../packages/hello-alice-out.tar.gz" is loaded
@@ -54,7 +54,7 @@ Feature: HUB-001 Host configuration
         Then container memory limit is 128
         * exit hub process
 
-    @ci-hub @starts-host @docker-specific @requires-docker
+    @ci-hub @starts-host @docker-specific @requires-docker @slow
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with random ports and parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
@@ -64,7 +64,7 @@ Feature: HUB-001 Host configuration
         And end fake stream
         * exit hub process
 
-    @ci-hub @starts-host @docker-specific @requires-docker
+    @ci-hub @starts-host @docker-specific @requires-docker @slow
     Scenario: HUB-001 TC-013  Set prerunner memory limit (--prerunner-max-mem)
         When hub process is started with random ports and parameters "--prerunner-max-mem 64"
         And get all containers

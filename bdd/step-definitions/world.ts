@@ -10,9 +10,10 @@ import * as dns from "dns";
 const glob: (pattern: string, callback: (err: Error | null, matches: string[]) => void) => void = require("glob");
 
 const DEFAULT_TIMEOUT = 20000;
+const MAX_TIMEOUT = 30000;
 const configuredTimeout = Number(process.env.BDD_STEP_TIMEOUT_MS);
 const defaultTimeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0
-    ? configuredTimeout
+    ? Math.min(configuredTimeout, MAX_TIMEOUT)
     : DEFAULT_TIMEOUT;
 
 type MultiHostInfo = {
