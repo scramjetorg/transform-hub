@@ -313,7 +313,8 @@
         - Normal `npm test` now succeeds in both packages: `@scramjet/api-server` passed 28 tests and `@scramjet/verser` passed 1 test under `NODE_OPTIONS="--max-old-space-size=1536"`.
     - [x] Record the chosen fix and validation command results in this plan before starting the final phase.
         - Additional validation: `npm test -- test/routed-forward.spec.ts` in `packages/api-server` passed 26 tests; `node ../../node_modules/ava/cli.js test/manager-forwarding.spec.ts` in `packages/manager` passed 13 tests after fixing routed-forward request-close abort propagation. Broad `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent` now passes api-server and verser and continues past Manager, then fails later in `packages/runner-python` golden replay parity tests. That later failure is tied to pre-existing uncommitted runner-python/runner changes in the worktree and is not part of this package-suite quarantine fix.
-- [ ] Task: Conductor - User Manual Verification 'Global Runner and Runtime Migration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Global Runner and Runtime Migration' (Protocol in workflow.md)
+    - [x] User approved moving to Phase 4 with the runner-python worktree validation issue noted as outside the committed Phase 3 validation fixes.
 
 ## Phase 4: Default Switch, Legacy Removal, and Final Validation
 
