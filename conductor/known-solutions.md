@@ -29,3 +29,9 @@ Problem: File search or glob tools report no files under `node_modules` even tho
 Solution: Verify installed package contents with direct known-path reads such as `node_modules/<scope>/<package>/package.json` and package `dist/` directories, or use package manager resolution checks before concluding files are missing.
 Constraints: Only apply when package metadata or install output indicates the package is installed or resolvable; do not assume missing source files are present without direct path verification.
 Ignore-If: The install or package resolution actually failed; direct reads of known package paths fail; the task requires searching non-ignored source files rather than installed dependencies.
+
+### Memory-constrained Node validation
+Problem: Broad Node/npm validation or subagent-triggered tests can exceed available heap and cause OOM in this repository.
+Solution: Run Node/npm validation with `NODE_OPTIONS="--max-old-space-size=1536"`; instruct review agents not to run commands unless they use this guard, and prefer focused package tests/builds over broad suites.
+Constraints: Apply to validation/test/build commands in this repo; do not use it to hide real test failures; still inspect non-OOM failures normally.
+Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the user explicitly requests an unguarded run.
