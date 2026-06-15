@@ -173,18 +173,24 @@ guard6() {
 }
 
 # ----------------------------------------------------------------------------
-# Guard 7: No new active BPMux / old-verser usage outside the explicit legacy
-# migration allowlist. Existing paths are still present during the verser2
-# rollout, but new paths must not be added while transports move behind
-# verser2 abstractions.
+# Guard 7: No active legacy transport usage outside the standalone legacy
+# packages. The retained `packages/verser` and `packages/bpmux` workspaces may
+# still contain and depend on the legacy implementation; active runtime packages
+# must not import it, instantiate it, or expose old transport selection paths.
 # ----------------------------------------------------------------------------
 guard7() {
     local files
     files="$(
-        rg -l '@scramjet/bpmux|@scramjet/verser|from .*bpmux|require\(["'\''`]bpmux|import .*BPMux|new BPMux|new Verser|VerserClient|VerserConnection' \
+        rg -l '@scramjet/bpmux|@scramjet/verser|from .*bpmux|require\(["'\''`]bpmux|import .*\bBPMux\b|new BPMux\(|new Verser\(|\bVerserClient\b|\bVerserConnection\b|\bapiVerser\b|\bverserConnection\b|\bmigrationMode\b|\bverser2MigrationMode\b|verser2-migration-mode|SCRAMJET_VERSER2_MIGRATION_MODE|kind: "legacy"|kind === "legacy"|\bRunnerTransportConfigLegacy\b|RunnerTransportKind = "legacy"|\bSocketServer\b' \
             packages package.json \
+            --glob '!packages/verser/**' \
+            --glob '!packages/bpmux/**' \
             --glob '!**/codemap.md' \
+            --glob '!**/*.md' \
             --glob '!package-lock.json' \
+            --glob '!**/node_modules/**' \
+            --glob '!**/dist/**' \
+            --glob '!**/__pypackages__/**' \
             2> /dev/null \
         || true
     )"
@@ -193,46 +199,14 @@ guard7() {
     local file
     while IFS= read -r file; do
         [ -z "${file}" ] && continue
-        case "${file}" in
-            packages/bpmux/*|\
-            packages/verser/*|\
-            packages/host/package.json|\
-            packages/host/src/lib/cpm-connector.ts|\
-            packages/host/src/lib/csi-controller.ts|\
-            packages/host/src/lib/runner-transport.ts|\
-            packages/host/test/cpm-connector.test.ts|\
-            packages/host/test/runner-transport.spec.ts|\
-            packages/manager/package.json|\
-            packages/manager/src/lib/manager.ts|\
-            packages/manager/src/lib/sth-controller.ts|\
-            packages/manager/src/lib/verser2-transport.ts|\
-            packages/manager/test/manager-connection.spec.ts|\
-            packages/manager/test/sth-controller.spec.ts|\
-            packages/manager/test/verser2-transport.spec.ts|\
-            packages/multi-manager/package.json|\
-            packages/multi-manager/src/lib/multi-manager.ts|\
-            packages/multi-manager/src/lib/multi-host-controller.ts|\
-            packages/multi-manager/test/lib/multi-host-controller-store.spec.ts|\
-            packages/multi-manager/test/lib/multi-host-controller.spec.ts|\
-            packages/runner/package.json|\
-            packages/runner/src/host-client.ts|\
-            packages/runner-node/package.json|\
-            packages/runner-node/src/host-client.ts|\
-            packages/runner-node/test/host-client-parity.spec.ts|\
-            packages/types/package.json|\
-            packages/types/src/manager/sth-connection-store.ts)
-                ;;
-            *)
-                forbidden+=("${file}")
-                ;;
-        esac
+        forbidden+=("${file}")
     done <<< "${files}"
 
     if [ "${#forbidden[@]}" -eq 0 ]; then
         return 0
     fi
 
-    echo "  unexpected BPMux / old-verser references:"
+    echo "  unexpected legacy transport references:"
     printf '    %s\n' "${forbidden[@]}"
     return 1
 }
@@ -243,7 +217,7 @@ run_guard 3 "No bpmux import in runner-python" guard3
 run_guard 4 "No REQUESTS channel in runner-python/src" guard4
 run_guard 5 "No @scramjet/python-runner references outside CHANGELOG/docs/roadmap/lockfiles" guard5
 run_guard 6 "No process.stdout reassignment or redirectOutputs in runner/src" guard6
-run_guard 7 "No new BPMux or old-verser references outside the verser2 migration allowlist" guard7
+run_guard 7 "No active legacy transport references outside standalone legacy packages" guard7
 
 # ----------------------------------------------------------------------------
 # Guard 8: No direct Commander usage in package source or package manifests.
@@ -270,37 +244,6 @@ guard8() {
 }
 
 run_guard 8 "No direct Commander imports or package dependencies in packages" guard8
-
-# ----------------------------------------------------------------------------
-# Guard 9: Transitional old-verser removal guard. During the cleanup track this
-# intentionally fails until active packages stop importing old-verser/BPMux,
-# exposing migration-mode selection, and preserving legacy runner socket paths.
-# Standalone legacy packages remain allowed.
-# ----------------------------------------------------------------------------
-guard9() {
-    local hits
-    hits="$(
-        rg -n '@scramjet/(verser|bpmux)|VerserConnection|VerserClient|new Verser\(|apiVerser|verserConnection|migrationMode|verser2MigrationMode|verser2-migration-mode|SCRAMJET_VERSER2_MIGRATION_MODE|kind: "legacy"|kind === "legacy"|RunnerTransportConfigLegacy|RunnerTransportKind = "legacy"|SocketServer' \
-            packages \
-            --glob '!packages/verser/**' \
-            --glob '!packages/bpmux/**' \
-            --glob '!**/codemap.md' \
-            --glob '!**/*.md' \
-            --glob '!**/node_modules/**' \
-            --glob '!**/dist/**' \
-            --glob '!**/__pypackages__/**' \
-            2> /dev/null \
-        || true
-    )"
-    if [ -z "${hits}" ]; then
-        return 0
-    fi
-    echo "  active old-verser/BPMux/migration/socket traces:"
-    printf '    %s\n' "${hits}"
-    return 1
-}
-
-run_guard 9 "No active old-verser, BPMux, migration-mode, or legacy socket traces outside standalone legacy packages" guard9
 
 echo "---"
 echo "RESULTS: ${PASS} passed, ${FAIL} failed"
