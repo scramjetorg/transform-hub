@@ -31,8 +31,6 @@ type Events = {
     event: (eventData: { event: EventMessageData, id: string }) => void;
 };
 
-const STH_LOCAL_RUNNER_VERSER2_ENABLED = false;
-
 type CSIDispatcherOpts = {
     instanceStore: InstancesStore,
     sequenceStore: SequenceStore,
@@ -292,7 +290,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             this.logger.debug("Dispatched. Waiting for connection...", id);
 
-            if (STH_LOCAL_RUNNER_VERSER2_ENABLED) {
+            if (this.usesSthLocalRunnerVerser2Transport()) {
                 const csiController = await this.createCSIController(
                     id,
                     sequence,
@@ -384,5 +382,14 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             throw error;
         }
+    }
+
+    private usesSthLocalRunnerVerser2Transport(): boolean {
+        return !!(
+            this.STHConfig.verser2.enabled &&
+            this.STHConfig.verser2.migrationMode === "verser2" &&
+            this.STHConfig.verser2.runnerHost?.enabled &&
+            this.runnerBrokerProvider?.()
+        );
     }
 }

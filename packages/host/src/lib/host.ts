@@ -64,6 +64,7 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
 import { createSthRunnerVerser2HostOptions, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
+import { createVerser2RunnerBrokerTransport, Verser2RunnerBroker } from "./runner-transport";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
@@ -144,6 +145,7 @@ export class Host implements IHost, IComponent {
     cpmConnector?: CPMConnector;
 
     runnerVerser2Host?: VerserHost;
+    private runnerVerser2Broker?: Verser2RunnerBroker;
 
     /**
      * Object to store CSIControllers.
@@ -323,7 +325,7 @@ export class Host implements IHost, IComponent {
             serviceDiscovery: this.serviceDiscovery,
             STHConfig: sthConfig,
             localStorageAdapter: this.localStorage,
-            runnerBrokerProvider: () => undefined,
+            runnerBrokerProvider: () => this.runnerVerser2Broker,
             hostProxy: this.instanceProxy,
         });
 
@@ -966,6 +968,9 @@ export class Host implements IHost, IComponent {
 
         if (this.runnerVerser2Host) {
             await this.runnerVerser2Host.start();
+            this.runnerVerser2Broker = createVerser2RunnerBrokerTransport(
+                await this.runnerVerser2Host.attachLocalBroker({ brokerId: runnerHostConfig.localBroker.peerId })
+            );
             this.logger.info("STH-local runner verser2 Host started", this.runnerVerser2Host.address);
         }
     }
@@ -1539,6 +1544,7 @@ export class Host implements IHost, IComponent {
 
             await (host.stop?.() || host.close?.() || Promise.resolve());
             this.runnerVerser2Host = undefined;
+            this.runnerVerser2Broker = undefined;
         }
 
         this.instancesStore = new InstancesStore();

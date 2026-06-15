@@ -403,8 +403,10 @@
         - Added optional `verser2.runnerHost` config, descriptor validation, STH-local Host option mapping, and Host lifecycle start/cleanup. Defaults keep it disabled until STH-local CA generation and runner rewiring are complete.
     - [x] Generate or load an STH-local CA/server identity for the STH-local runner Host.
         - Added persisted `selfsigned`-backed STH-local CA/server PEM generation under `verser2.runnerHost.identityDir`; explicit `certFile`/`keyFile` or `pfxFile` still take precedence. Generated private keys are written with `0600` permissions and partial generated identity directories fail closed.
-    - [ ] Expose runner route domains through the STH-local Host, including `runner.<instanceId>.scramjet.internal` and stack-runtime routes such as `sequence.<instanceId>.scramjet.internal` where needed.
-    - [ ] Bridge any Manager-required interactions through STH rather than exposing Manager directly to runners.
+    - [x] Expose runner route domains through the STH-local Host, including `runner.<instanceId>.scramjet.internal` and stack-runtime routes such as `sequence.<instanceId>.scramjet.internal` where needed.
+        - Host now attaches an STH-local Broker to the STH-local runner Host and enables the existing `Verser2RunnerTransport`/synthetic-connect path only when `verser2.runnerHost` is enabled and a local Broker is available. Runner route domains continue to use `runner.<instanceId>.scramjet.internal`; stack-runtime sequence route domains are carried through the existing runtime boot handoff.
+    - [x] Bridge any Manager-required interactions through STH rather than exposing Manager directly to runners.
+        - Runner env uses the STH-local Host URL and STH route target, and Host-side runner transport uses only the STH-local Broker provider, not `cpmConnector.verser2Broker`.
     - [x] Ensure standalone STH startup can provide the STH-local runner Host without requiring Manager connectivity.
 - [x] Task: Adopt inline CA PEM bundles for verser2 trust
     - [x] Extend verser2 TLS config/types to support inline CA PEM bundles using the verser team format: `tls.ca` containing one or more concatenated PEM certificates.
@@ -439,7 +441,7 @@
     - [ ] Add cleanup for generated per-runner trust bundle files/secrets where applicable.
 - [ ] Task: Add topology and trust validation
     - [x] Add unit/static checks proving runner env generation never uses Manager/MultiManager `verser2.hostUrl`.
-    - [ ] Add unit/static checks proving host-side runner transport does not use `cpmConnector.verser2Broker`.
+    - [x] Add unit/static checks proving host-side runner transport does not use `cpmConnector.verser2Broker`.
     - [x] Add tests proving runner `hostUrl` is STH-local and runner `tls.ca` contains the STH-local CA plus Manager CA when available.
     - [x] Add negative tests proving direct `Runner -> Manager` config is rejected or never generated.
     - [ ] Add Manager trust endpoint tests proving only public trust material is returned.
