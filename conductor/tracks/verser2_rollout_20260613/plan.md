@@ -391,12 +391,13 @@
     - [x] Expose only public Manager trust material through a Manager endpoint for `si`/STH retrieval: CA PEM, fingerprint, expiry, Manager verser2 Host URL, and route-domain metadata.
     - [x] Ensure no private keys, client certs, or passphrases are exposed through the trust endpoint or public config.
         - Planned in `architecture.md` and `review-checklist.md`: Manager/MultiManager can autogenerate local CA/server identity for local startup, configured public certs take precedence, and the trust endpoint exposes only public trust metadata for `si`/STH bootstrap.
-- [ ] Task: Add STH Manager trust bootstrap
-    - [ ] Let `si` fetch, display, store, and pin the Manager trust material.
-    - [ ] Let STH use fetched/configured Manager CA trust when connecting to Manager/MultiManager.
-    - [ ] Keep STH client certificates optional for non-mTLS Manager connectivity.
-    - [ ] Preserve support for public CA trust when Manager uses a public certificate and no explicit Manager CA is required.
-    - [ ] Fail closed on Manager CA fingerprint mismatch when pinning is configured.
+- [x] Task: Add STH Manager trust bootstrap
+    - [x] Let `si` fetch, display, store, and pin the Manager trust material.
+    - [x] Let STH use fetched/configured Manager CA trust when connecting to Manager/MultiManager.
+    - [x] Keep STH client certificates optional for non-mTLS Manager connectivity.
+    - [x] Preserve support for public CA trust when Manager uses a public certificate and no explicit Manager CA is required.
+    - [x] Fail closed on Manager CA fingerprint mismatch when pinning is configured.
+        - Planned in `architecture.md` and `review-checklist.md`: `si` retrieves and pins public Manager trust material, STH can use configured/public/fetched CA trust, fingerprint mismatch fails closed, and trust bootstrap remains separate from STH registration authorization.
 - [ ] Task: Add STH-local verser2 Host for runners and stack-runners
     - [ ] Start an STH-owned local verser2 Host dedicated to runner and stack-runner connectivity.
     - [ ] Generate or load an STH-local CA/server identity for the STH-local runner Host.

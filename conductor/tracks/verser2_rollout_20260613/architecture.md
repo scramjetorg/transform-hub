@@ -224,6 +224,12 @@ STH-to-Manager/MultiManager `verser2` config must be explicit and separate from 
 
 The STH connector handoff (`STHConfiguration`, `CPMConnectorOptions`, and related types) must carry the validated values needed by the transport implementation instead of reconstructing protocol identity or TLS policy from loosely related legacy CPM settings.
 
+### STH Manager trust bootstrap and `si`
+
+`si` must be able to retrieve Manager/MultiManager trust material from the public trust export endpoint, display the CA fingerprint/expiry/Host URL for review, and store or pin the approved CA bundle for subsequent STH startup. STH startup may use a configured CA bundle, a public WebPKI certificate with no extra CA, or a fetched/pinned Manager CA. When pinning is configured, STH must fail closed on fingerprint mismatch before opening the `STH -> Manager/MultiManager` verser2 connection.
+
+STH trust bootstrap must not imply STH authorization. In non-mTLS mode, STH registration still requires an approved token, local-only policy, or a future enrollment mechanism. Client certificates remain optional for non-mTLS Manager connectivity and mandatory only when Manager/MultiManager policy requires mTLS.
+
 ### Public-safe masking and source precedence
 
 `verser2` config must follow the documented precedence model for new descriptor-backed settings: defaults < config file < package.json section < `.env` < process environment < CLI < explicit runtime overrides. Valid falsy values such as `false`, `0`, and `""` must be preserved. Public config views and masked logs must hide private key material, PFX passphrases, enrollment credentials, API keys, and any inline secret values. File paths to private key or PFX material should be treated as sensitive where deployment policy requires it. Config tests must cover CLI overrides, config-file values, environment aliases, secret masking, validation errors, and legacy compatibility aliases.

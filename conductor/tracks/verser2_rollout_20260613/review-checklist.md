@@ -37,6 +37,8 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - Host TLS is mandatory and server certificate SANs match the peer `hostUrl` values actually used.
 - Manager/MultiManager local CA autogeneration persists CA/server keys securely, is bypassed when explicit public certs are configured, and never downgrades to non-TLS `verser2`.
 - Manager/MultiManager trust export endpoints return only public trust material: CA PEM, fingerprint, expiry, Host URL, and route metadata.
+- `si` can fetch and pin Manager/MultiManager trust material, and STH fails closed on configured fingerprint mismatch.
+- STH Manager trust bootstrap does not bypass registration authorization; non-mTLS registration still needs token/local-only policy/future enrollment.
 - Guest/Broker clients use explicit `ca`/`caFile`; combined CA bundles are documented when public WebPKI and private CAs are both needed.
 - Runner/runtime trust is delivered as inline `tls.ca` PEM bundle where supported, or materialized as a mounted CA bundle file when required by Docker/Kubernetes/runtime libraries.
 - Runner/runtime trust bundles always include the STH-local CA and include Manager CA when STH has it; private keys and passphrases are never embedded in runner env/config.
