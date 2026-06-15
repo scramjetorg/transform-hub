@@ -320,7 +320,9 @@
 
 - [ ] Task: Make verser2 the default connectivity path
     - [ ] Switch Manager/STH connectivity defaults to verser2 Host/Broker/Guest roles.
+        - Phase 4 implementation review found that actively enabling verser2 by default is not yet safe: MultiManager default startup requires a configured Host TLS identity, and standalone STH sequence execution still has no local/default verser2 runner Broker when no platform connector is present. The current safe slice only selects `migrationMode: "verser2"`, provides deterministic STH route defaults, makes runner transport config fail closed when adapters omit it, and injects explicit legacy runner transport config for legacy/disabled modes and direct legacy runner harnesses. Active `enabled: true` defaults require either default TLS/local Broker provisioning or a narrower product decision for non-platform standalone behavior before this checklist item can be completed.
     - [ ] Switch global runner connectivity defaults to verser2 runner Guest routes.
+        - Topology correction: runners must connect to an STH-local verser2 Host/Broker/Guest surface, not directly to the Manager/MultiManager verser2 Host. Current runner verser2 env/config paths still reuse `sthConfig.verser2.hostUrl` (Manager URL) for runner Guest/Broker creation, so the direct-to-Manager runner transport work must be reverted or replanned before this item can complete.
     - [ ] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
     - [ ] Remove or narrow temporary migration flags according to the approved migration window.
 - [ ] Task: Remove BPMux from active repository usage
@@ -361,3 +363,80 @@
     - [ ] Complete final architecture conformance review for flat topology, exact-match routes, lease lifecycle, and no unsupported protocol assumptions.
     - [ ] Update docs and package guidance for final verser2 connectivity architecture.
 - [ ] Task: Conductor - User Manual Verification 'Default Switch, Legacy Removal, and Final Validation' (Protocol in workflow.md)
+
+## Phase 5: Post-Completion Runner Topology Correction and Local Trust Bootstrap
+
+- [ ] Task: Correct the final runner connectivity architecture
+    - [ ] Replace the previously planned direct runner-to-Manager topology with the required STH-mediated flow: `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.
+    - [ ] Document that runners and stack-runners must never connect directly to the Manager/MultiManager verser2 Host.
+    - [ ] Document that Manager/MultiManager connectivity is owned only by STH: `STH -> Manager/MultiManager verser2 Host`.
+    - [ ] Update `architecture.md`, review checklists, and any stale Phase 1 notes that describe runners as direct peers of the selected Manager/MultiManager Host.
+- [ ] Task: Revert or quarantine direct-to-Manager runner transport wiring
+    - [ ] Stop generating runner `SCRAMJET_RUNNER_TRANSPORT_CONFIG.hostUrl` from `sthConfig.verser2.hostUrl`; that value is the Manager/MultiManager Host URL and must not be used by runners.
+    - [ ] Stop using `cpmConnector.verser2Broker` as the STH runner Broker provider; that Broker is for STH-to-Manager connectivity, not STH-to-runner connectivity.
+    - [ ] Ensure runner verser2 mode is disabled or fails closed unless an STH-local verser2 Host/Broker/Guest surface is available.
+    - [ ] Preserve explicit legacy runner transport config for old harnesses until the STH-local runner path is complete.
+    - [ ] Add a static or unit invariant proving runner transport envs are not built from Manager/MultiManager `verser2.hostUrl`.
+- [ ] Task: Define separate Manager and STH trust domains
+    - [ ] Define the Manager-local trust domain: Manager/MultiManager owns a CA/server identity for `STH -> Manager/MultiManager` trust.
+    - [ ] Define the STH-local trust domain: STH owns a CA/server identity for `Runner / Stack-Runner -> STH` trust.
+    - [ ] State that Manager CA and STH-local CA are separate trust roots and must not be treated as one private-key domain.
+    - [ ] State that CA trust proves server identity only; authorization remains token, local-only policy, or future mTLS enrollment.
+- [ ] Task: Add Manager local CA and trust export plan
+    - [ ] Add Manager/MultiManager local CA and server certificate autogeneration for local startup when no explicit verser2 Host TLS identity is configured.
+    - [ ] Persist generated CA/server keys securely with restrictive private-key permissions.
+    - [ ] Support configured public certificates, including Let’s Encrypt certificates for a specific Manager/MultiManager domain, as an alternative to generated local CA material.
+    - [ ] Expose only public Manager trust material through a Manager endpoint for `si`/STH retrieval: CA PEM, fingerprint, expiry, Manager verser2 Host URL, and route-domain metadata.
+    - [ ] Ensure no private keys, client certs, or passphrases are exposed through the trust endpoint or public config.
+- [ ] Task: Add STH Manager trust bootstrap
+    - [ ] Let `si` fetch, display, store, and pin the Manager trust material.
+    - [ ] Let STH use fetched/configured Manager CA trust when connecting to Manager/MultiManager.
+    - [ ] Keep STH client certificates optional for non-mTLS Manager connectivity.
+    - [ ] Preserve support for public CA trust when Manager uses a public certificate and no explicit Manager CA is required.
+    - [ ] Fail closed on Manager CA fingerprint mismatch when pinning is configured.
+- [ ] Task: Add STH-local verser2 Host for runners and stack-runners
+    - [ ] Start an STH-owned local verser2 Host dedicated to runner and stack-runner connectivity.
+    - [ ] Generate or load an STH-local CA/server identity for the STH-local runner Host.
+    - [ ] Expose runner route domains through the STH-local Host, including `runner.<instanceId>.scramjet.internal` and stack-runtime routes such as `sequence.<instanceId>.scramjet.internal` where needed.
+    - [ ] Bridge any Manager-required interactions through STH rather than exposing Manager directly to runners.
+    - [ ] Ensure standalone STH startup can provide the STH-local runner Host without requiring Manager connectivity.
+- [ ] Task: Adopt inline CA PEM bundles for verser2 trust
+    - [ ] Extend verser2 TLS config/types to support inline CA PEM bundles using the verser team format: `tls.ca` containing one or more concatenated PEM certificates.
+    - [ ] Keep file-based `caFile` as an input/source option where useful, but normalize runner/STH-local handoff to inline `tls.ca` when supported.
+    - [ ] Prefer `tls.ca` over `tls.caFile` when both are provided for runner/runtime transport.
+    - [ ] Treat inline CA PEM as public trust material, not secret private material, while still ensuring it is not confused with private keys.
+- [ ] Task: Generate combined runner trust bundle
+    - [ ] Have STH build a single runner trust bundle PEM string for runner and stack-runner transport.
+    - [ ] Always include the STH-local CA so runners can trust the STH-local verser2 Host.
+    - [ ] Include the Manager CA when STH has fetched or configured it, so stack-runners have the same public trust context when STH-mediated flows need Manager trust metadata.
+    - [ ] Preserve PEM bundle order as STH-local CA first, Manager CA second.
+    - [ ] Pass the combined bundle to runners as `tls.ca` in `SCRAMJET_RUNNER_TRANSPORT_CONFIG` where supported.
+    - [ ] For Docker/Kubernetes, either pass inline PEM when supported or materialize the PEM bundle as a mounted read-only file/Secret and pass the mounted path.
+    - [ ] Never pass private keys, passphrases, STH server keys, or Manager server keys through runner env/config.
+- [ ] Task: Rewire runner and runtime transport to STH-local endpoint
+    - [ ] Update process, Docker, and Kubernetes adapter runner env generation to use the STH-local runner Host URL and combined CA bundle, not the Manager Host URL.
+    - [ ] Update `packages/runner` verser2 config parsing and boot-config handoff so `verser2Runtime.hostUrl` is STH-local.
+    - [ ] Update `runner-node`, `runner-python`, and `runner-bun` so stack-specific runtime Broker/Guest clients connect only to the STH-local endpoint.
+    - [ ] Ensure `hubTargetDomain` and sequence API route domains resolve through STH-local routes.
+    - [ ] Remove or reject any runtime assumption that Manager routes are directly reachable from runners.
+- [ ] Task: Update adapter trust delivery
+    - [ ] Process adapter passes inline `tls.ca` or a local bundle path directly to the runner.
+    - [ ] Docker adapter mounts a generated combined CA bundle read-only when inline PEM is not sufficient for the runtime/library path.
+    - [ ] Kubernetes adapter creates or mounts a per-instance Secret/projected volume for the combined CA bundle when inline PEM is not sufficient.
+    - [ ] Add cleanup for generated per-runner trust bundle files/secrets where applicable.
+- [ ] Task: Add topology and trust validation
+    - [ ] Add unit/static checks proving runner env generation never uses Manager/MultiManager `verser2.hostUrl`.
+    - [ ] Add unit/static checks proving host-side runner transport does not use `cpmConnector.verser2Broker`.
+    - [ ] Add tests proving runner `hostUrl` is STH-local and runner `tls.ca` contains the STH-local CA plus Manager CA when available.
+    - [ ] Add negative tests proving direct `Runner -> Manager` config is rejected or never generated.
+    - [ ] Add Manager trust endpoint tests proving only public trust material is returned.
+    - [ ] Add STH trust bootstrap tests for fetched CA, pinned fingerprint success, and pinned fingerprint mismatch failure.
+    - [ ] Add process-adapter smoke coverage for `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.
+    - [ ] Record Docker/Kubernetes validation status or explicit deferral reason.
+- [ ] Task: Complete post-completion correction review and validation
+    - [ ] Run focused tests for Manager trust export, STH trust bootstrap, adapters-common runner env, runner transport config, runner-node, runner-python, runner-bun, host runner transport, and process adapter smoke.
+    - [ ] Run `npm run check:runtime-invariants` with direct-to-Manager runner topology forbidden.
+    - [ ] Run the narrowest relevant package build set, then `npm run build:packages` before closing the correction phase.
+    - [ ] Run an architecture review proving the final data path is `Runner / Stack-Runner -> STH -> Manager/MultiManager` and the trust domains remain separated.
+    - [ ] Update the final handoff with any remaining compatibility flags, deferred mTLS enrollment work, and Docker/Kubernetes trust-bundle validation status.
+- [ ] Task: Conductor - User Manual Verification 'Runner Topology Correction and Local Trust Bootstrap' (Protocol in workflow.md)
