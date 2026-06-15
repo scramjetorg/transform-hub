@@ -4,9 +4,7 @@ import { strict as assert } from "assert";
 import { getExecutableCmd, spawnProcess, stopProcess, parseOptions, requestGet, requestPost, assertResponseData } from "./common";
 import { CustomWorld } from "../world";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
-import { HostClient } from "@scramjet/api-client";
 import { defer } from "@scramjet/utility";
-import { STHRestAPI } from "@scramjet/types";
 
 async function startMultiManager(options: {[key: string]: any}): Promise<ChildProcess> {
     return spawnProcess(getExecutableCmd("multi-manager"), options, 500, "Server started");
@@ -100,39 +98,6 @@ When("MultiManager with id {string}, {string} POST endpoint queried with data {s
     this.resources.multiManagerResponse = response;
 });
 
-
-When("start host on MultiHost {string} connected to Manager {string} using MultiManager {string} with data {string}", async function(
-    this: CustomWorld,
-    mhId: string,
-    mId: string,
-    mmId: string,
-    requestData: string
-){
-    const multiManager = this.resources.multiManagers[mmId];
-    const response = await requestPost(multiManager.apiBase, `msth/${mhId}/api/v1/start`, requestData);
-
-    const hostId = JSON.parse(requestData).host.id;
-
-    this.resources.hosts[hostId] = new HostClient(
-        `${multiManager.apiBase}/cpm/${mId}/api/v1/sth/${hostId}/api/v1`
-    );
-
-
-    let status: STHRestAPI.GetStatusResponse = { cpm: {} };
-
-    do {
-
-        try {
-            status = await this.resources.hosts[hostId].getStatus();
-        } catch (e) {
-            /* ignore */
-        }
-        await defer(500);
-    } while (!status.cpm.connected);
-
-    this.resources.multiManagerResponse = response;
-});
-
 When("Manager started on MultiManager {string} with config {string}", async function(
     this: CustomWorld,
     mmId: string,
@@ -173,17 +138,6 @@ Then("it lists manager with {int} sequences", async function(
     assert.equal(this.resources.multiManagerResponse.length, numberOfSeq);
 });
 
-When("MultiManager with id {string} stops first running host on MultiHost id {string}", async function(
-    this: CustomWorld,
-    multiManagerId: string,
-    multiHostId: string
-){
-    const hostId = this.resources.multiManagerResponse[0].id;
-    const multiManager = this.resources.multiManagers[multiManagerId];
-
-    await requestPost(multiManager.apiBase, `msth/${multiHostId}/api/v1/stop/${hostId}`, {});
-});
-
 Then("Manager {string} exposes own logs", { timeout: 10000 }, async function(
     this: CustomWorld,
     managerId: string,
@@ -212,21 +166,6 @@ Then("Manager {string} exposes Host {string} logs", { timeout: 10000 }, async fu
             return;
         }
     }
-});
-
-Then("MultiManager with id {string} lists {int} running hosts on MultiHost id {string}", async function(
-    this: CustomWorld,
-    multiManagerId: string,
-    itemsLength: number,
-    multiHostId: string
-){
-    const multiManager = this.resources.multiManagers[multiManagerId];
-    const response = await requestGet(multiManager.apiBase, `msth/${ multiHostId }/api/v1/list`);
-
-    this.resources.multiManagerResponse = response;
-
-    // eslint-disable-next-line no-extra-parens
-    assert.equal((this.resources.multiManagerResponse as any).length, itemsLength);
 });
 
 Then("MultiManager with id {string} lists {int} running hosts on Manager id {string}", async function(

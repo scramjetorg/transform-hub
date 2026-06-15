@@ -245,18 +245,6 @@ Logger.
 
 ___
 
-### verserClient
-
-• **verserClient**: `VerserClient`
-
-VerserClient Instance used for connecting with Verser.
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L133)
-
-___
-
 ### wasConnected
 
 • **wasConnected**: `boolean` = `false`
@@ -304,7 +292,7 @@ ___
 
 ▸ **connect**(): `Promise`<`void`\>
 
-Connect to Manager using VerserClient.
+Connect to Manager using verser2.
 Host send its id to Manager in headers. If id is not set, it will be received from Manager.
 When connection is established it sets up handlers for communication channels.
 If connection fails, it will try to reconnect.

@@ -14,7 +14,6 @@ export type STHCommandOptions = {
     config?: string;
     cpmUrl?: string;
     cpmId?: string;
-    cpmSslCaPath?: string;
     cpmMaxReconnections: number;
     cpmReconnectionDelay: number;
     federationControl: boolean;

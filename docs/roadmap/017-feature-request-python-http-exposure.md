@@ -13,7 +13,7 @@ Once Python sequences run behind `runner-python`, they should be able to expose 
 
 ## Current Behavior
 
-- The approved Python runner-wrapper plan explicitly excludes Python REQUESTS/BPMux and does not add a Python `context.api` or equivalent exposed-HTTP surface.
+- The approved Python runner-wrapper plan does not yet add a Python request channel, `context.api`, or equivalent exposed-HTTP surface.
 - Python sequences can process streams and lifecycle events, but they do not have a runtime-owned ASGI/WSGI serving contract.
 - Node runtime behavior includes a sequence-local API server path, but Python has no equivalent.
 - Python developers must run their own sidecar or bind their own server manually if they want HTTP exposure.

@@ -29,6 +29,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
         lastDisconnected?: Date,
     },
     accessKey: string | undefined;
+    routeDomain: string;
     healthy: boolean,
     created?: Date,
     disconnected?: Date,

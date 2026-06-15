@@ -13,8 +13,8 @@ After `runner-python` exists behind the main runner executor boundary, Python se
 
 ## Current Behavior
 
-- `packages/runner-node` builds a sequence-local host API client using the REQUESTS channel and BPMux-backed transport.
-- The approved Python runner-wrapper direction explicitly excludes REQUESTS/BPMux for Python and only gives Python direct `IN`, `OUT`, and `LOG` host channels plus fd-based control and monitoring.
+- `packages/runner-node` builds a sequence-local host API client over the runner verser2 runtime transport.
+- The approved Python runner-wrapper direction currently gives Python direct `IN`, `OUT`, and `LOG` host channels plus fd-based control and monitoring, without a Python request channel.
 - Python sequences therefore cannot call hub endpoints through a first-class runtime client the way Node sequences can.
 - Any Python sequence that needs host-facing HTTP interaction today must work around the runtime boundary externally rather than through the runner contract.
 

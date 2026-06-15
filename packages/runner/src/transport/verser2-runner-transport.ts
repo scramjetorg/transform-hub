@@ -227,6 +227,11 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
 
     private pipeResponse(res: http.ServerResponse, source: Readable): void {
         res.writeHead(200, { "content-type": "application/octet-stream" });
+        if (typeof res.flushHeaders === "function") {
+            res.flushHeaders();
+        } else {
+            res.write("");
+        }
         source.on("error", error => res.destroy(error));
         source.pipe(res);
         source.resume();

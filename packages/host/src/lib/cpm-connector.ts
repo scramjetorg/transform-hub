@@ -400,6 +400,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             id: this.config.id || this.info.id,
             description: this.config.description || "",
             tags: this.config.tags || [],
+            enrollmentToken: this.config.verser2.enrollment.token,
             routeDomain: this.config.verser2.guest.routeDomain
         });
 

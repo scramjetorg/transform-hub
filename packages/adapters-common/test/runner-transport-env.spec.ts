@@ -62,8 +62,20 @@ test("getRunnerTransportEnv emits STH-local verser2 runner transport when trust 
     t.is(parsed.hubTargetDomain, "sth.internal");
     t.not(parsed.hubTargetDomain, baseVerser2.broker.targetDomain);
     t.is(parsed.leaseAcquireTimeoutMs, 2000);
-    t.is(parsed.minWaitingStreams, 4);
+    t.is(parsed.minWaitingStreams, 8);
     t.deepEqual(parsed.tls, { ca: `${sthLocalCa}\n${managerCa}` });
+});
+
+test("getRunnerTransportEnv preserves configured runner lease floor when higher than transport minimum", t => {
+    const env = getRunnerTransportEnv({
+        verser2: withRunnerHost({
+            ...baseVerser2,
+            leases: { minimumWaitingLeases: 12 }
+        })
+    }, "inst-42");
+    const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
+
+    t.is(parsed.minWaitingStreams, 12);
 });
 
 test("getRunnerTransportEnv fails closed without STH-local CA", t => {

@@ -119,7 +119,7 @@ Manager/MultiManager migration scenarios live under `bdd/features/manager` and a
 npm run test:bdd-manager-migration
 ```
 
-The default Manager migration command excludes scenarios tagged `@requires-multi-host`; those depend on CPM MultiHost and are intentionally not part of the STH build/test path.
+The Manager migration command covers the current Manager/MultiManager API paths and no longer includes retired forwarding scenarios.
 
 ### Running BDD in a container
 
@@ -132,7 +132,7 @@ The root `npm run test:bdd` command runs through `scripts/run-bdd-docker.js`, wh
 
 **Default invocation**
 
-By default, `yarn test:bdd` starts a `node:22` container with `--memory=4096m` (and `--memory-swap` set to the same value). You don't need to change anything to get the containerized behavior.
+By default, `npm run test:bdd` starts a `node:22` container with `--memory=4096m` (and `--memory-swap` set to the same value). You don't need to change anything to get the containerized behavior.
 
 **Environment variables**
 
@@ -172,7 +172,7 @@ docker ps --filter name=bdd-runner- -q | xargs -r docker kill
 Native Node.js addons in `node_modules` must be linux-x64 glibc compatible. If you see an ABI mismatch error, rebuild the dependencies inside a Linux container:
 
 ```bash
-yarn --cwd=./bdd install
+npm install --workspace bdd
 ```
 
 This ensures the native modules match the container's runtime.
@@ -188,7 +188,7 @@ There is a list of variables that can be used in BDD tests. These variables are 
 You can use them in the command line, for example like this:
 
 ```bash
-DEVELOPMENT=1 yarn test:bdd --name="E2E-001 TC-002"
+DEVELOPMENT=1 npm run test:bdd -- --name="E2E-001 TC-002"
 # it will run the tests in development mode, which means that logs will be seen during test execution.
 ```
 
@@ -196,9 +196,9 @@ DEVELOPMENT=1 yarn test:bdd --name="E2E-001 TC-002"
 
 With the command below you will run all the unit tests in a whole project:
 
-    yarn test
+    npm test
 
-This command runs `test` script defined in the main `package.json` [file](../package.json). The script executes yarn command: `yarn test`. In a result, yarn goes through all the packages and runs unit tests in every package.
+This command runs the `test` script defined in the main `package.json` [file](../package.json). In a result, npm goes through all the packages and runs unit tests in every package.
 
 If you see the error along the way, that means some tests were not passed.
 

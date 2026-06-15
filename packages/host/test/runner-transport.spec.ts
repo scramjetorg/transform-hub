@@ -321,6 +321,23 @@ test("Verser2RunnerTransport replaces consumed response-body route leases", asyn
     t.is(Buffer.concat(stdoutChunks).toString("utf8"), "firstsecond");
 });
 
+test("Verser2RunnerTransport ignores failed replacement response-body leases", async t => {
+    const { downstreams, upstreams } = streams();
+    const { broker, responseBodies } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const errors: Error[] = [];
+
+    downstreams[CC.STDOUT].on("error", error => errors.push(error));
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+
+    broker.request = async () => ({ statusCode: 503, body: new PassThrough() });
+    responseBodies[3].end("done");
+    await nextTick();
+
+    t.deepEqual(errors, []);
+    t.false(downstreams[CC.STDOUT].destroyed);
+});
+
 test("Verser2RunnerTransport rejects unsuccessful route lease responses", async t => {
     const { downstreams, upstreams } = streams();
     const failedBody = new PassThrough();

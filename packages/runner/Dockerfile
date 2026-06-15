@@ -18,7 +18,6 @@ FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app/
 
-COPY ./dist/docker-runner/bpmux ./dist/bpmux
 COPY ./dist/docker-runner/frame-stream ./dist/frame-stream
 COPY ./dist/docker-runner/api-client ./dist/api-client
 COPY ./dist/docker-runner/client-utils ./dist/client-utils

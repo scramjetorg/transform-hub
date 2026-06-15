@@ -15,7 +15,7 @@ Runtime executable entrypoint for Node child execution. It is the concrete boots
 - Parses boot config path from `argv` and validates via `readBootConfig`.
 - Opens fd streams (`stdin/stdout/stderr/control/monitoring`) and determines host-backed mode.
 - Loads sequence module and builds app/sequence context.
-- Establishes host connectivity + BPMux (if host ports configured), sets up ping/control handlers, writes monitoring/keepalive frames.
+- Establishes host connectivity and verser2 runtime request metadata when configured, sets up ping/control handlers, writes monitoring/keepalive frames.
 - Executes sequence, writes terminal monitoring frame for completion/failure.
 - Disconnects host, tears down streams, writes legacy/secure process exit artifacts, returns numeric exit status.
 

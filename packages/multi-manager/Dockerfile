@@ -22,7 +22,6 @@ COPY sth/packages/adapter-kubernetes ./sth/packages/adapter-kubernetes
 COPY sth/packages/adapter-process ./sth/packages/adapter-process
 COPY sth/packages/api-client ./sth/packages/api-client
 COPY sth/packages/api-server ./sth/packages/api-server
-COPY sth/packages/bpmux ./sth/packages/bpmux
 COPY sth/packages/client-utils ./sth/packages/client-utils
 COPY sth/packages/frame-stream ./sth/packages/frame-stream
 COPY sth/packages/load-check ./sth/packages/load-check
@@ -37,7 +36,6 @@ COPY sth/packages/sth-config ./sth/packages/sth-config
 COPY sth/packages/symbols ./sth/packages/symbols
 COPY sth/packages/types ./sth/packages/types
 COPY sth/packages/utility ./sth/packages/utility
-COPY sth/packages/verser ./sth/packages/verser
 
 COPY sth/tsconfig.base.json ./cpm/tsconfig.base.json
 COPY sth/tsconfig.base.json ./sth/tsconfig.base.json

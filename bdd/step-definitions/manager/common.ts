@@ -22,12 +22,8 @@ async function requestPost(
 }
 
 function getExecutableCmd(packageName: string): string[] {
-    const sourcePath = packageName === "multi-host"
-        ? `../../cpm/packages/${ packageName }/src/bin/start.ts`
-        : `../packages/${ packageName }/src/bin/start.ts`;
-    const builtPath = packageName === "multi-host"
-        ? `../../dist/${ packageName }/bin/start.js`
-        : `../dist/${ packageName }/bin/start.js`;
+    const sourcePath = `../packages/${ packageName }/src/bin/start.ts`;
+    const builtPath = `../dist/${ packageName }/bin/start.js`;
 
     return process.env.SCRAMJET_SPAWN_TS
         ? ["npx", "ts-node", path.resolve(process.cwd(), sourcePath)]

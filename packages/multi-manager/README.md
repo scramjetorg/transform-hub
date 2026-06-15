@@ -98,6 +98,6 @@ This means if you want to query `/version` endpoint of manager with id `Mgr-1` s
 
 > curl 0.0.0.0:11000/api/v1/cpm/**Mgr-1**/api/v1/**version**
 
-## Connecting from MultiHost
+## STH Connectivity
 
-MultiManager can be also connected with MultiHost to expose MultiHost API. This needs to be initialized by MultiHost, please refer to [MultiHost docs](../multi-host/README.md).
+MultiManager and its managed Manager instances use verser2 Host/Broker/Guest routing for STH connectivity. The previous forwarding path is retired.

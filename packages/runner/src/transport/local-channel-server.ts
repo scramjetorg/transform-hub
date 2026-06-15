@@ -1,13 +1,11 @@
 /**
  * Local channel bridge server for runtime children.
  *
- * Phase 3 slice: listens on 127.0.0.1:0 and accepts the existing HostClient
+ * Listens on 127.0.0.1:0 and accepts the runtime wrapper local-channel
  * 37-byte header protocol (36-byte instance ID + 1-byte channel index).
  * Supports collecting streams for CC.IN, CC.OUT, CC.LOG (and CC.REQUESTS as
  * reserved). Exposes start(), close(), port/address, getStream(channel) and
  * waitForStream(channel, timeout?).
- *
- * Not yet wired into start-runner.ts.
  */
 
 import { CommunicationChannel as CC } from "@scramjet/symbols";

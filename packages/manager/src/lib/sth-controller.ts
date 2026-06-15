@@ -109,6 +109,10 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         return this.verser2.accessKey || "";
     }
 
+    get routeDomain() {
+        return this.verser2.routeDomain;
+    }
+
     constructor(id: string, verser2: STHControllerVerser2Options) {
         super();
 

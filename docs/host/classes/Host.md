@@ -298,16 +298,6 @@ Service to handle topics.
 
 ___
 
-### socketServer
-
-• **socketServer**: [`SocketServer`](SocketServer.md)
-
-#### Defined in
-
-[packages/host/src/lib/host.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L118)
-
-___
-
 ### telemetryAdapter
 
 • `Optional` **telemetryAdapter**: `ITelemetryAdapter`
@@ -1050,7 +1040,7 @@ using its CSIController [CSIController](CSIController.md)
 
 ### constructor
 
-• **new Host**(`apiServer`, `socketServer`, `sthConfig`)
+• **new Host**(`apiServer`, `sthConfig`)
 
 Initializes Host.
 Sets used modules with provided configuration.
@@ -1060,7 +1050,6 @@ Sets used modules with provided configuration.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `apiServer` | `APIExpose` | Server to attach API to. |
-| `socketServer` | [`SocketServer`](SocketServer.md) | Server to listen for connections from Instances. |
 | `sthConfig` | `STHConfiguration` | Configuration. |
 
 #### Defined in

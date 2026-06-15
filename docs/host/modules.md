@@ -11,7 +11,6 @@
 - [CommonLogsPipe](classes/CommonLogsPipe.md)
 - [Host](classes/Host.md)
 - [ServiceDiscovery](classes/ServiceDiscovery.md)
-- [SocketServer](classes/SocketServer.md)
 
 ### Interfaces
 

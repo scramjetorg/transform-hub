@@ -56,7 +56,6 @@ export class ConfigService {
         const {
             kubernetes: kubeFull,
             sequencesRoot: optionsSequencesRoot2,
-            cpmSslCaPath: optionsCpmSslCaPath,
             ...safe
         } = config;
 

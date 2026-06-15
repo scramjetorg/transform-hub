@@ -100,7 +100,7 @@ function classifySthRoute(method: string, segments: string[]): ManagerRouteDecis
         return managerOwned("sth-registry", "Manager owns the connected-STH registry");
     }
 
-    if (segments[2] === "info") {
+    if (segments.length === 3 && segments[2] === "info") {
         return managerOwned("sth-info", "Manager owns connected-STH registry metadata", { sthId });
     }
 

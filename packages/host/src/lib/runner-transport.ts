@@ -311,24 +311,16 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
             void this.openResponseBodyRoute(domain, path, target, true, generation).catch(replacementError => {
                 if (!this.connected || generation !== this.connectionGeneration) return;
-                this.destroyTarget(target, replacementError instanceof Error
-                    ? replacementError
-                    : new Error(String(replacementError))
-                );
+                // A replacement lease can fail after the runner has already
+                // completed and removed its route. The original body ending is
+                // enough signal; do not turn route cleanup into an unhandled
+                // stream error on Host-owned PassThroughs.
             });
         };
 
         body.once("end", () => replace());
         body.once("close", () => replace());
         body.once("error", error => replace(error));
-    }
-
-    private destroyTarget(target: NodeJS.WritableStream, error: Error): void {
-        const destroy = (target as unknown as { destroy?: (error?: Error) => void }).destroy;
-
-        if (typeof destroy === "function") {
-            destroy.call(target, error);
-        }
     }
 
     private assertSuccessfulRouteResponse(response: Verser2RunnerBrokerResponse, path: string): void {

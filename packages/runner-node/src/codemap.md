@@ -19,4 +19,4 @@ Without host config: builds sequence context only, discards output, marks input 
 
 ## Integration Points
 
-Integrates host transport (`HostClient`), BPMux for request multiplexing, API server/client helpers, `RunnerLifecycle`, `RunnerAppContext`, and shared `@scramjet` types/symbols.
+Integrates host transport (`HostClient`), verser2 runtime request metadata, API server/client helpers, `RunnerLifecycle`, `RunnerAppContext`, and shared `@scramjet` types/symbols.

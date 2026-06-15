@@ -8,7 +8,6 @@ COPY ./dist/adapter-kubernetes ./dist/adapter-kubernetes
 COPY ./dist/adapter-docker ./dist/adapter-docker
 COPY ./dist/adapters-common ./dist/adapters-common
 COPY ./dist/api-client ./dist/api-client
-COPY ./dist/bpmux ./dist/bpmux
 COPY ./dist/frame-stream ./dist/frame-stream
 COPY ./dist/client-utils ./dist/client-utils
 COPY ./dist/api-server ./dist/api-server
@@ -25,7 +24,6 @@ COPY ./dist/sth ./dist/sth
 COPY ./dist/symbols ./dist/symbols
 COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
-COPY ./dist/verser ./dist/verser
 COPY ./dist/telemetry ./dist/telemetry
 COPY ./dist/package.json ./dist/package.json
 COPY LICENSE ./

@@ -40,7 +40,7 @@ STH Connection (Verser):
 API Request Routing:
   HTTP request → Manager.router → /api/v1/sth/:id/*
     → Manager.handleRequestToSTH(req, res)
-    → Forwards via VerserConnection.getAgent() (HTTP proxy)
+    → Forwards via ManagerSthBrokerTransport over verser2
     → STHController handles and responds
 
 CPM Message Flow (STH → Manager):
@@ -66,7 +66,7 @@ API → Manager endpoints:
 
 ## Integration Points
 - **`@scramjet/api-server`**: Provides the Cero-based router for all HTTP API endpoints.
-- **`@scramjet/verser` / `@signicode/verser2-guest-node`**: Reverse HTTP tunnel transport used to communicate with each STH node.
+- **`@signicode/verser2-guest-node` / `@signicode/verser-common`**: verser2 broker/guest transport used to communicate with each STH node.
 - **`@scramjet/types`**: Interfaces for `ISTHController`, `ISTHConnectionStore`, `ISTHInfoRegister`, `IServiceDiscovery`, API REST types, and CPM message types.
 - **`@scramjet/symbols`**: Shared enum constants (`CPMMessageCode`, `InstanceStatus`, `SequenceMessageCode`, `OpRecordCode`, `DisconnectHubErrors`).
 - **`@scramjet/api-client` / `@scramjet/client-utils`**: `HostClient` used by `STHController` for intra-host API calls.

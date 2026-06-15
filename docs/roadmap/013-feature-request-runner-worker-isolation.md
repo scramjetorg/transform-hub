@@ -88,7 +88,7 @@ The implementation plan for this request is corrected in `.omo/plans/runner-work
 - **Duplicate frame prevention**: Added `lifecycle-observer.ts` that non-destructively inspects data on the child's monitoring fd5. The parent only emits a fallback terminal frame (`SEQUENCE_COMPLETED` / `SEQUENCE_STOPPED`) if the child did not already report one, preventing double terminal frames on the host.
 - **Exit code hardening**: Legacy exit-file write (`/tmp/runner-<pid>`) used `writeFileSync` which follows symlinks. Replaced with `writeLegacyExitFileSecure()` using `openSync` with `O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW` and mode `0o600`. Pre-existing files or symlinks cause a skip rather than a crash.
 - **Sequence-facing context**: Initial implementation uses `SequenceLocalContext` (native runner-node class exposing `keepAlive/end/destroy/on/emit/addStopHandler/addKillHandler` plus `instanceId`, `logger`, `emitter`). Full `RunnerAppContext` with `hub`/`space`/`api` deferred to a later slice.
-- **RunnerAppContext wiring**: When `instancesServerPort` + `instancesServerHost` are present in boot config, runner-node constructs a real `RunnerAppContext` with `ApiHostClient` / `ManagerClient` over BPMux REQUESTS. Falls back to `SequenceLocalContext` for unit-test spawns without an instances-server.
+- **RunnerAppContext wiring**: When runner verser2 runtime metadata is present in boot config, runner-node constructs a real `RunnerAppContext` with `ApiHostClient` / `ManagerClient` over the verser2 request transport. Falls back to `SequenceLocalContext` for unit-test spawns without runtime transport metadata.
 
 ### Issues Encountered
 

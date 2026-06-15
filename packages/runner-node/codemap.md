@@ -19,4 +19,4 @@ On completion/failure it writes terminal monitoring frames, runs lifecycle clean
 
 ## Integration Points
 
-Uses `@scramjet/types`, `@scramjet/symbols`, `@scramjet/api-client`, `@scramjet/api-server`, BPMux, and the outer runtime's boot-config + fd4/fd5 protocol contract.
+Uses `@scramjet/types`, `@scramjet/symbols`, `@scramjet/api-client`, `@scramjet/api-server`, the runner verser2 runtime metadata, and the outer runtime's boot-config + fd4/fd5 protocol contract.

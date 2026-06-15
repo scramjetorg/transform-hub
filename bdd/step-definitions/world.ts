@@ -16,11 +16,6 @@ const defaultTimeout = Number.isFinite(configuredTimeout) && configuredTimeout >
     ? Math.min(configuredTimeout, MAX_TIMEOUT)
     : DEFAULT_TIMEOUT;
 
-type MultiHostInfo = {
-    process: ChildProcess;
-    options: {[key: string]: any};
-};
-
 export class CustomWorld implements World {
     readonly attach: ICreateAttachment;
     readonly log: ICreateLog;
@@ -29,7 +24,6 @@ export class CustomWorld implements World {
     resources: {
         [key: string]: any;
         hub?: ChildProcess;
-        multiHosts: Record<string, MultiHostInfo>;
         multiManagers: Record<string, MultiManagerClient & { process?: ChildProcess }>;
         managers: Record<string, ManagerClient>;
         hosts: Record<string, HostClient>;

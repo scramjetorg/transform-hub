@@ -14,6 +14,8 @@ import SequenceStore from "./sequence-store";
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 
+const RUNNER_CHANNEL_INSTANCE_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+
 export type DispatcherErrorEventData = { id:string, err: any };
 export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};
 export type DispatcherInstanceTerminatedEventData = DispatcherInstanceEndEventData;
@@ -232,6 +234,10 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         const id = payload.instanceId || IDProvider.generate();
         let reservedInstanceId = false;
         let reservedInstanceName = false;
+
+        if (!RUNNER_CHANNEL_INSTANCE_ID_PATTERN.test(id)) {
+            throw new HostError("INSTANCE_STARTUP_ERROR", "Instance ID must be a DNS-label-safe value for runner verser2 channel routing");
+        }
 
         if (this.instanceStore.hasName(id)) {
             throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID conflicts with an existing instance name");

@@ -65,8 +65,8 @@ Ownership is split by responsibility, not by language:
 
 - Outer runner owns `STDIN`, `STDOUT`, `STDERR`, `CONTROL` on fd4, and `MONITORING` on fd5.
 - Wrapper opens directly, via TCP to instances server, `IN`, `OUT`, and `LOG`.
-- Node wrapper also opens `REQUESTS` through BPMux.
-- Python wrapper does not open `REQUESTS`.
+- Node wrapper API requests use the runner verser2 runtime when one is provided.
+- Python wrapper does not open a request channel.
 - fd3 remains reserved IPC.
 
 ## Boot-config Protocol

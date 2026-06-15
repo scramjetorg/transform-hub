@@ -1,7 +1,7 @@
 # Package Atlas: host/src/lib
 
 ## Responsibility
-Core host runtime library for API/socket orchestration, sequence and instance state, and control-plane integrations.
+Core host runtime library for API orchestration, sequence and instance state, verser2 runner transport, and control-plane integrations.
 
 This layer is the runtime heart of a Host node: it boots runtime adapters, exposes endpoints/events, tracks local sequence/instance lifecycles, and bridges to platform services.
 
@@ -11,7 +11,7 @@ This layer is the runtime heart of a Host node: it boots runtime adapters, expos
   - `CSIController` handles persisted instance lifecycle operations and status transitions.
   - `CSIDispatcher` schedules dispatch/monitoring against a runtime adapter.
 - Store abstractions (`SequenceStore`, `InstanceStore`) persist and synchronize objects.
-- Socket-driven control plane using `SocketServer` with explicit channel handlers.
+- verser2-driven runner control plane with explicit channel handlers.
 - Observer/connector pattern: `CPMConnector` drives external platform events and host registration.
 
 ## Data & Control Flow
@@ -19,10 +19,10 @@ This layer is the runtime heart of a Host node: it boots runtime adapters, expos
   1. initialize telemetry/logging + API request logging,
   2. optionally identify existing sequences,
   3. `initializeRuntimeAdapters(...)`,
-  4. initialize local storage and start socket server,
+  4. initialize local storage and runner verser2 Host when enabled,
   5. attach listeners/handlers and start listening on host API,
   6. connect to CPM (if configured), then run startup sequences.
-- Incoming run requests pass through `SocketServer`/REST handlers into `CSIController`/`CSIDispatcher`, which resolves sequence package via store and delegates execution to adapter.
+- Incoming run requests pass through REST handlers into `CSIController`/`CSIDispatcher`, which resolves sequence package via store, provisions runner verser2 routing, and delegates execution to adapter.
 - Runtime completion or failures flow back through event bus, persisted instance state, audit logs, and optional platform connectors.
 - `performStop` and `stop` perform graceful shutdown of servers, in-flight instances, and cleanup hooks.
 

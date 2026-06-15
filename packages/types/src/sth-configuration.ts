@@ -180,11 +180,6 @@ export type STHConfiguration = {
     cpmUrl: string;
 
     /**
-     * Path to the certificate authority file for verifying self-signed CPM certs
-     */
-    cpmSslCaPath?: string;
-
-    /**
      * CPM id.
      */
     cpmId: string;
@@ -331,6 +326,6 @@ export type STHConfiguration = {
     verser2: STHOutboundVerser2Config;
 }
 
-export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
+export type PublicSTHConfiguration = Omit<Omit<STHConfiguration, "sequencesRoot">, "kubernetes"> & {
     kubernetes: Omit<Omit<Partial<K8SAdapterConfiguration>, "authConfigPath">, "sequencesRoot">
 };

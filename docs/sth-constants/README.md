@@ -148,7 +148,7 @@ There are several installations you need to perform to get STH up and running, a
 
 - nvm
 - node.js
-- yarn
+- npm
 - typescript
 - ts-node
 - docker
@@ -217,12 +217,17 @@ output: `8.1.0`
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g yarn
+npm install -g typescript ts-node
 ```
 
 ![installations](./images/installations.png)
 
 The same as before the installations can be confirmed by checking the installed versions:
+
+```bash
+tsc -v
+ts-node -v
+```
 
 ![versions](./images/versions.png)
 
@@ -263,21 +268,21 @@ First, let's clone the transform-hub repo. After that, some more installations w
 ```bash
 git clone https://github.com/scramjetorg/transform-hub.git && \
 cd transform-hub && \
-yarn install && yarn build:all && npm i -g ./dist/cli
+npm install && npm run build:all && npm i -g ./dist/cli
 ```
 
 Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 Meantime let me describe you what is happening in the command you have just pasted into the console:
 
 - `git clone https://github.com/scramjetorg/transform-hub.git` is cloning STH repository.
 - `cd transform-hub` is changing the directory to STH repository.
-- `yarn install` is installing all the dependencies of STH.
-- `yarn build:all` is building all STH packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
+- `npm install` is installing all the dependencies of STH.
+- `npm run build:all` is building all STH packages, this script includes three other building scripts (npm run build:packages && npm run build:refapps && npm run build:docker).
 - `npm i -g ./dist/cli` is installing STH CLI as a global command.
 
 When the package installation and build is complete, STH should be ready to run. To confirm that we will try to start it. There are several ways to do it, but for now we will use the [script](package.json#start) that will run STH from node:
 
 ```bash
-yarn start -P 8000
+npm run start -P 8000
 ```
 
 The parameter `-P` makes STH listen on port 8000. If you skip this parameter, it will listen on port 8000 anyway. This port is set as a default value in STH configuration file.
@@ -302,7 +307,7 @@ npm i -g @scramjet/sth   # installs the package globally
 
 When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
 
-If you managed to start STH, it confirms that the installation process was performed successfully. This is the command we used to start STH: `yarn start -P 8000`. The `-P` option is used to start STH on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that STH can be started on any port number, and it can be started in several ways, which is described in the following section.
+If you managed to start STH, it confirms that the installation process was performed successfully. This is the command we used to start STH: `npm run start -P 8000`. The `-P` option is used to start STH on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that STH can be started on any port number, and it can be started in several ways, which is described in the following section.
 
 ---
 
@@ -313,11 +318,11 @@ STH can be started in multiple ways. The default way is to run it with Docker an
 ```bash
 node dist/sth/bin/hub                 # Starts Host after it's been built
 
-yarn start                            # This is the same as above but using script
+npm run start                            # This is the same as above but using script
 
 ts-node packages/sth/src/bin/hub.ts   # Starts Host in development mode
 
-yarn start:dev                        # This is the same as above but using script
+npm run start:dev                        # This is the same as above but using script
 ```
 
 You can also start STH without Docker, use the same commands as above but with added `--runtime-adapter=process` option:
@@ -325,11 +330,11 @@ You can also start STH without Docker, use the same commands as above but with a
 ```bash
 node dist/sth/bin/hub --runtime-adapter=process
 
-yarn start --runtime-adapter=process
+npm run start -- --runtime-adapter=process
 
 ts-node packages/sth/src/bin/hub.ts --runtime-adapter=process
 
-yarn start:dev --runtime-adapter=process
+npm run start:dev -- --runtime-adapter=process
 ```
 
 There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
@@ -399,8 +404,8 @@ All the packages in the project need to be installed and built before the can be
 This is how to perform a clean install and build of all the packages:
 
 ```bash
-yarn install:clean        # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
-yarn build:all-packages   # optionally 'build:all' if you want all dockerfiles.
+npm run install:clean        # this command will perform 'npm run clean && npm run clean:modules && npm install' at once
+npm run build:all-packages   # optionally 'build:all' if you want all dockerfiles.
 ```
 
 ![build_clean](./images/clean_install.png)
@@ -426,14 +431,14 @@ Build from current source:
 
 ```bash
 cd ./packages/host/
-yarn build:docker
+npm run build:docker
 ```
 
 Build current release:
 
 ```bash
 cd ./packages/host/
-yarn build:docker-release
+npm run build:docker-release
 ```
 
 ## Run Transform Hub in Docker :robot:
@@ -499,13 +504,13 @@ The Sequence needs to be compressed into a `tar.gz` file format before we send i
 Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
 
 ```bash
-yarn build:refapps    # this builds all the refapps in the 'reference-apps' package
+npm run build:refapps    # this builds all the refapps in the 'reference-apps' package
 ```
 
 When the host is not running you can use a script:
 
 ```bash
-yarn prepare-sample-tar
+npm run prepare-sample-tar
 ```
 
 To compress specific package use linux tar command:
@@ -655,7 +660,7 @@ sudo gpasswd -a $USER docker
 If something goes wrong during building packages, any errors occur, please try to run clean build, which will remove all `node_modules` and `dist` directories, after that you try to install and build them again.
 
 ```bash
-yarn clean && yarn clean:modules && yarn install && yarn build:all
+npm run clean && npm run clean:modules && npm install && npm run build:all
 ```
 
 </details>
@@ -667,22 +672,22 @@ yarn clean && yarn clean:modules && yarn install && yarn build:all
 
 Every reference-app package before we run it, needs to:
 
-- have `node_modules` installed (`yarn install`)
-- have `dist` directory created and tar.gz package created (`yarn build:refapps`)
+- have `node_modules` installed (`npm install`)
+- have `dist` directory created and tar.gz package created (`npm run build:refapps`)
 
 Remember to install dependencies and build your sample package before compressing it.
 
 If you create your sample in `packages/reference-apps` folder, you can use the following command to build it:
 
 ```bash
-yarn build:refapps
+npm run build:refapps
 ```
 
 It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with yarn. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with npm. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 

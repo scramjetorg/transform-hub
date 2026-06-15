@@ -54,6 +54,7 @@ const defaultOffset = 0;
 type SthRegistrationPayload = {
     id?: string;
     routeDomain?: string;
+    enrollmentToken?: string;
     accessKey?: string;
     description?: string;
     tags?: string[];
@@ -437,6 +438,12 @@ export class Manager implements IComponent {
         const routeDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length
             ? payload.routeDomain
             : this.getSthRouteDomain(id);
+        const registrationToken = this.config.verser2.registration.token;
+
+        if (registrationToken && payload.enrollmentToken !== registrationToken) {
+            this.logger.warn("Refusing STH registration with invalid verser2 enrollment token", id);
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
 
         if (id && this.sthConnectionStore.getById(id)?.isConnectionActive) {
             await defer(100); // Wait for 100 ms before responding, so that a prevous connection can be closed.
@@ -550,19 +557,17 @@ export class Manager implements IComponent {
         this.writeUnsupportedRouteDecision(decision, res);
     }
 
-    private async handleVerser2RequestToSTH(id: string, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
-        const domain = this.getSthRouteDomain(id);
-
+    private async handleVerser2RequestToSTH(sth: ISTHController, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
         await forwardRoutedRequest({
             transport: this.sthBrokerTransport!,
-            domain,
+            domain: sth.routeDomain,
             req,
             res,
             path: req.url || "/",
             headers,
             routeReadinessMs: this.config.verser2.timeouts.routeReadinessMs,
             requestTimeoutMs: this.config.verser2.timeouts.requestMs,
-            onError: (error) => this.logger.warn("M -> STH verser2 request error", { id, url: req.url, error })
+            onError: (error) => this.logger.warn("M -> STH verser2 request error", { id: sth.id, routeDomain: sth.routeDomain, url: req.url, error })
         });
     }
 
@@ -576,7 +581,7 @@ export class Manager implements IComponent {
         const forwarding = prepareManagerFollowForwarding(decision, req.url, headers);
 
         if (forwarding.kind === "direct-route-metadata") {
-            this.writeDirectRouteMetadata(forwarding.routeDomain, forwarding.targetPath, res);
+            this.writeDirectRouteMetadata(sth.routeDomain, forwarding.targetPath, res);
 
             return;
         }
@@ -591,7 +596,7 @@ export class Manager implements IComponent {
         req.url = forwarding.path;
 
         if (this.sthBrokerTransport) {
-            await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
+            await this.handleVerser2RequestToSTH(sth, req, res, headers);
         } else {
             this.logger.warn("Request to STH without verser2 broker transport", req.method, req.url);
             res.writeHead(503);

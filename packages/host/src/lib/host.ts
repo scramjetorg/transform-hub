@@ -446,7 +446,7 @@ export class Host implements IHost, IComponent {
         this.pushTelemetry("Instance ended", {
             executionTime: instance.info.executionTime.toString(),
             id: instance.id,
-            code: instance.code.toString(),
+            code: (instance.code ?? -2).toString(),
             seqId: instance.sequence.id
         });
 
@@ -843,7 +843,6 @@ export class Host implements IHost, IComponent {
                 tags: this.config.tags,
                 id: this.config.host.id,
                 infoFilePath: this.config.host.infoFilePath,
-                cpmSslCaPath: this.config.cpmSslCaPath,
                 maxReconnections: this.config.cpm.maxReconnections,
                 reconnectionDelay: this.config.cpm.reconnectionDelay,
                 apiKey: this.config.platform?.api ? this.config.platform?.apiKey : undefined,

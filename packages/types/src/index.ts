@@ -1,6 +1,5 @@
 import * as STHRestAPI from "./rest-api-sth";
 import * as MWRestAPI from "./rest-api-middleware";
-import * as MHRestAPI from "./rest-api-multi-host";
 import * as MMRestAPI from "./rest-api-multi-manager";
 import * as MRestAPI from "./rest-api-manager";
 
@@ -55,7 +54,6 @@ export * from "./storage-adapter";
 
 export { MRestAPI };
 export { MWRestAPI };
-export { MHRestAPI };
 export { MMRestAPI };
 export { STHRestAPI };
 

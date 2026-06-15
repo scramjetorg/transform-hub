@@ -24,6 +24,7 @@ test("classifyManagerRoute treats state-changing single-owner STH routes as foll
 
 test("classifyManagerRoute keeps Manager-owned route families out of follow forwarding", t => {
     t.is(classifyManagerRoute("GET", "/api/v1/sth/sth-1/info").kind, "manager-owned");
+    t.is(classifyManagerRoute("GET", "/api/v1/sth/sth-1/info/details").kind, "follow");
     t.is(classifyManagerRoute("DELETE", "/api/v1/sth/sth-1").kind, "manager-owned");
     t.is(classifyManagerRoute("GET", "/api/v1/s3/package.tar.gz").kind, "manager-owned");
     t.is(classifyManagerRoute("POST", "/api/v1/disconnect").kind, "manager-owned");

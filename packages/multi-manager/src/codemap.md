@@ -14,4 +14,4 @@ Minimal barrel export (`index.ts` re-exports `portsParser` from `lib/ports-parse
 
 ## Integration Points
 
-Re-exported function `portsParser` is used externally for port-range validation. Internal modules integrate with `@scramjet/manager`, `@scramjet/verser`, `@scramjet/api-server`, `@scramjet/obj-logger`, `@scramjet/utility`, and `@scramjet/types`.
+Re-exported function `portsParser` is used externally for port-range validation. Internal modules integrate with `@scramjet/manager`, `@signicode/verser2-host`, `@scramjet/api-server`, `@scramjet/obj-logger`, `@scramjet/utility`, and `@scramjet/types`.

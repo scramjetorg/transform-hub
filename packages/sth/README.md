@@ -34,7 +34,7 @@ $ scramjet-transform-hub
 2022-08-18T07:55:13.135Z INFO  Host Log Level [ 'TRACE' ]
 2022-08-18T07:55:13.137Z TRACE Host Host main called [ { version: '0.27.0' } ]
 2022-08-18T07:55:13.155Z INFO  Host Will use the "docker" adapter for running Sequences
-2022-08-18T07:55:13.157Z INFO  SocketServer SocketServer on [ { address: '::', family: 'IPv6', port: 8001 } ]
+2022-08-18T07:55:13.157Z INFO  Host Runner verser2 transport ready
 2022-08-18T07:55:13.159Z INFO  Host API on [ '0.0.0.0:8000' ]
 2022-08-18T07:55:13.160Z INFO  Host You don't need to maintain your own server anymore [
   {
@@ -172,6 +172,5 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 * There's also a Paypal donation link if you prefer that:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
 
 

@@ -161,7 +161,7 @@ There are several installations you need to perform to get STH up and running, a
 
 - nvm
 - node.js
-- yarn
+- npm
 - typescript
 - ts-node
 - docker
@@ -229,7 +229,7 @@ $ npm -v
 There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g yarn   # yarn is a package manager
+npm install -g typescript ts-node
 ```
 
 ![installations](./images/installations.png)
@@ -237,8 +237,8 @@ npm install -g yarn   # yarn is a package manager
 The same as before the installations can be confirmed by checking the installed versions:
 
 ```bash
-$ yarn -v
-1.22.17
+tsc -v
+ts-node -v
 ```
 
 **OK!** The installation was successful. 🎉 🎆
@@ -301,7 +301,7 @@ When you start STH from npm, no package installations or builds are required. Yo
 ```bash
 git clone https://github.com/scramjetorg/transform-hub.git && \
 cd transform-hub && \
-yarn install && yarn build:all && npm i -g ./dist/cli
+npm install && npm run build:all && npm i -g ./dist/cli
 ```
 
 Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘.
@@ -310,8 +310,8 @@ In the meantime let me describe for you what is happening in the command you hav
 
 - `git clone https://github.com/scramjetorg/transform-hub.git` is cloning STH repository.
 - `cd transform-hub` is changing the directory to STH repository.
-- `yarn install` is installing all the dependencies of STH.
-- `yarn build:all` is building all STH packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
+- `npm install` is installing all the dependencies of STH.
+- `npm run build:all` is building all STH packages, this script includes three other building scripts (npm run build:packages && npm run build:refapps && npm run build:docker).
 - `npm i -g ./dist/cli` is installing STH [CLI](https://github.com/scramjetorg/scramjet-cli) as a global command.
 
 When both the package installation and build are complete, STH should be ready to run.
@@ -325,9 +325,9 @@ STH can be started in multiple ways. The default way is to run it with Docker an
 If installed by **cloning the repo**:
 
 ```bash
-yarn start               # Starts Hub after it's been built using script
+npm run start               # Starts Hub after it's been built using script
 
-yarn start:dev           # Starts Hub in development mode
+npm run start:dev           # Starts Hub in development mode
 ```
 If installed as **npm package**:
 
@@ -339,9 +339,9 @@ sth                      # alias for scramjet-transform-hub
 You can also start STH without Docker, use the same commands as above but add `--no-docker` flag:
 
 ```bash
-yarn start --no-docker
+npm run start -- --no-docker
 
-yarn start:dev --no-docker
+npm run start:dev -- --no-docker
 
 sth --no-docker
 ```
@@ -349,9 +349,9 @@ sth --no-docker
 There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
 
 ```bash
-yarn start --help
+npm run start -- --help
 
-yarn start:dev --help
+npm run start:dev -- --help
 
 sth --help
 ```
@@ -427,11 +427,10 @@ To find out more about CLI, please check out our docs at https://hub.scramjet.or
 Read more about Scramjet at https://scramjet.org/ 🚀
 ```
 
-You can also run CLI commands from the source code using `yarn start:dev:cli` instead of `si`, in this case no installation is needed, eg.:
+You can also run CLI commands from the source code using `npm run start:dev:cli --` instead of `si`, in this case no installation is needed, eg.:
 
 ```bash
-$ yarn start:dev:cli --version
-yarn run v1.22.17
+$ npm run start:dev:cli --version
 
 $ ts-node packages/cli/src/bin/index.ts --version
 CLI version: 0.28.1
@@ -450,8 +449,8 @@ All the packages in the project need to be installed and built before they can b
 This is how to perform a clean install and build of all the packages:
 
 ```bash
-yarn install:clean    # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
-yarn build:packages   # optionally 'build:all' if you want all dockerfiles.
+npm run install:clean    # this command will perform 'npm run clean && npm run clean:modules && npm install' at once
+npm run build:packages   # optionally 'build:all' if you want all dockerfiles.
 ```
 
 ![build_clean](./images/clean_install.png)
@@ -477,7 +476,7 @@ Build from current source:
 
 ```bash
 cd ./packages/sth/
-yarn build:docker
+npm run build:docker
 ```
 
 ## Run Transform Hub in Docker :robot:
@@ -562,7 +561,7 @@ By this time you should already have all those things done by going through the 
 
 - Run STH:
 ```bash
-yarn start      # if cloned STH repo
+npm run start      # if cloned STH repo
 
 sth             # if installed STH as npm package
 ```
@@ -684,7 +683,7 @@ If the problem persists, restart your PC.
 If something goes wrong during building packages, any errors occur, please try to run clean build, which will remove all `node_modules` and `dist` directories, after that you try to install and build them again.
 
 ```bash
-yarn clean && yarn clean:modules && yarn install && yarn build:all
+npm run clean && npm run clean:modules && npm install && npm run build:all
 ```
 
 </details>
@@ -696,22 +695,22 @@ yarn clean && yarn clean:modules && yarn install && yarn build:all
 
 Every reference-app package before we run it, needs to:
 
-- have `node_modules` installed (`yarn install`)
-- have `dist` directory created and tar.gz package created (`yarn build:refapps`)
+- have `node_modules` installed (`npm install`)
+- have `dist` directory created and tar.gz package created (`npm run build:refapps`)
 
 Remember to install dependencies and build your sample package before compressing it.
 
 If you create your sample in `packages/reference-apps` folder, you can use the following command to build it:
 
 ```bash
-yarn build:refapps
+npm run build:refapps
 ```
 
 It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with yarn. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with npm. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 

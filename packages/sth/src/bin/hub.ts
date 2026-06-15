@@ -56,7 +56,6 @@ const commonOptions: ConfigOptionDescriptor[] = [
     { name: "safeOperationLimit", flag: "safe-operation-limit", type: "number", description: "Number of MB reserved by the host for safe operation", parse: stringToIntSanitizer },
     { name: "exposeHostIp", flag: "expose-host-ip", type: "string", description: "Host IP address that the Runner container's port is mapped to." },
     { name: "instancesServerPort", flag: "instances-server-port", short: "isp", type: "string", description: "Port on which server that instances connect to should run." },
-    { name: "cpmSslCaPath", flag: "cpm-ssl-ca-path", type: "string", description: "Certificate Authority for self-signed CPM SSL certificates" },
     { name: "cpmId", flag: "cpm-id", type: "string" },
     { name: "cpmMaxReconnections", flag: "cpm-max-reconnections", type: "number", description: "Maximum reconnection attempts (-1 no limit)" },
     { name: "cpmReconnectionDelay", flag: "cpm-reconnection-delay", type: "number", description: "Time to wait before next reconnection attempt" },
@@ -136,7 +135,6 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         customName: options.customName,
         cpmUrl: options.cpmUrl,
         cpmId: options.cpmId,
-        cpmSslCaPath: options.cpmSslCaPath,
         instanceReconnect: options.instanceReconnect,
         cpm: {
             reconnectionDelay: options.cpmReconnectionDelay,

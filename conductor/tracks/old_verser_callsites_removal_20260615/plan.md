@@ -96,33 +96,33 @@
 
 ## Phase 4: Dependency Audit, Final Reviews, Documentation, and Verification
 
-- [ ] Task: Confirm final verser2 and standalone legacy package dependencies
-    - [ ] Ensure affected TypeScript packages depend on the needed public `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, `@signicode/verser-common`, and `@signicode/verser2-guest-js-common` packages.
-    - [ ] Ensure Python runtime packaging includes `verser2-guest-python` and documents required TLS/trust inputs.
-    - [ ] Ensure active packages do not reference unpublished or internal verser2 APIs when public Host/Guest/Broker APIs exist.
-    - [ ] Confirm `packages/verser` and `packages/bpmux` remain standalone buildable workspaces and are the only allowed old-verser/BPMux dependency owners.
-- [ ] Task: Complete final automated reviews
-    - [ ] Complete dependency removal review for old-verser/BPMux active dependencies and final verser2 dependencies.
-    - [ ] Complete dead-code review for deleted old-way branches, deleted socket paths, and remaining standalone legacy packages.
-    - [ ] Complete security review for TLS/CA/cert handling, mTLS registration authorization, private-key permissions, and per-runner cert cleanup.
-    - [ ] Complete final architecture conformance review for flat topology, exact-match routes, lease lifecycle, no direct runner-to-Manager connectivity, and no unsupported protocol assumptions.
-- [ ] Task: Update final documentation and Conductor artifacts
-    - [ ] Update active docs to describe verser2-only Manager/STH connectivity and remove guidance for selecting `legacy`, `dual`, old-verser, or BPMux-backed mode.
-    - [ ] Update package guidance for final verser2 connectivity architecture and standalone old-verser/BPMux package status.
-    - [ ] Update the verser2 rollout notes to mark old-verser/BPMux/socket cleanup items as superseded by or completed through this track.
-- [ ] Task: Run final full validation
-    - [ ] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
-    - [ ] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`.
-    - [ ] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent`.
-    - [ ] Run relevant BDD smoke validation for Manager/STH connectivity, including `npm run test:bdd-ci-node` and `npm run test:bdd-ci-api-node`.
-    - [ ] Run current-contract Python BDD coverage if new Python refapps/scenarios are available, otherwise record the skip reason.
-    - [ ] Run Bun BDD or smoke validation if available, otherwise record the skip reason.
-    - [ ] Record any skipped broad Docker/Kubernetes validation with exact reason.
-- [ ] Task: Final absence review and commit Phase 4
-    - [ ] Run repository-wide static searches proving no active old-verser/BPMux/socket traces remain outside `packages/verser`, `packages/bpmux`, and historical/archive locations.
-    - [ ] Confirm no active package manifest outside standalone legacy packages depends on `@scramjet/verser` or `@scramjet/bpmux`.
-    - [ ] Confirm final tests/invariants do not preserve old-verser/BPMux/socket compatibility or temporary removal-only scaffolding.
-    - [ ] Commit the scoped Phase 4 changes.
+- [x] Task: Confirm final verser2 and standalone legacy package dependencies
+    - [x] Ensure affected TypeScript packages depend on the needed public `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, `@signicode/verser-common`, and `@signicode/verser2-guest-js-common` packages.
+    - [x] Ensure Python runtime packaging includes `verser2-guest-python` and documents required TLS/trust inputs.
+    - [x] Ensure active packages do not reference unpublished or internal verser2 APIs when public Host/Guest/Broker APIs exist.
+    - [x] Confirm `packages/verser` and `packages/bpmux` remain standalone buildable workspaces and are the only allowed old-verser/BPMux dependency owners.
+- [x] Task: Complete final automated reviews
+    - [x] Complete dependency removal review for old-verser/BPMux active dependencies and final verser2 dependencies.
+    - [x] Complete dead-code review for deleted old-way branches, deleted socket paths, and remaining standalone legacy packages.
+    - [x] Complete security review for TLS/CA/cert handling, mTLS registration authorization, private-key permissions, and per-runner cert cleanup.
+    - [x] Complete final architecture conformance review for flat topology, exact-match routes, lease lifecycle, no direct runner-to-Manager connectivity, and no unsupported protocol assumptions.
+- [x] Task: Update final documentation and Conductor artifacts
+    - [x] Update active docs to describe verser2-only Manager/STH connectivity and remove guidance for selecting `legacy`, `dual`, old-verser, or BPMux-backed mode.
+    - [x] Update package guidance for final verser2 connectivity architecture and standalone old-verser/BPMux package status.
+    - [x] Update the verser2 rollout notes to mark old-verser/BPMux/socket cleanup items as superseded by or completed through this track.
+- [x] Task: Run final full validation
+    - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
+    - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`.
+    - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent`.
+    - [x] Run relevant BDD smoke validation for Manager/STH connectivity, including `npm run test:bdd-ci-node` and `npm run test:bdd-ci-api-node`.
+    - [x] Run current-contract Python BDD coverage if new Python refapps/scenarios are available, otherwise record the skip reason.
+    - [x] Run Bun BDD or smoke validation if available, otherwise record the skip reason.
+    - [x] Record any skipped broad Docker/Kubernetes validation with exact reason.
+- [x] Task: Final absence review and commit Phase 4
+    - [x] Run repository-wide static searches proving no active old-verser/BPMux/socket traces remain outside `packages/verser`, `packages/bpmux`, and historical/archive locations.
+    - [x] Confirm no active package manifest outside standalone legacy packages depends on `@scramjet/verser` or `@scramjet/bpmux`.
+    - [x] Confirm final tests/invariants do not preserve old-verser/BPMux/socket compatibility or temporary removal-only scaffolding.
+    - [x] Commit the scoped Phase 4 changes.
 - [ ] Task: Conductor - User Manual Verification 'Dependency Audit, Final Reviews, Documentation, and Verification' (Protocol in workflow.md)
 
 ## Track Notes
@@ -173,3 +173,14 @@
 - `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` passed with 8 durable guards.
 - `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages` passed.
 - `NODE_OPTIONS="--max-old-space-size=1536" npm test --workspace @scramjet/verser` passed. `@scramjet/bpmux` still has no `test` script and is covered by the successful package build/prepack path.
+
+### Phase 4 Validation Notes
+
+- Dependency review passed: active package manifests no longer depend on `@scramjet/verser` or `@scramjet/bpmux`; only standalone `packages/verser/package.json` and `packages/bpmux/package.json` retain those names/dependencies.
+- Static absence review passed: old `VerserClient`/`VerserConnection`, BPMux imports, `SocketServer`, `MultiHost`, `MHRestAPI`, `migrationMode`, and `cpmSslCaPath` traces are absent from active package source outside standalone legacy packages and historical Conductor notes.
+- README command review passed: `rg -n "\byarn\b|1\.22\.17" README.md docs packages bdd --glob '*README.md' --glob '!**/node_modules/**' --glob '!**/dist/**'` has no hits after converting remaining BDD examples to npm.
+- Validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`, `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`, and `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent`.
+- BDD smoke validation passed: `SCRAMJET_TEST_LOG=1 NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-api-node` passed with 20 scenarios and 101 steps; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-node` passed with 2 scenarios and 14 steps.
+- BDD fix notes: runner transport now keeps enough waiting leases for channel fanout, flushes route-response headers before streaming data, ignores replacement lease failures after setup cleanup, hardens Host telemetry exit-code formatting, and accepts DNS-label-safe custom instance IDs used by existing BDD scenarios.
+- Python current-contract BDD was not run separately because no new Python refapp/scenario was introduced by this phase; Python runtime coverage was included in `test:packages-no-concurrent`. Bun BDD was not run because this phase introduced no Bun-specific refapp/scenario; Bun package coverage was included in `test:packages-no-concurrent`.
+- Broad Docker/Kubernetes BDD and image validation were skipped because the phase scope is package/runtime topology cleanup and README/static dependency cleanup; Docker/Kubernetes adapter package tests and package builds passed under the broad package validation.

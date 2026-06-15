@@ -160,7 +160,7 @@ $ nomad alloc logs 63894ad6-5806-ee16-9c51-0f84ddd6ab97
 2022-05-20T12:17:09.466Z INFO  Host Log Level [ 'trace' ]
 2022-05-20T12:17:09.470Z TRACE Host Host main called [ { version: '0.22.0' } ]
 2022-05-20T12:17:09.470Z TRACE Host Setting up Docker networking 
-2022-05-20T12:17:09.655Z INFO  SocketServer SocketServer on [ { address: '::', family: 'IPv6', port: 8001 } ]
+2022-05-20T12:17:09.655Z INFO  Host Runner verser2 transport ready
 2022-05-20T12:17:09.665Z INFO  Host API on [ '0.0.0.0:8000' ]
 2022-05-20T12:17:09.666Z INFO  Host Run Sequences in our cloud. [
   {
@@ -268,31 +268,9 @@ $ nomad alloc logs 63894ad6-5806-ee16-9c51-0f84ddd6ab97
   ]
 ]
 2022-05-20T12:17:51.535Z TRACE DockerInstanceAdapter Container is running [ 'c71f392b34d5a0d826c8e1d19dca9e2764fd8b281a65344a2ea63970bf565f17' ]
-2022-05-20T12:17:51.613Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.613Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.614Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.614Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.614Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.615Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.615Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.615Z INFO  SocketServer New incoming Runner connection to SocketServer 
-2022-05-20T12:17:51.615Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.616Z INFO  SocketServer Connection on channel [ 0 ]
-2022-05-20T12:17:51.616Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.617Z INFO  SocketServer Connection on channel [ 1 ]
-2022-05-20T12:17:51.618Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.618Z INFO  SocketServer Connection on channel [ 2 ]
-2022-05-20T12:17:51.618Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.618Z INFO  SocketServer Connection on channel [ 3 ]
-2022-05-20T12:17:51.619Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.619Z INFO  SocketServer Connection on channel [ 4 ]
-2022-05-20T12:17:51.619Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.619Z INFO  SocketServer Connection on channel [ 5 ]
-2022-05-20T12:17:51.620Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.620Z INFO  SocketServer Connection on channel [ 6 ]
-2022-05-20T12:17:51.620Z INFO  SocketServer Connection from Instance [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
+2022-05-20T12:17:51.613Z INFO  RunnerVerser2Host Runner route ready [ 'runner.c4a730cc-3a40-4bbd-8968-d83a3cf299b5.scramjet.internal' ]
 2022-05-20T12:17:51.621Z DEBUG Host Instance connected [ 'c4a730cc-3a40-4bbd-8968-d83a3cf299b5' ]
-2022-05-20T12:17:51.620Z INFO  SocketServer Connection on channel [ 7 ]
+2022-05-20T12:17:51.620Z INFO  RunnerVerser2Host Runner channels attached over verser2
 2022-05-20T12:17:51.621Z TRACE CSIController Hookup streams 
 2022-05-20T12:17:51.627Z DEBUG CSIController PING received [ [ 3000, {} ] ]
 2022-05-20T12:17:51.627Z TRACE CSIController Received a PING message but didn't receive ports config 
