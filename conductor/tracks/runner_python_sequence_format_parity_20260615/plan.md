@@ -2,7 +2,7 @@
 
 ## Phase 1: Entrypoint Contract Definition and Baseline Coverage
 
-- [ ] Task: Confirm runner-python current behavior and entrypoints
+- [~] Task: Confirm runner-python current behavior and entrypoints
     - [ ] Read `packages/runner-python/codemap.md` and current runner-python source entrypoints for boot config, AppContext, sequence loading, input/output handling, lifecycle, monitoring, logging, events, topics, and API exposure.
     - [ ] Read the relevant verser2 rollout notes for current Python runtime migration state and deferred Python BDD blockers.
     - [ ] Identify current `run(...)` loader behavior and current parity fixtures using `run` in `main.py`.

@@ -291,11 +291,12 @@
     - [x] Run targeted hub connectivity tests for Manager/STH plus runner paths.
     - [x] Run local package tests for runner, runner-node, runner-python, runner-bun, host, and api-server as changed.
     - [x] Run `npm run check:runtime-invariants` when runtime protocol wiring changes.
-    - [~] Run relevant BDD smoke tests for Node, Python, API, and Bun if available.
+    - [~] Run relevant BDD smoke tests for Node, API, and Bun if available. Python BDD scenarios that exercise legacy external reference-app tarballs are out of scope for Phase 3 runtime migration; move those scenarios to a dedicated compatibility tag and disregard that compatibility tag until the end of this plan. Python runtime validation in this phase should target package tests and new/current Python-sequence contract coverage aligned with Node/Bun AppContext semantics rather than adapting verser2 to old `scramjet-framework-py` refapp behavior.
         - Validation hardening while running BDD: fixed STH CLI omitted-tags startup crash, fixed native CLI boolean parsing that set absent booleans to `true` and incorrectly enabled `strictPlatformConnection`, fixed native command-model handling for `-` placeholder positional arguments, and fixed runner-node terminal STOP so final non-keepAlive STOP interrupts the runtime without emitting `SEQUENCE_COMPLETED`.
         - Guarded validations passed: `npm run check:runtime-invariants`; runner AVA transport/config suites; full `npm test` in `packages/runner-node`; `npm test` in `packages/runner-python`; `npm test` in `packages/runner-bun`; `npm test -- test/routed-forward.spec.ts` and `npm run build` in `packages/api-server`; host focused forwarding/runner tests; `npm run build:packages`; config AVA tests; native CLI command-model AVA test file.
         - BDD node smoke now passes: `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-node` completed 4 scenarios / 35 steps. Follow-up BDD fixes moved the bad-sequence deploy helper to `../refapps/` and aligned E2E-016 with the current CLI-visible generic API error (`Application Error Occurred`).
         - BDD API smoke was partially rechecked: the first failing scenario now gets past `seq start -`; remaining failure is a scenario trying to kill an instance that already completed (`400 Instance not running`). Full API smoke attempt exceeded the local 180s validation timeout after multiple scenario failures, so it remains unresolved and is not counted as passed.
+        - Decision update: existing Python BDD scenarios against downloaded `python-*.tar.gz` reference-apps are legacy compatibility coverage, not blockers for Phase 3. Move them under a compatibility tag and keep that tag excluded until the final compatibility review. New Python BDD coverage should be written against the current Python runtime contract and AppContext parity target.
     - [x] Complete automated cross-runtime parity, API streaming, lease lifecycle, route readiness, and lifecycle reviews.
         - Oracle review found no remaining blockers for pending connect/replacement lease cleanup after route-cancellation fixes.
         - Oracle reviewed the runner-node STOP lifecycle BDD failure and recommended the terminal STOP interruption path now implemented and covered by lifecycle/runtime-entry tests.
@@ -341,7 +342,7 @@
     - [ ] Run `npm run check:runtime-invariants`.
     - [ ] Run `npm run test:packages-no-concurrent`.
     - [ ] Run `npm run test:bdd-ci-node`.
-    - [ ] Run `npm run test:bdd-ci-python`.
+    - [ ] Run current-contract Python BDD coverage once new Python refapps/scenarios are in place; keep legacy Python reference-app compatibility scenarios under their compatibility tag and review them only at the end of the plan.
     - [ ] Run `npm run test:bdd-ci-api-node`.
     - [ ] Run Bun BDD or smoke validation if available.
     - [ ] Record any skipped broad Docker/Kubernetes validation and reason.
