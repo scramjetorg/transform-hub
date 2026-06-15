@@ -70,7 +70,7 @@
     - [x] Run relevant BDD smoke validation for Manager/STH connectivity, including `npm run test:bdd-ci-node` and `npm run test:bdd-ci-api-node` unless a skip is explicitly recorded with reason.
     - [x] Record validation results and any skipped validation in the track notes.
     - [x] Commit the scoped Phase 2 changes.
-- [ ] Task: Conductor - User Manual Verification 'Remove Active Old-Verser Runtime and Configuration Branches' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Remove Active Old-Verser Runtime and Configuration Branches' (Protocol in workflow.md)
 
 ## Phase 3: Remove Transient Guardrails and Clean Old Tests
 
@@ -92,7 +92,7 @@
     - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
     - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`.
     - [x] Commit the scoped Phase 3 changes.
-- [ ] Task: Conductor - User Manual Verification 'Remove Transient Guardrails and Clean Old Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Remove Transient Guardrails and Clean Old Tests' (Protocol in workflow.md)
 
 ## Phase 4: Dependency Audit, Final Reviews, Documentation, and Verification
 
@@ -185,3 +185,9 @@
 - Python current-contract BDD was not run separately because no new Python refapp/scenario was introduced by this phase; Python runtime coverage was included in `test:packages-no-concurrent`. Bun BDD was not run because this phase introduced no Bun-specific refapp/scenario; Bun package coverage was included in `test:packages-no-concurrent`.
 - Broad Docker/Kubernetes BDD and image validation were skipped because the phase scope is package/runtime topology cleanup and README/static dependency cleanup; Docker/Kubernetes adapter package tests and package builds passed under the broad package validation.
 - Manual Phase 4 verification completed after validation and push; the Conductor manual gate is closed.
+
+### Track Completion Notes
+
+- Track marked complete after Phases 1 through 4 were implemented, validated, manually verified, committed, and pushed to PR #11.
+- Remaining Phase 2 and Phase 3 Conductor manual verification gates were closed during track completion after user approval.
+- Final completed state preserves standalone `packages/verser` and `packages/bpmux` while removing active old-verser/BPMux/socket/MultiHost paths outside those standalone packages.
