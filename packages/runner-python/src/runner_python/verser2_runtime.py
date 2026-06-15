@@ -20,6 +20,7 @@ def _tls_kwargs(config: Verser2RuntimeConfig) -> dict[str, Any]:
     kwargs: dict[str, Any] = {}
 
     mapping = {
+        "ca": "tls_ca",
         "caFile": "tls_ca_file",
         "certFile": "tls_cert_file",
         "keyFile": "tls_key_file",

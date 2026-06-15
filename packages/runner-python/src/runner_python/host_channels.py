@@ -18,7 +18,6 @@ class HostChannels:
     input_sock: socket.socket
     output_sock: socket.socket
     log_sock: socket.socket
-    requests_sock: socket.socket
 
 
 def _get_boot_config_value(boot_config: object, field_name: str) -> object | None:
@@ -113,7 +112,7 @@ async def connect_host_channels(
     opened_sockets: list[socket.socket] = []
 
     try:
-        input_sock, output_sock, log_sock, requests_sock = await asyncio.gather(
+        input_sock, output_sock, log_sock = await asyncio.gather(
             _connect_one(
                 host=host,
                 port=port,
@@ -138,16 +137,8 @@ async def connect_host_channels(
                 timeout=timeout,
                 addr_infos=addr_infos,
             ),
-            _connect_one(
-                host=host,
-                port=port,
-                instance_id=instance_id,
-                code=ChannelCode.REQUESTS,
-                timeout=timeout,
-                addr_infos=addr_infos,
-            ),
         )
-        opened_sockets.extend([input_sock, output_sock, log_sock, requests_sock])
+        opened_sockets.extend([input_sock, output_sock, log_sock])
     except HostChannelConnectError:
         for channel_socket in opened_sockets:
             channel_socket.close()
@@ -157,5 +148,4 @@ async def connect_host_channels(
         input_sock=input_sock,
         output_sock=output_sock,
         log_sock=log_sock,
-        requests_sock=requests_sock,
     )
