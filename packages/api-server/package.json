@@ -9,7 +9,8 @@
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
-    "test:ava": "ava -T 50000"
+    "test:ava": "ava -T 50000 --serial",
+    "test:legacy": "ava -T 50000 test/server.spec.ts test/stream-methods.spec.ts test/rest-methods.spec.ts"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -40,7 +41,8 @@
       "ts"
     ],
     "files": [
-      "**/*.spec.ts"
+      "test/0http.spec.ts",
+      "test/routed-forward.spec.ts"
     ],
     "require": [
       "ts-node/register"

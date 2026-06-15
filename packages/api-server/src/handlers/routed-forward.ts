@@ -104,6 +104,7 @@ export async function forwardRoutedRequest({
 
         cleanedUp = true;
         res.off("close", abortRequest);
+        req.off("close", abortRequest);
         if (requestTimeout) clearTimeout(requestTimeout);
     };
     const abortRequest = () => {
@@ -118,6 +119,7 @@ export async function forwardRoutedRequest({
 
     try {
         res.once("close", abortRequest);
+        req.once("close", abortRequest);
         await Promise.race([transport.waitForRoute(domain, routeReadinessMs), abortPromise]);
         throwIfAborted();
 
