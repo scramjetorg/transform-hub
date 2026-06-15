@@ -49,7 +49,12 @@ from runner_python.utils import (
     maybe_await,
     resolve_sequence_result,
 )
-from runner_python.verser2_runtime import PythonHubClient, create_python_hub_client
+from runner_python.verser2_runtime import (
+    PythonHubClient,
+    PythonSequenceApiExposure,
+    create_python_hub_client,
+    start_python_sequence_guest,
+)
 
 
 logger = logging.getLogger("runner_python")
@@ -258,6 +263,7 @@ def _build_sequence_context(
     app_config: dict[str, Any],
     log_level: str,
     hub_client: PythonHubClient | None = None,
+    api_exposure: PythonSequenceApiExposure | None = None,
 ) -> AppContext:
     app_context = AppContext()
     app_context.logger = runtime_logger
@@ -266,6 +272,7 @@ def _build_sequence_context(
     app_context.config.update(app_config)
     app_context._app_config = app_context.config
     app_context.hub = hub_client
+    app_context.api = api_exposure
 
     def emit(event_name: str, message: Any = "") -> None:
         monitoring_writer.write_frame(
@@ -384,6 +391,7 @@ async def main() -> int:
     control_task: asyncio.Task[None] | None = None
     sequence_task: asyncio.Task[None] | None = None
     hub_client: PythonHubClient | None = None
+    sequence_guest: Any | None = None
 
     try:
         try:
@@ -420,12 +428,14 @@ async def main() -> int:
             _write_boot_error(f"Verser2 runtime error: {exc}")
             return 2
 
+        api_exposure = PythonSequenceApiExposure() if boot_config.exposePath and boot_config.verser2Runtime else None
         sequence_context = _build_sequence_context(
             monitoring_writer,
             runtime_logger,
             dict(handshake_result.appConfig),
             handshake_result.logLevel,
             hub_client,
+            api_exposure,
         )
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)
@@ -447,6 +457,12 @@ async def main() -> int:
 
         for payload in build_runtime_pangs(sequence, raw_result):
             monitoring_writer.write_frame(PANG, payload)
+
+        try:
+            sequence_guest = await start_python_sequence_guest(boot_config.verser2Runtime, api_exposure)
+        except Exception as exc:
+            _write_boot_error(f"Verser2 sequence API Guest error: {exc}")
+            return 2
 
         handshake_writer.flush()
 
@@ -529,6 +545,14 @@ async def main() -> int:
         if hub_client is not None:
             with contextlib.suppress(Exception):
                 await hub_client.close()
+
+        if sequence_guest is not None:
+            close_guest = getattr(sequence_guest, "close", None)
+            if callable(close_guest):
+                with contextlib.suppress(Exception):
+                    result = close_guest()
+                    if inspect.isawaitable(result):
+                        await result
 
         await _close_writer(input_writer)
         await _close_writer(output_writer)

@@ -5,8 +5,10 @@ import pytest
 from runner_python.boot_config import Verser2RuntimeConfig
 from runner_python.verser2_runtime import (
     PythonHubClient,
+    PythonSequenceApiExposure,
     create_python_hub_client,
     create_python_sequence_guest,
+    start_python_sequence_guest,
 )
 
 
@@ -25,6 +27,19 @@ class FakeBroker:
 
     async def close(self) -> None:
         self.closed = True
+
+
+class FakeGuest:
+    def __init__(self) -> None:
+        self.connected = False
+        self.attached = []
+
+    def attach(self, app):
+        self.attached.append(app)
+        return self
+
+    async def connect(self) -> None:
+        self.connected = True
 
 
 def config(**overrides) -> Verser2RuntimeConfig:
@@ -136,3 +151,50 @@ def test_create_python_sequence_guest_maps_pfx_passphrase() -> None:
 
     assert calls[0]["tls_pfx_file"] == "/client.p12"
     assert calls[0]["tls_pfx_password"] == "secret"
+
+
+def test_python_sequence_api_exposure_attaches_app_to_bound_guest() -> None:
+    exposure = PythonSequenceApiExposure()
+    first_app = object()
+    second_app = object()
+    guest = FakeGuest()
+
+    assert exposure.attach(first_app) is first_app
+    assert exposure.app is first_app
+
+    exposure.bind_guest(guest)
+    assert exposure.guest is guest
+    assert guest.attached == [first_app]
+
+    assert exposure.use(second_app) is second_app
+    assert exposure.app is second_app
+    assert guest.attached == [first_app, second_app]
+
+
+@pytest.mark.asyncio
+async def test_start_python_sequence_guest_connects_and_binds_exposure() -> None:
+    calls = []
+    exposure = PythonSequenceApiExposure()
+    app = exposure.attach(object())
+    guest = FakeGuest()
+
+    def guest_factory(**kwargs):
+        calls.append(kwargs)
+        return guest
+
+    started = await start_python_sequence_guest(config(), exposure, guest_factory=guest_factory)
+
+    assert started is guest
+    assert guest.connected is True
+    assert exposure.guest is guest
+    assert guest.attached == [app]
+    assert calls[0]["app"] is app
+    assert calls[0]["routed_domains"] == ["runner.inst.scramjet.internal"]
+
+
+@pytest.mark.asyncio
+async def test_start_python_sequence_guest_skips_without_config_or_exposure() -> None:
+    exposure = PythonSequenceApiExposure()
+
+    assert await start_python_sequence_guest(None, exposure, guest_factory=lambda **_: FakeGuest()) is None
+    assert await start_python_sequence_guest(config(), None, guest_factory=lambda **_: FakeGuest()) is None

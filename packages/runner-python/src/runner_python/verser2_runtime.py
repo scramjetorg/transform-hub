@@ -91,6 +91,40 @@ class PythonHubClient:
         return await self.request("POST", path, headers=headers, body=body)
 
 
+class PythonSequenceApiExposure:
+    """Sequence-facing ASGI exposure handle backed by a verser2 Guest."""
+
+    def __init__(self) -> None:
+        self._app: Any | None = None
+        self._guest: Any | None = None
+
+    @property
+    def app(self) -> Any | None:
+        return self._app
+
+    @property
+    def guest(self) -> Any | None:
+        return self._guest
+
+    def attach(self, app: Any) -> Any:
+        self._app = app
+        attach = getattr(self._guest, "attach", None)
+        if callable(attach):
+            attach(app)
+        return app
+
+    def use(self, app: Any) -> Any:
+        return self.attach(app)
+
+    def bind_guest(self, guest: Any) -> Any:
+        self._guest = guest
+        if self._app is not None:
+            attach = getattr(guest, "attach", None)
+            if callable(attach):
+                attach(self._app)
+        return guest
+
+
 async def create_python_hub_client(
     config: Verser2RuntimeConfig | None,
     *,
@@ -118,7 +152,7 @@ async def create_python_hub_client(
 
 def create_python_sequence_guest(
     config: Verser2RuntimeConfig,
-    app: Any,
+    app: Any | None,
     *,
     guest_factory: Callable[..., Any] | None = None,
 ) -> Any:
@@ -138,3 +172,20 @@ def create_python_sequence_guest(
         min_waiting_streams=config.minWaitingStreams or 1,
         **_tls_kwargs(config),
     )
+
+
+async def start_python_sequence_guest(
+    config: Verser2RuntimeConfig | None,
+    exposure: PythonSequenceApiExposure | None,
+    *,
+    guest_factory: Callable[..., Any] | None = None,
+) -> Any | None:
+    """Create, attach, and connect a sequence ASGI Guest when exposure is enabled."""
+
+    if config is None or exposure is None:
+        return None
+
+    guest = create_python_sequence_guest(config, exposure.app, guest_factory=guest_factory)
+    exposure.bind_guest(guest)
+    await guest.connect()
+    return guest

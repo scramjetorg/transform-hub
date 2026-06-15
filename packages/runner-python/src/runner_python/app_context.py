@@ -29,6 +29,7 @@ class AppContext:
         self.config: dict[str, Any] = {}
         self._app_config = self.config
         self.hub: Any | None = None
+        self.api: Any | None = None
         self.logger = logging.getLogger("runner_python.app_context")
         self.logger.setLevel(logging.INFO)
 
