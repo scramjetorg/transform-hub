@@ -271,6 +271,37 @@ guard8() {
 
 run_guard 8 "No direct Commander imports or package dependencies in packages" guard8
 
+# ----------------------------------------------------------------------------
+# Guard 9: Transitional old-verser removal guard. During the cleanup track this
+# intentionally fails until active packages stop importing old-verser/BPMux,
+# exposing migration-mode selection, and preserving legacy runner socket paths.
+# Standalone legacy packages remain allowed.
+# ----------------------------------------------------------------------------
+guard9() {
+    local hits
+    hits="$(
+        rg -n '@scramjet/(verser|bpmux)|VerserConnection|VerserClient|new Verser\(|apiVerser|verserConnection|migrationMode|verser2MigrationMode|verser2-migration-mode|SCRAMJET_VERSER2_MIGRATION_MODE|kind: "legacy"|kind === "legacy"|RunnerTransportConfigLegacy|RunnerTransportKind = "legacy"|SocketServer' \
+            packages \
+            --glob '!packages/verser/**' \
+            --glob '!packages/bpmux/**' \
+            --glob '!**/codemap.md' \
+            --glob '!**/*.md' \
+            --glob '!**/node_modules/**' \
+            --glob '!**/dist/**' \
+            --glob '!**/__pypackages__/**' \
+            2> /dev/null \
+        || true
+    )"
+    if [ -z "${hits}" ]; then
+        return 0
+    fi
+    echo "  active old-verser/BPMux/migration/socket traces:"
+    printf '    %s\n' "${hits}"
+    return 1
+}
+
+run_guard 9 "No active old-verser, BPMux, migration-mode, or legacy socket traces outside standalone legacy packages" guard9
+
 echo "---"
 echo "RESULTS: ${PASS} passed, ${FAIL} failed"
 if [ "${FAIL}" -gt 0 ]; then

@@ -7,21 +7,21 @@
     - [x] Commit the track handoff/plan-start state with a scoped Conductor commit message.
     - [x] Push the branch and open a draft PR for the old-verser/BPMux/socket removal track.
     - [x] Link the PR in the track notes before continuing implementation.
-- [ ] Task: Inventory old-verser, BPMux, and dead socket traces across active code, tests, config, package metadata, and docs
-    - [ ] Search active source and tests for `@scramjet/verser`, `@scramjet/bpmux`, `VerserConnection`, `VerserClient`, `new Verser`, `apiVerser`, `verserConnection`, `BPMux`, `SocketServer`, raw channel-index HostClients, `migrationMode`, `legacy`, and `dual`.
-    - [ ] Classify each trace as active runtime callsite, active config switch, active compatibility test, package dependency, standalone `packages/verser`/`packages/bpmux` package code/test, dead legacy socket branch, transient invariant/doc proof, or historical/archive.
-    - [ ] Explicitly preserve `packages/verser` and `packages/bpmux` source, package metadata, and package tests as standalone workspace packages that may still be used externally.
-    - [ ] Record the inventory in the track notes before implementation.
+- [x] Task: Inventory old-verser, BPMux, and dead socket traces across active code, tests, config, package metadata, and docs
+    - [x] Search active source and tests for `@scramjet/verser`, `@scramjet/bpmux`, `VerserConnection`, `VerserClient`, `new Verser`, `apiVerser`, `verserConnection`, `BPMux`, `SocketServer`, raw channel-index HostClients, `migrationMode`, `legacy`, and `dual`.
+    - [x] Classify each trace as active runtime callsite, active config switch, active compatibility test, package dependency, standalone `packages/verser`/`packages/bpmux` package code/test, dead legacy socket branch, transient invariant/doc proof, or historical/archive.
+    - [x] Explicitly preserve `packages/verser` and `packages/bpmux` source, package metadata, and package tests as standalone workspace packages that may still be used externally.
+    - [x] Record the inventory in the track notes before implementation.
 - [ ] Task: Add transient TDD guardrails for active old-verser/BPMux removal
     - [ ] Add or update focused tests proving active config no longer supports choosing `legacy` or `dual` transport behavior.
     - [ ] Add or update focused tests proving Host, Manager, and MultiManager active paths do not construct old-verser clients/servers or accept old-verser connection objects.
-    - [ ] Add temporary static/invariant checks or test assertions that identify active old-verser/BPMux callsites while excluding standalone `packages/verser`, standalone `packages/bpmux`, and approved historical/archive locations.
+    - [x] Add temporary static/invariant checks or test assertions that identify active old-verser/BPMux callsites while excluding standalone `packages/verser`, standalone `packages/bpmux`, and approved historical/archive locations.
     - [ ] Keep these transient checks scoped so they can be removed in Phase 3 after normal code/tests enforce the final state.
-- [ ] Task: Plan exact config and API contract edits
-    - [ ] Identify all config schemas, descriptors, defaults, tests, and shared types that expose `migrationMode`, `legacy`, or `dual` selection.
-    - [ ] Identify any public interfaces that expose `VerserConnection`, old-verser concepts, or BPMux-backed active transport outside standalone packages.
-    - [ ] Identify legacy runner socket protocol paths that become dead once old-way branches are removed and mark their removal points for Phase 2.
-    - [ ] Decide the minimal replacement shape for each affected API: remove field, make verser2 unconditional, or replace with verser2 route/broker metadata.
+- [x] Task: Plan exact config and API contract edits
+    - [x] Identify all config schemas, descriptors, defaults, tests, and shared types that expose `migrationMode`, `legacy`, or `dual` selection.
+    - [x] Identify any public interfaces that expose `VerserConnection`, old-verser concepts, or BPMux-backed active transport outside standalone packages.
+    - [x] Identify legacy runner socket protocol paths that become dead once old-way branches are removed and mark their removal points for Phase 2.
+    - [x] Decide the minimal replacement shape for each affected API: remove field, make verser2 unconditional, or replace with verser2 route/broker metadata.
 - [ ] Task: Validate Phase 1 guardrails and commit Phase 1
     - [ ] Run focused tests for the transient guardrails and config target areas.
     - [ ] Run standalone `packages/verser` and `packages/bpmux` tests if touched by guardrail exclusions.
@@ -128,3 +128,30 @@
 ## Track Notes
 
 - Draft PR: https://github.com/0rail/transform-hub/pull/11
+
+### Phase 1 Inventory
+
+- Preserved standalone legacy packages: `packages/verser/**` and `packages/bpmux/**`, including their source, tests, package metadata, and `@scramjet/bpmux` dependency from `packages/verser/package.json`.
+- Active package dependencies to remove after imports are gone: `packages/host/package.json`, `packages/manager/package.json`, `packages/multi-manager/package.json`, and `packages/types/package.json` depend on `@scramjet/verser`.
+- Active Host old-verser runtime path: `packages/host/src/lib/cpm-connector.ts` imports `VerserClient`/`VerserClientConnection`, constructs `new VerserClient(...)` when `usesVerser2` is false, updates old-verser headers, uses old `cpmUrl`/`cpmSslCaPath` CA behavior, falls back to `verserClient.verserAgent`, and branches `connect()`/`makeHttpRequestToCpm()` on `migrationMode`.
+- Active Manager old-verser runtime path: `packages/manager/src/lib/manager.ts` imports `VerserConnection`, accepts old connections through `handleHostConnection(id, verserConnection)`, constructs `STHController` with a `VerserConnection`, and falls back to `sth.verserConnection.getAgent()` when not in strict verser2 mode.
+- Active Manager STH controller old-verser path: `packages/manager/src/lib/sth-controller.ts` imports/stores `VerserConnection`, reads old headers, reconnects legacy sockets, builds `HostClient` with `ClientUtilsCustomAgent`, opens `/platform` and `/log` using `makeRequest`, hooks socket lifecycle, and falls back to legacy `makeRequest` when no verser2 options exist.
+- Active shared type exposure: `packages/types/src/manager/sth-connection-store.ts` imports `VerserConnection`, exposes `verserConnection?: VerserConnection`, and types `reconnect(verserConnection?: VerserConnection)`.
+- Active MultiManager old-verser path: `packages/multi-manager/src/lib/multi-manager.ts` imports `Verser`/`VerserConnection`, owns `apiVerser`, conditionally constructs `new Verser(...)`, installs `attachVerserListeners`, delegates old Host connections to `Manager.handleHostConnection`, keeps `/msth/:id` forwarding, and gates old-vs-verser2 behavior through `migrationMode`.
+- Active legacy MultiHost path: `packages/multi-manager/src/lib/multi-host-controller.ts` and `multi-host-controller-store.ts` remain old `VerserConnection`-based and are only used by the legacy MultiHost branch.
+- Active config switch surfaces: `packages/config/src/verser2-config.ts`, `packages/types/src/verser2-transport-configuration.ts`, `packages/types/src/sth-command-options.ts`, `packages/multi-manager/src/types/multi-manager-types.ts`, `packages/sth-config/src/default-config.ts`, `packages/multi-manager/src/config/multi-manager-configuration.ts`, and `packages/multi-manager/src/lib/default-config.ts` expose or default `migrationMode`, `legacy`, and `dual` selection.
+- Active compatibility tests to rewrite/delete: `packages/config/test/index.spec.ts`, `packages/sth-config/test/*`, `packages/multi-manager/test/config/multi-manager-configuration.spec.ts`, `packages/host/test/cpm-connector.test.ts`, `packages/manager/test/manager-forwarding.spec.ts`, `packages/manager/test/manager-connection.spec.ts`, `packages/manager/test/sth-controller.spec.ts`, `packages/manager/test/sth-connection-store.spec.ts`, `packages/manager/test/manager-auditor.spec.ts`, `packages/multi-manager/test/lib/multi-manager-verser2.spec.ts`, `packages/multi-manager/test/lib/multi-host-controller*.spec.ts`, and related tests that assert old `verserConnection` compatibility.
+- Dead runner/socket candidates after old-way removal: `packages/runner/src/transport/runner-transport-config.ts` still accepts `{ kind: "legacy" }`, `packages/runner/src/bin/start-runner.ts` still starts raw `HostClient` for legacy mode, `packages/types/src/runner-transport.ts` includes `legacy`, `packages/sequence-test/src/runner-launcher.ts` injects legacy config, and `packages/host/src/lib/socket-server.ts`/`start-host.ts` plus raw channel-index HostClients remain candidates for removal after confirming no current verser2 topology depends on them.
+- Historical/archive/docs/non-target references: package codemaps, Conductor notes, README license text using “dual”, generated/report/vendor content under runner-python `__pypackages__`, and parity fixture prose are not active old-verser runtime callsites for this track phase.
+- Transient guardrail: `scripts/check-runtime-wrapper-invariants.sh` Guard 9 now searches active package files for old-verser/BPMux imports, `VerserConnection`/`VerserClient`/`apiVerser`/`verserConnection`, `migrationMode`/`verser2MigrationMode` selection, legacy runner config, and `SocketServer`, excluding standalone `packages/verser`, `packages/bpmux`, codemaps, Markdown, node_modules, dist, and runner-python vendored packages. It intentionally fails before removal and is scheduled for Phase 3 cleanup.
+- Guardrail validation: `bash -n scripts/check-runtime-wrapper-invariants.sh` passed. `if NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants; then exit 1; else exit 0; fi` passed by confirming Guard 9 currently fails on the recorded active inventory.
+
+### Phase 1 Config/API Edit Targets
+
+- Remove `migrationMode` and `Verser2MigrationMode` from `packages/types/src/verser2-transport-configuration.ts`, `packages/types/src/sth-command-options.ts`, `packages/multi-manager/src/types/multi-manager-types.ts`, `packages/config/src/verser2-config.ts`, STH defaults, Manager defaults, MultiManager defaults/config loader, and related tests. Keep `enabled` only if it still represents startup enabling rather than old transport selection.
+- Replace runtime `usesVerser2`/`usesVerser2OnlyTransport`/`usesLegacyVerserTransport` conditionals with unconditional verser2 startup and forwarding in Host, Manager, and MultiManager.
+- Change `ISTHController` so it no longer exposes `verserConnection` or `reconnect(verserConnection)`. Keep verser2 broker/route metadata and health/lifecycle methods only.
+- Change `STHController` constructor to require verser2 options and derive access key, tags, description, request forwarding, audit/log/platform streams, and connection health from verser2 broker/route metadata only.
+- Remove `Manager.handleHostConnection(id, verserConnection)` after MultiManager no longer accepts old Verser Host connections; Manager STH attachment should happen through verser2 local Broker/Guest setup and route readiness.
+- Remove MultiManager `apiVerser`, `attachVerserListeners`, `attachHostAPI`, `attachMultiHostAPI`, `handleSTHRequest`, `/msth/:id`, `MultiHostController`, and `MultiHostControllerStore` active usage if no verser2 path references them.
+- Remove legacy runner transport shape `{ kind: "legacy" }`, raw `HostClient` branch in `packages/runner/src/bin/start-runner.ts`, adapter fallback to legacy runner env, and raw `SocketServer`/channel-index host path once verser2 runner Host is confirmed to cover active topology.
