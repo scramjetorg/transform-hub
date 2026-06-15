@@ -123,7 +123,7 @@
     - [x] Confirm no active package manifest outside standalone legacy packages depends on `@scramjet/verser` or `@scramjet/bpmux`.
     - [x] Confirm final tests/invariants do not preserve old-verser/BPMux/socket compatibility or temporary removal-only scaffolding.
     - [x] Commit the scoped Phase 4 changes.
-- [ ] Task: Conductor - User Manual Verification 'Dependency Audit, Final Reviews, Documentation, and Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Dependency Audit, Final Reviews, Documentation, and Verification' (Protocol in workflow.md)
 
 ## Track Notes
 
@@ -184,3 +184,4 @@
 - BDD fix notes: runner transport now keeps enough waiting leases for channel fanout, flushes route-response headers before streaming data, ignores replacement lease failures after setup cleanup, hardens Host telemetry exit-code formatting, and accepts DNS-label-safe custom instance IDs used by existing BDD scenarios.
 - Python current-contract BDD was not run separately because no new Python refapp/scenario was introduced by this phase; Python runtime coverage was included in `test:packages-no-concurrent`. Bun BDD was not run because this phase introduced no Bun-specific refapp/scenario; Bun package coverage was included in `test:packages-no-concurrent`.
 - Broad Docker/Kubernetes BDD and image validation were skipped because the phase scope is package/runtime topology cleanup and README/static dependency cleanup; Docker/Kubernetes adapter package tests and package builds passed under the broad package validation.
+- Manual Phase 4 verification completed after validation and push; the Conductor manual gate is closed.
