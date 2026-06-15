@@ -38,10 +38,10 @@ test("Check if the tags of the images match packages version", async t => {
 test("default STH connectivity selects verser2 route roles", t => {
     const config = new ConfigService().getConfig();
 
-    t.false(config.verser2.enabled);
+    t.true(config.verser2.enabled);
     t.is(config.verser2.migrationMode, "verser2");
     t.is(config.verser2.hostUrl, "https://127.0.0.1:2443");
-    t.is(config.verser2.runnerHost?.enabled, false);
+    t.is(config.verser2.runnerHost?.enabled, true);
     t.true(config.verser2.runnerHost!.identityDir.endsWith(".scramjet/verser2-runner-host"));
     t.is(config.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2444");
     t.not(config.verser2.runnerHost?.host.publicUrl, config.verser2.hostUrl);

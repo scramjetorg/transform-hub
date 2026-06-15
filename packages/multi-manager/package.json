@@ -36,7 +36,8 @@
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",
     "rereadable-stream": "^1.4.13",
-    "scramjet": "^4.37.0"
+    "scramjet": "^4.37.0",
+    "selfsigned": "^5.5.0"
   },
   "devDependencies": {
     "@scramjet/types": "^1.1.0",

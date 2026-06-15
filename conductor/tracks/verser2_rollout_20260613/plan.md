@@ -319,11 +319,12 @@
 ## Phase 4: Default Switch, Legacy Removal, and Final Validation
 
 - [ ] Task: Make verser2 the default connectivity path
-    - [ ] Switch Manager/STH connectivity defaults to verser2 Host/Broker/Guest roles.
-        - Phase 4 implementation review found that actively enabling verser2 by default is not yet safe: MultiManager default startup requires a configured Host TLS identity, and standalone STH sequence execution still has no local/default verser2 runner Broker when no platform connector is present. The current safe slice only selects `migrationMode: "verser2"`, provides deterministic STH route defaults, makes runner transport config fail closed when adapters omit it, and injects explicit legacy runner transport config for legacy/disabled modes and direct legacy runner harnesses. Active `enabled: true` defaults require either default TLS/local Broker provisioning or a narrower product decision for non-platform standalone behavior before this checklist item can be completed.
-    - [ ] Switch global runner connectivity defaults to verser2 runner Guest routes.
-        - Topology correction: runners must connect to an STH-local verser2 Host/Broker/Guest surface, not directly to the Manager/MultiManager verser2 Host. Current runner verser2 env/config paths still reuse `sthConfig.verser2.hostUrl` (Manager URL) for runner Guest/Broker creation, so the direct-to-Manager runner transport work must be reverted or replanned before this item can complete.
-    - [ ] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
+    - [x] Switch Manager/STH connectivity defaults to verser2 Host/Broker/Guest roles.
+        - Phase 5 corrected the runner topology and Phase 4 now enables verser2 by default for Manager, MultiManager, and STH while keeping TLS mandatory. Manager/MultiManager defaults include generated local CA/server identity under `~/.scramjet/verser2-*-host`, `https://127.0.0.1:2443` public Host URL defaults, and public CA export through the existing trust endpoint. Explicit configured cert/key or PFX still take precedence.
+    - [x] Switch global runner connectivity defaults to verser2 runner Guest routes.
+        - Phase 5 rewired runner envs to the STH-local runner Host. Phase 4 now defaults STH `verser2.enabled` and `verser2.runnerHost.enabled` to true, so process/Docker/Kubernetes runner env generation emits verser2 runner config once the STH-local generated CA is resolved at Host startup.
+    - [x] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
+        - Runtime wrappers already consume the runner-provided `verser2Runtime.hostUrl` and `hubTargetDomain`; with STH runnerHost defaults enabled, that runtime Host URL is STH-local by default rather than Manager/MultiManager.
     - [ ] Remove or narrow temporary migration flags according to the approved migration window.
 - [ ] Task: Remove BPMux from active repository usage
     - [ ] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.

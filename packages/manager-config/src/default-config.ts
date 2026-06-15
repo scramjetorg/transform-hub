@@ -1,4 +1,6 @@
 import { ManagerConfiguration } from "@scramjet/types";
+import { homedir } from "os";
+import { join } from "path";
 
 export const defaultConfig: ManagerConfiguration = {
     logColors: true,
@@ -9,12 +11,13 @@ export const defaultConfig: ManagerConfiguration = {
         unhealthyTimeoutMs: 61_000,
     },
     verser2: {
-        enabled: false,
+        enabled: true,
         migrationMode: "verser2",
         host: {
+            identityDir: join(homedir(), ".scramjet", "verser2-manager-host"),
             bindHost: "0.0.0.0",
-            bindPort: 0,
-            publicUrl: "",
+            bindPort: 2443,
+            publicUrl: "https://127.0.0.1:2443",
             tls: {
                 mtlsRequired: false
             }

@@ -69,11 +69,11 @@ export const defaultConfig: STHConfiguration = {
     exitWithLastInstance: false,
     strictPlatformConnection: false,
     verser2: {
-        enabled: false,
+        enabled: true,
         migrationMode: "verser2",
         hostUrl: "https://127.0.0.1:2443",
         runnerHost: {
-            enabled: false,
+            enabled: true,
             identityDir: join(homedir(), ".scramjet", "verser2-runner-host"),
             host: {
                 bindHost: "127.0.0.1",

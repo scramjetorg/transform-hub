@@ -53,6 +53,7 @@ export type ManagerVerser2Config = {
     enabled: boolean;
     migrationMode: Verser2MigrationMode;
     host: {
+        identityDir?: string;
         bindHost: string;
         bindPort: number;
         publicUrl: string;

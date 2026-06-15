@@ -1,14 +1,16 @@
 import { homedir } from "os";
+import { join } from "path";
 import { ManagerVerser2Config } from "@scramjet/types";
 import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-manager-types";
 
 const defaultVerser2Config: ManagerVerser2Config = {
-    enabled: false,
+    enabled: true,
     migrationMode: "verser2",
     host: {
+        identityDir: join(homedir(), ".scramjet", "verser2-multimanager-host"),
         bindHost: "0.0.0.0",
-        bindPort: 0,
-        publicUrl: "",
+        bindPort: 2443,
+        publicUrl: "https://127.0.0.1:2443",
         tls: {
             mtlsRequired: false
         }

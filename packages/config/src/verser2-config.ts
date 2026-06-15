@@ -17,6 +17,7 @@ export const managerVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
     migrationMode: verser2MigrationModeSchema,
     host: z.object({
+        identityDir: z.string().min(1).optional(),
         bindHost: z.string(),
         bindPort: z.number().int().nonnegative(),
         publicUrl: z.string(),
@@ -152,6 +153,7 @@ export const managerVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2Enabled", flag: "verser2-enabled", path: managerPath("enabled"), env: "SCRAMJET_VERSER2_ENABLED", type: "boolean", description: "Enable verser2 Manager/STH transport" },
     { name: "verser2MigrationMode", flag: "verser2-migration-mode", path: managerPath("migrationMode"), env: "SCRAMJET_VERSER2_MIGRATION_MODE", type: "string", choices: ["legacy", "dual", "verser2"], description: "Manager/STH migration mode" },
     { name: "verser2HostBindHost", flag: "verser2-host-bind-host", path: managerPath("host.bindHost"), env: "SCRAMJET_VERSER2_HOST_BIND_HOST", type: "string", description: "verser2 Host bind address" },
+    { name: "verser2HostIdentityDir", flag: "verser2-host-identity-dir", path: managerPath("host.identityDir"), env: "SCRAMJET_VERSER2_HOST_IDENTITY_DIR", type: "string", description: "Directory for generated Manager/MultiManager verser2 Host CA and server identity" },
     { name: "verser2HostBindPort", flag: "verser2-host-bind-port", path: managerPath("host.bindPort"), env: "SCRAMJET_VERSER2_HOST_BIND_PORT", type: "number", description: "verser2 Host bind port" },
     { name: "verser2HostPublicUrl", flag: "verser2-host-public-url", path: managerPath("host.publicUrl"), env: "SCRAMJET_VERSER2_HOST_PUBLIC_URL", type: "string", description: "Public TLS URL for verser2 peers" },
     { name: "verser2HostCaFile", flag: "verser2-host-ca-file", path: managerPath("host.tls.caFile"), env: "SCRAMJET_VERSER2_HOST_CA_FILE", type: "string", description: "Public CA/trust bundle file for the verser2 Host" },

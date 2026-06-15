@@ -49,8 +49,11 @@ test("MultiManagerConfig defaults to verser2 migration mode", t => {
         s3SecretAccessKey: ""
     }).get();
 
-    t.false(loaded.verser2.enabled);
+    t.true(loaded.verser2.enabled);
     t.is(loaded.verser2.migrationMode, "verser2");
+    t.true(loaded.verser2.host.identityDir!.endsWith(".scramjet/verser2-multimanager-host"));
+    t.is(loaded.verser2.host.bindPort, 2443);
+    t.is(loaded.verser2.host.publicUrl, "https://127.0.0.1:2443");
     t.is(loaded.verser2.localBroker.peerId, "multimanager.default.broker");
     t.is(loaded.verser2.localBroker.routeDomain, "multimanager.default.scramjet.internal");
     t.is(loaded.verser2.localGuest.peerId, "multimanager.default.guest");

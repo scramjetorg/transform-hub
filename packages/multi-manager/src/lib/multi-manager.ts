@@ -24,6 +24,7 @@ import { MultiManagerConfig } from "../config/multi-manager-configuration";
 import { MonitoringServer } from "@scramjet/monitoring-server";
 import { createManagerSthLocalBrokerTransport } from "@scramjet/manager";
 import { createVerser2HostOptions } from "./verser2-host-config";
+import { resolveManagerVerser2HostConfig } from "./verser2-host-identity";
 import { getMultiManagerVerser2TrustExport } from "./verser2-trust-export";
 
 const MANAGER_START_TIMEOUT = 30000;
@@ -85,10 +86,6 @@ export class MultiManager {
         this.apiBase = `${config.server.apiBase}/${config.server.version}`;
 
         this.apiServer = apiServer;
-        if (this.usesVerser2Transport()) {
-            this.verser2Host = createVerserHost(createVerser2HostOptions(config.verser2));
-        }
-
         if (this.usesLegacyVerserTransport()) {
             this.apiVerser = new Verser(this.apiServer.server);
         }
@@ -116,6 +113,11 @@ export class MultiManager {
 
         this.logger.info("Starting MultiManager", version);
         this.logger.debug("MultiManager config", this.config.getMasked());
+
+        if (this.usesVerser2Transport() && !this.verser2Host) {
+            Object.assign(this.config.verser2, await resolveManagerVerser2HostConfig(this.config.verser2, "MultiManager"));
+            this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2));
+        }
 
         this.setRouting();
 
