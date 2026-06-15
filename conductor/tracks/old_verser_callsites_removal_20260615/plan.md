@@ -12,23 +12,23 @@
     - [x] Classify each trace as active runtime callsite, active config switch, active compatibility test, package dependency, standalone `packages/verser`/`packages/bpmux` package code/test, dead legacy socket branch, transient invariant/doc proof, or historical/archive.
     - [x] Explicitly preserve `packages/verser` and `packages/bpmux` source, package metadata, and package tests as standalone workspace packages that may still be used externally.
     - [x] Record the inventory in the track notes before implementation.
-- [ ] Task: Add transient TDD guardrails for active old-verser/BPMux removal
-    - [ ] Add or update focused tests proving active config no longer supports choosing `legacy` or `dual` transport behavior.
-    - [ ] Add or update focused tests proving Host, Manager, and MultiManager active paths do not construct old-verser clients/servers or accept old-verser connection objects.
+- [x] Task: Add transient TDD guardrails for active old-verser/BPMux removal
+    - [x] Add or update focused tests proving active config no longer supports choosing `legacy` or `dual` transport behavior.
+    - [x] Add or update focused tests proving Host, Manager, and MultiManager active paths do not construct old-verser clients/servers or accept old-verser connection objects.
     - [x] Add temporary static/invariant checks or test assertions that identify active old-verser/BPMux callsites while excluding standalone `packages/verser`, standalone `packages/bpmux`, and approved historical/archive locations.
-    - [ ] Keep these transient checks scoped so they can be removed in Phase 3 after normal code/tests enforce the final state.
+    - [x] Keep these transient checks scoped so they can be removed in Phase 3 after normal code/tests enforce the final state.
 - [x] Task: Plan exact config and API contract edits
     - [x] Identify all config schemas, descriptors, defaults, tests, and shared types that expose `migrationMode`, `legacy`, or `dual` selection.
     - [x] Identify any public interfaces that expose `VerserConnection`, old-verser concepts, or BPMux-backed active transport outside standalone packages.
     - [x] Identify legacy runner socket protocol paths that become dead once old-way branches are removed and mark their removal points for Phase 2.
     - [x] Decide the minimal replacement shape for each affected API: remove field, make verser2 unconditional, or replace with verser2 route/broker metadata.
-- [ ] Task: Validate Phase 1 guardrails and commit Phase 1
-    - [ ] Run focused tests for the transient guardrails and config target areas.
-    - [ ] Run standalone `packages/verser` and `packages/bpmux` tests if touched by guardrail exclusions.
-    - [ ] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` if runtime invariant scripts changed.
-    - [ ] Record validation results and any skipped validation in the track notes.
-    - [ ] Commit the scoped Phase 1 changes.
-- [ ] Task: Conductor - User Manual Verification 'Identification, Transient TDD Guardrails, and Config Targeting' (Protocol in workflow.md)
+- [x] Task: Validate Phase 1 guardrails and commit Phase 1
+    - [x] Run focused tests for the transient guardrails and config target areas.
+    - [x] Run standalone `packages/verser` and `packages/bpmux` tests if touched by guardrail exclusions.
+    - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` if runtime invariant scripts changed.
+    - [x] Record validation results and any skipped validation in the track notes.
+    - [x] Commit the scoped Phase 1 changes.
+- [x] Task: Conductor - User Manual Verification 'Identification, Transient TDD Guardrails, and Config Targeting' (Protocol in workflow.md)
 
 ## Phase 2: Remove Active Old-Verser Runtime and Configuration Branches
 
@@ -62,14 +62,14 @@
     - [x] Remove legacy raw socket HostClients after Host, Manager, and MultiManager active paths no longer need them.
     - [x] Remove migration-only runner/socket config that only selected old-way behavior.
     - [x] Update or delete tests that preserve legacy runner socket behavior outside current verser2 topology requirements.
-- [ ] Task: Validate Phase 2 and commit Phase 2
-    - [ ] Run focused tests for `packages/config`, `packages/sth-config`, `packages/host`, `packages/manager`, `packages/multi-manager`, and `packages/types` as affected.
-    - [ ] Run standalone `packages/verser` and `packages/bpmux` tests to confirm retained packages still work if dependency metadata or workspace wiring changed.
-    - [ ] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`.
-    - [ ] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
-    - [ ] Run relevant BDD smoke validation for Manager/STH connectivity, including `npm run test:bdd-ci-node` and `npm run test:bdd-ci-api-node` unless a skip is explicitly recorded with reason.
-    - [ ] Record validation results and any skipped validation in the track notes.
-    - [ ] Commit the scoped Phase 2 changes.
+- [x] Task: Validate Phase 2 and commit Phase 2
+    - [x] Run focused tests for `packages/config`, `packages/sth-config`, `packages/host`, `packages/manager`, `packages/multi-manager`, and `packages/types` as affected.
+    - [x] Run standalone `packages/verser` and `packages/bpmux` tests to confirm retained packages still work if dependency metadata or workspace wiring changed.
+    - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`.
+    - [x] Run `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
+    - [x] Run relevant BDD smoke validation for Manager/STH connectivity, including `npm run test:bdd-ci-node` and `npm run test:bdd-ci-api-node` unless a skip is explicitly recorded with reason.
+    - [x] Record validation results and any skipped validation in the track notes.
+    - [x] Commit the scoped Phase 2 changes.
 - [ ] Task: Conductor - User Manual Verification 'Remove Active Old-Verser Runtime and Configuration Branches' (Protocol in workflow.md)
 
 ## Phase 3: Remove Transient Guardrails and Clean Old Tests
@@ -162,3 +162,5 @@
 - `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` passed; Guard 9 now reports no active old-verser/BPMux/migration/socket traces outside standalone legacy packages.
 - Focused tests passed: `@scramjet/config`, `@scramjet/sth-config`, `@scramjet/adapters-common`, `@scramjet/runner`, `@scramjet/manager`, `@scramjet/multi-manager`, `@scramjet/adapter-process`, `@scramjet/types`, and `@scramjet/host` with `-T 60000`.
 - Host test note: initial full Host run with the default timeout/OOMed while stale `LegacyRunnerTransport` tests still imported a deleted class. After deleting those compatibility assertions, isolated `test/runner-transport.spec.ts -T 60000` and full Host `-T 60000` both passed under `NODE_OPTIONS="--max-old-space-size=1536"`.
+- Standalone legacy package validation: `NODE_OPTIONS="--max-old-space-size=1536" npm test --workspace @scramjet/verser` passed. `@scramjet/bpmux` has no `test` script; standalone coverage for BPMux in this phase is through the successful package build and unchanged standalone package metadata/source.
+- BDD smoke validation was not run in Phase 2 because it is broader/expensive and remains listed in Phase 4 final validation; this phase used focused package tests, package build, static absence search, and runtime invariant checks.
