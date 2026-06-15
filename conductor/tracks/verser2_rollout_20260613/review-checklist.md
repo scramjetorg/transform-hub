@@ -8,6 +8,7 @@ Use this checklist for automated reviews between subphases and at every phase ga
 - STH connects outbound as Broker and, when Manager-connected, registers an STH Guest for Manager-callable STH APIs.
 - Runner/runtime peers initiate H2 connections to the owning STH local Host; STH initiates H2 connections to Manager/MultiManager.
 - Manager/MultiManager does not connect directly to runner/runtime peers, and runner/runtime peers do not connect directly to Manager/MultiManager.
+- Runner/runtime `hostUrl` values are STH-local; Manager/MultiManager `verser2.hostUrl` is used only by STH for upstream connectivity.
 - STH terminates and authorizes runner-side H2 connections; it is not a transparent H2 tunnel.
 - Manager/MultiManager Host owners expose routed Manager APIs through local peers for colocated components (`host.attachLocalBroker()`/`host.attachLocalGuest()`); networked H2 Guest/Broker is used for remote participants.
 - Local peers remove loopback TLS/mTLS overhead and `local: true` metadata cannot be spoofed by remote callers.
@@ -17,6 +18,8 @@ Use this checklist for automated reviews between subphases and at every phase ga
 ## Hierarchical topology and route state
 
 - Peers connect to their immediate upstream Host: runner/runtime -> STH, STH -> Manager/MultiManager.
+- The required data/control path is `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.
+- Host-side runner transport must not reuse `cpmConnector.verser2Broker`; that Broker belongs to STH-to-Manager connectivity.
 - Route matching uses exact hostname equality only.
 - Brokers replace their full route table on route-control frames; omitted routes are retracted.
 - Startup paths wait for required routes with timeout-aware readiness checks.
@@ -33,6 +36,8 @@ Use this checklist for automated reviews between subphases and at every phase ga
 
 - Host TLS is mandatory and server certificate SANs match the peer `hostUrl` values actually used.
 - Guest/Broker clients use explicit `ca`/`caFile`; combined CA bundles are documented when public WebPKI and private CAs are both needed.
+- Runner/runtime trust is delivered as inline `tls.ca` PEM bundle where supported, or materialized as a mounted CA bundle file when required by Docker/Kubernetes/runtime libraries.
+- Runner/runtime trust bundles always include the STH-local CA and include Manager CA when STH has it; private keys and passphrases are never embedded in runner env/config.
 - TLS is mandatory; client mTLS is enforced when required by Manager/STH policy, and non-mTLS registration uses approved alternate credentials rather than anonymous registration.
 - Manager policy can independently require mTLS for STH-to-Manager connections and for sequence/runner/runtime connections reported by STH.
 - STH reports effective runner/runtime/sequence transport-auth mode to Manager; Manager rejects, restricts, or marks noncompliant peers when reported mode violates policy.

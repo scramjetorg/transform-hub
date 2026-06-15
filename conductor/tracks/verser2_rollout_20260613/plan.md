@@ -10,10 +10,10 @@
 - [x] Task: Define final verser2 connectivity architecture
     - [x] Read current codemaps and affected entrypoints for Manager, MultiManager, Host, Runner, Node, Python, Bun, API server, and shared types.
     - [x] Document the verser2 role model: Manager/MultiManager owns the TLS HTTP/2 `Host`; STH connects outbound as a `Broker` and, where Manager-originated requests need to reach STH, also as a `Guest`.
-    - [x] Document the flat route topology: all peers connect directly to one selected Host; STH does not run an intermediate verser2 Host for runner or sequence routing.
+    - [x] Document the corrected hierarchical route topology: STH connects to the selected Manager/MultiManager Host, while runners and stack-runners connect only to an STH-local verser2 Host; direct runner-to-Manager routing is forbidden.
     - [x] Document that route state is per Host instance and per connected peer set; multi-Host, HA, and shared route-state behavior are deployment architecture/future work, not built into verser2.
-    - [x] Document STH → global runner routing as STH Broker → Host → runner Guest.
-    - [x] Document STH → sequence API routing as STH Broker → Host → stack-specific runtime Guest.
+    - [x] Document STH → global runner routing as STH-local Broker/Host → runner Guest.
+    - [x] Document STH → sequence API routing as STH-local Broker/Host → stack-specific runtime Guest.
     - [x] Document Manager → STH routing as Manager-side Broker/Host dispatch to an STH Guest route when that direction is required.
     - [x] Clarify that Manager-connected STH must expose an STH Guest for Manager-callable STH APIs.
     - [x] Document the local peer attachment path as the primary colocated Manager/STH API path (verser2 upstream delivered in-process `host.attachLocalBroker()`/`attachLocalGuest()`); H2 Guest/Broker remains for remote participants.
@@ -366,11 +366,11 @@
 
 ## Phase 5: Post-Completion Runner Topology Correction and Local Trust Bootstrap
 
-- [ ] Task: Correct the final runner connectivity architecture
-    - [ ] Replace the previously planned direct runner-to-Manager topology with the required STH-mediated flow: `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.
-    - [ ] Document that runners and stack-runners must never connect directly to the Manager/MultiManager verser2 Host.
-    - [ ] Document that Manager/MultiManager connectivity is owned only by STH: `STH -> Manager/MultiManager verser2 Host`.
-    - [ ] Update `architecture.md`, review checklists, and any stale Phase 1 notes that describe runners as direct peers of the selected Manager/MultiManager Host.
+- [x] Task: Correct the final runner connectivity architecture
+    - [x] Replace the previously planned direct runner-to-Manager topology with the required STH-mediated flow: `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.
+    - [x] Document that runners and stack-runners must never connect directly to the Manager/MultiManager verser2 Host.
+    - [x] Document that Manager/MultiManager connectivity is owned only by STH: `STH -> Manager/MultiManager verser2 Host`.
+    - [x] Update `architecture.md`, review checklists, and any stale Phase 1 notes that describe runners as direct peers of the selected Manager/MultiManager Host.
 - [ ] Task: Revert or quarantine direct-to-Manager runner transport wiring
     - [ ] Stop generating runner `SCRAMJET_RUNNER_TRANSPORT_CONFIG.hostUrl` from `sthConfig.verser2.hostUrl`; that value is the Manager/MultiManager Host URL and must not be used by runners.
     - [ ] Stop using `cpmConnector.verser2Broker` as the STH runner Broker provider; that Broker is for STH-to-Manager connectivity, not STH-to-runner connectivity.
