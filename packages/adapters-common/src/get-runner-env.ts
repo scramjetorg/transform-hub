@@ -2,6 +2,27 @@ import path from "path";
 import { STHConfiguration } from "@scramjet/types";
 import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
 
+export function buildRunnerTrustBundle(sthConfig: Pick<STHConfiguration, "verser2">): string | undefined {
+    const sthLocalCa = normalizePem(sthConfig.verser2.runnerHost?.ca);
+
+    if (!sthLocalCa) {
+        return undefined;
+    }
+
+    const managerCa = normalizePem(sthConfig.verser2.tls.ca);
+    const bundle = [sthLocalCa, managerCa].filter((pem): pem is string => !!pem);
+
+    return bundle.join("\n");
+}
+
+function normalizePem(value: string | undefined): string | undefined {
+    if (!value?.trim()) {
+        return undefined;
+    }
+
+    return value.trim();
+}
+
 export function getRunnerTransportEnv(
     sthConfig: Pick<STHConfiguration, "verser2">,
     instanceId: string

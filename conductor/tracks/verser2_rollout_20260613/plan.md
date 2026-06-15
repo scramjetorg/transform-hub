@@ -413,10 +413,11 @@
     - [x] Treat inline CA PEM as public trust material, not secret private material, while still ensuring it is not confused with private keys.
         - Implemented in shared verser2 config, STH public config masking descriptors, CPM verser2 client TLS options, runner transport config parsing, and Bun runtime TLS handoff. Runner package has no `npm test` script; the parser validation was rerun with `node ../../node_modules/ava/cli.js test/transport/runner-transport-config.spec.ts`.
 - [ ] Task: Generate combined runner trust bundle
-    - [ ] Have STH build a single runner trust bundle PEM string for runner and stack-runner transport.
-    - [ ] Always include the STH-local CA so runners can trust the STH-local verser2 Host.
-    - [ ] Include the Manager CA when STH has fetched or configured it, so stack-runners have the same public trust context when STH-mediated flows need Manager trust metadata.
-    - [ ] Preserve PEM bundle order as STH-local CA first, Manager CA second.
+    - [x] Have STH build a single runner trust bundle PEM string for runner and stack-runner transport.
+    - [x] Always include the STH-local CA so runners can trust the STH-local verser2 Host.
+    - [x] Include the Manager CA when STH has fetched or configured it, so stack-runners have the same public trust context when STH-mediated flows need Manager trust metadata.
+    - [x] Preserve PEM bundle order as STH-local CA first, Manager CA second.
+        - Added `buildRunnerTrustBundle()` in `packages/adapters-common`; it combines inline STH-local CA and inline Manager CA in the required order and ignores private key/passphrase/token fields. Runner env remains quarantined until the explicit STH-local rewire task.
     - [ ] Pass the combined bundle to runners as `tls.ca` in `SCRAMJET_RUNNER_TRANSPORT_CONFIG` where supported.
     - [ ] For Docker/Kubernetes, either pass inline PEM when supported or materialize the PEM bundle as a mounted read-only file/Secret and pass the mounted path.
     - [ ] Never pass private keys, passphrases, STH server keys, or Manager server keys through runner env/config.
