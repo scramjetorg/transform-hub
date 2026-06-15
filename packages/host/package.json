@@ -9,7 +9,7 @@
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
-    "test": "node ../../node_modules/ava/cli.js",
+    "test": "node ../../scripts/run-ava.js",
     "prebuild": "npm run savehash",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },

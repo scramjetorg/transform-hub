@@ -19,9 +19,9 @@ Constraints: Only apply when package-level configs exist and the task is package
 Ignore-If: The task explicitly requires root TypeScript config files; package-level configs are also missing; the missing file is not a TypeScript config discovery issue.
 
 ### AVA binary mismatch in newly added workspace package
-Problem: A new workspace package test script using `ava` exits with “Test files must be run with the AVA CLI” because the root `.bin/ava` symlink points at another workspace AVA copy while imports resolve the root AVA package.
-Solution: In the new package only, invoke the root AVA CLI file directly with `node ../../node_modules/ava/cli.js` so the CLI and imported `ava` package match.
-Constraints: Only apply to newly added packages that lack a local `.bin/ava` and reproduce this exact CLI/import mismatch; keep existing package scripts unchanged.
+Problem: A workspace package test script using bare `ava` exits with “Test files must be run with the AVA CLI” because the resolved binary and imported package can come from different workspace locations.
+Solution: Invoke AVA through `scripts/run-ava.js`, which resolves `ava/cli.js` from the active package context and spawns it as a real CLI process without hard-coded relative `node_modules` paths.
+Constraints: Do not call AVA through hard-coded relative `node_modules` paths; keep package-specific AVA flags such as timeouts or coverage wrappers intact.
 Ignore-If: The package has a working local AVA binary; the failure is an assertion failure or intentional red TDD case; a broader dependency install strategy is being changed intentionally.
 
 ### Gitignored node_modules search misses installed packages

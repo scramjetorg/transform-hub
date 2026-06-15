@@ -8,7 +8,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "test": "npm run test:ava",
-    "test:ava": "nyc ava",
+    "test:ava": "nyc node ../../scripts/run-ava.js",
     "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",

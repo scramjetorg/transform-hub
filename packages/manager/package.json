@@ -10,7 +10,7 @@
     "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
-    "test:ava": "node ../../node_modules/ava/cli.js",
+    "test:ava": "node ../../scripts/run-ava.js",
     "prebuild": "npm run savehash",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
