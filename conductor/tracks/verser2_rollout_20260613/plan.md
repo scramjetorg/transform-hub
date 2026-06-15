@@ -271,14 +271,22 @@
     - [x] Verify no Bun runtime path depends on WebSocket upgrade; verser2 Bun upgrade support is not available.
         - Added contract coverage proving Bun Guest route handlers see `server.upgrade()` return `false` and continue through ordinary HTTP responses.
         - Validation passed: `npm test` and `npm run build` in `packages/runner-bun`; root `npm run check:runtime-invariants` passed.
-- [ ] Task: Harden API forwarding and stream semantics
-    - [ ] Add API-server or transport tests for verser2 request forwarding through leased routing.
-    - [ ] Cover streaming request bodies.
-    - [ ] Cover streaming response bodies.
-    - [ ] Cover binary payloads.
-    - [ ] Cover abort/cancellation, route-unavailable behavior, duplicate peer rejection, and route retraction.
-    - [ ] Test and document unsupported forwarding behavior for WebSocket upgrade, CONNECT tunneling, trailers, and informational responses such as `100-continue` instead of treating them as required verser2 capabilities. Wording check: the plan and architecture docs consistently use “unsupported forwarding behavior”; no “unlocked forwarding handling” wording is present in this track.
-    - [ ] Avoid production reliance on direct/test-only dispatch paths that buffer full responses and enforce `maxResponseBytes`.
+- [x] Task: Harden API forwarding and stream semantics
+    - [x] Add API-server or transport tests for verser2 request forwarding through leased routing.
+        - Added focused API-server routed-forward tests and host broker RPC adapter tests covering the production `forwardRoutedRequest()` → `RoutedForwardTransport` → `createRunnerBrokerRpcTransport()` seams.
+    - [x] Cover streaming request bodies.
+        - Added a routed-forward test proving streamed request bytes flow through the `Readable` body passed to transport without buffering at the API forwarding layer.
+    - [x] Cover streaming response bodies.
+        - Existing routed-forward stream piping coverage remains active; validation re-ran with the hardened response handling.
+    - [x] Cover binary payloads.
+        - Added binary request and binary response payload coverage proving non-UTF8 bytes are preserved through routed forwarding.
+    - [x] Cover abort/cancellation, route-unavailable behavior, duplicate peer rejection, and route retraction.
+        - Existing abort/timeout and route-unavailable coverage was retained; added duplicate route-domain rejection in `createRunnerBrokerRpcTransport()` plus tests for duplicate route domains and route retraction before dispatch.
+    - [x] Test and document unsupported forwarding behavior for WebSocket upgrade, CONNECT tunneling, trailers, and informational responses such as `100-continue` instead of treating them as required verser2 capabilities. Wording check: the plan and architecture docs consistently use “unsupported forwarding behavior”; no “unlocked forwarding handling” wording is present in this track.
+        - `forwardRoutedRequest()` now rejects CONNECT and WebSocket upgrade requests with 501, strips unsupported trailer declarations, and treats informational routed responses as unsupported failures instead of pretending to tunnel them.
+    - [x] Avoid production reliance on direct/test-only dispatch paths that buffer full responses and enforce `maxResponseBytes`.
+        - The production API forwarding path remains streaming (`req` as body and `response.body.pipe(res)`); buffered dispatch remains confined to package-level tests and published runtime helper direct-dispatch utilities.
+        - Validation passed: `npm test -- test/routed-forward.spec.ts` and `npm run build` in `packages/api-server`; `npm exec -- ava test/csi-rpc-forwarding.spec.ts` and `npm run build` in `packages/host`.
 - [ ] Task: Run automated reviews and validation for Phase 3
     - [ ] Run targeted hub connectivity tests for Manager/STH plus runner paths.
     - [ ] Run local package tests for runner, runner-node, runner-python, runner-bun, host, and api-server as changed.

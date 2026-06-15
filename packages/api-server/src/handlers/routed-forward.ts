@@ -45,6 +45,27 @@ export function normalizeForwardedHeaders(headers: IncomingHttpHeaders): Record<
     return normalized;
 }
 
+function isUnsupportedRequest(req: IncomingMessage): boolean {
+    const method = (req.method || "GET").toUpperCase();
+    const connection = String(req.headers.connection || "").toLowerCase();
+
+    return method === "CONNECT" || req.headers.upgrade !== undefined || connection.split(",").map(value => value.trim()).includes("upgrade");
+}
+
+function normalizeResponseHeaders(headers: RoutedForwardTransportResponse["headers"]): Record<string, string | string[] | number> {
+    const normalized: Record<string, string | string[] | number> = {};
+
+    for (const [name, value] of Object.entries(headers || {})) {
+        if (value === undefined || name.toLowerCase() === "trailer") {
+            continue;
+        }
+
+        normalized[name] = value;
+    }
+
+    return normalized;
+}
+
 export async function forwardRoutedRequest({
     transport,
     domain,
@@ -56,6 +77,12 @@ export async function forwardRoutedRequest({
     requestTimeoutMs,
     onError
 }: RoutedForwardOptions): Promise<void> {
+    if (isUnsupportedRequest(req)) {
+        res.writeHead(501);
+        res.end();
+        return;
+    }
+
     const abortController = new AbortController();
     const requestTimeout = requestTimeoutMs && requestTimeoutMs > 0
         ? setTimeout(() => abortController.abort(), requestTimeoutMs)
@@ -104,6 +131,10 @@ export async function forwardRoutedRequest({
         }), abortPromise]);
         throwIfAborted();
 
+        if (response.statusCode >= 100 && response.statusCode < 200) {
+            throw new Error(`Unsupported routed informational response status: ${response.statusCode}`);
+        }
+
         responseBody = response.body;
         responseBody.once("end", cleanup);
         res.once("finish", cleanup);
@@ -114,7 +145,7 @@ export async function forwardRoutedRequest({
             abortRequest();
         });
 
-        res.writeHead(response.statusCode, response.headers || {});
+        res.writeHead(response.statusCode, normalizeResponseHeaders(response.headers));
         res.flushHeaders();
         responseBody.pipe(res);
     } catch (error) {

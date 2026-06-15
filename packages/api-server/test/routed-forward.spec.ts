@@ -243,6 +243,50 @@ test("forwardRoutedRequest forwards response body to response", async t => {
     t.is(body, "chunk1chunk2");
 });
 
+test("forwardRoutedRequest streams binary request body to transport", async t => {
+    const { transport, requestCalls, responseBody } = fakeTransport();
+    const { req, res } = fakeReqRes("POST", "/binary", { "content-type": "application/octet-stream" });
+    const observedChunks: Buffer[] = [];
+
+    const promise = forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/binary"
+    });
+
+    await new Promise(resolve => setImmediate(resolve));
+    (requestCalls[0].body as Readable).on("data", (chunk: Buffer) => observedChunks.push(chunk));
+    (req as unknown as PassThrough).write(Buffer.from([0, 255]));
+    (req as unknown as PassThrough).end(Buffer.from([1, 254]));
+    responseBody.end();
+
+    await promise;
+    t.deepEqual([...Buffer.concat(observedChunks)], [0, 255, 1, 254]);
+});
+
+test("forwardRoutedRequest forwards binary response bodies without text conversion", async t => {
+    const { transport, responseBody } = fakeTransport({
+        headers: { "content-type": "application/octet-stream" }
+    });
+    const { req, res, getChunks } = fakeReqRes();
+    const payload = Buffer.from([0, 255, 1, 254]);
+
+    await forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/binary"
+    });
+
+    responseBody.end(payload);
+    await new Promise<void>(resolve => res.on("end", resolve));
+
+    t.deepEqual([...Buffer.concat(getChunks())], [...payload]);
+});
+
 test("forwardRoutedRequest forwards status code and headers from transport response", async t => {
     const { transport, responseBody } = fakeTransport({
         statusCode: 201,
@@ -266,6 +310,66 @@ test("forwardRoutedRequest forwards status code and headers from transport respo
         "x-custom": "val",
         "content-type": "text/plain"
     });
+});
+
+test("forwardRoutedRequest strips unsupported response trailer declarations", async t => {
+    const { transport, responseBody } = fakeTransport({
+        headers: { "content-type": "text/plain", trailer: "x-checksum", "x-custom": "ok" }
+    });
+    const { req, res, getWriteHeadHeaders } = fakeReqRes();
+
+    await forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/trailers"
+    });
+    responseBody.end();
+
+    t.deepEqual(getWriteHeadHeaders(), { "content-type": "text/plain", "x-custom": "ok" });
+});
+
+test("forwardRoutedRequest rejects unsupported WebSocket upgrade and CONNECT requests", async t => {
+    const requestCalls: any[] = [];
+    const transport: RoutedForwardTransport = {
+        waitForRoute: async () => {
+            throw new Error("should not wait for unsupported request");
+        },
+        request: async opts => {
+            requestCalls.push(opts);
+            return { statusCode: 200, body: new PassThrough() };
+        }
+    };
+    const upgrade = fakeReqRes("GET", "/ws", { connection: "Upgrade", upgrade: "websocket" });
+    const connect = fakeReqRes("CONNECT", "example:443");
+
+    await forwardRoutedRequest({ transport, domain: "runner.inst-1.scramjet.internal", req: upgrade.req, res: upgrade.res, path: "/ws" });
+    await forwardRoutedRequest({ transport, domain: "runner.inst-1.scramjet.internal", req: connect.req, res: connect.res, path: "example:443" });
+
+    t.is(upgrade.getWriteHeadStatus(), 501);
+    t.is(connect.getWriteHeadStatus(), 501);
+    t.deepEqual(requestCalls, []);
+});
+
+test("forwardRoutedRequest treats informational responses as unsupported", async t => {
+    const infoBody = new PassThrough();
+    const transport: RoutedForwardTransport = {
+        waitForRoute: async () => undefined,
+        request: async () => ({ statusCode: 101, headers: { upgrade: "websocket" }, body: infoBody })
+    };
+    const { req, res, getWriteHeadStatus } = fakeReqRes();
+
+    await forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/switch"
+    });
+
+    t.is(getWriteHeadStatus(), 503);
+    t.false(infoBody.readableFlowing === true);
 });
 
 test("forwardRoutedRequest passes route readiness timeout to transport", async t => {

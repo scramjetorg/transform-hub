@@ -107,10 +107,15 @@ export function createRunnerBrokerRpcTransport(broker: Verser2RunnerBroker): Rou
     return {
         waitForRoute: (domain, timeoutMs) => broker.waitForRoute(domain, timeoutMs),
         request: async (request) => {
-            const route = broker.getRoutes().find(candidate => candidate.domain === request.domain);
+            const routes = broker.getRoutes().filter(candidate => candidate.domain === request.domain);
+            const route = routes[0];
 
             if (!route) {
                 throw new Error(`Runner route unavailable: ${request.domain}`);
+            }
+
+            if (routes.length > 1) {
+                throw new Error(`Duplicate runner route advertised: ${request.domain}`);
             }
 
             const response = await broker.request({

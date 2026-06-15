@@ -120,6 +120,49 @@ test("broker RPC transport request throws on missing route", async t => {
     t.truthy(err!.message.includes("runner.missing.scramjet.internal"));
 });
 
+test("broker RPC transport request rejects duplicate route domains", async t => {
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [
+            { targetId: "guest-a", domain: "runner.dup.scramjet.internal" },
+            { targetId: "guest-b", domain: "runner.dup.scramjet.internal" }
+        ],
+        waitForRoute: async () => {},
+        request: async () => {
+            throw new Error("must not request ambiguous route");
+        }
+    };
+    const transport = createRunnerBrokerRpcTransport(broker);
+
+    const err = await t.throwsAsync(
+        transport.request({ domain: "runner.dup.scramjet.internal", method: "GET", path: "/test" })
+    );
+
+    t.truthy(err!.message.includes("Duplicate runner route advertised"));
+});
+
+test("broker RPC transport request detects route retraction before dispatch", async t => {
+    let routeAdvertised = true;
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => routeAdvertised
+            ? [{ targetId: "guest-1", domain: "runner.retracted.scramjet.internal" }]
+            : [],
+        waitForRoute: async () => {
+            routeAdvertised = false;
+        },
+        request: async () => {
+            throw new Error("must not dispatch after route retraction");
+        }
+    };
+    const transport = createRunnerBrokerRpcTransport(broker);
+
+    await transport.waitForRoute("runner.retracted.scramjet.internal");
+    const err = await t.throwsAsync(
+        transport.request({ domain: "runner.retracted.scramjet.internal", method: "GET", path: "/test" })
+    );
+
+    t.truthy(err!.message.includes("Runner route unavailable"));
+});
+
 test("broker RPC transport request defaults statusCode to 200 when broker returns undefined", async t => {
     const broker: Verser2RunnerBroker = {
         getRoutes: () => [
