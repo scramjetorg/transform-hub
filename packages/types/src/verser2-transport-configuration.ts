@@ -19,6 +19,9 @@ export type Verser2ClientTlsConfig = Verser2TlsFilesConfig & {
 
 export type STHRunnerVerser2HostConfig = {
     enabled: boolean;
+    identityDir: string;
+    ca?: string;
+    caFile?: string;
     host: {
         bindHost: string;
         bindPort: number;

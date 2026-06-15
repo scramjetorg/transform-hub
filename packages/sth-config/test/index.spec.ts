@@ -42,6 +42,7 @@ test("default STH connectivity selects verser2 route roles", t => {
     t.is(config.verser2.migrationMode, "verser2");
     t.is(config.verser2.hostUrl, "https://127.0.0.1:2443");
     t.is(config.verser2.runnerHost?.enabled, false);
+    t.true(config.verser2.runnerHost!.identityDir.endsWith(".scramjet/verser2-runner-host"));
     t.is(config.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2444");
     t.not(config.verser2.runnerHost?.host.publicUrl, config.verser2.hostUrl);
     t.is(config.verser2.runnerHost?.localBroker.peerId, "sth.default.runner.broker");
@@ -65,6 +66,7 @@ test("getConfigInfo masks public verser2 client secrets", t => {
             hostUrl: "https://manager.example.test:8443",
             runnerHost: {
                 enabled: true,
+                identityDir: "/tmp/sth-runner-host",
                 host: {
                     bindHost: "127.0.0.1",
                     bindPort: 2444,

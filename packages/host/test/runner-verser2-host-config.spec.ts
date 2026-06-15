@@ -1,9 +1,16 @@
 import test from "ava";
 import { STHRunnerVerser2HostConfig } from "@scramjet/types";
-import { createSthRunnerVerser2HostOptions } from "../src/lib/runner-verser2-host-config";
+import { mkdtemp, readFile, rm, stat, writeFile } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
+import {
+    createSthRunnerVerser2HostOptions,
+    resolveSthRunnerVerser2HostConfig
+} from "../src/lib/runner-verser2-host-config";
 
 const baseConfig = (): STHRunnerVerser2HostConfig => ({
     enabled: true,
+    identityDir: "/tmp/scramjet-test-runner-host",
     host: {
         bindHost: "127.0.0.1",
         bindPort: 2444,
@@ -23,6 +30,10 @@ const baseConfig = (): STHRunnerVerser2HostConfig => ({
         peerId: "sth.runner.broker"
     }
 });
+
+async function tempIdentityDir(): Promise<string> {
+    return mkdtemp(join(tmpdir(), "sth-runner-host-"));
+}
 
 test("createSthRunnerVerser2HostOptions maps STH-local endpoint and PEM TLS files", t => {
     const options = createSthRunnerVerser2HostOptions(baseConfig());
@@ -127,4 +138,75 @@ test("createSthRunnerVerser2HostOptions authorizes runner fingerprints without M
             customExtensions: {}
         }
     }), { action: "allow" });
+});
+
+test("resolveSthRunnerVerser2HostConfig preserves explicitly configured TLS identity", async t => {
+    const config = baseConfig();
+    const resolved = await resolveSthRunnerVerser2HostConfig(config);
+
+    t.is(resolved, config);
+    t.is(resolved.host.tls.certFile, "/certs/sth-runner.crt");
+    t.is(resolved.host.tls.keyFile, "/certs/sth-runner.key");
+});
+
+test("resolveSthRunnerVerser2HostConfig generates and persists STH-local CA and server identity", async t => {
+    const identityDir = await tempIdentityDir();
+    const config = baseConfig();
+
+    config.identityDir = identityDir;
+    config.host.publicUrl = "https://127.0.0.1:2444";
+    config.host.tls = { mtlsRequired: false };
+
+    try {
+        const resolved = await resolveSthRunnerVerser2HostConfig(config);
+
+        t.is(resolved.caFile, join(identityDir, "ca.pem"));
+        t.is(resolved.host.tls.certFile, join(identityDir, "server.pem"));
+        t.is(resolved.host.tls.keyFile, join(identityDir, "server-key.pem"));
+        t.true(resolved.ca!.includes("BEGIN CERTIFICATE"));
+        t.true((await readFile(join(identityDir, "ca-key.pem"), "utf8")).includes("BEGIN PRIVATE KEY"));
+        t.true((await readFile(join(identityDir, "server-key.pem"), "utf8")).includes("BEGIN PRIVATE KEY"));
+
+        if (process.platform !== "win32") {
+            t.is((await stat(join(identityDir, "ca-key.pem"))).mode & 0o777, 0o600);
+            t.is((await stat(join(identityDir, "server-key.pem"))).mode & 0o777, 0o600);
+        }
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
+});
+
+test("resolveSthRunnerVerser2HostConfig reuses complete generated identity", async t => {
+    const identityDir = await tempIdentityDir();
+    const config = baseConfig();
+
+    config.identityDir = identityDir;
+    config.host.tls = { mtlsRequired: false };
+
+    try {
+        const first = await resolveSthRunnerVerser2HostConfig(config);
+        const second = await resolveSthRunnerVerser2HostConfig(config);
+
+        t.is(second.ca, first.ca);
+        t.is(second.host.tls.certFile, first.host.tls.certFile);
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
+});
+
+test("resolveSthRunnerVerser2HostConfig rejects partial generated identity", async t => {
+    const identityDir = await tempIdentityDir();
+    const config = baseConfig();
+
+    config.identityDir = identityDir;
+    config.host.tls = { mtlsRequired: false };
+    await writeFile(join(identityDir, "ca.pem"), "partial", { mode: 0o644 });
+
+    try {
+        await t.throwsAsync(() => resolveSthRunnerVerser2HostConfig(config), {
+            message: `Incomplete STH-local runner verser2 Host identity in ${identityDir}`
+        });
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
 });

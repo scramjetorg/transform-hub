@@ -172,6 +172,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
                 hostUrl: "",
                 runnerHost: {
                     enabled: false,
+                    identityDir: "/tmp/sth-runner-host",
                     host: {
                         bindHost: "127.0.0.1",
                         bindPort: 2444,

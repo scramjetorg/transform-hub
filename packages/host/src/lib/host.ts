@@ -63,7 +63,7 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
-import { createSthRunnerVerser2HostOptions } from "./runner-verser2-host-config";
+import { createSthRunnerVerser2HostOptions, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
@@ -326,10 +326,6 @@ export class Host implements IHost, IComponent {
             runnerBrokerProvider: () => undefined,
             hostProxy: this.instanceProxy,
         });
-
-        if (sthConfig.verser2.runnerHost?.enabled) {
-            this.runnerVerser2Host = createVerserHost(createSthRunnerVerser2HostOptions(sthConfig.verser2.runnerHost));
-        }
 
         this.csiDispatcher.logger.pipe(this.logger);
 
@@ -958,7 +954,15 @@ export class Host implements IHost, IComponent {
     }
 
     private async startRunnerVerser2Host() {
-        this.runnerVerser2Host?.onLifecycle(event => this.logger.debug("STH-local runner verser2 Host lifecycle", event));
+        if (!this.config.verser2.runnerHost?.enabled) {
+            return;
+        }
+
+        const runnerHostConfig = await resolveSthRunnerVerser2HostConfig(this.config.verser2.runnerHost);
+
+        this.config.verser2.runnerHost = runnerHostConfig;
+        this.runnerVerser2Host = createVerserHost(createSthRunnerVerser2HostOptions(runnerHostConfig));
+        this.runnerVerser2Host.onLifecycle(event => this.logger.debug("STH-local runner verser2 Host lifecycle", event));
 
         if (this.runnerVerser2Host) {
             await this.runnerVerser2Host.start();

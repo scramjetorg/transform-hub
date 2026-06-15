@@ -46,6 +46,9 @@ export const sthOutboundVerser2ConfigSchema = z.object({
     hostUrl: z.string(),
     runnerHost: z.object({
         enabled: z.boolean(),
+        identityDir: z.string().min(1),
+        ca: optionalFileSchema,
+        caFile: optionalFileSchema,
         host: z.object({
             bindHost: z.string(),
             bindPort: z.number().int().nonnegative(),
@@ -114,14 +117,6 @@ export const sthOutboundVerser2ConfigSchema = z.object({
         });
     }
 
-    if (config.runnerHost?.enabled && !runnerTls?.certFile && !runnerTls?.pfxFile) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["runnerHost", "host", "tls"],
-            message: "runnerHost TLS requires certFile/keyFile or pfxFile when enabled"
-        });
-    }
-
     if (config.runnerHost?.enabled && runnerTls?.mtlsRequired && !runnerTls.clientAuthCaFile) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -182,6 +177,9 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2MigrationMode", flag: "verser2-migration-mode", path: sthPath("migrationMode"), env: "SCRAMJET_VERSER2_MIGRATION_MODE", type: "string", choices: ["legacy", "dual", "verser2"], description: "STH Manager transport migration mode" },
     { name: "verser2HostUrl", flag: "verser2-host-url", path: sthPath("hostUrl"), env: "SCRAMJET_VERSER2_HOST_URL", flagAliases: ["cpm-verser2-url"], type: "string", description: "Manager/MultiManager verser2 Host URL" },
     { name: "verser2RunnerHostEnabled", flag: "verser2-runner-host-enabled", path: sthPath("runnerHost.enabled"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED", type: "boolean", description: "Enable the STH-local verser2 Host for runners" },
+    { name: "verser2RunnerHostIdentityDir", flag: "verser2-runner-host-identity-dir", path: sthPath("runnerHost.identityDir"), env: "SCRAMJET_VERSER2_RUNNER_HOST_IDENTITY_DIR", type: "string", description: "Directory for generated STH-local runner Host CA and server identity" },
+    { name: "verser2RunnerHostCa", flag: "verser2-runner-host-ca", path: sthPath("runnerHost.ca"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CA", type: "string", description: "Inline STH-local runner Host CA PEM" },
+    { name: "verser2RunnerHostCaFile", flag: "verser2-runner-host-ca-file", path: sthPath("runnerHost.caFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CA_FILE", type: "string", description: "STH-local runner Host CA PEM file" },
     { name: "verser2RunnerHostBindHost", flag: "verser2-runner-host-bind-host", path: sthPath("runnerHost.host.bindHost"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_HOST", type: "string", description: "STH-local runner verser2 Host bind address" },
     { name: "verser2RunnerHostBindPort", flag: "verser2-runner-host-bind-port", path: sthPath("runnerHost.host.bindPort"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT", type: "number", description: "STH-local runner verser2 Host bind port" },
     { name: "verser2RunnerHostPublicUrl", flag: "verser2-runner-host-public-url", path: sthPath("runnerHost.host.publicUrl"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL", type: "string", description: "STH-local runner verser2 Host URL passed to runners" },

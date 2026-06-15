@@ -401,7 +401,8 @@
 - [ ] Task: Add STH-local verser2 Host for runners and stack-runners
     - [x] Start an STH-owned local verser2 Host dedicated to runner and stack-runner connectivity.
         - Added optional `verser2.runnerHost` config, descriptor validation, STH-local Host option mapping, and Host lifecycle start/cleanup. Defaults keep it disabled until STH-local CA generation and runner rewiring are complete.
-    - [ ] Generate or load an STH-local CA/server identity for the STH-local runner Host.
+    - [x] Generate or load an STH-local CA/server identity for the STH-local runner Host.
+        - Added persisted `selfsigned`-backed STH-local CA/server PEM generation under `verser2.runnerHost.identityDir`; explicit `certFile`/`keyFile` or `pfxFile` still take precedence. Generated private keys are written with `0600` permissions and partial generated identity directories fail closed.
     - [ ] Expose runner route domains through the STH-local Host, including `runner.<instanceId>.scramjet.internal` and stack-runtime routes such as `sequence.<instanceId>.scramjet.internal` where needed.
     - [ ] Bridge any Manager-required interactions through STH rather than exposing Manager directly to runners.
     - [x] Ensure standalone STH startup can provide the STH-local runner Host without requiring Manager connectivity.

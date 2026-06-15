@@ -74,6 +74,7 @@ export const defaultConfig: STHConfiguration = {
         hostUrl: "https://127.0.0.1:2443",
         runnerHost: {
             enabled: false,
+            identityDir: join(homedir(), ".scramjet", "verser2-runner-host"),
             host: {
                 bindHost: "127.0.0.1",
                 bindPort: 2444,
