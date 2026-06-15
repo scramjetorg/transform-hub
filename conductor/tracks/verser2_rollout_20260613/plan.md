@@ -318,14 +318,15 @@
 
 ## Phase 4: Default Switch, Legacy Removal, and Final Validation
 
-- [ ] Task: Make verser2 the default connectivity path
+- [x] Task: Make verser2 the default connectivity path
     - [x] Switch Manager/STH connectivity defaults to verser2 Host/Broker/Guest roles.
         - Phase 5 corrected the runner topology and Phase 4 now enables verser2 by default for Manager, MultiManager, and STH while keeping TLS mandatory. Manager/MultiManager defaults include generated local CA/server identity under `~/.scramjet/verser2-*-host`, `https://127.0.0.1:2443` public Host URL defaults, and public CA export through the existing trust endpoint. Explicit configured cert/key or PFX still take precedence.
     - [x] Switch global runner connectivity defaults to verser2 runner Guest routes.
         - Phase 5 rewired runner envs to the STH-local runner Host. Phase 4 now defaults STH `verser2.enabled` and `verser2.runnerHost.enabled` to true, so process/Docker/Kubernetes runner env generation emits verser2 runner config once the STH-local generated CA is resolved at Host startup.
     - [x] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
         - Runtime wrappers already consume the runner-provided `verser2Runtime.hostUrl` and `hubTargetDomain`; with STH runnerHost defaults enabled, that runtime Host URL is STH-local by default rather than Manager/MultiManager.
-    - [ ] Remove or narrow temporary migration flags according to the approved migration window.
+    - Remove or narrow temporary migration flags according to the approved migration window.
+        - Moved to `../old_verser_callsites_removal_20260615/`: this is now handled as part of removing old-way config selection and making verser2 unconditional.
 - [x] Task: Remove BPMux from active repository usage
     - [x] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.
         - Removed direct dependencies from `@scramjet/host`, `@scramjet/runner`, `@scramjet/runner-node`, and stale Manager package metadata. The remaining direct dependency is limited to the legacy `@scramjet/verser` workspace and the local `@scramjet/bpmux` workspace until the old-verser removal slice archives/removes them.
@@ -337,38 +338,25 @@
         - Rewrote host and runner-node tests to prove the retired REQUESTS/BPMux path is closed instead of proving multiplexed request forwarding.
     - [x] Add static check proving no active `@scramjet/bpmux` imports remain.
         - Validation passed: focused Host/runner/runner-node AVA tests, `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`, and `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` (Guard 7 confirms no new active BPMux or old-verser references outside the migration allowlist).
-- [ ] Task: Remove old verser from active repository usage
-    - [ ] Remove `@scramjet/verser` dependencies from migrated packages.
-    - [ ] Remove or archive `packages/verser` from active workspace usage.
-    - [ ] Remove old `VerserConnection` from shared types.
-    - [ ] Remove old `VerserClient` CPM connector paths.
-    - [ ] Remove old `Verser` server paths in MultiManager.
-    - [ ] Add static check proving no active `@scramjet/verser` imports remain.
-- [ ] Task: Confirm final verser2 package dependencies
-    - [ ] Ensure affected TypeScript packages depend on the needed `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, `@signicode/verser-common`, and `@signicode/verser2-guest-js-common` packages.
-    - [ ] Ensure Python runtime packaging includes the `verser2-guest-python` dependency and documents required TLS file inputs.
-    - [ ] Ensure no package references unpublished or internal verser2 APIs when a public Host/Guest/Broker API exists.
-- [ ] Task: Remove legacy runner socket protocol
-    - [ ] Remove or archive `SocketServer` when no active path uses it.
-    - [ ] Remove raw channel-index connection logic.
-    - [ ] Remove legacy raw socket host clients.
-    - [ ] Remove migration-only config after final default switch.
-- [ ] Task: Run final automated validation
-    - [ ] Run `npm run build:packages`.
-    - [ ] Run `npm run check:runtime-invariants`.
-    - [ ] Run `npm run test:packages-no-concurrent`.
-    - [ ] Run `npm run test:bdd-ci-node`.
-    - [ ] Run current-contract Python BDD coverage once new Python refapps/scenarios are in place; keep legacy Python reference-app compatibility scenarios under their compatibility tag and review them only at the end of the plan.
-    - [ ] Run `npm run test:bdd-ci-api-node`.
-    - [ ] Run Bun BDD or smoke validation if available.
-    - [ ] Record any skipped broad Docker/Kubernetes validation and reason.
-- [ ] Task: Complete final automated reviews and documentation
-    - [ ] Complete dependency removal review.
-    - [ ] Complete dead-code review.
-    - [ ] Complete security review for TLS/CA/cert handling, mTLS registration authorization, private-key permissions, and per-runner cert cleanup.
-    - [ ] Complete final architecture conformance review for flat topology, exact-match routes, lease lifecycle, and no unsupported protocol assumptions.
-    - [ ] Update docs and package guidance for final verser2 connectivity architecture.
-- [ ] Task: Conductor - User Manual Verification 'Default Switch, Legacy Removal, and Final Validation' (Protocol in workflow.md)
+- Task: Remove old verser from active repository usage
+    - Moved to `../old_verser_callsites_removal_20260615/`.
+    - That plan removes active old-verser callsites and dependencies from migrated packages.
+    - Note: `packages/verser` is intentionally preserved as a standalone workspace package for external users; it should not be removed or archived from builds.
+    - That plan removes old `VerserConnection` shared types, old `VerserClient` CPM connector paths, old `Verser` server paths in MultiManager, and active old-verser/BPMux static traces outside standalone packages.
+- Task: Confirm final verser2 package dependencies
+    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4.
+    - That plan covers final verser2 dependency audit for TypeScript packages, Python `verser2-guest-python`, public API usage, and standalone legacy package dependency ownership.
+- Task: Remove legacy runner socket protocol
+    - Moved to `../old_verser_callsites_removal_20260615/` Phase 2.
+    - That plan removes dead runner socket protocol branches after old-way branch removal confirms no active verser2 topology uses them.
+- Task: Run final automated validation
+    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4.
+    - That plan covers build, runtime invariants, package tests, relevant BDD smoke validation, Python/Bun smoke decisions, and skipped Docker/Kubernetes validation notes.
+- Task: Complete final automated reviews and documentation
+    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4.
+    - That plan covers dependency removal, dead-code, TLS/security, final architecture conformance reviews, docs, and package guidance.
+- Task: Conductor - User Manual Verification 'Default Switch, Legacy Removal, and Final Validation' (Protocol in workflow.md)
+    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4 as the final manual verification gate.
 
 ## Phase 5: Post-Completion Runner Topology Correction and Local Trust Bootstrap
 

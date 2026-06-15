@@ -2,6 +2,11 @@
 
 ## Phase 1: Identification, Transient TDD Guardrails, and Config Targeting
 
+- [ ] Task: Create implementation branch, plan-start commit, and draft PR
+    - [ ] Create a dedicated implementation branch for this track before code changes.
+    - [ ] Commit the track handoff/plan-start state with a scoped Conductor commit message.
+    - [ ] Push the branch and open a draft PR for the old-verser/BPMux/socket removal track.
+    - [ ] Link the PR in the track notes before continuing implementation.
 - [ ] Task: Inventory old-verser, BPMux, and dead socket traces across active code, tests, config, package metadata, and docs
     - [ ] Search active source and tests for `@scramjet/verser`, `@scramjet/bpmux`, `VerserConnection`, `VerserClient`, `new Verser`, `apiVerser`, `verserConnection`, `BPMux`, `SocketServer`, raw channel-index HostClients, `migrationMode`, `legacy`, and `dual`.
     - [ ] Classify each trace as active runtime callsite, active config switch, active compatibility test, package dependency, standalone `packages/verser`/`packages/bpmux` package code/test, dead legacy socket branch, transient invariant/doc proof, or historical/archive.
