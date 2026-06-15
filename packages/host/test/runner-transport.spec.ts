@@ -1,5 +1,5 @@
 import test from "ava";
-import { Duplex, PassThrough } from "stream";
+import { PassThrough } from "stream";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import {
     DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS,
@@ -76,10 +76,7 @@ function deferred<T = void>(): { promise: Promise<T>; resolve: (value?: T | Prom
 test("LegacyRunnerTransport preserves legacy communication handler wiring order", async t => {
     const { upstreams, downstreams } = streams();
     const handler = communicationHandler();
-    const transport = new LegacyRunnerTransport(upstreams, handler, { onInstanceRequest: () => undefined } as any, () => ({
-        on: () => undefined as any,
-        removeAllListeners: () => undefined
-    }));
+    const transport = new LegacyRunnerTransport(upstreams, handler);
 
     await transport.connect({ instanceId: "instance-1", streams: downstreams });
 
@@ -93,55 +90,16 @@ test("LegacyRunnerTransport preserves legacy communication handler wiring order"
     ]);
 });
 
-test("LegacyRunnerTransport forwards BPMux peer_multiplex sockets to HostProxy", async t => {
+test("LegacyRunnerTransport ends retired REQUESTS channel without BPMux", async t => {
     const { upstreams, downstreams } = streams();
     const handler = communicationHandler();
-    const peerSockets: Duplex[] = [];
-    const listeners: Record<string, Function> = {};
-    const transport = new LegacyRunnerTransport(
-        upstreams,
-        handler,
-        { onInstanceRequest: (socket: Duplex) => peerSockets.push(socket) } as any,
-        () => ({
-            on: (event: string, listener: Function) => {
-                listeners[event] = listener;
-                return undefined as any;
-            },
-            removeAllListeners: () => undefined
-        })
-    );
+    const transport = new LegacyRunnerTransport(upstreams, handler);
 
     await transport.connect({ instanceId: "instance-1", streams: downstreams });
 
-    const peerSocket = new PassThrough();
-
-    listeners.peer_multiplex(peerSocket, undefined);
-
-    t.deepEqual(peerSockets, [peerSocket]);
-});
-
-test("LegacyRunnerTransport ends request stream on BPMux errors and removes listeners on disconnect", async t => {
-    const { upstreams, downstreams } = streams();
-    const handler = communicationHandler();
-    let removed = false;
-    const listeners: Record<string, Function> = {};
-    const transport = new LegacyRunnerTransport(upstreams, handler, { onInstanceRequest: () => undefined } as any, () => ({
-        on: (event: string, listener: Function) => {
-            listeners[event] = listener;
-            return undefined as any;
-        },
-        removeAllListeners: () => {
-            removed = true;
-        }
-    }));
-
-    await transport.connect({ instanceId: "instance-1", streams: downstreams });
-
-    listeners.error(new Error("boom"));
     t.true((downstreams[CC.REQUESTS] as PassThrough).writableEnded);
 
     await transport.disconnect();
-    t.true(removed);
 });
 
 test("createVerser2ClientTlsOptions rejects partial PEM identity", t => {

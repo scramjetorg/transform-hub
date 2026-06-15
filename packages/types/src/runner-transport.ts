@@ -1,5 +1,3 @@
-import { CommunicationChannel } from "@scramjet/symbols";
-import { Duplex } from "stream";
 import { DownstreamStreamsConfig } from "./message-streams";
 
 export type RunnerTransportKind = "legacy" | "verser2";
@@ -40,11 +38,3 @@ export interface RunnerTransport {
     connect(options: RunnerTransportConnectOptions): Promise<void>;
     disconnect(reason?: string): Promise<void>;
 }
-
-export type LegacyRunnerTransportMultiplex = {
-    on(event: "error", listener: (error: Error) => void): LegacyRunnerTransportMultiplex;
-    on(event: "peer_multiplex", listener: (socket: Duplex, data: unknown) => void): LegacyRunnerTransportMultiplex;
-    removeAllListeners(): void;
-};
-
-export type LegacyRunnerTransportBpmuxFactory = (stream: NonNullable<DownstreamStreamsConfig[CommunicationChannel.REQUESTS]>) => LegacyRunnerTransportMultiplex;

@@ -18,7 +18,6 @@
   "dependencies": {
     "@scramjet/adapters": "^1.1.0",
     "@scramjet/api-server": "^1.1.0",
-    "@scramjet/bpmux": "^9.0.0",
     "@scramjet/load-check": "^1.1.0",
     "@scramjet/model": "^1.1.0",
     "@scramjet/monitoring-server": "^1.1.0",

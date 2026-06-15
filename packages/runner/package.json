@@ -29,7 +29,6 @@
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "@signicode/verser2-guest-node": "0.3.1",
-    "@scramjet/bpmux": "^9.0.0",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

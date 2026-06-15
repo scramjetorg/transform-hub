@@ -482,7 +482,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
                 communicationHandler: this.communicationHandler,
                 routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs
             })
-            : new LegacyRunnerTransport(this.upStreams, this.communicationHandler, this.hostProxy);
+            : new LegacyRunnerTransport(this.upStreams, this.communicationHandler);
         this.runnerTransport.connect({ instanceId: this.id, streams }).catch((error) => {
             this.logger.error(`${this.runnerTransport?.kind || "unknown"} runner transport connection failed`, error);
             this.initResolver?.rej(error);

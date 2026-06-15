@@ -18,7 +18,6 @@
     "@scramjet/adapter-process": "^1.1.0",
     "@scramjet/api-client": "^1.1.0",
     "@scramjet/api-server": "^1.1.0",
-    "@scramjet/bpmux": "^9.0.0",
     "@scramjet/client-utils": "^1.1.0",
     "@scramjet/config": "^1.1.0",
     "@scramjet/load-check": "^1.1.0",

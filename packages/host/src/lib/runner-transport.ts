@@ -1,14 +1,10 @@
-import { BPMux } from "@scramjet/bpmux";
 import type { RoutedForwardTransport } from "@scramjet/api-server";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { Readable } from "stream";
 import {
     DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS,
     DownstreamStreamsConfig,
-    HostProxy,
     ICommunicationHandler,
-    LegacyRunnerTransportBpmuxFactory,
-    LegacyRunnerTransportMultiplex,
     PassThroughStreamsConfig,
     RunnerTransport,
     RunnerTransportConnectOptions,
@@ -147,13 +143,10 @@ export type Verser2RunnerTransportOptions = {
 export class LegacyRunnerTransport implements RunnerTransport {
     readonly kind = "legacy" as const;
     private streams?: DownstreamStreamsConfig;
-    private multiplex?: LegacyRunnerTransportMultiplex;
 
     constructor(
         private readonly upstreams: PassThroughStreamsConfig,
-        private readonly communicationHandler: ICommunicationHandler,
-        private readonly hostProxy: HostProxy,
-        private readonly createMultiplex: LegacyRunnerTransportBpmuxFactory = (stream) => new BPMux(stream) as LegacyRunnerTransportMultiplex
+        private readonly communicationHandler: ICommunicationHandler
     ) {}
 
     async connect({ streams }: RunnerTransportConnectOptions): Promise<void> {
@@ -164,19 +157,10 @@ export class LegacyRunnerTransport implements RunnerTransport {
         this.communicationHandler.pipeMessageStreams();
         this.communicationHandler.pipeDataStreams();
 
-        if (streams[CC.REQUESTS]) {
-            this.multiplex = this.createMultiplex(streams[CC.REQUESTS]!);
-            this.multiplex.on("error", (e: Error) => {
-                streams[CC.REQUESTS]?.end();
-            });
-            this.multiplex.on("peer_multiplex", (socket) => this.hostProxy.onInstanceRequest(socket));
-        }
+        streams[CC.REQUESTS]?.end();
     }
 
     async disconnect(): Promise<void> {
-        this.multiplex?.removeAllListeners();
-        this.multiplex = undefined;
-
         if (this.streams) {
             this.streams[CC.STDOUT].unpipe();
             this.streams[CC.STDERR].unpipe();

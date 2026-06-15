@@ -326,12 +326,17 @@
     - [x] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
         - Runtime wrappers already consume the runner-provided `verser2Runtime.hostUrl` and `hubTargetDomain`; with STH runnerHost defaults enabled, that runtime Host URL is STH-local by default rather than Manager/MultiManager.
     - [ ] Remove or narrow temporary migration flags according to the approved migration window.
-- [ ] Task: Remove BPMux from active repository usage
-    - [ ] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.
-    - [ ] Remove BPMux imports and implementation paths.
-    - [ ] Remove BPMux-backed HostClient code.
-    - [ ] Remove BPMux-specific tests or rewrite them as verser2 tests.
-    - [ ] Add static check proving no active `@scramjet/bpmux` imports remain.
+- [x] Task: Remove BPMux from active repository usage
+    - [x] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.
+        - Removed direct dependencies from `@scramjet/host`, `@scramjet/runner`, `@scramjet/runner-node`, and stale Manager package metadata. The remaining direct dependency is limited to the legacy `@scramjet/verser` workspace and the local `@scramjet/bpmux` workspace until the old-verser removal slice archives/removes them.
+    - [x] Remove BPMux imports and implementation paths.
+        - Removed active BPMux construction from host-side `LegacyRunnerTransport`, outer runner `HostClient`, and runner-node `HostClient`.
+    - [x] Remove BPMux-backed HostClient code.
+        - Legacy raw channels remain temporarily for explicit compatibility harnesses, but REQUESTS no longer initializes a BPMux-backed HTTP agent. Runtime API traffic uses the verser2 Broker agent when `verser2Runtime` is present; otherwise `getAgent()` fails fast.
+    - [x] Remove BPMux-specific tests or rewrite them as verser2 tests.
+        - Rewrote host and runner-node tests to prove the retired REQUESTS/BPMux path is closed instead of proving multiplexed request forwarding.
+    - [x] Add static check proving no active `@scramjet/bpmux` imports remain.
+        - Validation passed: focused Host/runner/runner-node AVA tests, `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`, and `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` (Guard 7 confirms no new active BPMux or old-verser references outside the migration allowlist).
 - [ ] Task: Remove old verser from active repository usage
     - [ ] Remove `@scramjet/verser` dependencies from migrated packages.
     - [ ] Remove or archive `packages/verser` from active workspace usage.

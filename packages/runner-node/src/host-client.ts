@@ -1,5 +1,4 @@
 /* eslint-disable dot-notation */
-import { BPMux } from "@scramjet/bpmux";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
@@ -34,8 +33,8 @@ export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
  * Connects to Host and exposes streams per channel (stdin, monitor etc.).
  *
  * Owned by runner-node: the child runtime is responsible for opening sockets,
- * wrapping the IN channel with a PassThrough, and initializing BPMux on the
- * REQUESTS channel so the API client transport stays sequence-local.
+ * wrapping the IN channel with a PassThrough. Sequence-local API client
+ * transport is provided by verser2 runtime configuration.
  *
  * Selective channel opening: when `channels` is provided to {@link init} or
  * {@link initWithStreams}, only the listed channel slots are populated; the
@@ -45,7 +44,6 @@ class HostClient implements IHostClient {
     private _streams?: Array<Socket | PassThrough | undefined>;
     public agent?: Agent;
     logger: IObjectLogger;
-    bpmux?: BPMux;
     verser2Broker?: Verser2BrokerLike;
     public inputEndDeferMs = 500;
     private inputSource?: Socket;
@@ -176,42 +174,6 @@ class HostClient implements IHostClient {
             input.pipe(inputTarget, { end: false });
 
             this._streams[CC.IN] = inputTarget;
-        }
-
-        try {
-            if (this._streams[CC.REQUESTS]) {
-                this.logger.debug("Using BPMux for requests stream");
-
-                this.bpmux = new BPMux(this._streams[CC.REQUESTS] as unknown as net.Socket);
-
-                const agent = new Agent() as AgentWithCreateConnection;
-
-                agent.createConnection = () => {
-                    try {
-                        const socket = this.bpmux!.multiplex() as unknown as Socket;
-
-                        socket.on("error", () => {
-                            this.logger.trace("Muxed stream error");
-                        });
-
-                        socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-
-                        this.logger.trace("Creating connection to verser server");
-
-                        return socket;
-                    } catch (error) {
-                        const ret = new Socket();
-
-                        setImmediate(() => ret.emit("error", error));
-                        return ret;
-                    }
-                };
-
-                this.agent = agent;
-            }
-        } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error(e);
         }
 
         this.logger.debug("Connected to host");
