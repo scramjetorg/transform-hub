@@ -13,6 +13,7 @@ export type Verser2HostTlsConfig = Verser2TlsFilesConfig & {
 };
 
 export type Verser2ClientTlsConfig = Verser2TlsFilesConfig & {
+    ca?: string;
     caFile?: string;
 };
 

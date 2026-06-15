@@ -18,6 +18,7 @@
  */
 
 export type RunnerTransportConfigTls = {
+    ca?: string;
     caFile?: string;
     certFile?: string;
     keyFile?: string;
@@ -143,7 +144,7 @@ export function parseRunnerTransportConfig(
             ? parsed.hubTargetDomain.trim()
             : undefined;
 
-    const tls = parsed.tls;
+    const tls = normalizeTls(parsed.tls);
     const leaseAcquireTimeoutMs =
         typeof parsed.leaseAcquireTimeoutMs === "number"
             ? parsed.leaseAcquireTimeoutMs
@@ -160,8 +161,26 @@ export function parseRunnerTransportConfig(
         guestId,
         hubBrokerId,
         ...(hubTargetDomain !== undefined ? { hubTargetDomain } : {}),
-        ...(tls !== undefined ? { tls: tls as RunnerTransportConfigTls } : {}),
+        ...(tls !== undefined ? { tls } : {}),
         ...(leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs } : {}),
         ...(minWaitingStreams !== undefined ? { minWaitingStreams } : {})
     };
+}
+
+function normalizeTls(value: unknown): RunnerTransportConfigTls | undefined {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        return undefined;
+    }
+
+    const { ca, caFile, ...rest } = value as RunnerTransportConfigTls;
+
+    if (typeof ca === "string" && ca.trim()) {
+        return { ...rest, ca: ca.trim() };
+    }
+
+    if (typeof caFile === "string" && caFile.trim()) {
+        return { ...rest, caFile: caFile.trim() };
+    }
+
+    return rest;
 }

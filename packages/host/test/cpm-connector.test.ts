@@ -348,6 +348,26 @@ test.serial("CPMConnector creates verser2 TLS options with pfx identity when con
     });
 });
 
+test.serial("CPMConnector prefers inline verser2 CA over CA file", t => {
+    createConnector({
+        ...verser2Options(),
+        verser2: {
+            ...verser2Options().verser2,
+            tls: {
+                ca: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
+                caFile: "/certs/ca.pem"
+            }
+        }
+    });
+
+    t.deepEqual(mockCreateVerserBroker._calls[0][0].tls, {
+        ca: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----"
+    });
+    t.deepEqual(mockCreateVerserNodeGuest._calls[0][0].tls, {
+        ca: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----"
+    });
+});
+
 test.serial("CPMConnector connect() connects verser2 Broker and Guest when enabled", async t => {
     const connector = createConnector(verser2Options());
     let emitted = false;

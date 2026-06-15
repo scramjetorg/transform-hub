@@ -405,11 +405,12 @@
     - [ ] Expose runner route domains through the STH-local Host, including `runner.<instanceId>.scramjet.internal` and stack-runtime routes such as `sequence.<instanceId>.scramjet.internal` where needed.
     - [ ] Bridge any Manager-required interactions through STH rather than exposing Manager directly to runners.
     - [x] Ensure standalone STH startup can provide the STH-local runner Host without requiring Manager connectivity.
-- [ ] Task: Adopt inline CA PEM bundles for verser2 trust
-    - [ ] Extend verser2 TLS config/types to support inline CA PEM bundles using the verser team format: `tls.ca` containing one or more concatenated PEM certificates.
-    - [ ] Keep file-based `caFile` as an input/source option where useful, but normalize runner/STH-local handoff to inline `tls.ca` when supported.
-    - [ ] Prefer `tls.ca` over `tls.caFile` when both are provided for runner/runtime transport.
-    - [ ] Treat inline CA PEM as public trust material, not secret private material, while still ensuring it is not confused with private keys.
+- [x] Task: Adopt inline CA PEM bundles for verser2 trust
+    - [x] Extend verser2 TLS config/types to support inline CA PEM bundles using the verser team format: `tls.ca` containing one or more concatenated PEM certificates.
+    - [x] Keep file-based `caFile` as an input/source option where useful, but normalize runner/STH-local handoff to inline `tls.ca` when supported.
+    - [x] Prefer `tls.ca` over `tls.caFile` when both are provided for runner/runtime transport.
+    - [x] Treat inline CA PEM as public trust material, not secret private material, while still ensuring it is not confused with private keys.
+        - Implemented in shared verser2 config, STH public config masking descriptors, CPM verser2 client TLS options, runner transport config parsing, and Bun runtime TLS handoff. Runner package has no `npm test` script; the parser validation was rerun with `node ../../node_modules/ava/cli.js test/transport/runner-transport-config.spec.ts`.
 - [ ] Task: Generate combined runner trust bundle
     - [ ] Have STH build a single runner trust bundle PEM string for runner and stack-runner transport.
     - [ ] Always include the STH-local CA so runners can trust the STH-local verser2 Host.

@@ -69,6 +69,7 @@ export const sthOutboundVerser2ConfigSchema = z.object({
     broker: z.object({ peerId: z.string(), targetDomain: z.string() }).strict(),
     guest: z.object({ peerId: z.string(), routeDomain: z.string() }).strict(),
     tls: z.object({
+        ca: optionalFileSchema,
         caFile: optionalFileSchema,
         certFile: optionalFileSchema,
         keyFile: optionalFileSchema,
@@ -194,6 +195,7 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2RunnerHostAllowLocalPeers", flag: "verser2-runner-host-allow-local-peers", path: sthPath("runnerHost.registration.allowLocalPeers"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOW_LOCAL_PEERS", type: "boolean", description: "Allow in-process local peers on the STH-local runner Host" },
     { name: "verser2RunnerHostAllowedClientFingerprints", flag: "verser2-runner-host-allowed-client-fingerprints", path: sthPath("runnerHost.registration.allowedClientFingerprints"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOWED_CLIENT_FINGERPRINTS", type: "string[]", description: "Allowed runner client certificate fingerprints" },
     { name: "verser2RunnerHostBrokerPeerId", flag: "verser2-runner-host-broker-peer-id", path: sthPath("runnerHost.localBroker.peerId"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BROKER_PEER_ID", type: "string", description: "Local STH Broker peer ID for runner routes" },
+    { name: "verser2Ca", flag: "verser2-ca", path: sthPath("tls.ca"), env: "SCRAMJET_VERSER2_CA", type: "string", description: "Inline CA PEM bundle for the Manager/MultiManager verser2 Host" },
     { name: "verser2CaFile", flag: "verser2-ca-file", path: sthPath("tls.caFile"), env: "SCRAMJET_VERSER2_CA_FILE", envAliases: ["CPM_SSL_CA_PATH"], type: "string", description: "CA file for the Manager/MultiManager verser2 Host" },
     { name: "verser2CertFile", flag: "verser2-cert-file", path: sthPath("tls.certFile"), env: "SCRAMJET_VERSER2_CERT_FILE", type: "string", description: "STH client certificate file" },
     { name: "verser2KeyFile", flag: "verser2-key-file", path: sthPath("tls.keyFile"), env: "SCRAMJET_VERSER2_KEY_FILE", type: "string", description: "STH client private key file", secret: true },

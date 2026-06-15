@@ -127,6 +127,26 @@ test("returns verser2 config with all optional fields", t => {
     t.is(result.minWaitingStreams, 3);
 });
 
+test("returns verser2 config with inline TLS CA preferred over CA file", t => {
+    const result = parseRunnerTransportConfig(
+        TEST_ID,
+        JSON.stringify({
+            kind: "verser2",
+            hostUrl: "https://verser2.example.com",
+            tls: {
+                ca: "  -----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----  ",
+                caFile: "/etc/ca.pem",
+                certFile: "/etc/cert.pem"
+            }
+        })
+    ) as RunnerTransportConfigVerser2;
+
+    t.deepEqual(result.tls, {
+        ca: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
+        certFile: "/etc/cert.pem"
+    });
+});
+
 test("trims hostUrl whitespace", t => {
     const result = parseRunnerTransportConfig(
         TEST_ID,

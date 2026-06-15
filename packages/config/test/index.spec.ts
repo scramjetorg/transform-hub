@@ -191,6 +191,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
         },
         env: {
             SCRAMJET_VERSER2_HOST_URL: "https://manager.example:2443",
+            SCRAMJET_VERSER2_CA: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
             SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://sth-local.example:2444",
             CPM_SSL_CA_PATH: "/ca/from-alias.pem",
             SCRAMJET_VERSER2_CERT_FILE: "/safe/cert.pem",
@@ -217,10 +218,12 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
     t.is(loaded.config.verser2.runnerHost?.enabled, true);
     t.is(loaded.config.verser2.runnerHost?.host.publicUrl, "https://sth-local.example:2444");
     t.is(loaded.config.verser2.runnerHost?.host.tls.keyFile, "/secret/runner.key");
+    t.is(loaded.config.verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
     t.is(loaded.config.verser2.tls.caFile, "/ca/from-cli.pem");
     t.is(loaded.config.verser2.tls.keyFile, "/secret/key.pem");
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.runnerHost.host.tls.keyFile, "********");
+    t.is((loaded.publicConfig as any).verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
 });
 
 test("verser2 schema requires usable routed config in verser2 mode", t => {

@@ -54,9 +54,11 @@ const dropMessageCodes = [
 ];
 
 export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): VerserClientTlsOptions {
+    const trust = tls.ca ? { ca: tls.ca } : { caFile: tls.caFile };
+
     if (tls.pfxFile) {
         return {
-            caFile: tls.caFile,
+            ...trust,
             pfxFile: tls.pfxFile,
             passphrase: tls.passphrase
         };
@@ -68,14 +70,14 @@ export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): Vers
         }
 
         return {
-            caFile: tls.caFile,
+            ...trust,
             certFile: tls.certFile,
             keyFile: tls.keyFile,
             passphrase: tls.passphrase
         };
     }
 
-    return { caFile: tls.caFile };
+    return trust;
 }
 
 /**

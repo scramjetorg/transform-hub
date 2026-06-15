@@ -19,7 +19,8 @@ function tlsOptions(config: RunnerBunVerser2RuntimeConfig): Record<string, unkno
 
     const result: Record<string, unknown> = {};
 
-    if (tls.caFile) result.caFile = tls.caFile;
+    if (tls.ca) result.ca = tls.ca;
+    else if (tls.caFile) result.caFile = tls.caFile;
     if (tls.certFile) result.certFile = tls.certFile;
     if (tls.keyFile) result.keyFile = tls.keyFile;
     if (tls.pfxFile) result.pfxFile = tls.pfxFile;
