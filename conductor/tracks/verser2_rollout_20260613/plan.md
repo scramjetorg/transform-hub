@@ -384,12 +384,13 @@
     - [x] State that Manager CA and STH-local CA are separate trust roots and must not be treated as one private-key domain.
     - [x] State that CA trust proves server identity only; authorization remains token, local-only policy, or future mTLS enrollment.
         - Recorded in `architecture.md` and `review-checklist.md`: STH connects upstream to Manager/MultiManager with Manager trust material, while runners and stack-runners connect only to the STH-local Host with STH-generated trust bundles. CA trust is server identity trust, not registration authorization.
-- [ ] Task: Add Manager local CA and trust export plan
-    - [ ] Add Manager/MultiManager local CA and server certificate autogeneration for local startup when no explicit verser2 Host TLS identity is configured.
-    - [ ] Persist generated CA/server keys securely with restrictive private-key permissions.
-    - [ ] Support configured public certificates, including Let’s Encrypt certificates for a specific Manager/MultiManager domain, as an alternative to generated local CA material.
-    - [ ] Expose only public Manager trust material through a Manager endpoint for `si`/STH retrieval: CA PEM, fingerprint, expiry, Manager verser2 Host URL, and route-domain metadata.
-    - [ ] Ensure no private keys, client certs, or passphrases are exposed through the trust endpoint or public config.
+- [x] Task: Add Manager local CA and trust export plan
+    - [x] Add Manager/MultiManager local CA and server certificate autogeneration for local startup when no explicit verser2 Host TLS identity is configured.
+    - [x] Persist generated CA/server keys securely with restrictive private-key permissions.
+    - [x] Support configured public certificates, including Let’s Encrypt certificates for a specific Manager/MultiManager domain, as an alternative to generated local CA material.
+    - [x] Expose only public Manager trust material through a Manager endpoint for `si`/STH retrieval: CA PEM, fingerprint, expiry, Manager verser2 Host URL, and route-domain metadata.
+    - [x] Ensure no private keys, client certs, or passphrases are exposed through the trust endpoint or public config.
+        - Planned in `architecture.md` and `review-checklist.md`: Manager/MultiManager can autogenerate local CA/server identity for local startup, configured public certs take precedence, and the trust endpoint exposes only public trust metadata for `si`/STH bootstrap.
 - [ ] Task: Add STH Manager trust bootstrap
     - [ ] Let `si` fetch, display, store, and pin the Manager trust material.
     - [ ] Let STH use fetched/configured Manager CA trust when connecting to Manager/MultiManager.

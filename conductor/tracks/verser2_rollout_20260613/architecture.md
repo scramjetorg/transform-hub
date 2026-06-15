@@ -202,7 +202,11 @@ Manager/MultiManager `verser2` Host settings are distinct from HTTP API server s
 - route readiness, lease acquire, request, and idle timeout settings;
 - temporary migration mode selecting legacy compatibility versus `verser2` where still required.
 
-Host startup must fail clearly when the selected `verser2` mode requires TLS material and the validated config does not provide it. Production code must not silently generate implicit self-signed Host TLS material or downgrade to non-TLS `verser2`.
+Manager/MultiManager local startup may autogenerate Manager-local trust material when no explicit `certFile`/`keyFile` or `pfxFile` is configured. Autogeneration must create and persist a local CA, server certificate, and server private key under a Manager-owned state directory with restrictive private-key permissions. Generated server certificates must include SANs for the configured public and local connection names actually used in `hostUrl`. Configured public certificates, including Let's Encrypt certificates for a specific Manager/MultiManager domain, take precedence over generated local material.
+
+Manager/MultiManager must expose only public trust material for `si` and STH bootstrap. The trust export endpoint returns the CA PEM bundle, CA fingerprint, expiry, Manager/MultiManager `hostUrl`, and route-domain metadata. It must never return CA private keys, server private keys, client certificates, PFX material, passphrases, registration tokens, or enrollment credentials. CA trust from this endpoint authenticates the Manager/MultiManager server only; it does not authorize STH registration by itself.
+
+Host startup must fail clearly when the selected `verser2` mode requires TLS material and neither explicit nor approved generated local trust material is available. Production code must not downgrade to non-TLS `verser2`.
 
 ### STH outbound Manager/MultiManager config
 
