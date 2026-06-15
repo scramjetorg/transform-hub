@@ -446,6 +446,35 @@ test("forwardRoutedRequest propagates request timeout via abort signal", async t
     t.true(requestCalls[0].signal.aborted);
 });
 
+test("forwardRoutedRequest clears establishment timeout after response headers", async t => {
+    const responseBody = new PassThrough();
+    let capturedSignal: AbortSignal | undefined;
+    const transport: RoutedForwardTransport = {
+        waitForRoute: async () => undefined,
+        request: async opts => {
+            capturedSignal = opts.signal;
+            return { statusCode: 200, body: responseBody };
+        }
+    };
+    const { req, res, getChunks } = fakeReqRes();
+
+    await forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/stream",
+        requestTimeoutMs: 10
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 25));
+    responseBody.end("late-stream-data");
+    await new Promise<void>(resolve => res.on("end", resolve));
+
+    t.false(capturedSignal?.aborted);
+    t.is(Buffer.concat(getChunks()).toString("utf8"), "late-stream-data");
+});
+
 test("forwardRoutedRequest does not dispatch request when response closes during route wait", async t => {
     const requestCalls: any[] = [];
     const transport: RoutedForwardTransport = {
@@ -494,6 +523,8 @@ test("forwardRoutedRequest does not pipe late response after request timeout abo
     t.true(capturedSignal?.aborted);
     t.is(getWriteHeadStatus(), 503);
     t.false(lateBody.readableFlowing === true);
+    await new Promise(resolve => setTimeout(resolve, 40));
+    t.true(lateBody.destroyed);
 });
 
 test("forwardRoutedRequest aborts routed request when response closes after pipe setup", async t => {

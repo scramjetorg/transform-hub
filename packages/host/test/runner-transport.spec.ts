@@ -62,6 +62,17 @@ async function nextTick(): Promise<void> {
     await new Promise(resolve => setImmediate(resolve));
 }
 
+function deferred<T = void>(): { promise: Promise<T>; resolve: (value?: T | PromiseLike<T>) => void; reject: (reason?: unknown) => void } {
+    let resolve!: (value?: T | PromiseLike<T>) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = value => res(value as T);
+        reject = rej;
+    });
+
+    return { promise, resolve, reject };
+}
+
 test("LegacyRunnerTransport preserves legacy communication handler wiring order", async t => {
     const { upstreams, downstreams } = streams();
     const handler = communicationHandler();
@@ -367,11 +378,10 @@ test("Verser2RunnerTransport replaces consumed response-body route leases", asyn
     await nextTick();
 
     t.is(requests.length, 9);
-    t.deepEqual(requests[8], {
-        targetId: "runner.guest.inst-1",
-        method: "GET",
-        path: "/stdout"
-    });
+    t.is(requests[8].targetId, "runner.guest.inst-1");
+    t.is(requests[8].method, "GET");
+    t.is(requests[8].path, "/stdout");
+    t.truthy(requests[8].signal instanceof AbortSignal);
     t.deepEqual(waitForRouteCalls, [
         { domain: "runner.inst-1.scramjet.internal", timeoutMs: 123 },
         { domain: "runner.inst-1.scramjet.internal", timeoutMs: 123 }
@@ -381,6 +391,128 @@ test("Verser2RunnerTransport replaces consumed response-body route leases", asyn
     await nextTick();
 
     t.is(Buffer.concat(stdoutChunks).toString("utf8"), "firstsecond");
+});
+
+test("Verser2RunnerTransport rejects unsuccessful route lease responses", async t => {
+    const { downstreams, upstreams } = streams();
+    const failedBody = new PassThrough();
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async request => ({
+            statusCode: request.path === "/stdout" ? 503 : 200,
+            body: request.path === "/stdout" ? failedBody : new PassThrough()
+        })
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const error = await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }));
+
+    t.true(error!.message.includes("/stdout"));
+    t.true(failedBody.destroyed);
+});
+
+test("Verser2RunnerTransport tears down partially opened leases when connect fails", async t => {
+    const { downstreams, upstreams } = streams();
+    const openedBodies: PassThrough[] = [];
+    let requestCount = 0;
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async () => {
+            requestCount++;
+            if (requestCount === 4) {
+                throw new Error("lease open failed");
+            }
+            const body = new PassThrough();
+
+            openedBodies.push(body);
+            return { statusCode: 200, body };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+
+    await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }), { message: "lease open failed" });
+    t.true(openedBodies.length > 0);
+    t.true(openedBodies.every(body => body.destroyed));
+});
+
+test("Verser2RunnerTransport does not leak delayed lease bodies after failed connect", async t => {
+    const { downstreams, upstreams } = streams();
+    const openedBodies: PassThrough[] = [];
+    let requestCount = 0;
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async () => {
+            requestCount++;
+            if (requestCount === 2) {
+                throw new Error("second lease failed");
+            }
+            await new Promise(resolve => setTimeout(resolve, 5));
+            const body = new PassThrough();
+
+            openedBodies.push(body);
+            return { statusCode: 200, body };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+
+    await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }), { message: "second lease failed" });
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    t.is(requestCount, 2);
+    t.true(openedBodies.every(body => body.destroyed));
+});
+
+test("Verser2RunnerTransport cancels connect continuation after disconnect during route wait", async t => {
+    const { downstreams, upstreams } = streams();
+    const wait = deferred();
+    const handler = communicationHandler();
+    let requestCount = 0;
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => wait.promise,
+        request: async () => {
+            requestCount++;
+            return { statusCode: 200, body: new PassThrough() };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams, communicationHandler: handler });
+    const connect = transport.connect({ instanceId: "inst-1", streams: downstreams });
+
+    await nextTick();
+    await transport.disconnect("cancel during wait");
+    wait.resolve();
+
+    await t.throwsAsync(connect, { message: "Runner verser2 transport connection was cancelled" });
+    t.is(requestCount, 0);
+    t.deepEqual(handler.calls, []);
+});
+
+test("Verser2RunnerTransport ignores in-flight replacement lease after disconnect", async t => {
+    const { downstreams, upstreams } = streams();
+    const replacementWait = deferred();
+    const { broker, requests, responseBodies } = fakeRunnerBroker();
+    const guardedBroker: Verser2RunnerBroker = {
+        getRoutes: broker.getRoutes,
+        waitForRoute: async (domain, timeoutMs) => {
+            if (requests.length >= 8) {
+                return replacementWait.promise;
+            }
+            return broker.waitForRoute(domain, timeoutMs);
+        },
+        request: broker.request
+    };
+    const transport = new Verser2RunnerTransport({ broker: guardedBroker, upstreams });
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+    responseBodies[3].end("stdout done");
+    await nextTick();
+    await transport.disconnect("cancel replacement");
+    replacementWait.resolve();
+    await nextTick();
+
+    t.is(requests.length, 8);
 });
 
 test("Verser2RunnerTransport does not replace route leases after disconnect", async t => {
@@ -395,6 +527,37 @@ test("Verser2RunnerTransport does not replace route leases after disconnect", as
     await nextTick();
 
     t.is(requests.length, 8);
+});
+
+test("Verser2RunnerTransport destroys late replacement response body after disconnect", async t => {
+    const { downstreams, upstreams } = streams();
+    const replacement = deferred<{ statusCode: number; body: PassThrough }>();
+    const lateBody = new PassThrough();
+    const { broker, responseBodies } = fakeRunnerBroker();
+    let requestCount = 0;
+    const guardedBroker: Verser2RunnerBroker = {
+        getRoutes: broker.getRoutes,
+        waitForRoute: broker.waitForRoute,
+        request: async request => {
+            requestCount++;
+            if (requestCount > 8) {
+                return replacement.promise;
+            }
+            return broker.request(request);
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker: guardedBroker, upstreams });
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+    responseBodies[3].end("stdout done");
+    await nextTick();
+    t.is(requestCount, 9);
+
+    await transport.disconnect("cancel replacement response");
+    replacement.resolve({ statusCode: 200, body: lateBody });
+    await nextTick();
+
+    t.true(lateBody.destroyed);
 });
 
 test("createVerser2RunnerBrokerTransport waits for raw broker routes", async t => {

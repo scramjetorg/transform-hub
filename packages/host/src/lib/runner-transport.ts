@@ -200,6 +200,10 @@ export class Verser2RunnerTransport implements RunnerTransport {
     private routeReadinessMs?: number;
     private responseBodies: Readable[] = [];
     private connected = false;
+    private connecting = false;
+    private setupError?: Error;
+    private connectionGeneration = 0;
+    private abortController?: AbortController;
 
     constructor(options: Verser2RunnerTransportOptions = {}) {
         this.broker = options.broker;
@@ -228,36 +232,57 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
         const domain = Verser2RunnerTransport.getRouteDomain(options.instanceId);
 
-        this.communicationHandler?.hookUpstreamStreams(this.upstreams);
-        this.communicationHandler?.hookDownstreamStreams(options.streams);
-        this.communicationHandler?.pipeStdio();
-        this.communicationHandler?.pipeMessageStreams();
-        this.communicationHandler?.pipeDataStreams();
+        this.connecting = true;
+        this.connected = false;
+        this.setupError = undefined;
+        this.abortController = new AbortController();
+        const generation = ++this.connectionGeneration;
 
-        await this.broker.waitForRoute(domain, this.routeReadinessMs);
+        try {
+            await this.waitForRoute(domain, generation);
+            this.assertCurrentGeneration(generation);
 
-        const route = this.broker.getRoutes().find(candidate => candidate.domain === domain);
+            const route = this.broker.getRoutes().find(candidate => candidate.domain === domain);
 
-        if (!route) {
-            throw new Error(`Runner route unavailable: ${domain}`);
+            if (!route) {
+                throw new Error(`Runner route unavailable: ${domain}`);
+            }
+
+            await this.openRequestBodyRoute(route.targetId, this.routeContracts.stdinPath, options.streams[CC.STDIN] as unknown as Readable, generation);
+            await this.openRequestBodyRoute(route.targetId, this.routeContracts.controlPath, options.streams[CC.CONTROL] as unknown as Readable, generation);
+            await this.openRequestBodyRoute(route.targetId, this.routeContracts.inputPath, options.streams[CC.IN] as unknown as Readable, generation);
+            await this.openResponseBodyRoute(domain, this.routeContracts.stdoutPath, options.streams[CC.STDOUT] as unknown as NodeJS.WritableStream, false, generation);
+            this.throwIfSetupFailed();
+            await this.openResponseBodyRoute(domain, this.routeContracts.stderrPath, options.streams[CC.STDERR] as unknown as NodeJS.WritableStream, false, generation);
+            this.throwIfSetupFailed();
+            await this.openResponseBodyRoute(domain, this.routeContracts.monitoringPath, options.streams[CC.MONITORING] as unknown as NodeJS.WritableStream, false, generation);
+            this.throwIfSetupFailed();
+            await this.openResponseBodyRoute(domain, this.routeContracts.outputPath, options.streams[CC.OUT] as unknown as NodeJS.WritableStream, false, generation);
+            this.throwIfSetupFailed();
+            await this.openResponseBodyRoute(domain, this.routeContracts.logPath, options.streams[CC.LOG] as unknown as NodeJS.WritableStream, false, generation);
+            this.throwIfSetupFailed();
+            this.assertCurrentGeneration(generation);
+
+            this.connected = true;
+            this.connecting = false;
+            this.communicationHandler?.hookUpstreamStreams(this.upstreams);
+            this.communicationHandler?.hookDownstreamStreams(options.streams);
+            this.communicationHandler?.pipeStdio();
+            this.communicationHandler?.pipeMessageStreams();
+            this.communicationHandler?.pipeDataStreams();
+        } catch (error) {
+            this.connecting = false;
+            await this.disconnect("connect failed");
+            throw error;
         }
-
-        this.connected = true;
-
-        await Promise.all([
-            this.openRequestBodyRoute(route.targetId, this.routeContracts.stdinPath, options.streams[CC.STDIN] as unknown as Readable),
-            this.openRequestBodyRoute(route.targetId, this.routeContracts.controlPath, options.streams[CC.CONTROL] as unknown as Readable),
-            this.openRequestBodyRoute(route.targetId, this.routeContracts.inputPath, options.streams[CC.IN] as unknown as Readable),
-            this.openResponseBodyRoute(domain, this.routeContracts.stdoutPath, options.streams[CC.STDOUT] as unknown as NodeJS.WritableStream, false),
-            this.openResponseBodyRoute(domain, this.routeContracts.stderrPath, options.streams[CC.STDERR] as unknown as NodeJS.WritableStream, false),
-            this.openResponseBodyRoute(domain, this.routeContracts.monitoringPath, options.streams[CC.MONITORING] as unknown as NodeJS.WritableStream, false),
-            this.openResponseBodyRoute(domain, this.routeContracts.outputPath, options.streams[CC.OUT] as unknown as NodeJS.WritableStream, false),
-            this.openResponseBodyRoute(domain, this.routeContracts.logPath, options.streams[CC.LOG] as unknown as NodeJS.WritableStream, false)
-        ]);
     }
 
     async disconnect(_reason?: string): Promise<void> {
+        this.connectionGeneration++;
+        this.abortController?.abort();
+        this.abortController = undefined;
         this.connected = false;
+        this.connecting = false;
         this.responseBodies.forEach(body => {
             body.unpipe();
             body.destroy();
@@ -265,14 +290,22 @@ export class Verser2RunnerTransport implements RunnerTransport {
         this.responseBodies = [];
     }
 
-    private async openRequestBodyRoute(targetId: string, path: string, body: Readable): Promise<void> {
-        const response = await this.broker!.request({
+    private async openRequestBodyRoute(targetId: string, path: string, body: Readable, generation: number): Promise<void> {
+        this.assertCurrentGeneration(generation);
+        const response = await this.requestRoute({
             targetId,
             method: "POST",
             path,
             headers: { "content-type": "application/octet-stream" },
-            body
-        });
+            body,
+            signal: this.abortController?.signal
+        }, generation);
+        if (!this.isCurrentGeneration(generation)) {
+            response.body.destroy();
+        }
+        this.assertCurrentGeneration(generation);
+
+        this.assertSuccessfulRouteResponse(response, path);
 
         response.body.resume();
         this.responseBodies.push(response.body);
@@ -282,10 +315,12 @@ export class Verser2RunnerTransport implements RunnerTransport {
         domain: string,
         path: string,
         target: NodeJS.WritableStream,
-        waitForRoute = true
+        waitForRoute = true,
+        generation = this.connectionGeneration
     ): Promise<void> {
         if (waitForRoute) {
-            await this.broker!.waitForRoute(domain, this.routeReadinessMs);
+            await this.waitForRoute(domain, generation);
+            this.assertCurrentGeneration(generation);
         }
 
         const route = this.broker!.getRoutes().find(candidate => candidate.domain === domain);
@@ -294,28 +329,40 @@ export class Verser2RunnerTransport implements RunnerTransport {
             throw new Error(`Runner route unavailable: ${domain}`);
         }
 
-        const response = await this.broker!.request({
+        const response = await this.requestRoute({
             targetId: route.targetId,
             method: "GET",
-            path
-        });
+            path,
+            signal: this.abortController?.signal
+        }, generation);
+        if (!this.isCurrentGeneration(generation)) {
+            response.body.destroy();
+        }
+        this.assertCurrentGeneration(generation);
+
+        this.assertSuccessfulRouteResponse(response, path);
 
         response.body.pipe(target, { end: false });
         this.responseBodies.push(response.body);
-        this.replaceLeaseAfterUse(response.body, domain, path, target);
+        this.replaceLeaseAfterUse(response.body, domain, path, target, generation);
     }
 
-    private replaceLeaseAfterUse(body: Readable, domain: string, path: string, target: NodeJS.WritableStream): void {
+    private replaceLeaseAfterUse(body: Readable, domain: string, path: string, target: NodeJS.WritableStream, generation: number): void {
         let handled = false;
-        const replace = () => {
+        const replace = (error?: Error) => {
             if (handled) return;
             handled = true;
             this.responseBodies = this.responseBodies.filter(candidate => candidate !== body);
 
-            if (!this.connected) return;
+            if (!this.connected || generation !== this.connectionGeneration) {
+                if (this.connecting && this.setupError === undefined) {
+                    this.setupError = error || new Error(`Runner route ${path} closed during setup`);
+                }
+                return;
+            }
 
-            void this.openResponseBodyRoute(domain, path, target).catch(replacementError => {
-                if (!this.connected) return;
+            void this.openResponseBodyRoute(domain, path, target, true, generation).catch(replacementError => {
+                if (!this.connected || generation !== this.connectionGeneration) return;
                 this.destroyTarget(target, replacementError instanceof Error
                     ? replacementError
                     : new Error(String(replacementError))
@@ -325,7 +372,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
         body.once("end", () => replace());
         body.once("close", () => replace());
-        body.once("error", () => replace());
+        body.once("error", error => replace(error));
     }
 
     private destroyTarget(target: NodeJS.WritableStream, error: Error): void {
@@ -334,5 +381,73 @@ export class Verser2RunnerTransport implements RunnerTransport {
         if (typeof destroy === "function") {
             destroy.call(target, error);
         }
+    }
+
+    private assertSuccessfulRouteResponse(response: Verser2RunnerBrokerResponse, path: string): void {
+        if (response.statusCode === undefined || (response.statusCode >= 200 && response.statusCode < 300)) {
+            return;
+        }
+
+        response.body.destroy();
+        throw new Error(`Runner route ${path} returned unsuccessful status ${response.statusCode}`);
+    }
+
+    private throwIfSetupFailed(): void {
+        if (this.setupError) {
+            throw this.setupError;
+        }
+    }
+
+    private assertCurrentGeneration(generation: number): void {
+        if (!this.isCurrentGeneration(generation)) {
+            throw new Error("Runner verser2 transport connection was cancelled");
+        }
+    }
+
+    private isCurrentGeneration(generation: number): boolean {
+        return generation === this.connectionGeneration;
+    }
+
+    private async waitForRoute(domain: string, generation: number): Promise<void> {
+        await Promise.race([
+            this.broker!.waitForRoute(domain, this.routeReadinessMs),
+            this.abortPromise(generation)
+        ]);
+    }
+
+    private async requestRoute(request: Verser2RunnerBrokerRequest, generation: number): Promise<Verser2RunnerBrokerResponse> {
+        const requestPromise = this.broker!.request(request).then(response => {
+            if (!this.isCurrentGeneration(generation)) {
+                response.body.destroy();
+            }
+
+            this.assertCurrentGeneration(generation);
+            return response;
+        });
+
+        return Promise.race([
+            requestPromise,
+            this.abortPromise(generation)
+        ]);
+    }
+
+    private abortPromise(generation: number): Promise<never> {
+        const signal = this.abortController?.signal;
+
+        if (!signal) {
+            return new Promise(() => undefined);
+        }
+
+        if (signal.aborted) {
+            return Promise.reject(new Error("Runner verser2 transport connection was cancelled"));
+        }
+
+        return new Promise((_, reject) => {
+            signal.addEventListener("abort", () => {
+                reject(new Error("Runner verser2 transport connection was cancelled"));
+            }, { once: true });
+        }).finally(() => {
+            this.assertCurrentGeneration(generation);
+        }) as Promise<never>;
     }
 }

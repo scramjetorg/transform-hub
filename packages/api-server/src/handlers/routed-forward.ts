@@ -121,17 +121,28 @@ export async function forwardRoutedRequest({
         await Promise.race([transport.waitForRoute(domain, routeReadinessMs), abortPromise]);
         throwIfAborted();
 
-        const response = await Promise.race([transport.request({
+        const routedRequest = transport.request({
             domain,
             method: req.method || "GET",
             path,
             headers,
             body: req,
             signal: abortController.signal
-        }), abortPromise]);
+        }).then(response => {
+            if (abortController.signal.aborted) {
+                response.body.destroy();
+            }
+
+            throwIfAborted();
+            return response;
+        });
+        const response = await Promise.race([routedRequest, abortPromise]);
         throwIfAborted();
 
+        if (requestTimeout) clearTimeout(requestTimeout);
+
         if (response.statusCode >= 100 && response.statusCode < 200) {
+            response.body.destroy();
             throw new Error(`Unsupported routed informational response status: ${response.statusCode}`);
         }
 

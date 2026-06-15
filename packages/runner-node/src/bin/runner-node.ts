@@ -258,15 +258,25 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
     lifecycleRef.current = lifecycle;
 
+    let killed = false;
+    let resolveKilled!: () => void;
+    const killedPromise = new Promise<void>(resolve => {
+        resolveKilled = resolve;
+    });
+
     wireControlStream(streams.controlIn, {
         onStop: (data) => lifecycle.handleStopRequest(data),
-        onKill: () => lifecycle.handleKillRequest(),
+        onKill: async () => {
+            await lifecycle.handleKillRequest();
+            killed = true;
+            resolveKilled();
+        },
         onEvent: (data) => emitter.emit(data.eventName, data.message),
         onStorageUpdate: (data) => context.localStorage.handleBroadcastUpdate(data),
     }, logger);
 
     try {
-        await runSequence(sequenceFns, {
+        const sequenceRun = runSequence(sequenceFns, {
             context,
             inputDataStream,
             outputDataStream,
@@ -275,10 +285,19 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             logger,
         });
 
-        writeMonitoring(streams.monitoringOut, [
-            RunnerMessageCode.SEQUENCE_COMPLETED,
-            { timeout: 0 },
-        ]);
+        await Promise.race([sequenceRun, killedPromise]);
+
+        if (killed) {
+            logger.warn("Sequence execution interrupted by KILL");
+            sequenceRun.catch(error => logger.debug("Sequence rejected after KILL", error));
+        } else {
+            await sequenceRun;
+
+            writeMonitoring(streams.monitoringOut, [
+                RunnerMessageCode.SEQUENCE_COMPLETED,
+                { timeout: 0 },
+            ]);
+        }
     } catch (err) {
         logRuntimeError(logger, "instance-runtime", bootConfig, err);
         logger.error("Sequence failed", err);
