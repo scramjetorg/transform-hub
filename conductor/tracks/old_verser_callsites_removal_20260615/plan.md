@@ -32,36 +32,36 @@
 
 ## Phase 2: Remove Active Old-Verser Runtime and Configuration Branches
 
-- [ ] Task: Remove old-way config selection and make verser2 unconditional
-    - [ ] Remove `migrationMode` from active verser2 config types, schemas, defaults, CLI descriptors, env descriptors, tests, and generated/public type surfaces.
-    - [ ] Remove `legacy` and `dual` branch handling from active config and runtime code.
-    - [ ] Simplify validation so required Manager/STH/MultiManager verser2 fields are validated as the only active connectivity configuration.
-    - [ ] Update config tests to prove old-way settings cannot activate or select old transport behavior.
-- [ ] Task: Remove Host/STH outbound old-verser callsites
-    - [ ] Remove `VerserClient` and `VerserClientConnection` imports/properties from `packages/host/src/lib/cpm-connector.ts`.
-    - [ ] Remove legacy constructor, connect, reconnect, header update, HTTP agent, and `cpmUrl`/`cpmSslCaPath` behavior that only exists for old-verser transport.
-    - [ ] Make Host Manager connectivity always construct and use verser2 Broker/Guest from validated config.
-    - [ ] Update/delete Host tests that stub `@scramjet/verser`; replace with tests for verser2-only forwarding and trust behavior.
-    - [ ] Remove active `@scramjet/verser` and `@scramjet/bpmux` dependencies from `packages/host/package.json` after imports are gone.
-- [ ] Task: Remove Manager old-verser controller and forwarding callsites
-    - [ ] Remove `VerserConnection` imports and active API parameters from Manager source.
-    - [ ] Remove or replace `Manager.handleHostConnection(id, verserConnection)` with verser2-only attach/registration behavior if still needed.
-    - [ ] Remove old local-peer forwarding fallback using `sth.verserConnection.getAgent()`.
-    - [ ] Refactor `STHController` to require verser2 broker/route metadata only and remove `verserConnection` storage, socket lifecycle hooks, header reads, and old `makeRequest` fallback.
-    - [ ] Remove `verserConnection` from `ISTHController`, connection store logic, auditor tests, and Manager tests.
-    - [ ] Remove active `@scramjet/verser` and `@scramjet/bpmux` dependencies from `packages/manager/package.json` and `packages/types/package.json` after imports are gone.
-- [ ] Task: Remove MultiManager old-verser server and legacy MultiHost callsites
-    - [ ] Remove `Verser` and `VerserConnection` imports and the `apiVerser` property from MultiManager.
-    - [ ] Remove legacy listener installation and handlers: `attachVerserListeners`, `attachHostAPI`, `attachMultiHostAPI`, and `handleSTHRequest`.
-    - [ ] Remove `/msth/:id` forwarding and active `MultiHostController`/store usage if no active code path remains.
-    - [ ] Delete or rewrite MultiManager tests that preserve legacy MultiHost or old-verser connection behavior.
-    - [ ] Remove active `@scramjet/verser` and `@scramjet/bpmux` dependencies from `packages/multi-manager/package.json` after imports are gone.
-- [ ] Task: Remove dead legacy runner socket protocol branches
-    - [ ] Remove or archive `SocketServer` only after confirming no active verser2 topology path uses it.
-    - [ ] Remove raw channel-index connection logic that exists only for legacy runner socket handoff.
-    - [ ] Remove legacy raw socket HostClients after Host, Manager, and MultiManager active paths no longer need them.
-    - [ ] Remove migration-only runner/socket config that only selected old-way behavior.
-    - [ ] Update or delete tests that preserve legacy runner socket behavior outside current verser2 topology requirements.
+- [x] Task: Remove old-way config selection and make verser2 unconditional
+    - [x] Remove `migrationMode` from active verser2 config types, schemas, defaults, CLI descriptors, env descriptors, tests, and generated/public type surfaces.
+    - [x] Remove `legacy` and `dual` branch handling from active config and runtime code.
+    - [x] Simplify validation so required Manager/STH/MultiManager verser2 fields are validated as the only active connectivity configuration.
+    - [x] Update config tests to prove old-way settings cannot activate or select old transport behavior.
+- [x] Task: Remove Host/STH outbound old-verser callsites
+    - [x] Remove `VerserClient` and `VerserClientConnection` imports/properties from `packages/host/src/lib/cpm-connector.ts`.
+    - [x] Remove legacy constructor, connect, reconnect, header update, HTTP agent, and `cpmUrl`/`cpmSslCaPath` behavior that only exists for old-verser transport.
+    - [x] Make Host Manager connectivity always construct and use verser2 Broker/Guest from validated config.
+    - [x] Update/delete Host tests that stub `@scramjet/verser`; replace with tests for verser2-only forwarding and trust behavior.
+    - [x] Remove active `@scramjet/verser` and `@scramjet/bpmux` dependencies from `packages/host/package.json` after imports are gone.
+- [x] Task: Remove Manager old-verser controller and forwarding callsites
+    - [x] Remove `VerserConnection` imports and active API parameters from Manager source.
+    - [x] Remove or replace `Manager.handleHostConnection(id, verserConnection)` with verser2-only attach/registration behavior if still needed.
+    - [x] Remove old local-peer forwarding fallback using `sth.verserConnection.getAgent()`.
+    - [x] Refactor `STHController` to require verser2 broker/route metadata only and remove `verserConnection` storage, socket lifecycle hooks, header reads, and old `makeRequest` fallback.
+    - [x] Remove `verserConnection` from `ISTHController`, connection store logic, auditor tests, and Manager tests.
+    - [x] Remove active `@scramjet/verser` and `@scramjet/bpmux` dependencies from `packages/manager/package.json` and `packages/types/package.json` after imports are gone.
+- [x] Task: Remove MultiManager old-verser server and legacy MultiHost callsites
+    - [x] Remove `Verser` and `VerserConnection` imports and the `apiVerser` property from MultiManager.
+    - [x] Remove legacy listener installation and handlers: `attachVerserListeners`, `attachHostAPI`, `attachMultiHostAPI`, and `handleSTHRequest`.
+    - [x] Remove `/msth/:id` forwarding and active `MultiHostController`/store usage if no active code path remains.
+    - [x] Delete or rewrite MultiManager tests that preserve legacy MultiHost or old-verser connection behavior.
+    - [x] Remove active `@scramjet/verser` and `@scramjet/bpmux` dependencies from `packages/multi-manager/package.json` after imports are gone.
+- [x] Task: Remove dead legacy runner socket protocol branches
+    - [x] Remove or archive `SocketServer` only after confirming no active verser2 topology path uses it.
+    - [x] Remove raw channel-index connection logic that exists only for legacy runner socket handoff.
+    - [x] Remove legacy raw socket HostClients after Host, Manager, and MultiManager active paths no longer need them.
+    - [x] Remove migration-only runner/socket config that only selected old-way behavior.
+    - [x] Update or delete tests that preserve legacy runner socket behavior outside current verser2 topology requirements.
 - [ ] Task: Validate Phase 2 and commit Phase 2
     - [ ] Run focused tests for `packages/config`, `packages/sth-config`, `packages/host`, `packages/manager`, `packages/multi-manager`, and `packages/types` as affected.
     - [ ] Run standalone `packages/verser` and `packages/bpmux` tests to confirm retained packages still work if dependency metadata or workspace wiring changed.
@@ -155,3 +155,10 @@
 - Remove `Manager.handleHostConnection(id, verserConnection)` after MultiManager no longer accepts old Verser Host connections; Manager STH attachment should happen through verser2 local Broker/Guest setup and route readiness.
 - Remove MultiManager `apiVerser`, `attachVerserListeners`, `attachHostAPI`, `attachMultiHostAPI`, `handleSTHRequest`, `/msth/:id`, `MultiHostController`, and `MultiHostControllerStore` active usage if no verser2 path references them.
 - Remove legacy runner transport shape `{ kind: "legacy" }`, raw `HostClient` branch in `packages/runner/src/bin/start-runner.ts`, adapter fallback to legacy runner env, and raw `SocketServer`/channel-index host path once verser2 runner Host is confirmed to cover active topology.
+
+### Phase 2 Validation Notes
+
+- `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages` passed after removing the old Host `SocketServer` export and Host `LegacyRunnerTransport` leftovers.
+- `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` passed; Guard 9 now reports no active old-verser/BPMux/migration/socket traces outside standalone legacy packages.
+- Focused tests passed: `@scramjet/config`, `@scramjet/sth-config`, `@scramjet/adapters-common`, `@scramjet/runner`, `@scramjet/manager`, `@scramjet/multi-manager`, `@scramjet/adapter-process`, `@scramjet/types`, and `@scramjet/host` with `-T 60000`.
+- Host test note: initial full Host run with the default timeout/OOMed while stale `LegacyRunnerTransport` tests still imported a deleted class. After deleting those compatibility assertions, isolated `test/runner-transport.spec.ts -T 60000` and full Host `-T 60000` both passed under `NODE_OPTIONS="--max-old-space-size=1536"`.

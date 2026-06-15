@@ -52,13 +52,7 @@ export type RunnerTransportConfigVerser2 = {
     hubTargetDomain?: string;
 };
 
-export type RunnerTransportConfigLegacy = {
-    kind: "legacy";
-};
-
-export type RunnerTransportConfigResult =
-    | RunnerTransportConfigLegacy
-    | RunnerTransportConfigVerser2;
+export type RunnerTransportConfigResult = RunnerTransportConfigVerser2;
 
 /**
  * Parse the `SCRAMJET_RUNNER_TRANSPORT_CONFIG` environment variable and
@@ -105,10 +99,6 @@ export function parseRunnerTransportConfig(
     }
 
     const kind = parsed.kind;
-
-    if (kind === "legacy") {
-        return { kind: "legacy" };
-    }
 
     if (kind !== "verser2") {
         throw new Error(

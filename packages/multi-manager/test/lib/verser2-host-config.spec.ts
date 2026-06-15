@@ -4,7 +4,6 @@ import { createVerser2HostOptions } from "../../src/lib/verser2-host-config";
 
 const baseConfig = (): ManagerVerser2Config => ({
     enabled: true,
-    migrationMode: "verser2",
     host: {
         bindHost: "127.0.0.1",
         bindPort: 2443,

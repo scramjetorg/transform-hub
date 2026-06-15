@@ -8,7 +8,6 @@ const caFile = join(__dirname, "../../../verser/test/cert/myCA.pem");
 function verser2(): ManagerVerser2Config {
     return {
         enabled: true,
-        migrationMode: "verser2",
         host: {
             bindHost: "0.0.0.0",
             bindPort: 2443,

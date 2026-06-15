@@ -27,7 +27,6 @@
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "@scramjet/verser": "^1.1.0",
     "@signicode/verser-common": "0.3.1",
     "@signicode/verser2-guest-node": "0.3.1",
     "find-package-json": "^1.2.0",

@@ -4,7 +4,6 @@ export * from "./lib/csi-controller";
 export * from "./lib/host";
 export * from "./lib/instance-store";
 export * from "./lib/serviceDiscovery/sd-adapter";
-export * from "./lib/socket-server";
 export * from "./lib/runner-transport";
 export * from "./lib/start-host";
 export * from "./lib/local-storage/utils";

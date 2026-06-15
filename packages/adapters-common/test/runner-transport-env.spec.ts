@@ -5,7 +5,6 @@ import { buildRunnerTrustBundle, getRunnerTransportEnv } from "../src/get-runner
 
 const baseVerser2: STHConfiguration["verser2"] = {
     enabled: true,
-    migrationMode: "verser2" as const,
     hostUrl: "https://verser2.example",
     broker: { peerId: "sth.broker", targetDomain: "manager.internal" },
     guest: { peerId: "sth.guest", routeDomain: "sth.internal" },
@@ -41,20 +40,13 @@ function withRunnerHost(verser2: STHConfiguration["verser2"] = baseVerser2): STH
     };
 }
 
-test("getRunnerTransportEnv injects explicit legacy config outside verser2-only mode", t => {
-    const legacyEnv = { SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }) };
-
-    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, enabled: false } }, "inst-1"), legacyEnv);
-    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "dual" } }, "inst-1"), legacyEnv);
-    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "legacy" } }, "inst-1"), legacyEnv);
-});
-
-test("getRunnerTransportEnv keeps legacy transport until STH-local Host exists", t => {
-    const env = getRunnerTransportEnv({ verser2: baseVerser2 }, "inst-42");
-    const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
-
-    t.deepEqual(parsed, { kind: "legacy" });
-    t.false("hostUrl" in parsed);
+test("getRunnerTransportEnv fails closed until STH-local Host exists", t => {
+    t.throws(() => getRunnerTransportEnv({ verser2: { ...baseVerser2, enabled: false } }, "inst-1"), {
+        message: /STH-local verser2 runner Host configuration is required/
+    });
+    t.throws(() => getRunnerTransportEnv({ verser2: baseVerser2 }, "inst-42"), {
+        message: /STH-local verser2 runner Host configuration is required/
+    });
 });
 
 test("getRunnerTransportEnv emits STH-local verser2 runner transport when trust is ready", t => {
@@ -74,15 +66,14 @@ test("getRunnerTransportEnv emits STH-local verser2 runner transport when trust 
     t.deepEqual(parsed.tls, { ca: `${sthLocalCa}\n${managerCa}` });
 });
 
-test("getRunnerTransportEnv does not emit verser2 without STH-local CA", t => {
+test("getRunnerTransportEnv fails closed without STH-local CA", t => {
     const verser2 = withRunnerHost();
 
     delete verser2.runnerHost!.ca;
 
-    const env = getRunnerTransportEnv({ verser2 }, "inst-42");
-    const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
-
-    t.deepEqual(parsed, { kind: "legacy" });
+    t.throws(() => getRunnerTransportEnv({ verser2 }, "inst-42"), {
+        message: /STH-local verser2 runner Host configuration is required/
+    });
 });
 
 test("getRunnerTransportEnv does not propagate STH TLS identity material to runners", t => {

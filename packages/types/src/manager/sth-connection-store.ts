@@ -1,6 +1,5 @@
 import type { Readable, Writable } from "stream";
 import type TypedEmitter from "typed-emitter";
-import type { VerserConnection } from "@scramjet/verser";
 import type { InstanceMessageData, LoadCheckStatMessage, MRestAPI, NetworkInfo, SequenceMessageData, SpaceEventMessageData } from "../index";
 import type { STHTopicEventData } from "../messages";
 import type { IObjectLogger } from "../object-logger";
@@ -24,7 +23,6 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     id: string,
     description?: string;
     tags?: string[];
-    verserConnection?: VerserConnection;
     info: {
         created?: Date,
         lastConnected?: Date
@@ -44,7 +42,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     init(): Promise<void>;
     disconnectAuditStream: () => void;
     getAuditStream(): Promise<Readable>;
-    reconnect: (verserConnection?: VerserConnection) => Promise<void>;
+    reconnect: () => Promise<void>;
     main: () => void;
     sendId: () => void;
     getInfo: () => MRestAPI.ConnectedSTHInfo;

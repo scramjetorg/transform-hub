@@ -42,7 +42,6 @@ test("process adapter launches runner with STH-local verser2 topology", async t 
         verser2: {
             ...defaultConfig.verser2,
             enabled: true,
-            migrationMode: "verser2",
             hostUrl: "https://manager.example.test:2443",
             broker: { peerId: "sth.broker", targetDomain: "manager.guest.scramjet.internal" },
             guest: { peerId: "sth.guest", routeDomain: "sth.local.scramjet.internal" },

@@ -16,7 +16,6 @@ function config(): ManagerConfiguration {
         sthController: { unhealthyTimeoutMs: 61_000 },
         verser2: {
             enabled: true,
-            migrationMode: "verser2",
             host: {
                 bindHost: "0.0.0.0",
                 bindPort: 2443,

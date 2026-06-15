@@ -19,19 +19,16 @@ import {
 
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
-import { VerserClient } from "@scramjet/verser";
 import {
     createVerserBroker,
     createVerserNodeGuest,
     VerserBroker,
-    VerserClientTlsOptions,
     VerserNodeGuest
 } from "@signicode/verser2-guest-node";
-import { TypedEmitter, generateSTHKey, normalizeUrl } from "@scramjet/utility";
+import { TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
-import { VerserClientConnection } from "@scramjet/verser";
 import { networkInterfaces } from "os";
 import { HostError } from "@scramjet/model";
 import { Verser2ClientTlsConfig } from "@scramjet/types";
@@ -53,7 +50,7 @@ const dropMessageCodes = [
     CPMMessageCode.ID_DROP
 ];
 
-export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): VerserClientTlsOptions {
+export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig) {
     const trust = tls.ca ? { ca: tls.ca } : { caFile: tls.caFile };
 
     if (tls.pfxFile) {
@@ -169,13 +166,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     cpmId: string;
 
-    /**
-     * VerserClient Instance used for connecting with Verser.
-     *
-     * @type {VerserClient}
-     */
-    verserClient?: VerserClient;
-
     verser2Broker?: VerserBroker;
 
     verser2Guest?: VerserNodeGuest;
@@ -188,99 +178,40 @@ export class CPMConnector extends TypedEmitter<Events> {
     loadInterval?: NodeJS.Timeout;
 
     /**
-     * Loaded certificate authority file for connecting to CPM via HTTPS
-     */
-    _cpmSslCa?: string | Buffer;
-
-    /**
      * @constructor
      * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
      * @param {string} cpm CPM id to connect to. (format: "org:manager").
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
-    constructor(private cpmHostname: string, cpm: string, config: CPMConnectorOptions, server: http.Server) {
+    constructor(_cpmHostname: string, cpm: string, config: CPMConnectorOptions, server: http.Server) {
         super();
 
-        const [orgId, cpmId] = cpm.split(":");
+        const [, cpmId] = cpm.split(":");
 
         this.cpmId = cpmId;
         this.config = config;
 
         this.logger = new ObjLogger(this);
 
-        let sthKey;
+        const tls = createVerser2ClientTlsOptions(this.config.verser2.tls);
 
-        if (config.apiKey) {
-            sthKey = generateSTHKey(config.apiKey);
-        }
-
-        if (this.usesVerser2) {
-            const tls = createVerser2ClientTlsOptions(this.config.verser2.tls);
-
-            this.verser2Broker = createVerserBroker({
-                hostUrl: this.config.verser2.hostUrl,
-                brokerId: this.config.verser2.broker.peerId,
-                leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
-                tls
-            });
-            this.verser2Guest = createVerserNodeGuest({
-                hostUrl: this.config.verser2.hostUrl,
-                guestId: this.config.verser2.guest.peerId,
-                routedDomains: [this.config.verser2.guest.routeDomain],
-                minWaitingStreams: this.config.verser2.leases.minimumWaitingLeases,
-                leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
-                tls
-            }).attach(server, this.config.verser2.guest.routeDomain);
-        } else {
-            this.verserClient = new VerserClient({
-                verserUrl: `${this.cpmUrl}/api/${config.apiVersion}/${orgId}/${cpmId}/`,
-                headers: {
-                    "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
-                    "x-sth-tags": JSON.stringify(typeof this.config?.tags !== "undefined" ? this.config?.tags : []),
-                    "x-manager-id": cpmId,
-                    "x-sth-id": this.config.id || "",
-                    ...orgId && { "x-org-id": orgId },
-                    ...sthKey && { Authorization: `Digest cnonce="${sthKey}"` }
-                },
-                server,
-                https: this.isHttps
-                    ? { ca: [this.cpmSslCa] }
-                    : undefined
-            });
-
-            this.verserClient.logger.pipe(this.logger);
-        }
+        this.verser2Broker = createVerserBroker({
+            hostUrl: this.config.verser2.hostUrl,
+            brokerId: this.config.verser2.broker.peerId,
+            leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
+            tls
+        });
+        this.verser2Guest = createVerserNodeGuest({
+            hostUrl: this.config.verser2.hostUrl,
+            guestId: this.config.verser2.guest.peerId,
+            routedDomains: [this.config.verser2.guest.routeDomain],
+            minWaitingStreams: this.config.verser2.leases.minimumWaitingLeases,
+            leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
+            tls
+        }).attach(server, this.config.verser2.guest.routeDomain);
 
         this.logger.trace("Initialized.");
-    }
-
-    private get cpmSslCa() {
-        if (typeof this.config.cpmSslCaPath === "undefined") {
-            throw new Error("No cpmSslCaPath specified");
-        }
-
-        if (!this._cpmSslCa) {
-            this._cpmSslCa = fs.readFileSync(this.config.cpmSslCaPath);
-        }
-
-        return this._cpmSslCa;
-    }
-
-    /**
-     * Should Host connect on SSL encrypted connection to CPM
-     */
-    private get isHttps(): boolean {
-        // @TODO potentially not all https requests would use custom CA
-        return typeof this.config.cpmSslCaPath === "string";
-    }
-
-    private get cpmUrl() {
-        return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, { defaultProtocol: this.isHttps ? "https:" : "http:" });
-    }
-
-    private get usesVerser2() {
-        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
     }
 
     /**
@@ -318,10 +249,8 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.connection = undefined;
         }
 
-        await this.verserClient?.close();
         await this.verser2Broker?.close("disconnect");
         await this.verser2Guest?.close("disconnect");
-        this.verserClient = undefined as any;
 
         this.logger.info("Disconnected from Manager");
     }
@@ -363,8 +292,6 @@ export class CPMConnector extends TypedEmitter<Events> {
                     this.info.id = (message[1] as STHIDMessageData).id;
 
                     this.logger.trace("Received id", this.info.id);
-
-                    this.verserClient?.updateHeaders({ "x-sth-id": this.info.id });
 
                     fs.writeFileSync(
                         this.config.infoFilePath,
@@ -430,11 +357,11 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     getHttpAgent(): http.Agent {
-        return this.verser2Broker?.createAgent() || this.verserClient!.verserAgent as http.Agent;
+        return this.verser2Broker!.createAgent();
     }
 
     /**
-     * Connect to Manager using VerserClient.
+     * Connect to Manager using verser2.
      * Host send its id to Manager in headers. If id is not set, it will be received from Manager.
      * When connection is established it sets up handlers for communication channels.
      * If connection fails, it will try to reconnect.
@@ -442,39 +369,14 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {Promise<void>} Promise that resolves when connection is established.
      */
     async connect(): Promise<void> {
-        if (this.usesVerser2) {
+        try {
             await this.verser2Broker!.connect();
             await this.verser2Guest!.connect();
-            this.connected = true;
-            this.connectionAttempts = 0;
-            this.emit("connect");
-            return;
-        }
-
-        this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
-
-        this.isReconnecting = false;
-
-        if (this.info.id) {
-            this.verserClient!.updateHeaders({ "x-sth-id": this.info.id });
-        }
-
-        let connection: VerserClientConnection;
-
-        try {
-            connection = await this.verserClient!.connect();
-
-            connection.socket
-                .once("close", async () => {
-                    this.logger.warn("Space request close status", connection.res.statusCode);
-                    this.logger.warn("Space request close message", connection.res.statusMessage);
-
-                    await this.handleConnectionClose(connection.res.statusCode || -1);
-                });
+            await this.registerWithManager();
         } catch (error: any) {
             if (this.isAbandoned) return;
 
-            this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
+            this.logger.error("Can not connect to Manager", this.config.verser2.hostUrl, this.cpmId, error.message);
 
             await this.reconnect();
 
@@ -489,26 +391,46 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.connected = true;
         this.connectionAttempts = 0;
+        this.emit("connect");
+    }
 
-        connection.res.once("error", async (error: any) => {
-            this.logger.error("Request error", error);
-
-            try {
-                await this.reconnect();
-            } catch (e) {
-                this.logger.error("Reconnect failed");
-            }
+    private async registerWithManager(): Promise<void> {
+        const req = this.makeHttpRequestToCpm("POST", "sth", { "content-type": "application/json" });
+        const payload = JSON.stringify({
+            id: this.config.id || this.info.id,
+            description: this.config.description || "",
+            tags: this.config.tags || [],
+            routeDomain: this.config.verser2.guest.routeDomain
         });
 
-        this.verserClient!.once("error", async (error: any) => {
-            this.logger.warn("VerserClient error", error);
+        const responseBody = await new Promise<string>((resolve, reject) => {
+            req.on("response", (res: http.IncomingMessage) => {
+                const chunks: Buffer[] = [];
 
-            try {
-                await this.reconnect();
-            } catch (e) {
-                this.logger.error("Reconnect failed");
-            }
+                res.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+                res.on("end", () => {
+                    if ((res.statusCode || 500) >= 400) {
+                        reject(new Error(`Manager STH registration failed: ${res.statusCode} ${res.statusMessage || ""}`.trim()));
+                        return;
+                    }
+                    resolve(Buffer.concat(chunks).toString("utf8"));
+                });
+                res.on("error", reject);
+            });
+            req.on("error", reject);
+            req.end(payload);
         });
+
+        if (!responseBody) return;
+
+        const response = JSON.parse(responseBody) as { id?: string };
+
+        if (response.id && response.id !== this.info.id) {
+            this.info.id = response.id;
+            fs.writeFileSync(this.config.infoFilePath, JSON.stringify(this.info));
+            this.emit("id", this.info.id);
+            this.logger.updateBaseLog({ id: this.info.id });
+        }
     }
 
     /**
@@ -755,9 +677,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         headers: http.OutgoingHttpHeaders | Record<string, string> = {}
     ): http.ClientRequest {
         //@TODO: Disconnecting/error handling
-        const url = this.usesVerser2
-            ? `http://${this.config.verser2.broker.targetDomain}/api/v1/${reqPath}`
-            : `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
+        const url = `http://${this.config.verser2.broker.targetDomain}/api/v1/${reqPath}`;
 
         this.logger.debug("make HTTP Req to CPM", url);
 

@@ -49,7 +49,7 @@ import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { CSIEvents, ICSI } from "./types";
-import { createRunnerBrokerRpcTransport, LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
+import { createRunnerBrokerRpcTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -469,22 +469,22 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.logger.error("Downstream error on channel", i, err);
         }));
 
-        const runnerBroker = this.usesVerser2RunnerTransport ? this.runnerBrokerProvider?.() : undefined;
+        const runnerBroker = this.runnerBrokerProvider?.();
 
-        if (this.usesVerser2RunnerTransport && !runnerBroker) {
+        if (!runnerBroker) {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "verser2 runner broker");
         }
 
-        this.runnerTransport = runnerBroker
-            ? new Verser2RunnerTransport({
-                broker: runnerBroker,
-                upstreams: this.upStreams,
-                communicationHandler: this.communicationHandler,
-                routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs
-            })
-            : new LegacyRunnerTransport(this.upStreams, this.communicationHandler);
-        this.runnerTransport.connect({ instanceId: this.id, streams }).catch((error) => {
-            this.logger.error(`${this.runnerTransport?.kind || "unknown"} runner transport connection failed`, error);
+        const runnerTransport = new Verser2RunnerTransport({
+            broker: runnerBroker,
+            upstreams: this.upStreams,
+            communicationHandler: this.communicationHandler,
+            routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs
+        });
+
+        this.runnerTransport = runnerTransport;
+        runnerTransport.connect({ instanceId: this.id, streams }).catch((error: Error) => {
+            this.logger.error(`${runnerTransport.kind} runner transport connection failed`, error);
             this.initResolver?.rej(error);
         });
 
@@ -581,14 +581,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
 
         this.upStreams[CC.MONITORING].resume();
-    }
-
-    private get usesVerser2RunnerTransport(): boolean {
-        return !!(
-            this.sthConfig.verser2.enabled &&
-            this.sthConfig.verser2.migrationMode === "verser2" &&
-            this.sthConfig.verser2.runnerHost?.enabled
-        );
     }
 
     async applyUpdate(key: string, value: string | null): Promise<void> {
@@ -718,10 +710,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     async forwardRpcRequest(req: IncomingMessage, res: ServerResponse, path: string): Promise<boolean> {
-        if (!this.usesVerser2RunnerTransport) {
-            return false;
-        }
-
         const broker = this.runnerBrokerProvider?.();
 
         if (!broker) {

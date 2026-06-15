@@ -8,7 +8,6 @@ import { resolveManagerVerser2HostConfig } from "../../src/lib/verser2-host-iden
 
 const baseConfig = (identityDir: string): ManagerVerser2Config => ({
     enabled: true,
-    migrationMode: "verser2",
     host: {
         identityDir,
         bindHost: "127.0.0.1",

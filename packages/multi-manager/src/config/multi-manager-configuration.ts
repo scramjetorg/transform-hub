@@ -37,7 +37,6 @@ const defaultMultiManagerConfig: MultiManagerOptions = {
     },
     verser2: {
         enabled: true,
-        migrationMode: "verser2",
         host: {
             identityDir: join(homedir(), ".scramjet", "verser2-multimanager-host"),
             bindHost: "0.0.0.0",

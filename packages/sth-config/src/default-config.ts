@@ -70,7 +70,6 @@ export const defaultConfig: STHConfiguration = {
     strictPlatformConnection: false,
     verser2: {
         enabled: true,
-        migrationMode: "verser2",
         hostUrl: "https://127.0.0.1:2443",
         runnerHost: {
             enabled: true,

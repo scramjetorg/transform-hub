@@ -1,12 +1,10 @@
 import { createServer, ServerConfig } from "@scramjet/api-server";
 import { STHConfiguration } from "@scramjet/types";
 import { Host } from "./host";
-import { SocketServer } from "./socket-server";
 
 function createHost(apiServerConfig: ServerConfig, sthConfig: STHConfiguration) {
     const apiServer = createServer(apiServerConfig);
-    const tcpServer = new SocketServer(sthConfig.host.instancesServerPort, sthConfig.host.hostname);
-    const host = new Host(apiServer, tcpServer, sthConfig);
+    const host = new Host(apiServer, sthConfig);
 
     return host;
 }

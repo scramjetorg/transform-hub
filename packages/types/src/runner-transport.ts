@@ -1,6 +1,6 @@
 import { DownstreamStreamsConfig } from "./message-streams";
 
-export type RunnerTransportKind = "legacy" | "verser2";
+export type RunnerTransportKind = "verser2";
 
 export type RunnerTransportRouteContracts = {
     runnerDomain: string;

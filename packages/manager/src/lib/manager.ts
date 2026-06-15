@@ -17,7 +17,7 @@ import {
 import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
 import { CeroError, forwardRoutedRequest, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
-import { IncomingMessage, ServerResponse, request } from "http";
+import { IncomingMessage, ServerResponse } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -33,7 +33,6 @@ import { ManagerSthBrokerTransport } from "./verser2-transport";
 import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
 import { managerVerser2Options, maskConfig } from "@scramjet/config";
 
-import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { HealthCheck } from "./health-check";
 import { ManagerAuditor } from "./manager-auditor";
@@ -51,6 +50,14 @@ const version = packageFile.value?.version || "unknown";
 const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
+
+type SthRegistrationPayload = {
+    id?: string;
+    routeDomain?: string;
+    accessKey?: string;
+    description?: string;
+    tags?: string[];
+};
 
 export const normalizeForwardedHeaders = normalizeApiForwardedHeaders;
 
@@ -108,10 +115,6 @@ export class Manager implements IComponent {
 
     public getSthBrokerTransport(): ManagerSthBrokerTransport | undefined {
         return this.sthBrokerTransport;
-    }
-
-    private usesVerser2OnlyTransport(): boolean {
-        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
     }
 
     public get service(): string {
@@ -221,6 +224,12 @@ export class Manager implements IComponent {
 
         this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.publicConfig }));
         this._apiRouter.get(`${apiBase}/verser2/trust`, () => getManagerVerser2TrustExport(this.config));
+        this._apiRouter.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
+            const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
+            const id = await this.handleSthRegistration(payload);
+
+            return { id, opStatus: ReasonPhrases.ACCEPTED };
+        });
         this._apiRouter.get(`${apiBase}/list`, (req:ParsedMessage): MRestAPI.GetListResponse => {
             let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
             let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
@@ -417,67 +426,67 @@ export class Manager implements IComponent {
         return ps;
     }
 
-    async handleHostConnection(id: string, verserConnection: VerserConnection) {
-        this.logger.info("STH Api. Incoming connection.");
+    async handleSthRegistration(payload: SthRegistrationPayload): Promise<string> {
+        this.logger.info("STH Api. Incoming verser2 registration.");
+
+        if (!this.sthBrokerTransport) {
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
+
+        const id = typeof payload.id === "string" && payload.id.trim().length ? payload.id : IDProvider.generate();
+        const routeDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length
+            ? payload.routeDomain
+            : this.getSthRouteDomain(id);
 
         if (id && this.sthConnectionStore.getById(id)?.isConnectionActive) {
             await defer(100); // Wait for 100 ms before responding, so that a prevous connection can be closed.
 
             if (this.sthConnectionStore.getById(id)?.isConnectionActive) {
                 this.logger.warn(`Refusing STH connection. STH with ${id} already connected.`);
-                verserConnection.end(409, "Conflict");
-
-                return;
+                throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
             }
         }
 
-        verserConnection.respond(202);
-
         let sth: ISTHController | undefined;
 
-        if (typeof id === "string" && id.trim().length) {
-            sth = this.sthConnectionStore.getById(id);
+        sth = this.sthConnectionStore.getById(id);
 
-            if (sth) {
-                sth.logger.unpipe(this.logger);
-                sth.dispose();
+        if (sth) {
+            sth.logger.unpipe(this.logger);
+            sth.dispose();
 
-                this.logger.info("STH re-connecting, id:", id);
-                sth = new STHController(id, verserConnection);
+            this.logger.info("STH re-registering, id:", id);
+            sth = new STHController(id, {
+                brokerTransport: this.sthBrokerTransport,
+                routeDomain,
+                accessKey: payload.accessKey,
+                description: payload.description,
+                tags: payload.tags
+            });
 
-                sth.logger.pipe(this.logger, { end: false });
+            sth.logger.pipe(this.logger, { end: false });
 
-                this.sthInfoRegister.clearHostEntities(sth.id);
-                this.sthConnectionStore.add(sth);
-                this.commonLogsPipe.removeInStream(sth.id);
+            this.sthInfoRegister.clearHostEntities(sth.id);
+            this.sthConnectionStore.add(sth);
+            this.commonLogsPipe.removeInStream(sth.id);
 
-                await sth.init();
-                this.attachSTHEventHandlers(sth);
-            } else {
-                this.logger.info("Unknown STH providing id:", id);
-
-                sth = new STHController(id, verserConnection);
-
-                sth.logger.pipe(this.logger, { end: false });
-
-                this.sthConnectionStore.add(sth);
-                this.sthInfoRegister.addHub(sth.id);
-
-                await sth.init();
-                this.attachSTHEventHandlers(sth);
-            }
+            await sth.init();
+            this.attachSTHEventHandlers(sth);
         } else {
-            sth = new STHController(IDProvider.generate(), verserConnection);
-            sth.logger.pipe(this.logger);
+            this.logger.info("New STH registered", id);
+            sth = new STHController(id, {
+                brokerTransport: this.sthBrokerTransport,
+                routeDomain,
+                accessKey: payload.accessKey,
+                description: payload.description,
+                tags: payload.tags
+            });
+            sth.logger.pipe(this.logger, { end: false });
 
             await sth.init();
 
-            this.logger.info("New STH connected", sth.id);
-
             this.sthConnectionStore.add(sth);
             this.sthInfoRegister.addHub(sth.id);
-
-            sth.sendId();
 
             this.attachSTHEventHandlers(sth);
         }
@@ -488,6 +497,8 @@ export class Manager implements IComponent {
         //sth.logStream!.pipe(this.logger);
 
         await this.auditor.onUpdate();
+
+        return sth.id;
     }
 
     async handleHostDisconnect(id: string, reason: DisconnectReason) {
@@ -555,80 +566,6 @@ export class Manager implements IComponent {
         });
     }
 
-    private async handleLocalPeerRequestToSTH(
-        sth: ISTHController,
-        req: ParsedMessage,
-        res: ServerResponse,
-        headers: Record<string, string>,
-        expectsContinue: boolean
-    ) {
-        if (!sth.verserConnection) {
-            this.logger.warn("Request to STH without local peer connection", req.method, req.url);
-            res.writeHead(503);
-            res.end();
-
-            return;
-        }
-
-        let hostResponse: IncomingMessage | null = null;
-        let requestToHost: ReturnType<typeof request> | null = null;
-        let disconnectCalled = false;
-
-        const disconnect = (reason: string) => {
-            if (!disconnectCalled) {
-                this.logger.warn("Disconnecting local peer request", req.url, reason);
-
-                hostResponse?.unpipe(res);
-
-                res.end();
-                req.unpipe(requestToHost!);
-
-                requestToHost?.end();
-                requestToHost?.destroy();
-            }
-
-            disconnectCalled = true;
-        };
-
-        requestToHost = request({
-            headers,
-            method: req.method,
-            path: req.url,
-            agent: sth.verserConnection.getAgent()
-        })
-            .on("error", (error: Error) => {
-                this.logger.warn("M -> STH local peer request error", { id: sth.id, url: req.url, error });
-                disconnect("error");
-            })
-            .on("continue", () => {
-                if (!expectsContinue) {
-                    res.writeContinue();
-                }
-
-                req.resume();
-            })
-            .on("response", (response) => {
-                hostResponse = response;
-
-                this.logger.debug("Response from local peer STH", hostResponse.url, hostResponse.statusCode);
-
-                res.writeHead(response.statusCode!, response.statusMessage, response.headers);
-                res.flushHeaders();
-                response.pipe(res);
-            });
-
-        req.socket.on("close", () => {
-            if (!res.writableFinished || !req.readableEnded) {
-                disconnect("Request aborted");
-            }
-        });
-
-        requestToHost.flushHeaders();
-        req.pipe(requestToHost);
-
-        requestToHost.setTimeout(0);
-    }
-
     private async handleClassifiedFollowRequestToSTH(
         sth: ISTHController,
         decision: ManagerRouteDecision,
@@ -653,10 +590,12 @@ export class Manager implements IComponent {
 
         req.url = forwarding.path;
 
-        if (this.sthBrokerTransport && this.usesVerser2OnlyTransport()) {
+        if (this.sthBrokerTransport) {
             await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
         } else {
-            await this.handleLocalPeerRequestToSTH(sth, req, res, headers, expectsContinue);
+            this.logger.warn("Request to STH without verser2 broker transport", req.method, req.url);
+            res.writeHead(503);
+            res.end();
         }
     }
 

@@ -69,7 +69,6 @@ export type MultiManagerCommandOptions = {
     healtzPath?: string,
     healtzHost?: string
     verser2Enabled?: boolean;
-    verser2MigrationMode?: "legacy" | "dual" | "verser2";
     verser2HostBindHost?: string;
     verser2HostBindPort?: number;
     verser2HostPublicUrl?: string;

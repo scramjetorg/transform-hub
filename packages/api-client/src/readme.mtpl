@@ -214,7 +214,7 @@ ___
 
 ```bash
 2021-11-19T16:04:47.094Z log (object:Host) Host main called.
-2021-11-19T16:04:47.100Z info (object:SocketServer) Server on: /tmp/scramjet-socket-server-path
+2021-11-19T16:04:47.100Z info (object:HostAPI) Server on: /tmp/scramjet-api-server-path
 2021-11-19T16:04:47.104Z info (object:Host) API listening on: 127.0.0.1:8000
 2021-11-19T16:05:08.228Z info (object:Host) New sequence incoming...
 2021-11-19T16:05:08.229Z log (object:LifecycleDockerAdapterSequence) Docker sequence adapter init.

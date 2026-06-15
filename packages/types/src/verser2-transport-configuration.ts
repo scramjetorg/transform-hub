@@ -1,5 +1,3 @@
-export type Verser2MigrationMode = "legacy" | "dual" | "verser2";
-
 export type Verser2TlsFilesConfig = {
     certFile?: string;
     keyFile?: string;
@@ -51,7 +49,6 @@ export type Verser2LeaseConfig = {
 
 export type ManagerVerser2Config = {
     enabled: boolean;
-    migrationMode: Verser2MigrationMode;
     host: {
         identityDir?: string;
         bindHost: string;
@@ -78,7 +75,6 @@ export type ManagerVerser2Config = {
 
 export type STHOutboundVerser2Config = {
     enabled: boolean;
-    migrationMode: Verser2MigrationMode;
     hostUrl: string;
     runnerHost?: STHRunnerVerser2HostConfig;
     broker: {

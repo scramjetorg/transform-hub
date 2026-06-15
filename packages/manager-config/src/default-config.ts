@@ -12,7 +12,6 @@ export const defaultConfig: ManagerConfiguration = {
     },
     verser2: {
         enabled: true,
-        migrationMode: "verser2",
         host: {
             identityDir: join(homedir(), ".scramjet", "verser2-manager-host"),
             bindHost: "0.0.0.0",

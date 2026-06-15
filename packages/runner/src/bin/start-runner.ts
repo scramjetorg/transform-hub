@@ -10,7 +10,6 @@ import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/
 
 import { RuntimeProcessHandles } from "@scramjet/types";
 
-import { HostClient, OUTER_RUNNER_CHANNELS } from "../host-client";
 import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
 import {
@@ -32,8 +31,6 @@ const CR = 0x0d;
 // ---------------------------------------------------------------------------
 
 const rawSequencePath = process.env.SEQUENCE_PATH;
-const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
-const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
 const sequenceInfo = process.env.SEQUENCE_INFO;
 const runnerConnectInfo = process.env.RUNNER_CONNECT_INFO;
@@ -71,18 +68,6 @@ try {
 } catch (error) {
     console.error(error instanceof Error ? error.message : "Incorrect run argument: runner transport config");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
-
-if (runnerTransportConfig.kind === "legacy") {
-    if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
-        console.error("Incorrect run argument: instancesServerPort");
-        process.exit(RunnerExitCode.INVALID_ENV_VARS);
-    }
-
-    if (!instancesServerHost) {
-        console.error("Incorrect run argument: instancesServerHost");
-        process.exit(RunnerExitCode.INVALID_ENV_VARS);
-    }
 }
 
 if (!fs.existsSync(sequencePath)) {
@@ -225,24 +210,13 @@ function observeRpcExpose(stream: Readable, transport: RunnerVerser2Transport): 
 }
 
 async function main(): Promise<void> {
-    let hostClient: HostClient | RunnerVerser2Transport;
-    let resolvedInstancesServerHost: string;
-    let resolvedInstancesServerPort: number;
-
-    if (runnerTransportConfig.kind === "verser2") {
-        hostClient = new RunnerVerser2Transport({
-            config: runnerTransportConfig,
-            instanceId: instanceId!
-        });
-        await hostClient.init();
-        resolvedInstancesServerHost = hostClient.localChannelHost;
-        resolvedInstancesServerPort = hostClient.localChannelPort;
-    } else {
-        hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
-        await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
-        resolvedInstancesServerHost = instancesServerHost!;
-        resolvedInstancesServerPort = parseInt(instancesServerPort!, 10);
-    }
+    const hostClient = new RunnerVerser2Transport({
+        config: runnerTransportConfig,
+        instanceId: instanceId!
+    });
+    await hostClient.init();
+    const resolvedInstancesServerHost = hostClient.localChannelHost;
+    const resolvedInstancesServerPort = hostClient.localChannelPort;
 
     const bootConfigPath = writeBootConfig(
         resolvedInstancesServerHost,

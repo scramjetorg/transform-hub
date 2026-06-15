@@ -9,14 +9,11 @@ import { IDProvider } from "@scramjet/model";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
 import { Manager, CommonLogsPipe, HealthCheck } from "@scramjet/manager";
 import { ManagersStore } from "./manager-store";
-import { Duplex, Writable } from "stream";
+import { Writable } from "stream";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
 import { getDefaultConfig as getManagerDefaultConfig } from "@scramjet/manager-config";
-import { Verser, VerserConnection } from "@scramjet/verser";
 import { createVerserHost, VerserHost } from "@signicode/verser2-host";
-import { MultiHostController } from "./multi-host-controller";
-import { MultiHostControllerStore } from "./multi-host-controller-store";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";
 import { MultiManagerAuditor } from "./mulit-manager-auditor";
@@ -36,7 +33,6 @@ const name = packageFile.value?.name || "unknown";
 
 export class MultiManager {
     apiServer: APIExpose;
-    apiVerser?: Verser;
     verser2Host?: VerserHost;
     apiBase: string;
 
@@ -55,8 +51,6 @@ export class MultiManager {
     loadCheck: LoadCheck;
 
     freePortsFinder = new FreePortsFinder();
-    multiHostControllerStore: MultiHostControllerStore = new MultiHostControllerStore();
-
     private commonLogsPipe = new CommonLogsPipe();
 
     public get logStream(): Writable {
@@ -86,10 +80,6 @@ export class MultiManager {
         this.apiBase = `${config.server.apiBase}/${config.server.version}`;
 
         this.apiServer = apiServer;
-        if (this.usesLegacyVerserTransport()) {
-            this.apiVerser = new Verser(this.apiServer.server);
-        }
-
         this.apiServer.server.timeout = 0;
         this.apiServer.server.requestTimeout = 0;
 
@@ -114,14 +104,13 @@ export class MultiManager {
         this.logger.info("Starting MultiManager", version);
         this.logger.debug("MultiManager config", this.config.getMasked());
 
-        if (this.usesVerser2Transport() && !this.verser2Host) {
+        if (!this.verser2Host) {
             Object.assign(this.config.verser2, await resolveManagerVerser2HostConfig(this.config.verser2, "MultiManager"));
             this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2));
         }
 
         this.setRouting();
 
-        this.apiVerser?.logger.pipe(this.logger);
         this.verser2Host?.onLifecycle(event => this.logger.debug("verser2 Host lifecycle", event));
 
         if (this.verser2Host) {
@@ -143,9 +132,6 @@ export class MultiManager {
 
             this.logger.info("Server started on", address.port, address.address);
 
-            if (this.apiVerser) {
-                this.attachVerserListeners();
-            }
         });
 
         if (this.config.manager) {
@@ -281,8 +267,6 @@ export class MultiManager {
 
         this.apiServer.use(`${this.apiBase}/cpm/:id`, async (req, res, next) => await this.cpmMiddleware(req, res, next));
 
-        this.apiServer.use(`${this.apiBase}/msth/:id`, (req, res) => this.forwardMultiHostRequest(req, res));
-
         this.apiServer.upstream(`${this.apiBase}/log`, this.commonLogsPipe.getOut());
         this.apiServer.upstream(`${this.apiBase}/audit`, (req, _res) => this.commonAuditPipe(req));
     }
@@ -293,64 +277,8 @@ export class MultiManager {
         return this.auditor.output;
     }
 
-    attachVerserListeners() {
-        if (!this.apiVerser) {
-            return;
-        }
-
-        this.apiVerser.on("connect", async (verserConnection: VerserConnection) => {
-            this.logger.debug("Verser connect event");
-
-            const hostId = verserConnection.getHeader("x-sth-id") as string;
-            const multiHostId = verserConnection.getHeader("x-multihost-id") as string;
-
-            verserConnection.addChannelListener((socket, data) => this.handleSTHRequest(socket, data));
-            verserConnection.logger.pipe(this.logger);
-
-            if (multiHostId) {
-                this.logger.trace("MultiHost connection", multiHostId);
-                this.attachMultiHostAPI(multiHostId, verserConnection);
-            } else {
-                this.logger.trace("Host connection", hostId);
-                await this.attachHostAPI(hostId, verserConnection);
-            }
-        });
-
-        this.apiVerser.on("close", (verserConnection: VerserConnection) => {
-            this.logger.debug("Verser close event", verserConnection.getHeader("x-sth-id"));
-
-            const hostId = verserConnection.getHeader("x-sth-id") as string;
-            const multiHostId = verserConnection.getHeader("x-multihost-id") as string;
-
-            if (multiHostId) {
-                this.logger.trace("MultiHost connection closed", multiHostId);
-                this.multiHostControllerStore.remove(multiHostId);
-            } else {
-                this.logger.trace("Host connection closed", hostId);
-                const managerId = verserConnection.getHeader("x-manager-id") as string;
-                const managerInstance = this.managersStore.getById(managerId);
-
-                if (managerInstance) {
-                    managerInstance.handleHostDisconnect(hostId, "disconnected");
-                }
-            }
-        });
-    }
-
-    private usesVerser2Transport() {
-        return this.config.verser2.enabled && this.config.verser2.migrationMode !== "legacy";
-    }
-
-    private usesLegacyVerserTransport() {
-        return !this.config.verser2.enabled || this.config.verser2.migrationMode !== "verser2";
-    }
-
-    private usesVerser2OnlyTransport() {
-        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
-    }
-
     private async attachManagerVerser2Peers(manager: Manager) {
-        if (!this.verser2Host || !manager.config.verser2.enabled || manager.config.verser2.migrationMode === "legacy") {
+        if (!this.verser2Host || !manager.config.verser2.enabled) {
             return;
         }
 
@@ -368,55 +296,6 @@ export class MultiManager {
                 res.end();
             })
         });
-    }
-
-    async attachHostAPI(id: string, verserConnection: VerserConnection) {
-        const managerId = verserConnection.getHeader("x-manager-id") as string;
-        const managerInstance = this.managersStore.getById(managerId);
-
-        this.logger.info(`Host API incoming connection with id "${id}" to manager with id "${managerId}".`);
-
-        if (!managerInstance) {
-            this.logger.error(`Host with id: ${id} trying to connect to non-existent manager with id ${managerId}.`);
-
-            verserConnection.end(404);
-        } else {
-            await managerInstance.handleHostConnection(id, verserConnection);
-        }
-    }
-
-    attachMultiHostAPI(id: string, verserConnection: VerserConnection) {
-        this.logger.info(`MultiHost API incoming connection with id: ${id}.`);
-
-        if (this.usesVerser2OnlyTransport()) {
-            this.logger.warn("Refusing legacy MultiHost connection in verser2 mode", id);
-            verserConnection.end(410, "Legacy MultiHost path is retired in verser2 mode");
-
-            return;
-        }
-
-        let instance = this.multiHostControllerStore.getById(id);
-
-        if (instance?.isConnectionActive) {
-            this.logger.warn(`Refusing MultiHost connection. MultiHost with ${id} already connected.`);
-            verserConnection.end(409);
-            return;
-        }
-
-        verserConnection.respond(202);
-
-        if (instance) {
-            instance.reconnect(verserConnection);
-            this.logger.info("MultiHost reconnected", id);
-        } else {
-            instance = new MultiHostController(id, verserConnection);
-
-            this.multiHostControllerStore.add(id, instance);
-            instance.connect();
-            this.logger.info("MultiHost connected", id);
-        }
-
-        this.commonLogsPipe.addInStream(instance.id, instance.logStream!);
     }
 
     async cpmMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
@@ -450,35 +329,6 @@ export class MultiManager {
         res.end();
 
         return next();
-    }
-
-    async forwardMultiHostRequest(req: ParsedMessage, res: ServerResponse) {
-        const id = (req.params || {}).id;
-
-        if (this.usesVerser2OnlyTransport()) {
-            res.writeHead(410, { "content-type": "application/json" });
-            res.end(JSON.stringify({
-                opStatus: ReasonPhrases.GONE,
-                error: "Legacy MultiHost /msth forwarding is retired in verser2 mode"
-            }));
-
-            return;
-        }
-
-        const controller = this.multiHostControllerStore.getById(id);
-
-        this.logger.debug("Request to MultiHost", req.method, req.url);
-
-        if (!controller) {
-            res.writeHead(404);
-            res.end();
-
-            return;
-        }
-
-        req.url = req?.url?.replace(`${this.apiBase}/msth/${id}`, "");
-
-        await controller.forward(req, res);
     }
 
     async handleStartManagerRequest(
@@ -536,11 +386,4 @@ export class MultiManager {
         }));
     }
 
-    handleSTHRequest(socket: Duplex, data = Buffer.alloc(0)) {
-        this.logger.debug("handleSTHRequest", data.toString());
-
-        if (data.toString() !== "verser") {
-            this.apiServer.server.emit("connection", socket);
-        }
-    }
 }

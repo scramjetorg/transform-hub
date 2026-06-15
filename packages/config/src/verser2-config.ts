@@ -1,8 +1,6 @@
 import type { ConfigOptionDescriptor } from ".";
 import { z } from "zod";
 
-export const verser2MigrationModeSchema = z.enum(["legacy", "dual", "verser2"]);
-
 const optionalFileSchema = z.string().min(1).optional();
 const timeoutsSchema = z.object({
     routeReadinessMs: z.number().int().nonnegative(),
@@ -15,7 +13,6 @@ const leasesSchema = z.object({
 
 export const managerVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
-    migrationMode: verser2MigrationModeSchema,
     host: z.object({
         identityDir: z.string().min(1).optional(),
         bindHost: z.string(),
@@ -44,7 +41,6 @@ export const managerVerser2ConfigSchema = z.object({
 
 export const sthOutboundVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
-    migrationMode: verser2MigrationModeSchema,
     hostUrl: z.string(),
     runnerHost: z.object({
         enabled: z.boolean(),
@@ -127,7 +123,7 @@ export const sthOutboundVerser2ConfigSchema = z.object({
         });
     }
 
-    if (!(config.enabled && config.migrationMode === "verser2")) return;
+    if (!config.enabled) return;
 
     ([
         ["hostUrl", config.hostUrl],
@@ -151,7 +147,6 @@ const sthPath = (path: string) => `verser2.${path}`;
 
 export const managerVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2Enabled", flag: "verser2-enabled", path: managerPath("enabled"), env: "SCRAMJET_VERSER2_ENABLED", type: "boolean", description: "Enable verser2 Manager/STH transport" },
-    { name: "verser2MigrationMode", flag: "verser2-migration-mode", path: managerPath("migrationMode"), env: "SCRAMJET_VERSER2_MIGRATION_MODE", type: "string", choices: ["legacy", "dual", "verser2"], description: "Manager/STH migration mode" },
     { name: "verser2HostBindHost", flag: "verser2-host-bind-host", path: managerPath("host.bindHost"), env: "SCRAMJET_VERSER2_HOST_BIND_HOST", type: "string", description: "verser2 Host bind address" },
     { name: "verser2HostIdentityDir", flag: "verser2-host-identity-dir", path: managerPath("host.identityDir"), env: "SCRAMJET_VERSER2_HOST_IDENTITY_DIR", type: "string", description: "Directory for generated Manager/MultiManager verser2 Host CA and server identity" },
     { name: "verser2HostBindPort", flag: "verser2-host-bind-port", path: managerPath("host.bindPort"), env: "SCRAMJET_VERSER2_HOST_BIND_PORT", type: "number", description: "verser2 Host bind port" },
@@ -178,7 +173,6 @@ export const managerVerser2Options: ConfigOptionDescriptor[] = [
 
 export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2Enabled", flag: "verser2-enabled", path: sthPath("enabled"), env: "SCRAMJET_VERSER2_ENABLED", type: "boolean", description: "Enable outbound STH verser2 transport" },
-    { name: "verser2MigrationMode", flag: "verser2-migration-mode", path: sthPath("migrationMode"), env: "SCRAMJET_VERSER2_MIGRATION_MODE", type: "string", choices: ["legacy", "dual", "verser2"], description: "STH Manager transport migration mode" },
     { name: "verser2HostUrl", flag: "verser2-host-url", path: sthPath("hostUrl"), env: "SCRAMJET_VERSER2_HOST_URL", flagAliases: ["cpm-verser2-url"], type: "string", description: "Manager/MultiManager verser2 Host URL" },
     { name: "verser2RunnerHostEnabled", flag: "verser2-runner-host-enabled", path: sthPath("runnerHost.enabled"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED", type: "boolean", description: "Enable the STH-local verser2 Host for runners" },
     { name: "verser2RunnerHostIdentityDir", flag: "verser2-runner-host-identity-dir", path: sthPath("runnerHost.identityDir"), env: "SCRAMJET_VERSER2_RUNNER_HOST_IDENTITY_DIR", type: "string", description: "Directory for generated STH-local runner Host CA and server identity" },

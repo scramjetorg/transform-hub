@@ -40,7 +40,7 @@ test("MultiManagerConfig preserves falsy values from config file", t => {
     t.is(loaded.monitoringServer!.path, "");
 });
 
-test("MultiManagerConfig defaults to verser2 migration mode", t => {
+test("MultiManagerConfig defaults to verser2 configuration", t => {
     const loaded = new MultiManagerConfig({
         colors: true,
         dumpHeap: 0,
@@ -50,7 +50,6 @@ test("MultiManagerConfig defaults to verser2 migration mode", t => {
     }).get();
 
     t.true(loaded.verser2.enabled);
-    t.is(loaded.verser2.migrationMode, "verser2");
     t.true(loaded.verser2.host.identityDir!.endsWith(".scramjet/verser2-multimanager-host"));
     t.is(loaded.verser2.host.bindPort, 2443);
     t.is(loaded.verser2.host.publicUrl, "https://127.0.0.1:2443");
@@ -67,7 +66,6 @@ test("MultiManagerConfig loads verser2 config from file env and cli with precede
     writeFileSync(config, JSON.stringify({
         verser2: {
             enabled: false,
-            migrationMode: "legacy",
             host: {
                 bindHost: "127.0.0.1",
                 bindPort: 2443,
@@ -112,12 +110,10 @@ test("MultiManagerConfig loads verser2 config from file env and cli with precede
         verser2HostKeyFile: "/cli/key.pem"
     }, {
         SCRAMJET_VERSER2_ENABLED: "true",
-        SCRAMJET_VERSER2_MIGRATION_MODE: "dual",
         SCRAMJET_VERSER2_HOST_PUBLIC_URL: "https://env.example:2443"
     }).get();
 
     t.true(loaded.verser2.enabled);
-    t.is(loaded.verser2.migrationMode, "dual");
     t.is(loaded.verser2.host.bindHost, "127.0.0.1");
     t.is(loaded.verser2.host.bindPort, 3443);
     t.is(loaded.verser2.host.publicUrl, "https://env.example:2443");
@@ -139,17 +135,4 @@ test("MultiManagerConfig masks verser2 secret descriptor paths", t => {
     t.is(config.verser2.host.tls.keyFile, "********");
     t.is(config.verser2.host.tls.passphrase, "********");
     t.is(config.verser2.registration.token, "********");
-});
-
-test("MultiManagerConfig rejects invalid verser2 config", t => {
-    const dir = mkdtempSync(join(tmpdir(), "multi-manager-config-"));
-    const config = join(dir, "config.json");
-
-    writeFileSync(config, JSON.stringify({
-        verser2: {
-            migrationMode: "invalid"
-        }
-    }));
-
-    t.throws(() => new MultiManagerConfig({ config, colors: true, dumpHeap: 0, logLevel: "TRACE", s3AccessKeyId: "", s3SecretAccessKey: "" }));
 });

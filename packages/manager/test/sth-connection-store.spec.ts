@@ -11,32 +11,31 @@ function mockController(
   overrides: Partial<{
     accessKey: string;
     selfHosted: boolean;
-    verserConnection: { connected: boolean };
+    isConnectionActive: boolean;
     getInfo: () => MRestAPI.ConnectedSTHInfo;
     disconnect: (reason: string) => void | Promise<void>;
   }> = {}
 ): ISTHController {
   const accessKey = overrides.accessKey ?? "";
   const selfHosted = overrides.selfHosted ?? true;
-  const verserConnection = overrides.verserConnection ?? { connected: false };
+  const isConnectionActive = overrides.isConnectionActive ?? false;
 
   return {
     id,
     accessKey,
     selfHosted,
-    verserConnection: verserConnection as any,
     getInfo: overrides.getInfo ?? (() => ({
       id,
       info: { created: undefined, lastConnected: undefined, lastDisconnected: undefined },
       healthy: true,
       selfHosted,
-      isConnectionActive: false,
+      isConnectionActive,
     })),
     disconnect: overrides.disconnect ?? (() => {}),
     // Satisfy the remaining ISTHController interface with no-ops
     logger: {} as any,
     healthy: true,
-    isConnectionActive: false,
+    isConnectionActive,
     networkInterfaces: [],
     disconnectReason: undefined,
     info: { created: undefined, lastConnected: undefined, lastDisconnected: undefined },
@@ -218,7 +217,7 @@ test("SthConnectionStore: delete throws when connected and not forced", async (t
   store.add(
     mockController("connected-sth", {
       selfHosted: true,
-      verserConnection: { connected: true },
+      isConnectionActive: true,
     })
   );
 
@@ -234,7 +233,7 @@ test("SthConnectionStore: delete with force disconnects and removes", async (t) 
   store.add(
     mockController("force-sth", {
       selfHosted: true,
-      verserConnection: { connected: true },
+      isConnectionActive: true,
       disconnect: async (reason) => {
         disconnectCalled = true;
         t.is(reason, "id_drop");
@@ -253,7 +252,7 @@ test("SthConnectionStore: delete with force disconnects and removes", async (t) 
 test("SthConnectionStore: delete removes controller when disconnected", async (t) => {
   const store = new SthConnectionStore();
 
-  store.add(mockController("disconnected-sth", { selfHosted: true, verserConnection: { connected: false } }));
+  store.add(mockController("disconnected-sth", { selfHosted: true, isConnectionActive: false }));
 
   await store.delete("disconnected-sth", false);
   t.is(store.getById("disconnected-sth"), undefined);
@@ -266,7 +265,7 @@ test("SthConnectionStore: delete with force removes controller even when disconn
 
   const controller = mockController("force-reason-sth", {
     selfHosted: true,
-    verserConnection: { connected: true },
+    isConnectionActive: true,
     disconnect: (reason) => {
       disconnectAttempts++;
 

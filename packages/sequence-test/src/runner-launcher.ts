@@ -109,7 +109,10 @@ export function createRunnerEnv(options: RunnerEnvOptions): NodeJS.ProcessEnv {
             }
         }),
         RUNNER_CONNECT_INFO: JSON.stringify(runnerConnectInfo),
-        SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }),
+        SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({
+            kind: "verser2",
+            hostUrl: `http://${options.instancesServer.host}:${options.instancesServer.port}`
+        }),
         INSTANCES_SERVER_HOST: options.instancesServer.host,
         INSTANCES_SERVER_PORT: options.instancesServer.port.toString(),
         INSTANCE_ID: instanceId

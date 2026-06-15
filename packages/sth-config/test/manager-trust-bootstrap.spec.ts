@@ -32,7 +32,6 @@ function config(): STHConfiguration {
         verser2: {
             ...defaultConfig.verser2,
             enabled: true,
-            migrationMode: "verser2",
             hostUrl: "https://old-manager.example:2443",
             broker: { peerId: "sth.broker", targetDomain: "manager.old.scramjet.internal" },
             guest: { peerId: "sth.guest", routeDomain: "sth.test.scramjet.internal" },

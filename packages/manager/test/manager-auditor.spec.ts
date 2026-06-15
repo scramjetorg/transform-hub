@@ -47,7 +47,6 @@ function mockController(
     healthy: true,
     isConnectionActive: true,
     selfHosted: true,
-    verserConnection: {} as any,
     networkInterfaces: [],
     accessKey: undefined,
     disconnectReason: undefined,

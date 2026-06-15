@@ -3,7 +3,6 @@ import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { Readable } from "stream";
 import {
     DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS,
-    DownstreamStreamsConfig,
     ICommunicationHandler,
     PassThroughStreamsConfig,
     RunnerTransport,
@@ -139,41 +138,6 @@ export type Verser2RunnerTransportOptions = {
     routeReadinessMs?: number;
     routeContracts?: RunnerTransportRouteContracts;
 };
-
-export class LegacyRunnerTransport implements RunnerTransport {
-    readonly kind = "legacy" as const;
-    private streams?: DownstreamStreamsConfig;
-
-    constructor(
-        private readonly upstreams: PassThroughStreamsConfig,
-        private readonly communicationHandler: ICommunicationHandler
-    ) {}
-
-    async connect({ streams }: RunnerTransportConnectOptions): Promise<void> {
-        this.streams = streams;
-        this.communicationHandler.hookUpstreamStreams(this.upstreams);
-        this.communicationHandler.hookDownstreamStreams(streams);
-        this.communicationHandler.pipeStdio();
-        this.communicationHandler.pipeMessageStreams();
-        this.communicationHandler.pipeDataStreams();
-
-        streams[CC.REQUESTS]?.end();
-    }
-
-    async disconnect(): Promise<void> {
-        if (this.streams) {
-            this.streams[CC.STDOUT].unpipe();
-            this.streams[CC.STDERR].unpipe();
-            this.streams[CC.OUT].unpipe();
-        }
-
-        this.upstreams[CC.STDOUT].unpipe();
-        this.upstreams[CC.STDERR].unpipe();
-        this.upstreams[CC.OUT].unpipe();
-
-        this.streams = undefined;
-    }
-}
 
 export class Verser2RunnerTransport implements RunnerTransport {
     readonly kind = "verser2" as const;

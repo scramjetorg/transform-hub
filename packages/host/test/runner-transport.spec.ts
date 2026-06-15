@@ -9,7 +9,6 @@ import {
 } from "@scramjet/types";
 import {
     createVerser2RunnerBrokerTransport,
-    LegacyRunnerTransport,
     Verser2RunnerBroker,
     Verser2RunnerRouteUnavailableError,
     Verser2RunnerTransport
@@ -72,35 +71,6 @@ function deferred<T = void>(): { promise: Promise<T>; resolve: (value?: T | Prom
 
     return { promise, resolve, reject };
 }
-
-test("LegacyRunnerTransport preserves legacy communication handler wiring order", async t => {
-    const { upstreams, downstreams } = streams();
-    const handler = communicationHandler();
-    const transport = new LegacyRunnerTransport(upstreams, handler);
-
-    await transport.connect({ instanceId: "instance-1", streams: downstreams });
-
-    t.is(transport.kind, "legacy");
-    t.deepEqual(handler.calls, [
-        "hook-upstream",
-        "hook-downstream",
-        "pipe-stdio",
-        "pipe-message",
-        "pipe-data"
-    ]);
-});
-
-test("LegacyRunnerTransport ends retired REQUESTS channel without BPMux", async t => {
-    const { upstreams, downstreams } = streams();
-    const handler = communicationHandler();
-    const transport = new LegacyRunnerTransport(upstreams, handler);
-
-    await transport.connect({ instanceId: "instance-1", streams: downstreams });
-
-    t.true((downstreams[CC.REQUESTS] as PassThrough).writableEnded);
-
-    await transport.disconnect();
-});
 
 test("createVerser2ClientTlsOptions rejects partial PEM identity", t => {
     t.throws(() => createVerser2ClientTlsOptions({ certFile: "/safe/cert.pem" }), {

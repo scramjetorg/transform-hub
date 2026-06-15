@@ -39,7 +39,6 @@ test("default STH connectivity selects verser2 route roles", t => {
     const config = new ConfigService().getConfig();
 
     t.true(config.verser2.enabled);
-    t.is(config.verser2.migrationMode, "verser2");
     t.is(config.verser2.hostUrl, "https://127.0.0.1:2443");
     t.is(config.verser2.runnerHost?.enabled, true);
     t.true(config.verser2.runnerHost!.identityDir.endsWith(".scramjet/verser2-runner-host"));
@@ -62,7 +61,6 @@ test("getConfigInfo masks public verser2 client secrets", t => {
         },
         verser2: {
             enabled: true,
-            migrationMode: "verser2",
             hostUrl: "https://manager.example.test:8443",
             runnerHost: {
                 enabled: true,

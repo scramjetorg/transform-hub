@@ -32,12 +32,11 @@ export function getRunnerTransportEnv(
 
     if (
         !sthConfig.verser2.enabled ||
-        sthConfig.verser2.migrationMode !== "verser2" ||
         !runnerHost?.enabled ||
         !runnerHost.host.publicUrl.trim() ||
         !trustBundle
     ) {
-        return { SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }) };
+        throw new Error("STH-local verser2 runner Host configuration is required");
     }
 
     return {

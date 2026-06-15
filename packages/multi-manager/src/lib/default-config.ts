@@ -5,7 +5,6 @@ import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-
 
 const defaultVerser2Config: ManagerVerser2Config = {
     enabled: true,
-    migrationMode: "verser2",
     host: {
         identityDir: join(homedir(), ".scramjet", "verser2-multimanager-host"),
         bindHost: "0.0.0.0",

@@ -6,7 +6,7 @@ import { AddressInfo, Socket } from "net";
 import { Duplex, Readable } from "stream";
 import { constants } from "os";
 
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 import {
     APIExpose,
@@ -48,8 +48,6 @@ import { inspect } from "util";
 import { Auditor } from "./auditor";
 
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
-import { SocketServer } from "./socket-server";
-
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
@@ -137,8 +135,6 @@ export class Host implements IHost, IComponent {
     instanceBase: string;
 
     topicsBase: string;
-
-    socketServer: SocketServer;
 
     /**
      * Instance of CPMConnector used to communicate with Manager.
@@ -236,11 +232,10 @@ export class Host implements IHost, IComponent {
      * Sets used modules with provided configuration.
      *
      * @param {APIExpose} apiServer Server to attach API to.
-     * @param {SocketServer} socketServer Server to listen for connections from Instances.
      * @param {STHConfiguration} sthConfig Configuration.
      */
     // eslint-disable-next-line complexity
-    constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
+    constructor(apiServer: APIExpose, sthConfig: STHConfiguration) {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
         this.sequenceStore = new SequenceStore();
@@ -310,9 +305,6 @@ export class Host implements IHost, IComponent {
             fsPaths: [...new Set(fsPaths)]
         }));
         this.loadCheck.logger.pipe(this.logger);
-
-        this.socketServer = socketServer;
-        this.socketServer.logger.pipe(this.logger);
 
         this.api = apiServer;
         this.apiHandler = new HostAPIHandler(this.api, this, version, this.build);
@@ -834,9 +826,6 @@ export class Host implements IHost, IComponent {
 
         this.pushTelemetry("Host started");
 
-        await this.socketServer.start();
-
-        this.attachListeners();
         new HostAPIHandler(this.api, this, version, this.build).attach();
 
         await this.startListening();
@@ -1362,38 +1351,6 @@ export class Host implements IHost, IComponent {
         }
     }
 
-    /**
-     * Sets listener for connections to socket server.
-     */
-    private attachListeners() {
-        this.socketServer.on("connect", async (id, streams) => {
-            this.logger.debug("Instance connecting", id);
-
-            let instance = this.instancesStore.get(id);
-
-            if (!instance) {
-                this.logger.info("Creating new CSIController for unknown Instance");
-
-                instance = await this.csiDispatcher.createCSIController(
-                    id,
-                    {} as SequenceInfo,
-                    {} as STHRestAPI.StartSequencePayload,
-                    new CommunicationHandler(),
-                    this.config,
-                    this.instanceProxy
-                );
-
-                await instance.handleInstanceConnect(streams);
-            } else {
-                this.logger.info("Instance already exists", id);
-
-                await instance.handleInstanceReconnect(
-                    streams
-                );
-            }
-        });
-    }
-
     async eventBus(event: EventMessageData & { source: InstanceId, sourceHost?: string }): Promise<void> {
         this.logger.debug("Got event", event);
 
@@ -1577,17 +1534,6 @@ export class Host implements IHost, IComponent {
                 .close();
         });
 
-        this.logger.trace("Stopping socket server");
-
-        await new Promise<void>((res, _rej) => {
-            this.socketServer.server
-                ?.once("close", () => {
-                    this.logger.info("Socket server stopped.");
-
-                    res();
-                })
-                .close();
-        });
     }
 
     /**

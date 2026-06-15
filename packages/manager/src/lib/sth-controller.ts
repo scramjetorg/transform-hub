@@ -21,11 +21,8 @@ import { CPMMessageCode } from "@scramjet/symbols";
 import { StringStream } from "scramjet";
 import { configService } from "@scramjet/manager-config";
 
-import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { TypedEmitter, defer } from "@scramjet/utility";
-import { HostClient } from "@scramjet/api-client";
-import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { ManagerSthBrokerTransport } from "./verser2-transport";
 
 export type STHControllerVerser2Options = {
@@ -51,7 +48,6 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     description?: string;
     tags: string[] = [];
 
-    verserConnection?: VerserConnection;
     communicationStream?: StringStream;
     communicationChannel?: Duplex;
     logStream?: Readable;
@@ -101,48 +97,31 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     networkInterfaces: NetworkInfo[] = [];
     logger: IObjectLogger;
 
-    private _hostClient?: HostClient;
-
-    get hostClient() {
-        return this._hostClient;
-    }
-
     private load?: LoadCheckStatMessage;
     private loadTimeout?: NodeJS.Timeout;
     private readonly config: ManagerConfiguration;
 
     auditStream?: Readable;
     private auditStreamRequest?: Writable;
-    private readonly verser2?: STHControllerVerser2Options;
+    private readonly verser2: STHControllerVerser2Options;
 
     get accessKey() {
-        if (!this.verserConnection) {
-            return this.verser2?.accessKey || "";
-        }
-
-        const accessKeyHeader = this.verserConnection.getHeader("x-self-hosted") as string || "";
-        const daughterKeyId = accessKeyHeader.length >= 32 ? accessKeyHeader.substring(16, 32) : undefined;
-
-        return daughterKeyId || "";
+        return this.verser2.accessKey || "";
     }
 
-    constructor(id: string, verserConnection?: VerserConnection, verser2?: STHControllerVerser2Options) {
+    constructor(id: string, verser2: STHControllerVerser2Options) {
         super();
 
-        const tags = verserConnection?.getHeader("x-sth-tags") as string | undefined;
-        const description = verserConnection?.getHeader("x-sth-description") as string | undefined;
-
-        this.description = description || verser2?.description;
-        this.tags = tags ? JSON.parse(tags) : verser2?.tags || [];
+        this.description = verser2.description;
+        this.tags = verser2.tags || [];
         this.id = id;
-        this.verserConnection = verserConnection;
         this.verser2 = verser2;
 
         this.config = configService.getConfig();
 
         this.logger = new ObjLogger(this, { id: this.id });
         this.info.created = new Date();
-        this.selfHosted = !!verserConnection?.getHeader("x-self-hosted") || !!verser2?.accessKey;
+        this.selfHosted = !!verser2.accessKey;
     }
     created?: Date | undefined;
     disconnected?: Date | undefined;
@@ -153,15 +132,11 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
 
     async init() {
         this.logger.info("Init");
-        await this.reconnect(this.verserConnection);
+        await this.reconnect();
     }
 
     get isConnectionActive() {
-        if (this.verserConnection) {
-            return !this.verserConnection.socket.destroyed;
-        }
-
-        return this.verser2 ? this.verser2.brokerTransport.isRouteReady(this.verser2.routeDomain) : false;
+        return this.verser2.brokerTransport.isRouteReady(this.verser2.routeDomain);
     }
 
     disconnectAuditStream() {
@@ -222,63 +197,13 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.hookupStream();
     }
 
-    async reconnect(verserConnection?: VerserConnection) {
+    async reconnect() {
         this.logger.info("STH CONTROLLER RECONNECT");
-        if (verserConnection) {
-            this.verserConnection = verserConnection;
-        }
-
         this.healthy = true;
 
         this.startLoadTimeout();
-        if (!this.verserConnection) {
-            if (this.verser2) {
-                await this.connectVerser2Streams();
-                this.info.lastConnected = new Date();
-                this.main();
-
-                return;
-            }
-
-            this.info.lastConnected = new Date();
-            return;
-        }
-
-        this.verserConnection.connect();
-
-        this.logger.info("Requesting /platform and /logs");
-
-        this._hostClient = new HostClient("http://host/api/v1", new ClientUtilsCustomAgent("http://host/api/v1", this.verserConnection.getAgent()));
-
-        const [{ incomingMessage: upstream, clientRequest: downstream }, logRequest] = await Promise.all([
-            this.verserConnection.makeRequest({ method: "POST", path: "/api/v1/platform", headers: { "Content-Type": "application/x-ndjson" } }),
-            this.verserConnection.makeRequest({ path: "/api/v1/log", headers: { "Content-Type": "application/x-ndjson" } }),
-        ]);
-
-        handleConnResetErrors(upstream, (err: Error) => this.logger.warn("CC upstream", err.message));
-        handleConnResetErrors(downstream, (err: Error) => this.logger.warn("CC downstream", err.message));
-        handleConnResetErrors(logRequest.incomingMessage, (err: Error) => this.logger.warn("Log upstream", err.message));
-
-        this.communicationChannel = upstream as unknown as Duplex;//new PassThrough().resume();
-        this.communicationStream = new StringStream();
-
-        this.communicationStream
-            .pipe(downstream);
-
-        this.logStream = StringStream
-            .from(logRequest.incomingMessage)
-            .JSONParse()
-            .catch((e: any) => {
-                if (e.message !== "aborted")
-                    this.logger.error("Log stream error", e);
-            })
-            .resume();
-
-        // Uncomment to see Host Logs in STHController Logs
-        // this.logStream.pipe(this.logger.inputLogStream);
-
+        await this.connectVerser2Streams();
         this.info.lastConnected = new Date();
-
         this.main();
     }
 
@@ -347,37 +272,6 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.logger.debug("Hooking up stream");
 
         this._verserErrorAbort = false;
-        if (!this.verserConnection) {
-            return;
-        }
-
-        this.verserConnection.socket
-            .on("end", () => {
-                this.info.lastDisconnected = new Date();
-
-                // TODO: killing STH while active BPMux items are active kills CPM.
-                this.communicationStream?.end();
-                this.verserConnection!.socket.emit("close", true);
-                this.logger.trace("STH connection ended", this.id);
-            })
-            .on("error", (err: any) => {
-                this.info.lastDisconnected = new Date();
-                if (err.code !== "ECONNRESET") {
-                    this._verserErrorAbort = true;
-                    this.logger.trace("STH connection threw", this.id, err);
-                }
-            })
-            .on("close", (emit?: boolean) => {
-                this.info.lastDisconnected = new Date();
-                this.verserConnection!.socket.destroy();
-                this.logger.warn("STH connection closed", this.id, emit);
-                this.disconnected = new Date();
-                this.emit("disconnected");
-
-                this.auditStream = undefined;
-                this.auditStreamRequest = undefined;
-            });
-
 
         StringStream.from(this.communicationChannel!)
             .catch((error: any) => {
@@ -484,27 +378,19 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     }
 
     private async makeSthRequest(method: string, path: string, headers: Record<string, string>): Promise<{ incomingMessage: Readable; clientRequest: Writable }> {
-        if (this.verser2) {
-            const clientRequest = new PassThrough();
-            const response = await this.verser2.brokerTransport.request({
-                domain: this.verser2.routeDomain,
-                method,
-                path,
-                headers,
-                body: method === "GET" ? undefined : clientRequest
-            });
+        const clientRequest = new PassThrough();
+        const response = await this.verser2.brokerTransport.request({
+            domain: this.verser2.routeDomain,
+            method,
+            path,
+            headers,
+            body: method === "GET" ? undefined : clientRequest
+        });
 
-            return {
-                incomingMessage: response.body,
-                clientRequest
-            };
-        }
-
-        if (this.verserConnection) {
-            return this.verserConnection.makeRequest({ method, path, headers });
-        }
-
-        throw new Error("No transport available for STH request — need verser2 broker or legacy verser connection");
+        return {
+            incomingMessage: response.body,
+            clientRequest
+        };
     }
 
     async askToReconnect() {
@@ -540,7 +426,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         if (reason !== "disconnected") {
-            this.verserConnection?.close();
+            this.communicationChannel?.destroy();
         }
     }
 

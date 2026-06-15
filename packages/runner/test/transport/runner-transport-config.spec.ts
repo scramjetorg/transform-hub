@@ -39,14 +39,13 @@ test("throws when envValue is whitespace only", t => {
     t.regex(err!.message, /SCRAMJET_RUNNER_TRANSPORT_CONFIG is required/);
 });
 
-// ---------------------------------------------------------------------------
-// Explicit kind "legacy" => legacy
-// ---------------------------------------------------------------------------
+test("rejects retired raw socket transport kind", t => {
+    const err = t.throws<Error>(() => {
+        parseRunnerTransportConfig(TEST_ID, JSON.stringify({ kind: "retired-raw-socket" }));
+    });
 
-test("returns legacy when kind is explicitly 'legacy'", t => {
-    const result = parseRunnerTransportConfig(TEST_ID, JSON.stringify({ kind: "legacy" }));
-
-    t.is(result.kind, "legacy");
+    t.truthy(err);
+    t.regex(err!.message, /unknown kind/);
 });
 
 test("throws when JSON object has no kind", t => {
@@ -269,7 +268,7 @@ test("throws on unknown kind", t => {
 
 test("throws when instanceId is empty", t => {
     const err = t.throws<Error>(() => {
-        parseRunnerTransportConfig("", JSON.stringify({ kind: "legacy" }));
+        parseRunnerTransportConfig("", JSON.stringify({ kind: "verser2", hostUrl: "https://verser2.example.com" }));
     });
 
     t.truthy(err);

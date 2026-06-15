@@ -387,7 +387,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     private usesSthLocalRunnerVerser2Transport(): boolean {
         return !!(
             this.STHConfig.verser2.enabled &&
-            this.STHConfig.verser2.migrationMode === "verser2" &&
             this.STHConfig.verser2.runnerHost?.enabled &&
             this.runnerBrokerProvider?.()
         );

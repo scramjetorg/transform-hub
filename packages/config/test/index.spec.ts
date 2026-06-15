@@ -168,7 +168,6 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
         defaults: {
             verser2: {
                 enabled: false,
-                migrationMode: "legacy",
                 hostUrl: "",
                 runnerHost: {
                     enabled: false,
@@ -200,7 +199,6 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
         },
         cli: {
             verser2Enabled: true,
-            verser2MigrationMode: "dual",
             verser2CaFile: "/ca/from-cli.pem",
             verser2RunnerHostEnabled: true,
             verser2RunnerHostCertFile: "/safe/runner.crt",
@@ -214,7 +212,6 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
     });
 
     t.true(loaded.config.verser2.enabled);
-    t.is(loaded.config.verser2.migrationMode, "dual");
     t.is(loaded.config.verser2.hostUrl, "https://manager.example:2443");
     t.is(loaded.config.verser2.runnerHost?.enabled, true);
     t.is(loaded.config.verser2.runnerHost?.host.publicUrl, "https://sth-local.example:2444");
@@ -230,7 +227,6 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
 test("verser2 schema requires usable routed config in verser2 mode", t => {
     const error = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
         enabled: true,
-        migrationMode: "verser2",
         hostUrl: "",
         broker: { peerId: "", targetDomain: "" },
         guest: { peerId: "", routeDomain: "" },
@@ -253,7 +249,6 @@ test("verser2 schema requires usable routed config in verser2 mode", t => {
 test("verser2 schema requires PEM cert and key together", t => {
     const certOnly = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
         enabled: false,
-        migrationMode: "legacy",
         hostUrl: "",
         broker: { peerId: "", targetDomain: "" },
         guest: { peerId: "", routeDomain: "" },
@@ -264,7 +259,6 @@ test("verser2 schema requires PEM cert and key together", t => {
     }));
     const keyOnly = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
         enabled: false,
-        migrationMode: "legacy",
         hostUrl: "",
         broker: { peerId: "", targetDomain: "" },
         guest: { peerId: "", routeDomain: "" },
@@ -276,20 +270,4 @@ test("verser2 schema requires PEM cert and key together", t => {
 
     t.is((certOnly as z.ZodError).issues[0].path.join("."), "tls.keyFile");
     t.is((keyOnly as z.ZodError).issues[0].path.join("."), "tls.certFile");
-});
-
-test("verser2 schema rejects invalid migration mode", t => {
-    const error = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
-        enabled: true,
-        migrationMode: "invalid",
-        hostUrl: "https://manager.example:2443",
-        broker: { peerId: "sth.a.broker", targetDomain: "manager.a.scramjet.internal" },
-        guest: { peerId: "sth.a.guest", routeDomain: "sth.a.scramjet.internal" },
-        tls: {},
-        enrollment: {},
-        timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
-        leases: { minimumWaitingLeases: 1 }
-    }));
-
-    t.true(error instanceof z.ZodError);
 });
