@@ -72,9 +72,12 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/adapter-kubernetes/` | Kubernetes adapter package for sequence storage, runner pod execution, CLI/config augmentation, and client initialization. | [View Map](packages/adapter-kubernetes/codemap.md) |
 | `packages/adapter-kubernetes/src/` | Kubernetes sequence persistence, runner pod lifecycle management, config decoding, and Kubernetes client access. | [View Map](packages/adapter-kubernetes/src/codemap.md) |
 | `packages/adapter-process/` | Process adapter runtime package bridging host-side adapter contracts to process-based execution and packaging. | [View Map](packages/adapter-process/codemap.md) |
+| `packages/api-server/` | HTTP API server package for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. | [View Map](packages/api-server/codemap.md) |
 | `packages/api-server/src/` | API server runtime surface for request routing, middleware wrapping, forwarding, and HTTP/HTTPS server setup. | [View Map](packages/api-server/src/codemap.md) |
 | `packages/host/src/lib/` | Shared host-side library code for service discovery and low-level utilities. | [View Map](packages/host/src/lib/codemap.md) |
 | `packages/utility/src/file/` | File abstraction helpers that choose concrete file implementations by extension. | [View Map](packages/utility/src/file/codemap.md) |
+| `packages/verser/` | Legacy CONNECT/BPMux reverse-server connectivity package targeted for removal from active paths by the verser2 rollout. | [View Map](packages/verser/codemap.md) |
+| `bdd/` | Cucumber BDD smoke and end-to-end validation workspace for CLI, hub, Manager, instance API, runtime, and streaming behavior. | [View Map](bdd/codemap.md) |
 
 ## Runtime Wrapper Implementation Flow
 
