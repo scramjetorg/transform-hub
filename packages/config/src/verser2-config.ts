@@ -21,6 +21,7 @@ export const managerVerser2ConfigSchema = z.object({
         bindPort: z.number().int().nonnegative(),
         publicUrl: z.string(),
         tls: z.object({
+            caFile: optionalFileSchema,
             certFile: optionalFileSchema,
             keyFile: optionalFileSchema,
             pfxFile: optionalFileSchema,
@@ -153,6 +154,7 @@ export const managerVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2HostBindHost", flag: "verser2-host-bind-host", path: managerPath("host.bindHost"), env: "SCRAMJET_VERSER2_HOST_BIND_HOST", type: "string", description: "verser2 Host bind address" },
     { name: "verser2HostBindPort", flag: "verser2-host-bind-port", path: managerPath("host.bindPort"), env: "SCRAMJET_VERSER2_HOST_BIND_PORT", type: "number", description: "verser2 Host bind port" },
     { name: "verser2HostPublicUrl", flag: "verser2-host-public-url", path: managerPath("host.publicUrl"), env: "SCRAMJET_VERSER2_HOST_PUBLIC_URL", type: "string", description: "Public TLS URL for verser2 peers" },
+    { name: "verser2HostCaFile", flag: "verser2-host-ca-file", path: managerPath("host.tls.caFile"), env: "SCRAMJET_VERSER2_HOST_CA_FILE", type: "string", description: "Public CA/trust bundle file for the verser2 Host" },
     { name: "verser2HostCertFile", flag: "verser2-host-cert-file", path: managerPath("host.tls.certFile"), env: "SCRAMJET_VERSER2_HOST_CERT_FILE", type: "string", description: "verser2 Host TLS certificate file" },
     { name: "verser2HostKeyFile", flag: "verser2-host-key-file", path: managerPath("host.tls.keyFile"), env: "SCRAMJET_VERSER2_HOST_KEY_FILE", type: "string", description: "verser2 Host TLS private key file", secret: true },
     { name: "verser2HostPfxFile", flag: "verser2-host-pfx-file", path: managerPath("host.tls.pfxFile"), env: "SCRAMJET_VERSER2_HOST_PFX_FILE", type: "string", description: "verser2 Host PFX/PKCS12 file", secret: true },

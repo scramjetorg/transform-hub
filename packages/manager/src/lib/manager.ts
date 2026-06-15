@@ -43,6 +43,7 @@ import { Client as MinioClient } from "minio";
 import * as fs from "fs/promises";
 import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "./utils";
 import { homedir } from "os";
+import { getManagerVerser2TrustExport } from "./verser2-trust-export";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -219,6 +220,7 @@ export class Manager implements IComponent {
         );
 
         this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.publicConfig }));
+        this._apiRouter.get(`${apiBase}/verser2/trust`, () => getManagerVerser2TrustExport(this.config));
         this._apiRouter.get(`${apiBase}/list`, (req:ParsedMessage): MRestAPI.GetListResponse => {
             let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
             let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;

@@ -24,6 +24,7 @@ import { MultiManagerConfig } from "../config/multi-manager-configuration";
 import { MonitoringServer } from "@scramjet/monitoring-server";
 import { createManagerSthLocalBrokerTransport } from "@scramjet/manager";
 import { createVerser2HostOptions } from "./verser2-host-config";
+import { getMultiManagerVerser2TrustExport } from "./verser2-trust-export";
 
 const MANAGER_START_TIMEOUT = 30000;
 
@@ -248,6 +249,15 @@ export class MultiManager {
         );
         this.apiServer.get(`${this.apiBase}/list`, () => this.handleListManagersRequest());
         this.apiServer.get(`${this.apiBase}/health`, () => this.healthCheck.getHealthCheckInfo());
+        this.apiServer.get(`${this.apiBase}/verser2/trust/:id?`, (req: ParsedMessage) => {
+            const manager = req.params?.id ? this.managersStore.getById(req.params.id) : undefined;
+
+            if (req.params?.id && !manager) {
+                throw new Error(`Manager ${req.params.id} not found`);
+            }
+
+            return getMultiManagerVerser2TrustExport(this.config.verser2, manager?.config);
+        });
 
         this.apiServer.op("post", `${this.apiBase}/start`, (req) => this.handleStartManagerRequest(req));
         this.apiServer.op(

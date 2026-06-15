@@ -8,6 +8,7 @@ export type Verser2TlsFilesConfig = {
 };
 
 export type Verser2HostTlsConfig = Verser2TlsFilesConfig & {
+    caFile?: string;
     clientAuthCaFile?: string;
     mtlsRequired: boolean;
 };
