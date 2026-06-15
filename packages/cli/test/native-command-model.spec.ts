@@ -59,6 +59,19 @@ test("native command model keeps option values out of positional args", t => {
     t.deepEqual(context.options, { configFile: "config.json", args: "[1]" });
 });
 
+test("native command model treats dash placeholder as positional arg", t => {
+    const root = cmd("si", b => b.children(
+        cmd("sequence", sequence => sequence.children(
+            cmd("start", start => start.argument("<id>"))
+        ))
+    ));
+
+    const resolved = resolveCommandPath(["sequence", "start", "-"], root);
+    const context = parseCommandContext(resolved);
+
+    t.deepEqual(context.args, ["-"]);
+});
+
 test("native command model parses negated boolean options", t => {
     const root = cmd("si", b => b.children(
         cmd("util", util => util.children(

@@ -287,12 +287,18 @@
     - [x] Avoid production reliance on direct/test-only dispatch paths that buffer full responses and enforce `maxResponseBytes`.
         - The production API forwarding path remains streaming (`req` as body and `response.body.pipe(res)`); buffered dispatch remains confined to package-level tests and published runtime helper direct-dispatch utilities.
         - Validation passed: `npm test -- test/routed-forward.spec.ts` and `npm run build` in `packages/api-server`; `npm exec -- ava test/csi-rpc-forwarding.spec.ts` and `npm run build` in `packages/host`.
-- [ ] Task: Run automated reviews and validation for Phase 3
-    - [ ] Run targeted hub connectivity tests for Manager/STH plus runner paths.
-    - [ ] Run local package tests for runner, runner-node, runner-python, runner-bun, host, and api-server as changed.
-    - [ ] Run `npm run check:runtime-invariants` when runtime protocol wiring changes.
-    - [ ] Run relevant BDD smoke tests for Node, Python, API, and Bun if available.
-    - [ ] Complete automated cross-runtime parity, API streaming, lease lifecycle, route readiness, and lifecycle reviews.
+- [~] Task: Run automated reviews and validation for Phase 3
+    - [x] Run targeted hub connectivity tests for Manager/STH plus runner paths.
+    - [x] Run local package tests for runner, runner-node, runner-python, runner-bun, host, and api-server as changed.
+    - [x] Run `npm run check:runtime-invariants` when runtime protocol wiring changes.
+    - [~] Run relevant BDD smoke tests for Node, Python, API, and Bun if available.
+        - Validation hardening while running BDD: fixed STH CLI omitted-tags startup crash, fixed native CLI boolean parsing that set absent booleans to `true` and incorrectly enabled `strictPlatformConnection`, fixed native command-model handling for `-` placeholder positional arguments, and fixed runner-node terminal STOP so final non-keepAlive STOP interrupts the runtime without emitting `SEQUENCE_COMPLETED`.
+        - Guarded validations passed: `npm run check:runtime-invariants`; runner AVA transport/config suites; full `npm test` in `packages/runner-node`; `npm test` in `packages/runner-python`; `npm test` in `packages/runner-bun`; `npm test -- test/routed-forward.spec.ts` and `npm run build` in `packages/api-server`; host focused forwarding/runner tests; `npm run build:packages`; config AVA tests; native CLI command-model AVA test file.
+        - BDD node smoke now starts the Host and passes the Node runtime lifecycle scenarios, including STOP/KILL; remaining failure is an existing fixture path mismatch in E2E-016 (`../packages/js-bad-sequence.tar.gz` is requested but the archive exists under `../refapps/`).
+        - BDD API smoke was partially rechecked: the first failing scenario now gets past `seq start -`; remaining failure is a scenario trying to kill an instance that already completed (`400 Instance not running`). Full API smoke attempt exceeded the local 180s validation timeout after multiple scenario failures, so it remains unresolved and is not counted as passed.
+    - [x] Complete automated cross-runtime parity, API streaming, lease lifecycle, route readiness, and lifecycle reviews.
+        - Oracle review found no remaining blockers for pending connect/replacement lease cleanup after route-cancellation fixes.
+        - Oracle reviewed the runner-node STOP lifecycle BDD failure and recommended the terminal STOP interruption path now implemented and covered by lifecycle/runtime-entry tests.
     - [ ] If a verser2 limitation blocks safe implementation, halt and produce upstream verser2 change report.
 - [ ] Task: Fix skipped package validation suites before final phase
     - [ ] Fix `@scramjet/api-server` AVA memory pressure so its package tests can run under the standard serial package validation without OOM; investigate heavy `test/rest-methods.spec.ts`, `test/server.spec.ts`, and `test/stream-methods.spec.ts` workers.

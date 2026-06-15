@@ -124,7 +124,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         configService.update({ runnerEnvs: processCommanderRunnerEnvs(options.runnerEnvs) });
     }
 
-    if (options.tags.length) {
+    if (options.tags?.length) {
         configService.update({ tags: options.tags.split(",") });
     }
 

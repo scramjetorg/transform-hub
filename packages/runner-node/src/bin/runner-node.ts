@@ -254,6 +254,10 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         onExit: (code) => {
             exitCode = code;
         },
+        onTerminalStop: () => {
+            terminalStop = true;
+            resolveTerminalStop();
+        },
     });
 
     lifecycleRef.current = lifecycle;
@@ -262,6 +266,12 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     let resolveKilled!: () => void;
     const killedPromise = new Promise<void>(resolve => {
         resolveKilled = resolve;
+    });
+
+    let terminalStop = false;
+    let resolveTerminalStop!: () => void;
+    const terminalStopPromise = new Promise<void>(resolve => {
+        resolveTerminalStop = resolve;
     });
 
     wireControlStream(streams.controlIn, {
@@ -285,11 +295,14 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             logger,
         });
 
-        await Promise.race([sequenceRun, killedPromise]);
+        await Promise.race([sequenceRun, killedPromise, terminalStopPromise]);
 
         if (killed) {
             logger.warn("Sequence execution interrupted by KILL");
             sequenceRun.catch(error => logger.debug("Sequence rejected after KILL", error));
+        } else if (terminalStop) {
+            logger.info("Sequence execution interrupted by terminal STOP");
+            sequenceRun.catch(error => logger.debug("Sequence rejected after terminal STOP", error));
         } else {
             await sequenceRun;
 
@@ -337,6 +350,7 @@ if (require.main === module) {
     bootstrap()
         .then(code => {
             process.exitCode = code;
+            process.exit(code);
         })
         .catch(err => {
             console.error(

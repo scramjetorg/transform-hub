@@ -185,7 +185,7 @@ function formatFlags(option: ConfigOptionDescriptor): string {
         flags.push(option.type === "boolean" ? `--${alias}` : `--${alias} <value>`);
     });
 
-    if (option.negatable !== false && option.type === "boolean") {
+    if (option.negatable !== false && option.type === "boolean" && option.defaultValue !== undefined) {
         flags.push(`--no-${option.name}`);
     }
 
@@ -195,7 +195,7 @@ function formatFlags(option: ConfigOptionDescriptor): string {
 function optionConfig(option: ConfigOptionDescriptor): Record<string, unknown> {
     const config: Record<string, unknown> = {};
 
-    if (option.type === "boolean") config.default = option.defaultValue;
+    if (option.type === "boolean" && option.defaultValue !== undefined) config.default = option.defaultValue;
     if (option.type === "number") config.type = Number;
     if (option.type === "number[]") config.type = [Number];
     if (option.type === "string" || option.type === "json") config.type = String;

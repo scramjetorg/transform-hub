@@ -106,6 +106,42 @@ test("parses cli options without exposing parser types", t => {
     });
 });
 
+test("parses boolean cli options — absent without default omitted", t => {
+    const parsed = parseCliOptions({
+        argv: ["node", "script"],
+        options: [{ name: "enabled", type: "boolean" }]
+    });
+
+    t.false("enabled" in parsed);
+});
+
+test("parses boolean cli options — explicit flag sets true", t => {
+    const parsed = parseCliOptions({
+        argv: ["node", "script", "--enabled"],
+        options: [{ name: "enabled", type: "boolean" }]
+    });
+
+    t.true(parsed.enabled);
+});
+
+test("parses boolean cli options — absent with explicit default uses default", t => {
+    const parsed = parseCliOptions({
+        argv: ["node", "script"],
+        options: [{ name: "enabled", type: "boolean", defaultValue: true }]
+    });
+
+    t.true(parsed.enabled);
+});
+
+test("parses boolean cli options — --no-flag sets false when default present", t => {
+    const parsed = parseCliOptions({
+        argv: ["node", "script", "--no-enabled"],
+        options: [{ name: "enabled", type: "boolean", defaultValue: true }]
+    });
+
+    t.false(parsed.enabled);
+});
+
 test("supports compatibility aliases before validation", t => {
     const loaded = loadConfig<z.infer<typeof schema>>({
         schema,

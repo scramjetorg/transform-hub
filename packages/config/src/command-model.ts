@@ -155,7 +155,7 @@ export function parseCommandContext(
         const option = allOptions.find(candidate => optionTokens(candidate).includes(optionName));
 
         if (!option) {
-            if (!token.startsWith("-")) positionalTokens.push(token);
+            if (token === "-" || !token.startsWith("-")) positionalTokens.push(token);
             return;
         }
 
