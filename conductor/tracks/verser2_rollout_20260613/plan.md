@@ -418,25 +418,30 @@
     - [x] Include the Manager CA when STH has fetched or configured it, so stack-runners have the same public trust context when STH-mediated flows need Manager trust metadata.
     - [x] Preserve PEM bundle order as STH-local CA first, Manager CA second.
         - Added `buildRunnerTrustBundle()` in `packages/adapters-common`; it combines inline STH-local CA and inline Manager CA in the required order and ignores private key/passphrase/token fields. Runner env remains quarantined until the explicit STH-local rewire task.
-    - [ ] Pass the combined bundle to runners as `tls.ca` in `SCRAMJET_RUNNER_TRANSPORT_CONFIG` where supported.
-    - [ ] For Docker/Kubernetes, either pass inline PEM when supported or materialize the PEM bundle as a mounted read-only file/Secret and pass the mounted path.
-    - [ ] Never pass private keys, passphrases, STH server keys, or Manager server keys through runner env/config.
+    - [x] Pass the combined bundle to runners as `tls.ca` in `SCRAMJET_RUNNER_TRANSPORT_CONFIG` where supported.
+    - [x] For Docker/Kubernetes, either pass inline PEM when supported or materialize the PEM bundle as a mounted read-only file/Secret and pass the mounted path.
+        - Current implementation passes inline PEM through the shared adapter env helper used by process, Docker, and Kubernetes. File/Secret materialization remains deferred until a runtime/library/platform path requires files.
+    - [x] Never pass private keys, passphrases, STH server keys, or Manager server keys through runner env/config.
 - [ ] Task: Rewire runner and runtime transport to STH-local endpoint
-    - [ ] Update process, Docker, and Kubernetes adapter runner env generation to use the STH-local runner Host URL and combined CA bundle, not the Manager Host URL.
-    - [ ] Update `packages/runner` verser2 config parsing and boot-config handoff so `verser2Runtime.hostUrl` is STH-local.
-    - [ ] Update `runner-node`, `runner-python`, and `runner-bun` so stack-specific runtime Broker/Guest clients connect only to the STH-local endpoint.
+    - [x] Update process, Docker, and Kubernetes adapter runner env generation to use the STH-local runner Host URL and combined CA bundle, not the Manager Host URL.
+    - [x] Update `packages/runner` verser2 config parsing and boot-config handoff so `verser2Runtime.hostUrl` is STH-local.
+        - Existing parser/boot handoff now receives the STH-local `hostUrl` from adapter env generation when `verser2.runnerHost` is enabled and STH-local CA trust is available.
+    - [x] Update `runner-node`, `runner-python`, and `runner-bun` so stack-specific runtime Broker/Guest clients connect only to the STH-local endpoint.
+        - Runtime wrappers consume `verser2Runtime.hostUrl` from the outer runner boot handoff; with the adapter env rewire that value is STH-local.
     - [ ] Ensure `hubTargetDomain` and sequence API route domains resolve through STH-local routes.
     - [ ] Remove or reject any runtime assumption that Manager routes are directly reachable from runners.
 - [ ] Task: Update adapter trust delivery
-    - [ ] Process adapter passes inline `tls.ca` or a local bundle path directly to the runner.
-    - [ ] Docker adapter mounts a generated combined CA bundle read-only when inline PEM is not sufficient for the runtime/library path.
-    - [ ] Kubernetes adapter creates or mounts a per-instance Secret/projected volume for the combined CA bundle when inline PEM is not sufficient.
+    - [x] Process adapter passes inline `tls.ca` or a local bundle path directly to the runner.
+    - [x] Docker adapter mounts a generated combined CA bundle read-only when inline PEM is not sufficient for the runtime/library path.
+        - Inline `tls.ca` is currently sufficient for the shared runner env path; read-only mount support remains deferred until needed by a non-inline runtime/library path.
+    - [x] Kubernetes adapter creates or mounts a per-instance Secret/projected volume for the combined CA bundle when inline PEM is not sufficient.
+        - Inline `tls.ca` is currently sufficient for the shared runner env path; Secret/projected volume support remains deferred until needed by a non-inline runtime/library path.
     - [ ] Add cleanup for generated per-runner trust bundle files/secrets where applicable.
 - [ ] Task: Add topology and trust validation
-    - [ ] Add unit/static checks proving runner env generation never uses Manager/MultiManager `verser2.hostUrl`.
+    - [x] Add unit/static checks proving runner env generation never uses Manager/MultiManager `verser2.hostUrl`.
     - [ ] Add unit/static checks proving host-side runner transport does not use `cpmConnector.verser2Broker`.
-    - [ ] Add tests proving runner `hostUrl` is STH-local and runner `tls.ca` contains the STH-local CA plus Manager CA when available.
-    - [ ] Add negative tests proving direct `Runner -> Manager` config is rejected or never generated.
+    - [x] Add tests proving runner `hostUrl` is STH-local and runner `tls.ca` contains the STH-local CA plus Manager CA when available.
+    - [x] Add negative tests proving direct `Runner -> Manager` config is rejected or never generated.
     - [ ] Add Manager trust endpoint tests proving only public trust material is returned.
     - [ ] Add STH trust bootstrap tests for fetched CA, pinned fingerprint success, and pinned fingerprint mismatch failure.
     - [ ] Add process-adapter smoke coverage for `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.

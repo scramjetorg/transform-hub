@@ -27,12 +27,32 @@ export function getRunnerTransportEnv(
     sthConfig: Pick<STHConfiguration, "verser2">,
     instanceId: string
 ): Record<string, string> {
-    void sthConfig;
-    void instanceId;
+    const runnerHost = sthConfig.verser2.runnerHost;
+    const trustBundle = buildRunnerTrustBundle(sthConfig);
 
-    // Quarantined until STH-local runner verser2 Host configuration exists.
-    // The STH Manager/MultiManager hostUrl must never be passed to runners.
-    return { SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }) };
+    if (
+        !sthConfig.verser2.enabled ||
+        sthConfig.verser2.migrationMode !== "verser2" ||
+        !runnerHost?.enabled ||
+        !runnerHost.host.publicUrl.trim() ||
+        !trustBundle
+    ) {
+        return { SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }) };
+    }
+
+    return {
+        SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({
+            kind: "verser2",
+            hostUrl: runnerHost.host.publicUrl,
+            routeDomain: `runner.${instanceId}.scramjet.internal`,
+            guestId: `runner.${instanceId}.guest`,
+            hubBrokerId: `runner.${instanceId}.hub.broker`,
+            hubTargetDomain: sthConfig.verser2.guest.routeDomain,
+            leaseAcquireTimeoutMs: sthConfig.verser2.timeouts.leaseAcquireMs,
+            minWaitingStreams: sthConfig.verser2.leases.minimumWaitingLeases,
+            tls: { ca: trustBundle }
+        })
+    };
 }
 
 /**
