@@ -326,7 +326,7 @@
     - [x] Switch Node/Python/Bun runtime API connectivity defaults to verser2 Guests and Brokers.
         - Runtime wrappers already consume the runner-provided `verser2Runtime.hostUrl` and `hubTargetDomain`; with STH runnerHost defaults enabled, that runtime Host URL is STH-local by default rather than Manager/MultiManager.
     - Remove or narrow temporary migration flags according to the approved migration window.
-        - Moved to `../old_verser_callsites_removal_20260615/`: this is now handled as part of removing old-way config selection and making verser2 unconditional.
+        - Moved to `../../archive/old_verser_callsites_removal_20260615/`: this is now handled as part of removing old-way config selection and making verser2 unconditional.
 - [x] Task: Remove BPMux from active repository usage
     - [x] Remove `@scramjet/bpmux` dependencies from packages that no longer use it.
         - Removed direct dependencies from `@scramjet/host`, `@scramjet/runner`, `@scramjet/runner-node`, and stale Manager package metadata. The remaining direct dependency is limited to the legacy `@scramjet/verser` workspace and the local `@scramjet/bpmux` workspace until the old-verser removal slice archives/removes them.
@@ -339,24 +339,24 @@
     - [x] Add static check proving no active `@scramjet/bpmux` imports remain.
         - Validation passed: focused Host/runner/runner-node AVA tests, `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`, and `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants` (Guard 7 confirms no new active BPMux or old-verser references outside the migration allowlist).
 - Task: Remove old verser from active repository usage
-    - Moved to `../old_verser_callsites_removal_20260615/`.
+    - Moved to `../../archive/old_verser_callsites_removal_20260615/`.
     - That plan removes active old-verser callsites and dependencies from migrated packages.
     - Note: `packages/verser` is intentionally preserved as a standalone workspace package for external users; it should not be removed or archived from builds.
     - That plan removes old `VerserConnection` shared types, old `VerserClient` CPM connector paths, old `Verser` server paths in MultiManager, and active old-verser/BPMux static traces outside standalone packages.
 - Task: Confirm final verser2 package dependencies
-    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4.
+    - Moved to `../../archive/old_verser_callsites_removal_20260615/` Phase 4.
     - That plan covers final verser2 dependency audit for TypeScript packages, Python `verser2-guest-python`, public API usage, and standalone legacy package dependency ownership.
 - Task: Remove legacy runner socket protocol
-    - Moved to `../old_verser_callsites_removal_20260615/` Phase 2.
+    - Moved to `../../archive/old_verser_callsites_removal_20260615/` Phase 2.
     - That plan removes dead runner socket protocol branches after old-way branch removal confirms no active verser2 topology uses them.
 - Task: Run final automated validation
-    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4.
+    - Moved to `../../archive/old_verser_callsites_removal_20260615/` Phase 4.
     - That plan covers build, runtime invariants, package tests, relevant BDD smoke validation, Python/Bun smoke decisions, and skipped Docker/Kubernetes validation notes.
 - Task: Complete final automated reviews and documentation
-    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4.
+    - Moved to `../../archive/old_verser_callsites_removal_20260615/` Phase 4.
     - That plan covers dependency removal, dead-code, TLS/security, final architecture conformance reviews, docs, and package guidance.
 - Task: Conductor - User Manual Verification 'Default Switch, Legacy Removal, and Final Validation' (Protocol in workflow.md)
-    - Moved to `../old_verser_callsites_removal_20260615/` Phase 4 as the final manual verification gate.
+    - Moved to `../../archive/old_verser_callsites_removal_20260615/` Phase 4 as the final manual verification gate.
 
 ## Phase 5: Post-Completion Runner Topology Correction and Local Trust Bootstrap
 

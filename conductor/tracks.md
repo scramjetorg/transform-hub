@@ -11,8 +11,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [~] **Track: runner-python sequence format parity**
 *Link: [./tracks/runner_python_sequence_format_parity_20260615/](./tracks/runner_python_sequence_format_parity_20260615/)*
-
----
-
-- [x] **Track: Remove legacy old-verser active callsites and old-way configuration**
-*Link: [./tracks/old_verser_callsites_removal_20260615/](./tracks/old_verser_callsites_removal_20260615/)*
