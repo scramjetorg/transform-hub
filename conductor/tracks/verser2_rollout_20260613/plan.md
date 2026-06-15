@@ -378,11 +378,12 @@
     - [x] Preserve explicit legacy runner transport config for old harnesses until the STH-local runner path is complete.
     - [x] Add a static or unit invariant proving runner transport envs are not built from Manager/MultiManager `verser2.hostUrl`.
         - Quarantine implemented by forcing adapter runner env generation to explicit legacy transport until STH-local runner Host configuration exists, disabling synthetic verser2 runner attach, and removing Host reuse of `cpmConnector.verser2Broker` for runner transport. Validation passed: `npm test -- test/runner-transport-env.spec.ts` in `packages/adapters-common`; `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/runner-transport.spec.ts` in `packages/host`; package builds for `packages/adapters-common` and `packages/host`; grep invariant found no `hostUrl: sthConfig.verser2.hostUrl` or `cpmConnector?.verser2Broker` runner wiring.
-- [ ] Task: Define separate Manager and STH trust domains
-    - [ ] Define the Manager-local trust domain: Manager/MultiManager owns a CA/server identity for `STH -> Manager/MultiManager` trust.
-    - [ ] Define the STH-local trust domain: STH owns a CA/server identity for `Runner / Stack-Runner -> STH` trust.
-    - [ ] State that Manager CA and STH-local CA are separate trust roots and must not be treated as one private-key domain.
-    - [ ] State that CA trust proves server identity only; authorization remains token, local-only policy, or future mTLS enrollment.
+- [x] Task: Define separate Manager and STH trust domains
+    - [x] Define the Manager-local trust domain: Manager/MultiManager owns a CA/server identity for `STH -> Manager/MultiManager` trust.
+    - [x] Define the STH-local trust domain: STH owns a CA/server identity for `Runner / Stack-Runner -> STH` trust.
+    - [x] State that Manager CA and STH-local CA are separate trust roots and must not be treated as one private-key domain.
+    - [x] State that CA trust proves server identity only; authorization remains token, local-only policy, or future mTLS enrollment.
+        - Recorded in `architecture.md` and `review-checklist.md`: STH connects upstream to Manager/MultiManager with Manager trust material, while runners and stack-runners connect only to the STH-local Host with STH-generated trust bundles. CA trust is server identity trust, not registration authorization.
 - [ ] Task: Add Manager local CA and trust export plan
     - [ ] Add Manager/MultiManager local CA and server certificate autogeneration for local startup when no explicit verser2 Host TLS identity is configured.
     - [ ] Persist generated CA/server keys securely with restrictive private-key permissions.
