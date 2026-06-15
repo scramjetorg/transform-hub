@@ -64,7 +64,8 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
 import { createSthRunnerVerser2HostOptions, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
-import { createVerser2RunnerBrokerTransport, Verser2RunnerBroker } from "./runner-transport";
+import { Verser2RunnerBroker } from "./runner-transport";
+import { attachSthLocalRunnerVerser2Peers } from "./runner-verser2-host-peers";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
@@ -146,6 +147,7 @@ export class Host implements IHost, IComponent {
 
     runnerVerser2Host?: VerserHost;
     private runnerVerser2Broker?: Verser2RunnerBroker;
+    private runnerVerser2Guest?: { close?: () => Promise<void> };
 
     /**
      * Object to store CSIControllers.
@@ -968,9 +970,15 @@ export class Host implements IHost, IComponent {
 
         if (this.runnerVerser2Host) {
             await this.runnerVerser2Host.start();
-            this.runnerVerser2Broker = createVerser2RunnerBrokerTransport(
-                await this.runnerVerser2Host.attachLocalBroker({ brokerId: runnerHostConfig.localBroker.peerId })
+            const peers = await attachSthLocalRunnerVerser2Peers(
+                this.runnerVerser2Host,
+                runnerHostConfig,
+                this.config.verser2,
+                this.api.server
             );
+
+            this.runnerVerser2Broker = peers.broker;
+            this.runnerVerser2Guest = peers.guest;
             this.logger.info("STH-local runner verser2 Host started", this.runnerVerser2Host.address);
         }
     }
@@ -1542,9 +1550,11 @@ export class Host implements IHost, IComponent {
         if (this.runnerVerser2Host) {
             const host = this.runnerVerser2Host as VerserHost & { stop?: () => Promise<void>; close?: () => Promise<void> };
 
+            await (this.runnerVerser2Guest?.close?.() || Promise.resolve());
             await (host.stop?.() || host.close?.() || Promise.resolve());
             this.runnerVerser2Host = undefined;
             this.runnerVerser2Broker = undefined;
+            this.runnerVerser2Guest = undefined;
         }
 
         this.instancesStore = new InstancesStore();

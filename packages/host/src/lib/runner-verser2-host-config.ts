@@ -21,7 +21,7 @@ export function createSthRunnerVerser2HostOptions(config: STHRunnerVerser2HostCo
 
 export async function resolveSthRunnerVerser2HostConfig(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
     if (hasConfiguredHostIdentity(config)) {
-        return config;
+        return loadConfiguredRunnerHostCa(config);
     }
 
     const identity = await ensureGeneratedSthRunnerVerser2HostIdentity(config);
@@ -38,6 +38,21 @@ export async function resolveSthRunnerVerser2HostConfig(config: STHRunnerVerser2
                 keyFile: identity.keyFile
             }
         }
+    };
+}
+
+async function loadConfiguredRunnerHostCa(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
+    if (config.ca) {
+        return config;
+    }
+
+    if (!config.caFile) {
+        throw new Error("STH-local runner verser2 Host explicit TLS identity requires ca or caFile for runner trust");
+    }
+
+    return {
+        ...config,
+        ca: await readFile(config.caFile, "utf8")
     };
 }
 

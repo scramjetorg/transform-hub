@@ -68,6 +68,7 @@ test("getRunnerTransportEnv emits STH-local verser2 runner transport when trust 
     t.is(parsed.guestId, "runner.inst-42.guest");
     t.is(parsed.hubBrokerId, "runner.inst-42.hub.broker");
     t.is(parsed.hubTargetDomain, "sth.internal");
+    t.not(parsed.hubTargetDomain, baseVerser2.broker.targetDomain);
     t.is(parsed.leaseAcquireTimeoutMs, 2000);
     t.is(parsed.minWaitingStreams, 4);
     t.deepEqual(parsed.tls, { ca: `${sthLocalCa}\n${managerCa}` });

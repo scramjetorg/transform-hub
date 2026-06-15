@@ -142,11 +142,40 @@ test("createSthRunnerVerser2HostOptions authorizes runner fingerprints without M
 
 test("resolveSthRunnerVerser2HostConfig preserves explicitly configured TLS identity", async t => {
     const config = baseConfig();
+
+    config.ca = "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----";
     const resolved = await resolveSthRunnerVerser2HostConfig(config);
 
     t.is(resolved, config);
     t.is(resolved.host.tls.certFile, "/certs/sth-runner.crt");
     t.is(resolved.host.tls.keyFile, "/certs/sth-runner.key");
+});
+
+test("resolveSthRunnerVerser2HostConfig rejects explicit TLS identity without runner trust material", async t => {
+    const config = baseConfig();
+
+    await t.throwsAsync(() => resolveSthRunnerVerser2HostConfig(config), {
+        message: "STH-local runner verser2 Host explicit TLS identity requires ca or caFile for runner trust"
+    });
+});
+
+test("resolveSthRunnerVerser2HostConfig loads configured STH-local CA file for runner trust bundles", async t => {
+    const identityDir = await tempIdentityDir();
+    const config = baseConfig();
+
+    config.caFile = join(identityDir, "runner-ca.pem");
+    await writeFile(config.caFile, "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----", { mode: 0o644 });
+
+    try {
+        const resolved = await resolveSthRunnerVerser2HostConfig(config);
+
+        t.is(resolved.ca, "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----");
+        t.is(resolved.caFile, config.caFile);
+        t.is(resolved.host.tls.certFile, "/certs/sth-runner.crt");
+        t.is(resolved.host.tls.keyFile, "/certs/sth-runner.key");
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
 });
 
 test("resolveSthRunnerVerser2HostConfig generates and persists STH-local CA and server identity", async t => {
