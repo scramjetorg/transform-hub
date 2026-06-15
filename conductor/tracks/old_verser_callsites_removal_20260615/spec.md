@@ -2,7 +2,7 @@
 
 ## Overview
 
-Remove all active runtime callsites, configuration surfaces, tests, and active package dependencies for the legacy `@scramjet/verser` transport and its BPMux-backed active usage. After this track, verser2 is the only supported Manager/STH connectivity implementation in active Host, Manager, and MultiManager runtime code. Legacy `migrationMode`, `dual`, and `legacy` branching must be removed from active configuration and runtime paths rather than retained as compatibility switches.
+Remove all active runtime callsites, configuration surfaces, tests, and active package dependencies for the legacy `@scramjet/verser` transport, its BPMux-backed active usage, and the legacy runner socket protocol paths that become dead after old-way branching is removed. After this track, verser2 is the only supported Manager/STH connectivity implementation in active Host, Manager, and MultiManager runtime code. Legacy `migrationMode`, `dual`, and `legacy` branching must be removed from active configuration and runtime paths rather than retained as compatibility switches.
 
 The standalone `packages/verser` package must remain in the workspace and builds for external users. Its own source, tests, package metadata, and dependency on `@scramjet/bpmux` are intentionally retained. The local `packages/bpmux` workspace also remains because old verser depends on it. Active Host/Manager/MultiManager/types/config code must not depend on either old verser or BPMux.
 
@@ -20,13 +20,15 @@ Chore / Refactor
 6. Make verser2 connectivity unconditional in active Manager/STH/MultiManager runtime code, subject only to valid verser2 transport configuration and startup requirements.
 7. Remove active package dependencies on `@scramjet/verser` and `@scramjet/bpmux` outside the standalone old-verser/BPMux packages.
 8. Clean up tests that model or preserve active old-verser/BPMux behavior; do not leave active tests proving old-verser compatibility outside `packages/verser`.
-9. Add or update transient invariant/static checks while removing active old-verser/BPMux callsites, then remove any transient removal-only invariant/doc-test scaffolding at the end once normal dependency, build, and architecture checks enforce the final state.
-10. Update Conductor rollout notes or related documentation where behavior changes, then remove obsolete documentation that exists only to describe old-verser compatibility.
+9. Remove legacy runner socket protocol code paths that become dead after active old-verser and old-way config branching are removed, including raw channel-index connection logic and raw socket HostClients where no active verser2 topology uses them.
+10. Add or update transient invariant/static checks while removing active old-verser/BPMux/socket callsites, then remove any transient removal-only invariant/doc-test scaffolding at the end once normal dependency, build, and architecture checks enforce the final state.
+11. Complete a final dependency audit for verser2 packages, standalone old-verser/BPMux package preservation, and absence of active old-way dependencies.
+12. Complete final automated reviews, documentation updates, validation, and Conductor manual verification for the resulting verser2-only active topology.
 
 ## Non-Functional Requirements
 
 1. Keep changes incremental and reviewable by package or closely related package group.
-2. Begin each implementation phase with a targeted inventory of remaining old-verser/BPMux code, tests, config, package metadata, and docs for that phase scope.
+2. Begin each implementation phase with a targeted inventory of remaining old-verser/BPMux/socket code, tests, config, package metadata, and docs for that phase scope.
 3. Preserve verser2 topology invariants: `Runner / Stack-Runner -> STH-local verser2 Host -> STH -> Manager/MultiManager`.
 4. Do not introduce direct `Runner -> Manager/MultiManager` connectivity.
 5. Do not weaken TLS, trust, CA bundle, or private-key handling introduced by the verser2 rollout.
@@ -45,8 +47,12 @@ Chore / Refactor
 7. Shared types no longer expose `VerserConnection` fields or method parameters.
 8. `migrationMode`, `legacy`, and `dual` options are removed from active config schemas/descriptors/types, and tests prove old-way configuration cannot select old transport behavior.
 9. Tests that only exercised active legacy old-verser behavior are deleted or rewritten to current verser2 behavior; standalone `packages/verser` and `packages/bpmux` tests remain.
-10. Final validation includes a repository-wide static search proving no active old-verser/BPMux traces remain outside explicitly retained standalone package or historical/archive locations, followed by cleanup of transient old-verser-removal proof scaffolding.
-11. `npm run build:packages`, `npm run check:runtime-invariants`, relevant focused package tests, standalone `packages/verser`/`packages/bpmux` tests, and relevant BDD smoke validation pass or any skipped BDD command is explicitly documented with reason.
+10. Legacy runner socket protocol paths are removed from active runtime code when no active verser2 topology uses them.
+11. Final dependency audit confirms active packages depend only on required public verser2 packages and do not depend on old-verser/BPMux outside standalone `packages/verser` and `packages/bpmux`.
+12. Final validation includes a repository-wide static search proving no active old-verser/BPMux/socket traces remain outside explicitly retained standalone package or historical/archive locations, followed by cleanup of transient old-verser-removal proof scaffolding.
+13. Final automated reviews cover dependency removal, dead code, TLS/security, and architecture conformance.
+14. `npm run build:packages`, `npm run check:runtime-invariants`, relevant focused package tests, standalone `packages/verser`/`packages/bpmux` tests, and relevant BDD smoke validation pass or any skipped BDD command is explicitly documented with reason.
+15. The track ends with Conductor manual verification for the final active topology.
 
 ## Out Of Scope
 
@@ -69,3 +75,5 @@ Chore / Refactor
 9. Package metadata for active packages depending on `@scramjet/verser` or `@scramjet/bpmux`
 10. Tests under Host, Manager, and MultiManager that still model old-verser/BPMux connections
 11. Runtime invariant/static-check scripts and documentation that temporarily mention old-verser/BPMux removal
+12. Legacy runner socket protocol paths and raw socket HostClients that become dead after old-way branch removal
+13. Final dependency audit, automatic review, docs, and validation artifacts inherited from the verser2 rollout cleanup
