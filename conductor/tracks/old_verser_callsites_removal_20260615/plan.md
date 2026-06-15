@@ -2,11 +2,11 @@
 
 ## Phase 1: Identification, Transient TDD Guardrails, and Config Targeting
 
-- [ ] Task: Create implementation branch, plan-start commit, and draft PR
-    - [ ] Create a dedicated implementation branch for this track before code changes.
-    - [ ] Commit the track handoff/plan-start state with a scoped Conductor commit message.
-    - [ ] Push the branch and open a draft PR for the old-verser/BPMux/socket removal track.
-    - [ ] Link the PR in the track notes before continuing implementation.
+- [x] Task: Create implementation branch, plan-start commit, and draft PR
+    - [x] Create a dedicated implementation branch for this track before code changes.
+    - [x] Commit the track handoff/plan-start state with a scoped Conductor commit message.
+    - [x] Push the branch and open a draft PR for the old-verser/BPMux/socket removal track.
+    - [x] Link the PR in the track notes before continuing implementation.
 - [ ] Task: Inventory old-verser, BPMux, and dead socket traces across active code, tests, config, package metadata, and docs
     - [ ] Search active source and tests for `@scramjet/verser`, `@scramjet/bpmux`, `VerserConnection`, `VerserClient`, `new Verser`, `apiVerser`, `verserConnection`, `BPMux`, `SocketServer`, raw channel-index HostClients, `migrationMode`, `legacy`, and `dual`.
     - [ ] Classify each trace as active runtime callsite, active config switch, active compatibility test, package dependency, standalone `packages/verser`/`packages/bpmux` package code/test, dead legacy socket branch, transient invariant/doc proof, or historical/archive.
@@ -124,3 +124,7 @@
     - [ ] Confirm final tests/invariants do not preserve old-verser/BPMux/socket compatibility or temporary removal-only scaffolding.
     - [ ] Commit the scoped Phase 4 changes.
 - [ ] Task: Conductor - User Manual Verification 'Dependency Audit, Final Reviews, Documentation, and Verification' (Protocol in workflow.md)
+
+## Track Notes
+
+- Draft PR: https://github.com/0rail/transform-hub/pull/11
