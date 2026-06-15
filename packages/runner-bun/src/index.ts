@@ -5,5 +5,11 @@ export {
     readBootConfig,
     validateBootConfig,
 } from "./boot-config";
+export {
+    BunSequenceApiExposure,
+    createBunHubFetch,
+    createBunSequenceGuest,
+    startBunSequenceGuest,
+} from "./verser2-runtime";
 
-export type { RunnerBunBootConfig } from "./boot-config";
+export type { RunnerBunBootConfig, RunnerBunVerser2RuntimeConfig } from "./boot-config";

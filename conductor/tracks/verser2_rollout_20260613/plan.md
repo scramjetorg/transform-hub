@@ -257,13 +257,20 @@
         - Validation: `npm install` passed after the authenticated release-wheel installer was added; `npm run build` in `packages/runner-python` passed; `npm run build:packages` passed; `npm run check:runtime-invariants` passed after tightening false-positive guards for lowercase Python “requests” wording and the existing Host legacy runner-transport allowlist.
         - Resolved validation blocker: the Python 3.12.3 segfault was caused by `pyee==9.0.4` importing `TypeVar(name="Handler", bound=Callable)`, which reproduces as a CPython crash in this environment. Bumped runner-python to `pyee==13.0.1`, whose import uses positional `TypeVar("Handler", bound=Callable)`. Validation passed: clean `npm run install:deps`, `npm test` (160 tests), `npm run build`, and `npm run check:runtime-invariants`.
         - Added ASGI 3 dispatch tests for scope construction, one-shot request/response bodies, streamed request/response body chunks, and pre-response-start error envelopes. Validation passed: focused verser2 runtime/ASGI tests, full `npm test` in `packages/runner-python` (167 tests), `npm run build` in `packages/runner-python`, and root `npm run check:runtime-invariants`.
-- [ ] Task: Migrate Bun runtime
-    - [ ] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls using `@signicode/verser2-guest-bun`.
-    - [ ] Add or update runner-bun tests for Bun Guest `fetch`/`routes` STH → sequence API exposure.
-    - [ ] Wire Bun runtime to runner-provided routes and certificate files.
-    - [ ] Verify Bun local route matching precedence: exact path, `:param`, `*`, then `fetch` fallback.
-    - [ ] Verify streaming and binary request/response bodies across Bun runtime paths.
-    - [ ] Verify no Bun runtime path depends on WebSocket upgrade; verser2 Bun upgrade support is not available.
+- [x] Task: Migrate Bun runtime
+    - [x] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls using `@signicode/verser2-guest-bun`.
+        - Added `createBunHubFetch()` helper tests proving runner-provided Host URL, Broker ID, lease timeout, and TLS certificate files are passed to the published Bun Broker and expose a Broker-backed fetch handle.
+    - [x] Add or update runner-bun tests for Bun Guest `fetch`/`routes` STH → sequence API exposure.
+        - Added `BunSequenceApiExposure`, `createBunSequenceGuest()`, and `startBunSequenceGuest()` helper tests proving non-listening Bun Guest attachment through the published Bun Guest API.
+    - [x] Wire Bun runtime to runner-provided routes and certificate files.
+        - Extended runner-bun boot-config validation to preserve `verser2Runtime` and `requestsUnsupported` for both Node delegation and Bun-native helper paths, including `hostUrl`, `runnerGuestId`, explicit `runnerRouteDomain`, `hubBrokerId`, optional `hubTargetDomain`, TLS files, lease timeout, and minimum waiting leases.
+    - [x] Verify Bun local route matching precedence: exact path, `:param`, `*`, then `fetch` fallback.
+        - Added focused contract tests against `@signicode/verser2-guest-bun` proving exact routes win before `:param`, wildcard routes, and fetch fallback.
+    - [x] Verify streaming and binary request/response bodies across Bun runtime paths.
+        - Added focused Bun Guest contract coverage for streamed binary request chunks and streamed binary response bodies.
+    - [x] Verify no Bun runtime path depends on WebSocket upgrade; verser2 Bun upgrade support is not available.
+        - Added contract coverage proving Bun Guest route handlers see `server.upgrade()` return `false` and continue through ordinary HTTP responses.
+        - Validation passed: `npm test` and `npm run build` in `packages/runner-bun`; root `npm run check:runtime-invariants` passed.
 - [ ] Task: Harden API forwarding and stream semantics
     - [ ] Add API-server or transport tests for verser2 request forwarding through leased routing.
     - [ ] Cover streaming request bodies.

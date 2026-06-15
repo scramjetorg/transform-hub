@@ -69,6 +69,74 @@ describe("runner-bun boot config", () => {
         });
     });
 
+    test("preserves verser2 runtime config for Bun-native helpers and node delegation", () => {
+        expect(validateBootConfig({
+            sequencePath: "/tmp/seq.ts",
+            instanceId: "inst",
+            instancesServerPort: 9000,
+            instancesServerHost: "127.0.0.1",
+            sequenceInfo: { id: "seq-1" },
+            requestsUnsupported: { reason: "reserved" },
+            verser2Runtime: {
+                hostUrl: "https://verser2.example",
+                runnerGuestId: "runner.inst.guest",
+                runnerRouteDomain: "runner.inst.scramjet.internal",
+                hubBrokerId: "runner.inst.hub.broker",
+                hubTargetDomain: "sth.local.scramjet.internal",
+                tls: {
+                    caFile: "/ca.pem",
+                    certFile: "/client.crt",
+                    keyFile: "/client.key",
+                    passphrase: "secret",
+                },
+                leaseAcquireTimeoutMs: 1234,
+                minWaitingStreams: 3,
+            },
+        })).toEqual({
+            sequencePath: "/tmp/seq.ts",
+            instanceId: "inst",
+            instancesServerPort: 9000,
+            instancesServerHost: "127.0.0.1",
+            sequenceInfo: { id: "seq-1" },
+            requestsUnsupported: { reason: "reserved" },
+            verser2Runtime: {
+                hostUrl: "https://verser2.example",
+                runnerGuestId: "runner.inst.guest",
+                runnerRouteDomain: "runner.inst.scramjet.internal",
+                hubBrokerId: "runner.inst.hub.broker",
+                hubTargetDomain: "sth.local.scramjet.internal",
+                tls: {
+                    caFile: "/ca.pem",
+                    certFile: "/client.crt",
+                    keyFile: "/client.key",
+                    passphrase: "secret",
+                },
+                leaseAcquireTimeoutMs: 1234,
+                minWaitingStreams: 3,
+            },
+        });
+    });
+
+    test("rejects invalid verser2 runtime config", () => {
+        expect(() => validateBootConfig({
+            sequencePath: "/tmp/seq.ts",
+            instanceId: "inst",
+            verser2Runtime: { hostUrl: "" },
+        })).toThrow(/verser2Runtime\.hostUrl/);
+
+        expect(() => validateBootConfig({
+            sequencePath: "/tmp/seq.ts",
+            instanceId: "inst",
+            verser2Runtime: {
+                hostUrl: "https://verser2.example",
+                runnerGuestId: "runner.inst.guest",
+                runnerRouteDomain: "runner.inst.scramjet.internal",
+                hubBrokerId: "runner.inst.hub.broker",
+                leaseAcquireTimeoutMs: 0,
+            },
+        })).toThrow(/leaseAcquireTimeoutMs/);
+    });
+
     test("rejects incomplete host channel config", () => {
         expect(() => validateBootConfig({
             sequencePath: "/tmp/seq.ts",
