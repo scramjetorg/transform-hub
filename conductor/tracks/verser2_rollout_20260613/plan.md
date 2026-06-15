@@ -371,12 +371,13 @@
     - [x] Document that runners and stack-runners must never connect directly to the Manager/MultiManager verser2 Host.
     - [x] Document that Manager/MultiManager connectivity is owned only by STH: `STH -> Manager/MultiManager verser2 Host`.
     - [x] Update `architecture.md`, review checklists, and any stale Phase 1 notes that describe runners as direct peers of the selected Manager/MultiManager Host.
-- [ ] Task: Revert or quarantine direct-to-Manager runner transport wiring
-    - [ ] Stop generating runner `SCRAMJET_RUNNER_TRANSPORT_CONFIG.hostUrl` from `sthConfig.verser2.hostUrl`; that value is the Manager/MultiManager Host URL and must not be used by runners.
-    - [ ] Stop using `cpmConnector.verser2Broker` as the STH runner Broker provider; that Broker is for STH-to-Manager connectivity, not STH-to-runner connectivity.
-    - [ ] Ensure runner verser2 mode is disabled or fails closed unless an STH-local verser2 Host/Broker/Guest surface is available.
-    - [ ] Preserve explicit legacy runner transport config for old harnesses until the STH-local runner path is complete.
-    - [ ] Add a static or unit invariant proving runner transport envs are not built from Manager/MultiManager `verser2.hostUrl`.
+- [x] Task: Revert or quarantine direct-to-Manager runner transport wiring
+    - [x] Stop generating runner `SCRAMJET_RUNNER_TRANSPORT_CONFIG.hostUrl` from `sthConfig.verser2.hostUrl`; that value is the Manager/MultiManager Host URL and must not be used by runners.
+    - [x] Stop using `cpmConnector.verser2Broker` as the STH runner Broker provider; that Broker is for STH-to-Manager connectivity, not STH-to-runner connectivity.
+    - [x] Ensure runner verser2 mode is disabled or fails closed unless an STH-local verser2 Host/Broker/Guest surface is available.
+    - [x] Preserve explicit legacy runner transport config for old harnesses until the STH-local runner path is complete.
+    - [x] Add a static or unit invariant proving runner transport envs are not built from Manager/MultiManager `verser2.hostUrl`.
+        - Quarantine implemented by forcing adapter runner env generation to explicit legacy transport until STH-local runner Host configuration exists, disabling synthetic verser2 runner attach, and removing Host reuse of `cpmConnector.verser2Broker` for runner transport. Validation passed: `npm test -- test/runner-transport-env.spec.ts` in `packages/adapters-common`; `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/runner-transport.spec.ts` in `packages/host`; package builds for `packages/adapters-common` and `packages/host`; grep invariant found no `hostUrl: sthConfig.verser2.hostUrl` or `cpmConnector?.verser2Broker` runner wiring.
 - [ ] Task: Define separate Manager and STH trust domains
     - [ ] Define the Manager-local trust domain: Manager/MultiManager owns a CA/server identity for `STH -> Manager/MultiManager` trust.
     - [ ] Define the STH-local trust domain: STH owns a CA/server identity for `Runner / Stack-Runner -> STH` trust.

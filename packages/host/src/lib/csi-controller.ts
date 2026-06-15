@@ -584,7 +584,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     private get usesVerser2RunnerTransport(): boolean {
-        return this.sthConfig.verser2.enabled && this.sthConfig.verser2.migrationMode === "verser2";
+        // Quarantined until runners connect to an STH-local verser2 Host instead
+        // of reusing the Manager/MultiManager Host path.
+        return false;
     }
 
     async applyUpdate(key: string, value: string | null): Promise<void> {

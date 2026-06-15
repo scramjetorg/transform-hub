@@ -23,20 +23,12 @@ test("getRunnerTransportEnv injects explicit legacy config outside verser2-only 
     t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "legacy" } }, "inst-1"), legacyEnv);
 });
 
-test("getRunnerTransportEnv builds per-instance verser2 runner transport config", t => {
+test("getRunnerTransportEnv quarantines verser2 runner transport until STH-local Host exists", t => {
     const env = getRunnerTransportEnv({ verser2: baseVerser2 }, "inst-42");
     const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
 
-    t.deepEqual(parsed, {
-        kind: "verser2",
-        hostUrl: "https://verser2.example",
-        guestId: "runner.inst-42.guest",
-        routeDomain: "runner.inst-42.scramjet.internal",
-        hubBrokerId: "runner.inst-42.hub.broker",
-        hubTargetDomain: "sth.internal",
-        leaseAcquireTimeoutMs: 2000,
-        minWaitingStreams: 4
-    });
+    t.deepEqual(parsed, { kind: "legacy" });
+    t.false("hostUrl" in parsed);
 });
 
 test("getRunnerTransportEnv does not propagate STH TLS identity material to runners", t => {
