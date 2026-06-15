@@ -29,6 +29,7 @@
     "@scramjet/utility": "^1.1.0",
     "@scramjet/verser": "^1.1.0",
     "@signicode/verser-common": "0.3.1",
+    "@signicode/verser2-host": "0.3.1",
     "@signicode/verser2-guest-node": "0.3.1",
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",

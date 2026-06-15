@@ -399,11 +399,12 @@
     - [x] Fail closed on Manager CA fingerprint mismatch when pinning is configured.
         - Planned in `architecture.md` and `review-checklist.md`: `si` retrieves and pins public Manager trust material, STH can use configured/public/fetched CA trust, fingerprint mismatch fails closed, and trust bootstrap remains separate from STH registration authorization.
 - [ ] Task: Add STH-local verser2 Host for runners and stack-runners
-    - [ ] Start an STH-owned local verser2 Host dedicated to runner and stack-runner connectivity.
+    - [x] Start an STH-owned local verser2 Host dedicated to runner and stack-runner connectivity.
+        - Added optional `verser2.runnerHost` config, descriptor validation, STH-local Host option mapping, and Host lifecycle start/cleanup. Defaults keep it disabled until STH-local CA generation and runner rewiring are complete.
     - [ ] Generate or load an STH-local CA/server identity for the STH-local runner Host.
     - [ ] Expose runner route domains through the STH-local Host, including `runner.<instanceId>.scramjet.internal` and stack-runtime routes such as `sequence.<instanceId>.scramjet.internal` where needed.
     - [ ] Bridge any Manager-required interactions through STH rather than exposing Manager directly to runners.
-    - [ ] Ensure standalone STH startup can provide the STH-local runner Host without requiring Manager connectivity.
+    - [x] Ensure standalone STH startup can provide the STH-local runner Host without requiring Manager connectivity.
 - [ ] Task: Adopt inline CA PEM bundles for verser2 trust
     - [ ] Extend verser2 TLS config/types to support inline CA PEM bundles using the verser team format: `tls.ca` containing one or more concatenated PEM certificates.
     - [ ] Keep file-based `caFile` as an input/source option where useful, but normalize runner/STH-local handoff to inline `tls.ca` when supported.

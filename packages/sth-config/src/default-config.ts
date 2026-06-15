@@ -72,6 +72,24 @@ export const defaultConfig: STHConfiguration = {
         enabled: false,
         migrationMode: "verser2",
         hostUrl: "https://127.0.0.1:2443",
+        runnerHost: {
+            enabled: false,
+            host: {
+                bindHost: "127.0.0.1",
+                bindPort: 2444,
+                publicUrl: "https://127.0.0.1:2444",
+                tls: {
+                    mtlsRequired: false
+                }
+            },
+            registration: {
+                allowLocalPeers: true,
+                allowedClientFingerprints: []
+            },
+            localBroker: {
+                peerId: "sth.default.runner.broker"
+            }
+        },
         broker: {
             peerId: "sth.default.broker",
             targetDomain: "manager.cpm-manager.scramjet.internal"

@@ -53,6 +53,7 @@ import { SocketServer } from "./socket-server";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
+import { createVerserHost, VerserHost } from "@signicode/verser2-host";
 
 import { existsSync, mkdirSync, readFileSync } from "fs";
 
@@ -62,6 +63,7 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
+import { createSthRunnerVerser2HostOptions } from "./runner-verser2-host-config";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
@@ -140,6 +142,8 @@ export class Host implements IHost, IComponent {
      * Instance of CPMConnector used to communicate with Manager.
      */
     cpmConnector?: CPMConnector;
+
+    runnerVerser2Host?: VerserHost;
 
     /**
      * Object to store CSIControllers.
@@ -322,6 +326,10 @@ export class Host implements IHost, IComponent {
             runnerBrokerProvider: () => undefined,
             hostProxy: this.instanceProxy,
         });
+
+        if (sthConfig.verser2.runnerHost?.enabled) {
+            this.runnerVerser2Host = createVerserHost(createSthRunnerVerser2HostOptions(sthConfig.verser2.runnerHost));
+        }
 
         this.csiDispatcher.logger.pipe(this.logger);
 
@@ -832,6 +840,7 @@ export class Host implements IHost, IComponent {
         new HostAPIHandler(this.api, this, version, this.build).attach();
 
         await this.startListening();
+        await this.startRunnerVerser2Host();
 
         if (!this.isCPMConfigured()) {
             if (this.config.strictPlatformConnection) {
@@ -946,6 +955,15 @@ export class Host implements IHost, IComponent {
                 })
                 .listen(this.config.host.port, this.config.host.hostname);
         });
+    }
+
+    private async startRunnerVerser2Host() {
+        this.runnerVerser2Host?.onLifecycle(event => this.logger.debug("STH-local runner verser2 Host lifecycle", event));
+
+        if (this.runnerVerser2Host) {
+            await this.runnerVerser2Host.start();
+            this.logger.info("STH-local runner verser2 Host started", this.runnerVerser2Host.address);
+        }
     }
 
     async performStartup() {
@@ -1511,6 +1529,13 @@ export class Host implements IHost, IComponent {
         this._cleaning = true;
 
         this.logger.info("Cleaning up", this.config.killOnExit);
+
+        if (this.runnerVerser2Host) {
+            const host = this.runnerVerser2Host as VerserHost & { stop?: () => Promise<void>; close?: () => Promise<void> };
+
+            await (host.stop?.() || host.close?.() || Promise.resolve());
+            this.runnerVerser2Host = undefined;
+        }
 
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();

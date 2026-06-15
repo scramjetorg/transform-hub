@@ -16,6 +16,24 @@ export type Verser2ClientTlsConfig = Verser2TlsFilesConfig & {
     caFile?: string;
 };
 
+export type STHRunnerVerser2HostConfig = {
+    enabled: boolean;
+    host: {
+        bindHost: string;
+        bindPort: number;
+        publicUrl: string;
+        tls: Verser2HostTlsConfig;
+    };
+    registration: {
+        allowLocalPeers: boolean;
+        token?: string;
+        allowedClientFingerprints: string[];
+    };
+    localBroker: {
+        peerId: string;
+    };
+};
+
 export type Verser2TimeoutConfig = {
     routeReadinessMs: number;
     leaseAcquireMs: number;
@@ -56,6 +74,7 @@ export type STHOutboundVerser2Config = {
     enabled: boolean;
     migrationMode: Verser2MigrationMode;
     hostUrl: string;
+    runnerHost?: STHRunnerVerser2HostConfig;
     broker: {
         peerId: string;
         targetDomain: string;

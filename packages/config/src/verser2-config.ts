@@ -44,6 +44,28 @@ export const sthOutboundVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
     migrationMode: verser2MigrationModeSchema,
     hostUrl: z.string(),
+    runnerHost: z.object({
+        enabled: z.boolean(),
+        host: z.object({
+            bindHost: z.string(),
+            bindPort: z.number().int().nonnegative(),
+            publicUrl: z.string(),
+            tls: z.object({
+                certFile: optionalFileSchema,
+                keyFile: optionalFileSchema,
+                pfxFile: optionalFileSchema,
+                passphrase: optionalFileSchema,
+                clientAuthCaFile: optionalFileSchema,
+                mtlsRequired: z.boolean()
+            }).strict()
+        }).strict(),
+        registration: z.object({
+            allowLocalPeers: z.boolean(),
+            token: optionalFileSchema,
+            allowedClientFingerprints: z.array(z.string())
+        }).strict(),
+        localBroker: z.object({ peerId: z.string() }).strict()
+    }).strict().optional(),
     broker: z.object({ peerId: z.string(), targetDomain: z.string() }).strict(),
     guest: z.object({ peerId: z.string(), routeDomain: z.string() }).strict(),
     tls: z.object({
@@ -70,6 +92,40 @@ export const sthOutboundVerser2ConfigSchema = z.object({
             code: z.ZodIssueCode.custom,
             path: ["tls", "certFile"],
             message: "certFile is required when keyFile is provided"
+        });
+    }
+
+    const runnerTls = config.runnerHost?.host.tls;
+
+    if (runnerTls?.certFile && !runnerTls.keyFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["runnerHost", "host", "tls", "keyFile"],
+            message: "keyFile is required when certFile is provided"
+        });
+    }
+
+    if (runnerTls?.keyFile && !runnerTls.certFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["runnerHost", "host", "tls", "certFile"],
+            message: "certFile is required when keyFile is provided"
+        });
+    }
+
+    if (config.runnerHost?.enabled && !runnerTls?.certFile && !runnerTls?.pfxFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["runnerHost", "host", "tls"],
+            message: "runnerHost TLS requires certFile/keyFile or pfxFile when enabled"
+        });
+    }
+
+    if (config.runnerHost?.enabled && runnerTls?.mtlsRequired && !runnerTls.clientAuthCaFile) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["runnerHost", "host", "tls", "clientAuthCaFile"],
+            message: "runnerHost mTLS requires clientAuthCaFile"
         });
     }
 
@@ -124,6 +180,20 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2Enabled", flag: "verser2-enabled", path: sthPath("enabled"), env: "SCRAMJET_VERSER2_ENABLED", type: "boolean", description: "Enable outbound STH verser2 transport" },
     { name: "verser2MigrationMode", flag: "verser2-migration-mode", path: sthPath("migrationMode"), env: "SCRAMJET_VERSER2_MIGRATION_MODE", type: "string", choices: ["legacy", "dual", "verser2"], description: "STH Manager transport migration mode" },
     { name: "verser2HostUrl", flag: "verser2-host-url", path: sthPath("hostUrl"), env: "SCRAMJET_VERSER2_HOST_URL", flagAliases: ["cpm-verser2-url"], type: "string", description: "Manager/MultiManager verser2 Host URL" },
+    { name: "verser2RunnerHostEnabled", flag: "verser2-runner-host-enabled", path: sthPath("runnerHost.enabled"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED", type: "boolean", description: "Enable the STH-local verser2 Host for runners" },
+    { name: "verser2RunnerHostBindHost", flag: "verser2-runner-host-bind-host", path: sthPath("runnerHost.host.bindHost"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_HOST", type: "string", description: "STH-local runner verser2 Host bind address" },
+    { name: "verser2RunnerHostBindPort", flag: "verser2-runner-host-bind-port", path: sthPath("runnerHost.host.bindPort"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT", type: "number", description: "STH-local runner verser2 Host bind port" },
+    { name: "verser2RunnerHostPublicUrl", flag: "verser2-runner-host-public-url", path: sthPath("runnerHost.host.publicUrl"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL", type: "string", description: "STH-local runner verser2 Host URL passed to runners" },
+    { name: "verser2RunnerHostCertFile", flag: "verser2-runner-host-cert-file", path: sthPath("runnerHost.host.tls.certFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CERT_FILE", type: "string", description: "STH-local runner Host TLS certificate file" },
+    { name: "verser2RunnerHostKeyFile", flag: "verser2-runner-host-key-file", path: sthPath("runnerHost.host.tls.keyFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_KEY_FILE", type: "string", description: "STH-local runner Host TLS private key file", secret: true },
+    { name: "verser2RunnerHostPfxFile", flag: "verser2-runner-host-pfx-file", path: sthPath("runnerHost.host.tls.pfxFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PFX_FILE", type: "string", description: "STH-local runner Host PFX/PKCS12 file", secret: true },
+    { name: "verser2RunnerHostPassphrase", flag: "verser2-runner-host-passphrase", path: sthPath("runnerHost.host.tls.passphrase"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PASSPHRASE", type: "string", description: "STH-local runner Host TLS passphrase", secret: true },
+    { name: "verser2RunnerHostClientAuthCaFile", flag: "verser2-runner-host-client-auth-ca-file", path: sthPath("runnerHost.host.tls.clientAuthCaFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CLIENT_AUTH_CA_FILE", type: "string", description: "CA file used to authenticate runner verser2 clients" },
+    { name: "verser2RunnerHostMtlsRequired", flag: "verser2-runner-host-mtls-required", path: sthPath("runnerHost.host.tls.mtlsRequired"), env: "SCRAMJET_VERSER2_RUNNER_HOST_MTLS_REQUIRED", type: "boolean", description: "Require runner client certificates for STH-local verser2 registration" },
+    { name: "verser2RunnerHostRegistrationToken", flag: "verser2-runner-host-registration-token", path: sthPath("runnerHost.registration.token"), env: "SCRAMJET_VERSER2_RUNNER_HOST_REGISTRATION_TOKEN", type: "string", description: "Non-mTLS runner registration token", secret: true },
+    { name: "verser2RunnerHostAllowLocalPeers", flag: "verser2-runner-host-allow-local-peers", path: sthPath("runnerHost.registration.allowLocalPeers"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOW_LOCAL_PEERS", type: "boolean", description: "Allow in-process local peers on the STH-local runner Host" },
+    { name: "verser2RunnerHostAllowedClientFingerprints", flag: "verser2-runner-host-allowed-client-fingerprints", path: sthPath("runnerHost.registration.allowedClientFingerprints"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOWED_CLIENT_FINGERPRINTS", type: "string[]", description: "Allowed runner client certificate fingerprints" },
+    { name: "verser2RunnerHostBrokerPeerId", flag: "verser2-runner-host-broker-peer-id", path: sthPath("runnerHost.localBroker.peerId"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BROKER_PEER_ID", type: "string", description: "Local STH Broker peer ID for runner routes" },
     { name: "verser2CaFile", flag: "verser2-ca-file", path: sthPath("tls.caFile"), env: "SCRAMJET_VERSER2_CA_FILE", envAliases: ["CPM_SSL_CA_PATH"], type: "string", description: "CA file for the Manager/MultiManager verser2 Host" },
     { name: "verser2CertFile", flag: "verser2-cert-file", path: sthPath("tls.certFile"), env: "SCRAMJET_VERSER2_CERT_FILE", type: "string", description: "STH client certificate file" },
     { name: "verser2KeyFile", flag: "verser2-key-file", path: sthPath("tls.keyFile"), env: "SCRAMJET_VERSER2_KEY_FILE", type: "string", description: "STH client private key file", secret: true },

@@ -170,6 +170,17 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
                 enabled: false,
                 migrationMode: "legacy",
                 hostUrl: "",
+                runnerHost: {
+                    enabled: false,
+                    host: {
+                        bindHost: "127.0.0.1",
+                        bindPort: 2444,
+                        publicUrl: "https://127.0.0.1:2444",
+                        tls: { mtlsRequired: false }
+                    },
+                    registration: { allowLocalPeers: true, allowedClientFingerprints: [] },
+                    localBroker: { peerId: "sth.default.runner.broker" }
+                },
                 broker: { peerId: "", targetDomain: "" },
                 guest: { peerId: "", routeDomain: "" },
                 tls: {},
@@ -180,6 +191,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
         },
         env: {
             SCRAMJET_VERSER2_HOST_URL: "https://manager.example:2443",
+            SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://sth-local.example:2444",
             CPM_SSL_CA_PATH: "/ca/from-alias.pem",
             SCRAMJET_VERSER2_CERT_FILE: "/safe/cert.pem",
             SCRAMJET_VERSER2_KEY_FILE: "/secret/key.pem"
@@ -188,6 +200,9 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
             verser2Enabled: true,
             verser2MigrationMode: "dual",
             verser2CaFile: "/ca/from-cli.pem",
+            verser2RunnerHostEnabled: true,
+            verser2RunnerHostCertFile: "/safe/runner.crt",
+            verser2RunnerHostKeyFile: "/secret/runner.key",
             verser2BrokerPeerId: "sth.a.broker",
             verser2BrokerTargetDomain: "manager.a.scramjet.internal",
             verser2GuestPeerId: "sth.a.guest",
@@ -199,9 +214,13 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
     t.true(loaded.config.verser2.enabled);
     t.is(loaded.config.verser2.migrationMode, "dual");
     t.is(loaded.config.verser2.hostUrl, "https://manager.example:2443");
+    t.is(loaded.config.verser2.runnerHost?.enabled, true);
+    t.is(loaded.config.verser2.runnerHost?.host.publicUrl, "https://sth-local.example:2444");
+    t.is(loaded.config.verser2.runnerHost?.host.tls.keyFile, "/secret/runner.key");
     t.is(loaded.config.verser2.tls.caFile, "/ca/from-cli.pem");
     t.is(loaded.config.verser2.tls.keyFile, "/secret/key.pem");
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
+    t.is((loaded.publicConfig as any).verser2.runnerHost.host.tls.keyFile, "********");
 });
 
 test("verser2 schema requires usable routed config in verser2 mode", t => {
