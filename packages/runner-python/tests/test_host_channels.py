@@ -15,7 +15,7 @@ from runner_python.host_channels import (
 
 def make_boot_config(fake_host_server, **overrides):
     boot_config = {
-        "instanceId": "instance-123",
+        "instanceId": "12345678-1234-1234-1234-123456789abc",
         "instancesServerHost": fake_host_server.host,
         "instancesServerPort": fake_host_server.port,
     }
@@ -28,6 +28,7 @@ async def close_host_channels(host_channels: HostChannels) -> None:
         host_channels.input_sock,
         host_channels.output_sock,
         host_channels.log_sock,
+        host_channels.requests_sock,
     ):
         channel_socket.close()
 
@@ -35,46 +36,51 @@ async def close_host_channels(host_channels: HostChannels) -> None:
 
 
 @pytest.mark.asyncio
-async def test_connect_host_channels_opens_three_sockets_and_sends_handshakes(
+async def test_connect_host_channels_opens_four_sockets_and_sends_handshakes(
     fake_host_server,
 ):
     host_channels = await connect_host_channels(make_boot_config(fake_host_server))
 
     try:
-        await fake_host_server.wait_for_connections(3)
+        await fake_host_server.wait_for_connections(4)
 
         assert isinstance(host_channels, HostChannels)
         assert hasattr(host_channels, "input_sock")
         assert hasattr(host_channels, "output_sock")
         assert hasattr(host_channels, "log_sock")
+        assert hasattr(host_channels, "requests_sock")
         assert isinstance(host_channels.input_sock, socket.socket)
         assert isinstance(host_channels.output_sock, socket.socket)
         assert isinstance(host_channels.log_sock, socket.socket)
+        assert isinstance(host_channels.requests_sock, socket.socket)
         assert [
             connection.channel_code for connection in fake_host_server.connections
         ] == [
             ChannelCode.IN.value,
             ChannelCode.OUT.value,
             ChannelCode.LOG.value,
+            ChannelCode.REQUESTS.value,
         ]
         assert fake_host_server.handshakes == [
-            b"instance-123\n5",
-            b"instance-123\n6",
-            b"instance-123\n7",
+            b"12345678-1234-1234-1234-123456789abc5",
+            b"12345678-1234-1234-1234-123456789abc6",
+            b"12345678-1234-1234-1234-123456789abc7",
+            b"12345678-1234-1234-1234-123456789abc8",
         ]
     finally:
         await close_host_channels(host_channels)
 
 
 @pytest.mark.asyncio
-async def test_connect_host_channels_never_opens_requests_channel(fake_host_server):
+async def test_connect_host_channels_opens_reserved_requests_channel(fake_host_server):
     host_channels = await connect_host_channels(make_boot_config(fake_host_server))
 
     try:
-        await fake_host_server.wait_for_connections(3)
+        await fake_host_server.wait_for_connections(4)
         await asyncio.sleep(0.05)
 
-        assert len(fake_host_server.connections) == 3
+        assert len(fake_host_server.connections) == 4
+        assert fake_host_server.connections[-1].channel_code == ChannelCode.REQUESTS.value
     finally:
         await close_host_channels(host_channels)
 

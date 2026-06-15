@@ -7,7 +7,7 @@ export function getRunnerTransportEnv(
     instanceId: string
 ): Record<string, string> {
     if (!sthConfig.verser2.enabled || sthConfig.verser2.migrationMode !== "verser2") {
-        return {};
+        return { SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }) };
     }
 
     return {

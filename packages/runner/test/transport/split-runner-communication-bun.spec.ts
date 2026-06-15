@@ -14,6 +14,7 @@ function buildEnv(port: number, sequenceName: string): NodeJS.ProcessEnv {
 
     return {
         ...process.env,
+        SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }),
         SEQUENCE_PATH: path.resolve(sequenceDir, "index.js"),
         SEQUENCE_INFO: JSON.stringify({
             id: INSTANCE_ID,

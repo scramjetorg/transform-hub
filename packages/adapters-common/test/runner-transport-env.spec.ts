@@ -15,10 +15,12 @@ const baseVerser2: STHConfiguration["verser2"] = {
     leases: { minimumWaitingLeases: 4 }
 };
 
-test("getRunnerTransportEnv returns empty env outside verser2-only mode", t => {
-    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, enabled: false } }, "inst-1"), {});
-    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "dual" } }, "inst-1"), {});
-    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "legacy" } }, "inst-1"), {});
+test("getRunnerTransportEnv injects explicit legacy config outside verser2-only mode", t => {
+    const legacyEnv = { SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({ kind: "legacy" }) };
+
+    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, enabled: false } }, "inst-1"), legacyEnv);
+    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "dual" } }, "inst-1"), legacyEnv);
+    t.deepEqual(getRunnerTransportEnv({ verser2: { ...baseVerser2, migrationMode: "legacy" } }, "inst-1"), legacyEnv);
 });
 
 test("getRunnerTransportEnv builds per-instance verser2 runner transport config", t => {

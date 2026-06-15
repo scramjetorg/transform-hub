@@ -36,7 +36,7 @@ const defaultMultiManagerConfig: MultiManagerOptions = {
     },
     verser2: {
         enabled: false,
-        migrationMode: "legacy",
+        migrationMode: "verser2",
         host: {
             bindHost: "0.0.0.0",
             bindPort: 0,

@@ -70,15 +70,15 @@ export const defaultConfig: STHConfiguration = {
     strictPlatformConnection: false,
     verser2: {
         enabled: false,
-        migrationMode: "legacy",
-        hostUrl: "",
+        migrationMode: "verser2",
+        hostUrl: "https://127.0.0.1:2443",
         broker: {
-            peerId: "",
-            targetDomain: ""
+            peerId: "sth.default.broker",
+            targetDomain: "manager.cpm-manager.scramjet.internal"
         },
         guest: {
-            peerId: "",
-            routeDomain: ""
+            peerId: "sth.default.guest",
+            routeDomain: "sth.default.scramjet.internal"
         },
         tls: {},
         enrollment: {},

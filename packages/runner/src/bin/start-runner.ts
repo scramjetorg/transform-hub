@@ -6,7 +6,7 @@ import { dirname, resolve } from "path";
 import { Readable, Writable } from "stream";
 
 import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
-import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
 
 import { RuntimeProcessHandles } from "@scramjet/types";
 
@@ -31,7 +31,7 @@ const CR = 0x0d;
 // adapters do not need to change. Same env names, same exit codes.
 // ---------------------------------------------------------------------------
 
-const sequencePath: string = `${process.env.SEQUENCE_PATH?.replace(/(?<!\.m?js|\.ts)$/, ".js")}`;
+const rawSequencePath = process.env.SEQUENCE_PATH;
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
 const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
@@ -41,6 +41,7 @@ const runnerConnectInfo = process.env.RUNNER_CONNECT_INFO;
 let connectInfo: SequenceInfo;
 let parsedRunnerConnectInfo: RunnerConnectInfo;
 let runnerTransportConfig: RunnerTransportConfigResult;
+let sequencePath: string;
 
 try {
     if (!runnerConnectInfo) throw new Error("Connection JSON is required.");
@@ -57,6 +58,8 @@ try {
     console.error("Error while parsing connection information.");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
+
+sequencePath = normalizeSequencePath(rawSequencePath, connectInfo.config?.engines);
 
 if (!instanceId) {
     console.error("Incorrect run argument: instanceId");
@@ -85,6 +88,12 @@ if (runnerTransportConfig.kind === "legacy") {
 if (!fs.existsSync(sequencePath)) {
     console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
     process.exit(RunnerExitCode.INVALID_SEQUENCE_PATH);
+}
+
+function normalizeSequencePath(path: string | undefined, engines?: Record<string, string>): string {
+    if (!path) return "";
+    if (selectRuntimeKind(engines) === "python3") return path;
+    return path.replace(/(?<!\.m?js|\.ts)$/, ".js");
 }
 
 // ---------------------------------------------------------------------------

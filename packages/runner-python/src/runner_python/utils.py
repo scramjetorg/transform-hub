@@ -4,6 +4,8 @@ import inspect
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 from typing import TYPE_CHECKING, Any
 
+from runner_python.input_stream import read_http_headers
+
 if TYPE_CHECKING:
     from runner_python.sequence_loader import SequenceModule
     from scramjet.streams import Stream
@@ -19,11 +21,28 @@ async def maybe_await(result: Any) -> Any:
 def build_input_stream(reader: Any, content_type: str) -> Stream:
     from scramjet.streams import Stream
 
-    if content_type == "application/octet-stream":
-        return Stream.read_from(reader, chunk_size=CHUNK_SIZE)
+    return Stream.from_iterable(_iter_headered_input(reader, content_type))
 
-    stream = Stream.read_from(reader)
-    return stream.decode("utf-8")
+
+async def _iter_headered_input(reader: Any, default_content_type: str):
+    headers = await read_http_headers(reader)
+    content_type = headers.get("content-type", default_content_type)
+
+    if content_type == "application/octet-stream":
+        while True:
+            chunk = await reader.read(CHUNK_SIZE)
+            if not chunk:
+                return
+            yield chunk
+
+    if content_type == "text/plain":
+        while True:
+            line = await reader.readline()
+            if not line:
+                return
+            yield line.decode("utf-8")
+
+    raise ValueError(f"unsupported content_type: {content_type!r}")
 
 
 def build_runtime_pangs(sequence: SequenceModule, result: Any) -> list[dict[str, str]]:

@@ -1,10 +1,38 @@
 from __future__ import annotations
 
+import asyncio
 from typing import AsyncIterator, Protocol, Union
 
 
 class _AsyncByteReader(Protocol):
     async def read(self, n: int = -1) -> bytes: ...
+
+
+async def read_http_headers(reader: asyncio.StreamReader) -> dict[str, str]:
+    """Read HTTP-like headers from *reader*, consuming up to ``\r\n\r\n``.
+
+    Returns a ``{name: value}`` dict with lower-cased keys.  Any bytes
+    after the blank-line terminator remain in the reader's internal buffer
+    for subsequent reads.
+
+    If EOF is reached before the blank-line terminator is found, returns an
+    empty dict without raising (no hang).
+    """
+    headers: dict[str, str] = {}
+    while True:
+        line = await reader.readline()
+        if not line:
+            # EOF before headers complete.
+            return {}
+        line = line.rstrip(b"\r\n")
+        if not line:
+            # Blank line -> end of headers.
+            return headers
+        if b":" in line:
+            name, _, value = line.partition(b":")
+            headers[name.strip().decode("utf-8").lower()] = (
+                value.strip().decode("utf-8")
+            )
 
 
 _CHUNK_SIZE = 4096

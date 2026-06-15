@@ -10,33 +10,33 @@ const DEFAULT_GUEST_ID = `runner.${TEST_ID}.guest`;
 const DEFAULT_HUB_BROKER_ID = `runner.${TEST_ID}.hub.broker`;
 
 // ---------------------------------------------------------------------------
-// Absent / empty / whitespace env => legacy
+// Absent / empty / whitespace env => fail closed
 // ---------------------------------------------------------------------------
 
-test("returns legacy when envValue is undefined", t => {
+test("throws when envValue is undefined", t => {
     const original = process.env.SCRAMJET_RUNNER_TRANSPORT_CONFIG;
 
     delete process.env.SCRAMJET_RUNNER_TRANSPORT_CONFIG;
-    const result = parseRunnerTransportConfig(TEST_ID, undefined);
+    const err = t.throws<Error>(() => parseRunnerTransportConfig(TEST_ID, undefined));
 
     if (original === undefined) {
         delete process.env.SCRAMJET_RUNNER_TRANSPORT_CONFIG;
     } else {
         process.env.SCRAMJET_RUNNER_TRANSPORT_CONFIG = original;
     }
-    t.is(result.kind, "legacy");
+    t.regex(err!.message, /SCRAMJET_RUNNER_TRANSPORT_CONFIG is required/);
 });
 
-test("returns legacy when envValue is empty string", t => {
-    const result = parseRunnerTransportConfig(TEST_ID, "");
+test("throws when envValue is empty string", t => {
+    const err = t.throws<Error>(() => parseRunnerTransportConfig(TEST_ID, ""));
 
-    t.is(result.kind, "legacy");
+    t.regex(err!.message, /SCRAMJET_RUNNER_TRANSPORT_CONFIG is required/);
 });
 
-test("returns legacy when envValue is whitespace only", t => {
-    const result = parseRunnerTransportConfig(TEST_ID, "   ");
+test("throws when envValue is whitespace only", t => {
+    const err = t.throws<Error>(() => parseRunnerTransportConfig(TEST_ID, "   "));
 
-    t.is(result.kind, "legacy");
+    t.regex(err!.message, /SCRAMJET_RUNNER_TRANSPORT_CONFIG is required/);
 });
 
 // ---------------------------------------------------------------------------

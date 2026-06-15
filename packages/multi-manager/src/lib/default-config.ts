@@ -4,7 +4,7 @@ import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-
 
 const defaultVerser2Config: ManagerVerser2Config = {
     enabled: false,
-    migrationMode: "legacy",
+    migrationMode: "verser2",
     host: {
         bindHost: "0.0.0.0",
         bindPort: 0,

@@ -40,6 +40,23 @@ test("MultiManagerConfig preserves falsy values from config file", t => {
     t.is(loaded.monitoringServer!.path, "");
 });
 
+test("MultiManagerConfig defaults to verser2 migration mode", t => {
+    const loaded = new MultiManagerConfig({
+        colors: true,
+        dumpHeap: 0,
+        logLevel: "TRACE",
+        s3AccessKeyId: "",
+        s3SecretAccessKey: ""
+    }).get();
+
+    t.false(loaded.verser2.enabled);
+    t.is(loaded.verser2.migrationMode, "verser2");
+    t.is(loaded.verser2.localBroker.peerId, "multimanager.default.broker");
+    t.is(loaded.verser2.localBroker.routeDomain, "multimanager.default.scramjet.internal");
+    t.is(loaded.verser2.localGuest.peerId, "multimanager.default.guest");
+    t.is(loaded.verser2.localGuest.routeDomain, "multimanager.default.scramjet.internal");
+});
+
 test("MultiManagerConfig loads verser2 config from file env and cli with precedence", t => {
     const dir = mkdtempSync(join(tmpdir(), "multi-manager-config-"));
     const config = join(dir, "config.json");

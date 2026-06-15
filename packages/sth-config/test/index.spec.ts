@@ -35,6 +35,18 @@ test("Check if the tags of the images match packages version", async t => {
     t.is(preRunnerTagPackageJson, preRunnerTagImageConfig, "Prerunner tag is eqal");
 });
 
+test("default STH connectivity selects verser2 route roles", t => {
+    const config = new ConfigService().getConfig();
+
+    t.false(config.verser2.enabled);
+    t.is(config.verser2.migrationMode, "verser2");
+    t.is(config.verser2.hostUrl, "https://127.0.0.1:2443");
+    t.is(config.verser2.broker.peerId, "sth.default.broker");
+    t.is(config.verser2.broker.targetDomain, "manager.cpm-manager.scramjet.internal");
+    t.is(config.verser2.guest.peerId, "sth.default.guest");
+    t.is(config.verser2.guest.routeDomain, "sth.default.scramjet.internal");
+});
+
 test("getConfigInfo masks public verser2 client secrets", t => {
     const config = new ConfigService({
         platform: {

@@ -128,6 +128,21 @@ async def test_handshake_sends_ping_matching_golden_fixture_bytes() -> None:
 
 
 @pytest.mark.asyncio
+async def test_handshake_succeeds_with_lf_terminated_pong() -> None:
+    event_log: list[tuple[str, float]] = []
+    writer = RecordingMonitoringWriter(event_log)
+    control_decoder = ScriptedControlDecoder(
+        [encode_control_line(PONG, {"appConfig": {}, "args": [], "logLevel": "INFO"}) + b"\n"],
+        event_log,
+    )
+
+    result = await perform_handshake(writer, control_decoder, make_boot_config())
+
+    assert result == HandshakeResult(appConfig={}, args=[], logLevel="INFO")
+    assert [code for code, _ in writer.frames] == [PING, MONITORING]
+
+
+@pytest.mark.asyncio
 async def test_pong_normalizes_app_config_args_and_log_level() -> None:
     writer = RecordingMonitoringWriter([])
     control_decoder = ScriptedControlDecoder(

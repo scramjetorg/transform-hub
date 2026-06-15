@@ -1,8 +1,8 @@
 /**
  * Runner transport config parser for SCRAMJET_RUNNER_TRANSPORT_CONFIG.
  *
- * Phase 3 slice: pure helpers that parse the environment variable and derive
- * defaults from instanceId. Not yet wired into start-runner.ts.
+ * Parses the runner transport environment variable and derives defaults from
+ * instanceId.
  *
  * Environment variable shape (JSON):
  *   { kind: "verser2", hostUrl: string, routeDomain?: string, tls?: {...},
@@ -10,7 +10,7 @@
  *     hubBrokerId?: string, hubTargetDomain?: string }
  *
  * Derivation rules:
- *   - Absent / empty / whitespace env → { kind: "legacy" }
+ *   - Absent / empty / whitespace env → throws
  *   - verser2 without hostUrl           → throws
  *   - Invalid JSON                      → throws
  *   - Default routeDomain               → runner.<instanceId>.scramjet.internal
@@ -82,9 +82,10 @@ export function parseRunnerTransportConfig(
 
     const raw = envValue ?? process.env.SCRAMJET_RUNNER_TRANSPORT_CONFIG;
 
-    // Absent / empty / whitespace => legacy
+    // Absent / empty / whitespace => fail closed. Adapters must inject the
+    // verser2 transport config now that verser2 is the default connectivity path.
     if (!raw || raw.trim() === "") {
-        return { kind: "legacy" };
+        throw new Error("SCRAMJET_RUNNER_TRANSPORT_CONFIG is required");
     }
 
     let parsed: Record<string, unknown>;
