@@ -185,7 +185,7 @@
     - [x] Add targeted hub test for input and output streams.
     - [x] Add targeted hub test for runner disconnect, route retraction, reconnect, and route-unavailable behavior.
         - Validation: added host-side verser2 runner route-contract tests for route domain derivation, readiness/route-unavailable domain behavior, lifecycle/control, stdout/stderr/log, monitoring, input/output, disconnect, and reconnect contract paths. `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
-- [ ] Task: Implement global runner verser2 transport
+- [x] Task: Implement global runner verser2 transport
     - [ ] Make `packages/runner` own the global verser2 runner Guest connection, route registration, Host URL, trust material, and optional client certificate material.
         - [x] Added pure internal `SCRAMJET_RUNNER_TRANSPORT_CONFIG` parser in `packages/runner` with legacy default behavior, verser2 `hostUrl` validation, TLS/lease/min-waiting fields, and derived `runner.<instanceId>.scramjet.internal` route domain plus `runner.<instanceId>.guest` Guest ID defaults.
         - [x] Added a runner-local channel bridge server that binds `127.0.0.1:0`, accepts the existing 37-byte runtime child header, validates instance ID/channel indexes, retains IN/OUT/LOG streams plus reserved REQUESTS, preserves same-segment payload data, rejects invalid sockets safely, and cleans up waiters/sockets on close.
@@ -201,15 +201,17 @@
             - Review: Oracle re-check found no remaining blockers for continuing; `REQUESTS`/`context.hub` remains an explicit deferred runtime migration item. Host runner transport regression `npm test -- test/runner-transport.spec.ts` in `packages/host` passed.
         - [x] Added explicit Node runtime fail-fast behavior for deferred `REQUESTS`/`context.hub` in verser2 runner mode: `start-runner` writes a boot-config unsupported reason, runner-node omits the `REQUESTS` local channel, and `context.hub` receives an agent that errors immediately instead of hanging on an unpaired BPMux socket.
             - Validation: `npm test -- test/host-client-channels.spec.ts` and `npm run build` in `packages/runner-node`; `npm run build` in `packages/runner` passed.
-    - [ ] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
+    - [x] Map stdin, stdout, stderr, control, monitoring, input, output, and log behavior to explicit runner Guest routes and Broker request/response streaming bodies.
         - [x] Added host-side `Verser2RunnerTransport` route-backed Broker dispatch foundation with explicit route paths for stdin, stdout, stderr, control, monitoring, input, output, and log streams using injected Broker handles for focused tests.
-    - [ ] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
+    - [x] Account for one-use lease lifecycle, replacement leases, and lease-acquire timeouts in runner request handling.
+        - Added host-side replacement of consumed response-body route leases for stdout, stderr, monitoring, output, and log routes. Replacement waits for route readiness using the configured timeout, re-resolves the current route target, and stops reopening routes after disconnect.
+        - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
     - [x] Connect host-side `CSIController` or replacement instance lifecycle code through `Verser2RunnerTransport`.
         - Added a polling adapter for the shared CPM verser2 Broker routes, injected a runner broker provider from Host → CSIDispatcher → CSIController, and selected `Verser2RunnerTransport` in verser2-only mode while preserving `LegacyRunnerTransport` for legacy/dual modes.
         - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed.
         - Fixed global runner review blockers by synthesizing a CSIController attach for verser2 runner launches, routing verser2 stream bodies through downstream streams so `CommunicationHandler` still parses PING/PANG/lifecycle messages, using downstream input/control/stdin request streams, and propagating verser2 transport connection failures to startup.
         - Validation: `npm test -- test/runner-transport.spec.ts` and `npm run build` in `packages/host` passed. Oracle re-check reported no commit-blocking blockers; instance request/RPC expose parity remains deferred.
-    - [ ] Preserve temporary legacy mode only until runtime migrations are complete.
+    - [x] Preserve temporary legacy mode only until runtime migrations are complete.
     - [x] Update runtime boot config to carry `hostUrl`, peer IDs, routed domains, CA file/value, optional client cert/key or PFX settings, and route/lease timeout settings needed by stack-specific runtimes.
         - Added adapter env and runner parser fields for per-instance runtime hub Broker ID and STH target route domain, then passed a `verser2Runtime` object through runner-node boot config with Host URL, runner Guest ID/domain, runtime hub Broker ID, target route domain, TLS file config, lease timeout, and minimum waiting leases.
         - Validation: `npm exec -- ava test/transport/runner-transport-config.spec.ts`, `npm test -- test/skeleton.spec.ts test/host-client-channels.spec.ts` in `packages/runner-node`, `npm exec -- ava test/runner-transport-env.spec.ts`, `npm run build` in `packages/runner`, and `npm run build` in `packages/adapters-common` passed.

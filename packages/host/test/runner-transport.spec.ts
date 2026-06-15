@@ -58,6 +58,10 @@ function fakeRunnerBroker(routeDomain = "runner.inst-1.scramjet.internal") {
     return { broker, requests, responseBodies, waitForRouteCalls };
 }
 
+async function nextTick(): Promise<void> {
+    await new Promise(resolve => setImmediate(resolve));
+}
+
 test("LegacyRunnerTransport preserves legacy communication handler wiring order", async t => {
     const { upstreams, downstreams } = streams();
     const handler = communicationHandler();
@@ -347,6 +351,50 @@ test("Verser2RunnerTransport disconnect tears down routed response bodies", asyn
     await transport.disconnect("test cleanup");
 
     t.true(responseBodies.every(body => body.destroyed));
+});
+
+test("Verser2RunnerTransport replaces consumed response-body route leases", async t => {
+    const { downstreams, upstreams } = streams();
+    const { broker, requests, responseBodies, waitForRouteCalls } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams, routeReadinessMs: 123 });
+    const stdoutChunks: Buffer[] = [];
+
+    downstreams[CC.STDOUT].on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+
+    responseBodies[3].end("first");
+    await nextTick();
+
+    t.is(requests.length, 9);
+    t.deepEqual(requests[8], {
+        targetId: "runner.guest.inst-1",
+        method: "GET",
+        path: "/stdout"
+    });
+    t.deepEqual(waitForRouteCalls, [
+        { domain: "runner.inst-1.scramjet.internal", timeoutMs: 123 },
+        { domain: "runner.inst-1.scramjet.internal", timeoutMs: 123 }
+    ]);
+
+    responseBodies[8].end("second");
+    await nextTick();
+
+    t.is(Buffer.concat(stdoutChunks).toString("utf8"), "firstsecond");
+});
+
+test("Verser2RunnerTransport does not replace route leases after disconnect", async t => {
+    const { downstreams, upstreams } = streams();
+    const { broker, requests, responseBodies } = fakeRunnerBroker();
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+
+    await transport.connect({ instanceId: "inst-1", streams: downstreams });
+    await transport.disconnect("done");
+
+    responseBodies[3].emit("close");
+    await nextTick();
+
+    t.is(requests.length, 8);
 });
 
 test("createVerser2RunnerBrokerTransport waits for raw broker routes", async t => {
