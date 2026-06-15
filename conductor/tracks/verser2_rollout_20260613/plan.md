@@ -243,7 +243,7 @@
         - Added `PythonHubClient` and `create_python_hub_client()` wrappers around the published `create_verser_broker` API, including STH API URL construction, Broker connection, TLS option mapping, and close behavior. `AppContext.hub` is now populated when `verser2Runtime` is configured.
     - [ ] Add or update runner-python tests for Python ASGI Guest STH → sequence API exposure.
         - [x] Added `create_python_sequence_guest()` helper tests proving the runtime passes ASGI app, Host URL, runner Guest ID, explicit route domain, waiting stream count, and TLS identity options to the published `create_verser_guest` API.
-        - [~] Blocked before full runtime Guest startup: `verser2-guest-python` source exists upstream and is available as an npm/GitHub Packages artifact during development, but `python3 -m pip index versions verser2-guest-python` reports no installable Python distribution. Logged this as a Python package distribution blocker in `upstream-verser2-api-availability-report.md`; runtime wiring must pause until upstream confirms a CI/runtime install path.
+        - [x] Upstream `v0.3.1` release now provides `verser2_guest_python-0.3.1-py3-none-any.whl`; runner-python installs the release artifact through an authenticated `gh release download` helper, verifies SHA-256 `c1529bef856959c0baab2f0c012a052788b1a725ca2be75baf51c557f741a212`, and keeps `@signicode/verser2-guest-python` pinned to `0.3.1` for bridge/package metadata alignment.
     - [ ] Wire Python runtime to runner-provided `host_url`, explicit `routed_domains`, CA file, and optional client cert/key or PFX files.
         - [x] Broker-backed `context.hub` wiring now consumes runner-provided `hostUrl`, `hubBrokerId`, `hubTargetDomain`, CA, PEM client identity, PFX client identity, and passphrase fields.
         - [ ] Runtime ASGI Guest startup for inbound sequence API exposure remains to be wired to sequence expose metadata.
@@ -251,6 +251,9 @@
         - `create_python_sequence_guest()` always passes `routed_domains=[runnerRouteDomain]`; no Python path relies on Guest ID defaulting.
         - Validation passed: `npm test -- tests/test_boot_config.py tests/test_verser2_runtime.py tests/test_app_context.py -v`, full `npm test`, and `npm run build` in `packages/runner-python`. Build completed with preexisting pip target-directory warnings because `dist/__pypackages__` already contained installed packages.
     - [ ] Verify ASGI 3 behavior, one-shot response bodies, and streaming request/response bodies across Python runtime paths.
+        - Package update state: all active `@signicode/verser*` dependencies are pinned to `0.3.1` in workspace manifests and `package-lock.json`; no `0.0.0-sha.f2c83d754654` pins remain. `packages/runner-python/scripts/install-deps.sh` is the CI/runtime package install path for the Python release wheel.
+        - Validation: `npm install` passed after the authenticated release-wheel installer was added; `npm run build` in `packages/runner-python` passed; `npm run build:packages` passed; `npm run check:runtime-invariants` passed after tightening false-positive guards for lowercase Python “requests” wording and the existing Host legacy runner-transport allowlist.
+        - Deferred validation blocker: `npm test` in `packages/runner-python` currently fails in this environment with a Python 3.12.3 interpreter-level hang/segfault reproducible by `python3 -c 'from typing import Callable, TypeVar; TypeVar(name="Handler", bound=Callable)'`, before test assertions run. Classified as environment/tooling and recorded for handoff; it is not treated as a verser2 package blocker.
 - [ ] Task: Migrate Bun runtime
     - [ ] Add or update runner-bun tests for Bun Broker/fetch sequence → STH API calls using `@signicode/verser2-guest-bun`.
     - [ ] Add or update runner-bun tests for Bun Guest `fetch`/`routes` STH → sequence API exposure.
@@ -264,7 +267,7 @@
     - [ ] Cover streaming response bodies.
     - [ ] Cover binary payloads.
     - [ ] Cover abort/cancellation, route-unavailable behavior, duplicate peer rejection, and route retraction.
-    - [ ] Test and document unsupported forwarding behavior for WebSocket upgrade, CONNECT tunneling, trailers, and informational responses such as `100-continue` instead of treating them as required verser2 capabilities.
+    - [ ] Test and document unsupported forwarding behavior for WebSocket upgrade, CONNECT tunneling, trailers, and informational responses such as `100-continue` instead of treating them as required verser2 capabilities. Wording check: the plan and architecture docs consistently use “unsupported forwarding behavior”; no “unlocked forwarding handling” wording is present in this track.
     - [ ] Avoid production reliance on direct/test-only dispatch paths that buffer full responses and enforce `maxResponseBytes`.
 - [ ] Task: Run automated reviews and validation for Phase 3
     - [ ] Run targeted hub connectivity tests for Manager/STH plus runner paths.

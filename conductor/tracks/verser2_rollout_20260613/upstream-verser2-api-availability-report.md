@@ -74,7 +74,7 @@ Authenticated package resolution now succeeds for the Phase 2 packages at `0.0.0
 
 The `.env` token can read package metadata but does not have private repository metadata access; the helper treats repository metadata as informational and package metadata as the authoritative dependency-resolution gate.
 
-Follow-up authenticated package checks found local peer support published at `0.0.0-sha.f2c83d754654`. Transform Hub now pins the Phase 2 `@signicode` packages to that SHA so `@signicode/verser2-host` exposes `host.attachLocalBroker()` and `host.attachLocalGuest()` for colocated Manager/STH peers.
+Follow-up authenticated package checks originally found local peer support published at `0.0.0-sha.f2c83d754654`, so Transform Hub temporarily pinned the Phase 2 `@signicode` packages to that SHA to access `host.attachLocalBroker()` and `host.attachLocalGuest()` for colocated Manager/STH peers. Those pins were superseded by the `0.3.1` rollout.
 
 The only safe local work that can continue before the upstream artifacts are available is preparatory work that does not depend on concrete verser2 signatures, such as:
 
@@ -88,6 +88,8 @@ These preparatory steps do not replace the required upstream packages and should
 ---
 
 ## Python package distribution blocker during Phase 3
+
+Status update, 2026-06-15: upstream release `v0.3.1` now provides direct release artifacts for the Python package. Transform Hub consumes `verser2_guest_python-0.3.1-py3-none-any.whl` via `gh release download`, verifies SHA-256 `c1529bef856959c0baab2f0c012a052788b1a725ca2be75baf51c557f741a212`, and installs that wheel in `packages/runner-python/scripts/install-deps.sh`. The original PyPI `pip index versions verser2-guest-python` check may still fail, but it is no longer the active install gate for this rollout slice.
 
 ### Observed Transform Hub use case
 

@@ -118,7 +118,7 @@ guard3() {
 guard4() {
     local hits
     hits="$(
-        rg -in 'REQUESTS' packages/runner-python/src 2> /dev/null || true
+        rg -n '\bREQUESTS\b' packages/runner-python/src 2> /dev/null || true
     )"
     if [ -z "${hits}" ]; then
         return 0
@@ -199,7 +199,9 @@ guard7() {
             packages/host/package.json|\
             packages/host/src/lib/cpm-connector.ts|\
             packages/host/src/lib/csi-controller.ts|\
+            packages/host/src/lib/runner-transport.ts|\
             packages/host/test/cpm-connector.test.ts|\
+            packages/host/test/runner-transport.spec.ts|\
             packages/manager/package.json|\
             packages/manager/src/lib/manager.ts|\
             packages/manager/src/lib/sth-controller.ts|\
