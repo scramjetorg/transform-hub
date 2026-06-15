@@ -24,6 +24,20 @@ class ValidationError(ValueError):
 
 
 @dataclass
+class Verser2RuntimeConfig:
+    """Verser2 runtime transport details supplied by the outer runner."""
+
+    hostUrl: str
+    runnerGuestId: str
+    runnerRouteDomain: str
+    hubBrokerId: str
+    hubTargetDomain: str | None = None
+    tls: dict | None = None
+    leaseAcquireTimeoutMs: int | None = None
+    minWaitingStreams: int | None = None
+
+
+@dataclass
 class BootConfig:
     """Boot configuration handed to runner-python from the outer runner.
 
@@ -44,6 +58,7 @@ class BootConfig:
     exposePath: str | None = None
     exposeHost: str | None = None
     pythonPath: str | None = None
+    verser2Runtime: Verser2RuntimeConfig | None = None
 
 
 def _require_non_empty_string(value: Any, field_name: str) -> str:
@@ -69,6 +84,55 @@ def _require_object(value: Any, field_name: str) -> dict:
             f"runner-python: boot config field '{field_name}' must be an object"
         )
     return value
+
+
+def _validate_optional_positive_int(value: Any, field_name: str) -> int | None:
+    if value is None:
+        return None
+    return _require_positive_int(value, field_name)
+
+
+def _validate_verser2_runtime(value: Any) -> Verser2RuntimeConfig | None:
+    if value is None:
+        return None
+
+    data = _require_object(value, "verser2Runtime")
+
+    host_url = _require_non_empty_string(data.get("hostUrl"), "verser2Runtime.hostUrl")
+    runner_guest_id = _require_non_empty_string(
+        data.get("runnerGuestId"), "verser2Runtime.runnerGuestId"
+    )
+    runner_route_domain = _require_non_empty_string(
+        data.get("runnerRouteDomain"), "verser2Runtime.runnerRouteDomain"
+    )
+    hub_broker_id = _require_non_empty_string(
+        data.get("hubBrokerId"), "verser2Runtime.hubBrokerId"
+    )
+
+    hub_target_domain = data.get("hubTargetDomain")
+    if hub_target_domain is not None:
+        hub_target_domain = _require_non_empty_string(
+            hub_target_domain, "verser2Runtime.hubTargetDomain"
+        )
+
+    tls = data.get("tls")
+    if tls is not None:
+        tls = _require_object(tls, "verser2Runtime.tls")
+
+    return Verser2RuntimeConfig(
+        hostUrl=host_url,
+        runnerGuestId=runner_guest_id,
+        runnerRouteDomain=runner_route_domain,
+        hubBrokerId=hub_broker_id,
+        hubTargetDomain=hub_target_domain,
+        tls=tls,
+        leaseAcquireTimeoutMs=_validate_optional_positive_int(
+            data.get("leaseAcquireTimeoutMs"), "verser2Runtime.leaseAcquireTimeoutMs"
+        ),
+        minWaitingStreams=_validate_optional_positive_int(
+            data.get("minWaitingStreams"), "verser2Runtime.minWaitingStreams"
+        ),
+    )
 
 
 def _validate(payload: Any) -> BootConfig:
@@ -118,6 +182,8 @@ def _validate(payload: Any) -> BootConfig:
     if python_path is not None:
         python_path = _require_non_empty_string(python_path, "pythonPath")
 
+    verser2_runtime = _validate_verser2_runtime(payload.get("verser2Runtime"))
+
     return BootConfig(
         sequencePath=sequence_path,
         instanceId=instance_id,
@@ -131,6 +197,7 @@ def _validate(payload: Any) -> BootConfig:
         exposePath=expose_path,
         exposeHost=expose_host,
         pythonPath=python_path,
+        verser2Runtime=verser2_runtime,
     )
 
 

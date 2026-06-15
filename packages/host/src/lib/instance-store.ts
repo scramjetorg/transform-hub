@@ -1,4 +1,5 @@
 import { ICSI } from "./types";
+import { matchesRpcExposePath } from "./rpc-path";
 
 export class InstancesStore extends Map<string, ICSI> {
     private exposePathMap: Map<string, Set<string>> = new Map();
@@ -116,7 +117,8 @@ export class InstancesStore extends Map<string, ICSI> {
 
     getByExposePath(exposePath: string): ICSI[] {
         const set = Array.from(this.exposePathMap)
-            .find(([path]) => exposePath.startsWith(path))?.[1];
+            .filter(([path]) => matchesRpcExposePath(exposePath, path))
+            .sort(([left], [right]) => right.length - left.length)[0]?.[1];
 
         if (!set) {
             return [];

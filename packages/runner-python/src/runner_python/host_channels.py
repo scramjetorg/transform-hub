@@ -70,7 +70,7 @@ async def _connect_one(
     addr_infos: list[Any],
 ) -> socket.socket:
     loop = asyncio.get_running_loop()
-    handshake = f"{instance_id}\n{code.value}".encode("ascii")
+    handshake = f"{instance_id}{code.value}".encode("ascii")
     last_error: Exception | None = None
 
     for family, socktype, proto, _, sockaddr in addr_infos:
@@ -112,34 +112,33 @@ async def connect_host_channels(
     opened_sockets: list[socket.socket] = []
 
     try:
-        input_sock = await _connect_one(
-            host=host,
-            port=port,
-            instance_id=instance_id,
-            code=ChannelCode.IN,
-            timeout=timeout,
-            addr_infos=addr_infos,
+        input_sock, output_sock, log_sock = await asyncio.gather(
+            _connect_one(
+                host=host,
+                port=port,
+                instance_id=instance_id,
+                code=ChannelCode.IN,
+                timeout=timeout,
+                addr_infos=addr_infos,
+            ),
+            _connect_one(
+                host=host,
+                port=port,
+                instance_id=instance_id,
+                code=ChannelCode.OUT,
+                timeout=timeout,
+                addr_infos=addr_infos,
+            ),
+            _connect_one(
+                host=host,
+                port=port,
+                instance_id=instance_id,
+                code=ChannelCode.LOG,
+                timeout=timeout,
+                addr_infos=addr_infos,
+            ),
         )
-        opened_sockets.append(input_sock)
-
-        output_sock = await _connect_one(
-            host=host,
-            port=port,
-            instance_id=instance_id,
-            code=ChannelCode.OUT,
-            timeout=timeout,
-            addr_infos=addr_infos,
-        )
-        opened_sockets.append(output_sock)
-
-        log_sock = await _connect_one(
-            host=host,
-            port=port,
-            instance_id=instance_id,
-            code=ChannelCode.LOG,
-            timeout=timeout,
-            addr_infos=addr_infos,
-        )
+        opened_sockets.extend([input_sock, output_sock, log_sock])
     except HostChannelConnectError:
         for channel_socket in opened_sockets:
             channel_socket.close()

@@ -15,7 +15,7 @@ from runner_python.host_channels import (
 
 def make_boot_config(fake_host_server, **overrides):
     boot_config = {
-        "instanceId": "instance-123",
+        "instanceId": "12345678-1234-1234-1234-123456789abc",
         "instancesServerHost": fake_host_server.host,
         "instancesServerPort": fake_host_server.port,
     }
@@ -58,16 +58,16 @@ async def test_connect_host_channels_opens_three_sockets_and_sends_handshakes(
             ChannelCode.LOG.value,
         ]
         assert fake_host_server.handshakes == [
-            b"instance-123\n5",
-            b"instance-123\n6",
-            b"instance-123\n7",
+            b"12345678-1234-1234-1234-123456789abc5",
+            b"12345678-1234-1234-1234-123456789abc6",
+            b"12345678-1234-1234-1234-123456789abc7",
         ]
     finally:
         await close_host_channels(host_channels)
 
 
 @pytest.mark.asyncio
-async def test_connect_host_channels_never_opens_requests_channel(fake_host_server):
+async def test_connect_host_channels_does_not_open_reserved_requests_channel(fake_host_server):
     host_channels = await connect_host_channels(make_boot_config(fake_host_server))
 
     try:
@@ -75,6 +75,9 @@ async def test_connect_host_channels_never_opens_requests_channel(fake_host_serv
         await asyncio.sleep(0.05)
 
         assert len(fake_host_server.connections) == 3
+        assert [
+            connection.channel_code for connection in fake_host_server.connections
+        ] == [ChannelCode.IN.value, ChannelCode.OUT.value, ChannelCode.LOG.value]
     finally:
         await close_host_channels(host_channels)
 

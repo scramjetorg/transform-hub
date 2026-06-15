@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from runner_python.boot_config import BootConfig, ValidationError, load_boot_config
+from runner_python.boot_config import (
+    BootConfig,
+    ValidationError,
+    Verser2RuntimeConfig,
+    load_boot_config,
+)
 
 
 VALID_PAYLOAD = {
@@ -85,6 +90,7 @@ def test_optional_fields_default_correctly(tmp_path: Path) -> None:
     assert cfg.exposePath is None
     assert cfg.exposeHost is None
     assert cfg.pythonPath is None
+    assert cfg.verser2Runtime is None
 
 
 def test_python_path_field_reads_when_present(tmp_path: Path) -> None:
@@ -129,3 +135,90 @@ def test_port_must_be_positive_integer(tmp_path: Path) -> None:
     payload = {**VALID_PAYLOAD, "instancesServerPort": "13000"}
     with pytest.raises(ValidationError):
         load_boot_config(["runner_python", _write(tmp_path, payload)])
+
+
+def test_verser2_runtime_round_trips_when_present(tmp_path: Path) -> None:
+    payload = {
+        **VALID_PAYLOAD,
+        "verser2Runtime": {
+            "hostUrl": "https://verser2.example",
+            "runnerGuestId": "runner.inst.guest",
+            "runnerRouteDomain": "runner.inst.scramjet.internal",
+            "hubBrokerId": "runner.inst.hub.broker",
+            "hubTargetDomain": "sth.local.scramjet.internal",
+            "tls": {"caFile": "/certs/ca.pem"},
+            "leaseAcquireTimeoutMs": 1234,
+            "minWaitingStreams": 2,
+        },
+    }
+
+    cfg = load_boot_config(["runner_python", _write(tmp_path, payload)])
+
+    assert isinstance(cfg.verser2Runtime, Verser2RuntimeConfig)
+    assert cfg.verser2Runtime.hostUrl == "https://verser2.example"
+    assert cfg.verser2Runtime.runnerGuestId == "runner.inst.guest"
+    assert cfg.verser2Runtime.runnerRouteDomain == "runner.inst.scramjet.internal"
+    assert cfg.verser2Runtime.hubBrokerId == "runner.inst.hub.broker"
+    assert cfg.verser2Runtime.hubTargetDomain == "sth.local.scramjet.internal"
+    assert cfg.verser2Runtime.tls == {"caFile": "/certs/ca.pem"}
+    assert cfg.verser2Runtime.leaseAcquireTimeoutMs == 1234
+    assert cfg.verser2Runtime.minWaitingStreams == 2
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["hostUrl", "runnerGuestId", "runnerRouteDomain", "hubBrokerId"],
+)
+def test_verser2_runtime_requires_non_empty_core_strings(
+    tmp_path: Path, field: str
+) -> None:
+    verser2_runtime = {
+        "hostUrl": "https://verser2.example",
+        "runnerGuestId": "runner.inst.guest",
+        "runnerRouteDomain": "runner.inst.scramjet.internal",
+        "hubBrokerId": "runner.inst.hub.broker",
+    }
+    verser2_runtime[field] = ""
+    payload = {**VALID_PAYLOAD, "verser2Runtime": verser2_runtime}
+
+    with pytest.raises(ValidationError):
+        load_boot_config(["runner_python", _write(tmp_path, payload)])
+
+
+def test_verser2_runtime_requires_object_shape(tmp_path: Path) -> None:
+    payload = {**VALID_PAYLOAD, "verser2Runtime": []}
+
+    with pytest.raises(ValidationError):
+        load_boot_config(["runner_python", _write(tmp_path, payload)])
+
+
+def test_verser2_runtime_requires_explicit_routed_domain(tmp_path: Path) -> None:
+    payload = {
+        **VALID_PAYLOAD,
+        "verser2Runtime": {
+            "hostUrl": "https://verser2.example",
+            "runnerGuestId": "runner.inst.guest",
+            "hubBrokerId": "runner.inst.hub.broker",
+        },
+    }
+
+    with pytest.raises(ValidationError):
+        load_boot_config(["runner_python", _write(tmp_path, payload)])
+
+
+def test_verser2_runtime_rejects_invalid_tls_and_timeouts(tmp_path: Path) -> None:
+    base = {
+        "hostUrl": "https://verser2.example",
+        "runnerGuestId": "runner.inst.guest",
+        "runnerRouteDomain": "runner.inst.scramjet.internal",
+        "hubBrokerId": "runner.inst.hub.broker",
+    }
+
+    for bad_patch in [
+        {"tls": "not-object"},
+        {"leaseAcquireTimeoutMs": 0},
+        {"minWaitingStreams": "2"},
+    ]:
+        payload = {**VALID_PAYLOAD, "verser2Runtime": {**base, **bad_patch}}
+        with pytest.raises(ValidationError):
+            load_boot_config(["runner_python", _write(tmp_path, payload)])

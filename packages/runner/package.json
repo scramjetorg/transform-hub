@@ -11,6 +11,7 @@
     "export:docker": "npm run build:docker && docker save scramjetorg/runner:$(git rev-parse HEAD) | gzip > ../../dist/docker/scramjetorg-runner.tar.gz",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
+    "test": "node ../../scripts/run-ava.js",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$(git rev-parse HEAD)",
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse HEAD)"
@@ -27,7 +28,7 @@
     "@scramjet/runner-node": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "@scramjet/bpmux": "^9.0.0",
+    "@signicode/verser2-guest-node": "0.3.1",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

@@ -1,8 +1,8 @@
-import { Command } from "commander";
+import type { CommandDescriptor } from "@scramjet/config";
 import { dirname, resolve } from "path";
 import { displayMessage } from "../../lib/output";
 import { CompleterParams } from "../../events/completerDetails";
-import { CommanderCompleter } from "./commanderCompleter";
+import { CommandCompleter } from "./commandCompleter";
 import { runScript } from "../../helpers/runScript";
 
 const requireFileNameDir = dirname(require.main!.filename);
@@ -17,10 +17,10 @@ export class Completion {
         return `|${completerParams}`;
     }
 
-    public static complete(command: Command) {
+    public static complete(command: CommandDescriptor) {
         const compWords = (process.env.COMP_WORDS || "").split(" ");
         const compCword = Number(process.env.COMP_CWORD);
-        const comperly = new CommanderCompleter(command).complete(compWords, compCword);
+        const comperly = new CommandCompleter(command).complete(compWords, compCword);
 
         const siComperly = this.formatForSiScript(comperly);
 

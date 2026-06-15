@@ -56,19 +56,16 @@ async def fake_host_server() -> AsyncIterator[FakeHostServer]:
 
                 buffer.extend(chunk)
 
-                if b"\n" in buffer:
+                if len(buffer) >= 37:
                     handshake = bytes(buffer)
-                    newline_index = handshake.index(b"\n")
-
-                    if len(handshake) >= newline_index + 2:
-                        message = handshake[:newline_index + 2]
-                        fake_host.connections.append(
-                            RecordedHandshake(
-                                handshake=message,
-                                channel_code=message[-1:].decode("ascii"),
-                            )
+                    message = handshake[:37]
+                    fake_host.connections.append(
+                        RecordedHandshake(
+                            handshake=message,
+                            channel_code=message[-1:].decode("ascii"),
                         )
-                        break
+                    )
+                    break
 
             await fake_host._stop_event.wait()
         finally:

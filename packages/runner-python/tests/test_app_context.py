@@ -20,6 +20,7 @@ def test_default_health_check_returns_healthy_true() -> None:
     ctx = AppContext()
 
     assert ctx._health_check() == {"healthy": True}
+    assert ctx.hub is None
 
 
 def test_set_stop_handler_registers_handler() -> None:

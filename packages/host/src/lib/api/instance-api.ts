@@ -9,6 +9,7 @@ import { IncomingHttpHeaders, ServerResponse } from "http";
 import { DataStream } from "scramjet";
 import EventEmitter from "events";
 import { ReReadable } from "rereadable-stream";
+import { normalizeRpcForwardPath, stripRpcExposePath } from "./host-api";
 
 export class InstanceAPI {
     constructor(
@@ -69,6 +70,21 @@ export class InstanceAPI {
         router.op("post", "/_kill", this.handleKill.bind(this), communicationHandler);
 
         router.op("post", "/set", this.handleSet.bind(this));
+
+        router.use("/rpc", async (req, res, next) => {
+            const rpcPath = req.url?.startsWith("/rpc") ? req.url.slice("/rpc".length) || "/" : req.url || "/";
+            const apiVersion = this.csi.expose?.path?.startsWith("/api/v1") ? "v1" : undefined;
+            const url = stripRpcExposePath(
+                normalizeRpcForwardPath(rpcPath, this.csi.expose?.path, apiVersion),
+                this.csi.expose?.path
+            );
+
+            if (await this.csi.forwardRpcRequest?.(req, res, url)) {
+                return;
+            }
+
+            next();
+        });
 
         router.forward("/rpc", [], (req) => {
             const url = req.url!.slice(this.csi.expose?.path?.length || 0);

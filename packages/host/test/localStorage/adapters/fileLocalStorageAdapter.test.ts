@@ -1,3 +1,4 @@
+import test from "ava";
 import fs from "fs";
 import path from "path";
 // eslint-disable-next-line import/no-useless-path-segments
@@ -15,107 +16,152 @@ function tempLocalDir(testName: string): string {
     return path.join(__dirname, testStorageName, `${testName}_${Date.now()}`);
 }
 
-describe("FileLocalStorageAdapter Tests", () => {
-    let adapter: FileLocalStorageAdapter;
-    let testDir: string;
+const createAdapter = (): { adapter: FileLocalStorageAdapter; testDir: string } => {
+    const testDir = tempLocalDir("test");
+    cleanupDir(testDir);
+    fs.mkdirSync(testDir, { recursive: true });
+    const adapter = new FileLocalStorageAdapter(testDir);
 
-    beforeEach(async () => {
-        testDir = tempLocalDir("test");
-        cleanupDir(testDir);
-        fs.mkdirSync(testDir, { recursive: true });
-        adapter = new FileLocalStorageAdapter(testDir);
-        await adapter.init();
-        await adapter.clear();
-    });
+    return { adapter, testDir };
+};
 
-    afterEach(() => {
-        cleanupDir(testDir);
-    });
+test.serial("FileLocalStorageAdapter: setItem() and getItem() work correctly", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
 
-    afterAll(() => {
-        cleanupDir(path.join(__dirname, testStorageName));
-    });
+    await adapter.init();
+    await adapter.clear();
 
-    test("setItem() and getItem() work correctly", async () => {
-        await adapter.setItem("foo", "bar");
-        const value = await adapter.getItem("foo");
+    await adapter.setItem("foo", "bar");
+    const value = await adapter.getItem("foo");
 
-        expect(value).toBe("bar");
-    });
+    t.is(value, "bar");
+});
 
-    test("Overwriting a key updates its value", async () => {
-        await adapter.setItem("foo", "bar");
-        await adapter.setItem("foo", "baz");
-        const value = await adapter.getItem("foo");
+test.serial("FileLocalStorageAdapter: overwriting a key updates its value", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
 
-        expect(value).toBe("baz");
-    });
+    await adapter.init();
+    await adapter.clear();
 
-    test("removeItem() should remove a key", async () => {
-        await adapter.setItem("temp", "value");
-        await adapter.removeItem("temp");
-        const value = await adapter.getItem("temp");
+    await adapter.setItem("foo", "bar");
+    await adapter.setItem("foo", "baz");
+    const value = await adapter.getItem("foo");
 
-        expect(value).toBeNull();
-    });
+    t.is(value, "baz");
+});
 
-    test("clear() should remove all keys and set length to 0", async () => {
-        await adapter.setItem("a", "1");
-        await adapter.setItem("b", "2");
-        await adapter.clear();
-        const allItems = await adapter.getAllItems();
+test.serial("FileLocalStorageAdapter: removeItem() should remove a key", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
 
-        expect(allItems).toEqual({});
-        expect(await adapter.length()).toBe(0);
-    });
+    await adapter.init();
+    await adapter.clear();
 
-    test("getAllItems() returns complete key-value mapping", async () => {
-        await adapter.setItem("key1", "val1");
-        await adapter.setItem("key2", "val2");
-        const items = await adapter.getAllItems();
+    await adapter.setItem("temp", "value");
+    await adapter.removeItem("temp");
+    const value = await adapter.getItem("temp");
 
-        expect(items).toEqual({ key1: "val1", key2: "val2" });
-    });
+    t.is(value, null);
+});
 
-    test("length() returns correct number of keys", async () => {
-        await adapter.clear();
-        expect(await adapter.length()).toBe(0);
-        await adapter.setItem("a", "1");
-        expect(await adapter.length()).toBe(1);
-        await adapter.setItem("b", "2");
-        expect(await adapter.length()).toBe(2);
-        await adapter.removeItem("a");
-        expect(await adapter.length()).toBe(1);
-    });
+test.serial("FileLocalStorageAdapter: clear() should remove all keys and set length to 0", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
 
-    test("handles special characters in keys and values", async () => {
-        const key = "spécial_键_😊";
-        const value = "välüe_测试_🚀";
+    await adapter.init();
+    await adapter.clear();
 
-        await adapter.setItem(key, value);
-        const retrieved = await adapter.getItem(key);
+    await adapter.setItem("a", "1");
+    await adapter.setItem("b", "2");
+    await adapter.clear();
+    const allItems = await adapter.getAllItems();
 
-        expect(retrieved).toBe(value);
-    });
+    t.deepEqual(allItems, {});
+    t.is(await adapter.length(), 0);
+});
 
-    test("concurrent setItem operations", async () => {
-        const numItems = 100;
-        const keys = Array.from({ length: numItems }, (_, i) => `key_${i}`);
+test.serial("FileLocalStorageAdapter: getAllItems() returns complete key-value mapping", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
 
-        await Promise.all(keys.map(key => adapter.setItem(key, `value_${key}`)));
-        const items = await adapter.getAllItems();
+    await adapter.init();
+    await adapter.clear();
 
-        for (const key of keys) {
-            expect(items[key]).toBe(`value_${key}`);
-        }
-    });
+    await adapter.setItem("key1", "val1");
+    await adapter.setItem("key2", "val2");
+    const items = await adapter.getAllItems();
 
-    test("setItem() rejects when disk write fails", async () => {
-        const backup = (adapter as any).localStorage.setItem;
+    t.deepEqual(items, { key1: "val1", key2: "val2" });
+});
 
-        (adapter as any).localStorage.setItem = () => { throw new Error("Disk write error"); };
-        await expect(adapter.setItem("fail", "value")).rejects.toThrow("Disk write error");
+test.serial("FileLocalStorageAdapter: length() returns correct number of keys", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
 
+    await adapter.init();
+    await adapter.clear();
+
+    t.is(await adapter.length(), 0);
+    await adapter.setItem("a", "1");
+    t.is(await adapter.length(), 1);
+    await adapter.setItem("b", "2");
+    t.is(await adapter.length(), 2);
+    await adapter.removeItem("a");
+    t.is(await adapter.length(), 1);
+});
+
+test.serial("FileLocalStorageAdapter: handles special characters in keys and values", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
+
+    await adapter.init();
+    await adapter.clear();
+
+    const key = "spécial_键_😊";
+    const value = "välüe_测试_🚀";
+
+    await adapter.setItem(key, value);
+    const retrieved = await adapter.getItem(key);
+
+    t.is(retrieved, value);
+});
+
+test.serial("FileLocalStorageAdapter: concurrent setItem operations", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
+
+    await adapter.init();
+    await adapter.clear();
+
+    const numItems = 100;
+    const keys = Array.from({ length: numItems }, (_, i) => `key_${i}`);
+
+    await Promise.all(keys.map(key => adapter.setItem(key, `value_${key}`)));
+    const items = await adapter.getAllItems();
+
+    for (const key of keys) {
+        t.is(items[key], `value_${key}`);
+    }
+});
+
+test.serial("FileLocalStorageAdapter: setItem() rejects when disk write fails", async t => {
+    const { adapter, testDir } = createAdapter();
+    t.teardown(() => cleanupDir(testDir));
+
+    await adapter.init();
+    await adapter.clear();
+
+    const backup = (adapter as any).localStorage.setItem;
+    (adapter as any).localStorage.setItem = () => { throw new Error("Disk write error"); };
+
+    try {
+        await adapter.setItem("fail", "value");
+        t.fail("Expected setItem to reject");
+    } catch (err: any) {
+        t.is(err.message, "Disk write error");
+    } finally {
         (adapter as any).localStorage.setItem = backup;
-    });
+    }
 });

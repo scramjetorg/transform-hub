@@ -20,6 +20,13 @@ import {
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
 import { VerserClient } from "@scramjet/verser";
+import {
+    createVerserBroker,
+    createVerserNodeGuest,
+    VerserBroker,
+    VerserClientTlsOptions,
+    VerserNodeGuest
+} from "@signicode/verser2-guest-node";
 import { TypedEmitter, generateSTHKey, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
@@ -27,6 +34,7 @@ import { DuplexStream } from "@scramjet/api-server";
 import { VerserClientConnection } from "@scramjet/verser";
 import { networkInterfaces } from "os";
 import { HostError } from "@scramjet/model";
+import { Verser2ClientTlsConfig } from "@scramjet/types";
 
 type STHInformation = {
     id?: string;
@@ -44,6 +52,33 @@ const dropMessageCodes = [
     CPMMessageCode.LIMIT_EXCEEDED,
     CPMMessageCode.ID_DROP
 ];
+
+export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig): VerserClientTlsOptions {
+    const trust = tls.ca ? { ca: tls.ca } : { caFile: tls.caFile };
+
+    if (tls.pfxFile) {
+        return {
+            ...trust,
+            pfxFile: tls.pfxFile,
+            passphrase: tls.passphrase
+        };
+    }
+
+    if (tls.certFile || tls.keyFile) {
+        if (!tls.certFile || !tls.keyFile) {
+            throw new Error("Both verser2 TLS certFile and keyFile must be provided together");
+        }
+
+        return {
+            ...trust,
+            certFile: tls.certFile,
+            keyFile: tls.keyFile,
+            passphrase: tls.passphrase
+        };
+    }
+
+    return trust;
+}
 
 /**
  * Provides communication with Manager.
@@ -139,7 +174,11 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @type {VerserClient}
      */
-    verserClient: VerserClient;
+    verserClient?: VerserClient;
+
+    verser2Broker?: VerserBroker;
+
+    verser2Guest?: VerserNodeGuest;
 
     /**
      * Reference for method called in interval and sending load check data to the Manager.
@@ -176,23 +215,42 @@ export class CPMConnector extends TypedEmitter<Events> {
             sthKey = generateSTHKey(config.apiKey);
         }
 
-        this.verserClient = new VerserClient({
-            verserUrl: `${this.cpmUrl}/api/${config.apiVersion}/${orgId}/${cpmId}/`,
-            headers: {
-                "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
-                "x-sth-tags": JSON.stringify(typeof this.config?.tags !== "undefined" ? this.config?.tags : []),
-                "x-manager-id": cpmId,
-                "x-sth-id": this.config.id || "",
-                ...orgId && { "x-org-id": orgId },
-                ...sthKey && { Authorization: `Digest cnonce="${sthKey}"` }
-            },
-            server,
-            https: this.isHttps
-                ? { ca: [this.cpmSslCa] }
-                : undefined
-        });
+        if (this.usesVerser2) {
+            const tls = createVerser2ClientTlsOptions(this.config.verser2.tls);
 
-        this.verserClient.logger.pipe(this.logger);
+            this.verser2Broker = createVerserBroker({
+                hostUrl: this.config.verser2.hostUrl,
+                brokerId: this.config.verser2.broker.peerId,
+                leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
+                tls
+            });
+            this.verser2Guest = createVerserNodeGuest({
+                hostUrl: this.config.verser2.hostUrl,
+                guestId: this.config.verser2.guest.peerId,
+                routedDomains: [this.config.verser2.guest.routeDomain],
+                minWaitingStreams: this.config.verser2.leases.minimumWaitingLeases,
+                leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
+                tls
+            }).attach(server, this.config.verser2.guest.routeDomain);
+        } else {
+            this.verserClient = new VerserClient({
+                verserUrl: `${this.cpmUrl}/api/${config.apiVersion}/${orgId}/${cpmId}/`,
+                headers: {
+                    "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
+                    "x-sth-tags": JSON.stringify(typeof this.config?.tags !== "undefined" ? this.config?.tags : []),
+                    "x-manager-id": cpmId,
+                    "x-sth-id": this.config.id || "",
+                    ...orgId && { "x-org-id": orgId },
+                    ...sthKey && { Authorization: `Digest cnonce="${sthKey}"` }
+                },
+                server,
+                https: this.isHttps
+                    ? { ca: [this.cpmSslCa] }
+                    : undefined
+            });
+
+            this.verserClient.logger.pipe(this.logger);
+        }
 
         this.logger.trace("Initialized.");
     }
@@ -219,6 +277,10 @@ export class CPMConnector extends TypedEmitter<Events> {
 
     private get cpmUrl() {
         return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, { defaultProtocol: this.isHttps ? "https:" : "http:" });
+    }
+
+    private get usesVerser2() {
+        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
     }
 
     /**
@@ -256,7 +318,9 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.connection = undefined;
         }
 
-        await this.verserClient.close();
+        await this.verserClient?.close();
+        await this.verser2Broker?.close("disconnect");
+        await this.verser2Guest?.close("disconnect");
         this.verserClient = undefined as any;
 
         this.logger.info("Disconnected from Manager");
@@ -267,6 +331,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
+            this.loadInterval = undefined;
         }
 
         this.communicationStream = undefined;
@@ -299,7 +364,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
                     this.logger.trace("Received id", this.info.id);
 
-                    this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+                    this.verserClient?.updateHeaders({ "x-sth-id": this.info.id });
 
                     fs.writeFileSync(
                         this.config.infoFilePath,
@@ -365,7 +430,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     getHttpAgent(): http.Agent {
-        return this.verserClient.verserAgent as http.Agent;
+        return this.verser2Broker?.createAgent() || this.verserClient!.verserAgent as http.Agent;
     }
 
     /**
@@ -377,18 +442,27 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {Promise<void>} Promise that resolves when connection is established.
      */
     async connect(): Promise<void> {
+        if (this.usesVerser2) {
+            await this.verser2Broker!.connect();
+            await this.verser2Guest!.connect();
+            this.connected = true;
+            this.connectionAttempts = 0;
+            this.emit("connect");
+            return;
+        }
+
         this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
 
         this.isReconnecting = false;
 
         if (this.info.id) {
-            this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+            this.verserClient!.updateHeaders({ "x-sth-id": this.info.id });
         }
 
         let connection: VerserClientConnection;
 
         try {
-            connection = await this.verserClient.connect();
+            connection = await this.verserClient!.connect();
 
             connection.socket
                 .once("close", async () => {
@@ -426,7 +500,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             }
         });
 
-        this.verserClient.once("error", async (error: any) => {
+        this.verserClient!.once("error", async (error: any) => {
             this.logger.warn("VerserClient error", error);
 
             try {
@@ -681,13 +755,15 @@ export class CPMConnector extends TypedEmitter<Events> {
         headers: http.OutgoingHttpHeaders | Record<string, string> = {}
     ): http.ClientRequest {
         //@TODO: Disconnecting/error handling
-        const url = `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
+        const url = this.usesVerser2
+            ? `http://${this.config.verser2.broker.targetDomain}/api/v1/${reqPath}`
+            : `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
 
         this.logger.debug("make HTTP Req to CPM", url);
 
         return http.request(
             url,
-            { method, agent: this.verserClient.verserAgent, headers }
+            { method, agent: this.getHttpAgent(), headers }
         );
     }
 

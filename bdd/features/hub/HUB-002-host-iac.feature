@@ -30,7 +30,7 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
         And host is running
         * exit hub process
 
-    @ci-hub @starts-host
+    @ci-hub @starts-host @slow
     Scenario: HUB-002 TC-004 Event forwarding works between sequences
         When hub process is started with random ports and parameters "--sequences-root=data/sequences/ --instance-lifetime-extension-delay=10 --identify-existing --runtime-adapter=process"
         And host is running

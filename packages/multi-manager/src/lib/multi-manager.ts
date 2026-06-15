@@ -14,6 +14,7 @@ import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
 import { getDefaultConfig as getManagerDefaultConfig } from "@scramjet/manager-config";
 import { Verser, VerserConnection } from "@scramjet/verser";
+import { createVerserHost, VerserHost } from "@signicode/verser2-host";
 import { MultiHostController } from "./multi-host-controller";
 import { MultiHostControllerStore } from "./multi-host-controller-store";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
@@ -21,6 +22,10 @@ import { DataStream } from "scramjet";
 import { MultiManagerAuditor } from "./mulit-manager-auditor";
 import { MultiManagerConfig } from "../config/multi-manager-configuration";
 import { MonitoringServer } from "@scramjet/monitoring-server";
+import { createManagerSthLocalBrokerTransport } from "@scramjet/manager";
+import { createVerser2HostOptions } from "./verser2-host-config";
+import { resolveManagerVerser2HostConfig } from "./verser2-host-identity";
+import { getMultiManagerVerser2TrustExport } from "./verser2-trust-export";
 
 const MANAGER_START_TIMEOUT = 30000;
 
@@ -31,7 +36,8 @@ const name = packageFile.value?.name || "unknown";
 
 export class MultiManager {
     apiServer: APIExpose;
-    apiVerser: Verser;
+    apiVerser?: Verser;
+    verser2Host?: VerserHost;
     apiBase: string;
 
     id: string;
@@ -80,7 +86,9 @@ export class MultiManager {
         this.apiBase = `${config.server.apiBase}/${config.server.version}`;
 
         this.apiServer = apiServer;
-        this.apiVerser = new Verser(this.apiServer.server);
+        if (this.usesLegacyVerserTransport()) {
+            this.apiVerser = new Verser(this.apiServer.server);
+        }
 
         this.apiServer.server.timeout = 0;
         this.apiServer.server.requestTimeout = 0;
@@ -106,9 +114,20 @@ export class MultiManager {
         this.logger.info("Starting MultiManager", version);
         this.logger.debug("MultiManager config", this.config.getMasked());
 
+        if (this.usesVerser2Transport() && !this.verser2Host) {
+            Object.assign(this.config.verser2, await resolveManagerVerser2HostConfig(this.config.verser2, "MultiManager"));
+            this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2));
+        }
+
         this.setRouting();
 
-        this.apiVerser.logger.pipe(this.logger);
+        this.apiVerser?.logger.pipe(this.logger);
+        this.verser2Host?.onLifecycle(event => this.logger.debug("verser2 Host lifecycle", event));
+
+        if (this.verser2Host) {
+            await this.verser2Host.start();
+            this.logger.info("verser2 Host started", this.verser2Host.address);
+        }
 
         if (this.config.monitoringServer?.port) {
             this.logger.debug(`starting monitoring server on port ${this.config.monitoringServer?.port}`);
@@ -124,7 +143,9 @@ export class MultiManager {
 
             this.logger.info("Server started on", address.port, address.address);
 
-            this.attachVerserListeners();
+            if (this.apiVerser) {
+                this.attachVerserListeners();
+            }
         });
 
         if (this.config.manager) {
@@ -179,6 +200,8 @@ export class MultiManager {
                 try {
                     const managerMain = manager.main();
 
+                    await this.attachManagerVerser2Peers(manager);
+
                     manager.setupHealthEndpoint(this.healthCheck);
 
                     this.auditor.attach(manager.auditor);
@@ -228,6 +251,15 @@ export class MultiManager {
         );
         this.apiServer.get(`${this.apiBase}/list`, () => this.handleListManagersRequest());
         this.apiServer.get(`${this.apiBase}/health`, () => this.healthCheck.getHealthCheckInfo());
+        this.apiServer.get(`${this.apiBase}/verser2/trust/:id?`, (req: ParsedMessage) => {
+            const manager = req.params?.id ? this.managersStore.getById(req.params.id) : undefined;
+
+            if (req.params?.id && !manager) {
+                throw new Error(`Manager ${req.params.id} not found`);
+            }
+
+            return getMultiManagerVerser2TrustExport(this.config.verser2, manager?.config);
+        });
 
         this.apiServer.op("post", `${this.apiBase}/start`, (req) => this.handleStartManagerRequest(req));
         this.apiServer.op(
@@ -262,6 +294,10 @@ export class MultiManager {
     }
 
     attachVerserListeners() {
+        if (!this.apiVerser) {
+            return;
+        }
+
         this.apiVerser.on("connect", async (verserConnection: VerserConnection) => {
             this.logger.debug("Verser connect event");
 
@@ -301,6 +337,39 @@ export class MultiManager {
         });
     }
 
+    private usesVerser2Transport() {
+        return this.config.verser2.enabled && this.config.verser2.migrationMode !== "legacy";
+    }
+
+    private usesLegacyVerserTransport() {
+        return !this.config.verser2.enabled || this.config.verser2.migrationMode !== "verser2";
+    }
+
+    private usesVerser2OnlyTransport() {
+        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
+    }
+
+    private async attachManagerVerser2Peers(manager: Manager) {
+        if (!this.verser2Host || !manager.config.verser2.enabled || manager.config.verser2.migrationMode === "legacy") {
+            return;
+        }
+
+        await manager.startedPromise;
+
+        const broker = await this.verser2Host.attachLocalBroker({ brokerId: manager.config.verser2.localBroker.peerId });
+
+        manager.setSthBrokerTransport(createManagerSthLocalBrokerTransport(broker));
+
+        await this.verser2Host.attachLocalGuest({
+            guestId: manager.config.verser2.localGuest.peerId,
+            routedDomains: [manager.config.verser2.localGuest.routeDomain],
+            listener: (req, res) => manager.router.lookup(req as ParsedMessage, res as ServerResponse, () => {
+                res.statusCode = 404;
+                res.end();
+            })
+        });
+    }
+
     async attachHostAPI(id: string, verserConnection: VerserConnection) {
         const managerId = verserConnection.getHeader("x-manager-id") as string;
         const managerInstance = this.managersStore.getById(managerId);
@@ -318,6 +387,13 @@ export class MultiManager {
 
     attachMultiHostAPI(id: string, verserConnection: VerserConnection) {
         this.logger.info(`MultiHost API incoming connection with id: ${id}.`);
+
+        if (this.usesVerser2OnlyTransport()) {
+            this.logger.warn("Refusing legacy MultiHost connection in verser2 mode", id);
+            verserConnection.end(410, "Legacy MultiHost path is retired in verser2 mode");
+
+            return;
+        }
 
         let instance = this.multiHostControllerStore.getById(id);
 
@@ -378,6 +454,17 @@ export class MultiManager {
 
     async forwardMultiHostRequest(req: ParsedMessage, res: ServerResponse) {
         const id = (req.params || {}).id;
+
+        if (this.usesVerser2OnlyTransport()) {
+            res.writeHead(410, { "content-type": "application/json" });
+            res.end(JSON.stringify({
+                opStatus: ReasonPhrases.GONE,
+                error: "Legacy MultiHost /msth forwarding is retired in verser2 mode"
+            }));
+
+            return;
+        }
+
         const controller = this.multiHostControllerStore.getById(id);
 
         this.logger.debug("Request to MultiHost", req.method, req.url);
@@ -429,6 +516,8 @@ export class MultiManager {
 
         try {
             await manager.main();
+
+            await this.attachManagerVerser2Peers(manager);
 
             manager.setupHealthEndpoint(this.healthCheck);
 

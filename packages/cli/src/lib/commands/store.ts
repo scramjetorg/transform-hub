@@ -1,88 +1,82 @@
-import { CommandCompleterDetails, CompleterDetailsEvent } from "../../events/completerDetails";
-import { CommandDefinition, ExtendedHelpConfiguration, isProductionEnv } from "../../types";
+import { cmd, type CommandDescriptor } from "@scramjet/config";
+import { isProductionEnv } from "../../types";
 import { getReadStreamFromFile } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { displayMessage, displayObject } from "../output";
-import { getMiddlewareClient, initPlatform } from "../platform";
+import { getMiddlewareClient } from "../platform";
 
 /**
- * Initializes `store` command.
- *
- * @param {Command} program Commander object.
+ * Builds the `store` command descriptor tree.
  */
-export const store: CommandDefinition = (program) => {
+export const storeCommand: CommandDescriptor = cmd("store", (b) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) {
-        program.command("store", { hidden: true })
-            .action(() => displayProdOnlyMsg("store"));
-
+        b.hidden(true).action(() => displayProdOnlyMsg("store"));
         return;
     }
 
-    const storeCmd = program
-        .command("store")
-        .hook("preAction", initPlatform)
-        .addHelpCommand(false)
-        .configureHelp({ showGlobalOptions: true, developersOnly: true } as ExtendedHelpConfiguration)
+    b
         .usage("[command] [options...]")
-        .description("Operations on a Store");
+        .meta("developersOnly", true)
+        .desc("Operations on a Store")
+        .children(
+            cmd("list", (c) => {
+                c
+                    .alias("ls")
+                    .desc("Lists all available Sequences in Store")
+                    .action(async () => {
+                        const spaceId = sessionConfig.lastSpaceId;
+                        const managerClient = getMiddlewareClient().getManagerClient(spaceId);
 
-    storeCmd
-        .command("list")
-        .alias("ls")
-        .description("Lists all available Sequences in Store")
-        .action(async () => {
-            const spaceId = sessionConfig.lastSpaceId;
-            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
+                        displayObject(await managerClient.getStoreItems(), profileManager.getProfileConfig().format);
+                    });
+            }),
+            cmd("send", (c) => {
+                c
+                    .argument("<package>", "The file or directory to upload. If directory, it will be packed and sent.")
+                    .option("--name <name>", "Allows to name sequence")
+                    .desc("Send the Sequence package to the Store")
+                    .completer({ package: "filenames" })
+                    .action(async (sequencePackage: string, options: Record<string, unknown>) => {
+                        const name = options.name as string;
+                        const spaceId = sessionConfig.lastSpaceId;
+                        const managerClient = getMiddlewareClient().getManagerClient(spaceId);
+                        const uploadedItem = await managerClient.putStoreItem(
+                            await getReadStreamFromFile(sequencePackage), name
+                        );
 
-            displayObject(await managerClient.getStoreItems(), profileManager.getProfileConfig().format);
-        });
+                        displayObject(uploadedItem, profileManager.getProfileConfig().format);
+                    });
+            }),
+            cmd("delete", (c) => {
+                c
+                    .alias("rm")
+                    .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
+                    .desc("Delete the Sequence from the Store")
+                    .action(async (id: string) => {
+                        const spaceId = sessionConfig.lastSpaceId;
+                        const managerClient = getMiddlewareClient().getManagerClient(spaceId);
 
-    storeCmd
-        .command("send")
-        .argument("<package>", "The file or directory to upload. If directory, it will be packed and sent.")
-        .option("--name <name>", "Allows to name sequence")
-        .description("Send the Sequence package to the Store")
-        .on(CompleterDetailsEvent, (complDetails: CommandCompleterDetails) => {
-            complDetails.package = "filenames";
-        })
-        .action(async (sequencePackage: string, { name }) => {
-            const spaceId = sessionConfig.lastSpaceId;
-            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
-            const uploadedItem = await managerClient.putStoreItem(
-                await getReadStreamFromFile(sequencePackage), name
-            );
+                        displayObject(await managerClient.deleteStoreItem(id), profileManager.getProfileConfig().format);
+                    });
+            }),
+            cmd("prune", (c) => {
+                c
+                    .desc("Remove all Sequences from the store (use with caution)")
+                    .action(async () => {
+                        const spaceId = sessionConfig.lastSpaceId;
+                        const managerClient = getMiddlewareClient().getManagerClient(spaceId);
 
-            displayObject(uploadedItem, profileManager.getProfileConfig().format);
-        });
+                        try {
+                            await managerClient.clearStore();
+                        } catch (e: any) {
+                            throw new Error("Some Sequences may have not been deleted.");
+                        }
 
-    storeCmd
-        .command("delete")
-        .alias("rm")
-        .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
-        .description("Delete the Sequence from the Store")
-        .action(async (id: string) => {
-            const spaceId = sessionConfig.lastSpaceId;
-            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
-
-            displayObject(await managerClient.deleteStoreItem(id), profileManager.getProfileConfig().format);
-        });
-
-    storeCmd
-        .command("prune")
-        .description("Remove all Sequences from the store (use with caution)")
-        .action(async () => {
-            const spaceId = sessionConfig.lastSpaceId;
-            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
-
-            try {
-                await managerClient.clearStore();
-            } catch (e : any) {
-                throw new Error("Some Sequences may have not been deleted.");
-            }
-
-            displayMessage("Sequences removed successfully.");
-        });
-};
+                        displayMessage("Sequences removed successfully.");
+                    });
+            })
+        );
+});

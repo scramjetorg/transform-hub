@@ -239,6 +239,12 @@ def test_control_in_readline_crlf_returns_complete_line_without_crlf():
         assert streams.control_in.readline_crlf() == b"status ok"
 
 
+def test_control_in_readline_crlf_accepts_lf_only():
+    with open_streams() as (wired_fds, streams):
+        os.write(wired_fds.control_writer, b"hello world\n")
+        assert streams.control_in.readline_crlf() == b"hello world"
+
+
 def test_monitoring_out_write_frame_appends_crlf():
     with open_streams() as (wired_fds, streams):
         streams.monitoring_out.write_frame(b"metric 1")

@@ -34,3 +34,85 @@ test("Check if the tags of the images match packages version", async t => {
     }
     t.is(preRunnerTagPackageJson, preRunnerTagImageConfig, "Prerunner tag is eqal");
 });
+
+test("default STH connectivity selects verser2 route roles", t => {
+    const config = new ConfigService().getConfig();
+
+    t.true(config.verser2.enabled);
+    t.is(config.verser2.migrationMode, "verser2");
+    t.is(config.verser2.hostUrl, "https://127.0.0.1:2443");
+    t.is(config.verser2.runnerHost?.enabled, true);
+    t.true(config.verser2.runnerHost!.identityDir.endsWith(".scramjet/verser2-runner-host"));
+    t.is(config.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2444");
+    t.not(config.verser2.runnerHost?.host.publicUrl, config.verser2.hostUrl);
+    t.is(config.verser2.runnerHost?.localBroker.peerId, "sth.default.runner.broker");
+    t.is(config.verser2.broker.peerId, "sth.default.broker");
+    t.is(config.verser2.broker.targetDomain, "manager.cpm-manager.scramjet.internal");
+    t.is(config.verser2.guest.peerId, "sth.default.guest");
+    t.is(config.verser2.guest.routeDomain, "sth.default.scramjet.internal");
+});
+
+test("getConfigInfo masks public verser2 client secrets", t => {
+    const config = new ConfigService({
+        platform: {
+            apiKey: "platform-secret"
+        },
+        couchdb: {
+            pass: "couchdb-secret"
+        },
+        verser2: {
+            enabled: true,
+            migrationMode: "verser2",
+            hostUrl: "https://manager.example.test:8443",
+            runnerHost: {
+                enabled: true,
+                identityDir: "/tmp/sth-runner-host",
+                host: {
+                    bindHost: "127.0.0.1",
+                    bindPort: 2444,
+                    publicUrl: "https://sth-local.example.test:2444",
+                    tls: {
+                        certFile: "/safe/runner.crt",
+                        keyFile: "/secret/runner.key",
+                        passphrase: "runner-passphrase",
+                        mtlsRequired: false
+                    }
+                },
+                registration: {
+                    allowLocalPeers: true,
+                    token: "runner-token",
+                    allowedClientFingerprints: []
+                },
+                localBroker: { peerId: "sth.runner.broker" }
+            },
+            broker: { peerId: "sth.broker", targetDomain: "manager.example.test" },
+            guest: { peerId: "sth.guest", routeDomain: "sth.example.test" },
+            tls: {
+                ca: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
+                caFile: "/safe/ca.pem",
+                certFile: "/safe/cert.pem",
+                keyFile: "/secret/key.pem",
+                pfxFile: "/secret/client.p12",
+                passphrase: "secret-passphrase"
+            },
+            enrollment: { token: "enrollment-token" },
+            timeouts: { routeReadinessMs: 100, leaseAcquireMs: 200, requestMs: 300 },
+            leases: { minimumWaitingLeases: 2 }
+        }
+    }).getConfig();
+
+    const publicConfig = ConfigService.getConfigInfo(config);
+
+    t.is(publicConfig.verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
+    t.is(publicConfig.verser2.tls.caFile, "/safe/ca.pem");
+    t.is(publicConfig.verser2.tls.certFile, "/safe/cert.pem");
+    t.is(publicConfig.verser2.tls.keyFile, "********");
+    t.is(publicConfig.verser2.tls.pfxFile, "********");
+    t.is(publicConfig.verser2.tls.passphrase, "********");
+    t.is(publicConfig.verser2.enrollment.token, "********");
+    t.is(publicConfig.verser2.runnerHost?.host.tls.keyFile, "********");
+    t.is(publicConfig.verser2.runnerHost?.host.tls.passphrase, "********");
+    t.is(publicConfig.verser2.runnerHost?.registration.token, "********");
+    t.is(publicConfig.platform?.apiKey, "********");
+    t.is(publicConfig.couchdb?.pass, "********");
+});

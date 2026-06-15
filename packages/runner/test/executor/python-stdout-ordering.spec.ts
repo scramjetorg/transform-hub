@@ -17,7 +17,7 @@ const INSTANCE_ID = "00000000-0000-0000-0000-0000000000cc";
 const PYTHON_IN = "5";
 const PYTHON_OUT = "6";
 const PYTHON_LOG = "7";
-const PYTHON_HANDSHAKE_LEN = 38;
+const PYTHON_HANDSHAKE_LEN = 37;
 const INSTANCE_ID_LEN = 36;
 const packagesDir = resolve(__dirname, "..", "..", "..");
 const runnerPythonDir = resolve(packagesDir, "runner-python");
@@ -101,17 +101,10 @@ async function createPythonInstancesServer(expectedInstanceId: string): Promise<
             if (header.length < PYTHON_HANDSHAKE_LEN) return;
 
             const id = header.subarray(0, INSTANCE_ID_LEN).toString("utf8");
-            const separator = header.subarray(INSTANCE_ID_LEN, INSTANCE_ID_LEN + 1).toString("utf8");
-            const parsedChannel = header.subarray(INSTANCE_ID_LEN + 1, PYTHON_HANDSHAKE_LEN).toString("utf8");
+            const parsedChannel = header.subarray(INSTANCE_ID_LEN, PYTHON_HANDSHAKE_LEN).toString("utf8");
 
             if (id !== expectedInstanceId) {
                 harnessErrors.push(new Error(`unexpected instance id: ${id} (expected ${expectedInstanceId})`));
-                socket.destroy();
-                return;
-            }
-
-            if (separator !== "\n") {
-                harnessErrors.push(new Error(`unexpected python host-channel separator: ${JSON.stringify(separator)}`));
                 socket.destroy();
                 return;
             }

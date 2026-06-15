@@ -1,6 +1,6 @@
 Feature: Maintain efficiency within a host
 
-    @ci-performance
+    @ci-performance @perf @slow
     Scenario: PT-002 TC-001 Maintain efficiency - quick test
         Given host is running
         When sequence "../packages/inert-sequence-2-with-delay.tar.gz" loaded

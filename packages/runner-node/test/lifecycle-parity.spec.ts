@@ -280,3 +280,76 @@ test("lifecycle parity: subsequent KILL after expected stop still uses STOPPED",
     t.deepEqual(exits, [RunnerExitCode.STOPPED, RunnerExitCode.STOPPED]);
     t.true(lifecycle.isStopExpected);
 });
+
+// ---- onTerminalStop callback tests ----
+
+test("lifecycle parity: onTerminalStop not called when canCallKeepalive=true and keepAlive is issued", async t => {
+    const monitor = makeMonitor();
+    let terminalStopCalled = false;
+    const context = makeContext({
+        stopHandler: async (_timeout, _canCallKeepalive) => {
+            // keepAliveIssued will be called inside the handler
+        },
+    });
+    const lifecycle = new RunnerLifecycle(
+        makeDeps(context, monitor.stream, {
+            onTerminalStop: () => { terminalStopCalled = true; },
+        })
+    );
+
+    // Simulate sequence calling keepAlive from within stopHandler.
+    const origStopHandler = context.stopHandler.bind(context);
+    context.stopHandler = async (timeout, canCallKeepalive) => {
+        lifecycle.keepAliveIssued();
+        await origStopHandler(timeout, canCallKeepalive);
+    };
+
+    await lifecycle.handleStopRequest({ timeout: 1000, canCallKeepalive: true });
+
+    // Terminal stop should NOT fire because keepAlive was issued.
+    t.false(terminalStopCalled);
+    // SEQUENCE_STOPPED should also be suppressed (existing behaviour).
+    t.is(monitor.frames().length, 0);
+    t.true(lifecycle.isStopExpected);
+});
+
+test("lifecycle parity: onTerminalStop called when canCallKeepalive=false even if keepAlive was previously issued", async t => {
+    const monitor = makeMonitor();
+    let terminalStopCalled = false;
+    const context = makeContext();
+    const lifecycle = new RunnerLifecycle(
+        makeDeps(context, monitor.stream, {
+            onTerminalStop: () => { terminalStopCalled = true; },
+        })
+    );
+
+    lifecycle.keepAliveIssued();
+    await lifecycle.handleStopRequest({ timeout: 1000, canCallKeepalive: false });
+
+    t.true(terminalStopCalled);
+    // SEQUENCE_STOPPED is also emitted (existing behaviour).
+    const frames = monitor.frames();
+    t.is(frames.length, 1);
+    t.is(frames[0][0], RunnerMessageCode.SEQUENCE_STOPPED);
+    t.true(lifecycle.isStopExpected);
+});
+
+test("lifecycle parity: onTerminalStop called when keepAlive was not requested", async t => {
+    const monitor = makeMonitor();
+    let terminalStopCalled = false;
+    const context = makeContext();
+    const lifecycle = new RunnerLifecycle(
+        makeDeps(context, monitor.stream, {
+            onTerminalStop: () => { terminalStopCalled = true; },
+        })
+    );
+
+    await lifecycle.handleStopRequest({ timeout: 1000, canCallKeepalive: true });
+
+    t.true(terminalStopCalled);
+    // SEQUENCE_STOPPED is also emitted (existing behaviour).
+    const frames = monitor.frames();
+    t.is(frames.length, 1);
+    t.is(frames[0][0], RunnerMessageCode.SEQUENCE_STOPPED);
+    t.true(lifecycle.isStopExpected);
+});

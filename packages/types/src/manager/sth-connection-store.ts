@@ -24,7 +24,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     id: string,
     description?: string;
     tags?: string[];
-    verserConnection: VerserConnection;
+    verserConnection?: VerserConnection;
     info: {
         created?: Date,
         lastConnected?: Date
@@ -44,7 +44,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     init(): Promise<void>;
     disconnectAuditStream: () => void;
     getAuditStream(): Promise<Readable>;
-    reconnect: (verserConnection: VerserConnection) => Promise<void>;
+    reconnect: (verserConnection?: VerserConnection) => Promise<void>;
     main: () => void;
     sendId: () => void;
     getInfo: () => MRestAPI.ConnectedSTHInfo;
@@ -52,7 +52,7 @@ export interface ISTHController extends TypedEmitter<STHControllerEvents> {
     sendEvent(event: SpaceEventMessageData): Promise<void>;
     createUpstreamTopicRequest(name: string, contentType: string): Promise<Readable>;
     createDownstreamTopicRequest(name: string, contentType: string): Promise<Writable>;
-    disconnect(reason: DisconnectReason): void;
+    disconnect(reason: DisconnectReason): Promise<void>;
     dispose(): void;
 }
 
@@ -65,7 +65,7 @@ export interface ISTHConnectionStore {
     getById(id: string): ISTHController | undefined;
     getByAccessKey(accessKey: string): ISTHController[];
     add(controller: ISTHController): void;
-    delete(id: string, force: boolean): void;
+    delete(id: string, force: boolean): Promise<void>;
 }
 
 export enum SthConnectionStoreErrors {

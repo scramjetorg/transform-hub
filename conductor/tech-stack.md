@@ -30,6 +30,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 ## Core Product Packages
 
 - `packages/sth`: top-level host wrapper and CLI-facing startup façade.
+- `packages/config`: Zod-backed config loading, validation, masking, option descriptors, native command descriptors, and parser abstraction.
 - `packages/sth-config`: configuration defaults, image defaults, and merge behavior.
 - `packages/host`: host lifecycle, API handling, local storage, and service behavior.
 - `packages/cli`: command-line client behavior and completion support.
@@ -66,6 +67,9 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Linting**: ESLint with TypeScript parser and project-wide rules.
 - **Formatting**: Prettier with minimal configuration.
 - **Docs**: generated documentation under `docs/` and package README files.
+- **Config validation**: Zod is used by `@scramjet/config` as the canonical validation and type inference layer for migrated config flows.
+- **CLI parsing**: `cac` is used internally behind `@scramjet/config`; parser types must not leak into package public APIs.
+- **Config file loading**: `@scramjet/config` supports JSON, YAML, and JSONC for migrated consumers.
 
 ## Operational Dependencies
 
@@ -81,3 +85,4 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - Avoid full Docker or BDD workflows unless required by a track.
 - Keep runtime wrapper behavior protocol-compatible across supported languages.
 - Keep adapter-specific behavior explicit when process, Docker, and Kubernetes differ.
+- Keep parser and option-registration details behind Scramjet-owned descriptors instead of exposing third-party CLI parser APIs.

@@ -68,6 +68,48 @@ export const defaultConfig: STHConfiguration = {
     killOnExit: false,
     exitWithLastInstance: false,
     strictPlatformConnection: false,
+    verser2: {
+        enabled: true,
+        migrationMode: "verser2",
+        hostUrl: "https://127.0.0.1:2443",
+        runnerHost: {
+            enabled: true,
+            identityDir: join(homedir(), ".scramjet", "verser2-runner-host"),
+            host: {
+                bindHost: "127.0.0.1",
+                bindPort: 2444,
+                publicUrl: "https://127.0.0.1:2444",
+                tls: {
+                    mtlsRequired: false
+                }
+            },
+            registration: {
+                allowLocalPeers: true,
+                allowedClientFingerprints: []
+            },
+            localBroker: {
+                peerId: "sth.default.runner.broker"
+            }
+        },
+        broker: {
+            peerId: "sth.default.broker",
+            targetDomain: "manager.cpm-manager.scramjet.internal"
+        },
+        guest: {
+            peerId: "sth.default.guest",
+            routeDomain: "sth.default.scramjet.internal"
+        },
+        tls: {},
+        enrollment: {},
+        timeouts: {
+            routeReadinessMs: 10_000,
+            leaseAcquireMs: 10_000,
+            requestMs: 30_000
+        },
+        leases: {
+            minimumWaitingLeases: 1
+        }
+    },
     timings: {
         heartBeatInterval: 10000,
         instanceLifetimeExtensionDelay: 180e3,

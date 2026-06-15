@@ -1,14 +1,11 @@
 /* eslint-disable dot-notation */
-import { BPMux } from "@scramjet/bpmux";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 import { Agent } from "http";
-import net, { Socket, createConnection } from "net";
+import net, { Socket } from "net";
 import { PassThrough } from "stream";
-
-type AgentWithCreateConnection = Agent & { createConnection: typeof createConnection };
 
 /** Default channel set: every host channel (legacy parity). */
 export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
@@ -33,9 +30,7 @@ export const OUTER_RUNNER_CHANNELS: ReadonlySet<CC> = new Set<CC>([
  */
 class HostClient implements IHostClient {
     private _streams?: Array<Socket | PassThrough | undefined>;
-    public agent?: Agent;
     logger: IObjectLogger;
-    bpmux: any;
 
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = new ObjLogger(this);
@@ -49,11 +44,7 @@ class HostClient implements IHostClient {
         return this._streams;
     }
 
-    getAgent() {
-        if (this.agent) {
-            return this.agent;
-        }
-
+    getAgent(): Agent {
         throw new Error("No HTTP Agent set");
     }
 
@@ -137,43 +128,6 @@ class HostClient implements IHostClient {
 
             this._streams[CC.IN] = inputTarget;
             //this._streams[CC.STDIN] = this._streams[CC.STDIN].pipe(new PassThrough({ emitClose: false }), { end: false });
-        }
-
-        try {
-            if (this._streams[CC.REQUESTS]) {
-                this.logger.debug("Using BPMux for requests stream");
-
-                this.bpmux = new BPMux(this._streams[CC.REQUESTS] as unknown as net.Socket);
-
-                const agent = new Agent() as AgentWithCreateConnection;
-
-                agent.createConnection = () => {
-                    try {
-                        const socket = this.bpmux!.multiplex() as Socket;
-
-                        socket.on("error", () => {
-                            this.logger.trace("Muxed stream error");
-                        });
-
-                        // some libs call it but it is not here, in BPMux.
-                        socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-
-                        this.logger.trace("Creating connection to verser server");
-
-                        return socket;
-                    } catch (error) {
-                        const ret = new Socket();
-
-                        setImmediate(() => ret.emit("error", error));
-                        return ret;
-                    }
-                };
-
-                this.agent = agent;
-            }
-        } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error(e);
         }
 
         this.logger.debug("Connected to host");

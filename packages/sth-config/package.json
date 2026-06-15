@@ -12,7 +12,7 @@
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
     "test": "npm run test:ava",
-    "test:ava": "ava"
+    "test:ava": "node ../../scripts/run-ava.js"
   },
   "assets": [
     {
@@ -39,6 +39,7 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "dependencies": {
+    "@scramjet/config": "^1.1.0",
     "@scramjet/utility": "^1.1.0"
   },
   "peerDependencies": {

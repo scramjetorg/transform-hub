@@ -16,7 +16,43 @@ const { writeFile } = require("fs/promises");
 const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
-const { existsSync } = require("fs");
+const { existsSync, readFileSync } = require("fs");
+
+function loadDotEnv(filePath) {
+    if (!existsSync(filePath)) return {};
+
+    const values = {};
+
+    for (const line of readFileSync(filePath, "utf8").split(/\r?\n/)) {
+        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+
+        if (!match) continue;
+
+        let value = match[2];
+
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+        }
+
+        values[match[1]] = value;
+    }
+
+    return values;
+}
+
+function createDistInstallEnv(root) {
+    const dotenv = loadDotEnv(join(root, ".env"));
+    const token = env.GITHUB_PACKAGES_TOKEN || env.NODE_AUTH_TOKEN || dotenv.GITHUB_PACKAGES_TOKEN || dotenv.NODE_AUTH_TOKEN;
+
+    if (!token) {
+        return {};
+    }
+
+    return {
+        GITHUB_PACKAGES_TOKEN: env.GITHUB_PACKAGES_TOKEN || token,
+        NODE_AUTH_TOKEN: env.NODE_AUTH_TOKEN || token
+    };
+}
 
 const opts = minimist(process.argv.slice(2), {
     alias: {
@@ -99,8 +135,17 @@ console.time(BUILD_NAME);
 
     opts.root = workspaceRoot;
 
-    const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));
+    const workspaceFilter = [opts.workspace].flat().filter(x => x);
+    const allPackages = getPackagesInWorkspace(pkg, workspaceFilter);
+    const packageWorkspaceDeps = !wantsWorkspaceSelection && pkg !== workspacePkg
+        ? getPackagesInWorkspace(workspacePkg)
+        : allPackages;
     let packages = allPackages;
+
+    if (!wantsWorkspaceSelection && pkg !== workspacePkg) {
+        packages = (await getDeepDeps(opts.root, getDepTypes({ a: true }), [relative(opts.root, dirname(pkg))], packageWorkspaceDeps))
+            .map((pkgDir) => resolve(opts.root, pkgDir));
+    }
 
     if (opts.dependencies) {
         const depTypeObject = opts["dep-types"] ? Object.fromEntries([...opts["dep-types"]].map(k => [k, true])) : { a: true };
@@ -187,9 +232,11 @@ console.time(BUILD_NAME);
         if (opts.install) {
             console.timeLog(BUILD_NAME, `Done, installing packages in ${outDir}...`);
 
-            const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -q -ws --no-audit`;
+            const rootNpmrc = join(opts.root, ".npmrc");
+            const npmUserconfig = existsSync(rootNpmrc) ? ` --userconfig ${JSON.stringify(rootNpmrc)}` : "";
+            const cmd = `cd ${JSON.stringify(outDir)} && pwd >&2 && npx npm@8 install -q -ws --no-audit${npmUserconfig}`;
 
-            await runCommand(cmd, opts.verbose);
+            await runCommand(cmd, opts.verbose, createDistInstallEnv(opts.root));
         }
 
         if (opts.bundle) {

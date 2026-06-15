@@ -8,7 +8,7 @@ Feature: Runner-node spawn-isolation regression coverage
     # these scenarios are acceptance/regression definitions whose --name
     # selectors must remain stable.
 
-    @ci-runner-node @starts-host
+    @ci-runner-node @starts-host @slow
     Scenario: E2E-017 TC-001 Node sequence completes successfully under runner-node spawn isolation
         When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-runner-node-completes.json --runtime-adapter=process"
         Then host is running
@@ -20,7 +20,7 @@ Feature: Runner-node spawn-isolation regression coverage
         Then kept instance stream "stdout" should be "NODE_COMPLETES_OK\n"
         And host is still running
 
-    @ci-runner-node @starts-host
+    @ci-runner-node @starts-host @slow
     Scenario: E2E-017 TC-002 Sequence stdout bytes arrive before SEQUENCE_STOPPED
         When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-runner-node-throw.json --runtime-adapter=process"
         Then host is running
@@ -32,7 +32,7 @@ Feature: Runner-node spawn-isolation regression coverage
         Then kept instance stream "stdout" should be "STDOUT_BEFORE_THROW\n"
         And host is still running
 
-    @ci-runner-node @starts-host
+    @ci-runner-node @starts-host @slow
     Scenario: E2E-017 TC-003 Exposed sequence API streams response chunks
         When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-runner-node-api.json --runtime-adapter=process"
         Then host is running
@@ -46,7 +46,7 @@ Feature: Runner-node spawn-isolation regression coverage
         And the streamed response body contains "chunk-3"
         And host is still running
 
-    @ci-runner-node @starts-host
+    @ci-runner-node @starts-host @slow
     Scenario: E2E-017 TC-004 Exposed sequence API request body streams into the handler
         When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-runner-node-api.json --runtime-adapter=process"
         Then host is running
@@ -58,7 +58,7 @@ Feature: Runner-node spawn-isolation regression coverage
         And the response body reports at least 2 request body chunks
         And host is still running
 
-    @ci-runner-node
+    @ci-runner-node @slow
     Scenario: E2E-017 TC-005 STOP with keepAlive matches current behaviour under runner-node spawn isolation
         Given host is running
         When sequence "../refapps/can-keep-alive.tar.gz" loaded

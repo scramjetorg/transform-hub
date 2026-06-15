@@ -233,14 +233,14 @@ and you will see the results in the console:
 
 If you want to run one particular test in the file, go to directory where the test file is and run command:
 
-    npx ava name-of-the-file.spec.ts -m "Name-of-the-unit-test"
+    npm test -- name-of-the-file.spec.ts -m "Name-of-the-unit-test"
 
 for example:
 
-    npx ava runner.spec.ts -m "Runner new instance"
+    npm test -- runner.spec.ts -m "Runner new instance"
 
 ![ava1](../images/ava1.png)
 
 If you add `-w` a the end of the command above the test will run automatically after every change you make in the test, eg.:
 
-    npx ava runner.spec.ts -m "Stop sequence" -w
+    npm test -- runner.spec.ts -m "Stop sequence" -w

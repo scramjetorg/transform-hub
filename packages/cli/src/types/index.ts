@@ -1,16 +1,10 @@
-import { Command, HelpConfiguration } from "commander";
+import type { CommandDescriptor, CommandContext } from "@scramjet/config";
 
 /**
- * CommandDefinition is an object from commander.js
- * program.opts() - show options
- * program.args - show arguments passed by user
+ * CommandDefinition takes a program root CommandDescriptor and mutates it
+ * to register subcommands, options, arguments, and actions.
  */
-export type CommandDefinition = (program: Command) => void;
-
-/**
- * ExtendedHelpConfiguration is used to pass context options throughout commands
- */
-export type ExtendedHelpConfiguration = HelpConfiguration & { developersOnly?: boolean }
+export type CommandDefinition = (program: CommandDescriptor) => void;
 
 export type configEnv = "development" | "production";
 export const isConfigEnv = (env: string) => ["development", "production"].includes(env);
@@ -47,3 +41,12 @@ export interface SessionConfigEntity {
     lastHubId: string,
     sessionId: string
 }
+
+/**
+ * ExtendedHelpConfiguration is used to pass context options throughout commands.
+ * In the native descriptor model this is carried through CommandDescriptor metadata.
+ */
+export type ExtendedHelpConfiguration = Record<string, unknown> & { developersOnly?: boolean };
+
+// Re-export CommandContext for use in command modules
+export type { CommandDescriptor, CommandContext };

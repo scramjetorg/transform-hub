@@ -9,7 +9,7 @@
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
-    "test": "nyc ava",
+    "test": "nyc node ../../scripts/run-ava.js",
     "prepack": "node ../../scripts/publish.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
@@ -32,7 +32,6 @@
     "@types/ws": "^8.18.1",
     "@types/node": "^22.15.0",
     "ava": "^3.15.0",
-    "commander": "^8.3.0",
     "ts-node": "^10.9.2",
     "typedoc": "0.23.17",
     "typedoc-plugin-markdown": "3.13.6",

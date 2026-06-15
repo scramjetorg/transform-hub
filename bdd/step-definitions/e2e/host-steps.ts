@@ -88,6 +88,7 @@ const streamToBinary = async (stream: Readable): Promise<BinaryLike> => {
 };
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
+    const startedAt = Date.now();
 
     let containers = await dockerode.listContainers();
 
@@ -100,13 +101,16 @@ const waitForContainerToClose = async () => {
             containers = await dockerode.listContainers();
             containerExist = containers.filter((containerInfo) => containerInfo.Id === containerId).length > 0;
             await defer(500);
-        } while (containerExist);
+        } while (containerExist && Date.now() - startedAt < 30000);
+
+        assert.ok(!containerExist, "Runner container did not close before the BDD timeout");
     }
 };
 
 const waitForProcessToEnd = async (pid: number) => {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < 30000) {
         const proc = exec(`ps -p ${pid}`);
 
         const exitCode = await new Promise<number>((res) => proc.on("exit", res));
@@ -116,6 +120,8 @@ const waitForProcessToEnd = async (pid: number) => {
         }
         await defer(500);
     }
+
+    assert.fail(`Process ${pid} did not end before the BDD timeout`);
 };
 
 // const killRunner = async () => {
@@ -324,7 +330,7 @@ When("wait for {string} ms", async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
+When("find and upload sequence {string}", { timeout: 30000 }, async function(this: CustomWorld, packageName: string) {
     const packagePath = `${process.env.PACKAGES_DIR || "../refapps/"}${packageName}`;
 
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
@@ -332,7 +338,7 @@ When("find and upload sequence {string}", { timeout: 50000 }, async function(thi
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
-When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
+When("sequence {string} loaded", { timeout: 30000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
@@ -464,7 +470,7 @@ When(
 
 When(
     "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
-    { timeout: -1 },
+    { timeout: 30000 },
     async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
         this.resources.instance = await this.resources.sequence!.start({
             appConfig: {},
@@ -483,14 +489,14 @@ When(
                 writeStream.on("error", rej);
                 stream.on("end", res);
             }),
-            new Promise((res) => setTimeout(res, 1000 * timeout))
+            new Promise((res) => setTimeout(res, Math.min(1000 * timeout, 30000)))
         ]);
     }
 );
 
 When(
     "get {string} with instanceId and wait for it to finish",
-    { timeout: 500000 },
+    { timeout: 30000 },
     async function(this: CustomWorld, outputStream: InstanceOutputStream) {
         const out = await this.resources.instance?.getStream(outputStream);
 
@@ -617,7 +623,7 @@ When("send kill message to instance", async function(this: CustomWorld) {
 });
 
 // eslint-disable-next-line complexity
-When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
+When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
@@ -1025,7 +1031,7 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
     assert.ok(sendData);
 });
 
-Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
+Then("get output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
     const output = await this.resources.instance!.getStream("output");
 
     this.resources.outStream = output;

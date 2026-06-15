@@ -148,7 +148,7 @@ class RunnerHost:
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
     ) -> None:
-        ident = await reader.readexactly(len(self.instance_id) + 2)
+        ident = await reader.readexactly(len(self.instance_id) + 1)
         channel_code = ident[-1:].decode("ascii")
         self._connections[channel_code] = (reader, writer)
         if len(self._connections) == 3:
@@ -174,9 +174,10 @@ class RunnerHost:
         assert self.control_write_fd is not None
         os.write(self.control_write_fd, frame)
 
-    async def send_in(self, payload: bytes, close_after: bool) -> None:
+    async def send_in(self, payload: bytes, close_after: bool, content_type: str = "text/plain") -> None:
         self.in_frames.append(payload)
         _reader, writer = self._connections["5"]
+        writer.write(f"content-type: {content_type}\r\n\r\n".encode("ascii"))
         writer.write(payload)
         await writer.drain()
         if close_after and writer.can_write_eof():
@@ -260,11 +261,11 @@ async def orchestrate_scenario(scenario: str, host: RunnerHost, recorded: dict[s
     await host.send_control(control_frames[0])
 
     if scenario == "text-input":
-        await host.send_in(channel_bytes(recorded, "IN", "host-send")[0], close_after=True)
+        await host.send_in(channel_bytes(recorded, "IN", "host-send")[0], close_after=True, content_type="text/plain")
         safe_close_fd(host.control_write_fd)
         host.control_write_fd = None
     elif scenario == "binary-input":
-        await host.send_in(channel_bytes(recorded, "IN", "host-send")[0], close_after=True)
+        await host.send_in(channel_bytes(recorded, "IN", "host-send")[0], close_after=True, content_type="application/octet-stream")
         safe_close_fd(host.control_write_fd)
         host.control_write_fd = None
     elif scenario == "stop-handler":

@@ -38,6 +38,20 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/sth/src/bin/` | CLI bootstrap that parses flags, builds `STHConfiguration`, selects the runtime adapter, and launches the host process. | [View Map](packages/sth/src/bin/codemap.md) |
 | `packages/sth-config/` | STH configuration defaults, image defaults, deep-merge updates, and runtime-adapter selection. | [View Map](packages/sth-config/codemap.md) |
 | `packages/sth-config/src/` | Config defaults, image defaults, merge/update semantics, adapter selection, and public config extraction. | [View Map](packages/sth-config/src/codemap.md) |
+| `packages/config/` | Zod-backed configuration loading, validation, secret masking, CLI option descriptors, and native command model utilities. | [View Map](packages/config/codemap.md) |
+| `packages/config/src/` | Config file/env/CLI merge pipeline, public-safe masking helpers, and descriptor-driven command tree implementation. | [View Map](packages/config/src/codemap.md) |
+| `packages/manager-config/` | Manager default configuration and singleton config service for deep-merge runtime updates. | [View Map](packages/manager-config/codemap.md) |
+| `packages/manager/` | Manager control plane for connected STH nodes, cluster API routing, sequence/instance/topic registry, and storage proxying. | [View Map](packages/manager/codemap.md) |
+| `packages/manager/src/` | Manager source entrypoints and library modules for orchestration, STH controllers, service discovery, storage routers, and transport helpers. | [View Map](packages/manager/src/codemap.md) |
+| `packages/manager/src/bin/` | Manager executable entrypoint that starts the Manager process and reports startup failures. | [View Map](packages/manager/src/bin/codemap.md) |
+| `packages/manager/src/lib/` | Core Manager orchestration layer for REST routes, STH connection lifecycle, health/audit/log streams, and verser2 transport abstraction. | [View Map](packages/manager/src/lib/codemap.md) |
+| `packages/manager/src/lib/storage-routers/` | Disk and S3 sequence storage proxy routers with shared upload, retrieval, deletion, and sequence identification flow. | [View Map](packages/manager/src/lib/storage-routers/codemap.md) |
+| `packages/multi-manager/` | MultiManager control plane for sub-Manager lifecycle, API proxying, Verser host routing, audit/log aggregation, and health monitoring. | [View Map](packages/multi-manager/codemap.md) |
+| `packages/multi-manager/src/` | MultiManager source entrypoints split across CLI startup, config classes, core orchestration, and public type definitions. | [View Map](packages/multi-manager/src/codemap.md) |
+| `packages/multi-manager/src/bin/` | MultiManager CLI entrypoint for parsing options, building config, creating the API server, and starting orchestration. | [View Map](packages/multi-manager/src/bin/codemap.md) |
+| `packages/multi-manager/src/config/` | MultiManager configuration merge and validation classes for defaults, JSON config, CLI values, and server sub-config. | [View Map](packages/multi-manager/src/config/codemap.md) |
+| `packages/multi-manager/src/lib/` | MultiManager orchestration layer for sub-manager stores, MultiHost controllers, auditor aggregation, and ports parsing. | [View Map](packages/multi-manager/src/lib/codemap.md) |
+| `packages/multi-manager/src/types/` | MultiManager option, command, server, and start-manager request type contracts. | [View Map](packages/multi-manager/src/types/codemap.md) |
 | `packages/runner/` | Outer runtime launcher for adapter-launched sequences; validates env, writes boot config, opens host transport, and selects Bun/Node/Python child runtimes. | [View Map](packages/runner/codemap.md) |
 | `packages/runner/src/` | Runner launcher and runtime-executor plumbing for outer startup, host client mediation, runtime selection, and child-process helpers. | [View Map](packages/runner/src/codemap.md) |
 | `packages/runner/src/bin/` | Outer runner entrypoint for adapter env validation, boot config writing, child runtime selection, and host stdio/control/monitoring streams. | [View Map](packages/runner/src/bin/codemap.md) |
@@ -58,9 +72,12 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/adapter-kubernetes/` | Kubernetes adapter package for sequence storage, runner pod execution, CLI/config augmentation, and client initialization. | [View Map](packages/adapter-kubernetes/codemap.md) |
 | `packages/adapter-kubernetes/src/` | Kubernetes sequence persistence, runner pod lifecycle management, config decoding, and Kubernetes client access. | [View Map](packages/adapter-kubernetes/src/codemap.md) |
 | `packages/adapter-process/` | Process adapter runtime package bridging host-side adapter contracts to process-based execution and packaging. | [View Map](packages/adapter-process/codemap.md) |
+| `packages/api-server/` | HTTP API server package for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. | [View Map](packages/api-server/codemap.md) |
 | `packages/api-server/src/` | API server runtime surface for request routing, middleware wrapping, forwarding, and HTTP/HTTPS server setup. | [View Map](packages/api-server/src/codemap.md) |
 | `packages/host/src/lib/` | Shared host-side library code for service discovery and low-level utilities. | [View Map](packages/host/src/lib/codemap.md) |
 | `packages/utility/src/file/` | File abstraction helpers that choose concrete file implementations by extension. | [View Map](packages/utility/src/file/codemap.md) |
+| `packages/verser/` | Legacy CONNECT/BPMux reverse-server connectivity package targeted for removal from active paths by the verser2 rollout. | [View Map](packages/verser/codemap.md) |
+| `bdd/` | Cucumber BDD smoke and end-to-end validation workspace for CLI, hub, Manager, instance API, runtime, and streaming behavior. | [View Map](bdd/codemap.md) |
 
 ## Runtime Wrapper Implementation Flow
 

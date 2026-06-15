@@ -28,6 +28,7 @@ export interface LifecycleDeps {
     };
     onStatusChange?: (status: InstanceStatus) => void;
     onExit?: (exitCode: RunnerExitCode) => void;
+    onTerminalStop?: () => void;
 }
 
 /**
@@ -70,6 +71,7 @@ export class RunnerLifecycle {
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             this.deps.onStatusChange?.(InstanceStatus.STOPPING);
+            this.deps.onTerminalStop?.();
 
             MessageUtils.writeMessageOnStream(
                 [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }],

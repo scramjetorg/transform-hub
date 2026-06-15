@@ -30,12 +30,14 @@ import {
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
-    IStorageAdapter
+    IStorageAdapter,
+    RunnerTransport
 } from "@scramjet/types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
-import { Duplex, PassThrough, Readable } from "stream";
+import { PassThrough, Readable } from "stream";
+import { IncomingMessage, ServerResponse } from "http";
 
-import { getRouter } from "@scramjet/api-server";
+import { forwardRoutedRequest, getRouter, normalizeForwardedHeaders } from "@scramjet/api-server";
 import { EventEmitter, once } from "events";
 import { DataStream } from "scramjet";
 
@@ -46,8 +48,8 @@ import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitt
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
-import { BPMux } from "@scramjet/bpmux";
 import { CSIEvents, ICSI } from "./types";
+import { createRunnerBrokerRpcTransport, LegacyRunnerTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -85,7 +87,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
-    private bpmux: any;
+    private runnerTransport?: RunnerTransport;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
     private inputContentType: string | undefined;
     api: InstanceAPI;
@@ -195,6 +197,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
         private instanceStore: InstancesStore,
         localStorageAdapter: IStorageAdapter,
+        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined,
     ) {
         super();
         this.instanceStore = instanceStore;
@@ -466,12 +469,24 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.logger.error("Downstream error on channel", i, err);
         }));
 
-        this.communicationHandler.hookUpstreamStreams(this.upStreams);
-        this.communicationHandler.hookDownstreamStreams(this.downStreams);
+        const runnerBroker = this.usesVerser2RunnerTransport ? this.runnerBrokerProvider?.() : undefined;
 
-        this.communicationHandler.pipeStdio();
-        this.communicationHandler.pipeMessageStreams();
-        this.communicationHandler.pipeDataStreams();
+        if (this.usesVerser2RunnerTransport && !runnerBroker) {
+            throw new CSIControllerError("UNINITIALIZED_STREAM", "verser2 runner broker");
+        }
+
+        this.runnerTransport = runnerBroker
+            ? new Verser2RunnerTransport({
+                broker: runnerBroker,
+                upstreams: this.upStreams,
+                communicationHandler: this.communicationHandler,
+                routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs
+            })
+            : new LegacyRunnerTransport(this.upStreams, this.communicationHandler);
+        this.runnerTransport.connect({ instanceId: this.id, streams }).catch((error) => {
+            this.logger.error(`${this.runnerTransport?.kind || "unknown"} runner transport connection failed`, error);
+            this.initResolver?.rej(error);
+        });
 
         this.controlDataStream = new DataStream();
         this.controlDataStream
@@ -566,6 +581,14 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
 
         this.upStreams[CC.MONITORING].resume();
+    }
+
+    private get usesVerser2RunnerTransport(): boolean {
+        return !!(
+            this.sthConfig.verser2.enabled &&
+            this.sthConfig.verser2.migrationMode === "verser2" &&
+            this.sthConfig.verser2.runnerHost?.enabled
+        );
     }
 
     async applyUpdate(key: string, value: string | null): Promise<void> {
@@ -683,10 +706,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     async handleInstanceDisconnect() {
-        this.bpmux?.removeAllListeners();
-        if (this.downStreams) this.unhookStreams();
+        await this.runnerTransport?.disconnect();
 
-        this.bpmux = null;
+        this.runnerTransport = undefined;
         this.downStreams = null;
     }
 
@@ -695,20 +717,37 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         await this.handleInstanceConnect(streams);
     }
 
+    async forwardRpcRequest(req: IncomingMessage, res: ServerResponse, path: string): Promise<boolean> {
+        if (!this.usesVerser2RunnerTransport) {
+            return false;
+        }
+
+        const broker = this.runnerBrokerProvider?.();
+
+        if (!broker) {
+            return false;
+        }
+
+        await forwardRoutedRequest({
+            transport: createRunnerBrokerRpcTransport(broker),
+            domain: Verser2RunnerTransport.getRouteDomain(this.id),
+            req,
+            res,
+            path,
+            headers: normalizeForwardedHeaders(req.headers),
+            routeReadinessMs: this.sthConfig.verser2.timeouts.routeReadinessMs,
+            requestTimeoutMs: this.sthConfig.verser2.timeouts.requestMs,
+            onError: (error) => this.logger.warn("Host -> runner verser2 RPC request error", { id: this.id, path, error })
+        });
+
+        return true;
+    }
+
     //@TODO: ! unhookup ! set proper state for reconnecting !
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {
         try {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
-
-            if (streams[CC.REQUESTS]) {
-                this.bpmux = new BPMux(streams[CC.REQUESTS]!);
-                this.bpmux.on("error", (e: any) => {
-                    this.logger.warn("Instance client multiplex connection errored", e.message);
-                    streams[8]?.end();
-                });
-                this.bpmux.on("peer_multiplex", (socket: Duplex, _data: any) => this.hostProxy.onInstanceRequest(socket));
-            }
 
             await once(this, "pang");
             this.initResolver?.res();

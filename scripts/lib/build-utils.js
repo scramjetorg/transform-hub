@@ -169,11 +169,11 @@ function getPackagesInWorkspace(pkgLocation, workspaces = []) {
     return toAbsolutePackageDirs(dir, getDirectoriesFromGlobs(dir, workspaces, "package.json"));
 }
 
-async function runCommand(cmd, verbose) {
+async function runCommand(cmd, verbose, env = {}) {
     const stack = new Error().stack.split("\n").slice(2).join("\n");
 
     await new Promise((res, rej) => {
-        const proc = exec(cmd)
+        const proc = exec(cmd, { env: { ...process.env, ...env } })
             .on(
                 "exit",
                 (err) => err

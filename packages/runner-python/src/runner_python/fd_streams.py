@@ -21,13 +21,15 @@ class ControlInput:
 
     def readline_crlf(self) -> bytes:
         while True:
-            delimiter_index = self._buffer.find(b"\r\n")
+            delimiter_index = self._buffer.find(b"\n")
             if delimiter_index != -1:
                 line = bytes(self._buffer[:delimiter_index])
-                del self._buffer[: delimiter_index + 2]
+                del self._buffer[: delimiter_index + 1]
+                if line.endswith(b"\r"):
+                    line = line[:-1]
                 return line
 
-            chunk = self.stream.read(4096)
+            chunk = os.read(self.stream.fileno(), 4096)
             if not chunk:
                 raise EOFError("control stream closed before CRLF terminator")
 

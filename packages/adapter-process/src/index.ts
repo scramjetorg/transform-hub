@@ -1,4 +1,4 @@
-import { STHConfiguration, IAdapterAugmentation } from "@scramjet/types";
+import { STHConfiguration, IAdapterAugmentation, RuntimeOptionRegistry } from "@scramjet/types";
 import { ProcessInstanceAdapter } from "./process-instance-adapter";
 import { ProcessSequenceAdapter } from "./process-sequence-adapter";
 
@@ -6,8 +6,7 @@ export function initialize() {
     return true;
 }
 
-type Command = import("commander").Command;
-export function augmentOptions(options: Command): Command {
+export function augmentOptions(options: RuntimeOptionRegistry): RuntimeOptionRegistry {
     return options;
 }
 
@@ -31,4 +30,3 @@ export function augment() {
         LifeCycleAdapterClass: ProcessInstanceAdapter
     } as IAdapterAugmentation;
 }
-

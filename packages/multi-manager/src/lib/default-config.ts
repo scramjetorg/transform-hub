@@ -1,5 +1,41 @@
 import { homedir } from "os";
+import { join } from "path";
+import { ManagerVerser2Config } from "@scramjet/types";
 import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-manager-types";
+
+const defaultVerser2Config: ManagerVerser2Config = {
+    enabled: true,
+    migrationMode: "verser2",
+    host: {
+        identityDir: join(homedir(), ".scramjet", "verser2-multimanager-host"),
+        bindHost: "0.0.0.0",
+        bindPort: 2443,
+        publicUrl: "https://127.0.0.1:2443",
+        tls: {
+            mtlsRequired: false
+        }
+    },
+    registration: {
+        allowLocalPeers: true,
+        allowedClientFingerprints: []
+    },
+    localBroker: {
+        peerId: "multimanager.default.broker",
+        routeDomain: "multimanager.default.scramjet.internal"
+    },
+    localGuest: {
+        peerId: "multimanager.default.guest",
+        routeDomain: "multimanager.default.scramjet.internal"
+    },
+    timeouts: {
+        routeReadinessMs: 10_000,
+        leaseAcquireMs: 10_000,
+        requestMs: 30_000
+    },
+    leases: {
+        minimumWaitingLeases: 1
+    }
+};
 
 /**
  * Default MultiManager configuration.
@@ -55,7 +91,9 @@ export const defaultConfig: MultiManagerOptions = {
      */
     safeOperationLimit: 64,
 
-    fsPaths: [homedir()]
+    fsPaths: [homedir()],
+
+    verser2: defaultVerser2Config
 };
 
 /**
@@ -92,7 +130,8 @@ export function createSettings(options: MultiManagerCommandOptions): MultiManage
             freeSpace: defaultConfig.instanceRequirements.freeSpace,
         },
         safeOperationLimit: defaultConfig.safeOperationLimit,
-        fsPaths: []
+        fsPaths: [],
+        verser2: defaultVerser2Config
     };
 
     if (!Object.values(s3).find(v => v === undefined)) {

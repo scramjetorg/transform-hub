@@ -10,19 +10,19 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "ava"
+    "test": "node ../../scripts/run-ava.js"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
   "dependencies": {
     "@scramjet/api-client": "^1.1.0",
     "@scramjet/api-server": "^1.1.0",
-    "@scramjet/bpmux": "^9.0.0",
     "@scramjet/client-utils": "^1.1.0",
     "@scramjet/model": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
+    "@signicode/verser2-guest-node": "0.3.1",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

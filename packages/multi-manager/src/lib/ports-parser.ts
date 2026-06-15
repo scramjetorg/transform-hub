@@ -1,4 +1,9 @@
-import { InvalidOptionArgumentError } from "commander";
+export class InvalidOptionArgumentError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "InvalidOptionArgumentError";
+    }
+}
 
 /**
  * Parses ports range in [0-9]-[0-9] format to array of numbers
@@ -6,7 +11,7 @@ import { InvalidOptionArgumentError } from "commander";
  * @returns Ports in array of numbers
  */
 export function portsParser(value: string): [number, number] {
-    const match = (/([0-9]+)-([0-9]+)/g).exec(value);
+    const match = (/^([0-9]+)-([0-9]+)$/).exec(value);
 
     if (!match) {
         throw new InvalidOptionArgumentError("Ports range have to be in [0-9]-[0-9] format");
@@ -15,8 +20,8 @@ export function portsParser(value: string): [number, number] {
     const ports = [match[1], match[2]].map(portStr => {
         const parsedPort = parseInt(portStr, 10);
 
-        if (isNaN(parsedPort)) {
-            throw new InvalidOptionArgumentError("Port have to be valid integer");
+        if (isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+            throw new InvalidOptionArgumentError("Port has to be a valid integer in range 1-65535");
         }
 
         return parsedPort;

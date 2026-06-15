@@ -40,7 +40,7 @@ Feature: Expose API route in sequence
         And the response body should be "Method Not Allowed"
 
     # API INSTANCE ALIAS ROUTING
-    @ci-hub @starts-host
+    @ci-hub @starts-host @slow
     Scenario: HUB-003 TC-005 Instance alias routing should accept requests to instance stable name
         When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-named-required.json --runtime-adapter=process"
         Then host is running

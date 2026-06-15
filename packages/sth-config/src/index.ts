@@ -22,3 +22,5 @@ export const debug = development() && process.env.SCRAMJET_DEBUG
     : () => {};
 
 export { ConfigService, defaultConfig };
+export { applyManagerTrustBootstrap } from "./manager-trust-bootstrap";
+export type { ManagerTrustBootstrapMaterial, ManagerTrustBootstrapOptions } from "./manager-trust-bootstrap";

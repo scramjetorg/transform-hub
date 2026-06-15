@@ -7,7 +7,7 @@ import { Readable, Writable } from "stream";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";
 import type { APIExpose, AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
-import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
 import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig } from "../boot-config";
 import { buildAppContext, buildSequenceContext } from "../context";
@@ -142,10 +142,18 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
         const sequenceInfo = bootConfig.sequenceInfo;
 
-        hostClient = new HostClient(bootConfig.instancesServerPort!, bootConfig.instancesServerHost!);
+        hostClient = new HostClient(
+            bootConfig.instancesServerPort!,
+            bootConfig.instancesServerHost!,
+            bootConfig.requestsUnsupported,
+            bootConfig.verser2Runtime
+        );
+        const channels = bootConfig.requestsUnsupported || bootConfig.verser2Runtime
+            ? new Set(Array.from(RUNNER_NODE_CHANNELS).filter(channel => channel !== CC.REQUESTS))
+            : RUNNER_NODE_CHANNELS;
 
         try {
-            await hostClient.init(bootConfig.instanceId, RUNNER_NODE_CHANNELS);
+            await hostClient.init(bootConfig.instanceId, channels);
         } catch (err) {
             logger.error("Failed to connect runner-node host channels", err);
             throw err;
@@ -246,19 +254,39 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         onExit: (code) => {
             exitCode = code;
         },
+        onTerminalStop: () => {
+            terminalStop = true;
+            resolveTerminalStop();
+        },
     });
 
     lifecycleRef.current = lifecycle;
 
+    let killed = false;
+    let resolveKilled!: () => void;
+    const killedPromise = new Promise<void>(resolve => {
+        resolveKilled = resolve;
+    });
+
+    let terminalStop = false;
+    let resolveTerminalStop!: () => void;
+    const terminalStopPromise = new Promise<void>(resolve => {
+        resolveTerminalStop = resolve;
+    });
+
     wireControlStream(streams.controlIn, {
         onStop: (data) => lifecycle.handleStopRequest(data),
-        onKill: () => lifecycle.handleKillRequest(),
+        onKill: async () => {
+            await lifecycle.handleKillRequest();
+            killed = true;
+            resolveKilled();
+        },
         onEvent: (data) => emitter.emit(data.eventName, data.message),
         onStorageUpdate: (data) => context.localStorage.handleBroadcastUpdate(data),
     }, logger);
 
     try {
-        await runSequence(sequenceFns, {
+        const sequenceRun = runSequence(sequenceFns, {
             context,
             inputDataStream,
             outputDataStream,
@@ -267,10 +295,22 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             logger,
         });
 
-        writeMonitoring(streams.monitoringOut, [
-            RunnerMessageCode.SEQUENCE_COMPLETED,
-            { timeout: 0 },
-        ]);
+        await Promise.race([sequenceRun, killedPromise, terminalStopPromise]);
+
+        if (killed) {
+            logger.warn("Sequence execution interrupted by KILL");
+            sequenceRun.catch(error => logger.debug("Sequence rejected after KILL", error));
+        } else if (terminalStop) {
+            logger.info("Sequence execution interrupted by terminal STOP");
+            sequenceRun.catch(error => logger.debug("Sequence rejected after terminal STOP", error));
+        } else {
+            await sequenceRun;
+
+            writeMonitoring(streams.monitoringOut, [
+                RunnerMessageCode.SEQUENCE_COMPLETED,
+                { timeout: 0 },
+            ]);
+        }
     } catch (err) {
         logRuntimeError(logger, "instance-runtime", bootConfig, err);
         logger.error("Sequence failed", err);
@@ -310,6 +350,7 @@ if (require.main === module) {
     bootstrap()
         .then(code => {
             process.exitCode = code;
+            process.exit(code);
         })
         .catch(err => {
             console.error(

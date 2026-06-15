@@ -34,7 +34,7 @@ The hub should consistently supervise sequence deployment, startup, runtime life
 The product should maintain parity for existing Node.js and Python runtimes while supporting the addition of new wrappers, including Bun and future languages, without fragmenting the protocol.
 
 ### Operational Clarity
-Configuration, CLI/API behavior, adapter selection, runner image selection, and lifecycle expectations should be understandable, documented, and predictable.
+Configuration, CLI/API behavior, adapter selection, runner image selection, and lifecycle expectations should be understandable, documented, typed, validated, and predictable.
 
 ## Product Pillars
 
@@ -43,6 +43,7 @@ Configuration, CLI/API behavior, adapter selection, runner image selection, and 
 - Start, stop, and manage running instances.
 - Support execution through process, Docker, and Kubernetes adapters.
 - Keep runtime-specific launch behavior behind consistent hub abstractions.
+- Keep configuration and CLI option handling behind Scramjet-owned descriptors so adapters and commands remain extensible without leaking parser implementation details.
 
 ### Observe and Control
 - Surface logs, lifecycle events, health state, and monitoring data.

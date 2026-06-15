@@ -13,6 +13,7 @@ import {
     InstanceId,
     SequenceInfo
 } from "@scramjet/types";
+import { IncomingMessage, ServerResponse } from "http";
 import { TypedEmitter } from "@scramjet/utility";
 
 export type CSIEvents = {
@@ -93,6 +94,8 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
 
     /** used by `/input` & duplex `/inout` */
     getInput(contentType?: string): Promise<WritableStream<any>>;
+
+    forwardRpcRequest?(req: IncomingMessage, res: ServerResponse, path: string): Promise<boolean>;
 
     handleInstanceConnect(streams: DownstreamStreamsConfig): Promise<void>;
     handleInstanceReconnect(streams: DownstreamStreamsConfig): Promise<void>;

@@ -1,13 +1,15 @@
 import { getInstanceAdapter } from "@scramjet/adapters";
-import { HostError, IDProvider } from "@scramjet/model";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/types";
+import { ContentType, DownstreamStreamsConfig, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
+import { Verser2RunnerBroker } from "./runner-transport";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
+import { PassThrough } from "stream";
 import SequenceStore from "./sequence-store";
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
@@ -35,6 +37,8 @@ type CSIDispatcherOpts = {
     serviceDiscovery: ServiceDiscovery,
     STHConfig: STHConfiguration,
     localStorageAdapter: IStorageAdapter
+    runnerBrokerProvider?: () => Verser2RunnerBroker | undefined
+    hostProxy?: HostProxy
 }
 
 export class CSIDispatcher extends TypedEmitter<Events> {
@@ -44,6 +48,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
     private localStorageAdapter: IStorageAdapter;
+    private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined;
+    private hostProxy?: HostProxy;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -54,6 +60,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.STHConfig = opts.STHConfig;
         this.serviceDiscovery = opts.serviceDiscovery;
         this.localStorageAdapter = opts.localStorageAdapter;
+        this.runnerBrokerProvider = opts.runnerBrokerProvider;
+        this.hostProxy = opts.hostProxy;
     }
 
     async createCSIController(
@@ -71,7 +79,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             payload,
             status: InstanceStatus.INITIALIZING,
             inputHeadersSent: false
-        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.instanceStore, this.localStorageAdapter);
+        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter, this.instanceStore, this.localStorageAdapter, this.runnerBrokerProvider);
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 
@@ -282,6 +290,22 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             this.logger.debug("Dispatched. Waiting for connection...", id);
 
+            if (this.usesSthLocalRunnerVerser2Transport()) {
+                const csiController = await this.createCSIController(
+                    id,
+                    sequence,
+                    payload,
+                    new CommunicationHandler(),
+                    this.STHConfig,
+                    this.hostProxy || { onInstanceRequest: () => undefined, onRPCExpose: () => undefined } as HostProxy
+                );
+                const streams = Array.from({ length: 9 }, () => new PassThrough()) as unknown as DownstreamStreamsConfig;
+
+                csiController.handleInstanceConnect(streams).catch((error) => {
+                    this.logger.error("Verser2 runner synthetic connect failed", id, error);
+                });
+            }
+
             let established = false;
 
             const result = await Promise.race([
@@ -358,5 +382,14 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             throw error;
         }
+    }
+
+    private usesSthLocalRunnerVerser2Transport(): boolean {
+        return !!(
+            this.STHConfig.verser2.enabled &&
+            this.STHConfig.verser2.migrationMode === "verser2" &&
+            this.STHConfig.verser2.runnerHost?.enabled &&
+            this.runnerBrokerProvider?.()
+        );
     }
 }

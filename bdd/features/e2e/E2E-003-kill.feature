@@ -1,6 +1,6 @@
 Feature: Kill e2e tests
 
-    @ci-instance-node
+    @ci-instance-node @slow
     Scenario: E2E-003 TC-003 API test - Kill instance when it's not responding
         Given host is running
         When sequence "../refapps/process-not-responding.tar.gz" loaded

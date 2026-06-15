@@ -429,6 +429,77 @@ test("runner-node child: STOP control frame on fd4 reaches sequence-registered s
     t.deepEqual(log.args, [500, false]);
 });
 
+test("runner-node child: terminal STOP frame suppresses SEQUENCE_COMPLETED", async t => {
+    const dir = mkdtempSync(join(tmpdir(), "runner-node-termstop-"));
+    const outFile = join(dir, "termstop.json");
+    const fixturePath = join(dir, "termstop-seq.js");
+
+    writeFileSync(fixturePath, [
+        '"use strict";',
+        'const fs = require("fs");',
+        'const out = process.env.SEQ_OUT;',
+        'fs.writeFileSync(out, JSON.stringify({ stopped: 0 }));',
+        'module.exports = [function (input) {',
+        '    var ctx = this;',
+        '    ctx.addStopHandler(function (timeout, canCallKeepalive) {',
+        '        var log = JSON.parse(fs.readFileSync(out, "utf8"));',
+        '        log.stopped += 1;',
+        '        log.args = [timeout, canCallKeepalive];',
+        '        fs.writeFileSync(out, JSON.stringify(log));',
+        '    });',
+        '    return new Promise(function (resolve) { setTimeout(function () { resolve("ok"); }, 1000); });',
+        '}];',
+        ""
+    ].join("\n"));
+
+    const bootPath = makeBootConfig(fixturePath);
+
+    const child = spawn(
+        process.execPath,
+        ["-r", "ts-node/register/transpile-only", ENTRY, bootPath],
+        {
+            stdio: ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"],
+            env: { ...process.env, SEQ_OUT: outFile },
+        }
+    );
+
+    const fd4 = (child.stdio as unknown as Array<NodeJS.WritableStream | null | undefined>)[4];
+    if (!fd4) throw new Error("fd4 not writable");
+
+    let stderrBuf = "";
+    let monitoringBuf = "";
+
+    child.stderr!.on("data", (c: Buffer) => { stderrBuf += c.toString("utf8"); });
+    getStdioStream(child, 5).on("data", (c: Buffer) => { monitoringBuf += c.toString("utf8"); });
+
+    // Send STOP with canCallKeepalive=false (terminal) after a brief delay.
+    setTimeout(() => {
+        fd4.write(JSON.stringify([RunnerMessageCode.STOP, { timeout: 500, canCallKeepalive: false }]) + "\r\n");
+    }, 50);
+
+    const exitCode: number = await new Promise((resolveExit, rejectExit) => {
+        child.once("error", rejectExit);
+        child.once("exit", code => resolveExit(code ?? -1));
+    });
+
+    t.is(exitCode, 0, `child should exit 0. stderr=${stderrBuf}`);
+
+    const log = JSON.parse(readFileSync(outFile, "utf8")) as {
+        stopped: number;
+        args: unknown;
+    };
+
+    t.is(log.stopped, 1, "stopHandler must be invoked exactly once");
+
+    const frames = parseFrames(monitoringBuf);
+    const codes = frames.map(([code]) => code);
+
+    t.true(codes.includes(RunnerMessageCode.SEQUENCE_STOPPED),
+        `expected SEQUENCE_STOPPED; got=${codes.join(",")}`);
+    t.false(codes.includes(RunnerMessageCode.SEQUENCE_COMPLETED),
+        `SEQUENCE_COMPLETED must NOT be emitted after terminal STOP; got=${codes.join(",")}`);
+});
+
 test("SequenceLocalContext type signature exposes keepAlive/end/destroy/on/emit", t => {
     // Compile-time guard that the public type does not regress.
     const probe: keyof SequenceLocalContext = "keepAlive";

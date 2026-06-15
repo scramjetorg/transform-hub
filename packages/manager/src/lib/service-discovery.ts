@@ -167,6 +167,16 @@ export class ServiceDiscovery implements IServiceDiscovery {
     }
 
     /**
+     * Manager-owned topic multiplexer.
+     *
+     * Topic actors are live providers and consumers. The Manager does not cache,
+     * replay, or otherwise persist topic payloads; it only wires every active
+     * provider stream to every active consumer stream while the actors remain
+     * connected. Host actors lazily open the required STH topic stream when a
+     * matching peer appears.
+     */
+
+    /**
      * Creates topic with provided name and content type.
      *
      * @param {string} topicName Topic name
@@ -194,6 +204,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
     }
 
     private updatedTopics: Set<string> = new Set();
+    private topicUpdateRunning = false;
     /**
      * Dispatcher: Connects unconnected topic Actors or cleans up connected ones.
      *
@@ -207,9 +218,10 @@ export class ServiceDiscovery implements IServiceDiscovery {
     }
 
     private runTopicUpdate() {
-        if (this.updatedTopics.size === 0)
+        if (this.topicUpdateRunning || this.updatedTopics.size === 0)
             return;
 
+        this.topicUpdateRunning = true;
         const topics = this.updatedTopics;
 
         this.updatedTopics = new Set();
@@ -224,7 +236,10 @@ export class ServiceDiscovery implements IServiceDiscovery {
                     }
                 }
             })
-            .finally(() => this.runTopicUpdate());
+            .finally(() => {
+                this.topicUpdateRunning = false;
+                this.runTopicUpdate();
+            });
     }
 
     /**
@@ -265,8 +280,18 @@ export class ServiceDiscovery implements IServiceDiscovery {
         const providers = this.findRole(ActorRole.PROVIDER, topicName);
         const consumers = this.findRole(ActorRole.CONSUMER, topicName);
 
+        if (
+            providers.length === 1 &&
+            consumers.length === 1 &&
+            providers[0].type === ActorType.HOST &&
+            consumers[0].type === ActorType.HOST
+        ) {
+            this.logger.debug("Skipping Manager data-plane topic pipe for exact host-to-host topic pair", topicName);
+            return;
+        }
+
         await Promise.all(providers.map(async (provider) => {
-            await consumers.map(async (consumer) => {
+            await Promise.all(consumers.map(async (consumer) => {
                 if (provider.handled && consumer.handled) {
                     return;
                 }
@@ -274,7 +299,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
                 consumer.handled = true;
 
                 await provider.connectoTo(consumer);
-            });
+            }));
 
             provider.handled = true;
         }));

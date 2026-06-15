@@ -1,5 +1,5 @@
 import test from "ava";
-import { Duplex, PassThrough } from "stream";
+import { PassThrough } from "stream";
 import { CommunicationChannel as CC, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { EncodedMonitoringMessage, UpstreamStreamsConfig } from "@scramjet/types";
 
@@ -15,15 +15,6 @@ function makeStreams(): UpstreamStreamsConfig {
     return streams;
 }
 
-function makePair(): { a: Duplex; b: Duplex } {
-    const aToB = new PassThrough();
-    const bToA = new PassThrough();
-    const a = Duplex.from({ readable: bToA, writable: aToB }) as Duplex;
-    const b = Duplex.from({ readable: aToB, writable: bToA }) as Duplex;
-
-    return { a, b };
-}
-
 test("host-client parity: stream getters map to CommunicationChannel slots", t => {
     const client = new HostClient(0, "127.0.0.1");
     const streams = makeStreams();
@@ -32,15 +23,15 @@ test("host-client parity: stream getters map to CommunicationChannel slots", t =
     client.inputEndDeferMs = 5;
     client.initWithStreams(streams);
 
-    t.is(client.stdinStream as unknown as Duplex, original[CC.STDIN] as unknown as Duplex);
-    t.is(client.stdoutStream as unknown as Duplex, original[CC.STDOUT] as unknown as Duplex);
-    t.is(client.stderrStream as unknown as Duplex, original[CC.STDERR] as unknown as Duplex);
-    t.is(client.controlStream as unknown as Duplex, original[CC.CONTROL] as unknown as Duplex);
-    t.is(client.monitorStream as unknown as Duplex, original[CC.MONITORING] as unknown as Duplex);
-    t.is(client.outputStream as unknown as Duplex, original[CC.OUT] as unknown as Duplex);
-    t.is(client.logStream as unknown as Duplex, original[CC.LOG] as unknown as Duplex);
-    t.is(client.requestsStream as unknown as Duplex, original[CC.REQUESTS] as unknown as Duplex);
-    t.not(client.inputStream as unknown as Duplex, original[CC.IN] as unknown as Duplex);
+    t.is(client.stdinStream as unknown as PassThrough, original[CC.STDIN] as unknown as PassThrough);
+    t.is(client.stdoutStream as unknown as PassThrough, original[CC.STDOUT] as unknown as PassThrough);
+    t.is(client.stderrStream as unknown as PassThrough, original[CC.STDERR] as unknown as PassThrough);
+    t.is(client.controlStream as unknown as PassThrough, original[CC.CONTROL] as unknown as PassThrough);
+    t.is(client.monitorStream as unknown as PassThrough, original[CC.MONITORING] as unknown as PassThrough);
+    t.is(client.outputStream as unknown as PassThrough, original[CC.OUT] as unknown as PassThrough);
+    t.is(client.logStream as unknown as PassThrough, original[CC.LOG] as unknown as PassThrough);
+    t.is(client.requestsStream as unknown as PassThrough, original[CC.REQUESTS] as unknown as PassThrough);
+    t.not(client.inputStream as unknown as PassThrough, original[CC.IN] as unknown as PassThrough);
 });
 
 test("host-client parity: control and monitoring streams are raw byte passthroughs (no JSON/base64 reframing)", async t => {
@@ -123,40 +114,14 @@ test("host-client parity: input end with control already ended keeps wrapped inp
     t.false(wrappedEnded, "wrapped input target should not end when control is already ended");
 });
 
-test("host-client parity: BPMux owns the requests channel and powers Agent.createConnection", async t => {
+test("host-client parity: REQUESTS channel no longer creates a BPMux agent", t => {
     const client = new HostClient(0, "127.0.0.1");
     const streams = makeStreams();
-    const { a: clientReq, b: hostReq } = makePair();
-
-    streams[CC.REQUESTS] = clientReq as unknown as UpstreamStreamsConfig[CC.REQUESTS];
 
     client.inputEndDeferMs = 5;
     client.initWithStreams(streams);
 
-    t.truthy(client.bpmux, "BPMux should be initialized on REQUESTS channel");
-
-    const { BPMux } = await import("@scramjet/bpmux");
-    const peer = new BPMux(hostReq);
-
-    const peerHandshakeP = new Promise<Duplex>((res) => {
-        peer.on("handshake", (duplex: Duplex) => res(duplex));
-    });
-
-    const agent = client.getAgent() as unknown as { createConnection: () => Duplex };
-    const muxed = agent.createConnection();
-
-    t.truthy(muxed, "agent.createConnection should return a multiplexed duplex");
-
-    const peerDuplex = await peerHandshakeP;
-    const dataReceivedP = new Promise<Buffer>((res) => {
-        peerDuplex.once("data", (chunk: Buffer) => res(chunk));
-    });
-    const payload = Buffer.from("hello-bpmux");
-
-    muxed.write(payload);
-    const received = await dataReceivedP;
-
-    t.true(received.equals(payload), "data written to multiplexed socket should arrive at peer over the requests carrier");
+    t.throws(() => client.getAgent(), { message: "No HTTP Agent set" });
 });
 
 function makeStorageHost() {

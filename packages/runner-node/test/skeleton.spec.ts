@@ -84,6 +84,28 @@ test("validateBootConfig accepts and validates instancesServerPort/Host", t => {
     }), { message: /must be set together/ });
 });
 
+test("validateBootConfig accepts and validates verser2 runtime handoff", t => {
+    const verser2Runtime = {
+        hostUrl: "https://verser2.example",
+        runnerGuestId: "runner.i-1.guest",
+        runnerRouteDomain: "runner.i-1.scramjet.internal",
+        hubBrokerId: "runner.i-1.hub.broker",
+        hubTargetDomain: "sth.scramjet.internal",
+        tls: { caFile: "/ca.pem" },
+        leaseAcquireTimeoutMs: 1000,
+        minWaitingStreams: 2
+    };
+
+    t.deepEqual(
+        validateBootConfig({ sequencePath: "/x", instanceId: "i-1", verser2Runtime }),
+        { sequencePath: "/x", instanceId: "i-1", verser2Runtime }
+    );
+
+    t.throws(() => validateBootConfig({
+        sequencePath: "/x", instanceId: "i-1", verser2Runtime: { ...verser2Runtime, hubBrokerId: "" }
+    }), { message: /verser2Runtime\.hubBrokerId/ });
+});
+
 test("createFdStreams is a function (smoke - fd4/5 only valid in spawned child)", t => {
     // We cannot invoke createFdStreams() inside an ava worker because fd4/fd5
     // are not opened by the parent here. The end-to-end coverage of this

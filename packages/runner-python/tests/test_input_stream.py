@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from runner_python.input_stream import make_input_stream
+from runner_python.input_stream import make_input_stream, read_http_headers
 
 
 def _make_reader() -> asyncio.StreamReader:
@@ -111,3 +111,50 @@ async def test_unknown_content_type_is_rejected() -> None:
     iterator = make_input_stream(reader, "application/x-unknown")
     with pytest.raises(ValueError, match="content_type"):
         await iterator.__anext__()
+
+
+# ---------------------------------------------------------------------------
+# read_http_headers — HTTP-like input header stripping
+# ---------------------------------------------------------------------------
+
+
+async def test_read_http_headers_parses_and_leaves_body() -> None:
+    """Headers are parsed to lower-case keys; body bytes remain for subsequent reads."""
+    reader = _make_reader()
+    reader.feed_data(
+        b"content-type: text/plain\r\n"
+        b"content-length: 13\r\n"
+        b"\r\n"
+        b"Hello, World!"
+    )
+    reader.feed_eof()
+
+    headers = await read_http_headers(reader)
+    body = await reader.read()
+
+    assert headers == {"content-type": "text/plain", "content-length": "13"}
+    assert body == b"Hello, World!"
+
+
+async def test_read_http_headers_body_in_same_buffer() -> None:
+    """Body bytes already fed after the \\r\\n\\r\\n separator are preserved."""
+    reader = _make_reader()
+    reader.feed_data(b"x-custom: value\r\n\r\nremaining body data")
+    reader.feed_eof()
+
+    headers = await read_http_headers(reader)
+    body = await reader.read()
+
+    assert headers == {"x-custom": "value"}
+    assert body == b"remaining body data"
+
+
+async def test_read_http_headers_eof_before_terminator() -> None:
+    """If EOF occurs before headers end, returns empty dict without hanging."""
+    reader = _make_reader()
+    reader.feed_data(b"content-type: text/plain\r\n")
+    reader.feed_eof()
+
+    headers = await read_http_headers(reader)
+
+    assert headers == {}

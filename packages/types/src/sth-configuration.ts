@@ -2,6 +2,7 @@ import { StorageAdapterType } from "./local-storage";
 import { MonitoringServerConfig } from "./monitoring-server";
 import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
+import { STHOutboundVerser2Config } from "./verser2-transport-configuration";
 
 export type AdapterConfig = {
     /**
@@ -326,6 +327,8 @@ export type STHConfiguration = {
     couchdb?: CouchDbAdapterConf;
 
     strictPlatformConnection?: boolean;
+
+    verser2: STHOutboundVerser2Config;
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

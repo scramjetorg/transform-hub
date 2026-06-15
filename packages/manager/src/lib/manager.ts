@@ -15,9 +15,9 @@ import {
     LogLevel
 } from "@scramjet/types";
 import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
-import { CeroError, getRouter } from "@scramjet/api-server";
+import { CeroError, forwardRoutedRequest, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
-import { ClientRequest, IncomingMessage, ServerResponse, request } from "http";
+import { IncomingMessage, ServerResponse, request } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -29,6 +29,9 @@ import { SthConnectionStore } from "./sth-connection-store";
 import { getDefaultConfig } from "@scramjet/manager-config";
 import { defer, merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
+import { ManagerSthBrokerTransport } from "./verser2-transport";
+import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
+import { managerVerser2Options, maskConfig } from "@scramjet/config";
 
 import { VerserConnection } from "@scramjet/verser";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -40,6 +43,7 @@ import { Client as MinioClient } from "minio";
 import * as fs from "fs/promises";
 import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "./utils";
 import { homedir } from "os";
+import { getManagerVerser2TrustExport } from "./verser2-trust-export";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -48,6 +52,21 @@ const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
 
+export const normalizeForwardedHeaders = normalizeApiForwardedHeaders;
+
+export function maskManagerConfig(config: ManagerConfiguration): ManagerConfiguration {
+    const safe = {} as ManagerConfiguration;
+
+    merge(safe, config);
+
+    if (safe.s3) {
+        if (safe.s3.accessKey) safe.s3.accessKey = "********";
+        if (safe.s3.secretKey) safe.s3.secretKey = "********";
+    }
+
+    return maskConfig(safe, managerVerser2Options) as ManagerConfiguration;
+}
+
 export class Manager implements IComponent {
     id: string;
     private _apiRouter: APIRoute;
@@ -55,6 +74,7 @@ export class Manager implements IComponent {
     private sthConnectionStore: ISTHConnectionStore = new SthConnectionStore();
     private serviceDiscovery: ServiceDiscovery = new ServiceDiscovery();
     private readonly _config: ManagerConfiguration = getDefaultConfig();
+    private sthBrokerTransport?: ManagerSthBrokerTransport;
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
@@ -74,8 +94,24 @@ export class Manager implements IComponent {
         return this._config;
     }
 
+    public get publicConfig(): ManagerConfiguration {
+        return maskManagerConfig(this._config);
+    }
+
     public get router(): APIRoute {
         return this._apiRouter;
+    }
+
+    public setSthBrokerTransport(transport: ManagerSthBrokerTransport) {
+        this.sthBrokerTransport = transport;
+    }
+
+    public getSthBrokerTransport(): ManagerSthBrokerTransport | undefined {
+        return this.sthBrokerTransport;
+    }
+
+    private usesVerser2OnlyTransport(): boolean {
+        return this.config.verser2.enabled && this.config.verser2.migrationMode === "verser2";
     }
 
     public get service(): string {
@@ -115,7 +151,7 @@ export class Manager implements IComponent {
         this.logger = new ObjLogger(this, { id: this.id });
         this.logger.logLevel = (this._config.logLevel || "info").toLocaleUpperCase() as LogLevel;
 
-        this.logger.debug("Manager config: ", this._config);
+        this.logger.debug("Manager config: ", this.publicConfig);
 
         this.serviceDiscovery.logger.pipe(this.logger);
 
@@ -134,7 +170,7 @@ export class Manager implements IComponent {
         this.commonLogsPipe.logger.pipe(this.logger);
 
         if (this.config.s3 && this.config.s3.endPoint) {
-            this.logger.info("Config", this.config.s3);
+            this.logger.info("Config", this.publicConfig.s3);
             this.s3Client = new MinioClient({
                 region: this.config.s3.region,
                 endPoint: this.config.s3.endPoint,
@@ -183,7 +219,8 @@ export class Manager implements IComponent {
             })
         );
 
-        this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.config }));
+        this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.publicConfig }));
+        this._apiRouter.get(`${apiBase}/verser2/trust`, () => getManagerVerser2TrustExport(this.config));
         this._apiRouter.get(`${apiBase}/list`, (req:ParsedMessage): MRestAPI.GetListResponse => {
             let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
             let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
@@ -468,6 +505,7 @@ export class Manager implements IComponent {
     async handleRequestToSTH(req: ParsedMessage, res: ServerResponse) {
         const params = req.params || {};
         const sth = this.sthConnectionStore.getById(params.id);
+        const originalUrl = req.url;
 
         if (!sth) {
             this.logger.error("Request to STH Not Found", req.method, req.url);
@@ -489,13 +527,56 @@ export class Manager implements IComponent {
 
         this.logger.debug("Request to STH", req.method, req.url, this._config.apiBase);
 
+        const headers = normalizeForwardedHeaders(req.headers);
+        const decision = classifyManagerRoute(req.method, originalUrl, { apiBase: this._config.apiBase });
+
+        if (decision.kind === "follow") {
+            await this.handleClassifiedFollowRequestToSTH(sth, decision, req, res, headers);
+
+            return;
+        }
+
+        this.writeUnsupportedRouteDecision(decision, res);
+    }
+
+    private async handleVerser2RequestToSTH(id: string, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
+        const domain = this.getSthRouteDomain(id);
+
+        await forwardRoutedRequest({
+            transport: this.sthBrokerTransport!,
+            domain,
+            req,
+            res,
+            path: req.url || "/",
+            headers,
+            routeReadinessMs: this.config.verser2.timeouts.routeReadinessMs,
+            requestTimeoutMs: this.config.verser2.timeouts.requestMs,
+            onError: (error) => this.logger.warn("M -> STH verser2 request error", { id, url: req.url, error })
+        });
+    }
+
+    private async handleLocalPeerRequestToSTH(
+        sth: ISTHController,
+        req: ParsedMessage,
+        res: ServerResponse,
+        headers: Record<string, string>,
+        expectsContinue: boolean
+    ) {
+        if (!sth.verserConnection) {
+            this.logger.warn("Request to STH without local peer connection", req.method, req.url);
+            res.writeHead(503);
+            res.end();
+
+            return;
+        }
+
         let hostResponse: IncomingMessage | null = null;
-        let requestToHost: ClientRequest | null = null;
+        let requestToHost: ReturnType<typeof request> | null = null;
         let disconnectCalled = false;
 
         const disconnect = (reason: string) => {
             if (!disconnectCalled) {
-                this.logger.warn("Disconnecting forwarded request", req.url, reason);
+                this.logger.warn("Disconnecting local peer request", req.url, reason);
 
                 hostResponse?.unpipe(res);
 
@@ -510,23 +591,26 @@ export class Manager implements IComponent {
         };
 
         requestToHost = request({
-            headers: req.headers,
+            headers,
             method: req.method,
             path: req.url,
             agent: sth.verserConnection.getAgent()
         })
             .on("error", (error: Error) => {
-                this.logger.warn("M -> STH Request error", { id: sth.id, url: req.url, error });
+                this.logger.warn("M -> STH local peer request error", { id: sth.id, url: req.url, error });
                 disconnect("error");
             })
             .on("continue", () => {
-                res.writeContinue();
+                if (!expectsContinue) {
+                    res.writeContinue();
+                }
+
                 req.resume();
             })
             .on("response", (response) => {
                 hostResponse = response;
 
-                this.logger.debug("Response from STH", hostResponse.url, hostResponse.statusCode);
+                this.logger.debug("Response from local peer STH", hostResponse.url, hostResponse.statusCode);
 
                 res.writeHead(response.statusCode!, response.statusMessage, response.headers);
                 res.flushHeaders();
@@ -542,11 +626,67 @@ export class Manager implements IComponent {
         requestToHost.flushHeaders();
         req.pipe(requestToHost);
 
-        if (req.headers.expect === "100-continue") {
-            req.pause();
+        requestToHost.setTimeout(0);
+    }
+
+    private async handleClassifiedFollowRequestToSTH(
+        sth: ISTHController,
+        decision: ManagerRouteDecision,
+        req: ParsedMessage,
+        res: ServerResponse,
+        headers: Record<string, string>
+    ) {
+        const forwarding = prepareManagerFollowForwarding(decision, req.url, headers);
+
+        if (forwarding.kind === "direct-route-metadata") {
+            this.writeDirectRouteMetadata(forwarding.routeDomain, forwarding.targetPath, res);
+
+            return;
         }
 
-        requestToHost.setTimeout(0);
+        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
+
+        if (expectsContinue) {
+            delete headers.expect;
+            res.writeContinue();
+        }
+
+        req.url = forwarding.path;
+
+        if (this.sthBrokerTransport && this.usesVerser2OnlyTransport()) {
+            await this.handleVerser2RequestToSTH(sth.id, req, res, headers);
+        } else {
+            await this.handleLocalPeerRequestToSTH(sth, req, res, headers, expectsContinue);
+        }
+    }
+
+    private writeDirectRouteMetadata(routeDomain: string | undefined, targetPath: string | undefined, res: ServerResponse) {
+        const payload = JSON.stringify({
+            opStatus: ReasonPhrases.CONFLICT,
+            routeDecision: "follow",
+            routeDomain,
+            targetPath,
+            error: "Direct STH-to-STH payloads must use the target route directly"
+        });
+
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(payload);
+    }
+
+    private writeUnsupportedRouteDecision(decision: ManagerRouteDecision, res: ServerResponse) {
+        const payload = JSON.stringify({
+            opStatus: ReasonPhrases.NOT_IMPLEMENTED,
+            routeDecision: decision.kind,
+            routeFamily: decision.family,
+            error: decision.reason
+        });
+
+        res.writeHead(decision.kind === "unsupported-bidirectional" ? 501 : 409, { "content-type": "application/json" });
+        res.end(payload);
+    }
+
+    private getSthRouteDomain(id: string) {
+        return `sth.${id}.scramjet.internal`;
     }
 
     attachSTHEventHandlers(sth: ISTHController) {

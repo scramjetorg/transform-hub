@@ -6,7 +6,7 @@ import { dirname, resolve } from "path";
 import { Readable, Writable } from "stream";
 
 import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
-import { RunnerExitCode } from "@scramjet/symbols";
+import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
 
 import { RuntimeProcessHandles } from "@scramjet/types";
 
@@ -20,15 +20,18 @@ import {
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
+import { parseRunnerTransportConfig, RunnerTransportConfigResult } from "../transport/runner-transport-config";
+import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
 
 const STDERR_TAIL_BYTES = 4096;
+const CR = 0x0d;
 
 // ---------------------------------------------------------------------------
 // Adapter-facing env validation. Preserved verbatim from the legacy entry so
 // adapters do not need to change. Same env names, same exit codes.
 // ---------------------------------------------------------------------------
 
-const sequencePath: string = `${process.env.SEQUENCE_PATH?.replace(/(?<!\.m?js|\.ts)$/, ".js")}`;
+const rawSequencePath = process.env.SEQUENCE_PATH;
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
 const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
@@ -37,6 +40,8 @@ const runnerConnectInfo = process.env.RUNNER_CONNECT_INFO;
 
 let connectInfo: SequenceInfo;
 let parsedRunnerConnectInfo: RunnerConnectInfo;
+let runnerTransportConfig: RunnerTransportConfigResult;
+let sequencePath: string;
 
 try {
     if (!runnerConnectInfo) throw new Error("Connection JSON is required.");
@@ -54,24 +59,41 @@ try {
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
-if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
-    console.error("Incorrect run argument: instancesServerPort");
-    process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
-
-if (!instancesServerHost) {
-    console.error("Incorrect run argument: instancesServerHost");
-    process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
+sequencePath = normalizeSequencePath(rawSequencePath, connectInfo.config?.engines);
 
 if (!instanceId) {
     console.error("Incorrect run argument: instanceId");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
+try {
+    runnerTransportConfig = parseRunnerTransportConfig(instanceId);
+} catch (error) {
+    console.error(error instanceof Error ? error.message : "Incorrect run argument: runner transport config");
+    process.exit(RunnerExitCode.INVALID_ENV_VARS);
+}
+
+if (runnerTransportConfig.kind === "legacy") {
+    if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
+        console.error("Incorrect run argument: instancesServerPort");
+        process.exit(RunnerExitCode.INVALID_ENV_VARS);
+    }
+
+    if (!instancesServerHost) {
+        console.error("Incorrect run argument: instancesServerHost");
+        process.exit(RunnerExitCode.INVALID_ENV_VARS);
+    }
+}
+
 if (!fs.existsSync(sequencePath)) {
     console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
     process.exit(RunnerExitCode.INVALID_SEQUENCE_PATH);
+}
+
+function normalizeSequencePath(path: string | undefined, engines?: Record<string, string>): string {
+    if (!path) return "";
+    if (selectRuntimeKind(engines) === "python3") return path;
+    return path.replace(/(?<!\.m?js|\.ts)$/, ".js");
 }
 
 // ---------------------------------------------------------------------------
@@ -91,17 +113,28 @@ interface RunnerNodeBootConfigShape {
     logLevel?: LogLevel;
     exposePath?: string;
     exposeHost?: string;
+    requestsUnsupported?: string;
+    verser2Runtime?: {
+        hostUrl: string;
+        runnerGuestId: string;
+        runnerRouteDomain: string;
+        hubBrokerId: string;
+        hubTargetDomain?: string;
+        tls?: unknown;
+        leaseAcquireTimeoutMs?: number;
+        minWaitingStreams?: number;
+    };
 }
 
-function writeBootConfig(): string {
+function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesServerPort: number): string {
     const dir = fs.mkdtempSync(resolve(os.tmpdir(), "runner-node-boot-"));
     const file = resolve(dir, "boot-config.json");
 
     const payload: RunnerNodeBootConfigShape = {
         sequencePath: resolve(sequencePath),
         instanceId: instanceId!,
-        instancesServerPort: parseInt(instancesServerPort!, 10),
-        instancesServerHost: instancesServerHost!,
+        instancesServerPort: resolvedInstancesServerPort,
+        instancesServerHost: resolvedInstancesServerHost,
         sequenceInfo: connectInfo
     };
 
@@ -117,6 +150,19 @@ function writeBootConfig(): string {
     const exposeHostResolved = parsedRunnerConnectInfo.exposeHost ?? process.env.EXPOSE_HOST;
 
     if (exposeHostResolved) payload.exposeHost = exposeHostResolved;
+
+    if (runnerTransportConfig.kind === "verser2") {
+        payload.verser2Runtime = {
+            hostUrl: runnerTransportConfig.hostUrl,
+            runnerGuestId: runnerTransportConfig.guestId,
+            runnerRouteDomain: runnerTransportConfig.routeDomain,
+            hubBrokerId: runnerTransportConfig.hubBrokerId,
+            ...(runnerTransportConfig.hubTargetDomain ? { hubTargetDomain: runnerTransportConfig.hubTargetDomain } : {}),
+            ...(runnerTransportConfig.tls ? { tls: runnerTransportConfig.tls } : {}),
+            ...(runnerTransportConfig.leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs: runnerTransportConfig.leaseAcquireTimeoutMs } : {}),
+            ...(runnerTransportConfig.minWaitingStreams !== undefined ? { minWaitingStreams: runnerTransportConfig.minWaitingStreams } : {})
+        };
+    }
 
     fs.writeFileSync(file, JSON.stringify(payload), { encoding: "utf8", mode: 0o600 });
 
@@ -146,12 +192,62 @@ function appendTail(current: string, chunk: Buffer | string): string {
     return (current + chunk.toString()).slice(-STDERR_TAIL_BYTES);
 }
 
+function observeRpcExpose(stream: Readable, transport: RunnerVerser2Transport): void {
+    let pending = "";
+
+    stream.on("data", (chunk: Buffer | string) => {
+        pending += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+
+        for (;;) {
+            const lfIdx = pending.indexOf("\n");
+
+            if (lfIdx === -1) break;
+
+            let endIdx = lfIdx;
+
+            if (endIdx > 0 && pending.charCodeAt(endIdx - 1) === CR) endIdx -= 1;
+
+            const line = pending.slice(0, endIdx);
+
+            pending = pending.slice(lfIdx + 1);
+
+            try {
+                const parsed = JSON.parse(line) as [number, { payload?: { exposeHost?: string; exposePort?: number } }];
+
+                if (parsed[0] === RunnerMessageCode.PING && parsed[1]?.payload?.exposePort !== undefined) {
+                    transport.setRpcTarget(parsed[1].payload.exposeHost || "localhost", parsed[1].payload.exposePort);
+                }
+            } catch {
+                // ignore non-frame lines
+            }
+        }
+    });
+}
+
 async function main(): Promise<void> {
-    const hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
+    let hostClient: HostClient | RunnerVerser2Transport;
+    let resolvedInstancesServerHost: string;
+    let resolvedInstancesServerPort: number;
 
-    await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
+    if (runnerTransportConfig.kind === "verser2") {
+        hostClient = new RunnerVerser2Transport({
+            config: runnerTransportConfig,
+            instanceId: instanceId!
+        });
+        await hostClient.init();
+        resolvedInstancesServerHost = hostClient.localChannelHost;
+        resolvedInstancesServerPort = hostClient.localChannelPort;
+    } else {
+        hostClient = new HostClient(+instancesServerPort!, instancesServerHost!);
+        await hostClient.init(instanceId!, OUTER_RUNNER_CHANNELS);
+        resolvedInstancesServerHost = instancesServerHost!;
+        resolvedInstancesServerPort = parseInt(instancesServerPort!, 10);
+    }
 
-    const bootConfigPath = writeBootConfig();
+    const bootConfigPath = writeBootConfig(
+        resolvedInstancesServerHost,
+        resolvedInstancesServerPort
+    );
 
     let handles: RuntimeProcessHandles;
 
@@ -210,13 +306,16 @@ async function main(): Promise<void> {
     // host control -> child fd4 (raw)
     pipeRaw(hostClient.controlStream, handles.control);
 
-    // child fd5 -> host monitoring (raw)
-    pipeRaw(handles.monitoring, hostClient.monitorStream);
-
     // Track whether the child already emitted a terminal lifecycle frame
     // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
     // destructive; bytes still flow to host monitoring unchanged.
     const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+    if (hostClient instanceof RunnerVerser2Transport) {
+        observeRpcExpose(handles.monitoring, hostClient);
+    }
+
+    // child fd5 -> host monitoring (raw)
+    pipeRaw(handles.monitoring, hostClient.monitorStream);
     let childStderrTail = "";
 
     handles.child.stderr?.on("data", chunk => {

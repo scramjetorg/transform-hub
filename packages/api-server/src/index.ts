@@ -13,6 +13,8 @@ import type { ServerConfig } from "./types/ServerConfig";
 import { createForwardController } from "./handlers/forward";
 import { roundRobinStrategy } from "./strategies/round-robin";
 export { createForwardController } from "./handlers/forward";
+export { forwardRoutedRequest, normalizeForwardedHeaders } from "./handlers/routed-forward";
+export type { RoutedForwardTransport, RoutedForwardTransportResponse } from "./handlers/routed-forward";
 export { roundRobinStrategy } from "./strategies/round-robin";
 export { consistentHashStrategy } from "./strategies/consistent-hash";
 

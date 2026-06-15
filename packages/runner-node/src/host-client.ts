@@ -1,14 +1,27 @@
 /* eslint-disable dot-notation */
-import { BPMux } from "@scramjet/bpmux";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
+import { createVerserBroker } from "@signicode/verser2-guest-node";
 import { Agent } from "http";
 import net, { Socket, createConnection } from "net";
 import { PassThrough } from "stream";
+import { RunnerNodeBootConfig } from "./boot-config";
 
 type AgentWithCreateConnection = Agent & { createConnection: typeof createConnection };
+type Verser2RuntimeConfig = NonNullable<RunnerNodeBootConfig["verser2Runtime"]>;
+type Verser2BrokerLike = {
+    connect(): Promise<void>;
+    close(reason?: string): Promise<void>;
+    createAgent(): Agent;
+};
+type Verser2BrokerFactory = (options: {
+    hostUrl: string;
+    brokerId: string;
+    leaseAcquireTimeoutMs?: number;
+    tls?: Record<string, unknown>;
+}) => Verser2BrokerLike;
 
 /** Default channel set: every host channel (legacy parity). */
 export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
@@ -20,8 +33,8 @@ export const ALL_CHANNELS: ReadonlySet<CC> = new Set<CC>([
  * Connects to Host and exposes streams per channel (stdin, monitor etc.).
  *
  * Owned by runner-node: the child runtime is responsible for opening sockets,
- * wrapping the IN channel with a PassThrough, and initializing BPMux on the
- * REQUESTS channel so the API client transport stays sequence-local.
+ * wrapping the IN channel with a PassThrough. Sequence-local API client
+ * transport is provided by verser2 runtime configuration.
  *
  * Selective channel opening: when `channels` is provided to {@link init} or
  * {@link initWithStreams}, only the listed channel slots are populated; the
@@ -31,11 +44,17 @@ class HostClient implements IHostClient {
     private _streams?: Array<Socket | PassThrough | undefined>;
     public agent?: Agent;
     logger: IObjectLogger;
-    bpmux?: BPMux;
+    verser2Broker?: Verser2BrokerLike;
     public inputEndDeferMs = 500;
     private inputSource?: Socket;
 
-    constructor(private instancesServerPort: number, private instancesServerHost: string) {
+    constructor(
+        private instancesServerPort: number,
+        private instancesServerHost: string,
+        private requestsUnsupported?: string,
+        private verser2Runtime?: Verser2RuntimeConfig,
+        private createBroker: Verser2BrokerFactory = createVerserBroker as unknown as Verser2BrokerFactory
+    ) {
         this.logger = new ObjLogger(this);
     }
 
@@ -52,7 +71,18 @@ class HostClient implements IHostClient {
             return this.agent;
         }
 
+        if (this.requestsUnsupported) {
+            this.agent = this.createUnsupportedRequestsAgent(this.requestsUnsupported);
+            return this.agent;
+        }
+
         throw new Error("No HTTP Agent set");
+    }
+
+    getApiBase(): string {
+        return this.verser2Runtime?.hubTargetDomain
+            ? `http://${this.verser2Runtime.hubTargetDomain}/api/v1`
+            : "http://scramjet-host/api/v1";
     }
 
     private async connectOne(i: number): Promise<Socket> {
@@ -100,6 +130,7 @@ class HostClient implements IHostClient {
         const streams = await this.connect(id, channels);
 
         this.initWithStreams(streams as unknown as UpstreamStreamsConfig);
+        await this.initVerser2BrokerAgent();
     }
 
     initWithStreams(streams: UpstreamStreamsConfig): void {
@@ -145,43 +176,35 @@ class HostClient implements IHostClient {
             this._streams[CC.IN] = inputTarget;
         }
 
-        try {
-            if (this._streams[CC.REQUESTS]) {
-                this.logger.debug("Using BPMux for requests stream");
+        this.logger.debug("Connected to host");
+    }
 
-                this.bpmux = new BPMux(this._streams[CC.REQUESTS] as unknown as net.Socket);
-
-                const agent = new Agent() as AgentWithCreateConnection;
-
-                agent.createConnection = () => {
-                    try {
-                        const socket = this.bpmux!.multiplex() as unknown as Socket;
-
-                        socket.on("error", () => {
-                            this.logger.trace("Muxed stream error");
-                        });
-
-                        socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-
-                        this.logger.trace("Creating connection to verser server");
-
-                        return socket;
-                    } catch (error) {
-                        const ret = new Socket();
-
-                        setImmediate(() => ret.emit("error", error));
-                        return ret;
-                    }
-                };
-
-                this.agent = agent;
-            }
-        } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error(e);
+    private async initVerser2BrokerAgent(): Promise<void> {
+        if (!this.verser2Runtime) {
+            return;
         }
 
-        this.logger.debug("Connected to host");
+        this.verser2Broker = this.createBroker({
+            hostUrl: this.verser2Runtime.hostUrl,
+            brokerId: this.verser2Runtime.hubBrokerId,
+            leaseAcquireTimeoutMs: this.verser2Runtime.leaseAcquireTimeoutMs,
+            tls: this.verser2Runtime.tls
+        });
+        await this.verser2Broker.connect();
+        this.agent = this.verser2Broker.createAgent();
+    }
+
+    private createUnsupportedRequestsAgent(message: string): Agent {
+        const agent = new Agent() as AgentWithCreateConnection;
+
+        agent.createConnection = () => {
+            const socket = new Socket();
+
+            setImmediate(() => socket.emit("error", new Error(message)));
+            return socket;
+        };
+
+        return agent;
     }
 
     async disconnect(hard: boolean) {
@@ -237,6 +260,8 @@ class HostClient implements IHostClient {
             ));
 
         await Promise.all(streamsExitedPromised);
+        await this.verser2Broker?.close(hard ? "hard-disconnect" : "disconnect");
+        this.verser2Broker = undefined;
     }
 
     private requireStream<T>(idx: CC): T {

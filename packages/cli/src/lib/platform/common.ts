@@ -3,7 +3,6 @@ import { sessionConfig, profileManager, ProfileConfig } from "../config";
 import { displayError, displayMessage } from "../output";
 import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { configEnv, isProductionEnv } from "../../types";
-import { Command } from "commander";
 import http from "http";
 import https from "https";
 
@@ -91,7 +90,6 @@ export const setPlatformDefaults = async () => {
 
 const profileConfig = profileManager.getProfileConfig();
 const platformRequirementsValid = (
-    program: Command & { _helpShortFlag?: any, _helpLongFlag?: any },
     token: string,
     env: configEnv,
     middlewareApiUrl: string
@@ -99,10 +97,10 @@ const platformRequirementsValid = (
     token &&
     isProductionEnv(env) &&
     middlewareApiUrl &&
-    !process.argv.includes(program._helpShortFlag) &&
-    !process.argv.includes(program._helpLongFlag);
+    !process.argv.includes("--help") &&
+    !process.argv.includes("-h");
 
-export const initPlatform = async (program: Command) => {
+export const initPlatform = async () => {
     if (!isProductionEnv(profileConfig.env)) return;
     const { token, env, middlewareApiUrl } = profileConfig.get();
 
@@ -111,7 +109,7 @@ export const initPlatform = async (program: Command) => {
      * are provided in the profile configuration.
      * Do not set the default platform values when displaying the help commands.
      */
-    if (platformRequirementsValid(program, token, env, middlewareApiUrl)) {
+    if (platformRequirementsValid(token, env, middlewareApiUrl)) {
         ClientUtils.setDefaultHeaders({ Authorization: `Bearer ${token}`, });
 
         await setPlatformDefaults();

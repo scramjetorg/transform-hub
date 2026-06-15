@@ -1,4 +1,6 @@
 import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { resolve } from "path";
 import { Duplex } from "stream";
 import { PythonSpawnOptions, RuntimeExecutor, RuntimeProcessHandles } from "@scramjet/types";
 
@@ -53,6 +55,8 @@ export function spawnRunnerPython(opts: PythonSpawnOptions): RuntimeProcessHandl
         delete childEnv.RUNNER_CONNECT_INFO;
     }
 
+    childEnv.PYTHONPATH = buildPythonPath(childEnv.PYTHONPATH);
+
     const child = spawn(pythonBin, argv, {
         stdio: [...RUNNER_PYTHON_STDIO],
         cwd: opts.cwd,
@@ -66,6 +70,24 @@ export function spawnRunnerPython(opts: PythonSpawnOptions): RuntimeProcessHandl
     const monitoring = stdioSlots[5] as Duplex;
 
     return { child, stdout, stderr, control, monitoring };
+}
+
+function buildPythonPath(existing?: string): string {
+    const candidates = [
+        resolve(__dirname, "../../../runner-python/src"),
+        resolve(__dirname, "../../../runner-python/__pypackages__"),
+        resolve(__dirname, "../../../runner-python/dist/__pypackages__"),
+        resolve(__dirname, "../../runner-python/src"),
+        resolve(__dirname, "../../runner-python/__pypackages__"),
+        resolve(__dirname, "../../runner-python/dist/__pypackages__"),
+        resolve(__dirname, "../../../packages/runner-python/src"),
+        resolve(__dirname, "../../../packages/runner-python/__pypackages__"),
+        resolve(__dirname, "../../../dist/runner-python/__pypackages__")
+    ].filter(existsSync);
+
+    if (existing) candidates.push(existing);
+
+    return candidates.join(":");
 }
 
 /** RuntimeExecutor instance for the `python3` runtime kind. */
