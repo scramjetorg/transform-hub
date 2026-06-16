@@ -21,8 +21,10 @@ export type ClassifyManagerRouteOptions = {
 
 export type ManagerFollowForwardingDecision =
     | {
-        kind: "dispatch";
-        path: string;
+        kind: "redirect";
+        location: string;
+        routeDomain?: string;
+        targetPath: string;
     }
     | {
         kind: "direct-route-metadata";
@@ -87,9 +89,14 @@ export function prepareManagerFollowForwarding(
         };
     }
 
+    const targetPath = applyOriginalQuery(decision.target?.targetPath || currentUrl || "/", currentUrl);
+    const routeDomain = decision.target?.routeDomain;
+
     return {
-        kind: "dispatch",
-        path: applyOriginalQuery(decision.target?.targetPath || currentUrl || "/", currentUrl)
+        kind: "redirect",
+        location: createVerserRouteLocation(routeDomain, targetPath),
+        routeDomain,
+        targetPath
     };
 }
 
@@ -261,4 +268,10 @@ function applyOriginalQuery(targetPath: string, currentUrl: string | undefined):
     const queryStart = currentUrl.indexOf("?");
 
     return queryStart === -1 ? targetPath : `${targetPath}${currentUrl.slice(queryStart)}`;
+}
+
+function createVerserRouteLocation(routeDomain: string | undefined, targetPath: string): string {
+    const path = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;
+
+    return routeDomain ? `http://${routeDomain}${path}` : path;
 }

@@ -32,19 +32,22 @@
     - [x] Define when `direct-route-metadata` remains necessary for STH-originated STH-to-STH payloads.
     - [x] Define fallback/error behavior when a route is unavailable, not follow-safe, or not representable as a native redirect.
         - Contract recorded in `native-redirect-contract.md`. Manager follow decisions should emit `308` responses with verser2 route `Location` targets for external/API callers. Existing direct route metadata remains for STH-originated payloads. Manager-owned, multiplex, and unsupported-bidirectional routes do not redirect. v0.4.0 upstream Host federation is separate from generic CONNECT tunneling, which remains unsupported by public Host/Guest APIs.
-- [ ] Task: Update Manager follow routing implementation
-    - [ ] Update `packages/manager/src/lib/route-classifier.ts` and related types only as needed to represent native redirect decisions.
-    - [ ] Replace Manager dummy/internal follow dispatch in `packages/manager/src/lib/manager.ts` with native 308-style redirect behavior for follow-safe Manager API requests.
-    - [ ] Preserve Manager-owned and Manager-multiplex routes on existing Manager handlers.
-    - [ ] Preserve the direct STH-to-STH data-plane constraint: Manager coordinates route ownership but does not proxy STH-originated payloads.
-- [ ] Task: Update redirect tests
-    - [ ] Update `packages/manager/test/route-classifier.spec.ts` for native redirect decisions and retained metadata cases.
-    - [ ] Add Manager tests covering follow-safe reads, state-changing single-owner follow routes, route-unavailable redirects, and non-follow Manager-owned routes.
-    - [ ] Update or remove tests that specifically assert dummy internal dispatch where native redirect is now expected.
-- [ ] Task: Validate native redirect adoption
-    - [ ] Run focused Manager route-classifier and Manager routing tests.
-    - [ ] Run affected Manager build/typecheck.
-    - [ ] Record any retained dummy/internal forwarding and the reason it remains.
+- [x] Task: Update Manager follow routing implementation
+    - [x] Update `packages/manager/src/lib/route-classifier.ts` and related types only as needed to represent native redirect decisions.
+    - [x] Replace Manager dummy/internal follow dispatch in `packages/manager/src/lib/manager.ts` with native 308-style redirect behavior for follow-safe Manager API requests.
+    - [x] Preserve Manager-owned and Manager-multiplex routes on existing Manager handlers.
+    - [x] Preserve the direct STH-to-STH data-plane constraint: Manager coordinates route ownership but does not proxy STH-originated payloads.
+        - `prepareManagerFollowForwarding()` now returns native redirect decisions for external/API callers. Manager follow handling writes `308` responses with verser2 route `Location` and diagnostic route headers. Direct STH-originated payloads still receive route metadata.
+- [x] Task: Update redirect tests
+    - [x] Update `packages/manager/test/route-classifier.spec.ts` for native redirect decisions and retained metadata cases.
+    - [x] Add Manager tests covering follow-safe reads, state-changing single-owner follow routes, route-unavailable redirects, and non-follow Manager-owned routes.
+    - [x] Update or remove tests that specifically assert dummy internal dispatch where native redirect is now expected.
+        - Updated classifier/follow-forwarding coverage to assert native redirect targets for follow-safe state-changing routes and retained direct route metadata for CPM/STH-originated calls. Existing classification tests continue to cover Manager-owned, Manager-multiplex, and unsupported-bidirectional decisions.
+- [x] Task: Validate native redirect adoption
+    - [x] Run focused Manager route-classifier and Manager routing tests.
+    - [x] Run affected Manager build/typecheck.
+    - [x] Record any retained dummy/internal forwarding and the reason it remains.
+        - Validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/route-classifier.spec.ts`; `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/route-classifier.spec.ts test/verser2-transport.spec.ts`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run build` in `packages/manager`. No dummy/internal follow dispatch is retained for external/API follow decisions.
 - [ ] Task: Conductor - User Manual Verification 'Native 308 Redirect Adoption' (Protocol in workflow.md)
 
 ## Phase 3: Upstream Host Tunneling Integration
