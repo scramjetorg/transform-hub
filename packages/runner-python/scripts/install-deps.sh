@@ -31,16 +31,22 @@ if [[ -z "${TARGET}" ]]; then
     exit 2
 fi
 
-# GH_TOKEN or GITHUB_TOKEN may be set for gh CLI API rate limits when downloading releases.
-# No GitHub Packages token is required; verser2 packages resolve from public npmjs.
+# No GitHub CLI or GitHub Packages token is required; the Python wheel is a
+# public GitHub release asset and verser2 npm packages resolve from public npmjs.
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
-gh release download "v${VERSER2_VERSION}" \
-    --repo signicode/verser2 \
-    --pattern "${VERSER2_WHEEL}" \
-    --dir "${TMP_DIR}"
+python - "https://github.com/signicode/verser2/releases/download/v${VERSER2_VERSION}/${VERSER2_WHEEL}" "${TMP_DIR}/${VERSER2_WHEEL}" <<'PY'
+import sys
+from pathlib import Path
+from urllib.request import urlopen
+
+url, destination = sys.argv[1], Path(sys.argv[2])
+
+with urlopen(url) as response:
+    destination.write_bytes(response.read())
+PY
 
 echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" | sha256sum --check --status
 
