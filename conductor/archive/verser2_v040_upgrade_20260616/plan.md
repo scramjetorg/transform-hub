@@ -157,4 +157,4 @@
     - [x] Record final validation results, skipped checks, and rationale in the track notes or implementation handoff.
         - Phase 5 made documentation/classification changes only and removed no production forwarding code. Validation passed: `git diff --check`; `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
         - Lint and BDD smoke were not rerun in Phase 5 because no source/test code or public communication behavior changed after the Phase 4 full lint/package/BDD gate.
-- [ ] Task: Conductor - User Manual Verification 'Remove Obsolete Local Forwarding and Finalize Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Remove Obsolete Local Forwarding and Finalize Documentation' (Protocol in workflow.md)
