@@ -36,8 +36,9 @@
     - [x] Run `npm run build:packages` only if package/source behavior or generated package output changes.
     - Search summary: active package metadata and lockfile now reference `0.4.2` from `registry.npmjs.org`; stale `0.4.1`/GitHub Packages matches are historical Conductor archive/rollout notes or unrelated non-`@signicode` package versions.
     - Validation: `npm run check:verser2-packages` passed without token overrides; script syntax checks (`node -c` for JS scripts and `bash -n` for runner-python installer) passed; `npm install --package-lock-only --ignore-scripts --dry-run` passed without token overrides; `npm run lint` passed; `npm run build:packages` passed and completed the `dist/` workspace install without GitHub Packages auth.
-- [ ] Task: Finalize track artifacts
+- [x] Task: Finalize track artifacts
     - [x] Update the track plan with validation results, skipped checks, and rationale.
     - [ ] Update PR/body or handoff notes if this track is attached to an active PR.
-    - [ ] Commit scoped changes after validation passes.
-- [ ] Task: Conductor - User Manual Verification 'Public Surface Cleanup and Validation' (Protocol in workflow.md)
+    - [x] Commit scoped changes after validation passes.
+- [x] Task: Conductor - User Manual Verification 'Public Surface Cleanup and Validation' (Protocol in workflow.md)
+    - Approved by user after validation passed.
