@@ -3,7 +3,7 @@ import assert from "assert";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-import { createVerserHost, VerserHost, VerserLocalGuestHandle } from "@signicode/verser2-host";
+import { createVerserHost, VerserHost, VerserHostUpstreamHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
 import { createVerserBroker, VerserBroker, VerserBrokerResponse } from "@signicode/verser2-guest-node";
 
 import { CustomWorld } from "../world";
@@ -15,8 +15,10 @@ type IsolatedVerser2RouteState = {
 
 type IsolatedVerser2State = {
     host?: VerserHost;
+    hosts: Map<string, VerserHost>;
     broker?: VerserBroker;
     guests: VerserLocalGuestHandle[];
+    upstreams: VerserHostUpstreamHandle[];
     routes: Map<string, IsolatedVerser2RouteState>;
     response?: VerserBrokerResponse;
     responseBody?: string;
@@ -30,7 +32,9 @@ const ca = readFileSync(join(certDir, "myCA.pem"), "utf8");
 function state(world: CustomWorld): IsolatedVerser2State {
     if (!world.resources.isolatedVerser2) {
         world.resources.isolatedVerser2 = {
+            hosts: new Map<string, VerserHost>(),
             guests: [],
+            upstreams: [],
             routes: new Map<string, IsolatedVerser2RouteState>()
         } as IsolatedVerser2State;
     }
@@ -40,6 +44,14 @@ function state(world: CustomWorld): IsolatedVerser2State {
 
 function routeToGuestId(routeDomain: string): string {
     return `bdd-${routeDomain.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+function requireHost(current: IsolatedVerser2State, hostName: string): VerserHost {
+    const host = current.hosts.get(hostName);
+
+    assert(host, `isolated verser2 host ${hostName} must be started first`);
+
+    return host;
 }
 
 async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
@@ -52,25 +64,13 @@ async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
     return Buffer.concat(chunks).toString("utf8");
 }
 
-After(async function(this: CustomWorld) {
-    const current = this.resources.isolatedVerser2 as IsolatedVerser2State | undefined;
-
-    if (!current) return;
-
-    await current.broker?.close("bdd-cleanup").catch(() => undefined);
-
-    for (const guest of current.guests.reverse()) {
-        await guest.close("bdd-cleanup").catch(() => undefined);
+async function startIsolatedHost(current: IsolatedVerser2State, hostName: string): Promise<void> {
+    if (current.hosts.has(hostName)) {
+        throw new Error(`isolated verser2 host ${hostName} is already started`);
     }
 
-    await current.host?.close("bdd-cleanup").catch(() => undefined);
-    delete this.resources.isolatedVerser2;
-});
-
-Given("an isolated verser2 host", async function(this: CustomWorld) {
-    const current = state(this);
-
-    current.host = createVerserHost({
+    const host = createVerserHost({
+        hostId: `bdd-${hostName}`,
         host: "127.0.0.1",
         port: 0,
         tls: {
@@ -79,15 +79,15 @@ Given("an isolated verser2 host", async function(this: CustomWorld) {
         }
     });
 
-    await current.host.start();
-});
+    await host.start();
+    current.hosts.set(hostName, host);
 
-Given("isolated verser2 route {string} responds with body {string}", async function(this: CustomWorld, routeDomain: string, body: string) {
-    const current = state(this);
-    const host = current.host;
+    if (hostName === "default") {
+        current.host = host;
+    }
+}
 
-    assert(host, "isolated verser2 host must be started first");
-
+async function attachRespondingRoute(current: IsolatedVerser2State, host: VerserHost, routeDomain: string, body: string): Promise<void> {
     const routeState: IsolatedVerser2RouteState = {
         guestId: routeToGuestId(routeDomain),
         receivedPaths: []
@@ -105,14 +105,9 @@ Given("isolated verser2 route {string} responds with body {string}", async funct
 
     current.guests.push(guest);
     current.routes.set(routeDomain, routeState);
-});
+}
 
-Given("isolated verser2 route {string} redirects with 308 to route {string}", async function(this: CustomWorld, routeDomain: string, targetRouteDomain: string) {
-    const current = state(this);
-    const host = current.host;
-
-    assert(host, "isolated verser2 host must be started first");
-
+async function attachRedirectingRoute(current: IsolatedVerser2State, host: VerserHost, routeDomain: string, targetRouteDomain: string): Promise<void> {
     const routeState: IsolatedVerser2RouteState = {
         guestId: routeToGuestId(routeDomain),
         receivedPaths: []
@@ -133,14 +128,11 @@ Given("isolated verser2 route {string} redirects with 308 to route {string}", as
 
     current.guests.push(guest);
     current.routes.set(routeDomain, routeState);
-});
+}
 
-When("an isolated verser2 broker requests {string}", async function(this: CustomWorld, requestUrl: string) {
-    const current = state(this);
-    const host = current.host;
-
-    assert(host, "isolated verser2 host must be started first");
-
+async function isolatedBrokerRequest(world: CustomWorld, hostName: string, requestUrl: string): Promise<void> {
+    const current = state(world);
+    const host = requireHost(current, hostName);
     const url = new URL(requestUrl);
     const route = current.routes.get(url.hostname);
 
@@ -148,7 +140,7 @@ When("an isolated verser2 broker requests {string}", async function(this: Custom
 
     const broker = createVerserBroker({
         hostUrl: `https://localhost:${host.address.port}`,
-        brokerId: "bdd-isolated-broker",
+        brokerId: `bdd-isolated-broker-${hostName}`,
         tls: { ca }
     });
 
@@ -165,6 +157,82 @@ When("an isolated verser2 broker requests {string}", async function(this: Custom
         path: `${url.pathname}${url.search}`
     });
     current.responseBody = await streamToString(current.response.body);
+}
+
+After(async function(this: CustomWorld) {
+    const current = this.resources.isolatedVerser2 as IsolatedVerser2State | undefined;
+
+    if (!current) return;
+
+    await current.broker?.close("bdd-cleanup").catch(() => undefined);
+
+    for (const upstream of current.upstreams.reverse()) {
+        await upstream.close("bdd-cleanup").catch(() => undefined);
+    }
+
+    for (const guest of current.guests.reverse()) {
+        await guest.close("bdd-cleanup").catch(() => undefined);
+    }
+
+    for (const host of Array.from(current.hosts.values()).reverse()) {
+        await host.close("bdd-cleanup").catch(() => undefined);
+    }
+
+    delete this.resources.isolatedVerser2;
+});
+
+Given("an isolated verser2 host", async function(this: CustomWorld) {
+    await startIsolatedHost(state(this), "default");
+});
+
+Given("an isolated verser2 host {string}", async function(this: CustomWorld, hostName: string) {
+    await startIsolatedHost(state(this), hostName);
+});
+
+Given("isolated verser2 host {string} is connected upstream to host {string}", async function(this: CustomWorld, downstreamHostName: string, upstreamHostName: string) {
+    const current = state(this);
+    const downstreamHost = requireHost(current, downstreamHostName);
+    const upstreamHost = requireHost(current, upstreamHostName);
+
+    current.upstreams.push(await downstreamHost.connectUpstream({
+        upstreamId: upstreamHostName,
+        url: `https://localhost:${upstreamHost.address.port}`,
+        tls: { ca }
+    }));
+});
+
+Given("isolated verser2 route {string} responds with body {string}", async function(this: CustomWorld, routeDomain: string, body: string) {
+    const current = state(this);
+
+    assert(current.host, "isolated verser2 host must be started first");
+    await attachRespondingRoute(current, current.host, routeDomain, body);
+});
+
+Given("isolated verser2 host {string} route {string} responds with body {string}", async function(this: CustomWorld, hostName: string, routeDomain: string, body: string) {
+    const current = state(this);
+
+    await attachRespondingRoute(current, requireHost(current, hostName), routeDomain, body);
+});
+
+Given("isolated verser2 route {string} redirects with 308 to route {string}", async function(this: CustomWorld, routeDomain: string, targetRouteDomain: string) {
+    const current = state(this);
+
+    assert(current.host, "isolated verser2 host must be started first");
+    await attachRedirectingRoute(current, current.host, routeDomain, targetRouteDomain);
+});
+
+Given("isolated verser2 host {string} route {string} redirects with 308 to route {string}", async function(this: CustomWorld, hostName: string, routeDomain: string, targetRouteDomain: string) {
+    const current = state(this);
+
+    await attachRedirectingRoute(current, requireHost(current, hostName), routeDomain, targetRouteDomain);
+});
+
+When("an isolated verser2 broker requests {string}", async function(this: CustomWorld, requestUrl: string) {
+    await isolatedBrokerRequest(this, "default", requestUrl);
+});
+
+When("an isolated verser2 broker connected to host {string} requests {string}", async function(this: CustomWorld, hostName: string, requestUrl: string) {
+    await isolatedBrokerRequest(this, hostName, requestUrl);
 });
 
 Then("the isolated verser2 response status is {int}", function(this: CustomWorld, statusCode: number) {

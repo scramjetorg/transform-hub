@@ -13,6 +13,18 @@ Feature: Isolated verser2 routing guarantees
     And the isolated verser2 response body is "space-ok"
     And isolated verser2 route "space.local.test" received path "/space/health?trace=1"
 
+  @phase3 @upstream-gap @ignore
+  Scenario: Broker follows a native 308 redirect across an upstream Host
+    Given an isolated verser2 host "manager"
+    And an isolated verser2 host "sth"
+    And isolated verser2 host "manager" route "remote-sth.local.test" responds with body "remote-sth-ok"
+    And isolated verser2 host "manager" route "manager.local.test" redirects with 308 to route "remote-sth.local.test"
+    And isolated verser2 host "sth" is connected upstream to host "manager"
+    When an isolated verser2 broker connected to host "sth" requests "http://manager.local.test/api/v1/sth/remote/health?trace=2"
+    Then the isolated verser2 response status is 200
+    And the isolated verser2 response body is "remote-sth-ok"
+    And isolated verser2 route "remote-sth.local.test" received path "/api/v1/sth/remote/health?trace=2"
+
   @phase3 @ignore
   Scenario: Sequence-to-space requests tunnel through the hub-level Host and Manager upstream
     Given an isolated STH-level verser2 host with a Manager upstream host
