@@ -65,11 +65,12 @@
     - [x] Define how sequence/runtime Broker/fetch requests reach Space/STH/Manager endpoints over the owning STH hub-level verser2 Host, Manager upstream Host federation, and native 308 redirect-following to other Hosts/STHs.
     - [x] Document generic CONNECT, `/platform`, `/inout`, and other paths deliberately left unsupported or deferred.
         - Classification recorded in `phase3-communication-paths.md`. The immediate Phase 3 lane is STH-originated sequence/runtime Space/Manager requests over the STH-local verser2 Host and Manager upstream federation, not Host-to-runner RPC or runner lifecycle streams. Manager topics/control routes remain Manager-owned/multiplexed. `/platform`, `/inout`, CONNECT/upgrade, trailers, and informational responses remain unsupported/deferred.
-- [ ] Task: Add tunnel configuration and types
-    - [ ] Update `packages/types/src/verser2-transport-configuration.ts` for any v0.4.0 tunnel/redirect policy options used by Transform Hub.
-    - [ ] Update `packages/config/src/verser2-config.ts` schemas and validation for upstream host tunnel settings.
-    - [ ] Update STH/Manager/MultiManager defaults and public-safe masking if new settings are added.
-    - [ ] Add or update CLI descriptors only when a setting must be user-configurable rather than internal.
+- [x] Task: Add tunnel configuration and types
+    - [x] Update `packages/types/src/verser2-transport-configuration.ts` for any v0.4.0 tunnel/redirect policy options used by Transform Hub.
+    - [x] Update `packages/config/src/verser2-config.ts` schemas and validation for upstream host tunnel settings.
+    - [x] Update STH/Manager/MultiManager defaults and public-safe masking if new settings are added.
+    - [x] Add or update CLI descriptors only when a setting must be user-configurable rather than internal.
+        - No new public config/type fields are required for Phase 3. Decision recorded in `phase3-config-decision.md`: STH-local Host upstream federation should derive Manager upstream URL/TLS from existing `verser2.hostUrl` and `verser2.tls`; `verser2.enabled`, `verser2.runnerHost.enabled`, and CPM/platform configuration remain the gates. Public config is deferred until multiple upstreams, failover, a distinct sequence-only upstream, explicit disable policy, or proxy/tunnel credentials become concrete requirements.
 - [ ] Task: Implement tunnel usage incrementally
     - [ ] Wire v0.4.0 upstream tunneling in the selected Manager/STH communication path while retaining fallback until validation passes.
     - [ ] Wire tunnel behavior into API-server or Host forwarding seams only where native tunnel parity is clear.
