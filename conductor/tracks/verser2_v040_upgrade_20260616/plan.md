@@ -26,11 +26,12 @@
 
 ## Phase 2: Native 308 Redirect Adoption
 
-- [ ] Task: Define the native redirect contract
-    - [ ] Update the route-forwarding design notes to replace `signicode/verser2#20` pending assumptions with the actual v0.4.0 redirect behavior.
-    - [ ] Define how Manager follow-classified routes produce native 308-style redirect responses or verser2-followable metadata.
-    - [ ] Define when `direct-route-metadata` remains necessary for STH-originated STH-to-STH payloads.
-    - [ ] Define fallback/error behavior when a route is unavailable, not follow-safe, or not representable as a native redirect.
+- [x] Task: Define the native redirect contract
+    - [x] Update the route-forwarding design notes to replace `signicode/verser2#20` pending assumptions with the actual v0.4.0 redirect behavior.
+    - [x] Define how Manager follow-classified routes produce native 308-style redirect responses or verser2-followable metadata.
+    - [x] Define when `direct-route-metadata` remains necessary for STH-originated STH-to-STH payloads.
+    - [x] Define fallback/error behavior when a route is unavailable, not follow-safe, or not representable as a native redirect.
+        - Contract recorded in `native-redirect-contract.md`. Manager follow decisions should emit `308` responses with verser2 route `Location` targets for external/API callers. Existing direct route metadata remains for STH-originated payloads. Manager-owned, multiplex, and unsupported-bidirectional routes do not redirect. v0.4.0 upstream Host federation is separate from generic CONNECT tunneling, which remains unsupported by public Host/Guest APIs.
 - [ ] Task: Update Manager follow routing implementation
     - [ ] Update `packages/manager/src/lib/route-classifier.ts` and related types only as needed to represent native redirect decisions.
     - [ ] Replace Manager dummy/internal follow dispatch in `packages/manager/src/lib/manager.ts` with native 308-style redirect behavior for follow-safe Manager API requests.

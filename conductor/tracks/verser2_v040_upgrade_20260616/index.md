@@ -4,3 +4,4 @@
 - [Implementation Plan](./plan.md)
 - [Metadata](./metadata.json)
 - [Phase 1 API Discovery](./phase1-api-discovery.md)
+- [Native Redirect Contract](./native-redirect-contract.md)
