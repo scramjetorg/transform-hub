@@ -129,7 +129,8 @@
     - [x] Classify and document any validation failure according to `workflow.md` before deciding whether it blocks completion.
         - Final Phase 4 validation passed with memory-limited commands: `NODE_OPTIONS="--max-old-space-size=1536" node scripts/run-script.js -w modules -j 2 -e "! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --cache --cache-strategy=content"`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent`; `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-api-node`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-node`.
         - Initial `test:bdd-ci-api-node` host-start failure passed on retry and was classified as transient tooling/environment startup failure. Full lint initially exposed repository-wide error-level style/promise issues on changed Phase 1-4 files; those were fixed with memory-limited targeted eslint, reviewed for behavior risk, and revalidated.
-- [ ] Task: Conductor - User Manual Verification 'Cross-Flow Integration and Full Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Cross-Flow Integration and Full Validation' (Protocol in workflow.md)
+    - [x] User approved Phase 4 after startup-order limitation documentation was added and pushed.
 
 ## Phase 5: Remove Obsolete Local Forwarding and Finalize Documentation
 
