@@ -134,22 +134,27 @@
 
 ## Phase 5: Remove Obsolete Local Forwarding and Finalize Documentation
 
-- [ ] Task: Remove forwarding made redundant by native redirect/tunnel behavior
-    - [ ] Remove or shrink `packages/api-server/src/handlers/routed-forward.ts` only for code paths fully replaced by native v0.4.0 behavior.
-    - [ ] Remove or shrink `packages/api-server/src/handlers/forward.ts` only where no longer needed by retained compatibility paths.
-    - [ ] Remove Manager dummy/internal redirect dispatch code replaced by native 308 redirects.
-    - [ ] Remove tests that assert obsolete local-forwarding behavior and replace them with redirect/tunnel expectations.
-- [ ] Task: Preserve and document intentional fallbacks
-    - [ ] Document any retained local forwarding, including the route family, reason, and future removal condition.
-    - [ ] Document unsupported or deferred bidirectional paths if v0.4.0 tunneling does not provide safe parity.
-    - [ ] Update Conductor architecture notes to reflect native redirects and upstream tunnels as the current design.
-- [ ] Task: Final cleanup checks
-    - [ ] Search for stale references to v0.3.1, dummy redirects, pending native follow, and unsupported CONNECT/tunnel assumptions.
-    - [ ] Verify no active path reintroduces legacy `@scramjet/verser` or BPMux communication.
-    - [ ] Verify public config and docs do not expose private TLS/tunnel material.
-- [ ] Task: Final validation and commit readiness
-    - [ ] Rerun the narrowest validations affected by forwarding removal.
-    - [ ] Rerun `npm run build:packages` and `npm run check:runtime-invariants`.
-    - [ ] Run lint and relevant BDD smoke if final removal changes public communication behavior.
-    - [ ] Record final validation results, skipped checks, and rationale in the track notes or implementation handoff.
+- [x] Task: Remove forwarding made redundant by native redirect/tunnel behavior
+    - [x] Remove or shrink `packages/api-server/src/handlers/routed-forward.ts` only for code paths fully replaced by native v0.4.0 behavior.
+    - [x] Remove or shrink `packages/api-server/src/handlers/forward.ts` only where no longer needed by retained compatibility paths.
+    - [x] Remove Manager dummy/internal redirect dispatch code replaced by native 308 redirects.
+    - [x] Remove tests that assert obsolete local-forwarding behavior and replace them with redirect/tunnel expectations.
+        - Cleanup review in `phase5-cleanup-review.md`: Manager dummy/internal follow dispatch was already removed in Phase 2; API-server `routed-forward.ts` and `forward.ts` remain active runner RPC primary/fallback paths, so no forwarding code was removed in Phase 5.
+- [x] Task: Preserve and document intentional fallbacks
+    - [x] Document any retained local forwarding, including the route family, reason, and future removal condition.
+    - [x] Document unsupported or deferred bidirectional paths if v0.4.0 tunneling does not provide safe parity.
+    - [x] Update Conductor architecture notes to reflect native redirects and upstream tunnels as the current design.
+        - Retained fallbacks and unsupported bidirectional paths are documented in `phase3-communication-paths.md` and `phase5-cleanup-review.md`.
+- [x] Task: Final cleanup checks
+    - [x] Search for stale references to v0.3.1, dummy redirects, pending native follow, and unsupported CONNECT/tunnel assumptions.
+    - [x] Verify no active path reintroduces legacy `@scramjet/verser` or BPMux communication.
+    - [x] Verify public config and docs do not expose private TLS/tunnel material.
+        - Stale-reference scan found no tracked stale runner-python v0.3.1 wheel metadata. Remaining v0.3.1/dummy-redirect mentions are historical conductor notes or unrelated transitive dependency versions. Runtime invariant checks remain the guard for active legacy `@scramjet/verser`/BPMux communication.
+- [x] Task: Final validation and commit readiness
+    - [x] Rerun the narrowest validations affected by forwarding removal.
+    - [x] Rerun `npm run build:packages` and `npm run check:runtime-invariants`.
+    - [x] Run lint and relevant BDD smoke if final removal changes public communication behavior.
+    - [x] Record final validation results, skipped checks, and rationale in the track notes or implementation handoff.
+        - Phase 5 made documentation/classification changes only and removed no production forwarding code. Validation passed: `git diff --check`; `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`.
+        - Lint and BDD smoke were not rerun in Phase 5 because no source/test code or public communication behavior changed after the Phase 4 full lint/package/BDD gate.
 - [ ] Task: Conductor - User Manual Verification 'Remove Obsolete Local Forwarding and Finalize Documentation' (Protocol in workflow.md)
