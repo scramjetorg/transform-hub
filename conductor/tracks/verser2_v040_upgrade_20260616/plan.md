@@ -15,11 +15,12 @@
     - [x] Preserve package manager guidance: use npm, not yarn.
     - [x] Update any package-resolution helper or version guard that assumes v0.3.1.
         - Updated active workspace manifests and `package-lock.json` to `0.4.0`. Updated the runner-python release wheel version and SHA-256 to `verser2_guest_python-0.4.0-py3-none-any.whl` / `3f903f6f6e3d8b87a0ec88205f1843035843cae6a2cb8b6e16681cff93955644`. Validation: `npm install --userconfig <temporary GitHub Packages npmrc>` passed and `npm run check:verser2-packages` passed.
-- [ ] Task: Establish compatibility tests before behavior changes
-    - [ ] Run or update focused tests proving existing Manager/STH route classification still behaves as documented.
-    - [ ] Run or update focused tests proving runner/runtime verser2 transport boot config still parses and starts with v0.4.0.
-    - [ ] Run or update focused tests for MultiManager Host setup and route registration.
-    - [ ] Run the narrowest build/typecheck for packages affected by dependency/API changes.
+- [x] Task: Establish compatibility tests before behavior changes
+    - [x] Run or update focused tests proving existing Manager/STH route classification still behaves as documented.
+    - [x] Run or update focused tests proving runner/runtime verser2 transport boot config still parses and starts with v0.4.0.
+    - [x] Run or update focused tests for MultiManager Host setup and route registration.
+    - [x] Run the narrowest build/typecheck for packages affected by dependency/API changes.
+        - Validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; Manager `test/route-classifier.spec.ts` and `test/verser2-transport.spec.ts`; MultiManager `test/lib/verser2-host-config.spec.ts`; Host `test/runner-transport.spec.ts`; Runner `test/transport/runner-transport-config.spec.ts` and `test/transport/verser2-runner-transport.spec.ts`; runner-node `test/host-client-channels.spec.ts`; runner-python `tests/test_boot_config.py` and `tests/test_verser2_runtime.py`; runner-bun `npm test`; and `npm run check:runtime-invariants`.
 - [ ] Task: Conductor - User Manual Verification 'v0.4.0 API Discovery and Compatibility Baseline' (Protocol in workflow.md)
 
 ## Phase 2: Native 308 Redirect Adoption
