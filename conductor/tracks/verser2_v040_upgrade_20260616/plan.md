@@ -93,7 +93,8 @@
     - [x] Run affected package builds/typechecks.
     - [x] Record tunnel candidates that remain on fallback local forwarding with rationale.
         - Validation passed: `npm run check:verser2-packages`; `NODE_OPTIONS="--max-old-space-size=1536" npm --prefix bdd run build:bdd`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2`; Host upstream/config/local-peer tests; Manager route/verser2 tests; Runner verser2 tests; runner-node host-client tests; runner-python boot/runtime tests; runner-bun tests; `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`. Retained fallbacks are documented in `phase3-communication-paths.md`: runner RPC/control streams, generic URL forwarding, Manager-owned/multiplexed routes, `/platform`, `/inout`, CONNECT/upgrade, trailers, and informational responses remain outside this Phase 3 tunnel lane.
-- [ ] Task: Conductor - User Manual Verification 'Upstream Host Tunneling Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Upstream Host Tunneling Integration' (Protocol in workflow.md)
+    - [x] User approved Phase 3 completion after verser2 v0.4.1 upgrade, upstream federation proof, and validation.
 
 ## Phase 4: Cross-Flow Integration and Full Validation
 
