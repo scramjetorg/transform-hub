@@ -2,12 +2,13 @@
 
 ## Phase 1: v0.4.0 API Discovery and Compatibility Baseline
 
-- [ ] Task: Confirm v0.4.0 package availability and API changes
-    - [ ] Read relevant package codemaps before implementation: Manager, MultiManager, Host, API server, config, types, runner, runner-node, runner-python, and runner-bun.
-    - [ ] Verify `@signicode/verser2-*` v0.4.0 packages resolve through the existing authenticated package workflow.
-    - [ ] Inspect upstream v0.4.0 public APIs for native 308 redirects, redirect-follow behavior, and upstream host tunneling.
-    - [ ] Compare v0.4.0 APIs against current v0.3.1 integration surfaces and record breaking changes.
-    - [ ] If a v0.4.0 capability is missing or incompatible with the intended architecture, halt the implementation subtask and produce an upstream-verser2 report before adding local workarounds.
+- [x] Task: Confirm v0.4.0 package availability and API changes
+    - [x] Read relevant package codemaps before implementation: Manager, MultiManager, Host, API server, config, types, runner, runner-node, runner-python, and runner-bun.
+    - [x] Verify `@signicode/verser2-*` v0.4.0 packages resolve through the existing authenticated package workflow.
+    - [x] Inspect upstream v0.4.0 public APIs for native 308 redirects, redirect-follow behavior, and upstream host tunneling.
+    - [x] Compare v0.4.0 APIs against current v0.3.1 integration surfaces and record breaking changes.
+    - [x] If a v0.4.0 capability is missing or incompatible with the intended architecture, halt the implementation subtask and produce an upstream-verser2 report before adding local workarounds.
+        - Discovery recorded in `phase1-api-discovery.md`. v0.4.0 package availability is confirmed via authenticated GitHub Packages. Native 307/308 Broker redirect following is available. Upstream Host federation is available through `host.connectUpstream()`. Generic CONNECT tunneling remains unsupported by the public Host/Guest API and should not be treated as available without a later upstream report or API proof.
 - [ ] Task: Upgrade verser2 dependencies
     - [ ] Update active workspace dependencies from v0.3.1 to v0.4.0 for `@signicode/verser-common`, `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, and `@signicode/verser2-guest-python` where present.
     - [ ] Update `package-lock.json` using npm.

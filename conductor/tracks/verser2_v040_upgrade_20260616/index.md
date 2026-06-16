@@ -3,3 +3,4 @@
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
 - [Metadata](./metadata.json)
+- [Phase 1 API Discovery](./phase1-api-discovery.md)
