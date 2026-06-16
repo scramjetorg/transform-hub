@@ -43,11 +43,17 @@
     - [x] Add Manager tests covering follow-safe reads, state-changing single-owner follow routes, route-unavailable redirects, and non-follow Manager-owned routes.
     - [x] Update or remove tests that specifically assert dummy internal dispatch where native redirect is now expected.
         - Updated classifier/follow-forwarding coverage to assert native redirect targets for follow-safe state-changing routes and retained direct route metadata for CPM/STH-originated calls. Existing classification tests continue to cover Manager-owned, Manager-multiplex, and unsupported-bidirectional decisions.
+- [x] Task: Add isolated verser2-only redirect BDD gate
+    - [x] Add BDD wording for native 308 redirect-following that uses only verser2 Host/Broker/local Guests and does not start Hub, Manager, STH, runners, Docker, or Kubernetes.
+    - [x] Add planned BDD wording for the future Phase 3 sequence-to-space tunnel path, marked ignored until that behavior is implemented.
+    - [x] Add a dedicated `npm run test:bdd-ci-verser2` gate that sets `NO_HOST=true` and selects only `@ci-verser2` scenarios.
+        - Added `bdd/features/verser2/VERSER2-001-isolated-routing.feature` and `bdd/step-definitions/verser2/isolated-routing.ts`. The active scenario proves a remote verser2 Broker follows a native `308` from `manager.local.test` to the advertised `space.local.test` route while preserving path/query. The ignored Phase 3 scenario records the expected sequence-to-space tunneled request behavior.
 - [x] Task: Validate native redirect adoption
     - [x] Run focused Manager route-classifier and Manager routing tests.
     - [x] Run affected Manager build/typecheck.
     - [x] Record any retained dummy/internal forwarding and the reason it remains.
         - Validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/route-classifier.spec.ts`; `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/route-classifier.spec.ts test/verser2-transport.spec.ts`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run build` in `packages/manager`. No dummy/internal follow dispatch is retained for external/API follow decisions.
+        - Additional isolated BDD gate validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm --prefix bdd run build:bdd`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2`. The first direct scenario run without `NO_HOST=true` started the default BDD hub; this was classified as command invocation mismatch, corrected by adding/running the dedicated no-hub gate, and is not a product failure.
 - [ ] Task: Conductor - User Manual Verification 'Native 308 Redirect Adoption' (Protocol in workflow.md)
 
 ## Phase 3: Upstream Host Tunneling Integration
