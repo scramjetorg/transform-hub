@@ -59,11 +59,12 @@
 
 ## Phase 3: Upstream Host Tunneling Integration
 
-- [ ] Task: Define tunnel-enabled communication paths
-    - [ ] Identify local forwarding paths in `packages/api-server/src/handlers/routed-forward.ts`, `packages/api-server/src/handlers/forward.ts`, Host RPC forwarding, Manager/STH request forwarding, runner transport, and MultiManager routing.
-    - [ ] Classify each path as tunneled sequence-to-space request candidate, redirect-only, Manager-owned/multiplexed, or retained fallback.
-    - [ ] Define how sequence/runtime Broker/fetch requests reach Space/STH/Manager endpoints over the owning STH hub-level verser2 Host, Manager upstream Host federation, and native 308 redirect-following to other Hosts/STHs.
-    - [ ] Document generic CONNECT, `/platform`, `/inout`, and other paths deliberately left unsupported or deferred.
+- [x] Task: Define tunnel-enabled communication paths
+    - [x] Identify local forwarding paths in `packages/api-server/src/handlers/routed-forward.ts`, `packages/api-server/src/handlers/forward.ts`, Host RPC forwarding, Manager/STH request forwarding, runner transport, and MultiManager routing.
+    - [x] Classify each path as tunneled sequence-to-space request candidate, redirect-only, Manager-owned/multiplexed, or retained fallback.
+    - [x] Define how sequence/runtime Broker/fetch requests reach Space/STH/Manager endpoints over the owning STH hub-level verser2 Host, Manager upstream Host federation, and native 308 redirect-following to other Hosts/STHs.
+    - [x] Document generic CONNECT, `/platform`, `/inout`, and other paths deliberately left unsupported or deferred.
+        - Classification recorded in `phase3-communication-paths.md`. The immediate Phase 3 lane is STH-originated sequence/runtime Space/Manager requests over the STH-local verser2 Host and Manager upstream federation, not Host-to-runner RPC or runner lifecycle streams. Manager topics/control routes remain Manager-owned/multiplexed. `/platform`, `/inout`, CONNECT/upgrade, trailers, and informational responses remain unsupported/deferred.
 - [ ] Task: Add tunnel configuration and types
     - [ ] Update `packages/types/src/verser2-transport-configuration.ts` for any v0.4.0 tunnel/redirect policy options used by Transform Hub.
     - [ ] Update `packages/config/src/verser2-config.ts` schemas and validation for upstream host tunnel settings.
