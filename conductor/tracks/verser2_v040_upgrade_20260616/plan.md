@@ -21,7 +21,8 @@
     - [x] Run or update focused tests for MultiManager Host setup and route registration.
     - [x] Run the narrowest build/typecheck for packages affected by dependency/API changes.
         - Validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; Manager `test/route-classifier.spec.ts` and `test/verser2-transport.spec.ts`; MultiManager `test/lib/verser2-host-config.spec.ts`; Host `test/runner-transport.spec.ts`; Runner `test/transport/runner-transport-config.spec.ts` and `test/transport/verser2-runner-transport.spec.ts`; runner-node `test/host-client-channels.spec.ts`; runner-python `tests/test_boot_config.py` and `tests/test_verser2_runtime.py`; runner-bun `npm test`; and `npm run check:runtime-invariants`.
-- [ ] Task: Conductor - User Manual Verification 'v0.4.0 API Discovery and Compatibility Baseline' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'v0.4.0 API Discovery and Compatibility Baseline' (Protocol in workflow.md)
+    - [x] User approved Phase 1 completion after review PR creation: https://github.com/0rail/transform-hub/pull/12
 
 ## Phase 2: Native 308 Redirect Adoption
 
