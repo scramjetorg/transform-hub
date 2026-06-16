@@ -24,5 +24,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Clean verser2 GitHub token override guidance from the public surface while keeping the reusable helper internal.**
+- [ ] **Track: Clean verser2 GitHub token override guidance and authentication requirements from the public verser2 package path while keeping the reusable helper internal.**
 *Link: [./tracks/verser2_public_20260616/](./tracks/verser2_public_20260616/)*

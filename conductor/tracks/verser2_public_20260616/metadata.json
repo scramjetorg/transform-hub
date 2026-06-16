@@ -3,6 +3,6 @@
   "type": "chore",
   "status": "new",
   "created_at": "2026-06-16T20:31:42Z",
-  "updated_at": "2026-06-16T20:31:42Z",
-  "description": "Clean verser2 GitHub token override guidance from the public surface while keeping the reusable helper internal."
+  "updated_at": "2026-06-16T20:44:31Z",
+  "description": "Clean verser2 GitHub token override guidance and authentication requirements from the public verser2 package path while keeping the reusable helper internal."
 }
