@@ -54,7 +54,8 @@
     - [x] Record any retained dummy/internal forwarding and the reason it remains.
         - Validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/route-classifier.spec.ts`; `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/route-classifier.spec.ts test/verser2-transport.spec.ts`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run build` in `packages/manager`. No dummy/internal follow dispatch is retained for external/API follow decisions.
         - Additional isolated BDD gate validation passed: `NODE_OPTIONS="--max-old-space-size=1536" npm --prefix bdd run build:bdd`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2`. The first direct scenario run without `NO_HOST=true` started the default BDD hub; this was classified as command invocation mismatch, corrected by adding/running the dedicated no-hub gate, and is not a product failure.
-- [ ] Task: Conductor - User Manual Verification 'Native 308 Redirect Adoption' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Native 308 Redirect Adoption' (Protocol in workflow.md)
+    - [x] User approved Phase 2 completion after review PR update and isolated verser2-only BDD gate validation.
 
 ## Phase 3: Upstream Host Tunneling Integration
 
