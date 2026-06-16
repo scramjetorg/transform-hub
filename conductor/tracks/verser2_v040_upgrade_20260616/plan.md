@@ -98,30 +98,36 @@
 
 ## Phase 4: Cross-Flow Integration and Full Validation
 
-- [ ] Task: Validate Manager-to-STH communication
-    - [ ] Test native redirect behavior for Manager API callers targeting a single STH.
-    - [ ] Test tunnel-enabled request/stream paths selected in Phase 3.
-    - [ ] Test route unavailable, route retraction, reconnect, and duplicate route/peer behavior remains clear.
-- [ ] Task: Validate STH-to-STH communication
-    - [ ] Test route metadata or native redirect flow used for direct STH-to-STH payloads.
-    - [ ] Verify Manager does not become a data-plane proxy for STH-originated single-target payloads.
-    - [ ] Verify Manager-owned and topic/multiplex cases still route through Manager only when semantics require it.
-- [ ] Task: Validate runner and runtime communication
-    - [ ] Run focused runner transport tests for global runner routes.
-    - [ ] Run runner-node tests for `context.hub` and sequence API exposure compatibility.
-    - [ ] Run runner-python tests for boot config, hub client, ASGI Guest exposure, and app context parity.
-    - [ ] Run runner-bun tests for Broker/fetch, Guest exposure, routing precedence, streaming, and binary payloads.
-- [ ] Task: Validate MultiManager communication
-    - [ ] Run focused MultiManager Host config and route registration tests.
-    - [ ] Verify sub-manager/MultiManager routing remains compatible with selected v0.4.0 APIs.
-    - [ ] Verify retired legacy MultiHost behavior remains intentionally unsupported where applicable.
-- [ ] Task: Run full requested validation set
-    - [ ] Run `npm run build:packages`.
-    - [ ] Run `npm run test:packages-no-concurrent` or the narrowed documented equivalent if package-level suites require scoped execution.
-    - [ ] Run `npm run lint`.
-    - [ ] Run `npm run check:runtime-invariants`.
-    - [ ] Run practical BDD smoke validation: `npm run test:bdd-ci-node`, `npm run test:bdd-ci-api-node`, and runtime-specific smoke where applicable.
-    - [ ] Classify and document any validation failure according to `workflow.md` before deciding whether it blocks completion.
+- [x] Task: Validate Manager-to-STH communication
+    - [x] Test native redirect behavior for Manager API callers targeting a single STH.
+    - [x] Test tunnel-enabled request/stream paths selected in Phase 3.
+    - [x] Test route unavailable, route retraction, reconnect, and duplicate route/peer behavior remains clear.
+        - Covered by Manager route/verser2 package tests, isolated verser2 BDD native 308/upstream scenarios, API Node BDD smoke, and serial package tests.
+- [x] Task: Validate STH-to-STH communication
+    - [x] Test route metadata or native redirect flow used for direct STH-to-STH payloads.
+    - [x] Verify Manager does not become a data-plane proxy for STH-originated single-target payloads.
+    - [x] Verify Manager-owned and topic/multiplex cases still route through Manager only when semantics require it.
+        - Covered by Phase 3 communication-path notes plus package tests and BDD smoke for selected native redirect/upstream paths; retained Manager-owned/topic/multiplex paths remain documented fallbacks.
+- [x] Task: Validate runner and runtime communication
+    - [x] Run focused runner transport tests for global runner routes.
+    - [x] Run runner-node tests for `context.hub` and sequence API exposure compatibility.
+    - [x] Run runner-python tests for boot config, hub client, ASGI Guest exposure, and app context parity.
+    - [x] Run runner-bun tests for Broker/fetch, Guest exposure, routing precedence, streaming, and binary payloads.
+        - Covered by `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent`, `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-node`, and runtime invariant checks.
+- [x] Task: Validate MultiManager communication
+    - [x] Run focused MultiManager Host config and route registration tests.
+    - [x] Verify sub-manager/MultiManager routing remains compatible with selected v0.4.1 APIs.
+    - [x] Verify retired legacy MultiHost behavior remains intentionally unsupported where applicable.
+        - Covered by MultiManager package tests and lint/build validation; active target is verser2 v0.4.1.
+- [x] Task: Run full requested validation set
+    - [x] Run `npm run build:packages`.
+    - [x] Run `npm run test:packages-no-concurrent` or the narrowed documented equivalent if package-level suites require scoped execution.
+    - [x] Run `npm run lint`.
+    - [x] Run `npm run check:runtime-invariants`.
+    - [x] Run practical BDD smoke validation: `npm run test:bdd-ci-node`, `npm run test:bdd-ci-api-node`, and runtime-specific smoke where applicable.
+    - [x] Classify and document any validation failure according to `workflow.md` before deciding whether it blocks completion.
+        - Final Phase 4 validation passed with memory-limited commands: `NODE_OPTIONS="--max-old-space-size=1536" node scripts/run-script.js -w modules -j 2 -e "! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --cache --cache-strategy=content"`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:packages-no-concurrent`; `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-api-node`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-node`.
+        - Initial `test:bdd-ci-api-node` host-start failure passed on retry and was classified as transient tooling/environment startup failure. Full lint initially exposed repository-wide error-level style/promise issues on changed Phase 1-4 files; those were fixed with memory-limited targeted eslint, reviewed for behavior risk, and revalidated.
 - [ ] Task: Conductor - User Manual Verification 'Cross-Flow Integration and Full Validation' (Protocol in workflow.md)
 
 ## Phase 5: Remove Obsolete Local Forwarding and Finalize Documentation
