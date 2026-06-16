@@ -71,12 +71,11 @@
     - [x] Update STH/Manager/MultiManager defaults and public-safe masking if new settings are added.
     - [x] Add or update CLI descriptors only when a setting must be user-configurable rather than internal.
         - No new public config/type fields are required for Phase 3. Decision recorded in `phase3-config-decision.md`: STH-local Host upstream federation should derive Manager upstream URL/TLS from existing `verser2.hostUrl` and `verser2.tls`; `verser2.enabled`, `verser2.runnerHost.enabled`, and CPM/platform configuration remain the gates. Public config is deferred until multiple upstreams, failover, a distinct sequence-only upstream, explicit disable policy, or proxy/tunnel credentials become concrete requirements.
-- [x] Task: Implement tunnel usage incrementally
-    - [x] Wire v0.4.0 upstream tunneling in the selected Manager/STH communication path while retaining fallback until validation passes.
-    - [x] Wire tunnel behavior into API-server or Host forwarding seams only where native tunnel parity is clear.
-    - [x] Update runner/runtime transport integration only if v0.4.0 tunnel APIs affect existing runner Guest/Broker communication.
-    - [x] Ensure streaming and backpressure remain stream-based and do not require full response buffering.
-        - `Host.startRunnerVerser2Host()` now connects the STH-local runner verser2 Host to the Manager/MultiManager Host with `connectUpstream()` when runner Host and CPM/platform configuration are enabled. The upstream parameters are derived from existing `verser2.hostUrl` and `verser2.tls` via `getRunnerVerser2HostUpstreamParams()`. Non-strict startup logs upstream connection failures and retains existing fallback behavior; strict platform mode rethrows. Runner/runtime transport and API-server forwarding remain unchanged because v0.4.0 tunnel APIs do not affect existing runner control/data streams.
+- [ ] Task: Implement tunnel usage incrementally
+    - [ ] Wire v0.4.0 upstream tunneling in the selected Manager/STH communication path while retaining fallback until validation passes.
+    - [ ] Wire tunnel behavior into API-server or Host forwarding seams only where native tunnel parity is clear.
+    - [ ] Update runner/runtime transport integration only if v0.4.0 tunnel APIs affect existing runner Guest/Broker communication.
+    - [ ] Ensure streaming and backpressure remain stream-based and do not require full response buffering.
 - [ ] Task: Update tunnel tests
     - [ ] Add or update API-server forwarding/tunnel tests for request body streaming, response body streaming, abort/cancellation, route unavailable, and binary payloads.
     - [ ] Add or update Manager/Host transport tests for tunnel-enabled paths.
@@ -86,7 +85,6 @@
     - [ ] Run focused API-server, Manager, Host, config/types, and affected runner/runtime tests.
     - [ ] Run affected package builds/typechecks.
     - [ ] Record tunnel candidates that remain on fallback local forwarding with rationale.
-        - Partial validation for the upstream Host federation slice passed: `NODE_OPTIONS="--max-old-space-size=1536" npm test -- test/runner-verser2-host-upstream.spec.ts test/runner-verser2-host-peers.spec.ts test/runner-verser2-host-config.spec.ts` in `packages/host`; `NODE_OPTIONS="--max-old-space-size=1536" npm run build` in `packages/host`. An initial Host AVA invocation without `test/` file prefixes failed with “Couldn’t find any files to test”; this was an invocation mismatch and was corrected with explicit test paths.
 - [ ] Task: Conductor - User Manual Verification 'Upstream Host Tunneling Integration' (Protocol in workflow.md)
 
 ## Phase 4: Cross-Flow Integration and Full Validation
