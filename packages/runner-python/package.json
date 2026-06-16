@@ -10,6 +10,6 @@
         "clean": "rm -rf __pypackages__ dist"
     },
     "dependencies": {
-        "@signicode/verser2-guest-python": "0.4.1"
+        "@signicode/verser2-guest-python": "0.4.2"
     }
 }

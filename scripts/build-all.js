@@ -16,43 +16,7 @@ const { writeFile } = require("fs/promises");
 const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
-const { existsSync, readFileSync } = require("fs");
-
-function loadDotEnv(filePath) {
-    if (!existsSync(filePath)) return {};
-
-    const values = {};
-
-    for (const line of readFileSync(filePath, "utf8").split(/\r?\n/)) {
-        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-
-        if (!match) continue;
-
-        let value = match[2];
-
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-            value = value.slice(1, -1);
-        }
-
-        values[match[1]] = value;
-    }
-
-    return values;
-}
-
-function createDistInstallEnv(root) {
-    const dotenv = loadDotEnv(join(root, ".env"));
-    const token = env.GITHUB_PACKAGES_TOKEN || env.NODE_AUTH_TOKEN || dotenv.GITHUB_PACKAGES_TOKEN || dotenv.NODE_AUTH_TOKEN;
-
-    if (!token) {
-        return {};
-    }
-
-    return {
-        GITHUB_PACKAGES_TOKEN: env.GITHUB_PACKAGES_TOKEN || token,
-        NODE_AUTH_TOKEN: env.NODE_AUTH_TOKEN || token
-    };
-}
+const { existsSync } = require("fs");
 
 const opts = minimist(process.argv.slice(2), {
     alias: {
@@ -236,7 +200,7 @@ console.time(BUILD_NAME);
             const npmUserconfig = existsSync(rootNpmrc) ? ` --userconfig ${JSON.stringify(rootNpmrc)}` : "";
             const cmd = `cd ${JSON.stringify(outDir)} && pwd >&2 && npx npm@8 install -q -ws --no-audit${npmUserconfig}`;
 
-            await runCommand(cmd, opts.verbose, createDistInstallEnv(opts.root));
+            await runCommand(cmd, opts.verbose);
         }
 
         if (opts.bundle) {

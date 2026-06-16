@@ -36,8 +36,8 @@ Solution: Run Node/npm validation with `NODE_OPTIONS="--max-old-space-size=1536"
 Constraints: Apply to validation/test/build commands in this repo; do not use it to hide real test failures; still inspect non-OOM failures normally.
 Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the user explicitly requests an unguarded run.
 
-### Signicode GitHub Packages auth for verser2
-Problem: Direct `npm view @signicode/verser2-*` commands fail with 401 Unauthorized because the scoped GitHub Packages registry requires an ephemeral `NODE_AUTH_TOKEN` and userconfig.
-Solution: Use `npm run check:verser2-packages` or invoke npm with a temporary `.npmrc` containing `@signicode:registry=https://npm.pkg.github.com` and `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`, loading `GITHUB_PACKAGES_TOKEN` from the environment or `.env`.
-Constraints: Never persist or print tokens; do not modify global npm/gh auth; use the existing checker script when possible because it creates and removes a temporary 0600 userconfig.
-Ignore-If: The token is absent or lacks package read access; the failure is a real missing package/version after authenticated GitHub Packages resolution; the task intentionally changes package registry wiring.
+### Private GitHub Packages registry auth recovery
+Problem: `npm view` or `npm install` for scoped packages hosted on GitHub Packages fails with 401/403 because the registry requires an authenticated `.npmrc` entry with `_authToken` for the GitHub Packages scope.
+Solution: Create a temporary `.npmrc` containing `@scope:registry=https://npm.pkg.github.com` and `//npm.pkg.github.com/:_authToken=${TOKEN}`, where `TOKEN` is a GitHub PAT with `read:packages` scope. Pass it via `--userconfig` or set `NPM_CONFIG_USERCONFIG`. Never persist or print the token.
+Constraints: The PAT must have `read:packages` permission for the organization's packages. Use a fresh temp file with restrictive permissions (0600). Do not modify global npm/gh auth configuration. Prefer static PAT over ephemeral GITHUB_TOKEN from Actions.
+Ignore-If: The package is public on npmjs and does not require a custom registry; the failure is a network error or missing package version rather than an auth failure.
