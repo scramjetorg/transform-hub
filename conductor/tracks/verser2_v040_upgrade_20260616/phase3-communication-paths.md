@@ -42,3 +42,11 @@ This document classifies existing Transform Hub forwarding paths before implemen
 3. Manager must remain out of the data plane for single-owner STH payloads. Any local HTTP proxy fallback must be documented as retained compatibility, not the target tunnel architecture.
 4. Upstream Host federation (`host.connectUpstream()`) is the intended route distribution mechanism. Generic CONNECT, WebSocket upgrade, trailers, informational responses, `/platform`, and `/inout` remain out of scope.
 5. Runner transports and exposed RPC are important existing verser2 users, but they are not the sequence-to-space tunnel lane for this phase.
+
+## Startup-order limitation
+
+Sequence-to-space routing depends on the STH-local hub-level verser2 Host being connected upstream to the Manager/MultiManager Host before the sequence runtime receives and uses its runner transport configuration.
+
+If a sequence is started in a Hub before that Hub has connected to Manager, the sequence should be treated as **local-only for Space API access**. Its runtime may still call local Hub/STH routes that are available through the local runner Host, but it cannot rely on Manager-owned Space API routes or remote STH route discovery until a new sequence/runtime is started after Manager connectivity and upstream Host federation are established.
+
+This is an intentional Phase 3/4 limitation, not a fallback proxy requirement. The current design does not retroactively upgrade already-started sequence runtimes when the Hub later connects to Manager, and Manager must not compensate by becoming a data-plane proxy for those earlier runtimes.

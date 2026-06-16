@@ -103,6 +103,7 @@
     - [x] Test tunnel-enabled request/stream paths selected in Phase 3.
     - [x] Test route unavailable, route retraction, reconnect, and duplicate route/peer behavior remains clear.
         - Covered by Manager route/verser2 package tests, isolated verser2 BDD native 308/upstream scenarios, API Node BDD smoke, and serial package tests.
+        - Documented startup-order limitation: sequences started before their Hub connects to Manager are local-only for Space API access and should be restarted after Manager connectivity/upstream Host federation if Space API access is required.
 - [x] Task: Validate STH-to-STH communication
     - [x] Test route metadata or native redirect flow used for direct STH-to-STH payloads.
     - [x] Verify Manager does not become a data-plane proxy for STH-originated single-target payloads.

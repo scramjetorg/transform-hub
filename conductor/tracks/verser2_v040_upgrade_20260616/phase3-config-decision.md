@@ -32,6 +32,14 @@ await runnerVerser2Host.connectUpstream({
 
 This keeps the tunnel settings internal and derived from the existing Manager connection contract.
 
+## Startup ordering
+
+The derived upstream settings are only useful after the Hub has an active Manager/MultiManager connection and the STH-local runner Host has joined upstream federation.
+
+Sequences started before that point are not guaranteed to have a usable Space API path. They may continue to use local Hub/STH routes, but Manager-owned Space API routes and remote STH route discovery are unavailable to those already-started runtimes. If Space API access is required, start or restart the sequence after the Hub is connected to Manager and upstream Host federation is active.
+
+This avoids adding public configuration for a partially connected mode and keeps Manager out of the data plane for sequences that were started too early.
+
 ## Deferred public config
 
 Revisit public configuration only if one of these concrete requirements appears:
