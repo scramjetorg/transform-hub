@@ -5,9 +5,9 @@ PACKAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "${PACKAGE_DIR}/../.." && pwd)"
 TARGET=""
 INCLUDE_DEV=0
-VERSER2_VERSION="0.3.1"
+VERSER2_VERSION="0.4.0"
 VERSER2_WHEEL="verser2_guest_python-${VERSER2_VERSION}-py3-none-any.whl"
-VERSER2_WHEEL_SHA256="c1529bef856959c0baab2f0c012a052788b1a725ca2be75baf51c557f741a212"
+VERSER2_WHEEL_SHA256="3f903f6f6e3d8b87a0ec88205f1843035843cae6a2cb8b6e16681cff93955644"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in

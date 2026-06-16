@@ -9,11 +9,12 @@
     - [x] Compare v0.4.0 APIs against current v0.3.1 integration surfaces and record breaking changes.
     - [x] If a v0.4.0 capability is missing or incompatible with the intended architecture, halt the implementation subtask and produce an upstream-verser2 report before adding local workarounds.
         - Discovery recorded in `phase1-api-discovery.md`. v0.4.0 package availability is confirmed via authenticated GitHub Packages. Native 307/308 Broker redirect following is available. Upstream Host federation is available through `host.connectUpstream()`. Generic CONNECT tunneling remains unsupported by the public Host/Guest API and should not be treated as available without a later upstream report or API proof.
-- [ ] Task: Upgrade verser2 dependencies
-    - [ ] Update active workspace dependencies from v0.3.1 to v0.4.0 for `@signicode/verser-common`, `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, and `@signicode/verser2-guest-python` where present.
-    - [ ] Update `package-lock.json` using npm.
-    - [ ] Preserve package manager guidance: use npm, not yarn.
-    - [ ] Update any package-resolution helper or version guard that assumes v0.3.1.
+- [x] Task: Upgrade verser2 dependencies
+    - [x] Update active workspace dependencies from v0.3.1 to v0.4.0 for `@signicode/verser-common`, `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, and `@signicode/verser2-guest-python` where present.
+    - [x] Update `package-lock.json` using npm.
+    - [x] Preserve package manager guidance: use npm, not yarn.
+    - [x] Update any package-resolution helper or version guard that assumes v0.3.1.
+        - Updated active workspace manifests and `package-lock.json` to `0.4.0`. Updated the runner-python release wheel version and SHA-256 to `verser2_guest_python-0.4.0-py3-none-any.whl` / `3f903f6f6e3d8b87a0ec88205f1843035843cae6a2cb8b6e16681cff93955644`. Validation: `npm install --userconfig <temporary GitHub Packages npmrc>` passed and `npm run check:verser2-packages` passed.
 - [ ] Task: Establish compatibility tests before behavior changes
     - [ ] Run or update focused tests proving existing Manager/STH route classification still behaves as documented.
     - [ ] Run or update focused tests proving runner/runtime verser2 transport boot config still parses and starts with v0.4.0.
