@@ -120,18 +120,17 @@ export class DiskProxy {
     async loadIndex(): Promise<void> {
         this.logger.info("Looking for s3 index on filesystem", this.bucket);
         try {
-            await new Promise<void>(async (res, rej) => {
+            await new Promise<void>((resolveIndexCheck, rejectIndexCheck) => {
                 this.s3Client.statObject(this.bucket, `${this.id}/index.json`)
-                    .then(() => res())
-                    .catch(async (error: any) => {
+                    .then(() => resolveIndexCheck())
+                    .catch((error: any) => {
                         this.logger.info(`S3 index ${error.code}, bucket: ${this.bucket}, folder: ${this.id}`);
 
                         if (error.code === "NotFound" || error.code === "NoSuchKey") {
-                            await this.saveIndex();
-                            res();
+                            this.saveIndex().then(() => resolveIndexCheck()).catch((e) => rejectIndexCheck(e));
                         } else {
                             this.logger.info("S3 index", error);
-                            rej();
+                            rejectIndexCheck();
                         }
                     });
             });
@@ -178,7 +177,6 @@ export class DiskProxy {
 
                 this.logger.info(`Sequences index in bucket ${this.bucket}, folder: ${this.id} updated`);
                 success = true;
-
             } catch (error: any) {
                 this.logger.error(`Sequences index in bucket ${this.bucket}, folder: ${this.id} update failed`, error && error.code);
 
@@ -197,7 +195,7 @@ export class DiskProxy {
         await this.saveIndex();
     }
 
-    async clearIndex() : Promise<void>{
+    async clearIndex() : Promise<void> {
         this.index.sequences = await this.index.sequences.reduce(async (acc: Promise<SequenceInfo[]>, item) => {
             const results = await acc;
 
@@ -259,7 +257,6 @@ export class DiskProxy {
             this.index.sequences = this.index.sequences.filter(seq => {
                 return seq._filename !== filename && seq._fileId !== filename;
             });
-
 
             if (originalLength !== this.index.sequences.length) {
                 await this.saveIndex();

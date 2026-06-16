@@ -39,7 +39,6 @@ export function translateDeleteError(e: any) {
 export const validateDisconnectRequest = (
     payload: MRestAPI.PostDisconnectPayload,
     sthConnectionStore: ISTHConnectionStore): DisconnectHubErrors | undefined => {
-
     if (!Object.keys(payload).length) {
         return DisconnectHubErrors.BAD_REQUEST;
     }

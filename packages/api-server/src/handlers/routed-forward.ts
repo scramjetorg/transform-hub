@@ -97,16 +97,18 @@ export async function forwardRoutedRequest({
         abortController.signal.addEventListener("abort", () => reject(new Error("Routed forward request aborted")), { once: true });
     });
     let cleanedUp = false;
+    let removeCloseListeners: () => void = () => undefined;
+
     const cleanup = () => {
         if (cleanedUp) {
             return;
         }
 
         cleanedUp = true;
-        res.off("close", abortRequest);
-        req.off("close", abortRequest);
+        removeCloseListeners();
         if (requestTimeout) clearTimeout(requestTimeout);
     };
+
     const abortRequest = () => {
         if (res.writableEnded || res.writableFinished) {
             return;
@@ -115,6 +117,11 @@ export async function forwardRoutedRequest({
         abortController.abort();
         responseBody?.destroy();
         cleanup();
+    };
+
+    removeCloseListeners = () => {
+        res.off("close", abortRequest);
+        req.off("close", abortRequest);
     };
 
     try {
@@ -139,6 +146,7 @@ export async function forwardRoutedRequest({
             return response;
         });
         const response = await Promise.race([routedRequest, abortPromise]);
+
         throwIfAborted();
 
         if (requestTimeout) clearTimeout(requestTimeout);

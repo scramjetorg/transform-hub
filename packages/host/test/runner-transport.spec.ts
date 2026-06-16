@@ -108,6 +108,7 @@ test("DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS runnerDomain contains instanceId pl
 
 test("DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS defines all required route paths", t => {
     const c = DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS;
+
     t.is(c.stdinPath, "/stdin");
     t.is(c.stdoutPath, "/stdout");
     t.is(c.stderrPath, "/stderr");
@@ -126,8 +127,10 @@ test("all DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS route paths start with /", t =>
         "inputPath", "outputPath",
         "logPath", "requestsPath"
     ];
+
     for (const key of paths) {
         const val = DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS[key];
+
         t.true(val.startsWith("/"), `${key} value "${val}" should start with /`);
     }
 });
@@ -135,41 +138,49 @@ test("all DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS route paths start with /", t =>
 test("runnerDomain and controlPath compose to full /control route URL for lifecycle commands (PING/STOP/KILL)", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("test-instance");
     const fullUrl = `${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.controlPath}`;
+
     t.is(fullUrl, "runner.test-instance.scramjet.internal/control");
 });
 
 test("runnerDomain and stdoutPath compose to full /stdout stream route URL", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-99");
+
     t.is(`${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.stdoutPath}`, "runner.inst-99.scramjet.internal/stdout");
 });
 
 test("runnerDomain and stderrPath compose to full /stderr stream route URL", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-99");
+
     t.is(`${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.stderrPath}`, "runner.inst-99.scramjet.internal/stderr");
 });
 
 test("runnerDomain and logPath compose to full /log stream route URL", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-99");
+
     t.is(`${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.logPath}`, "runner.inst-99.scramjet.internal/log");
 });
 
 test("runnerDomain and monitoringPath compose to full /monitoring stream route URL", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-42");
+
     t.is(`${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.monitoringPath}`, "runner.inst-42.scramjet.internal/monitoring");
 });
 
 test("runnerDomain and inputPath compose to full /input stream route URL", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-7");
+
     t.is(`${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.inputPath}`, "runner.inst-7.scramjet.internal/input");
 });
 
 test("runnerDomain and outputPath compose to full /output stream route URL", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-7");
+
     t.is(`${domain}${DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.outputPath}`, "runner.inst-7.scramjet.internal/output");
 });
 
 test("Verser2RunnerTransport disconnect is safe on fresh instance (idempotent contract)", async t => {
     const transport = new Verser2RunnerTransport();
+
     await t.notThrowsAsync(transport.disconnect());
     await t.notThrowsAsync(transport.disconnect("cleanup"));
 });
@@ -532,6 +543,7 @@ test("createVerser2RunnerBrokerTransport times out for missing raw broker route"
 
 test("unknown instanceId produces well-formed but route-unresolvable domain (route unavailable contract)", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("unknown-id");
+
     t.regex(domain, /^runner\.unknown-id\.scramjet\.internal$/);
 });
 
@@ -555,6 +567,7 @@ test("every DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS path composes with a derived 
 
     for (const { key, expectedPath } of routeChecks) {
         const actualPath = c[key];
+
         t.is(actualPath, expectedPath, `${key} should be "${expectedPath}"`);
         t.is(`${domain}${actualPath}`, `runner.verify-all-0.scramjet.internal${expectedPath}`);
     }

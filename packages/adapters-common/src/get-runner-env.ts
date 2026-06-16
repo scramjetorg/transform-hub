@@ -4,6 +4,14 @@ import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
 
 const RUNNER_VERSER2_MIN_WAITING_STREAMS = 8;
 
+function normalizePem(value: string | undefined): string | undefined {
+    if (!value?.trim()) {
+        return undefined;
+    }
+
+    return value.trim();
+}
+
 export function buildRunnerTrustBundle(sthConfig: Pick<STHConfiguration, "verser2">): string | undefined {
     const sthLocalCa = normalizePem(sthConfig.verser2.runnerHost?.ca);
 
@@ -15,14 +23,6 @@ export function buildRunnerTrustBundle(sthConfig: Pick<STHConfiguration, "verser
     const bundle = [sthLocalCa, managerCa].filter((pem): pem is string => !!pem);
 
     return bundle.join("\n");
-}
-
-function normalizePem(value: string | undefined): string | undefined {
-    if (!value?.trim()) {
-        return undefined;
-    }
-
-    return value.trim();
 }
 
 export function getRunnerTransportEnv(

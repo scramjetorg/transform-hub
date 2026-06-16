@@ -228,7 +228,7 @@ test("throws on malformed JSON", t => {
 
 test("throws on JSON primitive (non-object)", t => {
     const err = t.throws<Error>(() => {
-        parseRunnerTransportConfig(TEST_ID, '"just a string"');
+        parseRunnerTransportConfig(TEST_ID, "\"just a string\"");
     });
 
     t.truthy(err);

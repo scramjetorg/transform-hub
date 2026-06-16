@@ -63,7 +63,7 @@ import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
 import { createSthRunnerVerser2HostOptions, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
-import { attachSthLocalRunnerVerser2Peers } from "./runner-verser2-host-peers";
+import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
@@ -671,7 +671,9 @@ export class Host implements IHost, IComponent {
             });
 
             queueMicrotask(() => {
-                void this.launchRequiredStartupEntry(entry, reason);
+                this.launchRequiredStartupEntry(entry, reason).catch((e) => {
+                    this.logger.error("Error in required startup entry launch", e);
+                });
             });
             return;
         }
@@ -925,6 +927,10 @@ export class Host implements IHost, IComponent {
             .finally(() => {
                 process.exit();
             })
+            .catch((e) => {
+                this.logger.error("Error during host stop", e);
+                process.exit(1);
+            });
     }
 
     private isCPMConfigured() {
@@ -967,6 +973,25 @@ export class Host implements IHost, IComponent {
 
             this.runnerVerser2Broker = peers.broker;
             this.runnerVerser2Guest = peers.guest;
+
+            const upstreamParams = getRunnerVerser2HostUpstreamParams(this.config.verser2, !!this.isCPMConfigured());
+
+            if (upstreamParams) {
+                try {
+                    await this.runnerVerser2Host.connectUpstream(upstreamParams);
+                    this.logger.info("STH-local runner verser2 Host connected to Manager upstream", {
+                        upstreamId: upstreamParams.upstreamId,
+                        url: upstreamParams.url
+                    });
+                } catch (error) {
+                    this.logger.warn("STH-local runner verser2 Host Manager upstream connection failed", error);
+
+                    if (this.config.strictPlatformConnection) {
+                        throw error;
+                    }
+                }
+            }
+
             this.logger.info("STH-local runner verser2 Host started", this.runnerVerser2Host.address);
         }
     }
@@ -1003,7 +1028,9 @@ export class Host implements IHost, IComponent {
         }
 
         const startupConfig: StartSequenceDTO[] = _config.sequences;
+
         this.validateStartupConfigUniqueness(startupConfig);
+
         const startupEntries = startupConfig.map((sequenceConfig, index) => ({ sequenceConfig, index }));
 
         await DataStream.from(startupEntries)
@@ -1361,6 +1388,7 @@ export class Host implements IHost, IComponent {
                 return;
             case "sequence":
                 const sequence = this.instancesStore.get(event.source);
+
                 if (!sequence) {
                     this.logger.warn("Event for unknown sequence", event);
                     return;
@@ -1377,6 +1405,8 @@ export class Host implements IHost, IComponent {
                         ...event,
                         scope,
                         sourceHost: this.config.host.id!,
+                    }).catch((e) => {
+                        this.logger.error("Error sending event to CPM", e);
                     });
                 }
                 // Send the event to all instances except the source of the event.
@@ -1532,7 +1562,6 @@ export class Host implements IHost, IComponent {
                 })
                 .close();
         });
-
     }
 
     /**

@@ -24,7 +24,7 @@ export async function createFakeInstancesServer(expectedInstanceId: string): Pro
     const monitoring: Array<[number, unknown]> = [];
     const raw = new Map<number, Buffer>();
     const harnessErrors: Error[] = [];
-    const waiters = new Map<number, Array<{ resolve: (s: net.Socket) => void; reject: (e: Error) => void; timer: NodeJS.Timeout }>>();
+    const waiters = new Map<number, Array<{ resolve:(s: net.Socket) => void; reject: (e: Error) => void; timer: NodeJS.Timeout }>>();
 
     const notifyWaiters = (idx: number, socket: net.Socket) => {
         const list = waiters.get(idx);
@@ -45,6 +45,35 @@ export async function createFakeInstancesServer(expectedInstanceId: string): Pro
         let header = Buffer.alloc(0);
         let channelIndex = -1;
         let monBuffer = Buffer.alloc(0);
+
+        function onPayload(chunk: Buffer) {
+            if (channelIndex === CC.MONITORING) {
+                monBuffer = Buffer.concat([monBuffer, chunk]);
+
+                while (monBuffer.includes(NEWLINE)) {
+                    const i = monBuffer.indexOf(NEWLINE);
+
+                    const line = monBuffer.slice(0, i).toString("utf8");
+
+                    monBuffer = monBuffer.slice(i + NEWLINE.length);
+                    if (line.length === 0) continue;
+                    try {
+                        const parsed = JSON.parse(line);
+
+                        monitoring.push(parsed as [number, unknown]);
+                    } catch (e) {
+                        const reason = e instanceof Error ? e.message : String(e);
+
+                        harnessErrors.push(new Error(`monitoring parse failed: ${reason}`));
+                    }
+                }
+                return;
+            }
+
+            const prev = raw.get(channelIndex) ?? Buffer.alloc(0);
+
+            raw.set(channelIndex, Buffer.concat([prev, chunk]));
+        }
 
         const onData = (chunk: Buffer) => {
             if (channelIndex === -1) {
@@ -78,35 +107,6 @@ export async function createFakeInstancesServer(expectedInstanceId: string): Pro
             }
 
             onPayload(chunk);
-        };
-
-        const onPayload = (chunk: Buffer) => {
-            if (channelIndex === CC.MONITORING) {
-                monBuffer = Buffer.concat([monBuffer, chunk]);
-                while (true) {
-                    const i = monBuffer.indexOf(NEWLINE);
-
-                    if (i === -1) break;
-                    const line = monBuffer.slice(0, i).toString("utf8");
-
-                    monBuffer = monBuffer.slice(i + NEWLINE.length);
-                    if (line.length === 0) continue;
-                    try {
-                        const parsed = JSON.parse(line);
-
-                        monitoring.push(parsed as [number, unknown]);
-                    } catch (e) {
-                        const reason = e instanceof Error ? e.message : String(e);
-
-                        harnessErrors.push(new Error(`monitoring parse failed: ${reason}`));
-                    }
-                }
-                return;
-            }
-
-            const prev = raw.get(channelIndex) ?? Buffer.alloc(0);
-
-            raw.set(channelIndex, Buffer.concat([prev, chunk]));
         };
 
         socket.on("data", onData);

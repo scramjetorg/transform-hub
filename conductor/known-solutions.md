@@ -35,3 +35,9 @@ Problem: Broad Node/npm validation or subagent-triggered tests can exceed availa
 Solution: Run Node/npm validation with `NODE_OPTIONS="--max-old-space-size=1536"`; instruct review agents not to run commands unless they use this guard, and prefer focused package tests/builds over broad suites.
 Constraints: Apply to validation/test/build commands in this repo; do not use it to hide real test failures; still inspect non-OOM failures normally.
 Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the user explicitly requests an unguarded run.
+
+### Private GitHub Packages registry auth recovery
+Problem: `npm view` or `npm install` for scoped packages hosted on GitHub Packages fails with 401/403 because the registry requires an authenticated `.npmrc` entry with `_authToken` for the GitHub Packages scope.
+Solution: Create a temporary `.npmrc` containing `@scope:registry=https://npm.pkg.github.com` and `//npm.pkg.github.com/:_authToken=${TOKEN}`, where `TOKEN` is a GitHub PAT with `read:packages` scope. Pass it via `--userconfig` or set `NPM_CONFIG_USERCONFIG`. Never persist or print the token.
+Constraints: The PAT must have `read:packages` permission for the organization's packages. Use a fresh temp file with restrictive permissions (0600). Do not modify global npm/gh auth configuration. Prefer static PAT over ephemeral GITHUB_TOKEN from Actions.
+Ignore-If: The package is public on npmjs and does not require a custom registry; the failure is a network error or missing package version rather than an auth failure.

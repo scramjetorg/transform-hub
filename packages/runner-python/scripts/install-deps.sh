@@ -5,9 +5,9 @@ PACKAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "${PACKAGE_DIR}/../.." && pwd)"
 TARGET=""
 INCLUDE_DEV=0
-VERSER2_VERSION="0.3.1"
+VERSER2_VERSION="0.4.2"
 VERSER2_WHEEL="verser2_guest_python-${VERSER2_VERSION}-py3-none-any.whl"
-VERSER2_WHEEL_SHA256="c1529bef856959c0baab2f0c012a052788b1a725ca2be75baf51c557f741a212"
+VERSER2_WHEEL_SHA256="da5ab6efd2ef572a864b8f6766f043fcbe25af3d10a5f5ba0c3878e82e84eef0"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -31,16 +31,8 @@ if [[ -z "${TARGET}" ]]; then
     exit 2
 fi
 
-if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" && -z "${GITHUB_PACKAGES_TOKEN:-}" && -f "${REPO_ROOT}/.env" ]]; then
-    set -a
-    # shellcheck disable=SC1091
-    . "${REPO_ROOT}/.env"
-    set +a
-fi
-
-if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]] && ! gh auth status >/dev/null 2>&1 && [[ -n "${GITHUB_PACKAGES_TOKEN:-}" ]]; then
-    export GH_TOKEN="${GITHUB_PACKAGES_TOKEN}"
-fi
+# GH_TOKEN or GITHUB_TOKEN may be set for gh CLI API rate limits when downloading releases.
+# No GitHub Packages token is required; verser2 packages resolve from public npmjs.
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT

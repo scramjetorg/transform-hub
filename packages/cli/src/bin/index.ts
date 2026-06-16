@@ -7,9 +7,8 @@ import * as dns from "dns";
 
 import { errorHandler } from "../lib/errorHandler";
 import { commandDescriptors } from "../lib/commands/index";
-import { initConfig } from "../lib/config";
+import { initConfig, profileManager } from "../lib/config";
 import { initPaths } from "../lib/paths";
-import { profileManager } from "../lib/config";
 import findPackage from "find-package-json";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
@@ -52,10 +51,12 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
     // Show help text
     if (process.argv.includes("--help") || process.argv.includes("-h")) {
         const helpLines: string[] = [];
+
         helpLines.push(`Current profile: ${profileManager.getProfileName()}`);
         helpLines.push("");
 
         const help = generateHelp(leaf);
+
         helpLines.push(help);
         helpLines.push(chalk.greenBright("To find out more about CLI, please check out our docs at https://docs.scramjet.org/platform/cli-reference"));
         helpLines.push(`${chalk.hex("#7ed2e4")("Read more about Scramjet at https://scramjet.org/ 🚀")}`);
@@ -66,6 +67,7 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
     // Execute commands
     if (leaf.action) {
         const ctx = parseCommandContext(resolve, rootDescriptor.options);
+
         await executeCommand(ctx);
     } else if (leaf.children && leaf.children.length > 0) {
         // No action and has children - show help for the node

@@ -38,6 +38,7 @@ export class InstanceAPI {
         this.logger.addSerializedLoggerSource(logStream);
 
         const logHistory = new ReReadable({ objectMode: true, length: 10_000 });
+
         logHistory.tail(0).resume(); // resume stream
 
         this.logger.pipe(logHistory, { stringified: true });

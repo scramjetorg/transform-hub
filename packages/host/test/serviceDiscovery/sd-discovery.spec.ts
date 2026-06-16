@@ -19,6 +19,7 @@ test("ServiceDiscovery getTopics: empty list", t => {
     const serviceDiscovery = new ServiceDiscovery(mockLogger, "MockHost");
 
     const topics = serviceDiscovery.getTopics();
+
     t.is(topics.length, 0);
 });
 
@@ -48,6 +49,7 @@ test("ServiceDiscovery getTopics: list with only unique elements", t => {
         serviceDiscovery.createTopicIfNotExist({ topic: new TopicId("1fb4230f-5481-487d-a055-a99d20740e00"), contentType: "text/plain" });
 
     const topics = serviceDiscovery.getTopics();
+
     t.is(topics.length, 1);
 });
 
@@ -69,6 +71,7 @@ test("ServiceDiscovery getByTopic: get not existing topic", t => {
     const serviceDiscovery = new ServiceDiscovery(mockLogger, "MockHost");
 
     const returnedTopic = serviceDiscovery.getByTopic(testUUID);
+
     t.is(returnedTopic, undefined);
 });
 

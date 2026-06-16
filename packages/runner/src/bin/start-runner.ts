@@ -25,6 +25,12 @@ import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
 const STDERR_TAIL_BYTES = 4096;
 const CR = 0x0d;
 
+function normalizeSequencePath(path: string | undefined, engines?: Record<string, string>): string {
+    if (!path) return "";
+    if (selectRuntimeKind(engines) === "python3") return path;
+    return path.replace(/(?<!\.m?js|\.ts)$/, ".js");
+}
+
 // ---------------------------------------------------------------------------
 // Adapter-facing env validation. Preserved verbatim from the legacy entry so
 // adapters do not need to change. Same env names, same exit codes.
@@ -38,7 +44,6 @@ const runnerConnectInfo = process.env.RUNNER_CONNECT_INFO;
 let connectInfo: SequenceInfo;
 let parsedRunnerConnectInfo: RunnerConnectInfo;
 let runnerTransportConfig: RunnerTransportConfigResult;
-let sequencePath: string;
 
 try {
     if (!runnerConnectInfo) throw new Error("Connection JSON is required.");
@@ -56,7 +61,7 @@ try {
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
-sequencePath = normalizeSequencePath(rawSequencePath, connectInfo.config?.engines);
+const sequencePath = normalizeSequencePath(rawSequencePath, connectInfo.config?.engines);
 
 if (!instanceId) {
     console.error("Incorrect run argument: instanceId");
@@ -73,12 +78,6 @@ try {
 if (!fs.existsSync(sequencePath)) {
     console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
     process.exit(RunnerExitCode.INVALID_SEQUENCE_PATH);
-}
-
-function normalizeSequencePath(path: string | undefined, engines?: Record<string, string>): string {
-    if (!path) return "";
-    if (selectRuntimeKind(engines) === "python3") return path;
-    return path.replace(/(?<!\.m?js|\.ts)$/, ".js");
 }
 
 // ---------------------------------------------------------------------------
@@ -214,6 +213,7 @@ async function main(): Promise<void> {
         config: runnerTransportConfig,
         instanceId: instanceId!
     });
+
     await hostClient.init();
     const resolvedInstancesServerHost = hostClient.localChannelHost;
     const resolvedInstancesServerPort = hostClient.localChannelPort;
@@ -284,6 +284,7 @@ async function main(): Promise<void> {
     // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
     // destructive; bytes still flow to host monitoring unchanged.
     const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+
     if (hostClient instanceof RunnerVerser2Transport) {
         observeRpcExpose(handles.monitoring, hostClient);
     }

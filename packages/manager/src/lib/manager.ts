@@ -15,7 +15,7 @@ import {
     LogLevel
 } from "@scramjet/types";
 import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
-import { CeroError, forwardRoutedRequest, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
+import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
@@ -313,7 +313,7 @@ export class Manager implements IComponent {
 
             try {
                 await this.sthConnectionStore.delete(id, force);
-            } catch (e: any){
+            } catch (e: any) {
                 return translateDeleteError(e);
             }
             return {
@@ -351,7 +351,9 @@ export class Manager implements IComponent {
 
             dropList.forEach(drop => {
                 this.logger.info("dropping", drop.sthController.id, drop.reason);
-                drop.sthController.disconnect(drop.reason);
+                drop.sthController.disconnect(drop.reason).catch((err: Error) => {
+                    this.logger.error("STH disconnect error", err.message);
+                });
             });
 
             return {
@@ -510,6 +512,7 @@ export class Manager implements IComponent {
 
     async handleHostDisconnect(id: string, reason: DisconnectReason) {
         const sth = this.sthConnectionStore.getById(id);
+
         if (!sth) {
             this.logger.warn("STH disconnect request for unknown STH", id);
             return;
@@ -557,20 +560,6 @@ export class Manager implements IComponent {
         this.writeUnsupportedRouteDecision(decision, res);
     }
 
-    private async handleVerser2RequestToSTH(sth: ISTHController, req: ParsedMessage, res: ServerResponse, headers: Record<string, string>) {
-        await forwardRoutedRequest({
-            transport: this.sthBrokerTransport!,
-            domain: sth.routeDomain,
-            req,
-            res,
-            path: req.url || "/",
-            headers,
-            routeReadinessMs: this.config.verser2.timeouts.routeReadinessMs,
-            requestTimeoutMs: this.config.verser2.timeouts.requestMs,
-            onError: (error) => this.logger.warn("M -> STH verser2 request error", { id: sth.id, routeDomain: sth.routeDomain, url: req.url, error })
-        });
-    }
-
     private async handleClassifiedFollowRequestToSTH(
         sth: ISTHController,
         decision: ManagerRouteDecision,
@@ -586,22 +575,17 @@ export class Manager implements IComponent {
             return;
         }
 
-        const expectsContinue = headers.expect?.toLowerCase() === "100-continue";
+        this.writeNativeFollowRedirect(forwarding.location, forwarding.routeDomain || sth.routeDomain, forwarding.targetPath, res);
+    }
 
-        if (expectsContinue) {
-            delete headers.expect;
-            res.writeContinue();
-        }
-
-        req.url = forwarding.path;
-
-        if (this.sthBrokerTransport) {
-            await this.handleVerser2RequestToSTH(sth, req, res, headers);
-        } else {
-            this.logger.warn("Request to STH without verser2 broker transport", req.method, req.url);
-            res.writeHead(503);
-            res.end();
-        }
+    private writeNativeFollowRedirect(location: string, routeDomain: string | undefined, targetPath: string, res: ServerResponse) {
+        res.writeHead(308, {
+            location,
+            "x-scramjet-route-decision": "follow",
+            "x-scramjet-route-domain": routeDomain || "",
+            "x-scramjet-route-target-path": targetPath
+        });
+        res.end();
     }
 
     private writeDirectRouteMetadata(routeDomain: string | undefined, targetPath: string | undefined, res: ServerResponse) {
@@ -639,7 +623,7 @@ export class Manager implements IComponent {
                 if (!controller.isConnectionActive) return;
                 if (id !== event.sourceHost) {
                     controller.sendEvent(event).catch((err: Error) => {
-                        this.logger.warn("Error sending event to STH", id, err.message)
+                        this.logger.warn("Error sending event to STH", id, err.message);
                     });
                 }
             });
@@ -741,9 +725,11 @@ export class Manager implements IComponent {
     getList(offset = defaultOffset, limit = defaultLimit) {
         const topics = this.serviceDiscovery.list().slice(offset, offset + limit);
         const hubs = this.sthConnectionStore.getSTHControllersInfo().slice(offset, offset + limit);
+
         const response = hubs.sort((a, b) => {
             const aVal = a.isConnectionActive ? 10 : 0 + (a.healthy ? 1 : 0);
             const bVal = b.isConnectionActive ? 10 : 0 + (b.healthy ? 1 : 0);
+
             return bVal - aVal;
         }).map(hub => {
             return {
@@ -766,14 +752,14 @@ export class Manager implements IComponent {
         return response;
     }
 
-    getSequencesIds(){
+    getSequencesIds() {
         return this.sthInfoRegister
             .getHubs()
             .map((host) => this.sthInfoRegister.getSequencesByHub(host))
             .reduce((prev, curr) => prev.concat(curr), []);
     }
 
-    getSequences(offset = defaultOffset, limit = defaultLimit){
+    getSequences(offset = defaultOffset, limit = defaultLimit) {
         const sthSequences = this.sthInfoRegister.getSequences() as MRestAPI.GetSequenceResponse[];
         const storeSequences = this.s3Middleware.index.sequences;
         const allSequences = storeSequences.map(this.mapConfig).concat(sthSequences);
@@ -805,5 +791,4 @@ export class Manager implements IComponent {
         this.logger.info("Stopping manager...");
         this.logger.info("Manager stopped successfully.");
     }
-
 }

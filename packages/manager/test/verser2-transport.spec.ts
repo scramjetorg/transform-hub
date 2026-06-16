@@ -21,7 +21,7 @@ class FakeBroker implements VerserBroker {
     releaseHeldRequest: (() => void) | undefined;
     requestStarted: Promise<void> = Promise.resolve();
     private resolveRequestStarted: (() => void) | undefined;
-    private waiters = new Map<string, (() => void)[]>();
+    private waiters = new Map<string, Array<() => void>>();
     waitForRouteCallCount = 0;
 
     connect(): Promise<void> {
@@ -58,7 +58,7 @@ class FakeBroker implements VerserBroker {
         }
 
         return new Promise(resolve => {
-            this.waiters.set(domain, [...(this.waiters.get(domain) || []), resolve]);
+            this.waiters.set(domain, [...this.waiters.get(domain) || [], resolve]);
         });
     }
 
@@ -147,6 +147,7 @@ test("Verser2ManagerSthBrokerTransport waits for advertised route", async t => {
 
 test("createManagerSthLocalBrokerTransport supports local broker handles without connect", async t => {
     const broker = new FakeBroker();
+
     (broker as any).connect = undefined;
     const transport = createManagerSthLocalBrokerTransport(broker);
 
@@ -275,6 +276,7 @@ test("Verser2ManagerSthBrokerTransport rejects pending route waiters on close", 
     const transport = new Verser2ManagerSthBrokerTransport(broker);
 
     const wait = transport.waitForRoute("sth.pending.scramjet.internal");
+
     await transport.close("test close");
 
     await t.throwsAsync(wait, { instanceOf: Verser2RouteUnavailableError });
@@ -315,6 +317,7 @@ test("Verser2ManagerSthBrokerTransport preserves streaming request and response 
     t.is(response.body, responseBody);
 
     const responseText = collectText(response.body);
+
     requestBody.end("request body");
     responseBody.end("response body");
 
@@ -351,7 +354,7 @@ test("Verser2ManagerSthBrokerTransport destroys active request body on abort", a
     const abortController = new AbortController();
 
     broker.holdRequests = true;
-    broker.waitForNextRequest();
+    broker.waitForNextRequest().catch(() => {});
     broker.setRoutes([{ targetId: "sth:sth-1:guest", domain: "sth.sth-1.scramjet.internal" }]);
 
     const request = transport.request({
@@ -452,6 +455,7 @@ test("Verser2ManagerSthBrokerTransport uses request-time target during route rep
 
     broker.setRoutes([{ targetId: "sth:sth-1:guest-a", domain: "sth.sth-1.scramjet.internal" }]);
     const request = transport.request({ domain: "sth.sth-1.scramjet.internal", method: "GET", path: "/" });
+
     broker.setRoutes([{ targetId: "sth:sth-1:guest-b", domain: "sth.sth-1.scramjet.internal" }]);
     await request;
 

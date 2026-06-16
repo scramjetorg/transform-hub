@@ -31,7 +31,6 @@ export type ConfiguredMessageHandler<T extends RunnerMessageCode | CPMMessageCod
     blocking: boolean
 };
 
-
 type MonitoringMessageHandlerList = {
     [RunnerMessageCode.ACKNOWLEDGE]: ConfiguredMessageHandler<RunnerMessageCode.ACKNOWLEDGE>[];
     [RunnerMessageCode.DESCRIBE_SEQUENCE]: ConfiguredMessageHandler<RunnerMessageCode.DESCRIBE_SEQUENCE>[];
@@ -330,4 +329,3 @@ export class CommunicationHandler implements ICommunicationHandler {
         await this.controlPassThrough.whenWrote(encoded);
     }
 }
-

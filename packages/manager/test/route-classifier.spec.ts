@@ -74,13 +74,15 @@ test("classifyManagerRoute follows RPC and instance single-owner routes", t => {
     t.is(controlDecision.family, "instance-control");
 });
 
-test("prepareManagerFollowForwarding keeps dummy redirect dispatch internal and preserves query", t => {
+test("prepareManagerFollowForwarding returns native redirect target and preserves query", t => {
     const decision = classifyManagerRoute("POST", "/api/v1/sth/sth-1/sequence/seq-1/start?trace=1");
     const forwarding = prepareManagerFollowForwarding(decision, "/sequence/seq-1/start?trace=1", {});
 
     t.deepEqual(forwarding, {
-        kind: "dispatch",
-        path: "/sequence/seq-1/start?trace=1"
+        kind: "redirect",
+        location: "http://sth.sth-1.scramjet.internal/sequence/seq-1/start?trace=1",
+        routeDomain: "sth.sth-1.scramjet.internal",
+        targetPath: "/sequence/seq-1/start?trace=1"
     });
 });
 

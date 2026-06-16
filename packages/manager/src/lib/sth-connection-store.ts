@@ -18,9 +18,11 @@ export class SthConnectionStore implements ISTHConnectionStore {
 
     map<T>(callback: (id: string, sthController: ISTHController) => T): T[] {
         const result: T[] = [];
+
         for (const [id, controller] of this.sthControllers.entries()) {
             result.push(callback(id, controller));
         }
+
         return result;
     }
 

@@ -17,12 +17,14 @@ const createAdapter = async (): Promise<{ adapter: CouchdbLocalStorageAdapter; d
     const dbName = getRandomDbName();
     const options: CouchDbAdapterConf = { url: COUCHDB_URL, dbName, pass: "", user: "" };
     const adapter = new CouchdbLocalStorageAdapter(options);
+
     await adapter.init();
     return { adapter, dbName };
 };
 
 couchdbTest("CouchdbLocalStorageAdapter: setItem() and getItem() work correctly", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     await adapter.setItem("scram", "jet");
@@ -33,6 +35,7 @@ couchdbTest("CouchdbLocalStorageAdapter: setItem() and getItem() work correctly"
 
 couchdbTest("CouchdbLocalStorageAdapter: overwriting a key updates its value", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     await adapter.setItem("scram", "jet");
@@ -44,6 +47,7 @@ couchdbTest("CouchdbLocalStorageAdapter: overwriting a key updates its value", a
 
 couchdbTest("CouchdbLocalStorageAdapter: removeItem() should remove a key", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     await adapter.setItem("temp", "val");
@@ -55,6 +59,7 @@ couchdbTest("CouchdbLocalStorageAdapter: removeItem() should remove a key", asyn
 
 couchdbTest("CouchdbLocalStorageAdapter: clear() should remove all keys", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     await adapter.setItem("a", "1");
@@ -67,6 +72,7 @@ couchdbTest("CouchdbLocalStorageAdapter: clear() should remove all keys", async 
 
 couchdbTest("CouchdbLocalStorageAdapter: getAllItems() returns complete key-value mapping", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     await adapter.setItem("key1", "val1");
@@ -78,6 +84,7 @@ couchdbTest("CouchdbLocalStorageAdapter: getAllItems() returns complete key-valu
 
 couchdbTest("CouchdbLocalStorageAdapter: length() returns correct number of keys", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     await adapter.clear();
@@ -92,6 +99,7 @@ couchdbTest("CouchdbLocalStorageAdapter: length() returns correct number of keys
 
 couchdbTest("CouchdbLocalStorageAdapter: handles special characters in keys and values", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     const key = "spécial_键_😊";
@@ -105,6 +113,7 @@ couchdbTest("CouchdbLocalStorageAdapter: handles special characters in keys and 
 
 couchdbTest("CouchdbLocalStorageAdapter: concurrent setItem operations", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     const numItems = 100;
@@ -120,9 +129,11 @@ couchdbTest("CouchdbLocalStorageAdapter: concurrent setItem operations", async t
 
 couchdbTest("CouchdbLocalStorageAdapter: setItem() rejects when insert fails", async t => {
     const { adapter } = await createAdapter();
+
     t.teardown(() => adapter.destroy());
 
     const backup = (adapter as any).db.insert;
+
     (adapter as any).db.insert = () => { throw new Error("Simulated insert error"); };
 
     try {

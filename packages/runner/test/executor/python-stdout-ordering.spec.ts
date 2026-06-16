@@ -69,7 +69,7 @@ async function createPythonInstancesServer(expectedInstanceId: string): Promise<
     const channels = new Map<string, net.Socket>();
     const harnessErrors: Error[] = [];
     const waiters = new Map<string, Array<{
-        resolve: (socket: net.Socket) => void;
+        resolve:(socket: net.Socket) => void;
         reject: (err: Error) => void;
         timer: NodeJS.Timeout;
     }>>();

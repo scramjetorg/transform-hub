@@ -11,6 +11,8 @@
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/sth-config": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
+    "@signicode/verser2-guest-node": "0.4.2",
+    "@signicode/verser2-host": "0.4.2",
     "dockerode": "^3.3.4",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
@@ -26,7 +28,8 @@
   },
   "scripts": {
     "build:bdd": "tsc -p tsconfig.json",
-    "test:bdd": "cucumber-js"
+    "test:bdd": "cucumber-js",
+    "test:bdd-ci-verser2": "NO_HOST=true cucumber-js --format=@cucumber/pretty-formatter -t \"@ci-verser2 and not @ignore\""
   },
   "repository": {
     "type": "git",

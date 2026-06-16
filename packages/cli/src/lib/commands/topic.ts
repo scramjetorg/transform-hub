@@ -22,7 +22,7 @@ export const topicCommand: CommandDescriptor = cmd("topic", (b) => {
                     .action(async (topicName: string, options: Record<string, unknown>) => {
                         const contentType = options.contentType as string || "application/x-ndjson";
 
-                        displayEntity(
+                        await displayEntity(
                             getHostClient().createTopic(topicName, contentType),
                             format
                         );
@@ -45,7 +45,7 @@ export const topicCommand: CommandDescriptor = cmd("topic", (b) => {
                     .action(async (topicName: string, options: Record<string, unknown>) => {
                         const contentType = options.contentType as string || "application/x-ndjson";
 
-                        displayStream(
+                        await displayStream(
                             getHostClient().getNamedData(topicName, {}, contentType)
                         );
                     });
