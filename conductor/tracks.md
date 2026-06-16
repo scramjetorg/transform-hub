@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Update verser2 to v0.4.0 and migrate communication to native redirects and upstream tunnels.**
+- [~] **Track: Update verser2 to v0.4.0 and migrate communication to native redirects and upstream tunnels.**
 *Link: [./tracks/verser2_v040_upgrade_20260616/](./tracks/verser2_v040_upgrade_20260616/)*
