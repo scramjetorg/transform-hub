@@ -13,10 +13,15 @@ const GENERATED_SERVER_KEY_FILE = "server-key.pem";
 
 export function createSthRunnerVerser2HostOptions(config: STHRunnerVerser2HostConfig): VerserHostOptions {
     return {
+        hostId: createSthRunnerVerser2HostId(config),
         host: config.host.bindHost,
         port: config.host.bindPort,
         tls: createSthRunnerVerser2HostTlsOptions(config)
     };
+}
+
+export function createSthRunnerVerser2HostId(config: Pick<STHRunnerVerser2HostConfig, "localBroker">): string {
+    return `${config.localBroker.peerId}.host`;
 }
 
 export async function resolveSthRunnerVerser2HostConfig(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {

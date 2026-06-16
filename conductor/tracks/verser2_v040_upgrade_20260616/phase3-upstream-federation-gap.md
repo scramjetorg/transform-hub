@@ -1,8 +1,26 @@
 # Phase 3 Upstream Federation Gap
 
+## Resolution
+
+Resolved upstream in `signicode/verser2#24` / PR `signicode/verser2#25` and released as verser2 `v0.4.1`.
+
+After upgrading Transform Hub active verser2 packages to `0.4.1`, the previously ignored no-hub BDD proof now passes as an active scenario:
+
+- `bdd/features/verser2/VERSER2-001-isolated-routing.feature`
+- Scenario: `Broker follows a native 308 redirect across an upstream Host`
+- Tags: `@phase3 @upstream-fixed`
+
+Validation:
+
+```bash
+NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2
+```
+
+The original gap notes below are retained as historical context for why the patch upgrade was required.
+
 ## Summary
 
-The Phase 3 implementation target is blocked by verser2 v0.4.0 Host federation request directionality. `host.connectUpstream()` successfully establishes Host-to-Host federation and imports route advertisements from the upstream Host, but a Broker connected to the downstream STH-local Host cannot dispatch a request upward to an imported upstream route.
+The Phase 3 implementation target was blocked by verser2 v0.4.0 Host federation request directionality. `host.connectUpstream()` successfully established Host-to-Host federation and imported route advertisements from the upstream Host, but a Broker connected to the downstream STH-local Host could not dispatch a request upward to an imported upstream route.
 
 This prevents the intended sequence-to-space path from working as designed:
 
@@ -16,11 +34,12 @@ sequence/runtime Broker
 
 ## Reproduction
 
-An isolated no-hub BDD scenario was added and marked ignored:
+An isolated no-hub BDD scenario was added and initially marked ignored:
 
 - `bdd/features/verser2/VERSER2-001-isolated-routing.feature`
 - Scenario: `Broker follows a native 308 redirect across an upstream Host`
-- Tags: `@phase3 @upstream-gap @ignore`
+- Original tags: `@phase3 @upstream-gap @ignore`
+- Current tags after v0.4.1 fix: `@phase3 @upstream-fixed`
 
 The scenario starts two raw verser2 Hosts:
 

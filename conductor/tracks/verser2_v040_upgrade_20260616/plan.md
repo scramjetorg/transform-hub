@@ -71,23 +71,28 @@
     - [x] Update STH/Manager/MultiManager defaults and public-safe masking if new settings are added.
     - [x] Add or update CLI descriptors only when a setting must be user-configurable rather than internal.
         - No new public config/type fields are required for Phase 3. Decision recorded in `phase3-config-decision.md`: STH-local Host upstream federation should derive Manager upstream URL/TLS from existing `verser2.hostUrl` and `verser2.tls`; `verser2.enabled`, `verser2.runnerHost.enabled`, and CPM/platform configuration remain the gates. Public config is deferred until multiple upstreams, failover, a distinct sequence-only upstream, explicit disable policy, or proxy/tunnel credentials become concrete requirements.
-- [ ] Task: Implement tunnel usage incrementally
-    - [ ] Wire v0.4.0 upstream tunneling in the selected Manager/STH communication path while retaining fallback until validation passes.
-    - [ ] Wire tunnel behavior into API-server or Host forwarding seams only where native tunnel parity is clear.
-    - [ ] Update runner/runtime transport integration only if v0.4.0 tunnel APIs affect existing runner Guest/Broker communication.
-    - [ ] Ensure streaming and backpressure remain stream-based and do not require full response buffering.
-        - Blocked by upstream verser2 v0.4.0 Host federation request directionality. Report recorded in `phase3-upstream-federation-gap.md`. A raw verser2 BDD scenario proves local native `308` redirect-following works, but downstream Host Broker requests cannot dispatch upward to imported upstream route candidates after `connectUpstream()`. The unverified Transform Hub `connectUpstream()` implementation slice was reverted.
-- [ ] Task: Update tunnel tests
-    - [ ] Add or update API-server forwarding/tunnel tests for request body streaming, response body streaming, abort/cancellation, route unavailable, and binary payloads.
+- [x] Task: Upgrade to verser2 v0.4.1 upstream federation fix
+    - [x] Check upstream issue `signicode/verser2#24` status and confirm it was closed as fixed in PR `signicode/verser2#25` / release `v0.4.1`.
+    - [x] Update active workspace dependencies from `0.4.0` to `0.4.1` for `@signicode/verser-common`, `@signicode/verser2-host`, `@signicode/verser2-guest-node`, `@signicode/verser2-guest-bun`, and `@signicode/verser2-guest-python` where present.
+    - [x] Update `package-lock.json` using npm and update runner-python wheel SHA-256.
+        - v0.4.1 package availability passed via `npm run check:verser2-packages`. runner-python wheel checksum updated to `2a8c09128e526a09f3988dc81abb5b9b59848949dd9d16d310cbd95f8f460a7b` for `verser2_guest_python-0.4.1-py3-none-any.whl`.
+- [x] Task: Implement tunnel usage incrementally
+    - [x] Wire v0.4.0/v0.4.1 upstream tunneling in the selected Manager/STH communication path while retaining fallback until validation passes.
+    - [x] Wire tunnel behavior into API-server or Host forwarding seams only where native tunnel parity is clear.
+    - [x] Update runner/runtime transport integration only if v0.4.0/v0.4.1 tunnel APIs affect existing runner Guest/Broker communication.
+    - [x] Ensure streaming and backpressure remain stream-based and do not require full response buffering.
+        - `Host.startRunnerVerser2Host()` now connects the STH-local runner verser2 Host to the Manager/MultiManager Host with `connectUpstream()` when runner Host and CPM/platform configuration are enabled. The upstream parameters are derived from existing `verser2.hostUrl` and `verser2.tls` via `getRunnerVerser2HostUpstreamParams()`. The STH-local Host now configures a deterministic federation `hostId` from the existing local broker peer ID. Non-strict startup logs upstream connection failures and retains existing fallback behavior; strict platform mode rethrows. Runner/runtime transport and API-server forwarding remain unchanged because v0.4.1 tunnel APIs do not affect existing runner control/data streams.
+- [x] Task: Update tunnel tests
+    - [x] Add or update API-server forwarding/tunnel tests for request body streaming, response body streaming, abort/cancellation, route unavailable, and binary payloads.
     - [x] Add or update Manager/Host transport tests for tunnel-enabled paths.
-    - [ ] Add or update runner/runtime tests only for changed tunnel-related boot config or transport behavior.
-    - [ ] Add config tests for any new tunnel or redirect options.
-        - Added an ignored isolated BDD scenario `Broker follows a native 308 redirect across an upstream Host` tagged `@phase3 @upstream-gap @ignore` to preserve the failing upstream capability proof without breaking the active no-hub verser2 gate.
-- [ ] Task: Validate tunnel integration
-    - [ ] Run focused API-server, Manager, Host, config/types, and affected runner/runtime tests.
-    - [ ] Run affected package builds/typechecks.
-    - [ ] Record tunnel candidates that remain on fallback local forwarding with rationale.
-        - Validation finding: upstream federation BDD failed before being marked ignored with `VerserError: [upstream-unavailable] No federated route candidates are available`. Classification: preexisting/in-scope upstream dependency capability gap. Active no-hub validation remains `npm run test:bdd-ci-verser2`, excluding `@ignore` scenarios.
+    - [x] Add or update runner/runtime tests only for changed tunnel-related boot config or transport behavior.
+    - [x] Add config tests for any new tunnel or redirect options.
+        - Added active no-hub BDD coverage for native `308` redirect-following across upstream Host federation, tagged `@phase3 @upstream-fixed`. Added Host unit tests for upstream parameter derivation and STH-local Host `hostId` mapping. API-server forwarding code was not changed in this Phase 3 slice, so existing routed-forward coverage remains the relevant API-server fallback coverage. No new public config tests were needed because Phase 3 uses existing `verser2.hostUrl` and `verser2.tls`.
+- [x] Task: Validate tunnel integration
+    - [x] Run focused API-server, Manager, Host, config/types, and affected runner/runtime tests.
+    - [x] Run affected package builds/typechecks.
+    - [x] Record tunnel candidates that remain on fallback local forwarding with rationale.
+        - Validation passed: `npm run check:verser2-packages`; `NODE_OPTIONS="--max-old-space-size=1536" npm --prefix bdd run build:bdd`; `NODE_OPTIONS="--max-old-space-size=1536" npm run test:bdd-ci-verser2`; Host upstream/config/local-peer tests; Manager route/verser2 tests; Runner verser2 tests; runner-node host-client tests; runner-python boot/runtime tests; runner-bun tests; `NODE_OPTIONS="--max-old-space-size=1536" npm run build:packages`; and `NODE_OPTIONS="--max-old-space-size=1536" npm run check:runtime-invariants`. Retained fallbacks are documented in `phase3-communication-paths.md`: runner RPC/control streams, generic URL forwarding, Manager-owned/multiplexed routes, `/platform`, `/inout`, CONNECT/upgrade, trailers, and informational responses remain outside this Phase 3 tunnel lane.
 - [ ] Task: Conductor - User Manual Verification 'Upstream Host Tunneling Integration' (Protocol in workflow.md)
 
 ## Phase 4: Cross-Flow Integration and Full Validation

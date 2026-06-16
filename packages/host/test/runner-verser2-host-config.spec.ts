@@ -39,6 +39,7 @@ test("createSthRunnerVerser2HostOptions maps STH-local endpoint and PEM TLS file
     const options = createSthRunnerVerser2HostOptions(baseConfig());
 
     t.deepEqual(options, {
+        hostId: "sth.runner.broker.host",
         host: "127.0.0.1",
         port: 2444,
         tls: {

@@ -13,7 +13,7 @@ Feature: Isolated verser2 routing guarantees
     And the isolated verser2 response body is "space-ok"
     And isolated verser2 route "space.local.test" received path "/space/health?trace=1"
 
-  @phase3 @upstream-gap @ignore
+  @phase3 @upstream-fixed
   Scenario: Broker follows a native 308 redirect across an upstream Host
     Given an isolated verser2 host "manager"
     And an isolated verser2 host "sth"
