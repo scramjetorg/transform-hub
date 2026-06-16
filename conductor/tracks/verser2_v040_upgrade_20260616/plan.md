@@ -54,9 +54,9 @@
 
 - [ ] Task: Define tunnel-enabled communication paths
     - [ ] Identify local forwarding paths in `packages/api-server/src/handlers/routed-forward.ts`, `packages/api-server/src/handlers/forward.ts`, Host RPC forwarding, Manager/STH request forwarding, runner transport, and MultiManager routing.
-    - [ ] Classify each path as native tunnel candidate, redirect-only, Manager-owned/multiplexed, or retained fallback.
-    - [ ] Define which currently unsupported bidirectional cases, such as CONNECT, `/platform`, or `/inout`, can safely use v0.4.0 tunneling in this track.
-    - [ ] Document any paths deliberately left unsupported or deferred.
+    - [ ] Classify each path as tunneled sequence-to-space request candidate, redirect-only, Manager-owned/multiplexed, or retained fallback.
+    - [ ] Define how sequence/runtime Broker/fetch requests reach Space/STH/Manager endpoints over the owning STH hub-level verser2 Host, Manager upstream Host federation, and native 308 redirect-following to other Hosts/STHs.
+    - [ ] Document generic CONNECT, `/platform`, `/inout`, and other paths deliberately left unsupported or deferred.
 - [ ] Task: Add tunnel configuration and types
     - [ ] Update `packages/types/src/verser2-transport-configuration.ts` for any v0.4.0 tunnel/redirect policy options used by Transform Hub.
     - [ ] Update `packages/config/src/verser2-config.ts` schemas and validation for upstream host tunnel settings.

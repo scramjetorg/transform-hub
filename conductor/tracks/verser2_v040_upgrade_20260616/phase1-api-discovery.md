@@ -87,7 +87,7 @@ No breaking public signature changes were identified for current basic calls use
 - `createVerserBunGuest(options)` remains available.
 - Broker `request`, `getRoutes`, and `waitForRoute` remain available.
 
-v0.4.0 still documents that WebSocket upgrade, CONNECT tunneling, trailers, and informational responses are not forwarded by the Host/Node Guest surface. The track should treat “upstream tunnels” as Host federation/upstream routing unless a later implementation task proves a separate CONNECT tunnel API exists.
+v0.4.0 still documents that WebSocket upgrade, CONNECT tunneling, trailers, and informational responses are not forwarded by the Host/Node Guest surface. The track should not treat “tunneling” as generic HTTP CONNECT tunneling. For this track, “tunneled requests” means sequence-originated requests to Space/STH/Manager endpoints flowing over the owning STH hub-level verser2 Host, through Manager upstream Host federation where needed, and through native 308 redirect-following to reach other Hosts/STHs.
 
 New error codes include:
 
@@ -101,6 +101,6 @@ These may need mapping in Transform Hub transport error handling if Host federat
 ## Implementation implications
 
 - Phase 2 can use native 308 responses for follow-classified Manager routes, relying on v0.4.0 Broker redirect following.
-- Phase 3 should focus on `host.connectUpstream()` and federation route metadata rather than generic HTTP CONNECT tunneling.
+- Phase 3 should focus on `host.connectUpstream()`, federation route metadata, sequence/runtime Broker/fetch helpers, and native 308 redirect-following for sequence-to-Space/STH/Manager requests rather than generic HTTP CONNECT tunneling.
 - Existing config/types should gain host federation settings only when used by Transform Hub code: host IDs, max federation hops, upstream IDs/URLs, TLS trust, and federation authorization policy.
 - Python upgrade still requires updating the GitHub release wheel version and SHA-256 in `packages/runner-python/scripts/install-deps.sh`.

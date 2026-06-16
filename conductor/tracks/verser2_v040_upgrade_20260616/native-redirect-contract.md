@@ -60,6 +60,22 @@ Manager should not emit a native redirect unless it has enough target metadata t
 
 If the target STH is missing or inactive, the existing `404` / `503` behavior remains correct. If a follow decision lacks route-domain metadata, Manager should return a clear route-decision error rather than falling back to dummy internal forwarding.
 
-## Unsupported v0.4.0 tunneling assumption
+## Tunneling clarification for this track
+
+In this track, “verser tunneling” means tunneled application requests made from sequences to Space/STH/Manager endpoints over the hub-level verser2 Host, with the Manager connected as an upstream Host and with v0.4.0 Broker redirect following used to reach other Hosts after native `308` redirects.
+
+The intended request path is:
+
+```text
+sequence/runtime Broker or fetch helper
+  -> owning STH hub-level verser2 Host
+  -> Manager upstream Host federation when the target is outside the local STH
+  -> native 308 redirect-follow when Manager resolves a single target route on another Host/STH
+  -> target Host/STH route
+```
+
+This preserves the direct STH-to-STH data-plane constraint: Manager coordinates ownership and can emit route-aware redirects, but payload transfer should happen through verser2 route following/upstream Host routing instead of Manager-local HTTP forwarding.
+
+## Unsupported generic CONNECT tunneling assumption
 
 v0.4.0 adds Host federation/upstream routing through `host.connectUpstream()`, but the public Host/Guest type surface still states that WebSocket upgrade, CONNECT tunneling, trailers, and informational responses are not forwarded. This Phase 2 redirect contract does not enable CONNECT, `/platform`, or `/inout` bidirectional paths.
