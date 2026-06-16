@@ -17,8 +17,8 @@ const STRIPPED_KEYS = ["SEQUENCE_PATH", "SEQUENCE_INFO", "RUNNER_CONNECT_INFO"] 
  */
 test("outer runner strips SEQUENCE_PATH/SEQUENCE_INFO/RUNNER_CONNECT_INFO from python child env", async (t) => {
     process.env.SEQUENCE_PATH = "/test/sequence/path";
-    process.env.SEQUENCE_INFO = '{"id":"test-seq"}';
-    process.env.RUNNER_CONNECT_INFO = '{"args":["test"]}';
+    process.env.SEQUENCE_INFO = "{\"id\":\"test-seq\"}";
+    process.env.RUNNER_CONNECT_INFO = "{\"args\":[\"test\"]}";
 
     try {
         // Positive (sanity) assertion: keys ARE present in the parent before spawn.

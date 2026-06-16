@@ -36,6 +36,7 @@ async function connectClient(
             if (payload) sock.write(payload);
             resolve(sock);
         });
+
         sock.on("error", reject);
     });
 }
@@ -137,6 +138,7 @@ test("data sent after the header is readable by the consumer", async (t) => {
     await server.start();
 
     const payload = Buffer.from("hello world");
+
     await connectClient(server.port, INSTANCE_ID, CC.IN, payload);
 
     const stream = await server.waitForStream(CC.IN);
@@ -166,6 +168,7 @@ test("data arriving in the same TCP segment as the header is not lost", async (t
             s.write(combined);
             resolve(s);
         });
+
         s.on("error", reject);
     });
 
@@ -267,6 +270,7 @@ test("rejects connection with non-numeric channel digit", async (t) => {
             s.write(badHeader);
             resolve(s);
         });
+
         s.on("error", reject);
     });
 
@@ -308,6 +312,7 @@ test("rejects connection with negative channel index", async (t) => {
         // Write a literal "-1" as the channel.
         const idBuf = Buffer.from(INSTANCE_ID.padEnd(ID_LEN, " ").slice(0, ID_LEN));
         const chBuf = Buffer.from("-1", "utf8");
+
         sock.write(Buffer.concat([idBuf, chBuf]));
     });
 
@@ -454,13 +459,13 @@ test("destroying invalid connections does not crash the server", async (t) => {
     const attempts = Array.from({ length: 20 }, (_, i) => {
         if (i % 3 === 0) {
             // Wrong instance id.
-            return net.createConnection(server.port, "127.0.0.1", function (this: net.Socket) {
+            return net.createConnection(server.port, "127.0.0.1", function(this: net.Socket) {
                 this.write(buildHeader("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", CC.IN));
             });
         }
         if (i % 3 === 1) {
             // Unsupported channel.
-            return net.createConnection(server.port, "127.0.0.1", function (this: net.Socket) {
+            return net.createConnection(server.port, "127.0.0.1", function(this: net.Socket) {
                 this.write(buildHeader(INSTANCE_ID, CC.STDERR));
             });
         }
@@ -468,7 +473,7 @@ test("destroying invalid connections does not crash the server", async (t) => {
         const idBuf = Buffer.from(INSTANCE_ID.padEnd(ID_LEN, " ").slice(0, ID_LEN));
         const chBuf = Buffer.from("!", "utf8");
 
-        return net.createConnection(server.port, "127.0.0.1", function (this: net.Socket) {
+        return net.createConnection(server.port, "127.0.0.1", function(this: net.Socket) {
             this.write(Buffer.concat([idBuf, chBuf]));
         });
     });

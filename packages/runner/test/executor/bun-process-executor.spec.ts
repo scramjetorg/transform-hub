@@ -1,10 +1,8 @@
 import test from "ava";
 import { join } from "path";
 
-const MODULE_PATH = "../../src/executor/bun-process-executor";
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const loadModule = (): any => require(MODULE_PATH);
+const loadModule = (): any => require("../../src/executor/bun-process-executor");
 
 async function waitAndCleanup(handles: any): Promise<void> {
     await new Promise((resolve) => handles.child.on("close", resolve));
@@ -42,8 +40,8 @@ test("child env strips SEQUENCE_PATH, SEQUENCE_INFO, RUNNER_CONNECT_INFO", async
     const { spawnRunnerBun } = loadModule();
 
     process.env.SEQUENCE_PATH = "/test/path";
-    process.env.SEQUENCE_INFO = '{"id":"test"}';
-    process.env.RUNNER_CONNECT_INFO = '{"args":[]}';
+    process.env.SEQUENCE_INFO = "{\"id\":\"test\"}";
+    process.env.RUNNER_CONNECT_INFO = "{\"args\":[]}";
 
     try {
         const handles = spawnRunnerBun({

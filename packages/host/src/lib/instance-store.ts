@@ -92,6 +92,7 @@ export class InstancesStore extends Map<string, ICSI> {
 
     unregisterName(instanceName: string, instanceId: string) {
         const mapped = this.nameMap.get(instanceName);
+
         if (mapped && mapped === instanceId) {
             this.nameMap.delete(instanceName);
             this.nameReverse.delete(instanceId);
@@ -100,6 +101,7 @@ export class InstancesStore extends Map<string, ICSI> {
 
     getByName(instanceName: string): ICSI | undefined {
         const id = this.nameMap.get(instanceName);
+
         if (!id) return undefined;
         return this.get(id);
     }
@@ -110,6 +112,7 @@ export class InstancesStore extends Map<string, ICSI> {
 
     getByNameOrId(token: string): ICSI | undefined {
         const byId = this.get(token);
+
         if (byId) return byId;
 
         return this.getByName(token);
@@ -135,6 +138,7 @@ export class InstancesStore extends Map<string, ICSI> {
         this.releaseId(instanceId);
 
         const name = this.nameReverse.get(instanceId);
+
         if (name) {
             this.nameMap.set(name, instanceId);
         }

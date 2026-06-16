@@ -42,14 +42,16 @@ export class ConfigService {
     }
 
     async selectRuntimeAdapter() {
-        let updateAdaptersConfig: ((runtimeAdapter: string, config: STHConfiguration) => Awaited<void>) | undefined = undefined;
+        let updateAdaptersConfig: ((runtimeAdapter: string, config: STHConfiguration) => Awaited<void>) | undefined;
 
         try {
             updateAdaptersConfig = (await import("@scramjet/adapters")).updateAdaptersConfig;
         } catch (error) {
             // ignore
         }
-        updateAdaptersConfig && await updateAdaptersConfig(this.config.runtimeAdapter, this.config);
+        if (updateAdaptersConfig) {
+            await updateAdaptersConfig(this.config.runtimeAdapter, this.config);
+        }
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {

@@ -61,6 +61,7 @@ test("mapRunnerExitCode: exit code 0 resolves with completed status", async t =>
 
 test("mapRunnerExitCode: INVALID_ENV_VARS (20) rejects with error", async t => {
     const seq = mockSequence();
+
     await assertRejected(t,
         () => mapRunnerExitCode(RunnerExitCode.INVALID_ENV_VARS, seq),
         "Runner was started with invalid configuration. This is probably a bug in STH.",
@@ -70,6 +71,7 @@ test("mapRunnerExitCode: INVALID_ENV_VARS (20) rejects with error", async t => {
 
 test("mapRunnerExitCode: PODS_LIMIT_REACHED (24) rejects with limit message", async t => {
     const seq = mockSequence();
+
     await assertRejected(t,
         () => mapRunnerExitCode(RunnerExitCode.PODS_LIMIT_REACHED, seq),
         "Instance limit reached",
@@ -98,6 +100,7 @@ test("mapRunnerExitCode: INVALID_SEQUENCE_PATH (21) includes entrypointPath in m
 
 test("mapRunnerExitCode: SEQUENCE_FAILED_ON_START (22) rejects", async t => {
     const seq = mockSequence();
+
     await assertRejected(t,
         () => mapRunnerExitCode(RunnerExitCode.SEQUENCE_FAILED_ON_START, seq),
         "Sequence failed on start",
@@ -107,6 +110,7 @@ test("mapRunnerExitCode: SEQUENCE_FAILED_ON_START (22) rejects", async t => {
 
 test("mapRunnerExitCode: SEQUENCE_FAILED_DURING_EXECUTION (23) rejects", async t => {
     const seq = mockSequence();
+
     await assertRejected(t,
         () => mapRunnerExitCode(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION, seq),
         "Sequence failed during execution",
@@ -116,6 +120,7 @@ test("mapRunnerExitCode: SEQUENCE_FAILED_DURING_EXECUTION (23) rejects", async t
 
 test("mapRunnerExitCode: SEQUENCE_UNPACK_FAILED (10) rejects", async t => {
     const seq = mockSequence();
+
     await assertRejected(t,
         () => mapRunnerExitCode(RunnerExitCode.SEQUENCE_UNPACK_FAILED, seq),
         "Sequence unpack failed",
@@ -125,6 +130,7 @@ test("mapRunnerExitCode: SEQUENCE_UNPACK_FAILED (10) rejects", async t => {
 
 test("mapRunnerExitCode: KILLED (137) rejects with killed message", async t => {
     const seq = mockSequence();
+
     await assertRejected(t,
         () => mapRunnerExitCode(RunnerExitCode.KILLED, seq),
         "Instance killed",
@@ -136,6 +142,7 @@ test("mapRunnerExitCode: KILLED (137) rejects with killed message", async t => {
 
 test("mapRunnerExitCode: any positive exit code > 0 rejects with generic message", async t => {
     const seq = mockSequence();
+
     try {
         await mapRunnerExitCode(1, seq);
         t.fail("Expected rejection");
@@ -148,6 +155,7 @@ test("mapRunnerExitCode: any positive exit code > 0 rejects with generic message
 
 test("mapRunnerExitCode: negative exit code rejects with generic message", async t => {
     const seq = mockSequence();
+
     try {
         await mapRunnerExitCode(-1, seq);
         t.fail("Expected rejection");

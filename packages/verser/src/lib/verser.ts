@@ -32,14 +32,12 @@ export class Verser extends TypedEmitter<Events> {
             const sthId = req.headers["x-sth-id"];
             const orgId = req.headers["x-org-id"];
 
-
             this.logger.info("New connection:", req.url, {
                 orgId,
                 managerId,
                 sthId,
                 sthTags
             });
-
 
             const connection = new VerserConnection(req, socket);
 

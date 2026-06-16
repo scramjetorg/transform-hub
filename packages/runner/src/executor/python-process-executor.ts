@@ -22,6 +22,24 @@ export const RUNNER_PYTHON_STDIO = ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe
 
 export type RunnerPythonStdio = typeof RUNNER_PYTHON_STDIO;
 
+function buildPythonPath(existing?: string): string {
+    const candidates = [
+        resolve(__dirname, "../../../runner-python/src"),
+        resolve(__dirname, "../../../runner-python/__pypackages__"),
+        resolve(__dirname, "../../../runner-python/dist/__pypackages__"),
+        resolve(__dirname, "../../runner-python/src"),
+        resolve(__dirname, "../../runner-python/__pypackages__"),
+        resolve(__dirname, "../../runner-python/dist/__pypackages__"),
+        resolve(__dirname, "../../../packages/runner-python/src"),
+        resolve(__dirname, "../../../packages/runner-python/__pypackages__"),
+        resolve(__dirname, "../../../dist/runner-python/__pypackages__")
+    ].filter(existsSync);
+
+    if (existing) candidates.push(existing);
+
+    return candidates.join(":");
+}
+
 /**
  * Spawn a runner-python child process.
  *
@@ -70,24 +88,6 @@ export function spawnRunnerPython(opts: PythonSpawnOptions): RuntimeProcessHandl
     const monitoring = stdioSlots[5] as Duplex;
 
     return { child, stdout, stderr, control, monitoring };
-}
-
-function buildPythonPath(existing?: string): string {
-    const candidates = [
-        resolve(__dirname, "../../../runner-python/src"),
-        resolve(__dirname, "../../../runner-python/__pypackages__"),
-        resolve(__dirname, "../../../runner-python/dist/__pypackages__"),
-        resolve(__dirname, "../../runner-python/src"),
-        resolve(__dirname, "../../runner-python/__pypackages__"),
-        resolve(__dirname, "../../runner-python/dist/__pypackages__"),
-        resolve(__dirname, "../../../packages/runner-python/src"),
-        resolve(__dirname, "../../../packages/runner-python/__pypackages__"),
-        resolve(__dirname, "../../../dist/runner-python/__pypackages__")
-    ].filter(existsSync);
-
-    if (existing) candidates.push(existing);
-
-    return candidates.join(":");
 }
 
 /** RuntimeExecutor instance for the `python3` runtime kind. */

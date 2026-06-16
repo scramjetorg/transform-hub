@@ -14,6 +14,12 @@ export type ManagerTrustBootstrapOptions = {
     pinnedFingerprint256?: string;
 };
 
+function normalizeFingerprint(value: string | undefined): string | undefined {
+    const normalized = value?.replace(/:/g, "").trim().toUpperCase();
+
+    return normalized || undefined;
+}
+
 export function applyManagerTrustBootstrap(
     config: STHConfiguration,
     material: ManagerTrustBootstrapMaterial,
@@ -47,10 +53,4 @@ export function applyManagerTrustBootstrap(
             }
         }
     };
-}
-
-function normalizeFingerprint(value: string | undefined): string | undefined {
-    const normalized = value?.replace(/:/g, "").trim().toUpperCase();
-
-    return normalized || undefined;
 }

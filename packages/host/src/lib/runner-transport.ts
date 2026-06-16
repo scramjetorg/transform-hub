@@ -66,6 +66,10 @@ class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
 
         await new Promise<void>((resolve, reject) => {
             let finished = false;
+            // eslint-disable-next-line prefer-const
+            let interval: ReturnType<typeof setInterval> | undefined;
+            // eslint-disable-next-line prefer-const
+            let timeout: ReturnType<typeof setTimeout> | undefined;
             const finish = (error?: Error) => {
                 if (finished) return;
                 finished = true;
@@ -81,8 +85,9 @@ class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
                     finish(error instanceof Error ? error : new Error(String(error)));
                 }
             };
-            const interval = setInterval(check, 10);
-            const timeout = timeoutMs === undefined ? undefined : setTimeout(() => {
+
+            interval = setInterval(check, 10);
+            timeout = timeoutMs === undefined ? undefined : setTimeout(() => {
                 finish(new Verser2RunnerRouteUnavailableError(
                     domain,
                     `Timed out waiting for runner verser2 route: ${domain}`
@@ -248,9 +253,11 @@ export class Verser2RunnerTransport implements RunnerTransport {
             body,
             signal: this.abortController?.signal
         }, generation);
+
         if (!this.isCurrentGeneration(generation)) {
             response.body.destroy();
         }
+
         this.assertCurrentGeneration(generation);
 
         this.assertSuccessfulRouteResponse(response, path);
@@ -283,9 +290,11 @@ export class Verser2RunnerTransport implements RunnerTransport {
             path,
             signal: this.abortController?.signal
         }, generation);
+
         if (!this.isCurrentGeneration(generation)) {
             response.body.destroy();
         }
+
         this.assertCurrentGeneration(generation);
 
         this.assertSuccessfulRouteResponse(response, path);
@@ -309,7 +318,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
                 return;
             }
 
-            void this.openResponseBodyRoute(domain, path, target, true, generation).catch(replacementError => {
+            this.openResponseBodyRoute(domain, path, target, true, generation).catch(() => {
                 if (!this.connected || generation !== this.connectionGeneration) return;
                 // A replacement lease can fail after the runner has already
                 // completed and removed its route. The original body ending is

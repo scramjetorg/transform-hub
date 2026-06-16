@@ -34,8 +34,8 @@ export class LocalChannelServer {
     private sockets = new Set<net.Socket>();
     private channels = new Map<CC, net.Socket>();
     private waiters = new Map<CC, Array<{
-        resolve: (socket: net.Socket) => void;
-        reject: (err: Error) => void;
+        resolve:(socket: net.Socket) => void;
+        reject:(err: Error) => void;
         timer: NodeJS.Timeout;
     }>>();
     private _port = 0;

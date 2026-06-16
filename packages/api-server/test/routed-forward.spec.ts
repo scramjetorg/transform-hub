@@ -111,6 +111,7 @@ function fakeReqRes(
     headers: Record<string, string> = {}
 ) {
     const req = new PassThrough() as unknown as IncomingMessage;
+
     req.method = method;
     req.url = url;
     req.headers = { ...headers };
@@ -129,6 +130,7 @@ function fakeReqRes(
     let headersSent = false;
     let writableEnded = false;
     let writableFinished = false;
+
     Object.defineProperty(res, "headersSent", {
         get: () => headersSent,
         set: (v: boolean) => { headersSent = v; },
@@ -147,21 +149,23 @@ function fakeReqRes(
     res.on("error", () => undefined);
 
     const origEnd = res.end.bind(res);
-    const resEnd = function (this: any, ...args: any[]) {
+    const resEnd = function(this: any, ...args: any[]) {
         writableEnded = true;
         const ret = origEnd(...args);
+
         writableFinished = true;
         this.emit("finish");
         return ret;
     };
+
     res.end = resEnd as any;
 
     let lastWriteHeadStatus = 0;
-    let lastWriteHeadHeaders: any = undefined;
+    let lastWriteHeadHeaders: any;
 
-    res.writeHead = ((status: number, headers?: any) => {
+    res.writeHead = ((status: number, writeHeadHeaders?: any) => {
         lastWriteHeadStatus = status;
-        lastWriteHeadHeaders = headers;
+        lastWriteHeadHeaders = writeHeadHeaders;
         headersSent = true;
         res.statusCode = status;
         return res;
@@ -240,6 +244,7 @@ test("forwardRoutedRequest forwards response body to response", async t => {
     await new Promise<void>(resolve => res.on("end", resolve));
 
     const body = Buffer.concat(getChunks()).toString("utf8");
+
     t.is(body, "chunk1chunk2");
 });
 
@@ -624,6 +629,7 @@ test("forwardRoutedRequest does not overwrite headers if already sent on error",
 
     // Second call (different req/res) fails after headers sent
     const { req: req2, res: res2, getWriteHeadStatus: g2 } = fakeReqRes();
+
     res2.headersSent = true; // simulate partial write
 
     await forwardRoutedRequest({
@@ -687,7 +693,7 @@ test("forwardRoutedRequest sets route readiness and request timeout defaults whe
 test("forwardRoutedRequest uses custom headers when provided", async t => {
     const { transport, requestCalls, responseBody } = fakeTransport();
     const { req, res } = fakeReqRes("GET", "/custom", {
-        "accept": "text/html"
+        accept: "text/html"
     });
 
     const promise = forwardRoutedRequest({

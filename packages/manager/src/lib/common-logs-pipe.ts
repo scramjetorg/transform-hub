@@ -4,7 +4,6 @@ import { Readable, Writable } from "stream";
 import { StringStream } from "scramjet";
 import { ObjLogger } from "@scramjet/obj-logger";
 
-
 export class CommonLogsPipe {
     private pipe: ReReadable;
     private readonly instreamPipes: Map<string, Readable> = new Map();
@@ -22,7 +21,7 @@ export class CommonLogsPipe {
             .lines()
             .prepend(`${hostId}: `)
             .append("\n")
-            .catch((error: any) => { /* ignore errors */ });
+            .catch((_error: any) => { /* ignore errors */ });
 
         instream.pipe(this.pipe, { end: false });
         this.instreamPipes.set(hostId, instream);
@@ -30,6 +29,7 @@ export class CommonLogsPipe {
 
     public removeInStream(hostId: string): void {
         const instream = this.instreamPipes.get(hostId);
+
         if (instream) {
             instream.unpipe(this.pipe);
             this.instreamPipes.delete(hostId);

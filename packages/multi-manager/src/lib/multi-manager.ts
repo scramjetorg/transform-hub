@@ -131,7 +131,6 @@ export class MultiManager {
             const address = this.apiServer.server.address() as AddressInfo;
 
             this.logger.info("Server started on", address.port, address.address);
-
         });
 
         if (this.config.manager) {
@@ -168,39 +167,40 @@ export class MultiManager {
         }
 
         await Promise.all(managerConfigs.map(
-            (managerConfig, index) => new Promise<void>(async (resolve, reject) => {
-                if (!managerConfig.id.trim()) {
-                    throw new Error("Invalid Manager id");
-                }
+            (managerConfig, index) => new Promise<void>((resolve, reject) => {
+                (async () => {
+                    if (!managerConfig.id.trim()) {
+                        throw new Error("Invalid Manager id");
+                    }
 
-                if (this.managersStore.getById(managerConfig.id)) {
-                    throw new Error(`Duplicated Manager ${managerConfig.id}`);
-                }
+                    if (this.managersStore.getById(managerConfig.id)) {
+                        throw new Error(`Duplicated Manager ${managerConfig.id}`);
+                    }
 
-                this.logger.trace(`Starting ${index + 1}/${managerConfigs.length} default manager`, managerConfig.id);
+                    this.logger.trace(`Starting ${index + 1}/${managerConfigs.length} default manager`, managerConfig.id);
 
-                const manager = new Manager({ ...managerConfig, s3: this.config.s3 });
+                    const manager = new Manager({ ...managerConfig, s3: this.config.s3 });
 
-                manager.logger.pipe(this.logger);
+                    manager.logger.pipe(this.logger);
 
-                try {
-                    const managerMain = manager.main();
+                    try {
+                        const managerMain = manager.main();
 
-                    await this.attachManagerVerser2Peers(manager);
+                        await this.attachManagerVerser2Peers(manager);
 
-                    manager.setupHealthEndpoint(this.healthCheck);
+                        manager.setupHealthEndpoint(this.healthCheck);
 
-                    this.auditor.attach(manager.auditor);
-                    this.managersStore.add(managerConfig.id, manager);
+                        this.auditor.attach(manager.auditor);
+                        this.managersStore.add(managerConfig.id, manager);
 
-                    await managerMain;
-                    resolve();
-                } catch (e) {
-                    this.logger.error(`Manager ${this.config.manager} failed`, e);
+                        await managerMain;
+                    } catch (e) {
+                        this.logger.error(`Manager ${this.config.manager} failed`, e);
 
-                    this.managersStore.remove(managerConfig.id);
-                    reject(e);
-                }
+                        this.managersStore.remove(managerConfig.id);
+                        throw e;
+                    }
+                })().then(resolve, reject);
             })));
 
         this.logger.info("Managers started", this.managersStore.list().map(manager => manager.id));
@@ -385,5 +385,4 @@ export class MultiManager {
             id: manager.config.id,
         }));
     }
-
 }

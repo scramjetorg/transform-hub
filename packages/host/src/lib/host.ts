@@ -671,7 +671,9 @@ export class Host implements IHost, IComponent {
             });
 
             queueMicrotask(() => {
-                void this.launchRequiredStartupEntry(entry, reason);
+                this.launchRequiredStartupEntry(entry, reason).catch((e) => {
+                    this.logger.error("Error in required startup entry launch", e);
+                });
             });
             return;
         }
@@ -925,6 +927,10 @@ export class Host implements IHost, IComponent {
             .finally(() => {
                 process.exit();
             })
+            .catch((e) => {
+                this.logger.error("Error during host stop", e);
+                process.exit(1);
+            });
     }
 
     private isCPMConfigured() {
@@ -1022,7 +1028,9 @@ export class Host implements IHost, IComponent {
         }
 
         const startupConfig: StartSequenceDTO[] = _config.sequences;
+
         this.validateStartupConfigUniqueness(startupConfig);
+
         const startupEntries = startupConfig.map((sequenceConfig, index) => ({ sequenceConfig, index }));
 
         await DataStream.from(startupEntries)
@@ -1380,6 +1388,7 @@ export class Host implements IHost, IComponent {
                 return;
             case "sequence":
                 const sequence = this.instancesStore.get(event.source);
+
                 if (!sequence) {
                     this.logger.warn("Event for unknown sequence", event);
                     return;
@@ -1396,6 +1405,8 @@ export class Host implements IHost, IComponent {
                         ...event,
                         scope,
                         sourceHost: this.config.host.id!,
+                    }).catch((e) => {
+                        this.logger.error("Error sending event to CPM", e);
                     });
                 }
                 // Send the event to all instances except the source of the event.
@@ -1551,7 +1562,6 @@ export class Host implements IHost, IComponent {
                 })
                 .close();
         });
-
     }
 
     /**

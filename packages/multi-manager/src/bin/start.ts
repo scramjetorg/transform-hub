@@ -46,7 +46,7 @@ function startMultiManager(options: MultiManagerCommandOptions) {
 
     console.error(`Dump heap: ${options.dumpHeap}`);
     if (options.dumpHeap && options.dumpHeap > 0) {
-        let int = setInterval(() => {
+        const int = setInterval(() => {
             const heap = process.memoryUsage().heapUsed / 1024 / 1024;
 
             console.error(`Heap usage: ${heap.toFixed(2)} MB`);

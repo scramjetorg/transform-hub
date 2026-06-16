@@ -13,6 +13,20 @@ export type ManagerVerser2TrustExport = {
     };
 };
 
+function extractCertificatePemBundle(contents: string): string {
+    const blocks = contents.match(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g) || [];
+
+    if (!blocks.length) {
+        throw new Error("Manager verser2 trust export requires certificate PEM material");
+    }
+
+    if (blocks.some(block => !block.startsWith("-----BEGIN CERTIFICATE-----"))) {
+        throw new Error("Manager verser2 trust export refuses non-certificate PEM material");
+    }
+
+    return blocks.join("\n");
+}
+
 export async function getManagerVerser2TrustExport(config: ManagerConfiguration): Promise<ManagerVerser2TrustExport> {
     const trustFile = config.verser2.host.tls.caFile;
 
@@ -33,18 +47,4 @@ export async function getManagerVerser2TrustExport(config: ManagerConfiguration)
             guest: config.verser2.localGuest.routeDomain
         }
     };
-}
-
-function extractCertificatePemBundle(contents: string): string {
-    const blocks = contents.match(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g) || [];
-
-    if (!blocks.length) {
-        throw new Error("Manager verser2 trust export requires certificate PEM material");
-    }
-
-    if (blocks.some(block => !block.startsWith("-----BEGIN CERTIFICATE-----"))) {
-        throw new Error("Manager verser2 trust export refuses non-certificate PEM material");
-    }
-
-    return blocks.join("\n");
 }

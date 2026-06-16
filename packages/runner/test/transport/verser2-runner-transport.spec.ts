@@ -173,14 +173,17 @@ test("GET stdout, stderr, and monitoring routes stream outer runner output", asy
     const port = await listen(transport.server);
 
     const stdout = request(port, "GET", "/stdout");
+
     transport.stdoutStream.end("out");
     t.deepEqual(await stdout, { statusCode: 200, body: Buffer.from("out") });
 
     const stderr = request(port, "GET", "/stderr");
+
     transport.stderrStream.end("err");
     t.deepEqual(await stderr, { statusCode: 200, body: Buffer.from("err") });
 
     const monitoring = request(port, "GET", "/monitoring");
+
     transport.monitorStream.end("mon");
     t.deepEqual(await monitoring, { statusCode: 200, body: Buffer.from("mon") });
 

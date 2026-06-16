@@ -239,6 +239,9 @@ export class ServiceDiscovery implements IServiceDiscovery {
             .finally(() => {
                 this.topicUpdateRunning = false;
                 this.runTopicUpdate();
+            })
+            .catch((e) => {
+                this.logger.error("Topic update chain error", e);
             });
     }
 

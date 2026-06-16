@@ -18,6 +18,7 @@ function tempLocalDir(testName: string): string {
 
 const createAdapter = (): { adapter: FileLocalStorageAdapter; testDir: string } => {
     const testDir = tempLocalDir("test");
+
     cleanupDir(testDir);
     fs.mkdirSync(testDir, { recursive: true });
     const adapter = new FileLocalStorageAdapter(testDir);
@@ -27,6 +28,7 @@ const createAdapter = (): { adapter: FileLocalStorageAdapter; testDir: string } 
 
 test.serial("FileLocalStorageAdapter: setItem() and getItem() work correctly", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -40,6 +42,7 @@ test.serial("FileLocalStorageAdapter: setItem() and getItem() work correctly", a
 
 test.serial("FileLocalStorageAdapter: overwriting a key updates its value", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -54,6 +57,7 @@ test.serial("FileLocalStorageAdapter: overwriting a key updates its value", asyn
 
 test.serial("FileLocalStorageAdapter: removeItem() should remove a key", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -68,6 +72,7 @@ test.serial("FileLocalStorageAdapter: removeItem() should remove a key", async t
 
 test.serial("FileLocalStorageAdapter: clear() should remove all keys and set length to 0", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -84,6 +89,7 @@ test.serial("FileLocalStorageAdapter: clear() should remove all keys and set len
 
 test.serial("FileLocalStorageAdapter: getAllItems() returns complete key-value mapping", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -98,6 +104,7 @@ test.serial("FileLocalStorageAdapter: getAllItems() returns complete key-value m
 
 test.serial("FileLocalStorageAdapter: length() returns correct number of keys", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -114,6 +121,7 @@ test.serial("FileLocalStorageAdapter: length() returns correct number of keys", 
 
 test.serial("FileLocalStorageAdapter: handles special characters in keys and values", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -130,6 +138,7 @@ test.serial("FileLocalStorageAdapter: handles special characters in keys and val
 
 test.serial("FileLocalStorageAdapter: concurrent setItem operations", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
@@ -148,12 +157,14 @@ test.serial("FileLocalStorageAdapter: concurrent setItem operations", async t =>
 
 test.serial("FileLocalStorageAdapter: setItem() rejects when disk write fails", async t => {
     const { adapter, testDir } = createAdapter();
+
     t.teardown(() => cleanupDir(testDir));
 
     await adapter.init();
     await adapter.clear();
 
     const backup = (adapter as any).localStorage.setItem;
+
     (adapter as any).localStorage.setItem = () => { throw new Error("Disk write error"); };
 
     try {

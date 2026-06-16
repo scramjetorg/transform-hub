@@ -28,6 +28,7 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof sequenceName !== "undefined") {
         if (typeof sequenceName !== "string") throw new Error("DTO sequenceName is not string");
         const s = sequenceName.trim();
+
         if (s.length === 0) throw new Error("DTO sequenceName is empty");
         // normalize in-place
         arg.sequenceName = s;
@@ -37,6 +38,7 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof instanceName !== "undefined") {
         if (typeof instanceName !== "string") throw new Error("DTO instanceName is not string");
         const n = instanceName.trim();
+
         if (n.length === 0) throw new Error("DTO instanceName is empty");
         arg.instanceName = n;
     }
@@ -45,6 +47,7 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof arg.instanceName === "undefined" && typeof name !== "undefined") {
         if (typeof name !== "string") throw new Error("DTO name is not string");
         const n = name.trim();
+
         if (n.length === 0) throw new Error("DTO name is empty");
         // Map deprecated name -> instanceName
         arg.instanceName = n; // eslint-disable-line @typescript-eslint/no-explicit-any

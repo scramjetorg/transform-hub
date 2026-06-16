@@ -73,6 +73,7 @@ export class StreamGraph {
 
             if (s._readableState?.pipes) {
                 const pipes = Array.isArray(s._readableState.pipes) ? s._readableState.pipes : [s._readableState.pipes];
+
                 for (const pipe of pipes) {
                     connections.push([s, pipe]);
                     walk(pipe);
@@ -95,7 +96,6 @@ export class StreamGraph {
             connections,
             circular
         };
-
     }
 
     static isReadable(stream: Readable | Writable | NodeStream): stream is Readable {
@@ -125,8 +125,8 @@ export class StreamGraph {
             readable: isReadable && stream.readable,
             writable: isWritable && stream.writable,
             length,
-            errored: !!stream.errored,
-        }
+            errored: !!stream.errored
+        };
 
         if (isWritable) {
             status.writableEnded = stream.writableEnded;

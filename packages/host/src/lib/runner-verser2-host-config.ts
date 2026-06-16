@@ -11,89 +11,6 @@ const GENERATED_CA_KEY_FILE = "ca-key.pem";
 const GENERATED_SERVER_CERT_FILE = "server.pem";
 const GENERATED_SERVER_KEY_FILE = "server-key.pem";
 
-export function createSthRunnerVerser2HostOptions(config: STHRunnerVerser2HostConfig): VerserHostOptions {
-    return {
-        hostId: createSthRunnerVerser2HostId(config),
-        host: config.host.bindHost,
-        port: config.host.bindPort,
-        tls: createSthRunnerVerser2HostTlsOptions(config)
-    };
-}
-
-export function createSthRunnerVerser2HostId(config: Pick<STHRunnerVerser2HostConfig, "localBroker">): string {
-    return `${config.localBroker.peerId}.host`;
-}
-
-export async function resolveSthRunnerVerser2HostConfig(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
-    if (hasConfiguredHostIdentity(config)) {
-        return loadConfiguredRunnerHostCa(config);
-    }
-
-    const identity = await ensureGeneratedSthRunnerVerser2HostIdentity(config);
-
-    return {
-        ...config,
-        ca: identity.ca,
-        caFile: identity.caFile,
-        host: {
-            ...config.host,
-            tls: {
-                ...config.host.tls,
-                certFile: identity.certFile,
-                keyFile: identity.keyFile
-            }
-        }
-    };
-}
-
-async function loadConfiguredRunnerHostCa(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
-    if (config.ca) {
-        return config;
-    }
-
-    if (!config.caFile) {
-        throw new Error("STH-local runner verser2 Host explicit TLS identity requires ca or caFile for runner trust");
-    }
-
-    return {
-        ...config,
-        ca: await readFile(config.caFile, "utf8")
-    };
-}
-
-export type GeneratedSthRunnerVerser2HostIdentity = {
-    ca: string;
-    caFile: string;
-    certFile: string;
-    keyFile: string;
-};
-
-export async function ensureGeneratedSthRunnerVerser2HostIdentity(config: STHRunnerVerser2HostConfig): Promise<GeneratedSthRunnerVerser2HostIdentity> {
-    const files = generatedIdentityFiles(config.identityDir);
-
-    await mkdir(config.identityDir, { recursive: true, mode: 0o700 });
-
-    const existing = await existingGeneratedFiles(files);
-
-    if (existing.length && existing.length !== Object.keys(files).length) {
-        throw new Error(`Incomplete STH-local runner verser2 Host identity in ${config.identityDir}`);
-    }
-
-    if (!existing.length) {
-        await generateIdentityFiles(config, files);
-    }
-
-    await assertPrivateFileMode(files.caKeyFile);
-    await assertPrivateFileMode(files.keyFile);
-
-    return {
-        ca: await readFile(files.caFile, "utf8"),
-        caFile: files.caFile,
-        certFile: files.certFile,
-        keyFile: files.keyFile
-    };
-}
-
 function hasConfiguredHostIdentity(config: STHRunnerVerser2HostConfig): boolean {
     const tls = config.host.tls;
 
@@ -107,6 +24,44 @@ function generatedIdentityFiles(identityDir: string) {
         certFile: join(identityDir, GENERATED_SERVER_CERT_FILE),
         keyFile: join(identityDir, GENERATED_SERVER_KEY_FILE)
     };
+}
+
+async function assertPrivateFileMode(file: string): Promise<void> {
+    if (process.platform === "win32") {
+        return;
+    }
+
+    const mode = (await stat(file)).mode & 0o777;
+
+    if (mode !== 0o600) {
+        throw new Error(`STH-local runner verser2 private key file must use 0600 permissions: ${file}`);
+    }
+}
+
+function getServerCommonName(config: STHRunnerVerser2HostConfig): string {
+    try {
+        return new URL(config.host.publicUrl).hostname || "sth-local-runner";
+    } catch {
+        return "sth-local-runner";
+    }
+}
+
+function getServerAltNames(config: STHRunnerVerser2HostConfig): Array<{ type: 2; value: string } | { type: 7; ip: string }> {
+    const hosts = new Set<string>();
+
+    try {
+        hosts.add(new URL(config.host.publicUrl).hostname);
+    } catch {
+        // publicUrl validation is handled by config layers; omit malformed SANs here.
+    }
+
+    if (config.host.bindHost && !["0.0.0.0", "::"].includes(config.host.bindHost)) {
+        hosts.add(config.host.bindHost);
+    }
+
+    return Array.from(hosts)
+        .filter(Boolean)
+        .map(host => isIP(host) ? { type: 7 as const, ip: host } : { type: 2 as const, value: host });
 }
 
 async function existingGeneratedFiles(files: ReturnType<typeof generatedIdentityFiles>): Promise<string[]> {
@@ -146,42 +101,56 @@ async function generateIdentityFiles(config: STHRunnerVerser2HostConfig, files: 
     await writeFile(files.keyFile, server.private, { mode: 0o600 });
 }
 
-function getServerCommonName(config: STHRunnerVerser2HostConfig): string {
-    try {
-        return new URL(config.host.publicUrl).hostname || "sth-local-runner";
-    } catch {
-        return "sth-local-runner";
+export type GeneratedSthRunnerVerser2HostIdentity = {
+    ca: string;
+    caFile: string;
+    certFile: string;
+    keyFile: string;
+};
+
+export async function ensureGeneratedSthRunnerVerser2HostIdentity(config: STHRunnerVerser2HostConfig): Promise<GeneratedSthRunnerVerser2HostIdentity> {
+    const files = generatedIdentityFiles(config.identityDir);
+
+    await mkdir(config.identityDir, { recursive: true, mode: 0o700 });
+
+    const existing = await existingGeneratedFiles(files);
+
+    if (existing.length && existing.length !== Object.keys(files).length) {
+        throw new Error(`Incomplete STH-local runner verser2 Host identity in ${config.identityDir}`);
     }
+
+    if (!existing.length) {
+        await generateIdentityFiles(config, files);
+    }
+
+    await assertPrivateFileMode(files.caKeyFile);
+    await assertPrivateFileMode(files.keyFile);
+
+    return {
+        ca: await readFile(files.caFile, "utf8"),
+        caFile: files.caFile,
+        certFile: files.certFile,
+        keyFile: files.keyFile
+    };
 }
 
-function getServerAltNames(config: STHRunnerVerser2HostConfig): Array<{ type: 2; value: string } | { type: 7; ip: string }> {
-    const hosts = new Set<string>();
-
-    try {
-        hosts.add(new URL(config.host.publicUrl).hostname);
-    } catch {
-        // publicUrl validation is handled by config layers; omit malformed SANs here.
+async function loadConfiguredRunnerHostCa(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
+    if (config.ca) {
+        return config;
     }
 
-    if (config.host.bindHost && !["0.0.0.0", "::"].includes(config.host.bindHost)) {
-        hosts.add(config.host.bindHost);
+    if (!config.caFile) {
+        throw new Error("STH-local runner verser2 Host explicit TLS identity requires ca or caFile for runner trust");
     }
 
-    return Array.from(hosts)
-        .filter(Boolean)
-        .map(host => isIP(host) ? { type: 7 as const, ip: host } : { type: 2 as const, value: host });
+    return {
+        ...config,
+        ca: await readFile(config.caFile, "utf8")
+    };
 }
 
-async function assertPrivateFileMode(file: string): Promise<void> {
-    if (process.platform === "win32") {
-        return;
-    }
-
-    const mode = (await stat(file)).mode & 0o777;
-
-    if (mode !== 0o600) {
-        throw new Error(`STH-local runner verser2 private key file must use 0600 permissions: ${file}`);
-    }
+export function createSthRunnerVerser2HostId(config: Pick<STHRunnerVerser2HostConfig, "localBroker">): string {
+    return `${config.localBroker.peerId}.host`;
 }
 
 function createSthRunnerVerser2HostTlsOptions(config: STHRunnerVerser2HostConfig): VerserHostTlsOptions {
@@ -235,5 +204,36 @@ function createSthRunnerVerser2HostTlsOptions(config: STHRunnerVerser2HostConfig
                 return { action: "allow" };
             }
         }
+    };
+}
+
+export async function resolveSthRunnerVerser2HostConfig(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
+    if (hasConfiguredHostIdentity(config)) {
+        return loadConfiguredRunnerHostCa(config);
+    }
+
+    const identity = await ensureGeneratedSthRunnerVerser2HostIdentity(config);
+
+    return {
+        ...config,
+        ca: identity.ca,
+        caFile: identity.caFile,
+        host: {
+            ...config.host,
+            tls: {
+                ...config.host.tls,
+                certFile: identity.certFile,
+                keyFile: identity.keyFile
+            }
+        }
+    };
+}
+
+export function createSthRunnerVerser2HostOptions(config: STHRunnerVerser2HostConfig): VerserHostOptions {
+    return {
+        hostId: createSthRunnerVerser2HostId(config),
+        host: config.host.bindHost,
+        port: config.host.bindPort,
+        tls: createSthRunnerVerser2HostTlsOptions(config)
     };
 }

@@ -10,70 +10,11 @@ const GENERATED_CA_KEY_FILE = "ca-key.pem";
 const GENERATED_SERVER_CERT_FILE = "server-cert.pem";
 const GENERATED_SERVER_KEY_FILE = "server-key.pem";
 
-export async function resolveManagerVerser2HostConfig(
-    config: ManagerVerser2Config,
-    label = "Manager"
-): Promise<ManagerVerser2Config> {
-    if (hasConfiguredHostIdentity(config)) {
-        return config;
-    }
-
-    const identityDir = config.host.identityDir;
-
-    if (!identityDir) {
-        throw new Error("verser2 Host TLS requires certFile/keyFile, pfxFile, or host.identityDir");
-    }
-
-    const identity = await ensureGeneratedManagerVerser2HostIdentity(config, identityDir, label);
-
-    return {
-        ...config,
-        host: {
-            ...config.host,
-            tls: {
-                ...config.host.tls,
-                caFile: identity.caFile,
-                certFile: identity.certFile,
-                keyFile: identity.keyFile
-            }
-        }
-    };
-}
-
 type GeneratedManagerVerser2HostIdentity = {
     caFile: string;
     certFile: string;
     keyFile: string;
 };
-
-async function ensureGeneratedManagerVerser2HostIdentity(
-    config: ManagerVerser2Config,
-    identityDir: string,
-    label: string
-): Promise<GeneratedManagerVerser2HostIdentity> {
-    const files = generatedIdentityFiles(identityDir);
-
-    await mkdir(identityDir, { recursive: true, mode: 0o700 });
-
-    const existing = existingGeneratedFiles(files);
-
-    if (existing.length && existing.length !== Object.keys(files).length) {
-        throw new Error(`Incomplete ${label} verser2 Host identity in ${identityDir}`);
-    }
-
-    if (!existing.length) {
-        await generateIdentityFiles(config, files, label);
-    }
-
-    await assertPrivateFileMode(files.caKeyFile, label);
-    await assertPrivateFileMode(files.keyFile, label);
-
-    return {
-        caFile: files.caFile,
-        certFile: files.certFile,
-        keyFile: files.keyFile
-    };
-}
 
 function hasConfiguredHostIdentity(config: ManagerVerser2Config): boolean {
     const tls = config.host.tls;
@@ -92,6 +33,44 @@ function generatedIdentityFiles(identityDir: string) {
 
 function existingGeneratedFiles(files: ReturnType<typeof generatedIdentityFiles>): string[] {
     return Object.values(files).filter(file => existsSync(file));
+}
+
+function getServerCommonName(config: ManagerVerser2Config, label: string): string {
+    try {
+        return new URL(config.host.publicUrl).hostname || label.toLowerCase();
+    } catch {
+        return label.toLowerCase();
+    }
+}
+
+function getServerAltNames(config: ManagerVerser2Config): Array<{ type: 2; value: string } | { type: 7; ip: string }> {
+    const hosts = new Set<string>();
+
+    try {
+        hosts.add(new URL(config.host.publicUrl).hostname);
+    } catch {
+        // Config validation handles URL shape before production use.
+    }
+
+    if (config.host.bindHost && !["0.0.0.0", "::"].includes(config.host.bindHost)) {
+        hosts.add(config.host.bindHost);
+    }
+
+    return Array.from(hosts)
+        .filter(Boolean)
+        .map(host => isIP(host) ? { type: 7 as const, ip: host } : { type: 2 as const, value: host });
+}
+
+async function assertPrivateFileMode(file: string, label: string): Promise<void> {
+    if (process.platform === "win32") {
+        return;
+    }
+
+    const mode = (await stat(file)).mode & 0o777;
+
+    if (mode !== 0o600) {
+        throw new Error(`${label} verser2 private key file must use 0600 permissions: ${file}`);
+    }
 }
 
 async function generateIdentityFiles(
@@ -131,42 +110,63 @@ async function generateIdentityFiles(
     await writeFile(files.keyFile, server.private, { mode: 0o600 });
 }
 
-function getServerCommonName(config: ManagerVerser2Config, label: string): string {
-    try {
-        return new URL(config.host.publicUrl).hostname || label.toLowerCase();
-    } catch {
-        return label.toLowerCase();
+async function ensureGeneratedManagerVerser2HostIdentity(
+    config: ManagerVerser2Config,
+    identityDir: string,
+    label: string
+): Promise<GeneratedManagerVerser2HostIdentity> {
+    const files = generatedIdentityFiles(identityDir);
+
+    await mkdir(identityDir, { recursive: true, mode: 0o700 });
+
+    const existing = existingGeneratedFiles(files);
+
+    if (existing.length && existing.length !== Object.keys(files).length) {
+        throw new Error(`Incomplete ${label} verser2 Host identity in ${identityDir}`);
     }
+
+    if (!existing.length) {
+        await generateIdentityFiles(config, files, label);
+    }
+
+    await assertPrivateFileMode(files.caKeyFile, label);
+    await assertPrivateFileMode(files.keyFile, label);
+
+    return {
+        caFile: files.caFile,
+        certFile: files.certFile,
+        keyFile: files.keyFile
+    };
 }
 
-function getServerAltNames(config: ManagerVerser2Config): Array<{ type: 2; value: string } | { type: 7; ip: string }> {
-    const hosts = new Set<string>();
-
-    try {
-        hosts.add(new URL(config.host.publicUrl).hostname);
-    } catch {
-        // Config validation handles URL shape before production use.
+export async function resolveManagerVerser2HostConfig(
+    config: ManagerVerser2Config,
+    label = "Manager"
+): Promise<ManagerVerser2Config> {
+    if (hasConfiguredHostIdentity(config)) {
+        return config;
     }
 
-    if (config.host.bindHost && !["0.0.0.0", "::"].includes(config.host.bindHost)) {
-        hosts.add(config.host.bindHost);
+    const identityDir = config.host.identityDir;
+
+    if (!identityDir) {
+        throw new Error("verser2 Host TLS requires certFile/keyFile, pfxFile, or host.identityDir");
     }
 
-    return Array.from(hosts)
-        .filter(Boolean)
-        .map(host => isIP(host) ? { type: 7 as const, ip: host } : { type: 2 as const, value: host });
-}
+    const identity = await ensureGeneratedManagerVerser2HostIdentity(config, identityDir, label);
 
-async function assertPrivateFileMode(file: string, label: string): Promise<void> {
-    if (process.platform === "win32") {
-        return;
-    }
-
-    const mode = (await stat(file)).mode & 0o777;
-
-    if (mode !== 0o600) {
-        throw new Error(`${label} verser2 private key file must use 0600 permissions: ${file}`);
-    }
+    return {
+        ...config,
+        host: {
+            ...config.host,
+            tls: {
+                ...config.host.tls,
+                caFile: identity.caFile,
+                certFile: identity.certFile,
+                keyFile: identity.keyFile
+            }
+        }
+    };
 }
 
 export async function readGeneratedManagerVerser2Ca(config: ManagerVerser2Config): Promise<string | undefined> {

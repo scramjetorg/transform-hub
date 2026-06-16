@@ -4,10 +4,8 @@ import { join } from "path";
 // All tests fail until python-process-executor.ts is implemented (RED tests).
 // We use a runtime require() so that the missing module doesn't break TS compilation
 // at file-load time — it must throw inside the test body to register as a failure.
-const MODULE_PATH = "../../src/executor/python-process-executor";
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const loadModule = (): any => require(MODULE_PATH);
+const loadModule = (): any => require("../../src/executor/python-process-executor");
 
 test("RUNNER_PYTHON_STDIO matches RUNNER_NODE_STDIO layout", (t) => {
     const { RUNNER_PYTHON_STDIO } = loadModule();
@@ -47,8 +45,8 @@ test("child env strips SEQUENCE_PATH, SEQUENCE_INFO, RUNNER_CONNECT_INFO", async
 
     // Set the env vars in parent; spawn child that prints its env
     process.env.SEQUENCE_PATH = "/test/path";
-    process.env.SEQUENCE_INFO = '{"id":"test"}';
-    process.env.RUNNER_CONNECT_INFO = '{"args":[]}';
+    process.env.SEQUENCE_INFO = "{\"id\":\"test\"}";
+    process.env.RUNNER_CONNECT_INFO = "{\"args\":[]}";
 
     try {
         const handles = spawnRunnerPython({
@@ -104,8 +102,8 @@ test("NO REQUESTS channel is opened by outer runner on Python path", async (t) =
 
     // Verify no extra channel was created for REQUESTS
     // fd4 should be a duplex pipe, fd5 should be a duplex pipe
-    t.truthy(stdio[4]);  // fd4 control
-    t.truthy(stdio[5]);  // fd5 monitoring
+    t.truthy(stdio[4]); // fd4 control
+    t.truthy(stdio[5]); // fd5 monitoring
 
     handles.child.kill();
     await new Promise((resolve) => handles.child.on("close", resolve));

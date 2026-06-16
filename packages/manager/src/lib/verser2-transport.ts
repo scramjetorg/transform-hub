@@ -55,7 +55,7 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
     private suppressedRouteSignature: string | undefined;
     private readonly routeWaiters = new Set<{
         promise: Promise<void>;
-        reject: (error: Error) => void;
+        reject:(error: Error) => void;
         timer: NodeJS.Timeout;
         timeout?: NodeJS.Timeout;
     }>();
@@ -163,11 +163,16 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
         let resolveWaiter!: () => void;
         let rejectWaiter!: (error: Error) => void;
         let finished = false;
-        let waiter!: {
+
+        const waiter: {
             promise: Promise<void>;
             reject: (error: Error) => void;
             timer: NodeJS.Timeout;
             timeout?: NodeJS.Timeout;
+        } = {
+            promise: Promise.resolve() as Promise<void>,
+            reject: (() => {}) as unknown as (error: Error) => void,
+            timer: undefined as unknown as NodeJS.Timeout,
         };
 
         const finish = (error?: Error) => {
@@ -203,11 +208,8 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
             }
         };
 
-        waiter = {
-            promise: Promise.resolve(),
-            reject: finish,
-            timer: setInterval(check, 10),
-        };
+        waiter.timer = setInterval(check, 10);
+        waiter.reject = finish;
 
         waiter.promise = new Promise<void>((resolve, reject) => {
             resolveWaiter = resolve;

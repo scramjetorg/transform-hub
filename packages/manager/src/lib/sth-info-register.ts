@@ -36,7 +36,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
 
         sequencesMap.set(seqId, new Set());
         this.logger.info(`Sequence added ${seqId}.`);
-        if (seqConfig){
+        if (seqConfig) {
             const newSequence: SequenceInfo = {
                 id: seqId,
                 config: seqConfig,
@@ -128,7 +128,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
         return Array.from(this.hostsMap.keys());
     }
 
-    getSequences(): SequenceInfo[]{
+    getSequences(): SequenceInfo[] {
         const allSequencesArray = [];
 
         for (const [, sequences] of this.sequencesStore) {
@@ -152,7 +152,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
         return allSequencesArray;
     }
 
-    getSequencesByHub(hostId: string): string[]{
+    getSequencesByHub(hostId: string): string[] {
         const sequencesMap = this.hostsMap.get(hostId);
 
         if (sequencesMap === undefined) {
@@ -161,7 +161,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
         return Array.from(sequencesMap.keys());
     }
 
-    getInstances(): Instance[]{
+    getInstances(): Instance[] {
         return Array.from(this.instancesStore.values());
     }
 
@@ -171,7 +171,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
             return;
         }
 
-        this.hostsMap.get(id)?.forEach((instancesSet, sequenceId) => {
+        this.hostsMap.get(id)?.forEach((instancesSet, _sequenceId) => {
             instancesSet.forEach((instanceId) => {
                 this.instancesStore.delete(instanceId);
             });

@@ -280,7 +280,9 @@ export class CPMConnector extends TypedEmitter<Events> {
             .on("error", (e: Error) => {
                 if (this.isAbandoned) return;
                 this.logger.error("Communication stream error", e.message);
-                this.reconnect();
+                this.reconnect().catch((_e) => {
+                    this.logger.error("Reconnection error", _e);
+                });
             })
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
@@ -322,7 +324,10 @@ export class CPMConnector extends TypedEmitter<Events> {
             .catch((e: any) => {
                 this.logger.warn("communicationChannel error", e.message);
             })
-            .run();
+            .run()
+            .catch((e: any) => {
+                this.logger.warn("communicationChannel run error", e.message);
+            });
 
         this.communicationStream = new StringStream().JSONStringify();
         this.communicationStream.pipe(duplex.output);
@@ -465,7 +470,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {void}
      */
     async reconnect(): Promise<void> {
-
         this.connectionAttempts++;
 
         let shouldReconnect = true;

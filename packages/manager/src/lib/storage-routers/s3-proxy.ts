@@ -40,18 +40,17 @@ export class S3Proxy {
     async loadIndex(): Promise<void> {
         this.logger.info("Looking for s3 index in bucket", this.bucket);
         try {
-            await new Promise<void>(async (resolve, reject) => {
+            await new Promise<void>((resolveStat, rejectStat) => {
                 this.s3Client.statObject(this.bucket, `${this.id}/index.json`)
-                    .then(() => resolve())
-                    .catch(async (error: any) => {
+                    .then(() => resolveStat())
+                    .catch((error: any) => {
                         this.logger.info(`S3 index ${error.code}, bucket: ${this.bucket}, folder: ${this.id}`);
 
                         if (error.code === "NotFound" || error.code === "NoSuchKey") {
-                            await this.saveIndex();
-                            resolve();
+                            this.saveIndex().then(() => resolveStat()).catch((e) => rejectStat(e));
                         } else {
                             this.logger.info("S3 index", error);
-                            reject();
+                            rejectStat();
                         }
                     });
             });
@@ -107,7 +106,6 @@ export class S3Proxy {
 
                 this.logger.info(`Sequences index in bucket ${this.bucket}, folder: ${this.id} updated`);
                 success = true;
-
             } catch (error: any) {
                 this.logger.error(`Sequences index in bucket ${this.bucket}, folder: ${this.id} update failed`, error && error.code);
 
@@ -126,9 +124,7 @@ export class S3Proxy {
         await this.saveIndex();
     }
 
-    async clearIndex() : Promise<void>{
-
-
+    async clearIndex() : Promise<void> {
         this.index.sequences = await this.index.sequences.reduce(async (acc: Promise<SequenceInfo[]>, item) => {
             const results = await acc;
 
@@ -189,7 +185,6 @@ export class S3Proxy {
             this.index.sequences = this.index.sequences.filter(seq => {
                 return seq._filename !== filename && seq._fileId !== filename;
             });
-
 
             if (originalLength !== this.index.sequences.length) {
                 await this.saveIndex();

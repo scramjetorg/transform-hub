@@ -13,6 +13,20 @@ export type MultiManagerVerser2TrustExport = {
     };
 };
 
+function extractCertificatePemBundle(contents: string): string {
+    const blocks = contents.match(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g) || [];
+
+    if (!blocks.length) {
+        throw new Error("MultiManager verser2 trust export requires certificate PEM material");
+    }
+
+    if (blocks.some(block => !block.startsWith("-----BEGIN CERTIFICATE-----"))) {
+        throw new Error("MultiManager verser2 trust export refuses non-certificate PEM material");
+    }
+
+    return blocks.join("\n");
+}
+
 export async function getMultiManagerVerser2TrustExport(
     verser2: ManagerVerser2Config,
     manager?: Pick<ManagerConfiguration, "verser2">
@@ -36,18 +50,4 @@ export async function getMultiManagerVerser2TrustExport(
             guest: manager?.verser2.localGuest.routeDomain || verser2.localGuest.routeDomain
         }
     };
-}
-
-function extractCertificatePemBundle(contents: string): string {
-    const blocks = contents.match(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g) || [];
-
-    if (!blocks.length) {
-        throw new Error("MultiManager verser2 trust export requires certificate PEM material");
-    }
-
-    if (blocks.some(block => !block.startsWith("-----BEGIN CERTIFICATE-----"))) {
-        throw new Error("MultiManager verser2 trust export refuses non-certificate PEM material");
-    }
-
-    return blocks.join("\n");
 }

@@ -199,6 +199,7 @@ test("broker RPC transport request preserves broker response body and headers", 
 
     // Body passthrough
     const chunks: Buffer[] = [];
+
     response.body.on("data", (chunk: Buffer) => chunks.push(chunk));
     brokerResponseBody.end("response-data");
     await new Promise<void>(resolve => response.body.on("end", resolve));
@@ -213,6 +214,7 @@ test("broker RPC transport request preserves broker response body and headers", 
 
 test("forwardRpcRequest domain derived from Verser2RunnerTransport.getRouteDomain(instanceId)", t => {
     const domain = Verser2RunnerTransport.getRouteDomain("inst-42");
+
     t.is(domain, "runner.inst-42.scramjet.internal");
 });
 

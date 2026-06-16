@@ -1,14 +1,6 @@
 import { ManagerVerser2Config } from "@scramjet/types";
 import { VerserHostOptions, VerserHostTlsOptions } from "@signicode/verser2-host";
 
-export function createVerser2HostOptions(config: ManagerVerser2Config): VerserHostOptions {
-    return {
-        host: config.host.bindHost,
-        port: config.host.bindPort,
-        tls: createVerser2HostTlsOptions(config)
-    };
-}
-
 function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTlsOptions {
     const tls = config.host.tls;
     let identity: VerserHostTlsOptions;
@@ -60,5 +52,13 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
                 return { action: "allow" };
             }
         }
+    };
+}
+
+export function createVerser2HostOptions(config: ManagerVerser2Config): VerserHostOptions {
+    return {
+        host: config.host.bindHost,
+        port: config.host.bindPort,
+        tls: createVerser2HostTlsOptions(config)
     };
 }

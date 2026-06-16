@@ -41,7 +41,7 @@ const handleConnResetErrors = (stream: Readable | Writable, callback: (e: Error)
         }
         callback(e);
     });
-}
+};
 
 export class STHController extends TypedEmitter<STHControllerEvents> implements ISTHController {
     id: string;
@@ -292,6 +292,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
                 } catch (error: any) {
                     this.logger.error("Error while parsing message", error.message);
                     this.logger.debug("Error message", message, error.stack);
+                    return undefined;
                 }
             })
             .resume();
@@ -351,7 +352,9 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
                 break;
             case CPMMessageCode.EVENT:
                 const eventData = message[1] as SpaceEventMessageData;
-                this.eventMessageHandler(eventData);
+
+                await this.eventMessageHandler(eventData);
+                break;
             default:
                 break;
         }
@@ -435,7 +438,6 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     }
 
     dispose() {
-
         this.communicationChannel?.destroy();
         this.communicationStream?.destroy();
 

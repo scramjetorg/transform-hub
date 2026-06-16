@@ -54,6 +54,24 @@ export type RunnerTransportConfigVerser2 = {
 
 export type RunnerTransportConfigResult = RunnerTransportConfigVerser2;
 
+function normalizeTls(value: unknown): RunnerTransportConfigTls | undefined {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        return undefined;
+    }
+
+    const { ca, caFile, ...rest } = value as RunnerTransportConfigTls;
+
+    if (typeof ca === "string" && ca.trim()) {
+        return { ...rest, ca: ca.trim() };
+    }
+
+    if (typeof caFile === "string" && caFile.trim()) {
+        return { ...rest, caFile: caFile.trim() };
+    }
+
+    return rest;
+}
+
 /**
  * Parse the `SCRAMJET_RUNNER_TRANSPORT_CONFIG` environment variable and
  * return the resolved transport configuration.
@@ -84,6 +102,7 @@ export function parseRunnerTransportConfig(
     }
 
     let parsed: Record<string, unknown>;
+
     try {
         parsed = JSON.parse(raw);
     } catch (e) {
@@ -155,22 +174,4 @@ export function parseRunnerTransportConfig(
         ...(leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs } : {}),
         ...(minWaitingStreams !== undefined ? { minWaitingStreams } : {})
     };
-}
-
-function normalizeTls(value: unknown): RunnerTransportConfigTls | undefined {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-        return undefined;
-    }
-
-    const { ca, caFile, ...rest } = value as RunnerTransportConfigTls;
-
-    if (typeof ca === "string" && ca.trim()) {
-        return { ...rest, ca: ca.trim() };
-    }
-
-    if (typeof caFile === "string" && caFile.trim()) {
-        return { ...rest, caFile: caFile.trim() };
-    }
-
-    return rest;
 }

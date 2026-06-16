@@ -134,8 +134,9 @@ export class ObjLogger implements IObjectLogger {
      * @param {any} reference Used to obtain a name for the logger.
      * @param {LogEntry} baseLog Default log object.
      * @param {LogLevel} logLevel Log level.
+     * @param {number} _keep Deprecated, unused compatibility parameter.
      */
-    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "INFO", keep: number = 10_000) {
+    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "INFO", _keep: number = 10_000) {
         this.name = getName(reference);
 
         this.baseLog = baseLog;
@@ -268,7 +269,7 @@ export class ObjLogger implements IObjectLogger {
             .lines()
             .on("data", (line: string) => {
                 this.inputStringifiedLogStream.write(`${line}\n`);
-            })
+            });
     }
 
     /**

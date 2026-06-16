@@ -142,6 +142,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
                         const mergedConfig: DeepPartial<SequenceDeployArgs> = startupConfig || {};
+
                         merge(mergedConfig, {
                             appConfig,
                             args,
@@ -199,6 +200,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
                         const mergedConfig: DeepPartial<SequenceDeployArgs> = startupConfig || {};
+
                         merge(mergedConfig, {
                             output,
                             appConfig,
