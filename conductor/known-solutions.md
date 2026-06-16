@@ -35,3 +35,9 @@ Problem: Broad Node/npm validation or subagent-triggered tests can exceed availa
 Solution: Run Node/npm validation with `NODE_OPTIONS="--max-old-space-size=1536"`; instruct review agents not to run commands unless they use this guard, and prefer focused package tests/builds over broad suites.
 Constraints: Apply to validation/test/build commands in this repo; do not use it to hide real test failures; still inspect non-OOM failures normally.
 Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the user explicitly requests an unguarded run.
+
+### Signicode GitHub Packages auth for verser2
+Problem: Direct `npm view @signicode/verser2-*` commands fail with 401 Unauthorized because the scoped GitHub Packages registry requires an ephemeral `NODE_AUTH_TOKEN` and userconfig.
+Solution: Use `npm run check:verser2-packages` or invoke npm with a temporary `.npmrc` containing `@signicode:registry=https://npm.pkg.github.com` and `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`, loading `GITHUB_PACKAGES_TOKEN` from the environment or `.env`.
+Constraints: Never persist or print tokens; do not modify global npm/gh auth; use the existing checker script when possible because it creates and removes a temporary 0600 userconfig.
+Ignore-If: The token is absent or lacks package read access; the failure is a real missing package/version after authenticated GitHub Packages resolution; the task intentionally changes package registry wiring.
