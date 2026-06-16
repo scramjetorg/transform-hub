@@ -63,7 +63,7 @@ import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
 import { createSthRunnerVerser2HostOptions, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
-import { attachSthLocalRunnerVerser2Peers } from "./runner-verser2-host-peers";
+import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
@@ -967,6 +967,25 @@ export class Host implements IHost, IComponent {
 
             this.runnerVerser2Broker = peers.broker;
             this.runnerVerser2Guest = peers.guest;
+
+            const upstreamParams = getRunnerVerser2HostUpstreamParams(this.config.verser2, !!this.isCPMConfigured());
+
+            if (upstreamParams) {
+                try {
+                    await this.runnerVerser2Host.connectUpstream(upstreamParams);
+                    this.logger.info("STH-local runner verser2 Host connected to Manager upstream", {
+                        upstreamId: upstreamParams.upstreamId,
+                        url: upstreamParams.url
+                    });
+                } catch (error) {
+                    this.logger.warn("STH-local runner verser2 Host Manager upstream connection failed", error);
+
+                    if (this.config.strictPlatformConnection) {
+                        throw error;
+                    }
+                }
+            }
+
             this.logger.info("STH-local runner verser2 Host started", this.runnerVerser2Host.address);
         }
     }
