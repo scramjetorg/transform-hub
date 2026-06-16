@@ -21,3 +21,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [ ] **Track: api and docs revamp**
 *Link: [./tracks/api_docs_revamp_20260616/](./tracks/api_docs_revamp_20260616/)*
+
+---
+
+- [ ] **Track: Clean verser2 GitHub token override guidance from the public surface while keeping the reusable helper internal.**
+*Link: [./tracks/verser2_public_20260616/](./tracks/verser2_public_20260616/)*
