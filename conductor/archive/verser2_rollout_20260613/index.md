@@ -1,7 +1,7 @@
 # Track verser2_rollout_20260613 Context
 
 - [Specification](./spec.md)
-- [Implementation Plan](./plan.md)
+- [Outcomes](./outcomes.md)
 - [Architecture](./architecture.md)
 - [Route Forwarding Classification](./route-forwarding-classification.md)
 - [Automated Review Checklist](./review-checklist.md)
