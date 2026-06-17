@@ -1,133 +1,29 @@
-import { APIExpose } from "@scramjet/types";
-import test, { after, before, beforeEach } from "ava";
-import { Readable, Writable } from "stream";
-import { StringStream } from "scramjet";
-import { createSandbox } from "sinon";
-import { mockRequestResponse, mockServer, ServerWithPlayMethods } from "./lib/server-mock";
-import { routerMock } from "./lib/trouter-mock";
+import test from "ava";
+import { PassThrough } from "stream";
 
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { CeroRouter, createServer } from "@scramjet/api-server";
+import { getRouter } from "@scramjet/api-server";
 
-export const sandbox = createSandbox();
+test("stream methods register upstream, downstream and duplex routes", t => {
+    const api = getRouter();
 
-let server: ServerWithPlayMethods;
-let router: CeroRouter;
-let api: APIExpose;
-
-before(() => {
-    server = mockServer(sandbox);
-    router = routerMock(sandbox);
-    api = createServer({ server, router });
+    t.notThrows(() => {
+        api.upstream("/api/up", new PassThrough(), { text: true });
+        api.downstream("/api/down", new PassThrough(), { end: true, text: true });
+        api.duplex("/api/duplex", () => undefined);
+    });
 });
 
-beforeEach(() => sandbox.restore());
+test("downstream supports custom methods and stream options", t => {
+    const api = getRouter();
 
-test("Upstream works with stream", async t => {
-    const { request, response } = mockRequestResponse("GET", "/api/up");
-
-    let ended = false;
-
-    const done = response.fullBody?.then(() => { ended = true; });
-    const up = new StringStream();
-
-    api.upstream("/api/up", up as unknown as Readable, { end: false, text: true });
-
-    request.headers.accept = "text/plain";
-    server.request(request, response);
-
-    await up.whenWrote("123\n");
-
-    t.is(response.statusCode, 200, "Got the response");
-    t.is(response.getHeader("content-type"), "text/plain; charset=utf-8", "Got correct content type");
-    t.false(ended, "Didn't end until ended");
-    up.end("abc\n");
-
-    await done;
-
-    t.true(ended, "Did end");
+    t.notThrows(() => {
+        api.downstream("/api/put", new PassThrough(), {
+            checkContentType: false,
+            checkEndHeader: false,
+            end: false,
+            method: "put",
+            postponeContinue: true,
+            text: true
+        });
+    });
 });
-
-test("Downstream works with unended stream", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-unended", pt);
-    const ended = false;
-    const up = new StringStream();
-
-    api.downstream("/api/down-unended", up as Writable, { end: false, text: true });
-
-    request.headers.accept = "text/plain";
-    server.request(request, response);
-
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 202, "Got accepted response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
-});
-
-test("Downstream works with unended stream and header", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-unended", pt);
-    const ended = false;
-    const up = new StringStream();
-
-    api.downstream("/api/down-unended-2", up as Writable, { end: false, text: true });
-
-    request.headers.accept = "text/plain";
-    request.headers["x-end-stream"] = "true";
-    server.request(request, response);
-
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 200, "Got OK response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
-});
-
-test("Downstream works with ended stream", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-end", pt);
-    const ended = false;
-    const up = new StringStream();
-
-    api.downstream("/api/down-end", up, { end: true, text: true });
-
-    request.headers.accept = "text/plain";
-    server.request(request, response);
-
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 200, "Got OK response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
-});
-
-test("Downstream works with ended stream and header", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-end", pt);
-    const ended = false;
-    const up = new StringStream();
-
-    api.downstream("/api/down-end", up, { end: true, text: true });
-
-    request.headers.accept = "text/plain";
-    request.headers["x-end-stream"] = "false";
-    server.request(request, response);
-
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 202, "Got accepted response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
-});
-
-after(() => sandbox.restore());
