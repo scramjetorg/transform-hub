@@ -11,8 +11,8 @@
     - [x] Prepare PR title/description describing the intended complete v2 API/router state
       - PR title: `feat(api): add schema-aware v2 router and API client surface`.
       - PR description should summarize router package foundation, HTTP/verser2 execution, OpenAPI generation, v2 rollout, v1 compatibility, and validation gates.
-    - [ ] Create or update the PR when remote permissions and workflow allow
-      - Deferred until the Phase 1 checkpoint commit exists so the PR has the active track status and inventory notes.
+    - [x] Create or update the PR when remote permissions and workflow allow
+      - PR opened and updated from `conductor/api-revamp-20260617`: https://github.com/0rail/transform-hub/pull/13
 - [x] Task: Confirm affected packages, entrypoints, and current API behavior
     - [x] Read package codemaps for `packages/api-server`, `packages/host`, `packages/manager`, `packages/multi-manager`, and affected client/test packages
       - Relevant entrypoints: `packages/api-server/src/index.ts`, `packages/api-server/src/lib/0http.ts`, `packages/host/src/lib/host.ts`, `packages/host/src/lib/api/host-api.ts`, `packages/host/src/lib/api/instance-api.ts`, `packages/manager/src/lib/manager.ts`, `packages/manager/src/lib/route-classifier.ts`, `packages/manager/src/lib/verser2-transport.ts`, and `packages/multi-manager/src/lib/multi-manager.ts`.
@@ -43,7 +43,7 @@
       - Do not copy runtime/store/config/backend adapter internals into route schemas; use public REST DTO/config response types instead.
       - Do not import internal `packages/api-server/test` helpers; create package-local test utilities or extract shared helpers later if reuse becomes necessary.
       - Do not expose runner message tuple plumbing as API-router surface; use API stream abstractions instead.
-- [~] Task: Establish automated regression baseline
+- [x] Task: Establish automated regression baseline
     - [x] Identify exact package test files covering `packages/api-server`, Host, Manager, MultiManager, CSI/Instance, and verser2 behavior
       - `packages/api-server/test/routed-forward.spec.ts`, `0http.spec.ts`, `server.spec.ts`, `rest-methods.spec.ts`, `stream-methods.spec.ts` cover current server, REST, stream, and routed-forwarding behavior.
       - `packages/host/test/csi-rpc-forwarding.spec.ts`, `runner-transport.spec.ts`, `runner-verser2-host-config.spec.ts`, `runner-verser2-host-upstream.spec.ts`, `runner-verser2-host-peers.spec.ts`, `rpc-url-normalization.spec.ts`, `instance-store.spec.ts`, and `sequence-store.spec.ts` cover Host/CSI/runner-verser2 behavior.
@@ -79,7 +79,9 @@
       - API surface inventory recorded for Host, Instance/CSI, Manager, MultiManager, stream behavior, forwarding, and verser2 bridges.
       - Shared-package reuse and intentional non-use decisions recorded.
       - Regression baseline files, dry-selected commands, BDD gates, no-circumvention insertion points, and baseline command results recorded.
-      - Validation so far: `npm --prefix packages/api-server run test:ava` passed; legacy script selection failure classified as preexisting/stale and recorded.
+      - api-server stale legacy-test path was fixed before continuation; `test:ava` is now the single api-server package test path.
+      - Validation so far: `npm --prefix packages/api-server test` passed with 48 tests; api-server source coverage is `80.46%` statements and `80.96%` lines through the recorded nyc command.
+      - Phase 1 pushed commits include `de75c287`, `dc1cb951`, and `7467786d` on PR #13.
 
 ## Phase 2: `@scramjet/api-router` Package Foundation
 
