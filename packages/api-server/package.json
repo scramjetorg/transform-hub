@@ -44,6 +44,8 @@
       "test/server.spec.ts",
       "test/stream-methods.spec.ts",
       "test/rest-methods.spec.ts",
+      "test/support.spec.ts",
+      "test/handler-execution.spec.ts",
       "test/routed-forward.spec.ts"
     ],
     "require": [

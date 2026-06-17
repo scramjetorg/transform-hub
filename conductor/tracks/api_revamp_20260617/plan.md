@@ -62,6 +62,9 @@
       - Fixed ahead of continuation by making `test:ava` the single api-server test path, including the API surface tests in the package AVA file list, removing `test:legacy`, and rewriting `server.spec.ts`, `stream-methods.spec.ts`, and `rest-methods.spec.ts` as fast registration/surface tests.
       - Ran `npm --prefix packages/api-server run test:ava`: passed, 34 tests.
       - Ran `npm --prefix packages/api-server test`: passed, 34 tests.
+      - Extended fast coverage with `support.spec.ts` and `handler-execution.spec.ts` for config, middleware, strategies, MIME/data extractors, facade, duplex, and handler execution paths.
+      - Ran `npx nyc --reporter=text --reporter=json-summary --include "packages/api-server/src/**/*.ts" npm --prefix packages/api-server run test:ava`: passed, 48 tests; coverage `80.46%` statements and `80.96%` lines for `packages/api-server/src`.
+      - Ran `npm --prefix packages/api-server test`: passed, 48 tests.
     - [x] Identify which BDD smoke tests are automated gates for later phases and which are manual/escalation-only
       - Automated gates: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-api-topic`, `npm run test:bdd-ci-hub`, `npm run test:bdd-ci-hub-docker` when Docker behavior changes, `npm run test:bdd-ci-verser2`, `npm run test:bdd-ci-node`, and `npm run test:bdd-ci-python` when runtime behavior is affected.
       - Manual/escalation-only unless a phase explicitly requires them: `npm run test:bdd-long`, `npm run test:bdd-manager-migration`, unfiltered `npm run test:bdd`, and experimental unified-runtime BDD commands.
