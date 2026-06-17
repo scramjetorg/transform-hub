@@ -1,7 +1,9 @@
 import { RouteDefinition, RouteManifest, RouteManifestEntry, joinPaths, normalizePath, routeId } from "./manifest";
+import { RouteHook } from "./hooks";
 
 export type RouterOptions = {
     basePath?: string;
+    hooks?: RouteHook[];
 };
 
 export class DuplicateRouteError extends Error {
@@ -13,16 +15,21 @@ export class DuplicateRouteError extends Error {
 export class RouterDefinition {
     private readonly routes: RouteDefinition[] = [];
     readonly basePath: string;
+    private readonly hooks: RouteHook[];
 
-    constructor({ basePath = "/" }: RouterOptions = {}) {
+    constructor({ basePath = "/", hooks = [] }: RouterOptions = {}) {
         this.basePath = normalizePath(basePath);
+        this.hooks = hooks;
     }
 
     route(definition: RouteDefinition): this {
+        const routeHooks = definition.hooks || [];
+
         this.routes.push({
             ...definition,
             path: normalizePath(definition.path),
-            kind: definition.kind || "request"
+            kind: definition.kind || "request",
+            hooks: [...this.hooks, ...routeHooks]
         });
 
         return this;
@@ -48,7 +55,9 @@ export class RouterDefinition {
 
             seen.add(id);
 
-            const { handler: _handler, ...manifest } = definition;
+            const manifest = { ...definition };
+
+            delete manifest.handler;
 
             return {
                 ...manifest,
@@ -61,6 +70,10 @@ export class RouterDefinition {
             basePath: this.basePath,
             routes
         };
+    }
+
+    definitions(): RouteDefinition[] {
+        return [...this.routes];
     }
 }
 

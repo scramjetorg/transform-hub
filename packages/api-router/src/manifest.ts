@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { RouteHook } from "./hooks";
 
 export type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "options" | "head";
 
@@ -35,6 +36,7 @@ export type RouteDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
     kind?: RouteKind;
     tags?: string[];
     schemas?: TSchemas;
+    hooks?: RouteHook[];
     handler?: RouteHandler<TSchemas>;
 };
 
