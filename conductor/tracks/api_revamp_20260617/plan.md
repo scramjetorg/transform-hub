@@ -2,7 +2,7 @@
 
 ## Phase 1: Track Setup, Baseline Inventory, and Review Surface
 
-- [~] Task: Create dedicated branch and PR review surface for the API revamp track
+- [x] Task: Create dedicated branch and PR review surface for the API revamp track
     - [x] Confirm current base branch and working tree status
       - Base branch at track start: `feat/manager-oss`.
       - Working tree before track branch creation contained only Conductor status/plan edits for this active track.
@@ -71,7 +71,7 @@
     - [x] Define where no-circumvention checks must be added so migrated tests cannot bypass the shared client or skip real requests
       - Primary no-circumvention insertion points: `packages/host/src/lib/api/host-api.ts` RPC middleware, `packages/host/src/lib/api/instance-api.ts` instance RPC forwarding, `packages/host/src/lib/csi-controller.ts` `forwardRpcRequest()`, `packages/host/src/lib/runner-transport.ts`, `packages/manager/src/lib/verser2-transport.ts`, `packages/api-server/src/handlers/routed-forward.ts`, and migrated BDD/package API tests.
       - Migrated API tests should assert client request counters/transport probes and reject direct raw HTTP/verser2 helpers except in transport-level tests.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Inventory, and Review Surface' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Inventory, and Review Surface' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 1 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is open/updated, then ask for manual verification.
     - Phase 1 review notes:
       - Dedicated branch created: `conductor/api-revamp-20260617`.
@@ -82,41 +82,68 @@
       - api-server stale legacy-test path was fixed before continuation; `test:ava` is now the single api-server package test path.
       - Validation so far: `npm --prefix packages/api-server test` passed with 48 tests; api-server source coverage is `80.46%` statements and `80.96%` lines through the recorded nyc command.
       - Phase 1 pushed commits include `de75c287`, `dc1cb951`, and `7467786d` on PR #13.
+      - Manual verification approved by user after Phase 1 findings were pushed to PR #13.
 
 ## Phase 2: `@scramjet/api-router` Package Foundation
 
-- [ ] Task: Add the new workspace package skeleton
-    - [ ] Create `packages/api-router` with npm workspace metadata, TypeScript configs, build/test scripts, and public exports
-    - [ ] Wire package references and workspace dependencies consistently with existing packages
-    - [ ] Add package codemap/README stubs if required by repository conventions
-- [ ] Task: Define the router core model
-    - [ ] Add route definition types for HTTP method, path, description, schemas, hooks, handler, response metadata, and mount/base path
-    - [ ] Define typed request/response context using Zod-inferred params, query, headers, body, and response types
-    - [ ] Add duplicate route detection, path normalization, and deterministic route collection
-    - [ ] Define the shared route/schema manifest contract used by router execution, OpenAPI generation, and client construction
-- [ ] Task: Define the generic API client contract and fixture surface
-    - [ ] Decide whether the client lives in a new package or as a clearly separated module exported from the router/client package boundary
-    - [ ] Define typed client construction from route/schema manifests, including params, query, headers, body, response, error, and stream capabilities
-    - [ ] Define HTTP and verser2 broker transport interfaces with a common request/response abstraction
-    - [ ] Create a fixture API manifest/route set that can verify client features before production route migration begins
-- [ ] Task: Implement decorator and imperative route declaration
-    - [ ] Add class-level router decorator support and method decorators for common HTTP methods
-    - [ ] Add `Router.api(...)` or final equivalent API for class/object-based route definitions
-    - [ ] Add imperative helpers matching decorator capabilities
-    - [ ] Add tests proving decorator and imperative definitions produce equivalent route metadata
-- [ ] Task: Implement Zod-first validation primitives
-    - [ ] Add schema definitions for params, query, headers, body/payload, and responses
-    - [ ] Validate incoming requests and normalize validation errors
-    - [ ] Validate or serialize outgoing responses where configured
-    - [ ] Add focused tests for validation success/failure and inferred handler types
-- [ ] Task: Automated verification gate for package foundation
-    - [ ] Run the new `@scramjet/api-router` unit tests through the package's npm script
-    - [ ] Run client contract and fixture-manifest unit tests before any production API migration depends on the client
-    - [ ] Run package typecheck/build for `@scramjet/api-router`
-    - [ ] Run changed-package lint or repository lint if required by touched files
-    - [ ] Add the verification commands and results to `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: `@scramjet/api-router` Package Foundation' (Protocol in workflow.md)
+- [x] Task: Add the new workspace package skeleton
+    - [x] Create `packages/api-router` with npm workspace metadata, TypeScript configs, build/test scripts, and public exports
+    - [x] Wire package references and workspace dependencies consistently with existing packages
+      - Added `@scramjet/types` and `zod` dependencies and updated `package-lock.json` with `npm install --package-lock-only --ignore-scripts`.
+    - [x] Add package codemap/README stubs if required by repository conventions
+- [x] Task: Define the router core model
+    - [x] Add route definition types for HTTP method, path, description, schemas, hooks, handler, response metadata, and mount/base path
+    - [x] Define typed request/response context using Zod-inferred params, query, headers, body, and response types
+    - [x] Add duplicate route detection, path normalization, and deterministic route collection
+    - [x] Define the shared route/schema manifest contract used by router execution, OpenAPI generation, and client construction
+      - Initial framework-neutral manifest exports are in `packages/api-router/src/manifest.ts` and `src/router.ts`.
+- [x] Task: Define the generic API client contract and fixture surface
+    - [x] Decide whether the client lives in a new package or as a clearly separated module exported from the router/client package boundary
+      - Initial client contract lives as a separated `src/client.ts` module inside `@scramjet/api-router`; later phases can extract it if the surface grows beyond router-owned manifest execution.
+    - [x] Define typed client construction from route/schema manifests, including params, query, headers, body, response, error, and stream capabilities
+      - Added manifest-backed `createApiClient()` and request/response/transport contracts; stream-capable routes are represented by route `kind`, with concrete stream transport behavior deferred to Phase 3 client transport work.
+    - [x] Define HTTP and verser2 broker transport interfaces with a common request/response abstraction
+      - Added common `ApiClientTransport`; concrete HTTP and verser2 transport implementations remain Phase 3 work.
+    - [x] Create a fixture API manifest/route set that can verify client features before production route migration begins
+      - Added fixture-style manifest/client assertions in `packages/api-router/test/router.spec.ts`.
+- [x] Task: Implement decorator and imperative route declaration
+    - [x] Add class-level router decorator support and method decorators for common HTTP methods
+      - Added `Api`, `Route`, `Get`, `Post`, and `collectDecoratedRoutes` in `packages/api-router/src/decorators.ts`.
+    - [x] Add `Router.api(...)` or final equivalent API for class/object-based route definitions
+      - Added `Router.api(classOrInstance)` facade over decorated route collection.
+    - [x] Add imperative helpers matching decorator capabilities
+      - Added `createRouter()`, `RouterDefinition.route()`, `get()`, `post()`, and `defineRoute()`.
+    - [x] Add tests proving decorator and imperative definitions produce equivalent route metadata
+      - Added `decorators.spec.ts` and `router.spec.ts` manifest assertions.
+- [x] Task: Implement Zod-first validation primitives
+    - [x] Add schema definitions for params, query, headers, body/payload, and responses
+    - [x] Validate incoming requests and normalize validation errors
+      - Added `validateRouteRequest()` and `RouteValidationError`.
+    - [x] Validate or serialize outgoing responses where configured
+      - Added `validateRouteResponse()`.
+    - [x] Add focused tests for validation success/failure and inferred handler types
+      - Added `validation.spec.ts` and inferred handler checks in `router.spec.ts`.
+- [x] Task: Automated verification gate for package foundation
+    - [x] Run the new `@scramjet/api-router` unit tests through the package's npm script
+      - `npm --prefix packages/api-router test`: passed, 11 tests.
+    - [x] Run client contract and fixture-manifest unit tests before any production API migration depends on the client
+      - Covered by `packages/api-router/test/router.spec.ts` client/manifest fixture tests.
+    - [x] Run package typecheck/build for `@scramjet/api-router`
+      - `npx tsc -p packages/api-router/tsconfig.build.json --noEmit`: passed.
+    - [x] Run changed-package lint or repository lint if required by touched files
+      - `npm run lint:quick`: passed.
+    - [x] Add the verification commands and results to `plan.md`
+      - `npx nyc --reporter=text --reporter=json-summary --include "packages/api-router/src/**/*.ts" npm --prefix packages/api-router run test:ava`: passed, 11 tests; coverage `100%` statements and `100%` lines for `packages/api-router/src`.
+      - Combined validation command `npm --prefix packages/api-router test && npx tsc -p packages/api-router/tsconfig.build.json --noEmit && npx nyc --reporter=text --reporter=json-summary --include "packages/api-router/src/**/*.ts" npm --prefix packages/api-router run test:ava && npm run lint:quick`: passed.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: `@scramjet/api-router` Package Foundation' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 2 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+    - Phase 2 review notes:
+      - Added new workspace package `@scramjet/api-router` with package metadata, TypeScript configs, README, codemap, and npm lockfile wiring.
+      - Added framework-neutral route manifest, deterministic collection, duplicate route detection, path normalization, and Zod-inferred route handler request/response types.
+      - Added `Router` facade, imperative route helpers, decorator metadata collection, and `Router.api(classOrInstance)` support.
+      - Added manifest-backed generic client contract and fixture tests; concrete HTTP and verser2 transports remain Phase 3 scope.
+      - Added Zod request/response validation helpers and normalized `RouteValidationError`.
+      - Validation passed: package tests, typecheck, nyc coverage, and changed-file lint.
 
 ## Phase 3: Hook Pipeline, HTTP Adapter, verser2 Adapter, and Client Transports
 
