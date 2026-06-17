@@ -1,4 +1,4 @@
-import { ApiClientRequest, ApiClientResponse, ApiClientTransport } from "./client";
+import { ApiClientRequest, ApiClientResponse, ApiClientTransport } from "../../src";
 
 export class ClientRequestProbeError extends Error {}
 

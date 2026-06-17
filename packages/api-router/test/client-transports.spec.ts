@@ -1,6 +1,7 @@
 import test from "ava";
 
-import { ApiClientRequest, createApiClient, createClientRequestProbe, createHttpClientTransport, createRouter, createVerser2ClientTransport, ClientRequestProbeError } from "../src";
+import { ApiClientRequest, createApiClient, createHttpClientTransport, createRouter, createVerser2ClientTransport } from "../src";
+import { ClientRequestProbeError, createClientRequestProbe } from "./lib/no-circumvention";
 
 test("HTTP client transport materializes params, query, headers and body", async t => {
     const manifest = createRouter({ basePath: "/api/v2" }).post("/sequence/:id").collect();

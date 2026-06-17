@@ -3,7 +3,6 @@ export * from "./adapters/http";
 export * from "./adapters/verser2";
 export * from "./client-transports";
 export * from "./manifest";
-export * from "./no-circumvention";
 export * from "./router";
 export * from "./client";
 export * from "./decorators";

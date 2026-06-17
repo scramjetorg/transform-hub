@@ -25,6 +25,10 @@ async function executeHttpRoute(route: RouteDefinition, req: ParsedMessage, _res
     return route.schemas?.response ? validateRouteResponse(route.schemas, response) : response;
 }
 
+function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put" | "patch" | "delete" {
+    return method === "post" || method === "put" || method === "patch" || method === "delete";
+}
+
 export function registerHttpRoutes(api: APIRoute, router: RouterDefinition): void {
     for (const route of router.definitions()) {
         if (route.kind === "upstream" || route.kind === "downstream" || route.kind === "duplex") {
@@ -33,7 +37,7 @@ export function registerHttpRoutes(api: APIRoute, router: RouterDefinition): voi
 
         if (route.method === "get") {
             api.get(route.path, req => executeHttpRoute(route, req));
-        } else if (route.method === "post" || route.method === "put" || route.method === "patch" || route.method === "delete") {
+        } else if (isOpMethod(route.method)) {
             api.op(route.method, route.path, (req, res) => executeHttpRoute(route, req, res));
         }
     }
