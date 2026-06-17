@@ -4,19 +4,89 @@
 
 Use a test-conscious incremental workflow for every track. Prefer small, reviewable changes that preserve existing package behavior and runtime protocol compatibility.
 
+## Guiding Principles
+
+1. **The Plan is the Source of Truth:** Track work must be reflected in `plan.md`, including in-progress status, validation notes, skipped checks, and phase outcomes.
+2. **Tracks Use Review Surfaces:** New Conductor tracks should start from a dedicated branch and GitHub pull request unless the user explicitly asks to omit that setup.
+3. **The Tech Stack is Deliberate:** Changes to build tools, test frameworks, runtime targets, package managers, lint/format tools, release tooling, or major workflow commands must be documented in `conductor/tech-stack.md` before implementation.
+4. **Test-Conscious Development:** Add or update focused tests before or alongside behavior changes. When tests-first is impractical for brownfield integration work, record the source inventory or regression target that proves the intended behavior.
+5. **Narrow Validation:** Run the smallest reliable command that proves the changed behavior, then escalate only when the affected area crosses package, runtime, adapter, CLI/API, or BDD boundaries.
+6. **Shared First:** Reuse and adapt existing shared packages before implementing package-local solutions, and move repeated code into shared packages when reuse emerges.
+
 ## Task Lifecycle
 
 For each task:
 
 1. Confirm the affected package, entrypoint, and expected behavior.
 2. Read the relevant package codemap when present.
-3. Write or update focused tests before or alongside implementation.
-4. Implement the smallest change that satisfies the task.
-5. Run the most relevant validation command available for the changed area.
-6. Update documentation or Conductor artifacts when behavior changes.
-7. Commit after the task is complete with a concise message.
+3. Check existing shared packages for reusable types, constants, helpers, contracts, or test utilities before adding package-local code.
+4. Mark the task in `plan.md` as in progress using `[~]` when executing a Conductor track.
+5. Write or update focused tests before or alongside implementation.
+6. Implement the smallest change that satisfies the task.
+7. Run the most relevant validation command available for the changed area.
+8. Update documentation or Conductor artifacts when behavior changes.
+9. Mark the task complete in `plan.md` using `[x]` after validation and review.
+10. Defer commits until the phase checkpoint for Conductor tracks unless the user or plan explicitly requests task-level commits.
 
-## Implementation Delegation
+## Track Branch and Pull Request Policy
+
+- During Conductor track planning, include dedicated branch and PR setup near the start of Phase 1 by default unless the user explicitly asks to omit it.
+- Branch from the current branch at planning time unless the user requests a different base.
+- Use the PR as the review and checkpoint surface for the track until completion.
+- PR titles and descriptions should describe the intended TO-BE state of the complete track, not only the initial plan, specification, or documentation artifact.
+- Create PR descriptions as real multiline Markdown. Prefer writing the body to a temporary Markdown file and using `gh pr create --body-file <file>` or `gh pr edit --body-file <file>` instead of passing escaped `\n` strings.
+- Push phase checkpoint commits only when the current branch is the dedicated track branch. Never push Conductor track work directly to `main`.
+- If an existing track lacks a branch or PR and pushing is needed, create or ask for the review surface before pushing.
+
+## Shared Package Usage and Deduplication
+
+At the start of each phase:
+
+1. Review relevant shared packages for existing reusable exports before adding package-local code. Common examples include `@scramjet/types`, `@scramjet/symbols`, `@scramjet/adapters-common`, `@scramjet/config`, and runtime executor contracts.
+2. Record in `plan.md` when shared code is intentionally not used because the behavior is package-specific, adapter-specific, runtime-specific, experimental, or not yet repeated.
+3. Prefer adapting existing shared APIs over creating parallel local DTOs, constants, validation helpers, config shapes, protocol helpers, runner contracts, or test utilities.
+
+During the phase:
+
+1. Keep shared code protocol-neutral, adapter-neutral, or runtime-neutral where possible.
+2. Keep package-specific behavior as thin adapters around shared primitives when reuse exists.
+3. Avoid implementing the same solution independently in multiple packages.
+
+At the end of each phase:
+
+1. Perform a deduplication check across changed packages and tests.
+2. Move repeated or clearly reusable code into the appropriate shared package when doing so is safe within the phase scope.
+3. Update imports, tests, and documentation to use the shared export.
+4. Record the deduplication result in phase validation notes, including whether shared code was added, adapted, intentionally deferred, or not applicable.
+
+## Delegation Guidance
+
+Use delegation to accelerate Conductor work while preserving the active `plan.md` as the source of truth. Delegated work must remain bounded, reviewable, and aligned with the current phase.
+
+Delegate when the task is separable, read-only research can run in parallel, or a focused implementation can be handed off with clear inputs and validation expectations. Do not delegate vague product decisions, phase checkpoint commits, destructive cleanup, or work that requires changing the active plan without review.
+
+Recommended delegation patterns:
+
+- Use `explore` or `explorer` for read-only codebase searches, dependency tracing, file discovery, and pattern lookups.
+- Use `fixer` for bounded implementation tasks after scope, expected behavior, and verification are clear.
+- Use `librarian` for external documentation, dependency behavior, API references, and public examples.
+- Use `oracle` for architecture tradeoffs, complex debugging, code review, simplification, maintainability review, and risk analysis.
+- Use `designer` only for UI/UX work.
+- Use `general` for mixed multi-step tasks that do not fit a narrower agent.
+- Use `councillor` for independent read-only review when a second opinion is useful.
+
+Delegation rules:
+
+1. Provide each delegate with the relevant track goal, affected package, files or directories of interest, expected output, edit permission, and validation expectations.
+2. Keep delegated implementation tasks narrow enough to validate with the smallest reliable command.
+3. Review delegated findings or edits before marking any `plan.md` task complete.
+4. Record meaningful delegated findings, validation results, and unresolved risks in active track notes or the phase validation summary.
+5. Do not let delegated agents commit changes unless the current phase checkpoint explicitly authorizes a commit.
+6. Do not use delegation to bypass test, coverage, deduplication, documentation, or Conductor checkpoint requirements.
+7. Keep prompts specific and bounded; include exact goals, relevant paths, required output format, and whether edits are forbidden or allowed.
+8. Explicitly tell delegated agents not to subdelegate unless the task requires it and the delegation boundary is intentional.
+
+### Implementation Delegation
 
 Use the `fixer` agent for less complex implementation tasks when the work is
 bounded, mostly local to one package, and can be described with clear expected
@@ -176,20 +246,26 @@ failure and follow the test and validation failure policy above.
 
 ## Commit Policy
 
-- Commit after each completed task.
-- Keep commits scoped to the task.
+- For Conductor tracks, commit after each completed phase, not after each task, unless the user or plan explicitly requests task-level commits.
+- For non-track work or small standalone tasks, task-level commits remain acceptable when explicitly requested.
+- Keep phase commits scoped to the phase.
 - Do not commit unrelated working tree changes.
-- Include task summaries in commit messages when helpful.
+- Include a concise phase summary in the commit message body when helpful.
+- Do not use Git notes for routine task or phase summaries.
 
 ## Phase Completion Verification and Checkpointing Protocol
 
 At the end of each phase:
 
 1. Review all completed tasks in the phase against the phase goal.
-2. Run the validation command(s) appropriate for the phase scope.
-3. Confirm docs, tests, and code are aligned.
-4. Record any skipped validation and the reason.
-5. Ask the user to manually verify the phase before moving to the next phase when the plan includes a Conductor manual verification task.
+2. Confirm shared packages were reviewed at phase start and reused or adapted where appropriate.
+3. Perform the end-of-phase deduplication check and move repeated code into shared packages when safe within scope.
+4. Run the validation command(s) appropriate for the phase scope.
+5. Confirm docs, tests, and code are aligned.
+6. Record any skipped validation and the reason.
+7. Ask the user to manually verify the phase before moving to the next phase when the plan includes a Conductor manual verification task.
+8. Create one scoped phase commit when commits are requested or the active track calls for checkpointing.
+9. Update `plan.md` with the phase checkpoint commit SHA when a phase commit is created.
 
 ## Quality Gates
 
