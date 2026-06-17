@@ -31,6 +31,7 @@ For each task:
 ## Track Branch and Pull Request Policy
 
 - During Conductor track planning, include dedicated branch and PR setup near the start of Phase 1 by default unless the user explicitly asks to omit it.
+- During Conductor track planning, include an explicit push-before-manual-verification checkpoint in every Conductor manual verification task: complete phase work, create the scoped phase commit, push the review branch, then ask for manual verification.
 - Branch from the current branch at planning time unless the user requests a different base.
 - Use the PR as the review and checkpoint surface for the track until completion.
 - PR titles and descriptions should describe the intended TO-BE state of the complete track, not only the initial plan, specification, or documentation artifact.
@@ -263,9 +264,10 @@ At the end of each phase:
 4. Run the validation command(s) appropriate for the phase scope.
 5. Confirm docs, tests, and code are aligned.
 6. Record any skipped validation and the reason.
-7. Ask the user to manually verify the phase before moving to the next phase when the plan includes a Conductor manual verification task.
-8. Create one scoped phase commit when commits are requested or the active track calls for checkpointing.
-9. Update `plan.md` with the phase checkpoint commit SHA when a phase commit is created.
+7. Create one scoped phase commit when commits are requested or the active track calls for checkpointing.
+8. Update `plan.md` with the phase checkpoint commit SHA when a phase commit is created.
+9. Push the review branch before asking for manual verification when the track uses a dedicated branch or PR review surface.
+10. Ask the user to manually verify the phase before moving to the next phase when the plan includes a Conductor manual verification task.
 
 ## Quality Gates
 

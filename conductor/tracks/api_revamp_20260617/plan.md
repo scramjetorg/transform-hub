@@ -2,27 +2,82 @@
 
 ## Phase 1: Track Setup, Baseline Inventory, and Review Surface
 
-- [ ] Task: Create dedicated branch and PR review surface for the API revamp track
-    - [ ] Confirm current base branch and working tree status
-    - [ ] Create a dedicated track branch unless the user explicitly omits branch setup
-    - [ ] Prepare PR title/description describing the intended complete v2 API/router state
+- [~] Task: Create dedicated branch and PR review surface for the API revamp track
+    - [x] Confirm current base branch and working tree status
+      - Base branch at track start: `feat/manager-oss`.
+      - Working tree before track branch creation contained only Conductor status/plan edits for this active track.
+    - [x] Create a dedicated track branch unless the user explicitly omits branch setup
+      - Dedicated track branch: `conductor/api-revamp-20260617`.
+    - [x] Prepare PR title/description describing the intended complete v2 API/router state
+      - PR title: `feat(api): add schema-aware v2 router and API client surface`.
+      - PR description should summarize router package foundation, HTTP/verser2 execution, OpenAPI generation, v2 rollout, v1 compatibility, and validation gates.
     - [ ] Create or update the PR when remote permissions and workflow allow
-- [ ] Task: Confirm affected packages, entrypoints, and current API behavior
-    - [ ] Read package codemaps for `packages/api-server`, `packages/host`, `packages/manager`, `packages/multi-manager`, and affected client/test packages
-    - [ ] Inventory current route registrations, middleware, stream handlers, forwarding, and verser2 bridge points
-    - [ ] Record exact v1 compatibility constraints for paths, response bodies, status codes, stream behavior, headers, and errors
-- [ ] Task: Review shared packages and reusable contracts before adding new code
-    - [ ] Check `@scramjet/types`, `@scramjet/symbols`, `@scramjet/config`, `@scramjet/adapters-common`, and existing `packages/api-server` exports for reusable types or helpers
-    - [ ] Decide which existing DTOs and API contracts should be reused by router schemas
-    - [ ] Record any intentional non-use of shared code and why
-- [ ] Task: Establish automated regression baseline
-    - [ ] Identify exact package test files covering `packages/api-server`, Host, Manager, MultiManager, CSI/Instance, and verser2 behavior
-    - [ ] Inventory current direct HTTP, verser2, and client-based request helpers used by package tests and BDD step definitions
-    - [ ] Run or dry-select the narrow existing test commands that prove current baseline behavior before changes
-    - [ ] Capture baseline command names and any preexisting failures in `plan.md`
-    - [ ] Identify which BDD smoke tests are automated gates for later phases and which are manual/escalation-only
-    - [ ] Define where no-circumvention checks must be added so migrated tests cannot bypass the shared client or skip real requests
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Inventory, and Review Surface' (Protocol in workflow.md)
+      - Deferred until the Phase 1 checkpoint commit exists so the PR has the active track status and inventory notes.
+- [x] Task: Confirm affected packages, entrypoints, and current API behavior
+    - [x] Read package codemaps for `packages/api-server`, `packages/host`, `packages/manager`, `packages/multi-manager`, and affected client/test packages
+      - Relevant entrypoints: `packages/api-server/src/index.ts`, `packages/api-server/src/lib/0http.ts`, `packages/host/src/lib/host.ts`, `packages/host/src/lib/api/host-api.ts`, `packages/host/src/lib/api/instance-api.ts`, `packages/manager/src/lib/manager.ts`, `packages/manager/src/lib/route-classifier.ts`, `packages/manager/src/lib/verser2-transport.ts`, and `packages/multi-manager/src/lib/multi-manager.ts`.
+    - [x] Inventory current route registrations, middleware, stream handlers, forwarding, and verser2 bridge points
+      - `packages/api-server` builds the current `APIRoute`/`APIServer` facade around 0http/cero with GET, CRUD, operation, stream, URL-forward, and routed-forward handler factories.
+      - Host v1 routes are registered from `HostAPIHandler.attach()` under `config.host.apiBase` (default `/api/v1`) and include sequence upload/update/delete/start/read/list, entities, config/status/version/load-check, audit/log/platform streams, CPM proxying, RPC forwarding, and instance router dispatch.
+      - Instance/CSI routes are registered from `InstanceAPI.attach()` under `/api/v1/instance/:id` and include info, stdin/stdout/stderr/log/output/input, health, monitoring, events, stop/kill/set, experimental inout, and RPC forwarding.
+      - Manager v1 routes are registered from `Manager.attachManagerAPIs()` under `/api/v1` and include version/config/trust/STH registration/list/instances/sequences/entities/topics/load/health/log/load-stream/topic/store/disconnect plus `/api/v1/sth/:id/*` STH forwarding and `/api/v1/s3/` storage proxying.
+      - MultiManager v1 routes are registered from `MultiManager.setRouting()` under its configured API base and include version/info/load-check/list/health/trust/start/stop/CPM proxy/log/audit.
+      - Middleware and stream behavior to preserve: safe handler/decorator error wrapping, default 404 and mapped cero errors, global CORS and OPTIONS, audit rx/tx accounting, stream content negotiation, `100-continue`, `x-end-stream`, upstream chunked responses, downstream 200/202 status behavior, and duplex request/response piping.
+      - verser2 bridge points: Host runner transport (`Verser2RunnerTransport`, runner domain routes, RPC transport), Host CPM connector/proxy, Manager STH broker transport and route classification, MultiManager local broker/guest peers and CPM proxying.
+    - [x] Record exact v1 compatibility constraints for paths, response bodies, status codes, stream behavior, headers, and errors
+      - Compatibility constraints to preserve: `/api/v1` Host/Manager path conventions, `/api/v1/instance/:id` CSI paths, Manager `/api/v1/sth/:id/*` classifier semantics, `OpResponse` shapes/status phrases, raw GET object responses, upstream `200` chunked streams, downstream `200`/`202`/`opStatus` status mapping, cero error mappings (`404`, `412`, `500`, `502`, `415`, `400`), Manager redirect/direct-route metadata headers and status codes (`308`, `409`, `501`), `x-seq-kill-inst`, `x-force`, `x-mw-billable`, `x-end-stream`, `x-scramjet-route-*`, `cpm`, `content-type`, CORS/OPTIONS headers, `expect: 100-continue`, `x-self-hosted`, stream route end/content-type flags, HostError/Manager disconnect error codes, `APIErrorCode`, `InstanceStatus`, Manager pagination query validation, and stop timeout/default event semantics.
+- [x] Task: Review shared packages and reusable contracts before adding new code
+    - [x] Check `@scramjet/types`, `@scramjet/symbols`, `@scramjet/config`, `@scramjet/adapters-common`, and existing `packages/api-server` exports for reusable types or helpers
+      - Reusable `@scramjet/types`: REST DTO namespaces (`STHRestAPI`, `MRestAPI`, `MMRestAPI`, middleware/common/error DTOs), `OpResponse`, sequence start/set DTOs, `APIExpose`/`APIRoute`/`APIServer`/`APIBase` and stream contracts, API client type contracts, communication handler contracts, load-check/config/sequence/instance types, and generic utilities such as `MaybePromise`, `UrlPath`, `ApiVersion`, and `DeepPartial`.
+      - Reusable `@scramjet/symbols`: `APIErrorCode`, `HostHeaders`, `InstanceStatus`, `OpRecordCode`, `OpState`, runner/CPM/communication enums where existing API signatures require them, disconnect errors, and runtime-kind helpers.
+      - Reusable `@scramjet/config`: `z`, Zod formatting/config patterns, option/command descriptor patterns if the router generator needs CLI wiring.
+      - Reusable `@scramjet/adapters-common`: no direct router-layer reuse expected beyond avoiding duplicate adapter/runtime contracts; adapter helpers remain backend concerns.
+      - Reusable `@scramjet/api-server`: current public route/server contracts, CORS/options middleware semantics, forwarding utilities (`forwardRoutedRequest`, `normalizeForwardedHeaders`, strategies), and stream behavior as compatibility references.
+    - [x] Decide which existing DTOs and API contracts should be reused by router schemas
+      - v1/v2 route schemas should type or adapt to existing REST DTOs from `@scramjet/types` instead of redefining response bodies.
+      - Router execution should remain compatible with `APIRoute`/`APIServer` abstractions and stream contracts from `@scramjet/types`.
+      - Error bodies should use or adapt to `APIErrorMessage` and `APIErrorCode`; custom headers should use `HostHeaders` where available.
+      - Client construction should reuse existing client type concepts only as contracts; runtime implementation belongs in the new router/client surface.
+    - [x] Record any intentional non-use of shared code and why
+      - Do not make the new router depend directly on 0http/cero internals or `CeroRouter`; implement a framework-neutral route abstraction that can adapt to the existing `APIRoute` boundary.
+      - Do not copy runtime/store/config/backend adapter internals into route schemas; use public REST DTO/config response types instead.
+      - Do not import internal `packages/api-server/test` helpers; create package-local test utilities or extract shared helpers later if reuse becomes necessary.
+      - Do not expose runner message tuple plumbing as API-router surface; use API stream abstractions instead.
+- [~] Task: Establish automated regression baseline
+    - [x] Identify exact package test files covering `packages/api-server`, Host, Manager, MultiManager, CSI/Instance, and verser2 behavior
+      - `packages/api-server/test/routed-forward.spec.ts`, `0http.spec.ts`, `server.spec.ts`, `rest-methods.spec.ts`, `stream-methods.spec.ts` cover current server, REST, stream, and routed-forwarding behavior.
+      - `packages/host/test/csi-rpc-forwarding.spec.ts`, `runner-transport.spec.ts`, `runner-verser2-host-config.spec.ts`, `runner-verser2-host-upstream.spec.ts`, `runner-verser2-host-peers.spec.ts`, `rpc-url-normalization.spec.ts`, `instance-store.spec.ts`, and `sequence-store.spec.ts` cover Host/CSI/runner-verser2 behavior.
+      - `packages/manager/test/verser2-transport.spec.ts`, `route-classifier.spec.ts`, `verser2-trust-export.spec.ts`, `sth-connection-store.spec.ts`, `sth-info-register.spec.ts`, `service-discovery.spec.ts`, `common-logs-pipe.spec.ts`, and `manager-auditor.spec.ts` cover Manager routing/transport/control-plane behavior.
+      - `packages/multi-manager/test/lib/verser2-host-config.spec.ts`, `verser2-host-identity.spec.ts`, `verser2-trust-export.spec.ts`, `store.spec.ts`, `ports-parser.spec.ts`, and `test/config/multi-manager-configuration.spec.ts` cover MultiManager route-adjacent behavior.
+      - `packages/verser/test/http-connection.spec.ts` and `exports.spec.ts` remain legacy baseline coverage for verser1 behavior during migration.
+    - [x] Inventory current direct HTTP, verser2, and client-based request helpers used by package tests and BDD step definitions
+      - Direct HTTP/server helpers: `createServer()`, `getRouter()`, `forwardRoutedRequest()`, `normalizeForwardedHeaders()`, `RoutedForwardTransport`, package-local mock server/router utilities, and raw `fetch()`/`http.request()` in selected BDD hub steps.
+      - verser2 helpers: Host `Verser2RunnerTransport`, runner broker/guest setup helpers, Manager `Verser2ManagerSthBrokerTransport`, MultiManager local broker/guest setup, and direct `@signicode/verser2-host`/`@signicode/verser2-guest-node` usage in isolated BDD routing steps.
+      - Client helpers: `@scramjet/api-client` Host/Instance/Sequence/Manager clients, `@scramjet/client-utils` request helpers, `@scramjet/multi-manager-api-client`, and `@scramjet/middleware-api-client`; current client package tests are placeholders and BDD carries most client usage.
+    - [x] Run or dry-select the narrow existing test commands that prove current baseline behavior before changes
+      - Selected package baselines: `npm --prefix packages/api-server run test:ava`, `npm --prefix packages/api-server run test:legacy`, `npm --prefix packages/host test`, `npm --prefix packages/manager test`, `npm --prefix packages/multi-manager test`, and `npm --prefix packages/verser test`.
+      - Narrow future escalation commands: `npx ava packages/host/test/runner-transport.spec.ts packages/host/test/csi-rpc-forwarding.spec.ts packages/host/test/runner-verser2-host-config.spec.ts packages/host/test/runner-verser2-host-upstream.spec.ts packages/host/test/runner-verser2-host-peers.spec.ts`; `npx ava packages/manager/test/verser2-transport.spec.ts packages/manager/test/route-classifier.spec.ts packages/manager/test/verser2-trust-export.spec.ts`; `npx ava packages/multi-manager/test/lib/verser2-host-config.spec.ts packages/multi-manager/test/lib/verser2-host-identity.spec.ts packages/multi-manager/test/lib/verser2-trust-export.spec.ts`.
+    - [x] Capture baseline command names and any preexisting failures in `plan.md`
+      - Ran `npm --prefix packages/api-server run test:ava`: passed, 28 tests.
+      - Ran `npm --prefix packages/api-server run test:legacy`: failed with `Couldn't find any files to test`.
+      - Retried from `packages/api-server` with `npm run test:legacy`: same failure.
+      - Retried direct AVA selection with `npx ava -T 50000 --require ts-node/register test/server.spec.ts test/stream-methods.spec.ts test/rest-methods.spec.ts`: same failure.
+      - Classification: preexisting/stale legacy AVA selection issue; the files exist but are not selected by the script/direct AVA invocation in this workspace. Not treated as a blocker for Phase 1 because the active track has not changed product code yet and the primary configured `test:ava` baseline passes.
+    - [x] Identify which BDD smoke tests are automated gates for later phases and which are manual/escalation-only
+      - Automated gates: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-api-topic`, `npm run test:bdd-ci-hub`, `npm run test:bdd-ci-hub-docker` when Docker behavior changes, `npm run test:bdd-ci-verser2`, `npm run test:bdd-ci-node`, and `npm run test:bdd-ci-python` when runtime behavior is affected.
+      - Manual/escalation-only unless a phase explicitly requires them: `npm run test:bdd-long`, `npm run test:bdd-manager-migration`, unfiltered `npm run test:bdd`, and experimental unified-runtime BDD commands.
+    - [x] Define where no-circumvention checks must be added so migrated tests cannot bypass the shared client or skip real requests
+      - Primary no-circumvention insertion points: `packages/host/src/lib/api/host-api.ts` RPC middleware, `packages/host/src/lib/api/instance-api.ts` instance RPC forwarding, `packages/host/src/lib/csi-controller.ts` `forwardRpcRequest()`, `packages/host/src/lib/runner-transport.ts`, `packages/manager/src/lib/verser2-transport.ts`, `packages/api-server/src/handlers/routed-forward.ts`, and migrated BDD/package API tests.
+      - Migrated API tests should assert client request counters/transport probes and reject direct raw HTTP/verser2 helpers except in transport-level tests.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Inventory, and Review Surface' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 1 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is open/updated, then ask for manual verification.
+    - Phase 1 review notes:
+      - Dedicated branch created: `conductor/api-revamp-20260617`.
+      - Track registry status set to in progress.
+      - API surface inventory recorded for Host, Instance/CSI, Manager, MultiManager, stream behavior, forwarding, and verser2 bridges.
+      - Shared-package reuse and intentional non-use decisions recorded.
+      - Regression baseline files, dry-selected commands, BDD gates, no-circumvention insertion points, and baseline command results recorded.
+      - Validation so far: `npm --prefix packages/api-server run test:ava` passed; legacy script selection failure classified as preexisting/stale and recorded.
 
 ## Phase 2: `@scramjet/api-router` Package Foundation
 
@@ -57,6 +112,7 @@
     - [ ] Run changed-package lint or repository lint if required by touched files
     - [ ] Add the verification commands and results to `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: `@scramjet/api-router` Package Foundation' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 2 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
 ## Phase 3: Hook Pipeline, HTTP Adapter, verser2 Adapter, and Client Transports
 
@@ -90,6 +146,7 @@
     - [ ] Run changed-file lint for hook/adapter files
     - [ ] Record verification output and any classified failures in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Hook Pipeline, HTTP Adapter, verser2 Adapter, and Client Transports' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 3 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
 ## Phase 4: OpenAPI 3.1 Generation and Schema Mode
 
@@ -118,6 +175,7 @@
     - [ ] Store or compare a deterministic generated fixture snapshot where appropriate
     - [ ] Record verification output in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: OpenAPI 3.1 Generation and Schema Mode' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 4 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
 ## Phase 5: v2 Middleware and Low-Risk Route Exposure
 
@@ -143,6 +201,7 @@
     - [ ] Run the narrow API BDD smoke test through the client only if unit/package tests cannot prove cross-package HTTP/verser2 behavior
     - [ ] Record v1 compatibility evidence in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
 ## Phase 6: Sequence and Instance/CSI Route Migration to v2
 
@@ -162,6 +221,7 @@
     - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent through the client when package tests cannot prove end-to-end host API behavior
     - [ ] Record skipped Docker/Kubernetes validation and reason
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
 ## Phase 7: Manager, MultiManager, Forwarding, and Storage Route Migration to v2
 
@@ -185,6 +245,7 @@
     - [ ] Run manager/multimanager BDD smoke through the client only when package tests cannot prove integration behavior
     - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
 ## Phase 8: v1 Wrapper Compatibility, Documentation, and Final Validation
 
@@ -211,3 +272,4 @@
     - [ ] Verify migrated API and BDD tests use the generic client and pass no-circumvention checks
     - [ ] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
