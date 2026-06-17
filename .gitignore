@@ -161,6 +161,7 @@ timing-log.ndjson
 
 # private working directories
 /temp
+/conductor/prompts/
 
 # extra dist dirs
 

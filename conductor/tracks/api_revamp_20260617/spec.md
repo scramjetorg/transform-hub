@@ -2,11 +2,11 @@
 
 ## Overview
 
-Create a new TypeScript workspace package, `@scramjet/api-router`, that provides a documented, schema-aware API routing layer for Scramjet Transform Hub. The router must support both decorator-based and non-decorator route declaration, use Zod as the primary validation/schema source, expose OpenAPI 3.1 contracts, and provide route pipeline hooks for cross-cutting behavior such as CORS, headers, authentication, and authorization.
+Create a new TypeScript workspace package, `@scramjet/api-router`, that provides a documented, schema-aware API routing layer for Scramjet Transform Hub. The router must support both decorator-based and non-decorator route declaration, use Zod as the primary validation/schema source, expose OpenAPI 3.1 contracts, provide route pipeline hooks for cross-cutting behavior such as CORS, headers, authentication, and authorization, and provide the schema/client contracts needed for a generated or generic API client.
 
 The new router will be introduced as a v2 API surface while preserving exact backwards compatibility for all existing v1 Hub, Manager, MultiManager, and CSI/Instance APIs. v2 APIs must be available through both normal HTTP serving and verser2 broker routing. The implementation plan should cover the full API migration, phased sensibly: first router/middleware foundations, then route sections, then v1 compatibility wrapping.
 
-The design should use the `@drumwave-integration/router` package in the sibling `drumwave-integration` repository as a reference for lightweight decorator metadata, imperative registration, route collection, and typed request/client patterns, while adapting it to Scramjet requirements for Zod-first validation, OpenAPI 3.1 generation, hooks, verser2 integration, and exact v1 compatibility.
+The design should use the `@drumwave-integration/router` package in the sibling `drumwave-integration` repository as a reference for lightweight decorator metadata, imperative registration, route collection, and typed request/client patterns, while adapting it to Scramjet requirements for Zod-first validation, OpenAPI 3.1 generation, hooks, HTTP and verser2 client transports, verser2 integration, and exact v1 compatibility.
 
 ## Goals
 
@@ -14,7 +14,7 @@ The design should use the `@drumwave-integration/router` package in the sibling 
 - Reduce the difficulty of understanding and maintaining current Hub and Manager API implementations.
 - Centralize validation, schema exposure, route metadata, and hook composition.
 - Enable generated OpenAPI 3.1 documentation from implemented route definitions.
-- Support future generic API client construction from generated schemas, while keeping the generic API client itself as a separate module/package.
+- Bake in a generic API client testing surface early, with HTTP and verser2 broker transports, so subsequent API implementation and BDD tests exercise APIs through the library instead of direct requests.
 - Add v2 API exposure without breaking existing v1 clients.
 - Plan a migration path where v1 is eventually backed by/wrapped around the v2 route implementation while preserving exact v1 behavior.
 
@@ -46,7 +46,7 @@ The design should use the `@drumwave-integration/router` package in the sibling 
 - The generator must execute or load API definition files in a safe "schema mode" that exports schemas/route metadata without starting servers or side effects.
 - The first schema output format must be OpenAPI 3.1.
 - Generated OpenAPI must include route paths, methods, descriptions, request schemas, response schemas, and relevant hook/security metadata where available.
-- The design should leave room for an internal route/schema manifest if needed by a future generic API client package.
+- The design must include an internal route/schema manifest that can drive a generic API client and OpenAPI generation from the same route metadata.
 
 ### Hook Pipeline
 
@@ -92,10 +92,14 @@ Router.api(class APIRoute1 {
   - final v1 wrapper compatibility work.
 - Backwards compatibility should be proven with focused tests and existing BDD/API smoke coverage where needed.
 
-### API Client Schema Support
+### API Client and Testing Surface
 
-- Route/schema output must be suitable for future generic API client construction.
-- The generic API client implementation is out of this package/track unless explicitly added later, but schema generation should not block it.
+- Route/schema output must be suitable for generic API client construction.
+- The track must add the API client structure early enough that subsequent route migration and BDD tests can use it as the primary request surface.
+- The client must support HTTP transport and verser2 broker transport for the same route/schema definitions.
+- Client tests must verify feature availability against a controlled fixture API, including request validation, response validation, error handling, hooks where observable, streaming/duplex support where applicable, and both HTTP and verser2 transport behavior.
+- Actual implementation and BDD tests for migrated APIs must use the client library rather than raw direct HTTP/verser2 calls unless a test explicitly targets lower-level transport behavior.
+- The test suite must include no-circumvention checks that detect or prevent migrated API tests from bypassing the client by making direct requests or by not making real requests at all.
 
 ## Non-Functional Requirements
 
@@ -106,6 +110,7 @@ Router.api(class APIRoute1 {
 - Operational reliability: changes must not disrupt existing sequence execution, adapter behavior, runner communication, or verser2 routing.
 - Documentation alignment: generated and hand-written docs must match the implemented API behavior.
 - Test-conscious development: add or update package-level tests and escalate to BDD smoke tests only when required by cross-package behavior.
+- Testing integrity: migrated API and BDD tests should use the shared client surface, with explicit no-circumvention checks for direct raw requests and false-positive tests that do not exercise transport.
 
 ## Acceptance Criteria
 
@@ -114,16 +119,19 @@ Router.api(class APIRoute1 {
 - Zod schemas validate requests and can infer useful handler types.
 - OpenAPI 3.1 generation works from schema-mode route definition files without starting the Hub/Manager.
 - Route pipeline hooks can implement CORS, headers, authn/z, request/response processing, and error handling.
+- A generic API client structure exists early in the track with HTTP and verser2 broker transports backed by the shared route/schema manifest.
+- Client library tests verify required capabilities against fixture routes before migrated production routes depend on the client.
 - At least one v2 route section is live over HTTP and verser2 using the new router, with the plan covering subsequent route sections.
+- Subsequent migrated API package and BDD tests use the client library and include no-circumvention checks against direct requests or tests that do not issue requests.
 - Existing v1 API behavior remains exact for migrated areas and is covered by focused regression tests.
 - The migration plan identifies affected Hub, Manager, MultiManager, and CSI/Instance routes and validates each phase with narrow commands.
-- Generated schema output contains enough route metadata to support a future separate generic API client module.
+- Generated schema output contains enough route metadata to support generic API client construction and OpenAPI generation from the same manifest.
 
 ## Out of Scope
 
 - Replacing the entire existing `packages/api-server` implementation in one step.
 - Breaking or simplifying v1 public behavior without explicit approval.
-- Implementing the separate generic API client package, except for ensuring generated schemas can support it.
+- Replacing every existing hand-written client callsite outside the migrated API test and route surfaces unless explicitly planned in a later phase.
 - Migrating unrelated CLI behavior that does not depend on the API route surface.
 - Changing runtime wrapper, adapter, or sequence execution protocols except where required for verser2 API exposure and explicitly planned.
 - Introducing a non-Zod primary schema system for the initial router design.

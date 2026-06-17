@@ -17,9 +17,11 @@
     - [ ] Record any intentional non-use of shared code and why
 - [ ] Task: Establish automated regression baseline
     - [ ] Identify exact package test files covering `packages/api-server`, Host, Manager, MultiManager, CSI/Instance, and verser2 behavior
+    - [ ] Inventory current direct HTTP, verser2, and client-based request helpers used by package tests and BDD step definitions
     - [ ] Run or dry-select the narrow existing test commands that prove current baseline behavior before changes
     - [ ] Capture baseline command names and any preexisting failures in `plan.md`
     - [ ] Identify which BDD smoke tests are automated gates for later phases and which are manual/escalation-only
+    - [ ] Define where no-circumvention checks must be added so migrated tests cannot bypass the shared client or skip real requests
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Inventory, and Review Surface' (Protocol in workflow.md)
 
 ## Phase 2: `@scramjet/api-router` Package Foundation
@@ -32,6 +34,12 @@
     - [ ] Add route definition types for HTTP method, path, description, schemas, hooks, handler, response metadata, and mount/base path
     - [ ] Define typed request/response context using Zod-inferred params, query, headers, body, and response types
     - [ ] Add duplicate route detection, path normalization, and deterministic route collection
+    - [ ] Define the shared route/schema manifest contract used by router execution, OpenAPI generation, and client construction
+- [ ] Task: Define the generic API client contract and fixture surface
+    - [ ] Decide whether the client lives in a new package or as a clearly separated module exported from the router/client package boundary
+    - [ ] Define typed client construction from route/schema manifests, including params, query, headers, body, response, error, and stream capabilities
+    - [ ] Define HTTP and verser2 broker transport interfaces with a common request/response abstraction
+    - [ ] Create a fixture API manifest/route set that can verify client features before production route migration begins
 - [ ] Task: Implement decorator and imperative route declaration
     - [ ] Add class-level router decorator support and method decorators for common HTTP methods
     - [ ] Add `Router.api(...)` or final equivalent API for class/object-based route definitions
@@ -44,12 +52,13 @@
     - [ ] Add focused tests for validation success/failure and inferred handler types
 - [ ] Task: Automated verification gate for package foundation
     - [ ] Run the new `@scramjet/api-router` unit tests through the package's npm script
+    - [ ] Run client contract and fixture-manifest unit tests before any production API migration depends on the client
     - [ ] Run package typecheck/build for `@scramjet/api-router`
     - [ ] Run changed-package lint or repository lint if required by touched files
     - [ ] Add the verification commands and results to `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: `@scramjet/api-router` Package Foundation' (Protocol in workflow.md)
 
-## Phase 3: Hook Pipeline, HTTP Adapter, and verser2 Adapter
+## Phase 3: Hook Pipeline, HTTP Adapter, verser2 Adapter, and Client Transports
 
 - [ ] Task: Implement route pipeline hooks
     - [ ] Define typed hook context and lifecycle stages for before, after, error, and finalization behavior
@@ -64,18 +73,28 @@
     - [ ] Integrate route definitions with existing verser2 forwarding/broker abstractions where appropriate
     - [ ] Preserve route readiness, abort signal, domain routing, and response streaming semantics
     - [ ] Add tests around routed request execution or adapter contract boundaries
+- [ ] Task: Implement generic API client transports
+    - [ ] Implement the HTTP client transport against the shared route/schema manifest
+    - [ ] Implement the verser2 broker client transport against the same manifest and request abstraction
+    - [ ] Support request and response validation in the client where configured
+    - [ ] Support representative streaming/duplex client behavior or explicitly record deferred stream support with constraints
+    - [ ] Add fixture-backed tests proving the same client operations work over HTTP and verser2 transports
+- [ ] Task: Add client no-circumvention test helpers
+    - [ ] Provide test utilities or instrumentation that can assert client requests were made for migrated API tests
+    - [ ] Provide checks that reject direct raw HTTP/verser2 request helpers in migrated BDD/package test scopes unless explicitly allowed for transport-level tests
+    - [ ] Add fixture tests proving no-circumvention checks fail when a test bypasses the client or does not issue a request
 - [ ] Task: Automated verification gate for hook/adapters
-    - [ ] Run `@scramjet/api-router` tests including hook and adapter suites
+    - [ ] Run `@scramjet/api-router` tests including hook, adapter, client transport, fixture, and no-circumvention suites
     - [ ] Run affected `packages/api-server` tests, including `routed-forward` tests when applicable
     - [ ] Run package build covering `api-router` and `api-server`
     - [ ] Run changed-file lint for hook/adapter files
     - [ ] Record verification output and any classified failures in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Hook Pipeline, HTTP Adapter, and verser2 Adapter' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Hook Pipeline, HTTP Adapter, verser2 Adapter, and Client Transports' (Protocol in workflow.md)
 
 ## Phase 4: OpenAPI 3.1 Generation and Schema Mode
 
 - [ ] Task: Implement schema/export manifest model
-    - [ ] Define internal route manifest structure suitable for OpenAPI generation and future generic client construction
+    - [ ] Define internal route manifest structure suitable for OpenAPI generation and generic client construction
     - [ ] Include descriptions, paths, methods, params, query, headers, request bodies, responses, hook/security metadata, and tags/groups
     - [ ] Ensure manifest generation does not require starting Hub, Manager, or servers
 - [ ] Task: Add OpenAPI 3.1 generation
@@ -87,9 +106,14 @@
     - [ ] Implement safe schema-mode loading/execution contract for API definition files
     - [ ] Support output to stdout and/or file as defined by the package API
     - [ ] Add tests for CLI generation on a fixture API definition
+- [ ] Task: Connect generated manifests to client construction
+    - [ ] Add tests that construct the generic client from generated fixture metadata
+    - [ ] Verify generated fixture metadata supports both HTTP and verser2 client transports
+    - [ ] Verify client construction fails clearly when required route/client metadata is missing
 - [ ] Task: Automated verification gate for OpenAPI generation
     - [ ] Run `@scramjet/api-router` generator/unit tests
     - [ ] Run the CLI generator against a checked-in fixture and assert the output validates as OpenAPI 3.1 JSON
+    - [ ] Run fixture client construction tests against generated route/schema metadata
     - [ ] Run package build and verify the bin entrypoint exists in build output
     - [ ] Store or compare a deterministic generated fixture snapshot where appropriate
     - [ ] Record verification output in `plan.md`
@@ -110,12 +134,13 @@
     - [ ] Define v2 health/status/version/load-check/config route schemas and handlers for Host where applicable
     - [ ] Define v2 version/info/health/load-check/trust route schemas and handlers for Manager/MultiManager where applicable
     - [ ] Expose the same v2 route definitions over HTTP and verser2
-    - [ ] Add focused tests for v2 route output and v1 unchanged behavior
+    - [ ] Add focused tests for v2 route output and v1 unchanged behavior using the generic client wherever the test is not specifically transport-level
 - [ ] Task: Automated verification gate for first v2 exposure
     - [ ] Run `api-router`, `api-server`, Host, Manager, and MultiManager package tests affected by v2 registration
-    - [ ] Add automated assertions that representative `/api/v1` endpoints are unchanged while matching v2 endpoints respond correctly
-    - [ ] Run verser2 transport/routed-forward tests proving v2 routes can be reached over broker routing
-    - [ ] Run the narrow API BDD smoke test only if unit/package tests cannot prove cross-package HTTP/verser2 behavior
+    - [ ] Add automated assertions through the client that representative `/api/v1` endpoints are unchanged while matching v2 endpoints respond correctly
+    - [ ] Run client-based HTTP and verser2 checks proving v2 routes can be reached through both transports
+    - [ ] Run no-circumvention checks for migrated package tests and BDD steps
+    - [ ] Run the narrow API BDD smoke test through the client only if unit/package tests cannot prove cross-package HTTP/verser2 behavior
     - [ ] Record v1 compatibility evidence in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
 
@@ -124,16 +149,17 @@
 - [ ] Task: Migrate sequence route definitions to v2
     - [ ] Define schemas and route handlers for sequence upload, update, delete, start, get, list, and related entity routes
     - [ ] Preserve existing DTO and `OpResponse` expectations for v1 while defining v2 contracts intentionally
-    - [ ] Add focused tests for validation, response shape, and failure behavior
+    - [ ] Add focused client-based tests for validation, response shape, and failure behavior
 - [ ] Task: Migrate Instance/CSI routes to v2
     - [ ] Define schemas and handlers for instance health, input/output, stdin/stdout/stderr/log, monitoring, events, set, stop, kill, and RPC routes
     - [ ] Preserve streaming behavior, duplex/upstream/downstream semantics, and current route aliases where required
-    - [ ] Add tests for stream route registration and representative control/event behavior
+    - [ ] Add client-based tests for stream route registration and representative control/event behavior where the shared client supports the route kind
 - [ ] Task: Automated verification gate for sequence and CSI behavior
     - [ ] Run affected Host, CSI/Instance, `api-server`, and `api-router` tests
-    - [ ] Add automated v1/v2 parity assertions for representative sequence control and read routes
-    - [ ] Add automated stream/duplex route tests for representative CSI routes where feasible without full runtime startup
-    - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent when package tests cannot prove end-to-end host API behavior
+    - [ ] Add automated client-based v1/v2 parity assertions for representative sequence control and read routes
+    - [ ] Add automated client-based stream/duplex route tests for representative CSI routes where feasible without full runtime startup
+    - [ ] Run no-circumvention checks for migrated sequence and CSI package/BDD tests
+    - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent through the client when package tests cannot prove end-to-end host API behavior
     - [ ] Record skipped Docker/Kubernetes validation and reason
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
 
@@ -142,11 +168,11 @@
 - [ ] Task: Migrate Manager route definitions to v2
     - [ ] Define schemas and handlers for STH info, list, instances, sequences, entities, topics, load, disconnect, and STH lifecycle routes
     - [ ] Preserve route classifier behavior and existing forwarding decisions
-    - [ ] Add tests for query validation, route classification, and response compatibility where applicable
+    - [ ] Add client-based tests for query validation, route classification, and response compatibility where applicable
 - [ ] Task: Migrate MultiManager route definitions to v2
     - [ ] Define schemas and handlers for version, info, load-check, list, health, trust, start, stop, logs, audit, and CPM proxy routes
     - [ ] Preserve sub-manager proxying behavior and verser2 guest attachment expectations
-    - [ ] Add focused MultiManager tests or fixtures as needed
+    - [ ] Add focused client-based MultiManager tests or fixtures as needed
 - [ ] Task: Migrate forwarding and storage proxy behavior to v2
     - [ ] Define v2 route handling for routed forwarding through verser2 transport
     - [ ] Integrate Disk/S3 storage proxy route definitions or adapters where in scope
@@ -154,8 +180,9 @@
 - [ ] Task: Automated verification gate for Manager/MultiManager migration
     - [ ] Run affected Manager, MultiManager, `api-server`, and `api-router` tests
     - [ ] Run route-classifier, verser2-transport, and routed-forward tests explicitly
-    - [ ] Add automated v1/v2 parity assertions for representative Manager and MultiManager routes
-    - [ ] Run manager/multimanager BDD smoke only when package tests cannot prove integration behavior
+    - [ ] Add automated client-based v1/v2 parity assertions for representative Manager and MultiManager routes
+    - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests
+    - [ ] Run manager/multimanager BDD smoke through the client only when package tests cannot prove integration behavior
     - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
 
@@ -167,7 +194,9 @@
     - [ ] Add compatibility tests for migrated v1 wrappers versus current expectations
 - [ ] Task: Update documentation and examples
     - [ ] Document decorator and imperative router usage
-    - [ ] Document Zod schema patterns, hook pipeline, OpenAPI generation, schema mode, HTTP registration, and verser2 registration
+    - [ ] Document Zod schema patterns, hook pipeline, OpenAPI generation, schema mode, HTTP registration, verser2 registration, and generic client construction
+    - [ ] Document HTTP and verser2 client transport setup and fixture-based client testing patterns
+    - [ ] Document no-circumvention rules for migrated package and BDD tests
     - [ ] Include migration notes for v1 compatibility and v2 route sections
 - [ ] Task: Run final deduplication and shared package review
     - [ ] Move repeated route/schema/hook helpers into shared package exports where safe
@@ -179,5 +208,6 @@
     - [ ] Run `npm run lint` or changed-file lint where appropriate
     - [ ] Run `npm run test:bdd-ci-api-node` and any Manager/MultiManager/verser2 smoke commands required by changed integration scope
     - [ ] Regenerate OpenAPI output and verify deterministic output for documented example routes
+    - [ ] Verify migrated API and BDD tests use the generic client and pass no-circumvention checks
     - [ ] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
