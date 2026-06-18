@@ -566,7 +566,8 @@
       - Not run; Phase 7.5 changed documentation and Conductor plan only.
     - [x] Record skipped validation and the reason when this phase remains documentation/contract-only
       - Package tests, typechecks, BDD, and build were skipped because this phase added no code, package metadata, generated artifacts, or runtime behavior.
-    - [ ] Create the scoped Phase 7.5 checkpoint commit and record the commit SHA in `plan.md`
+    - [x] Create the scoped Phase 7.5 checkpoint commit and record the commit SHA in `plan.md`
+      - Phase 7.5 checkpoint commit: `d37178b5`.
     - [ ] Push `conductor/api-revamp-20260617`, ensure PR #13 is updated, then ask for manual verification before Phase 8
 
 ## Phase 8: `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC Migration
