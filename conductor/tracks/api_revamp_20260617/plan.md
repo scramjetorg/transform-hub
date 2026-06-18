@@ -324,10 +324,99 @@
       - `npx tsc -p packages/multi-manager/tsconfig.build.json --noEmit`: passed.
       - Narrowed ESLint on changed source/test files passed with no errors and one existing complexity warning for `Manager.handleSthRegistration`.
     - [x] Record validation output, selected BDD guard mapping, and any known storage proxy failures/gaps in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: v1 API Extraction, Hotwire Tests, and BDD Guard Mapping' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: v1 API Extraction, Hotwire Tests, and BDD Guard Mapping' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+    - Manual verification approved by user by instructing continuation from the new Phase 6.
 
-## Phase 6: v2 Middleware and Low-Risk Route Exposure
+## Phase 6: v1 API Behavioral Unit Coverage and Gaps
+
+- [x] Task: Upgrade hotwire test infrastructure for unit behavior testing
+    - [x] Extend the test-only route recorder to retain registered handlers, middleware, stream handlers, forward strategies, and route options
+      - `packages/api-server/test/lib/route-recorder.ts` now stores handler, handlers, strategy, and options metadata for direct unit invocation.
+    - [x] Add helper APIs for selecting a recorded route by kind/path/method and invoking its handler directly
+      - Added `find(...)` and `require(...)` helpers for captured route lookup.
+    - [x] Keep the recorder test-only and out of production exports
+    - [x] Preserve existing route-surface hotwire assertions while enabling isolated unit tests
+    - [x] Do not create BDD tests in this phase
+- [x] Task: Add Host API behavioral unit coverage
+    - [x] Test Host API handlers as unit tests only
+    - [x] Do not start Host, HTTP servers, runners, Docker, Kubernetes, verser2, or BDD harnesses
+    - [x] Use fake Host dependencies for sequence store, instance store, auditor, load check, CPM connector, and lifecycle methods
+    - [x] Cover representative success and error behavior for sequence create/update/delete/start, version/config/status/load-check, instance middleware, RPC middleware/forwarding, audit stream setup, and CPM/space forwarding boundaries
+      - Added Host unit coverage for version/config/status handlers and delete sequence validation/delegation.
+    - [x] Record any behavior that cannot be cleanly unit tested without broader refactoring
+      - Host stream piping, CPM forwarding, RPC forwarding, audit stream lifecycle, and full sequence create/update/start behavior remain candidates for deeper unit coverage outside this phase.
+- [x] Task: Add Instance API behavioral unit coverage
+    - [x] Test Instance API handlers as unit tests only
+    - [x] Do not start a real instance runtime, Host, HTTP server, runner, verser2, or BDD harness
+    - [x] Use fake CSI, fake logger, and fake local event emitter
+    - [x] Cover representative success and error behavior for info, health/control message registration, input/output, stdin/stdout/stderr/log streams, events/event/once, set, stop, kill, inout duplex, and RPC middleware/forwarding
+      - Added Instance unit coverage for event lookup, set/stop/kill delegation, input-disabled error, and kill-not-running error.
+    - [x] Record stream/duplex cases that remain registration-only because realistic behavior requires runtime transport
+      - Stdio/log/output/input stream piping and inout duplex remain route-surface-only in this phase.
+- [x] Task: Add Manager API behavioral unit coverage
+    - [x] Test `ManagerAPIHandler` behavior as unit tests only
+    - [x] Do not start Manager, HTTP server, STH connections, verser2, storage services, or BDD harnesses
+    - [x] Use fake Manager dependencies for connection store, service discovery, load check, common logs, S3 middleware, logger, and route-forwarding methods
+    - [x] Cover representative success and error behavior for version/config/trust, STH info/register/delete, list/instances/sequences/entities/topics/load, log/load-stream registration handlers, topic stream delegation, store clear, disconnect validation/drop-list behavior, and STH proxy delegation
+      - Added Manager unit coverage for version/config, list query fallback, STH info success/not-found error, and STH delete validation/delegation.
+    - [x] Record any direct Manager REST BDD gaps as gaps only; do not add BDD coverage
+      - Direct Manager REST BDD remains a gap; no BDD coverage was added.
+- [x] Task: Add MultiManager API behavioral unit coverage
+    - [x] Test `MultiManagerAPIHandler` behavior as unit tests only
+    - [x] Do not start MultiManager, Manager subprocesses, HTTP server, verser2 Host, monitoring server, or BDD harnesses
+    - [x] Use fake MultiManager dependencies for manager store, health check, load check, logs, auditor, CPM middleware, and start/list methods
+    - [x] Cover representative success and error behavior for request logging middleware, version/info/load-check/list/health, verser2 trust with and without manager id, start, stop existing manager, stop missing manager, CPM proxy delegation, log stream, and audit stream delegation
+      - Added MultiManager unit coverage for version/info/load-check/list/health and stop existing/missing manager behavior.
+- [x] Task: Add DiskProxy behavioral unit coverage and decision gate
+    - [x] Test DiskProxy behavior as unit tests only
+    - [x] Do not start Manager, HTTP server, external S3, Docker, Kubernetes, verser2, or BDD harnesses
+    - [x] Keep S3Proxy behavioral fixes and S3Proxy behavioral tests out of scope for this phase
+    - [x] Cover DiskProxy route handlers by invoking recorded handlers directly with fake request/response/stream objects where feasible
+    - [x] Cover index/list, retrieval, delete, upload/downstream boundaries, and clear/index persistence behavior as far as current seams allow
+      - Added DiskProxy unit coverage for index listing, object retrieval, delete success/not-found, index update, storage-client calls, and save-index boundary.
+    - [x] When DiskProxy failures appear, classify each as test-fixture gap, known broken behavior, safe local fix candidate, or deferred storage repair
+      - No DiskProxy unit failures remained after using fake storage client boundaries.
+    - [x] Do not automatically fix DiskProxy behavior without recording the decision
+      - No DiskProxy production behavior fixes were made in this phase.
+- [x] Task: Preserve S3Proxy scope boundary
+    - [x] Keep S3Proxy route hotwire coverage structural only
+    - [x] Do not fix or expand S3Proxy behavioral tests in this phase
+    - [x] Keep S3Proxy marked as known broken unless a later storage repair phase explicitly changes that
+    - [x] Do not claim storage proxy BDD coverage from DiskProxy unit tests
+- [x] Task: Update unit coverage map and known gaps
+    - [x] Record which v1 API behaviors are covered by isolated unit tests
+      - Covered by isolated unit tests: Host version/config/status/delete sequence; Instance event/set/stop/kill/input error paths; Manager version/config/list/STH info/STH delete; MultiManager version/info/load/list/health/stop; DiskProxy list/retrieve/delete boundaries.
+    - [x] Record which behaviors are covered only by route hotwire tests
+      - Covered only by route hotwire tests: Host sequence upload/update/start, audit stream lifecycle, log/platform streams, CPM/RPC forwarding; Instance stdio/log/output stream routes, inout duplex, RPC middleware/forwarding; Manager topic streams, store clear, disconnect, STH proxy, S3 mount; MultiManager request logging, trust/start/CPM proxy/log/audit stream registration; S3Proxy all behavior.
+    - [x] Record which behaviors still require integration or BDD coverage outside this phase
+      - Runtime stream piping, real HTTP server behavior, verser2 forwarding, CPM/STH routed forwarding, and storage end-to-end behavior remain integration/BDD concerns outside this unit-test-only phase.
+    - [x] Keep existing BDD guard mapping as context only
+    - [x] Explicitly state that no BDD tests were created or modified in this phase
+    - [x] Explicitly record that storage proxy has no passing BDD guard in this phase
+- [x] Task: Automated verification gate for API behavioral unit coverage
+    - [x] Run affected Host, Manager, MultiManager, API-server, and API-router package tests through package scripts
+      - `npm --prefix packages/api-server test`: passed, 48 tests.
+      - `npm --prefix packages/host test`: passed, 171 tests, 9 skipped.
+      - `npm --prefix packages/manager test`: passed, 120 tests.
+      - `npm --prefix packages/multi-manager test`: passed, 39 tests.
+      - `npm --prefix packages/api-router test`: passed, 23 tests.
+    - [x] Run narrowed hotwire/behavior unit tests through package scripts; do not invoke AVA directly
+      - `npm --prefix packages/host run test -- test/api-hotwire.spec.ts`: passed, 6 tests.
+      - `npm --prefix packages/manager run test:ava -- test/manager-api-hotwire.spec.ts test/storage-proxy-hotwire.spec.ts`: passed, 7 tests.
+      - `npm --prefix packages/multi-manager run test:ava -- test/multi-manager-api-hotwire.spec.ts`: passed, 3 tests.
+    - [x] Run Manager and MultiManager typechecks if production seams change
+      - `npx tsc -p packages/manager/tsconfig.build.json --noEmit`: passed.
+      - `npx tsc -p packages/multi-manager/tsconfig.build.json --noEmit`: passed.
+    - [x] Run narrowed changed-file lint
+      - Initial narrowed ESLint command incorrectly included `plan.md`; classified as invocation error because Markdown is not in the TypeScript ESLint project.
+      - Corrected `npx eslint packages/api-server/test/lib/route-recorder.ts packages/host/test/api-hotwire.spec.ts packages/manager/test/manager-api-hotwire.spec.ts packages/manager/test/storage-proxy-hotwire.spec.ts packages/multi-manager/test/multi-manager-api-hotwire.spec.ts --ext .ts`: passed.
+    - [x] Do not run, create, or modify BDD tests for this phase
+    - [x] Record validation results, known failures, behavioral gaps, and fix/defer decisions in `plan.md`
+- [ ] Task: Conductor - User Manual Verification 'Phase 6: v1 API Behavioral Unit Coverage and Gaps' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+
+## Phase 7: v2 Middleware and Low-Risk Route Exposure
 
 - [ ] Task: Create v2 API integration points
     - [ ] Add v2 registration locations for Host, Manager, MultiManager, and CSI/Instance without changing v1 route registration
@@ -350,10 +439,10 @@
     - [ ] Run no-circumvention checks for migrated package tests and BDD steps
     - [ ] Run the narrow API BDD smoke test through the client only if unit/package tests cannot prove cross-package HTTP/verser2 behavior
     - [ ] Record v1 compatibility evidence in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 7: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 7: Sequence and Instance/CSI Route Migration to v2
+## Phase 8: Sequence and Instance/CSI Route Migration to v2
 
 - [ ] Task: Migrate sequence route definitions to v2
     - [ ] Define schemas and route handlers for sequence upload, update, delete, start, get, list, and related entity routes
@@ -370,10 +459,10 @@
     - [ ] Run no-circumvention checks for migrated sequence and CSI package/BDD tests
     - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent through the client when package tests cannot prove end-to-end host API behavior
     - [ ] Record skipped Docker/Kubernetes validation and reason
-- [ ] Task: Conductor - User Manual Verification 'Phase 7: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 8: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 8: Manager, MultiManager, Forwarding, and Storage Route Migration to v2
+## Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2
 
 - [ ] Task: Migrate Manager route definitions to v2
     - [ ] Define schemas and handlers for STH info, list, instances, sequences, entities, topics, load, disconnect, and STH lifecycle routes
@@ -395,10 +484,10 @@
     - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests
     - [ ] Run manager/multimanager BDD smoke through the client only when package tests cannot prove integration behavior
     - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 8: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 9: v1 Wrapper Compatibility, Documentation, and Final Validation
+## Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation
 
 - [ ] Task: Implement v1 wrapper/backing strategy after v2 coverage is available
     - [ ] Route v1 handlers through v2 implementations or compatibility adapters only where exact v1 behavior is preserved
@@ -422,5 +511,5 @@
     - [ ] Regenerate OpenAPI output and verify deterministic output for documented example routes
     - [ ] Verify migrated API and BDD tests use the generic client and pass no-circumvention checks
     - [ ] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 9: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 10 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.

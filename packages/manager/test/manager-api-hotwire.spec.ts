@@ -75,3 +75,53 @@ test("ManagerAPIHandler registers the separated v1 Manager API route surface", a
     t.true(sthProxyIndex > -1);
     t.true(deleteSthIndex < sthProxyIndex);
 });
+
+test("ManagerAPIHandler unit handlers return version config and paginated list data", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const manager = {
+        ...createManagerStub(recorder),
+        validateQueries: (offset: number, limit: number) => offset >= 0 && limit > 0,
+        getList: (offset: number, limit: number) => {
+            calls.push({ offset, limit });
+            return { hosts: [{ id: "sth-1" }] };
+        }
+    };
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    const version = (recorder.require("get", "/api/v1/version").handler as Function)({});
+    const config = (recorder.require("get", "/api/v1/config").handler as Function)({});
+    const list = (recorder.require("get", "/api/v1/list").handler as Function)({ query: { offset: "-1", limit: "0" } });
+
+    t.deepEqual(version, { service: "@scramjet/manager", apiVersion: "v1", version: "0.0.0-test", build: "test-build" });
+    t.deepEqual(config, { config: { apiBase: "/api/v1" } });
+    t.deepEqual(list, { hosts: [{ id: "sth-1" }] });
+    t.deepEqual(calls, [{ offset: 0, limit: 100 }]);
+});
+
+test("ManagerAPIHandler unit handlers cover STH info and delete behavior", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const manager = {
+        ...createManagerStub(recorder),
+        apiSthConnectionStore: {
+            getById: (id: string) => id === "sth-1" ? { getInfo: () => ({ id }) } : undefined,
+            delete: async (id: string, force: boolean) => calls.push({ id, force })
+        }
+    };
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    const infoHandler = recorder.require("get", "/api/v1/sth/:id/info").handler as Function;
+    const deleteHandler = recorder.require("op", "/api/v1/sth/:id", "delete").handler as Function;
+
+    t.deepEqual(infoHandler({ params: { id: "sth-1" } }), { id: "sth-1" });
+    const missingError = t.throws(() => infoHandler({ params: { id: "missing" } })) as any;
+
+    t.is(missingError.type, "ERR_NOT_FOUND");
+    t.is(missingError.code, 404);
+    t.deepEqual(await deleteHandler({ params: {}, headers: {} }), { opStatus: "Not Found", error: "Id was not supplied" });
+    t.deepEqual(await deleteHandler({ params: { id: "sth-1" }, headers: { "x-force": "true" } }), { opStatus: "Accepted" });
+    t.deepEqual(calls, [{ id: "sth-1", force: true }]);
+});

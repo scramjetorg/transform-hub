@@ -1,10 +1,13 @@
-import { APIExpose, APIRoute, HttpMethod, Middleware, StreamConfig } from "@scramjet/types";
+import { APIExpose, APIRoute, ForwardStrategy, HttpMethod, Middleware, StreamConfig } from "@scramjet/types";
 
 export type RecordedRoute = {
     kind: string;
     method?: HttpMethod;
     path: string;
     options?: StreamConfig | boolean;
+    handler?: unknown;
+    handlers?: unknown[];
+    strategy?: ForwardStrategy;
 };
 
 export class RouteRecorder {
@@ -24,81 +27,105 @@ export class RouteRecorder {
         });
     }
 
-    use(path: string) {
-        this.record("use", path);
+    find(kind: string, path: string, method?: HttpMethod) {
+        return this.routes.find(route => {
+            return route.kind === kind && route.path === path && (method === undefined || route.method === method);
+        });
     }
 
-    get(path: string) {
-        this.record("get", path, "get");
+    require(kind: string, path: string, method?: HttpMethod) {
+        const route = this.find(kind, path, method);
+
+        if (!route) {
+            throw new Error(`Route not recorded: ${kind} ${method || ""} ${path}`.trim());
+        }
+
+        return route;
     }
 
-    op(method: HttpMethod, path: string) {
-        this.record("op", path, method);
+    use(path: string, ...middlewares: Middleware[]) {
+        this.record("use", path, undefined, undefined, middlewares[0], middlewares);
     }
 
-    upstream(path: string, _stream: unknown, options?: StreamConfig) {
-        this.record("upstream", path, "get", options);
+    get(path: string, handler?: unknown) {
+        this.record("get", path, "get", undefined, handler);
     }
 
-    downstream(path: string, _stream: unknown, options?: StreamConfig) {
-        this.record("downstream", path, options?.method || "post", options);
+    op(method: HttpMethod, path: string, handler?: unknown, comm?: unknown, rawBody?: boolean) {
+        this.record("op", path, method, rawBody, handler, comm === undefined ? undefined : [handler, comm]);
     }
 
-    duplex(path: string) {
-        this.record("duplex", path);
+    upstream(path: string, stream: unknown, options?: StreamConfig) {
+        this.record("upstream", path, "get", options, stream);
     }
 
-    forward(path: string) {
-        this.record("forward", path);
+    downstream(path: string, stream: unknown, options?: StreamConfig) {
+        this.record("downstream", path, options?.method || "post", options, stream);
     }
 
-    create(path: string, _handler: Middleware) {
-        this.record("create", path, "post");
+    duplex(path: string, handler?: unknown) {
+        this.record("duplex", path, undefined, undefined, handler);
     }
 
-    delete(path: string, _handler: Middleware) {
-        this.record("delete", path, "delete");
+    forward(path: string, _urls?: string[], strategy?: ForwardStrategy) {
+        this.record("forward", path, undefined, undefined, undefined, undefined, strategy);
     }
 
-    update(path: string, _handler: Middleware) {
-        this.record("update", path, "put");
+    create(path: string, handler: Middleware) {
+        this.record("create", path, "post", undefined, handler);
     }
 
-    read(path: string, _handler: Middleware) {
-        this.record("read", path, "get");
+    delete(path: string, handler: Middleware) {
+        this.record("delete", path, "delete", undefined, handler);
     }
 
-    all(path: string, _handler: Middleware) {
-        this.record("all", path);
+    update(path: string, handler: Middleware) {
+        this.record("update", path, "put", undefined, handler);
     }
 
-    head(path: string, _handler: Middleware) {
-        this.record("head", path, "head");
+    read(path: string, handler: Middleware) {
+        this.record("read", path, "get", undefined, handler);
     }
 
-    patch(path: string, _handler: Middleware) {
-        this.record("patch", path, "patch");
+    all(path: string, handler: Middleware) {
+        this.record("all", path, undefined, undefined, handler);
     }
 
-    options(path: string, _handler: Middleware) {
-        this.record("options", path);
+    head(path: string, handler: Middleware) {
+        this.record("head", path, "head", undefined, handler);
     }
 
-    connect(path: string, _handler: Middleware) {
-        this.record("connect", path, "connect");
+    patch(path: string, handler: Middleware) {
+        this.record("patch", path, "patch", undefined, handler);
     }
 
-    trace(path: string, _handler: Middleware) {
-        this.record("trace", path, "trace");
+    options(path: string, handler: Middleware) {
+        this.record("options", path, undefined, undefined, handler);
     }
 
-    decorate(path: string) {
-        this.record("decorate", path);
+    connect(path: string, handler: Middleware) {
+        this.record("connect", path, "connect", undefined, handler);
+    }
+
+    trace(path: string, handler: Middleware) {
+        this.record("trace", path, "trace", undefined, handler);
+    }
+
+    decorate(path: string, ...decorators: unknown[]) {
+        this.record("decorate", path, undefined, undefined, decorators[0], decorators);
     }
 
     lookup() {}
 
-    private record(kind: string, path: string, method?: HttpMethod, options?: StreamConfig | boolean) {
-        this.routes.push({ kind, method, path, options });
+    private record(
+        kind: string,
+        path: string,
+        method?: HttpMethod,
+        options?: StreamConfig | boolean,
+        handler?: unknown,
+        handlers?: unknown[],
+        strategy?: ForwardStrategy
+    ) {
+        this.routes.push({ kind, method, path, options, handler, handlers, strategy });
     }
 }

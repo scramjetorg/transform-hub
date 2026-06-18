@@ -57,3 +57,44 @@ test("MultiManagerAPIHandler registers the separated v1 MultiManager API route s
     t.true(proxyIndex > -1);
     t.true(stopIndex < proxyIndex);
 });
+
+test("MultiManagerAPIHandler unit handlers return version info list and health data", async t => {
+    const recorder = new RouteRecorder();
+    const multiManager = {
+        ...createMultiManagerStub(recorder),
+        healthCheck: { getHealthCheckInfo: () => ({ healthy: true }) },
+        loadCheck: { getLoadCheck: async () => ({ load: 1 }) },
+        handleListManagersRequest: () => [{ id: "manager-1" }]
+    };
+
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    const version = (recorder.require("get", "/api/v1/version").handler as Function)({});
+    const info = (recorder.require("get", "/api/v1/info").handler as Function)({});
+    const load = await (recorder.require("get", "/api/v1/load-check").handler as Function)({});
+    const list = (recorder.require("get", "/api/v1/list").handler as Function)({});
+    const health = (recorder.require("get", "/api/v1/health").handler as Function)({});
+
+    t.deepEqual(version, { service: "@scramjet/multi-manager", apiVersion: "v1", version: "0.0.0-test", build: "test-build" });
+    t.deepEqual(info, { apiBase: "/api/v1", apiPort: 20000, id: "mm-hotwire", managersCount: 0 });
+    t.deepEqual(load, { load: 1 });
+    t.deepEqual(list, [{ id: "manager-1" }]);
+    t.deepEqual(health, { healthy: true });
+});
+
+test("MultiManagerAPIHandler stop unit handler stops existing managers and reports missing managers", async t => {
+    const recorder = new RouteRecorder();
+    const multiManager = createMultiManagerStub(recorder);
+    const stopped: string[] = [];
+
+    multiManager.managersStore.add("manager-1", { id: "manager-1", stop: async () => stopped.push("manager-1") } as any);
+
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    const stopHandler = recorder.require("op", "/api/v1/cpm/:id/stop", "post").handler as Function;
+
+    t.deepEqual(await stopHandler({ params: { id: "manager-1" } }), { id: "manager-1", opStatus: "OK" });
+    t.deepEqual(stopped, ["manager-1"]);
+    t.is(multiManager.managersStore.getById("manager-1"), undefined);
+    t.deepEqual(await stopHandler({ params: { id: "missing" } }), { opStatus: "Not Found" });
+});
