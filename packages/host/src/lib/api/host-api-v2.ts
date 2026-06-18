@@ -1,9 +1,8 @@
-import { APIExpose, NextCallback, OpResponse, ParsedMessage } from "@scramjet/types";
+import { APIExpose, OpResponse, ParsedMessage } from "@scramjet/types";
 import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { RestAPI2 } from "@scramjet/rest-api2";
 import { z } from "zod";
 import { ReasonPhrases } from "http-status-codes";
-import { ServerResponse } from "http";
 
 import { IHost } from "../types";
 
@@ -11,7 +10,6 @@ export type HostAPIV2Support = {
     handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<Record<string, unknown>>>;
     handleStartSequence(req: ParsedMessage): Promise<OpResponse<Record<string, unknown>>>;
     toRestOperation<TOutput>(response: OpResponse<Record<string, unknown>>, result: TOutput): RestAPI2.OpResponse<TOutput>;
-    forwardToInstanceV2(req: ParsedMessage, res: ServerResponse, next: NextCallback): unknown;
 };
 
 export class HostAPIV2Handler {
@@ -154,11 +152,18 @@ export class HostAPIV2Handler {
     createV2Router(): RouterDefinition {
         return Router.create({ basePath: this.v2ApiBase })
             .mount("/", this.createHubRouter())
-            .mount("/sequences", this.createSequenceRouter());
+            .mount("/sequences", this.createSequenceRouter())
+            .resolve("/instances/:instanceId", {
+                schemas: { params: z.object({ instanceId: z.string() }) },
+                handler: ({ params }) => {
+                    const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
+
+                    return instance?.v2Router ? { local: instance.v2Router } : undefined;
+                }
+            });
     }
 
     attach() {
         registerHttpRoutes(this.api, this.createV2Router());
-        this.api.use(`${this.v2ApiBase}/instances/:instanceId`, (req, res, next) => this.support.forwardToInstanceV2(req, res, next));
     }
 }

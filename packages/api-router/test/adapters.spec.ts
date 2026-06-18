@@ -61,6 +61,74 @@ test("registerHttpRoutes executes mounted child routes at composed paths", async
     }), { instanceId: "inst-1", ok: true });
 });
 
+test("registerHttpRoutes dispatches dynamic resolvers to local lookup targets", async t => {
+    const calls: string[] = [];
+    const uses: { path: string; handler: Function }[] = [];
+    const api = {
+        get() {},
+        op() {},
+        use(path: string, handler: Function) {
+            uses.push({ path, handler });
+        }
+    } as any;
+    const child = {
+        async lookup(req: any) {
+            calls.push(`${req.url}:${req.params.instanceId}`);
+        }
+    };
+    const router = createRouter({ basePath: "/api/v2" })
+        .resolve("/instances/:instanceId", {
+            schemas: { params: z.object({ instanceId: z.string() }) },
+            handler: ({ params, remainingPath }) => {
+                calls.push(`resolve:${params.instanceId}:${remainingPath}`);
+
+                return { local: child };
+            }
+        });
+    const req: any = { url: "/api/v2/instances/inst-1/stdio", params: {}, headers: {} };
+
+    registerHttpRoutes(api, router);
+    t.deepEqual(uses.map(use => use.path), ["/api/v2/instances/:instanceId", "/api/v2/instances/:instanceId/*"]);
+    await uses[1].handler(req, { headersSent: false, writeHead() {}, end() {} }, () => undefined);
+
+    t.deepEqual(calls, ["resolve:inst-1:/stdio", "/stdio:inst-1"]);
+    t.is(req.url, "/api/v2/instances/inst-1/stdio");
+    t.deepEqual(req.params, {});
+});
+
+test("registerHttpRoutes reports unsupported dynamic resolver targets", async t => {
+    const uses: { path: string; handler: Function }[] = [];
+    const api = {
+        get() {},
+        op() {},
+        use(path: string, handler: Function) {
+            uses.push({ path, handler });
+        }
+    } as any;
+    const router = createRouter({ basePath: "/api/v2" })
+        .resolve("/remote/:id", {
+            handler: () => ({ client: {} })
+        });
+    const response = {
+        headersSent: false,
+        statusCode: 200,
+        body: "",
+        writeHead(statusCode: number) {
+            this.statusCode = statusCode;
+            this.headersSent = true;
+        },
+        end(body: string) {
+            this.body = body;
+        }
+    };
+
+    registerHttpRoutes(api, router);
+    await uses[0].handler({ url: "/api/v2/remote/upstream", headers: {} }, response, () => undefined);
+
+    t.is(response.statusCode, 501);
+    t.regex(response.body, /not supported/);
+});
+
 test("registerHttpRoutes registers stream route kinds when target supports them", t => {
     const calls: string[] = [];
     const api = {

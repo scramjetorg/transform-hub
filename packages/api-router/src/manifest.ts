@@ -28,6 +28,43 @@ export type RouteHandler<TSchemas extends RouteSchemas = RouteSchemas> = (
 
 export type RouteKind = "request" | "upstream" | "downstream" | "duplex";
 
+export type ResolverRequest<TSchemas extends RouteSchemas = RouteSchemas> = RouteRequest<TSchemas> & {
+    path: string;
+    remainingPath: string;
+};
+
+export type LocalRouterTarget = {
+    lookup(req: unknown, res: unknown, next: (err?: Error) => void): unknown;
+};
+
+export type ResolverTarget = {
+    local?: LocalRouterTarget;
+    definitions?: unknown;
+    client?: unknown;
+    localForwardPath?: string;
+};
+
+export type ResolverHandler<TSchemas extends RouteSchemas = RouteSchemas> = (
+    request: ResolverRequest<TSchemas>
+) => ResolverTarget | undefined | Promise<ResolverTarget | undefined>;
+
+export type ResolverDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
+    id?: string;
+    path: string;
+    description?: string;
+    schemas?: TSchemas;
+    handler: ResolverHandler<TSchemas>;
+    targetDefinitions?: unknown;
+};
+
+export type ResolverManifestEntry = Omit<ResolverDefinition, "handler" | "targetDefinitions"> & {
+    id: string;
+    fullPath: string;
+    implementerPath?: string;
+    mountPath?: string;
+    targetDefinitions?: unknown;
+};
+
 export type RouteDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
     id?: string;
     method: HttpMethod;
@@ -50,6 +87,7 @@ export type RouteManifestEntry = Omit<RouteDefinition, "handler"> & {
 export type RouteManifest = {
     basePath: string;
     routes: RouteManifestEntry[];
+    resolvers?: ResolverManifestEntry[];
 };
 
 export function normalizePath(path: string): string {

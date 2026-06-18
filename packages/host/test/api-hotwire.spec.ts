@@ -6,6 +6,7 @@ import { InstanceStatus } from "@scramjet/symbols";
 import { HostError } from "@scramjet/model";
 
 import { HostAPIHandler } from "../src/lib/api/host-api";
+import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { InstanceAPI } from "../src/lib/api/instance-api";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
@@ -160,7 +161,7 @@ test("HostAPIHandler delete sequence unit handler validates id and delegates", a
 
 test("HostAPIHandler unit methods cover sequence create update and incoming errors", async t => {
     const host = createHostStub();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
 
     host.sequenceStore.getById = (id: string) => id === "existing" ? { id, instances: [] } : undefined;
     t.deepEqual(await api.handleUpdateSequence({ params: {}, method: "PUT" }), { opStatus: "Bad Request", error: "missing id parameter" });
@@ -185,7 +186,7 @@ test("HostAPIHandler unit methods cover sequence create update and incoming erro
 
 test("HostAPIHandler unit sequence wrappers delegate to incoming sequence handler", async t => {
     const host = createHostStub();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
     const calls: any[] = [];
 
     host.sequenceStore.getById = (id: string) => id === "existing" ? { id, instances: [] } : undefined;
@@ -201,7 +202,7 @@ test("HostAPIHandler unit sequence wrappers delegate to incoming sequence handle
 
 test("HostAPIHandler unit start sequence validates payload and maps startup errors", async t => {
     const host = createHostStub();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
 
     t.deepEqual(await api.handleStartSequence({ params: {}, body: {} }), { opStatus: "Bad Request", error: "Missing id parameter" });
     t.deepEqual(await api.handleStartSequence({ params: { id: "seq" }, body: { appConfig: "bad" } }), { opStatus: "Bad Request", error: "DTO appConfig is string, not an object" });
@@ -226,7 +227,7 @@ test("HostAPIHandler unit start sequence validates payload and maps startup erro
 
 test("HostAPIHandler unit start sequence covers remaining startup conflict and error mappings", async t => {
     const host = createHostStub();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
 
     host.instancesStore.has = (id: string) => id === "conflicting-name";
     t.deepEqual(await api.handleStartSequence({ params: { id: "seq" }, body: { instanceName: "conflicting-name" } }), { opStatus: "Conflict", error: "Instance name conflicts with an existing instance ID" });
@@ -248,7 +249,7 @@ test("HostAPIHandler unit start sequence covers remaining startup conflict and e
 
 test("HostAPIHandler unit delete and incoming sequence map HostError branches", async t => {
     const host = createHostStub();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
 
     host.deleteSequence = async () => { throw new HostError("UNKNOWN_SEQUENCE", "missing"); };
     t.deepEqual(await api.handleDeleteSequence({ params: { id: "seq" }, headers: {} }), { opStatus: "Not Found", error: "Application Error Occurred" });
@@ -302,7 +303,7 @@ test("HostAPIHandler unit audit and space middleware do not require servers", as
     let unrefCount = 0;
     const auditSource = new PassThrough();
     const socket = new EventEmitter();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
 
     host.heartBeatInterval = { ref: () => refCount++, unref: () => unrefCount++ };
     host.auditor = { getOutputStream: () => auditSource };
@@ -323,7 +324,7 @@ test("HostAPIHandler unit audit and space middleware do not require servers", as
 
 test("HostAPIHandler unit space middleware pipes CPM responses", async t => {
     const host = createHostStub();
-    const api = new HostAPIHandler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
     const clientRequest = Object.assign(new PassThrough(), {
         flushed: false,
         flushHeaders() { this.flushed = true; }

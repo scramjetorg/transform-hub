@@ -1,5 +1,5 @@
 import { collectDecoratedRoutes } from "./decorators";
-import { HttpMethod, RouteDefinition, defineRoute } from "./manifest";
+import { HttpMethod, ResolverDefinition, RouteDefinition, RouteSchemas, defineRoute, normalizePath } from "./manifest";
 import { RouterDefinition, RouterOptions, createRouter } from "./router";
 
 function route(method: HttpMethod, path: string, definition: Omit<RouteDefinition, "method" | "path"> = {}): RouteDefinition {
@@ -21,5 +21,11 @@ export const Router = {
     },
     post(path: string, definition?: Omit<RouteDefinition, "method" | "path">): RouteDefinition {
         return route("post", path, definition);
+    },
+    resolve<TSchemas extends RouteSchemas>(path: string, definition: Omit<ResolverDefinition<TSchemas>, "path">): ResolverDefinition<TSchemas> {
+        return {
+            ...definition,
+            path: normalizePath(path)
+        };
     }
 };

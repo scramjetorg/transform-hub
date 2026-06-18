@@ -1,7 +1,6 @@
-import { APIExpose, NextCallback, OpResponse, ParsedMessage } from "@scramjet/types";
+import { APIExpose, OpResponse } from "@scramjet/types";
 import { RestAPI2 } from "@scramjet/rest-api2";
 import { ReasonPhrases } from "http-status-codes";
-import { ServerResponse } from "http";
 
 import { IHost } from "../types";
 import { HostAPIV1Handler } from "./host-api-v1";
@@ -13,27 +12,28 @@ export {
     stripRpcExposePath
 } from "./host-api-v1";
 
-export class HostAPIHandler extends HostAPIV1Handler {
+export class HostAPIHandler {
+    private readonly v1: HostAPIV1Handler;
+
     constructor(
         private hostApi: APIExpose,
         private hostInstance: IHost,
         private hostVersion: string,
         build: string
     ) {
-        super(hostApi, hostInstance, hostVersion, build);
+        this.v1 = new HostAPIV1Handler(hostApi, hostInstance, hostVersion, build);
     }
 
     attach() {
-        super.attach();
+        this.v1.attach();
         this.attachV2Routes();
     }
 
     private attachV2Routes() {
         new HostAPIV2Handler(this.hostApi, this.hostInstance, this.hostVersion, {
-            handleDeleteSequence: (req) => this.handleDeleteSequence(req) as Promise<OpResponse<Record<string, unknown>>>,
-            handleStartSequence: (req) => this.handleStartSequence(req) as Promise<OpResponse<Record<string, unknown>>>,
+            handleDeleteSequence: (req) => this.v1.handleDeleteSequence(req) as Promise<OpResponse<Record<string, unknown>>>,
+            handleStartSequence: (req) => this.v1.handleStartSequence(req) as Promise<OpResponse<Record<string, unknown>>>,
             toRestOperation: (response, result) => this.toRestOperation(response, result),
-            forwardToInstanceV2: (req, res, next) => this.instanceV2Middleware(req, res, next)
         }).attach();
     }
 
@@ -51,9 +51,5 @@ export class HostAPIHandler extends HostAPIV1Handler {
                 message: String((response as { error?: unknown }).error || response.opStatus)
             }
         };
-    }
-
-    private instanceV2Middleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        return this.instanceMiddleware(req, res, next, "/api/v2/instances", "instanceId", "v2Router");
     }
 }

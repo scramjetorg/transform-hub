@@ -1,7 +1,7 @@
 import test from "ava";
 import { z } from "zod";
 
-import { ApiClientRequest, DuplicateRouteError, Router, UnknownRouteError, createApiClient, createRouter, defineRoute, joinPaths, normalizePath, replacePathVersion, routeId } from "../src";
+import { ApiClientRequest, DuplicateRouteError, ResolverRequest, Router, UnknownRouteError, createApiClient, createRouter, defineRoute, joinPaths, normalizePath, replacePathVersion, routeId } from "../src";
 
 test("normalizes and joins route paths", t => {
     t.is(normalizePath("api/v2/"), "/api/v2");
@@ -62,6 +62,45 @@ test("mount rejects duplicate composed full paths", t => {
         .mount("/instances/:instanceId", createRouter().get("/stdio", { id: "mounted" }));
 
     t.throws(() => router.collect(), { instanceOf: DuplicateRouteError });
+});
+
+test("resolve stores dynamic resolver metadata separately from static routes", t => {
+    const router = createRouter({ basePath: "/api/v2" })
+        .get("/health")
+        .resolve("/instances/:instanceId", {
+            schemas: { params: z.object({ instanceId: z.string() }) },
+            handler: ({ params }) => ({ local: { lookup: () => params.instanceId } })
+        });
+    const manifest = router.collect();
+
+    t.deepEqual(manifest.routes.map(route => route.fullPath), ["/api/v2/health"]);
+    t.deepEqual(manifest.resolvers?.map(resolver => resolver.fullPath), ["/api/v2/instances/:instanceId"]);
+    t.is(router.resolvers()[0].path, "/instances/:instanceId");
+});
+
+test("Router.resolve preserves schema-inferred resolver context", async t => {
+    const resolver = Router.resolve("/instances/:instanceId", {
+        schemas: { params: z.object({ instanceId: z.string() }) },
+        handler({ params }) {
+            const typed: string = params.instanceId;
+
+            return { local: { lookup: () => typed } };
+        }
+    });
+
+    const request: ResolverRequest<{ params: z.ZodObject<{ instanceId: z.ZodString }> }> = {
+        params: { instanceId: "inst-1" },
+        query: undefined,
+        headers: undefined,
+        body: undefined,
+        path: "/api/v2/instances/inst-1",
+        remainingPath: "/"
+    };
+
+    const target = await resolver.handler(request);
+
+    t.is(resolver.path, "/instances/:instanceId");
+    t.is(target?.local?.lookup({}, {}, () => undefined), "inst-1");
 });
 
 test("defineRoute preserves schema-inferred handler context", async t => {

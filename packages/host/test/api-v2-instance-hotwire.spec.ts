@@ -5,6 +5,7 @@ import { InstanceStatus } from "@scramjet/symbols";
 import EventEmitter from "events";
 
 import { HostAPIHandler } from "../src/lib/api/host-api";
+import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { InstanceAPIV2 } from "../src/lib/api/instance-api-v2";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 import { registerHttpRoutes } from "@scramjet/api-router";
@@ -94,12 +95,19 @@ test("HostAPIHandler forwards v2 Instance paths without registering Host-owned c
     new HostAPIHandler(recorder.asApiExpose(), createHostStub(), "1.0.0", "build").attach();
 
     t.true(recorder.has("use", "/api/v2/instances/:instanceId"));
+    t.true(recorder.has("use", "/api/v2/instances/:instanceId/*"));
     t.false(recorder.has("use", "/api/v2/instance/:id"));
     t.false(recorder.has("get", "/api/v2/instances/:instanceId"));
     t.false(recorder.has("op", "/api/v2/instances/:instanceId", "delete"));
     t.false(recorder.has("op", "/api/v2/instances/:instanceId", "patch"));
     t.false(recorder.has("get", "/api/v2/instances/:instanceId/stdio"));
     t.false(recorder.has("duplex", "/api/v2/instances/:instanceId/rpc/*"));
+});
+
+test("HostAPIHandler composes v1 and v2 handlers without inheriting the v1 handler", t => {
+    const handler = new HostAPIHandler(new RouteRecorder().asApiExpose(), createHostStub(), "1.0.0", "build");
+
+    t.false(handler instanceof HostAPIV1Handler);
 });
 
 test("InstanceAPIV2 registers local per-instance v2 routes", t => {
@@ -209,7 +217,7 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
     ]);
 });
 
-test("HostAPIHandler v2 plural instance mount rewrites to the v2 CSI router", t => {
+test("HostAPIHandler v2 plural instance resolver dispatches to the v2 CSI router", async t => {
     const recorder = new RouteRecorder();
     const host = createHostStub();
     const v1LookupCalls: any[] = [];
@@ -217,15 +225,34 @@ test("HostAPIHandler v2 plural instance mount rewrites to the v2 CSI router", t 
 
     host.instancesStore.getByNameOrId = (id: string) => id === "inst-1" ? {
         router: { lookup: (...args: any[]) => v1LookupCalls.push(args) },
-        v2Router: { lookup: (...args: any[]) => v2LookupCalls.push(args) }
+        v2Router: { lookup: (routedReq: any) => v2LookupCalls.push({ url: routedReq.url, params: routedReq.params }) }
     } : undefined;
 
     new HostAPIHandler(recorder.asApiExpose(), host, "1.0.0", "build").attach();
 
-    const req: any = { params: { instanceId: "inst-1" }, url: "/api/v2/instances/inst-1/stdio" };
+    const req: any = { params: {}, headers: {}, url: "/api/v2/instances/inst-1/stdio" };
 
-    (recorder.require("use", "/api/v2/instances/:instanceId").handler as Function)(req, createResponseStub(), () => undefined);
-    t.is(req.url, "/stdio");
+    await (recorder.require("use", "/api/v2/instances/:instanceId/*").handler as Function)(req, createResponseStub(), () => undefined);
+    t.is(req.url, "/api/v2/instances/inst-1/stdio");
+    t.deepEqual(req.params, {});
     t.is(v1LookupCalls.length, 0);
     t.is(v2LookupCalls.length, 1);
+    t.deepEqual(v2LookupCalls[0], { url: "/stdio", params: { instanceId: "inst-1" } });
+});
+
+test("HostAPIHandler v2 instance resolver returns a clear not-found when no v2 router resolves", async t => {
+    const recorder = new RouteRecorder();
+    const host = createHostStub();
+    const response = createResponseStub();
+
+    new HostAPIHandler(recorder.asApiExpose(), host, "1.0.0", "build").attach();
+
+    await (recorder.require("use", "/api/v2/instances/:instanceId/*").handler as Function)({
+        params: {},
+        headers: {},
+        url: "/api/v2/instances/missing/stdio"
+    }, response, () => undefined);
+
+    t.is(response.statusCode, 404);
+    t.true(response.ended);
 });

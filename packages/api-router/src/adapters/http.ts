@@ -1,11 +1,11 @@
 import { APIRoute, ParsedMessage, StreamConfig } from "@scramjet/types";
 import { ServerResponse } from "http";
-import { RouteDefinition, RouteRequest } from "../manifest";
+import { ResolverDefinition, ResolverTarget, RouteDefinition, RouteRequest, normalizePath } from "../manifest";
 import { RouterDefinition } from "../router";
 import { executeRoutePipeline } from "../hooks";
 import { validateRouteRequest, validateRouteResponse } from "../validation";
 
-export type HttpRouteTarget = Pick<APIRoute, "get" | "op"> & Partial<Pick<APIRoute, "upstream" | "downstream" | "duplex">>;
+export type HttpRouteTarget = Pick<APIRoute, "get" | "op"> & Partial<Pick<APIRoute, "upstream" | "downstream" | "duplex" | "use">>;
 
 export function mapRouteRequest(req: Partial<ParsedMessage>): Partial<RouteRequest> {
     return {
@@ -39,8 +39,118 @@ function streamOptions(route: RouteDefinition): StreamConfig | undefined {
     return route.method === "put" ? { method: "put" } : undefined;
 }
 
+function writeResolverError(res: ServerResponse, statusCode: number, message: string) {
+    if (!res.headersSent) {
+        res.writeHead(statusCode, { "content-type": "application/json" });
+    }
+
+    res.end(JSON.stringify({ error: { message } }));
+}
+
+function splitPath(path: string): string[] {
+    return normalizePath(path.split("?")[0]).split("/").filter(Boolean);
+}
+
+function matchResolverPath(pattern: string, path: string) {
+    const patternSegments = splitPath(pattern);
+    const pathSegments = splitPath(path);
+
+    if (pathSegments.length < patternSegments.length) {
+        return undefined;
+    }
+
+    const params: Record<string, string> = {};
+
+    for (let index = 0; index < patternSegments.length; index++) {
+        const patternSegment = patternSegments[index];
+        const pathSegment = pathSegments[index];
+
+        if (patternSegment.startsWith(":")) {
+            params[patternSegment.slice(1)] = decodeURIComponent(pathSegment);
+            continue;
+        }
+
+        if (patternSegment !== pathSegment) {
+            return undefined;
+        }
+    }
+
+    const remainingSegments = pathSegments.slice(patternSegments.length);
+    const remainingPath = remainingSegments.length ? `/${remainingSegments.join("/")}` : "/";
+
+    return { params, remainingPath };
+}
+
+async function dispatchResolvedTarget(
+    target: ResolverTarget | undefined,
+    req: ParsedMessage,
+    res: ServerResponse,
+    next: (err?: Error) => void,
+    remainingPath: string,
+    params: Record<string, string>
+) {
+    if (!target) {
+        writeResolverError(res, 404, "Resolved API target was not found");
+        return;
+    }
+
+    if (!target.local) {
+        writeResolverError(res, 501, "Resolved API target is not supported by the HTTP adapter");
+        return;
+    }
+
+    const originalUrl = req.url;
+    const originalParams = req.params;
+    const existingParams = originalParams || {};
+
+    req.url = remainingPath;
+    req.params = { ...params, ...existingParams };
+
+    try {
+        await target.local.lookup(req, res, next);
+    } finally {
+        req.url = originalUrl;
+        req.params = originalParams;
+    }
+}
+
+function createResolverMiddleware(resolver: ResolverDefinition, fullPath: string) {
+    return async (req: ParsedMessage, res: ServerResponse, next: (err?: Error) => void) => {
+        const matched = matchResolverPath(fullPath, req.url || fullPath);
+
+        if (!matched) {
+            next();
+            return;
+        }
+
+        const existingParams = req.params || {};
+        const request = validateRouteRequest(resolver.schemas || {}, {
+            ...mapRouteRequest(req),
+            params: { ...matched.params, ...existingParams }
+        });
+        const target = await resolver.handler({
+            ...request,
+            path: req.url || fullPath,
+            remainingPath: matched.remainingPath
+        });
+
+        await dispatchResolvedTarget(target, req, res, next, matched.remainingPath, matched.params);
+    };
+}
+
 export function registerHttpRoutes(api: HttpRouteTarget, router: RouterDefinition): void {
     router.collect();
+
+    for (const { resolver, entry } of router.collectedResolvers()) {
+        if (!api.use) {
+            continue;
+        }
+
+        const middleware = createResolverMiddleware(resolver, entry.fullPath);
+
+        api.use(entry.fullPath, middleware);
+        api.use(`${entry.fullPath}/*`, middleware);
+    }
 
     for (const { route, entry } of router.collectedRoutes()) {
         if (route.kind === "upstream") {

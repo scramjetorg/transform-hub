@@ -728,6 +728,73 @@
       - Updated active workflow/agent memory guidance: start agent-run tests and Node validation under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless a repo/package test runner owns process setup.
       - Phase 8 correction checkpoint commit after manual review feedback: `a7cf2da3`. This commit splits Host API v1/v2 implementation files, keeps `host-api.ts` as the coordinator that hooks both versions from Host, moves Instance v2 behavior to an Instance/CSI-owned `instance-api-v2.ts` using `@scramjet/api-router`, and leaves v1 `instance-api.ts` untouched.
 
+## Phase 8.5: Dynamic Resolver Mount and Host API Composition
+
+- [x] Task: Add typed dynamic `resolve` primitive to `@scramjet/api-router`
+    - [x] Add both `RouterDefinition.resolve(path, resolverDefinition)` and `Router.resolve(path, resolverDefinition)` so `resolve` mirrors the existing imperative helper pattern
+    - [x] Type resolver input with the same route-schema/request inference used by route handlers; at minimum, `params.instanceId` must infer as `string` from `z.object({ instanceId: z.string() })`
+    - [x] Ensure resolver code does not consume the request body before dispatching to the resolved target
+    - [x] Store resolver boundary metadata separately from static routes and static mounts; do not expand runtime-selected child routes into the normal static route manifest
+    - [x] Allow future static target definitions to be carried as resolver metadata, but do not make them client/OpenAPI routes automatically in Phase 8.5
+    - [x] Preserve existing `route`, `get`, `post`, `mount`, route collection, OpenAPI generation, and generic-client behavior
+    - [x] Add type-level or compile-time coverage proving `params.instanceId` is typed from a params schema such as `z.object({ instanceId: z.string() })`
+      - Implemented `ResolverDefinition`, `ResolverRequest`, `ResolverTarget`, `ResolverManifestEntry`, `RouterDefinition.resolve()`, and `Router.resolve()`.
+- [x] Task: Add HTTP adapter support for dynamic router resolution
+    - [x] Register resolver paths as prefix/catch-all middleware for the exact path and descendants, for example `/api/v2/instances/:instanceId` and `/api/v2/instances/:instanceId/*`
+    - [x] Match params, compute the remaining subpath, call the resolver, and dispatch to the resolved local router target
+    - [x] Strip the consumed resolver prefix before dispatch, merge resolver params into child params, and avoid permanent `req.url` mutation by restoring it after local dispatch when needed
+    - [x] Preserve resolved request, upstream, downstream, and duplex behavior by delegating to a lookup-capable local router such as `APIRoute.lookup(req, res, next)` rather than implementing a second stream/duplex execution engine
+    - [x] Return a clear not-found/error response when the resolver cannot resolve a target
+    - [x] Keep existing static HTTP route registration behavior unchanged
+- [x] Task: Define future-compatible resolver target shape without implementing verser forwarding yet
+    - [x] Support local lookup-capable `APIRoute` targets for Phase 8.5, because `CSIController.v2Router` is currently an `APIRoute`
+    - [x] Optionally support `RouterDefinition` targets only if dispatch uses the existing api-router adapter path
+    - [x] Leave type room for future resolver returns such as `{ client, definitions, localForwardPath }`
+    - [x] Ensure HTTP adapter clearly rejects unsupported client-only or remote resolver results for now; do not silently ignore them
+    - [x] Do not register verser2 forward paths in Phase 8.5
+    - [x] Reserve type fields such as `{ client, definitions, localForwardPath }` so a later phase can register verser2 forward paths without changing the resolver API
+      - Phase 8.5 supports local `APIRoute.lookup` targets and explicitly returns `501` for unsupported non-local targets.
+- [x] Task: Refactor `HostAPIHandler` to composition only
+    - [x] Remove `extends HostAPIV1Handler`; `host-api.ts` must not inherit from the v1 handler
+    - [x] Make `host-api.ts` a coordinator that owns private `HostAPIV1Handler` and `HostAPIV2Handler` instances
+    - [x] `attach()` should explicitly attach v1 and v2 from the Host-level coordinator
+    - [x] V2 support callbacks may delegate to explicit v1 handler methods only where shared behavior is intentional, but v2 routing must not use inherited v1 middleware, `super.attach()`, or inherited helper access
+    - [x] Do not modify `host-api-v1.ts` or `instance-api.ts` in Phase 8.5; v1 behavior and route registration must remain behaviorally unchanged
+      - Existing v1 helper-method tests now instantiate `HostAPIV1Handler` directly while `HostAPIHandler` remains an import-compatible v1/v2 coordinator.
+- [x] Task: Move Host v2 instance routing to api-router `resolve`
+    - [x] Replace manual `/api/v2/instances/:instanceId` middleware with a v2 router-level `resolve`
+    - [x] Resolve `instanceId` through `host.instancesStore.getByNameOrId(instanceId)` inside `host-api-v2.ts`
+    - [x] Return the selected instance's `v2Router` as a local `APIRoute` target
+    - [x] Missing instance or missing `v2Router` must produce a v2 not-found/controller-error response without calling v1 `instanceMiddleware`
+    - [x] Ensure Host v2 no longer calls v1 `instanceMiddleware` for v2 instance routing
+    - [x] Preserve `/api/v1/instance/:id` exactly as-is and keep `/api/v2/instance/:id` unsupported
+- [x] Task: Add focused tests for dynamic resolution and Host composition
+    - [x] Add `@scramjet/api-router` tests for typed resolver construction, resolver metadata, HTTP adapter dynamic dispatch, path stripping, and static route/mount regression
+    - [x] Cover exact resolver base path and descendant path dispatch, stripped child URL, merged params, and restored `req.url`
+    - [x] Cover unsupported client-only or remote resolver targets rejecting clearly
+    - [x] Add Host tests proving `HostAPIHandler` composes v1/v2 and does not inherit from `HostAPIV1Handler`
+    - [x] Add Host tests proving v2 Instance routing resolves through api-router `resolve` and dispatches to the selected `v2Router`
+    - [x] Add Host tests proving the resolver target is `instance.v2Router.lookup`, not v1 `router.lookup`
+    - [x] Add Host tests proving missing v2 instance resolution returns a clear not-found/error response
+    - [x] Add Host tests proving no `/api/v2/instance/:id` and no Host-owned concrete individual Instance v2 routes are registered
+    - [x] Keep v1 hotwire assertions unchanged and separate from v2 assertions
+- [x] Task: Automated verification gate for Phase 8.5
+    - [x] Run `@scramjet/api-router` tests
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-router test`: passed, 36 tests.
+    - [x] Run focused Host API v1/v2 hotwire tests
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" TS_NODE_TRANSPILE_ONLY=1 node ../../scripts/run-ava.js --serial -T 50000 test/api-v2-instance-hotwire.spec.ts test/api-hotwire.spec.ts test/api-v2-hotwire.spec.ts` from `packages/host`: passed, 30 tests.
+    - [x] Run Host build typecheck
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/api-router/tsconfig.build.json --noEmit`: passed.
+    - [x] Run narrowed lint for changed files where feasible under the standard memory guard
+      - Initial narrowed lint found source lint issues plus the known root-TSConfig limitation for api-router test fixtures. Source lint issues were fixed.
+      - Corrected narrowed source/test lint excluding api-router test fixture files not included by root TSConfig passed under the standard memory guard.
+    - [x] Record validation results, skipped checks, and deduplication notes in `plan.md`
+      - Deduplication check: resolver target and request contracts live in `@scramjet/api-router`; Host-specific resolution remains in `host-api-v2.ts`; no repeated helper required extraction.
+- [ ] Task: Conductor - User Manual Verification 'Phase 8.5: Dynamic Resolver Mount and Host API Composition' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 8.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+    - Manual verification should confirm v1 routes remain unchanged, Host v2 instance routes resolve through dynamic router resolution, and `host-api.ts` uses composition rather than v1 inheritance.
+
 ## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
 
 - [ ] Task: Migrate MultiManager route definitions to the approved v2 shape
