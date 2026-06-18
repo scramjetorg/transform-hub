@@ -34,7 +34,7 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
             caFile: tls.clientAuthCaFile,
             authorizeRegistration: context => {
                 if (context.metadata.local === true) {
-                    return config.registration.allowLocalPeers ? { action: "allow" } : { action: "close", reason: "local peers disabled" };
+                    return { action: "allow" };
                 }
 
                 if (tls.mtlsRequired && !context.certificate) {

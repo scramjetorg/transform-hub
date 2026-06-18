@@ -186,7 +186,7 @@ function createSthRunnerVerser2HostTlsOptions(config: STHRunnerVerser2HostConfig
             caFile: tls.clientAuthCaFile,
             authorizeRegistration: context => {
                 if (context.metadata.local === true) {
-                    return config.registration.allowLocalPeers ? { action: "allow" } : { action: "close", reason: "local peers disabled" };
+                    return { action: "allow" };
                 }
 
                 if (tls.mtlsRequired && !context.certificate) {

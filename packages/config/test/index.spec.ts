@@ -178,7 +178,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
                         publicUrl: "https://127.0.0.1:2444",
                         tls: { mtlsRequired: false }
                     },
-                    registration: { allowLocalPeers: true, allowedClientFingerprints: [] },
+                    registration: { allowedClientFingerprints: [] },
                     localBroker: { peerId: "sth.default.runner.broker" }
                 },
                 broker: { peerId: "", targetDomain: "" },

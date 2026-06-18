@@ -15,7 +15,6 @@ const baseVerser2Config: STHOutboundVerser2Config = {
             tls: { mtlsRequired: false }
         },
         registration: {
-            allowLocalPeers: true,
             allowedClientFingerprints: []
         },
         localBroker: { peerId: "sth.runner.broker" }

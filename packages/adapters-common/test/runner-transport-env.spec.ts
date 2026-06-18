@@ -32,7 +32,6 @@ function withRunnerHost(verser2: STHConfiguration["verser2"] = baseVerser2): STH
                 tls: { mtlsRequired: false }
             },
             registration: {
-                allowLocalPeers: true,
                 allowedClientFingerprints: []
             },
             localBroker: { peerId: "sth.runner.broker" }
@@ -117,7 +116,6 @@ test("buildRunnerTrustBundle includes STH-local CA first and Manager CA second",
                     tls: { mtlsRequired: false }
                 },
                 registration: {
-                    allowLocalPeers: true,
                     allowedClientFingerprints: []
                 },
                 localBroker: { peerId: "sth.runner.broker" }
@@ -148,7 +146,6 @@ test("buildRunnerTrustBundle never includes private key or passphrase fields", t
                     }
                 },
                 registration: {
-                    allowLocalPeers: true,
                     token: "runner-token",
                     allowedClientFingerprints: []
                 },

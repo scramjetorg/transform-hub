@@ -22,7 +22,6 @@ export const defaultConfig: ManagerConfiguration = {
             }
         },
         registration: {
-            allowLocalPeers: true,
             allowedClientFingerprints: []
         },
         localBroker: {

@@ -15,7 +15,6 @@ const runnerHostConfig: STHRunnerVerser2HostConfig = {
         tls: { mtlsRequired: false }
     },
     registration: {
-        allowLocalPeers: true,
         allowedClientFingerprints: []
     },
     localBroker: { peerId: "sth.runner.broker" }

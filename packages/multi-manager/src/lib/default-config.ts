@@ -15,7 +15,6 @@ const defaultVerser2Config: ManagerVerser2Config = {
         }
     },
     registration: {
-        allowLocalPeers: true,
         allowedClientFingerprints: []
     },
     localBroker: {

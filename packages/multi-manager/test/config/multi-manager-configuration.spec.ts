@@ -77,7 +77,6 @@ test("MultiManagerConfig loads verser2 config from file env and cli with precede
                 }
             },
             registration: {
-                allowLocalPeers: true,
                 allowedClientFingerprints: []
             },
             localBroker: {

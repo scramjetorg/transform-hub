@@ -18,7 +18,6 @@ const baseConfig = (identityDir: string): ManagerVerser2Config => ({
         }
     },
     registration: {
-        allowLocalPeers: true,
         allowedClientFingerprints: []
     },
     localBroker: {

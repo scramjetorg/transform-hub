@@ -16,7 +16,6 @@ const baseConfig = (): ManagerVerser2Config => ({
         }
     },
     registration: {
-        allowLocalPeers: true,
         allowedClientFingerprints: []
     },
     localBroker: {
@@ -94,7 +93,6 @@ test("createVerser2HostOptions adds client authorization from validated policy",
 
     config.host.tls.clientAuthCaFile = "/certs/clients-ca.crt";
     config.host.tls.mtlsRequired = true;
-    config.registration.allowLocalPeers = false;
     config.registration.allowedClientFingerprints = ["sha256:allowed"];
 
     const options = createVerser2HostOptions(config);
@@ -111,7 +109,7 @@ test("createVerser2HostOptions adds client authorization from validated policy",
         role: "broker",
         routedDomains: [],
         metadata: { local: true }
-    }), { action: "close", reason: "local peers disabled" });
+    }), { action: "allow" });
     t.deepEqual(await clientAuth.authorizeRegistration({
         peerId: "remote-peer",
         role: "guest",

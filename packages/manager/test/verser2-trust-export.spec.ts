@@ -77,7 +77,6 @@ function config(certFile: string): ManagerConfiguration {
                 }
             },
             registration: {
-                allowLocalPeers: false,
                 token: "registration-token",
                 allowedClientFingerprints: ["sha256:client"]
             },

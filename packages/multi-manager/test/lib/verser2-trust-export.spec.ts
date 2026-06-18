@@ -14,7 +14,7 @@ function verser2(): ManagerVerser2Config {
             publicUrl: "https://multimanager.example.test:2443",
             tls: { caFile, certFile: "/server.crt", keyFile: "/server.key", mtlsRequired: false }
         },
-        registration: { allowLocalPeers: true, allowedClientFingerprints: [] },
+        registration: { allowedClientFingerprints: [] },
         localBroker: { peerId: "mm.broker", routeDomain: "multimanager.broker.scramjet.internal" },
         localGuest: { peerId: "mm.guest", routeDomain: "multimanager.guest.scramjet.internal" },
         timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 2000, requestMs: 3000 },

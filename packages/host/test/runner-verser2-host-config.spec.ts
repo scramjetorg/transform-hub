@@ -23,7 +23,6 @@ const baseConfig = (): STHRunnerVerser2HostConfig => ({
         }
     },
     registration: {
-        allowLocalPeers: true,
         allowedClientFingerprints: []
     },
     localBroker: {
@@ -90,7 +89,6 @@ test("createSthRunnerVerser2HostOptions authorizes runner fingerprints without M
 
     config.host.tls.clientAuthCaFile = "/certs/runner-ca.crt";
     config.host.tls.mtlsRequired = true;
-    config.registration.allowLocalPeers = false;
     config.registration.allowedClientFingerprints = ["sha256:runner"];
 
     const clientAuth = createSthRunnerVerser2HostOptions(config).tls?.clientAuth;
@@ -106,7 +104,7 @@ test("createSthRunnerVerser2HostOptions authorizes runner fingerprints without M
         role: "broker",
         routedDomains: [],
         metadata: { local: true }
-    }), { action: "close", reason: "local peers disabled" });
+    }), { action: "allow" });
     t.deepEqual(await clientAuth.authorizeRegistration({
         peerId: "runner.inst-1",
         role: "guest",

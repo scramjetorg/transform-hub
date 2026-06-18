@@ -460,6 +460,7 @@
       - Separate v1 hotwire tests passed for Host, Manager, and MultiManager route registration and handler behavior.
     - [x] Prove v1 and v2 endpoints are reachable through verser2; legacy verser must not be used for this routing path
       - Added versioned routing tests using `registerVerser2Routes()` for Host, Manager, and MultiManager v1/v2 low-risk route definitions.
+      - Confirmed config assumption: enabled verser2 routing requires local peers. MultiManager attaches Manager local Broker/Guest peers unconditionally when Manager verser2 is enabled, and Manager/STH API route reachability through verser2 depends on those peers being present. The `allowLocalPeers` option is therefore misleading for this topology and should be removed from config/CLI/env/docs/tests rather than treated as a supported disabled-local-peers mode.
     - [x] Ensure v1 and v2 routes are bound to the single API/router surface rather than parallel uncoordinated APIs
       - Low-risk v1 and v2 routes are built by the same handler-class route builder methods (`createLowRiskRouter(...)`) and registered on the existing API surface.
     - [x] Ensure the same API handling class instance that serves v2 also serves v1 compatibility behavior; v1 should become a proxy compatibility layer instead of a separate implementation
@@ -500,6 +501,10 @@
     - [x] Record v1 compatibility evidence in `plan.md`
       - Focused coverage checks all exceeded 90% statements and lines: `api-router` `94.83%` statements / `94.69%` lines, Host/Instance API `91.04%` statements / `94.75%` lines, Manager API/DiskProxy `95.98%` statements / `96.23%` lines, MultiManager API `95.12%` statements / `100%` lines.
       - Typechecks passed for api-router, Host, Manager, and MultiManager. Narrowed ESLint passed with one preexisting Manager complexity warning.
+      - Follow-up local-peer config cleanup removed the misleading `allowLocalPeers` surface from shared verser2 config types, Zod schemas, CLI/env descriptors, defaults, registration authorization, and affected tests. Enabled verser2 now assumes in-process local peers are always available for API/runner route registration.
+      - Follow-up validation, run sequentially after an OOM from parallel package tests: `npm --prefix packages/config test` passed, 13 tests; `npm --prefix packages/sth-config test` passed, 8 tests; `npm --prefix packages/host test` passed, 188 tests and 9 skipped; `npm --prefix packages/manager test` passed, 136 tests; `npm --prefix packages/multi-manager test` passed, 45 tests; `npm --prefix packages/adapters-common test` passed, 13 tests; `npm --prefix packages/adapter-process test` passed, 2 tests.
+      - Capped follow-up validation used `ulimit -v 1572864` and `NODE_OPTIONS="--max-old-space-size=512"` unless noted: `npm --prefix packages/types test` passed; TypeScript checks passed for `packages/types`, `packages/config`, `packages/sth-config`, `packages/manager-config`, `packages/host`, `packages/manager`, `packages/multi-manager`, `packages/adapters-common`, and `packages/adapter-process`.
+      - Capped narrowed ESLint did not complete: `npx eslint` over changed files OOMed under the 1.5G virtual-memory cap before diagnostics, including a smaller config-file batch. Classified as tooling/resource failure under the imposed cap; no TypeScript references to `allowLocalPeers`, removed CLI/env flags, or `local peers disabled` remain under `packages/**/*.ts`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 

@@ -28,7 +28,6 @@ export type STHRunnerVerser2HostConfig = {
         tls: Verser2HostTlsConfig;
     };
     registration: {
-        allowLocalPeers: boolean;
         token?: string;
         allowedClientFingerprints: string[];
     };
@@ -57,7 +56,6 @@ export type ManagerVerser2Config = {
         tls: Verser2HostTlsConfig;
     };
     registration: {
-        allowLocalPeers: boolean;
         token?: string;
         allowedClientFingerprints: string[];
     };

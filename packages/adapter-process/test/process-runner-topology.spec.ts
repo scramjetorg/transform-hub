@@ -56,7 +56,7 @@ test("process adapter launches runner with STH-local verser2 topology", async t 
                     publicUrl: "https://sth-local.example.test:2444",
                     tls: { mtlsRequired: false }
                 },
-                registration: { allowLocalPeers: true, allowedClientFingerprints: [] },
+                registration: { allowedClientFingerprints: [] },
                 localBroker: { peerId: "sth.runner.broker" }
             }
         }

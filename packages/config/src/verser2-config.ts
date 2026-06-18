@@ -29,7 +29,6 @@ export const managerVerser2ConfigSchema = z.object({
         }).strict()
     }).strict(),
     registration: z.object({
-        allowLocalPeers: z.boolean(),
         token: optionalFileSchema,
         allowedClientFingerprints: z.array(z.string())
     }).strict(),
@@ -61,7 +60,6 @@ export const sthOutboundVerser2ConfigSchema = z.object({
             }).strict()
         }).strict(),
         registration: z.object({
-            allowLocalPeers: z.boolean(),
             token: optionalFileSchema,
             allowedClientFingerprints: z.array(z.string())
         }).strict(),
@@ -159,7 +157,6 @@ export const managerVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2HostClientAuthCaFile", flag: "verser2-host-client-auth-ca-file", path: managerPath("host.tls.clientAuthCaFile"), env: "SCRAMJET_VERSER2_HOST_CLIENT_AUTH_CA_FILE", type: "string", description: "CA file used to authenticate verser2 clients" },
     { name: "verser2MtlsRequired", flag: "verser2-mtls-required", path: managerPath("host.tls.mtlsRequired"), env: "SCRAMJET_VERSER2_MTLS_REQUIRED", type: "boolean", description: "Require client certificates for verser2 registration" },
     { name: "verser2RegistrationToken", flag: "verser2-registration-token", path: managerPath("registration.token"), env: "SCRAMJET_VERSER2_REGISTRATION_TOKEN", type: "string", description: "Non-mTLS verser2 registration token", secret: true },
-    { name: "verser2AllowLocalPeers", flag: "verser2-allow-local-peers", path: managerPath("registration.allowLocalPeers"), env: "SCRAMJET_VERSER2_ALLOW_LOCAL_PEERS", type: "boolean", description: "Allow in-process local verser2 peers" },
     { name: "verser2AllowedClientFingerprints", flag: "verser2-allowed-client-fingerprints", path: managerPath("registration.allowedClientFingerprints"), env: "SCRAMJET_VERSER2_ALLOWED_CLIENT_FINGERPRINTS", type: "string[]", description: "Allowed verser2 client certificate fingerprints" },
     { name: "verser2LocalBrokerPeerId", flag: "verser2-local-broker-peer-id", path: managerPath("localBroker.peerId"), env: "SCRAMJET_VERSER2_LOCAL_BROKER_PEER_ID", type: "string", description: "Local Manager Broker peer ID" },
     { name: "verser2LocalBrokerRouteDomain", flag: "verser2-local-broker-route-domain", path: managerPath("localBroker.routeDomain"), env: "SCRAMJET_VERSER2_LOCAL_BROKER_ROUTE_DOMAIN", type: "string", description: "Local Manager Broker route domain" },
@@ -188,7 +185,6 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2RunnerHostClientAuthCaFile", flag: "verser2-runner-host-client-auth-ca-file", path: sthPath("runnerHost.host.tls.clientAuthCaFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CLIENT_AUTH_CA_FILE", type: "string", description: "CA file used to authenticate runner verser2 clients" },
     { name: "verser2RunnerHostMtlsRequired", flag: "verser2-runner-host-mtls-required", path: sthPath("runnerHost.host.tls.mtlsRequired"), env: "SCRAMJET_VERSER2_RUNNER_HOST_MTLS_REQUIRED", type: "boolean", description: "Require runner client certificates for STH-local verser2 registration" },
     { name: "verser2RunnerHostRegistrationToken", flag: "verser2-runner-host-registration-token", path: sthPath("runnerHost.registration.token"), env: "SCRAMJET_VERSER2_RUNNER_HOST_REGISTRATION_TOKEN", type: "string", description: "Non-mTLS runner registration token", secret: true },
-    { name: "verser2RunnerHostAllowLocalPeers", flag: "verser2-runner-host-allow-local-peers", path: sthPath("runnerHost.registration.allowLocalPeers"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOW_LOCAL_PEERS", type: "boolean", description: "Allow in-process local peers on the STH-local runner Host" },
     { name: "verser2RunnerHostAllowedClientFingerprints", flag: "verser2-runner-host-allowed-client-fingerprints", path: sthPath("runnerHost.registration.allowedClientFingerprints"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOWED_CLIENT_FINGERPRINTS", type: "string[]", description: "Allowed runner client certificate fingerprints" },
     { name: "verser2RunnerHostBrokerPeerId", flag: "verser2-runner-host-broker-peer-id", path: sthPath("runnerHost.localBroker.peerId"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BROKER_PEER_ID", type: "string", description: "Local STH Broker peer ID for runner routes" },
     { name: "verser2Ca", flag: "verser2-ca", path: sthPath("tls.ca"), env: "SCRAMJET_VERSER2_CA", type: "string", description: "Inline CA PEM bundle for the Manager/MultiManager verser2 Host" },

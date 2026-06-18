@@ -83,7 +83,6 @@ export const defaultConfig: STHConfiguration = {
                 }
             },
             registration: {
-                allowLocalPeers: true,
                 allowedClientFingerprints: []
             },
             localBroker: {

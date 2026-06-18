@@ -47,7 +47,6 @@ const defaultMultiManagerConfig: MultiManagerOptions = {
             }
         },
         registration: {
-            allowLocalPeers: true,
             allowedClientFingerprints: []
         },
         localBroker: {

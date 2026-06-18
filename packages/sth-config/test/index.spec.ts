@@ -77,7 +77,6 @@ test("getConfigInfo masks public verser2 client secrets", t => {
                     }
                 },
                 registration: {
-                    allowLocalPeers: true,
                     token: "runner-token",
                     allowedClientFingerprints: []
                 },
