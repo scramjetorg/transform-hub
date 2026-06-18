@@ -14,7 +14,7 @@ const GENERATED_SERVER_KEY_FILE = "server-key.pem";
 function hasConfiguredHostIdentity(config: STHRunnerVerser2HostConfig): boolean {
     const tls = config.host.tls;
 
-    return !!((tls.certFile && tls.keyFile) || tls.pfxFile);
+    return Boolean(tls.certFile && tls.keyFile || tls.pfxFile);
 }
 
 function generatedIdentityFiles(identityDir: string) {
