@@ -1,0 +1,59 @@
+import test from "ava";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { PassThrough } from "stream";
+
+import { MultiManagerAPIHandler } from "../src/lib/api/multi-manager-api";
+import { ManagersStore } from "../src/lib/manager-store";
+import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
+
+function createMultiManagerStub(recorder: RouteRecorder) {
+    return {
+        apiServer: recorder.asApiExpose(),
+        apiBase: "/api/v1",
+        id: "mm-hotwire",
+        config: {
+            server: { apiPort: 20000 },
+            verser2: {}
+        },
+        managersStore: new ManagersStore(),
+        healthCheck: { getHealthCheckInfo: () => ({}) },
+        logger: new ObjLogger("multi-manager-api-hotwire-test"),
+        loadCheck: { getLoadCheck: async () => ({}) },
+        service: "@scramjet/multi-manager",
+        apiVersion: "v1",
+        version: "0.0.0-test",
+        build: "test-build",
+        apiCommonLogsPipe: { getOut: () => new PassThrough() },
+        handleListManagersRequest: () => [],
+        handleStartManagerRequest: async () => ({ id: "manager-1" }),
+        cpmMiddleware: async () => undefined,
+        commonAuditPipe: async () => new PassThrough()
+    };
+}
+
+test("MultiManagerAPIHandler registers the separated v1 MultiManager API route surface", t => {
+    const recorder = new RouteRecorder();
+    const multiManager = createMultiManagerStub(recorder);
+
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    t.true(recorder.has("use", "*"));
+    t.true(recorder.has("get", "/api/v1/version"));
+    t.true(recorder.has("get", "/api/v1/info"));
+    t.true(recorder.has("get", "/api/v1/load-check"));
+    t.true(recorder.has("get", "/api/v1/list"));
+    t.true(recorder.has("get", "/api/v1/health"));
+    t.true(recorder.has("get", "/api/v1/verser2/trust/:id?"));
+    t.true(recorder.has("op", "/api/v1/start", "post"));
+    t.true(recorder.has("op", "/api/v1/cpm/:id/stop", "post"));
+    t.true(recorder.has("use", "/api/v1/cpm/:id"));
+    t.true(recorder.has("upstream", "/api/v1/log"));
+    t.true(recorder.has("upstream", "/api/v1/audit"));
+
+    const stopIndex = recorder.routes.findIndex(route => route.kind === "op" && route.path === "/api/v1/cpm/:id/stop" && route.method === "post");
+    const proxyIndex = recorder.routes.findIndex(route => route.kind === "use" && route.path === "/api/v1/cpm/:id");
+
+    t.true(stopIndex > -1);
+    t.true(proxyIndex > -1);
+    t.true(stopIndex < proxyIndex);
+});

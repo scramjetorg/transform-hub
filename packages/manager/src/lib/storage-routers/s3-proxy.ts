@@ -1,7 +1,7 @@
 import { getRouter } from "@scramjet/api-server";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { ISequenceAdapter, ParsedMessage, STHConfiguration } from "@scramjet/types";
+import { APIRoute, ISequenceAdapter, ParsedMessage, STHConfiguration } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { Client as MinioClient, UploadedObjectInfo } from "minio";
 import { DataStream, StringStream } from "scramjet";
@@ -24,11 +24,12 @@ type S3ProxyParams = {
     base: string,
     id: string,
     bucket: string,
-    bucketLimit: number
+    bucketLimit: number,
+    router?: APIRoute
 }
 
 export class S3Proxy {
-    router = getRouter();
+    router: APIRoute;
     logger: ObjLogger;
     index: SequenceIndex = { sequences: [], size: 0, version: "1.0" };
 
@@ -144,6 +145,7 @@ export class S3Proxy {
         this.bucket = config.bucket;
         this.base = config.base;
         this.bucketLimit = config.bucketLimit;
+        this.router = config.router || getRouter();
 
         this.logger = new ObjLogger(this, { id: this.id });
         this.logger.info("args", arguments);

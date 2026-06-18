@@ -256,7 +256,7 @@
     - [x] Record verification output in `plan.md`
       - `npx nyc --reporter=text --reporter=json-summary --include "packages/api-router/src/**/*.ts" npm --prefix packages/api-router run test:ava`: passed, 23 tests; coverage `94.90%` statements and `94.77%` lines for `packages/api-router/src`.
       - `TIMING=1 NODE_OPTIONS="--max-old-space-size=3072" npx eslint packages/api-router/src --ext .ts`: passed.
-- [~] Task: Conductor - User Manual Verification 'Phase 4: OpenAPI 3.1 Generation and Schema Mode' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: OpenAPI 3.1 Generation and Schema Mode' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 4 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Phase 4 review notes:
       - Added OpenAPI 3.1 document generation from route manifests and Zod schemas.
@@ -264,8 +264,70 @@
       - Added CLI generator entrypoint and fixture-backed CLI test.
       - Added fixture client construction tests against schema-mode manifest metadata.
       - Validation passed: api-router tests/typecheck/coverage and api-router source lint.
+      - Manual verification approved by user after Phase 4 was pushed to PR #13.
 
-## Phase 5: v2 Middleware and Low-Risk Route Exposure
+## Phase 5: v1 API Extraction, Hotwire Tests, and BDD Guard Mapping
+
+- [x] Task: Add isolated v1 route hotwire test infrastructure
+    - [x] Add a test-only route recorder for `APIRoute`/`APIExpose`-style registration calls without starting Hub, Manager, MultiManager, servers, runners, Docker, Kubernetes, or verser2 peers
+      - Added shared test-only `RouteRecorder` in `packages/api-server/test/lib/route-recorder.ts` after Oracle review flagged package-local duplication.
+    - [x] Record route kind, method, path, middleware/use registrations, forwarding registrations, stream direction, and key options needed to preserve current v1 route surfaces
+    - [x] Keep route-recorder helpers out of production exports; package-local test helpers are preferred unless cross-package duplication justifies later extraction
+      - Helper remains test-only and is imported as `@scramjet/api-server/test/lib/route-recorder`; no production package export was added.
+- [x] Task: Cover already-separated Host and Instance APIs with hotwire tests
+    - [x] Add isolated route inventory tests for `packages/host/src/lib/api/host-api.ts` using the existing `HostAPIHandler.attach()` shape
+    - [x] Add isolated route inventory tests for `packages/host/src/lib/api/instance-api.ts` using the existing `InstanceAPI.attach()` shape
+    - [x] Confirm Host and Instance API classes remain separated from their owner runtime classes and require no extraction in this phase
+      - Added `packages/host/test/api-hotwire.spec.ts` covering Host and Instance route registration.
+- [x] Task: Extract Manager API registration from the large Manager class
+    - [x] Move `Manager.attachManagerAPIs()` route registration out of `packages/manager/src/lib/manager.ts` into a separated API handler matching the `host-api.ts` ownership pattern
+      - Added `packages/manager/src/lib/api/manager-api.ts`; `Manager.attachManagerAPIs()` delegates to `ManagerAPIHandler`.
+    - [x] Keep `Manager.main()` behavior unchanged by delegating to the extracted API handler
+    - [x] Add isolated Manager v1 route inventory tests covering version, config, trust, STH registration/list/info/delete/forwarding, instances, sequences, entities, topics, load, log, load-stream, topic streams, store clear, storage proxy mount, and disconnect registrations
+      - Added `packages/manager/test/manager-api-hotwire.spec.ts`, including STH delete-before-proxy order assertion.
+    - [x] Automated Oracle agent review immediately after the extraction and before continuing to the next extraction, specifically asking it to verify extraction correctness against the changed Manager API files, `packages/manager/src/lib/manager.ts`, and the new Manager hotwire tests
+      - Oracle review found no blocking issues; type import/circular-dependency concerns were addressed with type-only imports and a typed `ManagerAPIHandler` dependency.
+- [x] Task: Extract MultiManager API registration from the large MultiManager class
+    - [x] Move `MultiManager.setRouting()` route registration out of `packages/multi-manager/src/lib/multi-manager.ts` into a separated API handler matching the `host-api.ts` ownership pattern
+      - Added `packages/multi-manager/src/lib/api/multi-manager-api.ts`; `MultiManager.setRouting()` delegates to `MultiManagerAPIHandler`.
+    - [x] Keep `MultiManager.start()` behavior unchanged by delegating to the extracted API handler
+    - [x] Add isolated MultiManager v1 route inventory tests covering request logging middleware, version, info, load-check, list, health, verser2 trust, start, stop, CPM proxy, log, and audit registrations
+      - Added `packages/multi-manager/test/multi-manager-api-hotwire.spec.ts`, including stop-before-CPM-proxy order assertion.
+    - [x] Automated Oracle agent review immediately after the extraction and before continuing to storage proxy coverage, specifically asking it to verify extraction correctness against the changed MultiManager API files, `packages/multi-manager/src/lib/multi-manager.ts`, and the new MultiManager hotwire tests
+      - Initial Oracle review found no blocking issues and flagged duplicate route-recorder helpers; re-review confirmed duplication was resolved and no blocking issues remained.
+- [x] Task: Add structural storage proxy hotwire coverage without treating storage behavior as fixed
+    - [x] Add route inventory tests for `packages/manager/src/lib/storage-routers/disk-proxy.ts`
+    - [x] Add route inventory tests for `packages/manager/src/lib/storage-routers/s3-proxy.ts`
+      - Added `packages/manager/test/storage-proxy-hotwire.spec.ts` and optional router injection for structural route recording.
+    - [x] Preserve the current route-registration shape for later repair work, but do not use this phase to claim storage proxy behavioral correctness
+    - [x] Record that storage proxy behavior is currently known broken and intentionally excluded from passing BDD guard requirements in this phase
+      - Storage proxy tests are route-surface only; current storage behavior remains known broken and is not claimed fixed.
+- [x] Task: Map at least one existing BDD guard to each non-broken API surface
+    - [x] Host API guard: `bdd/features/e2e/E2E-008-host-api.feature`
+    - [x] Instance API guard: `bdd/features/hub/HUB-003-instance-api-server.feature`
+    - [x] MultiManager API guard: `bdd/features/manager/MANAGER-001-multimanager-api.feature`
+    - [x] Manager API guard: select and record the narrowest existing BDD that crosses Manager API/forwarding behavior; current candidate is `bdd/features/verser2/VERSER2-001-isolated-routing.feature` for Manager/STH route forwarding, with any direct Manager REST gap explicitly recorded
+      - Selected `bdd/features/verser2/VERSER2-001-isolated-routing.feature` as the current Manager forwarding guard; direct Manager REST BDD coverage remains a recorded gap.
+    - [x] Storage proxy guard: record no passing BDD guard because the current implementation is known broken; this phase only captures route-registration shape
+- [x] Task: Automated verification gate for v1 extraction and hotwire coverage
+    - [x] Run affected Host, Manager, MultiManager, and API-server package tests through package scripts
+      - `npm --prefix packages/host test`: passed, 167 tests, 9 skipped.
+      - `npm --prefix packages/manager test`: passed, 116 tests.
+      - `npm --prefix packages/multi-manager test`: passed, 37 tests.
+      - `npm --prefix packages/api-server test`: passed, 48 tests.
+    - [x] Run any new hotwire tests through their package scripts; do not invoke AVA directly
+      - `npm --prefix packages/host run test -- test/api-hotwire.spec.ts`: passed, 2 tests.
+      - `npm --prefix packages/manager run test:ava -- test/manager-api-hotwire.spec.ts test/storage-proxy-hotwire.spec.ts`: passed, 3 tests.
+      - `npm --prefix packages/multi-manager run test:ava -- test/multi-manager-api-hotwire.spec.ts`: passed, 1 test.
+    - [x] Run changed-file lint or narrowed source lint appropriate to touched packages
+      - `npx tsc -p packages/manager/tsconfig.build.json --noEmit`: passed.
+      - `npx tsc -p packages/multi-manager/tsconfig.build.json --noEmit`: passed.
+      - Narrowed ESLint on changed source/test files passed with no errors and one existing complexity warning for `Manager.handleSthRegistration`.
+    - [x] Record validation output, selected BDD guard mapping, and any known storage proxy failures/gaps in `plan.md`
+- [ ] Task: Conductor - User Manual Verification 'Phase 5: v1 API Extraction, Hotwire Tests, and BDD Guard Mapping' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+
+## Phase 6: v2 Middleware and Low-Risk Route Exposure
 
 - [ ] Task: Create v2 API integration points
     - [ ] Add v2 registration locations for Host, Manager, MultiManager, and CSI/Instance without changing v1 route registration
@@ -288,10 +350,10 @@
     - [ ] Run no-circumvention checks for migrated package tests and BDD steps
     - [ ] Run the narrow API BDD smoke test through the client only if unit/package tests cannot prove cross-package HTTP/verser2 behavior
     - [ ] Record v1 compatibility evidence in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 6: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 6: Sequence and Instance/CSI Route Migration to v2
+## Phase 7: Sequence and Instance/CSI Route Migration to v2
 
 - [ ] Task: Migrate sequence route definitions to v2
     - [ ] Define schemas and route handlers for sequence upload, update, delete, start, get, list, and related entity routes
@@ -308,10 +370,10 @@
     - [ ] Run no-circumvention checks for migrated sequence and CSI package/BDD tests
     - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent through the client when package tests cannot prove end-to-end host API behavior
     - [ ] Record skipped Docker/Kubernetes validation and reason
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 7: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 7: Manager, MultiManager, Forwarding, and Storage Route Migration to v2
+## Phase 8: Manager, MultiManager, Forwarding, and Storage Route Migration to v2
 
 - [ ] Task: Migrate Manager route definitions to v2
     - [ ] Define schemas and handlers for STH info, list, instances, sequences, entities, topics, load, disconnect, and STH lifecycle routes
@@ -323,7 +385,8 @@
     - [ ] Add focused client-based MultiManager tests or fixtures as needed
 - [ ] Task: Migrate forwarding and storage proxy behavior to v2
     - [ ] Define v2 route handling for routed forwarding through verser2 transport
-    - [ ] Integrate Disk/S3 storage proxy route definitions or adapters where in scope
+    - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
+    - [ ] Integrate Disk/S3 storage proxy route definitions or adapters where in scope after repair expectations are defined
     - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
 - [ ] Task: Automated verification gate for Manager/MultiManager migration
     - [ ] Run affected Manager, MultiManager, `api-server`, and `api-router` tests
@@ -332,10 +395,10 @@
     - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests
     - [ ] Run manager/multimanager BDD smoke through the client only when package tests cannot prove integration behavior
     - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 7: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 8: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 8: v1 Wrapper Compatibility, Documentation, and Final Validation
+## Phase 9: v1 Wrapper Compatibility, Documentation, and Final Validation
 
 - [ ] Task: Implement v1 wrapper/backing strategy after v2 coverage is available
     - [ ] Route v1 handlers through v2 implementations or compatibility adapters only where exact v1 behavior is preserved
@@ -359,5 +422,5 @@
     - [ ] Regenerate OpenAPI output and verify deterministic output for documented example routes
     - [ ] Verify migrated API and BDD tests use the generic client and pass no-circumvention checks
     - [ ] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 8: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
-    - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+- [ ] Task: Conductor - User Manual Verification 'Phase 9: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
+    - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.

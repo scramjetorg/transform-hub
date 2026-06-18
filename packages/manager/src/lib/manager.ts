@@ -13,12 +13,17 @@ import {
     Instance,
     InstanceMessageData,
     SpaceEventMessageData,
-    LogLevel
+    LogLevel,
+    ActorRole,
+    ActorType,
+    DisconnectReason,
+    ISTHConnectionStore,
+    ISTHController,
+    ISTHInfoRegister
 } from "@scramjet/types";
-import { ActorRole, ActorType, DisconnectReason, ISTHConnectionStore, ISTHController, ISTHInfoRegister } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { PassThrough, Readable } from "stream";
-import { IncomingMessage, ServerResponse } from "http";
+import { ServerResponse } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -41,9 +46,8 @@ import { ManagerAuditor } from "./manager-auditor";
 import { getS3Router } from "./s3-router";
 import { Client as MinioClient } from "minio";
 import * as fs from "fs/promises";
-import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "./utils";
 import { homedir } from "os";
-import { getManagerVerser2TrustExport } from "./verser2-trust-export";
+import { ManagerAPIHandler } from "./api/manager-api";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -52,7 +56,7 @@ const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
 
-type SthRegistrationPayload = {
+export type SthRegistrationPayload = {
     id?: string;
     routeDomain?: string;
     enrollmentToken?: string;
@@ -109,6 +113,30 @@ export class Manager implements IComponent {
 
     public get router(): APIRoute {
         return this._apiRouter;
+    }
+
+    public get apiSthConnectionStore(): ISTHConnectionStore {
+        return this.sthConnectionStore;
+    }
+
+    public get apiServiceDiscovery(): ServiceDiscovery {
+        return this.serviceDiscovery;
+    }
+
+    public get apiCommonLogsPipe(): CommonLogsPipe {
+        return this.commonLogsPipe;
+    }
+
+    public get apiLoadCheck(): LoadCheck {
+        return this.loadCheck;
+    }
+
+    public get apiS3Middleware(): Awaited<ReturnType<typeof getS3Router>> {
+        return this.s3Middleware;
+    }
+
+    public set apiS3Middleware(s3Middleware: Awaited<ReturnType<typeof getS3Router>>) {
+        this.s3Middleware = s3Middleware;
     }
 
     public setSthBrokerTransport(transport: ManagerSthBrokerTransport) {
@@ -202,170 +230,7 @@ export class Manager implements IComponent {
     }
 
     async attachManagerAPIs() {
-        const { apiBase } = this._config;
-
-        this._apiRouter.get(`${apiBase}/sth/:id/info`, (req: ParsedMessage): MRestAPI.GetHostInfoResponse => {
-            const sth = this.sthConnectionStore.getById(req.params?.id);
-
-            if (!sth) {
-                throw new CeroError("ERR_NOT_FOUND");
-            }
-
-            return sth.getInfo();
-        });
-
-        this._apiRouter.get(
-            `${apiBase}/version`,
-            (): MRestAPI.GetVersionResponse => ({
-                service: this.service,
-                apiVersion: this.apiVersion,
-                version,
-                build: this.build,
-            })
-        );
-
-        this._apiRouter.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: this.publicConfig }));
-        this._apiRouter.get(`${apiBase}/verser2/trust`, () => getManagerVerser2TrustExport(this.config));
-        this._apiRouter.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
-            const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
-            const id = await this.handleSthRegistration(payload);
-
-            return { id, opStatus: ReasonPhrases.ACCEPTED };
-        });
-        this._apiRouter.get(`${apiBase}/list`, (req:ParsedMessage): MRestAPI.GetListResponse => {
-            let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
-            let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
-
-            if (!this.validateQueries(offset, limit)) {
-                offset = defaultOffset;
-                limit = defaultLimit;
-            }
-
-            return this.getList(offset, limit);
-        });
-        this._apiRouter.get(`${apiBase}/instances`, (req:ParsedMessage): MRestAPI.GetInstancesResponse => {
-            let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
-            let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
-
-            if (!this.validateQueries(offset, limit)) {
-                offset = defaultOffset;
-                limit = defaultLimit;
-            }
-
-            return this.getInstances(offset, limit);
-        });
-        this._apiRouter.get(`${apiBase}/sequences`, (): MRestAPI.GetSequenceIDSResponse => this.getSequencesIds());
-        this._apiRouter.get(`${apiBase}/all_sequences`, (req:ParsedMessage): MRestAPI.GetSequencesResponse => {
-            let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
-            let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
-
-            if (!this.validateQueries(offset, limit)) {
-                offset = defaultOffset;
-                limit = defaultLimit;
-            }
-
-            return this.getSequences(offset, limit);
-        });
-        this._apiRouter.get(`${apiBase}/entities`, (): MRestAPI.GetEntitiesResponse => this.getEntities());
-        this._apiRouter.get(`${apiBase}/topics`, (): MRestAPI.GetTopicsResponse => this.serviceDiscovery.list());
-        this._apiRouter.get(`${apiBase}/load`, (): Promise<MRestAPI.GetLoadResponse> => this.loadCheck.getLoadCheck());
-
-        this._apiRouter.upstream(`${apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this._apiRouter.upstream(`${apiBase}/load-stream`, () => this.loadCheck.getLoadCheckStream());
-
-        this._apiRouter.upstream(`${apiBase}/topic/:name`, (req: ParsedMessage, res: ServerResponse) => {
-            return this.handleTopicUpstreamRequest(req, res);
-        });
-
-        this._apiRouter.downstream(
-            `${apiBase}/topic/:name`,
-            async (req, res) => {
-                return this.handleTopicDownstreamRequest(req, res);
-            },
-            { checkContentType: false, end: false }
-        );
-
-        this._apiRouter.op("delete", `${apiBase}/store`, async (): Promise<MRestAPI.StoreClearResponse> => {
-            try {
-                await this.s3Middleware.clearIndex();
-                return { opStatus: ReasonPhrases.ACCEPTED };
-            } catch (err: any) {
-                return {
-                    opStatus: ReasonPhrases.NOT_FOUND,
-                    error: err.message
-                };
-            }
-        });
-
-        this._apiRouter.op("delete", `${apiBase}/sth/:id`, async (req: ParsedMessage): Promise<MRestAPI.HubDeleteResponse> => {
-            req.params ||= {};
-
-            const id = req.params.id;
-            const force = req.headers["x-force"] === "true";
-
-            if (!id) {
-                return {
-                    opStatus: ReasonPhrases.NOT_FOUND,
-                    error: "Id was not supplied"
-                };
-            }
-
-            this.logger.debug("Received delete request", { id, force });
-
-            try {
-                await this.sthConnectionStore.delete(id, force);
-            } catch (e: any) {
-                return translateDeleteError(e);
-            }
-            return {
-                opStatus: ReasonPhrases.ACCEPTED,
-            };
-        });
-        this._apiRouter.use(`${apiBase}/sth/:id`, (req, res, _next) => this.handleRequestToSTH(req, res));
-
-        if (this.config.s3) {
-            this.s3Middleware = await getS3Router(this.s3Client, {
-                base: `${apiBase}/s3`,
-                id: this.id,
-                bucket: this.config.s3.bucket!,
-                bucketLimit: this.config.s3.bucketLimit
-            });
-
-            this.s3Middleware.logger.pipe(this.logger);
-
-            await this.s3Middleware.loadIndex();
-
-            this._apiRouter.use(`${apiBase}/s3/`, (req, res, next) => this.s3Middleware.router.lookup(req, res, next));
-        }
-
-        this._apiRouter.op("post", `${apiBase}/disconnect`, async (req: IncomingMessage): Promise<MRestAPI.PostDisconnectResponse> => {
-            // eslint-disable-next-line no-extra-parens
-            const payload = (req as IncomingMessage & { body: MRestAPI.PostDisconnectPayload }).body || {};
-
-            this.logger.debug("Received disconnect request", payload);
-            const requestInvalid = validateDisconnectRequest(payload, this.sthConnectionStore);
-
-            if (requestInvalid === 0 || requestInvalid !== undefined) {
-                return translateDisconnectError(requestInvalid);
-            }
-            const dropList = prepareDisconnectDroplist(payload, this.sthConnectionStore);
-
-            dropList.forEach(drop => {
-                this.logger.info("dropping", drop.sthController.id, drop.reason);
-                drop.sthController.disconnect(drop.reason).catch((err: Error) => {
-                    this.logger.error("STH disconnect error", err.message);
-                });
-            });
-
-            return {
-                opStatus: ReasonPhrases.ACCEPTED,
-                managerId: this.id,
-                disconnected: dropList.map(elem => ({
-                    sthId: elem.sthController.id,
-                    reason: elem.reason
-                }))
-            };
-        });
+        await new ManagerAPIHandler(this).attach();
     }
 
     setupHealthEndpoint(healthCheck: HealthCheck) {

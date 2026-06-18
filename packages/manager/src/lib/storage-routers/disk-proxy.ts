@@ -1,7 +1,7 @@
 import { getRouter } from "@scramjet/api-server";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { ISequenceAdapter, ParsedMessage, STHConfiguration } from "@scramjet/types";
+import { APIRoute, ISequenceAdapter, ParsedMessage, STHConfiguration } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { DataStream } from "scramjet";
 import { augment } from "@scramjet/adapter-process";
@@ -27,7 +27,8 @@ type S3ProxyParams = {
     base: string,
     id: string,
     bucket: string,
-    bucketLimit: number
+    bucketLimit: number,
+    router?: APIRoute
 }
 
 class DiskClient {
@@ -107,7 +108,7 @@ class DiskClient {
 }
 
 export class DiskProxy {
-    router = getRouter();
+    router: APIRoute;
     logger: ObjLogger;
     index: SequenceIndex = { sequences: [], size: 0, version: "1.0" };
 
@@ -216,6 +217,7 @@ export class DiskProxy {
         this.base = config.base;
         this.bucketLimit = config.bucketLimit;
         this.s3Client = new DiskClient();
+        this.router = config.router || getRouter();
 
         this.logger = new ObjLogger(this, { id: this.id });
         this.logger.info("args", arguments);

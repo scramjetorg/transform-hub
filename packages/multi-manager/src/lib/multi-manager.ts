@@ -7,7 +7,7 @@ import { FreePortsFinder, merge, promiseTimeout, readJsonFile } from "@scramjet/
 import { AddressInfo } from "net";
 import { IDProvider } from "@scramjet/model";
 import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
-import { Manager, CommonLogsPipe, HealthCheck } from "@scramjet/manager";
+import { Manager, CommonLogsPipe, HealthCheck, createManagerSthLocalBrokerTransport } from "@scramjet/manager";
 import { ManagersStore } from "./manager-store";
 import { Writable } from "stream";
 import { ReasonPhrases } from "http-status-codes";
@@ -19,10 +19,9 @@ import { DataStream } from "scramjet";
 import { MultiManagerAuditor } from "./mulit-manager-auditor";
 import { MultiManagerConfig } from "../config/multi-manager-configuration";
 import { MonitoringServer } from "@scramjet/monitoring-server";
-import { createManagerSthLocalBrokerTransport } from "@scramjet/manager";
 import { createVerser2HostOptions } from "./verser2-host-config";
 import { resolveManagerVerser2HostConfig } from "./verser2-host-identity";
-import { getMultiManagerVerser2TrustExport } from "./verser2-trust-export";
+import { MultiManagerAPIHandler } from "./api/multi-manager-api";
 
 const MANAGER_START_TIMEOUT = 30000;
 
@@ -55,6 +54,10 @@ export class MultiManager {
 
     public get logStream(): Writable {
         return this.commonLogsPipe.getIn();
+    }
+
+    public get apiCommonLogsPipe(): CommonLogsPipe {
+        return this.commonLogsPipe;
     }
 
     public get service(): string {
@@ -207,68 +210,7 @@ export class MultiManager {
     }
 
     setRouting() {
-        this.apiServer.use("*", (req, _res, next) => {
-            this.logger.trace("API request", req.method, req.url);
-            return next();
-        });
-        this.apiServer.get(
-            `${this.apiBase}/version`,
-            (): MMRestAPI.GetVersionResponse => ({
-                service: this.service,
-                apiVersion: this.apiVersion,
-                version,
-                build: this.build,
-            })
-        );
-
-        this.apiServer.get(
-            `${this.apiBase}/info`,
-            (): MMRestAPI.GetInfoReposnse => ({
-                apiBase: this.apiBase,
-                apiPort: this.config.server.apiPort,
-                id: this.id,
-                managersCount: this.managersStore.size,
-            })
-        );
-
-        this.apiServer.get(
-            `${this.apiBase}/load-check`,
-            async (): Promise<MMRestAPI.GetLoadCheckResponse> => this.loadCheck.getLoadCheck()
-        );
-        this.apiServer.get(`${this.apiBase}/list`, () => this.handleListManagersRequest());
-        this.apiServer.get(`${this.apiBase}/health`, () => this.healthCheck.getHealthCheckInfo());
-        this.apiServer.get(`${this.apiBase}/verser2/trust/:id?`, (req: ParsedMessage) => {
-            const manager = req.params?.id ? this.managersStore.getById(req.params.id) : undefined;
-
-            if (req.params?.id && !manager) {
-                throw new Error(`Manager ${req.params.id} not found`);
-            }
-
-            return getMultiManagerVerser2TrustExport(this.config.verser2, manager?.config);
-        });
-
-        this.apiServer.op("post", `${this.apiBase}/start`, (req) => this.handleStartManagerRequest(req));
-        this.apiServer.op(
-            "post",
-            `${this.apiBase}/cpm/:id/stop`,
-            async (req, _res): Promise<MMRestAPI.OpResponse<MMRestAPI.SendStopManagerResponse>> => {
-                const manager = this.managersStore.getById(req.params!.id);
-
-                if (manager) {
-                    await manager.stop();
-
-                    this.managersStore.remove(req.params!.id);
-                    return { id: req.params!.id, opStatus: ReasonPhrases.OK };
-                }
-
-                return { opStatus: ReasonPhrases.NOT_FOUND };
-            }
-        );
-
-        this.apiServer.use(`${this.apiBase}/cpm/:id`, async (req, res, next) => await this.cpmMiddleware(req, res, next));
-
-        this.apiServer.upstream(`${this.apiBase}/log`, this.commonLogsPipe.getOut());
-        this.apiServer.upstream(`${this.apiBase}/audit`, (req, _res) => this.commonAuditPipe(req));
+        new MultiManagerAPIHandler(this).attach();
     }
 
     async commonAuditPipe(req: IncomingMessage) {
