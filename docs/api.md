@@ -127,6 +127,8 @@ This document defines the target v2 shape. Implementation is deferred to the mig
 
 v2 routing must use verser2 forwarding, resolution, and redirects for cross-node routing. New manual HTTP forwarding layers or bespoke forwarding protocols should not be implemented for v2 routes; compatibility code should adapt to verser2-backed routing instead.
 
+Route implementation ownership follows the API level that owns the behavior, even when the public path is nested under `/api/v2/managers/:managerId/...`. MultiManager routes own only MultiManager behavior and Manager selection. Manager routes own Manager-level inventory, storage, topics, logs, audit, and Hub selection. Host routes own Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit behavior. Cross-level public paths should resolve to the owning router through verser2-backed routing instead of being reimplemented as MultiManager-level proxy handlers.
+
 ### Generic structures
 
 | Contract | Shape |

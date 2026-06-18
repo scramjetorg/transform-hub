@@ -559,6 +559,11 @@
     - [x] Update Phase 9 to implement the approved `mmgr`, `mgr`, storage, topics, logs, audit, forwarding, and routing contracts
     - [x] Keep v1 compatibility requirements explicit while ensuring v2 uses only new `RestAPI2.*` package contracts
     - [x] Keep implementation deferred until the contract shape has been reviewed and approved
+- [x] Task: Clarify v2 router implementation ownership after manual review
+    - [x] State that public nested v2 paths do not imply MultiManager-only implementation
+    - [x] Define owning router levels for implementation: MultiManager owns only MultiManager behavior and Manager selection; Manager owns Manager inventory, storage, topics, logs, audit, and Hub selection; Host owns Hub, Sequence, Instance/CSI, stdio, Hub/Instance RPC, and Hub audit behavior
+    - [x] Require cross-level public paths to reach the owning router through verser2 forwarding, resolution, and redirects instead of custom MultiManager proxy handlers
+      - Manual verification requested this clarification before Phase 8 approval.
 - [x] Task: Phase 7.5 validation and final manual verification
     - [x] Run documentation/plan consistency checks appropriate for a contract-only phase
       - `git diff --check -- docs/api.md conductor/tracks/api_revamp_20260617/plan.md`: passed.
@@ -569,9 +574,9 @@
     - [x] Create the scoped Phase 7.5 checkpoint commit and record the commit SHA in `plan.md`
       - Phase 7.5 checkpoint commit: `d37178b5`.
     - [x] Push `conductor/api-revamp-20260617`, ensure PR #13 is updated, then ask for manual verification before Phase 8
-      - Pushed Phase 7.5 commits to PR #13: `d37178b5`, `74bee3fc`, `ca173f4d`, and `adbdf05a`.
+      - Pushed Phase 7.5 commits to PR #13: `d37178b5`, `74bee3fc`, `ca173f4d`, `adbdf05a`, and `cb389b36`.
 
-## Phase 8: `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC Migration
+## Phase 8: `@scramjet/rest-api2` and Host-Owned v2 Router Migration
 
 - [ ] Task: Add the `@scramjet/rest-api2` package foundation
     - [ ] Create the workspace package with v2 type exports under the `RestAPI2` namespace
@@ -581,22 +586,25 @@
     - [ ] Add package tests proving one common client can address representative `mmgr`, `mgr`, `hub`, `seq`, `inst`, `audit`, `stdio`, and `rpc` operation identifiers
     - [ ] Do not export or alias old `MMRestAPI`, `MRestAPI`, or `STHRestAPI` contracts from this package
 - [ ] Task: Migrate Hub route definitions to the approved v2 shape
-    - [ ] Define schemas and handlers for Hub load-check, version, config, status, sequences, instances, entities, topics, logs, and audit routes under `/api/v2/managers/:managerId/hubs/:hubId`
+    - [ ] Implement these route definitions on the Host-owned v2 API router, not as MultiManager-only proxy handlers
+    - [ ] Define schemas and handlers for Hub load-check, version, config, status, sequences, instances, entities, topics, logs, and audit routes under the public `/api/v2/managers/:managerId/hubs/:hubId` path shape
     - [ ] Preserve existing Host v1 behavior through compatibility routes while v2 uses only `RestAPI2` package contracts
-    - [ ] Add common-client tests for representative Hub routes over HTTP and verser2 route registration
+    - [ ] Add common-client tests for representative Hub routes over HTTP and verser2 route registration against the Host-owned router
 - [ ] Task: Migrate Sequence route definitions to the approved v2 shape
-    - [ ] Define schemas and handlers for sequence create, update, delete, start, read, and sequence-instance list routes under `/api/v2/managers/:managerId/hubs/:hubId/sequences`
+    - [ ] Implement these route definitions on the Host-owned Sequence router/API handler, not on the MultiManager router
+    - [ ] Define schemas and handlers for sequence create, update, delete, start, read, and sequence-instance list routes under the public `/api/v2/managers/:managerId/hubs/:hubId/sequences` path shape
     - [ ] Preserve existing DTO and `OpResponse` expectations for v1 while using only `RestAPI2` package contracts for v2
     - [ ] Add common-client tests for validation, response shape, failure behavior, and v1 compatibility assertions
 - [ ] Task: Migrate Instance route definitions to the approved v2 shape
-    - [ ] Define schemas and handlers for instance info, delete, patch, health, logs, monitoring, events, input, output, and lifecycle behavior under `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId`
+    - [ ] Implement these route definitions on the Host-owned Instance/CSI router/API handler, not on the MultiManager router
+    - [ ] Define schemas and handlers for instance info, delete, patch, health, logs, monitoring, events, input, output, and lifecycle behavior under the public `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId` path shape
     - [ ] Implement `DELETE` instance semantics through `RestAPI2.DeleteInstancePayload` instead of v2 stop/kill action routes
     - [ ] Implement mutable instance parameters through `PATCH` and `RestAPI2.InstanceParametersPatch` instead of dedicated monitoring-rate or set action routes
     - [ ] Preserve streaming behavior, duplex/upstream/downstream semantics, and current v1 route aliases where required
     - [ ] Add common-client tests for representative control, event, monitoring, and stream behavior where feasible without full runtime startup
 - [ ] Task: Migrate specialized stdio and RPC endpoints
-    - [ ] Define specialized `stdio` descriptors and channel stream endpoints under the approved instance endpoint shape
-    - [ ] Define specialized Hub and Instance RPC pass-through endpoints with `RestAPI2.RpcRequest` and `RestAPI2.RpcResponse`
+    - [ ] Implement specialized `stdio` descriptors and channel stream endpoints on the Host-owned Instance/CSI router under the approved instance endpoint shape
+    - [ ] Implement specialized Hub and Instance RPC pass-through endpoints on the Host-owned Hub/Instance routers with `RestAPI2.RpcRequest` and `RestAPI2.RpcResponse`
     - [ ] Keep external HTTP routing on the standard API/router surface; do not introduce bespoke external HTTP forwarding for Instance/CSI
     - [ ] Use verser2 forwarding, resolution, and redirects for cross-node/internal routing instead of implementing custom forwarding where route ownership must be resolved
     - [ ] Add common-client tests for stdio descriptors and RPC registration boundaries
@@ -610,21 +618,25 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 9: MultiManager, Manager, Storage, Topics, Logs, Audit, and Forwarding Migration
+## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
 
 - [ ] Task: Migrate MultiManager route definitions to the approved v2 shape
+    - [ ] Implement only MultiManager-owned route definitions on the MultiManager v2 API router
     - [ ] Define schemas and handlers for MultiManager version, info, load, config, managers list, health, trust, manager start, manager delete, logs, and audit routes
+    - [ ] Do not implement Host-owned Hub, Sequence, Instance/CSI, stdio, or RPC behavior as MultiManager-level route handlers
     - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [ ] Preserve sub-manager proxying behavior and verser2 guest attachment expectations
     - [ ] Add common-client tests for representative MultiManager routes and v1 compatibility assertions
 - [ ] Task: Migrate Manager route definitions to the approved v2 shape
+    - [ ] Implement Manager-owned route definitions on the Manager v2 API router, not on the MultiManager router
     - [ ] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
+    - [ ] Treat nested Hub/Sequence/Instance paths as routing/resolution concerns that reach Host-owned routers through verser2, not as Manager-owned duplicate implementations
     - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [ ] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
     - [ ] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
 - [ ] Task: Migrate storage and topic behavior to the approved v2 shape
-    - [ ] Define v2 storage route handling for sequence storage list, object read/write/delete, and storage clear contracts
-    - [ ] Define v2 Manager and Hub topic routes for topic information, topic streams, create, and delete contracts
+    - [ ] Implement Manager-owned storage route handling for sequence storage list, object read/write/delete, and storage clear contracts on the Manager router
+    - [ ] Implement Manager-owned topic routes on the Manager router and Host-owned Hub topic routes on the Host router; do not collapse both into MultiManager handlers
     - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
     - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
 - [ ] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
