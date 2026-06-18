@@ -791,13 +791,14 @@
       - Corrected narrowed source/test lint excluding api-router test fixture files not included by root TSConfig passed under the standard memory guard.
     - [x] Record validation results, skipped checks, and deduplication notes in `plan.md`
       - Deduplication check: resolver target and request contracts live in `@scramjet/api-router`; Host-specific resolution remains in `host-api-v2.ts`; no repeated helper required extraction.
-- [~] Task: Conductor - User Manual Verification 'Phase 8.5: Dynamic Resolver Mount and Host API Composition' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 8.5: Dynamic Resolver Mount and Host API Composition' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 8.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Phase 8.5 checkpoint commit: `cd41d5e7`.
     - Manual review correction requested before approval: remove `HostAPIV2Support`, keep `HostAPIHandler` as a coordinator with only construction and `v1.attach()`/`v2.attach()` behavior, and implement the two Host-owned v2 sequence mutation handlers natively in `host-api-v2.ts` with typed `RestAPI2` responses instead of delegating through v1 `OpResponse<Record<string, unknown>>` wrappers.
     - Correction implemented after manual feedback: `HostAPIHandler` now constructs and attaches v1/v2 handlers only, `HostAPIV2Support` and `toRestOperation` were removed, and Host-owned v2 sequence delete/start routes now call `host.deleteSequence()` and `host.startSequence()` directly with typed `RestAPI2.OpResponse` results.
     - Correction validation passed: focused Host API v1/v2 hotwire tests passed, 30 tests; Host build typecheck passed; narrowed lint for changed Host files passed; grep confirmed no `HostAPIV2Support`, `toRestOperation`, or v2 support callback declarations remain under `packages/host/src/lib/api`.
     - Manual verification should confirm v1 routes remain unchanged, Host v2 instance routes resolve through dynamic router resolution, and `host-api.ts` uses composition rather than v1 inheritance.
+    - Manual verification approved after the native Host v2 sequence-route correction was pushed.
 
 ## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
 
