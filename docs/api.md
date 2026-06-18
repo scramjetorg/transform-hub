@@ -12,89 +12,6 @@ Examples:
 
 Inferred API version is always the first version in the path, which means that `/api/v2/.../legacy-v1-endpoint/...` will not autoresolve to the correct endpoint, even if the naming of v2 would not mask it.
 
-## v2 package and contract model
-
-`@scramjet/rest-api2` is the new package boundary for the v2 public API and exports the `RestAPI2` namespace. It owns v2 route contracts, v2 request/response DTOs, v2 stream descriptors, and the single common v2 client used by package tests, BDD tests, HTTP consumers, and verser2 consumers.
-
-The v2 package must not reuse or alias old public API contracts. Existing `MMRestAPI.*`, `MRestAPI.*`, `STHRestAPI.*`, and un-namespaced v1 DTOs may be used as implementation references for compatibility adapters, but the exported v2 package types must be new `RestAPI2.*` contracts.
-
-This document defines the target v2 shape. Implementation is deferred to the migration phases after this contract is approved.
-
-v2 routing must use verser2 forwarding, resolution, and redirects for cross-node routing. New manual HTTP forwarding layers or bespoke forwarding protocols should not be implemented for v2 routes; compatibility code should adapt to verser2-backed routing instead.
-
-### Generic structures
-
-| Contract | Shape |
-| --- | --- |
-| `RestAPI2.Empty` | Empty request object, used instead of `void` when a request type must be explicit. |
-| `RestAPI2.IdParams<TScope>` | Path identifiers for a scope such as `MultiManager`, `Manager`, `Hub`, `Sequence`, `Instance`, `Topic`, or `StoreItem`. |
-| `RestAPI2.ListQuery<TItem>` | Pagination, filtering, sorting, and stream-range selection for list endpoints. |
-| `RestAPI2.ListResponse<TItem>` | `{ items: TItem[]; page?: RestAPI2.PageInfo; stream?: RestAPI2.StreamInfo; links?: RestAPI2.Links }`. |
-| `RestAPI2.OpResponse<TOutput>` | `{ operation: RestAPI2.Operation; result?: TOutput; error?: RestAPI2.ErrorBody }`. |
-| `RestAPI2.NoContent<Status>` | Empty body response with the indicated HTTP status, for example `RestAPI2.NoContent<202>`. |
-| `RestAPI2.StreamRange` | Parsed `Content-Range` request span or time range. |
-| `RestAPI2.StreamInfo` | Response metadata for ranged or live stream reads. |
-| `RestAPI2.StreamDescriptor<TItem>` | Describes a streamable endpoint and the item contract emitted by the stream. |
-| `RestAPI2.ErrorBody` | v2 error envelope independent from v1 error DTOs. |
-
-### Common client
-
-The v2 package exposes one common client surface for all API levels. The client resolves the same `RestAPI2.*` operation contracts over HTTP and verser2 transports, rather than generating separate clients for MultiManager, Manager, Hub, Sequence, Instance, audit, stdio, or RPC surfaces.
-
-| Contract | Purpose |
-| --- | --- |
-| `RestAPI2.Client` | Common typed client for all v2 operations. |
-| `RestAPI2.ClientTransport` | Transport contract implemented by HTTP and verser2 adapters. |
-| `RestAPI2.ClientRequest<TOperation>` | Typed request envelope for a v2 operation. |
-| `RestAPI2.ClientResponse<TOperation>` | Typed response envelope for a v2 operation. |
-| `RestAPI2.OperationId` | Stable operation identifier shared by route definitions, OpenAPI output, and the common client. |
-
-### Specific outputs
-
-| Contract | Purpose |
-| --- | --- |
-| `RestAPI2.MultiManager` | MultiManager identity, API base, version, config summary, load, health, and trust-relevant public state. |
-| `RestAPI2.Manager` | Manager identity, API base, version, config summary, load, health, connected hub counts, and trust-relevant public state. |
-| `RestAPI2.Hub` | Hub identity, status, version, config summary, load, sequence counts, instance counts, and topic counts. |
-| `RestAPI2.Sequence` | Sequence identity, metadata, config summary, status, current instances, and package/source descriptors. |
-| `RestAPI2.Instance` | Instance identity, sequence reference, hub reference, status, parameters, monitoring summary, and stream descriptors. |
-| `RestAPI2.Entity` | Shared entity listing output for manager and hub scopes. |
-| `RestAPI2.Topic` | Topic identity, direction, stream descriptors, and retention/availability metadata. |
-| `RestAPI2.StoreItem` | Stored sequence or object metadata exposed by storage endpoints. |
-| `RestAPI2.LogRecord` | v2 log record independent from v1 log DTOs. |
-| `RestAPI2.AuditRecord` | v2 audit record independent from v1 audit DTOs. |
-| `RestAPI2.TrustExport<TScope>` | v2 trust export for the indicated scope. |
-| `RestAPI2.HealthCheckInfo<TScope>` | v2 health check output for the indicated scope. |
-| `RestAPI2.VersionResponse<TScope>` | v2 version output for the indicated scope. |
-| `RestAPI2.ConfigResponse<TScope>` | v2 public-safe config output for the indicated scope. |
-| `RestAPI2.LoadResponse<TScope>` | v2 load output for the indicated scope. |
-
-### Specific requests and operation outputs
-
-| Contract | Purpose |
-| --- | --- |
-| `RestAPI2.StartManagerPayload` / `RestAPI2.StartManagerResponse` | Start a managed Manager from the MultiManager API. |
-| `RestAPI2.DeleteManagerPayload` / `RestAPI2.DeleteManagerResponse` | Stop or remove a managed Manager. |
-| `RestAPI2.RegisterHubPayload` / `RestAPI2.RegisterHubResponse` | Register a Hub with a Manager. |
-| `RestAPI2.DeleteHubPayload` / `RestAPI2.DeleteHubResponse` | Delete or detach a Hub from a Manager. |
-| `RestAPI2.DisconnectHubPayload` / `RestAPI2.DisconnectHubResponse` | Disconnect one or more Hubs without deleting stored Manager state. |
-| `RestAPI2.SendSequencePayload` / `RestAPI2.SendSequenceResponse` | Create or update a Sequence package. |
-| `RestAPI2.DeleteSequencePayload` / `RestAPI2.DeleteSequenceResponse` | Delete a Sequence and define how related instances are handled. |
-| `RestAPI2.StartSequencePayload` / `RestAPI2.StartSequenceResponse` | Start a Sequence and return the created Instance reference. |
-| `RestAPI2.DeleteInstancePayload` / `RestAPI2.DeleteInstanceResponse` | Stop or kill an Instance. The body selects graceful stop versus forced kill and timeout behavior. |
-| `RestAPI2.InstanceParametersPatch` / `RestAPI2.InstanceParametersResponse` | Update mutable Instance parameters such as monitoring rate and log levels. |
-| `RestAPI2.EventPayload` / `RestAPI2.EventResponse` / `RestAPI2.NextEventResponse` | Read current, streamed, or next Instance event data. |
-| `RestAPI2.EventMessage` / `RestAPI2.SendEventResponse` | Send an event to an Instance. |
-| `RestAPI2.TopicCreatePayload` / `RestAPI2.TopicCreateResponse` | Create or configure a Hub topic. |
-| `RestAPI2.TopicDeletePayload` / `RestAPI2.TopicDeleteResponse` | Delete a Hub topic. |
-| `RestAPI2.TopicChunk` / `RestAPI2.TopicStreamResponse` | Stream topic data. |
-| `RestAPI2.StoreItemPayload` / `RestAPI2.StoreItemResponse` / `RestAPI2.DeleteStoreItemPayload` / `RestAPI2.DeleteStoreItemResponse` | Read, write, and delete storage objects. |
-| `RestAPI2.StoreClearPayload` / `RestAPI2.StoreClearResponse` | Clear a Manager storage scope. |
-| `RestAPI2.AuditQuery` / `RestAPI2.AuditQueryResponse` | Query audit records without opening a live audit stream. |
-| `RestAPI2.StdIODescriptorList` / `RestAPI2.StdIOChunk` | Describe and stream Instance stdio channels. |
-| `RestAPI2.RpcRequest` / `RestAPI2.RpcResponse` | Pass-through RPC request/response envelope for specialized RPC endpoints. |
-| `RestAPI2.ForwardingRoute` / `RestAPI2.ForwardingResolution` | Describes verser2-backed route resolution, redirect, or local execution decisions for cross-node v2 requests. |
-
 ## v1
 
 ### mmgr
@@ -199,6 +116,89 @@ The v2 package exposes one common client surface for all API levels. The client 
 | --- | --- | --- | --- |
 | ANY | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/rpc/*` | `HttpRequest` | `HttpResponse` |
 | ANY | `/api/v1/cpm/:managerId/sth/:hubId/rpc/*` | `HttpRequest` | `HttpResponse` |
+
+## v2 package and contract model
+
+`@scramjet/rest-api2` is the new package boundary for the v2 public API and exports the `RestAPI2` namespace. It owns v2 route contracts, v2 request/response DTOs, v2 stream descriptors, and the single common v2 client used by package tests, BDD tests, HTTP consumers, and verser2 consumers.
+
+The v2 package must not reuse or alias old public API contracts. Existing `MMRestAPI.*`, `MRestAPI.*`, `STHRestAPI.*`, and un-namespaced v1 DTOs may be used as implementation references for compatibility adapters, but the exported v2 package types must be new `RestAPI2.*` contracts.
+
+This document defines the target v2 shape. Implementation is deferred to the migration phases after this contract is approved.
+
+v2 routing must use verser2 forwarding, resolution, and redirects for cross-node routing. New manual HTTP forwarding layers or bespoke forwarding protocols should not be implemented for v2 routes; compatibility code should adapt to verser2-backed routing instead.
+
+### Generic structures
+
+| Contract | Shape |
+| --- | --- |
+| `RestAPI2.Empty` | Empty request object, used instead of `void` when a request type must be explicit. |
+| `RestAPI2.IdParams<TScope>` | Path identifiers for a scope such as `MultiManager`, `Manager`, `Hub`, `Sequence`, `Instance`, `Topic`, or `StoreItem`. |
+| `RestAPI2.ListQuery<TItem>` | Pagination, filtering, sorting, and stream-range selection for list endpoints. |
+| `RestAPI2.ListResponse<TItem>` | `{ items: TItem[]; page?: RestAPI2.PageInfo; stream?: RestAPI2.StreamInfo; links?: RestAPI2.Links }`. |
+| `RestAPI2.OpResponse<TOutput>` | `{ operation: RestAPI2.Operation; result?: TOutput; error?: RestAPI2.ErrorBody }`. |
+| `RestAPI2.NoContent<Status>` | Empty body response with the indicated HTTP status, for example `RestAPI2.NoContent<202>`. |
+| `RestAPI2.StreamRange` | Parsed `Content-Range` request span or time range. |
+| `RestAPI2.StreamInfo` | Response metadata for ranged or live stream reads. |
+| `RestAPI2.StreamDescriptor<TItem>` | Describes a streamable endpoint and the item contract emitted by the stream. |
+| `RestAPI2.ErrorBody` | v2 error envelope independent from v1 error DTOs. |
+
+### Common client
+
+The v2 package exposes one common client surface for all API levels. The client resolves the same `RestAPI2.*` operation contracts over HTTP and verser2 transports, rather than generating separate clients for MultiManager, Manager, Hub, Sequence, Instance, audit, stdio, or RPC surfaces.
+
+| Contract | Purpose |
+| --- | --- |
+| `RestAPI2.Client` | Common typed client for all v2 operations. |
+| `RestAPI2.ClientTransport` | Transport contract implemented by HTTP and verser2 adapters. |
+| `RestAPI2.ClientRequest<TOperation>` | Typed request envelope for a v2 operation. |
+| `RestAPI2.ClientResponse<TOperation>` | Typed response envelope for a v2 operation. |
+| `RestAPI2.OperationId` | Stable operation identifier shared by route definitions, OpenAPI output, and the common client. |
+
+### Specific outputs
+
+| Contract | Purpose |
+| --- | --- |
+| `RestAPI2.MultiManager` | MultiManager identity, API base, version, config summary, load, health, and trust-relevant public state. |
+| `RestAPI2.Manager` | Manager identity, API base, version, config summary, load, health, connected hub counts, and trust-relevant public state. |
+| `RestAPI2.Hub` | Hub identity, status, version, config summary, load, sequence counts, instance counts, and topic counts. |
+| `RestAPI2.Sequence` | Sequence identity, metadata, config summary, status, current instances, and package/source descriptors. |
+| `RestAPI2.Instance` | Instance identity, sequence reference, hub reference, status, parameters, monitoring summary, and stream descriptors. |
+| `RestAPI2.Entity` | Shared entity listing output for manager and hub scopes. |
+| `RestAPI2.Topic` | Topic identity, direction, stream descriptors, and retention/availability metadata. |
+| `RestAPI2.StoreItem` | Stored sequence or object metadata exposed by storage endpoints. |
+| `RestAPI2.LogRecord` | v2 log record independent from v1 log DTOs. |
+| `RestAPI2.AuditRecord` | v2 audit record independent from v1 audit DTOs. |
+| `RestAPI2.TrustExport<TScope>` | v2 trust export for the indicated scope. |
+| `RestAPI2.HealthCheckInfo<TScope>` | v2 health check output for the indicated scope. |
+| `RestAPI2.VersionResponse<TScope>` | v2 version output for the indicated scope. |
+| `RestAPI2.ConfigResponse<TScope>` | v2 public-safe config output for the indicated scope. |
+| `RestAPI2.LoadResponse<TScope>` | v2 load output for the indicated scope. |
+
+### Specific requests and operation outputs
+
+| Contract | Purpose |
+| --- | --- |
+| `RestAPI2.StartManagerPayload` / `RestAPI2.StartManagerResponse` | Start a managed Manager from the MultiManager API. |
+| `RestAPI2.DeleteManagerPayload` / `RestAPI2.DeleteManagerResponse` | Stop or remove a managed Manager. |
+| `RestAPI2.RegisterHubPayload` / `RestAPI2.RegisterHubResponse` | Register a Hub with a Manager. |
+| `RestAPI2.DeleteHubPayload` / `RestAPI2.DeleteHubResponse` | Delete or detach a Hub from a Manager. |
+| `RestAPI2.DisconnectHubPayload` / `RestAPI2.DisconnectHubResponse` | Disconnect one or more Hubs without deleting stored Manager state. |
+| `RestAPI2.SendSequencePayload` / `RestAPI2.SendSequenceResponse` | Create or update a Sequence package. |
+| `RestAPI2.DeleteSequencePayload` / `RestAPI2.DeleteSequenceResponse` | Delete a Sequence and define how related instances are handled. |
+| `RestAPI2.StartSequencePayload` / `RestAPI2.StartSequenceResponse` | Start a Sequence and return the created Instance reference. |
+| `RestAPI2.DeleteInstancePayload` / `RestAPI2.DeleteInstanceResponse` | Stop or kill an Instance. The body selects graceful stop versus forced kill and timeout behavior. |
+| `RestAPI2.InstanceParametersPatch` / `RestAPI2.InstanceParametersResponse` | Update mutable Instance parameters such as monitoring rate and log levels. |
+| `RestAPI2.EventPayload` / `RestAPI2.EventResponse` / `RestAPI2.NextEventResponse` | Read current, streamed, or next Instance event data. |
+| `RestAPI2.EventMessage` / `RestAPI2.SendEventResponse` | Send an event to an Instance. |
+| `RestAPI2.TopicCreatePayload` / `RestAPI2.TopicCreateResponse` | Create or configure a Hub topic. |
+| `RestAPI2.TopicDeletePayload` / `RestAPI2.TopicDeleteResponse` | Delete a Hub topic. |
+| `RestAPI2.TopicChunk` / `RestAPI2.TopicStreamResponse` | Stream topic data. |
+| `RestAPI2.StoreItemPayload` / `RestAPI2.StoreItemResponse` / `RestAPI2.DeleteStoreItemPayload` / `RestAPI2.DeleteStoreItemResponse` | Read, write, and delete storage objects. |
+| `RestAPI2.StoreClearPayload` / `RestAPI2.StoreClearResponse` | Clear a Manager storage scope. |
+| `RestAPI2.AuditQuery` / `RestAPI2.AuditQueryResponse` | Query audit records without opening a live audit stream. |
+| `RestAPI2.StdIODescriptorList` / `RestAPI2.StdIOChunk` | Describe and stream Instance stdio channels. |
+| `RestAPI2.RpcRequest` / `RestAPI2.RpcResponse` | Pass-through RPC request/response envelope for specialized RPC endpoints. |
+| `RestAPI2.ForwardingRoute` / `RestAPI2.ForwardingResolution` | Describes verser2-backed route resolution, redirect, or local execution decisions for cross-node v2 requests. |
 
 ## v2
 
