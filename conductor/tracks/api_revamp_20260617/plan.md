@@ -695,6 +695,8 @@
     - [ ] Define specialized v2 audit contracts separately from generic object routes and wire each applicable level to those contracts
     - [ ] Define v2 route handling for routed forwarding through verser2 transport
     - [ ] Use verser2 forwarding, resolution, and redirects for external API routing instead of implementing custom forwarding paths
+    - [ ] Interview the user before implementing remote route mounting/resolution
+      - Open design point: public nested v2 routes that are not local to the current process should use Manager-level resolution, verser-side routing, and `308` redirects where appropriate. Do not implement remote mounts or resolver behavior until the user has been interviewed on the exact solution.
 - [ ] Task: Automated verification gate for MultiManager, Manager, storage, topics, logs, audit, and forwarding migration
     - [ ] Run affected `@scramjet/rest-api2`, Manager, MultiManager, `api-server`, and `api-router` tests
     - [ ] Run route-classifier, verser2-transport, and routed-forward tests explicitly
@@ -718,6 +720,8 @@
     - [ ] Document HTTP and verser2 client transport setup and fixture-based client testing patterns
     - [ ] Document no-circumvention rules for migrated package and BDD tests
     - [ ] Include migration notes for v1 compatibility and v2 route sections
+    - [ ] Document deferred content-range handling and revisit any implemented tasks that require edits
+      - Deferred design point: v2 stream/list content-range semantics need a deliberate implementation larger than the current plan scope. Document the intended behavior, affected endpoints, validation expectations, and any edits needed if earlier tasks accidentally implemented partial range semantics.
 - [ ] Task: Run final deduplication and shared package review
     - [ ] Move repeated route/schema/hook helpers into shared package exports where safe
     - [ ] Confirm no duplicate DTOs, constants, validation helpers, or route metadata types were introduced unnecessarily
