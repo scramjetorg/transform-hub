@@ -1,0 +1,12 @@
+# Test runner for the repro — wraps Node with curl/jq for API queries.
+
+FROM node:20-bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl jq && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /test
+COPY repro/manager-aggregation/scripts/test-repro.sh /test/test-repro.sh
+RUN chmod +x /test/test-repro.sh
+
+ENTRYPOINT ["/test/test-repro.sh"]

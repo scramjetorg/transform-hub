@@ -1,0 +1,11 @@
+{
+  "sequences": [
+    {
+      "id": "hello-2",
+      "sequenceName": "hello-2",
+      "instanceName": "hub-2-hello-main",
+      "args": [],
+      "keepAlive": true
+    }
+  ]
+}

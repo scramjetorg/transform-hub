@@ -1,0 +1,176 @@
+# repro/manager-aggregation/docker-compose.yaml
+#
+# Reproduce Manager aggregation empty state (0rail/transform-hub#15).
+#
+# Brings up:
+#   multi-manager  – MultiManager with a Manager started inline
+#   hub-1          – STH hub connected to the Manager
+#   hub-2          – STH hub connected to the Manager
+#   test-runner    – Validates that aggregation endpoints return empty
+#                    while direct hub sequence endpoints are non-empty.
+#
+# Build:
+#   docker compose -f repro/manager-aggregation/docker-compose.yaml build
+#
+# Run:
+#   docker compose -f repro/manager-aggregation/docker-compose.yaml up --abort-on-container-exit
+#
+# Expected: the test-runner exits with code 1, showing that the
+#   MultiManager-proxied Manager /list and /all_sequences
+#   return 200 [] while direct hub APIs show the hello sequences.
+
+name: repro-manager-aggregation
+
+services:
+  multi-manager:
+    build:
+      context: ../..
+      dockerfile: repro/manager-aggregation/Dockerfile.mm
+    container_name: repro-mm
+    hostname: mm
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    command:
+      [
+        "--id", "repro-mm",
+        "--server-api-port", "3000",
+        "--host", "0.0.0.0",
+        "--manager", '"mgr1"',
+        "--log-level", "INFO",
+        "--verser2-host-bind-port", "2443",
+        "--verser2-host-bind-host", "0.0.0.0",
+        "--verser2-host-public-url", "https://mm:2443",
+        "--verser2-allow-local-peers", "true",
+        "--verser2-local-broker-peer-id", "manager.mgr1.broker",
+        "--verser2-local-guest-peer-id", "manager.mgr1.guest",
+        "--verser2-host-identity-dir", "/tmp/verser2-identity",
+      ]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/version', r => { let d=''; r.on('data',c=>d+=c); r.on('end',()=>process.exit(d.includes('apiVersion')?0:1)) }).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  hub-1:
+    build:
+      context: ../..
+      dockerfile: repro/manager-aggregation/Dockerfile.sth
+    container_name: repro-hub-1
+    hostname: hub-1
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ENV=production
+      - SCRAMJET_VERSER2_HOST_URL=https://mm:2443
+    command:
+      [
+        "--port", "8001",
+        "--hostname", "0.0.0.0",
+        "--runtime-adapter", "process",
+        "--sequences-root", "/sequences",
+        "--identify-existing",
+        "--log-level", "INFO",
+        "--verser2-enabled", "true",
+        "--verser2-host-url", "https://mm:2443",
+        "--verser2-guest-peer-id", "sth.hub1.guest",
+        "--verser2-guest-route-domain", "sth.hub1.scramjet.internal",
+        "--verser2-broker-peer-id", "sth.hub1.broker",
+        "--verser2-broker-target-domain", "manager.mgr1.scramjet.internal",
+        "--verser2-runner-host-enabled", "false",
+        "--verser2-ca-file", "/tmp/verser2-ca.pem",
+      ]
+    depends_on:
+      multi-manager:
+        condition: service_healthy
+
+  hub-2:
+    build:
+      context: ../..
+      dockerfile: repro/manager-aggregation/Dockerfile.sth
+    container_name: repro-hub-2
+    hostname: hub-2
+    ports:
+      - "8002:8002"
+    environment:
+      - NODE_ENV=production
+      - SCRAMJET_VERSER2_HOST_URL=https://mm:2443
+    command:
+      [
+        "--port", "8002",
+        "--hostname", "0.0.0.0",
+        "--runtime-adapter", "process",
+        "--sequences-root", "/sequences",
+        "--identify-existing",
+        "--log-level", "INFO",
+        "--verser2-enabled", "true",
+        "--verser2-host-url", "https://mm:2443",
+        "--verser2-guest-peer-id", "sth.hub2.guest",
+        "--verser2-guest-route-domain", "sth.hub2.scramjet.internal",
+        "--verser2-broker-peer-id", "sth.hub2.broker",
+        "--verser2-broker-target-domain", "manager.mgr1.scramjet.internal",
+        "--verser2-runner-host-enabled", "false",
+        "--verser2-ca-file", "/tmp/verser2-ca.pem",
+      ]
+    depends_on:
+      multi-manager:
+        condition: service_healthy
+
+  cert-bootstrap:
+    build:
+      context: ../..
+      dockerfile: repro/manager-aggregation/Dockerfile.sth
+    container_name: repro-cert-bootstrap
+    volumes:
+      - repro-verser2-ca:/certs
+    entrypoint:
+      [
+        "sh", "-c",
+        "apk add --no-cache curl jq 2>/dev/null || apt-get update && apt-get install -y --no-install-recommends curl jq;
+         echo 'Waiting for MM API...';
+         for i in $$(seq 1 30); do
+           if curl -sf http://mm:3000/api/v1/version >/dev/null 2>&1; then
+             echo 'Fetching verser2 trust material...';
+             curl -sf http://mm:3000/api/v1/verser2/trust/mgr1 > /certs/trust.json || true;
+             cat /certs/trust.json | sed 's/.*\"ca\":\"//;s/\".*//' > /certs/ca.pem 2>/dev/null || true;
+             if [ -s /certs/ca.pem ]; then
+               echo 'CA certificate saved.';
+               exit 0;
+             fi;
+             echo 'No CA in trust response — generating self-signed CA for bootstrap';
+             openssl genrsa -out /certs/ca-key.pem 2048 2>/dev/null;
+             openssl req -x509 -new -nodes -key /certs/ca-key.pem -sha256 -days 365 -out /certs/ca.pem -subj '/CN=repro-ca' 2>/dev/null;
+             echo 'Fallback CA generated.';
+             exit 0;
+           fi;
+           sleep 2;
+         done;
+         echo 'Failed to reach MM API';
+         exit 1"
+      ]
+    depends_on:
+      multi-manager:
+        condition: service_healthy
+
+  test-runner:
+    build:
+      context: ../..
+      dockerfile: repro/manager-aggregation/Dockerfile.test-runner
+    container_name: repro-test-runner
+    environment:
+      - MM_URL=http://mm:3000
+      - HUB1_URL=http://hub-1:8001
+      - HUB2_URL=http://hub-2:8002
+      - MANAGER_ID=mgr1
+    depends_on:
+      hub-1:
+        condition: service_started
+      hub-2:
+        condition: service_started
+      cert-bootstrap:
+        condition: service_completed_successfully
+
+volumes:
+  repro-verser2-ca:
