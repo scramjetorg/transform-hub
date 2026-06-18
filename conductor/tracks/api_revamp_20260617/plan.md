@@ -658,6 +658,13 @@
       - Docker/Kubernetes validation skipped because Phase 8 did not change adapter behavior, runner image artifacts, or Docker/Kubernetes runtime paths.
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+    - Phase 8 checkpoint commit: `1d0e736c`.
+    - Phase 8 review notes:
+      - Added `@scramjet/rest-api2` package foundation with `RestAPI2` contracts and common client.
+      - Added static router `mount()` support and stream route-kind registration in `@scramjet/api-router`.
+      - Migrated Host-owned v2 Hub, Sequence, Instance selector, stdio descriptor, and RPC boundary route definitions without registering full public `:managerId`/`:hubId` paths on Host.
+      - Split Host v2 tests by surface: `api-v2-hotwire.spec.ts` for Host/Hub/Sequence and `api-v2-instance-hotwire.spec.ts` for Instance/CSI. Existing v1 hotwire assertions remain in `api-hotwire.spec.ts`.
+      - Updated active workflow/agent memory guidance: start agent-run tests and Node validation under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless a repo/package test runner owns process setup.
 
 ## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
 
