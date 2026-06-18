@@ -40,12 +40,12 @@ function createHostStub(): any {
     };
 }
 
-test("Host low-risk routes are reachable through verser2 for v1 and v2", async t => {
+test("Host v1 compatibility and v2 mounted routes are reachable through verser2", async t => {
     const handler = new HostAPIHandler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3", "build") as any;
     const registrations: any[] = [];
     const adapter = { register: (registration: any) => registrations.push(registration) };
 
-    registerVerser2Routes(adapter, handler.createLowRiskRouter("v1"));
+    registerVerser2Routes(adapter, handler.createV1CompatibilityRouter());
     registerVerser2Routes(adapter, handler.createV2Router());
 
     t.deepEqual(registrations.slice(0, 8).map(registration => registration.fullPath), [

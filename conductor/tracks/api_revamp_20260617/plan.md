@@ -664,6 +664,8 @@
       - Added `@scramjet/rest-api2` package foundation with `RestAPI2` contracts and common client.
       - Added static router `mount()` support and stream route-kind registration in `@scramjet/api-router`.
       - Migrated Host-owned v2 Hub, Sequence, Instance selector, stdio descriptor, and RPC boundary route definitions without registering full public `:managerId`/`:hubId` paths on Host.
+      - Follow-up cleanup removed the superseded Host `createLowRiskRouter("v2")` capability entirely. Host v1 compatibility routes are now exposed through `createV1CompatibilityRouter()`, while Host v2 routes are exposed only through `createV2Router()` and `/api/v2/load`.
+      - Follow-up validation after cleanup: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" TS_NODE_TRANSPILE_ONLY=1 node ../../scripts/run-ava.js --serial -T 50000 test/api-v2-hotwire.spec.ts test/api-v2-instance-hotwire.spec.ts test/api-versioned-routing.spec.ts` passed, 13 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit` passed.
       - Split Host v2 tests by surface: `api-v2-hotwire.spec.ts` for Host/Hub/Sequence and `api-v2-instance-hotwire.spec.ts` for Instance/CSI. Existing v1 hotwire assertions remain in `api-hotwire.spec.ts`.
       - Updated active workflow/agent memory guidance: start agent-run tests and Node validation under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless a repo/package test runner owns process setup.
 

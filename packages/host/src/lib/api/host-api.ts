@@ -96,7 +96,7 @@ export class HostAPIHandler {
             sequences: host.getSequences(),
             instances: host.getInstances()
         }));
-        registerHttpRoutes(this.api, this.createLowRiskRouter("v1"));
+        registerHttpRoutes(this.api, this.createV1CompatibilityRouter());
 
         this.topicRouter = new TopicRouter(this.logger, this.api, this.apiBase, host.serviceDiscovery);
 
@@ -115,41 +115,40 @@ export class HostAPIHandler {
         this.attachV2Routes();
     }
 
-    createLowRiskRouter(apiVersion: "v1" | "v2"): RouterDefinition {
+    createV1CompatibilityRouter(): RouterDefinition {
         const host = this.host;
-        const basePath = apiVersion === "v1" ? this.apiBase : this.v2ApiBase;
         const objectResponse = z.object({}).passthrough();
 
-        return Router.create({ basePath })
+        return Router.create({ basePath: this.apiBase })
             .route(Router.get("/load-check", {
-                id: `host.${apiVersion}.load-check`,
+                id: "host.v1.load-check",
                 schemas: { response: z.unknown() },
                 handler: () => host.loadCheck.getLoadCheck()
             }))
             .route(Router.get("/version", {
-                id: `host.${apiVersion}.version`,
+                id: "host.v1.version",
                 schemas: {
                     response: z.object({
                         service: z.string(),
-                        apiVersion: z.literal(apiVersion),
+                        apiVersion: z.literal("v1"),
                         version: z.string(),
                         build: z.string()
                     })
                 },
                 handler: (): STHRestAPI.GetVersionResponse => ({
                     service: host.service,
-                    apiVersion,
+                    apiVersion: "v1",
                     version: this.version,
                     build: this.build,
                 })
             }))
             .route(Router.get("/config", {
-                id: `host.${apiVersion}.config`,
+                id: "host.v1.config",
                 schemas: { response: objectResponse },
                 handler: () => host.publicConfig
             }))
             .route(Router.get("/status", {
-                id: `host.${apiVersion}.status`,
+                id: "host.v1.status",
                 schemas: { response: objectResponse },
                 handler: () => host.getStatus()
             }));
