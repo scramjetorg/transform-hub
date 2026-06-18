@@ -435,6 +435,7 @@
 - [x] Task: Create v2 API integration points
     - [x] Add v2 registration locations for Host, Manager, MultiManager, and CSI/Instance without changing v1 route registration
       - Added Host v2 read-route registration through `@scramjet/api-router` for `/api/v2/load-check`, `/api/v2/version`, `/api/v2/config`, and `/api/v2/status`.
+      - Superseded for Host-owned Hub v2 in Phase 8: the Host v2 Hub route is `/api/v2/load`, and `/api/v2/load-check` remains only a prior low-risk exposure/v1 compatibility reference.
       - Added Host CSI/Instance v2 integration mount at `/api/v2/instance/:id`, reusing the existing per-instance relative router and preserving `/api/v1/instance/:id` behavior.
       - Added Manager v2 read-route registration for `/api/v2/version`, `/api/v2/config`, `/api/v2/verser2/trust`, `/api/v2/load`, and `/api/v2/health`.
       - Added MultiManager v2 read-route registration for `/api/v2/version`, `/api/v2/info`, `/api/v2/load-check`, `/api/v2/list`, `/api/v2/health`, and `/api/v2/verser2/trust/:id?`.
@@ -546,7 +547,7 @@
     - [x] Define specific output models such as `RestAPI2.MultiManager`, `RestAPI2.Manager`, `RestAPI2.Hub`, `RestAPI2.Sequence`, `RestAPI2.Instance`, `RestAPI2.Topic`, `RestAPI2.StoreItem`, `RestAPI2.AuditRecord`, and `RestAPI2.LogRecord`
     - [x] Define concrete request/response pairs for MultiManager manager start/stop/list/info/load/config/health/trust/log/audit behavior
     - [x] Define concrete request/response pairs for Manager hub registration/delete/disconnect/list, instance list, sequence list, entity list, topic, storage, log, audit, load, config, health, version, and trust behavior
-    - [x] Define concrete request/response pairs for Hub status, sequence list, instance list, entity list, topic, log, audit, load-check, config, and version behavior
+    - [x] Define concrete request/response pairs for Hub status, sequence list, instance list, entity list, topic, log, audit, load, config, and version behavior
     - [x] Define concrete request/response pairs for Sequence send/update/delete/start/read/instances behavior
     - [x] Define concrete request/response pairs for Instance delete, patch, events, input, output, monitoring, logs, health, and info behavior
     - [x] Define concrete request/response pairs for specialized `audit`, `stdio`, and `rpc` endpoints
