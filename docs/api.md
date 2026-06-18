@@ -1,6 +1,10 @@
 # API
 
+Compatibility: v1 remains accessible at any nested level under v2; v2 is not supported under v1. Examples: `/api/v2/cpm/:managerId/api/v1/topic` works; `/api/v1/.../api/v1/...` works; `/api/v1/.../api/v2/...` is unsupported.
+
 ## v1
+
+### mmgr
 
 | Method | Path | In | Out |
 | --- | --- | --- | --- |
@@ -14,6 +18,11 @@
 | POST | `/api/v1/cpm/:managerId/stop` | `MMRestAPI.SendStopManagerPayload` | `MMRestAPI.OpResponse<MMRestAPI.SendStopManagerResponse>` |
 | GET | `/api/v1/log` | `void` | `ReadableStream<LogRecord>` |
 | GET | `/api/v1/audit` | `void` | `ReadableStream<AuditRecord>` |
+
+### mgr
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | GET | `/api/v1/cpm/:managerId/version` | `MRestAPI.ManagerParams` | `MRestAPI.GetVersionResponse` |
 | GET | `/api/v1/cpm/:managerId/config` | `MRestAPI.ManagerParams` | `MRestAPI.GetConfigResponse` |
 | GET | `/api/v1/cpm/:managerId/verser2/trust` | `MRestAPI.ManagerParams` | `ManagerVerser2TrustExport` |
@@ -38,17 +47,16 @@
 | PUT | `/api/v1/cpm/:managerId/s3/:filename?` | `MRestAPI.PutStoreItemPayload` | `MRestAPI.PutStoreItemResponse` |
 | DELETE | `/api/v1/cpm/:managerId/s3/:filename` | `MRestAPI.DeleteStoreItemPayload` | `MRestAPI.DeleteStoreItemResponse` |
 | POST | `/api/v1/cpm/:managerId/disconnect` | `MRestAPI.PostDisconnectPayload` | `MRestAPI.PostDisconnectResponse` |
+
+### hub
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/load-check` | `STHRestAPI.HubParams` | `STHRestAPI.GetLoadCheckResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/version` | `STHRestAPI.HubParams` | `STHRestAPI.GetVersionResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/config` | `STHRestAPI.HubParams` | `STHRestAPI.GetConfigResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/status` | `STHRestAPI.HubParams` | `STHRestAPI.GetStatusResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/audit` | `STHRestAPI.HubParams` | `ReadableStream<AuditRecord>` |
-| POST | `/api/v1/cpm/:managerId/sth/:hubId/sequence` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
-| PUT | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
-| DELETE | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId` | `STHRestAPI.DeleteSequencePayload` | `OpResponse<STHRestAPI.DeleteSequenceResponse>` |
-| POST | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId/start` | `STHRestAPI.StartSequencePayload` | `OpResponse<STHRestAPI.StartSequenceResponse>` |
-| GET | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId` | `STHRestAPI.GetSequencePayload` | `STHRestAPI.GetSequenceResponse` |
-| GET | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId/instances` | `STHRestAPI.GetSequenceInstancesPayload` | `STHRestAPI.GetSequenceInstancesResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/sequences` | `STHRestAPI.HubParams` | `STHRestAPI.GetSequencesResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/instances` | `STHRestAPI.HubParams` | `STHRestAPI.GetInstancesResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/entities` | `STHRestAPI.HubParams` | `STHRestAPI.GetEntitiesResponse` |
@@ -58,6 +66,22 @@
 | DELETE | `/api/v1/cpm/:managerId/sth/:hubId/topics/:topic` | `TopicDeletePayload` | `OpResponse<TopicDeleteResponse>` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/topic/:topic` | `TopicStreamPayload` | `ReadableStream<TopicChunk>` |
 | POST | `/api/v1/cpm/:managerId/sth/:hubId/topic/:topic` | `TopicStreamPayload` | `OpResponse<Record<string, unknown>>` |
+
+### seq
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
+| POST | `/api/v1/cpm/:managerId/sth/:hubId/sequence` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
+| PUT | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
+| DELETE | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId` | `STHRestAPI.DeleteSequencePayload` | `OpResponse<STHRestAPI.DeleteSequenceResponse>` |
+| POST | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId/start` | `STHRestAPI.StartSequencePayload` | `OpResponse<STHRestAPI.StartSequenceResponse>` |
+| GET | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId` | `STHRestAPI.GetSequencePayload` | `STHRestAPI.GetSequenceResponse` |
+| GET | `/api/v1/cpm/:managerId/sth/:hubId/sequence/:sequenceId/instances` | `STHRestAPI.GetSequenceInstancesPayload` | `STHRestAPI.GetSequenceInstancesResponse` |
+
+### inst
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId` | `STHRestAPI.GetInstancePayload` | `STHRestAPI.GetInstanceResponse` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/stdout` | `STHRestAPI.InstanceStreamPayload` | `ReadableStream<Buffer>` |
 | GET | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/stderr` | `STHRestAPI.InstanceStreamPayload` | `ReadableStream<Buffer>` |
@@ -75,10 +99,17 @@
 | POST | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/_stop` | `STHRestAPI.StopInstancePayload` | `OpResponse<STHRestAPI.SendStopInstanceResponse>` |
 | POST | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/_kill` | `STHRestAPI.KillInstancePayload` | `OpResponse<STHRestAPI.SendKillInstanceResponse>` |
 | POST | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/set` | `SetSequenceMessage` | `OpResponse<Record<string, unknown>>` |
+
+### rpc
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | ANY | `/api/v1/cpm/:managerId/sth/:hubId/instance/:instanceId/rpc/*` | `HttpRequest` | `HttpResponse` |
 | ANY | `/api/v1/cpm/:managerId/sth/:hubId/rpc/*` | `HttpRequest` | `HttpResponse` |
 
 ## v2
+
+### mmgr
 
 | Method | Path | In | Out |
 | --- | --- | --- | --- |
@@ -92,6 +123,11 @@
 | DELETE | `/api/v2/managers/:managerId` | `MMRestAPI.SendStopManagerPayload` | `MMRestAPI.OpResponse<MMRestAPI.SendStopManagerResponse>` |
 | GET | `/api/v2/logs` | `void` | `ReadableStream<LogRecord>` |
 | GET | `/api/v2/audit` | `void` | `ReadableStream<AuditRecord>` |
+
+### mgr
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | GET | `/api/v2/managers/:managerId/version` | `MRestAPI.ManagerParams` | `MRestAPI.GetVersionResponse` |
 | GET | `/api/v2/managers/:managerId/config` | `MRestAPI.ManagerParams` | `MRestAPI.GetConfigResponse` |
 | GET | `/api/v2/managers/:managerId/verser2/trust` | `MRestAPI.ManagerParams` | `ManagerVerser2TrustExport` |
@@ -116,17 +152,16 @@
 | PUT | `/api/v2/managers/:managerId/storage/objects/:filename?` | `MRestAPI.PutStoreItemPayload` | `MRestAPI.PutStoreItemResponse` |
 | DELETE | `/api/v2/managers/:managerId/storage/objects/:filename` | `MRestAPI.DeleteStoreItemPayload` | `MRestAPI.DeleteStoreItemResponse` |
 | DELETE | `/api/v2/managers/:managerId/storage` | `MRestAPI.ManagerParams` | `MRestAPI.StoreClearResponse` |
+
+### hub
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/load-check` | `STHRestAPI.HubParams` | `STHRestAPI.GetLoadCheckResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/version` | `STHRestAPI.HubParams` | `STHRestAPI.GetVersionResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/config` | `STHRestAPI.HubParams` | `STHRestAPI.GetConfigResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/status` | `STHRestAPI.HubParams` | `STHRestAPI.GetStatusResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/audit` | `STHRestAPI.HubParams` | `ReadableStream<AuditRecord>` |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/sequences` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
-| PUT | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
-| DELETE | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `STHRestAPI.DeleteSequencePayload` | `OpResponse<STHRestAPI.DeleteSequenceResponse>` |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId/instances` | `STHRestAPI.StartSequencePayload` | `OpResponse<STHRestAPI.StartSequenceResponse>` |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `STHRestAPI.GetSequencePayload` | `STHRestAPI.GetSequenceResponse` |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId/instances` | `STHRestAPI.GetSequenceInstancesPayload` | `STHRestAPI.GetSequenceInstancesResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences` | `STHRestAPI.HubParams` | `STHRestAPI.GetSequencesResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/instances` | `STHRestAPI.HubParams` | `STHRestAPI.GetInstancesResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/entities` | `STHRestAPI.HubParams` | `STHRestAPI.GetEntitiesResponse` |
@@ -136,6 +171,22 @@
 | DELETE | `/api/v2/managers/:managerId/hubs/:hubId/topics/:topic` | `TopicDeletePayload` | `OpResponse<TopicDeleteResponse>` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/topics/:topic/stream` | `TopicStreamPayload` | `ReadableStream<TopicChunk>` |
 | POST | `/api/v2/managers/:managerId/hubs/:hubId/topics/:topic/stream` | `TopicStreamPayload` | `OpResponse<Record<string, unknown>>` |
+
+### seq
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
+| POST | `/api/v2/managers/:managerId/hubs/:hubId/sequences` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
+| PUT | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `STHRestAPI.SendSequencePayload` | `OpResponse<STHRestAPI.SendSequenceResponse>` |
+| DELETE | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `STHRestAPI.DeleteSequencePayload` | `OpResponse<STHRestAPI.DeleteSequenceResponse>` |
+| POST | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId/instances` | `STHRestAPI.StartSequencePayload` | `OpResponse<STHRestAPI.StartSequenceResponse>` |
+| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `STHRestAPI.GetSequencePayload` | `STHRestAPI.GetSequenceResponse` |
+| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId/instances` | `STHRestAPI.GetSequenceInstancesPayload` | `STHRestAPI.GetSequenceInstancesResponse` |
+
+### inst
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId` | `STHRestAPI.GetInstancePayload` | `STHRestAPI.GetInstanceResponse` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdout` | `STHRestAPI.InstanceStreamPayload` | `ReadableStream<Buffer>` |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stderr` | `STHRestAPI.InstanceStreamPayload` | `ReadableStream<Buffer>` |
@@ -153,5 +204,10 @@
 | POST | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stop` | `STHRestAPI.StopInstancePayload` | `OpResponse<STHRestAPI.SendStopInstanceResponse>` |
 | POST | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/kill` | `STHRestAPI.KillInstancePayload` | `OpResponse<STHRestAPI.SendKillInstanceResponse>` |
 | PATCH | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId` | `SetSequenceMessage` | `OpResponse<Record<string, unknown>>` |
+
+### rpc
+
+| Method | Path | In | Out |
+| --- | --- | --- | --- |
 | ANY | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/rpc/*` | `HttpRequest` | `HttpResponse` |
 | ANY | `/api/v2/managers/:managerId/hubs/:hubId/rpc/*` | `HttpRequest` | `HttpResponse` |
