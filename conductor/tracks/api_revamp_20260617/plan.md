@@ -514,52 +514,128 @@
 
 ## Phase 7.5: v2 API Shape Rework
 
-- [ ] Halt here: add the API shape rework tasks before continuing to Phase 8.
+- [x] Task: Finalize v2 route shape for every API level
+    - [x] Define `mmgr` v2 routes from the approved top-level API shape
+    - [x] Define `mgr` v2 routes from the approved nested Manager API shape
+    - [x] Define `hub` v2 routes as first-class nested routes, not only direct Host-level low-risk aliases
+    - [x] Define `seq` v2 routes for sequence create/update/delete/start/read/list behavior
+    - [x] Define `inst` v2 routes for instance read, lifecycle, parameters, monitoring, events, input, output, and health behavior
+    - [x] Define specialized `audit` endpoints separately from generic object routes
+    - [x] Define specialized `stdio` endpoints separately from generic instance routes
+    - [x] Define specialized `rpc` pass-through endpoints separately from generic object routes
+    - [x] Define storage, topics, logs, health, load, config, version, and trust routes where applicable at each level
+    - [x] Record that this phase finalizes contracts only; implementation remains deferred to later migration phases
+      - `docs/api.md` now records the target v2 route surface by level and specialized endpoint family. Implementation remains in Phase 8 and Phase 9.
+- [x] Task: Define generic v2 contract structures
+    - [x] Define the dedicated `@scramjet/rest-api2` package boundary exporting the `RestAPI2` namespace for v2 public types and client code
+    - [x] Define new `RestAPI2.ListResponse<T>` contract structure
+    - [x] Define new `RestAPI2.OpResponse<T>` contract structure
+    - [x] Define new `RestAPI2.NoContent<Status>` contract structure
+    - [x] Define new generic pagination, filtering, query, and route-params structures
+    - [x] Define new generic stream metadata, range, and descriptor structures where needed
+    - [x] Do not reuse or alias old public API contracts for v2 contracts
+      - `docs/api.md` states that `@scramjet/rest-api2` owns v2 public types and must not export or alias old `MMRestAPI`, `MRestAPI`, or `STHRestAPI` contracts.
+- [x] Task: Define the single common v2 client surface
+    - [x] Define one `RestAPI2.Client` surface that covers `mmgr`, `mgr`, `hub`, `seq`, `inst`, specialized `audit`, specialized `stdio`, and specialized `rpc` operations
+    - [x] Define `RestAPI2.ClientTransport` so the same client can execute over HTTP and verser2 transports
+    - [x] Define stable operation identifiers shared by route definitions, OpenAPI output, and the common client
+    - [x] Ensure migrated package and BDD tests use this common client instead of surface-specific clients
+    - [x] Do not implement separate v2 clients for MultiManager, Manager, Hub, Sequence, Instance, audit, stdio, or RPC surfaces
+      - `docs/api.md` records the common client contract; Phase 8 now creates the package and implements the client before migrated route implementations depend on it.
+- [x] Task: Define specific v2 request and response contracts
+    - [x] Define specific output models such as `RestAPI2.MultiManager`, `RestAPI2.Manager`, `RestAPI2.Hub`, `RestAPI2.Sequence`, `RestAPI2.Instance`, `RestAPI2.Topic`, `RestAPI2.StoreItem`, `RestAPI2.AuditRecord`, and `RestAPI2.LogRecord`
+    - [x] Define concrete request/response pairs for MultiManager manager start/stop/list/info/load/config/health/trust/log/audit behavior
+    - [x] Define concrete request/response pairs for Manager hub registration/delete/disconnect/list, instance list, sequence list, entity list, topic, storage, log, audit, load, config, health, version, and trust behavior
+    - [x] Define concrete request/response pairs for Hub status, sequence list, instance list, entity list, topic, log, audit, load-check, config, and version behavior
+    - [x] Define concrete request/response pairs for Sequence send/update/delete/start/read/instances behavior
+    - [x] Define concrete request/response pairs for Instance delete, patch, events, input, output, monitoring, logs, health, and info behavior
+    - [x] Define concrete request/response pairs for specialized `audit`, `stdio`, and `rpc` endpoints
+    - [x] Define verser2-backed forwarding and resolution contracts instead of introducing new manual forwarding contracts
+    - [x] Explicitly state that v2 public contracts must not alias or reuse old `MMRestAPI`, `MRestAPI`, or `STHRestAPI` contracts
+      - `docs/api.md` adds `RestAPI2.ForwardingRoute` and `RestAPI2.ForwardingResolution` for verser2-backed routing and states that v2 must not add new manual HTTP forwarding layers.
+- [x] Task: Align Phase 8 and Phase 9 migration wording to approved contracts
+    - [x] Update Phase 8 to add the `@scramjet/rest-api2` package skeleton, type exports, and common client before migrated routes depend on it
+    - [x] Update Phase 8 to implement the approved `hub`, `seq`, `inst`, `stdio`, `rpc`, and related specialized endpoint contracts
+    - [x] Update Phase 9 to implement the approved `mmgr`, `mgr`, storage, topics, logs, audit, forwarding, and routing contracts
+    - [x] Keep v1 compatibility requirements explicit while ensuring v2 uses only new `RestAPI2.*` package contracts
+    - [x] Keep implementation deferred until the contract shape has been reviewed and approved
+- [x] Task: Phase 7.5 validation and final manual verification
+    - [x] Run documentation/plan consistency checks appropriate for a contract-only phase
+      - `git diff --check -- docs/api.md conductor/tracks/api_revamp_20260617/plan.md`: passed.
+    - [x] Run package tests only if this phase changes code or generated type artifacts
+      - Not run; Phase 7.5 changed documentation and Conductor plan only.
+    - [x] Record skipped validation and the reason when this phase remains documentation/contract-only
+      - Package tests, typechecks, BDD, and build were skipped because this phase added no code, package metadata, generated artifacts, or runtime behavior.
+    - [ ] Create the scoped Phase 7.5 checkpoint commit and record the commit SHA in `plan.md`
+    - [ ] Push `conductor/api-revamp-20260617`, ensure PR #13 is updated, then ask for manual verification before Phase 8
 
-## Phase 8: Sequence and Instance/CSI Route Migration to v2
+## Phase 8: `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC Migration
 
-- [ ] Task: Migrate sequence route definitions to v2
-    - [ ] Define schemas and route handlers for sequence upload, update, delete, start, get, list, and related entity routes
-    - [ ] Preserve existing DTO and `OpResponse` expectations for v1 while defining v2 contracts intentionally
-    - [ ] Add focused client-based tests for validation, response shape, and failure behavior
-- [ ] Task: Migrate Instance/CSI internal route definitions to v2
-    - [ ] Define schemas and handlers for internal instance health, input/output, stdin/stdout/stderr/log, monitoring, events, set, stop, kill, and RPC calls
+- [ ] Task: Add the `@scramjet/rest-api2` package foundation
+    - [ ] Create the workspace package with v2 type exports under the `RestAPI2` namespace
+    - [ ] Implement generic v2 structures such as `ListResponse<T>`, `OpResponse<T>`, `NoContent<Status>`, route params, pagination, filtering, stream metadata, and error envelopes
+    - [ ] Implement the single common `RestAPI2.Client` and `RestAPI2.ClientTransport` abstractions
+    - [ ] Implement HTTP and verser2 transports for the common client using the shared router manifest where applicable
+    - [ ] Add package tests proving one common client can address representative `mmgr`, `mgr`, `hub`, `seq`, `inst`, `audit`, `stdio`, and `rpc` operation identifiers
+    - [ ] Do not export or alias old `MMRestAPI`, `MRestAPI`, or `STHRestAPI` contracts from this package
+- [ ] Task: Migrate Hub route definitions to the approved v2 shape
+    - [ ] Define schemas and handlers for Hub load-check, version, config, status, sequences, instances, entities, topics, logs, and audit routes under `/api/v2/managers/:managerId/hubs/:hubId`
+    - [ ] Preserve existing Host v1 behavior through compatibility routes while v2 uses only `RestAPI2` package contracts
+    - [ ] Add common-client tests for representative Hub routes over HTTP and verser2 route registration
+- [ ] Task: Migrate Sequence route definitions to the approved v2 shape
+    - [ ] Define schemas and handlers for sequence create, update, delete, start, read, and sequence-instance list routes under `/api/v2/managers/:managerId/hubs/:hubId/sequences`
+    - [ ] Preserve existing DTO and `OpResponse` expectations for v1 while using only `RestAPI2` package contracts for v2
+    - [ ] Add common-client tests for validation, response shape, failure behavior, and v1 compatibility assertions
+- [ ] Task: Migrate Instance route definitions to the approved v2 shape
+    - [ ] Define schemas and handlers for instance info, delete, patch, health, logs, monitoring, events, input, output, and lifecycle behavior under `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId`
+    - [ ] Implement `DELETE` instance semantics through `RestAPI2.DeleteInstancePayload` instead of v2 stop/kill action routes
+    - [ ] Implement mutable instance parameters through `PATCH` and `RestAPI2.InstanceParametersPatch` instead of dedicated monitoring-rate or set action routes
+    - [ ] Preserve streaming behavior, duplex/upstream/downstream semantics, and current v1 route aliases where required
+    - [ ] Add common-client tests for representative control, event, monitoring, and stream behavior where feasible without full runtime startup
+- [ ] Task: Migrate specialized stdio and RPC endpoints
+    - [ ] Define specialized `stdio` descriptors and channel stream endpoints under the approved instance endpoint shape
+    - [ ] Define specialized Hub and Instance RPC pass-through endpoints with `RestAPI2.RpcRequest` and `RestAPI2.RpcResponse`
     - [ ] Keep external HTTP routing on the standard API/router surface; do not introduce bespoke external HTTP forwarding for Instance/CSI
-    - [ ] Use verser2 resolution and redirects for cross-node/internal routing instead of manual forwarding where route ownership must be resolved
-    - [ ] Preserve streaming behavior, duplex/upstream/downstream semantics, and current route aliases where required
-    - [ ] Add client-based tests for stream route registration and representative control/event behavior where the shared client supports the route kind
-- [ ] Task: Automated verification gate for sequence and CSI behavior
-    - [ ] Run affected Host, CSI/Instance, `api-server`, and `api-router` tests
-    - [ ] Add automated client-based v1/v2 parity assertions for representative sequence control and read routes
-    - [ ] Add automated client-based stream/duplex route tests for representative CSI routes where feasible without full runtime startup
-    - [ ] Run no-circumvention checks for migrated sequence and CSI package/BDD tests
-    - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent through the client when package tests cannot prove end-to-end host API behavior
+    - [ ] Use verser2 forwarding, resolution, and redirects for cross-node/internal routing instead of implementing custom forwarding where route ownership must be resolved
+    - [ ] Add common-client tests for stdio descriptors and RPC registration boundaries
+- [ ] Task: Automated verification gate for `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC behavior
+    - [ ] Run `@scramjet/rest-api2`, Host, CSI/Instance, `api-server`, and `api-router` tests
+    - [ ] Add automated common-client v1/v2 parity assertions for representative Hub, Sequence, Instance, stdio, and RPC routes
+    - [ ] Add automated common-client stream/duplex route tests for representative routes where feasible without full runtime startup
+    - [ ] Run no-circumvention checks for migrated package/BDD tests to prove the common client was used
+    - [ ] Run `npm run test:bdd-ci-api-node` or a narrower equivalent through the common client when package tests cannot prove end-to-end host API behavior
     - [ ] Record skipped Docker/Kubernetes validation and reason
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 
-## Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2
+## Phase 9: MultiManager, Manager, Storage, Topics, Logs, Audit, and Forwarding Migration
 
-- [ ] Task: Migrate remaining Manager route definitions to v2
-    - [ ] Define schemas and handlers for remaining Manager routes not completed in Phase 7, including STH info, list, instances, sequences, entities, topics, disconnect, and STH lifecycle routes
-    - [ ] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
-    - [ ] Add client-based tests for query validation, route classification, and response compatibility where applicable
-- [ ] Task: Migrate remaining MultiManager route definitions to v2
-    - [ ] Define schemas and handlers for remaining MultiManager routes not completed in Phase 7, including start, stop, logs, audit, and CPM proxy routes
+- [ ] Task: Migrate MultiManager route definitions to the approved v2 shape
+    - [ ] Define schemas and handlers for MultiManager version, info, load, config, managers list, health, trust, manager start, manager delete, logs, and audit routes
+    - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [ ] Preserve sub-manager proxying behavior and verser2 guest attachment expectations
-    - [ ] Add focused client-based MultiManager tests or fixtures as needed
-- [ ] Task: Migrate forwarding and storage proxy behavior to v2
-    - [ ] Define v2 route handling for routed forwarding through verser2 transport
-    - [ ] Prefer verser2 resolution and redirects over manual forwarding for external API routing wherever possible
+    - [ ] Add common-client tests for representative MultiManager routes and v1 compatibility assertions
+- [ ] Task: Migrate Manager route definitions to the approved v2 shape
+    - [ ] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
+    - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
+    - [ ] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
+    - [ ] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
+- [ ] Task: Migrate storage and topic behavior to the approved v2 shape
+    - [ ] Define v2 storage route handling for sequence storage list, object read/write/delete, and storage clear contracts
+    - [ ] Define v2 Manager and Hub topic routes for topic information, topic streams, create, and delete contracts
     - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
-    - [ ] Integrate Disk/S3 storage proxy route definitions or adapters where in scope after repair expectations are defined
     - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
-- [ ] Task: Automated verification gate for Manager/MultiManager migration
-    - [ ] Run affected Manager, MultiManager, `api-server`, and `api-router` tests
+- [ ] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
+    - [ ] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
+    - [ ] Define specialized v2 audit contracts separately from generic object routes and wire each applicable level to those contracts
+    - [ ] Define v2 route handling for routed forwarding through verser2 transport
+    - [ ] Use verser2 forwarding, resolution, and redirects for external API routing instead of implementing custom forwarding paths
+- [ ] Task: Automated verification gate for MultiManager, Manager, storage, topics, logs, audit, and forwarding migration
+    - [ ] Run affected `@scramjet/rest-api2`, Manager, MultiManager, `api-server`, and `api-router` tests
     - [ ] Run route-classifier, verser2-transport, and routed-forward tests explicitly
-    - [ ] Add automated client-based v1/v2 parity assertions for representative Manager and MultiManager routes
-    - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests
-    - [ ] Run manager/multimanager BDD smoke through the client only when package tests cannot prove integration behavior
+    - [ ] Add automated common-client v1/v2 parity assertions for representative MultiManager, Manager, storage, topic, log, audit, and forwarding routes
+    - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests to prove the common client was used
+    - [ ] Run manager/multimanager BDD smoke through the common client only when package tests cannot prove integration behavior
     - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
