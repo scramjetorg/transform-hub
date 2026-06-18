@@ -610,6 +610,8 @@
       - Existing v1 Host hotwire tests remain in `api-hotwire.spec.ts` with no v2 assertions added. v2 tests were split into `api-v2-hotwire.spec.ts` for Host/Hub/Sequence and `api-v2-instance-hotwire.spec.ts` for Instance/CSI.
     - [x] Add common-client tests for representative Hub public operation IDs and HTTP/verser2 registration tests proving the Host-owned implementer router remains local and does not register `/api/v2/managers/:managerId/hubs/:hubId/...` directly
       - Added Host tests proving local implementer paths (`/load`, `/version`, `/config`, `/status`, `/sequences`, `/instances`, `/entities`, `/topics`), composed `/api/v2/...` mount registration, and no direct Host registration containing `:managerId` or `:hubId`.
+      - Follow-up correction before Phase 8 approval: split Host v1 and v2 implementation into separate files before further implementation. `host-api.ts` should remain a compatibility/coordinator surface, while v1 behavior moves behind `host-api-v1.ts` and v2 Hub/Sequence behavior moves behind `host-api-v2.ts`.
+      - Follow-up correction before Phase 8 approval: individual Instance v2 behavior must not be implemented in Host v2 handlers. Host may resolve/forward `/api/v2/instances/:instanceId` to the selected instance, but per-instance v2 behavior must be owned by a new Instance/CSI-level v2 implementation file, keeping the existing `instance-api.ts` v1 implementation untouched.
 - [x] Task: Migrate Sequence route definitions to the approved v2 shape
     - [x] Implement these route definitions on the Host-owned Sequence router/API handler, not on the MultiManager router
     - [x] Define schemas and handlers for sequence create, update, delete, start, read, and sequence-instance list routes as Sequence-local implementer paths mounted or resolved into the public `/api/v2/managers/:managerId/hubs/:hubId/sequences` path shape
@@ -628,6 +630,9 @@
       - Preserved existing v1 instance route aliases and added plural `/api/v2/instances/:instanceId` dispatch to the same local CSI router, so CSI-local paths remain unprefixed after instance resolution.
     - [x] Add common-client tests for representative control, event, monitoring, and stream behavior where feasible without full runtime startup
       - Added `api-v2-instance-hotwire.spec.ts` for Instance/CSI registration, DELETE/PATCH behavior, stdio descriptor shape, and local CSI router dispatch. Full runtime stream/event/monitoring data-plane behavior remains existing v1 coverage plus later stream-focused migration scope.
+      - Manual review rejected this implementation because individual Instance v2 routes were implemented at Host API level and remained incomplete. Correction plan: first move the previously implemented `GET /`, `DELETE /`, `PATCH /`, and `GET /stdio` behavior into a separate Instance/CSI-owned v2 file without touching v1 routes; then continue remaining Instance v2 endpoints in small method groups.
+      - Target Host API file split for correction: keep `host-api.ts` as the existing import-compatible coordinator/export surface, add `host-api-v1.ts` for current v1 Host route registration and shared v1 helper methods, add `host-api-v2.ts` for Host-owned v2 Hub/Sequence routes, keep `instance-api.ts` as v1-only, and add `instance-api-v2.ts` for per-instance v2 behavior.
+      - Do not mutate the existing local v1 Instance router or overwrite v1 endpoints during the correction. Existing `/api/v1/instance/:id` and `InstanceAPI.attach()` behavior must remain covered by unchanged v1 hotwire assertions.
 - [x] Task: Migrate specialized stdio and RPC endpoints
     - [x] Implement specialized `stdio` descriptors and channel stream endpoints as CSI-local paths such as `/stdio` and `/stdio/:fd`, with parent routers responsible for resolving and mounting the instance context
       - Implemented v2 stdio descriptor route at the Host-owned Instance selector and preserved local CSI router dispatch for stream endpoints.
@@ -637,8 +642,59 @@
     - [x] Use verser2 forwarding, resolution, and redirects for cross-node/internal routing instead of implementing custom forwarding where route ownership must be resolved
       - No custom public nested Host forwarding path was added; public cross-node paths remain route-resolution responsibility for Manager/MultiManager phases.
     - [x] Add common-client tests for stdio descriptors and RPC registration boundaries
-- [ ] Task: Automated verification gate for `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC behavior
-    - [~] Run `@scramjet/rest-api2`, Host, CSI/Instance, `api-server`, and `api-router` tests
+- [x] Task: Correct Phase 8 API ownership and split Host API implementation files
+    - [x] Split current `packages/host/src/lib/api/host-api.ts` into separate v1 and v2 implementation files before further behavior changes
+      - Target structure: keep `host-api.ts` as the existing import-compatible coordinator/export surface, add `host-api-v1.ts` for current v1 Host route registration and shared v1 helper methods, and add `host-api-v2.ts` for Host-owned v2 Hub/Sequence route definitions.
+      - Existing `HostAPIHandler` imports from `./api/host-api` must continue to work until callsites are deliberately migrated.
+      - The split must preserve current v1 route registration, handler behavior, and unit-test access to existing Host API helper methods.
+      - Implemented with `host-api.ts` as the coordinator that hooks both versions directly from Host. `host-api-v1.ts` no longer imports or attaches v2, and `host-api-v2.ts` owns Host-level v2 Hub/Sequence registration.
+    - [x] Keep `packages/host/src/lib/api/instance-api.ts` v1-only during this correction
+      - Do not overwrite, rename, or mutate the existing `InstanceAPI.attach()` v1 route surface.
+      - Existing `/api/v1/instance/:id` forwarding and v1 hotwire assertions remain the compatibility guard.
+      - `instance-api.ts` was not changed by this correction.
+    - [x] Add `packages/host/src/lib/api/instance-api-v2.ts` for per-instance v2 behavior owned by the CSI/Instance API layer
+      - The first moved chunk must contain only the previously Host-owned v2 behavior for local `GET /`, `DELETE /`, `PATCH /`, and `GET /stdio`.
+      - Use `RestAPI2` response envelopes and local CSI data/methods directly; do not look up instances through Host stores from inside v2 instance handlers.
+      - Added `InstanceAPIV2` with local `GET /`, `DELETE /`, `PATCH /`, and `GET /stdio` routes.
+      - Correction from review: `InstanceAPIV2` must define routes through `@scramjet/api-router` and be registered onto the per-instance router, not manually attach v2 routes through the legacy `APIRoute` method surface.
+      - Corrected implementation: `InstanceAPIV2` now exposes an `@scramjet/api-router` `RouterDefinition`; `CSIController` registers it onto the separate per-instance v2 router through `registerHttpRoutes()`.
+    - [x] Wire `CSIController` to create separate v1 and v2 per-instance routers
+      - Keep the existing `router`/`InstanceAPI` path for v1.
+      - Add a separate v2 router/API instance for `InstanceAPIV2` so v2 routes do not share or mutate the v1 local router registration.
+      - `CSIController` now creates both `router` and `v2Router`; the v1 router remains attached through `InstanceAPI`, and the v2 router is attached through `InstanceAPIV2`.
+    - [x] Change Host v2 instance handling to resolution/forwarding only
+      - Remove Host-owned concrete v2 instance routes from `createV2Router()`/Host v2 implementation.
+      - Host may register only the plural `/api/v2/instances/:instanceId` resolver that forwards to the selected instance's v2 router.
+      - Do not keep `/api/v2/instance/:id`; it is a v1-shaped alias and must not be treated as the approved v2 path.
+      - Host v2 no longer registers concrete individual Instance v2 routes or `/api/v2/instance/:id`; `/api/v2/instances/:instanceId` resolves to the selected instance's `v2Router`.
+    - [x] Update focused tests for the corrected ownership boundary
+      - Host v2 tests must assert no Host-owned concrete individual instance routes are registered.
+      - Instance v2 tests must invoke the new Instance/CSI-level v2 handlers directly.
+      - V1 hotwire tests must remain explicit compatibility checks and must not be replaced by v2 assertions.
+      - Updated `api-v2-instance-hotwire.spec.ts` to assert Host forwarding-only behavior and direct `InstanceAPIV2` handler behavior while keeping v1 hotwire assertions unchanged.
+    - [x] Run focused validation for the corrected ownership boundary
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" TS_NODE_TRANSPILE_ONLY=1 node ../../scripts/run-ava.js --serial -T 50000 test/api-v2-instance-hotwire.spec.ts test/api-hotwire.spec.ts test/api-v2-hotwire.spec.ts` from `packages/host`: passed, 28 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
+- [ ] Task: Complete Instance/CSI v2 behavior in small method groups after the ownership split
+    - [x] Add v2 health plus input/output route behavior in `instance-api-v2.ts` only
+      - Implemented through `InstanceAPIV2.createRouter()` using `@scramjet/api-router` route definitions, not legacy direct route attachment.
+      - V2 health returns a `RestAPI2.HealthCheckInfo<RestAPI2.Instance>` from CSI state. V2 output and input are registered as upstream/downstream router definitions for the per-instance v2 router.
+      - Validation after api-router correction: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" TS_NODE_TRANSPILE_ONLY=1 node ../../scripts/run-ava.js --serial -T 50000 test/api-v2-instance-hotwire.spec.ts test/api-hotwire.spec.ts test/api-v2-hotwire.spec.ts` from `packages/host`: passed, 28 tests.
+      - Validation after api-router correction: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
+    - [x] Add v2 events route behavior in `instance-api-v2.ts` only
+      - Added v2 `GET /events/:name`, `GET /events/:name/once`, and `POST /events` through `InstanceAPIV2.createRouter()` using `@scramjet/api-router` definitions.
+      - Focused validation after event group: Host API v1/v2 hotwire tests passed, 28 tests; Host build typecheck passed under the standard memory guard.
+    - [x] Complete v2 DELETE/PATCH semantics after validating payload-to-runner mappings
+      - Added local validation for delete mode and timeout, plus patch validation for log level and monitoring rate shape.
+      - Mapped `logLevel` to the existing `csi.set({ logLevel })` runner control path. Existing arbitrary `parameters` mapping is preserved for this first v2 chunk, while `monitoringRate` remains shape-validated only until a deliberate runner mapping is added.
+      - Focused validation after DELETE/PATCH group: Host API v1/v2 hotwire tests passed, 28 tests; Host build typecheck passed under the standard memory guard.
+    - [x] Add v2 logs, monitoring, stdio channel stream, and RPC behavior without duplicating v1 logger source setup or adding Host-level handlers
+      - Added v2 logs, monitoring, stdio channel stream routes, and RPC route boundary through `InstanceAPIV2.createRouter()` using `@scramjet/api-router` definitions.
+      - No Host-level individual Instance v2 handlers were added, and v1 logger source setup remains untouched.
+      - Focused validation after logs/monitoring/stdio/RPC group: Host API v1/v2 hotwire tests passed, 28 tests; Host build typecheck passed under the standard memory guard.
+    - [ ] Add tests and validation after each small group before marking that group complete
+- [x] Task: Automated verification gate for `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC behavior
+    - [x] Run `@scramjet/rest-api2`, Host, CSI/Instance, `api-server`, and `api-router` tests
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-router test`: passed, 32 tests.
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/rest-api2 test`: passed, 3 tests.
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-server test`: passed, 48 tests.
@@ -647,6 +703,8 @@
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/api-router/tsconfig.build.json --noEmit`: passed.
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/rest-api2/tsconfig.build.json --noEmit`: passed.
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
+      - Follow-up Phase 8 correction validation after Host API split and Instance v2 ownership fix: focused Host API v1/v2 hotwire tests passed, 28 tests; Host build typecheck passed under the standard memory guard.
+      - Follow-up after correcting Instance v2 to use `@scramjet/api-router` definitions and completing health/input/output/events/delete/patch/logs/monitoring/stdio/RPC route groups: focused Host API v1/v2 hotwire tests passed, 28 tests; Host build typecheck passed under the standard memory guard.
     - [x] Add automated common-client v1/v2 parity assertions for representative Hub, Sequence, Instance, stdio, and RPC routes
       - Added representative route registration/client-manifest tests for Host-owned v2 routes and kept v1 hotwire assertions separate. Full parity for stream data-plane behavior remains later stream migration scope.
     - [x] Add automated common-client stream/duplex route tests for representative routes where feasible without full runtime startup

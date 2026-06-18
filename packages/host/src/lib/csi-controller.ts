@@ -38,6 +38,7 @@ import { PassThrough, Readable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 
 import { forwardRoutedRequest, getRouter, normalizeForwardedHeaders } from "@scramjet/api-server";
+import { registerHttpRoutes } from "@scramjet/api-router";
 import { EventEmitter, once } from "events";
 import { DataStream } from "scramjet";
 
@@ -48,6 +49,7 @@ import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitt
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
+import { InstanceAPIV2 } from "./api/instance-api-v2";
 import { CSIEvents, ICSI } from "./types";
 import { createRunnerBrokerRpcTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
@@ -91,6 +93,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined; };
     private inputContentType: string | undefined;
     api: InstanceAPI;
+    apiV2: InstanceAPIV2;
 
     get rpcUrl(): string {
         return `http://${this.expose?.host}:${this.expose?.port}`;
@@ -116,6 +119,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     instanceName?: string;
     controlDataStream?: DataStream;
     router?: APIRoute;
+    v2Router?: APIRoute;
     info: CSIControllerInfo = {};
     status: InstanceStatus;
     terminated?: { exitcode: number; reason: string; };
@@ -237,6 +241,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         ];
 
         this.api = new InstanceAPI(this, this.logger, this.localEmitter);
+        this.apiV2 = new InstanceAPIV2(this, this.logger, this.localEmitter);
     }
 
     getInfo(): STHRestAPI.GetInstanceResponse {
@@ -746,8 +751,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     private createInstanceAPIRouter() {
         const router = this.router = getRouter();
+        const v2Router = this.v2Router = getRouter();
 
         this.api.attach(router, this.communicationHandler!);
+        registerHttpRoutes(v2Router, this.apiV2.createRouter());
     }
 
     public async emitEvent({ source, eventName, message }: EventMessageData) {

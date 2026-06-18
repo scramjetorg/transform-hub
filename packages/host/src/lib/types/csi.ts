@@ -33,6 +33,8 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
 
     readonly router?: APIRoute;
 
+    readonly v2Router?: APIRoute;
+
     /** output sgtream encoding (if set) */
     readonly outputEncoding?: BufferEncoding;
 
