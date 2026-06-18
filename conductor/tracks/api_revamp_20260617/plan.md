@@ -802,16 +802,21 @@
 
 ## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
 
-- [ ] Task: Migrate MultiManager route definitions to the approved v2 shape
+- [~] Task: Migrate MultiManager route definitions to the approved v2 shape
     - [ ] Implement only MultiManager-owned route definitions on the MultiManager v2 API router
+      - Phase 9 first slice review: existing MultiManager low-risk v2 routes already cover version, info, load-check, managers list, health, and trust through the v2 router; start/stop/log/audit migration remains pending for this task.
+      - Manual review correction: do not extend the coupled v1/v2 router-builder pattern further. MultiManager route-shape migration remains pending until it is split or otherwise decoupled like Host/Manager.
     - [ ] Define schemas and handlers for MultiManager version, info, load, config, managers list, health, trust, manager start, manager delete, logs, and audit routes
     - [ ] Do not implement Host-owned Hub, Sequence, Instance/CSI, stdio, or RPC behavior as MultiManager-level route handlers
     - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [ ] Preserve sub-manager proxying behavior and verser2 guest attachment expectations
     - [ ] Add common-client tests for representative MultiManager routes and v1 compatibility assertions
-- [ ] Task: Migrate Manager route definitions to the approved v2 shape
+- [~] Task: Migrate Manager route definitions to the approved v2 shape
     - [ ] Implement Manager-owned route definitions on the Manager v2 API router, not on the MultiManager router
     - [ ] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
+      - Phase 9 first slice added Manager-owned v2 aggregate read routes for list/hubs, instances, sequence IDs, all sequences, entities, and topics using `RestAPI2.ListResponse` outputs. V1 route registration remains unchanged.
+      - Added `@scramjet/rest-api2` as a Manager package dependency because `manager-api.ts` now imports v2 public contracts.
+      - Manual review correction: Manager API now mirrors the Host API structure: `manager-api.ts` is a coordinator only, `manager-api-v1.ts` owns unchanged v1 registration and compatibility routes, and `manager-api-v2.ts` owns v2 route definitions and `RestAPI2` contracts. V1 and v2 route builders are no longer coupled through a shared `createLowRiskRouter(apiVersion)` implementation.
     - [ ] Treat nested Hub/Sequence/Instance paths as routing/resolution concerns that reach Host-owned routers through verser2, not as Manager-owned duplicate implementations
     - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [ ] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
@@ -835,6 +840,8 @@
     - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests to prove the common client was used
     - [ ] Run manager/multimanager BDD smoke through the common client only when package tests cannot prove integration behavior
     - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
+      - First-slice validation: focused Manager API hotwire/versioned-routing tests passed, 11 tests; Manager build typecheck passed; narrowed lint for changed Manager files passed after adding the `@scramjet/rest-api2` workspace dependency to `packages/manager/package.json` and updating `package-lock.json`.
+      - Correction validation after Manager API split: focused Manager API hotwire/versioned-routing tests passed, 11 tests; Manager build typecheck passed; narrowed lint for `manager-api.ts`, `manager-api-v1.ts`, `manager-api-v2.ts`, and changed Manager tests passed.
 - [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 

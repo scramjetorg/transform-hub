@@ -1,225 +1,25 @@
-import { CeroError } from "@scramjet/api-server";
-import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { MRestAPI, ParsedMessage } from "@scramjet/types";
-import { ReasonPhrases } from "http-status-codes";
-import { IncomingMessage, ServerResponse } from "http";
-import { z } from "zod";
-
 import { getS3Router } from "../s3-router";
-import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "../utils";
-import { getManagerVerser2TrustExport } from "../verser2-trust-export";
-import type { Manager, SthRegistrationPayload } from "../manager";
-
-const defaultLimit = 100;
-const defaultOffset = 0;
+import type { Manager } from "../manager";
+import { ManagerAPIV1Handler } from "./manager-api-v1";
+import { ManagerAPIV2Handler } from "./manager-api-v2";
 
 export class ManagerAPIHandler {
+    private readonly v1: ManagerAPIV1Handler;
+    private readonly v2: ManagerAPIV2Handler;
+
     constructor(
-        private manager: Manager,
-        private createS3Router: typeof getS3Router = getS3Router
-    ) {}
+        manager: Manager,
+        createS3Router: typeof getS3Router = getS3Router
+    ) {
+        this.v1 = new ManagerAPIV1Handler(manager, createS3Router);
+        this.v2 = new ManagerAPIV2Handler(manager);
+    }
 
     async attach() {
-        const manager = this.manager;
-        const apiBase = manager.config.apiBase;
-        const router = manager.router;
-
-        router.get(`${apiBase}/sth/:id/info`, (req: ParsedMessage): MRestAPI.GetHostInfoResponse => {
-            const sth = manager.apiSthConnectionStore.getById(req.params?.id);
-
-            if (!sth) {
-                throw new CeroError("ERR_NOT_FOUND");
-            }
-
-            return sth.getInfo();
-        });
-
-        registerHttpRoutes(router, this.createLowRiskRouter("v1"));
-        router.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
-            const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
-            const id = await manager.handleSthRegistration(payload);
-
-            return { id, opStatus: ReasonPhrases.ACCEPTED };
-        });
-        router.get(`${apiBase}/list`, (req: ParsedMessage): MRestAPI.GetListResponse => {
-            let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
-            let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
-
-            if (!manager.validateQueries(offset, limit)) {
-                offset = defaultOffset;
-                limit = defaultLimit;
-            }
-
-            return manager.getList(offset, limit);
-        });
-        router.get(`${apiBase}/instances`, (req: ParsedMessage): MRestAPI.GetInstancesResponse => {
-            let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
-            let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
-
-            if (!manager.validateQueries(offset, limit)) {
-                offset = defaultOffset;
-                limit = defaultLimit;
-            }
-
-            return manager.getInstances(offset, limit);
-        });
-        router.get(`${apiBase}/sequences`, (): MRestAPI.GetSequenceIDSResponse => manager.getSequencesIds());
-        router.get(`${apiBase}/all_sequences`, (req: ParsedMessage): MRestAPI.GetSequencesResponse => {
-            let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;
-            let limit = req.query && req.query.limit ? parseInt(req.query.limit, 10) : defaultLimit;
-
-            if (!manager.validateQueries(offset, limit)) {
-                offset = defaultOffset;
-                limit = defaultLimit;
-            }
-
-            return manager.getSequences(offset, limit);
-        });
-        router.get(`${apiBase}/entities`, (): MRestAPI.GetEntitiesResponse => manager.getEntities());
-        router.get(`${apiBase}/topics`, (): MRestAPI.GetTopicsResponse => manager.apiServiceDiscovery.list());
-        router.upstream(`${apiBase}/log`, () => manager.apiCommonLogsPipe.getOut());
-        router.upstream(`${apiBase}/load-stream`, () => manager.apiLoadCheck.getLoadCheckStream());
-
-        router.upstream(`${apiBase}/topic/:name`, (req: ParsedMessage, res: ServerResponse) => {
-            return manager.handleTopicUpstreamRequest(req, res);
-        });
-
-        router.downstream(
-            `${apiBase}/topic/:name`,
-            async (req: ParsedMessage, res: ServerResponse) => {
-                return manager.handleTopicDownstreamRequest(req, res);
-            },
-            { checkContentType: false, end: false }
-        );
-
-        router.op("delete", `${apiBase}/store`, async (): Promise<MRestAPI.StoreClearResponse> => {
-            try {
-                await manager.apiS3Middleware.clearIndex();
-                return { opStatus: ReasonPhrases.ACCEPTED };
-            } catch (err: any) {
-                return {
-                    opStatus: ReasonPhrases.NOT_FOUND,
-                    error: err.message
-                };
-            }
-        });
-
-        router.op("delete", `${apiBase}/sth/:id`, async (req: ParsedMessage): Promise<MRestAPI.HubDeleteResponse> => {
-            req.params ||= {};
-
-            const id = req.params.id;
-            const force = req.headers["x-force"] === "true";
-
-            if (!id) {
-                return {
-                    opStatus: ReasonPhrases.NOT_FOUND,
-                    error: "Id was not supplied"
-                };
-            }
-
-            manager.logger.debug("Received delete request", { id, force });
-
-            try {
-                await manager.apiSthConnectionStore.delete(id, force);
-            } catch (e: any) {
-                return translateDeleteError(e);
-            }
-            return {
-                opStatus: ReasonPhrases.ACCEPTED,
-            };
-        });
-        router.use(`${apiBase}/sth/:id`, (req: ParsedMessage, res: ServerResponse) => manager.handleRequestToSTH(req, res));
-
-        if (manager.config.s3) {
-            manager.apiS3Middleware = await this.createS3Router(manager.s3Client, {
-                base: `${apiBase}/s3`,
-                id: manager.id,
-                bucket: manager.config.s3.bucket!,
-                bucketLimit: manager.config.s3.bucketLimit
-            });
-
-            manager.apiS3Middleware.logger.pipe(manager.logger);
-
-            await manager.apiS3Middleware.loadIndex();
-
-            router.use(`${apiBase}/s3/`, (req: ParsedMessage, res: ServerResponse, next: any) => {
-                return manager.apiS3Middleware.router.lookup(req, res, next);
-            });
-        }
-
-        router.op("post", `${apiBase}/disconnect`, async (req: IncomingMessage): Promise<MRestAPI.PostDisconnectResponse> => {
-            // eslint-disable-next-line no-extra-parens
-            const payload = (req as IncomingMessage & { body: MRestAPI.PostDisconnectPayload }).body || {};
-
-            manager.logger.debug("Received disconnect request", payload);
-            const requestInvalid = validateDisconnectRequest(payload, manager.apiSthConnectionStore);
-
-            if (requestInvalid === 0 || requestInvalid !== undefined) {
-                return translateDisconnectError(requestInvalid);
-            }
-            const dropList = prepareDisconnectDroplist(payload, manager.apiSthConnectionStore);
-
-            dropList.forEach(drop => {
-                manager.logger.info("dropping", drop.sthController.id, drop.reason);
-                drop.sthController.disconnect(drop.reason).catch((err: Error) => {
-                    manager.logger.error("STH disconnect error", err.message);
-                });
-            });
-
-            return {
-                opStatus: ReasonPhrases.ACCEPTED,
-                managerId: manager.id,
-                disconnected: dropList.map(elem => ({
-                    sthId: elem.sthController.id,
-                    reason: elem.reason
-                }))
-            };
-        });
-
-        this.attachV2Routes();
-    }
-
-    createLowRiskRouter(apiVersion: "v1" | "v2"): RouterDefinition {
-        const manager = this.manager;
-        const basePath = apiVersion === "v1" ? manager.config.apiBase : replacePathVersion(manager.config.apiBase, "v2");
-        const objectResponse = z.object({}).passthrough();
-
-        return Router.create({ basePath })
-            .route(Router.get("/version", {
-                id: `manager.${apiVersion}.version`,
-                schemas: {
-                    response: z.object({
-                        service: z.string(),
-                        apiVersion: z.literal(apiVersion),
-                        version: z.string(),
-                        build: z.string()
-                    })
-                },
-                handler: (): MRestAPI.GetVersionResponse => ({
-                    service: manager.service,
-                    apiVersion,
-                    version: manager.version,
-                    build: manager.build,
-                })
-            }))
-            .route(Router.get("/config", {
-                id: `manager.${apiVersion}.config`,
-                schemas: { response: z.object({ config: objectResponse }) },
-                handler: (): MRestAPI.GetConfigResponse => ({ config: manager.publicConfig })
-            }))
-            .route(Router.get("/verser2/trust", {
-                id: `manager.${apiVersion}.verser2.trust`,
-                schemas: { response: objectResponse },
-                handler: () => getManagerVerser2TrustExport(manager.config)
-            }))
-            .route(Router.get("/load", {
-                id: `manager.${apiVersion}.load`,
-                schemas: { response: z.unknown() },
-                handler: (): Promise<MRestAPI.GetLoadResponse> => manager.apiLoadCheck.getLoadCheck()
-            }));
-    }
-
-    attachV2Routes() {
-        registerHttpRoutes(this.manager.router, this.createLowRiskRouter("v2"));
+        await this.v1.attach();
+        this.v2.attach();
     }
 }
+
+export { ManagerAPIV1Handler } from "./manager-api-v1";
+export { ManagerAPIV2Handler } from "./manager-api-v2";

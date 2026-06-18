@@ -30,11 +30,12 @@ function createManagerStub(recorder: RouteRecorder) {
         logger: new ObjLogger("manager-api-v2-hotwire-test"),
         handleSthRegistration: async () => "sth-1",
         validateQueries: () => true,
-        getList: () => ({ hosts: [] }),
-        getInstances: () => ({ instances: [] }),
-        getSequencesIds: () => ({ sequences: [] }),
-        getSequences: () => ({ sequences: [] }),
-        getEntities: () => ({ sequences: [], instances: [] }),
+        getList: () => ({ hosts: [{ id: "sth-1" }] }),
+        getInstances: () => ({ instances: [{ id: "inst-1", sequenceId: "seq-1" }] }),
+        getSequencesIds: () => ({ sequences: ["seq-1"] }),
+        getSequences: () => ({ sequences: [{ id: "seq-1", status: "ready" }] }),
+        getEntities: () => ({ sequences: ["seq-1"], instances: ["inst-1"] }),
+        getTopics: () => ({ topics: [] }),
         handleTopicUpstreamRequest: () => new PassThrough(),
         handleTopicDownstreamRequest: async () => undefined,
         handleRequestToSTH: () => undefined
@@ -50,6 +51,12 @@ test("ManagerAPIHandler registers the v2 Manager API route surface separately", 
     t.true(recorder.has("get", "/api/v2/config"));
     t.true(recorder.has("get", "/api/v2/verser2/trust"));
     t.true(recorder.has("get", "/api/v2/load"));
+    t.true(recorder.has("get", "/api/v2/list"));
+    t.true(recorder.has("get", "/api/v2/instances"));
+    t.true(recorder.has("get", "/api/v2/sequences"));
+    t.true(recorder.has("get", "/api/v2/all_sequences"));
+    t.true(recorder.has("get", "/api/v2/entities"));
+    t.true(recorder.has("get", "/api/v2/topics"));
 });
 
 test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
@@ -59,13 +66,16 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     await new ManagerAPIHandler(manager as any).attach();
 
     t.deepEqual(await (recorder.require("get", "/api/v2/version").handler as Function)({}), {
-        service: "@scramjet/manager",
-        apiVersion: "v2",
-        version: "0.0.0-test",
-        build: "test-build"
+        version: "0.0.0-test"
     });
     t.deepEqual(await (recorder.require("get", "/api/v2/config").handler as Function)({}), { config: { apiBase: "/api/v1" } });
     t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
+    t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({ query: { offset: "1", limit: "2" } }), { items: [{ id: "sth-1" }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)({ query: {} }), { items: [{ id: "inst-1", sequenceId: "seq-1" }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/sequences").handler as Function)({}), { items: [{ id: "seq-1" }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/all_sequences").handler as Function)({ query: {} }), { items: [{ id: "seq-1", status: "ready" }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/entities").handler as Function)({}), { items: [{ id: "seq-1", type: "sequence" }, { id: "inst-1", type: "instance" }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [] });
 });
 
 test("Manager setupHealthEndpoint registers v2 health on the same API router", async t => {
