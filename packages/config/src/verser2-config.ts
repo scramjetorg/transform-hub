@@ -11,6 +11,32 @@ const leasesSchema = z.object({
     minimumWaitingLeases: z.number().int().nonnegative()
 }).strict();
 
+function addIssue(ctx: z.RefinementCtx, path: string[], message: string): void {
+    ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message
+    });
+}
+
+function validatePemPair(ctx: z.RefinementCtx, path: string[], certFile?: string, keyFile?: string): void {
+    if (certFile && !keyFile) {
+        addIssue(ctx, [...path, "keyFile"], "keyFile is required when certFile is provided");
+    }
+
+    if (keyFile && !certFile) {
+        addIssue(ctx, [...path, "certFile"], "certFile is required when keyFile is provided");
+    }
+}
+
+function validateRequiredRoutes(ctx: z.RefinementCtx, routes: ReadonlyArray<readonly [string, string]>): void {
+    routes.forEach(([path, value]) => {
+        if (value.trim().length) return;
+
+        addIssue(ctx, path.split("."), `${path} is required when verser2 mode is enabled`);
+    });
+}
+
 export const managerVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
     host: z.object({
@@ -79,65 +105,24 @@ export const sthOutboundVerser2ConfigSchema = z.object({
     timeouts: timeoutsSchema,
     leases: leasesSchema
 }).strict().superRefine((config, ctx) => {
-    if (config.tls.certFile && !config.tls.keyFile) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["tls", "keyFile"],
-            message: "keyFile is required when certFile is provided"
-        });
-    }
-
-    if (config.tls.keyFile && !config.tls.certFile) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["tls", "certFile"],
-            message: "certFile is required when keyFile is provided"
-        });
-    }
-
     const runnerTls = config.runnerHost?.host.tls;
 
-    if (runnerTls?.certFile && !runnerTls.keyFile) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["runnerHost", "host", "tls", "keyFile"],
-            message: "keyFile is required when certFile is provided"
-        });
-    }
-
-    if (runnerTls?.keyFile && !runnerTls.certFile) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["runnerHost", "host", "tls", "certFile"],
-            message: "certFile is required when keyFile is provided"
-        });
-    }
+    validatePemPair(ctx, ["tls"], config.tls.certFile, config.tls.keyFile);
+    validatePemPair(ctx, ["runnerHost", "host", "tls"], runnerTls?.certFile, runnerTls?.keyFile);
 
     if (config.runnerHost?.enabled && runnerTls?.mtlsRequired && !runnerTls.clientAuthCaFile) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["runnerHost", "host", "tls", "clientAuthCaFile"],
-            message: "runnerHost mTLS requires clientAuthCaFile"
-        });
+        addIssue(ctx, ["runnerHost", "host", "tls", "clientAuthCaFile"], "runnerHost mTLS requires clientAuthCaFile");
     }
 
     if (!config.enabled) return;
 
-    ([
+    validateRequiredRoutes(ctx, [
         ["hostUrl", config.hostUrl],
         ["broker.peerId", config.broker.peerId],
         ["broker.targetDomain", config.broker.targetDomain],
         ["guest.peerId", config.guest.peerId],
         ["guest.routeDomain", config.guest.routeDomain]
-    ] as const).forEach(([path, value]) => {
-        if (value.trim().length) return;
-
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: path.split("."),
-            message: `${path} is required when verser2 mode is enabled`
-        });
-    });
+    ]);
 });
 
 const managerPath = (path: string) => `verser2.${path}`;
