@@ -35,6 +35,35 @@ test("rejects duplicate manifest route ids", t => {
     t.throws(() => router.collect(), { instanceOf: DuplicateRouteError });
 });
 
+test("mount composes manifest paths without mutating implementer routes", t => {
+    const child = createRouter()
+        .get("/stdio")
+        .get("/events/:name");
+    const router = createRouter({ basePath: "/api/v2" })
+        .mount("/instances/:instanceId", child);
+    const manifest = router.collect();
+
+    t.deepEqual(child.definitions().map(route => route.path), ["/stdio", "/events/:name"]);
+    t.deepEqual(manifest.routes.map(route => route.fullPath), [
+        "/api/v2/instances/:instanceId/stdio",
+        "/api/v2/instances/:instanceId/events/:name"
+    ]);
+    t.deepEqual(manifest.routes.map(route => route.id), [
+        "GET /api/v2/instances/:instanceId/stdio",
+        "GET /api/v2/instances/:instanceId/events/:name"
+    ]);
+    t.deepEqual(manifest.routes.map(route => route.implementerPath), ["/stdio", "/events/:name"]);
+    t.deepEqual(manifest.routes.map(route => route.mountPath), ["/api/v2/instances/:instanceId", "/api/v2/instances/:instanceId"]);
+});
+
+test("mount rejects duplicate composed full paths", t => {
+    const router = createRouter({ basePath: "/api/v2" })
+        .get("/instances/:instanceId/stdio", { id: "direct" })
+        .mount("/instances/:instanceId", createRouter().get("/stdio", { id: "mounted" }));
+
+    t.throws(() => router.collect(), { instanceOf: DuplicateRouteError });
+});
+
 test("defineRoute preserves schema-inferred handler context", async t => {
     const route = defineRoute({
         method: "post",

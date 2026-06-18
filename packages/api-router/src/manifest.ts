@@ -43,6 +43,8 @@ export type RouteDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
 export type RouteManifestEntry = Omit<RouteDefinition, "handler"> & {
     id: string;
     fullPath: string;
+    implementerPath?: string;
+    mountPath?: string;
 };
 
 export type RouteManifest = {

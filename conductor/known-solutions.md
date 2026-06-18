@@ -32,9 +32,9 @@ Ignore-If: The install or package resolution actually failed; direct reads of kn
 
 ### Memory-constrained Node validation
 Problem: Broad Node/npm validation or subagent-triggered tests can exceed available heap and cause OOM in this repository.
-Solution: Run Node/npm validation with `NODE_OPTIONS="--max-old-space-size=1536"`; instruct review agents not to run commands unless they use this guard, and prefer focused package tests/builds over broad suites.
-Constraints: Apply to validation/test/build commands in this repo; do not use it to hide real test failures; still inspect non-OOM failures normally.
-Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the user explicitly requests an unguarded run.
+Solution: Start agent-invoked tests and Node validation with `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`; instruct review agents not to run direct commands unless they use this guard, and prefer focused package tests/builds over broad suites.
+Constraints: Apply to validation/test/build commands unless run through a repo/package test runner that already owns process setup and memory behavior; do not use it to hide real test failures; still inspect non-OOM failures normally.
+Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the command already runs under a runner-specific or equivalent memory guard; the user explicitly requests an unguarded run.
 
 ### Private GitHub Packages registry auth recovery
 Problem: `npm view` or `npm install` for scoped packages hosted on GitHub Packages fails with 401/403 because the registry requires an authenticated `.npmrc` entry with `_authToken` for the GitHub Packages scope.

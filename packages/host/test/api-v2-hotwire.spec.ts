@@ -34,27 +34,9 @@ function createHostStub(): any {
         publicConfig: { apiBase: "/api/v1" },
         getSequence: () => ({}),
         getSequenceInstances: () => [],
-        getSequences: () => [],
-        getInstances: () => [],
+        getSequences: () => [{ id: "seq-1", status: "ready" }],
+        getInstances: () => [{ id: "inst-1", sequenceId: "seq-1", status: "running" }],
         getStatus: () => ({ status: "ok" })
-    };
-}
-
-function createResponseStub() {
-    return {
-        statusCode: 200,
-        chunks: [] as any[],
-        ended: false,
-        write(chunk: any) {
-            this.chunks.push(chunk);
-        },
-        writeHead(statusCode: number) {
-            this.statusCode = statusCode;
-        },
-        end() {
-            this.ended = true;
-        },
-        on() { return this; }
     };
 }
 
@@ -63,44 +45,110 @@ test("HostAPIHandler registers the v2 Host API route surface separately", t => {
 
     new HostAPIHandler(recorder.asApiExpose(), createHostStub(), "1.0.0", "build").attach();
 
-    t.true(recorder.has("get", "/api/v2/load-check"));
+    t.true(recorder.has("get", "/api/v2/load"));
     t.true(recorder.has("get", "/api/v2/version"));
     t.true(recorder.has("get", "/api/v2/config"));
     t.true(recorder.has("get", "/api/v2/status"));
-    t.true(recorder.has("use", "/api/v2/instance/:id"));
 });
 
-test("HostAPIHandler v2 read handlers return v2 Host data", async t => {
+test("HostAPIHandler registers Host-owned v2 Hub routes as local mounted paths", t => {
+    const recorder = new RouteRecorder();
+
+    new HostAPIHandler(recorder.asApiExpose(), createHostStub(), "1.0.0", "build").attach();
+
+    t.true(recorder.has("get", "/api/v2/load"));
+    t.true(recorder.has("get", "/api/v2/sequences"));
+    t.true(recorder.has("get", "/api/v2/instances"));
+    t.true(recorder.has("get", "/api/v2/entities"));
+    t.true(recorder.has("get", "/api/v2/topics"));
+    t.true(recorder.has("upstream", "/api/v2/logs"));
+    t.true(recorder.has("upstream", "/api/v2/audit"));
+    t.false(recorder.has("get", "/api/v2/managers/:managerId/hubs/:hubId/load"));
+    t.false(recorder.has("get", "/api/v2/managers/:managerId/hubs/:hubId/load-check"));
+});
+
+test("HostAPIHandler registers Host-owned v2 Sequence routes as local mounted paths", t => {
+    const recorder = new RouteRecorder();
+
+    new HostAPIHandler(recorder.asApiExpose(), createHostStub(), "1.0.0", "build").attach();
+
+    t.true(recorder.has("downstream", "/api/v2/sequences"));
+    t.true(recorder.has("downstream", "/api/v2/sequences/:sequenceId", "put"));
+    t.true(recorder.has("op", "/api/v2/sequences/:sequenceId", "delete"));
+    t.true(recorder.has("op", "/api/v2/sequences/:sequenceId/instances", "post"));
+    t.true(recorder.has("get", "/api/v2/sequences/:sequenceId"));
+    t.true(recorder.has("get", "/api/v2/sequences/:sequenceId/instances"));
+});
+
+test("HostAPIHandler v2 read handlers return v2 Hub data", async t => {
     const recorder = new RouteRecorder();
     const host = createHostStub();
 
     new HostAPIHandler(recorder.asApiExpose(), host, "1.2.3", "test-build").attach();
 
     t.deepEqual(await (recorder.require("get", "/api/v2/version").handler as Function)({}), {
-        service: "sth",
-        apiVersion: "v2",
-        version: "1.2.3",
-        build: "test-build"
+        version: "1.2.3"
     });
-    t.deepEqual(await (recorder.require("get", "/api/v2/config").handler as Function)({}), host.publicConfig);
-    t.deepEqual(await (recorder.require("get", "/api/v2/status").handler as Function)({}), { status: "ok" });
-    t.deepEqual(await (recorder.require("get", "/api/v2/load-check").handler as Function)({}), { load: 1 });
+    t.deepEqual(await (recorder.require("get", "/api/v2/config").handler as Function)({}), { config: host.publicConfig });
+    t.deepEqual(await (recorder.require("get", "/api/v2/status").handler as Function)({}), { status: "ok", details: { status: "ok" } });
+    t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
 });
 
-test("HostAPIHandler v2 instance mount rewrites to the same instance router", t => {
+test("HostAPIHandler local v2 Hub handlers return RestAPI2 envelopes", async t => {
     const recorder = new RouteRecorder();
     const host = createHostStub();
-    const lookupCalls: any[] = [];
+    const req: any = { params: {} };
 
-    host.instancesStore.getByNameOrId = (id: string) => id === "inst-1" ? {
-        router: { lookup: (...args: any[]) => lookupCalls.push(args) }
-    } : undefined;
+    new HostAPIHandler(recorder.asApiExpose(), host, "1.2.3", "test-build").attach();
 
-    new HostAPIHandler(recorder.asApiExpose(), host, "1.0.0", "build").attach();
+    t.deepEqual(await (recorder.require("get", "/api/v2/version").handler as Function)(req), {
+        version: "1.2.3"
+    });
+    t.deepEqual(await (recorder.require("get", "/api/v2/sequences").handler as Function)(req), {
+        items: [{ id: "seq-1", status: "ready" }]
+    });
+    t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)(req), {
+        items: [{ id: "inst-1", sequenceId: "seq-1", status: "running" }]
+    });
+    t.deepEqual(await (recorder.require("get", "/api/v2/entities").handler as Function)(req), {
+        items: [{ id: "seq-1", type: "sequence" }, { id: "inst-1", type: "instance" }]
+    });
+});
 
-    const req: any = { params: { id: "inst-1" }, url: "/api/v2/instance/inst-1/health" };
+test("HostAPIHandler local v2 Sequence handlers adapt existing Host behavior", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const host = {
+        ...createHostStub(),
+        deleteSequence: async (id: string, force: boolean) => calls.push({ id, force }),
+        startSequence: async () => ({ id: "inst-started", limits: {} }),
+        auditor: { auditInstanceStart: () => undefined },
+        getSequence: (id: string) => ({ id, status: "ready" }),
+        getSequenceInstances: (id: string) => [{ id: "inst-1", sequenceId: id, status: "running" }]
+    };
 
-    (recorder.require("use", "/api/v2/instance/:id").handler as Function)(req, createResponseStub(), () => undefined);
-    t.is(req.url, "/health");
-    t.is(lookupCalls.length, 1);
+    new HostAPIHandler(recorder.asApiExpose(), host, "1.2.3", "test-build").attach();
+
+    t.deepEqual(await (recorder.require("op", "/api/v2/sequences/:sequenceId", "delete").handler as Function)({
+        params: { sequenceId: "seq-1" },
+        headers: { "x-seq-kill-inst": "true" }
+    }), {
+        operation: { id: "seq-1", status: "completed" },
+        result: { sequenceId: "seq-1", deleted: true }
+    });
+    t.deepEqual(calls, [{ id: "seq-1", force: true }]);
+    t.deepEqual(await (recorder.require("op", "/api/v2/sequences/:sequenceId/instances", "post").handler as Function)({
+        params: { sequenceId: "seq-1" },
+        body: {},
+        headers: {}
+    }), {
+        operation: { id: "inst-started", status: "completed" },
+        result: { instance: { id: "inst-started" } }
+    });
+    t.deepEqual(await (recorder.require("get", "/api/v2/sequences/:sequenceId").handler as Function)({
+        params: { sequenceId: "seq-1" }
+    }), { sequence: { id: "seq-1", status: "ready" } });
+    t.deepEqual(await (recorder.require("get", "/api/v2/sequences/:sequenceId/instances").handler as Function)({
+        params: { sequenceId: "seq-1" }
+    }), { items: [{ id: "inst-1", sequenceId: "seq-1", status: "running" }] });
 });

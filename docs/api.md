@@ -129,6 +129,18 @@ v2 routing must use verser2 forwarding, resolution, and redirects for cross-node
 
 Route implementation ownership follows the API level that owns the behavior, even when the public path is nested under `/api/v2/managers/:managerId/...`. MultiManager routes own only MultiManager behavior and Manager selection. Manager routes own Manager-level inventory, storage, topics, logs, audit, and Hub selection. Host routes own Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit behavior. Cross-level public paths should resolve to the owning router through verser2-backed routing instead of being reimplemented as MultiManager-level proxy handlers.
 
+Path shapes are distinct:
+
+- **Public path**: the canonical client/OpenAPI path. It may contain parent identifiers such as `:managerId`, `:hubId`, and `:instanceId`.
+- **Mount path**: the hook-up or resolution point where a parent router attaches or delegates to a child router. The parent owns resolving identifiers consumed by this prefix.
+- **Implementer path**: the relative path inside the owning router. Implementer routers must not bake in parent prefixes or parent identifiers they do not own.
+
+Examples:
+
+- Public Hub load path: `/api/v2/managers/:managerId/hubs/:hubId/load`; Host-owned Hub implementer path: `/load`.
+- Public Instance stdio path: `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio`; CSI/Instance implementer path after parent resolution: `/stdio`.
+- Public operation IDs and generated manifests may compose public paths from mounts, but the owning router's route definitions remain local.
+
 ### Generic structures
 
 | Contract | Shape |
@@ -200,7 +212,7 @@ The v2 package exposes one common client surface for all API levels. The client 
 | `RestAPI2.AuditQuery` / `RestAPI2.AuditQueryResponse` | Query audit records without opening a live audit stream. |
 | `RestAPI2.StdIODescriptorList` / `RestAPI2.StdIOChunk` | Describe and stream Instance stdio channels. |
 | `RestAPI2.RpcRequest` / `RestAPI2.RpcResponse` | Pass-through RPC request/response envelope for specialized RPC endpoints. |
-| `RestAPI2.ForwardingRoute` / `RestAPI2.ForwardingResolution` | Describes verser2-backed route resolution, redirect, or local execution decisions for cross-node v2 requests. |
+| `RestAPI2.RouteOwnership` / `RestAPI2.ForwardingRoute` / `RestAPI2.ForwardingResolution` | Describes public path, owner, mount path, implementer path, and verser2-backed route resolution, redirect, or local execution decisions for cross-node v2 requests. |
 
 ## v2
 
@@ -253,7 +265,7 @@ The v2 package exposes one common client surface for all API levels. The client 
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/load-check` | `RestAPI2.HubParams` | `RestAPI2.LoadResponse<RestAPI2.Hub>` | |
+| GET | `/api/v2/managers/:managerId/hubs/:hubId/load` | `RestAPI2.HubParams` | `RestAPI2.LoadResponse<RestAPI2.Hub>` | |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/version` | `RestAPI2.HubParams` | `RestAPI2.VersionResponse` | |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/config` | `RestAPI2.HubParams` | `RestAPI2.ConfigResponse` | |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId/status` | `RestAPI2.HubParams` | `RestAPI2.StatusResponse` | |

@@ -28,15 +28,9 @@ export type Verser2RouteAdapter = {
 };
 
 export function registerVerser2Routes(adapter: Verser2RouteAdapter, router: RouterDefinition): void {
-    const manifest = router.collect();
+    router.collect();
 
-    for (const route of router.definitions()) {
-        const entry = manifest.routes.find(item => item.method === route.method && item.path === route.path);
-
-        if (!entry) {
-            continue;
-        }
-
+    for (const { route, entry } of router.collectedRoutes()) {
         adapter.register({
             route,
             fullPath: entry.fullPath,

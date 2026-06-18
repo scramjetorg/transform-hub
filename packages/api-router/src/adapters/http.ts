@@ -1,11 +1,11 @@
-import { APIRoute, ParsedMessage } from "@scramjet/types";
+import { APIRoute, ParsedMessage, StreamConfig } from "@scramjet/types";
 import { ServerResponse } from "http";
 import { RouteDefinition, RouteRequest } from "../manifest";
 import { RouterDefinition } from "../router";
 import { executeRoutePipeline } from "../hooks";
 import { validateRouteRequest, validateRouteResponse } from "../validation";
 
-export type HttpRouteTarget = Pick<APIRoute, "get" | "op">;
+export type HttpRouteTarget = Pick<APIRoute, "get" | "op"> & Partial<Pick<APIRoute, "upstream" | "downstream" | "duplex">>;
 
 export function mapRouteRequest(req: Partial<ParsedMessage>): Partial<RouteRequest> {
     return {
@@ -35,17 +35,26 @@ function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put"
     return method === "post" || method === "put" || method === "patch" || method === "delete";
 }
 
+function streamOptions(route: RouteDefinition): StreamConfig | undefined {
+    return route.method === "put" ? { method: "put" } : undefined;
+}
+
 export function registerHttpRoutes(api: HttpRouteTarget, router: RouterDefinition): void {
-    const manifest = router.collect();
+    router.collect();
 
-    for (const route of router.definitions()) {
-        const entry = manifest.routes.find(item => item.method === route.method && item.path === route.path);
-
-        if (!entry) {
+    for (const { route, entry } of router.collectedRoutes()) {
+        if (route.kind === "upstream") {
+            api.upstream?.(entry.fullPath, (req: ParsedMessage, res: ServerResponse) => executeHttpRoute(route, req, res));
             continue;
         }
 
-        if (route.kind === "upstream" || route.kind === "downstream" || route.kind === "duplex") {
+        if (route.kind === "downstream") {
+            api.downstream?.(entry.fullPath, (req: ParsedMessage, res: ServerResponse) => executeHttpRoute(route, req, res), streamOptions(route));
+            continue;
+        }
+
+        if (route.kind === "duplex") {
+            api.duplex?.(entry.fullPath, route.handler as any);
             continue;
         }
 

@@ -33,6 +33,65 @@ test("registerHttpRoutes registers get and op handlers on APIRoute", async t => 
     t.deepEqual(await handlers.get("post:/api/v2/sequence")!({ headers: {}, body: { id: "seq" } }), { id: "seq" });
 });
 
+test("registerHttpRoutes executes mounted child routes at composed paths", async t => {
+    const calls: string[] = [];
+    const handlers = new Map<string, Function>();
+    const api = {
+        get(path: string, handler: Function) {
+            calls.push(`get:${path}`);
+            handlers.set(`get:${path}`, handler);
+        },
+        op(method: string, path: string, handler: Function) {
+            calls.push(`${method}:${path}`);
+            handlers.set(`${method}:${path}`, handler);
+        }
+    } as any;
+    const child = createRouter().get("/stdio", {
+        schemas: { response: z.object({ instanceId: z.string(), ok: z.boolean() }) },
+        handler: ({ params }) => ({ instanceId: (params as any).instanceId, ok: true })
+    });
+    const router = createRouter({ basePath: "/api/v2" }).mount("/instances/:instanceId", child);
+
+    registerHttpRoutes(api, router);
+
+    t.deepEqual(calls, ["get:/api/v2/instances/:instanceId/stdio"]);
+    t.deepEqual(await handlers.get("get:/api/v2/instances/:instanceId/stdio")!({
+        headers: {},
+        params: { instanceId: "inst-1" }
+    }), { instanceId: "inst-1", ok: true });
+});
+
+test("registerHttpRoutes registers stream route kinds when target supports them", t => {
+    const calls: string[] = [];
+    const api = {
+        get() {},
+        op() {},
+        upstream(path: string) {
+            calls.push(`upstream:${path}`);
+        },
+        downstream(path: string, _handler: Function, options?: { method?: string }) {
+            calls.push(`downstream:${path}:${options?.method || "post"}`);
+        },
+        duplex(path: string) {
+            calls.push(`duplex:${path}`);
+        }
+    } as any;
+    const router = createRouter({ basePath: "/api/v2" })
+        .route(Router.get("/logs", { kind: "upstream" }))
+        .route(Router.post("/sequences", { kind: "downstream" }))
+        .route(Router.route("put", "/sequences/:sequenceId", { kind: "downstream" }))
+        .route(Router.post("/rpc", { kind: "duplex" }));
+
+    registerHttpRoutes(api, router);
+
+    t.deepEqual(calls, [
+        "upstream:/api/v2/logs",
+        "downstream:/api/v2/sequences:post",
+        "downstream:/api/v2/sequences/:sequenceId:put",
+        "duplex:/api/v2/rpc"
+    ]);
+});
+
 test("registerVerser2Routes creates executable route registrations from manifest entries", async t => {
     const registrations: any[] = [];
     const router = createRouter({ basePath: "/api/v2" })
@@ -48,6 +107,27 @@ test("registerVerser2Routes creates executable route registrations from manifest
     t.deepEqual(await registrations[0].handle({ method: "GET", path: "/api/v2/health" }), {
         status: 200,
         body: { ok: true }
+    });
+});
+
+test("registerVerser2Routes executes mounted child routes at composed paths", async t => {
+    const registrations: any[] = [];
+    const child = createRouter().get("/stdio", {
+        handler: ({ params }) => ({ instanceId: (params as any).instanceId, fd: 1 })
+    });
+    const router = createRouter({ basePath: "/api/v2" }).mount("/instances/:instanceId", child);
+
+    registerVerser2Routes({ register: registration => registrations.push(registration) }, router);
+
+    t.is(registrations[0].fullPath, "/api/v2/instances/:instanceId/stdio");
+    t.is(registrations[0].route.path, "/stdio");
+    t.deepEqual(await registrations[0].handle({
+        method: "GET",
+        path: "/api/v2/instances/inst-1/stdio",
+        params: { instanceId: "inst-1" }
+    }), {
+        status: 200,
+        body: { instanceId: "inst-1", fd: 1 }
     });
 });
 
