@@ -506,11 +506,15 @@
       - Capped follow-up validation used `ulimit -v 1572864` and `NODE_OPTIONS="--max-old-space-size=512"` unless noted: `npm --prefix packages/types test` passed; TypeScript checks passed for `packages/types`, `packages/config`, `packages/sth-config`, `packages/manager-config`, `packages/host`, `packages/manager`, `packages/multi-manager`, `packages/adapters-common`, and `packages/adapter-process`.
       - Capped narrowed ESLint did not complete: `npx eslint` over changed files OOMed under the 1.5G virtual-memory cap before diagnostics, including a smaller config-file batch. Classified as tooling/resource failure under the imposed cap; no TypeScript references to `allowLocalPeers`, removed CLI/env flags, or `local peers disabled` remain under `packages/**/*.ts`.
       - Follow-up config lint cleanup split `sthOutboundVerser2ConfigSchema` refinement checks into small helpers. Validation: capped `npm --prefix packages/config test` passed, capped `tsc -p packages/config/tsconfig.build.json --noEmit` passed, and one-off high-cap `npx eslint packages/config/src/verser2-config.ts` passed.
-- [ ] Task: Conductor - User Manual Verification 'Phase 7: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 7: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Phase 7 checkpoint commits pushed to PR #13: `a48087f4`, `6077350c`, `2c8a4cc4`, `071d416d`, and `d53c6d51`.
     - API shape review artifact added: `docs/api.md` lists MultiManager-level v1 and v2 endpoints with in/out type names only.
-    - Remaining Phase 7 action: user manual verification only; do not continue to Phase 8 until approved.
+    - Manual verification recorded by user request before API shape rework planning.
+
+## Phase 7.5: v2 API Shape Rework
+
+- [ ] Halt here: add the API shape rework tasks before continuing to Phase 8.
 
 ## Phase 8: Sequence and Instance/CSI Route Migration to v2
 
