@@ -124,34 +124,21 @@ test("HostAPIHandler registers the v1 Host API route surface", t => {
     t.true(recorder.has("use", "/api/v1/instance/:id"));
     t.true(recorder.has("use", "/api/v1/rpc"));
     t.true(recorder.has("forward", "/api/v1/rpc"));
-    t.true(recorder.has("get", "/api/v2/load-check"));
-    t.true(recorder.has("get", "/api/v2/version"));
-    t.true(recorder.has("get", "/api/v2/config"));
-    t.true(recorder.has("get", "/api/v2/status"));
-    t.true(recorder.has("use", "/api/v2/instance/:id"));
 });
 
-test("HostAPIHandler unit handlers return basic v1 and v2 Host data", async t => {
+test("HostAPIHandler unit handlers return basic v1 Host data", async t => {
     const recorder = new RouteRecorder();
     const host = createHostStub();
 
     new HostAPIHandler(recorder.asApiExpose(), host as any, "1.2.3", "test-build").attach();
 
-    const version = (recorder.require("get", "/api/v1/version").handler as Function)({});
-    const config = (recorder.require("get", "/api/v1/config").handler as Function)({});
-    const status = (recorder.require("get", "/api/v1/status").handler as Function)({});
-    const v2Version = await (recorder.require("get", "/api/v2/version").handler as Function)({});
-    const v2Config = await (recorder.require("get", "/api/v2/config").handler as Function)({});
-    const v2Status = await (recorder.require("get", "/api/v2/status").handler as Function)({});
-    const v2Load = await (recorder.require("get", "/api/v2/load-check").handler as Function)({});
+    const version = await (recorder.require("get", "/api/v1/version").handler as Function)({});
+    const config = await (recorder.require("get", "/api/v1/config").handler as Function)({});
+    const status = await (recorder.require("get", "/api/v1/status").handler as Function)({});
 
     t.deepEqual(version, { service: "sth", apiVersion: "v1", version: "1.2.3", build: "test-build" });
     t.deepEqual(config, host.publicConfig);
     t.deepEqual(status, {});
-    t.deepEqual(v2Version, { service: "sth", apiVersion: "v2", version: "1.2.3", build: "test-build" });
-    t.deepEqual(v2Config, host.publicConfig);
-    t.deepEqual(v2Status, {});
-    t.deepEqual(v2Load, {});
 });
 
 test("HostAPIHandler delete sequence unit handler validates id and delegates", async t => {
@@ -297,12 +284,6 @@ test("HostAPIHandler unit middleware covers instance and rpc forwarding boundari
     (recorder.require("use", "/api/v1/instance/:id").handler as Function)(instanceReq, createResponseStub(), () => undefined);
     t.is(instanceReq.url, "/log");
     t.is(lookupCalls.length, 1);
-
-    const v2InstanceReq: any = { params: { id: "inst-1" }, url: "/api/v2/instance/inst-1/health" };
-
-    (recorder.require("use", "/api/v2/instance/:id").handler as Function)(v2InstanceReq, createResponseStub(), () => undefined);
-    t.is(v2InstanceReq.url, "/health");
-    t.is(lookupCalls.length, 2);
 
     const missingRes = createResponseStub();
 

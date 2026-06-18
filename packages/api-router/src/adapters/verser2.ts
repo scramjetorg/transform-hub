@@ -1,9 +1,12 @@
 import { RouteDefinition } from "../manifest";
 import { RouterDefinition } from "../router";
+import { executeRouteDefinition } from "./http";
 
 export type Verser2RouteRequest = {
     method: string;
     path: string;
+    params?: Record<string, string>;
+    query?: Record<string, string>;
     headers?: Record<string, string>;
     body?: unknown;
 };
@@ -37,8 +40,11 @@ export function registerVerser2Routes(adapter: Verser2RouteAdapter, router: Rout
         adapter.register({
             route,
             fullPath: entry.fullPath,
-            async handle() {
-                return { status: 501, body: { error: "VERSER2_HANDLER_NOT_IMPLEMENTED" } };
+            async handle(request) {
+                return {
+                    status: 200,
+                    body: await executeRouteDefinition(route, request)
+                };
             }
         });
     }

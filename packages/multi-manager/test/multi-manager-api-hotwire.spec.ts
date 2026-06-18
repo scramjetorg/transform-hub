@@ -49,12 +49,6 @@ test("MultiManagerAPIHandler registers the separated v1 MultiManager API route s
     t.true(recorder.has("use", "/api/v1/cpm/:id"));
     t.true(recorder.has("upstream", "/api/v1/log"));
     t.true(recorder.has("upstream", "/api/v1/audit"));
-    t.true(recorder.has("get", "/api/v2/version"));
-    t.true(recorder.has("get", "/api/v2/info"));
-    t.true(recorder.has("get", "/api/v2/load-check"));
-    t.true(recorder.has("get", "/api/v2/list"));
-    t.true(recorder.has("get", "/api/v2/health"));
-    t.true(recorder.has("get", "/api/v2/verser2/trust/:id?"));
 
     const stopIndex = recorder.routes.findIndex(route => route.kind === "op" && route.path === "/api/v1/cpm/:id/stop" && route.method === "post");
     const proxyIndex = recorder.routes.findIndex(route => route.kind === "use" && route.path === "/api/v1/cpm/:id");
@@ -75,27 +69,17 @@ test("MultiManagerAPIHandler unit handlers return version info list and health d
 
     new MultiManagerAPIHandler(multiManager as any).attach();
 
-    const version = (recorder.require("get", "/api/v1/version").handler as Function)({});
-    const info = (recorder.require("get", "/api/v1/info").handler as Function)({});
+    const version = await (recorder.require("get", "/api/v1/version").handler as Function)({});
+    const info = await (recorder.require("get", "/api/v1/info").handler as Function)({});
     const load = await (recorder.require("get", "/api/v1/load-check").handler as Function)({});
-    const list = (recorder.require("get", "/api/v1/list").handler as Function)({});
-    const health = (recorder.require("get", "/api/v1/health").handler as Function)({});
-    const v2Version = await (recorder.require("get", "/api/v2/version").handler as Function)({});
-    const v2Info = await (recorder.require("get", "/api/v2/info").handler as Function)({});
-    const v2Load = await (recorder.require("get", "/api/v2/load-check").handler as Function)({});
-    const v2List = await (recorder.require("get", "/api/v2/list").handler as Function)({});
-    const v2Health = await (recorder.require("get", "/api/v2/health").handler as Function)({});
+    const list = await (recorder.require("get", "/api/v1/list").handler as Function)({});
+    const health = await (recorder.require("get", "/api/v1/health").handler as Function)({});
 
     t.deepEqual(version, { service: "@scramjet/multi-manager", apiVersion: "v1", version: "0.0.0-test", build: "test-build" });
     t.deepEqual(info, { apiBase: "/api/v1", apiPort: 20000, id: "mm-hotwire", managersCount: 0 });
     t.deepEqual(load, { load: 1 });
     t.deepEqual(list, [{ id: "manager-1" }]);
     t.deepEqual(health, { healthy: true });
-    t.deepEqual(v2Version, { service: "@scramjet/multi-manager", apiVersion: "v2", version: "0.0.0-test", build: "test-build" });
-    t.deepEqual(v2Info, { apiBase: "/api/v2", apiPort: 20000, id: "mm-hotwire", managersCount: 0 });
-    t.deepEqual(v2Load, { load: 1 });
-    t.deepEqual(v2List, [{ id: "manager-1" }]);
-    t.deepEqual(v2Health, { healthy: true });
 });
 
 test("MultiManagerAPIHandler unit handlers cover middleware start and trust branches", async t => {
@@ -129,7 +113,6 @@ test("MultiManagerAPIHandler unit handlers cover middleware start and trust bran
     t.deepEqual(startRequests, [startRequest]);
 
     const trustHandler = recorder.require("get", "/api/v1/verser2/trust/:id?").handler as Function;
-    const v2TrustHandler = recorder.require("get", "/api/v2/verser2/trust/:id?").handler as Function;
 
     await trustHandler({ params: { id: "manager-1" } }).then(
         () => t.fail("trust export should require verser2 host configuration"),
@@ -140,12 +123,7 @@ test("MultiManagerAPIHandler unit handlers cover middleware start and trust bran
         (error: Error) => t.true(error instanceof TypeError)
     );
 
-    t.throws(() => trustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
-    await v2TrustHandler({ params: { id: "manager-1" } }).then(
-        () => t.fail("v2 trust export should require verser2 host configuration"),
-        (error: Error) => t.true(error instanceof TypeError)
-    );
-    await t.throwsAsync(() => v2TrustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
+    await t.throwsAsync(() => trustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
 });
 
 test("MultiManagerAPIHandler stop unit handler stops existing managers and reports missing managers", async t => {

@@ -1,6 +1,7 @@
-import { RouteRequest, Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { MMRestAPI, ParsedMessage } from "@scramjet/types";
+import { RouteRequest, Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
+import { MMRestAPI } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
+import { z } from "zod";
 
 import { getMultiManagerVerser2TrustExport } from "../verser2-trust-export";
 import type { MultiManager } from "../multi-manager";
@@ -15,41 +16,7 @@ export class MultiManagerAPIHandler {
             multiManager.logger.trace("API request", req.method, req.url);
             return next();
         });
-        multiManager.apiServer.get(
-            `${multiManager.apiBase}/version`,
-            (): MMRestAPI.GetVersionResponse => ({
-                service: multiManager.service,
-                apiVersion: multiManager.apiVersion,
-                version: multiManager.version,
-                build: multiManager.build,
-            })
-        );
-
-        multiManager.apiServer.get(
-            `${multiManager.apiBase}/info`,
-            (): MMRestAPI.GetInfoReposnse => ({
-                apiBase: multiManager.apiBase,
-                apiPort: multiManager.config.server.apiPort,
-                id: multiManager.id,
-                managersCount: multiManager.managersStore.size,
-            })
-        );
-
-        multiManager.apiServer.get(
-            `${multiManager.apiBase}/load-check`,
-            async (): Promise<MMRestAPI.GetLoadCheckResponse> => multiManager.loadCheck.getLoadCheck()
-        );
-        multiManager.apiServer.get(`${multiManager.apiBase}/list`, () => multiManager.handleListManagersRequest());
-        multiManager.apiServer.get(`${multiManager.apiBase}/health`, () => multiManager.healthCheck.getHealthCheckInfo());
-        multiManager.apiServer.get(`${multiManager.apiBase}/verser2/trust/:id?`, (req: ParsedMessage) => {
-            const manager = req.params?.id ? multiManager.managersStore.getById(req.params.id) : undefined;
-
-            if (req.params?.id && !manager) {
-                throw new Error(`Manager ${req.params.id} not found`);
-            }
-
-            return getMultiManagerVerser2TrustExport(multiManager.config.verser2, manager?.config);
-        });
+        registerHttpRoutes(multiManager.apiServer, this.createLowRiskRouter("v1"));
 
         multiManager.apiServer.op("post", `${multiManager.apiBase}/start`, (req) => multiManager.handleStartManagerRequest(req));
         multiManager.apiServer.op(
@@ -77,41 +44,67 @@ export class MultiManagerAPIHandler {
         this.attachV2Routes();
     }
 
-    attachV2Routes() {
+    createLowRiskRouter(apiVersion: "v1" | "v2"): RouterDefinition {
         const multiManager = this.multiManager;
-        const router = Router.create({ basePath: replacePathVersion(multiManager.apiBase, "v2") })
+        const basePath = apiVersion === "v1" ? multiManager.apiBase : replacePathVersion(multiManager.apiBase, "v2");
+        const objectResponse = z.object({}).passthrough();
+
+        return Router.create({ basePath })
             .route(Router.get("/version", {
-                id: "multi-manager.v2.version",
+                id: `multi-manager.${apiVersion}.version`,
+                schemas: {
+                    response: z.object({
+                        service: z.string(),
+                        apiVersion: z.literal(apiVersion),
+                        version: z.string(),
+                        build: z.string()
+                    })
+                },
                 handler: (): MMRestAPI.GetVersionResponse => ({
                     service: multiManager.service,
-                    apiVersion: "v2",
+                    apiVersion,
                     version: multiManager.version,
                     build: multiManager.build,
                 })
             }))
             .route(Router.get("/info", {
-                id: "multi-manager.v2.info",
+                id: `multi-manager.${apiVersion}.info`,
+                schemas: {
+                    response: z.object({
+                        apiBase: z.string(),
+                        apiPort: z.number(),
+                        id: z.string(),
+                        managersCount: z.number()
+                    })
+                },
                 handler: (): MMRestAPI.GetInfoReposnse => ({
-                    apiBase: replacePathVersion(multiManager.apiBase, "v2"),
+                    apiBase: basePath,
                     apiPort: multiManager.config.server.apiPort,
                     id: multiManager.id,
                     managersCount: multiManager.managersStore.size,
                 })
             }))
             .route(Router.get("/load-check", {
-                id: "multi-manager.v2.load-check",
+                id: `multi-manager.${apiVersion}.load-check`,
+                schemas: { response: z.unknown() },
                 handler: async (): Promise<MMRestAPI.GetLoadCheckResponse> => multiManager.loadCheck.getLoadCheck()
             }))
             .route(Router.get("/list", {
-                id: "multi-manager.v2.list",
+                id: `multi-manager.${apiVersion}.list`,
+                schemas: { response: z.array(objectResponse) },
                 handler: () => multiManager.handleListManagersRequest()
             }))
             .route(Router.get("/health", {
-                id: "multi-manager.v2.health",
+                id: `multi-manager.${apiVersion}.health`,
+                schemas: { response: objectResponse },
                 handler: () => multiManager.healthCheck.getHealthCheckInfo()
             }))
             .route(Router.get("/verser2/trust/:id?", {
-                id: "multi-manager.v2.verser2.trust",
+                id: `multi-manager.${apiVersion}.verser2.trust`,
+                schemas: {
+                    params: z.object({ id: z.string().optional() }).optional(),
+                    response: objectResponse
+                },
                 handler: (req: RouteRequest) => {
                     const params = req.params as { id?: string } | undefined;
                     const manager = params?.id ? multiManager.managersStore.getById(params.id) : undefined;
@@ -123,7 +116,9 @@ export class MultiManagerAPIHandler {
                     return getMultiManagerVerser2TrustExport(multiManager.config.verser2, manager?.config);
                 }
             }));
+    }
 
-        registerHttpRoutes(multiManager.apiServer, router);
+    attachV2Routes() {
+        registerHttpRoutes(this.multiManager.apiServer, this.createLowRiskRouter("v2"));
     }
 }

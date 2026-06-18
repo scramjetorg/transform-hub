@@ -1,6 +1,6 @@
 import test from "ava";
 
-import { RouteHook, createRouter, executeRoutePipeline, headerHook } from "../src";
+import { RouteHook, corsHook, createRouter, executeRoutePipeline, headerHook, requestLoggingHook } from "../src";
 
 const route = createRouter().get("/test").definitions()[0];
 const request = { params: undefined, query: undefined, headers: undefined, body: undefined };
@@ -50,4 +50,28 @@ test("headerHook stores response headers in hook state", async t => {
     });
 
     t.deepEqual(state.headers, { "x-test": "true" });
+});
+
+test("corsHook stores v2 CORS parity headers in hook state", async t => {
+    let state: Record<string, unknown> = {};
+
+    await executeRoutePipeline(route, request, () => "ok", {
+        hooks: [corsHook(), { after: context => { state = context.state; } }]
+    });
+
+    t.deepEqual(state.headers, {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, HEAD, POST, PUT, DELETE, PATCH",
+        "access-control-allow-headers": "Content-Type, Accept, Authorization"
+    });
+});
+
+test("requestLoggingHook records method and path before handling", async t => {
+    const calls: any[] = [];
+
+    await executeRoutePipeline(route, request, () => "ok", {
+        hooks: [requestLoggingHook((message, details) => calls.push({ message, details }))]
+    });
+
+    t.deepEqual(calls, [{ message: "API request", details: { method: "GET", path: "/test" } }]);
 });

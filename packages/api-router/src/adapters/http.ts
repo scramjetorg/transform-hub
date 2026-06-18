@@ -7,7 +7,7 @@ import { validateRouteRequest, validateRouteResponse } from "../validation";
 
 export type HttpRouteTarget = Pick<APIRoute, "get" | "op">;
 
-function mapRequest(req: ParsedMessage): Partial<RouteRequest> {
+export function mapRouteRequest(req: Partial<ParsedMessage>): Partial<RouteRequest> {
     return {
         params: req.params,
         query: req.query,
@@ -16,15 +16,19 @@ function mapRequest(req: ParsedMessage): Partial<RouteRequest> {
     };
 }
 
-async function executeHttpRoute(route: RouteDefinition, req: ParsedMessage, _res?: ServerResponse) {
+export async function executeRouteDefinition(route: RouteDefinition, requestLike: Partial<ParsedMessage>) {
     if (!route.handler) {
         return undefined;
     }
 
-    const request = validateRouteRequest(route.schemas || {}, mapRequest(req));
+    const request = validateRouteRequest(route.schemas || {}, mapRouteRequest(requestLike));
     const response = await executeRoutePipeline(route, request, () => route.handler!(request), { hooks: route.hooks });
 
     return route.schemas?.response ? validateRouteResponse(route.schemas, response) : response;
+}
+
+async function executeHttpRoute(route: RouteDefinition, req: ParsedMessage, _res?: ServerResponse) {
+    return executeRouteDefinition(route, req);
 }
 
 function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put" | "patch" | "delete" {

@@ -23,6 +23,7 @@ import {
 } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
+import { z } from "zod";
 import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
@@ -236,16 +237,16 @@ export class Manager implements IComponent {
 
     setupHealthEndpoint(healthCheck: HealthCheck) {
         // We may need some additional logic here later.
-        this._apiRouter.get(`${this._config.apiBase}/health`, () => healthCheck.getHealthCheckInfo());
+        const createHealthRouter = (apiVersion: "v1" | "v2") => Router.create({
+            basePath: apiVersion === "v1" ? this._config.apiBase : replacePathVersion(this._config.apiBase, "v2")
+        }).route(Router.get("/health", {
+            id: `manager.${apiVersion}.health`,
+            schemas: { response: z.object({}).passthrough() },
+            handler: () => healthCheck.getHealthCheckInfo()
+        }));
 
-        registerHttpRoutes(
-            this._apiRouter,
-            Router.create({ basePath: replacePathVersion(this._config.apiBase, "v2") })
-                .route(Router.get("/health", {
-                    id: "manager.v2.health",
-                    handler: () => healthCheck.getHealthCheckInfo()
-                }))
-        );
+        registerHttpRoutes(this._apiRouter, createHealthRouter("v1"));
+        registerHttpRoutes(this._apiRouter, createHealthRouter("v2"));
     }
 
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {

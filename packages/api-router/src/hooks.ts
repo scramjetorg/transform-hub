@@ -81,3 +81,31 @@ export function headerHook(headers: Record<string, string>): RouteHook {
         }
     };
 }
+
+export function corsHook({
+    origin = "*",
+    methods = "GET, HEAD, POST, PUT, DELETE, PATCH",
+    headers = "Content-Type, Accept, Authorization",
+}: {
+    origin?: string;
+    methods?: string;
+    headers?: string;
+} = {}): RouteHook {
+    return headerHook({
+        "access-control-allow-origin": origin,
+        "access-control-allow-methods": methods,
+        "access-control-allow-headers": headers
+    });
+}
+
+export function requestLoggingHook(log: (message: string, details: { method?: string; path?: string }) => void): RouteHook {
+    return {
+        name: "request-logging",
+        before(context) {
+            log("API request", {
+                method: context.route.method.toUpperCase(),
+                path: context.route.path
+            });
+        }
+    };
+}

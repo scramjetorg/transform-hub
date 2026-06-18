@@ -1,8 +1,9 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
 import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
-import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
+import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { isStartSequenceEndpointPayloadDTO } from "@scramjet/utility";
+import { z } from "zod";
 import { IHost } from "../types";
 
 import { auditMiddleware, logger as auditMiddlewareLogger } from "../middlewares/audit";
@@ -94,19 +95,7 @@ export class HostAPIHandler {
             sequences: host.getSequences(),
             instances: host.getInstances()
         }));
-        this.api.get(`${this.apiBase}/load-check`, () => host.loadCheck.getLoadCheck());
-        this.api.get(
-            `${this.apiBase}/version`,
-            (): STHRestAPI.GetVersionResponse => ({
-                service: host.service,
-                apiVersion: host.apiVersion,
-                version: this.version,
-                build: this.build,
-            })
-        );
-
-        this.api.get(`${this.apiBase}/config`, () => host.publicConfig);
-        this.api.get(`${this.apiBase}/status`, () => host.getStatus());
+        registerHttpRoutes(this.api, this.createLowRiskRouter("v1"));
 
         this.topicRouter = new TopicRouter(this.logger, this.api, this.apiBase, host.serviceDiscovery);
 
@@ -125,32 +114,48 @@ export class HostAPIHandler {
         this.attachV2Routes();
     }
 
-    attachV2Routes() {
+    createLowRiskRouter(apiVersion: "v1" | "v2"): RouterDefinition {
         const host = this.host;
-        const router = Router.create({ basePath: this.v2ApiBase })
+        const basePath = apiVersion === "v1" ? this.apiBase : this.v2ApiBase;
+        const objectResponse = z.object({}).passthrough();
+
+        return Router.create({ basePath })
             .route(Router.get("/load-check", {
-                id: "host.v2.load-check",
+                id: `host.${apiVersion}.load-check`,
+                schemas: { response: z.unknown() },
                 handler: () => host.loadCheck.getLoadCheck()
             }))
             .route(Router.get("/version", {
-                id: "host.v2.version",
+                id: `host.${apiVersion}.version`,
+                schemas: {
+                    response: z.object({
+                        service: z.string(),
+                        apiVersion: z.literal(apiVersion),
+                        version: z.string(),
+                        build: z.string()
+                    })
+                },
                 handler: (): STHRestAPI.GetVersionResponse => ({
                     service: host.service,
-                    apiVersion: "v2",
+                    apiVersion,
                     version: this.version,
                     build: this.build,
                 })
             }))
             .route(Router.get("/config", {
-                id: "host.v2.config",
+                id: `host.${apiVersion}.config`,
+                schemas: { response: objectResponse },
                 handler: () => host.publicConfig
             }))
             .route(Router.get("/status", {
-                id: "host.v2.status",
+                id: `host.${apiVersion}.status`,
+                schemas: { response: objectResponse },
                 handler: () => host.getStatus()
             }));
+    }
 
-        registerHttpRoutes(this.api, router);
+    attachV2Routes() {
+        registerHttpRoutes(this.api, this.createLowRiskRouter("v2"));
         this.api.use(`${this.v2InstanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next, this.v2InstanceBase));
     }
 

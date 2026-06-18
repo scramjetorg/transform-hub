@@ -1,8 +1,9 @@
 import { CeroError } from "@scramjet/api-server";
-import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
+import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { MRestAPI, ParsedMessage } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
+import { z } from "zod";
 
 import { getS3Router } from "../s3-router";
 import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "../utils";
@@ -33,18 +34,7 @@ export class ManagerAPIHandler {
             return sth.getInfo();
         });
 
-        router.get(
-            `${apiBase}/version`,
-            (): MRestAPI.GetVersionResponse => ({
-                service: manager.service,
-                apiVersion: manager.apiVersion,
-                version: manager.version,
-                build: manager.build,
-            })
-        );
-
-        router.get(`${apiBase}/config`, (): MRestAPI.GetConfigResponse => ({ config: manager.publicConfig }));
-        router.get(`${apiBase}/verser2/trust`, () => getManagerVerser2TrustExport(manager.config));
+        registerHttpRoutes(router, this.createLowRiskRouter("v1"));
         router.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
             const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
             const id = await manager.handleSthRegistration(payload);
@@ -87,8 +77,6 @@ export class ManagerAPIHandler {
         });
         router.get(`${apiBase}/entities`, (): MRestAPI.GetEntitiesResponse => manager.getEntities());
         router.get(`${apiBase}/topics`, (): MRestAPI.GetTopicsResponse => manager.apiServiceDiscovery.list());
-        router.get(`${apiBase}/load`, (): Promise<MRestAPI.GetLoadResponse> => manager.apiLoadCheck.getLoadCheck());
-
         router.upstream(`${apiBase}/log`, () => manager.apiCommonLogsPipe.getOut());
         router.upstream(`${apiBase}/load-stream`, () => manager.apiLoadCheck.getLoadCheckStream());
 
@@ -191,32 +179,47 @@ export class ManagerAPIHandler {
         this.attachV2Routes();
     }
 
-    attachV2Routes() {
+    createLowRiskRouter(apiVersion: "v1" | "v2"): RouterDefinition {
         const manager = this.manager;
-        const v2ApiBase = replacePathVersion(manager.config.apiBase, "v2");
-        const router = Router.create({ basePath: v2ApiBase })
+        const basePath = apiVersion === "v1" ? manager.config.apiBase : replacePathVersion(manager.config.apiBase, "v2");
+        const objectResponse = z.object({}).passthrough();
+
+        return Router.create({ basePath })
             .route(Router.get("/version", {
-                id: "manager.v2.version",
+                id: `manager.${apiVersion}.version`,
+                schemas: {
+                    response: z.object({
+                        service: z.string(),
+                        apiVersion: z.literal(apiVersion),
+                        version: z.string(),
+                        build: z.string()
+                    })
+                },
                 handler: (): MRestAPI.GetVersionResponse => ({
                     service: manager.service,
-                    apiVersion: "v2",
+                    apiVersion,
                     version: manager.version,
                     build: manager.build,
                 })
             }))
             .route(Router.get("/config", {
-                id: "manager.v2.config",
+                id: `manager.${apiVersion}.config`,
+                schemas: { response: z.object({ config: objectResponse }) },
                 handler: (): MRestAPI.GetConfigResponse => ({ config: manager.publicConfig })
             }))
             .route(Router.get("/verser2/trust", {
-                id: "manager.v2.verser2.trust",
+                id: `manager.${apiVersion}.verser2.trust`,
+                schemas: { response: objectResponse },
                 handler: () => getManagerVerser2TrustExport(manager.config)
             }))
             .route(Router.get("/load", {
-                id: "manager.v2.load",
+                id: `manager.${apiVersion}.load`,
+                schemas: { response: z.unknown() },
                 handler: (): Promise<MRestAPI.GetLoadResponse> => manager.apiLoadCheck.getLoadCheck()
             }));
+    }
 
-        registerHttpRoutes(manager.router, router);
+    attachV2Routes() {
+        registerHttpRoutes(this.manager.router, this.createLowRiskRouter("v2"));
     }
 }
