@@ -509,6 +509,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: v2 Middleware and Low-Risk Route Exposure' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 7 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Phase 7 checkpoint commits pushed to PR #13: `a48087f4`, `6077350c`, `2c8a4cc4`, `071d416d`, and `d53c6d51`.
+    - API shape review artifact added: `docs/api.md` lists MultiManager-level v1 and v2 endpoints with in/out type names only.
     - Remaining Phase 7 action: user manual verification only; do not continue to Phase 8 until approved.
 
 ## Phase 8: Sequence and Instance/CSI Route Migration to v2
