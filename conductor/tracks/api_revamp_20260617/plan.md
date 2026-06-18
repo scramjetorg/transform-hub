@@ -791,8 +791,9 @@
       - Corrected narrowed source/test lint excluding api-router test fixture files not included by root TSConfig passed under the standard memory guard.
     - [x] Record validation results, skipped checks, and deduplication notes in `plan.md`
       - Deduplication check: resolver target and request contracts live in `@scramjet/api-router`; Host-specific resolution remains in `host-api-v2.ts`; no repeated helper required extraction.
-- [ ] Task: Conductor - User Manual Verification 'Phase 8.5: Dynamic Resolver Mount and Host API Composition' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 8.5: Dynamic Resolver Mount and Host API Composition' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 8.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+    - Phase 8.5 checkpoint commit: `cd41d5e7`.
     - Manual verification should confirm v1 routes remain unchanged, Host v2 instance routes resolve through dynamic router resolution, and `host-api.ts` uses composition rather than v1 inheritance.
 
 ## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
