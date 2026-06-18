@@ -88,7 +88,11 @@ test("ManagerAPIHandler unit handlers return version config and paginated list d
         }
     };
 
-    await new ManagerAPIHandler(manager as any).attach();
+    await new ManagerAPIHandler(manager as any, async () => ({
+        logger: { pipe: () => undefined },
+        loadIndex: async () => undefined,
+        router: { lookup: () => undefined }
+    } as any)).attach();
 
     const version = (recorder.require("get", "/api/v1/version").handler as Function)({});
     const config = (recorder.require("get", "/api/v1/config").handler as Function)({});
@@ -124,4 +128,94 @@ test("ManagerAPIHandler unit handlers cover STH info and delete behavior", async
     t.deepEqual(await deleteHandler({ params: {}, headers: {} }), { opStatus: "Not Found", error: "Id was not supplied" });
     t.deepEqual(await deleteHandler({ params: { id: "sth-1" }, headers: { "x-force": "true" } }), { opStatus: "Accepted" });
     t.deepEqual(calls, [{ id: "sth-1", force: true }]);
+});
+
+test("ManagerAPIHandler unit handlers cover aggregate getters streams and topic delegation", async t => {
+    const recorder = new RouteRecorder();
+    const logStream = new PassThrough();
+    const loadStream = new PassThrough();
+    const topicStream = new PassThrough();
+    const topicCalls: string[] = [];
+    const manager = {
+        ...createManagerStub(recorder),
+        getInstances: (offset: number, limit: number) => ({ offset, limit, instances: ["i"] }),
+        getSequencesIds: () => ({ sequences: ["s"] }),
+        getSequences: (offset: number, limit: number) => ({ offset, limit, sequences: ["s"] }),
+        getEntities: () => ({ entities: true }),
+        apiServiceDiscovery: { list: () => [{ topic: "t" }] },
+        apiLoadCheck: { getLoadCheck: async () => ({ ok: true }), getLoadCheckStream: () => loadStream },
+        apiCommonLogsPipe: { getOut: () => logStream },
+        handleTopicUpstreamRequest: () => { topicCalls.push("up"); return topicStream; },
+        handleTopicDownstreamRequest: async () => { topicCalls.push("down"); return { opStatus: "OK" }; }
+    };
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    t.deepEqual((recorder.require("get", "/api/v1/instances").handler as Function)({ query: { offset: "2", limit: "3" } }), { offset: 2, limit: 3, instances: ["i"] });
+    t.deepEqual((recorder.require("get", "/api/v1/sequences").handler as Function)({}), { sequences: ["s"] });
+    t.deepEqual((recorder.require("get", "/api/v1/all_sequences").handler as Function)({ query: { offset: "4", limit: "5" } }), { offset: 4, limit: 5, sequences: ["s"] });
+    t.deepEqual((recorder.require("get", "/api/v1/entities").handler as Function)({}), { entities: true });
+    t.deepEqual((recorder.require("get", "/api/v1/topics").handler as Function)({}), [{ topic: "t" }]);
+    t.deepEqual(await (recorder.require("get", "/api/v1/load").handler as Function)({}), { ok: true });
+    t.is((recorder.require("upstream", "/api/v1/log").handler as Function)(), logStream);
+    t.is((recorder.require("upstream", "/api/v1/load-stream").handler as Function)(), loadStream);
+    t.is((recorder.require("upstream", "/api/v1/topic/:name").handler as Function)({}, {}), topicStream);
+    t.deepEqual(await (recorder.require("downstream", "/api/v1/topic/:name").handler as Function)({}, {}), { opStatus: "OK" });
+    t.deepEqual(topicCalls, ["up", "down"]);
+});
+
+test("ManagerAPIHandler unit handlers cover store clear delete errors and proxy delegation", async t => {
+    const recorder = new RouteRecorder();
+    const calls: string[] = [];
+    const manager = {
+        ...createManagerStub(recorder),
+        apiS3Middleware: { clearIndex: async () => calls.push("clear") },
+        apiSthConnectionStore: {
+            getById: () => undefined,
+            delete: async () => { throw new Error("delete failed"); }
+        },
+        handleRequestToSTH: () => calls.push("proxy")
+    };
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    t.deepEqual(await (recorder.require("op", "/api/v1/store", "delete").handler as Function)(), { opStatus: "Accepted" });
+    manager.apiS3Middleware.clearIndex = async () => { throw new Error("missing index"); };
+    t.deepEqual(await (recorder.require("op", "/api/v1/store", "delete").handler as Function)(), { opStatus: "Not Found", error: "missing index" });
+    t.deepEqual(await (recorder.require("op", "/api/v1/sth/:id", "delete").handler as Function)({ params: { id: "sth" }, headers: {} }), { opStatus: "Internal Server Error" });
+    (recorder.require("use", "/api/v1/sth/:id").handler as Function)({}, {});
+    t.deepEqual(calls, ["clear", "proxy"]);
+});
+
+test("ManagerAPIHandler unit handlers cover registration disconnect and S3 mount", async t => {
+    const recorder = new RouteRecorder();
+    const disconnected: string[] = [];
+    const manager = {
+        ...createManagerStub(recorder),
+        config: { apiBase: "/api/v1", s3: { bucket: "bucket", bucketLimit: 1000 } },
+        s3Client: undefined,
+        apiS3Middleware: undefined,
+        apiSthConnectionStore: {
+            getById: () => undefined,
+            getByAccessKey: () => [],
+            list: () => [{
+                id: "sth-1",
+                type: "remote",
+                selfHosted: true,
+                isConnectionActive: true,
+                disconnect: async (reason: string) => disconnected.push(reason)
+            }]
+        },
+        handleSthRegistration: async () => "sth-registered"
+    };
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth" } }), { id: "sth-registered", opStatus: "Accepted" });
+    t.true(recorder.has("use", "/api/v1/s3/"));
+    t.deepEqual(await (recorder.require("op", "/api/v1/disconnect", "post").handler as Function)({ body: { limit: 0 } }), {
+        opStatus: "Accepted",
+        managerId: "manager-hotwire",
+        disconnected: [{ sthId: "sth-1", reason: "limit_exceeded" }]
+    });
 });

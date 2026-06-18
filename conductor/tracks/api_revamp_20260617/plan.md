@@ -413,6 +413,19 @@
       - Corrected `npx eslint packages/api-server/test/lib/route-recorder.ts packages/host/test/api-hotwire.spec.ts packages/manager/test/manager-api-hotwire.spec.ts packages/manager/test/storage-proxy-hotwire.spec.ts packages/multi-manager/test/multi-manager-api-hotwire.spec.ts --ext .ts`: passed.
     - [x] Do not run, create, or modify BDD tests for this phase
     - [x] Record validation results, known failures, behavioral gaps, and fix/defer decisions in `plan.md`
+- [x] Task: Raise focused API unit coverage to 90% lines and statements
+    - [x] Run API-focused coverage for `api-server`, `api-router`, Host/Instance API, Manager API/DiskProxy, and MultiManager API without BDD
+      - `api-server` baseline remains recorded separately for package server internals at `80.46%` statements and `80.96%` lines; it is not part of the extracted v1 API-surface coverage target.
+      - `api-router` baseline remains above target at `94.90%` statements and `94.77%` lines.
+    - [x] Add isolated unit tests until focused API coverage reaches at least 90% lines and statements for the API surfaces in scope
+      - Host/Instance API focused command: `npx nyc --reporter=text --include "packages/host/src/lib/api/**/*.ts" npm --prefix packages/host run test -- test/api-hotwire.spec.ts`: passed, 18 tests; `90.47%` statements and `94.55%` lines.
+      - Manager API/DiskProxy focused command: `npx nyc --reporter=text --include "packages/manager/src/lib/api/**/*.ts" --include "packages/manager/src/lib/storage-routers/disk-proxy.ts" npm --prefix packages/manager run test:ava -- test/manager-api-hotwire.spec.ts test/storage-proxy-hotwire.spec.ts`: passed, 18 tests; `95.90%` statements and `96.53%` lines.
+      - MultiManager API focused command: `npx nyc --reporter=text --include "packages/multi-manager/src/lib/api/**/*.ts" npm --prefix packages/multi-manager run test:ava -- test/multi-manager-api-hotwire.spec.ts`: passed, 4 tests; `94.59%` statements and `100%` lines.
+    - [x] Keep S3Proxy behavior out of scope unless structural inclusion prevents accurate API coverage reporting; record any explicit exclusion or deferral
+      - S3Proxy remains structural route-surface coverage only and known-broken behavior remains deferred. Focused Manager coverage includes `manager-api.ts` and `disk-proxy.ts` only; S3Proxy behavioral repair is not claimed.
+    - [x] Record final coverage results in `plan.md`
+      - Follow-up validation passed: `npm --prefix packages/api-server test` (48 tests), `npm --prefix packages/api-router test` (23 tests), `npm --prefix packages/host test` (183 tests, 9 skipped), `npm --prefix packages/manager test` (131 tests), `npm --prefix packages/multi-manager test` (40 tests), Manager and MultiManager build typechecks, and narrowed ESLint on touched TypeScript files.
+      - No BDD tests were created, modified, or run for this coverage follow-up.
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: v1 API Behavioral Unit Coverage and Gaps' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
 

@@ -82,6 +82,50 @@ test("MultiManagerAPIHandler unit handlers return version info list and health d
     t.deepEqual(health, { healthy: true });
 });
 
+test("MultiManagerAPIHandler unit handlers cover middleware start and trust branches", async t => {
+    const recorder = new RouteRecorder();
+    const startRequests: any[] = [];
+    const multiManager = {
+        ...createMultiManagerStub(recorder),
+        config: {
+            server: { apiPort: 20000 },
+            verser2: {}
+        },
+        handleStartManagerRequest: async (request: any) => {
+            startRequests.push(request);
+            return { id: "started" };
+        }
+    };
+
+    multiManager.managersStore.add("manager-1", { id: "manager-1", config: { verser2: { localGuest: { routeDomain: "guest.local" } } } } as any);
+
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    let nextCalled = false;
+    const middleware = recorder.require("use", "*").handler as Function;
+
+    t.is(middleware({ method: "GET", url: "/api/v1/info" }, {}, () => { nextCalled = true; }), undefined);
+    t.true(nextCalled);
+
+    const startRequest = { body: { id: "manager-1" } };
+
+    t.deepEqual(await (recorder.require("op", "/api/v1/start", "post").handler as Function)(startRequest), { id: "started" });
+    t.deepEqual(startRequests, [startRequest]);
+
+    const trustHandler = recorder.require("get", "/api/v1/verser2/trust/:id?").handler as Function;
+
+    await trustHandler({ params: { id: "manager-1" } }).then(
+        () => t.fail("trust export should require verser2 host configuration"),
+        (error: Error) => t.true(error instanceof TypeError)
+    );
+    await trustHandler({ params: {} }).then(
+        () => t.fail("trust export should require verser2 host configuration"),
+        (error: Error) => t.true(error instanceof TypeError)
+    );
+
+    t.throws(() => trustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
+});
+
 test("MultiManagerAPIHandler stop unit handler stops existing managers and reports missing managers", async t => {
     const recorder = new RouteRecorder();
     const multiManager = createMultiManagerStub(recorder);

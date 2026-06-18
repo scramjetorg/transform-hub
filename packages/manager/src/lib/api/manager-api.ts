@@ -12,7 +12,10 @@ const defaultLimit = 100;
 const defaultOffset = 0;
 
 export class ManagerAPIHandler {
-    constructor(private manager: Manager) {}
+    constructor(
+        private manager: Manager,
+        private createS3Router: typeof getS3Router = getS3Router
+    ) {}
 
     async attach() {
         const manager = this.manager;
@@ -139,7 +142,7 @@ export class ManagerAPIHandler {
         router.use(`${apiBase}/sth/:id`, (req: ParsedMessage, res: ServerResponse) => manager.handleRequestToSTH(req, res));
 
         if (manager.config.s3) {
-            manager.apiS3Middleware = await getS3Router(manager.s3Client, {
+            manager.apiS3Middleware = await this.createS3Router(manager.s3Client, {
                 base: `${apiBase}/s3`,
                 id: manager.id,
                 bucket: manager.config.s3.bucket!,

@@ -23,14 +23,6 @@ type SequenceIndex = {
     version: string;
 }
 
-type S3ProxyParams = {
-    base: string,
-    id: string,
-    bucket: string,
-    bucketLimit: number,
-    router?: APIRoute
-}
-
 class DiskClient {
     async exists(path: string, location: string) {
         try {
@@ -105,6 +97,16 @@ class DiskClient {
 
         return unlink(resolve(path, location));
     }
+}
+
+type S3ProxyParams = {
+    base: string,
+    id: string,
+    bucket: string,
+    bucketLimit: number,
+    router?: APIRoute,
+    s3Client?: DiskClient,
+    sequenceAdapter?: Pick<ISequenceAdapter, "identify" | "remove"> & { logger: ObjLogger }
 }
 
 export class DiskProxy {
@@ -216,7 +218,7 @@ export class DiskProxy {
         this.bucket = config.bucket;
         this.base = config.base;
         this.bucketLimit = config.bucketLimit;
-        this.s3Client = new DiskClient();
+        this.s3Client = config.s3Client || new DiskClient();
         this.router = config.router || getRouter();
 
         this.logger = new ObjLogger(this, { id: this.id });
@@ -224,7 +226,7 @@ export class DiskProxy {
 
         const { SequenceAdapterClass: ProcessSequenceAdapter } = augment();
 
-        const processSequenceAdapter = new ProcessSequenceAdapter({
+        const processSequenceAdapter = config.sequenceAdapter || new ProcessSequenceAdapter({
             sequencesRoot: `/tmp/manager/${this.id}`
         } as STHConfiguration);
 
