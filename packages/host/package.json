@@ -17,6 +17,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/adapters": "^1.1.0",
+    "@scramjet/api-router": "^1.1.0",
     "@scramjet/api-server": "^1.1.0",
     "@scramjet/load-check": "^1.1.0",
     "@scramjet/model": "^1.1.0",

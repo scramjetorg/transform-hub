@@ -21,6 +21,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/api-router": "^1.1.0",
     "@scramjet/api-server": "^1.1.0",
     "@scramjet/config": "^1.1.0",
     "@scramjet/load-check": "^1.1.0",

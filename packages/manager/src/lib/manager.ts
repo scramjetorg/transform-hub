@@ -22,6 +22,7 @@ import {
     ISTHInfoRegister
 } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
+import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
@@ -236,6 +237,15 @@ export class Manager implements IComponent {
     setupHealthEndpoint(healthCheck: HealthCheck) {
         // We may need some additional logic here later.
         this._apiRouter.get(`${this._config.apiBase}/health`, () => healthCheck.getHealthCheckInfo());
+
+        registerHttpRoutes(
+            this._apiRouter,
+            Router.create({ basePath: replacePathVersion(this._config.apiBase, "v2") })
+                .route(Router.get("/health", {
+                    id: "manager.v2.health",
+                    handler: () => healthCheck.getHealthCheckInfo()
+                }))
+        );
     }
 
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {

@@ -9,7 +9,7 @@ export class RouteValidationError extends Error {
 
 function parseSchema<TSchema extends z.ZodTypeAny>(location: keyof RouteSchemas, schema: TSchema | undefined, value: unknown): z.infer<TSchema> | undefined {
     if (!schema) {
-        return undefined;
+        return value as z.infer<TSchema>;
     }
 
     const result = schema.safeParse(value);

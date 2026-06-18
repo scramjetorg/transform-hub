@@ -1,5 +1,6 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
 import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
+import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { isStartSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { IHost } from "../types";
@@ -40,6 +41,14 @@ export class HostAPIHandler {
 
     get instanceBase() {
         return this.host.instanceBase;
+    }
+
+    get v2ApiBase() {
+        return replacePathVersion(this.apiBase, "v2");
+    }
+
+    get v2InstanceBase() {
+        return replacePathVersion(this.instanceBase, "v2");
     }
 
     get heartBeatInterval() {
@@ -112,6 +121,37 @@ export class HostAPIHandler {
 
         this.api.use(`${this.apiBase}/rpc`, (req, res, next) => this.rpcMiddleware(req, res, next));
         this.api.forward(`${this.apiBase}/rpc`, [], this.createRPCForwarder());
+
+        this.attachV2Routes();
+    }
+
+    attachV2Routes() {
+        const host = this.host;
+        const router = Router.create({ basePath: this.v2ApiBase })
+            .route(Router.get("/load-check", {
+                id: "host.v2.load-check",
+                handler: () => host.loadCheck.getLoadCheck()
+            }))
+            .route(Router.get("/version", {
+                id: "host.v2.version",
+                handler: (): STHRestAPI.GetVersionResponse => ({
+                    service: host.service,
+                    apiVersion: "v2",
+                    version: this.version,
+                    build: this.build,
+                })
+            }))
+            .route(Router.get("/config", {
+                id: "host.v2.config",
+                handler: () => host.publicConfig
+            }))
+            .route(Router.get("/status", {
+                id: "host.v2.status",
+                handler: () => host.getStatus()
+            }));
+
+        registerHttpRoutes(this.api, router);
+        this.api.use(`${this.v2InstanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next, this.v2InstanceBase));
     }
 
     /**
@@ -169,9 +209,10 @@ export class HostAPIHandler {
      * @param {Request} req Request object.
      * @param {ServerResponse} res Response object.
      * @param {NextCallback} next Function to call when request is not handled by Instance middleware.
+     * @param {string} instanceBase Instance API base path used when rewriting the forwarded URL.
      * @returns {Middleware} Instance middleware.
      */
-    instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
+    instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback, instanceBase = this.instanceBase) {
         const params = req.params;
 
         if (!params || !params.id) {
@@ -185,7 +226,7 @@ export class HostAPIHandler {
                 return next(new HostError("CONTROLLER_ERROR", "Instance controller doesn't provide API."));
             }
 
-            req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
+            req.url = req.url?.substring(instanceBase.length + 1 + params.id.length);
 
             return instance.router.lookup(req, res, next);
         }

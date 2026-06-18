@@ -1,12 +1,14 @@
 import test from "ava";
 import { z } from "zod";
 
-import { ApiClientRequest, DuplicateRouteError, Router, UnknownRouteError, createApiClient, createRouter, defineRoute, joinPaths, normalizePath, routeId } from "../src";
+import { ApiClientRequest, DuplicateRouteError, Router, UnknownRouteError, createApiClient, createRouter, defineRoute, joinPaths, normalizePath, replacePathVersion, routeId } from "../src";
 
 test("normalizes and joins route paths", t => {
     t.is(normalizePath("api/v2/"), "/api/v2");
     t.is(normalizePath("/"), "/");
     t.is(joinPaths("/api/v2/", "/health"), "/api/v2/health");
+    t.is(replacePathVersion("/api/v1", "v2"), "/api/v2");
+    t.is(replacePathVersion("/api/v1/instance", "v2"), "/api/v2/instance");
     t.is(routeId("get", "/api/v2/health"), "GET /api/v2/health");
 });
 

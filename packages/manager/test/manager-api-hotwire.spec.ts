@@ -2,6 +2,7 @@ import test from "ava";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 
+import { Manager } from "../src/lib/manager";
 import { ManagerAPIHandler } from "../src/lib/api/manager-api";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
@@ -67,6 +68,10 @@ test("ManagerAPIHandler registers the separated v1 Manager API route surface", a
     t.true(recorder.has("use", "/api/v1/sth/:id"));
     t.true(recorder.has("op", "/api/v1/disconnect", "post"));
     t.false(recorder.has("use", "/api/v1/s3/"));
+    t.true(recorder.has("get", "/api/v2/version"));
+    t.true(recorder.has("get", "/api/v2/config"));
+    t.true(recorder.has("get", "/api/v2/verser2/trust"));
+    t.true(recorder.has("get", "/api/v2/load"));
 
     const deleteSthIndex = recorder.routes.findIndex(route => route.kind === "op" && route.path === "/api/v1/sth/:id" && route.method === "delete");
     const sthProxyIndex = recorder.routes.findIndex(route => route.kind === "use" && route.path === "/api/v1/sth/:id");
@@ -97,11 +102,17 @@ test("ManagerAPIHandler unit handlers return version config and paginated list d
     const version = (recorder.require("get", "/api/v1/version").handler as Function)({});
     const config = (recorder.require("get", "/api/v1/config").handler as Function)({});
     const list = (recorder.require("get", "/api/v1/list").handler as Function)({ query: { offset: "-1", limit: "0" } });
+    const v2Version = await (recorder.require("get", "/api/v2/version").handler as Function)({});
+    const v2Config = await (recorder.require("get", "/api/v2/config").handler as Function)({});
+    const v2Load = await (recorder.require("get", "/api/v2/load").handler as Function)({});
 
     t.deepEqual(version, { service: "@scramjet/manager", apiVersion: "v1", version: "0.0.0-test", build: "test-build" });
     t.deepEqual(config, { config: { apiBase: "/api/v1" } });
     t.deepEqual(list, { hosts: [{ id: "sth-1" }] });
     t.deepEqual(calls, [{ offset: 0, limit: 100 }]);
+    t.deepEqual(v2Version, { service: "@scramjet/manager", apiVersion: "v2", version: "0.0.0-test", build: "test-build" });
+    t.deepEqual(v2Config, { config: { apiBase: "/api/v1" } });
+    t.deepEqual(v2Load, {});
 });
 
 test("ManagerAPIHandler unit handlers cover STH info and delete behavior", async t => {
@@ -218,4 +229,18 @@ test("ManagerAPIHandler unit handlers cover registration disconnect and S3 mount
         managerId: "manager-hotwire",
         disconnected: [{ sthId: "sth-1", reason: "limit_exceeded" }]
     });
+});
+
+test("Manager setupHealthEndpoint registers v1 and v2 health routes", async t => {
+    const recorder = new RouteRecorder();
+    const healthCheck = { getHealthCheckInfo: () => ({ healthy: true }) };
+    const manager = {
+        _apiRouter: recorder.asApiRoute(),
+        _config: { apiBase: "/api/v1" }
+    };
+
+    Manager.prototype.setupHealthEndpoint.call(manager as any, healthCheck as any);
+
+    t.deepEqual((recorder.require("get", "/api/v1/health").handler as Function)({}), { healthy: true });
+    t.deepEqual(await (recorder.require("get", "/api/v2/health").handler as Function)({}), { healthy: true });
 });

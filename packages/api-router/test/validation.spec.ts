@@ -23,6 +23,22 @@ test("validates route request locations with Zod schemas", t => {
     });
 });
 
+test("preserves unschematized route request locations", t => {
+    const request = validateRouteRequest({}, {
+        params: { id: "seq-1" },
+        query: { limit: "10" },
+        headers: { authorization: "Bearer token" },
+        body: { enabled: true }
+    });
+
+    t.deepEqual(request, {
+        params: { id: "seq-1" },
+        query: { limit: "10" },
+        headers: { authorization: "Bearer token" },
+        body: { enabled: true }
+    });
+});
+
 test("validates route responses", t => {
     const response = validateRouteResponse({ response: z.object({ ok: z.boolean() }) }, { ok: true });
 

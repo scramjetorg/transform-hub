@@ -11,7 +11,7 @@ export type RouteSchemas = {
     response?: z.ZodTypeAny;
 };
 
-export type InferSchema<TSchema> = TSchema extends z.ZodTypeAny ? z.infer<TSchema> : undefined;
+export type InferSchema<TSchema> = TSchema extends z.ZodTypeAny ? z.infer<TSchema> : unknown;
 
 export type RouteRequest<TSchemas extends RouteSchemas = RouteSchemas> = {
     params: InferSchema<TSchemas["params"]>;
@@ -58,6 +58,10 @@ export function normalizePath(path: string): string {
 
 export function joinPaths(basePath: string, path: string): string {
     return normalizePath(`${normalizePath(basePath)}/${normalizePath(path)}`);
+}
+
+export function replacePathVersion(path: string, version: string): string {
+    return normalizePath(path).replace(/\/v\d+(?=\/|$)/, `/${version}`);
 }
 
 export function routeId(method: HttpMethod, fullPath: string): string {

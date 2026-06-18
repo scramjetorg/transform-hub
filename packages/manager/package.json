@@ -17,6 +17,7 @@
   "dependencies": {
     "@scramjet/adapter-process": "^1.1.0",
     "@scramjet/api-client": "^1.1.0",
+    "@scramjet/api-router": "^1.1.0",
     "@scramjet/api-server": "^1.1.0",
     "@scramjet/client-utils": "^1.1.0",
     "@scramjet/config": "^1.1.0",

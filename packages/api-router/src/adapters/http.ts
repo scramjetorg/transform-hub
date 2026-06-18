@@ -5,6 +5,8 @@ import { RouterDefinition } from "../router";
 import { executeRoutePipeline } from "../hooks";
 import { validateRouteRequest, validateRouteResponse } from "../validation";
 
+export type HttpRouteTarget = Pick<APIRoute, "get" | "op">;
+
 function mapRequest(req: ParsedMessage): Partial<RouteRequest> {
     return {
         params: req.params,
@@ -29,16 +31,24 @@ function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put"
     return method === "post" || method === "put" || method === "patch" || method === "delete";
 }
 
-export function registerHttpRoutes(api: APIRoute, router: RouterDefinition): void {
+export function registerHttpRoutes(api: HttpRouteTarget, router: RouterDefinition): void {
+    const manifest = router.collect();
+
     for (const route of router.definitions()) {
+        const entry = manifest.routes.find(item => item.method === route.method && item.path === route.path);
+
+        if (!entry) {
+            continue;
+        }
+
         if (route.kind === "upstream" || route.kind === "downstream" || route.kind === "duplex") {
             continue;
         }
 
         if (route.method === "get") {
-            api.get(route.path, req => executeHttpRoute(route, req));
+            api.get(entry.fullPath, req => executeHttpRoute(route, req));
         } else if (isOpMethod(route.method)) {
-            api.op(route.method, route.path, (req, res) => executeHttpRoute(route, req, res));
+            api.op(route.method, entry.fullPath, (req, res) => executeHttpRoute(route, req, res));
         }
     }
 }

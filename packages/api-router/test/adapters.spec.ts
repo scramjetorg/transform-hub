@@ -28,9 +28,9 @@ test("registerHttpRoutes registers get and op handlers on APIRoute", async t => 
 
     registerHttpRoutes(api, router);
 
-    t.deepEqual(calls, ["get:/health", "post:/sequence"]);
-    t.deepEqual(await handlers.get("get:/health")!({ headers: {} }), { ok: true });
-    t.deepEqual(await handlers.get("post:/sequence")!({ headers: {}, body: { id: "seq" } }), { id: "seq" });
+    t.deepEqual(calls, ["get:/api/v2/health", "post:/api/v2/sequence"]);
+    t.deepEqual(await handlers.get("get:/api/v2/health")!({ headers: {} }), { ok: true });
+    t.deepEqual(await handlers.get("post:/api/v2/sequence")!({ headers: {}, body: { id: "seq" } }), { id: "seq" });
 });
 
 test("registerVerser2Routes creates route registrations from manifest entries", async t => {

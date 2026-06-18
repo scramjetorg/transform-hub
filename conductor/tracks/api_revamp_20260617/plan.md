@@ -426,15 +426,27 @@
     - [x] Record final coverage results in `plan.md`
       - Follow-up validation passed: `npm --prefix packages/api-server test` (48 tests), `npm --prefix packages/api-router test` (23 tests), `npm --prefix packages/host test` (183 tests, 9 skipped), `npm --prefix packages/manager test` (131 tests), `npm --prefix packages/multi-manager test` (40 tests), Manager and MultiManager build typechecks, and narrowed ESLint on touched TypeScript files.
       - No BDD tests were created, modified, or run for this coverage follow-up.
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: v1 API Behavioral Unit Coverage and Gaps' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 6: v1 API Behavioral Unit Coverage and Gaps' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 6 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
+    - Manual verification approved by user by instructing continuation to further track work after pushed Phase 6 coverage follow-up.
 
 ## Phase 7: v2 Middleware and Low-Risk Route Exposure
 
-- [ ] Task: Create v2 API integration points
-    - [ ] Add v2 registration locations for Host, Manager, MultiManager, and CSI/Instance without changing v1 route registration
-    - [ ] Configure v2 availability over normal HTTP and verser2 broker routing
-    - [ ] Keep v1 `/api/v1` behavior untouched
+- [~] Task: Create v2 API integration points
+    - [x] Add v2 registration locations for Host, Manager, MultiManager, and CSI/Instance without changing v1 route registration
+      - Added Host v2 read-route registration through `@scramjet/api-router` for `/api/v2/load-check`, `/api/v2/version`, `/api/v2/config`, and `/api/v2/status`.
+      - Added Host CSI/Instance v2 integration mount at `/api/v2/instance/:id`, reusing the existing per-instance relative router and preserving `/api/v1/instance/:id` behavior.
+      - Added Manager v2 read-route registration for `/api/v2/version`, `/api/v2/config`, `/api/v2/verser2/trust`, `/api/v2/load`, and `/api/v2/health`.
+      - Added MultiManager v2 read-route registration for `/api/v2/version`, `/api/v2/info`, `/api/v2/load-check`, `/api/v2/list`, `/api/v2/health`, and `/api/v2/verser2/trust/:id?`.
+    - [~] Configure v2 availability over normal HTTP and verser2 broker routing
+      - Normal HTTP availability is wired through `registerHttpRoutes()` on the existing Host, Manager, and MultiManager API surfaces.
+      - Fixed `registerHttpRoutes()` to honor `RouterDefinition.basePath`, matching the existing verser2 route manifest full-path behavior.
+      - Concrete runtime broker exposure for v2 route manifests remains to be connected in the verser2-specific portion of this phase.
+    - [x] Keep v1 `/api/v1` behavior untouched
+      - Updated hotwire tests assert v1 routes remain registered while v2 routes are added separately.
+      - Validation for this slice passed: `npm --prefix packages/api-router test` (24 tests), `npm --prefix packages/host test` (183 tests, 9 skipped), `npm --prefix packages/manager test` (132 tests), `npm --prefix packages/multi-manager test` (40 tests), and build typechecks for api-router, Host, Manager, and MultiManager.
+      - Narrowed ESLint passed for changed source and project-included test files with one preexisting Manager complexity warning; api-router test fixture files remain excluded by root ESLint project configuration.
+      - Test-structure decision before follow-up cleanup: v2 tests must be separate from v1 tests. Existing v1 tests must remain explicit compatibility checks; v2 assertions should be additive tests, not replacements or renamed v1 tests.
 - [ ] Task: Migrate middleware behavior into v2 hooks first
     - [ ] Implement CORS/options behavior through the hook pipeline
     - [ ] Implement headers and request logging behavior through hooks where appropriate

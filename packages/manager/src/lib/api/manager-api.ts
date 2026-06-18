@@ -1,4 +1,5 @@
 import { CeroError } from "@scramjet/api-server";
+import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { MRestAPI, ParsedMessage } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
@@ -186,5 +187,36 @@ export class ManagerAPIHandler {
                 }))
             };
         });
+
+        this.attachV2Routes();
+    }
+
+    attachV2Routes() {
+        const manager = this.manager;
+        const v2ApiBase = replacePathVersion(manager.config.apiBase, "v2");
+        const router = Router.create({ basePath: v2ApiBase })
+            .route(Router.get("/version", {
+                id: "manager.v2.version",
+                handler: (): MRestAPI.GetVersionResponse => ({
+                    service: manager.service,
+                    apiVersion: "v2",
+                    version: manager.version,
+                    build: manager.build,
+                })
+            }))
+            .route(Router.get("/config", {
+                id: "manager.v2.config",
+                handler: (): MRestAPI.GetConfigResponse => ({ config: manager.publicConfig })
+            }))
+            .route(Router.get("/verser2/trust", {
+                id: "manager.v2.verser2.trust",
+                handler: () => getManagerVerser2TrustExport(manager.config)
+            }))
+            .route(Router.get("/load", {
+                id: "manager.v2.load",
+                handler: (): Promise<MRestAPI.GetLoadResponse> => manager.apiLoadCheck.getLoadCheck()
+            }));
+
+        registerHttpRoutes(manager.router, router);
     }
 }
