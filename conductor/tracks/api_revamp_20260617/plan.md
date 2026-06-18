@@ -574,7 +574,7 @@
     - [x] Create the scoped Phase 7.5 checkpoint commit and record the commit SHA in `plan.md`
       - Phase 7.5 checkpoint commit: `d37178b5`.
     - [x] Push `conductor/api-revamp-20260617`, ensure PR #13 is updated, then ask for manual verification before Phase 8
-      - Pushed Phase 7.5 commits to PR #13: `d37178b5`, `74bee3fc`, `ca173f4d`, `adbdf05a`, and `cb389b36`.
+      - Pushed Phase 7.5 commits to PR #13: `d37178b5`, `74bee3fc`, `ca173f4d`, `adbdf05a`, `cb389b36`, and `6d2acb1c`.
 
 ## Phase 8: `@scramjet/rest-api2` and Host-Owned v2 Router Migration
 
