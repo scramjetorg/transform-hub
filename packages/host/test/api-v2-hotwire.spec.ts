@@ -120,8 +120,12 @@ test("HostAPIHandler local v2 Sequence handlers adapt existing Host behavior", a
     const calls: any[] = [];
     const host = {
         ...createHostStub(),
-        deleteSequence: async (id: string, force: boolean) => calls.push({ id, force }),
-        startSequence: async () => ({ id: "inst-started", limits: {} }),
+        deleteSequence: async (id: string, force: boolean) => calls.push({ type: "delete", id, force }),
+        startSequence: async (id: string, payload: unknown) => {
+            calls.push({ type: "start", id, payload });
+
+            return { id: "inst-started", limits: {} };
+        },
         auditor: { auditInstanceStart: () => undefined },
         getSequence: (id: string) => ({ id, status: "ready" }),
         getSequenceInstances: (id: string) => [{ id: "inst-1", sequenceId: id, status: "running" }]
@@ -136,15 +140,18 @@ test("HostAPIHandler local v2 Sequence handlers adapt existing Host behavior", a
         operation: { id: "seq-1", status: "completed" },
         result: { sequenceId: "seq-1", deleted: true }
     });
-    t.deepEqual(calls, [{ id: "seq-1", force: true }]);
     t.deepEqual(await (recorder.require("op", "/api/v2/sequences/:sequenceId/instances", "post").handler as Function)({
         params: { sequenceId: "seq-1" },
-        body: {},
+        body: { config: { value: 1 } },
         headers: {}
     }), {
         operation: { id: "inst-started", status: "completed" },
         result: { instance: { id: "inst-started" } }
     });
+    t.deepEqual(calls, [
+        { type: "delete", id: "seq-1", force: true },
+        { type: "start", id: "seq-1", payload: { config: { value: 1 } } }
+    ]);
     t.deepEqual(await (recorder.require("get", "/api/v2/sequences/:sequenceId").handler as Function)({
         params: { sequenceId: "seq-1" }
     }), { sequence: { id: "seq-1", status: "ready" } });

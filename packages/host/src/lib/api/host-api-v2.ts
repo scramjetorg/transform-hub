@@ -1,23 +1,15 @@
-import { APIExpose, OpResponse, ParsedMessage } from "@scramjet/types";
+import { APIExpose } from "@scramjet/types";
 import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { RestAPI2 } from "@scramjet/rest-api2";
 import { z } from "zod";
-import { ReasonPhrases } from "http-status-codes";
 
 import { IHost } from "../types";
-
-export type HostAPIV2Support = {
-    handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<Record<string, unknown>>>;
-    handleStartSequence(req: ParsedMessage): Promise<OpResponse<Record<string, unknown>>>;
-    toRestOperation<TOutput>(response: OpResponse<Record<string, unknown>>, result: TOutput): RestAPI2.OpResponse<TOutput>;
-};
 
 export class HostAPIV2Handler {
     constructor(
         private api: APIExpose,
         private host: IHost,
-        private version: string,
-        private support: HostAPIV2Support
+        private version: string
     ) {}
 
     get v2ApiBase() {
@@ -114,18 +106,38 @@ export class HostAPIV2Handler {
                 schemas: { response: objectResponse },
                 handler: async ({ params, headers }): Promise<RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>> => {
                     const id = sequenceId(params);
-                    const response = await this.support.handleDeleteSequence({ params: { id }, headers } as unknown as ParsedMessage);
+                    const force = Boolean((headers as Record<string, unknown> | undefined)?.["x-seq-kill-inst"]);
 
-                    return this.support.toRestOperation(response, { sequenceId: id, deleted: response.opStatus === ReasonPhrases.OK });
+                    if (!id) {
+                        return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id);
+                    }
+
+                    try {
+                        await host.deleteSequence(id, force);
+
+                        return this.completedOperation(id, { sequenceId: id, deleted: true });
+                    } catch (error) {
+                        return this.failedOperation("DELETE_SEQUENCE_FAILED", this.errorMessage(error), id);
+                    }
                 }
             }))
             .route(Router.post("/:sequenceId/instances", {
                 schemas: { response: objectResponse },
-                handler: async ({ params, body, headers }): Promise<RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>> => {
+                handler: async ({ params, body }): Promise<RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>> => {
                     const id = sequenceId(params);
-                    const response = await this.support.handleStartSequence({ params: { id }, body, headers } as unknown as ParsedMessage);
 
-                    return this.support.toRestOperation(response, { instance: { id: String((response as { id?: string }).id || "") } });
+                    if (!id) {
+                        return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id);
+                    }
+
+                    try {
+                        const instance = await host.startSequence(id, body as any);
+                        const instanceId = "id" in instance ? String(instance.id) : "";
+
+                        return this.completedOperation(instanceId || id, { instance: { id: instanceId } });
+                    } catch (error) {
+                        return this.failedOperation("START_SEQUENCE_FAILED", this.errorMessage(error), id);
+                    }
                 }
             }))
             .route(Router.get("/:sequenceId", {
@@ -165,5 +177,23 @@ export class HostAPIV2Handler {
 
     attach() {
         registerHttpRoutes(this.api, this.createV2Router());
+    }
+
+    private completedOperation<TOutput>(id: string, result: TOutput): RestAPI2.OpResponse<TOutput> {
+        return {
+            operation: { id, status: "completed" },
+            result
+        };
+    }
+
+    private failedOperation<TOutput>(code: string, message: string, id: string): RestAPI2.OpResponse<TOutput> {
+        return {
+            operation: { id: id || code, status: "failed" },
+            error: { code, message }
+        };
+    }
+
+    private errorMessage(error: unknown): string {
+        return error instanceof Error ? error.message : String(error);
     }
 }
