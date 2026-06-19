@@ -64,6 +64,7 @@ export interface ISTHConnectionStore {
     getById(id: string): ISTHController | undefined;
     getByAccessKey(accessKey: string): ISTHController[];
     add(controller: ISTHController): void;
+    remove(id: string): void;
     delete(id: string, force: boolean): Promise<void>;
 }
 

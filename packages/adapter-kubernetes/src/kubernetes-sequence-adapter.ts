@@ -104,7 +104,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
         const compressedOut = createWriteStream(path.join(this.sequenceWorkdir, `${id}.tar.gz`));
 
         // @TODO unpack only package.json
-        const uncompressingInput = x({ z: true, C: sequenceDir });
+        const uncompressingInput = x({ cwd: sequenceDir });
 
         stream.pipe(uncompressingInput);
         stream.pipe(compressedOut);

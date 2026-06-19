@@ -39,6 +39,7 @@ type STHInformation = {
 
 type Events = {
     connect: () => void,
+    communicationReady: () => void,
     id: (id: string) => void;
     event: (event: SpaceEventMessageData) => void;
     disconnect: (statusCode: number, given_up: boolean) => void;
@@ -342,7 +343,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             [CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]
         );
 
-        this.emit("connect");
+        this.emit("communicationReady");
 
         return new Promise((resolve, reject) => {
             duplex.on("end", () => {

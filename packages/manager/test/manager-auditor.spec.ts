@@ -19,6 +19,7 @@ function mockConnectionStore(
         getById: (id: string) => controllers.find((c) => c.id === id),
         getByAccessKey: (_key: string) => [],
         add: (_ctrl: ISTHController) => {},
+        remove: (_id: string) => {},
         delete: async (_id: string, _force: boolean) => {},
         getSTHControllersInfo: () => controllers.map((c) => ({
             id: c.id,

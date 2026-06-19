@@ -57,6 +57,7 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
 
 export function createVerser2HostOptions(config: ManagerVerser2Config): VerserHostOptions {
     return {
+        hostId: `${config.localBroker.peerId}.host`,
         host: config.host.bindHost,
         port: config.host.bindPort,
         tls: createVerser2HostTlsOptions(config)
