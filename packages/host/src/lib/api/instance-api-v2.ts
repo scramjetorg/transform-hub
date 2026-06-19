@@ -1,9 +1,8 @@
 import { IObjectLogger, ParsedMessage } from "@scramjet/types";
 import { Router, RouterDefinition } from "@scramjet/api-router";
-import { RestAPI2 } from "@scramjet/rest-api2";
+import { RestAPI2, RestAPI2Routes, getRestAPI2Route } from "@scramjet/rest-api2";
 import { HostError } from "@scramjet/model";
 import { IncomingHttpHeaders } from "http";
-import { z } from "zod";
 import EventEmitter from "events";
 
 import { ICSI } from "../types";
@@ -16,77 +15,56 @@ export class InstanceAPIV2 {
     ) {}
 
     createRouter(): RouterDefinition {
+        const contract = RestAPI2Routes.instance.router();
+        const route = (method: "get" | "post" | "put" | "patch" | "delete", path: string) => getRestAPI2Route(contract, method, path);
         const router = Router.create()
-            .route(Router.get("/", {
-                schemas: { response: z.object({}).passthrough() },
+            .route({ ...route("get", "/"),
                 handler: () => this.handleInfo()
-            }))
-            .route(Router.route("delete", "/", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("delete", "/"),
                 handler: ({ body }) => this.handleDelete({ body } as ParsedMessage)
-            }))
-            .route(Router.route("patch", "/", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("patch", "/"),
                 handler: ({ body }) => this.handlePatch({ body } as ParsedMessage)
-            }))
-            .route(Router.get("/stdio", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("get", "/stdio"),
                 handler: () => this.handleStdio()
-            }))
-            .route(Router.get("/health", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("get", "/health"),
                 handler: (): RestAPI2.HealthCheckInfo<RestAPI2.Instance> => ({
                     scope: { id: this.csi.id, status: this.csi.status },
                     healthy: this.csi.isRunning,
                     details: this.csi.lastStats
                 })
-            }))
-            .route(Router.get("/output", {
-                kind: "upstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("get", "/output"),
                 handler: () => this.csi.getOutputStream()
-            }))
-            .route(Router.get("/logs", {
-                kind: "upstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("get", "/logs"),
                 handler: () => this.csi.getLogStream()
-            }))
-            .route(Router.get("/monitoring", {
-                kind: "upstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("get", "/monitoring"),
                 handler: () => this.csi.getMonitoringStream()
-            }))
-            .route(Router.get("/stdio/:fd", {
-                kind: "upstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("get", "/stdio/:fd"),
                 handler: ({ params }) => this.getReadableStdio(Number((params as { fd?: string }).fd))
-            }))
-            .route(Router.route("post", "/input", {
-                kind: "downstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("post", "/input"),
                 handler: ({ headers }) => this.handleInput({ headers: headers || {} })
-            }))
-            .route(Router.route("put", "/stdio/:fd", {
-                kind: "downstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("put", "/stdio/:fd"),
                 handler: ({ params, headers }) => this.handleStdioInput(Number((params as { fd?: string }).fd), { headers: headers || {} })
-            }))
-            .route(Router.get("/events/:name", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("get", "/events/:name"),
                 handler: ({ params }) => this.handleEvent(String((params as { name?: string }).name || ""), false)
-            }))
-            .route(Router.get("/events/:name/once", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("get", "/events/:name/once"),
                 handler: ({ params }) => this.handleEvent(String((params as { name?: string }).name || ""), true)
-            }))
-            .route(Router.route("post", "/events", {
-                schemas: { response: z.object({}).passthrough() },
+            })
+            .route({ ...route("post", "/events"),
                 handler: ({ body }) => this.handleSendEvent(body)
-            }))
-            .route(Router.route("post", "/rpc/*", {
-                kind: "duplex",
-                schemas: { response: z.unknown() }
-            }));
+            })
+            .route(route("post", "/rpc/*"));
 
         return router;
     }
@@ -131,7 +109,7 @@ export class InstanceAPIV2 {
 
     private async handlePatch(req: ParsedMessage): Promise<RestAPI2.OpResponse<RestAPI2.InstanceParametersResponse>> {
         const patch = (req.body || {}) as RestAPI2.InstanceParametersPatch;
-        const parameters = { ...(patch.parameters || {}) };
+        const parameters = { ...patch.parameters || {} };
 
         if (patch.monitoringRate !== undefined && typeof patch.monitoringRate !== "number") {
             return this.failedOperation("INVALID_MONITORING_RATE", "Monitoring rate must be a number");

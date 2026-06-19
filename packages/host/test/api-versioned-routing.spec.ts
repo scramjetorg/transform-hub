@@ -3,8 +3,9 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 
 import { ApiClientRequest, createApiClient, registerVerser2Routes } from "@scramjet/api-router";
-import { createRestAPI2Client } from "@scramjet/rest-api2";
-import { HostAPIHandler } from "../src/lib/api/host-api";
+import { RestAPI2Routes, createRestAPI2Client } from "@scramjet/rest-api2";
+import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
+import { HostAPIV2Handler } from "../src/lib/api/host-api-v2";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
 function createHostStub(): any {
@@ -41,12 +42,15 @@ function createHostStub(): any {
 }
 
 test("Host v1 compatibility and v2 mounted routes are reachable through verser2", async t => {
-    const handler = new HostAPIHandler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3", "build") as any;
+    const api = new RouteRecorder().asApiExpose();
+    const host = createHostStub();
+    const v1 = new HostAPIV1Handler(api, host, "1.2.3", "build") as any;
+    const v2 = new HostAPIV2Handler(api, host, "1.2.3");
     const registrations: any[] = [];
     const adapter = { register: (registration: any) => registrations.push(registration) };
 
-    registerVerser2Routes(adapter, handler.createV1CompatibilityRouter());
-    registerVerser2Routes(adapter, handler.createV2Router());
+    registerVerser2Routes(adapter, v1.createV1CompatibilityRouter());
+    registerVerser2Routes(adapter, v2.createV2Router());
 
     t.deepEqual(registrations.slice(0, 8).map(registration => registration.fullPath), [
         "/api/v1/load-check",
@@ -73,7 +77,7 @@ test("Host v1 compatibility and v2 mounted routes are reachable through verser2"
 });
 
 test("Host v2 manifest constructs a generic client", async t => {
-    const handler = new HostAPIHandler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3", "build") as any;
+    const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3");
     const client = createApiClient(handler.createV2Router().collect(), {
         async request<T>(request: ApiClientRequest) {
             return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
@@ -88,7 +92,7 @@ test("Host v2 manifest constructs a generic client", async t => {
 });
 
 test("Host-owned Hub v2 routes are mounted locally and reachable through verser2 and RestAPI2 client", async t => {
-    const handler = new HostAPIHandler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3", "build") as any;
+    const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3");
     const registrations: any[] = [];
     const adapter = { register: (registration: any) => registrations.push(registration) };
 
@@ -132,4 +136,17 @@ test("Host-owned Hub v2 routes are mounted locally and reachable through verser2
         headers: {},
         body: { route: "GET /api/v2/status" }
     });
+});
+
+test("Host v2 expanded manifest exposes shared instance contract paths without local registration", t => {
+    const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), createHostStub(), "1.2.3");
+    const runtimeManifest = handler.createV2Router().collect();
+    const expandedManifest = handler.createV2Router().collect({ expandResolvers: true });
+
+    t.false(runtimeManifest.routes.some(route => route.fullPath === "/api/v2/instances/:instanceId/stdio"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/instances/:instanceId/stdio"));
+    t.deepEqual(
+        RestAPI2Routes.host.router("/api/v2").collect({ expandResolvers: true }).routes.map(route => route.fullPath),
+        expandedManifest.routes.map(route => route.fullPath)
+    );
 });

@@ -38,6 +38,24 @@ test("loads manifests from schema-mode module shapes", t => {
     t.throws(() => loadManifestFromSchemaModule({}), { message: "Schema module does not export a route manifest" });
 });
 
+test("generates OpenAPI paths for resolver-expanded virtual routes", t => {
+    const target = Router.create({ basePath: "/api/v2" }).get("/load", {
+        schemas: { response: z.object({ load: z.number() }) }
+    });
+    const manifest = Router.create({ basePath: "/api/v2" })
+        .resolve("/hubs/:hubId", {
+            schemas: { params: z.object({ hubId: z.string() }) },
+            targetDefinitions: { owner: "host", definitions: target, implementerBasePath: "/api/v2" },
+            handler: () => undefined
+        })
+        .collect({ expandResolvers: true });
+    const doc = generateOpenApi(manifest);
+    const operation = doc.paths["/api/v2/hubs/:hubId/load"].get as any;
+
+    t.is(operation.operationId, "GET /api/v2/hubs/:hubId/load");
+    t.deepEqual(operation.parameters.map((parameter: any) => parameter.name), ["hubId"]);
+});
+
 test("schema-mode fixture manifest can construct a client", async t => {
     const module = await import("./fixtures/schema-api");
     const manifest = loadManifestFromSchemaModule(module);

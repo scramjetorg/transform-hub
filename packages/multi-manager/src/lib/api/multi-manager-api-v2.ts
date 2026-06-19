@@ -1,4 +1,5 @@
 import { RouteRequest, Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
+import { RestAPI2Routes, RestAPI2Schemas, getRestAPI2Route } from "@scramjet/rest-api2";
 import { MMRestAPI } from "@scramjet/types";
 import { z } from "zod";
 
@@ -14,10 +15,12 @@ export class MultiManagerAPIV2Handler {
 
     createV2Router(): RouterDefinition {
         const multiManager = this.multiManager;
-        const objectResponse = z.object({}).passthrough();
+        const objectResponse = RestAPI2Schemas.empty;
+        const contract = RestAPI2Routes.multiManager.router(this.v2ApiBase);
+        const route = (method: "get", path: string) => getRestAPI2Route(contract, method, path);
 
         return Router.create({ basePath: this.v2ApiBase })
-            .route(Router.get("/version", {
+            .route({ ...route("get", "/version"),
                 id: "multi-manager.v2.version",
                 schemas: {
                     response: z.object({
@@ -33,8 +36,8 @@ export class MultiManagerAPIV2Handler {
                     version: multiManager.version,
                     build: multiManager.build,
                 })
-            }))
-            .route(Router.get("/info", {
+            })
+            .route({ ...route("get", "/info"),
                 id: "multi-manager.v2.info",
                 schemas: {
                     response: z.object({
@@ -50,39 +53,34 @@ export class MultiManagerAPIV2Handler {
                     id: multiManager.id,
                     managersCount: multiManager.managersStore.size,
                 })
-            }))
-            .route(Router.get("/load", {
+            })
+            .route({ ...route("get", "/load"),
                 id: "multi-manager.v2.load",
                 schemas: { response: z.unknown() },
                 handler: async (): Promise<MMRestAPI.GetLoadCheckResponse> => multiManager.loadCheck.getLoadCheck()
-            }))
-            .route(Router.get("/list", {
+            })
+            .route({ ...route("get", "/list"),
                 id: "multi-manager.v2.list",
                 schemas: { response: z.array(objectResponse) },
                 handler: () => multiManager.handleListManagersRequest()
-            }))
-            .route(Router.get("/health", {
+            })
+            .route({ ...route("get", "/health"),
                 id: "multi-manager.v2.health",
-                schemas: { response: objectResponse },
                 handler: () => multiManager.healthCheck.getHealthCheckInfo()
-            }))
-            .route(Router.get("/verser2/trust/:id?", {
+            })
+            .route({ ...route("get", "/verser2/trust/:id?"),
                 id: "multi-manager.v2.verser2.trust",
                 schemas: {
                     params: z.object({ id: z.string().optional() }).optional(),
                     response: objectResponse
                 },
                 handler: (req: RouteRequest) => this.getTrustExport(req)
-            }))
+            })
             .resolve("/managers/:managerId", {
                 id: "multi-manager.v2.manager.forward",
                 description: "Resolve a selected Manager to its verser2 route domain for Manager-owned v2 routes.",
-                schemas: { params: z.object({ managerId: z.string() }) },
-                targetDefinitions: {
-                    owner: "mgr",
-                    mountPath: "/managers/:managerId",
-                    implementerBasePath: this.v2ApiBase
-                },
+                schemas: contract.resolvers()[0].schemas,
+                targetDefinitions: contract.resolvers()[0].targetDefinitions,
                 handler: ({ params, remainingPath }) => {
                     const managerId = (params as { managerId: string }).managerId;
                     const manager = this.multiManager.managersStore.getById(managerId);

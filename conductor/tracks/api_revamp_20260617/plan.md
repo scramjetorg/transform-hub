@@ -874,45 +874,50 @@
 
 ## Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition
 
-- [ ] Task: Extract shared handlerless v2 route contracts
-    - [ ] Add shared v2 route/Zod contract modules under `packages/rest-api2`.
-    - [ ] Add `zod` as a direct dependency of `@scramjet/rest-api2` if not already present.
-    - [ ] Define handlerless route definitions for MultiManager-owned routes, Manager-owned routes, Hub-owned routes, Sequence-owned routes, Instance-owned routes, stdio routes, RPC route boundaries, and audit route families.
-    - [ ] Keep runtime handlers out of `@scramjet/rest-api2`.
-    - [ ] Ensure Host/Manager/MultiManager packages do not import each other for route schemas.
-- [ ] Task: Refactor v2 implementations to bind handlers to shared contracts
-    - [ ] Refactor Host v2 routes to reuse shared `@scramjet/rest-api2` route definitions and attach Host-local handlers.
-    - [ ] Refactor Instance/CSI v2 routes to reuse shared route definitions and attach Instance-local handlers.
-    - [ ] Refactor Manager v2 routes to reuse shared route definitions and attach Manager-local handlers.
-    - [ ] Refactor MultiManager v2 routes to reuse shared route definitions and attach MultiManager-local handlers.
-    - [ ] Preserve existing runtime behavior and v1 compatibility.
-- [ ] Task: Type resolver target definitions
-    - [ ] Replace opaque `targetDefinitions?: unknown` with a typed resolver target definition model.
-    - [ ] Support target definitions as `RouterDefinition` or collected `RouteManifest`.
-    - [ ] Include metadata for route owner, mount path, implementer base path, and public/client path composition.
-    - [ ] Preserve existing local resolver dispatch behavior for Host instance-local resolution.
-    - [ ] Preserve verser2 redirect behavior for cross-node resolution.
-- [ ] Task: Add resolver-expanded manifest composition
-    - [ ] Add manifest collection mode for schema/client/OpenAPI expansion of resolver target definitions.
-    - [ ] Compose public paths from resolver mount paths plus target implementer route paths.
-    - [ ] Support nested composition such as MultiManager `/managers/:managerId` + Manager `/hubs/:hubId` + Host `/load` becoming `/api/v2/managers/:managerId/hubs/:hubId/load`.
-    - [ ] Do not register resolver-expanded virtual routes as local HTTP handlers.
-    - [ ] Ensure runtime registration still registers only local routes and resolver middleware.
-- [ ] Task: Update client/OpenAPI generation
-    - [ ] Update generic client manifest generation to include resolver-expanded virtual routes.
-    - [ ] Update OpenAPI generation to include resolver-expanded public v2 paths.
-    - [ ] Ensure generated paths use shared Zod schemas from `@scramjet/rest-api2`.
-    - [ ] Add tests proving Hub paths are visible through Manager and MultiManager manifests.
-    - [ ] Add tests proving no Host package import is required by Manager/MultiManager.
-- [ ] Task: Phase 9.5 validation
-    - [ ] Run `@scramjet/rest-api2` tests/typecheck.
-    - [ ] Run `@scramjet/api-router` tests/typecheck.
-    - [ ] Run focused Host v2 API tests.
-    - [ ] Run focused Manager v2 API tests.
-    - [ ] Run focused MultiManager v2 API tests.
-    - [ ] Run OpenAPI/client manifest tests for nested resolver-expanded routes.
-    - [ ] Run narrowed lint for changed source files.
-    - [ ] Record validation results and any deferred full BDD checks.
+- [x] Task: Extract shared handlerless v2 route contracts
+    - [x] Add shared v2 route/Zod contract modules under `packages/rest-api2`.
+    - [x] Add `zod` as a direct dependency of `@scramjet/rest-api2` if not already present.
+    - [x] Define handlerless route definitions for MultiManager-owned routes, Manager-owned routes, Hub-owned routes, Sequence-owned routes, Instance-owned routes, stdio routes, RPC route boundaries, and audit route families.
+    - [x] Keep runtime handlers out of `@scramjet/rest-api2`.
+    - [x] Ensure Host/Manager/MultiManager packages do not import each other for route schemas.
+      - Added `RestAPI2Schemas` and `RestAPI2Routes` in `@scramjet/rest-api2`; routes are handlerless and cover the migrated v2 surfaces plus nested resolver target surfaces.
+- [x] Task: Refactor v2 implementations to bind handlers to shared contracts
+    - [x] Refactor Host v2 routes to reuse shared `@scramjet/rest-api2` route definitions and attach Host-local handlers.
+    - [x] Refactor Instance/CSI v2 routes to reuse shared route definitions and attach Instance-local handlers.
+    - [x] Refactor Manager v2 routes to reuse shared route definitions and attach Manager-local handlers.
+    - [x] Refactor MultiManager v2 routes to reuse shared route definitions and attach MultiManager-local handlers.
+    - [x] Preserve existing runtime behavior and v1 compatibility.
+      - Runtime v2 routers now spread shared handlerless `@scramjet/rest-api2` route definitions and attach only package-local handlers. Resolver handlers remain runtime-local.
+- [x] Task: Type resolver target definitions
+    - [x] Replace opaque `targetDefinitions?: unknown` with a typed resolver target definition model.
+    - [x] Support target definitions as `RouterDefinition` or collected `RouteManifest`.
+    - [x] Include metadata for route owner, mount path, implementer base path, and public/client path composition.
+    - [x] Preserve existing local resolver dispatch behavior for Host instance-local resolution.
+    - [x] Preserve verser2 redirect behavior for cross-node resolution.
+- [x] Task: Add resolver-expanded manifest composition
+    - [x] Add manifest collection mode for schema/client/OpenAPI expansion of resolver target definitions.
+    - [x] Compose public paths from resolver mount paths plus target implementer route paths.
+    - [x] Support nested composition such as MultiManager `/managers/:managerId` + Manager `/hubs/:hubId` + Host `/load` becoming `/api/v2/managers/:managerId/hubs/:hubId/load`.
+    - [x] Do not register resolver-expanded virtual routes as local HTTP handlers.
+    - [x] Ensure runtime registration still registers only local routes and resolver middleware.
+      - Added opt-in `collect({ expandResolvers: true })`; default `collect()` and HTTP/verser2 registration remain runtime-local.
+- [x] Task: Update client/OpenAPI generation
+    - [x] Update generic client manifest generation to include resolver-expanded virtual routes.
+    - [x] Update OpenAPI generation to include resolver-expanded public v2 paths.
+    - [x] Ensure generated paths use shared Zod schemas from `@scramjet/rest-api2`.
+    - [x] Add tests proving Hub paths are visible through Manager and MultiManager manifests.
+    - [x] Add tests proving no Host package import is required by Manager/MultiManager.
+- [x] Task: Phase 9.5 validation
+    - [x] Run `@scramjet/rest-api2` tests/typecheck.
+    - [x] Run `@scramjet/api-router` tests/typecheck.
+    - [x] Run focused Host v2 API tests.
+    - [x] Run focused Manager v2 API tests.
+    - [x] Run focused MultiManager v2 API tests.
+    - [x] Run OpenAPI/client manifest tests for nested resolver-expanded routes.
+    - [x] Run narrowed lint for changed source files.
+    - [x] Record validation results and any deferred full BDD checks.
+      - Validation: api-router typecheck passed; rest-api2 typecheck passed; Host, Manager, and MultiManager build typechecks passed; api-router tests passed, 40 tests; rest-api2 tests passed, 4 tests; focused Host API tests passed, 10 tests; focused Manager API tests passed, 7 tests; focused MultiManager API tests passed, 11 tests; narrowed source ESLint passed with higher memory cap; `git diff --check` passed before plan update.
+      - Direct ESLint invocation on changed test files was skipped after parser errors because those test files are not included by the repo ESLint TypeScript project; package test runs cover the changed tests. Full BDD was deferred because this phase changed schema/manifest composition and preserved runtime local/redirect registration behavior.
 - [ ] Task: Conductor - User Manual Verification 'Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm shared v2 route contracts live in `@scramjet/rest-api2`, Host/Manager/MultiManager bind handlers locally, Manager/MultiManager do not import Host internals, nested public paths are available for client/OpenAPI generation, and runtime forwarding still uses verser2 redirects.

@@ -78,6 +78,48 @@ test("resolve stores dynamic resolver metadata separately from static routes", t
     t.is(router.resolvers()[0].path, "/instances/:instanceId");
 });
 
+test("collect expands resolver target definitions only when requested", t => {
+    const target = Router.create({ basePath: "/api/v2" }).get("/load");
+    const router = Router.create({ basePath: "/api/v2" })
+        .get("/health")
+        .resolve("/hubs/:hubId", {
+            schemas: { params: z.object({ hubId: z.string() }) },
+            targetDefinitions: { owner: "host", definitions: target, implementerBasePath: "/api/v2" },
+            handler: () => undefined
+        });
+
+    t.deepEqual(router.collect().routes.map(route => route.fullPath), ["/api/v2/health"]);
+
+    const expanded = router.collect({ expandResolvers: true });
+    const virtual = expanded.routes.find(route => route.fullPath === "/api/v2/hubs/:hubId/load");
+
+    t.truthy(virtual);
+    t.is(virtual?.id, "GET /api/v2/hubs/:hubId/load");
+    t.true(virtual?.virtual);
+    t.is(virtual?.owner, "host");
+    t.is(virtual?.target?.implementerFullPath, "/api/v2/load");
+});
+
+test("collect expands nested resolver target definitions for public client paths", t => {
+    const host = Router.create({ basePath: "/api/v2" }).get("/load");
+    const manager = Router.create({ basePath: "/api/v2" }).resolve("/hubs/:hubId", {
+        schemas: { params: z.object({ hubId: z.string() }) },
+        targetDefinitions: { owner: "host", definitions: host, implementerBasePath: "/api/v2" },
+        handler: () => undefined
+    });
+    const multiManager = Router.create({ basePath: "/api/v2" }).resolve("/managers/:managerId", {
+        schemas: { params: z.object({ managerId: z.string() }) },
+        targetDefinitions: { owner: "mgr", definitions: manager, implementerBasePath: "/api/v2" },
+        handler: () => undefined
+    });
+
+    const route = multiManager.collect({ expandResolvers: true }).routes.find(entry => entry.fullPath.endsWith("/load"));
+
+    t.is(route?.fullPath, "/api/v2/managers/:managerId/hubs/:hubId/load");
+    t.is(route?.id, "GET /api/v2/managers/:managerId/hubs/:hubId/load");
+    t.deepEqual(Object.keys((route?.schemas?.params as z.ZodObject<any>).shape), ["managerId", "hubId"]);
+});
+
 test("Router.resolve preserves schema-inferred resolver context", async t => {
     const resolver = Router.resolve("/instances/:instanceId", {
         schemas: { params: z.object({ instanceId: z.string() }) },

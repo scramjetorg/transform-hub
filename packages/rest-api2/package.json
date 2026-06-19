@@ -14,7 +14,8 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/api-router": "^1.1.0"
+    "@scramjet/api-router": "^1.1.0",
+    "zod": "^3.24.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

@@ -1,6 +1,8 @@
 import test from "ava";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 import { ApiClientRequest, createApiClient, registerVerser2Routes } from "@scramjet/api-router";
 import { ManagerAPIV1Handler, ManagerAPIV2Handler } from "../src/lib/api/manager-api";
@@ -90,4 +92,17 @@ test("Manager v2 manifest constructs a generic client", async t => {
         headers: {},
         body: { route: "manager.v2.instances" }
     });
+});
+
+test("Manager v2 expanded manifest includes shared Host paths without Host imports", t => {
+    const handler = new ManagerAPIV2Handler(createManagerStub(new RouteRecorder()) as any);
+    const runtimeManifest = handler.createV2Router().collect();
+    const expandedManifest = handler.createV2Router().collect({ expandResolvers: true });
+    const source = readFileSync(resolve(__dirname, "../src/lib/api/manager-api-v2.ts"), "utf8");
+
+    t.false(runtimeManifest.routes.some(route => route.fullPath === "/api/v2/hubs/:hubId/load"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/hubs/:hubId/load"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/hubs/:hubId/instances/:instanceId/stdio"));
+    t.false(source.includes("@scramjet/host"));
+    t.false(source.includes("packages/host"));
 });

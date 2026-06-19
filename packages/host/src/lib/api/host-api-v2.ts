@@ -1,6 +1,6 @@
 import { APIExpose } from "@scramjet/types";
 import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { RestAPI2 } from "@scramjet/rest-api2";
+import { RestAPI2, RestAPI2Routes, getRestAPI2Route } from "@scramjet/rest-api2";
 import { z } from "zod";
 
 import { IHost } from "../types";
@@ -18,92 +18,72 @@ export class HostAPIV2Handler {
 
     createHubRouter(): RouterDefinition {
         const host = this.host;
-        const objectResponse = z.object({}).passthrough();
-        const listResponse = z.object({ items: z.array(z.unknown()) }).passthrough();
+        const hubContract = RestAPI2Routes.host.hubRouter();
+        const route = (method: "get", path: string) => getRestAPI2Route(hubContract, method, path);
 
         return Router.create()
-            .route(Router.get("/load", {
-                schemas: { response: objectResponse },
+            .route({ ...route("get", "/load"),
                 handler: (): RestAPI2.LoadResponse<RestAPI2.Hub> => ({
                     load: (host.loadCheck.getLoadCheck() as any)?.load ?? 0
                 })
-            }))
-            .route(Router.get("/version", {
-                schemas: { response: objectResponse },
+            })
+            .route({ ...route("get", "/version"),
                 handler: (): RestAPI2.VersionResponse<RestAPI2.Hub> => ({
                     version: this.version
                 })
-            }))
-            .route(Router.get("/config", {
-                schemas: { response: objectResponse },
+            })
+            .route({ ...route("get", "/config"),
                 handler: (): RestAPI2.ConfigResponse<RestAPI2.Hub> => ({
                     config: host.publicConfig
                 })
-            }))
-            .route(Router.get("/status", {
-                schemas: { response: objectResponse },
+            })
+            .route({ ...route("get", "/status"),
                 handler: (): RestAPI2.StatusResponse => ({
                     status: "ok",
                     details: host.getStatus()
                 })
-            }))
-            .route(Router.get("/sequences", {
-                schemas: { response: listResponse },
+            })
+            .route({ ...route("get", "/sequences"),
                 handler: (): RestAPI2.ListResponse<RestAPI2.Sequence> => ({
                     items: (host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), status: sequence.status }))
                 })
-            }))
-            .route(Router.get("/instances", {
-                schemas: { response: listResponse },
+            })
+            .route({ ...route("get", "/instances"),
                 handler: (): RestAPI2.ListResponse<RestAPI2.Instance> => ({
                     items: (host.getInstances() as any[]).map(instance => ({ id: String(instance.id), sequenceId: instance.sequenceId, status: instance.status }))
                 })
-            }))
-            .route(Router.get("/entities", {
-                schemas: { response: listResponse },
+            })
+            .route({ ...route("get", "/entities"),
                 handler: (): RestAPI2.ListResponse<RestAPI2.Entity> => ({
                     items: [
                         ...(host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), type: "sequence" })),
                         ...(host.getInstances() as any[]).map(instance => ({ id: String(instance.id), type: "instance" }))
                     ]
                 })
-            }))
-            .route(Router.get("/topics", {
-                schemas: { response: listResponse },
+            })
+            .route({ ...route("get", "/topics"),
                 handler: (): RestAPI2.ListResponse<RestAPI2.Topic> => ({
                     items: ((host.serviceDiscovery as any)?.getTopics?.() || []).map((topic: any) => ({
                         name: String(topic.id?.() || topic.id || topic.name || topic)
                     }))
                 })
-            }))
-            .route(Router.get("/logs", {
-                kind: "upstream",
-                schemas: { response: z.unknown() },
+            })
+            .route({ ...route("get", "/logs"),
                 handler: () => host.commonLogsPipe.getOut()
-            }))
-            .route(Router.get("/audit", {
-                kind: "upstream",
-                schemas: { response: z.unknown() }
-            }));
+            })
+            .route(route("get", "/audit"));
     }
 
     createSequenceRouter(): RouterDefinition {
         const host = this.host;
-        const objectResponse = z.object({}).passthrough();
-        const listResponse = z.object({ items: z.array(z.unknown()) }).passthrough();
         const sequenceId = (params: unknown) => String((params as { sequenceId?: string } | undefined)?.sequenceId || "");
+        const sequenceContract = RestAPI2Routes.host.sequenceRouter();
+        const route = (method: "get" | "post" | "put" | "delete", path: string) => getRestAPI2Route(sequenceContract, method, path);
 
         return Router.create()
-            .route(Router.route("post", "/", {
-                kind: "downstream",
-                schemas: { response: objectResponse }
-            }))
-            .route(Router.route("put", "/:sequenceId", {
-                kind: "downstream",
-                schemas: { response: objectResponse }
-            }))
-            .route(Router.route("delete", "/:sequenceId", {
-                schemas: { response: objectResponse },
+            .route(route("post", "/"))
+            .route(route("put", "/:sequenceId"))
+            .route({ ...route("delete", "/:sequenceId"),
                 handler: async ({ params, headers }): Promise<RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>> => {
                     const id = sequenceId(params);
                     const force = Boolean((headers as Record<string, unknown> | undefined)?.["x-seq-kill-inst"]);
@@ -120,9 +100,8 @@ export class HostAPIV2Handler {
                         return this.failedOperation("DELETE_SEQUENCE_FAILED", this.errorMessage(error), id);
                     }
                 }
-            }))
-            .route(Router.post("/:sequenceId/instances", {
-                schemas: { response: objectResponse },
+            })
+            .route({ ...route("post", "/:sequenceId/instances"),
                 handler: async ({ params, body }): Promise<RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>> => {
                     const id = sequenceId(params);
 
@@ -139,18 +118,16 @@ export class HostAPIV2Handler {
                         return this.failedOperation("START_SEQUENCE_FAILED", this.errorMessage(error), id);
                     }
                 }
-            }))
-            .route(Router.get("/:sequenceId", {
-                schemas: { response: objectResponse },
+            })
+            .route({ ...route("get", "/:sequenceId"),
                 handler: ({ params }): RestAPI2.SequenceResponse => {
                     const id = sequenceId(params);
                     const sequence = host.getSequence(id) as any;
 
                     return { sequence: { id: String(sequence?.id || id), status: sequence?.status } };
                 }
-            }))
-            .route(Router.get("/:sequenceId/instances", {
-                schemas: { response: listResponse },
+            })
+            .route({ ...route("get", "/:sequenceId/instances"),
                 handler: ({ params }): RestAPI2.ListResponse<RestAPI2.Instance> => ({
                     items: (host.getSequenceInstances(sequenceId(params)) as any[]).map(instance => ({
                         id: String(instance.id),
@@ -158,7 +135,7 @@ export class HostAPIV2Handler {
                         status: instance.status
                     }))
                 })
-            }));
+            });
     }
 
     createV2Router(): RouterDefinition {
@@ -167,6 +144,12 @@ export class HostAPIV2Handler {
             .mount("/sequences", this.createSequenceRouter())
             .resolve("/instances/:instanceId", {
                 schemas: { params: z.object({ instanceId: z.string() }) },
+                targetDefinitions: {
+                    owner: "inst",
+                    definitions: RestAPI2Routes.instance.router(),
+                    mountPath: "/instances/:instanceId",
+                    implementerBasePath: "/"
+                },
                 handler: ({ params }) => {
                     const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
 

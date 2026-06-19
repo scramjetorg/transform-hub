@@ -1,4 +1,5 @@
-import { ResolverDefinition, ResolverManifestEntry, RouteDefinition, RouteManifest, RouteManifestEntry, RouteSchemas, joinPaths, normalizePath, routeId } from "./manifest";
+import { z } from "zod";
+import { CollectManifestOptions, ResolverDefinition, ResolverManifestEntry, ResolverTargetDefinition, RouteDefinition, RouteManifest, RouteManifestEntry, RouteSchemas, joinPaths, normalizePath, routeId } from "./manifest";
 import { RouteHook } from "./hooks";
 
 export type RouterOptions = {
@@ -81,10 +82,17 @@ export class RouterDefinition {
         return this;
     }
 
-    collect(): RouteManifest {
+    collect(options: CollectManifestOptions = {}): RouteManifest {
         const seen = new Set<string>();
         const collectedRoutes = this.collectedRoutes();
-        const routes = collectedRoutes.map(({ entry }) => {
+        const routes = collectedRoutes.map(({ entry }) => entry);
+        const resolvers = this.collectedResolvers().map(({ entry }) => entry);
+
+        if (options.expandResolvers) {
+            routes.push(...this.expandResolverRoutes(resolvers, options, options.maxResolverDepth || 8));
+        }
+
+        const checkedRoutes = routes.map(entry => {
             const pathKey = routeId(entry.method, entry.fullPath);
 
             if (seen.has(entry.id) || seen.has(pathKey)) {
@@ -99,8 +107,8 @@ export class RouterDefinition {
 
         return {
             basePath: this.basePath,
-            routes,
-            resolvers: this.collectedResolvers().map(({ entry }) => entry)
+            routes: checkedRoutes,
+            resolvers
         };
     }
 
@@ -190,6 +198,89 @@ export class RouterDefinition {
         });
 
         return [...resolvers, ...mountedResolvers];
+    }
+
+    private expandResolverRoutes(resolvers: ResolverManifestEntry[], options: CollectManifestOptions, depth: number): RouteManifestEntry[] {
+        if (depth <= 0) {
+            return [];
+        }
+
+        return resolvers.flatMap(resolver => {
+            let targets: ResolverTargetDefinition[] = [];
+
+            if (Array.isArray(resolver.targetDefinitions)) {
+                targets = resolver.targetDefinitions;
+            } else if (resolver.targetDefinitions) {
+                targets = [resolver.targetDefinitions];
+            }
+
+            return targets.flatMap(target => this.expandTargetRoutes(resolver, target, options, depth));
+        });
+    }
+
+    private expandTargetRoutes(
+        resolver: ResolverManifestEntry,
+        target: ResolverTargetDefinition,
+        options: CollectManifestOptions,
+        depth: number
+    ): RouteManifestEntry[] {
+        const targetManifest = "collect" in target.definitions
+            ? target.definitions.collect({ ...options, expandResolvers: true, maxResolverDepth: depth - 1 })
+            : target.definitions;
+        const publicBasePath = normalizePath(target.publicBasePath || resolver.fullPath);
+        const implementerBasePath = normalizePath(target.implementerBasePath || targetManifest.basePath);
+        const mountPath = normalizePath(target.mountPath || resolver.path);
+
+        return targetManifest.routes.map(route => {
+            const relativeTargetPath = this.relativePath(route.fullPath, implementerBasePath);
+            const fullPath = joinPaths(publicBasePath, relativeTargetPath);
+            const schemas = this.mergeResolverSchemas(resolver.schemas, route.schemas);
+
+            return {
+                ...route,
+                id: routeId(route.method, fullPath),
+                fullPath,
+                schemas,
+                implementerPath: route.implementerPath || relativeTargetPath,
+                mountPath,
+                virtual: true,
+                owner: target.owner,
+                target: {
+                    mountPath,
+                    publicBasePath,
+                    implementerBasePath,
+                    implementerFullPath: route.fullPath
+                }
+            };
+        });
+    }
+
+    private relativePath(fullPath: string, basePath: string): string {
+        const full = normalizePath(fullPath);
+        const base = normalizePath(basePath);
+
+        if (full === base) {
+            return "/";
+        }
+
+        return full.startsWith(`${base}/`) ? normalizePath(full.slice(base.length)) : full;
+    }
+
+    private mergeResolverSchemas(resolverSchemas: RouteSchemas | undefined, routeSchemas: RouteSchemas | undefined): RouteSchemas | undefined {
+        const params = this.mergeObjectSchemas(resolverSchemas?.params, routeSchemas?.params);
+
+        return {
+            ...routeSchemas,
+            params: params || routeSchemas?.params || resolverSchemas?.params
+        };
+    }
+
+    private mergeObjectSchemas(left: z.ZodTypeAny | undefined, right: z.ZodTypeAny | undefined): z.ZodTypeAny | undefined {
+        if (left instanceof z.ZodObject && right instanceof z.ZodObject) {
+            return z.object({ ...left.shape, ...right.shape });
+        }
+
+        return right || left;
     }
 }
 

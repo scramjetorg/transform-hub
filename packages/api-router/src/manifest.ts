@@ -45,6 +45,27 @@ export type ResolverRedirectTarget = {
     headers?: Record<string, string>;
 };
 
+export type CollectManifestOptions = {
+    expandResolvers?: boolean;
+    maxResolverDepth?: number;
+};
+
+// eslint-disable-next-line no-use-before-define
+export type RouteDefinitionSource = RouteManifest | {
+    // eslint-disable-next-line no-use-before-define
+    collect(options?: CollectManifestOptions): RouteManifest;
+};
+
+export type ResolverTargetDefinition = {
+    owner: string;
+    definitions: RouteDefinitionSource;
+    mountPath?: string;
+    publicBasePath?: string;
+    implementerBasePath?: string;
+};
+
+export type ResolverTargetDefinitions = ResolverTargetDefinition | ResolverTargetDefinition[];
+
 export type ResolverTarget = {
     local?: LocalRouterTarget;
     redirect?: ResolverRedirectTarget;
@@ -63,7 +84,7 @@ export type ResolverDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
     description?: string;
     schemas?: TSchemas;
     handler: ResolverHandler<TSchemas>;
-    targetDefinitions?: unknown;
+    targetDefinitions?: ResolverTargetDefinitions;
 };
 
 export type ResolverManifestEntry = Omit<ResolverDefinition, "handler" | "targetDefinitions"> & {
@@ -71,7 +92,7 @@ export type ResolverManifestEntry = Omit<ResolverDefinition, "handler" | "target
     fullPath: string;
     implementerPath?: string;
     mountPath?: string;
-    targetDefinitions?: unknown;
+    targetDefinitions?: ResolverTargetDefinitions;
 };
 
 export type RouteDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
@@ -91,6 +112,14 @@ export type RouteManifestEntry = Omit<RouteDefinition, "handler"> & {
     fullPath: string;
     implementerPath?: string;
     mountPath?: string;
+    virtual?: boolean;
+    owner?: string;
+    target?: {
+        mountPath: string;
+        publicBasePath: string;
+        implementerBasePath: string;
+        implementerFullPath: string;
+    };
 };
 
 export type RouteManifest = {

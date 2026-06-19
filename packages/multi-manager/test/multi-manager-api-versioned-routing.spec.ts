@@ -1,6 +1,8 @@
 import test from "ava";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 import { ApiClientRequest, createApiClient, registerVerser2Routes } from "@scramjet/api-router";
 import { MultiManagerAPIV1Handler, MultiManagerAPIV2Handler } from "../src/lib/api/multi-manager-api";
@@ -81,4 +83,17 @@ test("MultiManager v2 manifest constructs a generic client", async t => {
         headers: {},
         body: { route: "multi-manager.v2.load" }
     });
+});
+
+test("MultiManager v2 expanded manifest includes shared nested Manager and Host paths without Host imports", t => {
+    const handler = new MultiManagerAPIV2Handler(createMultiManagerStub(new RouteRecorder()) as any);
+    const runtimeManifest = handler.createV2Router().collect();
+    const expandedManifest = handler.createV2Router().collect({ expandResolvers: true });
+    const source = readFileSync(resolve(__dirname, "../src/lib/api/multi-manager-api-v2.ts"), "utf8");
+
+    t.false(runtimeManifest.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/load"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/load"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio"));
+    t.false(source.includes("@scramjet/host"));
+    t.false(source.includes("packages/host"));
 });

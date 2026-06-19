@@ -1,6 +1,5 @@
 import { RouteRequest, Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { RestAPI2 } from "@scramjet/rest-api2";
-import { z } from "zod";
+import { RestAPI2, RestAPI2Routes, getRestAPI2Route } from "@scramjet/rest-api2";
 
 import { getManagerVerser2TrustExport } from "../verser2-trust-export";
 import type { Manager } from "../manager";
@@ -17,84 +16,65 @@ export class ManagerAPIV2Handler {
 
     createV2Router(): RouterDefinition {
         const manager = this.manager;
-        const objectResponse = z.object({}).passthrough();
-        const listResponse = z.object({ items: z.array(z.unknown()) }).passthrough();
-        const querySchema = z.object({
-            offset: z.union([z.string(), z.number()]).optional(),
-            limit: z.union([z.string(), z.number()]).optional()
-        }).passthrough().optional();
+        const contract = RestAPI2Routes.manager.router(this.v2ApiBase);
+        const route = (method: "get", path: string) => getRestAPI2Route(contract, method, path);
 
         return Router.create({ basePath: this.v2ApiBase })
-            .route(Router.get("/version", {
+            .route({ ...route("get", "/version"),
                 id: "manager.v2.version",
-                schemas: { response: objectResponse },
                 handler: (): RestAPI2.VersionResponse<RestAPI2.Manager> => ({
                     version: manager.version
                 })
-            }))
-            .route(Router.get("/config", {
+            })
+            .route({ ...route("get", "/config"),
                 id: "manager.v2.config",
-                schemas: { response: objectResponse },
                 handler: (): RestAPI2.ConfigResponse<RestAPI2.Manager> => ({ config: manager.publicConfig })
-            }))
-            .route(Router.get("/verser2/trust", {
+            })
+            .route({ ...route("get", "/verser2/trust"),
                 id: "manager.v2.verser2.trust",
-                schemas: { response: objectResponse },
                 handler: () => getManagerVerser2TrustExport(manager.config)
-            }))
-            .route(Router.get("/load", {
+            })
+            .route({ ...route("get", "/load"),
                 id: "manager.v2.load",
-                schemas: { response: objectResponse },
                 handler: async (): Promise<RestAPI2.LoadResponse<RestAPI2.Manager>> => {
                     const load = await manager.apiLoadCheck.getLoadCheck();
 
                     return { load: (load as { load?: number }).load ?? 0 };
                 }
-            }))
-            .route(Router.get("/list", {
+            })
+            .route({ ...route("get", "/list"),
                 id: "manager.v2.list",
-                schemas: { query: querySchema, response: listResponse },
                 handler: req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts")
-            }))
-            .route(Router.get("/hubs", {
+            })
+            .route({ ...route("get", "/hubs"),
                 id: "manager.v2.hubs",
-                schemas: { query: querySchema, response: listResponse },
                 handler: req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts")
-            }))
-            .route(Router.get("/instances", {
+            })
+            .route({ ...route("get", "/instances"),
                 id: "manager.v2.instances",
-                schemas: { query: querySchema, response: listResponse },
                 handler: req => this.listResponse<RestAPI2.Instance>(this.getPaginated(req, manager.getInstances.bind(manager)), "instances")
-            }))
-            .route(Router.get("/sequences", {
+            })
+            .route({ ...route("get", "/sequences"),
                 id: "manager.v2.sequences",
-                schemas: { response: listResponse },
                 handler: () => this.listResponse<RestAPI2.Sequence>(manager.getSequencesIds(), "sequences")
-            }))
-            .route(Router.get("/all_sequences", {
+            })
+            .route({ ...route("get", "/all_sequences"),
                 id: "manager.v2.all_sequences",
-                schemas: { query: querySchema, response: listResponse },
                 handler: req => this.listResponse<RestAPI2.Sequence>(this.getPaginated(req, manager.getSequences.bind(manager)), "sequences")
-            }))
-            .route(Router.get("/entities", {
+            })
+            .route({ ...route("get", "/entities"),
                 id: "manager.v2.entities",
-                schemas: { response: listResponse },
                 handler: () => this.entityListResponse(manager.getEntities())
-            }))
-            .route(Router.get("/topics", {
+            })
+            .route({ ...route("get", "/topics"),
                 id: "manager.v2.topics",
-                schemas: { response: listResponse },
                 handler: () => this.listResponse<RestAPI2.Topic>(manager.apiServiceDiscovery.list(), "topics")
-            }))
+            })
             .resolve("/hubs/:hubId", {
                 id: "manager.v2.hub.forward",
                 description: "Resolve a selected Hub to its verser2 route domain for Host-owned v2 routes.",
-                schemas: { params: z.object({ hubId: z.string() }) },
-                targetDefinitions: {
-                    owner: "host",
-                    mountPath: "/hubs/:hubId",
-                    implementerBasePath: this.v2ApiBase
-                },
+                schemas: contract.resolvers()[0].schemas,
+                targetDefinitions: contract.resolvers()[0].targetDefinitions,
                 handler: ({ params, remainingPath }) => {
                     const hubId = (params as { hubId: string }).hubId;
                     const sth = manager.apiSthConnectionStore.getById(hubId);

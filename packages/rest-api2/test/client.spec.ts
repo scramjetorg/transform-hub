@@ -1,7 +1,7 @@
 import test from "ava";
 
 import { ApiClientRequest, ApiClientTransport, HttpMethod, createRouter } from "@scramjet/api-router";
-import { RestAPI2, createRestAPI2Client } from "../src";
+import { RestAPI2, RestAPI2Routes, createRestAPI2Client } from "../src";
 
 const representativeOperations: Array<{ scope: RestAPI2.ScopeName; operationId: RestAPI2.OperationId; path: string }> = [
     { scope: "mmgr", operationId: "GET /api/v2/managers", path: "/managers" },
@@ -86,4 +86,14 @@ test("route ownership separates public paths from implementer paths", t => {
     t.false(hubLoad.implementerPath.includes(":hubId"));
     t.is(stdio.implementerPath, "/stdio");
     t.false(stdio.implementerPath.includes(":instanceId"));
+});
+
+test("shared v2 route contracts are handlerless and expose nested virtual paths", t => {
+    const hostRoutes = RestAPI2Routes.host.hubRouter().definitions();
+    const expanded = RestAPI2Routes.multiManager.router("/api/v2").collect({ expandResolvers: true });
+
+    t.true(hostRoutes.every(route => !route.handler));
+    t.true(expanded.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/load"));
+    t.true(expanded.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio"));
+    t.true(expanded.routes.filter(route => route.virtual).every(route => route.id.startsWith(`${route.method.toUpperCase()} ${route.fullPath}`)));
 });
