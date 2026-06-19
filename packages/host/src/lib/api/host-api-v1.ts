@@ -1,10 +1,11 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
 import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
-import { Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
+import { RouteDefinition, Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { isStartSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { z } from "zod";
 import { IHost } from "../types";
+import type { HostAPIV2Handler } from "./host-api-v2";
 
 import { auditMiddleware, logger as auditMiddlewareLogger } from "../middlewares/audit";
 import { Duplex, PassThrough } from "stream";
@@ -30,7 +31,8 @@ export class HostAPIV1Handler {
         private api: APIExpose,
         private host: IHost,
         private version: string,
-        private build: string
+        private build: string,
+        private v2?: Pick<HostAPIV2Handler, "createHubRouter">
     ) {
         this.logger = new ObjLogger(this);
         this.logger.pipe(this.host.logger);
@@ -102,12 +104,12 @@ export class HostAPIV1Handler {
 
         this.api.use(`${this.apiBase}/rpc`, (req, res, next) => this.rpcMiddleware(req, res, next));
         this.api.forward(`${this.apiBase}/rpc`, [], this.createRPCForwarder());
-
     }
 
     createV1CompatibilityRouter(): RouterDefinition {
         const host = this.host;
         const objectResponse = z.object({}).passthrough();
+        const v2Handler = (path: string) => this.v2HubRoute(path)?.handler;
 
         return Router.create({ basePath: this.apiBase })
             .route(Router.get("/load-check", {
@@ -125,23 +127,41 @@ export class HostAPIV1Handler {
                         build: z.string()
                     })
                 },
-                handler: (): STHRestAPI.GetVersionResponse => ({
+                handler: async (): Promise<STHRestAPI.GetVersionResponse> => ({
                     service: host.service,
                     apiVersion: "v1",
-                    version: this.version,
+                    version: await this.v2Version(v2Handler("/version")),
                     build: this.build,
                 })
             }))
             .route(Router.get("/config", {
                 id: "host.v1.config",
                 schemas: { response: objectResponse },
-                handler: () => host.publicConfig
+                handler: async () => {
+                    const response = await v2Handler("/config")?.({} as never) as { config?: unknown } | undefined;
+
+                    return response?.config ?? host.publicConfig;
+                }
             }))
             .route(Router.get("/status", {
                 id: "host.v1.status",
                 schemas: { response: objectResponse },
-                handler: () => host.getStatus()
+                handler: async () => {
+                    const response = await v2Handler("/status")?.({} as never) as { details?: unknown } | undefined;
+
+                    return response?.details ?? host.getStatus();
+                }
             }));
+    }
+
+    private v2HubRoute(path: string): RouteDefinition | undefined {
+        return this.v2?.createHubRouter().definitions().find(route => route.method === "get" && route.path === path);
+    }
+
+    private async v2Version(handler: RouteDefinition["handler"] | undefined): Promise<string> {
+        const response = await handler?.({} as never) as { version?: unknown } | undefined;
+
+        return typeof response?.version === "string" ? response.version : this.version;
     }
 
     /**

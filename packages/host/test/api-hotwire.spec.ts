@@ -9,6 +9,7 @@ import { HostAPIHandler } from "../src/lib/api/host-api";
 import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { InstanceAPI } from "../src/lib/api/instance-api";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
+import { Router } from "@scramjet/api-router";
 
 const logger = new ObjLogger("api-hotwire-test");
 
@@ -140,6 +141,47 @@ test("HostAPIHandler unit handlers return basic v1 Host data", async t => {
     t.deepEqual(version, { service: "sth", apiVersion: "v1", version: "1.2.3", build: "test-build" });
     t.deepEqual(config, host.publicConfig);
     t.deepEqual(status, {});
+});
+
+test("HostAPIV1Handler adapts shared v2 read handlers while preserving v1 response shapes", async t => {
+    const recorder = new RouteRecorder();
+    const host = createHostStub();
+    const calls: string[] = [];
+    const v2 = {
+        createHubRouter: () => Router.create()
+            .get("/version", {
+                handler: () => {
+                    calls.push("version");
+
+                    return { version: "2.0.0-from-v2" };
+                }
+            })
+            .get("/config", {
+                handler: () => {
+                    calls.push("config");
+
+                    return { config: { v2Config: true } };
+                }
+            })
+            .get("/status", {
+                handler: () => {
+                    calls.push("status");
+
+                    return { status: "ok", details: { fromV2: true } };
+                }
+            })
+    };
+
+    new HostAPIV1Handler(recorder.asApiExpose(), host as any, "1.2.3", "test-build", v2).attach();
+
+    const version = await (recorder.require("get", "/api/v1/version").handler as Function)({});
+    const config = await (recorder.require("get", "/api/v1/config").handler as Function)({});
+    const status = await (recorder.require("get", "/api/v1/status").handler as Function)({});
+
+    t.deepEqual(version, { service: "sth", apiVersion: "v1", version: "2.0.0-from-v2", build: "test-build" });
+    t.deepEqual(config, { v2Config: true });
+    t.deepEqual(status, { fromV2: true });
+    t.deepEqual(calls, ["version", "config", "status"]);
 });
 
 test("HostAPIHandler delete sequence unit handler validates id and delegates", async t => {

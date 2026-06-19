@@ -352,3 +352,69 @@ Streaming notes:
 * `²` - Stdio is streamable by default, non-ranged requests can be achieved on specific sub-endpoints, see `stdio` section for details.
 * `always` - The endpoint is always streamable, and will always return a `ReadableStream` of data. The `Content-Range` header is ignored for these endpoints.
 * `output consumption` - The endpoint consumes the output and will not return the data again.
+
+## Migration Notes
+
+### v1 Compatibility
+
+- **No client-visible changes to `/api/v1`**: All existing v1 routes, response bodies, status codes, stream behavior, headers, and error payloads are preserved exactly. Some low-risk Host v1 read routes are now backed by v2 handlers through compatibility adapters, but the returned v1 shapes remain unchanged. Separate v1 hotwire tests (`api-hotwire.spec.ts`, `manager-api-hotwire.spec.ts`, `multi-manager-api-hotwire.spec.ts`) assert exact v1 behavior and must not be replaced by v2 assertions.
+- **API handler split**: Each API level (Host, Manager, MultiManager) has separate v1 and v2 implementation files:
+  - `*-api-v1.ts` — v1-compatible route registration and response-shape adapters.
+  - `*-api-v2.ts` — v2 route definitions using `RestAPI2.*` contracts.
+  - `*-api.ts` — coordinator that constructs and attaches both v1 and v2 handlers.
+- **Instance/CSI separation**: v1 instance behavior lives in `instance-api.ts` (unchanged); v2 instance behavior lives in `instance-api-v2.ts` using `@scramjet/api-router` definitions.
+- **V1 compatibility tests** must remain explicit no-API-change assertions, separate from v2 coverage.
+
+### v2 Route Sections
+
+- **Shared handlerless contracts**: All v2 route definitions live in `@scramjet/rest-api2` as handlerless contract sets (`RestAPI2RouteSets`). Runtime implementations import shared contracts and bind local handlers with `bindRoutes`/`bindResolvers` from `@scramjet/api-router`.
+- **Owner-local implementation**: Route implementation follows the API level that owns the behavior:
+  - Host owns Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit routes.
+  - Manager owns Manager-level inventory, storage, topics, logs, audit, and Hub selection routes.
+  - MultiManager owns MultiManager behavior and Manager selection routes.
+- **Cross-node routing via verser2**: Cross-level public paths (e.g. `/api/v2/managers/:managerId/hubs/:hubId/load`) use verser2-backed resolver redirects, not local/manual HTTP forwarding. The HTTP adapter emits `308` with `x-scramjet-route-decision`, `x-scramjet-route-domain`, and `x-scramjet-route-target-path` headers.
+- **Three path shapes**:
+  - **Public path**: Canonical client/OpenAPI path (e.g. `/api/v2/managers/:managerId/hubs/:hubId/load`).
+  - **Mount path**: Hook-up or resolution point where parent attaches child router.
+  - **Implementer path**: Relative path inside the owning router (e.g. `/load` for Hub). Implementer routers must not bake in parent prefixes or parent identifiers.
+- **Storage proxy**: Manager v2 storage object read/write/delete at `/api/v2/managers/:managerId/storage/objects/...` is a documented WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
+- **No legacy DTO aliasing**: `@scramjet/rest-api2` exports only `RestAPI2.*` contracts. Old `MMRestAPI`, `MRestAPI`, and `STHRestAPI` types remain in `@scramjet/types` for v1 compatibility and must not be re-exported from the v2 package.
+
+### No-Circumvention Rules
+
+When writing or migrating API tests and BDD step definitions:
+
+1. **Use the common client** (`createRestAPI2Client` from `@scramjet/rest-api2` or `createApiClient` from `@scramjet/api-router`) for all migrated endpoints — do not construct raw `fetch()`, `http.request()`, or direct verser2 calls.
+2. **Wrap transports with a request probe** in package tests using `createClientRequestProbe` from `packages/api-router/test/lib/no-circumvention.ts` (test-only helper, not a production export). Call `probe.assertUsed()` after each test that should issue a request.
+3. **Transport-level tests** (testing `createHttpClientTransport` itself) are exempt from client-only enforcement. All other tests must go through the client.
+4. **Do not import production-internal request helpers** from packages under test — use the public `ApiClientTransport` interface.
+5. **BDD step definitions** for migrated API surfaces must use `RestAPI2.Client` or `ApiClient`, not raw `http` or `@scramjet/verser` calls.
+6. **No false positives**: Tests that do not issue real requests (e.g., manifest-only checks) must not call `assertUsed()` — use `assertNotUsed()` to prove no transport calls were made.
+
+### Deferred Content-Range Handling
+
+Streamable endpoints support `Content-Range` headers for time-range and span-range queries. The intended semantics are:
+
+- `Content-Range: time <start>-<end>` — milliseconds since epoch; `*` for start or end.
+- `Content-Range: span <start>-<end>` — milliseconds relative to now; negative only (e.g. `span 10000-*` for last 10 seconds, continuing live).
+- **When the range is not finite**: Response is `206 Partial Content` with a `ReadableStream` of data.
+- **When the range is finite**: Response is `200 OK` with a `RestAPI2.ListResponse` envelope.
+- **Always-streamable endpoints** (marked `always` in tables): Always return `ReadableStream`; `Content-Range` is ignored.
+
+**Current implementation status**: v2 stream routes register as `kind: "upstream"` or `kind: "downstream"` boundaries. The full runtime range negotiation (switching between streamed `206` and paginated `200` responses) is not yet implemented for v2 routes and relies on existing v1 streaming behavior. Key items deferred:
+
+- Range-dependent response envelope switching in the `@scramjet/api-router` HTTP adapter.
+- `206 Partial Content` response code emission for non-finite ranged requests.
+- `Content-Range` response header generation from actual data ranges.
+- `always` vs conditional streamable distinction in route metadata enforcement.
+- Client-side stream vs list response type narrowing based on range parameters.
+
+Affected endpoint families (documented as streamable but range negotiation deferred):
+- Manager load, health, hubs, instances, sequences, entities, audit streams.
+- Hub sequences, instances, entities streams.
+- Instance monitoring, output, logs, events, stdio streams.
+- Topic read/write streams.
+- MultiManager load, health, managers, audit streams.
+- Audit query streams.
+
+These stream routes remain functional through existing runtime streaming paths; the v2-specific range-driven response switching is a later implementation item.

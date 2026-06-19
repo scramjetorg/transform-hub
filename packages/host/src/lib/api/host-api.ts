@@ -12,18 +12,20 @@ export {
 
 export class HostAPIHandler {
     private readonly v1: HostAPIV1Handler;
+    private readonly v2: HostAPIV2Handler;
 
     constructor(
-        private hostApi: APIExpose,
-        private hostInstance: IHost,
-        private hostVersion: string,
+        hostApi: APIExpose,
+        hostInstance: IHost,
+        hostVersion: string,
         build: string
     ) {
-        this.v1 = new HostAPIV1Handler(hostApi, hostInstance, hostVersion, build);
+        this.v2 = new HostAPIV2Handler(hostApi, hostInstance, hostVersion);
+        this.v1 = new HostAPIV1Handler(hostApi, hostInstance, hostVersion, build, this.v2);
     }
 
     attach() {
         this.v1.attach();
-        new HostAPIV2Handler(this.hostApi, this.hostInstance, this.hostVersion).attach();
+        this.v2.attach();
     }
 }

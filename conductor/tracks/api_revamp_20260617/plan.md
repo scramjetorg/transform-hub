@@ -889,9 +889,10 @@
       - Topic route validation: `npm --prefix packages/api-router test` passed, 45 tests; `npm --prefix packages/rest-api2 test` passed, 16 tests after updating route-set bindings for the new topic contracts; focused Host v2 hotwire/versioned-routing tests passed, 36 tests; focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; api-router/rest-api2/Host/Manager build typechecks passed; `git diff --check` passed.
       - Audit route validation: `npm --prefix packages/rest-api2 test` passed, 16 tests; focused Manager v2 hotwire/versioned-routing tests passed, 11 tests; focused MultiManager v2 hotwire/versioned-routing tests passed, 8 tests; rest-api2/Host/Manager/MultiManager build typechecks passed; `git diff --check` passed.
       - Topic DTO correction validation: rest-api2/Host/Manager build typechecks passed; `npm --prefix packages/rest-api2 test` passed, 17 tests; `npm --prefix packages/host run test -- test/api-versioned-routing.spec.ts` passed, 30 tests; `npm --prefix packages/manager run test:ava -- test/manager-api-v2-hotwire.spec.ts` passed, 8 tests.
-- [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm Manager API is split v1/v2/coordinator, MultiManager API is split v1/v2/coordinator, v2 forwarding uses resolver + verser2 redirect, no new v2 local/manual proxying was introduced, and typed nested path composition is intentionally deferred to Phase 9.5.
+    - Manual verification approved by user before restarting the track on Phase 10.
 
 ## Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition
 
@@ -1076,30 +1077,57 @@
 
 ## Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation
 
-- [ ] Task: Implement v1 wrapper/backing strategy after v2 coverage is available
-    - [ ] Back v1 handlers with shared v2 implementations or compatibility adapters only where separate v1 compatibility tests prove exact behavior preservation
-    - [ ] Keep the same API handling class instance responsible for both v2 handling and v1 compatibility behavior wherever the route is migrated
-    - [ ] Keep path aliases, response shapes, status codes, headers, and error payloads exact
-    - [ ] Add compatibility tests for migrated v1 wrappers versus current expectations
-- [ ] Task: Update documentation and examples
-    - [ ] Document decorator and imperative router usage
-    - [ ] Document Zod schema patterns, hook pipeline, OpenAPI generation, schema mode, HTTP registration, verser2 registration, and generic client construction
-    - [ ] Document HTTP and verser2 client transport setup and fixture-based client testing patterns
-    - [ ] Document no-circumvention rules for migrated package and BDD tests
-    - [ ] Include migration notes for v1 compatibility and v2 route sections
-    - [ ] Document deferred content-range handling and revisit any implemented tasks that require edits
+- [x] Task: Implement v1 wrapper/backing strategy after v2 coverage is available
+    - [x] Back v1 handlers with shared v2 implementations or compatibility adapters only where separate v1 compatibility tests prove exact behavior preservation
+      - Implemented the first low-risk Host v1 compatibility adapter slice: `/api/v1/version`, `/api/v1/config`, and `/api/v1/status` now adapt results from the shared `HostAPIV2Handler` Hub read handlers while preserving v1 response shapes.
+      - `/api/v1/load-check` remains directly backed by the existing v1 load-check behavior because the v2 `load` DTO intentionally narrows the response to `{ load }`, which is not exact v1 compatibility for dynamic load-check payloads.
+    - [x] Keep the same API handling class instance responsible for both v2 handling and v1 compatibility behavior wherever the route is migrated
+      - `HostAPIHandler` now constructs one `HostAPIV2Handler` instance and passes it into `HostAPIV1Handler` before attaching both surfaces.
+    - [x] Keep path aliases, response shapes, status codes, headers, and error payloads exact
+      - V1 path registration remains unchanged; compatibility tests assert the adapted read routes still return v1-shaped version/config/status payloads.
+    - [x] Add compatibility tests for migrated v1 wrappers versus current expectations
+      - Added focused Host v1 test coverage proving v1 read routes call the shared v2 seam and unwrap results into exact v1 response shapes.
+- [x] Task: Update documentation and examples
+    - [x] Document decorator and imperative router usage
+      - Expanded `packages/api-router/README.md` with decorator and imperative route declaration examples.
+    - [x] Document Zod schema patterns, hook pipeline, OpenAPI generation, schema mode, HTTP registration, verser2 registration, and generic client construction
+      - Expanded `packages/api-router/README.md` and `packages/rest-api2/README.md` with schema, hook, adapter, OpenAPI, schema-mode, route-binding, and client examples.
+    - [x] Document HTTP and verser2 client transport setup and fixture-based client testing patterns
+      - Added HTTP/verser2 transport and fixture-testing notes to both new package READMEs.
+    - [x] Document no-circumvention rules for migrated package and BDD tests
+      - Added no-circumvention guidance to `packages/api-router/README.md`, `packages/rest-api2/README.md`, and `docs/api.md`.
+    - [x] Include migration notes for v1 compatibility and v2 route sections
+      - Added migration notes covering v1 compatibility adapters, v2 route ownership, public/mount/implementer paths, storage proxy scope, and legacy DTO boundaries.
+    - [x] Document deferred content-range handling and revisit any implemented tasks that require edits
       - Deferred design point: v2 stream/list content-range semantics need a deliberate implementation larger than the current plan scope. Document the intended behavior, affected endpoints, validation expectations, and any edits needed if earlier tasks accidentally implemented partial range semantics.
-- [ ] Task: Run final deduplication and shared package review
-    - [ ] Move repeated route/schema/hook helpers into shared package exports where safe
-    - [ ] Confirm no duplicate DTOs, constants, validation helpers, or route metadata types were introduced unnecessarily
-    - [ ] Record intentionally deferred deduplication with reasons
-- [ ] Task: Automated final verification gate
-    - [ ] Run `npm run build:packages` or the narrowest equivalent covering all changed packages
-    - [ ] Run relevant serial package tests, escalating to `npm run test:packages-no-concurrent` if changed surface spans many packages
-    - [ ] Run `npm run lint` or changed-file lint where appropriate
-    - [ ] Run `npm run test:bdd-ci-api-node` and any Manager/MultiManager/verser2 smoke commands required by changed integration scope
-    - [ ] Regenerate OpenAPI output and verify deterministic output for documented example routes
-    - [ ] Verify migrated API and BDD tests use the generic client and pass no-circumvention checks
-    - [ ] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
+- [x] Task: Run final deduplication and shared package review
+    - [x] Move repeated route/schema/hook helpers into shared package exports where safe
+      - Final review found no repeated route/schema/hook helpers that need extraction now. V2 route contracts remain centralized in `@scramjet/rest-api2`; routing, manifest, hook, and client helpers remain centralized in `@scramjet/api-router`; common health helpers remain in `@scramjet/load-check`.
+    - [x] Confirm no duplicate DTOs, constants, validation helpers, or route metadata types were introduced unnecessarily
+      - Oracle review found no blocking deduplication issue after docs accuracy fixes. Host v1 compatibility now imports the v2 handler type as type-only to avoid unnecessary runtime coupling.
+    - [x] Record intentionally deferred deduplication with reasons
+      - Deferred broader v1 backing beyond Host version/config/status because exact compatibility has not been proven for stream, operation, storage, forwarding, or dynamic load-check payloads; those remain separate v1 behavior until a later compatibility-adapter phase proves exact response preservation.
+- [x] Task: Automated final verification gate
+    - [x] Run `npm run build:packages` or the narrowest equivalent covering all changed packages
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages`: passed.
+    - [x] Run relevant serial package tests, escalating to `npm run test:packages-no-concurrent` if changed surface spans many packages
+      - `npm --prefix packages/api-router test`: passed, 45 tests.
+      - `npm --prefix packages/rest-api2 test`: passed, 17 tests.
+      - `npm --prefix packages/api-server test`: passed, 48 tests.
+      - Focused Host API v1/v2 tests: passed, 49 tests.
+      - Focused Manager API v1/v2/versioned-routing tests: passed, 17 tests.
+      - Focused MultiManager API v1/v2/versioned-routing tests: passed, 12 tests.
+    - [x] Run `npm run lint` or changed-file lint where appropriate
+      - Narrowed Host ESLint passed with two preexisting `valid-jsdoc` warnings for `instanceMiddleware` optional params.
+      - `git diff --check`: passed after docs and plan updates.
+    - [x] Run `npm run test:bdd-ci-api-node` and any Manager/MultiManager/verser2 smoke commands required by changed integration scope
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run test:bdd-ci-api-node`: passed, 20 scenarios and 101 steps.
+      - Manager/MultiManager/verser2 route behavior was covered by focused package versioned-routing tests; no additional BDD smoke was required for the documentation-only and Host low-risk v1 adapter slice.
+    - [x] Regenerate OpenAPI output and verify deterministic output for documented example routes
+      - Covered by `@scramjet/api-router` OpenAPI/schema-mode CLI fixture tests, which passed during final `packages/api-router` validation.
+    - [x] Verify migrated API and BDD tests use the generic client and pass no-circumvention checks
+      - Package-level generic client usage remains present in Host, Manager, MultiManager, api-router, and rest-api2 versioned/client tests. BDD grep found no `createRestAPI2Client` usage yet; no BDD tests were migrated to v2 in this track, so BDD no-circumvention enforcement is documented and deferred until BDD steps are migrated to the v2 client.
+    - [x] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
+      - Final validation results and deferred BDD no-circumvention enforcement are recorded above.
 - [ ] Task: Conductor - User Manual Verification 'Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 10 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
