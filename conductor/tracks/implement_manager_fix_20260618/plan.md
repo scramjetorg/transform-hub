@@ -154,4 +154,5 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
     - `npm --workspace @scramjet/multi-manager test -- test/lib/verser2-host-config.spec.ts`.
     - `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 npm --prefix bdd run test:bdd -- -t "@manager-aggregation-repro"`.
     - `npm run build:packages`.
+- Phase 4 checkpoint commit: `5cda9304`.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Closure Review and Checkpoint' (Protocol in workflow.md)
