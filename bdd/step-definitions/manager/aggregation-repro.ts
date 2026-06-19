@@ -369,9 +369,9 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
         const proc = await spawnProcess(cmd, hubOpts, undefined, 20_000, hubEnv);
         const apiBase = `http://127.0.0.1:${apiPort}/api/v1`;
 
-        await waitForGet(apiBase, "version", 30_000);
-
         aggregationProcesses(this).push(proc);
+
+        await waitForGet(apiBase, "version", 30_000);
 
         if (!this.resources.aggHubs) {
             this.resources.aggHubs = {};
