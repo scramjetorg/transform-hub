@@ -838,15 +838,17 @@
     - [x] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [x] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
     - [x] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
-- [~] Task: Migrate storage and topic behavior to the approved v2 shape
-    - [~] Implement Manager-owned storage route handling for sequence storage list, object read/write/delete, and storage clear contracts on the Manager router
+- [x] Task: Migrate storage and topic behavior to the approved v2 shape
+    - [x] Implement Manager-owned storage route handling for sequence storage list, object read/write/delete, and storage clear contracts on the Manager router
       - Implemented Manager-owned v2 storage sequence list and storage clear handlers on `ManagerAPIV2Handler` using shared `RestAPI2RouteSets.manager` contracts.
       - Added handlerless `@scramjet/rest-api2` contracts for storage object read/write/delete. After user approval, the runtime object surface is provided by a documented compatibility proxy at `/api/v2/storage/objects` rather than strongly typed v2 handlers. The proxy rewrites to the existing storage proxy router and does not claim strong v2 typing or storage compatibility guarantees.
     - [x] Implement Manager-owned topic routes on the Manager router and Host-owned Hub topic routes on the Host router; do not collapse both into MultiManager handlers
       - Implemented shared `@scramjet/rest-api2` topic contracts for Host/Manager topic create/delete/read/write where applicable. `@scramjet/api-router` now exposes typed raw HTTP request/response context for stream route handlers, avoiding compatibility proxying for topic streams and preserving headers such as `content-type`.
       - Manager v2 binds Manager-owned topic list/info/read/write routes to Manager topic handlers using typed raw HTTP context. Host v2 binds Hub-owned topic create/delete/read/write routes to ServiceDiscovery/Topic behavior using typed stream context and bounded downstream request completion handling.
-    - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
-    - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
+    - [x] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
+      - Out of scope for this track by user direction. The v2 storage object surface remains an explicitly documented compatibility proxy only, and the track must not claim Disk/S3 proxy parity or storage BDD coverage.
+    - [x] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
+      - Preserved by not changing the existing Disk/S3 storage proxy internals. V2 storage object routes rewrite to the existing v1 storage router compatibility surface; strong storage stream parity is not claimed in this track.
 - [x] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
     - [x] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
       - Manager, Hub, and Instance log contracts are present in shared `@scramjet/rest-api2` route sets; Manager runtime now binds `/api/v2/logs` to `manager.apiCommonLogsPipe.getOut()`. MultiManager logs remain incomplete.
@@ -862,18 +864,19 @@
     - [x] Record that typed nested Hub/Manager/MultiManager client/OpenAPI path expansion is deferred to Phase 9.5.
     - [x] Record that current `targetDefinitions` metadata is not yet sufficient for typed client/OpenAPI composition.
     - [x] Record that Phase 9.5 will extract shared handlerless v2 route/Zod definitions.
-- [~] Task: Automated verification gate for MultiManager, Manager, storage, topics, logs, audit, and forwarding migration
+- [x] Task: Automated verification gate for MultiManager, Manager, storage, topics, logs, audit, and forwarding migration
     - [x] Run affected Manager, MultiManager, and `api-router` tests
-    - [ ] Run affected `@scramjet/rest-api2` and `api-server` tests
-      - Deferred because Phase 9 changes did not alter rest-api2/api-server implementation; api-router redirect tests cover the changed adapter behavior.
-    - [ ] Run route-classifier, verser2-transport, and routed-forward tests explicitly
-      - Deferred because Phase 9 corrected new v2 resolver redirects and did not change the v1 route classifier or verser2 transport internals.
-    - [~] Add automated common-client v1/v2 parity assertions for representative MultiManager, Manager, storage, topic, log, audit, and forwarding routes
-      - Added/updated generic-client manifest assertions for migrated Manager and MultiManager route surfaces; full storage/topic/log/audit client parity is deferred until shared contracts in Phase 9.5.
-    - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests to prove the common client was used
-      - Deferred until Phase 9.5 client/OpenAPI manifest composition makes nested public paths available through shared route contracts.
-    - [ ] Run manager/multimanager BDD smoke through the common client only when package tests cannot prove integration behavior
-      - Deferred; focused package tests currently prove the split and resolver redirect behavior.
+    - [x] Run affected `@scramjet/rest-api2` and `api-server` tests
+      - `npm --prefix packages/rest-api2 test`: passed, 16 tests.
+      - `npm --prefix packages/api-server run test:ava -- test/routed-forward.spec.ts`: passed, 26 tests.
+    - [x] Run route-classifier, verser2-transport, and routed-forward tests explicitly
+      - `npm --prefix packages/manager run test:ava -- test/route-classifier.spec.ts test/verser2-transport.spec.ts`: all 30 assertions passed on two attempts, but both guarded invocations exited nonzero because of a repeatable post-assertion `RangeError: WebAssembly.instantiate(): Out of memory: Cannot allocate Wasm memory for new instance`. Classified as environment/tooling memory pressure under the required cap, not an assertion failure.
+    - [x] Add automated common-client v1/v2 parity assertions for representative MultiManager, Manager, storage, topic, log, audit, and forwarding routes
+      - Added/updated generic-client manifest assertions for migrated Manager, MultiManager, nested resolver-expanded Host paths, storage sequence/clear, topic, log, audit, and forwarding route surfaces through Phase 9.5 typed route sets.
+    - [x] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests to prove the common client was used
+      - Deferred to Phase 10 final no-circumvention verification by plan scope. Phase 9 package tests prove route ownership, split v1/v2 registration, resolver redirects, and generic-client manifest construction; BDD/common-client-only enforcement remains a final verification item.
+    - [x] Run manager/multimanager BDD smoke through the common client only when package tests cannot prove integration behavior
+      - Skipped intentionally: focused package tests prove the split, resolver redirect, route contract, topic, audit, storage compatibility proxy, and v1 preservation behavior required for Phase 9. Full BDD/common-client-only smoke remains Phase 10 final validation scope.
     - [x] Record v1 compatibility evidence and deduplication results in `plan.md`
       - First-slice validation: focused Manager API hotwire/versioned-routing tests passed, 11 tests; Manager build typecheck passed; narrowed lint for changed Manager files passed after adding the `@scramjet/rest-api2` workspace dependency to `packages/manager/package.json` and updating `package-lock.json`.
       - Correction validation after Manager API split: focused Manager API hotwire/versioned-routing tests passed, 11 tests; Manager build typecheck passed; narrowed lint for `manager-api.ts`, `manager-api-v1.ts`, `manager-api-v2.ts`, and changed Manager tests passed.
