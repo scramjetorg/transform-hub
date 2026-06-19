@@ -1,5 +1,6 @@
 export * from "./api";
 export * from "./adapters/http";
+export * from "./bind";
 export * from "./adapters/verser2";
 export * from "./client-transports";
 export * from "./manifest";

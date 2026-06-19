@@ -1,7 +1,6 @@
-import { RouteRequest, Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { RestAPI2Routes, RestAPI2Schemas, getRestAPI2Route } from "@scramjet/rest-api2";
-import { MMRestAPI } from "@scramjet/types";
-import { z } from "zod";
+import { RouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, resolverBinding, routeBinding } from "@scramjet/api-router";
+import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
+import { createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
 
 import { getMultiManagerVerser2TrustExport } from "../verser2-trust-export";
 import type { MultiManager } from "../multi-manager";
@@ -15,89 +14,52 @@ export class MultiManagerAPIV2Handler {
 
     createV2Router(): RouterDefinition {
         const multiManager = this.multiManager;
-        const objectResponse = RestAPI2Schemas.empty;
-        const contract = RestAPI2Routes.multiManager.router(this.v2ApiBase);
-        const route = (method: "get", path: string) => getRestAPI2Route(contract, method, path);
+        const routes = RestAPI2RouteSets.multiManager.routes();
+        const router = bindRoutes(routes, {
+            version: routeBinding.handler<typeof routes.version>(() => ({
+                service: multiManager.service,
+                apiVersion: "v2",
+                version: multiManager.version,
+                build: multiManager.build,
+            }), { id: "multi-manager.v2.version" }),
+            info: routeBinding.handler<typeof routes.info>(() => ({
+                apiBase: this.v2ApiBase,
+                apiPort: multiManager.config.server.apiPort,
+                id: multiManager.id,
+                managersCount: multiManager.managersStore.size,
+            }), { id: "multi-manager.v2.info" }),
+            load: routeBinding.handler<typeof routes.load>(async (): Promise<RestAPI2.LoadResponse<RestAPI2.MultiManager>> => {
+                const load = await multiManager.loadCheck.getLoadCheck() as { load?: number };
 
-        return Router.create({ basePath: this.v2ApiBase })
-            .route({ ...route("get", "/version"),
-                id: "multi-manager.v2.version",
-                schemas: {
-                    response: z.object({
-                        service: z.string(),
-                        apiVersion: z.literal("v2"),
-                        version: z.string(),
-                        build: z.string()
-                    })
-                },
-                handler: (): MMRestAPI.GetVersionResponse => ({
-                    service: multiManager.service,
-                    apiVersion: "v2",
-                    version: multiManager.version,
-                    build: multiManager.build,
-                })
-            })
-            .route({ ...route("get", "/info"),
-                id: "multi-manager.v2.info",
-                schemas: {
-                    response: z.object({
-                        apiBase: z.string(),
-                        apiPort: z.number(),
-                        id: z.string(),
-                        managersCount: z.number()
-                    })
-                },
-                handler: (): MMRestAPI.GetInfoReposnse => ({
-                    apiBase: this.v2ApiBase,
-                    apiPort: multiManager.config.server.apiPort,
-                    id: multiManager.id,
-                    managersCount: multiManager.managersStore.size,
-                })
-            })
-            .route({ ...route("get", "/load"),
-                id: "multi-manager.v2.load",
-                schemas: { response: z.unknown() },
-                handler: async (): Promise<MMRestAPI.GetLoadCheckResponse> => multiManager.loadCheck.getLoadCheck()
-            })
-            .route({ ...route("get", "/list"),
-                id: "multi-manager.v2.list",
-                schemas: { response: z.array(objectResponse) },
-                handler: () => multiManager.handleListManagersRequest()
-            })
-            .route({ ...route("get", "/health"),
-                id: "multi-manager.v2.health",
-                handler: () => multiManager.healthCheck.getHealthCheckInfo()
-            })
-            .route({ ...route("get", "/verser2/trust/:id?"),
-                id: "multi-manager.v2.verser2.trust",
-                schemas: {
-                    params: z.object({ id: z.string().optional() }).optional(),
-                    response: objectResponse
-                },
-                handler: (req: RouteRequest) => this.getTrustExport(req)
-            })
-            .resolve("/managers/:managerId", {
-                id: "multi-manager.v2.manager.forward",
-                description: "Resolve a selected Manager to its verser2 route domain for Manager-owned v2 routes.",
-                schemas: contract.resolvers()[0].schemas,
-                targetDefinitions: contract.resolvers()[0].targetDefinitions,
-                handler: ({ params, remainingPath }) => {
-                    const managerId = (params as { managerId: string }).managerId;
-                    const manager = this.multiManager.managersStore.getById(managerId);
-                    const routeDomain = manager?.config?.verser2?.localGuest?.routeDomain;
+                return { load: load.load ?? 0 };
+            }, { id: "multi-manager.v2.load" }),
+            list: routeBinding.handler<typeof routes.list>(() => ({
+                items: (multiManager.handleListManagersRequest() as unknown[]).map(manager => this.toMultiManagerItem(manager))
+            }), { id: "multi-manager.v2.list" }),
+            health: routeBinding.handler<typeof routes.health>(() => this.toHealthCheckInfo(multiManager.healthCheck.getHealthCheckInfo()), { id: "multi-manager.v2.health" }),
+            trust: routeBinding.handler<typeof routes.trust>((req: RouteRequest) => this.getTrustExport(req), { id: "multi-manager.v2.verser2.trust" })
+        }, Router.create({ basePath: this.v2ApiBase }));
+        const resolver = RestAPI2RouteSets.multiManager.resolvers(this.v2ApiBase).manager;
 
-                    if (!routeDomain) {
-                        return undefined;
-                    }
+        return bindResolver(resolver, resolverBinding.handler(({ params, remainingPath }) => {
+            const managerId = params.managerId;
+            const manager = this.multiManager.managersStore.getById(managerId);
+            const routeDomain = manager?.config?.verser2?.localGuest?.routeDomain;
 
-                    return {
-                        redirect: {
-                            routeDomain,
-                            targetPath: this.toManagerImplementerPath(remainingPath)
-                        }
-                    };
+            if (!routeDomain) {
+                return undefined;
+            }
+
+            return {
+                redirect: {
+                    routeDomain,
+                    targetPath: this.toManagerImplementerPath(remainingPath)
                 }
-            });
+            };
+        }, {
+            id: "multi-manager.v2.manager.forward",
+            description: "Resolve a selected Manager to its verser2 route domain for Manager-owned v2 routes."
+        }), router);
     }
 
     attach() {
@@ -117,5 +79,32 @@ export class MultiManagerAPIV2Handler {
 
     private toManagerImplementerPath(remainingPath: string): string {
         return remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
+    }
+
+    private toMultiManagerItem(manager: unknown): RestAPI2.MultiManager {
+        if (typeof manager === "string") {
+            return { id: manager, apiBase: this.v2ApiBase };
+        }
+
+        const record = manager as Record<string, unknown>;
+
+        return {
+            id: String(record.id || record.managerId || record.name || ""),
+            apiBase: String(record.apiBase || this.v2ApiBase),
+            managers: typeof record.managers === "number" ? record.managers : undefined
+        };
+    }
+
+    private async toHealthCheckInfo(info: unknown): Promise<RestAPI2.HealthCheckInfo<RestAPI2.MultiManager>> {
+        const record = info as Record<string, unknown>;
+        const scope = { id: this.multiManager.id, apiBase: this.v2ApiBase, managers: this.multiManager.managersStore.size };
+        const currentHealthy = Object.values((record.modules as Record<string, boolean> | undefined) || { server: true }).every(Boolean);
+        const components = await createDefaultHealthComponents({
+            current: { name: "multi-manager", healthy: currentHealthy, scope, details: info },
+            processMemoryLimitBytes: this.multiManager.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
+            osDiskPaths: this.multiManager.loadCheck?.config?.fsPaths
+        });
+
+        return summarizeHealth(scope, components, info);
     }
 }

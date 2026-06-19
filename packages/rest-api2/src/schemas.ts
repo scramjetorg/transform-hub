@@ -97,15 +97,42 @@ export const MonitoringMessage = z.object({
 });
 
 export const TrustExport = z.object({
-    scope: z.unknown(),
-    keys: z.array(z.unknown())
+    ca: z.string(),
+    fingerprint256: z.string(),
+    expiresAt: z.string(),
+    hostUrl: z.string(),
+    routeDomains: z.object({
+        broker: z.string(),
+        guest: z.string()
+    })
 });
 
-export const HealthCheckInfo = z.object({
-    scope: z.unknown().optional(),
-    healthy: z.boolean(),
-    details: z.unknown().optional()
-});
+export const HealthStatus = z.union([z.literal("healthy"), z.literal("degraded"), z.literal("unhealthy")]);
+
+export function healthComponent<TScope extends z.ZodTypeAny = z.ZodUnknown>(scopeSchema: TScope = z.unknown() as unknown as TScope) {
+    return z.object({
+        name: z.string(),
+        healthy: z.boolean(),
+        status: HealthStatus,
+        scope: scopeSchema.optional(),
+        details: z.unknown().optional()
+    });
+}
+
+export function healthCheckInfo<TScope extends z.ZodTypeAny, TComponent extends z.ZodTypeAny = ReturnType<typeof healthComponent>>(
+    scopeSchema: TScope,
+    componentSchema: TComponent = healthComponent(scopeSchema) as unknown as TComponent
+) {
+    return z.object({
+        scope: scopeSchema.optional(),
+        healthy: z.boolean(),
+        status: HealthStatus,
+        components: z.array(componentSchema),
+        details: z.unknown().optional()
+    });
+}
+
+export const HealthCheckInfo = healthCheckInfo(z.unknown());
 
 export const VersionResponse = z.object({
     scope: z.unknown().optional(),
@@ -226,6 +253,59 @@ export const InstanceParametersResponse = z.object({
     parameters: z.record(z.string(), z.unknown())
 });
 
+const queryBoolean = z.preprocess(value => {
+    if (value === "true" || value === "1") return true;
+    if (value === "false" || value === "0") return false;
+
+    return value;
+}, z.boolean());
+
+export const DeleteHubQuery = z.object({
+    force: queryBoolean.optional(),
+    delete: queryBoolean.optional(),
+    disconnect: queryBoolean.optional(),
+    reason: z.string().optional()
+});
+
+export const DeleteHubResponse = z.object({
+    hubId: z.string(),
+    deleted: z.boolean(),
+    disconnected: z.boolean().optional()
+});
+
+export const StoreItemPayload = z.object({
+    path: z.string().optional(),
+    directory: z.string().optional(),
+    filename: z.string().optional()
+}).passthrough();
+
+export const StoreClearQuery = z.object({
+    force: queryBoolean.optional()
+}).passthrough();
+
+export const StoreClearResponse = z.object({
+    cleared: z.boolean()
+});
+
+export const TopicCreatePayload = z.object({
+    topic: Topic
+});
+
+export const TopicCreateResponse = z.object({
+    topic: Topic
+});
+
+export const TopicDeleteResponse = z.object({
+    topic: z.string(),
+    deleted: z.boolean()
+});
+
+export const TopicStreamResponse = z.object({
+    accepted: z.boolean()
+});
+
+export const HttpHeaders = z.record(z.string(), z.union([z.string(), z.array(z.string()), z.undefined()]));
+
 export const EventResponse = z.object({
     event: z.unknown()
 });
@@ -303,6 +383,9 @@ export const RestAPI2Schemas = {
             .passthrough()
             .optional()
     },
+    headers: {
+        http: HttpHeaders
+    },
     params: {
         manager: z.object({ managerId: z.string() }),
         hub: z.object({ hubId: z.string() }),
@@ -310,6 +393,7 @@ export const RestAPI2Schemas = {
         instance: z.object({ instanceId: z.string() }),
         fd: anyFdParam,
         event: z.object({ name: z.string() }),
+        topic: z.object({ name: z.string() }),
         trustManager: z.object({ id: z.string().optional() }).optional()
     },
     multiManager: {

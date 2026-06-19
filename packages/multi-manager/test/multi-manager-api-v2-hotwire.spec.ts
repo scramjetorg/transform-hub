@@ -64,8 +64,15 @@ test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t
         managersCount: 0
     });
     t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
-    t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({}), [{ id: "manager-1" }]);
-    t.deepEqual(await (recorder.require("get", "/api/v2/health").handler as Function)({}), { healthy: true });
+    t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({}), { items: [{ id: "manager-1", apiBase: "/api/v2", managers: undefined }] });
+    const health = await (recorder.require("get", "/api/v2/health").handler as Function)({});
+
+    t.deepEqual(health.scope, { id: "mm-hotwire", apiBase: "/api/v2", managers: 0 });
+    t.true(health.healthy);
+    t.true(["healthy", "degraded"].includes(health.status));
+    t.true(health.components.some((component: { name: string }) => component.name === "multi-manager"));
+    t.true(health.components.some((component: { name: string }) => component.name === "process.memory"));
+    t.deepEqual(health.details, { healthy: true });
 });
 
 test("MultiManagerAPIHandler v2 trust route preserves manager lookup behavior", async t => {

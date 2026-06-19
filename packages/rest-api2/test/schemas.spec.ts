@@ -1,5 +1,5 @@
 import test from "ava";
-import { RestAPI2Routes, getRestAPI2Route } from "../src";
+import { RestAPI2Routes, getRestAPI2Route, healthCheckInfo, MultiManager } from "../src";
 
 // ============================================================
 // Assertion (1): host hubRouter /sequences response schema
@@ -187,4 +187,45 @@ test("instance DELETE / operation response validates operation/result shape", t 
         result: { mode: "stop", accepted: true }
     });
     t.false(noInstId.success, "should reject result missing instanceId");
+});
+
+test("healthCheckInfo schema requires typed components for the selected scope", t => {
+    const schema = healthCheckInfo(MultiManager);
+
+    t.true(schema.safeParse({
+        scope: { id: "mmgr-1", apiBase: "/api/v2", managers: 1 },
+        healthy: true,
+        status: "healthy",
+        components: [{ name: "child", healthy: true, status: "healthy", scope: { id: "child-mmgr", apiBase: "/api/v2/managers/child" } }]
+    }).success);
+    t.true(schema.safeParse({
+        scope: { id: "mmgr-1", apiBase: "/api/v2" },
+        healthy: true,
+        status: "degraded",
+        components: []
+    }).success);
+    t.false(schema.safeParse({
+        scope: { id: "mmgr-1", apiBase: "/api/v2" },
+        status: "healthy",
+        healthy: true
+    }).success, "should require components array");
+    t.false(schema.safeParse({
+        scope: { id: "mmgr-1", apiBase: "/api/v2" },
+        healthy: true,
+        status: "healthy",
+        components: [{ name: "child", healthy: true, status: "healthy", scope: { id: "missing-api-base" } }]
+    }).success, "should reject component items that do not match the selected scope schema");
+});
+
+test("manager inventory hub DELETE query parses true and false strings", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.manager.router("/api/v2"), "delete", "/inventory/hubs/:hubId");
+    const schema = route.schemas!.query!;
+    const parsedFalse = schema.safeParse({ delete: "false", force: "0" });
+    const parsedTrue = schema.safeParse({ delete: "true", force: "1" });
+
+    t.true(parsedFalse.success);
+    if (parsedFalse.success) t.deepEqual(parsedFalse.data, { delete: false, force: false });
+    t.true(parsedTrue.success);
+    if (parsedTrue.success) t.deepEqual(parsedTrue.data, { delete: true, force: true });
+    t.false(schema.safeParse({ delete: "not-a-boolean" }).success);
 });

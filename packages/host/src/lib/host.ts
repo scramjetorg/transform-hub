@@ -4,7 +4,7 @@ import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, Server } from "http";
 import { AddressInfo, Socket } from "net";
 import { Duplex, Readable } from "stream";
-import { constants } from "os";
+import { constants, cpus, homedir, totalmem } from "os";
 
 import { HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
@@ -32,7 +32,7 @@ import {
 } from "@scramjet/types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
-import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
+import { HealthComponent, LoadCheck, LoadCheckConfig, degradedComponent } from "@scramjet/load-check";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
@@ -49,7 +49,6 @@ import { Auditor } from "./auditor";
 
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
-import { cpus, homedir, totalmem } from "os";
 import { S3Client } from "./s3-client";
 import { createVerserHost, VerserHost } from "@signicode/verser2-host";
 
@@ -142,6 +141,7 @@ export class Host implements IHost, IComponent {
     cpmConnector?: CPMConnector;
 
     runnerVerser2Host?: VerserHost;
+    runnerVerser2UpstreamHealth?: HealthComponent = degradedComponent("hub.upstream", false, { configured: false });
     private runnerVerser2Broker?: Verser2RunnerBroker;
     private runnerVerser2Guest?: { close?: () => Promise<void> };
 
@@ -977,13 +977,21 @@ export class Host implements IHost, IComponent {
             const upstreamParams = getRunnerVerser2HostUpstreamParams(this.config.verser2, !!this.isCPMConfigured());
 
             if (upstreamParams) {
+                this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", true, { configured: true, url: upstreamParams.url });
                 try {
                     await this.runnerVerser2Host.connectUpstream(upstreamParams);
+                    this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", false, { configured: true, connected: true, url: upstreamParams.url });
                     this.logger.info("STH-local runner verser2 Host connected to Manager upstream", {
                         upstreamId: upstreamParams.upstreamId,
                         url: upstreamParams.url
                     });
                 } catch (error) {
+                    this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", true, {
+                        configured: true,
+                        connected: false,
+                        url: upstreamParams.url,
+                        error: error instanceof Error ? error.message : String(error)
+                    });
                     this.logger.warn("STH-local runner verser2 Host Manager upstream connection failed", error);
 
                     if (this.config.strictPlatformConnection) {

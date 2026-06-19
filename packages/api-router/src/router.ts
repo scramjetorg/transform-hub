@@ -42,7 +42,7 @@ export class RouterDefinition {
         this.hooks = hooks;
     }
 
-    route(definition: RouteDefinition): this {
+    route<TSchemas extends RouteSchemas>(definition: RouteDefinition<TSchemas>): this {
         const routeHooks = definition.hooks || [];
 
         this.routes.push({
@@ -55,11 +55,11 @@ export class RouterDefinition {
         return this;
     }
 
-    get(path: string, definition: Omit<RouteDefinition, "method" | "path"> = {}): this {
+    get<TSchemas extends RouteSchemas>(path: string, definition: Omit<RouteDefinition<TSchemas>, "method" | "path"> = {}): this {
         return this.route({ ...definition, method: "get", path });
     }
 
-    post(path: string, definition: Omit<RouteDefinition, "method" | "path"> = {}): this {
+    post<TSchemas extends RouteSchemas>(path: string, definition: Omit<RouteDefinition<TSchemas>, "method" | "path"> = {}): this {
         return this.route({ ...definition, method: "post", path });
     }
 

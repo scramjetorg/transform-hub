@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { ParsedMessage } from "@scramjet/types";
+import type { ServerResponse } from "http";
 import type { RouteHook } from "./hooks";
 
 export type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "options" | "head";
@@ -18,6 +20,17 @@ export type RouteRequest<TSchemas extends RouteSchemas = RouteSchemas> = {
     query: InferSchema<TSchemas["query"]>;
     headers: InferSchema<TSchemas["headers"]>;
     body: InferSchema<TSchemas["body"]>;
+    raw?: {
+        request?: Partial<ParsedMessage>;
+        response?: ServerResponse;
+    };
+};
+
+export type RawHttpRouteRequest<TSchemas extends RouteSchemas = RouteSchemas> = RouteRequest<TSchemas> & {
+    raw: {
+        request: ParsedMessage;
+        response: ServerResponse;
+    };
 };
 
 export type RouteResponse<TSchemas extends RouteSchemas = RouteSchemas> = InferSchema<TSchemas["response"]>;
@@ -106,6 +119,26 @@ export type RouteDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
     hooks?: RouteHook[];
     handler?: RouteHandler<TSchemas>;
 };
+
+export type RouteSchemasFor<TContract> = TContract extends RouteDefinition<infer TSchemas>
+    ? TSchemas
+    : TContract extends ResolverDefinition<infer TSchemas>
+        ? TSchemas
+        : RouteSchemas;
+
+export type RouteRequestFor<TContract extends RouteDefinition> = RouteRequest<RouteSchemasFor<TContract>>;
+
+export type RouteResponseFor<TContract extends RouteDefinition> = RouteResponse<RouteSchemasFor<TContract>>;
+
+export type RouteHandlerFor<TContract extends RouteDefinition> = TContract extends { kind: "upstream" | "downstream" | "duplex" }
+    ? (request: RawHttpRouteRequest<RouteSchemasFor<TContract>>) => unknown | Promise<unknown>
+    : (request: RouteRequestFor<TContract>) => RouteResponseFor<TContract> | Promise<RouteResponseFor<TContract>>;
+
+export type ResolverRequestFor<TContract extends ResolverDefinition> = ResolverRequest<RouteSchemasFor<TContract>>;
+
+export type ResolverHandlerFor<TContract extends ResolverDefinition> = (
+    request: ResolverRequestFor<TContract>
+) => ResolverTarget | undefined | Promise<ResolverTarget | undefined>;
 
 export type RouteManifestEntry = Omit<RouteDefinition, "handler"> & {
     id: string;

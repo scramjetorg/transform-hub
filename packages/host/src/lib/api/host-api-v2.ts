@@ -1,9 +1,27 @@
 import { APIExpose } from "@scramjet/types";
-import { Router, RouterDefinition, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { RestAPI2, RestAPI2Routes, getRestAPI2Route } from "@scramjet/rest-api2";
-import { z } from "zod";
+import { RawHttpRouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, routeBinding, resolverBinding } from "@scramjet/api-router";
+import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
+import { createDefaultHealthComponents, degradedComponent, summarizeHealth } from "@scramjet/load-check";
+import { Readable } from "stream";
 
 import { IHost } from "../types";
+import TopicId from "../serviceDiscovery/topicId";
+import { isContentType } from "../serviceDiscovery/contentType";
+
+type HostTopicListItem = {
+    id?: unknown;
+    name?: unknown;
+    topic?: unknown;
+    topicName?: unknown;
+};
+
+type HasIdMethod = {
+    id(): unknown;
+};
+
+function hasIdMethod(value: unknown): value is HasIdMethod {
+    return Boolean(value && typeof value === "object" && "id" in value && typeof Object.getOwnPropertyDescriptor(value, "id")?.value === "function");
+}
 
 export class HostAPIV2Handler {
     constructor(
@@ -18,144 +36,125 @@ export class HostAPIV2Handler {
 
     createHubRouter(): RouterDefinition {
         const host = this.host;
-        const hubContract = RestAPI2Routes.host.hubRouter();
-        const route = (method: "get", path: string) => getRestAPI2Route(hubContract, method, path);
+        const routes = RestAPI2RouteSets.host.hubRoutes();
 
-        return Router.create()
-            .route({ ...route("get", "/load"),
-                handler: (): RestAPI2.LoadResponse<RestAPI2.Hub> => ({
-                    load: (host.loadCheck.getLoadCheck() as any)?.load ?? 0
-                })
-            })
-            .route({ ...route("get", "/version"),
-                handler: (): RestAPI2.VersionResponse<RestAPI2.Hub> => ({
-                    version: this.version
-                })
-            })
-            .route({ ...route("get", "/config"),
-                handler: (): RestAPI2.ConfigResponse<RestAPI2.Hub> => ({
-                    config: host.publicConfig
-                })
-            })
-            .route({ ...route("get", "/status"),
-                handler: (): RestAPI2.StatusResponse => ({
-                    status: "ok",
-                    details: host.getStatus()
-                })
-            })
-            .route({ ...route("get", "/sequences"),
-                handler: (): RestAPI2.ListResponse<RestAPI2.Sequence> => ({
-                    items: (host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), status: sequence.status }))
-                })
-            })
-            .route({ ...route("get", "/instances"),
-                handler: (): RestAPI2.ListResponse<RestAPI2.Instance> => ({
-                    items: (host.getInstances() as any[]).map(instance => ({ id: String(instance.id), sequenceId: instance.sequenceId, status: instance.status }))
-                })
-            })
-            .route({ ...route("get", "/entities"),
-                handler: (): RestAPI2.ListResponse<RestAPI2.Entity> => ({
-                    items: [
-                        ...(host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), type: "sequence" })),
-                        ...(host.getInstances() as any[]).map(instance => ({ id: String(instance.id), type: "instance" }))
-                    ]
-                })
-            })
-            .route({ ...route("get", "/topics"),
-                handler: (): RestAPI2.ListResponse<RestAPI2.Topic> => ({
-                    items: ((host.serviceDiscovery as any)?.getTopics?.() || []).map((topic: any) => ({
-                        name: String(topic.id?.() || topic.id || topic.name || topic)
-                    }))
-                })
-            })
-            .route({ ...route("get", "/logs"),
-                handler: () => host.commonLogsPipe.getOut()
-            })
-            .route(route("get", "/audit"));
+        return bindRoutes(routes, {
+            load: (): RestAPI2.LoadResponse<RestAPI2.Hub> => ({
+                load: (host.loadCheck.getLoadCheck() as any)?.load ?? 0
+            }),
+            version: (): RestAPI2.VersionResponse<RestAPI2.Hub> => ({
+                version: this.version
+            }),
+            config: (): RestAPI2.ConfigResponse<RestAPI2.Hub> => ({
+                config: host.publicConfig
+            }),
+            health: async (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Hub>> => {
+                const scope = { id: String((host as any).config?.host?.id || "hub"), status: "ok" };
+                const sequenceStorage = (host as any).config?.sequencesRoot;
+                const components = await createDefaultHealthComponents({
+                    current: { name: "hub", healthy: true, scope, details: host.getStatus() },
+                    processMemoryLimitBytes: host.loadCheck.constants.SAFE_OPERATION_LIMIT || undefined,
+                    osDiskPaths: [sequenceStorage].filter(Boolean),
+                    extraComponents: [host.runnerVerser2UpstreamHealth || degradedComponent("hub.upstream", false, { configured: false })]
+                });
+
+                return summarizeHealth(scope, components, { status: host.getStatus() });
+            },
+            status: (): RestAPI2.StatusResponse => ({
+                status: "ok",
+                details: host.getStatus()
+            }),
+            sequences: (): RestAPI2.ListResponse<RestAPI2.Sequence> => ({
+                items: (host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), status: sequence.status }))
+            }),
+            instances: (): RestAPI2.ListResponse<RestAPI2.Instance> => ({
+                items: (host.getInstances() as any[]).map(instance => ({ id: String(instance.id), sequenceId: instance.sequenceId, status: instance.status }))
+            }),
+            entities: (): RestAPI2.ListResponse<RestAPI2.Entity> => ({
+                items: [
+                    ...(host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), type: "sequence" })),
+                    ...(host.getInstances() as any[]).map(instance => ({ id: String(instance.id), type: "instance" }))
+                ]
+            }),
+            topics: (): RestAPI2.ListResponse<RestAPI2.Topic> => ({
+                items: this.hostTopics().map(topic => ({ name: this.hostTopicName(topic) }))
+            }),
+            createTopic: routeBinding.handler<typeof routes.createTopic>(({ body, headers }) => this.createTopic(body, headers)),
+            deleteTopic: routeBinding.handler<typeof routes.deleteTopic>(({ params }) => this.deleteTopic(params.name)),
+            topicRead: routeBinding.handler<typeof routes.topicRead>(req => this.topicRead(req.params.name, req.headers)),
+            topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => this.topicWrite(req.params.name, this.rawReadable(req), req.headers)),
+            logs: () => host.commonLogsPipe.getOut(),
+            audit: routeBinding.contractOnly("Audit stream wiring remains handled by v1 compatibility surface.")
+        });
     }
 
     createSequenceRouter(): RouterDefinition {
         const host = this.host;
-        const sequenceId = (params: unknown) => String((params as { sequenceId?: string } | undefined)?.sequenceId || "");
-        const sequenceContract = RestAPI2Routes.host.sequenceRouter();
-        const route = (method: "get" | "post" | "put" | "delete", path: string) => getRestAPI2Route(sequenceContract, method, path);
+        const sequenceId = (params: { sequenceId: string }) => params.sequenceId;
+        const routes = RestAPI2RouteSets.host.sequenceRoutes();
 
-        return Router.create()
-            .route(route("post", "/"))
-            .route(route("put", "/:sequenceId"))
-            .route({ ...route("delete", "/:sequenceId"),
-                handler: async ({ params, headers }): Promise<RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>> => {
-                    const id = sequenceId(params);
-                    const force = Boolean((headers as Record<string, unknown> | undefined)?.["x-seq-kill-inst"]);
+        return bindRoutes(routes, {
+            sendSequence: routeBinding.contractOnly("Sequence upload stream remains handled by v1 compatibility surface."),
+            updateSequence: routeBinding.contractOnly("Sequence update stream remains handled by v1 compatibility surface."),
+            deleteSequence: async ({ params, headers }): Promise<RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>> => {
+                const id = sequenceId(params);
+                const force = Boolean((headers as Record<string, unknown> | undefined)?.["x-seq-kill-inst"]);
 
-                    if (!id) {
-                        return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id);
-                    }
-
-                    try {
-                        await host.deleteSequence(id, force);
-
-                        return this.completedOperation(id, { sequenceId: id, deleted: true });
-                    } catch (error) {
-                        return this.failedOperation("DELETE_SEQUENCE_FAILED", this.errorMessage(error), id);
-                    }
+                if (!id) {
+                    return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id);
                 }
-            })
-            .route({ ...route("post", "/:sequenceId/instances"),
-                handler: async ({ params, body }): Promise<RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>> => {
-                    const id = sequenceId(params);
 
-                    if (!id) {
-                        return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id);
-                    }
+                try {
+                    await host.deleteSequence(id, force);
 
-                    try {
-                        const instance = await host.startSequence(id, body as any);
-                        const instanceId = "id" in instance ? String(instance.id) : "";
-
-                        return this.completedOperation(instanceId || id, { instance: { id: instanceId } });
-                    } catch (error) {
-                        return this.failedOperation("START_SEQUENCE_FAILED", this.errorMessage(error), id);
-                    }
+                    return this.completedOperation(id, { sequenceId: id, deleted: true });
+                } catch (error) {
+                    return this.failedOperation("DELETE_SEQUENCE_FAILED", this.errorMessage(error), id);
                 }
-            })
-            .route({ ...route("get", "/:sequenceId"),
-                handler: ({ params }): RestAPI2.SequenceResponse => {
-                    const id = sequenceId(params);
-                    const sequence = host.getSequence(id) as any;
+            },
+            startSequence: async ({ params, body }): Promise<RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>> => {
+                const id = sequenceId(params);
 
-                    return { sequence: { id: String(sequence?.id || id), status: sequence?.status } };
+                if (!id) {
+                    return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id);
                 }
+
+                try {
+                    const instance = await host.startSequence(id, body as any);
+                    const instanceId = "id" in instance ? String(instance.id) : "";
+
+                    return this.completedOperation(instanceId || id, { instance: { id: instanceId } });
+                } catch (error) {
+                    return this.failedOperation("START_SEQUENCE_FAILED", this.errorMessage(error), id);
+                }
+            },
+            getSequence: ({ params }): RestAPI2.SequenceResponse => {
+                const id = sequenceId(params);
+                const sequence = host.getSequence(id) as any;
+
+                return { sequence: { id: String(sequence?.id || id), status: sequence?.status } };
+            },
+            getSequenceInstances: ({ params }): RestAPI2.ListResponse<RestAPI2.Instance> => ({
+                items: (host.getSequenceInstances(sequenceId(params)) as any[]).map(instance => ({
+                    id: String(instance.id),
+                    sequenceId: instance.sequenceId,
+                    status: instance.status
+                }))
             })
-            .route({ ...route("get", "/:sequenceId/instances"),
-                handler: ({ params }): RestAPI2.ListResponse<RestAPI2.Instance> => ({
-                    items: (host.getSequenceInstances(sequenceId(params)) as any[]).map(instance => ({
-                        id: String(instance.id),
-                        sequenceId: instance.sequenceId,
-                        status: instance.status
-                    }))
-                })
-            });
+        });
     }
 
     createV2Router(): RouterDefinition {
-        return Router.create({ basePath: this.v2ApiBase })
+        const router = Router.create({ basePath: this.v2ApiBase })
             .mount("/", this.createHubRouter())
-            .mount("/sequences", this.createSequenceRouter())
-            .resolve("/instances/:instanceId", {
-                schemas: { params: z.object({ instanceId: z.string() }) },
-                targetDefinitions: {
-                    owner: "inst",
-                    definitions: RestAPI2Routes.instance.router(),
-                    mountPath: "/instances/:instanceId",
-                    implementerBasePath: "/"
-                },
-                handler: ({ params }) => {
-                    const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
+            .mount("/sequences", this.createSequenceRouter());
+        const resolver = RestAPI2RouteSets.host.resolvers().instance;
 
-                    return instance?.v2Router ? { local: instance.v2Router } : undefined;
-                }
-            });
+        return bindResolver(resolver, resolverBinding.handler(({ params }) => {
+            const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
+
+            return instance?.v2Router ? { local: instance.v2Router } : undefined;
+        }), router);
     }
 
     attach() {
@@ -167,6 +166,118 @@ export class HostAPIV2Handler {
             operation: { id, status: "completed" },
             result
         };
+    }
+
+    private hostTopics(): unknown[] {
+        const serviceDiscovery: { getTopics?: () => unknown[] } = this.host.serviceDiscovery;
+
+        return serviceDiscovery.getTopics?.() || [];
+    }
+
+    private hostTopicName(topic: unknown): string {
+        if (typeof topic !== "object" || topic === null) {
+            return String(topic);
+        }
+
+        const item = topic as HostTopicListItem;
+
+        return String(this.topicValue(item.id) || item.name || item.topicName || item.topic || topic);
+    }
+
+    private topicValue(value: unknown): unknown {
+        if (typeof value === "function") {
+            return value();
+        }
+
+        if (hasIdMethod(value)) {
+            return value.id();
+        }
+
+        return value;
+    }
+
+    private createTopic(body: RestAPI2.TopicCreatePayload, headers?: Record<string, unknown>): RestAPI2.OpResponse<RestAPI2.TopicCreateResponse> {
+        const name = body?.topic?.name || "";
+        const contentType = this.headerValue(headers, "content-type") || "application/x-ndjson";
+
+        if (!TopicId.validate(name)) return this.failedOperation("INVALID_TOPIC", "Topic id incorrect format", name);
+        if (!isContentType(contentType)) return this.failedOperation("INVALID_CONTENT_TYPE", "Unsupported content-type", name);
+
+        this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+
+        return this.completedOperation(name, { topic: { name } });
+    }
+
+    private deleteTopic(name: string): RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse> {
+        if (!TopicId.validate(name)) return this.failedOperation("INVALID_TOPIC", "Topic id incorrect format", name);
+
+        const deleted = Boolean(this.host.serviceDiscovery.deleteTopic(new TopicId(name)));
+
+        if (!deleted) return this.failedOperation("TOPIC_NOT_FOUND", `Topic ${name} not found`, name);
+
+        return this.completedOperation(name, { topic: name, deleted });
+    }
+
+    private async topicRead(name: string, headers?: Record<string, unknown>) {
+        const contentType = this.headerValue(headers, "content-type") || "application/x-ndjson";
+
+        if (!TopicId.validate(name)) return this.failedOperation("INVALID_TOPIC", "Topic id incorrect format", name);
+        if (!isContentType(contentType)) return this.failedOperation("INVALID_CONTENT_TYPE", "Unsupported content-type", name);
+
+        const topic = this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+
+        await this.host.serviceDiscovery.update({
+            requires: name,
+            contentType,
+            topicName: name,
+            status: "add"
+        });
+
+        return topic;
+    }
+
+    private async topicWrite(name: string, request: Readable, headers?: Record<string, unknown>): Promise<RestAPI2.OpResponse<RestAPI2.TopicStreamResponse>> {
+        const contentType = this.headerValue(headers, "content-type") || "";
+
+        if (!TopicId.validate(name)) return this.failedOperation("INVALID_TOPIC", "Topic id incorrect format", name);
+        if (!isContentType(contentType)) return this.failedOperation("INVALID_CONTENT_TYPE", "Unsupported content-type", name);
+
+        const topic = this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+
+        topic.acceptPipe(request);
+        await this.host.serviceDiscovery.update({
+            provides: name,
+            contentType,
+            topicName: name,
+            status: "add"
+        });
+        await this.waitForStreamEnd(request);
+
+        return this.completedOperation(name, { accepted: true });
+    }
+
+    private rawReadable(req: RawHttpRouteRequest): Readable {
+        if (!req.raw?.request) {
+            throw new Error("Raw HTTP request is required for Host v2 topic stream routes");
+        }
+
+        return req.raw.request;
+    }
+
+    private headerValue(headers: Record<string, unknown> | undefined, name: string): string | undefined {
+        const value = headers?.[name];
+
+        return Array.isArray(value) ? String(value[0]) : value === undefined ? undefined : String(value);
+    }
+
+    private async waitForStreamEnd(stream: Readable): Promise<void> {
+        if ((stream as { readableEnded?: boolean }).readableEnded) return;
+
+        await new Promise<void>(resolve => {
+            stream.once("close", resolve);
+            stream.once("end", resolve);
+            stream.once("error", resolve);
+        });
     }
 
     private failedOperation<TOutput>(code: string, message: string, id: string): RestAPI2.OpResponse<TOutput> {

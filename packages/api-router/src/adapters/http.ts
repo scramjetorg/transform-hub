@@ -16,19 +16,22 @@ export function mapRouteRequest(req: Partial<ParsedMessage>): Partial<RouteReque
     };
 }
 
-export async function executeRouteDefinition(route: RouteDefinition, requestLike: Partial<ParsedMessage>) {
+export async function executeRouteDefinition(route: RouteDefinition, requestLike: Partial<ParsedMessage>, responseLike?: ServerResponse) {
     if (!route.handler) {
         return undefined;
     }
 
-    const request = validateRouteRequest(route.schemas || {}, mapRouteRequest(requestLike));
+    const request = {
+        ...validateRouteRequest(route.schemas || {}, mapRouteRequest(requestLike)),
+        raw: { request: requestLike, response: responseLike }
+    };
     const response = await executeRoutePipeline(route, request, () => route.handler!(request), { hooks: route.hooks });
 
     return route.schemas?.response ? validateRouteResponse(route.schemas, response) : response;
 }
 
-async function executeHttpRoute(route: RouteDefinition, req: ParsedMessage, _res?: ServerResponse) {
-    return executeRouteDefinition(route, req);
+async function executeHttpRoute(route: RouteDefinition, req: ParsedMessage, res?: ServerResponse) {
+    return executeRouteDefinition(route, req, res);
 }
 
 function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put" | "patch" | "delete" {

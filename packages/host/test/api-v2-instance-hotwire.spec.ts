@@ -8,7 +8,7 @@ import { HostAPIHandler } from "../src/lib/api/host-api";
 import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { InstanceAPIV2 } from "../src/lib/api/instance-api-v2";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
-import { registerHttpRoutes } from "@scramjet/api-router";
+import { registerHttpRoutes, RouteValidationError } from "@scramjet/api-router";
 
 const logger = new ObjLogger("api-v2-instance-hotwire-test");
 
@@ -160,18 +160,14 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
         operation: { id: "inst-1", status: "completed" },
         result: { instance: { id: "inst-1" }, parameters: { logLevel: "debug" } }
     });
-    t.deepEqual(await (recorder.require("op", "/", "delete").handler as Function)({
-        body: { mode: "restart" }
-    }), {
-        operation: { id: "inst-1", status: "failed" },
-        error: { code: "INVALID_DELETE_MODE", message: "Unsupported delete mode: restart" }
-    });
-    t.deepEqual(await (recorder.require("op", "/", "patch").handler as Function)({
-        body: { monitoringRate: "fast" }
-    }), {
-        operation: { id: "inst-1", status: "failed" },
-        error: { code: "INVALID_MONITORING_RATE", message: "Monitoring rate must be a number" }
-    });
+    await t.throwsAsync(
+        () => (recorder.require("op", "/", "delete").handler as Function)({ body: { mode: "restart" } }),
+        { instanceOf: RouteValidationError, message: "Invalid route body" }
+    );
+    await t.throwsAsync(
+        () => (recorder.require("op", "/", "patch").handler as Function)({ body: { monitoringRate: "fast" } }),
+        { instanceOf: RouteValidationError, message: "Invalid route body" }
+    );
     t.deepEqual(await (recorder.require("get", "/stdio").handler as Function)({}), {
         channels: [
             { fd: 0, readable: false, writable: true },
@@ -182,17 +178,17 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
     t.deepEqual(await (recorder.require("get", "/health").handler as Function)({}), {
         scope: { id: "inst-1", status: InstanceStatus.RUNNING },
         healthy: true,
+        status: "healthy",
+        components: [{ name: "instance", healthy: true, status: "healthy", scope: { id: "inst-1", status: InstanceStatus.RUNNING }, details: { current: { memory: 1 } } }],
         details: { current: { memory: 1 } }
     });
     t.truthy(await (recorder.require("upstream", "/stdio/:fd").handler as Function)({
         params: { fd: "1" }
     }));
-    t.deepEqual(await (recorder.require("upstream", "/stdio/:fd").handler as Function)({
-        params: { fd: "0" }
-    }), {
-        operation: { id: "inst-1", status: "failed" },
-        error: { code: "INVALID_STDIO_FD", message: "File descriptor 0 is not readable" }
-    });
+    await t.throwsAsync(
+        () => (recorder.require("upstream", "/stdio/:fd").handler as Function)({ params: { fd: "0" } }),
+        { instanceOf: RouteValidationError, message: "Invalid route params" }
+    );
     t.truthy(await (recorder.require("downstream", "/stdio/:fd", "put").handler as Function)({
         params: { fd: "0" },
         headers: { "content-type": "application/octet-stream" }

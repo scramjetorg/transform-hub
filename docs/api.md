@@ -244,8 +244,7 @@ The v2 package exposes one common client surface for all API levels. The client 
 | POST | `/api/v2/managers/:managerId/hubs` | `RestAPI2.RegisterHubPayload` | `RestAPI2.OpResponse<RestAPI2.RegisterHubResponse>` | |
 | GET | `/api/v2/managers/:managerId/hubs` | `RestAPI2.ListQuery<RestAPI2.Hub>` | `RestAPI2.ListResponse<RestAPI2.Hub>` | yes |
 | GET | `/api/v2/managers/:managerId/hubs/:hubId` | `RestAPI2.HubParams` | `RestAPI2.HostInfoResponse` | |
-| POST | `/api/v2/managers/:managerId/hubs/disconnect` | `RestAPI2.DisconnectHubPayload` | `RestAPI2.OpResponse<RestAPI2.DisconnectHubResponse>` | |
-| DELETE | `/api/v2/managers/:managerId/hubs/:hubId` | `RestAPI2.DeleteHubPayload` | `RestAPI2.OpResponse<RestAPI2.DeleteHubResponse>` | |
+| DELETE | `/api/v2/managers/:managerId/inventory/hubs/:hubId` | `RestAPI2.DeleteHubQuery` | `RestAPI2.OpResponse<RestAPI2.DeleteHubResponse>` | |
 | GET | `/api/v2/managers/:managerId/instances` | `RestAPI2.InstancesQuery` | `RestAPI2.ListResponse<RestAPI2.Instance>` | yes⁰ |
 | GET | `/api/v2/managers/:managerId/sequences` | `RestAPI2.SequencesQuery` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | yes⁰ |
 | GET | `/api/v2/managers/:managerId/entities` | `RestAPI2.ManagerParams` | `RestAPI2.ListResponse<RestAPI2.Entity>` | yes⁰ |
@@ -260,6 +259,8 @@ The v2 package exposes one common client surface for all API levels. The client 
 | DELETE | `/api/v2/managers/:managerId/storage/objects/:filename` | `RestAPI2.DeleteStoreItemPayload` | `RestAPI2.DeleteStoreItemResponse` | |
 | DELETE | `/api/v2/managers/:managerId/storage` | `RestAPI2.StoreClearPayload` | `RestAPI2.StoreClearResponse` | |
 | GET | `/api/v2/managers/:managerId/audit` | `RestAPI2.ManagerParams` | `ReadableStream<RestAPI2.AuditRecord>` | yes¹ |
+
+Manager storage object endpoints are exposed as a WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and compatibility guarantees are intentionally not provided for that proxy surface yet; typed storage contracts can replace the proxy in a later storage-service migration.
 
 ### hub
 

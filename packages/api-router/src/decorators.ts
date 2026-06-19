@@ -2,9 +2,12 @@ import { HttpMethod, RouteDefinition } from "./manifest";
 import { RouterDefinition } from "./router";
 
 type Constructor<T = any> = new (...args: any[]) => T;
+type DecoratedRouteDefinition = Omit<RouteDefinition, "handler"> & {
+    createHandler(instance: Record<string | symbol, Function>): RouteDefinition["handler"];
+};
 
 const classBasePaths = new WeakMap<Function, string>();
-const methodRoutes = new WeakMap<Function, RouteDefinition[]>();
+const methodRoutes = new WeakMap<Function, DecoratedRouteDefinition[]>();
 
 export function Api(basePath = "/"): ClassDecorator {
     return target => {
@@ -21,8 +24,8 @@ export function Route(method: HttpMethod, path: string, definition: Omit<RouteDe
             ...definition,
             method,
             path,
-            handler: (instance: Record<string | symbol, Function>) => instance[propertyKey].bind(instance)
-        } as RouteDefinition);
+            createHandler: (instance: Record<string | symbol, Function>) => instance[propertyKey].bind(instance)
+        });
         methodRoutes.set(ctor, routes);
     };
 }
@@ -42,11 +45,11 @@ export function collectDecoratedRoutes(target: Constructor | object): RouterDefi
     const router = new RouterDefinition({ basePath: classBasePaths.get(ctor) || "/" });
 
     for (const route of methodRoutes.get(ctor) || []) {
-        const handlerFactory = route.handler as unknown as (instance: object) => RouteDefinition["handler"];
+        const { createHandler, ...definition } = route;
 
         router.route({
-            ...route,
-            handler: handlerFactory(instance)
+            ...definition,
+            handler: createHandler(instance as Record<string | symbol, Function>)
         });
     }
 

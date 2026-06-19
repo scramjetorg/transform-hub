@@ -17,7 +17,7 @@ function createManagerStub(recorder: RouteRecorder) {
         version: "0.0.0-test",
         build: "test-build",
         apiSthConnectionStore: {
-            getById: (id: string) => id === "sth-1" ? { id, routeDomain: "sth-1.scramjet.internal", isConnectionActive: true } : undefined,
+            getById: (id: string) => id === "sth-1" ? { id, routeDomain: "sth-1.scramjet.internal", isConnectionActive: true, selfHosted: true, disconnect: async () => undefined } : undefined,
             delete: async () => undefined
         },
         apiServiceDiscovery: { list: () => [] },
@@ -26,7 +26,7 @@ function createManagerStub(recorder: RouteRecorder) {
             getLoadCheckStream: () => new PassThrough()
         },
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
-        apiS3Middleware: { clearIndex: async () => undefined },
+        apiS3Middleware: { clearIndex: async () => undefined, index: { sequences: [{ id: "seq-1", _filename: "seq.tar.gz", packageSize: 123 }] }, router: { lookup: () => undefined } },
         logger: new ObjLogger("manager-api-v2-hotwire-test"),
         handleSthRegistration: async () => "sth-1",
         validateQueries: () => true,
@@ -58,8 +58,62 @@ test("ManagerAPIHandler registers the v2 Manager API route surface separately", 
     t.true(recorder.has("get", "/api/v2/all_sequences"));
     t.true(recorder.has("get", "/api/v2/entities"));
     t.true(recorder.has("get", "/api/v2/topics"));
+    t.true(recorder.has("upstream", "/api/v2/logs"));
+    t.true(recorder.has("op", "/api/v2/inventory/hubs/:hubId", "delete"));
+    t.true(recorder.has("get", "/api/v2/storage/sequences"));
+    t.false(recorder.has("upstream", "/api/v2/storage/objects/:directory/:filename?"));
+    t.false(recorder.has("downstream", "/api/v2/storage/objects/:filename?", "put"));
+    t.false(recorder.has("op", "/api/v2/storage/objects/:filename", "delete"));
+    t.true(recorder.has("use", "/api/v2/storage/objects"));
+    t.true(recorder.has("use", "/api/v2/storage/objects/*"));
+    t.true(recorder.has("op", "/api/v2/storage", "delete"));
     t.true(recorder.has("use", "/api/v2/hubs/:hubId"));
     t.true(recorder.has("use", "/api/v2/hubs/:hubId/*"));
+});
+
+test("ManagerAPIHandler v2 storage objects proxy rewrites to the legacy storage router", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder);
+    const lookups: any[] = [];
+
+    manager.apiS3Middleware.router.lookup = ((req: any) => {
+        lookups.push({ url: req.url });
+    }) as any;
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    const req: any = { url: "/api/v2/storage/objects/packages/seq.tar.gz", headers: {}, params: {} };
+
+    (recorder.require("use", "/api/v2/storage/objects/*").handler as Function)(req, {}, () => t.fail());
+
+    t.is(req.url, "/api/v2/storage/objects/packages/seq.tar.gz");
+    t.deepEqual(lookups, [{ url: "/api/v1/s3/packages/seq.tar.gz" }]);
+});
+
+test("ManagerAPIHandler v2 storage objects proxy returns not found when storage is unavailable", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder);
+    const response = {
+        statusCode: 200,
+        body: "",
+        headersSent: false,
+        writeHead(statusCode: number) {
+            this.statusCode = statusCode;
+            this.headersSent = true;
+        },
+        end(body: string) {
+            this.body = body;
+        }
+    };
+
+    manager.apiS3Middleware = undefined as any;
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    (recorder.require("use", "/api/v2/storage/objects/*").handler as Function)({ url: "/api/v2/storage/objects/missing" }, response, () => t.fail());
+
+    t.is(response.statusCode, 404);
+    t.true(response.body.includes("Storage proxy is not configured"));
 });
 
 test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
@@ -80,6 +134,43 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     t.deepEqual(await (recorder.require("get", "/api/v2/all_sequences").handler as Function)({ query: {} }), { items: [{ id: "seq-1", status: "ready" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/entities").handler as Function)({}), { items: [{ id: "seq-1", type: "sequence" }, { id: "inst-1", type: "instance" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/storage/sequences").handler as Function)({}), { items: [{ path: "seq.tar.gz", size: 123 }] });
+    t.deepEqual(await (recorder.require("op", "/api/v2/storage", "delete").handler as Function)({}), { cleared: true });
+});
+
+test("ManagerAPIHandler v2 inventory hub delete disconnects by default and deletes with query option", async t => {
+    const recorder = new RouteRecorder();
+    const calls: unknown[] = [];
+    const manager = createManagerStub(recorder);
+
+    manager.apiSthConnectionStore = {
+        getById: (id: string) => id === "sth-1" ? {
+            id,
+            routeDomain: "sth-1.scramjet.internal",
+            isConnectionActive: true,
+            selfHosted: true,
+            disconnect: async (reason: string) => calls.push({ disconnect: reason })
+        } : undefined,
+        delete: async (id: string, force: boolean) => calls.push({ delete: id, force })
+    } as any;
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    const handler = recorder.require("op", "/api/v2/inventory/hubs/:hubId", "delete").handler as Function;
+
+    t.deepEqual(await handler({ params: { hubId: "sth-1" }, query: { reason: "manual" } }), {
+        operation: { id: "sth-1", status: "completed" },
+        result: { hubId: "sth-1", deleted: false, disconnected: true }
+    });
+    t.deepEqual(await handler({ params: { hubId: "sth-1" }, query: { delete: "true", force: "true" } }), {
+        operation: { id: "sth-1", status: "completed" },
+        result: { hubId: "sth-1", deleted: true, disconnected: true }
+    });
+    t.deepEqual(await handler({ params: { hubId: "missing" }, query: {} }), {
+        operation: { id: "missing", status: "failed" },
+        error: { code: "HUB_NOT_FOUND", message: "Couldn't find Hub with a given ID" }
+    });
+    t.deepEqual(calls, [{ disconnect: "id_drop" }, { delete: "sth-1", force: true }]);
 });
 
 test("ManagerAPIHandler v2 resolves Hub-owned routes with a verser2 redirect", async t => {
@@ -108,13 +199,22 @@ test("ManagerAPIHandler v2 resolves Hub-owned routes with a verser2 redirect", a
 
 test("Manager setupHealthEndpoint registers v2 health on the same API router", async t => {
     const recorder = new RouteRecorder();
-    const healthCheck = { getHealthCheckInfo: () => ({ healthy: true }) };
+    const healthCheck = { getHealthCheckInfo: () => ({ uptime: 1, timestamp: 2, modules: { sthServer: true } }) };
     const manager = {
+        id: "mgr-hotwire",
         _apiRouter: recorder.asApiRoute(),
-        _config: { apiBase: "/api/v1" }
+        _config: { apiBase: "/api/v1", id: "mgr-hotwire" },
+        getList: () => [{ id: "hub-1" }]
     };
 
     Manager.prototype.setupHealthEndpoint.call(manager as any, healthCheck as any);
 
-    t.deepEqual(await (recorder.require("get", "/api/v2/health").handler as Function)({}), { healthy: true });
+    const health = await (recorder.require("get", "/api/v2/health").handler as Function)({});
+
+    t.deepEqual(health.scope, { id: "mgr-hotwire", hubs: 1 });
+    t.true(health.healthy);
+    t.true(["healthy", "degraded"].includes(health.status));
+    t.true(health.components.some((component: { name: string }) => component.name === "manager"));
+    t.true(health.components.some((component: { name: string }) => component.name === "process.memory"));
+    t.deepEqual(health.details, { uptime: 1, timestamp: 2, modules: { sthServer: true } });
 });

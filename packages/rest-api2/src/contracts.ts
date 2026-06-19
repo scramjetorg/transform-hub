@@ -114,8 +114,31 @@ export namespace RestAPI2 {
     export type LogRecord = { time: number; level: string; message: string; meta?: unknown };
     export type AuditRecord = { id: string; time: number; event: string; meta?: unknown };
 
-    export type TrustExport<TScope = unknown> = { scope: TScope; keys: unknown[] };
-    export type HealthCheckInfo<TScope = unknown> = { scope?: TScope; healthy: boolean; details?: unknown };
+    export type TrustExport = {
+        ca: string;
+        fingerprint256: string;
+        expiresAt: string;
+        hostUrl: string;
+        routeDomains: {
+            broker: string;
+            guest: string;
+        };
+    };
+    export type HealthStatus = "healthy" | "degraded" | "unhealthy";
+    export type HealthComponent<TScope = unknown> = {
+        name: string;
+        healthy: boolean;
+        status: HealthStatus;
+        scope?: TScope;
+        details?: unknown;
+    };
+    export type HealthCheckInfo<TScope = unknown, TComponent = HealthComponent> = {
+        scope?: TScope;
+        healthy: boolean;
+        status: HealthStatus;
+        components: TComponent[];
+        details?: unknown;
+    };
     export type VersionResponse<TScope = unknown> = { scope?: TScope; version: string };
     export type InfoResponse<TScope = unknown> = { scope?: TScope; info: unknown };
     export type ConfigResponse<TScope = unknown> = { scope?: TScope; config: unknown };
@@ -139,8 +162,9 @@ export namespace RestAPI2 {
     export type DeleteManagerResponse = { managerId: string; stopped: boolean };
     export type RegisterHubPayload = { hub: Hub; connection?: unknown };
     export type RegisterHubResponse = { hub: Hub };
-    export type DeleteHubPayload = { force?: boolean };
-    export type DeleteHubResponse = { hubId: string; deleted: boolean };
+    export type DeleteHubQuery = { force?: boolean; delete?: boolean; disconnect?: boolean; reason?: string };
+    export type DeleteHubPayload = DeleteHubQuery;
+    export type DeleteHubResponse = { hubId: string; deleted: boolean; disconnected?: boolean };
     export type DisconnectHubPayload = { hubIds?: string[]; reason?: string };
     export type DisconnectHubResponse = { disconnected: string[] };
 
@@ -177,7 +201,7 @@ export namespace RestAPI2 {
     export type TopicChunk = unknown;
     export type TopicStreamResponse = { accepted: boolean };
 
-    export type StoreItemPayload = { path: string };
+    export type StoreItemPayload = { path: string; directory?: string; filename?: string };
     export type StoreItemResponse = { item: StoreItem };
     export type DeleteStoreItemPayload = StoreItemPayload;
     export type DeleteStoreItemResponse = { path: string; deleted: boolean };

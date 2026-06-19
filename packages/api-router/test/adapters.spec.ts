@@ -199,6 +199,38 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
     ]);
 });
 
+test("registerHttpRoutes exposes raw request and response to stream handlers", async t => {
+    const handlers = new Map<string, Function>();
+    const api = {
+        get() {},
+        op() {},
+        upstream(path: string, handler: Function) {
+            handlers.set(`upstream:${path}`, handler);
+        },
+        downstream(path: string, handler: Function) {
+            handlers.set(`downstream:${path}`, handler);
+        }
+    } as any;
+    const router = createRouter({ basePath: "/api/v2" })
+        .route(Router.get("/topics/:name/stream", {
+            kind: "upstream",
+            schemas: { params: z.object({ name: z.string() }) },
+            handler: ({ params, raw }) => ({ params, rawRequest: raw?.request, rawResponse: raw?.response })
+        }))
+        .route(Router.post("/topics/:name/stream", {
+            kind: "downstream",
+            schemas: { params: z.object({ name: z.string() }) },
+            handler: ({ params, raw }) => ({ params, rawRequest: raw?.request, rawResponse: raw?.response })
+        }));
+    const req: any = { params: { name: "topic-1" }, headers: {} };
+    const res: any = { statusCode: 200 };
+
+    registerHttpRoutes(api, router);
+
+    t.deepEqual(await handlers.get("upstream:/api/v2/topics/:name/stream")!(req, res), { params: { name: "topic-1" }, rawRequest: req, rawResponse: res });
+    t.deepEqual(await handlers.get("downstream:/api/v2/topics/:name/stream")!(req, res), { params: { name: "topic-1" }, rawRequest: req, rawResponse: res });
+});
+
 test("registerVerser2Routes creates executable route registrations from manifest entries", async t => {
     const registrations: any[] = [];
     const router = createRouter({ basePath: "/api/v2" })

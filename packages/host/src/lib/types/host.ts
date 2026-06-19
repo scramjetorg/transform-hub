@@ -1,7 +1,7 @@
 import { IObjectLogger, OpResponse, StartInstanceReturnType, STHRestAPI } from "@scramjet/types";
 import { RefCountHandler } from "@scramjet/utility";
 import { Auditor } from "../auditor";
-import { LoadCheck } from "@scramjet/load-check";
+import { HealthComponent, LoadCheck } from "@scramjet/load-check";
 import { ServiceDiscovery } from "../serviceDiscovery/sd-adapter";
 import { CommonLogsPipe } from "../common-logs-pipe";
 import { CPMConnector } from "../cpm-connector";
@@ -26,6 +26,7 @@ export interface IHost {
 
     auditor: Auditor;
     loadCheck: LoadCheck;
+    runnerVerser2UpstreamHealth?: HealthComponent;
     serviceDiscovery: ServiceDiscovery;
     commonLogsPipe: CommonLogsPipe;
     cpmConnector?: CPMConnector;

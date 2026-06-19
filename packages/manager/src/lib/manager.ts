@@ -23,6 +23,7 @@ import {
 } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
+import { RestAPI2, healthCheckInfo, Manager as RestAPI2ManagerSchema } from "@scramjet/rest-api2";
 import { z } from "zod";
 import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
@@ -30,7 +31,7 @@ import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { IDProvider } from "@scramjet/model";
-import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
+import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
 import { STHController } from "./sth-controller";
 import { STHInfoRegister } from "./sth-info-register";
 import { SthConnectionStore } from "./sth-connection-store";
@@ -237,16 +238,31 @@ export class Manager implements IComponent {
 
     setupHealthEndpoint(healthCheck: HealthCheck) {
         // We may need some additional logic here later.
-        const createHealthRouter = (apiVersion: "v1" | "v2") => Router.create({
-            basePath: apiVersion === "v1" ? this._config.apiBase : replacePathVersion(this._config.apiBase, "v2")
-        }).route(Router.get("/health", {
-            id: `manager.${apiVersion}.health`,
+        const toV2HealthCheckInfo = async (info: MRestAPI.HealthCheckInfo): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Manager>> => {
+            const managerList = typeof this.getList === "function" ? this.getList() : [];
+            const scope = { id: this.id || this._config.id, hubs: managerList.length };
+            const currentHealthy = Object.values(info.modules || {}).every(Boolean);
+            const components = await createDefaultHealthComponents({
+                current: { name: "manager", healthy: currentHealthy, scope, details: info },
+                processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
+                osDiskPaths: this.loadCheck?.config?.fsPaths
+            });
+
+            return summarizeHealth(scope, components, info);
+        };
+        const createV1HealthRouter = () => Router.create({ basePath: this._config.apiBase }).route(Router.get("/health", {
+            id: "manager.v1.health",
             schemas: { response: z.object({}).passthrough() },
             handler: () => healthCheck.getHealthCheckInfo()
         }));
+        const createV2HealthRouter = () => Router.create({ basePath: replacePathVersion(this._config.apiBase, "v2") }).route(Router.get("/health", {
+            id: "manager.v2.health",
+            schemas: { response: healthCheckInfo(RestAPI2ManagerSchema) },
+            handler: (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Manager>> => toV2HealthCheckInfo(healthCheck.getHealthCheckInfo())
+        }));
 
-        registerHttpRoutes(this._apiRouter, createHealthRouter("v1"));
-        registerHttpRoutes(this._apiRouter, createHealthRouter("v2"));
+        registerHttpRoutes(this._apiRouter, createV1HealthRouter());
+        registerHttpRoutes(this._apiRouter, createV2HealthRouter());
     }
 
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {

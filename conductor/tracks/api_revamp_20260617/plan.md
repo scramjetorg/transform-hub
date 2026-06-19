@@ -675,7 +675,7 @@
     - [x] Run focused validation for the corrected ownership boundary
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" TS_NODE_TRANSPILE_ONLY=1 node ../../scripts/run-ava.js --serial -T 50000 test/api-v2-instance-hotwire.spec.ts test/api-hotwire.spec.ts test/api-v2-hotwire.spec.ts` from `packages/host`: passed, 28 tests.
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
-- [ ] Task: Complete Instance/CSI v2 behavior in small method groups after the ownership split
+- [x] Task: Complete Instance/CSI v2 behavior in small method groups after the ownership split
     - [x] Add v2 health plus input/output route behavior in `instance-api-v2.ts` only
       - Implemented through `InstanceAPIV2.createRouter()` using `@scramjet/api-router` route definitions, not legacy direct route attachment.
       - V2 health returns a `RestAPI2.HealthCheckInfo<RestAPI2.Instance>` from CSI state. V2 output and input are registered as upstream/downstream router definitions for the per-instance v2 router.
@@ -692,7 +692,9 @@
       - Added v2 logs, monitoring, stdio channel stream routes, and RPC route boundary through `InstanceAPIV2.createRouter()` using `@scramjet/api-router` definitions.
       - No Host-level individual Instance v2 handlers were added, and v1 logger source setup remains untouched.
       - Focused validation after logs/monitoring/stdio/RPC group: Host API v1/v2 hotwire tests passed, 28 tests; Host build typecheck passed under the standard memory guard.
-    - [ ] Add tests and validation after each small group before marking that group complete
+    - [x] Add tests and validation after each small group before marking that group complete
+      - Reconciled after Phase 9.5 correction review: the remaining unchecked item was stale. `InstanceAPIV2` now binds to the shared typed `RestAPI2RouteSets.instance` contracts, covers info, DELETE/PATCH, health, output, logs, monitoring, stdio read/write, input, events, and RPC route boundary behavior, and preserves Host-level instance routing as resolver-only.
+      - Current focused validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/host run test -- test/api-v2-instance-hotwire.spec.ts test/api-versioned-routing.spec.ts`: passed, 36 tests.
 - [x] Task: Automated verification gate for `@scramjet/rest-api2`, Hub, Sequence, Instance, stdio, and RPC behavior
     - [x] Run `@scramjet/rest-api2`, Host, CSI/Instance, `api-server`, and `api-router` tests
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-router test`: passed, 32 tests.
@@ -715,7 +717,7 @@
       - Skipped BDD because Phase 8 added package-level route definitions, local mounted dispatch, and contract/client tests without changing runtime adapter behavior. End-to-end v2 public cross-node routing remains Phase 9/10 scope.
     - [x] Record skipped Docker/Kubernetes validation and reason
       - Docker/Kubernetes validation skipped because Phase 8 did not change adapter behavior, runner image artifacts, or Docker/Kubernetes runtime paths.
-- [ ] Task: Conductor - User Manual Verification 'Phase 8: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 8: Sequence and Instance/CSI Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 8 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Phase 8 checkpoint commit: `1d0e736c`.
     - Phase 8 review notes:
@@ -727,6 +729,7 @@
       - Split Host v2 tests by surface: `api-v2-hotwire.spec.ts` for Host/Hub/Sequence and `api-v2-instance-hotwire.spec.ts` for Instance/CSI. Existing v1 hotwire assertions remain in `api-hotwire.spec.ts`.
       - Updated active workflow/agent memory guidance: start agent-run tests and Node validation under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless a repo/package test runner owns process setup.
       - Phase 8 correction checkpoint commit after manual review feedback: `a7cf2da3`. This commit splits Host API v1/v2 implementation files, keeps `host-api.ts` as the coordinator that hooks both versions from Host, moves Instance v2 behavior to an Instance/CSI-owned `instance-api-v2.ts` using `@scramjet/api-router`, and leaves v1 `instance-api.ts` untouched.
+      - Reconciled after Phase 8.5/9.5 review: this verification item was superseded by the approved Phase 8.5 correction, which explicitly resolved the Phase 8 ownership feedback before later typed route binding work.
 
 ## Phase 8.5: Dynamic Resolver Mount and Host API Composition
 
@@ -825,19 +828,26 @@
       - Phase 9 first slice added Manager-owned v2 aggregate read routes for list/hubs, instances, sequence IDs, all sequences, entities, and topics using `RestAPI2.ListResponse` outputs. V1 route registration remains unchanged.
       - Added `@scramjet/rest-api2` as a Manager package dependency because `manager-api.ts` now imports v2 public contracts.
       - Manual review correction: Manager API now mirrors the Host API structure: `manager-api.ts` is a coordinator only, `manager-api-v1.ts` owns unchanged v1 registration and compatibility routes, and `manager-api-v2.ts` owns v2 route definitions and `RestAPI2` contracts. V1 and v2 route builders are no longer coupled through a shared `createLowRiskRouter(apiVersion)` implementation.
+      - Follow-up after reviewing Phase 9.5 ownership: Manager-owned v2 inventory hub deletion now uses `DELETE /api/v2/managers/:managerId/inventory/hubs/:hubId` as the public path and `/api/v2/inventory/hubs/:hubId` as the Manager implementer path. Delete/disconnect options are querystring options (`RestAPI2.DeleteHubQuery`), not a DELETE request body. This avoids the `/hubs/:hubId` resolver conflict and preserves HTTP/1 expectations.
+      - Added Manager-owned `@scramjet/rest-api2` contracts and runtime handlers for Manager logs, storage sequence listing, storage clear, and inventory hub disconnect/delete.
+      - User-approved storage exception: v2 storage object read/write/delete is exposed as an explicitly documented WebDAV/S3-compatible proxy compatibility surface. Runtime uses a dedicated `/api/v2/storage/objects` compatibility middleware that rewrites to the existing storage proxy router; strong v2 typing and compatibility guarantees for that proxy surface are deferred to a later storage-service migration.
     - [x] Treat nested Hub/Sequence/Instance paths as routing/resolution concerns that reach Host-owned routers through verser2, not as Manager-owned duplicate implementations
       - Manual review clarified that Manager v2 Hub-owned nested routes should use a resolver-returned verser2 redirect, not local dispatch. Added Manager v2 `/hubs/:hubId` resolution that redirects to the connected Hub/STH route domain with the Host-owned implementer path under `/api/v2/...`.
     - [~] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [x] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
     - [x] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
-- [ ] Task: Migrate storage and topic behavior to the approved v2 shape
-    - [ ] Implement Manager-owned storage route handling for sequence storage list, object read/write/delete, and storage clear contracts on the Manager router
-    - [ ] Implement Manager-owned topic routes on the Manager router and Host-owned Hub topic routes on the Host router; do not collapse both into MultiManager handlers
+- [~] Task: Migrate storage and topic behavior to the approved v2 shape
+    - [~] Implement Manager-owned storage route handling for sequence storage list, object read/write/delete, and storage clear contracts on the Manager router
+      - Implemented Manager-owned v2 storage sequence list and storage clear handlers on `ManagerAPIV2Handler` using shared `RestAPI2RouteSets.manager` contracts.
+      - Added handlerless `@scramjet/rest-api2` contracts for storage object read/write/delete. After user approval, the runtime object surface is provided by a documented compatibility proxy at `/api/v2/storage/objects` rather than strongly typed v2 handlers. The proxy rewrites to the existing storage proxy router and does not claim strong v2 typing or storage compatibility guarantees.
+    - [x] Implement Manager-owned topic routes on the Manager router and Host-owned Hub topic routes on the Host router; do not collapse both into MultiManager handlers
+      - Implemented shared `@scramjet/rest-api2` topic contracts for Host/Manager topic create/delete/read/write where applicable. `@scramjet/api-router` now exposes typed raw HTTP request/response context for stream route handlers, avoiding compatibility proxying for topic streams and preserving headers such as `content-type`.
+      - Manager v2 binds Manager-owned topic list/info/read/write routes to Manager topic handlers using typed raw HTTP context. Host v2 binds Hub-owned topic create/delete/read/write routes to ServiceDiscovery/Topic behavior using typed stream context and bounded downstream request completion handling.
     - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
     - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
 - [~] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
-    - [ ] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
-      - Deferred to Phase 9.5 shared route contracts and later implementation slices; Phase 9 only corrected runtime route ownership/forwarding.
+    - [~] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
+      - Manager, Hub, and Instance log contracts are present in shared `@scramjet/rest-api2` route sets; Manager runtime now binds `/api/v2/logs` to `manager.apiCommonLogsPipe.getOut()`. MultiManager logs remain incomplete.
     - [ ] Define specialized v2 audit contracts separately from generic object routes and wire each applicable level to those contracts
       - Deferred to Phase 9.5 shared route contracts and later implementation slices; Phase 9 only corrected runtime route ownership/forwarding.
     - [x] Define v2 route handling for routed forwarding through verser2 transport
@@ -868,6 +878,9 @@
       - Forwarding correction validation: `@scramjet/api-router` tests passed, 37 tests; api-router build typecheck passed; focused Manager v2 forwarding tests passed, 6 tests; focused MultiManager v2 forwarding tests passed, 4 tests; Manager and MultiManager build typechecks passed; `git diff --check` passed.
       - Remaining Phase 9 validation blocker: MultiManager still uses a coupled v1/v2 router builder in one file. Split MultiManager v1/v2 like Manager, then rerun focused MultiManager/Manager/api-router tests and build typechecks to clear Phase 9 validation before starting Phase 9.5 shared contract extraction.
       - MultiManager split validation: focused MultiManager API v1/v2/versioned-routing tests passed, 10 tests; MultiManager build typecheck passed; narrowed lint for split MultiManager API files passed under a higher per-package memory cap; `git diff --check` passed. V2 MultiManager load route was corrected from the v1-shaped `/api/v2/load-check` to the planned `/api/v2/load` while preserving v1 `/api/v1/load-check`.
+      - Manager inventory/storage/log validation after Phase 9.5-aligned slice: `npm --prefix packages/rest-api2 test` passed, 16 tests; focused Manager v2 hotwire/versioned-routing tests passed, 8 tests; rest-api2 and Manager build typechecks passed; narrowed source ESLint passed; `git diff --check` passed.
+      - Storage proxy exception validation after user approval: focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; Manager build typecheck passed; narrowed source ESLint passed after fixing a session-introduced `consistent-return` issue; `git diff --check` passed.
+      - Topic route validation: `npm --prefix packages/api-router test` passed, 45 tests; `npm --prefix packages/rest-api2 test` passed, 16 tests after updating route-set bindings for the new topic contracts; focused Host v2 hotwire/versioned-routing tests passed, 36 tests; focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; api-router/rest-api2/Host/Manager build typechecks passed; `git diff --check` passed.
 - [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm Manager API is split v1/v2/coordinator, MultiManager API is split v1/v2/coordinator, v2 forwarding uses resolver + verser2 redirect, no new v2 local/manual proxying was introduced, and typed nested path composition is intentionally deferred to Phase 9.5.
@@ -918,10 +931,11 @@
     - [x] Record validation results and any deferred full BDD checks.
       - Validation: api-router typecheck passed; rest-api2 typecheck passed; Host, Manager, and MultiManager build typechecks passed; api-router tests passed, 40 tests; rest-api2 tests passed, 4 tests; focused Host API tests passed, 10 tests; focused Manager API tests passed, 7 tests; focused MultiManager API tests passed, 11 tests; narrowed source ESLint passed with higher memory cap; `git diff --check` passed before plan update.
       - Direct ESLint invocation on changed test files was skipped after parser errors because those test files are not included by the repo ESLint TypeScript project; package test runs cover the changed tests. Full BDD was deferred because this phase changed schema/manifest composition and preserved runtime local/redirect registration behavior.
-- [~] Task: Conductor - User Manual Verification 'Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition' (Protocol in workflow.md)
     - Checkpoint commit: `4e2672d6 feat(api): share v2 route contracts`.
     - Push-before-verification requirement: create the scoped Phase 9.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm shared v2 route contracts live in `@scramjet/rest-api2`, Host/Manager/MultiManager bind handlers locally, Manager/MultiManager do not import Host internals, nested public paths are available for client/OpenAPI generation, and runtime forwarding still uses verser2 redirects.
+    - Manual verification approved by user after Phase 9.5 shared route contracts and resolver manifest composition were pushed.
 
 ## Phase 9.5 Correction Note: Schema Precision After User Rejection of Simplistic Schemas
 
@@ -950,6 +964,105 @@
       - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/multi-manager/tsconfig.build.json --noEmit`: passed.
       - `ulimit -v 4194304 && NODE_OPTIONS="--max-old-space-size=2048" npx eslint packages/rest-api2/src/schemas.ts packages/rest-api2/src/routes.ts`: passed.
       - `git diff --check`: passed.
+- [x] Task: Preserve route schema types at declaration time
+    - [x] Ensure `Router.get`, `Router.post`, `Router.route`, and `Router.resolve` preserve exact `schemas` generic types.
+    - [x] Ensure `RouteDefinition<TSchemas>` and `ResolverDefinition<TSchemas>` keep params, query, body, headers, and response types available to downstream binders.
+    - [x] Preserve existing runtime behavior while improving compile-time type inference.
+- [x] Task: Add compile-time contract inference utilities
+    - [x] Add `RouteRequestFor<TContract>` for inferring handler request shape from a route contract.
+    - [x] Add `RouteResponseFor<TContract>` for inferring handler response shape from a route contract.
+    - [x] Add `RouteHandlerFor<TContract>` for enforcing local handler request/response compatibility.
+    - [x] Add resolver equivalents such as `ResolverRequestFor<TContract>` and `ResolverHandlerFor<TContract>`.
+- [x] Task: Introduce typed v2 route sets in `@scramjet/rest-api2`
+    - [x] Define named handlerless route sets for Host hub routes, Host sequence routes, Instance routes, Manager routes, and MultiManager routes.
+    - [x] Preserve per-route keys such as `load`, `version`, `stdioRead`, `stdioWrite`, `deleteInstance`, and resolver keys.
+    - [x] Build the existing `RestAPI2Routes.*.router()` factories from the typed route sets for compatibility.
+    - [x] Keep shared route sets handlerless and runtime-neutral.
+- [x] Task: Add typed route binding helper for runtime implementations
+    - [x] Add a helper such as `bindRoutes(contractSet, handlers)` that requires every runtime-owned contract route to be handled or explicitly marked skipped/forwarded/stream-only.
+    - [x] Reject unknown handler keys at compile time.
+    - [x] Infer handler params, query, headers, and body from shared route schemas.
+    - [x] Enforce handler response type from shared response schemas.
+    - [x] Preserve shared route schemas in the resulting runtime router so implementations cannot weaken schemas locally.
+- [x] Task: Add typed resolver binding helper for forwarding implementations
+    - [x] Add a helper such as `bindResolver(contractResolver, handler)` that infers resolver params and preserves shared `targetDefinitions`.
+    - [x] Prevent manual resolver schema copying in Host, Manager, and MultiManager implementations.
+    - [x] Keep runtime decisions (`local` vs `redirect`) separate from public/client path expansion metadata.
+- [x] Task: Replace stringly route lookup in v2 implementations
+    - [x] Stop using implementation-time `getRestAPI2Route(router, method, path)` in Host, Instance, Manager, and MultiManager v2 handlers.
+    - [x] Bind implementations to named route contracts from typed route sets instead.
+    - [x] Keep `getRestAPI2Route` only for compatibility and tests unless a typed keyed lookup replaces it fully.
+- [x] Task: Refactor v2 API implementations to typed binding
+    - [x] Refactor Host hub routes to bind against the Host hub route set.
+    - [x] Refactor Host sequence routes to bind against the Host sequence route set.
+    - [x] Refactor Instance routes to bind against the Instance route set, including stdio fd-specific contracts.
+    - [x] Refactor Manager routes and resolver to bind against the Manager route set and resolver contract.
+    - [x] Refactor MultiManager routes and resolver to bind against the MultiManager route set and resolver contract.
+    - [x] Remove casts that become unnecessary when params/body/response are inferred from shared contracts.
+- [x] Task: Type forwarding through route sets
+    - [x] Make MultiManager resolver target definitions reference the typed Manager route set.
+    - [x] Make Manager resolver target definitions reference the typed Host route set.
+    - [x] Make Host resolver target definitions reference the typed Instance route set.
+    - [x] Ensure expanded manifest typing composes parent resolver params with target route params for nested public paths.
+    - [x] Keep redirect target paths implementer-local while public operation paths remain typed and client-visible.
+- [x] Task: Add compile-time implementation parity tests
+    - [x] Add type assertions proving missing required handlers fail.
+    - [x] Add type assertions proving extra handler keys fail.
+    - [x] Add type assertions proving wrong params/body usage fails.
+    - [x] Add type assertions proving wrong response shape fails.
+    - [x] Add type assertions proving resolver params are inferred.
+    - [x] Add type assertions proving runtime implementations cannot weaken shared schemas.
+- [x] Task: Add runtime parity tests for typed binding
+    - [x] Assert bound runtime routers expose the same paths and methods as the shared contract sets, excluding explicitly skipped/forwarded routes.
+    - [x] Assert shared contracts remain handlerless.
+    - [x] Assert resolver `targetDefinitions` survive binding.
+    - [x] Assert `collect()` excludes virtual routes while `collect({ expandResolvers: true })` includes typed nested public routes.
+    - Validation after typed binding and HealthCheckInfo templating:
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-router test`: passed, 44 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/rest-api2 test`: passed, 14 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/host run test -- test/api-v2-instance-hotwire.spec.ts test/api-versioned-routing.spec.ts`: passed, 10 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/manager run test:ava -- test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts`: passed, 7 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/multi-manager run test:ava -- test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts`: passed, 7 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/api-router/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/rest-api2/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/manager/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/multi-manager/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 4194304 && NODE_OPTIONS="--max-old-space-size=2048" npx eslint ...changed source files...`: passed with one existing Manager complexity warning for `handleSthRegistration`.
+      - `git diff --check`: passed.
+- [x] Task: Add componentized v2 healthchecks across API levels
+    - [x] Extend shared v2 health contracts with component status and typed component arrays.
+    - [x] Add shared default health component helpers for current service, process memory, process CPU, OS memory/load/disk, and path-specific disk checks.
+    - [x] Add Hub v2 health reporting, including sequence storage disk and upstream connection components.
+    - [x] Update Manager and MultiManager v2 health to return `HealthCheckInfo<Manager>` and `HealthCheckInfo<MultiManager>` with components.
+    - [x] Keep v1 health behavior unchanged.
+    - [x] Add/update focused schema and API tests for componentized health responses.
+    - Validation after componentized healthchecks:
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/load-check test`: passed, 3 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/rest-api2 test`: passed, 14 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/host run test -- test/api-v2-instance-hotwire.spec.ts test/api-versioned-routing.spec.ts`: passed, 10 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/manager run test:ava -- test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts`: passed, 7 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/multi-manager run test:ava -- test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts`: passed, 7 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-router test`: passed, 44 tests.
+      - Typechecks for `load-check`, `rest-api2`, `host`, `manager`, and `multi-manager`: passed.
+      - Narrowed source ESLint passed with existing warnings in Host and Manager unrelated to this task.
+      - `git diff --check`: passed.
+- [x] Task: Raise focused Host v2 API handler coverage after coverage review
+    - [x] Check focused API coverage for changed API packages.
+      - `@scramjet/api-router`: 92.32% statements, 92.57% lines.
+      - `@scramjet/rest-api2`: 98.01% statements, 98.95% lines.
+      - `packages/host/src/lib/api/host-api-v2.ts`: initially 34.37% statements, 34.92% lines in focused v2 coverage.
+      - `packages/host/src/lib/api/instance-api-v2.ts`: 74.35% statements, 75% lines.
+      - `packages/manager/src/lib/api/manager-api-v2.ts`: 92.72% statements, 92.45% lines.
+      - `packages/multi-manager/src/lib/api/multi-manager-api-v2.ts`: 95.23% statements, 95.23% lines.
+    - [x] Add direct Host v2 handler tests for Hub and sequence route handlers.
+      - Covered Hub load/config/list/topics/logs/health handlers and sequence delete/start/get/list handlers, including representative error branches.
+    - [x] Re-run focused Host v2 tests and coverage.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/host run test -- test/api-versioned-routing.spec.ts test/api-v2-instance-hotwire.spec.ts`: passed, 36 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx nyc --reporter=text --include "packages/host/src/lib/api/*v2.ts" npm --prefix packages/host run test -- test/api-versioned-routing.spec.ts test/api-v2-instance-hotwire.spec.ts`: passed.
+      - Focused Host v2 API file coverage after improvement: `host-api-v2.ts` 98.43% statements / 98.41% lines; `instance-api-v2.ts` remained 74.35% statements / 75% lines; combined included files 85.21% statements / 85.61% lines.
+- [x] Task: Conductor - User Manual Verification 'Phase 9.5 Correction: Schema Precision and Typed Binding' (Protocol in workflow.md)
+    - Manual verification approved by user after the Phase 9.5 correction note, precise DTO schemas, typed route binding, componentized healthchecks, and focused Host v2 coverage improvement were reviewed.
 
 ## Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation
 
