@@ -1129,7 +1129,8 @@
       - Package-level generic client usage remains present in Host, Manager, MultiManager, api-router, and rest-api2 versioned/client tests. BDD grep found no `createRestAPI2Client` usage yet; no BDD tests were migrated to v2 in this track, so BDD no-circumvention enforcement is documented and deferred until BDD steps are migrated to the v2 client.
     - [x] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
       - Final validation results and deferred BDD no-circumvention enforcement are recorded above.
-- [ ] Task: Conductor - User Manual Verification 'Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 10 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Phase 10 checkpoint commit: `b1d804b2`.
     - Manual verification should confirm Host v1 version/config/status preserve v1 shapes while adapting shared v2 read handlers, API router/rest-api2 documentation is accurate, no-circumvention rules and content-range deferral are documented, and final validation results are acceptable.
+    - Manual verification approved by user after Phase 10 checkpoint was pushed.
