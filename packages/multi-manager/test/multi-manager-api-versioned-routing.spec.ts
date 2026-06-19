@@ -53,7 +53,8 @@ test("MultiManager low-risk routes are reachable through verser2 for v1 and v2",
         "/api/v2/load",
         "/api/v2/list",
         "/api/v2/health",
-        "/api/v2/verser2/trust/:id?"
+        "/api/v2/verser2/trust/:id?",
+        "/api/v2/audit"
     ]);
     t.deepEqual(await registrations[0].handle({ method: "GET", path: "/api/v1/version" }), {
         status: 200,

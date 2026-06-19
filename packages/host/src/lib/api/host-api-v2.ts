@@ -2,7 +2,7 @@ import { APIExpose } from "@scramjet/types";
 import { RawHttpRouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, routeBinding, resolverBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { createDefaultHealthComponents, degradedComponent, summarizeHealth } from "@scramjet/load-check";
-import { Readable } from "stream";
+import { PassThrough, Readable } from "stream";
 
 import { IHost } from "../types";
 import TopicId from "../serviceDiscovery/topicId";
@@ -84,7 +84,7 @@ export class HostAPIV2Handler {
             topicRead: routeBinding.handler<typeof routes.topicRead>(req => this.topicRead(req.params.name, req.headers)),
             topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => this.topicWrite(req.params.name, this.rawReadable(req), req.headers)),
             logs: () => host.commonLogsPipe.getOut(),
-            audit: routeBinding.contractOnly("Audit stream wiring remains handled by v1 compatibility surface.")
+            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "host.v2.audit" })
         });
     }
 
@@ -166,6 +166,26 @@ export class HostAPIV2Handler {
             operation: { id, status: "completed" },
             result
         };
+    }
+
+    private handleAuditRequest(req: RawHttpRouteRequest): Readable {
+        this.host.heartBeatInterval.ref();
+
+        const ret = new PassThrough();
+        const out = this.host.auditor.getOutputStream(req.raw.request, req.raw.response);
+
+        out.pipe(ret);
+
+        const unpipe = () => {
+            this.host.heartBeatInterval.unref();
+            out.unpipe(ret);
+            ret.end();
+        };
+
+        req.raw.request.socket.on("end", unpipe);
+        req.raw.request.socket.on("error", unpipe);
+
+        return ret;
     }
 
     private hostTopics(): unknown[] {

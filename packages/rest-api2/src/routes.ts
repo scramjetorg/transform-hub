@@ -2,7 +2,6 @@ import { HttpMethod, RouteDefinition, Router, RouterDefinition } from "@scramjet
 
 import {
     RestAPI2Schemas,
-    AuditRecord,
     ConfigResponse,
     DeleteInstancePayload,
     DeleteInstanceResponse,
@@ -71,7 +70,7 @@ function hostHubRouteSet() {
         topicRead: Router.get("/topics/:name/stream", { kind: "upstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: RestAPI2Schemas.stream } }),
         topicWrite: Router.post("/topics/:name/stream", { kind: "downstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) } }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
-        audit: Router.get("/audit", { kind: "upstream", schemas: { response: AuditRecord } })
+        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } })
     } as const;
 }
 
@@ -134,6 +133,7 @@ function managerRouteSet() {
         topicRead: Router.get("/topics/:name/stream", { kind: "upstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: RestAPI2Schemas.stream } }),
         topicWrite: Router.post("/topics/:name/stream", { kind: "downstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) } }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
+        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } }),
         deleteHub: Router.route("delete", "/inventory/hubs/:hubId", { schemas: { params: RestAPI2Schemas.params.hub, query: DeleteHubQuery.optional(), response: opResponse(DeleteHubResponse) } }),
         storageSequences: Router.get("/storage/sequences", { schemas: { response: listResponse(StoreItem) } }),
         storageObjectRead: Router.get("/storage/objects/:directory/:filename?", { kind: "upstream", schemas: { params: StoreItemPayload, response: RestAPI2Schemas.stream } }),
@@ -161,7 +161,8 @@ function multiManagerRouteSet() {
         load: Router.get("/load", { schemas: { response: LoadResponse } }),
         list: Router.get("/list", { schemas: { response: listResponse(MultiManager) } }),
         health: Router.get("/health", { schemas: { response: healthCheckInfo(MultiManager) } }),
-        trust: Router.get("/verser2/trust/:id?", { schemas: { params: RestAPI2Schemas.params.trustManager, response: TrustExport } })
+        trust: Router.get("/verser2/trust/:id?", { schemas: { params: RestAPI2Schemas.params.trustManager, response: TrustExport } }),
+        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } })
     } as const;
 }
 

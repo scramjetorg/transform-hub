@@ -26,6 +26,7 @@ function createManagerStub(recorder: RouteRecorder) {
             getLoadCheckStream: () => new PassThrough()
         },
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
+        auditor: { setFlowing: async (_flowing: boolean) => undefined, output: new PassThrough() },
         apiS3Middleware: { clearIndex: async () => undefined, index: { sequences: [{ id: "seq-1", _filename: "seq.tar.gz", packageSize: 123 }] }, router: { lookup: () => undefined } },
         logger: new ObjLogger("manager-api-v2-hotwire-test"),
         handleSthRegistration: async () => "sth-1",
@@ -59,6 +60,7 @@ test("ManagerAPIHandler registers the v2 Manager API route surface separately", 
     t.true(recorder.has("get", "/api/v2/entities"));
     t.true(recorder.has("get", "/api/v2/topics"));
     t.true(recorder.has("upstream", "/api/v2/logs"));
+    t.true(recorder.has("upstream", "/api/v2/audit"));
     t.true(recorder.has("op", "/api/v2/inventory/hubs/:hubId", "delete"));
     t.true(recorder.has("get", "/api/v2/storage/sequences"));
     t.false(recorder.has("upstream", "/api/v2/storage/objects/:directory/:filename?"));
@@ -136,6 +138,34 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [] });
     t.deepEqual(await (recorder.require("get", "/api/v2/storage/sequences").handler as Function)({}), { items: [{ path: "seq.tar.gz", size: 123 }] });
     t.deepEqual(await (recorder.require("op", "/api/v2/storage", "delete").handler as Function)({}), { cleared: true });
+});
+
+test("ManagerAPIHandler v2 audit handler returns auditor output and toggles flow", async t => {
+    const recorder = new RouteRecorder();
+    const manager: any = createManagerStub(recorder);
+    const output = new PassThrough();
+    const calls: boolean[] = [];
+    const req = new PassThrough() as any;
+
+    req.headers = {};
+    manager.auditor = {
+        output,
+        setFlowing: async (flowing: boolean) => {
+            calls.push(flowing);
+        }
+    };
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    const result = await (recorder.require("upstream", "/api/v2/audit").handler as Function)(req, {});
+
+    t.is(result, output);
+    t.deepEqual(calls, [true]);
+
+    req.emit("close");
+    await Promise.resolve();
+
+    t.deepEqual(calls, [true, false]);
 });
 
 test("ManagerAPIHandler v2 inventory hub delete disconnects by default and deletes with query option", async t => {

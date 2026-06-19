@@ -1,4 +1,4 @@
-import { RouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, resolverBinding, routeBinding } from "@scramjet/api-router";
+import { RawHttpRouteRequest, RouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, resolverBinding, routeBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
 
@@ -37,7 +37,8 @@ export class MultiManagerAPIV2Handler {
                 items: (multiManager.handleListManagersRequest() as unknown[]).map(manager => this.toMultiManagerItem(manager))
             }), { id: "multi-manager.v2.list" }),
             health: routeBinding.handler<typeof routes.health>(() => this.toHealthCheckInfo(multiManager.healthCheck.getHealthCheckInfo()), { id: "multi-manager.v2.health" }),
-            trust: routeBinding.handler<typeof routes.trust>((req: RouteRequest) => this.getTrustExport(req), { id: "multi-manager.v2.verser2.trust" })
+            trust: routeBinding.handler<typeof routes.trust>((req: RouteRequest) => this.getTrustExport(req), { id: "multi-manager.v2.verser2.trust" }),
+            audit: routeBinding.handler<typeof routes.audit>((req: RawHttpRouteRequest) => multiManager.commonAuditPipe(req.raw.request), { id: "multi-manager.v2.audit" })
         }, Router.create({ basePath: this.v2ApiBase }));
         const resolver = RestAPI2RouteSets.multiManager.resolvers(this.v2ApiBase).manager;
 

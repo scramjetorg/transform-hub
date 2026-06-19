@@ -67,6 +67,7 @@ test("Manager low-risk routes are reachable through verser2 for v1 and v2", asyn
         "/api/v2/topics/:name/stream",
         "/api/v2/topics/:name/stream",
         "/api/v2/logs",
+        "/api/v2/audit",
         "/api/v2/inventory/hubs/:hubId",
         "/api/v2/storage/sequences",
         "/api/v2/storage"

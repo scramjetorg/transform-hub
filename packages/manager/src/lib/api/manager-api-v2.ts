@@ -50,6 +50,7 @@ export class ManagerAPIV2Handler {
             topicRead: routeBinding.handler<typeof routes.topicRead>(req => manager.handleTopicUpstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "manager.v2.topic.read" }),
             topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => manager.handleTopicDownstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "manager.v2.topic.write" }),
             logs: routeBinding.handler<typeof routes.logs>(() => manager.apiCommonLogsPipe.getOut(), { id: "manager.v2.logs" }),
+            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "manager.v2.audit" }),
             deleteHub: routeBinding.handler<typeof routes.deleteHub>(req => this.handleInventoryHubDelete(req), { id: "manager.v2.inventory.hub.delete" }),
             storageSequences: routeBinding.handler<typeof routes.storageSequences>(() => this.storageSequenceList(), { id: "manager.v2.storage.sequences" }),
             storageObjectRead: routeBinding.skip("Storage object read requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
@@ -145,6 +146,15 @@ export class ManagerAPIV2Handler {
         }
 
         return req.raw.response;
+    }
+
+    private async handleAuditRequest(req: RawHttpRouteRequest) {
+        await this.manager.auditor.setFlowing(true);
+        req.raw.request.on("close", () => {
+            this.manager.auditor.setFlowing(false).catch(() => undefined);
+        });
+
+        return this.manager.auditor.output;
     }
 
     private listResponse<TItem>(source: unknown, property: string, fromString: (value: string) => TItem): RestAPI2.ListResponse<TItem> {

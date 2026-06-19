@@ -591,8 +591,8 @@
       - `npx tsc -p packages/rest-api2/tsconfig.build.json --noEmit`: passed.
     - [x] Do not export or alias old `MMRestAPI`, `MRestAPI`, or `STHRestAPI` contracts from this package
       - `packages/rest-api2` defines new `RestAPI2.*` contracts and does not import legacy REST DTO namespaces.
-- [~] Task: Migrate Hub route definitions to the approved v2 shape
-    - [~] Implement these route definitions on the Host-owned v2 API router, not as MultiManager-only proxy handlers
+- [x] Task: Migrate Hub route definitions to the approved v2 shape
+    - [x] Implement these route definitions on the Host-owned v2 API router, not as MultiManager-only proxy handlers
       - Halted for correction after manual review: the first uncommitted Host implementation incorrectly registered the full public nested path `/api/v2/managers/:managerId/hubs/:hubId/...` inside the Host router and implemented Hub `load-check` instead of Hub `load`.
       - Root cause: Phase 7.5/Phase 8 wording did not separate public/client path shape from owner-local implementer paths. Public operation IDs may include `:managerId`, `:hubId`, and `:instanceId`, but implementer routers must define only their local relative surface.
       - Corrected rule: route prefixes belong to the hook-up or resolution point. Implementer routers must not bake in parent prefixes or parent object IDs they do not own. Host-owned Hub routes must not require `managerId` or `hubId`; CSI/Instance implementer routes must not implement `/instances/:instanceId/...` and should instead implement local paths such as `/stdio` after the parent router resolves the instance.
@@ -612,6 +612,7 @@
       - Added Host tests proving local implementer paths (`/load`, `/version`, `/config`, `/status`, `/sequences`, `/instances`, `/entities`, `/topics`), composed `/api/v2/...` mount registration, and no direct Host registration containing `:managerId` or `:hubId`.
       - Follow-up correction before Phase 8 approval: split Host v1 and v2 implementation into separate files before further implementation. `host-api.ts` should remain a compatibility/coordinator surface, while v1 behavior moves behind `host-api-v1.ts` and v2 Hub/Sequence behavior moves behind `host-api-v2.ts`.
       - Follow-up correction before Phase 8 approval: individual Instance v2 behavior must not be implemented in Host v2 handlers. Host may resolve/forward `/api/v2/instances/:instanceId` to the selected instance, but per-instance v2 behavior must be owned by a new Instance/CSI-level v2 implementation file, keeping the existing `instance-api.ts` v1 implementation untouched.
+      - Reconciled after Phase 9.5 correction work: Host v2 Hub routes are implemented in `host-api-v2.ts` via shared `RestAPI2RouteSets.host.hubRoutes()`, Host does not register Manager-owned public prefixes locally, and focused Host v2 tests validated local Hub route registration/handlers.
 - [x] Task: Migrate Sequence route definitions to the approved v2 shape
     - [x] Implement these route definitions on the Host-owned Sequence router/API handler, not on the MultiManager router
     - [x] Define schemas and handlers for sequence create, update, delete, start, read, and sequence-instance list routes as Sequence-local implementer paths mounted or resolved into the public `/api/v2/managers/:managerId/hubs/:hubId/sequences` path shape
@@ -822,18 +823,19 @@
     - [x] Do not add local/manual HTTP proxying for v2.
     - [x] Add focused tests proving the v2 resolver emits `308` redirect metadata.
       - Manual review clarified that v2 must not use local/manual forwarding for cross-node route ownership. Added api-router resolver redirect support and MultiManager v2 `/managers/:managerId` resolution that emits a verser2 `308` redirect to the selected Manager's `localGuest.routeDomain`, preserving the Manager-owned implementer path under `/api/v2/...`.
-- [~] Task: Migrate Manager route definitions to the approved v2 shape
+- [x] Task: Migrate Manager route definitions to the approved v2 shape
     - [x] Implement Manager-owned route definitions on the Manager v2 API router, not on the MultiManager router
-    - [~] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
+    - [x] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
       - Phase 9 first slice added Manager-owned v2 aggregate read routes for list/hubs, instances, sequence IDs, all sequences, entities, and topics using `RestAPI2.ListResponse` outputs. V1 route registration remains unchanged.
       - Added `@scramjet/rest-api2` as a Manager package dependency because `manager-api.ts` now imports v2 public contracts.
       - Manual review correction: Manager API now mirrors the Host API structure: `manager-api.ts` is a coordinator only, `manager-api-v1.ts` owns unchanged v1 registration and compatibility routes, and `manager-api-v2.ts` owns v2 route definitions and `RestAPI2` contracts. V1 and v2 route builders are no longer coupled through a shared `createLowRiskRouter(apiVersion)` implementation.
       - Follow-up after reviewing Phase 9.5 ownership: Manager-owned v2 inventory hub deletion now uses `DELETE /api/v2/managers/:managerId/inventory/hubs/:hubId` as the public path and `/api/v2/inventory/hubs/:hubId` as the Manager implementer path. Delete/disconnect options are querystring options (`RestAPI2.DeleteHubQuery`), not a DELETE request body. This avoids the `/hubs/:hubId` resolver conflict and preserves HTTP/1 expectations.
       - Added Manager-owned `@scramjet/rest-api2` contracts and runtime handlers for Manager logs, storage sequence listing, storage clear, and inventory hub disconnect/delete.
       - User-approved storage exception: v2 storage object read/write/delete is exposed as an explicitly documented WebDAV/S3-compatible proxy compatibility surface. Runtime uses a dedicated `/api/v2/storage/objects` compatibility middleware that rewrites to the existing storage proxy router; strong v2 typing and compatibility guarantees for that proxy surface are deferred to a later storage-service migration.
+      - Added Manager-owned v2 audit stream contract and runtime handler. The handler toggles Manager auditor flow while the raw HTTP request is open and returns the auditor output stream.
     - [x] Treat nested Hub/Sequence/Instance paths as routing/resolution concerns that reach Host-owned routers through verser2, not as Manager-owned duplicate implementations
       - Manual review clarified that Manager v2 Hub-owned nested routes should use a resolver-returned verser2 redirect, not local dispatch. Added Manager v2 `/hubs/:hubId` resolution that redirects to the connected Hub/STH route domain with the Host-owned implementer path under `/api/v2/...`.
-    - [~] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
+    - [x] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
     - [x] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
     - [x] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
 - [~] Task: Migrate storage and topic behavior to the approved v2 shape
@@ -845,11 +847,11 @@
       - Manager v2 binds Manager-owned topic list/info/read/write routes to Manager topic handlers using typed raw HTTP context. Host v2 binds Hub-owned topic create/delete/read/write routes to ServiceDiscovery/Topic behavior using typed stream context and bounded downstream request completion handling.
     - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
     - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
-- [~] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
-    - [~] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
+- [x] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
+    - [x] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
       - Manager, Hub, and Instance log contracts are present in shared `@scramjet/rest-api2` route sets; Manager runtime now binds `/api/v2/logs` to `manager.apiCommonLogsPipe.getOut()`. MultiManager logs remain incomplete.
-    - [ ] Define specialized v2 audit contracts separately from generic object routes and wire each applicable level to those contracts
-      - Deferred to Phase 9.5 shared route contracts and later implementation slices; Phase 9 only corrected runtime route ownership/forwarding.
+    - [x] Define specialized v2 audit contracts separately from generic object routes and wire each applicable level to those contracts
+      - Added stream-shaped audit contracts at Host, Manager, and MultiManager levels using shared `@scramjet/rest-api2` route sets. Host v2 audit reuses Host auditor output lifecycle, Manager v2 audit toggles Manager auditor flow, and MultiManager v2 audit delegates to `commonAuditPipe()`.
     - [x] Define v2 route handling for routed forwarding through verser2 transport
     - [x] Use verser2 forwarding, resolution, and redirects for external API routing instead of implementing custom forwarding paths
     - [x] Interview the user before implementing remote route mounting/resolution
@@ -881,6 +883,7 @@
       - Manager inventory/storage/log validation after Phase 9.5-aligned slice: `npm --prefix packages/rest-api2 test` passed, 16 tests; focused Manager v2 hotwire/versioned-routing tests passed, 8 tests; rest-api2 and Manager build typechecks passed; narrowed source ESLint passed; `git diff --check` passed.
       - Storage proxy exception validation after user approval: focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; Manager build typecheck passed; narrowed source ESLint passed after fixing a session-introduced `consistent-return` issue; `git diff --check` passed.
       - Topic route validation: `npm --prefix packages/api-router test` passed, 45 tests; `npm --prefix packages/rest-api2 test` passed, 16 tests after updating route-set bindings for the new topic contracts; focused Host v2 hotwire/versioned-routing tests passed, 36 tests; focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; api-router/rest-api2/Host/Manager build typechecks passed; `git diff --check` passed.
+      - Audit route validation: `npm --prefix packages/rest-api2 test` passed, 16 tests; focused Manager v2 hotwire/versioned-routing tests passed, 11 tests; focused MultiManager v2 hotwire/versioned-routing tests passed, 8 tests; rest-api2/Host/Manager/MultiManager build typechecks passed; `git diff --check` passed.
 - [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm Manager API is split v1/v2/coordinator, MultiManager API is split v1/v2/coordinator, v2 forwarding uses resolver + verser2 redirect, no new v2 local/manual proxying was introduced, and typed nested path composition is intentionally deferred to Phase 9.5.

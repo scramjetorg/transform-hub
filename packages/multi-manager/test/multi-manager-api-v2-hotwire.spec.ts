@@ -42,6 +42,7 @@ test("MultiManagerAPIHandler registers the v2 MultiManager API route surface sep
     t.true(recorder.has("get", "/api/v2/list"));
     t.true(recorder.has("get", "/api/v2/health"));
     t.true(recorder.has("get", "/api/v2/verser2/trust/:id?"));
+    t.true(recorder.has("upstream", "/api/v2/audit"));
     t.true(recorder.has("use", "/api/v2/managers/:managerId"));
     t.true(recorder.has("use", "/api/v2/managers/:managerId/*"));
 });
@@ -73,6 +74,27 @@ test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t
     t.true(health.components.some((component: { name: string }) => component.name === "multi-manager"));
     t.true(health.components.some((component: { name: string }) => component.name === "process.memory"));
     t.deepEqual(health.details, { healthy: true });
+});
+
+test("MultiManagerAPIHandler v2 audit handler delegates to common audit pipe", async t => {
+    const recorder = new RouteRecorder();
+    const multiManager: any = createMultiManagerStub(recorder);
+    const output = new PassThrough();
+    const requests: unknown[] = [];
+    const req = new PassThrough() as any;
+
+    req.headers = {};
+    multiManager.commonAuditPipe = async (request: unknown) => {
+        requests.push(request);
+        return output;
+    };
+
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    const result = await (recorder.require("upstream", "/api/v2/audit").handler as Function)(req, {});
+
+    t.is(result, output);
+    t.deepEqual(requests, [req]);
 });
 
 test("MultiManagerAPIHandler v2 trust route preserves manager lookup behavior", async t => {
