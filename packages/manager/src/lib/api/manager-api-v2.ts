@@ -45,7 +45,7 @@ export class ManagerAPIV2Handler {
             sequences: routeBinding.handler<typeof routes.sequences>(() => this.listResponse<RestAPI2.Sequence>(manager.getSequencesIds(), "sequences", id => ({ id })), { id: "manager.v2.sequences" }),
             allSequences: routeBinding.handler<typeof routes.allSequences>(req => this.listResponse<RestAPI2.Sequence>(this.getPaginated(req, manager.getSequences.bind(manager)), "sequences", id => ({ id })), { id: "manager.v2.all_sequences" }),
             entities: routeBinding.handler<typeof routes.entities>(() => this.entityListResponse(manager.getEntities()), { id: "manager.v2.entities" }),
-            topics: routeBinding.handler<typeof routes.topics>(() => this.listResponse<RestAPI2.Topic>(manager.apiServiceDiscovery.list(), "topics", name => ({ name })), { id: "manager.v2.topics" }),
+            topics: routeBinding.handler<typeof routes.topics>(() => this.topicListResponse(manager.apiServiceDiscovery.list()), { id: "manager.v2.topics" }),
             topicInfo: routeBinding.handler<typeof routes.topicInfo>(({ params }) => this.topicInfo(params.name), { id: "manager.v2.topic.info" }),
             topicRead: routeBinding.handler<typeof routes.topicRead>(req => manager.handleTopicUpstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "manager.v2.topic.read" }),
             topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => manager.handleTopicDownstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "manager.v2.topic.write" }),
@@ -178,6 +178,28 @@ export class ManagerAPIV2Handler {
         };
     }
 
+    private topicListResponse(source: unknown): RestAPI2.ListResponse<RestAPI2.Topic> {
+        const items = Array.isArray(source) ? source : (source as { topics?: unknown[] } | undefined)?.topics || [];
+
+        return {
+            items: items.map(item => this.toTopicItem(item))
+        };
+    }
+
+    private toTopicItem(item: unknown): RestAPI2.Topic {
+        if (typeof item === "string") {
+            return { name: item, contentType: "" };
+        }
+
+        const record = item as Record<string, unknown> | undefined;
+
+        return {
+            name: String(record?.name || record?.topic || record?.topicName || ""),
+            contentType: String(record?.contentType || ""),
+            direction: record?.direction as RestAPI2.Topic["direction"] | undefined
+        };
+    }
+
     private toListItem<TItem>(item: unknown, fromString: (value: string) => TItem): TItem {
         if (typeof item === "string") {
             return fromString(item);
@@ -192,6 +214,7 @@ export class ManagerAPIV2Handler {
 
         return {
             name,
+            contentType: String(topic?.contentType || ""),
             direction: topic?.direction as RestAPI2.Topic["direction"] | undefined
         };
     }

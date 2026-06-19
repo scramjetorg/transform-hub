@@ -178,7 +178,7 @@ The v2 package exposes one common client surface for all API levels. The client 
 | `RestAPI2.Sequence` | Sequence identity, metadata, config summary, status, current instances, and package/source descriptors. |
 | `RestAPI2.Instance` | Instance identity, sequence reference, hub reference, status, parameters, monitoring summary, and stream descriptors. |
 | `RestAPI2.Entity` | Shared entity listing output for manager and hub scopes. |
-| `RestAPI2.Topic` | Topic identity, direction, stream descriptors, and retention/availability metadata. |
+| `RestAPI2.Topic` | Topic identity and content type as `{ name, contentType }`, plus optional direction/stream descriptors where available. |
 | `RestAPI2.StoreItem` | Stored sequence or object metadata exposed by storage endpoints. |
 | `RestAPI2.LogRecord` | v2 log record independent from v1 log DTOs. |
 | `RestAPI2.AuditRecord` | v2 audit record independent from v1 audit DTOs. |

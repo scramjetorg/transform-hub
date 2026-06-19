@@ -845,6 +845,7 @@
     - [x] Implement Manager-owned topic routes on the Manager router and Host-owned Hub topic routes on the Host router; do not collapse both into MultiManager handlers
       - Implemented shared `@scramjet/rest-api2` topic contracts for Host/Manager topic create/delete/read/write where applicable. `@scramjet/api-router` now exposes typed raw HTTP request/response context for stream route handlers, avoiding compatibility proxying for topic streams and preserving headers such as `content-type`.
       - Manager v2 binds Manager-owned topic list/info/read/write routes to Manager topic handlers using typed raw HTTP context. Host v2 binds Hub-owned topic create/delete/read/write routes to ServiceDiscovery/Topic behavior using typed stream context and bounded downstream request completion handling.
+      - Follow-up topic DTO correction: `RestAPI2.Topic` and `/topics` list responses now require `{ name, contentType }` so callers can validate content type before opening topic streams.
     - [x] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
       - Out of scope for this track by user direction. The v2 storage object surface remains an explicitly documented compatibility proxy only, and the track must not claim Disk/S3 proxy parity or storage BDD coverage.
     - [x] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
@@ -887,6 +888,7 @@
       - Storage proxy exception validation after user approval: focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; Manager build typecheck passed; narrowed source ESLint passed after fixing a session-introduced `consistent-return` issue; `git diff --check` passed.
       - Topic route validation: `npm --prefix packages/api-router test` passed, 45 tests; `npm --prefix packages/rest-api2 test` passed, 16 tests after updating route-set bindings for the new topic contracts; focused Host v2 hotwire/versioned-routing tests passed, 36 tests; focused Manager v2 hotwire/versioned-routing tests passed, 10 tests; api-router/rest-api2/Host/Manager build typechecks passed; `git diff --check` passed.
       - Audit route validation: `npm --prefix packages/rest-api2 test` passed, 16 tests; focused Manager v2 hotwire/versioned-routing tests passed, 11 tests; focused MultiManager v2 hotwire/versioned-routing tests passed, 8 tests; rest-api2/Host/Manager/MultiManager build typechecks passed; `git diff --check` passed.
+      - Topic DTO correction validation: rest-api2/Host/Manager build typechecks passed; `npm --prefix packages/rest-api2 test` passed, 17 tests; `npm --prefix packages/host run test -- test/api-versioned-routing.spec.ts` passed, 30 tests; `npm --prefix packages/manager run test:ava -- test/manager-api-v2-hotwire.spec.ts` passed, 8 tests.
 - [ ] Task: Conductor - User Manual Verification 'Phase 9: Manager, MultiManager, Forwarding, and Storage Route Migration to v2' (Protocol in workflow.md)
     - Push-before-verification requirement: create the scoped Phase 9 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm Manager API is split v1/v2/coordinator, MultiManager API is split v1/v2/coordinator, v2 forwarding uses resolver + verser2 redirect, no new v2 local/manual proxying was introduced, and typed nested path composition is intentionally deferred to Phase 9.5.
@@ -1039,6 +1041,7 @@
 - [x] Task: Add componentized v2 healthchecks across API levels
     - [x] Extend shared v2 health contracts with component status and typed component arrays.
     - [x] Add shared default health component helpers for current service, process memory, process CPU, OS memory/load/disk, and path-specific disk checks.
+      - Follow-up review kept these helpers in the existing `@scramjet/load-check` package rather than creating a new package. `@scramjet/load-check` is the shared runtime home for common health checks; `@scramjet/rest-api2` remains the API contract/schema layer.
     - [x] Add Hub v2 health reporting, including sequence storage disk and upstream connection components.
     - [x] Update Manager and MultiManager v2 health to return `HealthCheckInfo<Manager>` and `HealthCheckInfo<MultiManager>` with components.
     - [x] Keep v1 health behavior unchanged.
@@ -1053,6 +1056,7 @@
       - Typechecks for `load-check`, `rest-api2`, `host`, `manager`, and `multi-manager`: passed.
       - Narrowed source ESLint passed with existing warnings in Host and Manager unrelated to this task.
       - `git diff --check`: passed.
+      - Follow-up option-1 validation: `npm --prefix packages/load-check test` passed, 4 tests; `npx tsc -p packages/load-check/tsconfig.build.json --noEmit` passed.
 - [x] Task: Raise focused Host v2 API handler coverage after coverage review
     - [x] Check focused API coverage for changed API packages.
       - `@scramjet/api-router`: 92.32% statements, 92.57% lines.

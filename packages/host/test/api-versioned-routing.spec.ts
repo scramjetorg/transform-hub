@@ -178,7 +178,11 @@ function createV2HostStub(): any {
         },
         commonLogsPipe: { getOut: () => new PassThrough() },
         serviceDiscovery: {
-            getTopics: () => [{ id: () => "topic-1" }, { name: "topic-2" }, "topic-3"]
+            getTopics: () => [
+                { id: () => "topic-1", contentType: "application/x-ndjson" },
+                { name: "topic-2", contentType: "text/plain" },
+                "topic-3"
+            ]
         },
         cpmConnector: undefined,
         instancesStore: {
@@ -284,7 +288,11 @@ test("Host v2 hub topics handler maps various topic shapes", async t => {
 
     t.is(result.status, 200);
     t.deepEqual(result.body, {
-        items: [{ name: "topic-1" }, { name: "topic-2" }, { name: "topic-3" }]
+        items: [
+            { name: "topic-1", contentType: "application/x-ndjson" },
+            { name: "topic-2", contentType: "text/plain" },
+            { name: "topic-3", contentType: "" }
+        ]
     });
 });
 

@@ -13,6 +13,7 @@ type HostTopicListItem = {
     name?: unknown;
     topic?: unknown;
     topicName?: unknown;
+    contentType?: unknown;
 };
 
 type HasIdMethod = {
@@ -77,7 +78,7 @@ export class HostAPIV2Handler {
                 ]
             }),
             topics: (): RestAPI2.ListResponse<RestAPI2.Topic> => ({
-                items: this.hostTopics().map(topic => ({ name: this.hostTopicName(topic) }))
+                items: this.hostTopics().map(topic => this.hostTopic(topic))
             }),
             createTopic: routeBinding.handler<typeof routes.createTopic>(({ body, headers }) => this.createTopic(body, headers)),
             deleteTopic: routeBinding.handler<typeof routes.deleteTopic>(({ params }) => this.deleteTopic(params.name)),
@@ -194,6 +195,13 @@ export class HostAPIV2Handler {
         return serviceDiscovery.getTopics?.() || [];
     }
 
+    private hostTopic(topic: unknown): RestAPI2.Topic {
+        return {
+            name: this.hostTopicName(topic),
+            contentType: this.hostTopicContentType(topic)
+        };
+    }
+
     private hostTopicName(topic: unknown): string {
         if (typeof topic !== "object" || topic === null) {
             return String(topic);
@@ -202,6 +210,16 @@ export class HostAPIV2Handler {
         const item = topic as HostTopicListItem;
 
         return String(this.topicValue(item.id) || item.name || item.topicName || item.topic || topic);
+    }
+
+    private hostTopicContentType(topic: unknown): string {
+        if (typeof topic !== "object" || topic === null) {
+            return "";
+        }
+
+        const item = topic as HostTopicListItem;
+
+        return item.contentType === undefined ? "" : String(item.contentType);
     }
 
     private topicValue(value: unknown): unknown {
@@ -225,7 +243,7 @@ export class HostAPIV2Handler {
 
         this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
 
-        return this.completedOperation(name, { topic: { name } });
+        return this.completedOperation(name, { topic: { name, contentType } });
     }
 
     private deleteTopic(name: string): RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse> {

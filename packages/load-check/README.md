@@ -2,6 +2,16 @@
 
 This package provides info about STH health and also some metrics such as CPU, memory and disk usage.
 
+## Componentized health checks
+
+`@scramjet/load-check` is the shared package for componentized health check helpers used by Host, Manager, MultiManager, and Instance v2 APIs. It exports:
+
+* `createDefaultHealthComponents()` for common current-service, process memory, process CPU, OS memory, OS load, and OS disk checks.
+* `currentComponent()` and `degradedComponent()` for package-specific health components.
+* `summarizeHealth()` for aggregating component status into a single health response.
+
+API contract schemas remain in `@scramjet/rest-api2`; runtime health checks belong here.
+
 ## Docs
 
 See the code documentation here: [scramjetorg/transform-hub/docs/load-check/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/load-check/modules.md)
@@ -51,6 +61,5 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 * There's also a Paypal donation link if you prefer that:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
 
 

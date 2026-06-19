@@ -20,7 +20,7 @@ function createManagerStub(recorder: RouteRecorder) {
             getById: (id: string) => id === "sth-1" ? { id, routeDomain: "sth-1.scramjet.internal", isConnectionActive: true, selfHosted: true, disconnect: async () => undefined } : undefined,
             delete: async () => undefined
         },
-        apiServiceDiscovery: { list: () => [] },
+        apiServiceDiscovery: { list: () => [{ name: "topic-1", contentType: "application/x-ndjson" }] },
         apiLoadCheck: {
             getLoadCheck: async () => ({ load: 1 }),
             getLoadCheckStream: () => new PassThrough()
@@ -135,7 +135,7 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     t.deepEqual(await (recorder.require("get", "/api/v2/sequences").handler as Function)({}), { items: [{ id: "seq-1" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/all_sequences").handler as Function)({ query: {} }), { items: [{ id: "seq-1", status: "ready" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/entities").handler as Function)({}), { items: [{ id: "seq-1", type: "sequence" }, { id: "inst-1", type: "instance" }] });
-    t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [{ name: "topic-1", contentType: "application/x-ndjson", direction: undefined }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/storage/sequences").handler as Function)({}), { items: [{ path: "seq.tar.gz", size: 123 }] });
     t.deepEqual(await (recorder.require("op", "/api/v2/storage", "delete").handler as Function)({}), { cleared: true });
 });

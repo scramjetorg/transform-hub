@@ -61,6 +61,14 @@ test("manager /instances response schema is not unknown and rejects invalid list
     t.true(valid.success, "should accept valid instance list");
 });
 
+test("topic list response requires name and contentType", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.host.hubRouter(), "get", "/topics");
+    const schema = route.schemas!.response!;
+
+    t.true(schema.safeParse({ items: [{ name: "topic-1", contentType: "application/x-ndjson" }] }).success);
+    t.false(schema.safeParse({ items: [{ name: "topic-1" }] }).success, "should reject topic item without contentType");
+});
+
 // ============================================================
 // Assertion (3): instance router GET /stdio response
 // ============================================================

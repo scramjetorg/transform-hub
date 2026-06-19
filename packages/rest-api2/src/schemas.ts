@@ -67,6 +67,7 @@ export const Entity = z.object({
 
 export const Topic = z.object({
     name: z.string(),
+    contentType: z.string(),
     direction: z
         .union([z.literal("input"), z.literal("output"), z.literal("duplex")])
         .optional()

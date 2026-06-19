@@ -109,7 +109,7 @@ export namespace RestAPI2 {
     };
 
     export type Entity = { id: string; type?: string };
-    export type Topic = { name: string; direction?: "input" | "output" | "duplex" };
+    export type Topic = { name: string; contentType: string; direction?: "input" | "output" | "duplex" };
     export type StoreItem = { path: string; size?: number };
     export type LogRecord = { time: number; level: string; message: string; meta?: unknown };
     export type AuditRecord = { id: string; time: number; event: string; meta?: unknown };
