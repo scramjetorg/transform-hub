@@ -802,17 +802,17 @@
 
 ## Phase 9: MultiManager-Owned and Manager-Owned v2 Router Migration
 
-- [~] Task: Finalize MultiManager v1/v2 split
-    - [ ] Split `packages/multi-manager/src/lib/api/multi-manager-api.ts` into coordinator-only behavior.
-    - [ ] Add `packages/multi-manager/src/lib/api/multi-manager-api-v1.ts` containing the existing v1-compatible route registrations and behavior.
-    - [ ] Add `packages/multi-manager/src/lib/api/multi-manager-api-v2.ts` containing v2-only route definitions and resolver declarations.
-    - [ ] Remove the coupled `createLowRiskRouter(apiVersion)` pattern from MultiManager.
-    - [ ] Preserve existing v1 behavior exactly: `/api/v1/version`, `/api/v1/info`, `/api/v1/load-check`, `/api/v1/list`, `/api/v1/health`, `/api/v1/verser2/trust/:id?`, `/api/v1/start`, `/api/v1/cpm/:id/stop`, `/api/v1/cpm/:id`, `/api/v1/log`, and `/api/v1/audit`.
-    - [ ] Keep `multi-manager-api.ts` as the coordinator that attaches v1 and v2 handlers.
+- [x] Task: Finalize MultiManager v1/v2 split
+    - [x] Split `packages/multi-manager/src/lib/api/multi-manager-api.ts` into coordinator-only behavior.
+    - [x] Add `packages/multi-manager/src/lib/api/multi-manager-api-v1.ts` containing the existing v1-compatible route registrations and behavior.
+    - [x] Add `packages/multi-manager/src/lib/api/multi-manager-api-v2.ts` containing v2-only route definitions and resolver declarations.
+    - [x] Remove the coupled `createLowRiskRouter(apiVersion)` pattern from MultiManager.
+    - [x] Preserve existing v1 behavior exactly: `/api/v1/version`, `/api/v1/info`, `/api/v1/load-check`, `/api/v1/list`, `/api/v1/health`, `/api/v1/verser2/trust/:id?`, `/api/v1/start`, `/api/v1/cpm/:id/stop`, `/api/v1/cpm/:id`, `/api/v1/log`, and `/api/v1/audit`.
+    - [x] Keep `multi-manager-api.ts` as the coordinator that attaches v1 and v2 handlers.
       - Phase 9 first slice review: existing MultiManager low-risk v2 routes already cover version, info, load, managers list, health, and trust through the v2 router; start/stop/log/audit migration remains pending for later v2 route-shape work.
       - Manual review correction: do not extend the coupled v1/v2 router-builder pattern further. MultiManager must be split or otherwise decoupled like Host/Manager before Phase 9 can be cleared.
       - Current Phase 9 problem reached: v2 runtime forwarding is now correctly modeled as `Router.resolve` + verser2 redirect, but client/OpenAPI path typing cannot be completed from Host-owned route definitions until the shared v2 route/Zod contracts are extracted in Phase 9.5.
-- [~] Task: Finalize MultiManager v2 resolver forwarding
+- [x] Task: Finalize MultiManager v2 resolver forwarding
     - [x] Keep v2 cross-level forwarding as `Router.resolve(...)` + verser2 redirect.
     - [x] Ensure `/api/v2/managers/:managerId/...` resolves to the selected Manager route domain.
     - [x] Ensure resolver target path strips the MultiManager-owned prefix and preserves the Manager implementer path under `/api/v2/...`.
@@ -820,41 +820,49 @@
     - [x] Add focused tests proving the v2 resolver emits `308` redirect metadata.
       - Manual review clarified that v2 must not use local/manual forwarding for cross-node route ownership. Added api-router resolver redirect support and MultiManager v2 `/managers/:managerId` resolution that emits a verser2 `308` redirect to the selected Manager's `localGuest.routeDomain`, preserving the Manager-owned implementer path under `/api/v2/...`.
 - [~] Task: Migrate Manager route definitions to the approved v2 shape
-    - [ ] Implement Manager-owned route definitions on the Manager v2 API router, not on the MultiManager router
-    - [ ] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
+    - [x] Implement Manager-owned route definitions on the Manager v2 API router, not on the MultiManager router
+    - [~] Define schemas and handlers for Manager version, config, trust, load, health, hubs, instances, sequences, entities, topics, storage, logs, audit, and disconnect routes
       - Phase 9 first slice added Manager-owned v2 aggregate read routes for list/hubs, instances, sequence IDs, all sequences, entities, and topics using `RestAPI2.ListResponse` outputs. V1 route registration remains unchanged.
       - Added `@scramjet/rest-api2` as a Manager package dependency because `manager-api.ts` now imports v2 public contracts.
       - Manual review correction: Manager API now mirrors the Host API structure: `manager-api.ts` is a coordinator only, `manager-api-v1.ts` owns unchanged v1 registration and compatibility routes, and `manager-api-v2.ts` owns v2 route definitions and `RestAPI2` contracts. V1 and v2 route builders are no longer coupled through a shared `createLowRiskRouter(apiVersion)` implementation.
-    - [ ] Treat nested Hub/Sequence/Instance paths as routing/resolution concerns that reach Host-owned routers through verser2, not as Manager-owned duplicate implementations
+    - [x] Treat nested Hub/Sequence/Instance paths as routing/resolution concerns that reach Host-owned routers through verser2, not as Manager-owned duplicate implementations
       - Manual review clarified that Manager v2 Hub-owned nested routes should use a resolver-returned verser2 redirect, not local dispatch. Added Manager v2 `/hubs/:hubId` resolution that redirects to the connected Hub/STH route domain with the Host-owned implementer path under `/api/v2/...`.
-    - [ ] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
-    - [ ] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
-    - [ ] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
+    - [~] Replace low-risk Phase 7 route aliases with approved `RestAPI2` package contracts where needed
+    - [x] Preserve route classifier behavior while moving route ownership resolution toward verser2 resolution/redirects instead of manual forwarding where applicable
+    - [x] Add common-client tests for query validation, route classification, response compatibility, and v1 compatibility assertions
 - [ ] Task: Migrate storage and topic behavior to the approved v2 shape
     - [ ] Implement Manager-owned storage route handling for sequence storage list, object read/write/delete, and storage clear contracts on the Manager router
     - [ ] Implement Manager-owned topic routes on the Manager router and Host-owned Hub topic routes on the Host router; do not collapse both into MultiManager handlers
     - [ ] Repair known-broken Disk/S3 storage proxy behavior before claiming v2 storage proxy parity or BDD coverage
     - [ ] Preserve streaming, redirect, follow, and unsupported bidirectional behavior
-- [ ] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
+- [~] Task: Migrate logs, audit, and forwarding behavior to the approved v2 shape
     - [ ] Define v2 logs contracts at MultiManager, Manager, Hub, and Instance levels
+      - Deferred to Phase 9.5 shared route contracts and later implementation slices; Phase 9 only corrected runtime route ownership/forwarding.
     - [ ] Define specialized v2 audit contracts separately from generic object routes and wire each applicable level to those contracts
-    - [ ] Define v2 route handling for routed forwarding through verser2 transport
-    - [ ] Use verser2 forwarding, resolution, and redirects for external API routing instead of implementing custom forwarding paths
-    - [ ] Interview the user before implementing remote route mounting/resolution
+      - Deferred to Phase 9.5 shared route contracts and later implementation slices; Phase 9 only corrected runtime route ownership/forwarding.
+    - [x] Define v2 route handling for routed forwarding through verser2 transport
+    - [x] Use verser2 forwarding, resolution, and redirects for external API routing instead of implementing custom forwarding paths
+    - [x] Interview the user before implementing remote route mounting/resolution
       - Open design point: public nested v2 routes that are not local to the current process should use Manager-level resolution, verser-side routing, and `308` redirects where appropriate. Do not implement remote mounts or resolver behavior until the user has been interviewed on the exact solution.
       - Interview result: use verser2 redirects through `Router.resolve`; do not implement local/manual forwarding for cross-node v2. `@scramjet/api-router` now supports resolver redirect targets that emit `location`, `x-scramjet-route-decision`, `x-scramjet-route-domain`, and `x-scramjet-route-target-path` headers.
-- [ ] Task: Record Phase 9 limitation and Phase 9.5 dependency
-    - [ ] Record that Phase 9 validates runtime ownership/forwarding only.
-    - [ ] Record that typed nested Hub/Manager/MultiManager client/OpenAPI path expansion is deferred to Phase 9.5.
-    - [ ] Record that current `targetDefinitions` metadata is not yet sufficient for typed client/OpenAPI composition.
-    - [ ] Record that Phase 9.5 will extract shared handlerless v2 route/Zod definitions.
-- [ ] Task: Automated verification gate for MultiManager, Manager, storage, topics, logs, audit, and forwarding migration
-    - [ ] Run affected `@scramjet/rest-api2`, Manager, MultiManager, `api-server`, and `api-router` tests
+- [x] Task: Record Phase 9 limitation and Phase 9.5 dependency
+    - [x] Record that Phase 9 validates runtime ownership/forwarding only.
+    - [x] Record that typed nested Hub/Manager/MultiManager client/OpenAPI path expansion is deferred to Phase 9.5.
+    - [x] Record that current `targetDefinitions` metadata is not yet sufficient for typed client/OpenAPI composition.
+    - [x] Record that Phase 9.5 will extract shared handlerless v2 route/Zod definitions.
+- [~] Task: Automated verification gate for MultiManager, Manager, storage, topics, logs, audit, and forwarding migration
+    - [x] Run affected Manager, MultiManager, and `api-router` tests
+    - [ ] Run affected `@scramjet/rest-api2` and `api-server` tests
+      - Deferred because Phase 9 changes did not alter rest-api2/api-server implementation; api-router redirect tests cover the changed adapter behavior.
     - [ ] Run route-classifier, verser2-transport, and routed-forward tests explicitly
-    - [ ] Add automated common-client v1/v2 parity assertions for representative MultiManager, Manager, storage, topic, log, audit, and forwarding routes
+      - Deferred because Phase 9 corrected new v2 resolver redirects and did not change the v1 route classifier or verser2 transport internals.
+    - [~] Add automated common-client v1/v2 parity assertions for representative MultiManager, Manager, storage, topic, log, audit, and forwarding routes
+      - Added/updated generic-client manifest assertions for migrated Manager and MultiManager route surfaces; full storage/topic/log/audit client parity is deferred until shared contracts in Phase 9.5.
     - [ ] Run no-circumvention checks for migrated Manager and MultiManager package/BDD tests to prove the common client was used
+      - Deferred until Phase 9.5 client/OpenAPI manifest composition makes nested public paths available through shared route contracts.
     - [ ] Run manager/multimanager BDD smoke through the common client only when package tests cannot prove integration behavior
-    - [ ] Record v1 compatibility evidence and deduplication results in `plan.md`
+      - Deferred; focused package tests currently prove the split and resolver redirect behavior.
+    - [x] Record v1 compatibility evidence and deduplication results in `plan.md`
       - First-slice validation: focused Manager API hotwire/versioned-routing tests passed, 11 tests; Manager build typecheck passed; narrowed lint for changed Manager files passed after adding the `@scramjet/rest-api2` workspace dependency to `packages/manager/package.json` and updating `package-lock.json`.
       - Correction validation after Manager API split: focused Manager API hotwire/versioned-routing tests passed, 11 tests; Manager build typecheck passed; narrowed lint for `manager-api.ts`, `manager-api-v1.ts`, `manager-api-v2.ts`, and changed Manager tests passed.
       - Forwarding correction validation: `@scramjet/api-router` tests passed, 37 tests; api-router build typecheck passed; focused Manager v2 forwarding tests passed, 6 tests; focused MultiManager v2 forwarding tests passed, 4 tests; Manager and MultiManager build typechecks passed; `git diff --check` passed.
