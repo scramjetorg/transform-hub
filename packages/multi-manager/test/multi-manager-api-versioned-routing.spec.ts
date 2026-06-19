@@ -3,7 +3,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 
 import { ApiClientRequest, createApiClient, registerVerser2Routes } from "@scramjet/api-router";
-import { MultiManagerAPIHandler } from "../src/lib/api/multi-manager-api";
+import { MultiManagerAPIV1Handler, MultiManagerAPIV2Handler } from "../src/lib/api/multi-manager-api";
 import { ManagersStore } from "../src/lib/manager-store";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
@@ -30,12 +30,14 @@ function createMultiManagerStub(recorder: RouteRecorder) {
 }
 
 test("MultiManager low-risk routes are reachable through verser2 for v1 and v2", async t => {
-    const handler = new MultiManagerAPIHandler(createMultiManagerStub(new RouteRecorder()) as any) as any;
+    const multiManager = createMultiManagerStub(new RouteRecorder()) as any;
+    const v1 = new MultiManagerAPIV1Handler(multiManager);
+    const v2 = new MultiManagerAPIV2Handler(multiManager);
     const registrations: any[] = [];
     const adapter = { register: (registration: any) => registrations.push(registration) };
 
-    registerVerser2Routes(adapter, handler.createLowRiskRouter("v1"));
-    registerVerser2Routes(adapter, handler.createLowRiskRouter("v2"));
+    registerVerser2Routes(adapter, v1.createV1Router());
+    registerVerser2Routes(adapter, v2.createV2Router());
 
     t.deepEqual(registrations.map(registration => registration.fullPath), [
         "/api/v1/version",
@@ -46,7 +48,7 @@ test("MultiManager low-risk routes are reachable through verser2 for v1 and v2",
         "/api/v1/verser2/trust/:id?",
         "/api/v2/version",
         "/api/v2/info",
-        "/api/v2/load-check",
+        "/api/v2/load",
         "/api/v2/list",
         "/api/v2/health",
         "/api/v2/verser2/trust/:id?"
@@ -62,8 +64,8 @@ test("MultiManager low-risk routes are reachable through verser2 for v1 and v2",
 });
 
 test("MultiManager v2 manifest constructs a generic client", async t => {
-    const handler = new MultiManagerAPIHandler(createMultiManagerStub(new RouteRecorder()) as any) as any;
-    const client = createApiClient(handler.createLowRiskRouter("v2").collect(), {
+    const handler = new MultiManagerAPIV2Handler(createMultiManagerStub(new RouteRecorder()) as any);
+    const client = createApiClient(handler.createV2Router().collect(), {
         async request<T>(request: ApiClientRequest) {
             return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
         }
@@ -73,5 +75,10 @@ test("MultiManager v2 manifest constructs a generic client", async t => {
         status: 200,
         headers: {},
         body: { route: "multi-manager.v2.health" }
+    });
+    t.deepEqual(await client.request("multi-manager.v2.load"), {
+        status: 200,
+        headers: {},
+        body: { route: "multi-manager.v2.load" }
     });
 });

@@ -38,10 +38,12 @@ test("MultiManagerAPIHandler registers the v2 MultiManager API route surface sep
 
     t.true(recorder.has("get", "/api/v2/version"));
     t.true(recorder.has("get", "/api/v2/info"));
-    t.true(recorder.has("get", "/api/v2/load-check"));
+    t.true(recorder.has("get", "/api/v2/load"));
     t.true(recorder.has("get", "/api/v2/list"));
     t.true(recorder.has("get", "/api/v2/health"));
     t.true(recorder.has("get", "/api/v2/verser2/trust/:id?"));
+    t.true(recorder.has("use", "/api/v2/managers/:managerId"));
+    t.true(recorder.has("use", "/api/v2/managers/:managerId/*"));
 });
 
 test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t => {
@@ -61,7 +63,7 @@ test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t
         id: "mm-hotwire",
         managersCount: 0
     });
-    t.deepEqual(await (recorder.require("get", "/api/v2/load-check").handler as Function)({}), { load: 1 });
+    t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
     t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({}), [{ id: "manager-1" }]);
     t.deepEqual(await (recorder.require("get", "/api/v2/health").handler as Function)({}), { healthy: true });
 });
@@ -81,4 +83,30 @@ test("MultiManagerAPIHandler v2 trust route preserves manager lookup behavior", 
         (error: Error) => t.true(error instanceof TypeError)
     );
     await t.throwsAsync(() => trustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
+});
+
+test("MultiManagerAPIHandler v2 resolves Manager-owned routes with a verser2 redirect", async t => {
+    const recorder = new RouteRecorder();
+    const multiManager = createMultiManagerStub(recorder);
+
+    multiManager.managersStore.add("manager-1", { id: "manager-1", config: { verser2: { localGuest: { routeDomain: "manager-1.scramjet.internal" } } } } as any);
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    const response = {
+        statusCode: 200,
+        headers: {} as Record<string, string>,
+        writeHead(statusCode: number, headers: Record<string, string>) {
+            this.statusCode = statusCode;
+            this.headers = headers;
+        },
+        end() {}
+    };
+    const handler = recorder.require("use", "/api/v2/managers/:managerId/*").handler as Function;
+
+    await handler({ url: "/api/v2/managers/manager-1/hubs/sth-1/load", params: {}, headers: {} }, response, () => t.fail());
+
+    t.is(response.statusCode, 308);
+    t.is(response.headers.location, "http://manager-1.scramjet.internal/api/v2/hubs/sth-1/load");
+    t.is(response.headers["x-scramjet-route-domain"], "manager-1.scramjet.internal");
+    t.is(response.headers["x-scramjet-route-target-path"], "/api/v2/hubs/sth-1/load");
 });
