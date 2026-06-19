@@ -2,7 +2,7 @@
 
 ## Product Summary
 
-Scramjet Transform Hub is an open-source runtime supervisor for deploying, executing, monitoring, and controlling Transform Sequences across local process, Docker, and Kubernetes environments. It gives application developers, platform engineers, and contributors a consistent way to run long-lived data-processing programs while preserving operational visibility and runtime portability.
+Scramjet Transform Hub is an open-source runtime supervisor for deploying, executing, monitoring, and controlling Transform Sequences across local process, Docker, and Kubernetes environments. It gives application developers, platform engineers, and contributors a consistent way to run long-lived data-processing programs through compatible v1 APIs and a schema-aware v2 API surface while preserving operational visibility and runtime portability.
 
 ## Product Vision
 
@@ -13,7 +13,7 @@ Enable teams to run stream-oriented applications reliably anywhere—from local 
 ### App Developers
 - Write Transform Sequences in supported runtimes such as Node.js and Python.
 - Package and deploy workloads without managing all runtime supervision details directly.
-- Use CLI/API workflows to start, stop, provide input, observe output, and respond to lifecycle events.
+- Use CLI/API workflows to start, stop, provide input, observe output, inspect schema-backed v2 contracts, and respond to lifecycle events.
 
 ### Contributors
 - Extend package internals, adapters, runners, and runtime wrappers.
@@ -28,13 +28,13 @@ Enable teams to run stream-oriented applications reliably anywhere—from local 
 ## Core Product Outcomes
 
 ### Reliable Execution
-The hub should consistently supervise sequence deployment, startup, runtime lifecycle, monitoring, and graceful shutdown across supported adapters.
+The hub should consistently supervise sequence deployment, startup, runtime lifecycle, monitoring, API routing, and graceful shutdown across supported adapters.
 
 ### Runtime Expansion
 The product should maintain parity for existing Node.js and Python runtimes while supporting the addition of new wrappers, including Bun and future languages, without fragmenting the protocol.
 
 ### Operational Clarity
-Configuration, CLI/API behavior, adapter selection, runner image selection, and lifecycle expectations should be understandable, documented, typed, validated, and predictable.
+Configuration, CLI/API behavior, v2 route contracts, adapter selection, runner image selection, and lifecycle expectations should be understandable, documented, typed, validated, and predictable.
 
 ## Product Pillars
 
@@ -48,6 +48,7 @@ Configuration, CLI/API behavior, adapter selection, runner image selection, and 
 ### Observe and Control
 - Surface logs, lifecycle events, health state, and monitoring data.
 - Support app context communication patterns for events, health, and control flows.
+- Expose schema-aware v2 API routes, client contracts, and OpenAPI documentation while preserving exact v1 compatibility.
 - Make sequence behavior debuggable for developers and operators.
 
 ## Current Product Framing
@@ -61,6 +62,7 @@ The near-term product framing is to stabilize Scramjet Transform Hub as a reliab
 - Contributors can trace behavior through package boundaries and make changes safely.
 - Runtime wrapper implementations remain protocol-compatible and testable.
 - Documentation and code structure reinforce the same product model.
+- API contracts remain discoverable through shared schemas, generated OpenAPI output, and compatibility tests.
 
 ## Non-Goals
 

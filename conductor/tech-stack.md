@@ -2,7 +2,7 @@
 
 ## Stack Summary
 
-Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages for the hub, CLI, host, adapters, shared types, runtime launchers, and runtime wrappers. It supports Transform Sequence execution through local process, Docker, and Kubernetes adapters, with Node.js and Python runtime support and active multi-runtime extension work.
+Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages for the hub, CLI, host, adapters, shared types, runtime launchers, runtime wrappers, and schema-aware API routing. It supports Transform Sequence execution through local process, Docker, and Kubernetes adapters, with Node.js and Python runtime support and active multi-runtime extension work.
 
 ## Languages and Runtimes
 
@@ -33,6 +33,8 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - `packages/config`: Zod-backed config loading, validation, masking, option descriptors, native command descriptors, and parser abstraction.
 - `packages/sth-config`: configuration defaults, image defaults, and merge behavior.
 - `packages/host`: host lifecycle, API handling, local storage, and service behavior.
+- `packages/api-router`: schema-aware route declaration, hook pipeline, HTTP/verser2 registration adapters, OpenAPI generation, schema-mode loading, and generic client transport contracts.
+- `packages/rest-api2`: v2 REST API contracts, Zod schemas, handlerless route sets, and common v2 client surface.
 - `packages/cli`: command-line client behavior and completion support.
 - `packages/types`: shared contracts, DTOs, config types, and runtime interfaces.
 - `packages/runner`: outer runner launcher and executor selection.
@@ -57,6 +59,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **BDD tests**: Cucumber-based scenarios under `bdd/`.
 - **Coverage**: nyc/istanbul tooling.
 - **Runtime parity tests**: used especially for runtime wrapper behavior.
+- **API route/client tests**: package-level route-manifest, OpenAPI, generic-client, no-circumvention, and v1/v2 compatibility tests for migrated API surfaces.
 - **CI-safe command preference**: serial package tests via `npm run test:packages-no-concurrent` when needed.
 
 ## Build and Tooling
@@ -67,6 +70,8 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Linting**: ESLint with TypeScript parser and project-wide rules.
 - **Formatting**: Prettier with minimal configuration.
 - **Docs**: generated documentation under `docs/` and package README files.
+- **API routing**: `@scramjet/api-router` provides decorator and imperative route declaration, Zod-first validation, route hooks, OpenAPI 3.1 generation, schema-mode route loading, HTTP registration, verser2 registration, and generic client transports.
+- **API contracts**: `@scramjet/rest-api2` provides v2 DTO contracts, Zod schemas, handlerless route sets, typed route binding, and the common v2 client surface.
 - **Config validation**: Zod is used by `@scramjet/config` as the canonical validation and type inference layer for migrated config flows.
 - **CLI parsing**: `cac` is used internally behind `@scramjet/config`; parser types must not leak into package public APIs.
 - **Config file loading**: `@scramjet/config` supports JSON, YAML, and JSONC for migrated consumers.
@@ -86,3 +91,4 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - Keep runtime wrapper behavior protocol-compatible across supported languages.
 - Keep adapter-specific behavior explicit when process, Docker, and Kubernetes differ.
 - Keep parser and option-registration details behind Scramjet-owned descriptors instead of exposing third-party CLI parser APIs.
+- Keep v2 API route contracts in `@scramjet/rest-api2`, runtime routing primitives in `@scramjet/api-router`, and v1 compatibility adapters covered by explicit v1 tests.
