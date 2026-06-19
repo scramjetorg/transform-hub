@@ -122,6 +122,7 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
     - `npm --workspace @scramjet/manager run test:ava -- test/manager-registration.spec.ts`.
     - `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 npm --prefix bdd run test:bdd -- -t "@manager-aggregation-repro"`.
     - `npm run build:packages`.
+- Phase 3 checkpoint commit: `9b512443`.
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Repro Cleanup and Clean BDD Regression Fixture' (Protocol in workflow.md)
 
 ## Phase 4: Closure Review and Checkpoint
