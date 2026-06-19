@@ -82,7 +82,7 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
     - Adapted existing `@scramjet/types` manager interfaces to expose the narrow rollback helpers used by Manager internals.
     - No new protocol constants or public REST contracts were added.
 - Phase 2 checkpoint commit: `9b0d49b9`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Oracle Review and Fix Attempt' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Oracle Review and Fix Attempt' (Protocol in workflow.md)
 
 ## Phase 3: Repro Cleanup and Clean BDD Regression Fixture
 
@@ -103,7 +103,7 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
     - [x] Record why any Docker repro path was removed, retained, or left out of completion validation.
     - [x] Document validation commands and any skipped checks with reasons.
 
-### Phase 3 Notes (in progress)
+### Phase 3 Notes
 
 - Removed brittle Docker repro assets from `repro/manager-aggregation` and moved durable hello sequence/startup fixtures under `bdd/fixtures/manager-aggregation`.
 - Reworked `MANAGER-002` from three expected-failure repro scenarios into one isolated regression scenario using free ports, unique Manager/MM ids, temp identity dirs, and direct hub sanity checks.
@@ -127,21 +127,31 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
 
 ## Phase 4: Closure Review and Checkpoint
 
-- [ ] Task: Request closure review
-    - [ ] Ask `oracle` to review the final source/test/BDD diff for correctness, maintainability, YAGNI, compatibility, and alignment with the spec.
-    - [ ] Resolve any review findings or explicitly record accepted follow-ups.
-- [ ] Task: Run final validation
-    - [ ] Run focused package tests covering the fix.
-    - [ ] Run the clean Manager aggregation BDD fixture.
-    - [ ] Run `npm run build:packages`.
-    - [ ] Run lint only if changed files or package conventions require it.
-- [ ] Task: Final cleanup and diff review
-    - [ ] Confirm no generated artifacts remain.
-    - [ ] Confirm `git status --short` contains only intended Conductor/source/test changes.
-    - [ ] Review final diff against the specification and acceptance criteria.
-- [ ] Task: Prepare checkpoint and PR summary
-    - [ ] Stage only intended files.
-    - [ ] Commit scoped phase/track work according to Conductor commit policy.
+- [x] Task: Request closure review
+    - [x] Ask `oracle` to review the final source/test/BDD diff for correctness, maintainability, YAGNI, compatibility, and alignment with the spec.
+    - [x] Resolve any review findings or explicitly record accepted follow-ups.
+- [x] Task: Run final validation
+    - [x] Run focused package tests covering the fix.
+    - [x] Run the clean Manager aggregation BDD fixture.
+    - [x] Run `npm run build:packages`.
+    - [x] Run lint only if changed files or package conventions require it. (Not run: final changed files were covered by TypeScript build and targeted tests; no new lint-only patterns were introduced.)
+- [x] Task: Final cleanup and diff review
+    - [x] Confirm generated artifacts are either ignored intentional fixtures or not present in `git status --short`.
+    - [x] Confirm `git status --short` contains only intended Conductor/source/test changes.
+    - [x] Review final diff against the specification and acceptance criteria.
+- [~] Task: Prepare checkpoint and PR summary
+    - [x] Stage only intended files.
+    - [x] Commit scoped phase/track work according to Conductor commit policy.
     - [ ] Update `plan.md` with checkpoint commit SHA if a phase commit is created.
-    - [ ] Prepare or update PR description with the fixed state, validation results, and remaining caveats.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Closure Review and Checkpoint' (Protocol in workflow.md)
+    - [x] Prepare or update PR description with the fixed state, validation results, and remaining caveats.
+
+### Phase 4 Notes
+
+- Closure `oracle` review found no blocking issues.
+- Addressed the only actionable review suggestion by tracking spawned BDD hub processes immediately after spawn, before API readiness checks, so teardown can clean them if readiness fails.
+- Final validation passed:
+    - `npm --workspace @scramjet/manager run test:ava -- test/manager-registration.spec.ts`.
+    - `npm --workspace @scramjet/multi-manager test -- test/lib/verser2-host-config.spec.ts`.
+    - `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 npm --prefix bdd run test:bdd -- -t "@manager-aggregation-repro"`.
+    - `npm run build:packages`.
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Closure Review and Checkpoint' (Protocol in workflow.md)
