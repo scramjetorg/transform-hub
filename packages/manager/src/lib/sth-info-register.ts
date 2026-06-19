@@ -18,6 +18,11 @@ export class STHInfoRegister implements ISTHInfoRegister {
         }
     }
 
+    removeHub(hostId: string): void {
+        this.clearHostEntities(hostId);
+        this.hostsMap.delete(hostId);
+    }
+
     addSequence(hostId: string, seqId: string, seqConfig?: SequenceConfig): void {
         this.logger.info(`Adding sequence to store (host id: ${hostId}, seq id: ${seqId}.`);
 

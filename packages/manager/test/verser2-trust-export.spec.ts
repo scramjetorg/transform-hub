@@ -1,13 +1,59 @@
 import test from "ava";
-import { mkdtemp, rm, writeFile } from "fs/promises";
+import { execFile } from "child_process";
+import { X509Certificate } from "crypto";
+import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
+import { promisify } from "util";
 import { ManagerConfiguration } from "@scramjet/types";
 import { getManagerVerser2TrustExport } from "../src/lib/verser2-trust-export";
 
-const certFile = join(__dirname, "../../verser/test/cert/myCA.pem");
+const run = promisify(execFile);
+const existingCertFile = join(__dirname, "../../verser/test/cert/myCA.pem");
 
-function config(): ManagerConfiguration {
+async function readCertificateMetadata(certFile: string): Promise<{ certFile: string; expiresAt: string }> {
+    const certificate = new X509Certificate(await readFile(certFile, "utf8"));
+
+    return { certFile, expiresAt: new Date(certificate.validTo).toISOString() };
+}
+
+async function ensureCaFixture(): Promise<{ certFile: string; expiresAt: string; cleanup?: () => Promise<void> }> {
+    try {
+        return await readCertificateMetadata(existingCertFile);
+    } catch (error: any) {
+        if (error?.code !== "ENOENT") throw error;
+    }
+
+    const dir = await mkdtemp(join(tmpdir(), "manager-trust-export-ca-"));
+    const certFile = join(dir, "myCA.pem");
+    const keyFile = join(dir, "myCA.key");
+
+    await run("openssl", ["genrsa", "-out", keyFile, "2048"]);
+    await run("openssl", [
+        "req",
+        "-x509",
+        "-new",
+        "-nodes",
+        "-key",
+        keyFile,
+        "-sha256",
+        "-days",
+        "825",
+        "-out",
+        certFile,
+        "-subj",
+        "/CN=manager.example.test/O=Scramjet Test/C=US"
+    ]);
+
+    const fixture = await readCertificateMetadata(certFile);
+
+    return {
+        ...fixture,
+        cleanup: () => rm(dir, { recursive: true, force: true })
+    };
+}
+
+function config(certFile: string): ManagerConfiguration {
     return {
         id: "manager-test",
         apiBase: "/api/v1",
@@ -50,26 +96,32 @@ function config(): ManagerConfiguration {
 }
 
 test("getManagerVerser2TrustExport returns only public Manager trust metadata", async t => {
-    const exported = await getManagerVerser2TrustExport(config());
-    const serialized = JSON.stringify(exported);
+    const { certFile, expiresAt, cleanup } = await ensureCaFixture();
 
-    t.true(exported.ca.includes("BEGIN CERTIFICATE"));
-    t.regex(exported.fingerprint256, /^([A-F0-9]{2}:){31}[A-F0-9]{2}$/);
-    t.is(exported.expiresAt, "2028-09-17T13:16:09.000Z");
-    t.is(exported.hostUrl, "https://manager.example.test:2443");
-    t.deepEqual(exported.routeDomains, {
-        broker: "manager.broker.scramjet.internal",
-        guest: "manager.guest.scramjet.internal"
-    });
-    t.false(serialized.includes("manager-key"));
-    t.false(serialized.includes("manager-passphrase"));
-    t.false(serialized.includes("registration-token"));
-    t.false(serialized.includes("client-ca"));
-    t.false(serialized.includes("PRIVATE KEY"));
+    try {
+        const exported = await getManagerVerser2TrustExport(config(certFile));
+        const serialized = JSON.stringify(exported);
+
+        t.true(exported.ca.includes("BEGIN CERTIFICATE"));
+        t.regex(exported.fingerprint256, /^([A-F0-9]{2}:){31}[A-F0-9]{2}$/);
+        t.is(exported.expiresAt, expiresAt);
+        t.is(exported.hostUrl, "https://manager.example.test:2443");
+        t.deepEqual(exported.routeDomains, {
+            broker: "manager.broker.scramjet.internal",
+            guest: "manager.guest.scramjet.internal"
+        });
+        t.false(serialized.includes("manager-key"));
+        t.false(serialized.includes("manager-passphrase"));
+        t.false(serialized.includes("registration-token"));
+        t.false(serialized.includes("client-ca"));
+        t.false(serialized.includes("PRIVATE KEY"));
+    } finally {
+        await cleanup?.();
+    }
 });
 
 test("getManagerVerser2TrustExport fails closed without public CA material", async t => {
-    const missing = config();
+    const missing = config("/tmp/missing-ca.pem");
 
     delete missing.verser2.host.tls.caFile;
 
@@ -81,7 +133,7 @@ test("getManagerVerser2TrustExport fails closed without public CA material", asy
 test("getManagerVerser2TrustExport refuses non-certificate PEM material", async t => {
     const dir = await mkdtemp(join(tmpdir(), "manager-trust-export-"));
     const privatePem = join(dir, "mixed.pem");
-    const mixed = config();
+    const mixed = config(privatePem);
 
     await writeFile(privatePem, "-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----\n", "utf8");
     mixed.verser2.host.tls.caFile = privatePem;

@@ -43,21 +43,44 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
 
 ## Phase 2: Oracle Review and Fix Attempt
 
-- [ ] Task: Request oracle review of findings and proposed fix
-    - [ ] Provide the confirmed spec, failing unit reproduction, affected files, and root-cause findings to `oracle`.
-    - [ ] Ask `oracle` to review fix direction for correctness, compatibility, and minimality before implementation.
-- [ ] Task: Implement the reviewed fix attempt
-    - [ ] Fix Manager registration ordering if confirmed by tests/review so state and handlers are installed before initial inventory can be missed.
-    - [ ] Adjust CPM connector readiness semantics only if confirmed necessary, ensuring inventory sends wait for a usable communication/control stream.
-    - [ ] Normalize bulk instance inventory payloads only if confirmed necessary, preserving backward compatibility with existing payload shapes.
-    - [ ] Keep changes narrow and avoid public REST path or response-shape changes other than returning populated aggregation data.
-- [ ] Task: Validate the fix against focused tests
-    - [ ] Re-run the unit/package tests added in Phase 1 and confirm they pass.
-    - [ ] Run any adjacent package tests needed for changed Manager/Host behavior.
-    - [ ] Run `npm run build:packages` if TypeScript/package contracts changed in this phase.
-- [ ] Task: Record implementation notes
-    - [ ] Note which shared packages were reviewed and whether shared code was reused, adapted, deferred, or not applicable.
-    - [ ] Note any validation failures and their classification according to `conductor/workflow.md`.
+- [x] Task: Request oracle review of findings and proposed fix
+    - [x] Provide the confirmed spec, failing unit reproduction, affected files, and root-cause findings to `oracle`.
+    - [x] Ask `oracle` to review fix direction for correctness, compatibility, and minimality before implementation.
+- [x] Task: Implement the reviewed fix attempt
+    - [x] Fix Manager registration ordering if confirmed by tests/review so state and handlers are installed before initial inventory can be missed.
+    - [x] Adjust CPM connector readiness semantics only if confirmed necessary, ensuring inventory sends wait for a usable communication/control stream. (Not changed in Phase 2 per oracle guidance; not required by focused reproduction.)
+    - [x] Normalize bulk instance inventory payloads only if confirmed necessary, preserving backward compatibility with existing payload shapes.
+    - [x] Keep changes narrow and avoid public REST path or response-shape changes other than returning populated aggregation data.
+- [x] Task: Validate the fix against focused tests
+    - [x] Re-run the unit/package tests added in Phase 1 and confirm they pass.
+    - [x] Run any adjacent package tests needed for changed Manager/Host behavior.
+    - [x] Run `npm run build:packages` if TypeScript/package contracts changed in this phase.
+- [x] Task: Record implementation notes
+    - [x] Note which shared packages were reviewed and whether shared code was reused, adapted, deferred, or not applicable.
+    - [x] Note any validation failures and their classification according to `conductor/workflow.md`.
+
+### Phase 2 Notes
+
+- Oracle review recommended:
+    - Install Manager-side hub state, controller store entry, and event handlers before `await sth.init()`.
+    - Add rollback cleanup for failed `sth.init()` without relying on public `delete()` semantics.
+    - Accept both wrapped `{ instance }` and raw `Instance` inventory payloads.
+    - Leave `CPMConnector` readiness semantics unchanged until a focused test proves it remains necessary.
+- Implemented:
+    - Added `ISTHConnectionStore.remove()` / `SthConnectionStore.remove()` as an internal rollback primitive.
+    - Added `ISTHInfoRegister.removeHub()` / `STHInfoRegister.removeHub()` for failed-registration rollback.
+    - Reordered `Manager.handleSthRegistration()` so hub state and listeners are installed before `sth.init()` for new registration and re-registration.
+    - Added Manager-side instance event payload normalization for wrapped and raw payloads.
+    - Expanded focused tests for new registration, re-registration, init rollback, raw payloads, wrapped payloads, raw `GONE`, and the `STHController.hostMessageHandler()` bulk raw instance path.
+- Validation:
+    - Passed: `npm --workspace @scramjet/manager run test:ava -- --match "Manager *"`.
+    - Passed: `npm --workspace @scramjet/manager run test:ava -- test/manager-registration.spec.ts`.
+    - Passed after self-contained cert fixture correction: `npm --workspace @scramjet/manager run test:ava` (120 tests).
+    - Corrected `verser2-trust-export` test with `ensureCaFixture()` so it reuses `packages/verser/test/cert/myCA.pem` when present, otherwise generates a CA fixture in an OS temp directory and compares against that certificate metadata.
+    - Passed: `npm run build:packages`.
+- Shared package review:
+    - Adapted existing `@scramjet/types` manager interfaces to expose the narrow rollback helpers used by Manager internals.
+    - No new protocol constants or public REST contracts were added.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Oracle Review and Fix Attempt' (Protocol in workflow.md)
 
 ## Phase 3: Repro Cleanup and Clean BDD Regression Fixture

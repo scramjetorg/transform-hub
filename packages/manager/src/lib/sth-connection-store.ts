@@ -33,6 +33,11 @@ export class SthConnectionStore implements ISTHConnectionStore {
         }
     }
 
+    remove(id: string) {
+        this.sthControllers.delete(id);
+        this.logger.info("STH Controller removed", id);
+    }
+
     getById(id: string): ISTHController | undefined {
         return this.sthControllers.get(id);
     }
@@ -71,7 +76,6 @@ export class SthConnectionStore implements ISTHConnectionStore {
             }
         }
 
-        this.sthControllers.delete(id);
-        this.logger.info("STH Controller removed", id);
+        this.remove(id);
     }
 }

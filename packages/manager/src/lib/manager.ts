@@ -11,6 +11,7 @@ import {
     MRestAPI,
     SequenceConfig,
     Instance,
+    InstanceMessageData,
     SpaceEventMessageData,
     LogLevel
 } from "@scramjet/types";
@@ -456,9 +457,8 @@ export class Manager implements IComponent {
             }
         }
 
-        let sth: ISTHController | undefined;
-
-        sth = this.sthConnectionStore.getById(id);
+        const previousSth = this.sthConnectionStore.getById(id);
+        let sth: ISTHController | undefined = previousSth;
 
         if (sth) {
             sth.logger.unpipe(this.logger);
@@ -476,11 +476,17 @@ export class Manager implements IComponent {
             sth.logger.pipe(this.logger, { end: false });
 
             this.sthInfoRegister.clearHostEntities(sth.id);
+            this.sthInfoRegister.addHub(sth.id);
             this.sthConnectionStore.add(sth);
+            this.attachSTHEventHandlers(sth);
             this.commonLogsPipe.removeInStream(sth.id);
 
-            await sth.init();
-            this.attachSTHEventHandlers(sth);
+            try {
+                await sth.init();
+            } catch (error) {
+                this.rollbackFailedSthRegistration(sth);
+                throw error;
+            }
         } else {
             this.logger.info("New STH registered", id);
             sth = new STHController(id, {
@@ -492,12 +498,16 @@ export class Manager implements IComponent {
             });
             sth.logger.pipe(this.logger, { end: false });
 
-            await sth.init();
-
             this.sthConnectionStore.add(sth);
             this.sthInfoRegister.addHub(sth.id);
-
             this.attachSTHEventHandlers(sth);
+
+            try {
+                await sth.init();
+            } catch (error) {
+                this.rollbackFailedSthRegistration(sth);
+                throw error;
+            }
         }
 
         this.commonLogsPipe.addInStream(sth.id, sth.logStream!);
@@ -508,6 +518,16 @@ export class Manager implements IComponent {
         await this.auditor.onUpdate();
 
         return sth.id;
+    }
+
+    private rollbackFailedSthRegistration(sth: ISTHController) {
+        this.logger.warn("Rolling back failed STH registration", sth.id);
+        sth.logger.unpipe(this.logger);
+        sth.dispose();
+        this.commonLogsPipe.removeInStream(sth.id);
+        this.sthInfoRegister.clearHostEntities(sth.id);
+        this.sthInfoRegister.removeHub(sth.id);
+        this.sthConnectionStore.remove(sth.id);
     }
 
     async handleHostDisconnect(id: string, reason: DisconnectReason) {
@@ -646,21 +666,23 @@ export class Manager implements IComponent {
             }
         });
 
-        sth.on("instance", ({ status, ...msg }) => {
-            this.logger.debug("Instance event", msg, status);
+        sth.on("instance", (message: InstanceMessageData) => {
+            const instance = this.normalizeInstanceEventPayload(message);
 
-            if (!msg.instance) {
-                this.logger.warn("Instance event without instance", msg);
+            this.logger.debug("Instance event", instance);
+
+            if (!instance) {
+                this.logger.warn("Instance event without instance", message);
                 return;
             }
 
-            switch (msg.instance.status) {
+            switch (instance.status) {
                 case InstanceStatus.GONE:
-                    this.sthInfoRegister.deleteInstance(sth.id, msg.instance.sequence?.id, msg.instance.id);
+                    this.sthInfoRegister.deleteInstance(sth.id, instance.sequence?.id, instance.id);
 
                     break;
                 default:
-                    this.sthInfoRegister.addInstance(sth.id, msg.instance as Instance);
+                    this.sthInfoRegister.addInstance(sth.id, instance);
                     break;
             }
         });
@@ -693,6 +715,10 @@ export class Manager implements IComponent {
             this.auditor.hubConnectionChange(sth.id, false);
             this.serviceDiscovery.onUpdate("hub disconnect");
         });
+    }
+
+    private normalizeInstanceEventPayload(message: InstanceMessageData | Instance): Instance | undefined {
+        return "instance" in message ? message.instance : message;
     }
 
     mapConfig(input: SequenceConfig): MRestAPI.GetSequenceResponse {
