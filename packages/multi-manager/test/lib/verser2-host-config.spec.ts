@@ -41,6 +41,7 @@ test("createVerser2HostOptions maps validated endpoint and PEM TLS files", t => 
     const options = createVerser2HostOptions(baseConfig());
 
     t.deepEqual(options, {
+        hostId: "manager.test.broker.host",
         host: "127.0.0.1",
         port: 2443,
         tls: {

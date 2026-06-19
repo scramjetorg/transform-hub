@@ -86,23 +86,43 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
 
 ## Phase 3: Repro Cleanup and Clean BDD Regression Fixture
 
-- [ ] Task: Remove or replace ad-hoc repro assets from the local repro branch as appropriate
-    - [ ] Review existing `repro/manager-aggregation` files and current BDD repro files for duplication, fragility, and solution alignment.
-    - [ ] Remove repro-only files that should not remain once a clean regression fixture exists.
-    - [ ] Preserve only durable fixtures that are needed for regression coverage.
-- [ ] Task: Reimplement a clean BDD fixture based on the proposed solution
-    - [ ] Create or revise BDD scenarios so they exercise the fixed Manager aggregation behavior without relying on brittle Docker bootstrap paths.
-    - [ ] Ensure the fixture covers all scoped endpoints: `/list`, `/all_sequences`, and `/instances`.
-    - [ ] Avoid same-port/same-manager-id reuse issues by isolating scenario resources or designing shared setup intentionally.
-    - [ ] Keep BDD fixture prerequisites clear and aligned with repository BDD conventions.
-- [ ] Task: Validate the clean BDD fixture
-    - [ ] Run the Manager aggregation BDD scenarios with `BDD_INCLUDE_LONG_RUNNING=1` and source execution as needed.
-    - [ ] Confirm direct hub queries and MM-proxied Manager aggregation assertions pass for all scoped endpoints.
-    - [ ] Clean generated certs, BDD storage directories, processes, Docker containers/volumes, and other validation artifacts.
-- [ ] Task: Update Conductor notes and docs if needed
-    - [ ] Record why any Docker repro path was removed, retained, or left out of completion validation.
-    - [ ] Document validation commands and any skipped checks with reasons.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Repro Cleanup and Clean BDD Regression Fixture' (Protocol in workflow.md)
+- [x] Task: Remove or replace ad-hoc repro assets from the local repro branch as appropriate
+    - [x] Review existing `repro/manager-aggregation` files and current BDD repro files for duplication, fragility, and solution alignment.
+    - [x] Remove repro-only files that should not remain once a clean regression fixture exists.
+    - [x] Preserve only durable fixtures that are needed for regression coverage.
+- [x] Task: Reimplement a clean BDD fixture based on the proposed solution
+    - [x] Create or revise BDD scenarios so they exercise the fixed Manager aggregation behavior without relying on brittle Docker bootstrap paths.
+    - [x] Ensure the fixture covers all scoped endpoints: `/list`, `/all_sequences`, and `/instances`.
+    - [x] Avoid same-port/same-manager-id reuse issues by isolating scenario resources or designing shared setup intentionally.
+    - [x] Keep BDD fixture prerequisites clear and aligned with repository BDD conventions.
+- [x] Task: Validate the clean BDD fixture
+    - [x] Run the Manager aggregation BDD scenarios with `BDD_INCLUDE_LONG_RUNNING=1` and source execution as needed.
+    - [x] Confirm direct hub queries and MM-proxied Manager aggregation assertions pass for all scoped endpoints.
+    - [x] Clean generated certs, BDD storage directories, processes, Docker containers/volumes, and other validation artifacts.
+- [x] Task: Update Conductor notes and docs if needed
+    - [x] Record why any Docker repro path was removed, retained, or left out of completion validation.
+    - [x] Document validation commands and any skipped checks with reasons.
+
+### Phase 3 Notes (in progress)
+
+- Removed brittle Docker repro assets from `repro/manager-aggregation` and moved durable hello sequence/startup fixtures under `bdd/fixtures/manager-aggregation`.
+- Reworked `MANAGER-002` from three expected-failure repro scenarios into one isolated regression scenario using free ports, unique Manager/MM ids, temp identity dirs, and direct hub sanity checks.
+- BDD validation commands run:
+    - `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 npm --prefix bdd run test:bdd -- -t "@manager-aggregation-repro"`
+    - repeated with `SCRAMJET_TEST_LOG=1` for failure diagnosis.
+- Validation classification and fixes discovered during BDD cleanup:
+    - Initial compile/import failures were fixture issues and fixed: TypeScript `satisfies` unsupported under this toolchain; generated verser cert fixtures are required by unrelated imported BDD steps before targeted scenarios run.
+    - Oracle review for the newly proven CPM readiness issue recommended preserving existing `connect` semantics and introducing a separate `communicationReady` event fired after `communicationStream` exists; implemented this narrow host-side change so inventory snapshots are sent only when the communication stream can accept them.
+    - Real BDD also exposed a MultiManager verser2 Host federation issue; fixed `createVerser2HostOptions()` to provide a stable `hostId` derived from `localBroker.peerId`.
+    - Real BDD exposed that `/log` stream failures could roll back otherwise usable STH registration; made the Manager log stream request best-effort while keeping `/platform` as the critical communication path.
+    - Proxy assertions now poll the requested Manager endpoint to account for asynchronous inventory delivery after registration.
+    - Generated BDD/verser fixtures are ignored rather than deleted after every run: cert artifacts are covered by existing `*.crt`, `*.csr`, `*.ext`, `*.key`, `*.pem`, `*.srl` rules; `bdd/mgr-agg-*/` is now ignored; `bdd/step-definitions/verser2/isolated-routing.ts` generates its localhost cert fixture once when missing.
+- Validation passed:
+    - `npm --workspace @scramjet/multi-manager test -- test/lib/verser2-host-config.spec.ts`.
+    - `npm --workspace @scramjet/manager run test:ava -- test/manager-registration.spec.ts`.
+    - `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 npm --prefix bdd run test:bdd -- -t "@manager-aggregation-repro"`.
+    - `npm run build:packages`.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Repro Cleanup and Clean BDD Regression Fixture' (Protocol in workflow.md)
 
 ## Phase 4: Closure Review and Checkpoint
 

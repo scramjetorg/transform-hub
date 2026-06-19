@@ -214,10 +214,17 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     private async connectVerser2Streams() {
         this.logger.info("Requesting /platform and /logs over verser2");
 
-        const [{ incomingMessage: upstream, clientRequest: downstream }, logRequest] = await Promise.all([
-            this.makeSthRequest("POST", "/api/v1/platform", { "Content-Type": "application/x-ndjson" }),
-            this.makeSthRequest("GET", "/api/v1/log", { "Content-Type": "application/x-ndjson" }),
-        ]);
+        const { incomingMessage: upstream, clientRequest: downstream } = await this.makeSthRequest(
+            "POST",
+            "/api/v1/platform",
+            { "Content-Type": "application/x-ndjson" }
+        );
+        const logRequest = await this.makeSthRequest("GET", "/api/v1/log", { "Content-Type": "application/x-ndjson" })
+            .catch((error: Error) => {
+                this.logger.warn("Log stream request failed", error.message);
+
+                return { incomingMessage: Readable.from([]), clientRequest: new PassThrough() };
+            });
 
         handleConnResetErrors(upstream, (err: Error) => this.logger.warn("CC upstream", err.message));
         handleConnResetErrors(downstream, (err: Error) => this.logger.warn("CC downstream", err.message));

@@ -1,6 +1,7 @@
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import assert from "assert";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
+import { execFileSync } from "child_process";
 import { join } from "path";
 
 import { createVerserHost, VerserHost, VerserHostUpstreamHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
@@ -25,6 +26,21 @@ type IsolatedVerser2State = {
 };
 
 const certDir = join(__dirname, "../../../packages/verser/test/cert");
+
+function ensureLocalhostCertFixture() {
+    if (
+        existsSync(join(certDir, "localhost.crt")) &&
+        existsSync(join(certDir, "localhost.key")) &&
+        existsSync(join(certDir, "myCA.pem"))
+    ) {
+        return;
+    }
+
+    execFileSync(join(certDir, "gen-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
+}
+
+ensureLocalhostCertFixture();
+
 const serverCert = readFileSync(join(certDir, "localhost.crt"), "utf8");
 const serverKey = readFileSync(join(certDir, "localhost.key"), "utf8");
 const ca = readFileSync(join(certDir, "myCA.pem"), "utf8");

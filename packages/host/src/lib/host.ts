@@ -1080,13 +1080,19 @@ export class Host implements IHost, IComponent {
 
         connector.init();
 
-        connector.on("connect", async () => {
-            await connector.sendSequencesInfo(this.getSequences().map(s => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
-            await connector.sendInstancesInfo(this.getInstances());
-            await connector.sendTopicsInfo(this.getTopics());
+        connector.on("communicationReady", () => {
+            Promise.resolve()
+                .then(async () => {
+                    await connector.sendSequencesInfo(this.getSequences().map(s => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
+                    await connector.sendInstancesInfo(this.getInstances());
+                    await connector.sendTopicsInfo(this.getTopics());
 
-            // @TODO this causes problem with axios.
-            this.s3Client?.setAgent(connector.getHttpAgent());
+                    // @TODO this causes problem with axios.
+                    this.s3Client?.setAgent(connector.getHttpAgent());
+                })
+                .catch((error: Error) => {
+                    this.logger.error("Error sending CPM inventory snapshot", error.message);
+                });
         });
 
         await connector.connect();
