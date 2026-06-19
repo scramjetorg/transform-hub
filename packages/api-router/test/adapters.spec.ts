@@ -129,6 +129,45 @@ test("registerHttpRoutes reports unsupported dynamic resolver targets", async t 
     t.regex(response.body, /not supported/);
 });
 
+test("registerHttpRoutes dispatches dynamic resolvers to verser2 redirects", async t => {
+    const uses: { path: string; handler: Function }[] = [];
+    const api = {
+        get() {},
+        op() {},
+        use(path: string, handler: Function) {
+            uses.push({ path, handler });
+        }
+    } as any;
+    const router = createRouter({ basePath: "/api/v2" })
+        .resolve("/managers/:managerId", {
+            schemas: { params: z.object({ managerId: z.string() }) },
+            handler: ({ params, remainingPath }) => ({
+                redirect: {
+                    routeDomain: `${params.managerId}.manager.internal`,
+                    targetPath: `/api/v2${remainingPath === "/" ? "" : remainingPath}`
+                }
+            })
+        });
+    const response = {
+        statusCode: 200,
+        headers: {} as Record<string, string>,
+        writeHead(statusCode: number, headers: Record<string, string>) {
+            this.statusCode = statusCode;
+            this.headers = headers;
+        },
+        end() {}
+    };
+
+    registerHttpRoutes(api, router);
+    await uses[1].handler({ url: "/api/v2/managers/manager-1/hubs/hub-1/load", headers: {} }, response, () => undefined);
+
+    t.is(response.statusCode, 308);
+    t.is(response.headers.location, "http://manager-1.manager.internal/api/v2/hubs/hub-1/load");
+    t.is(response.headers["x-scramjet-route-decision"], "redirect");
+    t.is(response.headers["x-scramjet-route-domain"], "manager-1.manager.internal");
+    t.is(response.headers["x-scramjet-route-target-path"], "/api/v2/hubs/hub-1/load");
+});
+
 test("registerHttpRoutes registers stream route kinds when target supports them", t => {
     const calls: string[] = [];
     const api = {

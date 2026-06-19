@@ -1,6 +1,6 @@
 import { APIRoute, ParsedMessage, StreamConfig } from "@scramjet/types";
 import { ServerResponse } from "http";
-import { ResolverDefinition, ResolverTarget, RouteDefinition, RouteRequest, normalizePath } from "../manifest";
+import { ResolverDefinition, ResolverRedirectTarget, ResolverTarget, RouteDefinition, RouteRequest, normalizePath } from "../manifest";
 import { RouterDefinition } from "../router";
 import { executeRoutePipeline } from "../hooks";
 import { validateRouteRequest, validateRouteResponse } from "../validation";
@@ -47,6 +47,21 @@ function writeResolverError(res: ServerResponse, statusCode: number, message: st
     res.end(JSON.stringify({ error: { message } }));
 }
 
+function writeVerser2Redirect(res: ServerResponse, redirect: ResolverRedirectTarget) {
+    const targetPath = redirect.targetPath.startsWith("/") ? redirect.targetPath : `/${redirect.targetPath}`;
+    const location = redirect.location || `http://${redirect.routeDomain}${targetPath}`;
+    const headers = redirect.headers || {};
+
+    res.writeHead(redirect.statusCode || 308, {
+        location,
+        "x-scramjet-route-decision": "redirect",
+        "x-scramjet-route-domain": redirect.routeDomain,
+        "x-scramjet-route-target-path": targetPath,
+        ...headers
+    });
+    res.end();
+}
+
 function splitPath(path: string): string[] {
     return normalizePath(path.split("?")[0]).split("/").filter(Boolean);
 }
@@ -91,6 +106,11 @@ async function dispatchResolvedTarget(
 ) {
     if (!target) {
         writeResolverError(res, 404, "Resolved API target was not found");
+        return;
+    }
+
+    if (target.redirect) {
+        writeVerser2Redirect(res, target.redirect);
         return;
     }
 

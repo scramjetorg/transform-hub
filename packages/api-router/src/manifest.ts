@@ -37,8 +37,17 @@ export type LocalRouterTarget = {
     lookup(req: unknown, res: unknown, next: (err?: Error) => void): unknown;
 };
 
+export type ResolverRedirectTarget = {
+    routeDomain: string;
+    targetPath: string;
+    location?: string;
+    statusCode?: 307 | 308;
+    headers?: Record<string, string>;
+};
+
 export type ResolverTarget = {
     local?: LocalRouterTarget;
+    redirect?: ResolverRedirectTarget;
     definitions?: unknown;
     client?: unknown;
     localForwardPath?: string;
