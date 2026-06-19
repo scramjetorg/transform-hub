@@ -923,6 +923,34 @@
     - Push-before-verification requirement: create the scoped Phase 9.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm shared v2 route contracts live in `@scramjet/rest-api2`, Host/Manager/MultiManager bind handlers locally, Manager/MultiManager do not import Host internals, nested public paths are available for client/OpenAPI generation, and runtime forwarding still uses verser2 redirects.
 
+## Phase 9.5 Correction Note: Schema Precision After User Rejection of Simplistic Schemas
+
+- [x] Correction: Replace simplistic `z.unknown()` schemas with precise DTO-focused schemas after manual review rejection
+    - [x] Identify all shared `@scramjet/rest-api2` route contract schemas that used `z.unknown()` for list items, DTO bodies, or response payloads and were rejected by manual review
+      - List response item schemas were generic `unknown` in `RestAPI2Schemas.list()` and individual list routes.
+      - Stdio descriptor `fd` param schemas were unconstrained integers for GET, PUT, and descriptor routes.
+      - Several `responseBody` schemas used simplified `unknown` instead of the actual `RestAPI2.*` DTO shapes.
+    - [x] Replace list item `unknown` schemas with the actual DTO type per route family in shared contract modules
+      - Shared `listResponse(itemSchema)` now binds each route to a typed item schema instead of defaulting route contracts to `z.unknown()`.
+      - List routes in `RestAPI2Routes` pass explicit DTO schemas such as `Hub`, `Sequence`, `Instance`, `Entity`, `Topic`, `MultiManager`, `AuditRecord`, and `LogRecord` where applicable.
+    - [x] Constrain stdio `fd` param schemas per operation
+      - `GET /stdio/:fd` now constrains `fd` to union `z.literal(1) | z.literal(2)` (stdout/stderr read only).
+      - `PUT /stdio/:fd` now constrains `fd` to `z.literal(0)` (stdin write only).
+      - Descriptor `fd` routes now constrain `fd` to union `z.literal(0) | z.literal(1) | z.literal(2)`.
+    - [x] Replace remaining `unknown` response bodies with typed `RestAPI2.*` DTO references where the DTO shape is stable
+      - Route contracts for version, config, health, info, load, status, and trust now reference explicit Zod DTO schemas matching `RestAPI2` contract shapes.
+    - [x] Keep response body as `unknown` only where the underlying v1 runtime behavior deliberately returns dynamic/opaque shapes that have no stable DTO yet (e.g., STH-forwarded opaque responses)
+      - Stream bodies and generic dynamic payload fields retain `unknown` only where the payload is intentionally opaque or stream-like.
+    - [x] Run focused correction validation
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/rest-api2/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/rest-api2 test`: passed, 11 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/api-router test`: passed, 40 tests.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/host/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/manager/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc -p packages/multi-manager/tsconfig.build.json --noEmit`: passed.
+      - `ulimit -v 4194304 && NODE_OPTIONS="--max-old-space-size=2048" npx eslint packages/rest-api2/src/schemas.ts packages/rest-api2/src/routes.ts`: passed.
+      - `git diff --check`: passed.
+
 ## Phase 10: v1 Wrapper Compatibility, Documentation, and Final Validation
 
 - [ ] Task: Implement v1 wrapper/backing strategy after v2 coverage is available
