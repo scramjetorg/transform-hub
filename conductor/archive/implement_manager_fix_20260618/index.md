@@ -1,5 +1,5 @@
 # Track implement_manager_fix_20260618 Context
 
 - [Specification](./spec.md)
-- [Implementation Plan](./plan.md)
+- [Outcome](./outcome.md)
 - [Metadata](./metadata.json)

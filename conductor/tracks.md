@@ -16,8 +16,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [ ] **Track: api and docs revamp**
 *Link: [./tracks/api_docs_revamp_20260616/](./tracks/api_docs_revamp_20260616/)*
-
----
-
-- [~] **Track: implement manager fix**
-*Link: [./tracks/implement_manager_fix_20260618/](./tracks/implement_manager_fix_20260618/)*
