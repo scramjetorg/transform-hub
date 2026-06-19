@@ -38,6 +38,7 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
     - Raw instance inventory payload gap: Manager `attachSTHEventHandlers()` ignores raw `Instance` payloads because it expects `{ instance }` wrapper records, while `CPMConnector.sendInstancesInfo()` sends raw `Instance[]`.
 - Not yet proven by focused tests:
     - Host `CPMConnector` early `connect` readiness semantics. Source inspection shows `connect()` emits `connect` after registration and `handleCommunicationRequest()` emits `connect` after the communication stream is created; this remains a candidate for oracle review but was not necessary to reproduce the manager aggregation failure in Phase 1.
+- Phase 1 checkpoint commit: `8176812e`.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Unit-Test Reproduction and Root-Cause Findings' (Protocol in workflow.md)
 
 ## Phase 2: Oracle Review and Fix Attempt
