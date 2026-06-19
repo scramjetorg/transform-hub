@@ -56,6 +56,11 @@ export class ManagerAPIV2Handler {
                 schemas: { query: querySchema, response: listResponse },
                 handler: req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts")
             }))
+            .route(Router.get("/hubs", {
+                id: "manager.v2.hubs",
+                schemas: { query: querySchema, response: listResponse },
+                handler: req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts")
+            }))
             .route(Router.get("/instances", {
                 id: "manager.v2.instances",
                 schemas: { query: querySchema, response: listResponse },
@@ -80,7 +85,32 @@ export class ManagerAPIV2Handler {
                 id: "manager.v2.topics",
                 schemas: { response: listResponse },
                 handler: () => this.listResponse<RestAPI2.Topic>(manager.apiServiceDiscovery.list(), "topics")
-            }));
+            }))
+            .resolve("/hubs/:hubId", {
+                id: "manager.v2.hub.forward",
+                description: "Resolve a selected Hub to its verser2 route domain for Host-owned v2 routes.",
+                schemas: { params: z.object({ hubId: z.string() }) },
+                targetDefinitions: {
+                    owner: "host",
+                    mountPath: "/hubs/:hubId",
+                    implementerBasePath: this.v2ApiBase
+                },
+                handler: ({ params, remainingPath }) => {
+                    const hubId = (params as { hubId: string }).hubId;
+                    const sth = manager.apiSthConnectionStore.getById(hubId);
+
+                    if (!sth || !sth.isConnectionActive || !sth.routeDomain) {
+                        return undefined;
+                    }
+
+                    return {
+                        redirect: {
+                            routeDomain: sth.routeDomain,
+                            targetPath: this.toImplementerPath(remainingPath)
+                        }
+                    };
+                }
+            });
     }
 
     attach() {
@@ -127,5 +157,9 @@ export class ManagerAPIV2Handler {
         }
 
         return item as TItem;
+    }
+
+    private toImplementerPath(remainingPath: string): string {
+        return remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
     }
 }
