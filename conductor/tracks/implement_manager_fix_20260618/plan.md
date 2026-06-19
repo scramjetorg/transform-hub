@@ -12,22 +12,33 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
 
 ## Phase 1: Unit-Test Reproduction and Root-Cause Findings
 
-- [ ] Task: Create review surface for the track
-    - [ ] Confirm current branch/base and create a dedicated track branch unless explicitly skipped.
-    - [ ] Prepare PR surface when the first phase checkpoint is ready.
-- [ ] Task: Confirm affected packages, entrypoints, and expected behavior
-    - [ ] Read relevant package codemaps for `packages/manager`, `packages/host`, and affected nested `src/` folders.
-    - [ ] Inspect Manager registration flow, STH controller inventory events, Host CPM connector readiness, and bulk instance message handling.
-    - [ ] Review shared packages such as `@scramjet/types` and `@scramjet/symbols` for reusable contracts before adding local helpers.
-- [ ] Task: Reproduce issue #15 with focused unit/package tests
-    - [ ] Add or update Manager-side tests that demonstrate missed hub/sequence/instance aggregation under the suspected registration ordering path.
-    - [ ] Add or update tests for CPM connector readiness timing if the unit reproduction identifies early readiness as a contributing cause.
-    - [ ] Add or update tests for bulk instance payload handling if raw `Instance[]` payloads reproduce the missing `/instances` state.
-    - [ ] Run the narrowest test command that demonstrates the failing reproduction.
-- [ ] Task: Record root-cause findings
-    - [ ] Document which candidate causes are proven by tests: Manager listener ordering, CPM readiness timing, bulk instance payload shape, or another cause.
-    - [ ] Record any candidates that are not reproduced and should not be changed.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Unit-Test Reproduction and Root-Cause Findings' (Protocol in workflow.md)
+- [x] Task: Create review surface for the track
+    - [x] Confirm current branch/base and create a dedicated track branch unless explicitly skipped.
+    - [x] Prepare PR surface when the first phase checkpoint is ready. (Dedicated branch created locally; remote PR creation deferred until push/PR is explicitly requested.)
+- [x] Task: Confirm affected packages, entrypoints, and expected behavior
+    - [x] Read relevant package codemaps for `packages/manager`, `packages/host`, and affected nested `src/` folders.
+    - [x] Inspect Manager registration flow, STH controller inventory events, Host CPM connector readiness, and bulk instance message handling.
+    - [x] Review shared packages such as `@scramjet/types` and `@scramjet/symbols` for reusable contracts before adding local helpers.
+- [x] Task: Reproduce issue #15 with focused unit/package tests
+    - [x] Add or update Manager-side tests that demonstrate missed hub/sequence/instance aggregation under the suspected registration ordering path.
+    - [x] Add or update tests for CPM connector readiness timing if the unit reproduction identifies early readiness as a contributing cause. (Not added in Phase 1: manager-side ordering and raw instance payload tests already reproduce the confirmed empty aggregation symptoms; CPM readiness remains a candidate for oracle review.)
+    - [x] Add or update tests for bulk instance payload handling if raw `Instance[]` payloads reproduce the missing `/instances` state.
+    - [x] Run the narrowest test command that demonstrates the failing reproduction.
+- [x] Task: Record root-cause findings
+    - [x] Document which candidate causes are proven by tests: Manager listener ordering, CPM readiness timing, bulk instance payload shape, or another cause.
+    - [x] Record any candidates that are not reproduced and should not be changed.
+
+### Phase 1 Findings
+
+- Branch: `conductor/implement-manager-fix`, branched from `repro/manager-aggregation-bdd`.
+- Focused reproduction command: `npm --workspace @scramjet/manager run test:ava -- --match "Manager *"`.
+- Result: expected failure, classified as preexisting but in scope.
+- Proven by focused tests:
+    - Manager registration ordering gap: inventory emitted during `STHController.init()` is missed because Manager state/listeners are installed after `await sth.init()` on the new-STH path.
+    - Raw instance inventory payload gap: Manager `attachSTHEventHandlers()` ignores raw `Instance` payloads because it expects `{ instance }` wrapper records, while `CPMConnector.sendInstancesInfo()` sends raw `Instance[]`.
+- Not yet proven by focused tests:
+    - Host `CPMConnector` early `connect` readiness semantics. Source inspection shows `connect()` emits `connect` after registration and `handleCommunicationRequest()` emits `connect` after the communication stream is created; this remains a candidate for oracle review but was not necessary to reproduce the manager aggregation failure in Phase 1.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Unit-Test Reproduction and Root-Cause Findings' (Protocol in workflow.md)
 
 ## Phase 2: Oracle Review and Fix Attempt
 

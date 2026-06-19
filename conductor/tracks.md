@@ -19,5 +19,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: implement manager fix**
+- [~] **Track: implement manager fix**
 *Link: [./tracks/implement_manager_fix_20260618/](./tracks/implement_manager_fix_20260618/)*
