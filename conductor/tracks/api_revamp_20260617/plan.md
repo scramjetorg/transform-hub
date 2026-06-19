@@ -918,7 +918,8 @@
     - [x] Record validation results and any deferred full BDD checks.
       - Validation: api-router typecheck passed; rest-api2 typecheck passed; Host, Manager, and MultiManager build typechecks passed; api-router tests passed, 40 tests; rest-api2 tests passed, 4 tests; focused Host API tests passed, 10 tests; focused Manager API tests passed, 7 tests; focused MultiManager API tests passed, 11 tests; narrowed source ESLint passed with higher memory cap; `git diff --check` passed before plan update.
       - Direct ESLint invocation on changed test files was skipped after parser errors because those test files are not included by the repo ESLint TypeScript project; package test runs cover the changed tests. Full BDD was deferred because this phase changed schema/manifest composition and preserved runtime local/redirect registration behavior.
-- [ ] Task: Conductor - User Manual Verification 'Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 9.5: Shared v2 Route Contracts and Resolver Manifest Composition' (Protocol in workflow.md)
+    - Checkpoint commit: `4e2672d6 feat(api): share v2 route contracts`.
     - Push-before-verification requirement: create the scoped Phase 9.5 checkpoint commit, push `conductor/api-revamp-20260617`, ensure the PR is updated, then ask for manual verification.
     - Manual verification should confirm shared v2 route contracts live in `@scramjet/rest-api2`, Host/Manager/MultiManager bind handlers locally, Manager/MultiManager do not import Host internals, nested public paths are available for client/OpenAPI generation, and runtime forwarding still uses verser2 redirects.
 
