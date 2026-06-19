@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: API revamp**
+- [x] **Track: API revamp**
 *Link: [./tracks/api_revamp_20260617/](./tracks/api_revamp_20260617/)*
