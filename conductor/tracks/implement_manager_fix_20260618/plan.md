@@ -81,6 +81,7 @@ The plan prioritizes reproducing the bug in focused unit/package tests first, th
 - Shared package review:
     - Adapted existing `@scramjet/types` manager interfaces to expose the narrow rollback helpers used by Manager internals.
     - No new protocol constants or public REST contracts were added.
+- Phase 2 checkpoint commit: `9b0d49b9`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Oracle Review and Fix Attempt' (Protocol in workflow.md)
 
 ## Phase 3: Repro Cleanup and Clean BDD Regression Fixture
