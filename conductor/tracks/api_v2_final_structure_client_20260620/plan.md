@@ -55,6 +55,7 @@
   - Source lint chunks passed for changed `rest-api2`, `multi-manager`, and `host` files; changed `manager` files had only a preexisting out-of-scope complexity warning in `packages/manager/src/lib/manager.ts`.
   - Direct root ESLint on changed package test files failed because `tsconfig.base.json` does not include those test files; package AVA tests were used as the executable validation for changed tests.
   - Public code/docs grep checks for `/api/v2/managers`, `managers/:managerId`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `multi-manager.v2`, `manager.v2`, and `host.v2` — passed for `packages/` and `docs/api.md`. Remaining matches are limited to Conductor spec/plan/archive text and v1 generated type docs.
+  - Combined Phase 2/3 checkpoint commit: `bbf2f71c`.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
@@ -114,9 +115,9 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run narrowed lint for changed source/test files where feasible
     - [x] Record validation results and deduplication findings in `plan.md`
 - [~] Task: Conductor - User Manual Verification 'Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers' (Protocol in workflow.md)
-    - [~] Create a scoped Phase 2 checkpoint commit after validation and before asking for manual verification
-    - [ ] Push the review branch before asking for manual verification
-    - [ ] Begin the manual verification request/note with `Phase 2: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Create a scoped Phase 2 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [~] Begin the manual verification request/note with `Phase 2: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 3: Public v2 Space/Hub Terminology Replacement
 
@@ -147,9 +148,9 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run narrowed lint and `git diff --check`
     - [x] Record validation results and any intentionally retained internal Manager/Host references in `plan.md`
 - [~] Task: Conductor - User Manual Verification 'Phase 3: Public v2 Space/Hub Terminology Replacement' (Protocol in workflow.md)
-    - [~] Covered by the combined Phase 2/3 checkpoint commit and manual verification
-    - [ ] Push the review branch before asking for manual verification
-    - [ ] Begin the manual verification request/note with `Phase 3: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Covered by the combined Phase 2/3 checkpoint commit and manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [~] Begin the manual verification request/note with `Phase 3: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 4: Fluent Client Type Model and Runtime Builder
 
