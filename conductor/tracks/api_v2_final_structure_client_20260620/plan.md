@@ -67,6 +67,11 @@
   - Source lint: `npx eslint packages/rest-api2/src/client.ts packages/rest-api2/src/routes.ts` under memory guard — passed.
   - Focused Host, Manager, and MultiManager v2 route tests under memory guard — passed after adding the Space health contract.
   - Phase 4 checkpoint commit: `55599a1a`.
+- Phase 4 manual verification correction:
+  - User rejected the prior Manager v2 health implementation because `/api/v2/health` was registered separately in `Manager.setupHealthEndpoint` and skipped in the normal Space route binding.
+  - Moved the Space health implementation into `packages/manager/src/lib/api/manager-api-v2.ts` at the route binding point and kept `Manager.setupHealthEndpoint` responsible only for legacy v1 health registration.
+  - Focused Manager validation: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
+  - Focused Manager source lint: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
