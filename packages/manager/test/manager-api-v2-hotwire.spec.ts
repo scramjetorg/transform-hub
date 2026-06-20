@@ -28,6 +28,13 @@ function createManagerStub(recorder: RouteRecorder) {
             getLoadCheckStream: () => new PassThrough()
         },
         apiHealthCheck: { getHealthCheckInfo: () => ({ uptime: 1, timestamp: 2, modules: { sthServer: true } }) },
+        getV2HealthCheckInfo: async () => ({
+            scope: { id: "manager-hotwire", hubs: 1 },
+            healthy: true,
+            status: "healthy",
+            components: [{ name: "manager", healthy: true, status: "healthy" }],
+            details: { uptime: 1, timestamp: 2, modules: { sthServer: true } }
+        }),
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
         auditor: { setFlowing: async (_flowing: boolean) => undefined, output: new PassThrough() },
         apiS3Middleware: { clearIndex: async () => undefined, index: { sequences: [{ id: "seq-1", _filename: "seq.tar.gz", packageSize: 123 }] }, router: { lookup: () => undefined } },

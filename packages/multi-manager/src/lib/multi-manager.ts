@@ -6,7 +6,8 @@ import { FreePortsFinder, merge, promiseTimeout, readJsonFile } from "@scramjet/
 
 import { AddressInfo } from "net";
 import { IDProvider } from "@scramjet/model";
-import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
+import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
+import { RestAPI2 } from "@scramjet/rest-api2";
 import { Manager, CommonLogsPipe, HealthCheck, createManagerSthLocalBrokerTransport } from "@scramjet/manager";
 import { ManagersStore } from "./manager-store";
 import { Writable } from "stream";
@@ -72,6 +73,20 @@ export class MultiManager {
 
     public get build(): string {
         return buildInfo.hash || "source";
+    }
+
+    public async getV2HealthCheckInfo(): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Root>> {
+        const info = this.healthCheck.getHealthCheckInfo();
+        const record = info as Record<string, unknown>;
+        const scope = { id: this.id, apiBase: this.apiBase.replace(/\/v1\/?$/, "/v2"), spaces: this.managersStore.size };
+        const currentHealthy = Object.values((record.modules as Record<string, boolean> | undefined) || { server: true }).every(Boolean);
+        const components = await createDefaultHealthComponents({
+            current: { name: "multi-manager", healthy: currentHealthy, scope, details: info },
+            processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
+            osDiskPaths: this.loadCheck?.config?.fsPaths
+        });
+
+        return summarizeHealth(scope, components, info);
     }
 
     constructor(apiServer: APIExpose, config: MultiManagerConfig) {

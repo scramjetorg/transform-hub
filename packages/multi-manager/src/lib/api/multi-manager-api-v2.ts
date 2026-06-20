@@ -1,6 +1,5 @@
 import { RawHttpRouteRequest, RouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, resolverBinding, routeBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
-import { createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
 
 import { getMultiManagerVerser2TrustExport } from "../verser2-trust-export";
 import type { MultiManager } from "../multi-manager";
@@ -36,7 +35,7 @@ export class MultiManagerAPIV2Handler {
             spaces: routeBinding.handler<typeof routes.spaces>(() => ({
                 items: (multiManager.handleListManagersRequest() as unknown[]).map(manager => this.toMultiManagerItem(manager))
             }), { id: "root.v2.spaces" }),
-            health: routeBinding.handler<typeof routes.health>(() => this.toHealthCheckInfo(multiManager.healthCheck.getHealthCheckInfo()), { id: "root.v2.health" }),
+            health: routeBinding.handler<typeof routes.health>(() => multiManager.getV2HealthCheckInfo(), { id: "root.v2.health" }),
             trust: routeBinding.handler<typeof routes.trust>((req: RouteRequest) => this.getTrustExport(req), { id: "root.v2.verser2.trust" }),
             audit: routeBinding.handler<typeof routes.audit>((req: RawHttpRouteRequest) => multiManager.commonAuditPipe(req.raw.request), { id: "root.v2.audit" })
         }, Router.create({ basePath: this.v2ApiBase }));
@@ -102,18 +101,5 @@ export class MultiManagerAPIV2Handler {
             apiBase: String(record.apiBase || this.v2ApiBase),
             spaces
         };
-    }
-
-    private async toHealthCheckInfo(info: unknown): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Root>> {
-        const record = info as Record<string, unknown>;
-        const scope = { id: this.multiManager.id, apiBase: this.v2ApiBase, spaces: this.multiManager.managersStore.size };
-        const currentHealthy = Object.values((record.modules as Record<string, boolean> | undefined) || { server: true }).every(Boolean);
-        const components = await createDefaultHealthComponents({
-            current: { name: "multi-manager", healthy: currentHealthy, scope, details: info },
-            processMemoryLimitBytes: this.multiManager.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
-            osDiskPaths: this.multiManager.loadCheck?.config?.fsPaths
-        });
-
-        return summarizeHealth(scope, components, info);
     }
 }

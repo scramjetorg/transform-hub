@@ -23,6 +23,7 @@ import {
 } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { Router, registerHttpRoutes } from "@scramjet/api-router";
+import { RestAPI2 } from "@scramjet/rest-api2";
 import { z } from "zod";
 import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
@@ -30,7 +31,7 @@ import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { IDProvider } from "@scramjet/model";
-import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
+import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
 import { STHController } from "./sth-controller";
 import { STHInfoRegister } from "./sth-info-register";
 import { SthConnectionStore } from "./sth-connection-store";
@@ -250,6 +251,25 @@ export class Manager implements IComponent {
         }));
 
         registerHttpRoutes(this._apiRouter, createV1HealthRouter());
+    }
+
+    async getV2HealthCheckInfo(): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Space>> {
+        const info = this.managerHealthCheck?.getHealthCheckInfo() || {
+            uptime: process.uptime(),
+            timestamp: Date.now(),
+            modules: { sthServer: false }
+        };
+        const managerList = typeof this.getList === "function" ? this.getList() : [];
+        const hubs = Array.isArray(managerList) ? managerList.length : ((managerList as { hosts?: unknown[] } | undefined)?.hosts || []).length;
+        const scope = { id: this.id || this._config.id, hubs };
+        const currentHealthy = Object.values(info.modules || {}).every(Boolean);
+        const components = await createDefaultHealthComponents({
+            current: { name: "manager", healthy: currentHealthy, scope, details: info },
+            processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
+            osDiskPaths: this.loadCheck?.config?.fsPaths
+        });
+
+        return summarizeHealth(scope, components, info);
     }
 
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {

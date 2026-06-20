@@ -22,6 +22,13 @@ function createManagerStub(recorder: RouteRecorder) {
         apiServiceDiscovery: { list: () => [] },
         apiLoadCheck: { constants: { SAFE_OPERATION_LIMIT: 0 }, config: { fsPaths: [] }, getLoadCheck: async () => ({ load: 1 }), getLoadCheckStream: () => new PassThrough() },
         apiHealthCheck: { getHealthCheckInfo: () => ({ uptime: 1, timestamp: 2, modules: { sthServer: true } }) },
+        getV2HealthCheckInfo: async () => ({
+            scope: { id: "manager-hotwire", hubs: 1 },
+            healthy: true,
+            status: "healthy",
+            components: [{ name: "manager", healthy: true, status: "healthy" }],
+            details: { uptime: 1, timestamp: 2, modules: { sthServer: true } }
+        }),
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
         apiS3Middleware: { clearIndex: async () => undefined },
         logger: new ObjLogger("manager-versioned-routing-test"),

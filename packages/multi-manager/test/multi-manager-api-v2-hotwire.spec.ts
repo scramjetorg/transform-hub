@@ -17,6 +17,13 @@ function createMultiManagerStub(recorder: RouteRecorder) {
         },
         managersStore: new ManagersStore(),
         healthCheck: { getHealthCheckInfo: () => ({ healthy: true }) },
+        getV2HealthCheckInfo: async () => ({
+            scope: { id: "mm-hotwire", apiBase: "/api/v2", spaces: 0 },
+            healthy: true,
+            status: "healthy",
+            components: [{ name: "multi-manager", healthy: true, status: "healthy" }, { name: "process.memory", healthy: true, status: "healthy" }],
+            details: { healthy: true }
+        }),
         logger: new ObjLogger("multi-manager-api-v2-hotwire-test"),
         loadCheck: { getLoadCheck: async () => ({ load: 1 }) },
         service: "@scramjet/multi-manager",

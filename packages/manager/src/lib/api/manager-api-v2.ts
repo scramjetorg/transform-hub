@@ -2,7 +2,6 @@ import { RawHttpRouteRequest, RouteRequest, Router, RouterDefinition, bindResolv
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { DisconnectReason, ParsedMessage } from "@scramjet/types";
 import { ServerResponse } from "http";
-import { createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
 
 import { getManagerVerser2TrustExport } from "../verser2-trust-export";
 import type { Manager } from "../manager";
@@ -41,24 +40,7 @@ export class ManagerAPIV2Handler {
 
                 return { load: (load as { load?: number }).load ?? 0 };
             }, { id: "space.v2.load" }),
-            health: routeBinding.handler<typeof routes.health>(async (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Space>> => {
-                const info = manager.apiHealthCheck?.getHealthCheckInfo() || {
-                    uptime: process.uptime(),
-                    timestamp: Date.now(),
-                    modules: { sthServer: false }
-                };
-                const managerList = typeof manager.getList === "function" ? manager.getList() : [];
-                const hubs = Array.isArray(managerList) ? managerList.length : ((managerList as { hosts?: unknown[] } | undefined)?.hosts || []).length;
-                const scope = { id: manager.id || manager.config.id, hubs };
-                const currentHealthy = Object.values(info.modules || {}).every(Boolean);
-                const components = await createDefaultHealthComponents({
-                    current: { name: "manager", healthy: currentHealthy, scope, details: info },
-                    processMemoryLimitBytes: manager.apiLoadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
-                    osDiskPaths: manager.apiLoadCheck?.config?.fsPaths
-                });
-
-                return summarizeHealth(scope, components, info);
-            }, { id: "space.v2.health" }),
+            health: routeBinding.handler<typeof routes.health>(() => manager.getV2HealthCheckInfo(), { id: "space.v2.health" }),
             list: routeBinding.handler<typeof routes.list>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.list" }),
             hubs: routeBinding.handler<typeof routes.hubs>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.hubs" }),
             instances: routeBinding.handler<typeof routes.instances>(req => this.listResponse<RestAPI2.Instance>(this.getPaginated(req, manager.getInstances.bind(manager)), "instances", id => ({ id })), { id: "space.v2.instances" }),

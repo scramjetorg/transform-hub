@@ -73,6 +73,11 @@
   - Focused Manager validation: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
   - Focused Manager source lint: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
   - Phase 4 correction checkpoint commit: `25034fc6`.
+  - User requested a follow-up cleanup to keep complex health summary logic out of API handlers and in Manager/MultiManager-owned code.
+  - Moved Space health summary construction into `Manager.getV2HealthCheckInfo()` and Root health summary construction into `MultiManager.getV2HealthCheckInfo()`; v2 API handlers now only bind route contracts to those owner methods.
+  - Focused Manager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
+  - Focused MultiManager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
+  - Focused Manager/MultiManager source lint after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts packages/multi-manager/src/lib/api/multi-manager-api-v2.ts packages/multi-manager/src/lib/multi-manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
