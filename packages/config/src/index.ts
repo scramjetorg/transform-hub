@@ -38,6 +38,20 @@ export interface ParseCliOptionsInput {
     options: readonly ConfigOptionDescriptor[];
 }
 
+export interface ExecutableArgumentDescriptor {
+    name: string;
+    description?: string;
+    required?: boolean;
+}
+
+export interface ExecutableHelpDescriptor {
+    name: string;
+    usage?: string;
+    description?: string;
+    arguments?: readonly ExecutableArgumentDescriptor[];
+    options?: readonly ConfigOptionDescriptor[];
+}
+
 export interface LoadConfigInput<T> {
     schema: ZodType<T>;
     defaults?: Record<string, unknown>;
@@ -101,6 +115,63 @@ export function parseCliOptions(input: ParseCliOptionsInput): Record<string, unk
     });
 
     return values;
+}
+
+export function isHelpRequested(argv: readonly string[]): boolean {
+    const args = argv.length >= 2 ? argv.slice(2) : [...argv];
+
+    for (const arg of args) {
+        if (arg === "--") return false;
+        if (arg === "--help" || arg === "-h") return true;
+    }
+
+    return false;
+}
+
+export function generateExecutableHelp(descriptor: ExecutableHelpDescriptor): string {
+    const lines: string[] = [];
+    const usage = descriptor.usage || "[options...]";
+
+    lines.push(`Usage: ${descriptor.name} ${usage}`);
+
+    if (descriptor.description) {
+        lines.push("", descriptor.description);
+    }
+
+    const args = descriptor.arguments || [];
+
+    if (args.length) {
+        lines.push("", "Arguments:");
+        args.forEach(arg => {
+            const required = arg.required === false ? " (optional)" : "";
+
+            lines.push(`  ${arg.name}${required}${arg.description ? `  ${arg.description}` : ""}`);
+        });
+    }
+
+    const options = descriptor.options || [];
+
+    if (options.length) {
+        lines.push("", "Options:");
+        options.forEach(option => {
+            const details = optionDetails(option);
+
+            lines.push(`  ${formatFlags(option)}${details ? `  ${details}` : ""}`);
+        });
+    }
+
+    return `${lines.join("\n")}\n`;
+}
+
+export function printExecutableHelp(descriptor: ExecutableHelpDescriptor, output: NodeJS.WritableStream = process.stdout): void {
+    output.write(generateExecutableHelp(descriptor));
+}
+
+export function printHelpAndExitIfRequested(argv: readonly string[], descriptor: ExecutableHelpDescriptor): void {
+    if (!isHelpRequested(argv)) return;
+
+    printExecutableHelp(descriptor);
+    process.exit(0);
 }
 
 export function loadConfig<T>(input: LoadConfigInput<T>): LoadedConfig<T> {
@@ -186,10 +257,20 @@ function formatFlags(option: ConfigOptionDescriptor): string {
     });
 
     if (option.negatable !== false && option.type === "boolean" && option.defaultValue !== undefined) {
-        flags.push(`--no-${option.name}`);
+        flags.push(`--no-${option.flag || option.name}`);
     }
 
     return flags.join(", ");
+}
+
+function optionDetails(option: ConfigOptionDescriptor): string {
+    const details = [option.description || ""];
+
+    if (option.choices?.length) details.push(`Allowed: ${option.choices.join(", ")}`);
+    if (option.defaultValue !== undefined) details.push(`Default: ${String(option.defaultValue)}`);
+    if (option.env) details.push(`Env: ${option.env}`);
+
+    return details.filter(Boolean).join(" ");
 }
 
 function optionConfig(option: ConfigOptionDescriptor): Record<string, unknown> {

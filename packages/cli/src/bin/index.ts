@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
 
-import { cmd, resolveCommandPath, parseCommandContext, executeCommand, generateHelp, type CommandDescriptor } from "@scramjet/config";
+import { cmd, resolveCommandPath, parseCommandContext, executeCommand, generateHelp, isHelpRequested, type CommandDescriptor } from "@scramjet/config";
 import chalk from "chalk";
 import * as dns from "dns";
 
@@ -49,7 +49,7 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
     const leaf = resolve.command;
 
     // Show help text
-    if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    if (isHelpRequested(process.argv)) {
         const helpLines: string[] = [];
 
         helpLines.push(`Current profile: ${profileManager.getProfileName()}`);

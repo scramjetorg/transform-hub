@@ -77,3 +77,11 @@ test("CLI generator emits OpenAPI JSON for schema-mode fixture", t => {
     t.is(doc.openapi, "3.1.0");
     t.truthy(doc.paths["/api/v2/health"].get);
 });
+
+test("CLI generator prints help and exits successfully", t => {
+    const bin = resolve(__dirname, "../src/bin/generate.ts");
+    const output = execFileSync(process.execPath, ["-r", "ts-node/register", bin, "--help"], { encoding: "utf8" });
+
+    t.true(output.includes("Usage: scramjet-api-router-generate <api-definition> [output.json]"));
+    t.true(output.includes("Generate an OpenAPI document"));
+});

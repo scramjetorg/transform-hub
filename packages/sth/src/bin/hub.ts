@@ -4,8 +4,10 @@
 import {
     ConfigOptionDescriptor,
     createOptionRegistry,
+    isHelpRequested,
     loadConfig,
     parseCliOptions,
+    printHelpAndExitIfRequested,
     sthOutboundVerser2ConfigSchema,
     sthOutboundVerser2Options,
     z
@@ -91,12 +93,41 @@ const createBaseRegistry = () => {
     return registry;
 };
 
-const preliminaryOptions = parseCliOptions({
-    argv: process.argv,
-    options: createBaseRegistry().getOptions()
-}) as Partial<STHCommandOptions>;
+const runtimeAdapterHelpOption = (argv: readonly string[]) => {
+    const valid = new Set(["detect", "process", "docker", "kubernetes"]);
 
-const finalRegistry = augmentOptions(createBaseRegistry(), getRuntimeAdapterOption(preliminaryOptions as STHCommandOptions) || "detect");
+    for (let i = 0; i < argv.length; i++) {
+        const token = argv[i];
+        const value = token.startsWith("--runtime-adapter=")
+            ? token.slice("--runtime-adapter=".length)
+            : (token === "--runtime-adapter" || token === "-a") ? argv[i + 1] : undefined;
+
+        if (value && valid.has(value)) return value;
+    }
+
+    return "detect";
+};
+
+const helpRequested = isHelpRequested(process.argv);
+const preliminaryOptions = helpRequested
+    ? {}
+    : parseCliOptions({
+        argv: process.argv,
+        options: createBaseRegistry().getOptions()
+    }) as Partial<STHCommandOptions>;
+
+const finalRegistry = augmentOptions(
+    createBaseRegistry(),
+    helpRequested ? runtimeAdapterHelpOption(process.argv) : getRuntimeAdapterOption(preliminaryOptions as STHCommandOptions) || "detect"
+);
+
+printHelpAndExitIfRequested(process.argv, {
+    name: "sth",
+    usage: "[options...]",
+    description: "Start Scramjet Transform Hub.",
+    options: finalRegistry.getOptions()
+});
+
 const options = parseCliOptions({ argv: process.argv, options: finalRegistry.getOptions() }) as Partial<STHCommandOptions> as STHCommandOptions;
 
 (async () => {

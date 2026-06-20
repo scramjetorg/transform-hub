@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
-import { ConfigOptionDescriptor, parseCliOptions } from "@scramjet/config";
+import { ConfigOptionDescriptor, parseCliOptions, printHelpAndExitIfRequested } from "@scramjet/config";
 import { MultiManager as MultiManager } from "../lib/multi-manager";
 import { createServer, ServerConfiguration } from "@scramjet/api-server";
 import { MultiManagerCommandOptions } from "../types/multi-manager-types";
@@ -26,6 +26,13 @@ const cliOptions: ConfigOptionDescriptor[] = [
     ...multiManagerCliOptions
         .filter(option => !["colors", "id", "serverApiBase", "serverApiPort", "serverApiHost", "serverVersion", "logLevel", "manager", "healtzPort", "healtzHost", "healtzPath"].includes(option.name))
 ];
+
+printHelpAndExitIfRequested(process.argv, {
+    name: "multi-manager",
+    usage: "[options...]",
+    description: "Start Scramjet MultiManager.",
+    options: cliOptions
+});
 
 function startMultiManager(options: MultiManagerCommandOptions) {
     try {

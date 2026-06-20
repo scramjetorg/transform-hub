@@ -10,6 +10,8 @@ import {
     mergeConfig,
     sthOutboundVerser2ConfigSchema,
     sthOutboundVerser2Options,
+    generateExecutableHelp,
+    isHelpRequested,
     parseCliOptions,
     z
 } from "../src";
@@ -140,6 +142,34 @@ test("parses boolean cli options — --no-flag sets false when default present",
     });
 
     t.false(parsed.enabled);
+});
+
+test("detects executable help flags before positional separator", t => {
+    t.true(isHelpRequested(["node", "bin", "--help"]));
+    t.true(isHelpRequested(["node", "bin", "-h"]));
+    t.false(isHelpRequested(["node", "bin", "--", "--help"]));
+    t.false(isHelpRequested(["node", "bin", "run"]));
+});
+
+test("generates executable help from config descriptors", t => {
+    const help = generateExecutableHelp({
+        name: "example",
+        usage: "<file> [options...]",
+        description: "Example executable.",
+        arguments: [{ name: "file", description: "Input file" }],
+        options: [
+            { name: "configPath", flag: "config-path", short: "c", type: "string", description: "Config path", env: "CONFIG_PATH" },
+            { name: "mode", flag: "mode", type: "string", description: "Run mode", choices: ["dev", "prod"], defaultValue: "dev" },
+            { name: "colors", flag: "colors", type: "boolean", description: "Enable colors", defaultValue: true, negatable: true }
+        ]
+    });
+
+    t.true(help.includes("Usage: example <file> [options...]"));
+    t.true(help.includes("Example executable."));
+    t.true(help.includes("file  Input file"));
+    t.true(help.includes("-c, --config-path <value>  Config path Env: CONFIG_PATH"));
+    t.true(help.includes("--mode <value>  Run mode Allowed: dev, prod Default: dev"));
+    t.true(help.includes("--colors, --no-colors  Enable colors Default: true"));
 });
 
 test("supports compatibility aliases before validation", t => {
