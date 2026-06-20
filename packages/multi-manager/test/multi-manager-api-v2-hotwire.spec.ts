@@ -72,7 +72,7 @@ test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t
         spacesCount: 0
     });
     t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
-    t.deepEqual(await (recorder.require("get", "/api/v2/spaces").handler as Function)({}), { items: [{ id: "manager-1", apiBase: "/api/v2", spaces: undefined }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/spaces").handler as Function)({}), { items: [{ id: "manager-1", hubs: undefined }] });
     const health = await (recorder.require("get", "/api/v2/health").handler as Function)({});
 
     t.deepEqual(health.scope, { id: "mm-hotwire", apiBase: "/api/v2", spaces: 0 });

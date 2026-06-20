@@ -33,7 +33,7 @@ export class MultiManagerAPIV2Handler {
                 return { load: load.load ?? 0 };
             }, { id: "root.v2.load" }),
             spaces: routeBinding.handler<typeof routes.spaces>(() => ({
-                items: (multiManager.handleListManagersRequest() as unknown[]).map(manager => this.toMultiManagerItem(manager))
+                items: (multiManager.handleListManagersRequest() as unknown[]).map(manager => this.toSpaceItem(manager))
             }), { id: "root.v2.spaces" }),
             health: routeBinding.handler<typeof routes.health>(() => multiManager.getV2HealthCheckInfo(), { id: "root.v2.health" }),
             trust: routeBinding.handler<typeof routes.trust>((req: RouteRequest) => this.getTrustExport(req), { id: "root.v2.verser2.trust" }),
@@ -81,25 +81,24 @@ export class MultiManagerAPIV2Handler {
         return remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
     }
 
-    private toMultiManagerItem(manager: unknown): RestAPI2.Root {
+    private toSpaceItem(manager: unknown): RestAPI2.Space {
         if (typeof manager === "string") {
-            return { id: manager, apiBase: this.v2ApiBase };
+            return { id: manager };
         }
 
         const record = manager as Record<string, unknown>;
 
-        let spaces: number | undefined;
+        let hubs: number | undefined;
 
-        if (typeof record.spaces === "number") {
-            spaces = record.spaces;
-        } else if (typeof record.managers === "number") {
-            spaces = record.managers;
+        if (typeof record.hubs === "number") {
+            hubs = record.hubs;
+        } else if (typeof record.hosts === "number") {
+            hubs = record.hosts;
         }
 
         return {
             id: String(record.id || record.managerId || record.name || ""),
-            apiBase: String(record.apiBase || this.v2ApiBase),
-            spaces
+            hubs
         };
     }
 }

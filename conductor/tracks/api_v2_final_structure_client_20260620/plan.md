@@ -316,29 +316,49 @@ Phase 2 is intentionally combined with the public terminology replacement work f
 
 ## Phase 7: Final Documentation, OpenAPI, and Integration Validation
 
-- [ ] Task: Finalize public API and client documentation
-    - [ ] Update `docs/api.md` with final Root/Space/Hub/Instance endpoint tables and fluent client examples
-    - [ ] Update `packages/rest-api2/README.md` with route tree, route-set accessors, fluent client factories, and custom route tree examples
-    - [ ] Update `packages/api-router/README.md` only where route tree/client integration affects generic router documentation
-    - [ ] Document how adding a route once updates runtime bindings, fluent clients, expanded manifests, and OpenAPI
-- [ ] Task: Regenerate or verify OpenAPI output
-    - [ ] Generate OpenAPI from schema-mode or fixture route tree definitions
-    - [ ] Verify public paths use `/api/v2/spaces/:spaceId/...` and do not expose public `/api/v2/managers/:managerId/...`
-    - [ ] Verify response/request schemas remain present for representative Root, Space, Hub, Instance, Stream, and Operation endpoints
-    - [ ] Store or compare deterministic fixture output where appropriate
-- [ ] Task: Run final deduplication and shared package review
-    - [ ] Confirm route definitions, schemas, resolver metadata, fluent client mapping, and OpenAPI metadata are not duplicated across packages
-    - [ ] Move repeated helpers into `@scramjet/api-router` or `@scramjet/rest-api2` where safe
-    - [ ] Ask Oracle for a read-only maintainability/deduplication review before final checkpoint
-    - [ ] Record deduplication results and accepted tradeoffs in `plan.md`
-- [ ] Task: Automated final verification gate
-    - [ ] Run `npm run build:packages` or the narrowest equivalent covering changed packages
-    - [ ] Run relevant package tests for `api-router`, `rest-api2`, Host, Manager, and MultiManager
-    - [ ] Run relevant typechecks for changed packages
-    - [ ] Run `npm run lint` or narrowed changed-file lint where appropriate
-    - [ ] Run `npm run test:bdd-ci-api-node` only if public HTTP behavior or v1/v2 integration changes require cross-package smoke validation
-    - [ ] Run final grep checks for disallowed public Manager/Host v2 terminology in docs, OpenAPI fixtures, route contracts, and client examples
-    - [ ] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
+- Phase 7 start notes:
+  - Affected final documentation surfaces: `docs/api.md`, `packages/rest-api2/README.md`, `packages/api-router/README.md`, generated/fixture OpenAPI and schema-mode routes, and final package validation for `api-router`, `rest-api2`, Host, Manager, and MultiManager.
+  - Documentation update summary: refreshed final Root/Space/Hub/Instance endpoint tables, route-tree source-of-truth notes, fluent client examples, custom fluent client notes, opaque RPC exception notes, and generic router method-literal guidance.
+  - Oracle final review summary: initial review found docs drift, operation ID source-of-truth split, and fluent-client resolver-prefix maintainability debt; docs drift was patched. Final review then found missing Hub health documentation, `/spaces` returning Root-shaped items instead of Space-shaped items, stale Hub RPC representative coverage, and remaining implementation-owner terminology in stream notes; all blocking drift items were fixed in this phase. Deferred non-blocking issues are operation ID standardization and deriving fluent resolver prefixes from the route tree.
+  - `/api/v2/spaces` finalization: route schema now uses `ListResponse<Space>` (`listResponse(Space)`), MultiManager v2 maps manager records to public Space items (`id`, optional `hubs`), and the focused MultiManager v2 test expectation was updated accordingly.
+  - OpenAPI verification: generated expanded RestAPI2 OpenAPI from `RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true })` into `/tmp/opencode/rest-api2-openapi.json`; 56 paths were emitted; required Root, Space, Hub, Instance, stdio, and instance RPC paths were present; no generated path included `/api/v2/managers` or `:managerId`; `/api/v2/spaces` response schema contains Space items with `id` and optional `hubs`.
+  - OpenAPI caveat: `@scramjet/api-router` currently emits route paths with Express-style `:param` syntax, matching existing tests; converting to OpenAPI `{param}` path templating is deferred as an api-router output-format improvement.
+  - Final validation:
+    - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 47 tests.
+    - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 27 tests after the `/spaces` and representative RPC fixes.
+    - Focused Host v2 route tests under memory guard — passed, 42 tests.
+    - Focused Manager v2 route tests under memory guard — passed, 11 tests.
+    - Focused MultiManager v2 route tests under memory guard — passed, 8 tests after the Space item mapping fix.
+    - Package build equivalent: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node scripts/build-all.js -v -w modules --ts-config tsconfig.build.json --no-install --no-distws` — passed. Earlier `npm run build:packages` completed TypeScript package builds but aborted during the broader dist workspace prepack/install step under the memory guard, so the narrower equivalent was used and recorded.
+    - Focused source lint: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/api-router/src/api.ts packages/rest-api2/src/client.ts packages/rest-api2/src/routes.ts packages/multi-manager/src/lib/api/multi-manager-api-v2.ts` — passed.
+    - `git diff --check` — passed.
+    - Public v2 terminology grep checks for `/api/v2/managers`, `managers/:managerId`, old public `RestAPI2.Manager`/`RestAPI2.MultiManager`, old route-set/router aliases, and old v2 operation ID prefixes in `packages/` and `docs/` — passed.
+    - `npm run test:bdd-ci-api-node` was skipped because this phase only changed docs plus contract/schema alignment covered by package, focused runtime, build, OpenAPI, and grep validation; no new cross-package HTTP runtime behavior required a BDD smoke rerun.
+  - Deduplication/shared package review: v2 route contracts remain centralized in `@scramjet/rest-api2`, generic router/client/OpenAPI primitives remain in `@scramjet/api-router`, and runtime packages bind shared contracts locally. No repeated helpers were introduced. Manual endpoint tables remain the main drift risk and were verified against the expanded route manifest during this phase.
+
+- [x] Task: Finalize public API and client documentation
+    - [x] Update `docs/api.md` with final Root/Space/Hub/Instance endpoint tables and fluent client examples
+    - [x] Update `packages/rest-api2/README.md` with route tree, route-set accessors, fluent client factories, and custom route tree examples
+    - [x] Update `packages/api-router/README.md` only where route tree/client integration affects generic router documentation
+    - [x] Document how adding a route once updates runtime bindings, fluent clients, expanded manifests, and OpenAPI
+- [x] Task: Regenerate or verify OpenAPI output
+    - [x] Generate OpenAPI from schema-mode or fixture route tree definitions
+    - [x] Verify public paths use `/api/v2/spaces/:spaceId/...` and do not expose public `/api/v2/managers/:managerId/...`
+    - [x] Verify response/request schemas remain present for representative Root, Space, Hub, Instance, Stream, and Operation endpoints
+    - [x] Store or compare deterministic fixture output where appropriate
+- [x] Task: Run final deduplication and shared package review
+    - [x] Confirm route definitions, schemas, resolver metadata, fluent client mapping, and OpenAPI metadata are not duplicated across packages
+    - [x] Move repeated helpers into `@scramjet/api-router` or `@scramjet/rest-api2` where safe
+    - [x] Ask Oracle for a read-only maintainability/deduplication review before final checkpoint
+    - [x] Record deduplication results and accepted tradeoffs in `plan.md`
+- [x] Task: Automated final verification gate
+    - [x] Run `npm run build:packages` or the narrowest equivalent covering changed packages
+    - [x] Run relevant package tests for `api-router`, `rest-api2`, Host, Manager, and MultiManager
+    - [x] Run relevant typechecks for changed packages
+    - [x] Run `npm run lint` or narrowed changed-file lint where appropriate
+    - [x] Run `npm run test:bdd-ci-api-node` only if public HTTP behavior or v1/v2 integration changes require cross-package smoke validation
+    - [x] Run final grep checks for disallowed public Manager/Host v2 terminology in docs, OpenAPI fixtures, route contracts, and client examples
+    - [x] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: Final Documentation, OpenAPI, and Integration Validation' (Protocol in workflow.md)
     - [ ] Create a scoped Phase 7 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification

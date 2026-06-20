@@ -44,7 +44,8 @@ See full details in `docs/api.md` — key models include `RestAPI2.Root`, `RestA
 Build the client from a route manifest and a transport:
 
 ```ts
-import { createRestAPI2Client, createHttpClientTransport } from "@scramjet/rest-api2";
+import { createHttpClientTransport } from "@scramjet/api-router";
+import { createRestAPI2Client } from "@scramjet/rest-api2";
 
 const transport = createHttpClientTransport({
     baseUrl: "http://localhost:8000",
@@ -83,7 +84,7 @@ await hub.health.get();
 ## HTTP Client Transport Setup
 
 ```ts
-import { createHttpClientTransport } from "@scramjet/rest-api2";
+import { createHttpClientTransport } from "@scramjet/api-router";
 
 const transport = createHttpClientTransport({
     baseUrl: "http://localhost:8000",
@@ -95,13 +96,32 @@ const transport = createHttpClientTransport({
 ## Verser2 Client Transport Setup
 
 ```ts
-import { createVerser2ClientTransport } from "@scramjet/rest-api2";
+import { createVerser2ClientTransport } from "@scramjet/api-router";
 
 const transport = createVerser2ClientTransport(broker);
 // Delegates each request to the broker's request() method.
 ```
 
-Both transports are re-exported from `@scramjet/api-router`.
+Both transports are owned by `@scramjet/api-router`; `@scramjet/rest-api2` re-exports them for compatibility.
+
+### Custom Fluent Clients and Opaque RPC
+
+The fluent client model is derived from route tree nodes. Built-in clients cover Root, Space, Hub, and Instance levels. Custom extensions can provide a RestAPI2-compatible route tree node:
+
+```ts
+import { Router } from "@scramjet/api-router";
+import { createFluentClientFromRouteTreeNode } from "@scramjet/rest-api2";
+
+const custom = createFluentClientFromRouteTreeNode({
+    concept: "extension",
+    owner: "extension",
+    routes: () => ({ inspect: Router.get("/inspect") })
+}, { basePath: "/api/v2/extensions/example", transport });
+
+await custom.inspect.get();
+```
+
+RPC route groups are explicit opaque exceptions. They remain available as route contracts, but are intentionally omitted from standard Instance fluent clients because sequence-provided RPC surfaces can be dynamic.
 
 ## Shared Handlerless Route Sets
 
@@ -146,6 +166,14 @@ Binding variants:
 - `resolverBinding.handler(fn)` — bind a resolver.
 
 Missing, extra, or wrong-typed handlers fail at compile time.
+
+## Adding a v2 Endpoint
+
+1. Add the Zod request/response schemas in `schemas.ts` when a new DTO is needed.
+2. Add the route once in the relevant route-set factory in `routes.ts` under `RestAPI2RouteTree` ownership.
+3. Bind the route in the owning runtime package (`host`, `manager`, or `multi-manager`) with `bindRoutes()` or explicitly document it as `contractOnly()` / `skip()`.
+4. Add fluent client and route-set tests when the endpoint should be part of the standard public client. Opaque/dynamic RPC escapes must be declared in route group metadata.
+5. OpenAPI/schema-mode output and resolver-expanded manifests derive from the same route tree.
 
 ## Zod Schema Patterns
 
@@ -212,7 +240,7 @@ When migrating BDD or package tests to the common client:
 - **No legacy aliasing**: This package must not export or alias `MMRestAPI`, `MRestAPI`, or `STHRestAPI`. Those contracts belong to `@scramjet/types` for v1 compatibility only.
 - **Owner-local handling**: Route contracts are handlerless by design. Each package (`host`, `manager`, `multi-manager`) imports shared contracts and binds local handlers with `bindRoutes`/`bindResolvers`. No package imports another runtime package for route schemas.
 - **Deferred content-range**: Full `Content-Range` negotiation (time range, span range, `206` vs `200`, `ReadableStream` vs `ListResponse`) is documented in `docs/api.md`. Runtime implementation of range-dependent response switching is deferred — stream routes currently register as `kind: "upstream"` / `kind: "downstream"` boundaries.
-- **Storage proxy v2 typing**: Manager storage object read/write/delete is a documented WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
+- **Storage proxy v2 typing**: Space storage object read/write/delete is a documented WebDAV/S3-compatible proxy compatibility surface implemented by the Manager package. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
 - **V1 compatibility**: All `/api/v1` routes remain registered with unchanged client-visible behavior. Compatibility adapters may unwrap v2 handler results for low-risk v1 read routes only when separate v1 tests assert exact response preservation.
 
 ## Exports
@@ -235,6 +263,8 @@ When migrating BDD or package tests to the common client:
 │   ├── sequence.router
 │   └── instance.router
 ├── createRestAPI2Client     — common client factory
+├── createRootClient, createSpaceClient, createHubClient, createInstanceClient
+├── createFluentClientFromRouteTreeNode — custom route-tree client factory
 ├── createHttpClientTransport, createVerser2ClientTransport
 ├── ApiClientTransport (type)
 ├── Zod DTO schemas

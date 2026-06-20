@@ -190,7 +190,7 @@ function rootRouteSet() {
         version: Router.get("/version", { schemas: { response: RestAPI2Schemas.root.version } }),
         info: Router.get("/info", { schemas: { response: RestAPI2Schemas.root.info } }),
         load: Router.get("/load", { schemas: { response: LoadResponse } }),
-        spaces: Router.get("/spaces", { schemas: { response: listResponse(Root) } }),
+        spaces: Router.get("/spaces", { schemas: { response: listResponse(Space) } }),
         health: Router.get("/health", { schemas: { response: healthCheckInfo(Root) } }),
         trust: Router.get("/verser2/trust/:id?", { schemas: { params: RestAPI2Schemas.params.trustSpace, response: TrustExport } }),
         audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } })

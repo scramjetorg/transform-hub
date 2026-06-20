@@ -326,6 +326,8 @@ Available binding variants:
 
 `resolverBinding.handler` and `routeBinding.handler` accept either a bare function or `{ handler: fn, id?: string, description?: string }` for per-binding metadata overrides.
 
+When route definitions preserve literal HTTP methods, downstream fluent clients can expose only valid endpoint methods. For example, a `Router.get()` contract can generate `.get()` without exposing `.post()`.
+
 ## Fixture-Based Client Testing
 
 The package provides test fixtures under `packages/api-router/test/lib/` for no-circumvention testing (not exported as production API):

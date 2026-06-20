@@ -168,6 +168,30 @@ The v2 package exposes one common client surface for all API levels. The client 
 | `RestAPI2.ClientResponse<TOperation>` | Typed response envelope for a v2 operation. |
 | `RestAPI2.OperationId` | Stable operation identifier shared by route definitions, OpenAPI output, and the common client. |
 
+### Fluent clients
+
+The preferred v2 client surface is route-tree-backed and can be created directly at Root, Space, Hub, or Instance level. Fluent clients dispatch through the same generic manifest client and HTTP/verser2 transport contracts as `createRestAPI2Client`.
+
+```ts
+import { createRootClient, createHubClient } from "@scramjet/rest-api2";
+import { createHttpClientTransport } from "@scramjet/api-router";
+
+const transport = createHttpClientTransport({ baseUrl, fetch });
+const root = createRootClient({ transport });
+
+const rootHealth = await root.health.get();
+const spaceHealth = await root.space("space-1").health.get();
+const hubHealth = await root.space("space-1").hub("hub-1").health.get();
+const instanceHealth = await root.space("space-1").hub("hub-1").instance("inst-1").health.get();
+
+const hub = createHubClient({ basePath: "/api/v2", transport });
+const directHubHealth = await hub.health.get();
+```
+
+Endpoint methods are generated from route contract HTTP methods, so a `GET` route exposes `.get()` and does not expose unrelated verbs. RPC remains an explicit opaque route-group exception and is not exposed as a standard Instance fluent method.
+
+Custom extensions may provide a RestAPI2-compatible route tree node and create a scoped fluent client with `createFluentClientFromRouteTreeNode()`.
+
 ### Specific outputs
 
 | Contract | Purpose |
@@ -223,13 +247,9 @@ The v2 package exposes one common client surface for all API levels. The client 
 | GET | `/api/v2/version` | `void` | `RestAPI2.VersionResponse<RestAPI2.Root>` | |
 | GET | `/api/v2/info` | `void` | `RestAPI2.InfoResponse<RestAPI2.Root>` | |
 | GET | `/api/v2/load` | `void` | `RestAPI2.LoadResponse<RestAPI2.Root>` | yes |
-| GET | `/api/v2/config` | `void` | `RestAPI2.ConfigResponse<RestAPI2.Root>` | |
-| GET | `/api/v2/spaces` | `RestAPI2.SpacesQuery` | `RestAPI2.SpacesResponse` | |
+| GET | `/api/v2/spaces` | `RestAPI2.SpacesQuery` | `RestAPI2.ListResponse<RestAPI2.Space>` | |
 | GET | `/api/v2/health` | `void` | `RestAPI2.HealthCheckInfo<RestAPI2.Root>` | yes |
-| GET | `/api/v2/verser2/trust/:spaceId?` | `RestAPI2.TrustParams` | `RestAPI2.TrustExport<RestAPI2.Root>` | |
-| POST | `/api/v2/spaces` | `RestAPI2.StartSpacePayload` | `RestAPI2.OpResponse<RestAPI2.StartSpaceResponse>` | |
-| DELETE | `/api/v2/spaces/:spaceId` | `RestAPI2.DeleteSpacePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteSpaceResponse>` | |
-| GET | `/api/v2/logs` | `void` | `ReadableStream<RestAPI2.LogRecord>` | always |
+| GET | `/api/v2/verser2/trust/:id?` | `RestAPI2.TrustParams` | `RestAPI2.TrustExport<RestAPI2.Root>` | |
 | GET | `/api/v2/audit` | `void` | `ReadableStream<RestAPI2.AuditRecord>` | always |
 
 ### Space
@@ -241,12 +261,12 @@ The v2 package exposes one common client surface for all API levels. The client 
 | GET | `/api/v2/spaces/:spaceId/verser2/trust` | `RestAPI2.SpaceParams` | `RestAPI2.TrustExport<RestAPI2.Space>` | |
 | GET | `/api/v2/spaces/:spaceId/load` | `RestAPI2.SpaceParams` | `RestAPI2.LoadResponse<RestAPI2.Space>` | yes |
 | GET | `/api/v2/spaces/:spaceId/health` | `RestAPI2.SpaceParams` | `RestAPI2.HealthCheckInfo<RestAPI2.Space>` | yes |
-| POST | `/api/v2/spaces/:spaceId/hubs` | `RestAPI2.RegisterHubPayload` | `RestAPI2.OpResponse<RestAPI2.RegisterHubResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/list` | `RestAPI2.ListQuery<RestAPI2.Hub>` | `RestAPI2.ListResponse<RestAPI2.Hub>` | yes⁰ |
 | GET | `/api/v2/spaces/:spaceId/hubs` | `RestAPI2.ListQuery<RestAPI2.Hub>` | `RestAPI2.ListResponse<RestAPI2.Hub>` | yes |
-| GET | `/api/v2/spaces/:spaceId/hubs/:hubId` | `RestAPI2.HubParams` | `RestAPI2.Hub` | |
 | DELETE | `/api/v2/spaces/:spaceId/inventory/hubs/:hubId` | `RestAPI2.DeleteHubQuery` | `RestAPI2.OpResponse<RestAPI2.DeleteHubResponse>` | |
 | GET | `/api/v2/spaces/:spaceId/instances` | `RestAPI2.InstancesQuery` | `RestAPI2.ListResponse<RestAPI2.Instance>` | yes⁰ |
 | GET | `/api/v2/spaces/:spaceId/sequences` | `RestAPI2.SequencesQuery` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | yes⁰ |
+| GET | `/api/v2/spaces/:spaceId/all_sequences` | `RestAPI2.SequencesQuery` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | yes⁰ |
 | GET | `/api/v2/spaces/:spaceId/entities` | `RestAPI2.SpaceParams` | `RestAPI2.ListResponse<RestAPI2.Entity>` | yes⁰ |
 | GET | `/api/v2/spaces/:spaceId/logs` | `RestAPI2.SpaceParams + RestAPI2.LogFilters` | `ReadableStream<RestAPI2.LogRecord>` | |
 | GET | `/api/v2/spaces/:spaceId/topics` | `RestAPI2.SpaceParams` | `RestAPI2.ListResponse<RestAPI2.Topic>` | |
@@ -270,6 +290,7 @@ Space storage object endpoints are exposed as a WebDAV/S3-compatible proxy compa
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/version` | `RestAPI2.HubParams` | `RestAPI2.VersionResponse` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/config` | `RestAPI2.HubParams` | `RestAPI2.ConfigResponse` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/status` | `RestAPI2.HubParams` | `RestAPI2.StatusResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/health` | `RestAPI2.Empty` | `RestAPI2.HealthCheckInfo<RestAPI2.Hub>` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/audit` | `RestAPI2.HubParams` | `ReadableStream<RestAPI2.AuditRecord>` | yes¹ |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Instance>` | |
@@ -277,9 +298,9 @@ Space storage object endpoints are exposed as a WebDAV/S3-compatible proxy compa
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/logs` | `RestAPI2.HubParams` | `ReadableStream<RestAPI2.LogRecord>` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/topics` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Topic>` | |
 | POST | `/api/v2/spaces/:spaceId/hubs/:hubId/topics` | `RestAPI2.TopicCreatePayload` | `RestAPI2.OpResponse<RestAPI2.TopicCreateResponse>` | |
-| DELETE | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:topic` | `RestAPI2.TopicDeletePayload` | `RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse>` | |
-| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:topic/stream` | `RestAPI2.TopicStreamPayload` | `ReadableStream<RestAPI2.TopicChunk>` | |
-| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:topic/stream` | `RestAPI2.TopicStreamPayload` | `RestAPI2.OpResponse<RestAPI2.TopicStreamResponse>` | |
+| DELETE | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:name` | `RestAPI2.TopicDeletePayload` | `RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:name/stream` | `RestAPI2.TopicStreamPayload` | `ReadableStream<RestAPI2.TopicChunk>` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:name/stream` | `RestAPI2.TopicStreamPayload` | `RestAPI2.OpResponse<RestAPI2.TopicStreamResponse>` | |
 
 ### seq
 
@@ -302,20 +323,20 @@ Space storage object endpoints are exposed as a WebDAV/S3-compatible proxy compa
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/monitoring` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.MonitoringMessage>` | yes⁰ |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/output` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.BinaryChunk>` | always + output consumption |
 | POST | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/input` | `ReadableStream<RestAPI2.BinaryChunk>` | `RestAPI2.NoContent<202>` | always |
-| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/health` | `RestAPI2.HealthPayload` | `RestAPI2.RunnerMessageCode.MONITORING` | |
-| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events/:name/stream` | `RestAPI2.EventPayload` | `ReadableStream<RestAPI2.EventMessageData>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/health` | `RestAPI2.Empty` | `RestAPI2.HealthCheckInfo<RestAPI2.Instance>` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events/:name` | `RestAPI2.EventPayload` | `RestAPI2.EventResponse` | |
 | GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events/:name/once` | `RestAPI2.EventPayload` | `RestAPI2.NextEventResponse` | |
 | POST | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events` | `RestAPI2.EventMessage` | `RestAPI2.OpResponse<RestAPI2.SendEventResponse>` | |
 | DELETE | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId` | `RestAPI2.DeleteInstancePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteInstanceResponse>` | |
 | PATCH | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId` | `RestAPI2.InstanceParametersPatch` | `RestAPI2.OpResponse<RestAPI2.InstanceParametersResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio/:fd` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.StdIOChunk>` | always |
+| PUT | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio/:fd` | `ReadableStream<RestAPI2.StdIOChunk>` | `RestAPI2.NoContent<202>` | always |
 
 ### rpc
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| ANY | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
-| ANY | `/api/v2/spaces/:spaceId/hubs/:hubId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
 
 ### audit
 
@@ -368,8 +389,9 @@ Streaming notes:
 ### v2 Route Sections
 
 - **Shared handlerless contracts**: All v2 route definitions live in `@scramjet/rest-api2` as handlerless contract sets (`RestAPI2RouteSets`). Runtime implementations import shared contracts and bind local handlers with `bindRoutes`/`bindResolvers` from `@scramjet/api-router`.
+- **Route tree as the source of truth**: Add or change a v2 endpoint in `RestAPI2RouteTree` / the route-set factories once, then update the owning runtime binding. Route sets, runtime routers, resolver-expanded manifests, OpenAPI output, and fluent clients derive from that shared route source.
 - **Owner-local implementation**: Route implementation follows the API level that owns the behavior:
-  - Hub owns Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit routes.
+  - Hub owns Hub, Sequence, Instance/CSI, stdio, Instance RPC, and Hub audit routes.
   - Space owns Space-level inventory, storage, topics, logs, audit, and Hub selection routes.
   - Root owns Root behavior and Space selection routes.
 - **Cross-node routing via verser2**: Cross-level public paths (e.g. `/api/v2/spaces/:spaceId/hubs/:hubId/load`) use verser2-backed resolver redirects, not local/manual HTTP forwarding. The HTTP adapter emits `308` with `x-scramjet-route-decision`, `x-scramjet-route-domain`, and `x-scramjet-route-target-path` headers.
@@ -410,11 +432,11 @@ Streamable endpoints support `Content-Range` headers for time-range and span-ran
 - Client-side stream vs list response type narrowing based on range parameters.
 
 Affected endpoint families (documented as streamable but range negotiation deferred):
-- Manager load, health, hubs, instances, sequences, entities, audit streams.
+- Space load, health, hubs, instances, sequences, entities, audit streams.
 - Hub sequences, instances, entities streams.
 - Instance monitoring, output, logs, events, stdio streams.
 - Topic read/write streams.
-- MultiManager load, health, managers, audit streams.
+- Root load, health, spaces, audit streams.
 - Audit query streams.
 
 These stream routes remain functional through existing runtime streaming paths; the v2-specific range-driven response switching is a later implementation item.

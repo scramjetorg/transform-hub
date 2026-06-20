@@ -11,7 +11,7 @@ const representativeOperations: Array<{ scope: RestAPI2.ScopeName; operationId: 
     { scope: "inst", operationId: "PATCH /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId", path: "/spaces/:spaceId/hubs/:hubId/instances/:instanceId" },
     { scope: "audit", operationId: "GET /api/v2/spaces/:spaceId/audit", path: "/spaces/:spaceId/audit" },
     { scope: "stdio", operationId: "GET /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio", path: "/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio" },
-    { scope: "rpc", operationId: "POST /api/v2/spaces/:spaceId/hubs/:hubId/rpc/*", path: "/spaces/:spaceId/hubs/:hubId/rpc/*" }
+    { scope: "rpc", operationId: "POST /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/rpc/*", path: "/spaces/:spaceId/hubs/:hubId/instances/:instanceId/rpc/*" }
 ];
 
 function createRepresentativeManifest() {
