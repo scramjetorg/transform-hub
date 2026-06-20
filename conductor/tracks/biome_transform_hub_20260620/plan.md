@@ -35,6 +35,7 @@
 - [~] Task: Conductor - User Manual Verification 'Phase 1: Add Initial Executable Biome and Remove ESLint Guidance' (Protocol in workflow.md)
 
     Phase 1 checkpoint notes:
+    - Review PR: https://github.com/0rail/transform-hub/pull/20
     - Shared package review: not applicable; this phase changed root tooling/docs only and added no package-local runtime code.
     - Deduplication check: not applicable; no reusable code or tests were added.
     - Validation run: `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); JSON.parse(require('fs').readFileSync('package-lock.json','utf8')); console.log('package metadata json ok')"` passed.
