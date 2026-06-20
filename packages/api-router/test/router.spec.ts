@@ -107,17 +107,17 @@ test("collect expands nested resolver target definitions for public client paths
         targetDefinitions: { owner: "host", definitions: host, implementerBasePath: "/api/v2" },
         handler: () => undefined
     });
-    const multiManager = Router.create({ basePath: "/api/v2" }).resolve("/managers/:managerId", {
-        schemas: { params: z.object({ managerId: z.string() }) },
+    const multiManager = Router.create({ basePath: "/api/v2" }).resolve("/spaces/:spaceId", {
+        schemas: { params: z.object({ spaceId: z.string() }) },
         targetDefinitions: { owner: "mgr", definitions: manager, implementerBasePath: "/api/v2" },
         handler: () => undefined
     });
 
     const route = multiManager.collect({ expandResolvers: true }).routes.find(entry => entry.fullPath.endsWith("/load"));
 
-    t.is(route?.fullPath, "/api/v2/managers/:managerId/hubs/:hubId/load");
-    t.is(route?.id, "GET /api/v2/managers/:managerId/hubs/:hubId/load");
-    t.deepEqual(Object.keys((route?.schemas?.params as z.ZodObject<any>).shape), ["managerId", "hubId"]);
+    t.is(route?.fullPath, "/api/v2/spaces/:spaceId/hubs/:hubId/load");
+    t.is(route?.id, "GET /api/v2/spaces/:spaceId/hubs/:hubId/load");
+    t.deepEqual(Object.keys((route?.schemas?.params as z.ZodObject<any>).shape), ["spaceId", "hubId"]);
 });
 
 test("Router.resolve preserves schema-inferred resolver context", async t => {

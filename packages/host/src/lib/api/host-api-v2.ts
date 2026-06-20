@@ -37,7 +37,7 @@ export class HostAPIV2Handler {
 
     createHubRouter(): RouterDefinition {
         const host = this.host;
-        const routes = RestAPI2RouteSets.host.hubRoutes();
+        const routes = RestAPI2RouteSets.hub.hubRoutes();
 
         return bindRoutes(routes, {
             load: (): RestAPI2.LoadResponse<RestAPI2.Hub> => ({
@@ -85,14 +85,14 @@ export class HostAPIV2Handler {
             topicRead: routeBinding.handler<typeof routes.topicRead>(req => this.topicRead(req.params.name, req.headers)),
             topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => this.topicWrite(req.params.name, this.rawReadable(req), req.headers)),
             logs: () => host.commonLogsPipe.getOut(),
-            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "host.v2.audit" })
+            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "hub.v2.audit" })
         });
     }
 
     createSequenceRouter(): RouterDefinition {
         const host = this.host;
         const sequenceId = (params: { sequenceId: string }) => params.sequenceId;
-        const routes = RestAPI2RouteSets.host.sequenceRoutes();
+        const routes = RestAPI2RouteSets.hub.sequenceRoutes();
 
         return bindRoutes(routes, {
             sendSequence: routeBinding.contractOnly("Sequence upload stream remains handled by v1 compatibility surface."),
@@ -149,7 +149,7 @@ export class HostAPIV2Handler {
         const router = Router.create({ basePath: this.v2ApiBase })
             .mount("/", this.createHubRouter())
             .mount("/sequences", this.createSequenceRouter());
-        const resolver = RestAPI2RouteSets.host.resolvers().instance;
+        const resolver = RestAPI2RouteSets.hub.resolvers().instance;
 
         return bindResolver(resolver, resolverBinding.handler(({ params }) => {
             const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
@@ -305,7 +305,11 @@ export class HostAPIV2Handler {
     private headerValue(headers: Record<string, unknown> | undefined, name: string): string | undefined {
         const value = headers?.[name];
 
-        return Array.isArray(value) ? String(value[0]) : value === undefined ? undefined : String(value);
+        if (Array.isArray(value)) {
+            return String(value[0]);
+        }
+
+        return value === undefined ? undefined : String(value);
     }
 
     private async waitForStreamEnd(stream: Readable): Promise<void> {

@@ -22,9 +22,19 @@ function createManagerStub(recorder: RouteRecorder) {
         },
         apiServiceDiscovery: { list: () => [{ name: "topic-1", contentType: "application/x-ndjson" }] },
         apiLoadCheck: {
+            constants: { SAFE_OPERATION_LIMIT: 0 },
+            config: { fsPaths: [] },
             getLoadCheck: async () => ({ load: 1 }),
             getLoadCheckStream: () => new PassThrough()
         },
+        apiHealthCheck: { getHealthCheckInfo: () => ({ uptime: 1, timestamp: 2, modules: { sthServer: true } }) },
+        getV2HealthCheckInfo: async () => ({
+            scope: { id: "manager-hotwire", hubs: 1 },
+            healthy: true,
+            status: "healthy",
+            components: [{ name: "manager", healthy: true, status: "healthy" }],
+            details: { uptime: 1, timestamp: 2, modules: { sthServer: true } }
+        }),
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
         auditor: { setFlowing: async (_flowing: boolean) => undefined, output: new PassThrough() },
         apiS3Middleware: { clearIndex: async () => undefined, index: { sequences: [{ id: "seq-1", _filename: "seq.tar.gz", packageSize: 123 }] }, router: { lookup: () => undefined } },
@@ -52,6 +62,7 @@ test("ManagerAPIHandler registers the v2 Manager API route surface separately", 
     t.true(recorder.has("get", "/api/v2/config"));
     t.true(recorder.has("get", "/api/v2/verser2/trust"));
     t.true(recorder.has("get", "/api/v2/load"));
+    t.true(recorder.has("get", "/api/v2/health"));
     t.true(recorder.has("get", "/api/v2/list"));
     t.true(recorder.has("get", "/api/v2/hubs"));
     t.true(recorder.has("get", "/api/v2/instances"));
@@ -129,6 +140,11 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     });
     t.deepEqual(await (recorder.require("get", "/api/v2/config").handler as Function)({}), { config: { apiBase: "/api/v1" } });
     t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
+    t.like(await (recorder.require("get", "/api/v2/health").handler as Function)({}), {
+        scope: { id: "manager-hotwire", hubs: 1 },
+        healthy: true,
+        details: { uptime: 1, timestamp: 2, modules: { sthServer: true } }
+    });
     t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({ query: { offset: "1", limit: "2" } }), { items: [{ id: "sth-1" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/hubs").handler as Function)({ query: { offset: "1", limit: "2" } }), { items: [{ id: "sth-1" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)({ query: {} }), { items: [{ id: "inst-1", sequenceId: "seq-1" }] });
@@ -227,7 +243,7 @@ test("ManagerAPIHandler v2 resolves Hub-owned routes with a verser2 redirect", a
     t.is(response.headers["x-scramjet-route-target-path"], "/api/v2/load");
 });
 
-test("Manager setupHealthEndpoint registers v2 health on the same API router", async t => {
+test("Manager setupHealthEndpoint only registers legacy v1 health", async t => {
     const recorder = new RouteRecorder();
     const healthCheck = { getHealthCheckInfo: () => ({ uptime: 1, timestamp: 2, modules: { sthServer: true } }) };
     const manager = {
@@ -239,12 +255,7 @@ test("Manager setupHealthEndpoint registers v2 health on the same API router", a
 
     Manager.prototype.setupHealthEndpoint.call(manager as any, healthCheck as any);
 
-    const health = await (recorder.require("get", "/api/v2/health").handler as Function)({});
-
-    t.deepEqual(health.scope, { id: "mgr-hotwire", hubs: 1 });
-    t.true(health.healthy);
-    t.true(["healthy", "degraded"].includes(health.status));
-    t.true(health.components.some((component: { name: string }) => component.name === "manager"));
-    t.true(health.components.some((component: { name: string }) => component.name === "process.memory"));
-    t.deepEqual(health.details, { uptime: 1, timestamp: 2, modules: { sthServer: true } });
+    t.true(recorder.has("get", "/api/v1/health"));
+    t.false(recorder.has("get", "/api/v2/health"));
+    t.deepEqual(await (recorder.require("get", "/api/v1/health").handler as Function)({}), { uptime: 1, timestamp: 2, modules: { sthServer: true } });
 });

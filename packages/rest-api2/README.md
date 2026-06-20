@@ -13,7 +13,7 @@ The `RestAPI2` namespace defines all v2 request/response types, generic structur
 | Contract | Purpose |
 |---|---|
 | `RestAPI2.Empty` | Empty request object (explicit alternative to `void`). |
-| `RestAPI2.IdParams<TScope>` | Path identifiers for a scope such as `MultiManager`, `Manager`, `Hub`, etc. |
+| `RestAPI2.IdParams<TScope>` | Path identifiers for a scope such as `Root`, `Space`, `Hub`, etc. |
 | `RestAPI2.ListQuery<TItem>` | Pagination, filtering, sorting, and stream-range selection. |
 | `RestAPI2.ListResponse<TItem>` | `{ items: TItem[]; page?: PageInfo; stream?: StreamInfo; links?: Links }`. |
 | `RestAPI2.OpResponse<TOutput>` | `{ operation: Operation; result?: TOutput; error?: ErrorBody }`. |
@@ -37,14 +37,15 @@ One client surface for all API levels, sharing the same operation contracts over
 
 ### Specific Models
 
-See full details in `docs/api.md` — key models include `RestAPI2.MultiManager`, `RestAPI2.Manager`, `RestAPI2.Hub`, `RestAPI2.Sequence`, `RestAPI2.Instance`, `RestAPI2.Topic`, `RestAPI2.StoreItem`, `RestAPI2.LogRecord`, `RestAPI2.AuditRecord`, `RestAPI2.HealthCheckInfo<TScope>`, and operation-specific payloads such as `RestAPI2.DeleteInstancePayload` and `RestAPI2.InstanceParametersPatch`.
+See full details in `docs/api.md` — key models include `RestAPI2.Root`, `RestAPI2.Space`, `RestAPI2.Hub`, `RestAPI2.Sequence`, `RestAPI2.Instance`, `RestAPI2.Topic`, `RestAPI2.StoreItem`, `RestAPI2.LogRecord`, `RestAPI2.AuditRecord`, `RestAPI2.HealthCheckInfo<TScope>`, and operation-specific payloads such as `RestAPI2.DeleteInstancePayload` and `RestAPI2.InstanceParametersPatch`.
 
 ## Common Client Construction
 
 Build the client from a route manifest and a transport:
 
 ```ts
-import { createRestAPI2Client, createHttpClientTransport } from "@scramjet/rest-api2";
+import { createHttpClientTransport } from "@scramjet/api-router";
+import { createRestAPI2Client } from "@scramjet/rest-api2";
 
 const transport = createHttpClientTransport({
     baseUrl: "http://localhost:8000",
@@ -61,10 +62,29 @@ const response = await client.request({
 // response.status, response.headers, response.body
 ```
 
+## Fluent Client Construction
+
+The preferred public client can be constructed at Root, Space, Hub, or Instance level. Fluent calls dispatch through the same manifest client and transport stack as `createRestAPI2Client`.
+
+```ts
+import { createRootClient, createHubClient } from "@scramjet/rest-api2";
+
+const root = createRootClient({ transport });
+
+await root.health.get();
+await root.space("space-1").health.get();
+await root.space("space-1").hub("hub-1").health.get();
+await root.space("space-1").hub("hub-1").instance("inst-1").health.get();
+
+const hub = createHubClient({ transport, basePath: "/" });
+
+await hub.health.get();
+```
+
 ## HTTP Client Transport Setup
 
 ```ts
-import { createHttpClientTransport } from "@scramjet/rest-api2";
+import { createHttpClientTransport } from "@scramjet/api-router";
 
 const transport = createHttpClientTransport({
     baseUrl: "http://localhost:8000",
@@ -76,13 +96,32 @@ const transport = createHttpClientTransport({
 ## Verser2 Client Transport Setup
 
 ```ts
-import { createVerser2ClientTransport } from "@scramjet/rest-api2";
+import { createVerser2ClientTransport } from "@scramjet/api-router";
 
 const transport = createVerser2ClientTransport(broker);
 // Delegates each request to the broker's request() method.
 ```
 
-Both transports are re-exported from `@scramjet/api-router`.
+Both transports are owned by `@scramjet/api-router`; `@scramjet/rest-api2` re-exports them for compatibility.
+
+### Custom Fluent Clients and Opaque RPC
+
+The fluent client model is derived from route tree nodes. Built-in clients cover Root, Space, Hub, and Instance levels. Custom extensions can provide a RestAPI2-compatible route tree node:
+
+```ts
+import { Router } from "@scramjet/api-router";
+import { createFluentClientFromRouteTreeNode } from "@scramjet/rest-api2";
+
+const custom = createFluentClientFromRouteTreeNode({
+    concept: "extension",
+    owner: "extension",
+    routes: () => ({ inspect: Router.get("/inspect") })
+}, { basePath: "/api/v2/extensions/example", transport });
+
+await custom.inspect.get();
+```
+
+RPC route groups are explicit opaque exceptions. They remain available as route contracts, but are intentionally omitted from standard Instance fluent clients because sequence-provided RPC surfaces can be dynamic.
 
 ## Shared Handlerless Route Sets
 
@@ -92,16 +131,16 @@ Pre-defined route contracts live under `RestAPI2RouteSets` and `RestAPI2Routes`.
 import { RestAPI2RouteSets, RestAPI2Routes } from "@scramjet/rest-api2";
 
 // Typed contract keys for each API level:
-RestAPI2RouteSets.host.hubRoutes();     // { load, version, config, health, status, sequences, ... }
-RestAPI2RouteSets.host.sequenceRoutes(); // { sendSequence, updateSequence, deleteSequence, ... }
+RestAPI2RouteSets.root.routes();         // { version, info, load, spaces, health, trust, audit }
+RestAPI2RouteSets.space.routes();        // { version, config, trust, load, hubs, instances, ... }
+RestAPI2RouteSets.hub.hubRoutes();       // { load, version, config, health, status, sequences, ... }
+RestAPI2RouteSets.hub.sequenceRoutes();  // { sendSequence, updateSequence, deleteSequence, ... }
 RestAPI2RouteSets.instance.routes();     // { info, deleteInstance, stdio, health, logs, ... }
-RestAPI2RouteSets.manager.routes();      // { version, config, trust, load, hubs, instances, ... }
-RestAPI2RouteSets.multiManager.routes(); // { version, info, load, list, health, trust, audit }
 
 // Pre-built routers with resolver definitions:
-RestAPI2Routes.host.router();        // Host hub + sequence + instance resolver
-RestAPI2Routes.manager.router();     // Manager routes + hub resolver
-RestAPI2Routes.multiManager.router(); // MultiManager routes + manager resolver
+RestAPI2Routes.root.router();        // Root routes + Space resolver
+RestAPI2Routes.space.router();       // Space routes + Hub resolver
+RestAPI2Routes.hub.router();         // Hub routes + sequence routes + Instance resolver
 ```
 
 ### Typed Route Binding
@@ -112,7 +151,7 @@ Bind runtime handlers to handlerless contract sets using `bindRoutes`/`bindResol
 import { bindRoutes, bindResolvers, routeBinding, resolverBinding } from "@scramjet/api-router";
 import { RestAPI2RouteSets } from "@scramjet/rest-api2";
 
-const router = bindRoutes(RestAPI2RouteSets.host.hubRoutes(), {
+const router = bindRoutes(RestAPI2RouteSets.hub.hubRoutes(), {
     load: routeBinding.handler(async (req) => ({ load: await host.getLoad() })),
     version: routeBinding.handler(() => ({ version: "1.0.0" })),
     config: routeBinding.handler(() => ({ config: host.publicConfig })),
@@ -127,6 +166,14 @@ Binding variants:
 - `resolverBinding.handler(fn)` — bind a resolver.
 
 Missing, extra, or wrong-typed handlers fail at compile time.
+
+## Adding a v2 Endpoint
+
+1. Add the Zod request/response schemas in `schemas.ts` when a new DTO is needed.
+2. Add the route once in the relevant route-set factory in `routes.ts` under `RestAPI2RouteTree` ownership.
+3. Bind the route in the owning runtime package (`host`, `manager`, or `multi-manager`) with `bindRoutes()` or explicitly document it as `contractOnly()` / `skip()`.
+4. Add fluent client and route-set tests when the endpoint should be part of the standard public client. Opaque/dynamic RPC escapes must be declared in route group metadata.
+5. OpenAPI/schema-mode output and resolver-expanded manifests derive from the same route tree.
 
 ## Zod Schema Patterns
 
@@ -193,7 +240,7 @@ When migrating BDD or package tests to the common client:
 - **No legacy aliasing**: This package must not export or alias `MMRestAPI`, `MRestAPI`, or `STHRestAPI`. Those contracts belong to `@scramjet/types` for v1 compatibility only.
 - **Owner-local handling**: Route contracts are handlerless by design. Each package (`host`, `manager`, `multi-manager`) imports shared contracts and binds local handlers with `bindRoutes`/`bindResolvers`. No package imports another runtime package for route schemas.
 - **Deferred content-range**: Full `Content-Range` negotiation (time range, span range, `206` vs `200`, `ReadableStream` vs `ListResponse`) is documented in `docs/api.md`. Runtime implementation of range-dependent response switching is deferred — stream routes currently register as `kind: "upstream"` / `kind: "downstream"` boundaries.
-- **Storage proxy v2 typing**: Manager storage object read/write/delete is a documented WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
+- **Storage proxy v2 typing**: Space storage object read/write/delete is a documented WebDAV/S3-compatible proxy compatibility surface implemented by the Manager package. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
 - **V1 compatibility**: All `/api/v1` routes remain registered with unchanged client-visible behavior. Compatibility adapters may unwrap v2 handler results for low-risk v1 read routes only when separate v1 tests assert exact response preservation.
 
 ## Exports
@@ -202,17 +249,22 @@ When migrating BDD or package tests to the common client:
 @scramjet/rest-api2
 ├── RestAPI2.* contracts (namespace)
 ├── RestAPI2.Client, ClientTransport, ClientRequest, ClientResponse
+├── RestAPI2RouteTree        — Root → Space → Hub → Instance public hierarchy
 ├── RestAPI2RouteSets        — typed handlerless contract sets
-│   ├── host.{hubRoutes, sequenceRoutes, resolvers}
-│   ├── instance.{routes}
-│   ├── manager.{routes, resolvers}
-│   └── multiManager.{routes, resolvers}
+│   ├── root.{routes, resolvers}
+│   ├── space.{routes, resolvers}
+│   ├── hub.{hubRoutes, sequenceRoutes, resolvers}
+│   ├── sequence.{routes}
+│   └── instance.{routes}
 ├── RestAPI2Routes           — pre-built handlerless routers
-│   ├── host.{router, hubRouter, sequenceRouter}
-│   ├── instance.router
-│   ├── manager.router
-│   └── multiManager.router
+│   ├── root.router
+│   ├── space.router
+│   ├── hub.{router, hubRouter, sequenceRouter}
+│   ├── sequence.router
+│   └── instance.router
 ├── createRestAPI2Client     — common client factory
+├── createRootClient, createSpaceClient, createHubClient, createInstanceClient
+├── createFluentClientFromRouteTreeNode — custom route-tree client factory
 ├── createHttpClientTransport, createVerser2ClientTransport
 ├── ApiClientTransport (type)
 ├── Zod DTO schemas

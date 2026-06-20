@@ -1,5 +1,5 @@
 export namespace RestAPI2 {
-    export type ScopeName = "mmgr" | "mgr" | "hub" | "seq" | "inst" | "audit" | "stdio" | "rpc";
+    export type ScopeName = "root" | "space" | "hub" | "seq" | "inst" | "audit" | "stdio" | "rpc";
 
     export type OperationId = `${Uppercase<string>} /api/v2${string}` | `${Uppercase<string>} <${string}>`;
 
@@ -7,7 +7,7 @@ export namespace RestAPI2 {
 
     export type IdParams<TScope extends string = string> = {
         scope: TScope;
-        managerId?: string;
+        spaceId?: string;
         hubId?: string;
         sequenceId?: string;
         instanceId?: string;
@@ -81,13 +81,13 @@ export namespace RestAPI2 {
     export type BinaryChunk = Uint8Array;
     export type StdIOChunk = Uint8Array;
 
-    export type MultiManager = {
+    export type Root = {
         id: string;
         apiBase: string;
-        managers?: number;
+        spaces?: number;
     };
 
-    export type Manager = {
+    export type Space = {
         id: string;
         hubs?: number;
     };
@@ -145,9 +145,9 @@ export namespace RestAPI2 {
     export type LoadResponse<TScope = unknown> = { scope?: TScope; load: number };
     export type StatusResponse = { status: string; details?: unknown };
 
-    export type ManagersQuery = ListQuery<Manager>;
-    export type ManagersResponse = ListResponse<Manager>;
-    export type ManagerParams = IdParams<"mgr">;
+    export type SpacesQuery = ListQuery<Space>;
+    export type SpacesResponse = ListResponse<Space>;
+    export type SpaceParams = IdParams<"space">;
     export type HubParams = IdParams<"hub">;
     export type InstancesQuery = ListQuery<Instance>;
     export type SequencesQuery = ListQuery<Sequence>;
@@ -156,10 +156,10 @@ export namespace RestAPI2 {
     export type TopicParams = IdParams<"topic">;
     export type TopicInformation = Topic;
 
-    export type StartManagerPayload = { config?: unknown };
-    export type StartManagerResponse = { manager: Manager };
-    export type DeleteManagerPayload = { force?: boolean; timeout?: number };
-    export type DeleteManagerResponse = { managerId: string; stopped: boolean };
+    export type StartSpacePayload = { config?: unknown };
+    export type StartSpaceResponse = { space: Space };
+    export type DeleteSpacePayload = { force?: boolean; timeout?: number };
+    export type DeleteSpaceResponse = { spaceId: string; stopped: boolean };
     export type RegisterHubPayload = { hub: Hub; connection?: unknown };
     export type RegisterHubResponse = { hub: Hub };
     export type DeleteHubQuery = { force?: boolean; delete?: boolean; disconnect?: boolean; reason?: string };
@@ -205,7 +205,7 @@ export namespace RestAPI2 {
     export type StoreItemResponse = { item: StoreItem };
     export type DeleteStoreItemPayload = StoreItemPayload;
     export type DeleteStoreItemResponse = { path: string; deleted: boolean };
-    export type StoreClearPayload = ManagerParams & { force?: boolean };
+    export type StoreClearPayload = SpaceParams & { force?: boolean };
     export type StoreClearResponse = { cleared: boolean };
 
     export type AuditRecordParams = IdParams<"audit">;
@@ -215,7 +215,7 @@ export namespace RestAPI2 {
     export type StdIODescriptorList = { channels: Array<{ fd: 0 | 1 | 2; readable: boolean; writable: boolean }> };
     export type RpcRequest = { method: string; path: string; headers?: Record<string, string>; body?: unknown };
     export type RpcResponse = { status: number; headers: Record<string, string>; body?: unknown };
-    export type RouteOwner = "mmgr" | "mgr" | "host";
+    export type RouteOwner = "root" | "space" | "hub";
     export type RouteOwnership = {
         owner: RouteOwner;
         operationId: OperationId;

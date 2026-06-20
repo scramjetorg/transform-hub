@@ -63,8 +63,8 @@ test("HostAPIHandler registers Host-owned v2 Hub routes as local mounted paths",
     t.true(recorder.has("get", "/api/v2/topics"));
     t.true(recorder.has("upstream", "/api/v2/logs"));
     t.true(recorder.has("upstream", "/api/v2/audit"));
-    t.false(recorder.has("get", "/api/v2/managers/:managerId/hubs/:hubId/load"));
-    t.false(recorder.has("get", "/api/v2/managers/:managerId/hubs/:hubId/load-check"));
+    t.false(recorder.has("get", "/api/v2/spaces/:spaceId/hubs/:hubId/load"));
+    t.false(recorder.has("get", "/api/v2/spaces/:spaceId/hubs/:hubId/load-check"));
 });
 
 test("HostAPIHandler registers Host-owned v2 Sequence routes as local mounted paths", t => {

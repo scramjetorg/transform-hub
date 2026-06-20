@@ -22,8 +22,8 @@ import {
     ISTHInfoRegister
 } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
-import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { RestAPI2, healthCheckInfo, Manager as RestAPI2ManagerSchema } from "@scramjet/rest-api2";
+import { Router, registerHttpRoutes } from "@scramjet/api-router";
+import { RestAPI2 } from "@scramjet/rest-api2";
 import { z } from "zod";
 import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
@@ -95,6 +95,7 @@ export class Manager implements IComponent {
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
     private loadCheck: LoadCheck;
+    private managerHealthCheck?: HealthCheck;
     private _startedPromise: Promise<void>;
     private startHandlers!: { res: Function; rej: Function };
 
@@ -132,6 +133,10 @@ export class Manager implements IComponent {
 
     public get apiLoadCheck(): LoadCheck {
         return this.loadCheck;
+    }
+
+    public get apiHealthCheck(): HealthCheck | undefined {
+        return this.managerHealthCheck;
     }
 
     public get apiS3Middleware(): Awaited<ReturnType<typeof getS3Router>> {
@@ -238,31 +243,33 @@ export class Manager implements IComponent {
 
     setupHealthEndpoint(healthCheck: HealthCheck) {
         // We may need some additional logic here later.
-        const toV2HealthCheckInfo = async (info: MRestAPI.HealthCheckInfo): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Manager>> => {
-            const managerList = typeof this.getList === "function" ? this.getList() : [];
-            const scope = { id: this.id || this._config.id, hubs: managerList.length };
-            const currentHealthy = Object.values(info.modules || {}).every(Boolean);
-            const components = await createDefaultHealthComponents({
-                current: { name: "manager", healthy: currentHealthy, scope, details: info },
-                processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
-                osDiskPaths: this.loadCheck?.config?.fsPaths
-            });
-
-            return summarizeHealth(scope, components, info);
-        };
+        this.managerHealthCheck = healthCheck;
         const createV1HealthRouter = () => Router.create({ basePath: this._config.apiBase }).route(Router.get("/health", {
             id: "manager.v1.health",
             schemas: { response: z.object({}).passthrough() },
             handler: () => healthCheck.getHealthCheckInfo()
         }));
-        const createV2HealthRouter = () => Router.create({ basePath: replacePathVersion(this._config.apiBase, "v2") }).route(Router.get("/health", {
-            id: "manager.v2.health",
-            schemas: { response: healthCheckInfo(RestAPI2ManagerSchema) },
-            handler: (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Manager>> => toV2HealthCheckInfo(healthCheck.getHealthCheckInfo())
-        }));
 
         registerHttpRoutes(this._apiRouter, createV1HealthRouter());
-        registerHttpRoutes(this._apiRouter, createV2HealthRouter());
+    }
+
+    async getV2HealthCheckInfo(): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Space>> {
+        const info = this.managerHealthCheck?.getHealthCheckInfo() || {
+            uptime: process.uptime(),
+            timestamp: Date.now(),
+            modules: { sthServer: false }
+        };
+        const managerList = typeof this.getList === "function" ? this.getList() : [];
+        const hubs = Array.isArray(managerList) ? managerList.length : ((managerList as { hosts?: unknown[] } | undefined)?.hosts || []).length;
+        const scope = { id: this.id || this._config.id, hubs };
+        const currentHealthy = Object.values(info.modules || {}).every(Boolean);
+        const components = await createDefaultHealthComponents({
+            current: { name: "manager", healthy: currentHealthy, scope, details: info },
+            processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
+            osDiskPaths: this.loadCheck?.config?.fsPaths
+        });
+
+        return summarizeHealth(scope, components, info);
     }
 
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {

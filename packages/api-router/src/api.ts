@@ -9,16 +9,16 @@ type SchemasFromDefinition<TDefinition> = TDefinition extends { schemas?: infer 
         : RouteSchemas
     : RouteSchemas;
 
-function route<TDefinition extends RouteDefinitionInput = RouteDefinitionInput>(
-    method: HttpMethod,
+function route<TMethod extends HttpMethod, TDefinition extends RouteDefinitionInput = RouteDefinitionInput>(
+    method: TMethod,
     path: string,
     definition: TDefinition = {} as TDefinition
-): RouteDefinition<SchemasFromDefinition<TDefinition>> & Pick<TDefinition, Extract<keyof TDefinition, "kind">> {
+): RouteDefinition<SchemasFromDefinition<TDefinition>> & { method: TMethod } & Pick<TDefinition, Extract<keyof TDefinition, "kind">> {
     return defineRoute({
         ...definition,
         method,
         path
-    }) as RouteDefinition<SchemasFromDefinition<TDefinition>> & Pick<TDefinition, Extract<keyof TDefinition, "kind">>;
+    }) as RouteDefinition<SchemasFromDefinition<TDefinition>> & { method: TMethod } & Pick<TDefinition, Extract<keyof TDefinition, "kind">>;
 }
 
 export const Router = {
@@ -30,13 +30,13 @@ export const Router = {
     get<TDefinition extends RouteDefinitionInput = RouteDefinitionInput>(
         path: string,
         definition?: TDefinition
-    ): RouteDefinition<SchemasFromDefinition<TDefinition>> & Pick<TDefinition, Extract<keyof TDefinition, "kind">> {
+    ): RouteDefinition<SchemasFromDefinition<TDefinition>> & { method: "get" } & Pick<TDefinition, Extract<keyof TDefinition, "kind">> {
         return route("get", path, definition);
     },
     post<TDefinition extends RouteDefinitionInput = RouteDefinitionInput>(
         path: string,
         definition?: TDefinition
-    ): RouteDefinition<SchemasFromDefinition<TDefinition>> & Pick<TDefinition, Extract<keyof TDefinition, "kind">> {
+    ): RouteDefinition<SchemasFromDefinition<TDefinition>> & { method: "post" } & Pick<TDefinition, Extract<keyof TDefinition, "kind">> {
         return route("post", path, definition);
     },
     resolve<TSchemas extends RouteSchemas>(path: string, definition: Omit<ResolverDefinition<TSchemas>, "path">): ResolverDefinition<TSchemas> {

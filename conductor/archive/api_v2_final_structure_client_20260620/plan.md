@@ -1,0 +1,368 @@
+# Implementation Plan: API v2 Final Structure and Fluent Client
+
+## Phase 1 Notes
+
+- Branch base confirmed: `feat/manager-oss`.
+- Dedicated branch: `conductor/api-v2-final-structure-client-20260620`.
+- Planned PR title: `Finalize API v2 route tree and fluent client`.
+- Planned PR description:
+  - Make `RestAPI2RouteTree` the source of truth for public v2 route contracts, route sets, routers, manifests, OpenAPI, and fluent clients.
+  - Rename public v2 concepts from Manager/Host terminology to Root/Space/Hub/Instance while preserving internal package ownership names.
+  - Add typed fluent clients for Root, Space, Hub, and Instance over the existing generic client and transport stack.
+  - Add strict runtime binding and fluent-client coverage guards, then inventory and remove only approved obsolete v2 surfaces.
+  - Update docs and validation artifacts for the final public v2 structure.
+- PR: https://github.com/0rail/transform-hub/pull/17.
+- Codemap/inventory summary:
+  - `packages/rest-api2`: current v2 contract source is `src/routes.ts` (`RestAPI2RouteSets`, `RestAPI2Routes`), `src/contracts.ts`, `src/schemas.ts`, and `src/client.ts`; tests cover routes, schemas, and generic client dispatch.
+  - `packages/api-router`: generic route primitives live in `src/manifest.ts`, `src/router.ts`, `src/bind.ts`, `src/client.ts`, `src/client-transports.ts`, `src/schema-mode.ts`, and `src/openapi.ts`; package is domain-neutral with no direct Manager/Host public terminology.
+  - `packages/host`: v2 hub/sequence bindings live in `src/lib/api/host-api-v2.ts`; instance bindings live in `src/lib/api/instance-api-v2.ts`; `host-api-v1.ts` has v1-to-v2 fallback usage.
+  - `packages/manager`: v2 bindings live in `src/lib/api/manager-api-v2.ts`; health has a separate v2 router registration in `src/lib/manager.ts`.
+  - `packages/multi-manager`: v2 bindings and Manager resolver forwarding live in `src/lib/api/multi-manager-api-v2.ts`.
+  - Public v2 terminology inventory found `/api/v2/managers/:managerId`, `managerId`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, `RestAPI2RouteSets.manager`, `RestAPI2RouteSets.multiManager`, `RestAPI2RouteSets.host`, and Manager/Host wording across route contracts, docs, READMEs, tests, and generated operation ID expectations.
+  - Baseline risks: Host and Instance v2 routes mostly rely on generated route IDs; Manager v2 storage object routes are `skip` plus legacy middleware; `sendSequence`/`updateSequence` are contract-only; OpenAPI Zod conversion is intentionally limited; no full resolver-chain e2e test exists.
+- Shared-package review:
+  - Reuse `@scramjet/api-router` route definitions, resolver definitions, manifests, `bindRoutes`, `bindResolvers`, `bindResolver`, `routeBinding`, `resolverBinding`, generic client, HTTP/verser2 transports, schema-mode loading, and OpenAPI generation.
+  - Reuse `@scramjet/rest-api2` schemas/contracts as the public v2 DTO source; future route tree should derive current route sets/routers rather than duplicating them.
+  - No config parser, runtime adapter, runner, or runtime protocol packages are in scope for Phase 1 or the route/client-only track unless later validation exposes a direct dependency.
+- Baseline validation:
+  - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 17 tests.
+  - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 45 tests.
+  - `packages/host`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/api-v2-hotwire.spec.ts test/api-v2-instance-hotwire.spec.ts test/api-versioned-routing.spec.ts` — passed, 42 tests.
+  - `packages/manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
+  - `packages/multi-manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
+  - Baseline grep checks recorded for `/api/v2/managers`, `managerId`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, and `HostInfoResponse`; current matches are expected before Phase 3 terminology replacement.
+- Phase 1 checkpoint commit: `fa42032b`.
+- Phase 2 sequencing correction:
+  - User rejected preserving old public v2 Manager/Host names as temporary compatibility.
+  - Revised Oracle review recommended collapsing the Phase 2/Phase 3 public-surface work so no checkpoint lands a public route tree with legacy Manager/Host API names.
+  - The flawed uncommitted route-tree edit that preserved `multiManager`/`manager`/`host` compatibility exports was reverted before implementation.
+  - Phase 2 will introduce `RestAPI2RouteTree`, `RestAPI2RouteSets`, and `RestAPI2Routes` directly with Root/Space/Hub/Instance public terminology, replacing `/api/v2/managers/:managerId` with `/api/v2/spaces/:spaceId` and removing public old-name aliases.
+- Phase 2/3 combined implementation summary:
+  - Added final public `RestAPI2RouteTree` hierarchy: Root → Space → Hub → Instance, with Sequence and endpoint groups under Hub/Instance.
+  - Replaced public route-set/router exports with `root`, `space`, `hub`, `sequence`, and `instance`; old public `multiManager`, `manager`, and `host` route-set/router aliases were not retained.
+  - Replaced public `/api/v2/managers/:managerId/...` paths with `/api/v2/spaces/:spaceId/...`, `RestAPI2.Manager`/`MultiManager` with `RestAPI2.Space`/`Root`, and public v2 route IDs with `root.v2.*`, `space.v2.*`, and `hub.v2.*`.
+  - Updated Host, Manager, and MultiManager v2 bindings to consume tree-derived final public route sets while keeping internal implementation package/class names unchanged.
+  - Updated `docs/api.md`, `packages/rest-api2/README.md`, and `packages/api-router/README.md` to document Root/Space/Hub/Instance terminology.
+- Phase 2/3 validation:
+  - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 18 tests.
+  - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 45 tests.
+  - `packages/host`: focused v2 route tests under memory guard — passed, 42 tests.
+  - `packages/manager`: focused v2 route tests under memory guard — passed, 11 tests.
+  - `packages/multi-manager`: focused v2 route tests under memory guard — passed, 8 tests.
+  - `git diff --check` — passed.
+  - `npm run lint` — failed in unrelated `packages/api-server` test files; classified preexisting/out-of-scope after consulting `conductor/known-solutions.md`.
+  - Narrowed root ESLint over all changed TypeScript files OOMed under the default memory guard; smaller source-file chunks were used instead.
+  - Source lint chunks passed for changed `rest-api2`, `multi-manager`, and `host` files; changed `manager` files had only a preexisting out-of-scope complexity warning in `packages/manager/src/lib/manager.ts`.
+  - Direct root ESLint on changed package test files failed because `tsconfig.base.json` does not include those test files; package AVA tests were used as the executable validation for changed tests.
+  - Public code/docs grep checks for `/api/v2/managers`, `managers/:managerId`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `multi-manager.v2`, `manager.v2`, and `host.v2` — passed for `packages/` and `docs/api.md`. Remaining matches are limited to Conductor spec/plan/archive text and v1 generated type docs.
+  - Combined Phase 2/3 checkpoint commit: `bbf2f71c`.
+- Phase 4 implementation summary:
+  - Added route-tree-backed fluent clients in `@scramjet/rest-api2`: `createRootClient`, `createSpaceClient`, `createHubClient`, and `createInstanceClient`.
+  - Fluent endpoint methods dispatch through the existing generic `createRestAPI2Client`, route manifests, and HTTP/verser2-compatible transport contract.
+  - Root clients support `.space(spaceId)`, Space clients support `.hub(hubId)`, and Hub clients support `.instance(instanceId)` with resolver params forwarded to the transport request.
+  - Added focused fluent client tests for nested Root → Space → Hub → Instance health calls, direct level clients, and representative body/query/header forwarding.
+  - Updated `packages/rest-api2/README.md` with fluent client examples.
+- Phase 4 validation:
+  - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 21 tests.
+  - Source lint: `npx eslint packages/rest-api2/src/client.ts packages/rest-api2/src/routes.ts` under memory guard — passed.
+  - Focused Host, Manager, and MultiManager v2 route tests under memory guard — passed after adding the Space health contract.
+  - Phase 4 checkpoint commit: `55599a1a`.
+- Phase 4 manual verification correction:
+  - User rejected the prior Manager v2 health implementation because `/api/v2/health` was registered separately in `Manager.setupHealthEndpoint` and skipped in the normal Space route binding.
+  - Moved the Space health implementation into `packages/manager/src/lib/api/manager-api-v2.ts` at the route binding point and kept `Manager.setupHealthEndpoint` responsible only for legacy v1 health registration.
+  - Focused Manager validation: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
+  - Focused Manager source lint: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
+  - Phase 4 correction checkpoint commit: `25034fc6`.
+  - User requested a follow-up cleanup to keep complex health summary logic out of API handlers and in Manager/MultiManager-owned code.
+  - Moved Space health summary construction into `Manager.getV2HealthCheckInfo()` and Root health summary construction into `MultiManager.getV2HealthCheckInfo()`; v2 API handlers now only bind route contracts to those owner methods.
+  - Focused Manager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
+  - Focused MultiManager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
+  - Focused Manager/MultiManager source lint after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts packages/multi-manager/src/lib/api/multi-manager-api-v2.ts packages/multi-manager/src/lib/multi-manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
+  - Phase 4 owner-method cleanup checkpoint commit: `c66707fd`.
+  - Phase 4 manual verification approved by user after owner-method cleanup.
+
+## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
+
+- [x] Task: Create dedicated branch and PR review surface for the API v2 final structure track
+    - [x] Confirm current base branch and working tree status
+    - [x] Create a dedicated track branch unless the user explicitly omits branch setup
+    - [x] Prepare PR title/description describing the intended Root/Space/Hub/Instance route-tree and fluent-client state
+    - [x] Create or update the PR when remote permissions and workflow allow
+- [x] Task: Confirm affected packages, entrypoints, and expected behavior
+    - [x] Read codemaps for `packages/rest-api2`, `packages/api-router`, `packages/host`, `packages/manager`, `packages/multi-manager`, and relevant docs/tests
+    - [x] Inventory current `RestAPI2RouteSets`, `RestAPI2Routes`, route contract schemas, resolver target definitions, OpenAPI generation, schema-mode loading, and generic client usage
+    - [x] Inventory current runtime v2 route binding in Host, Manager, MultiManager, and Instance implementations
+    - [x] Inventory public v2 Manager/Host terminology in route paths, params, operation IDs, tests, generated docs, `docs/api.md`, and README examples
+- [x] Task: Review shared packages and reusable contracts before changes
+    - [x] Confirm reusable `@scramjet/api-router` exports for route definitions, resolver definitions, manifests, binders, client transports, and OpenAPI generation
+    - [x] Confirm reusable `@scramjet/rest-api2` schemas/contracts that should remain the public v2 DTO source
+    - [x] Confirm no parser/config/runtime-adapter packages should be changed for this route/client-only track
+    - [x] Record intentional non-use of shared code when behavior is specific to v2 routing or public API contracts
+- [x] Task: Establish baseline validation and terminology checks
+    - [x] Run focused `@scramjet/rest-api2` and `@scramjet/api-router` tests/typechecks under the memory guard
+    - [x] Run focused Host, Manager, and MultiManager v2 route tests/typechecks under the memory guard
+    - [x] Add or record grep checks for current public `/api/v2/managers`, `managerId`, and public Host wording so later phases can prove removal
+    - [x] Record baseline command results, skipped checks, and known failures in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Current Surface Inventory, and Review Surface' (Protocol in workflow.md)
+    - [x] Create a scoped Phase 1 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 1: Manual Verification` so the checkpoint is visible in the PR
+
+## Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers
+
+Phase 2 is intentionally combined with the public terminology replacement work from Phase 3 for route contracts, route-set exports, runtime bindings, tests, and public docs that must change together. No public compatibility aliases for old Manager/Host v2 names should be introduced.
+
+- [x] Task: Design and introduce `RestAPI2RouteTree`
+    - [x] Define a typed route-tree model that preserves route keys, resolver keys, schemas, owner metadata, public path composition, and implementer path metadata
+    - [x] Model the public hierarchy as Root → Space → Hub → Instance, with Sequence, Topic, Storage, StdIO, Events, RPC, Logs, and Audit groups as typed children or route groups
+    - [x] Ensure route tree definitions reuse existing Zod DTO schemas instead of redefining contract shapes
+    - [x] Keep the tree runtime-neutral and handlerless
+- [x] Task: Derive route-set accessors from the route tree
+    - [x] Provide typed route-set accessors for Root, Space, Hub, Sequence, Instance, and supporting groups
+    - [x] Remove old public `multiManager`/`manager`/`host` route-set exports instead of preserving compatibility aliases
+    - [x] Ensure route-set keys remain available to TypeScript for client and runtime binding coverage
+    - [x] Add tests proving route keys and schema inference survive tree-derived route sets
+- [x] Task: Derive router factories from the route tree
+    - [x] Rebuild `RestAPI2Routes.*.router()` factories from `RestAPI2RouteTree`
+    - [x] Preserve existing router manifest collection behavior for runtime-local routes
+    - [x] Preserve resolver-expanded manifest behavior for client/OpenAPI public nested paths
+    - [x] Add tests proving derived routers expose final expected route IDs and public paths
+- [x] Task: Wire existing runtime router contracts through tree-derived route sets
+    - [x] Refactor Host v2 route binding to consume tree-derived Hub, Sequence, and Instance route sets
+    - [x] Refactor Manager v2 route binding to consume tree-derived Space route sets and Hub resolver contracts
+    - [x] Refactor MultiManager v2 route binding to consume tree-derived Root route sets and Space resolver contracts
+    - [x] Preserve v1 routes and v1 compatibility adapters unchanged
+- [x] Task: Automated verification gate for route tree derivation
+    - [x] Run `@scramjet/rest-api2` tests/typecheck
+    - [x] Run `@scramjet/api-router` tests/typecheck if route tree requires api-router type changes
+    - [x] Run focused Host, Manager, and MultiManager v2 route tests/typechecks
+    - [x] Run narrowed lint for changed source/test files where feasible
+    - [x] Record validation results and deduplication findings in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers' (Protocol in workflow.md)
+    - [x] Create a scoped Phase 2 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 2: Manual Verification` so the checkpoint is visible in the PR
+
+## Phase 3: Public v2 Space/Hub Terminology Replacement
+
+- [x] Task: Rename public route contracts and params from Manager/Host to Space/Hub concepts
+    - [x] Replace public `managerId` params with `spaceId` in v2 schemas, resolver contracts, route contracts, and type names
+    - [x] Replace public `Manager` v2 DTO concepts with `Space` concepts while keeping internal Manager implementation names where appropriate
+    - [x] Replace public Host terminology with Hub terminology in route contracts, generated docs, route IDs, and examples
+    - [x] Preserve internal package/class/file names unless public contract cleanup requires local variable renaming
+- [x] Task: Replace public v2 paths and operation IDs
+    - [x] Replace `/api/v2/managers/:managerId/...` with `/api/v2/spaces/:spaceId/...`
+    - [x] Ensure Root-level routes expose Space collection and Space resolver terminology
+    - [x] Ensure Space-level routes expose Hub collection and Hub resolver terminology
+    - [x] Remove public `/api/v2/managers/...` route aliases rather than keeping compatibility aliases
+- [x] Task: Update tests for final public terminology
+    - [x] Update rest-api2 route-set, manifest, OpenAPI, and client tests to expect Root/Space/Hub/Instance terminology
+    - [x] Update Host, Manager, MultiManager v2 route tests to expect Space/Hub public routes while preserving internal implementation ownership
+    - [x] Add negative grep or assertion checks proving public v2 manifests/docs do not expose `/api/v2/managers` or `managerId`
+    - [x] Keep v1 tests unchanged and separate
+- [x] Task: Update base API documentation for final terminology
+    - [x] Update `docs/api.md` to use Root, Space, Hub, and Instance as public v2 concepts
+    - [x] Remove public Manager/Host wording from v2 endpoint tables and examples
+    - [x] Document that Manager/Host names are internal implementation owners only
+    - [x] Update package README examples that show public v2 routes or client usage
+- [x] Task: Automated verification gate for terminology replacement
+    - [x] Run rest-api2 tests/typecheck and OpenAPI/schema-mode fixture tests
+    - [x] Run focused Host, Manager, MultiManager v2 tests/typechecks
+    - [x] Run grep checks for disallowed public v2 `managers`, `managerId`, and Host-as-public-concept occurrences in generated/public docs and route contracts
+    - [x] Run narrowed lint and `git diff --check`
+    - [x] Record validation results and any intentionally retained internal Manager/Host references in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Public v2 Space/Hub Terminology Replacement' (Protocol in workflow.md)
+    - [x] Covered by the combined Phase 2/3 checkpoint commit and manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 3: Manual Verification` so the checkpoint is visible in the PR
+
+## Phase 4: Fluent Client Type Model and Runtime Builder
+
+- [x] Task: Define fluent client node types derived from the route tree
+    - [x] Add type-level helpers that convert a route definition into endpoint methods such as `.get()`, `.post()`, `.put()`, `.patch()`, and `.delete()`
+    - [x] Infer endpoint request params, query, headers, body, and response body from route schemas
+    - [x] Add type-level helpers that convert resolver/child definitions into nested functions such as `.space(spaceId)`, `.hub(hubId)`, and `.instance(instanceId)`
+    - [x] Ensure the client type is derived from `RestAPI2RouteTree` rather than manually duplicating the hierarchy
+- [x] Task: Implement fluent client runtime over the existing generic client
+    - [x] Implement a generic tree-based fluent client builder that dispatches through the existing manifest client and transport stack
+    - [x] Generate operation IDs and params internally from the tree path/resolver context
+    - [x] Preserve HTTP and verser2 transport support through existing `createHttpClientTransport` and `createVerser2ClientTransport`
+    - [x] Keep the existing low-level `createRestAPI2Client` as a supported base primitive unless later tree-shaking approval removes or narrows it
+- [x] Task: Add first-class client factories for each public level
+    - [x] Add `createRootClient(...)`
+    - [x] Add `createSpaceClient(...)`
+    - [x] Add `createHubClient(...)`
+    - [x] Add `createInstanceClient(...)`
+    - [x] Ensure each factory can be constructed from a known base endpoint and transport without requiring higher-level IDs
+- [x] Task: Add fluent client tests and examples
+    - [x] Add tests for `root.health.get()`, `root.space(spaceId).health.get()`, `root.space(spaceId).hub(hubId).health.get()`, and `root.space(spaceId).hub(hubId).instance(instanceId).health.get()`
+    - [x] Add tests proving direct Space, Hub, and Instance clients dispatch with the correct base route and infer correct response types
+    - [x] Add tests for body/query/header typing on representative write and stream endpoints
+    - [x] Add no-circumvention/request-probe tests proving fluent client calls issue real transport requests
+- [x] Task: Automated verification gate for fluent client
+    - [x] Run rest-api2 tests/typecheck including fluent client type tests
+    - [x] Run api-router tests/typecheck if generic client or transport types changed
+    - [x] Run focused Host, Manager, MultiManager route tests where manifests are consumed by the fluent client
+    - [x] Run docs example typecheck if examples are compiled or covered by tests
+    - [x] Record validation results in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Fluent Client Type Model and Runtime Builder' (Protocol in workflow.md)
+    - [x] Create a scoped Phase 4 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 4: Manual Verification` so the checkpoint is visible in the PR
+
+## Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients
+
+- Phase 5 start notes:
+  - Affected packages/entrypoints: `packages/api-router/src/bind.ts`, `packages/api-router/test/bind.spec.ts`, `packages/rest-api2/src/routes.ts`, `packages/rest-api2/src/client.ts`, `packages/rest-api2/test/client.spec.ts`, `packages/rest-api2/test/routes.spec.ts`, and existing Host/Manager/MultiManager v2 bindings that consume `bindRoutes`/`bindResolver`.
+  - Shared-package review: reuse existing `@scramjet/api-router` binding helpers, route definitions, manifests, and generic client transport; reuse `@scramjet/rest-api2` route tree/route-set accessors and fluent client runtime rather than adding implementation-local coverage helpers.
+  - Initial gap inventory: route binding exact-key checks already exist in `bindRoutes` but need stronger executable coverage for skip, handler overrides, plural resolver bindings, and active `@ts-expect-error` type regression cases; fluent clients need coverage assertions/error-path tests around route-method exposure and missing manifest routes; RPC opaque route-group metadata exists but is not formally typed/tested; custom route tree/client support needs a minimal typed fixture.
+  - Implementation summary:
+    - Preserved HTTP method literals in `@scramjet/api-router` facade route definitions so fluent clients expose only the contract method instead of all HTTP verbs.
+    - Expanded `bindRoutes`/`bindResolvers` tests to cover `skip`, `contractOnly`, handler metadata overrides, plural resolver binding, missing/extra binding type failures, wrong params, and wrong response shapes.
+    - Added typed route-group metadata and `getOpaqueRouteKeys()` for explicit opaque RPC exceptions.
+    - Excluded opaque Instance RPC from standard fluent clients and added a generic `createFluentClientFromRouteTreeNode()` fixture path for custom RestAPI2-compatible route nodes.
+    - Added fluent client tests for direct-level non-health endpoints, missing manifest coverage, custom route tree clients, method-specific endpoint typing, schema-shaped requests, resolver param typing, and opaque RPC exclusion.
+  - Phase 5 validation:
+    - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 47 tests.
+    - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 27 tests. One session-introduced assertion issue was fixed by using `t.throws()` for a synchronous missing-manifest error.
+    - Focused Host v2 route tests under memory guard — passed, 42 tests.
+    - Focused Manager v2 route tests under memory guard — passed, 11 tests.
+    - Focused MultiManager v2 route tests under memory guard — passed, 8 tests.
+    - Focused source lint for changed `api-router`/`rest-api2` source files under memory guard — passed.
+    - Focused package builds/typechecks: `packages/api-router` and `packages/rest-api2` `npm run build` under memory guard — passed.
+    - Phase 5 checkpoint commit: `41641a76`.
+    - Phase 5 manual verification approved by user.
+
+- [x] Task: Strengthen runtime binding coverage checks
+    - [x] Ensure adding a normal route to a route set fails typecheck in the owning runtime implementation until a handler is added
+    - [x] Ensure extra handler keys fail typecheck
+    - [x] Ensure wrong params/body/query/header usage fails typecheck
+    - [x] Ensure wrong response shape fails typecheck
+    - [x] Keep explicit skip/forward/contract-only behavior available only where justified and recorded
+- [x] Task: Strengthen fluent client coverage checks
+    - [x] Ensure adding a normal route to a route set fails typecheck in the fluent client mapping until the client exposes it
+    - [x] Ensure generated endpoint methods preserve method-specific request and response types
+    - [x] Ensure nested resolver routes are covered by fluent nested clients
+    - [x] Add runtime manifest-vs-client coverage assertions where TypeScript cannot directly prove coverage
+- [x] Task: Define and test RPC/custom route tree exceptions
+    - [x] Mark RPC endpoints as explicit opaque/dynamic escapes in route metadata and docs
+    - [x] Add a custom RestAPI2-compatible route tree fixture representing a user/sequence-provided route set
+    - [x] Prove a typed custom client can be constructed from the custom route tree
+    - [x] Prove opaque RPC exceptions do not weaken strict coverage for normal endpoints
+- [x] Task: Add compile-time regression tests for route additions
+    - [x] Add type tests that intentionally simulate a new route missing from runtime binding and assert a compile-time failure
+    - [x] Add type tests that intentionally simulate a new route missing from fluent client coverage and assert a compile-time failure
+    - [x] Add type tests for resolver param inference from `spaceId`, `hubId`, and `instanceId`
+    - [x] Add type tests proving route schemas cannot be weakened by implementation-local handlers
+- [x] Task: Automated verification gate for coverage guards
+    - [x] Run rest-api2 type tests and package tests
+    - [x] Run api-router type tests if binding utilities changed
+    - [x] Run Host, Manager, MultiManager build typechecks
+    - [x] Run narrowed lint and `git diff --check`
+    - [x] Record validation results and any explicit exceptions in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients' (Protocol in workflow.md)
+    - [x] Create a scoped Phase 5 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 5: Manual Verification` so the checkpoint is visible in the PR
+
+## Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal
+
+- Phase 6 inventory:
+  - Remove-now candidates requiring approval:
+    - `packages/rest-api2/src/client.ts` transport re-exports: `createHttpClientTransport`, `createVerser2ClientTransport`, and `ApiClientTransport`. These are re-exported from `@scramjet/api-router`; package search found no production consumers importing them from `@scramjet/rest-api2`. Risk: low for current repo, possible external import breakage.
+    - `packages/rest-api2/src/routes.ts` `getRestAPI2Route()`. Search found no production consumers; remaining usages are in `packages/rest-api2/test/schemas.spec.ts`. Removal would require replacing test usages with a local helper. Risk: low, but it is exported package surface.
+  - Removal candidates not recommended for this phase:
+    - v2 hotwire route-registration tests in Host/Manager/MultiManager overlap with route-tree tests but still exercise runtime handler binding and adapted behavior. Recommendation: keep; do not remove test coverage in this track.
+  - Keep as low-level generic infrastructure:
+    - `createRestAPI2Client()` and `RestAPI2.Client*` types; these remain the low-level base for fluent clients.
+    - `RestAPI2RouteSets`, `RestAPI2Routes`, `getOpaqueRouteKeys()`, route tree type helpers, `routerFromRouteSet()`, route manifest generation, schema-mode loading, OpenAPI generation, HTTP transport, and verser2 transport.
+  - Keep temporarily / defer:
+    - `RestAPI2Schemas` compatibility object remains heavily used by `packages/rest-api2/src/routes.ts`.
+    - Legacy client packages (`packages/api-client`, `packages/client-utils`, `packages/multi-manager-api-client`, `packages/middleware-api-client`) are still used by CLI, runners, BDD steps, and app context tests; removal requires a separate CLI/runner migration track.
+    - v1 compatibility route handlers must be preserved by spec.
+    - Host contract-only upload/update/RPC placeholders and Manager v2 storage compatibility proxy are known migration gaps requiring separate storage/RPC extraction work.
+  - User interview outcome: user selected "No removals". All remove-now candidates are deferred; no public or semi-public code was removed in Phase 6.
+  - Approved removals: none.
+  - Rejected/deferred removals: rest-api2 transport re-exports, `getRestAPI2Route()`, and all other inventoried surfaces.
+  - Phase 6 validation: no code removal was performed; `git diff --check` passed for the plan-only Phase 6 update.
+  - Phase 6 checkpoint commit: `3364f141`.
+  - Phase 6 manual verification approved by user.
+
+- [x] Task: Inventory old v2-related surfaces after the route tree and fluent client are in place
+    - [x] Search for old v2 route builders, helper functions, public aliases, generated operation IDs, client helpers, test-only utilities, docs, and README examples superseded by the route tree and fluent client
+    - [x] Classify each candidate as remove now, keep as low-level generic infrastructure, keep temporarily, or uncertain
+    - [x] Identify dependencies and risks for every removal candidate
+    - [x] Confirm that generic manifest client, HTTP/verser2 transports, route manifest generation, schema-mode loading, and OpenAPI generation remain unless explicitly approved for removal
+- [x] Task: Conduct required user interview before removals
+    - [x] Present the candidate removal list, risk classification, and recommended action to the user through the ask_user tool
+    - [x] Ask for explicit approval before removing public or semi-public code
+    - [x] Record approved removals, rejected removals, and deferred removals in `plan.md`
+    - [x] Do not remove unapproved candidates
+- [x] Task: Remove approved obsolete v2 surfaces
+    - [x] Remove approved old aliases, helpers, docs, tests, or exports
+    - [x] Update imports and package exports after removals
+    - [x] Add typechecks/tests proving removed exports are not used by current packages
+    - [x] Update docs to mention retained low-level infrastructure and any deferred compatibility surfaces
+- [x] Task: Automated verification gate for approved tree-shaking
+    - [x] Run rest-api2 and api-router tests/typechecks
+    - [x] Run focused Host, Manager, MultiManager tests/typechecks affected by removals
+    - [x] Run package build or narrowed build covering removed exports
+    - [x] Run narrowed lint and `git diff --check`
+    - [x] Record validation results, approved removals, retained surfaces, and deferred removals in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal' (Protocol in workflow.md)
+    - [x] Create a scoped Phase 6 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 6: Manual Verification` so the checkpoint is visible in the PR
+
+## Phase 7: Final Documentation, OpenAPI, and Integration Validation
+
+- Phase 7 start notes:
+  - Affected final documentation surfaces: `docs/api.md`, `packages/rest-api2/README.md`, `packages/api-router/README.md`, generated/fixture OpenAPI and schema-mode routes, and final package validation for `api-router`, `rest-api2`, Host, Manager, and MultiManager.
+  - Documentation update summary: refreshed final Root/Space/Hub/Instance endpoint tables, route-tree source-of-truth notes, fluent client examples, custom fluent client notes, opaque RPC exception notes, and generic router method-literal guidance.
+  - Oracle final review summary: initial review found docs drift, operation ID source-of-truth split, and fluent-client resolver-prefix maintainability debt; docs drift was patched. Final review then found missing Hub health documentation, `/spaces` returning Root-shaped items instead of Space-shaped items, stale Hub RPC representative coverage, and remaining implementation-owner terminology in stream notes; all blocking drift items were fixed in this phase. Deferred non-blocking issues are operation ID standardization and deriving fluent resolver prefixes from the route tree.
+  - `/api/v2/spaces` finalization: route schema now uses `ListResponse<Space>` (`listResponse(Space)`), MultiManager v2 maps manager records to public Space items (`id`, optional `hubs`), and the focused MultiManager v2 test expectation was updated accordingly.
+  - OpenAPI verification: generated expanded RestAPI2 OpenAPI from `RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true })` into `/tmp/opencode/rest-api2-openapi.json`; 56 paths were emitted; required Root, Space, Hub, Instance, stdio, and instance RPC paths were present; no generated path included `/api/v2/managers` or `:managerId`; `/api/v2/spaces` response schema contains Space items with `id` and optional `hubs`.
+  - OpenAPI caveat: `@scramjet/api-router` currently emits route paths with Express-style `:param` syntax, matching existing tests; converting to OpenAPI `{param}` path templating is deferred as an api-router output-format improvement.
+  - Final validation:
+    - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 47 tests.
+    - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 27 tests after the `/spaces` and representative RPC fixes.
+    - Focused Host v2 route tests under memory guard — passed, 42 tests.
+    - Focused Manager v2 route tests under memory guard — passed, 11 tests.
+    - Focused MultiManager v2 route tests under memory guard — passed, 8 tests after the Space item mapping fix.
+    - Package build equivalent: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node scripts/build-all.js -v -w modules --ts-config tsconfig.build.json --no-install --no-distws` — passed. Earlier `npm run build:packages` completed TypeScript package builds but aborted during the broader dist workspace prepack/install step under the memory guard, so the narrower equivalent was used and recorded.
+    - Focused source lint: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/api-router/src/api.ts packages/rest-api2/src/client.ts packages/rest-api2/src/routes.ts packages/multi-manager/src/lib/api/multi-manager-api-v2.ts` — passed.
+    - `git diff --check` — passed.
+    - Public v2 terminology grep checks for `/api/v2/managers`, `managers/:managerId`, old public `RestAPI2.Manager`/`RestAPI2.MultiManager`, old route-set/router aliases, and old v2 operation ID prefixes in `packages/` and `docs/` — passed.
+    - `npm run test:bdd-ci-api-node` was skipped because this phase only changed docs plus contract/schema alignment covered by package, focused runtime, build, OpenAPI, and grep validation; no new cross-package HTTP runtime behavior required a BDD smoke rerun.
+  - Deduplication/shared package review: v2 route contracts remain centralized in `@scramjet/rest-api2`, generic router/client/OpenAPI primitives remain in `@scramjet/api-router`, and runtime packages bind shared contracts locally. No repeated helpers were introduced. Manual endpoint tables remain the main drift risk and were verified against the expanded route manifest during this phase.
+  - Phase 7 checkpoint commit: `fe873b73`.
+  - Phase 7 checkpoint/push record commit: `64c22862`; review branch pushed through `64c22862` before manual verification.
+  - Phase 7 manual verification approved by user.
+
+- [x] Task: Finalize public API and client documentation
+    - [x] Update `docs/api.md` with final Root/Space/Hub/Instance endpoint tables and fluent client examples
+    - [x] Update `packages/rest-api2/README.md` with route tree, route-set accessors, fluent client factories, and custom route tree examples
+    - [x] Update `packages/api-router/README.md` only where route tree/client integration affects generic router documentation
+    - [x] Document how adding a route once updates runtime bindings, fluent clients, expanded manifests, and OpenAPI
+- [x] Task: Regenerate or verify OpenAPI output
+    - [x] Generate OpenAPI from schema-mode or fixture route tree definitions
+    - [x] Verify public paths use `/api/v2/spaces/:spaceId/...` and do not expose public `/api/v2/managers/:managerId/...`
+    - [x] Verify response/request schemas remain present for representative Root, Space, Hub, Instance, Stream, and Operation endpoints
+    - [x] Store or compare deterministic fixture output where appropriate
+- [x] Task: Run final deduplication and shared package review
+    - [x] Confirm route definitions, schemas, resolver metadata, fluent client mapping, and OpenAPI metadata are not duplicated across packages
+    - [x] Move repeated helpers into `@scramjet/api-router` or `@scramjet/rest-api2` where safe
+    - [x] Ask Oracle for a read-only maintainability/deduplication review before final checkpoint
+    - [x] Record deduplication results and accepted tradeoffs in `plan.md`
+- [x] Task: Automated final verification gate
+    - [x] Run `npm run build:packages` or the narrowest equivalent covering changed packages
+    - [x] Run relevant package tests for `api-router`, `rest-api2`, Host, Manager, and MultiManager
+    - [x] Run relevant typechecks for changed packages
+    - [x] Run `npm run lint` or narrowed changed-file lint where appropriate
+    - [x] Run `npm run test:bdd-ci-api-node` only if public HTTP behavior or v1/v2 integration changes require cross-package smoke validation
+    - [x] Run final grep checks for disallowed public Manager/Host v2 terminology in docs, OpenAPI fixtures, route contracts, and client examples
+    - [x] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 7: Final Documentation, OpenAPI, and Integration Validation' (Protocol in workflow.md)
+    - [x] Create a scoped Phase 7 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [x] Begin the manual verification request/note with `Phase 7: Manual Verification` so the checkpoint is visible in the PR

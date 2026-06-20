@@ -2,24 +2,25 @@
 
 ## Responsibility
 
-Multi-Manager is the Scramjet Cloud Platform control plane that orchestrates multiple `@scramjet/manager` instances. It exposes a REST API for lifecycle management (start/stop/list) of sub-Managers, aggregates audit logs and common log streams, and hosts verser2 routing for STH-to-Manager connectivity. It also provides load-check gating, health monitoring, and optional S3 persistence configuration for sub-Managers.
+Multi-Manager is the Scramjet Cloud Platform control plane that orchestrates multiple `@scramjet/manager` instances. It exposes a REST API (v1 and v2) for lifecycle management (start/stop/list) of sub-Managers, aggregates audit logs and common log streams, and hosts verser2 routing for STH-to-Manager connectivity. It also provides load-check gating, health monitoring, and optional S3 persistence configuration for sub-Managers.
 
 ## Design/Patterns
 
-- **Sub-Manager lifecycle**: Runs child `Manager` processes as in-process instances (`new Manager(...)`) managed via `ManagersStore`. Supports start requested via API or through CLI/config pre-population.
+- **Sub-Manager lifecycle**: Runs child `Manager` processes as in-process instances managed via `ManagersStore`. Supports start requested via API or through CLI/config pre-population.
 - **verser2 transport**: Starts a verser2 Host and attaches local Broker/Guest peers for each managed Manager instance.
-- **Config merge pipeline**: CLI options parsed by `@scramjet/config`, merged with JSON file config and compile-time defaults in `MultiManagerConfig` (extends `ReadOnlyConfig`).
-- **Auditor aggregation**: `MultiManagerAuditor` multiplexes audit streams from all sub-Managers into a single `ReReadable` output, streamed to API consumers on demand.
-- **Generic `Store<T>`**: Typed Map-based registry (extended by `ManagersStore`) for safe collection management.
-- **Health & monitoring**: `HealthCheck` attached to the API HTTP server; optional `MonitoringServer` on a separate port for external health probes.
+- **Config merge pipeline**: CLI options parsed by `@scramjet/config`, merged with JSON file config and compile-time defaults in `MultiManagerConfig`.
+- **Auditor aggregation**: `MultiManagerAuditor` multiplexes audit streams from all sub-Managers into a single `ReReadable` output.
+- **V1 + V2 API**: `MultiManagerAPIHandler` composes `MultiManagerAPIV1Handler` (legacy) and `MultiManagerAPIV2Handler` (v2 via `@scramjet/api-router` contracts). V2 uses verser2 redirect resolver for Space-owned routes.
+- **Health & monitoring**: `HealthCheck` attached to the API HTTP server; optional `MonitoringServer` on a separate port.
 
 ## Data & Control Flow
 
-1. `src/bin/start.ts` parses CLI flags via `parseCliOptions`, constructs `MultiManagerConfig` (merging defaults, file config, and CLI), creates an `APIExpose` HTTP server, and instantiates `MultiManager`.
-2. `MultiManager.start()` sets up API routing, starts the verser2 Host, optionally starts `MonitoringServer`, begins listening on the configured host:port, and optionally starts pre-configured Manager instances.
+1. `src/bin/start.ts` parses CLI flags, constructs `MultiManagerConfig`, creates an `APIExpose` HTTP server, and instantiates `MultiManager`.
+2. `MultiManager.start()` sets up API routing (v1+v2), starts the verser2 Host, optionally starts `MonitoringServer`, begins listening, and optionally starts pre-configured Manager instances.
 3. Each managed Manager gets local verser2 Broker/Guest peers attached to the MultiManager Host for STH routing.
 4. REST API calls to `/api/v1/start` spawn new Manager instances (load-check gated); `/api/v1/cpm/:id/*` proxies to the named Manager's router.
-5. Logs from all sub-Managers pipe into `CommonLogsPipe`, exposed as a Server-Sent Events upstream at `/api/v1/log`. Audit events aggregate through `MultiManagerAuditor` at `/api/v1/audit`.
+5. V2 API: `GET /api/v2/...` routes registered via `registerHttpRoutes()`. `/spaces/:spaceId` routes are resolved through verser2 redirect to the target Manager.
+6. Logs/audit from all sub-Managers pipe into `CommonLogsPipe`/`MultiManagerAuditor`, exposed as SSE upstreams.
 
 ## Directory Map
 
@@ -27,20 +28,23 @@ Multi-Manager is the Scramjet Cloud Platform control plane that orchestrates mul
 |-----------|---------------|
 | `src/bin/` | CLI entrypoint (`start.ts`) |
 | `src/config/` | Configuration classes (`MultiManagerConfig`, `MultiManagerServerConfig`) |
-| `src/lib/` | Core orchestration logic (`MultiManager`, manager store, auditor, ports parser, verser2 host/trust helpers) |
+| `src/lib/` | Core orchestration logic (`MultiManager`, manager store, auditor, ports parser, verser2 host/trust helpers, API handlers) |
+| `src/lib/api/` | V1 and V2 REST API handlers (`MultiManagerAPIHandler`, `MultiManagerAPIV1Handler`, `MultiManagerAPIV2Handler`) |
 | `src/types/` | Shared type definitions for options, commands, and API request params |
-| `src/index.ts` | Barrel export (re-exports `portsParser` from `lib/ports-parser`) |
+| `src/index.ts` | Barrel export |
 
 ## Integration Points
 
-- **`@scramjet/api-server`**: Creates the HTTP server (`APIExpose`) and registers routes.
-- **`@scramjet/config`**: CLI option parsing (`parseCliOptions`).
-- **`@scramjet/manager`**: Sub-Manager lifecycle, audit streams, health endpoints, and verser2 STH routing helpers.
+- **`@scramjet/api-server`**: HTTP server (`APIExpose`) and route registration.
+- **`@scramjet/api-router`**: Route contracts, binding, HTTP adapter for v2 API.
+- **`@scramjet/rest-api2`**: V2 route sets and schemas for Root-owned routes.
+- **`@scramjet/config`**: CLI option parsing.
+- **`@scramjet/manager`**: Sub-Manager lifecycle, audit streams, health endpoints, verser2 STH routing helpers.
 - **`@scramjet/manager-config`**: Default Manager configuration factory.
-- **`@signicode/verser2-host` / `@signicode/verser-common`**: verser2 Host and route/trust support for Manager/STH connectivity.
-- **`@scramjet/load-check`**: Resource pressure gating before spawning new Managers.
-- **`@scramjet/monitoring-server`**: Health-check endpoint on a separate port.
-- **`@scramjet/obj-logger`**: Structured logging with pipe/stream support.
+- **`@signicode/verser2-host` / `@signicode/verser-common`**: verser2 Host and route/trust support.
+- **`@scramjet/load-check`**: Resource pressure gating.
+- **`@scramjet/monitoring-server`**: Health-check endpoint on separate port.
+- **`@scramjet/obj-logger`**: Structured logging.
 - **`@scramjet/utility`**: `ReadOnlyConfig`, `FreePortsFinder`, `promiseTimeout`, `merge`, `readJsonFile`.
-- **`@scramjet/types`**: Type contracts (`MMRestAPI`, `LoadCheckRequirements`, `ManagerConfiguration`, etc.).
+- **`@scramjet/types`**: Type contracts (`MMRestAPI`, `LoadCheckRequirements`, `ManagerConfiguration`).
 - **`scramjet`**: DataStream / StringStream / MultiStream for log and audit stream processing.

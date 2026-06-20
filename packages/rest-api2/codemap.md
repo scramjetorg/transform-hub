@@ -2,15 +2,28 @@
 
 ## Responsibility
 
-`@scramjet/rest-api2` owns v2 REST API public contracts and the single common v2 client used across MultiManager, Manager, Host, Sequence, Instance/CSI, audit, stdio, and RPC surfaces.
+`@scramjet/rest-api2` owns v2 REST API public contracts and the single common v2 client used across MultiManager, Manager, Host, Sequence, Instance/CSI, audit, stdio, and RPC surfaces. Defines the Root → Space → Hub → Instance route tree as the source of truth.
 
 ## Design / Patterns
 
-- New public API contracts are exported under the `RestAPI2` namespace.
-- The common client dispatches through `@scramjet/api-router` manifests and transports instead of surface-specific clients.
-- Legacy v1 REST DTO namespaces are behavioral references only and must not be exported or aliased by this package.
+- **`RestAPI2` namespace** (`contracts.ts`): Public DTO types for all v2 API responses and request payloads — `Root`, `Space`, `Hub`, `Sequence`, `Instance`, `Topic`, `Entity`, `HealthCheckInfo`, `OpResponse`, `ListResponse`, etc.
+- **Zod schemas** (`schemas.ts`): Runtime validation schemas mirroring all DTOs, plus param/query/header/body schemas for route definitions.
+- **Route tree as source of truth** (`routes.ts`): `RestAPI2RouteTree` defines the hierarchical route structure:
+  - `root` → `/api/v2` (version, info, load, spaces, health, trust, audit)
+    - resolver: `space` → `/spaces/:spaceId`
+  - `space` → version, config, trust, load, health, list/hubs, instances, sequences, all_sequences, entities, topics, topic CRUD+stream, logs, audit, deleteHub, storage operations
+    - resolver: `hub` → `/hubs/:hubId`
+  - `hub` → load, version, config, health, status, sequences, instances, entities, topics, topic CRUD+stream, logs, audit
+    - groups: `sequence` (send, update, delete, start, get), `topics`, `logs`, `audit`
+    - resolver: `instance` → `/instances/:instanceId`
+  - `sequence` → send, update, delete, start, get, getInstances
+  - `instance` → info, delete, patch, stdio, health, output, logs, monitoring, stdioRead, input, stdioWrite, getEvent, getNextEvent, sendEvent, rpc
+    - groups: `stdio`, `events`, `rpc` (opaque), `logs`, `monitoring`
+- **Derived exports**: `RestAPI2RouteSets` (route/resolver sets per tree node) and `RestAPI2Routes` (pre-built `RouterDefinition` factories per node).
+- **Fluent client builder** (`client.ts`): Builds typed fluent clients (`RootClient`, `SpaceClient`, `HubClient`, `InstanceClient`) over `@scramjet/api-router` transports and manifests.
 
 ## Integration Points
 
-- Uses `@scramjet/api-router` for route manifest client dispatch and HTTP/verser2 transport boundaries.
-- Later migration phases wire Host-owned, Manager-owned, and MultiManager-owned route definitions to these contracts.
+- Uses `@scramjet/api-router` for route definitions, manifests, router factories, client transports, and schema-mode/OpenAPI integration.
+- Consumed by Host (`host-api-v2.ts`), Manager (`manager-api-v2.ts`), and MultiManager (`multi-manager-api-v2.ts`) for v2 handler binding and route manifests.
+- Publicly exported through `src/index.ts` as the v2 contract/client package surface.

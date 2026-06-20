@@ -7,11 +7,11 @@ Type definitions for the Multi-Manager package. Defines the configuration shape 
 ## Design/Patterns
 
 - **`MultiManagerServerOptions`**: Typed API server sub-config (url path, host, port, API version).
-- **`MultiManagerOptions`**: Full merged configuration interface extending `LoadCheckRequirements`. Includes log settings, server config, optional Manager pre-configuration, S3 credentials, and optional monitoring server config.
-- **`MultiManagerCommandOptions`**: Flat CLI flag shape after `parseCliOptions()`. All fields are optional or have defaults; non-flat sub-structures (e.g., `manager`) remain as raw strings pending JSON parse in `start.ts`.
-- **`StartManagerRequestParams`**: `DeepPartial<ManagerConfiguration>` for the `POST /start` body.
+- **`MultiManagerOptions`**: Full merged configuration interface extending `LoadCheckRequirements`. Includes log settings, server config, optional Manager pre-configuration, S3 credentials, optional monitoring server config, and verser2 configuration.
+- **`MultiManagerCommandOptions`**: Flat CLI flag shape after `parseCliOptions()`. All fields are optional or have defaults; non-flat sub-structures remain as raw strings pending JSON parse in `start.ts`.
+- **`StartManagerRequestParams`**: `DeepPartial<ManagerConfiguration>` for the `POST /v1/start` body.
 
 ## Integration Points
 
-- Used by `src/config/`, `src/lib/`, and `src/bin/` modules.
+- Used by `src/config/`, `src/lib/`, `src/lib/api/`, and `src/bin/` modules.
 - References `@scramjet/types` (`ApiVersion`, `DeepPartial`, `IdString`, `LoadCheckRequirements`, `LogLevel`, `ManagerConfiguration`, `Port`, `UrlPath`).

@@ -1,7 +1,7 @@
 # `lib/` — Core Manager Library
 
 ## Responsibility
-All core business logic of the Manager: STH connection lifecycle, CPM protocol message handling, aggregated state (sequences, instances, topics), REST API routing, log/audit aggregation, storage routing, and Verser-based transport abstraction.
+All core business logic of the Manager: STH connection lifecycle, CPM protocol message handling, aggregated state (sequences, instances, topics), REST API routing (v1+v2), log/audit aggregation, storage routing, Verser-based transport abstraction, route classification, and verser2 trust export.
 
 ---
 
@@ -10,67 +10,61 @@ All core business logic of the Manager: STH connection lifecycle, CPM protocol m
 ### `manager.ts` — `Manager` class (745 lines)
 Central orchestrator. Implements `IComponent`. Responsibilities:
 - **REST API registration** (`attachManagerAPIs`): ~25 endpoints covering version, config, list, instances, sequences, entities, topics, health, logs, load, store management, STH info, STH proxy, and disconnect.
-- **STH connection handling** (`handleHostConnection`): Accepts incoming Verser connections, deduplicates by ID (supports reconnection), creates `STHController`, registers in `SthConnectionStore`, attaches event handlers for sequences/instances/topics/events.
-- **STH request proxying** (`handleRequestToSTH`): Forwards HTTP requests to the correct STH via Verser agent (HTTP proxy pattern). Handles 100-continue, error disconnect, socket abort.
-- **Event broadcast**: Forwards `SpaceEventMessageData` from one STH to all other connected STHs.
-- **Topic stream handling**: Creates `TopicActor` instances for upstream (consumer) and downstream (provider) API-driven topic streams, registered via `ServiceDiscovery`.
-- **Config**: Reads `build.info.json` and `package.json` at runtime for version/build info.
-- **Initialization**: `main()` creates `/tmp/manager/:id/`, attaches APIs, resolves the `startedPromise`.
+- **Delegates API to `ManagerAPIHandler`**: `manager-api.ts` composes v1 and v2 handlers.
+- **STH connection handling** (`handleHostConnection`): Accepts incoming Verser connections, deduplicates by ID, creates `STHController`, registers in `SthConnectionStore`, attaches event handlers.
+- **STH request proxying** (`handleRequestToSTH`): Forwards HTTP requests via Verser agent.
+- **Event broadcast**: Forwards `SpaceEventMessageData` between STHs.
+- **Topic stream handling**: Creates `TopicActor` instances for upstream/downstream API-driven topic streams.
+- **Config**: Reads `build.info.json` and `package.json` at runtime.
 
 ### `sth-controller.ts` — `STHController` class (477 lines)
 Implements `ISTHController`. Wraps a single STH connection over Verser. Key aspects:
-- **Connection lifecycle**: `init()` → `reconnect(verserConnection)` → `main()` → `hookupStream()`. Sets up the `/api/v1/platform` duplex channel for CPM messages and `/api/v1/log` stream.
-- **CPM message dispatch** (`hostMessageHandler`): Routes messages by `CPMMessageCode` — LOAD (health), NETWORK_INFO, SEQUENCE, SEQUENCES, INSTANCE, INSTANCES, TOPIC, EVENT. Emits typed events for each.
-- **Health management**: `startLoadTimeout()` sets a timeout; if no LOAD message arrives before expiry, `healthy` becomes false. `reconnect()` resets health.
-- **Audit stream**: `getAuditStream()` makes a GET to the STH's `/api/v1/audit` and returns a `StringStream` that annotates entries with the host ID.
-- **Disconnect**: `disconnect(reason)` sends a CPM disconnect code (KEY_REVOKED, LIMIT_EXCEEDED, ID_DROP) over the communication stream, then closes the Verser connection.
-- **Access key**: Extracted from Verser connection header `x-self-hosted`.
-- **Topic requests**: `createUpstreamTopicRequest` / `createDownstreamTopicRequest` make Verser-routed requests to the STH's topic endpoints.
+- **Connection lifecycle**: `init()` → `reconnect(verserConnection)` → `main()` → `hookupStream()`.
+- **CPM message dispatch**: Routes by `CPMMessageCode` — LOAD, NETWORK_INFO, SEQUENCE, INSTANCE, TOPIC, EVENT.
+- **Health management**: Load-based timeout; `healthy` flag toggled by LOAD messages.
+- **Audit stream**: GET to STH's `/api/v1/audit`, annotates entries with host ID.
 
 ### `sth-connection-store.ts` — `SthConnectionStore` class (75 lines)
-Implements `ISTHConnectionStore`. In-memory `Map<string, ISTHController>`. Provides:
-- `list()`, `forEach()`, `map()` — iteration over controllers.
-- `add(controller)` — insert by controller.id.
-- `getById(id)`, `getByAccessKey(key)` — lookup.
-- `getSTHControllersInfo()` — map to REST response type.
-- `delete(id, force)` — guarded removal (rejects native hubs, checks connected state).
+Implements `ISTHConnectionStore`. In-memory `Map<string, ISTHController>`.
 
 ### `sth-info-register.ts` — `STHInfoRegister` class (201 lines)
-Implements `ISTHInfoRegister`. Three-level hierarchical store: `HostId → SequenceId → Set<InstanceId>`. Also maintains side arrays `sequencesStore` and `instancesStore` for aggregate queries. Provides:
-- `addHub`, `addSequence`, `deleteSequence`, `addInstance`, `deleteInstance` — mutation operations with duplicate/absence guards.
-- `getHubs`, `getSequences`, `getSequencesByHub`, `getInstances`, `getInstancesByHub` — query methods.
-- `clearHostEntities(id)` — removes all instances/sequences for a disconnected host but preserves the hub entry.
-- `handleHubDisconnect(id)` — delegates to `clearHostEntities`.
+Three-level hierarchical store: `HostId → SequenceId → Set<InstanceId>`.
 
 ### `service-discovery.ts` — `ServiceDiscovery` + `TopicActor` (372 lines)
-- **`TopicActor`**: A typed actor that can be a PROVIDER or CONSUMER, of type HOST or API. Holds a stream reference. Provides `connectoTo(targetActor)` which establishes a pipe between provider and consumer streams (lazy-init for host actors via Verser requests).
-- **`ServiceDiscovery`**: Manages a `Map<string, Topic>`. Key methods:
-  - `register(actor, opts)`: Adds actor to a topic; if topic doesn't exist, creates it. Emits `onTopicUpdate`.
-  - `unregister(actor)`: Sets `retired = true`, triggers update.
-  - `onTopicUpdateWorker`: Filters retired actors; connects unmatched providers to consumers via `connectoTo`. If no actors remain, deletes the topic.
-  - `list()`: Returns topic info for the REST API.
-  - Update loop is batch-coalesced (`updatedTopics` Set + `topicUpdateRunning` guard) to avoid concurrent runs.
+Topic-based pub/sub actor wiring. `TopicActor` is a typed actor (PROVIDER/CONSUMER, HOST/API) with lazy-init stream connections.
 
 ### `common-logs-pipe.ts` — `CommonLogsPipe` (48 lines)
-Aggregates multiple STH log streams into a single `ReReadable` output. Each incoming stream is prefixed with the host ID and suffixed with newline. Uses `ReReadable` so multiple consumers can read from the beginning.
+Aggregates STH log streams into `ReReadable`.
 
 ### `health-check.ts` — `HealthCheck` (20 lines)
-Simple class that provides `getHealthCheckInfo()` returning process uptime, timestamp, and whether the STH server socket is listening.
+Process uptime, listening status.
 
 ### `manager-auditor.ts` — `ManagerAuditor` (104 lines)
-Multiplexes audit data from all connected STHs plus a self-heartbeat stream into a single `ReReadable` output. When `flowing` is true, it attaches each STH's audit stream via `MultiStream`. The heartbeat writes `OpRecordCode.MANAGER_HEARTBEAT` every 5 seconds.
+Multiplexes STH audit streams plus heartbeat into `ReReadable`.
 
 ### `s3-router.ts` — `getS3Router` factory (18 lines)
-Returns `DiskProxy` if no `s3Client` is provided, or `S3Proxy` if a Minio client is available.
+Returns `DiskProxy` or `S3Proxy`.
 
-### `verser2-transport.ts` — ManagerSthBrokerTransport (253 lines)
-- **`Verser2ManagerSthBrokerTransport`**: Wraps a Verser2 broker, providing `connect`, `close`, `getRoutes`, `isRouteReady`, `waitForRoute`, and `request`. Used for domain-routed HTTP-like requests between Manager and STH nodes.
-- Handles duplicate route detection (`Verser2DuplicateRouteError`), route unavailability (`Verser2RouteUnavailableError`), closed-transport suppression, and polling-based route readiness with optional timeout.
-- Factory functions: `createManagerSthBrokerTransport(options)` and `createManagerSthLocalBrokerTransport(broker)`.
+### `verser2-transport.ts` — `Verser2ManagerSthBrokerTransport` (253 lines)
+Verser2 broker transport for domain-routed HTTP requests between Manager and STH. Handles duplicate route detection, route unavailability, and polling-based readiness.
+
+### `verser2-trust-export.ts` — `getManagerVerser2TrustExport` (50 lines)
+Reads CA certificate PEM, extracts fingerprint/expiry, returns trust export object for verser2 connectivity.
+
+### `route-classifier.ts` — `classifyManagerRoute` (293 lines)
+Pure-function route classifier that determines whether a Manager route is:
+- **`manager-owned`**: Version, config, health, list, instances, sequences, entities, topics, load, store, disconnect — handled by Manager directly.
+- **`follow`**: Routes that target a specific STH (topic, log, audit, instance, rpc, sequence, sequences, instances, entities, etc.) — forwarded via verser redirect.
+- **`manager-multiplex`**: Log, audit, load-stream, topic — aggregated across all STHs.
+- **`unsupported-bidirectional`**: Host platform, instance inout — duplex streams not supported via simple redirect.
+
+Also provides `prepareManagerFollowForwarding()` for constructing redirect or direct-route-metadata targets.
+
+### `api/` — V1 and V2 API Handlers
+See [api/](api/codemap.md) for details on `ManagerAPIHandler`, `ManagerAPIV1Handler`, and `ManagerAPIV2Handler`.
+
+### `storage-routers/` — Storage Backends
+See [storage-routers/](storage-routers/codemap.md) for details on `DiskProxy` and `S3Proxy`.
 
 ### `utils.ts` (125 lines)
-Three exported helper functions:
-- `translateDeleteError(e)`: Maps `SthConnectionStoreErrors` to HTTP status codes and messages.
-- `validateDisconnectRequest(payload, store)`: Validates disconnect payload structure (id, accessKey presence, hub type, connected state).
-- `translateDisconnectError(error)`: Maps `DisconnectHubErrors` enum to HTTP responses.
-- `prepareDisconnectDroplist(payload, store)`: Builds a list of `{sthController, reason}` tuples filtered by the disconnect criteria (id, accessKey, limit).
+- `translateDeleteError`, `validateDisconnectRequest`, `translateDisconnectError`, `prepareDisconnectDroplist`.

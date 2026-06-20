@@ -10,23 +10,18 @@ Filesystem-backed sequence store. Key aspects:
 - Uses `DiskClient` (internal helper) wrapping `fs/promises` operations: `statObject`, `getObject`, `putObject`, `removeObject`, `getText`.
 - Maintains a `SequenceIndex` (`{sequences, size, version}`) persisted as `index.json` on disk under `/<bucket>/<id>/`.
 - **Router endpoints** (mounted at `${base}`):
-  - `GET /:directory/:filename?` — retrieve a stored sequence by filename.
-  - `DELETE /:filename` — delete a sequence by filename or fileId, update index.
-  - `PUT /:filename?` — accept an uploaded package stream, identify it via `ProcessSequenceAdapter.identify()`, enforce `bucketLimit` storage cap, write to disk, add to index.
-  - `GET /` — return the full sequence index.
-- Uses `ProcessSequenceAdapter` from `@scramjet/adapter-process` for package identification (entrypoint, name, config, etc.).
+  - `GET /:directory/:filename?` — retrieve stored sequence.
+  - `DELETE /:filename` — delete sequence, update index.
+  - `PUT /:filename?` — accept uploaded package stream, identify via `ProcessSequenceAdapter.identify()`, enforce `bucketLimit`.
+  - `GET /` — return full sequence index.
+- Uses `ProcessSequenceAdapter` from `@scramjet/adapter-process` for package identification.
 - Persists metadata alongside each file as `<filename>.metadata`.
 
 ### `s3-proxy.ts` — `S3Proxy` class (264 lines)
-Minio S3-compatible sequence store. Structurally mirrors `DiskProxy` but uses a Minio `Client` instead of `DiskClient`:
-- **`loadIndex()`**: Downloads `index.json` from the S3 bucket; creates an empty one if not found.
-- **`saveIndex()`**: Uploads the index to S3 with retry logic and 5-second timeout.
-- **Router endpoints** (same shape as `DiskProxy`):
-  - `GET /:directory/:filename?` — stream from S3 via `s3Client.getObject()`.
-  - `DELETE /:filename` — remove from S3, update index.
-  - `PUT /:filename?` — upload to S3 via `s3Client.putObject()` with callback API.
-  - `GET /` — return index.
-- Index version migration: detects array-format legacy indexes and upgrades to the current `{sequences, size, version}` format.
+Minio S3-compatible sequence store. Structurally mirrors `DiskProxy` but uses a Minio `Client`:
+- **`loadIndex()`/`saveIndex()`**: Downloads/uploads `index.json` from S3 bucket with retry logic.
+- **Router endpoints** (same shape as `DiskProxy`): GET, DELETE, PUT, GET /.
+- Index version migration detects array-format legacy indexes and upgrades to `{sequences, size, version}`.
 
 ## Shared Types
 Both proxies define the same internal types:

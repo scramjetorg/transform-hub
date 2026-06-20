@@ -152,7 +152,7 @@ test("Host v2 expanded manifest exposes shared instance contract paths without l
     t.false(runtimeManifest.routes.some(route => route.fullPath === "/api/v2/instances/:instanceId/stdio"));
     t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/instances/:instanceId/stdio"));
     t.deepEqual(
-        RestAPI2Routes.host.router("/api/v2").collect({ expandResolvers: true }).routes.map(route => route.fullPath),
+        RestAPI2Routes.hub.router("/api/v2").collect({ expandResolvers: true }).routes.map(route => route.fullPath),
         expandedManifest.routes.map(route => route.fullPath)
     );
 });

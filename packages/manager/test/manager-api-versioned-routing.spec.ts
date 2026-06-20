@@ -20,7 +20,15 @@ function createManagerStub(recorder: RouteRecorder) {
         build: "test-build",
         apiSthConnectionStore: { getById: () => undefined, delete: async () => undefined },
         apiServiceDiscovery: { list: () => [] },
-        apiLoadCheck: { getLoadCheck: async () => ({ load: 1 }), getLoadCheckStream: () => new PassThrough() },
+        apiLoadCheck: { constants: { SAFE_OPERATION_LIMIT: 0 }, config: { fsPaths: [] }, getLoadCheck: async () => ({ load: 1 }), getLoadCheckStream: () => new PassThrough() },
+        apiHealthCheck: { getHealthCheckInfo: () => ({ uptime: 1, timestamp: 2, modules: { sthServer: true } }) },
+        getV2HealthCheckInfo: async () => ({
+            scope: { id: "manager-hotwire", hubs: 1 },
+            healthy: true,
+            status: "healthy",
+            components: [{ name: "manager", healthy: true, status: "healthy" }],
+            details: { uptime: 1, timestamp: 2, modules: { sthServer: true } }
+        }),
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
         apiS3Middleware: { clearIndex: async () => undefined },
         logger: new ObjLogger("manager-versioned-routing-test"),
@@ -56,6 +64,7 @@ test("Manager low-risk routes are reachable through verser2 for v1 and v2", asyn
         "/api/v2/config",
         "/api/v2/verser2/trust",
         "/api/v2/load",
+        "/api/v2/health",
         "/api/v2/list",
         "/api/v2/hubs",
         "/api/v2/instances",
@@ -90,15 +99,15 @@ test("Manager v2 manifest constructs a generic client", async t => {
         }
     });
 
-    t.deepEqual(await client.request("manager.v2.load"), {
+    t.deepEqual(await client.request("space.v2.load"), {
         status: 200,
         headers: {},
-        body: { route: "manager.v2.load" }
+        body: { route: "space.v2.load" }
     });
-    t.deepEqual(await client.request("manager.v2.instances"), {
+    t.deepEqual(await client.request("space.v2.instances"), {
         status: 200,
         headers: {},
-        body: { route: "manager.v2.instances" }
+        body: { route: "space.v2.instances" }
     });
 });
 
