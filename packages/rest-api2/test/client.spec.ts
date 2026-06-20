@@ -1,7 +1,7 @@
 import test from "ava";
 
 import { ApiClientRequest, ApiClientTransport, HttpMethod, createRouter } from "@scramjet/api-router";
-import { RestAPI2, RestAPI2Routes, createRestAPI2Client } from "../src";
+import { RestAPI2, RestAPI2Routes, createHubClient, createInstanceClient, createRestAPI2Client, createRootClient, createSpaceClient } from "../src";
 
 const representativeOperations: Array<{ scope: RestAPI2.ScopeName; operationId: RestAPI2.OperationId; path: string }> = [
     { scope: "root", operationId: "GET /api/v2/spaces", path: "/spaces" },
@@ -96,4 +96,73 @@ test("shared v2 route contracts are handlerless and expose nested virtual paths"
     t.true(expanded.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/load"));
     t.true(expanded.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio"));
     t.true(expanded.routes.filter(route => route.virtual).every(route => route.id.startsWith(`${route.method.toUpperCase()} ${route.fullPath}`)));
+});
+
+test("fluent root client dispatches nested Root Space Hub and Instance routes", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+
+            return { status: 200, headers: {}, body: { route: request.route.id, params: request.params } as unknown as T };
+        }
+    };
+    const root = createRootClient({ transport });
+
+    const rootHealth = await root.health.get();
+    const spaceHealth = await root.space("space-1").health.get();
+    const hubHealth = await root.space("space-1").hub("hub-1").health.get();
+    const instanceHealth = await root.space("space-1").hub("hub-1").instance("inst-1").health.get();
+
+    t.is((rootHealth.body as any).route, "GET /api/v2/health");
+    t.is((spaceHealth.body as any).route, "GET /api/v2/spaces/:spaceId/health");
+    t.is((hubHealth.body as any).route, "GET /api/v2/spaces/:spaceId/hubs/:hubId/health");
+    t.is((instanceHealth.body as any).route, "GET /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/health");
+    t.deepEqual(seen[1].params, { spaceId: "space-1" });
+    t.deepEqual(seen[2].params, { spaceId: "space-1", hubId: "hub-1" });
+    t.deepEqual(seen[3].params, { spaceId: "space-1", hubId: "hub-1", instanceId: "inst-1" });
+});
+
+test("direct level fluent clients dispatch through the manifest transport", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+
+    await createSpaceClient({ transport }).health.get();
+    await createHubClient({ transport }).health.get();
+    await createInstanceClient({ transport }).health.get();
+
+    t.deepEqual(seen.map(request => request.route.id), [
+        "GET /health",
+        "GET /health",
+        "GET /health"
+    ]);
+});
+
+test("fluent client forwards body query and headers for representative endpoints", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+
+    await createRootClient({ transport }).space("space-1").hub("hub-1").createTopic.post({
+        headers: { "content-type": "application/json" },
+        body: { topic: { name: "topic-1", contentType: "application/json" } }
+    });
+    await createRootClient({ transport }).space("space-1").storageClear.delete({ query: { force: true } });
+
+    t.deepEqual(seen[0].params, { spaceId: "space-1", hubId: "hub-1" });
+    t.deepEqual(seen[0].headers, { "content-type": "application/json" });
+    t.deepEqual(seen[0].body, { topic: { name: "topic-1", contentType: "application/json" } });
+    t.deepEqual(seen[1].params, { spaceId: "space-1" });
+    t.deepEqual(seen[1].query, { force: true });
 });

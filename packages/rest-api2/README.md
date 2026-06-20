@@ -61,6 +61,25 @@ const response = await client.request({
 // response.status, response.headers, response.body
 ```
 
+## Fluent Client Construction
+
+The preferred public client can be constructed at Root, Space, Hub, or Instance level. Fluent calls dispatch through the same manifest client and transport stack as `createRestAPI2Client`.
+
+```ts
+import { createRootClient, createHubClient } from "@scramjet/rest-api2";
+
+const root = createRootClient({ transport });
+
+await root.health.get();
+await root.space("space-1").health.get();
+await root.space("space-1").hub("hub-1").health.get();
+await root.space("space-1").hub("hub-1").instance("inst-1").health.get();
+
+const hub = createHubClient({ transport, basePath: "/" });
+
+await hub.health.get();
+```
+
 ## HTTP Client Transport Setup
 
 ```ts

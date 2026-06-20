@@ -40,6 +40,7 @@ export class ManagerAPIV2Handler {
 
                 return { load: (load as { load?: number }).load ?? 0 };
             }, { id: "space.v2.load" }),
+            health: routeBinding.skip("Space health is registered by Manager.setupHealthEndpoint with the same v2 contract."),
             list: routeBinding.handler<typeof routes.list>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.list" }),
             hubs: routeBinding.handler<typeof routes.hubs>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.hubs" }),
             instances: routeBinding.handler<typeof routes.instances>(req => this.listResponse<RestAPI2.Instance>(this.getPaginated(req, manager.getInstances.bind(manager)), "instances", id => ({ id })), { id: "space.v2.instances" }),

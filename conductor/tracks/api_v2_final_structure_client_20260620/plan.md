@@ -56,6 +56,15 @@
   - Direct root ESLint on changed package test files failed because `tsconfig.base.json` does not include those test files; package AVA tests were used as the executable validation for changed tests.
   - Public code/docs grep checks for `/api/v2/managers`, `managers/:managerId`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `multi-manager.v2`, `manager.v2`, and `host.v2` — passed for `packages/` and `docs/api.md`. Remaining matches are limited to Conductor spec/plan/archive text and v1 generated type docs.
   - Combined Phase 2/3 checkpoint commit: `bbf2f71c`.
+- Phase 4 implementation summary:
+  - Added route-tree-backed fluent clients in `@scramjet/rest-api2`: `createRootClient`, `createSpaceClient`, `createHubClient`, and `createInstanceClient`.
+  - Fluent endpoint methods dispatch through the existing generic `createRestAPI2Client`, route manifests, and HTTP/verser2-compatible transport contract.
+  - Root clients support `.space(spaceId)`, Space clients support `.hub(hubId)`, and Hub clients support `.instance(instanceId)` with resolver params forwarded to the transport request.
+  - Added focused fluent client tests for nested Root → Space → Hub → Instance health calls, direct level clients, and representative body/query/header forwarding.
+  - Updated `packages/rest-api2/README.md` with fluent client examples.
+- Phase 4 validation:
+  - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 21 tests.
+  - Source lint: `npx eslint packages/rest-api2/src/client.ts packages/rest-api2/src/routes.ts` under memory guard — passed.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
@@ -114,10 +123,10 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run focused Host, Manager, and MultiManager v2 route tests/typechecks
     - [x] Run narrowed lint for changed source/test files where feasible
     - [x] Record validation results and deduplication findings in `plan.md`
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers' (Protocol in workflow.md)
     - [x] Create a scoped Phase 2 checkpoint commit after validation and before asking for manual verification
     - [x] Push the review branch before asking for manual verification
-    - [~] Begin the manual verification request/note with `Phase 2: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Begin the manual verification request/note with `Phase 2: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 3: Public v2 Space/Hub Terminology Replacement
 
@@ -147,42 +156,42 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run grep checks for disallowed public v2 `managers`, `managerId`, and Host-as-public-concept occurrences in generated/public docs and route contracts
     - [x] Run narrowed lint and `git diff --check`
     - [x] Record validation results and any intentionally retained internal Manager/Host references in `plan.md`
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Public v2 Space/Hub Terminology Replacement' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Public v2 Space/Hub Terminology Replacement' (Protocol in workflow.md)
     - [x] Covered by the combined Phase 2/3 checkpoint commit and manual verification
     - [x] Push the review branch before asking for manual verification
-    - [~] Begin the manual verification request/note with `Phase 3: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Begin the manual verification request/note with `Phase 3: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 4: Fluent Client Type Model and Runtime Builder
 
-- [ ] Task: Define fluent client node types derived from the route tree
-    - [ ] Add type-level helpers that convert a route definition into endpoint methods such as `.get()`, `.post()`, `.put()`, `.patch()`, and `.delete()`
-    - [ ] Infer endpoint request params, query, headers, body, and response body from route schemas
-    - [ ] Add type-level helpers that convert resolver/child definitions into nested functions such as `.space(spaceId)`, `.hub(hubId)`, and `.instance(instanceId)`
-    - [ ] Ensure the client type is derived from `RestAPI2RouteTree` rather than manually duplicating the hierarchy
-- [ ] Task: Implement fluent client runtime over the existing generic client
-    - [ ] Implement a generic tree-based fluent client builder that dispatches through the existing manifest client and transport stack
-    - [ ] Generate operation IDs and params internally from the tree path/resolver context
-    - [ ] Preserve HTTP and verser2 transport support through existing `createHttpClientTransport` and `createVerser2ClientTransport`
-    - [ ] Keep the existing low-level `createRestAPI2Client` as a supported base primitive unless later tree-shaking approval removes or narrows it
-- [ ] Task: Add first-class client factories for each public level
-    - [ ] Add `createRootClient(...)`
-    - [ ] Add `createSpaceClient(...)`
-    - [ ] Add `createHubClient(...)`
-    - [ ] Add `createInstanceClient(...)`
-    - [ ] Ensure each factory can be constructed from a known base endpoint and transport without requiring higher-level IDs
-- [ ] Task: Add fluent client tests and examples
-    - [ ] Add tests for `root.health.get()`, `root.space(spaceId).health.get()`, `root.space(spaceId).hub(hubId).health.get()`, and `root.space(spaceId).hub(hubId).instance(instanceId).health.get()`
-    - [ ] Add tests proving direct Space, Hub, and Instance clients dispatch with the correct base route and infer correct response types
-    - [ ] Add tests for body/query/header typing on representative write and stream endpoints
-    - [ ] Add no-circumvention/request-probe tests proving fluent client calls issue real transport requests
-- [ ] Task: Automated verification gate for fluent client
-    - [ ] Run rest-api2 tests/typecheck including fluent client type tests
-    - [ ] Run api-router tests/typecheck if generic client or transport types changed
-    - [ ] Run focused Host, Manager, MultiManager route tests where manifests are consumed by the fluent client
-    - [ ] Run docs example typecheck if examples are compiled or covered by tests
-    - [ ] Record validation results in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Fluent Client Type Model and Runtime Builder' (Protocol in workflow.md)
-    - [ ] Create a scoped Phase 4 checkpoint commit after validation and before asking for manual verification
+- [x] Task: Define fluent client node types derived from the route tree
+    - [x] Add type-level helpers that convert a route definition into endpoint methods such as `.get()`, `.post()`, `.put()`, `.patch()`, and `.delete()`
+    - [x] Infer endpoint request params, query, headers, body, and response body from route schemas
+    - [x] Add type-level helpers that convert resolver/child definitions into nested functions such as `.space(spaceId)`, `.hub(hubId)`, and `.instance(instanceId)`
+    - [x] Ensure the client type is derived from `RestAPI2RouteTree` rather than manually duplicating the hierarchy
+- [x] Task: Implement fluent client runtime over the existing generic client
+    - [x] Implement a generic tree-based fluent client builder that dispatches through the existing manifest client and transport stack
+    - [x] Generate operation IDs and params internally from the tree path/resolver context
+    - [x] Preserve HTTP and verser2 transport support through existing `createHttpClientTransport` and `createVerser2ClientTransport`
+    - [x] Keep the existing low-level `createRestAPI2Client` as a supported base primitive unless later tree-shaking approval removes or narrows it
+- [x] Task: Add first-class client factories for each public level
+    - [x] Add `createRootClient(...)`
+    - [x] Add `createSpaceClient(...)`
+    - [x] Add `createHubClient(...)`
+    - [x] Add `createInstanceClient(...)`
+    - [x] Ensure each factory can be constructed from a known base endpoint and transport without requiring higher-level IDs
+- [x] Task: Add fluent client tests and examples
+    - [x] Add tests for `root.health.get()`, `root.space(spaceId).health.get()`, `root.space(spaceId).hub(hubId).health.get()`, and `root.space(spaceId).hub(hubId).instance(instanceId).health.get()`
+    - [x] Add tests proving direct Space, Hub, and Instance clients dispatch with the correct base route and infer correct response types
+    - [x] Add tests for body/query/header typing on representative write and stream endpoints
+    - [x] Add no-circumvention/request-probe tests proving fluent client calls issue real transport requests
+- [x] Task: Automated verification gate for fluent client
+    - [x] Run rest-api2 tests/typecheck including fluent client type tests
+    - [x] Run api-router tests/typecheck if generic client or transport types changed
+    - [x] Run focused Host, Manager, MultiManager route tests where manifests are consumed by the fluent client
+    - [x] Run docs example typecheck if examples are compiled or covered by tests
+    - [x] Record validation results in `plan.md`
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Fluent Client Type Model and Runtime Builder' (Protocol in workflow.md)
+    - [~] Create a scoped Phase 4 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification
     - [ ] Begin the manual verification request/note with `Phase 4: Manual Verification` so the checkpoint is visible in the PR
 
