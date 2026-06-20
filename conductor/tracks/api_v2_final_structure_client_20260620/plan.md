@@ -337,6 +337,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
   - Deduplication/shared package review: v2 route contracts remain centralized in `@scramjet/rest-api2`, generic router/client/OpenAPI primitives remain in `@scramjet/api-router`, and runtime packages bind shared contracts locally. No repeated helpers were introduced. Manual endpoint tables remain the main drift risk and were verified against the expanded route manifest during this phase.
   - Phase 7 checkpoint commit: `fe873b73`.
   - Phase 7 checkpoint/push record commit: `64c22862`; review branch pushed through `64c22862` before manual verification.
+  - Phase 7 manual verification approved by user.
 
 - [x] Task: Finalize public API and client documentation
     - [x] Update `docs/api.md` with final Root/Space/Hub/Instance endpoint tables and fluent client examples
@@ -361,7 +362,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run `npm run test:bdd-ci-api-node` only if public HTTP behavior or v1/v2 integration changes require cross-package smoke validation
     - [x] Run final grep checks for disallowed public Manager/Host v2 terminology in docs, OpenAPI fixtures, route contracts, and client examples
     - [x] Record all validation results, skipped checks, known failures, and reasons in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 7: Final Documentation, OpenAPI, and Integration Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 7: Final Documentation, OpenAPI, and Integration Validation' (Protocol in workflow.md)
     - [x] Create a scoped Phase 7 checkpoint commit after validation and before asking for manual verification
     - [x] Push the review branch before asking for manual verification
-    - [ ] Begin the manual verification request/note with `Phase 7: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Begin the manual verification request/note with `Phase 7: Manual Verification` so the checkpoint is visible in the PR
