@@ -65,6 +65,8 @@
 - Phase 4 validation:
   - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 21 tests.
   - Source lint: `npx eslint packages/rest-api2/src/client.ts packages/rest-api2/src/routes.ts` under memory guard — passed.
+  - Focused Host, Manager, and MultiManager v2 route tests under memory guard — passed after adding the Space health contract.
+  - Phase 4 checkpoint commit: `55599a1a`.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
@@ -191,9 +193,9 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run docs example typecheck if examples are compiled or covered by tests
     - [x] Record validation results in `plan.md`
 - [~] Task: Conductor - User Manual Verification 'Phase 4: Fluent Client Type Model and Runtime Builder' (Protocol in workflow.md)
-    - [~] Create a scoped Phase 4 checkpoint commit after validation and before asking for manual verification
-    - [ ] Push the review branch before asking for manual verification
-    - [ ] Begin the manual verification request/note with `Phase 4: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Create a scoped Phase 4 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [~] Begin the manual verification request/note with `Phase 4: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients
 
