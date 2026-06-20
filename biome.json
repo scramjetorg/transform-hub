@@ -8,16 +8,23 @@
   },
   "files": {
     "includes": [
-      "**",
-      "!!dist",
+      "biome.json",
+      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.js",
+      "scripts/**/*.ts",
+      "scripts/**/*.js",
       "!!**/dist",
-      "!!node_modules",
       "!!**/node_modules",
-      "!!coverage",
       "!!**/coverage",
-      "!!bdd/.work",
+      "!!**/test",
+      "!!**/tests",
+      "!!**/fixtures",
+      "!!bdd/data",
+      "!!conductor/archive",
+      "!!packages/*/lib",
       "!!packages/pre-runner/sample-package",
-      "!!refapps"
+      "!!scripts/deps-update.js",
+      "!!scripts/dev"
     ],
     "ignoreUnknown": true
   },
@@ -37,14 +44,49 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
+      "style": "off",
+      "complexity": "off",
+      "performance": "off",
+      "a11y": "off",
       "correctness": {
+        "noConstantCondition": "error",
+        "noInnerDeclarations": "off",
+        "noPrecisionLoss": "error",
+        "noSwitchDeclarations": "warn",
+        "noUndeclaredDependencies": "off",
+        "noUnresolvedImports": "off",
         "noPrivateImports": "warn",
-        "noUndeclaredDependencies": "warn",
-        "noUnresolvedImports": "warn"
+        "noUnusedImports": "error",
+        "noUnusedFunctionParameters": "off",
+        "noUnusedPrivateClassMembers": "off",
+        "noUnusedVariables": "warn"
       },
       "suspicious": {
-        "noImportCycles": "warn"
+        "noAssignInExpressions": "warn",
+        "noConfusingVoidType": "off",
+        "noConstEnum": "off",
+        "noExplicitAny": "off",
+        "noFallthroughSwitchClause": "off",
+        "noGlobalAssign": "error",
+        "noGlobalIsNan": "off",
+        "noImplicitAnyLet": "off",
+        "noImportCycles": "warn",
+        "noNonNullAssertedOptionalChain": "off",
+        "noPrototypeBuiltins": "off",
+        "noTsIgnore": "warn"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/*/src/**/*.ts", "packages/*/src/**/*.js"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUndeclaredDependencies": "warn"
+          }
+        }
+      }
+    }
+  ]
 }
