@@ -29,8 +29,10 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 
 | Directory | Responsibility Summary | Detailed Map |
 |-----------|------------------------|--------------|
+| `packages/` | Monorepo workspace directory index for all 39 `@scramjet/*` packages including adapters, runners, API clients, config, types, utilities, and manager. | [View Map](packages/codemap.md) |
 | `packages/types/` | Shared type package for CLI options, merged STH config, runtime executor contracts, and adapter-facing DTOs. | [View Map](packages/types/codemap.md) |
 | `packages/types/src/` | Canonical configuration, adapter, and runtime-executor declarations shared across STH packages. | [View Map](packages/types/src/codemap.md) |
+| `packages/types/src/manager/` | Manager-facing type contracts for STH connection lifecycle, service discovery, topic-based actor registration, and host/sequence/instance info tracking. | [View Map](packages/types/src/manager/codemap.md) |
 | `packages/symbols/` | Shared constants and protocol symbol package for message codes, statuses, stream states, headers, exit/error codes, and runtime-kind inference. | [View Map](packages/symbols/codemap.md) |
 | `packages/symbols/src/` | Concrete enum/constant modules and runtime-kind helper exports used by host, runner, API, adapters, and type contracts. | [View Map](packages/symbols/src/codemap.md) |
 | `packages/sth/` | Top-level STH wrapper that owns process-facing lifecycle around a configured host instance. | [View Map](packages/sth/codemap.md) |
@@ -41,6 +43,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/config/` | Zod-backed configuration loading, validation, secret masking, CLI option descriptors, and native command model utilities. | [View Map](packages/config/codemap.md) |
 | `packages/config/src/` | Config file/env/CLI merge pipeline, public-safe masking helpers, and descriptor-driven command tree implementation. | [View Map](packages/config/src/codemap.md) |
 | `packages/manager-config/` | Manager default configuration and singleton config service for deep-merge runtime updates. | [View Map](packages/manager-config/codemap.md) |
+| `packages/manager-config/src/` | Manager default config values, `ConfigService` singleton with deep-merge partial updates, and immutable defaults factory. | [View Map](packages/manager-config/src/codemap.md) |
 | `packages/manager/` | Manager control plane for connected STH nodes, cluster API routing, sequence/instance/topic registry, and storage proxying. | [View Map](packages/manager/codemap.md) |
 | `packages/manager/src/` | Manager source entrypoints and library modules for orchestration, STH controllers, service discovery, storage routers, and transport helpers. | [View Map](packages/manager/src/codemap.md) |
 | `packages/manager/src/bin/` | Manager executable entrypoint that starts the Manager process and reports startup failures. | [View Map](packages/manager/src/bin/codemap.md) |
@@ -74,9 +77,29 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/adapter-process/` | Process adapter runtime package bridging host-side adapter contracts to process-based execution and packaging. | [View Map](packages/adapter-process/codemap.md) |
 | `packages/api-server/` | HTTP API server package for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. | [View Map](packages/api-server/codemap.md) |
 | `packages/api-server/src/` | API server runtime surface for request routing, middleware wrapping, forwarding, and HTTP/HTTPS server setup. | [View Map](packages/api-server/src/codemap.md) |
-| `packages/host/src/lib/` | Shared host-side library code for service discovery and low-level utilities. | [View Map](packages/host/src/lib/codemap.md) |
+| `packages/api-client/` | Typed HTTP API client classes for Host, Instance, Sequence, and Manager REST endpoints. | [View Map](packages/api-client/codemap.md) |
+| `packages/client-utils/` | Base HTTP client utilities and abstractions for REST API communication with Node.js and browser support. | [View Map](packages/client-utils/codemap.md) |
+| `packages/load-check/` | System resource monitoring — CPU load, memory, disk space health checks and load stats for instance scheduling. | [View Map](packages/load-check/codemap.md) |
+| `packages/load-check/src/` | `LoadCheck` class and composable health component functions for process/OS resource diagnostics. | [View Map](packages/load-check/src/codemap.md) |
+| `packages/logger/` | Console Web API-compatible logger with streaming output, colorized formatting, and reference-counted stream registration. | [View Map](packages/logger/codemap.md) |
+| `packages/middleware-api-client/` | Middleware API client for space-level Manager routing through the Middleware layer. | [View Map](packages/middleware-api-client/codemap.md) |
+| `packages/multi-manager-api-client/` | MultiManager API client for starting and managing sub-Managers through the MultiManager control plane. | [View Map](packages/multi-manager-api-client/codemap.md) |
+| `packages/model/` | Domain model — message serialization, stream handler protocol, error types, ID provider, and delayed stream utility. | [View Map](packages/model/codemap.md) |
+| `packages/model/src/` | Stream handler implementation, message serialization/deserialization, error hierarchy, and utility classes. | [View Map](packages/model/src/codemap.md) |
+| `packages/module-loader/` | Runtime module loading utility supporting dynamic import() and require() with memory tracking. | [View Map](packages/module-loader/codemap.md) |
+| `packages/monitoring-server/` | Lightweight HTTP health-check server with configurable check functions and path validation. | [View Map](packages/monitoring-server/codemap.md) |
+| `packages/obj-logger/` | Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation. | [View Map](packages/obj-logger/codemap.md) |
+| `packages/obj-logger/src/` | `ObjLogger` class implementation with fallthrough log levels, stream plumbing, and pretty-print utilities. | [View Map](packages/obj-logger/src/codemap.md) |
+| `packages/utility/` | Shared utility functions — merge, defer, typeguards, validators, URL normalization, stream helpers, typed emitter, and reference counting. | [View Map](packages/utility/codemap.md) |
+| `packages/utility/src/` | Implementation of all shared utility modules: deferred promises, deep merge, type guards, stream utilities, free port finding, and key generation. | [View Map](packages/utility/src/codemap.md) |
+| `packages/utility/src/typeguards/` | Runtime type-checking functions for DTO validation, URL/path/port/id validation, and log level checking. | [View Map](packages/utility/src/typeguards/codemap.md) |
+| `packages/utility/src/typeguards/dto/` | DTO-specific type guard functions for sequence start and instance set endpoint payload validation. | [View Map](packages/utility/src/typeguards/dto/codemap.md) |
 | `packages/utility/src/file/` | File abstraction helpers that choose concrete file implementations by extension. | [View Map](packages/utility/src/file/codemap.md) |
+| `packages/host/src/lib/` | Shared host-side library code for service discovery and low-level utilities. | [View Map](packages/host/src/lib/codemap.md) |
 | `packages/verser/` | Legacy CONNECT/BPMux reverse-server connectivity package targeted for removal from active paths by the verser2 rollout. | [View Map](packages/verser/codemap.md) |
+| `packages/verser/src/` | Source implementation of Verser server, client, and connection modules with BPMux multiplexing. | [View Map](packages/verser/src/codemap.md) |
+| `packages/verser/src/lib/` | Concrete Verser, VerserClient, and VerserConnection class implementations with default config. | [View Map](packages/verser/src/lib/codemap.md) |
+| `template/` | Package template/scaffold with standard AVA, TypeScript, and typedoc configuration for bootstrapping new packages. | [View Map](template/codemap.md) |
 | `bdd/` | Cucumber BDD smoke and end-to-end validation workspace for CLI, hub, Manager, instance API, runtime, and streaming behavior. | [View Map](bdd/codemap.md) |
 
 ## Runtime Wrapper Implementation Flow

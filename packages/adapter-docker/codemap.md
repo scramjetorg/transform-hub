@@ -28,3 +28,4 @@ Instance flow:
 - `@scramjet/adapters-common`: runner env config + package decoding + image selection.
 - Docker bridge `transformhub0` and host-container linking logic in `setupDockerNetworking` for cross-container reachability.
 - Shared sequence abstraction packages (`@scramjet/types`, `@scramjet/model`, `@scramjet/utility`).
+- Verser2 runner transport config injected via `getRunnerTransportEnv()` from adapters-common, producing `SCRAMJET_RUNNER_TRANSPORT_CONFIG` in runner container environment.

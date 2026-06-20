@@ -28,3 +28,4 @@ Implements the Kubernetes runtime adapter package:
 - `@kubernetes/client-node` for core cluster operations and `tar` stream compression/decompression utilities.
 - Host-level adapter wiring (`packages/runner`) via `IAdapterAugmentation` contract.
 - Kubernetes control plane config (namespace/auth/limits), plus startup defaults from package config and CLI.
+- Verser2 runner transport config injected via `getRunnerTransportEnv()` from adapters-common, producing `SCRAMJET_RUNNER_TRANSPORT_CONFIG` in runner pod environment.
