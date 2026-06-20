@@ -14,7 +14,7 @@
 - Full build is expensive: `npm run build` includes packages, downloaded refapps, and Docker builds.
 - Unit/package tests: `npm run test:packages-no-concurrent` is the CI-safe serial variant; `npm run test:packages` runs package tests concurrently.
 - BDD smoke paths: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, or `npm run test:bdd`.
-- Biome migration: use `npm run biome:check`, `npm run biome:lint`, or `npm run biome:format` for the initial Biome command surface. Do not run legacy ESLint lint commands during the Biome migration track.
+- Biome lint/format: `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, `npm run format`, or the lower-level `npm run biome:check`/`npm run biome:lint`/`npm run biome:format` scripts. `lint` runs Biome linting; formatting remains an explicit `format` operation to avoid broad format churn.
 - Runtime invariant check: `npm run check:runtime-invariants`.
 - Dev hub: `npm run start:dev`; built hub: `npm run start` after building `dist/`.
 
@@ -40,7 +40,7 @@
 
 ## Toolchain constraints
 - TypeScript base is strict CommonJS targeting ES2019, with `allowJs`, decorators, declarations, and `noUnusedLocals` enabled.
-- Lint/format tooling is migrating from ESLint/Prettier to Biome. During the migration, avoid legacy ESLint commands unless the active track explicitly re-enables them.
+- Lint/format tooling uses Biome during the migration track. Do not run legacy ESLint commands unless the active track explicitly re-enables them.
 
 ## Repository Map
 

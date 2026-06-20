@@ -32,7 +32,7 @@
     - Remaining CI/hook references: `.github/workflows/analyze-code.yml` still runs `yarn lint`; the legacy Husky pre-push hook still runs `npm run lint`. Both are scheduled for Phase 2 replacement.
     - Remaining source suppressions: `eslint-disable` comments are present across source, test, BDD, and script TypeScript files and are scheduled for Phase 3 removal or Biome conversion.
     - Remaining cache artifacts: package `.eslintcache` files exist in the worktree and are scheduled for Phase 3 cleanup only if tracked or otherwise relevant.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Add Initial Executable Biome and Remove ESLint Guidance' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Add Initial Executable Biome and Remove ESLint Guidance' (Protocol in workflow.md)
 
     Phase 1 checkpoint notes:
     - Review PR: https://github.com/0rail/transform-hub/pull/20
@@ -42,29 +42,48 @@
     - Validation run: `npm run biome:check -- --help` passed, confirming the initial Biome command surface executes without running a full repository check.
     - Skipped validation: legacy ESLint lint commands were intentionally not run per track requirement.
     - Phase 1 checkpoint commit: `59ada29f`.
+    - Manual verification: approved after PR creation.
 
 ## Phase 2: Configure Biome and Replace CI/Local Lint Workflows
 
-- [ ] Task: Configure Biome for minimal useful corrections
-    - [ ] Create or finalize the root Biome configuration for the TypeScript/Node.js monorepo.
-    - [ ] Use Biome recommended rules plus practical import/dependency/cycle checks where stable and appropriate.
-    - [ ] Keep the rule set small and avoid recreating the existing ESLint rule matrix.
-    - [ ] Configure VCS/gitignore integration and explicit exclusions for generated output, dependencies, build artifacts, and ignored files.
-    - [ ] Configure Biome formatting to replace Prettier while preserving practical repository style expectations.
-- [ ] Task: Replace local scripts with Biome-backed commands
-    - [ ] Make `npm run lint` execute Biome, not ESLint.
-    - [ ] Add or update Biome fix/format scripts.
-    - [ ] Add a changed/staged fast path if supported by the selected Biome version.
-    - [ ] Remove old ESLint-specific script variants unless temporarily retained with a clear reason.
-- [ ] Task: Replace CI and hook integration
-    - [ ] Replace workflow lint invocations with Biome-backed commands.
-    - [ ] Ensure workflow dependencies/required job names remain coherent after the migration.
-    - [ ] Update pre-push or hook configuration so it no longer invokes ESLint.
-- [ ] Task: Update active references from ESLint to Biome
-    - [ ] Update `conductor/tech-stack.md` to document Biome as the lint/format tool.
-    - [ ] Update active documentation that instructs contributors to use ESLint, Prettier, or yarn lint.
-    - [ ] Search active scripts, workflows, and docs for stale ESLint references and replace them where they describe current workflow.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Configure Biome and Replace CI/Local Lint Workflows' (Protocol in workflow.md)
+- [x] Task: Configure Biome for minimal useful corrections
+    - [x] Create or finalize the root Biome configuration for the TypeScript/Node.js monorepo.
+    - [x] Use Biome recommended rules plus practical import/dependency/cycle checks where stable and appropriate.
+    - [x] Keep the rule set small and avoid recreating the existing ESLint rule matrix.
+    - [x] Configure VCS/gitignore integration and explicit exclusions for generated output, dependencies, build artifacts, and ignored files.
+    - [x] Configure Biome formatting to replace Prettier while preserving practical repository style expectations.
+
+    Phase 2 note: added root `biome.json` with recommended rules, warning-level import/dependency/cycle checks, git ignore integration, explicit generated-output exclusions, EditorConfig-aware formatting, 4-space indentation, 180-character line width, and no trailing commas. Biome linting is the default `lint` path; formatting remains explicit to avoid broad format churn.
+- [x] Task: Replace local scripts with Biome-backed commands
+    - [x] Make `npm run lint` execute Biome, not ESLint.
+    - [x] Add or update Biome fix/format scripts.
+    - [x] Add a changed/staged fast path if supported by the selected Biome version.
+    - [x] Remove old ESLint-specific script variants unless temporarily retained with a clear reason.
+
+    Phase 2 note: replaced root lint scripts with Biome-backed `lint`, `lint:fix`, `lint:full`, `lint:quick`, `lint:staged`, `format`, and `format:check` commands. The legacy cache-specific `lint:uncached` script was removed. An initial attempted validation through `npm run biome:check -- biome.json` incorrectly expanded to `biome check . biome.json` because the script included `.`, causing a full repository format check; classified as invocation error and corrected by making `biome:check` a lint-only alias.
+- [x] Task: Replace CI and hook integration
+    - [x] Replace workflow lint invocations with Biome-backed commands.
+    - [x] Ensure workflow dependencies/required job names remain coherent after the migration.
+    - [x] Update pre-push or hook configuration so it no longer invokes ESLint.
+
+    Phase 2 note: updated `.github/workflows/analyze-code.yml` from Yarn/ESLint linting to npm install plus `npm run lint`. The legacy Husky pre-push hook still invokes `npm run lint`, which now resolves to Biome.
+- [x] Task: Update active references from ESLint to Biome
+    - [x] Update `conductor/tech-stack.md` to document Biome as the lint/format tool.
+    - [x] Update active documentation that instructs contributors to use ESLint, Prettier, or yarn lint.
+    - [x] Search active scripts, workflows, and docs for stale ESLint references and replace them where they describe current workflow.
+
+    Phase 2 note: active script/workflow/docs search found no `.github` ESLint/yarn-lint references and no package-script ESLint invocations. Remaining `package.json` ESLint dependency references are intentionally deferred to Phase 3. Historical Conductor archive references were left unchanged.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Configure Biome and Replace CI/Local Lint Workflows' (Protocol in workflow.md)
+
+    Phase 2 checkpoint notes:
+    - Shared package review: not applicable; this phase changed root tooling/docs/CI only and added no package-local runtime code.
+    - Deduplication check: not applicable; no reusable code or tests were added.
+    - Validation run: JSON parse check for `package.json`, `package-lock.json`, and `biome.json` passed.
+    - Validation run: `npx biome lint biome.json` passed.
+    - Validation run: `npm run lint -- --help` passed, confirming `npm run lint` now resolves to Biome linting without running a full repository lint.
+    - Invocation error classified and fixed: `npm run biome:check -- biome.json` expanded to a full repository `biome check . biome.json` because the script included `.`, producing expected existing format diagnostics. The script was corrected to lint-only for now to avoid broad formatting churn.
+    - Skipped validation: legacy ESLint lint commands were intentionally not run per track requirement.
+    - Phase 2 checkpoint commit: pending.
 
 ## Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate
 

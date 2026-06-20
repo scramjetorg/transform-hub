@@ -1,0 +1,50 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "feat/manager-oss"
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!!dist",
+      "!!**/dist",
+      "!!node_modules",
+      "!!**/node_modules",
+      "!!coverage",
+      "!!**/coverage",
+      "!!bdd/.work",
+      "!!packages/pre-runner/sample-package",
+      "!!refapps"
+    ],
+    "ignoreUnknown": true
+  },
+  "formatter": {
+    "enabled": true,
+    "useEditorconfig": true,
+    "indentStyle": "space",
+    "indentWidth": 4,
+    "lineWidth": 180
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "correctness": {
+        "noPrivateImports": "warn",
+        "noUndeclaredDependencies": "warn",
+        "noUnresolvedImports": "warn"
+      },
+      "suspicious": {
+        "noImportCycles": "warn"
+      }
+    }
+  }
+}
