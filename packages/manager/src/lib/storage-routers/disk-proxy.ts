@@ -28,7 +28,7 @@ class DiskClient {
         try {
             await stat(resolve(path, location));
             return true;
-        } catch (error) {
+        } catch {
             return false;
         }
     }
@@ -41,7 +41,7 @@ class DiskClient {
                 size: stats.size,
                 modified: stats.mtime
             };
-        } catch (error) {
+        } catch {
             throw Object.assign(new Error(`File not found: ${resolve(path, location)}`), {
                 code: "NotFound",
             });
@@ -65,7 +65,7 @@ class DiskClient {
 
         try {
             await this.statObject(path, directory);
-        } catch (error) {
+        } catch {
             // create directory
             await mkdir(resolve(path, directory), { recursive: true });
         }

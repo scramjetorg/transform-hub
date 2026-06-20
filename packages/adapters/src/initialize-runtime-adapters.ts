@@ -1,4 +1,5 @@
 import { IObjectLogger, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { getAdapter, getValidAdapters } from "./get-adapters";
 
 export function updateAdaptersConfig(adapter: string, config: STHConfiguration) {
@@ -55,7 +56,7 @@ export async function initializeRuntimeAdapters(config: STHConfiguration, logger
         try {
             await getAdapter("docker").initialize(config.adapters.docker);
             config.runtimeAdapter = "docker";
-        } catch (e) {
+        } catch {
             logger.info("Docker not available, falling back to process adapter.");
             await getAdapter("process").initialize(config.adapters.process);
             config.runtimeAdapter = "process";

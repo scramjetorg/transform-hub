@@ -329,7 +329,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
             case CPMMessageCode.NETWORK_INFO:
                 this.networkInterfaces = message[1] as NetworkInfo[];
                 break;
-            case CPMMessageCode.SEQUENCES:
+            case CPMMessageCode.SEQUENCES: {
                 const { sequences } = message[1] as { sequences: SequenceMessageData[] } || [];
 
                 sequences.forEach(sequence => {
@@ -337,31 +337,36 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
                 });
 
                 break;
-            case CPMMessageCode.SEQUENCE:
+            }
+            case CPMMessageCode.SEQUENCE: {
                 const sequence = message[1] as SequenceMessage;
 
                 this.emit("sequence", sequence);
                 break;
-            case CPMMessageCode.INSTANCE:
+            }
+            case CPMMessageCode.INSTANCE: {
                 const instance = message[1] as InstanceMessage;
 
                 this.emit("instance", instance);
                 break;
-            case CPMMessageCode.INSTANCES:
+            }
+            case CPMMessageCode.INSTANCES: {
                 const instancesMsgPayload = message[1] as InstanceBulkMessage;
 
                 instancesMsgPayload.instances?.forEach((instanceData: InstanceMessageData) => {
                     this.emit("instance", instanceData);
                 });
                 break;
+            }
             case CPMMessageCode.TOPIC:
                 this.topicMessageHandler(message);
                 break;
-            case CPMMessageCode.EVENT:
+            case CPMMessageCode.EVENT: {
                 const eventData = message[1] as SpaceEventMessageData;
 
                 await this.eventMessageHandler(eventData);
                 break;
+            }
             default:
                 break;
         }

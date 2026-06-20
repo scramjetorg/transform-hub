@@ -90,18 +90,30 @@
 
 ## Phase 2.5: Fix Current Biome Diagnostics
 
-- [ ] Task: Fix package source diagnostics
-    - [ ] Fix or intentionally suppress current package-source `noUnusedVariables` diagnostics.
-    - [ ] Fix or intentionally suppress current package-source `noImportCycles` diagnostics.
-    - [ ] Fix current package-source `noAssignInExpressions`, `noSwitchDeclarations`, `noTsIgnore`, `useIterableCallbackReturn`, `noRedundantUseStrict`, parse, `noConstructorReturn`, `noEmptyPattern`, and `noUnsafeFinally` diagnostics.
-    - [ ] Avoid unrelated behavior changes while addressing diagnostics.
-- [ ] Task: Fix repository script diagnostics
-    - [ ] Fix current script diagnostics emitted by the tuned Biome baseline.
-    - [ ] Keep script behavior unchanged and avoid broad style-only rewrites.
-- [ ] Task: Revalidate tuned Biome baseline
-    - [ ] Run Biome lint under the 2GB memory limit and record diagnostic count and memory usage.
-    - [ ] Confirm no legacy ESLint commands are run.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
+- [x] Task: Fix package source diagnostics
+    - [x] Fix or intentionally suppress current package-source `noUnusedVariables` diagnostics.
+    - [x] Fix or intentionally suppress current package-source `noImportCycles` diagnostics.
+    - [x] Fix current package-source `noAssignInExpressions`, `noSwitchDeclarations`, `noTsIgnore`, `useIterableCallbackReturn`, `noRedundantUseStrict`, parse, `noConstructorReturn`, `noEmptyPattern`, and `noUnsafeFinally` diagnostics.
+    - [x] Avoid unrelated behavior changes while addressing diagnostics.
+
+    Phase 2.5 note: fixed non-cycle diagnostics with behavior-preserving mechanical rewrites such as unused catch binding removal, assignment-expression splitting, `forEach` block bodies, catch annotation cleanup, and unsafe-finally cleanup. Existing import cycles were intentionally retained and suppressed with targeted Biome suppressions so the rule remains enabled for new unsuppressed cycles.
+- [x] Task: Fix repository script diagnostics
+    - [x] Fix current script diagnostics emitted by the tuned Biome baseline.
+    - [x] Keep script behavior unchanged and avoid broad style-only rewrites.
+- [x] Task: Revalidate tuned Biome baseline
+    - [x] Run Biome lint under the 2GB memory limit and record diagnostic count and memory usage.
+    - [x] Confirm no legacy ESLint commands are run.
+
+    Phase 2.5 validation:
+    - `npx biome lint . --reporter=json --max-diagnostics=none` under a 2GB virtual-memory cap reported 0 diagnostics.
+    - `npm run lint` under a 2GB virtual-memory cap passed after review fixes: checked 554 files in 145ms, max RSS 108096 KB, wall time 0.26s.
+    - Focused review via Oracle identified a non-preserving `CeroError` constructor rewrite and a MultiManager array-config behavior change; both were corrected before checkpointing.
+    - `npm --prefix packages/api-server test` passed under the repository memory guard, 48 tests.
+    - `npm --prefix packages/multi-manager test` passed under the repository memory guard, 48 tests.
+    - `npm run build:packages` passed under the repository memory guard.
+    - `git diff --check` passed.
+    - Legacy ESLint lint commands were not run.
+- [~] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
 
 ## Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate
 

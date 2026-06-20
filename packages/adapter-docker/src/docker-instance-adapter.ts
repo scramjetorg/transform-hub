@@ -287,7 +287,7 @@ IComponent {
         }
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     monitorRate(_rps: number): this {
         /** ignore */
     }

@@ -1,4 +1,5 @@
 import { IAdapterAugmentation } from "@scramjet/types";
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { augment as processAugment } from "@scramjet/adapter-process";
 import { augment as dockerAugment } from "@scramjet/adapter-docker";
 import { augment as kubernetesAugment } from "@scramjet/adapter-kubernetes";

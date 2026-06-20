@@ -44,7 +44,7 @@ async function isDockerConfigured() {
     try {
         await new Dockerode().info();
         _isDockerConfigured = true;
-    } catch (e) {
+    } catch {
         _isDockerConfigured = false;
     }
 

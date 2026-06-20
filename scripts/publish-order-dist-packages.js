@@ -49,7 +49,7 @@ const checkIfPublished = async (opts, item) => {
         const out = await exec(`npm view --json ${item.name}@${item.version}`, opts);
 
         return out.stdout.length > 0;
-    } catch (e) {
+    } catch {
         return false;
     }
 };
@@ -79,7 +79,7 @@ const checkIfPublished = async (opts, item) => {
     }));
     const graph = filesWithDeps.reduce((acc, x) => {
         x.deps?.forEach(
-            (y) => acc.push([x.name, y])
+            (y) => { acc.push([x.name, y]); }
         );
         return acc;
     }, []);
@@ -128,7 +128,7 @@ const checkIfPublished = async (opts, item) => {
                 throw new Error("Package still not available after 600 secs");
 
             console.error(" `-> ops done, waiting until new package visible");
-        } catch (e) {
+    } catch (e) {
             if (!force)
                 throw e;
             else

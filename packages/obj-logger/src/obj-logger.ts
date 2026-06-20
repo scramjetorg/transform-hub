@@ -30,7 +30,7 @@ const getCircularReplacer = () => {
 const stringifier = (line: any): string => {
     try {
         return JSON.stringify(line) + "\n";
-    } catch (e) {
+    } catch {
         return JSON.stringify(line, getCircularReplacer()) + "\n";
     }
 };

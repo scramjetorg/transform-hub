@@ -213,7 +213,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     private async createVolume(id: string): Promise<DockerVolume> {
         try {
             return await this.dockerHelper.createVolume(id);
-        } catch (error: any) {
+        } catch {
             this.logger.error("Error creating volume", id);
 
             throw new SequenceAdapterError("DOCKER_ERROR", "Error creating volume");

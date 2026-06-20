@@ -79,7 +79,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             const body = await getBody(req, encoding);
 
             return body && (rawBody ? body : JSON.parse(body));
-        } catch (e: any) {
+        } catch {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };
@@ -189,7 +189,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
                     return await opControlMessageHandler(req, res, message, comm);
                 }
                 throw new Error("ERR_UNSUPPORTED_HANDLER_CONFIGURATION");
-            } catch (e: any) {
+        } catch (e: any) {
                 return next(e);
             }
         };

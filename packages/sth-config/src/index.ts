@@ -1,4 +1,5 @@
 import { STHCommandOptions } from "@scramjet/types";
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { ConfigService, defaultConfig } from "./config-service";
 
 const PRODUCTION: boolean = !!process.env.PRODUCTION;

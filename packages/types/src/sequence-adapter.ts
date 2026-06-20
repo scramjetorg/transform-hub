@@ -1,5 +1,6 @@
 import { Readable } from "stream";
 import { IObjectLogger } from "./object-logger";
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { SequenceConfig } from "./runner-config";
 
 export type SequenceInfo = {

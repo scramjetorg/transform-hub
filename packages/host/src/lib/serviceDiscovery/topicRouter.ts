@@ -172,7 +172,7 @@ class TopicRouter {
             }
 
             return topic;
-        } catch (e: any) {
+        } catch {
             throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);
         }
     }

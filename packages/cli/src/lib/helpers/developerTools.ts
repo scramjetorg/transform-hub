@@ -74,13 +74,13 @@ export const cmdToMdFormat = (command: CommandDescriptor, stream: NodeJS.Writabl
 
     if (args.length) {
         stream.write("**Arguments**\n\n");
-        args.forEach(arg => stream.write(`*${arg}\n`));
+        args.forEach(arg => { stream.write(`*${arg}\n`); });
         stream.write("\n");
     }
 
     if (opts.length) {
         stream.write("**Options**\n\n");
-        opts.forEach(opt => stream.write(`*${opt}\n`));
+        opts.forEach(opt => { stream.write(`*${opt}\n`); });
         stream.write("\n");
     }
     stream.write("---\n\n");

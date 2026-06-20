@@ -90,7 +90,7 @@ function revertStandardStream(oldStream: Writable) {
     if (overrideMap.has(oldStream)) {
         const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
 
-        // @ts-ignore - this is ok, we're doing this on purpose!
+        // @ts-expect-error - this is ok, we're doing this on purpose!
         delete oldStream.write;
 
         // if prototypic write is there, then no change needed
@@ -112,7 +112,7 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     const write = oldStream.write;
 
     if (process.env.PRINT_TO_STDOUT) {
-        // @ts-ignore
+        // @ts-expect-error
         oldStream.write = (...args) => { write.call(oldStream, ...args); return newStream.write(...args); };
     } else {
         oldStream.write = newStream.write.bind(newStream);
@@ -238,7 +238,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async onStorageMessage(data: { values: Record<string, string> }) {
         // this.logger.debug("Received local storage state from Host", data.values);  // <-- uncomment for debugging
-        Object.keys(this.localCache).forEach(k => delete this.localCache[k]);
+        Object.keys(this.localCache).forEach(k => { delete this.localCache[k]; });
         Object.assign(this.localCache, data.values);
     }
 
@@ -274,11 +274,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             case RunnerMessageCode.PONG:
                 this.handlePongRequest(data as HandshakeAcknowledgeMessageData);
                 break;
-            case RunnerMessageCode.EVENT:
+            case RunnerMessageCode.EVENT: {
                 const eventData = data as EventMessageData;
 
                 this.emitter.emit(eventData.eventName, eventData.message);
                 break;
+            }
             case RunnerMessageCode.MONITORING_REPLY:
                 break;
             case RunnerMessageCode.STORAGE:
@@ -353,7 +354,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             await access("/tmp/degraded", constants.R_OK);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -447,7 +448,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             await this.hostClient.disconnect(!this.connected);
             await defer(10000);
-        } catch (e) {
+        } catch {
             this.logger.error("Disconnect failed");
         }
 
@@ -707,7 +708,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.info("Cleaning up streams");
-        } catch (e: any) {
+        } catch {
             this.status = InstanceStatus.ERRORED;
 
             exitcode = RunnerExitCode.CLEANUP_FAILED;

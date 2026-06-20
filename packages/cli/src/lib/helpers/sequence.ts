@@ -222,7 +222,9 @@ export const waitForInstanceKills = (seq: STHRestAPI.GetSequenceResponse, timeou
         let l;
 
         // eslint-disable-next-line no-cond-assign
-        while (l = (await getHostClient().getSequence(seq.id)).instances.length) {
+        while (true) {
+            l = (await getHostClient().getSequence(seq.id)).instances.length;
+            if (!l) break;
             displayMessage(`Sequence ${seq.id}. Waiting for ${l} instance${l > 1 ? "s" : ""} to finish...`);
             await defer(1000);
         }

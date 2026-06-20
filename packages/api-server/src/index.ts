@@ -31,7 +31,7 @@ function safeHandler(value: Middleware): Middleware {
     return async (req: ParsedMessage, res: ServerResponse & { errorMessage?: string }, next: NextCallback) => {
         try {
             await value(req, res, next);
-        } catch (err: Error | any) {
+        } catch (err: any) {
             res.errorMessage = err.message;
             next(err);
         }

@@ -245,7 +245,7 @@ class KubernetesClientAdapter {
 
                 return used >= hard;
             }
-        } catch (e) {
+        } catch {
             this.logger.warn("Can't get quota object. ");
         }
 

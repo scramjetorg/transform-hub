@@ -559,7 +559,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             await this.communicationStream?.whenWrote(
                 [CPMMessageCode.LOAD, await this.getLoad()]
             );
-        } catch (e) {
+        } catch {
             this.logger.error("Error sending loadcheck");
         }
     }

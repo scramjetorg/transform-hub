@@ -6,6 +6,7 @@ import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 import { HostHeaders } from "@scramjet/symbols";
 // eslint-disable-next-line import/no-cycle
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { ManagerClient } from "./manager-client";
 
 /**

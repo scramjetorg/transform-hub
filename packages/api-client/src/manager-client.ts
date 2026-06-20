@@ -1,6 +1,7 @@
 /// <reference path="./definitions.d.ts" />
 
 // eslint-disable-next-line import/no-cycle
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { HostClient } from "./host-client";
 import { ClientUtils, ClientProvider, HttpClient, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { MRestAPI, LoadCheckStat } from "@scramjet/types";

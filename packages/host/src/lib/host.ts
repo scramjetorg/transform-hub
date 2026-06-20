@@ -402,7 +402,7 @@ export class Host implements IHost, IComponent {
                 const extSeq = await this.getExternalSequence(instance.sequence.id);
 
                 this.logger.info("Sequence acquired.", extSeq);
-            } catch (e) {
+            } catch {
                 this.logger.warn("Sequence not found in Store. Instance has no Sequence.");
             }
         }
@@ -771,7 +771,7 @@ export class Host implements IHost, IComponent {
 
         try {
             fileContents = readFileSync(this.config.host.infoFilePath, { encoding: "utf-8" });
-        } catch (err) {
+        } catch {
             this.logger.warn("Can not read id file");
 
             return {};
@@ -1400,7 +1400,7 @@ export class Host implements IHost, IComponent {
         switch (scope) {
             case "instance":
                 return;
-            case "sequence":
+            case "sequence": {
                 const sequence = this.instancesStore.get(event.source);
 
                 if (!sequence) {
@@ -1409,6 +1409,7 @@ export class Host implements IHost, IComponent {
                 }
 
                 break;
+            }
             default:
                 if (!incoming && scope === "space") {
                     if (!this.cpmConnector?.connected) {

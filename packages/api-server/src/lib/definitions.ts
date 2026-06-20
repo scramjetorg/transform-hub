@@ -53,7 +53,10 @@ export class CeroError extends Error implements APIError {
         this.code = code;
         this.type = errCode;
 
-        if (cause instanceof CeroError) return cause;
+        if (cause instanceof CeroError) {
+            // biome-ignore lint/correctness/noConstructorReturn: preserve existing CeroError identity behavior.
+            return cause;
+        }
         if (cause) this.cause = cause;
     }
 

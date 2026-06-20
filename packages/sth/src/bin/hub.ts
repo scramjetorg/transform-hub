@@ -80,7 +80,7 @@ const commonOptions: ConfigOptionDescriptor[] = [
 const createBaseRegistry = () => {
     const registry = createOptionRegistry();
 
-    commonOptions.forEach(option => registry.option(option));
+    commonOptions.forEach(option => { registry.option(option); });
     registerRuntimeAdapterOption(registry);
     registry.option({
         name: "localStorageAdapter",

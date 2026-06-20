@@ -45,8 +45,9 @@ export class ConfigService {
         let updateAdaptersConfig: ((runtimeAdapter: string, config: STHConfiguration) => Awaited<void>) | undefined;
 
         try {
+            // biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
             updateAdaptersConfig = (await import("@scramjet/adapters")).updateAdaptersConfig;
-        } catch (error) {
+        } catch {
             // ignore
         }
         if (updateAdaptersConfig) {

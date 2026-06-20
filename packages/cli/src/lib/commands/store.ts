@@ -71,7 +71,7 @@ export const storeCommand: CommandDescriptor = cmd("store", (b) => {
 
                         try {
                             await managerClient.clearStore();
-                        } catch (e: any) {
+                        } catch {
                             throw new Error("Some Sequences may have not been deleted.");
                         }
 

@@ -1,4 +1,4 @@
-"use strict";
+
 
 const { DataStream } = require("scramjet");
 const { join, relative, resolve } = require("path");

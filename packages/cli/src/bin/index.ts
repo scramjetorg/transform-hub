@@ -35,7 +35,7 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
             .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command");
 
         // Register child commands from command modules
-        commandDescriptors.forEach((child: CommandDescriptor) => b.addCommand(child));
+        commandDescriptors.forEach((child: CommandDescriptor) => { b.addCommand(child); });
     });
 
     // Handle --version before command resolution

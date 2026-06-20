@@ -1,6 +1,7 @@
 const { ObjLogger } = require("@scramjet/obj-logger");
 
-const logger = exports.logger = new ObjLogger("ModuleLoader");
+const logger = new ObjLogger("ModuleLoader");
+exports.logger = logger;
 exports.loadModule = async function loadModule(opts) {
     logger.info("Loading module", opts.name);
 

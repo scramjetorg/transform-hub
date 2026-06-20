@@ -19,6 +19,7 @@ import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables, getRunnerTransportEnv } from "@scramjet/adapters-common";
+// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { development } from "@scramjet/sth-config";
 
 const CRASH_LOG_TAIL_BYTES = 4096;
@@ -232,7 +233,7 @@ class ProcessInstanceAdapter implements
                     });
 
                     res(parseInt(data!, 10));
-                } catch (err) {
+                } catch {
                     /** OK. file not exists. check if process is*/
 
                     try {
@@ -257,7 +258,7 @@ class ProcessInstanceAdapter implements
         //noop
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     monitorRate(_rps: number): this {
         /** ignore */
     }
