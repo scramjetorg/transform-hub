@@ -11,31 +11,51 @@
   - Add typed fluent clients for Root, Space, Hub, and Instance over the existing generic client and transport stack.
   - Add strict runtime binding and fluent-client coverage guards, then inventory and remove only approved obsolete v2 surfaces.
   - Update docs and validation artifacts for the final public v2 structure.
+- PR: https://github.com/0rail/transform-hub/pull/17.
+- Codemap/inventory summary:
+  - `packages/rest-api2`: current v2 contract source is `src/routes.ts` (`RestAPI2RouteSets`, `RestAPI2Routes`), `src/contracts.ts`, `src/schemas.ts`, and `src/client.ts`; tests cover routes, schemas, and generic client dispatch.
+  - `packages/api-router`: generic route primitives live in `src/manifest.ts`, `src/router.ts`, `src/bind.ts`, `src/client.ts`, `src/client-transports.ts`, `src/schema-mode.ts`, and `src/openapi.ts`; package is domain-neutral with no direct Manager/Host public terminology.
+  - `packages/host`: v2 hub/sequence bindings live in `src/lib/api/host-api-v2.ts`; instance bindings live in `src/lib/api/instance-api-v2.ts`; `host-api-v1.ts` has v1-to-v2 fallback usage.
+  - `packages/manager`: v2 bindings live in `src/lib/api/manager-api-v2.ts`; health has a separate v2 router registration in `src/lib/manager.ts`.
+  - `packages/multi-manager`: v2 bindings and Manager resolver forwarding live in `src/lib/api/multi-manager-api-v2.ts`.
+  - Public v2 terminology inventory found `/api/v2/managers/:managerId`, `managerId`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, `RestAPI2RouteSets.manager`, `RestAPI2RouteSets.multiManager`, `RestAPI2RouteSets.host`, and Manager/Host wording across route contracts, docs, READMEs, tests, and generated operation ID expectations.
+  - Baseline risks: Host and Instance v2 routes mostly rely on generated route IDs; Manager v2 storage object routes are `skip` plus legacy middleware; `sendSequence`/`updateSequence` are contract-only; OpenAPI Zod conversion is intentionally limited; no full resolver-chain e2e test exists.
+- Shared-package review:
+  - Reuse `@scramjet/api-router` route definitions, resolver definitions, manifests, `bindRoutes`, `bindResolvers`, `bindResolver`, `routeBinding`, `resolverBinding`, generic client, HTTP/verser2 transports, schema-mode loading, and OpenAPI generation.
+  - Reuse `@scramjet/rest-api2` schemas/contracts as the public v2 DTO source; future route tree should derive current route sets/routers rather than duplicating them.
+  - No config parser, runtime adapter, runner, or runtime protocol packages are in scope for Phase 1 or the route/client-only track unless later validation exposes a direct dependency.
+- Baseline validation:
+  - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 17 tests.
+  - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 45 tests.
+  - `packages/host`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/api-v2-hotwire.spec.ts test/api-v2-instance-hotwire.spec.ts test/api-versioned-routing.spec.ts` — passed, 42 tests.
+  - `packages/manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
+  - `packages/multi-manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
+  - Baseline grep checks recorded for `/api/v2/managers`, `managerId`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, and `HostInfoResponse`; current matches are expected before Phase 3 terminology replacement.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
-- [~] Task: Create dedicated branch and PR review surface for the API v2 final structure track
+- [x] Task: Create dedicated branch and PR review surface for the API v2 final structure track
     - [x] Confirm current base branch and working tree status
     - [x] Create a dedicated track branch unless the user explicitly omits branch setup
     - [x] Prepare PR title/description describing the intended Root/Space/Hub/Instance route-tree and fluent-client state
-    - [ ] Create or update the PR when remote permissions and workflow allow
-- [ ] Task: Confirm affected packages, entrypoints, and expected behavior
-    - [ ] Read codemaps for `packages/rest-api2`, `packages/api-router`, `packages/host`, `packages/manager`, `packages/multi-manager`, and relevant docs/tests
-    - [ ] Inventory current `RestAPI2RouteSets`, `RestAPI2Routes`, route contract schemas, resolver target definitions, OpenAPI generation, schema-mode loading, and generic client usage
-    - [ ] Inventory current runtime v2 route binding in Host, Manager, MultiManager, and Instance implementations
-    - [ ] Inventory public v2 Manager/Host terminology in route paths, params, operation IDs, tests, generated docs, `docs/api.md`, and README examples
-- [ ] Task: Review shared packages and reusable contracts before changes
-    - [ ] Confirm reusable `@scramjet/api-router` exports for route definitions, resolver definitions, manifests, binders, client transports, and OpenAPI generation
-    - [ ] Confirm reusable `@scramjet/rest-api2` schemas/contracts that should remain the public v2 DTO source
-    - [ ] Confirm no parser/config/runtime-adapter packages should be changed for this route/client-only track
-    - [ ] Record intentional non-use of shared code when behavior is specific to v2 routing or public API contracts
-- [ ] Task: Establish baseline validation and terminology checks
-    - [ ] Run focused `@scramjet/rest-api2` and `@scramjet/api-router` tests/typechecks under the memory guard
-    - [ ] Run focused Host, Manager, and MultiManager v2 route tests/typechecks under the memory guard
-    - [ ] Add or record grep checks for current public `/api/v2/managers`, `managerId`, and public Host wording so later phases can prove removal
-    - [ ] Record baseline command results, skipped checks, and known failures in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Current Surface Inventory, and Review Surface' (Protocol in workflow.md)
-    - [ ] Create a scoped Phase 1 checkpoint commit after validation and before asking for manual verification
+    - [x] Create or update the PR when remote permissions and workflow allow
+- [x] Task: Confirm affected packages, entrypoints, and expected behavior
+    - [x] Read codemaps for `packages/rest-api2`, `packages/api-router`, `packages/host`, `packages/manager`, `packages/multi-manager`, and relevant docs/tests
+    - [x] Inventory current `RestAPI2RouteSets`, `RestAPI2Routes`, route contract schemas, resolver target definitions, OpenAPI generation, schema-mode loading, and generic client usage
+    - [x] Inventory current runtime v2 route binding in Host, Manager, MultiManager, and Instance implementations
+    - [x] Inventory public v2 Manager/Host terminology in route paths, params, operation IDs, tests, generated docs, `docs/api.md`, and README examples
+- [x] Task: Review shared packages and reusable contracts before changes
+    - [x] Confirm reusable `@scramjet/api-router` exports for route definitions, resolver definitions, manifests, binders, client transports, and OpenAPI generation
+    - [x] Confirm reusable `@scramjet/rest-api2` schemas/contracts that should remain the public v2 DTO source
+    - [x] Confirm no parser/config/runtime-adapter packages should be changed for this route/client-only track
+    - [x] Record intentional non-use of shared code when behavior is specific to v2 routing or public API contracts
+- [x] Task: Establish baseline validation and terminology checks
+    - [x] Run focused `@scramjet/rest-api2` and `@scramjet/api-router` tests/typechecks under the memory guard
+    - [x] Run focused Host, Manager, and MultiManager v2 route tests/typechecks under the memory guard
+    - [x] Add or record grep checks for current public `/api/v2/managers`, `managerId`, and public Host wording so later phases can prove removal
+    - [x] Record baseline command results, skipped checks, and known failures in `plan.md`
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Current Surface Inventory, and Review Surface' (Protocol in workflow.md)
+    - [~] Create a scoped Phase 1 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification
     - [ ] Begin the manual verification request/note with `Phase 1: Manual Verification` so the checkpoint is visible in the PR
 
