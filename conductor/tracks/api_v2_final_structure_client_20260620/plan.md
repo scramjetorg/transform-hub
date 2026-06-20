@@ -1,11 +1,23 @@
 # Implementation Plan: API v2 Final Structure and Fluent Client
 
+## Phase 1 Notes
+
+- Branch base confirmed: `feat/manager-oss`.
+- Dedicated branch: `conductor/api-v2-final-structure-client-20260620`.
+- Planned PR title: `Finalize API v2 route tree and fluent client`.
+- Planned PR description:
+  - Make `RestAPI2RouteTree` the source of truth for public v2 route contracts, route sets, routers, manifests, OpenAPI, and fluent clients.
+  - Rename public v2 concepts from Manager/Host terminology to Root/Space/Hub/Instance while preserving internal package ownership names.
+  - Add typed fluent clients for Root, Space, Hub, and Instance over the existing generic client and transport stack.
+  - Add strict runtime binding and fluent-client coverage guards, then inventory and remove only approved obsolete v2 surfaces.
+  - Update docs and validation artifacts for the final public v2 structure.
+
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
-- [ ] Task: Create dedicated branch and PR review surface for the API v2 final structure track
-    - [ ] Confirm current base branch and working tree status
-    - [ ] Create a dedicated track branch unless the user explicitly omits branch setup
-    - [ ] Prepare PR title/description describing the intended Root/Space/Hub/Instance route-tree and fluent-client state
+- [~] Task: Create dedicated branch and PR review surface for the API v2 final structure track
+    - [x] Confirm current base branch and working tree status
+    - [x] Create a dedicated track branch unless the user explicitly omits branch setup
+    - [x] Prepare PR title/description describing the intended Root/Space/Hub/Instance route-tree and fluent-client state
     - [ ] Create or update the PR when remote permissions and workflow allow
 - [ ] Task: Confirm affected packages, entrypoints, and expected behavior
     - [ ] Read codemaps for `packages/rest-api2`, `packages/api-router`, `packages/host`, `packages/manager`, `packages/multi-manager`, and relevant docs/tests

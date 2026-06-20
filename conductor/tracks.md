@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: API v2 final structure and client**
+- [~] **Track: API v2 final structure and client**
 *Link: [./tracks/api_v2_final_structure_client_20260620/](./tracks/api_v2_final_structure_client_20260620/)*
