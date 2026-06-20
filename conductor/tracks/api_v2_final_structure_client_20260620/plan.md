@@ -286,6 +286,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
   - Rejected/deferred removals: rest-api2 transport re-exports, `getRestAPI2Route()`, and all other inventoried surfaces.
   - Phase 6 validation: no code removal was performed; `git diff --check` passed for the plan-only Phase 6 update.
   - Phase 6 checkpoint commit: `3364f141`.
+  - Phase 6 manual verification approved by user.
 
 - [x] Task: Inventory old v2-related surfaces after the route tree and fluent client are in place
     - [x] Search for old v2 route builders, helper functions, public aliases, generated operation IDs, client helpers, test-only utilities, docs, and README examples superseded by the route tree and fluent client
@@ -308,10 +309,10 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run package build or narrowed build covering removed exports
     - [x] Run narrowed lint and `git diff --check`
     - [x] Record validation results, approved removals, retained surfaces, and deferred removals in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal' (Protocol in workflow.md)
     - [x] Create a scoped Phase 6 checkpoint commit after validation and before asking for manual verification
     - [x] Push the review branch before asking for manual verification
-    - [ ] Begin the manual verification request/note with `Phase 6: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Begin the manual verification request/note with `Phase 6: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 7: Final Documentation, OpenAPI, and Integration Validation
 
