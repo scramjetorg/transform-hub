@@ -79,6 +79,7 @@
   - Focused MultiManager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
   - Focused Manager/MultiManager source lint after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts packages/multi-manager/src/lib/api/multi-manager-api-v2.ts packages/multi-manager/src/lib/multi-manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
   - Phase 4 owner-method cleanup checkpoint commit: `c66707fd`.
+  - Phase 4 manual verification approved by user after owner-method cleanup.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
@@ -204,10 +205,10 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run focused Host, Manager, MultiManager route tests where manifests are consumed by the fluent client
     - [x] Run docs example typecheck if examples are compiled or covered by tests
     - [x] Record validation results in `plan.md`
-- [~] Task: Conductor - User Manual Verification 'Phase 4: Fluent Client Type Model and Runtime Builder' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Fluent Client Type Model and Runtime Builder' (Protocol in workflow.md)
     - [x] Create a scoped Phase 4 checkpoint commit after validation and before asking for manual verification
     - [x] Push the review branch before asking for manual verification
-    - [~] Begin the manual verification request/note with `Phase 4: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Begin the manual verification request/note with `Phase 4: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients
 
