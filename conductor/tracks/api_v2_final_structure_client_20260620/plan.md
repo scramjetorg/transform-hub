@@ -267,27 +267,46 @@ Phase 2 is intentionally combined with the public terminology replacement work f
 
 ## Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal
 
-- [ ] Task: Inventory old v2-related surfaces after the route tree and fluent client are in place
-    - [ ] Search for old v2 route builders, helper functions, public aliases, generated operation IDs, client helpers, test-only utilities, docs, and README examples superseded by the route tree and fluent client
-    - [ ] Classify each candidate as remove now, keep as low-level generic infrastructure, keep temporarily, or uncertain
-    - [ ] Identify dependencies and risks for every removal candidate
-    - [ ] Confirm that generic manifest client, HTTP/verser2 transports, route manifest generation, schema-mode loading, and OpenAPI generation remain unless explicitly approved for removal
-- [ ] Task: Conduct required user interview before removals
-    - [ ] Present the candidate removal list, risk classification, and recommended action to the user through the ask_user tool
-    - [ ] Ask for explicit approval before removing public or semi-public code
-    - [ ] Record approved removals, rejected removals, and deferred removals in `plan.md`
-    - [ ] Do not remove unapproved candidates
-- [ ] Task: Remove approved obsolete v2 surfaces
-    - [ ] Remove approved old aliases, helpers, docs, tests, or exports
-    - [ ] Update imports and package exports after removals
-    - [ ] Add typechecks/tests proving removed exports are not used by current packages
-    - [ ] Update docs to mention retained low-level infrastructure and any deferred compatibility surfaces
-- [ ] Task: Automated verification gate for approved tree-shaking
-    - [ ] Run rest-api2 and api-router tests/typechecks
-    - [ ] Run focused Host, Manager, MultiManager tests/typechecks affected by removals
-    - [ ] Run package build or narrowed build covering removed exports
-    - [ ] Run narrowed lint and `git diff --check`
-    - [ ] Record validation results, approved removals, retained surfaces, and deferred removals in `plan.md`
+- Phase 6 inventory:
+  - Remove-now candidates requiring approval:
+    - `packages/rest-api2/src/client.ts` transport re-exports: `createHttpClientTransport`, `createVerser2ClientTransport`, and `ApiClientTransport`. These are re-exported from `@scramjet/api-router`; package search found no production consumers importing them from `@scramjet/rest-api2`. Risk: low for current repo, possible external import breakage.
+    - `packages/rest-api2/src/routes.ts` `getRestAPI2Route()`. Search found no production consumers; remaining usages are in `packages/rest-api2/test/schemas.spec.ts`. Removal would require replacing test usages with a local helper. Risk: low, but it is exported package surface.
+  - Removal candidates not recommended for this phase:
+    - v2 hotwire route-registration tests in Host/Manager/MultiManager overlap with route-tree tests but still exercise runtime handler binding and adapted behavior. Recommendation: keep; do not remove test coverage in this track.
+  - Keep as low-level generic infrastructure:
+    - `createRestAPI2Client()` and `RestAPI2.Client*` types; these remain the low-level base for fluent clients.
+    - `RestAPI2RouteSets`, `RestAPI2Routes`, `getOpaqueRouteKeys()`, route tree type helpers, `routerFromRouteSet()`, route manifest generation, schema-mode loading, OpenAPI generation, HTTP transport, and verser2 transport.
+  - Keep temporarily / defer:
+    - `RestAPI2Schemas` compatibility object remains heavily used by `packages/rest-api2/src/routes.ts`.
+    - Legacy client packages (`packages/api-client`, `packages/client-utils`, `packages/multi-manager-api-client`, `packages/middleware-api-client`) are still used by CLI, runners, BDD steps, and app context tests; removal requires a separate CLI/runner migration track.
+    - v1 compatibility route handlers must be preserved by spec.
+    - Host contract-only upload/update/RPC placeholders and Manager v2 storage compatibility proxy are known migration gaps requiring separate storage/RPC extraction work.
+  - User interview outcome: user selected "No removals". All remove-now candidates are deferred; no public or semi-public code was removed in Phase 6.
+  - Approved removals: none.
+  - Rejected/deferred removals: rest-api2 transport re-exports, `getRestAPI2Route()`, and all other inventoried surfaces.
+  - Phase 6 validation: no code removal was performed; `git diff --check` passed for the plan-only Phase 6 update.
+
+- [x] Task: Inventory old v2-related surfaces after the route tree and fluent client are in place
+    - [x] Search for old v2 route builders, helper functions, public aliases, generated operation IDs, client helpers, test-only utilities, docs, and README examples superseded by the route tree and fluent client
+    - [x] Classify each candidate as remove now, keep as low-level generic infrastructure, keep temporarily, or uncertain
+    - [x] Identify dependencies and risks for every removal candidate
+    - [x] Confirm that generic manifest client, HTTP/verser2 transports, route manifest generation, schema-mode loading, and OpenAPI generation remain unless explicitly approved for removal
+- [x] Task: Conduct required user interview before removals
+    - [x] Present the candidate removal list, risk classification, and recommended action to the user through the ask_user tool
+    - [x] Ask for explicit approval before removing public or semi-public code
+    - [x] Record approved removals, rejected removals, and deferred removals in `plan.md`
+    - [x] Do not remove unapproved candidates
+- [x] Task: Remove approved obsolete v2 surfaces
+    - [x] Remove approved old aliases, helpers, docs, tests, or exports
+    - [x] Update imports and package exports after removals
+    - [x] Add typechecks/tests proving removed exports are not used by current packages
+    - [x] Update docs to mention retained low-level infrastructure and any deferred compatibility surfaces
+- [x] Task: Automated verification gate for approved tree-shaking
+    - [x] Run rest-api2 and api-router tests/typechecks
+    - [x] Run focused Host, Manager, MultiManager tests/typechecks affected by removals
+    - [x] Run package build or narrowed build covering removed exports
+    - [x] Run narrowed lint and `git diff --check`
+    - [x] Record validation results, approved removals, retained surfaces, and deferred removals in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal' (Protocol in workflow.md)
     - [ ] Create a scoped Phase 6 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification
