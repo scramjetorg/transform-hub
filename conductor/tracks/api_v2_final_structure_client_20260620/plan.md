@@ -78,6 +78,7 @@
   - Focused Manager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
   - Focused MultiManager validation after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
   - Focused Manager/MultiManager source lint after owner-method cleanup: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npx eslint packages/manager/src/lib/api/manager-api-v2.ts packages/manager/src/lib/manager.ts packages/multi-manager/src/lib/api/multi-manager-api-v2.ts packages/multi-manager/src/lib/multi-manager.ts` — passed with the known preexisting `handleSthRegistration` complexity warning in `packages/manager/src/lib/manager.ts`.
+  - Phase 4 owner-method cleanup checkpoint commit: `c66707fd`.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
