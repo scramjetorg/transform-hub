@@ -83,7 +83,7 @@
     - Validation run: `npm run lint -- --help` passed, confirming `npm run lint` now resolves to Biome linting without running a full repository lint.
     - Invocation error classified and fixed: `npm run biome:check -- biome.json` expanded to a full repository `biome check . biome.json` because the script included `.`, producing expected existing format diagnostics. The script was corrected to lint-only for now to avoid broad formatting churn.
     - Skipped validation: legacy ESLint lint commands were intentionally not run per track requirement.
-    - Phase 2 checkpoint commit: pending.
+    - Phase 2 checkpoint commit: `aa09be53`.
 
 ## Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate
 
