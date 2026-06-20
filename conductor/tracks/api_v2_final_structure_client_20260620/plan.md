@@ -335,6 +335,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - Public v2 terminology grep checks for `/api/v2/managers`, `managers/:managerId`, old public `RestAPI2.Manager`/`RestAPI2.MultiManager`, old route-set/router aliases, and old v2 operation ID prefixes in `packages/` and `docs/` — passed.
     - `npm run test:bdd-ci-api-node` was skipped because this phase only changed docs plus contract/schema alignment covered by package, focused runtime, build, OpenAPI, and grep validation; no new cross-package HTTP runtime behavior required a BDD smoke rerun.
   - Deduplication/shared package review: v2 route contracts remain centralized in `@scramjet/rest-api2`, generic router/client/OpenAPI primitives remain in `@scramjet/api-router`, and runtime packages bind shared contracts locally. No repeated helpers were introduced. Manual endpoint tables remain the main drift risk and were verified against the expanded route manifest during this phase.
+  - Phase 7 checkpoint commit: `fe873b73`.
 
 - [x] Task: Finalize public API and client documentation
     - [x] Update `docs/api.md` with final Root/Space/Hub/Instance endpoint tables and fluent client examples
