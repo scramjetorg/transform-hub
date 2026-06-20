@@ -115,6 +115,8 @@
     - Legacy ESLint lint commands were not run.
 - [~] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
 
+    Phase 2.5 checkpoint commit: `6b69afc2`.
+
 ## Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate
 
 - [ ] Task: Remove obsolete ESLint and Prettier tooling
