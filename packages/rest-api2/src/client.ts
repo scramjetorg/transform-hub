@@ -44,7 +44,17 @@ type FluentRouteMethods<TSet extends Record<string, RouteDefinition>> = {
     [K in keyof TSet]: FluentEndpoint<TSet[K]>;
 };
 
-export type FluentClientForRouteTreeNode<TNode extends RestAPI2RouteTreeRouteNode<string, string, Record<string, RouteDefinition>>> = FluentRouteMethods<ReturnType<TNode["routes"]>>;
+// Extract opaque route keys from a route tree node at the type level,
+// mirroring the runtime getOpaqueRouteKeys() behaviour.
+type OpaqueRouteKeysOfNode<TNode extends RestAPI2RouteTreeRouteNode<string, string, Record<string, RouteDefinition>>> =
+    TNode["groups"] extends Record<string, infer Group>
+        ? Group extends { opaque: true; routeKeys: ReadonlyArray<infer R> }
+            ? R extends string ? R : never
+            : never
+        : never;
+
+export type FluentClientForRouteTreeNode<TNode extends RestAPI2RouteTreeRouteNode<string, string, Record<string, RouteDefinition>>> =
+    FluentRouteMethods<Omit<ReturnType<TNode["routes"]>, OpaqueRouteKeysOfNode<TNode>>>;
 
 type RootRouteSet = ReturnType<typeof RestAPI2RouteTree.root.routes>;
 type SpaceRouteSet = ReturnType<typeof RestAPI2RouteTree.space.routes>;
@@ -193,29 +203,29 @@ function createFluentContext(manifest: RouteManifest, transport: ApiClientTransp
     };
 }
 
-export function createRootClient({ transport, basePath = "/api/v2" }: RestAPI2FluentClientOptions): RootClient {
-    const manifest = RestAPI2Routes.root.router(basePath).collect({ expandResolvers: true });
+export function createRootClient({ transport, basePath = "/api/v2", manifest: providedManifest }: RestAPI2FluentClientOptions): RootClient {
+    const manifest = providedManifest ?? RestAPI2Routes.root.router(basePath).collect({ expandResolvers: true });
 
     return buildRootClient(createFluentContext(manifest, transport, basePath));
 }
 
-export function createSpaceClient({ transport, basePath = "/" }: RestAPI2FluentClientOptions): SpaceClient {
-    const manifest = RestAPI2Routes.space.router(basePath).collect({ expandResolvers: true });
+export function createSpaceClient({ transport, basePath = "/", manifest: providedManifest }: RestAPI2FluentClientOptions): SpaceClient {
+    const manifest = providedManifest ?? RestAPI2Routes.space.router(basePath).collect({ expandResolvers: true });
 
     return buildSpaceClient(createFluentContext(manifest, transport, basePath));
 }
 
-export function createHubClient({ transport, basePath = "/" }: RestAPI2FluentClientOptions): HubClient {
-    const manifest = RestAPI2Routes.hub.router(basePath).collect({ expandResolvers: true });
+export function createHubClient({ transport, basePath = "/", manifest: providedManifest }: RestAPI2FluentClientOptions): HubClient {
+    const manifest = providedManifest ?? RestAPI2Routes.hub.router(basePath).collect({ expandResolvers: true });
 
     return buildHubClient(createFluentContext(manifest, transport, basePath));
 }
 
-export function createInstanceClient({ transport, basePath = "/" }: RestAPI2FluentClientOptions): InstanceClient {
+export function createInstanceClient({ transport, basePath = "/", manifest: providedManifest }: RestAPI2FluentClientOptions): InstanceClient {
     const instanceRouter = RestAPI2Routes.instance.router();
-    const manifest = basePath === "/"
+    const manifest = providedManifest ?? (basePath === "/"
         ? instanceRouter.collect({ expandResolvers: true })
-        : Router.create({ basePath }).mount("/", instanceRouter).collect({ expandResolvers: true });
+        : Router.create({ basePath }).mount("/", instanceRouter).collect({ expandResolvers: true }));
 
     return buildInstanceClient(createFluentContext(manifest, transport, basePath));
 }

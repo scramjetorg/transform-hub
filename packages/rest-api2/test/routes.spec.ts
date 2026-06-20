@@ -1,7 +1,7 @@
 import test from "ava";
 
 import { bindRoutes, routeBinding } from "@scramjet/api-router";
-import { RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes, getOpaqueRouteKeys } from "../src";
+import { RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes, getOpaqueRouteKeys, getRestAPI2Route } from "../src";
 
 test("typed route sets build the existing handlerless router factories", t => {
     const contract = RestAPI2Routes.hub.hubRouter().collect();
@@ -57,6 +57,26 @@ test("manager route set exposes inventory hub delete and storage contracts", t =
     t.true(paths.includes("put /api/v2/storage/objects/:filename?"));
     t.true(paths.includes("delete /api/v2/storage/objects/:filename"));
     t.true(paths.includes("delete /api/v2/storage"));
+});
+
+test("GET /spaces route includes page query schema", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.root.router("/api/v2"), "get", "/spaces");
+
+    t.truthy(route.schemas?.query, "spaces route should have a query schema");
+
+    const querySchema = route.schemas!.query!;
+
+    // Valid page query is accepted
+    const valid = querySchema.safeParse({ offset: "10", limit: "25" });
+    t.true(valid.success, "should accept valid page query");
+    if (valid.success) {
+        t.is(valid.data.offset, 10);
+        t.is(valid.data.limit, 25);
+    }
+
+    // Empty query is also valid (optional)
+    const empty = querySchema.safeParse({});
+    t.true(empty.success, "should accept empty query");
 });
 
 test("RPC route group is an explicit opaque route-tree exception", t => {

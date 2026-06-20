@@ -223,6 +223,107 @@ test("fluent client reports missing manifest route coverage", async t => {
     t.throws(() => client.health.get(), { message: "Missing fluent RestAPI2 route: GET /custom/health" });
 });
 
+test("custom route tree nodes with opaque groups exclude opaque routes from type and runtime", async t => {
+    const customNode = {
+        concept: "custom",
+        owner: "custom",
+        routes: () => ({
+            open: Router.get("/open"),
+            secret: Router.post("/secret")
+        }),
+        groups: {
+            internal: { routeKeys: ["secret"] as const, opaque: true }
+        }
+    } as const;
+
+    const client = createFluentClientFromRouteTreeNode(customNode, {
+        basePath: "/custom",
+        transport: {
+            async request<T>() {
+                return { status: 200, headers: {}, body: undefined as unknown as T };
+            }
+        }
+    });
+
+    // Non-opaque route is present
+    t.true("open" in client);
+
+    // Opaque route is excluded at runtime
+    t.false("secret" in client);
+
+    if (false) {
+        // @ts-expect-error opaque routes are excluded on the type level
+        client.secret.post();
+    }
+});
+
+test("createRootClient honors provided manifest", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+    const limitedManifest = { basePath: "/api/v2", routes: [{ id: "GET /api/v2/health", method: "get" as const, fullPath: "/api/v2/health", path: "/health", schemas: {} }] };
+    const client = createRootClient({ transport, manifest: limitedManifest });
+
+    // Provided route works
+    const resp = await client.health.get();
+    t.is((resp.body as any).route, "GET /api/v2/health");
+
+    // Route not in provided manifest throws
+    t.throws(() => client.version.get(), { message: /Missing fluent RestAPI2 route/ });
+});
+
+test("createSpaceClient honors provided manifest", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+    const limitedManifest = { basePath: "/", routes: [{ id: "GET /health", method: "get" as const, fullPath: "/health", path: "/health", schemas: {} }] };
+    const client = createSpaceClient({ transport, manifest: limitedManifest });
+
+    const resp = await client.health.get();
+    t.is((resp.body as any).route, "GET /health");
+    t.throws(() => client.version.get(), { message: /Missing fluent RestAPI2 route/ });
+});
+
+test("createHubClient honors provided manifest", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+    const limitedManifest = { basePath: "/", routes: [{ id: "GET /health", method: "get" as const, fullPath: "/health", path: "/health", schemas: {} }] };
+    const client = createHubClient({ transport, manifest: limitedManifest });
+
+    const resp = await client.health.get();
+    t.is((resp.body as any).route, "GET /health");
+    t.throws(() => client.version.get(), { message: /Missing fluent RestAPI2 route/ });
+});
+
+test("createInstanceClient honors provided manifest", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+    const limitedManifest = { basePath: "/", routes: [{ id: "GET /health", method: "get" as const, fullPath: "/health", path: "/health", schemas: {} }] };
+    const client = createInstanceClient({ transport, manifest: limitedManifest });
+
+    const resp = await client.health.get();
+    t.is((resp.body as any).route, "GET /health");
+    t.throws(() => client.info.get(), { message: /Missing fluent RestAPI2 route/ });
+});
+
 test("custom route tree nodes can construct typed fluent clients", async t => {
     const seen: ApiClientRequest[] = [];
     const customNode = {
