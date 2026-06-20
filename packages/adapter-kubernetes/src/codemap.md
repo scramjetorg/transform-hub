@@ -23,7 +23,7 @@ Source implementation for Kubernetes-based sequence persistence and runner pod l
 6. On completion/failure, pod is removed and exit code is returned.
 
 ## Integration Points
-- `@scramjet/adapters-common` for language/runtime/image selection and package validation.
+- `@scramjet/adapters-common` for language/runtime/image selection, package validation, and runner transport env (`getRunnerTransportEnv`).
 - `@kubernetes/client-node` for cluster operations.
 - `tar`, filesystem helpers, and namespace/auth config from Kubernetes context.
 - Host adapter registration via `packages/runner` (`initializeRuntimeAdapters`).

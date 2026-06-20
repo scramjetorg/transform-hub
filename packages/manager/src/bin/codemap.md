@@ -16,5 +16,5 @@ startManager().catch(e => {
 });
 ```
 - Imported by `package.json` script `"start": "ts-node ./src/bin/start"`.
-- `startManager()` (defined in `src/lib/start-manager.ts`) instantiates `Manager` and calls `manager.main()`.
+- `startManager()` (defined in `src/lib/start-manager.ts`) creates a `ManagerAPIHandler` and attaches both v1 and v2 routes via `manager.main()`.
 - Catches startup errors and exits with the appropriate code.
