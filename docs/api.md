@@ -123,22 +123,22 @@ Inferred API version is always the first version in the path, which means that `
 
 The v2 package must not reuse or alias old public API contracts. Existing `MMRestAPI.*`, `MRestAPI.*`, `STHRestAPI.*`, and un-namespaced v1 DTOs may be used as implementation references for compatibility adapters, but the exported v2 package types must be new `RestAPI2.*` contracts.
 
-This document defines the target v2 shape. Implementation is deferred to the migration phases after this contract is approved.
+This document defines the final public v2 shape. Public v2 concepts are Root, Space, Hub, and Instance. Internal packages may still be named MultiManager, Manager, and Host where they describe implementation ownership, but those names are not public v2 API concepts.
 
 v2 routing must use verser2 forwarding, resolution, and redirects for cross-node routing. New manual HTTP forwarding layers or bespoke forwarding protocols should not be implemented for v2 routes; compatibility code should adapt to verser2-backed routing instead.
 
-Route implementation ownership follows the API level that owns the behavior, even when the public path is nested under `/api/v2/managers/:managerId/...`. MultiManager routes own only MultiManager behavior and Manager selection. Manager routes own Manager-level inventory, storage, topics, logs, audit, and Hub selection. Host routes own Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit behavior. Cross-level public paths should resolve to the owning router through verser2-backed routing instead of being reimplemented as MultiManager-level proxy handlers.
+Route implementation ownership follows the API level that owns the behavior, even when the public path is nested under `/api/v2/spaces/:spaceId/...`. Root routes own only Root behavior and Space selection. Space routes own Space-level inventory, storage, topics, logs, audit, and Hub selection. Hub routes own Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit behavior. Cross-level public paths should resolve to the owning router through verser2-backed routing instead of being reimplemented as Root-level proxy handlers.
 
 Path shapes are distinct:
 
-- **Public path**: the canonical client/OpenAPI path. It may contain parent identifiers such as `:managerId`, `:hubId`, and `:instanceId`.
+- **Public path**: the canonical client/OpenAPI path. It may contain parent identifiers such as `:spaceId`, `:hubId`, and `:instanceId`.
 - **Mount path**: the hook-up or resolution point where a parent router attaches or delegates to a child router. The parent owns resolving identifiers consumed by this prefix.
 - **Implementer path**: the relative path inside the owning router. Implementer routers must not bake in parent prefixes or parent identifiers they do not own.
 
 Examples:
 
-- Public Hub load path: `/api/v2/managers/:managerId/hubs/:hubId/load`; Host-owned Hub implementer path: `/load`.
-- Public Instance stdio path: `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio`; CSI/Instance implementer path after parent resolution: `/stdio`.
+- Public Hub load path: `/api/v2/spaces/:spaceId/hubs/:hubId/load`; Hub implementer path: `/load`.
+- Public Instance stdio path: `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio`; CSI/Instance implementer path after parent resolution: `/stdio`.
 - Public operation IDs and generated manifests may compose public paths from mounts, but the owning router's route definitions remain local.
 
 ### Generic structures
@@ -146,7 +146,7 @@ Examples:
 | Contract | Shape |
 | --- | --- |
 | `RestAPI2.Empty` | Empty request object, used instead of `void` when a request type must be explicit. |
-| `RestAPI2.IdParams<TScope>` | Path identifiers for a scope such as `MultiManager`, `Manager`, `Hub`, `Sequence`, `Instance`, `Topic`, or `StoreItem`. |
+| `RestAPI2.IdParams<TScope>` | Path identifiers for a scope such as `Root`, `Space`, `Hub`, `Sequence`, `Instance`, `Topic`, or `StoreItem`. |
 | `RestAPI2.ListQuery<TItem>` | Pagination, filtering, sorting, and stream-range selection for list endpoints. |
 | `RestAPI2.ListResponse<TItem>` | `{ items: TItem[]; page?: RestAPI2.PageInfo; stream?: RestAPI2.StreamInfo; links?: RestAPI2.Links }`. |
 | `RestAPI2.OpResponse<TOutput>` | `{ operation: RestAPI2.Operation; result?: TOutput; error?: RestAPI2.ErrorBody }`. |
@@ -158,7 +158,7 @@ Examples:
 
 ### Common client
 
-The v2 package exposes one common client surface for all API levels. The client resolves the same `RestAPI2.*` operation contracts over HTTP and verser2 transports, rather than generating separate clients for MultiManager, Manager, Hub, Sequence, Instance, audit, stdio, or RPC surfaces.
+The v2 package exposes one common client surface for all API levels. The client resolves the same `RestAPI2.*` operation contracts over HTTP and verser2 transports, rather than generating separate clients for Root, Space, Hub, Sequence, Instance, audit, stdio, or RPC surfaces.
 
 | Contract | Purpose |
 | --- | --- |
@@ -172,12 +172,12 @@ The v2 package exposes one common client surface for all API levels. The client 
 
 | Contract | Purpose |
 | --- | --- |
-| `RestAPI2.MultiManager` | MultiManager identity, API base, version, config summary, load, health, and trust-relevant public state. |
-| `RestAPI2.Manager` | Manager identity, API base, version, config summary, load, health, connected hub counts, and trust-relevant public state. |
+| `RestAPI2.Root` | Root identity, API base, version, config summary, load, health, and trust-relevant public state. |
+| `RestAPI2.Space` | Space identity, API base, version, config summary, load, health, connected hub counts, and trust-relevant public state. |
 | `RestAPI2.Hub` | Hub identity, status, version, config summary, load, sequence counts, instance counts, and topic counts. |
 | `RestAPI2.Sequence` | Sequence identity, metadata, config summary, status, current instances, and package/source descriptors. |
 | `RestAPI2.Instance` | Instance identity, sequence reference, hub reference, status, parameters, monitoring summary, and stream descriptors. |
-| `RestAPI2.Entity` | Shared entity listing output for manager and hub scopes. |
+| `RestAPI2.Entity` | Shared entity listing output for Space and Hub scopes. |
 | `RestAPI2.Topic` | Topic identity and content type as `{ name, contentType }`, plus optional direction/stream descriptors where available. |
 | `RestAPI2.StoreItem` | Stored sequence or object metadata exposed by storage endpoints. |
 | `RestAPI2.LogRecord` | v2 log record independent from v1 log DTOs. |
@@ -192,11 +192,11 @@ The v2 package exposes one common client surface for all API levels. The client 
 
 | Contract | Purpose |
 | --- | --- |
-| `RestAPI2.StartManagerPayload` / `RestAPI2.StartManagerResponse` | Start a managed Manager from the MultiManager API. |
-| `RestAPI2.DeleteManagerPayload` / `RestAPI2.DeleteManagerResponse` | Stop or remove a managed Manager. |
-| `RestAPI2.RegisterHubPayload` / `RestAPI2.RegisterHubResponse` | Register a Hub with a Manager. |
-| `RestAPI2.DeleteHubPayload` / `RestAPI2.DeleteHubResponse` | Delete or detach a Hub from a Manager. |
-| `RestAPI2.DisconnectHubPayload` / `RestAPI2.DisconnectHubResponse` | Disconnect one or more Hubs without deleting stored Manager state. |
+| `RestAPI2.StartSpacePayload` / `RestAPI2.StartSpaceResponse` | Start a managed Space from the Root API. |
+| `RestAPI2.DeleteSpacePayload` / `RestAPI2.DeleteSpaceResponse` | Stop or remove a managed Space. |
+| `RestAPI2.RegisterHubPayload` / `RestAPI2.RegisterHubResponse` | Register a Hub with a Space. |
+| `RestAPI2.DeleteHubPayload` / `RestAPI2.DeleteHubResponse` | Delete or detach a Hub from a Space. |
+| `RestAPI2.DisconnectHubPayload` / `RestAPI2.DisconnectHubResponse` | Disconnect one or more Hubs without deleting stored Space state. |
 | `RestAPI2.SendSequencePayload` / `RestAPI2.SendSequenceResponse` | Create or update a Sequence package. |
 | `RestAPI2.DeleteSequencePayload` / `RestAPI2.DeleteSequenceResponse` | Delete a Sequence and define how related instances are handled. |
 | `RestAPI2.StartSequencePayload` / `RestAPI2.StartSequenceResponse` | Start a Sequence and return the created Instance reference. |
@@ -208,7 +208,7 @@ The v2 package exposes one common client surface for all API levels. The client 
 | `RestAPI2.TopicDeletePayload` / `RestAPI2.TopicDeleteResponse` | Delete a Hub topic. |
 | `RestAPI2.TopicChunk` / `RestAPI2.TopicStreamResponse` | Stream topic data. |
 | `RestAPI2.StoreItemPayload` / `RestAPI2.StoreItemResponse` / `RestAPI2.DeleteStoreItemPayload` / `RestAPI2.DeleteStoreItemResponse` | Read, write, and delete storage objects. |
-| `RestAPI2.StoreClearPayload` / `RestAPI2.StoreClearResponse` | Clear a Manager storage scope. |
+| `RestAPI2.StoreClearPayload` / `RestAPI2.StoreClearResponse` | Clear a Space storage scope. |
 | `RestAPI2.AuditQuery` / `RestAPI2.AuditQueryResponse` | Query audit records without opening a live audit stream. |
 | `RestAPI2.StdIODescriptorList` / `RestAPI2.StdIOChunk` | Describe and stream Instance stdio channels. |
 | `RestAPI2.RpcRequest` / `RestAPI2.RpcResponse` | Pass-through RPC request/response envelope for specialized RPC endpoints. |
@@ -216,106 +216,106 @@ The v2 package exposes one common client surface for all API levels. The client 
 
 ## v2
 
-### mmgr
+### Root
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| GET | `/api/v2/version` | `void` | `RestAPI2.VersionResponse<RestAPI2.MultiManager>` | |
-| GET | `/api/v2/info` | `void` | `RestAPI2.InfoResponse<RestAPI2.MultiManager>` | |
-| GET | `/api/v2/load` | `void` | `RestAPI2.LoadResponse<RestAPI2.MultiManager>` | yes |
-| GET | `/api/v2/config` | `void` | `RestAPI2.ConfigResponse<RestAPI2.MultiManager>` | |
-| GET | `/api/v2/managers` | `RestAPI2.ManagersQuery` | `RestAPI2.ManagersResponse` | |
-| GET | `/api/v2/health` | `void` | `RestAPI2.HealthCheckInfo<RestAPI2.MultiManager>` | yes |
-| GET | `/api/v2/verser2/trust/:managerId?` | `RestAPI2.TrustParams` | `RestAPI2.TrustExport<RestAPI2.MultiManager>` | |
-| POST | `/api/v2/managers` | `RestAPI2.StartManagerPayload` | `RestAPI2.OpResponse<RestAPI2.StartManagerResponse>` | |
-| DELETE | `/api/v2/managers/:managerId` | `RestAPI2.DeleteManagerPayload` | `RestAPI2.OpResponse<RestAPI2.DeleteManagerResponse>` | |
+| GET | `/api/v2/version` | `void` | `RestAPI2.VersionResponse<RestAPI2.Root>` | |
+| GET | `/api/v2/info` | `void` | `RestAPI2.InfoResponse<RestAPI2.Root>` | |
+| GET | `/api/v2/load` | `void` | `RestAPI2.LoadResponse<RestAPI2.Root>` | yes |
+| GET | `/api/v2/config` | `void` | `RestAPI2.ConfigResponse<RestAPI2.Root>` | |
+| GET | `/api/v2/spaces` | `RestAPI2.SpacesQuery` | `RestAPI2.SpacesResponse` | |
+| GET | `/api/v2/health` | `void` | `RestAPI2.HealthCheckInfo<RestAPI2.Root>` | yes |
+| GET | `/api/v2/verser2/trust/:spaceId?` | `RestAPI2.TrustParams` | `RestAPI2.TrustExport<RestAPI2.Root>` | |
+| POST | `/api/v2/spaces` | `RestAPI2.StartSpacePayload` | `RestAPI2.OpResponse<RestAPI2.StartSpaceResponse>` | |
+| DELETE | `/api/v2/spaces/:spaceId` | `RestAPI2.DeleteSpacePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteSpaceResponse>` | |
 | GET | `/api/v2/logs` | `void` | `ReadableStream<RestAPI2.LogRecord>` | always |
 | GET | `/api/v2/audit` | `void` | `ReadableStream<RestAPI2.AuditRecord>` | always |
 
-### mgr
+### Space
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| GET | `/api/v2/managers/:managerId/version` | `RestAPI2.ManagerParams` | `RestAPI2.VersionResponse<RestAPI2.Manager>` | |
-| GET | `/api/v2/managers/:managerId/config` | `RestAPI2.ManagerParams` | `RestAPI2.ConfigResponse<RestAPI2.Manager>` | |
-| GET | `/api/v2/managers/:managerId/verser2/trust` | `RestAPI2.ManagerParams` | `RestAPI2.TrustExport<RestAPI2.Manager>` | |
-| GET | `/api/v2/managers/:managerId/load` | `RestAPI2.ManagerParams` | `RestAPI2.LoadResponse<RestAPI2.Manager>` | yes |
-| GET | `/api/v2/managers/:managerId/health` | `RestAPI2.ManagerParams` | `RestAPI2.HealthCheckInfo<RestAPI2.Manager>` | yes |
-| POST | `/api/v2/managers/:managerId/hubs` | `RestAPI2.RegisterHubPayload` | `RestAPI2.OpResponse<RestAPI2.RegisterHubResponse>` | |
-| GET | `/api/v2/managers/:managerId/hubs` | `RestAPI2.ListQuery<RestAPI2.Hub>` | `RestAPI2.ListResponse<RestAPI2.Hub>` | yes |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId` | `RestAPI2.HubParams` | `RestAPI2.HostInfoResponse` | |
-| DELETE | `/api/v2/managers/:managerId/inventory/hubs/:hubId` | `RestAPI2.DeleteHubQuery` | `RestAPI2.OpResponse<RestAPI2.DeleteHubResponse>` | |
-| GET | `/api/v2/managers/:managerId/instances` | `RestAPI2.InstancesQuery` | `RestAPI2.ListResponse<RestAPI2.Instance>` | yes⁰ |
-| GET | `/api/v2/managers/:managerId/sequences` | `RestAPI2.SequencesQuery` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | yes⁰ |
-| GET | `/api/v2/managers/:managerId/entities` | `RestAPI2.ManagerParams` | `RestAPI2.ListResponse<RestAPI2.Entity>` | yes⁰ |
-| GET | `/api/v2/managers/:managerId/logs` | `RestAPI2.ManagerParams + RestAPI2.LogFilters` | `ReadableStream<RestAPI2.LogRecord>` | |
-| GET | `/api/v2/managers/:managerId/topics` | `RestAPI2.ManagerParams` | `RestAPI2.ListResponse<RestAPI2.Topic>` | |
-| GET | `/api/v2/managers/:managerId/topics/:name` | `RestAPI2.TopicParams` | `RestAPI2.TopicInformation` | |
-| GET | `/api/v2/managers/:managerId/topics/:name/stream` | `RestAPI2.TopicParams` | `ReadableStream<RestAPI2.TopicChunk>` | always |
-| POST | `/api/v2/managers/:managerId/topics/:name/stream` | `ReadableStream<RestAPI2.TopicChunk>` | `RestAPI2.OpResponse<RestAPI2.Topic>` | always |
-| GET | `/api/v2/managers/:managerId/storage/sequences` | `RestAPI2.ManagerParams` | `RestAPI2.ListResponse<RestAPI2.StoreItem>` | yes⁰ |
-| GET | `/api/v2/managers/:managerId/storage/objects/:directory/:filename?` | `RestAPI2.StoreItemPayload` | `ReadableStream<RestAPI2.BinaryChunk>` | always |
-| PUT | `/api/v2/managers/:managerId/storage/objects/:filename?` | `RestAPI2.StoreItemPayload` | `RestAPI2.StoreItemResponse` | |
-| DELETE | `/api/v2/managers/:managerId/storage/objects/:filename` | `RestAPI2.DeleteStoreItemPayload` | `RestAPI2.DeleteStoreItemResponse` | |
-| DELETE | `/api/v2/managers/:managerId/storage` | `RestAPI2.StoreClearPayload` | `RestAPI2.StoreClearResponse` | |
-| GET | `/api/v2/managers/:managerId/audit` | `RestAPI2.ManagerParams` | `ReadableStream<RestAPI2.AuditRecord>` | yes¹ |
+| GET | `/api/v2/spaces/:spaceId/version` | `RestAPI2.SpaceParams` | `RestAPI2.VersionResponse<RestAPI2.Space>` | |
+| GET | `/api/v2/spaces/:spaceId/config` | `RestAPI2.SpaceParams` | `RestAPI2.ConfigResponse<RestAPI2.Space>` | |
+| GET | `/api/v2/spaces/:spaceId/verser2/trust` | `RestAPI2.SpaceParams` | `RestAPI2.TrustExport<RestAPI2.Space>` | |
+| GET | `/api/v2/spaces/:spaceId/load` | `RestAPI2.SpaceParams` | `RestAPI2.LoadResponse<RestAPI2.Space>` | yes |
+| GET | `/api/v2/spaces/:spaceId/health` | `RestAPI2.SpaceParams` | `RestAPI2.HealthCheckInfo<RestAPI2.Space>` | yes |
+| POST | `/api/v2/spaces/:spaceId/hubs` | `RestAPI2.RegisterHubPayload` | `RestAPI2.OpResponse<RestAPI2.RegisterHubResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs` | `RestAPI2.ListQuery<RestAPI2.Hub>` | `RestAPI2.ListResponse<RestAPI2.Hub>` | yes |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId` | `RestAPI2.HubParams` | `RestAPI2.Hub` | |
+| DELETE | `/api/v2/spaces/:spaceId/inventory/hubs/:hubId` | `RestAPI2.DeleteHubQuery` | `RestAPI2.OpResponse<RestAPI2.DeleteHubResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/instances` | `RestAPI2.InstancesQuery` | `RestAPI2.ListResponse<RestAPI2.Instance>` | yes⁰ |
+| GET | `/api/v2/spaces/:spaceId/sequences` | `RestAPI2.SequencesQuery` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | yes⁰ |
+| GET | `/api/v2/spaces/:spaceId/entities` | `RestAPI2.SpaceParams` | `RestAPI2.ListResponse<RestAPI2.Entity>` | yes⁰ |
+| GET | `/api/v2/spaces/:spaceId/logs` | `RestAPI2.SpaceParams + RestAPI2.LogFilters` | `ReadableStream<RestAPI2.LogRecord>` | |
+| GET | `/api/v2/spaces/:spaceId/topics` | `RestAPI2.SpaceParams` | `RestAPI2.ListResponse<RestAPI2.Topic>` | |
+| GET | `/api/v2/spaces/:spaceId/topics/:name` | `RestAPI2.TopicParams` | `RestAPI2.TopicInformation` | |
+| GET | `/api/v2/spaces/:spaceId/topics/:name/stream` | `RestAPI2.TopicParams` | `ReadableStream<RestAPI2.TopicChunk>` | always |
+| POST | `/api/v2/spaces/:spaceId/topics/:name/stream` | `ReadableStream<RestAPI2.TopicChunk>` | `RestAPI2.OpResponse<RestAPI2.Topic>` | always |
+| GET | `/api/v2/spaces/:spaceId/storage/sequences` | `RestAPI2.SpaceParams` | `RestAPI2.ListResponse<RestAPI2.StoreItem>` | yes⁰ |
+| GET | `/api/v2/spaces/:spaceId/storage/objects/:directory/:filename?` | `RestAPI2.StoreItemPayload` | `ReadableStream<RestAPI2.BinaryChunk>` | always |
+| PUT | `/api/v2/spaces/:spaceId/storage/objects/:filename?` | `RestAPI2.StoreItemPayload` | `RestAPI2.StoreItemResponse` | |
+| DELETE | `/api/v2/spaces/:spaceId/storage/objects/:filename` | `RestAPI2.DeleteStoreItemPayload` | `RestAPI2.DeleteStoreItemResponse` | |
+| DELETE | `/api/v2/spaces/:spaceId/storage` | `RestAPI2.StoreClearPayload` | `RestAPI2.StoreClearResponse` | |
+| GET | `/api/v2/spaces/:spaceId/audit` | `RestAPI2.SpaceParams` | `ReadableStream<RestAPI2.AuditRecord>` | yes¹ |
 
-Manager storage object endpoints are exposed as a WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and compatibility guarantees are intentionally not provided for that proxy surface yet; typed storage contracts can replace the proxy in a later storage-service migration.
+Space storage object endpoints are exposed as a WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and compatibility guarantees are intentionally not provided for that proxy surface yet; typed storage contracts can replace the proxy in a later storage-service migration.
 
 ### hub
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/load` | `RestAPI2.HubParams` | `RestAPI2.LoadResponse<RestAPI2.Hub>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/version` | `RestAPI2.HubParams` | `RestAPI2.VersionResponse` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/config` | `RestAPI2.HubParams` | `RestAPI2.ConfigResponse` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/status` | `RestAPI2.HubParams` | `RestAPI2.StatusResponse` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/audit` | `RestAPI2.HubParams` | `ReadableStream<RestAPI2.AuditRecord>` | yes¹ |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Instance>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/entities` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Entity>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/logs` | `RestAPI2.HubParams` | `ReadableStream<RestAPI2.LogRecord>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/topics` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Topic>` | |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/topics` | `RestAPI2.TopicCreatePayload` | `RestAPI2.OpResponse<RestAPI2.TopicCreateResponse>` | |
-| DELETE | `/api/v2/managers/:managerId/hubs/:hubId/topics/:topic` | `RestAPI2.TopicDeletePayload` | `RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/topics/:topic/stream` | `RestAPI2.TopicStreamPayload` | `ReadableStream<RestAPI2.TopicChunk>` | |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/topics/:topic/stream` | `RestAPI2.TopicStreamPayload` | `RestAPI2.OpResponse<RestAPI2.TopicStreamResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/load` | `RestAPI2.HubParams` | `RestAPI2.LoadResponse<RestAPI2.Hub>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/version` | `RestAPI2.HubParams` | `RestAPI2.VersionResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/config` | `RestAPI2.HubParams` | `RestAPI2.ConfigResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/status` | `RestAPI2.HubParams` | `RestAPI2.StatusResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/audit` | `RestAPI2.HubParams` | `ReadableStream<RestAPI2.AuditRecord>` | yes¹ |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Sequence>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Instance>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/entities` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Entity>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/logs` | `RestAPI2.HubParams` | `ReadableStream<RestAPI2.LogRecord>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/topics` | `RestAPI2.HubParams` | `RestAPI2.ListResponse<RestAPI2.Topic>` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/topics` | `RestAPI2.TopicCreatePayload` | `RestAPI2.OpResponse<RestAPI2.TopicCreateResponse>` | |
+| DELETE | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:topic` | `RestAPI2.TopicDeletePayload` | `RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:topic/stream` | `RestAPI2.TopicStreamPayload` | `ReadableStream<RestAPI2.TopicChunk>` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/topics/:topic/stream` | `RestAPI2.TopicStreamPayload` | `RestAPI2.OpResponse<RestAPI2.TopicStreamResponse>` | |
 
 ### seq
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/sequences` | `RestAPI2.SendSequencePayload` | `RestAPI2.OpResponse<RestAPI2.SendSequenceResponse>` | |
-| PUT | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `RestAPI2.SendSequencePayload` | `RestAPI2.OpResponse<RestAPI2.SendSequenceResponse>` | |
-| DELETE | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `RestAPI2.DeleteSequencePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>` | |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId/instances` | `RestAPI2.StartSequencePayload` | `RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId` | `RestAPI2.SequencePayload` | `RestAPI2.SequenceResponse` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/sequences/:sequenceId/instances` | `RestAPI2.SequenceInstancesPayload` | `RestAPI2.ListResponse<RestAPI2.Instance>` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences` | `RestAPI2.SendSequencePayload` | `RestAPI2.OpResponse<RestAPI2.SendSequenceResponse>` | |
+| PUT | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | `RestAPI2.SendSequencePayload` | `RestAPI2.OpResponse<RestAPI2.SendSequenceResponse>` | |
+| DELETE | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | `RestAPI2.DeleteSequencePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId/instances` | `RestAPI2.StartSequencePayload` | `RestAPI2.OpResponse<RestAPI2.StartSequenceResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | `RestAPI2.SequencePayload` | `RestAPI2.SequenceResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId/instances` | `RestAPI2.SequenceInstancesPayload` | `RestAPI2.ListResponse<RestAPI2.Instance>` | |
 
 ### inst
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId` | `RestAPI2.Empty` | `RestAPI2.InstanceResponse` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio` | `RestAPI2.Empty` | `RestAPI2.StdIODescriptorList` | yes² |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/logs` | `RestAPI2.LogFilter` | `ReadableStream<RestAPI2.LogRecord>` | yes |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/monitoring` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.MonitoringMessage>` | yes⁰ |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/output` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.BinaryChunk>` | always + output consumption |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/input` | `ReadableStream<RestAPI2.BinaryChunk>` | `RestAPI2.NoContent<202>` | always |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/health` | `RestAPI2.HealthPayload` | `RestAPI2.RunnerMessageCode.MONITORING` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/events/:name/stream` | `RestAPI2.EventPayload` | `ReadableStream<RestAPI2.EventMessageData>` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/events/:name` | `RestAPI2.EventPayload` | `RestAPI2.EventResponse` | |
-| GET | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/events/:name/once` | `RestAPI2.EventPayload` | `RestAPI2.NextEventResponse` | |
-| POST | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/events` | `RestAPI2.EventMessage` | `RestAPI2.OpResponse<RestAPI2.SendEventResponse>` | |
-| DELETE | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId` | `RestAPI2.DeleteInstancePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteInstanceResponse>` | |
-| PATCH | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId` | `RestAPI2.InstanceParametersPatch` | `RestAPI2.OpResponse<RestAPI2.InstanceParametersResponse>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId` | `RestAPI2.Empty` | `RestAPI2.InstanceResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio` | `RestAPI2.Empty` | `RestAPI2.StdIODescriptorList` | yes² |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/logs` | `RestAPI2.LogFilter` | `ReadableStream<RestAPI2.LogRecord>` | yes |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/monitoring` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.MonitoringMessage>` | yes⁰ |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/output` | `RestAPI2.InstanceStreamPayload` | `ReadableStream<RestAPI2.BinaryChunk>` | always + output consumption |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/input` | `ReadableStream<RestAPI2.BinaryChunk>` | `RestAPI2.NoContent<202>` | always |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/health` | `RestAPI2.HealthPayload` | `RestAPI2.RunnerMessageCode.MONITORING` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events/:name/stream` | `RestAPI2.EventPayload` | `ReadableStream<RestAPI2.EventMessageData>` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events/:name` | `RestAPI2.EventPayload` | `RestAPI2.EventResponse` | |
+| GET | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events/:name/once` | `RestAPI2.EventPayload` | `RestAPI2.NextEventResponse` | |
+| POST | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/events` | `RestAPI2.EventMessage` | `RestAPI2.OpResponse<RestAPI2.SendEventResponse>` | |
+| DELETE | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId` | `RestAPI2.DeleteInstancePayload` | `RestAPI2.OpResponse<RestAPI2.DeleteInstanceResponse>` | |
+| PATCH | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId` | `RestAPI2.InstanceParametersPatch` | `RestAPI2.OpResponse<RestAPI2.InstanceParametersResponse>` | |
 
 ### rpc
 
 | Method | Path | In | Out | Streamable |
 | --- | --- | --- | --- | --- |
-| ANY | `/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
-| ANY | `/api/v2/managers/:managerId/hubs/:hubId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
+| ANY | `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
+| ANY | `/api/v2/spaces/:spaceId/hubs/:hubId/rpc/*` | `RestAPI2.RpcRequest` | `RestAPI2.RpcResponse` | |
 
 ### audit
 
@@ -369,15 +369,15 @@ Streaming notes:
 
 - **Shared handlerless contracts**: All v2 route definitions live in `@scramjet/rest-api2` as handlerless contract sets (`RestAPI2RouteSets`). Runtime implementations import shared contracts and bind local handlers with `bindRoutes`/`bindResolvers` from `@scramjet/api-router`.
 - **Owner-local implementation**: Route implementation follows the API level that owns the behavior:
-  - Host owns Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit routes.
-  - Manager owns Manager-level inventory, storage, topics, logs, audit, and Hub selection routes.
-  - MultiManager owns MultiManager behavior and Manager selection routes.
-- **Cross-node routing via verser2**: Cross-level public paths (e.g. `/api/v2/managers/:managerId/hubs/:hubId/load`) use verser2-backed resolver redirects, not local/manual HTTP forwarding. The HTTP adapter emits `308` with `x-scramjet-route-decision`, `x-scramjet-route-domain`, and `x-scramjet-route-target-path` headers.
+  - Hub owns Hub, Sequence, Instance/CSI, stdio, Instance RPC, Hub RPC, and Hub audit routes.
+  - Space owns Space-level inventory, storage, topics, logs, audit, and Hub selection routes.
+  - Root owns Root behavior and Space selection routes.
+- **Cross-node routing via verser2**: Cross-level public paths (e.g. `/api/v2/spaces/:spaceId/hubs/:hubId/load`) use verser2-backed resolver redirects, not local/manual HTTP forwarding. The HTTP adapter emits `308` with `x-scramjet-route-decision`, `x-scramjet-route-domain`, and `x-scramjet-route-target-path` headers.
 - **Three path shapes**:
-  - **Public path**: Canonical client/OpenAPI path (e.g. `/api/v2/managers/:managerId/hubs/:hubId/load`).
+  - **Public path**: Canonical client/OpenAPI path (e.g. `/api/v2/spaces/:spaceId/hubs/:hubId/load`).
   - **Mount path**: Hook-up or resolution point where parent attaches child router.
   - **Implementer path**: Relative path inside the owning router (e.g. `/load` for Hub). Implementer routers must not bake in parent prefixes or parent identifiers.
-- **Storage proxy**: Manager v2 storage object read/write/delete at `/api/v2/managers/:managerId/storage/objects/...` is a documented WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
+- **Storage proxy**: Space v2 storage object read/write/delete at `/api/v2/spaces/:spaceId/storage/objects/...` is a documented WebDAV/S3-compatible proxy compatibility surface. Strong v2 typing and storage compatibility guarantees are intentionally deferred.
 - **No legacy DTO aliasing**: `@scramjet/rest-api2` exports only `RestAPI2.*` contracts. Old `MMRestAPI`, `MRestAPI`, and `STHRestAPI` types remain in `@scramjet/types` for v1 compatibility and must not be re-exported from the v2 package.
 
 ### No-Circumvention Rules

@@ -8,6 +8,7 @@ import type { Manager } from "../manager";
 
 const defaultLimit = 100;
 const defaultOffset = 0;
+
 type StoredSequenceInfo = {
     _filename?: string;
     id?: string;
@@ -27,38 +28,38 @@ export class ManagerAPIV2Handler {
 
     createV2Router(): RouterDefinition {
         const manager = this.manager;
-        const routes = RestAPI2RouteSets.manager.routes();
+        const routes = RestAPI2RouteSets.space.routes();
         const router = bindRoutes(routes, {
             version: routeBinding.handler<typeof routes.version>(() => ({
                 version: manager.version
-            }), { id: "manager.v2.version" }),
-            config: routeBinding.handler<typeof routes.config>(() => ({ config: manager.publicConfig }), { id: "manager.v2.config" }),
-            trust: routeBinding.handler<typeof routes.trust>(() => getManagerVerser2TrustExport(manager.config), { id: "manager.v2.verser2.trust" }),
-            load: routeBinding.handler<typeof routes.load>(async (): Promise<RestAPI2.LoadResponse<RestAPI2.Manager>> => {
+            }), { id: "space.v2.version" }),
+            config: routeBinding.handler<typeof routes.config>(() => ({ config: manager.publicConfig }), { id: "space.v2.config" }),
+            trust: routeBinding.handler<typeof routes.trust>(() => getManagerVerser2TrustExport(manager.config), { id: "space.v2.verser2.trust" }),
+            load: routeBinding.handler<typeof routes.load>(async (): Promise<RestAPI2.LoadResponse<RestAPI2.Space>> => {
                 const load = await manager.apiLoadCheck.getLoadCheck();
 
                 return { load: (load as { load?: number }).load ?? 0 };
-            }, { id: "manager.v2.load" }),
-            list: routeBinding.handler<typeof routes.list>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "manager.v2.list" }),
-            hubs: routeBinding.handler<typeof routes.hubs>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "manager.v2.hubs" }),
-            instances: routeBinding.handler<typeof routes.instances>(req => this.listResponse<RestAPI2.Instance>(this.getPaginated(req, manager.getInstances.bind(manager)), "instances", id => ({ id })), { id: "manager.v2.instances" }),
-            sequences: routeBinding.handler<typeof routes.sequences>(() => this.listResponse<RestAPI2.Sequence>(manager.getSequencesIds(), "sequences", id => ({ id })), { id: "manager.v2.sequences" }),
-            allSequences: routeBinding.handler<typeof routes.allSequences>(req => this.listResponse<RestAPI2.Sequence>(this.getPaginated(req, manager.getSequences.bind(manager)), "sequences", id => ({ id })), { id: "manager.v2.all_sequences" }),
-            entities: routeBinding.handler<typeof routes.entities>(() => this.entityListResponse(manager.getEntities()), { id: "manager.v2.entities" }),
-            topics: routeBinding.handler<typeof routes.topics>(() => this.topicListResponse(manager.apiServiceDiscovery.list()), { id: "manager.v2.topics" }),
-            topicInfo: routeBinding.handler<typeof routes.topicInfo>(({ params }) => this.topicInfo(params.name), { id: "manager.v2.topic.info" }),
-            topicRead: routeBinding.handler<typeof routes.topicRead>(req => manager.handleTopicUpstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "manager.v2.topic.read" }),
-            topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => manager.handleTopicDownstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "manager.v2.topic.write" }),
-            logs: routeBinding.handler<typeof routes.logs>(() => manager.apiCommonLogsPipe.getOut(), { id: "manager.v2.logs" }),
-            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "manager.v2.audit" }),
-            deleteHub: routeBinding.handler<typeof routes.deleteHub>(req => this.handleInventoryHubDelete(req), { id: "manager.v2.inventory.hub.delete" }),
-            storageSequences: routeBinding.handler<typeof routes.storageSequences>(() => this.storageSequenceList(), { id: "manager.v2.storage.sequences" }),
+            }, { id: "space.v2.load" }),
+            list: routeBinding.handler<typeof routes.list>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.list" }),
+            hubs: routeBinding.handler<typeof routes.hubs>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.hubs" }),
+            instances: routeBinding.handler<typeof routes.instances>(req => this.listResponse<RestAPI2.Instance>(this.getPaginated(req, manager.getInstances.bind(manager)), "instances", id => ({ id })), { id: "space.v2.instances" }),
+            sequences: routeBinding.handler<typeof routes.sequences>(() => this.listResponse<RestAPI2.Sequence>(manager.getSequencesIds(), "sequences", id => ({ id })), { id: "space.v2.sequences" }),
+            allSequences: routeBinding.handler<typeof routes.allSequences>(req => this.listResponse<RestAPI2.Sequence>(this.getPaginated(req, manager.getSequences.bind(manager)), "sequences", id => ({ id })), { id: "space.v2.all_sequences" }),
+            entities: routeBinding.handler<typeof routes.entities>(() => this.entityListResponse(manager.getEntities()), { id: "space.v2.entities" }),
+            topics: routeBinding.handler<typeof routes.topics>(() => this.topicListResponse(manager.apiServiceDiscovery.list()), { id: "space.v2.topics" }),
+            topicInfo: routeBinding.handler<typeof routes.topicInfo>(({ params }) => this.topicInfo(params.name), { id: "space.v2.topic.info" }),
+            topicRead: routeBinding.handler<typeof routes.topicRead>(req => manager.handleTopicUpstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "space.v2.topic.read" }),
+            topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => manager.handleTopicDownstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "space.v2.topic.write" }),
+            logs: routeBinding.handler<typeof routes.logs>(() => manager.apiCommonLogsPipe.getOut(), { id: "space.v2.logs" }),
+            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "space.v2.audit" }),
+            deleteHub: routeBinding.handler<typeof routes.deleteHub>(req => this.handleInventoryHubDelete(req), { id: "space.v2.inventory.hub.delete" }),
+            storageSequences: routeBinding.handler<typeof routes.storageSequences>(() => this.storageSequenceList(), { id: "space.v2.storage.sequences" }),
             storageObjectRead: routeBinding.skip("Storage object read requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
             storageObjectWrite: routeBinding.skip("Storage object write requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
             storageObjectDelete: routeBinding.skip("Storage object delete requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
-            storageClear: routeBinding.handler<typeof routes.storageClear>(() => this.clearStorage(), { id: "manager.v2.storage.clear" })
+            storageClear: routeBinding.handler<typeof routes.storageClear>(() => this.clearStorage(), { id: "space.v2.storage.clear" })
         }, Router.create({ basePath: this.v2ApiBase }));
-        const resolver = RestAPI2RouteSets.manager.resolvers(this.v2ApiBase).hub;
+        const resolver = RestAPI2RouteSets.space.resolvers(this.v2ApiBase).hub;
 
         return bindResolver(resolver, resolverBinding.handler(({ params, remainingPath }) => {
             const hubId = params.hubId;
@@ -75,8 +76,8 @@ export class ManagerAPIV2Handler {
                 }
             };
         }, {
-            id: "manager.v2.hub.forward",
-            description: "Resolve a selected Hub to its verser2 route domain for Host-owned v2 routes."
+            id: "space.v2.hub.forward",
+            description: "Resolve a selected Hub to its verser2 route domain for Hub-owned v2 routes."
         }), router);
     }
 

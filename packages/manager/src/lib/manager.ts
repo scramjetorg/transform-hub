@@ -23,7 +23,7 @@ import {
 } from "@scramjet/types";
 import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { Router, registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
-import { RestAPI2, healthCheckInfo, Manager as RestAPI2ManagerSchema } from "@scramjet/rest-api2";
+import { RestAPI2, healthCheckInfo, Space as RestAPI2SpaceSchema } from "@scramjet/rest-api2";
 import { z } from "zod";
 import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
@@ -238,7 +238,7 @@ export class Manager implements IComponent {
 
     setupHealthEndpoint(healthCheck: HealthCheck) {
         // We may need some additional logic here later.
-        const toV2HealthCheckInfo = async (info: MRestAPI.HealthCheckInfo): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Manager>> => {
+        const toV2HealthCheckInfo = async (info: MRestAPI.HealthCheckInfo): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Space>> => {
             const managerList = typeof this.getList === "function" ? this.getList() : [];
             const scope = { id: this.id || this._config.id, hubs: managerList.length };
             const currentHealthy = Object.values(info.modules || {}).every(Boolean);
@@ -256,9 +256,9 @@ export class Manager implements IComponent {
             handler: () => healthCheck.getHealthCheckInfo()
         }));
         const createV2HealthRouter = () => Router.create({ basePath: replacePathVersion(this._config.apiBase, "v2") }).route(Router.get("/health", {
-            id: "manager.v2.health",
-            schemas: { response: healthCheckInfo(RestAPI2ManagerSchema) },
-            handler: (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Manager>> => toV2HealthCheckInfo(healthCheck.getHealthCheckInfo())
+            id: "space.v2.health",
+            schemas: { response: healthCheckInfo(RestAPI2SpaceSchema) },
+            handler: (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Space>> => toV2HealthCheckInfo(healthCheck.getHealthCheckInfo())
         }));
 
         registerHttpRoutes(this._apiRouter, createV1HealthRouter());

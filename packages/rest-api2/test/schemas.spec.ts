@@ -1,11 +1,11 @@
 import test from "ava";
-import { RestAPI2Routes, getRestAPI2Route, healthCheckInfo, MultiManager } from "../src";
+import { RestAPI2Routes, Root, getRestAPI2Route, healthCheckInfo } from "../src";
 
 // ============================================================
 // Assertion (1): host hubRouter /sequences response schema
 // ============================================================
 test("host hubRouter /sequences response accepts items with id/status and rejects item missing id", t => {
-    const route = getRestAPI2Route(RestAPI2Routes.host.hubRouter(), "get", "/sequences");
+    const route = getRestAPI2Route(RestAPI2Routes.hub.hubRouter(), "get", "/sequences");
     const schema = route.schemas!.response!;
 
     // Accepts items with id and status
@@ -24,8 +24,8 @@ test("host hubRouter /sequences response accepts items with id/status and reject
 // ============================================================
 // Assertion (2): manager router /hubs response schema
 // ============================================================
-test("manager /hubs response schema is not unknown and rejects invalid list item", t => {
-    const route = getRestAPI2Route(RestAPI2Routes.manager.router("/api/v2"), "get", "/hubs");
+test("space /hubs response schema is not unknown and rejects invalid list item", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.space.router("/api/v2"), "get", "/hubs");
     const schema = route.schemas!.response!;
 
     // Not unknown: rejects completely invalid data (empty object lacks `items`)
@@ -44,8 +44,8 @@ test("manager /hubs response schema is not unknown and rejects invalid list item
 // ============================================================
 // Assertion (2): manager router /instances response schema
 // ============================================================
-test("manager /instances response schema is not unknown and rejects invalid list item", t => {
-    const route = getRestAPI2Route(RestAPI2Routes.manager.router("/api/v2"), "get", "/instances");
+test("space /instances response schema is not unknown and rejects invalid list item", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.space.router("/api/v2"), "get", "/instances");
     const schema = route.schemas!.response!;
 
     // Not unknown: rejects empty object
@@ -62,7 +62,7 @@ test("manager /instances response schema is not unknown and rejects invalid list
 });
 
 test("topic list response requires name and contentType", t => {
-    const route = getRestAPI2Route(RestAPI2Routes.host.hubRouter(), "get", "/topics");
+    const route = getRestAPI2Route(RestAPI2Routes.hub.hubRouter(), "get", "/topics");
     const schema = route.schemas!.response!;
 
     t.true(schema.safeParse({ items: [{ name: "topic-1", contentType: "application/x-ndjson" }] }).success);
@@ -198,22 +198,22 @@ test("instance DELETE / operation response validates operation/result shape", t 
 });
 
 test("healthCheckInfo schema requires typed components for the selected scope", t => {
-    const schema = healthCheckInfo(MultiManager);
+    const schema = healthCheckInfo(Root);
 
     t.true(schema.safeParse({
-        scope: { id: "mmgr-1", apiBase: "/api/v2", managers: 1 },
+        scope: { id: "root-1", apiBase: "/api/v2", spaces: 1 },
         healthy: true,
         status: "healthy",
-        components: [{ name: "child", healthy: true, status: "healthy", scope: { id: "child-mmgr", apiBase: "/api/v2/managers/child" } }]
+        components: [{ name: "child", healthy: true, status: "healthy", scope: { id: "child-root", apiBase: "/api/v2/spaces/child" } }]
     }).success);
     t.true(schema.safeParse({
-        scope: { id: "mmgr-1", apiBase: "/api/v2" },
+        scope: { id: "root-1", apiBase: "/api/v2" },
         healthy: true,
         status: "degraded",
         components: []
     }).success);
     t.false(schema.safeParse({
-        scope: { id: "mmgr-1", apiBase: "/api/v2" },
+        scope: { id: "root-1", apiBase: "/api/v2" },
         status: "healthy",
         healthy: true
     }).success, "should require components array");
@@ -226,7 +226,7 @@ test("healthCheckInfo schema requires typed components for the selected scope", 
 });
 
 test("manager inventory hub DELETE query parses true and false strings", t => {
-    const route = getRestAPI2Route(RestAPI2Routes.manager.router("/api/v2"), "delete", "/inventory/hubs/:hubId");
+    const route = getRestAPI2Route(RestAPI2Routes.space.router("/api/v2"), "delete", "/inventory/hubs/:hubId");
     const schema = route.schemas!.query!;
     const parsedFalse = schema.safeParse({ delete: "false", force: "0" });
     const parsedTrue = schema.safeParse({ delete: "true", force: "1" });

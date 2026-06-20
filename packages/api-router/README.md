@@ -192,7 +192,7 @@ Pass `{ expandResolvers: true }` to include virtual routes from resolver target 
 ```ts
 const expanded = router.collect({ expandResolvers: true });
 // Virtual routes get composed public paths such as
-// GET /api/v2/managers/:managerId/hubs/:hubId/load
+// GET /api/v2/spaces/:spaceId/hubs/:hubId/load
 ```
 
 Default `collect()` and runtime registration do **not** expand resolver virtual routes — registrations stay local.
@@ -309,7 +309,7 @@ Bind runtime handlers to handlerless shared route contracts. Missing or extra ha
 import { bindRoutes, bindResolvers, routeBinding, resolverBinding } from "@scramjet/api-router";
 import { RestAPI2RouteSets } from "@scramjet/rest-api2";
 
-const router = bindRoutes(RestAPI2RouteSets.host.hubRoutes(), {
+const router = bindRoutes(RestAPI2RouteSets.hub.hubRoutes(), {
     load: routeBinding.handler(async (req) => ({ load: await host.getLoad() })),
     version: routeBinding.handler(() => ({ version: "1.0.0" })),
     config: routeBinding.handler(() => ({ config: host.publicConfig })),

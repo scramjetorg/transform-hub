@@ -39,7 +39,7 @@ export const ErrorBody = z.object({
     details: z.unknown().optional()
 });
 
-export const Manager = z.object({
+export const Space = z.object({
     id: z.string(),
     hubs: z.number().int().min(0).optional()
 });
@@ -312,7 +312,7 @@ export const EventResponse = z.object({
 });
 
 export const EventMessage = z.object({
-    managerId: z.string().optional(),
+    spaceId: z.string().optional(),
     hubId: z.string().optional(),
     sequenceId: z.string().optional(),
     instanceId: z.string().optional(),
@@ -339,10 +339,10 @@ export const RpcResponse = z.object({
     body: z.unknown().optional()
 });
 
-export const MultiManager = z.object({
+export const Root = z.object({
     id: z.string(),
     apiBase: z.string(),
-    managers: z.number().int().min(0).optional()
+    spaces: z.number().int().min(0).optional()
 });
 
 // ============================================================
@@ -388,16 +388,16 @@ export const RestAPI2Schemas = {
         http: HttpHeaders
     },
     params: {
-        manager: z.object({ managerId: z.string() }),
+        space: z.object({ spaceId: z.string() }),
         hub: z.object({ hubId: z.string() }),
         sequence: z.object({ sequenceId: z.string() }),
         instance: z.object({ instanceId: z.string() }),
         fd: anyFdParam,
         event: z.object({ name: z.string() }),
         topic: z.object({ name: z.string() }),
-        trustManager: z.object({ id: z.string().optional() }).optional()
+        trustSpace: z.object({ id: z.string().optional() }).optional()
     },
-    multiManager: {
+    root: {
         version: z.object({
             service: z.string(),
             apiVersion: z.literal("v2"),
@@ -408,7 +408,7 @@ export const RestAPI2Schemas = {
             apiBase: z.string(),
             apiPort: z.number(),
             id: z.string(),
-            managersCount: z.number()
+            spacesCount: z.number()
         }),
         load: z.unknown(),
         list: z.object({ items: z.array(z.unknown()) }).passthrough()

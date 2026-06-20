@@ -90,15 +90,15 @@ test("Manager v2 manifest constructs a generic client", async t => {
         }
     });
 
-    t.deepEqual(await client.request("manager.v2.load"), {
+    t.deepEqual(await client.request("space.v2.load"), {
         status: 200,
         headers: {},
-        body: { route: "manager.v2.load" }
+        body: { route: "space.v2.load" }
     });
-    t.deepEqual(await client.request("manager.v2.instances"), {
+    t.deepEqual(await client.request("space.v2.instances"), {
         status: 200,
         headers: {},
-        body: { route: "manager.v2.instances" }
+        body: { route: "space.v2.instances" }
     });
 });
 

@@ -32,6 +32,29 @@
   - `packages/multi-manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
   - Baseline grep checks recorded for `/api/v2/managers`, `managerId`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, and `HostInfoResponse`; current matches are expected before Phase 3 terminology replacement.
 - Phase 1 checkpoint commit: `fa42032b`.
+- Phase 2 sequencing correction:
+  - User rejected preserving old public v2 Manager/Host names as temporary compatibility.
+  - Revised Oracle review recommended collapsing the Phase 2/Phase 3 public-surface work so no checkpoint lands a public route tree with legacy Manager/Host API names.
+  - The flawed uncommitted route-tree edit that preserved `multiManager`/`manager`/`host` compatibility exports was reverted before implementation.
+  - Phase 2 will introduce `RestAPI2RouteTree`, `RestAPI2RouteSets`, and `RestAPI2Routes` directly with Root/Space/Hub/Instance public terminology, replacing `/api/v2/managers/:managerId` with `/api/v2/spaces/:spaceId` and removing public old-name aliases.
+- Phase 2/3 combined implementation summary:
+  - Added final public `RestAPI2RouteTree` hierarchy: Root → Space → Hub → Instance, with Sequence and endpoint groups under Hub/Instance.
+  - Replaced public route-set/router exports with `root`, `space`, `hub`, `sequence`, and `instance`; old public `multiManager`, `manager`, and `host` route-set/router aliases were not retained.
+  - Replaced public `/api/v2/managers/:managerId/...` paths with `/api/v2/spaces/:spaceId/...`, `RestAPI2.Manager`/`MultiManager` with `RestAPI2.Space`/`Root`, and public v2 route IDs with `root.v2.*`, `space.v2.*`, and `hub.v2.*`.
+  - Updated Host, Manager, and MultiManager v2 bindings to consume tree-derived final public route sets while keeping internal implementation package/class names unchanged.
+  - Updated `docs/api.md`, `packages/rest-api2/README.md`, and `packages/api-router/README.md` to document Root/Space/Hub/Instance terminology.
+- Phase 2/3 validation:
+  - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 18 tests.
+  - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 45 tests.
+  - `packages/host`: focused v2 route tests under memory guard — passed, 42 tests.
+  - `packages/manager`: focused v2 route tests under memory guard — passed, 11 tests.
+  - `packages/multi-manager`: focused v2 route tests under memory guard — passed, 8 tests.
+  - `git diff --check` — passed.
+  - `npm run lint` — failed in unrelated `packages/api-server` test files; classified preexisting/out-of-scope after consulting `conductor/known-solutions.md`.
+  - Narrowed root ESLint over all changed TypeScript files OOMed under the default memory guard; smaller source-file chunks were used instead.
+  - Source lint chunks passed for changed `rest-api2`, `multi-manager`, and `host` files; changed `manager` files had only a preexisting out-of-scope complexity warning in `packages/manager/src/lib/manager.ts`.
+  - Direct root ESLint on changed package test files failed because `tsconfig.base.json` does not include those test files; package AVA tests were used as the executable validation for changed tests.
+  - Public code/docs grep checks for `/api/v2/managers`, `managers/:managerId`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `multi-manager.v2`, `manager.v2`, and `host.v2` — passed for `packages/` and `docs/api.md`. Remaining matches are limited to Conductor spec/plan/archive text and v1 generated type docs.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
@@ -55,74 +78,76 @@
     - [x] Run focused Host, Manager, and MultiManager v2 route tests/typechecks under the memory guard
     - [x] Add or record grep checks for current public `/api/v2/managers`, `managerId`, and public Host wording so later phases can prove removal
     - [x] Record baseline command results, skipped checks, and known failures in `plan.md`
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Current Surface Inventory, and Review Surface' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Current Surface Inventory, and Review Surface' (Protocol in workflow.md)
     - [x] Create a scoped Phase 1 checkpoint commit after validation and before asking for manual verification
     - [x] Push the review branch before asking for manual verification
-    - [~] Begin the manual verification request/note with `Phase 1: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Begin the manual verification request/note with `Phase 1: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers
 
-- [ ] Task: Design and introduce `RestAPI2RouteTree`
-    - [ ] Define a typed route-tree model that preserves route keys, resolver keys, schemas, owner metadata, public path composition, and implementer path metadata
-    - [ ] Model the public hierarchy as Root → Space → Hub → Instance, with Sequence, Topic, Storage, StdIO, Events, RPC, Logs, and Audit groups as typed children or route groups
-    - [ ] Ensure route tree definitions reuse existing Zod DTO schemas instead of redefining contract shapes
-    - [ ] Keep the tree runtime-neutral and handlerless
-- [ ] Task: Derive route-set accessors from the route tree
-    - [ ] Provide typed route-set accessors for Root, Space, Hub, Sequence, Instance, and supporting groups
-    - [ ] Preserve or adapt existing `RestAPI2RouteSets` exports as derived compatibility accessors during migration
-    - [ ] Ensure route-set keys remain available to TypeScript for client and runtime binding coverage
-    - [ ] Add type tests proving route keys and schema inference survive tree-derived route sets
-- [ ] Task: Derive router factories from the route tree
-    - [ ] Rebuild `RestAPI2Routes.*.router()` factories from `RestAPI2RouteTree`
-    - [ ] Preserve existing router manifest collection behavior for runtime-local routes
-    - [ ] Preserve resolver-expanded manifest behavior for client/OpenAPI public nested paths
-    - [ ] Add tests proving derived routers match the existing route count and expected route IDs before terminology rename
-- [ ] Task: Wire existing runtime router contracts through tree-derived route sets
-    - [ ] Refactor Host v2 route binding to consume tree-derived Hub, Sequence, and Instance route sets
-    - [ ] Refactor Manager v2 route binding to consume tree-derived Space route sets and Hub resolver contracts
-    - [ ] Refactor MultiManager v2 route binding to consume tree-derived Root route sets and Space resolver contracts
-    - [ ] Preserve v1 routes and v1 compatibility adapters unchanged
-- [ ] Task: Automated verification gate for route tree derivation
-    - [ ] Run `@scramjet/rest-api2` tests/typecheck
-    - [ ] Run `@scramjet/api-router` tests/typecheck if route tree requires api-router type changes
-    - [ ] Run focused Host, Manager, and MultiManager v2 route tests/typechecks
-    - [ ] Run narrowed lint for changed source/test files where feasible
-    - [ ] Record validation results and deduplication findings in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers' (Protocol in workflow.md)
-    - [ ] Create a scoped Phase 2 checkpoint commit after validation and before asking for manual verification
+Phase 2 is intentionally combined with the public terminology replacement work from Phase 3 for route contracts, route-set exports, runtime bindings, tests, and public docs that must change together. No public compatibility aliases for old Manager/Host v2 names should be introduced.
+
+- [x] Task: Design and introduce `RestAPI2RouteTree`
+    - [x] Define a typed route-tree model that preserves route keys, resolver keys, schemas, owner metadata, public path composition, and implementer path metadata
+    - [x] Model the public hierarchy as Root → Space → Hub → Instance, with Sequence, Topic, Storage, StdIO, Events, RPC, Logs, and Audit groups as typed children or route groups
+    - [x] Ensure route tree definitions reuse existing Zod DTO schemas instead of redefining contract shapes
+    - [x] Keep the tree runtime-neutral and handlerless
+- [x] Task: Derive route-set accessors from the route tree
+    - [x] Provide typed route-set accessors for Root, Space, Hub, Sequence, Instance, and supporting groups
+    - [x] Remove old public `multiManager`/`manager`/`host` route-set exports instead of preserving compatibility aliases
+    - [x] Ensure route-set keys remain available to TypeScript for client and runtime binding coverage
+    - [x] Add tests proving route keys and schema inference survive tree-derived route sets
+- [x] Task: Derive router factories from the route tree
+    - [x] Rebuild `RestAPI2Routes.*.router()` factories from `RestAPI2RouteTree`
+    - [x] Preserve existing router manifest collection behavior for runtime-local routes
+    - [x] Preserve resolver-expanded manifest behavior for client/OpenAPI public nested paths
+    - [x] Add tests proving derived routers expose final expected route IDs and public paths
+- [x] Task: Wire existing runtime router contracts through tree-derived route sets
+    - [x] Refactor Host v2 route binding to consume tree-derived Hub, Sequence, and Instance route sets
+    - [x] Refactor Manager v2 route binding to consume tree-derived Space route sets and Hub resolver contracts
+    - [x] Refactor MultiManager v2 route binding to consume tree-derived Root route sets and Space resolver contracts
+    - [x] Preserve v1 routes and v1 compatibility adapters unchanged
+- [x] Task: Automated verification gate for route tree derivation
+    - [x] Run `@scramjet/rest-api2` tests/typecheck
+    - [x] Run `@scramjet/api-router` tests/typecheck if route tree requires api-router type changes
+    - [x] Run focused Host, Manager, and MultiManager v2 route tests/typechecks
+    - [x] Run narrowed lint for changed source/test files where feasible
+    - [x] Record validation results and deduplication findings in `plan.md`
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers' (Protocol in workflow.md)
+    - [~] Create a scoped Phase 2 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification
     - [ ] Begin the manual verification request/note with `Phase 2: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 3: Public v2 Space/Hub Terminology Replacement
 
-- [ ] Task: Rename public route contracts and params from Manager/Host to Space/Hub concepts
-    - [ ] Replace public `managerId` params with `spaceId` in v2 schemas, resolver contracts, route contracts, and type names
-    - [ ] Replace public `Manager` v2 DTO concepts with `Space` concepts while keeping internal Manager implementation names where appropriate
-    - [ ] Replace public Host terminology with Hub terminology in route contracts, generated docs, route IDs, and examples
-    - [ ] Preserve internal package/class/file names unless public contract cleanup requires local variable renaming
-- [ ] Task: Replace public v2 paths and operation IDs
-    - [ ] Replace `/api/v2/managers/:managerId/...` with `/api/v2/spaces/:spaceId/...`
-    - [ ] Ensure Root-level routes expose Space collection and Space resolver terminology
-    - [ ] Ensure Space-level routes expose Hub collection and Hub resolver terminology
-    - [ ] Remove public `/api/v2/managers/...` route aliases rather than keeping compatibility aliases
-- [ ] Task: Update tests for final public terminology
-    - [ ] Update rest-api2 route-set, manifest, OpenAPI, and client tests to expect Root/Space/Hub/Instance terminology
-    - [ ] Update Host, Manager, MultiManager v2 route tests to expect Space/Hub public routes while preserving internal implementation ownership
-    - [ ] Add negative grep or assertion checks proving public v2 manifests/docs do not expose `/api/v2/managers` or `managerId`
-    - [ ] Keep v1 tests unchanged and separate
-- [ ] Task: Update base API documentation for final terminology
-    - [ ] Update `docs/api.md` to use Root, Space, Hub, and Instance as public v2 concepts
-    - [ ] Remove public Manager/Host wording from v2 endpoint tables and examples
-    - [ ] Document that Manager/Host names are internal implementation owners only
-    - [ ] Update package README examples that show public v2 routes or client usage
-- [ ] Task: Automated verification gate for terminology replacement
-    - [ ] Run rest-api2 tests/typecheck and OpenAPI/schema-mode fixture tests
-    - [ ] Run focused Host, Manager, MultiManager v2 tests/typechecks
-    - [ ] Run grep checks for disallowed public v2 `managers`, `managerId`, and Host-as-public-concept occurrences in generated/public docs and route contracts
-    - [ ] Run narrowed lint and `git diff --check`
-    - [ ] Record validation results and any intentionally retained internal Manager/Host references in `plan.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Public v2 Space/Hub Terminology Replacement' (Protocol in workflow.md)
-    - [ ] Create a scoped Phase 3 checkpoint commit after validation and before asking for manual verification
+- [x] Task: Rename public route contracts and params from Manager/Host to Space/Hub concepts
+    - [x] Replace public `managerId` params with `spaceId` in v2 schemas, resolver contracts, route contracts, and type names
+    - [x] Replace public `Manager` v2 DTO concepts with `Space` concepts while keeping internal Manager implementation names where appropriate
+    - [x] Replace public Host terminology with Hub terminology in route contracts, generated docs, route IDs, and examples
+    - [x] Preserve internal package/class/file names unless public contract cleanup requires local variable renaming
+- [x] Task: Replace public v2 paths and operation IDs
+    - [x] Replace `/api/v2/managers/:managerId/...` with `/api/v2/spaces/:spaceId/...`
+    - [x] Ensure Root-level routes expose Space collection and Space resolver terminology
+    - [x] Ensure Space-level routes expose Hub collection and Hub resolver terminology
+    - [x] Remove public `/api/v2/managers/...` route aliases rather than keeping compatibility aliases
+- [x] Task: Update tests for final public terminology
+    - [x] Update rest-api2 route-set, manifest, OpenAPI, and client tests to expect Root/Space/Hub/Instance terminology
+    - [x] Update Host, Manager, MultiManager v2 route tests to expect Space/Hub public routes while preserving internal implementation ownership
+    - [x] Add negative grep or assertion checks proving public v2 manifests/docs do not expose `/api/v2/managers` or `managerId`
+    - [x] Keep v1 tests unchanged and separate
+- [x] Task: Update base API documentation for final terminology
+    - [x] Update `docs/api.md` to use Root, Space, Hub, and Instance as public v2 concepts
+    - [x] Remove public Manager/Host wording from v2 endpoint tables and examples
+    - [x] Document that Manager/Host names are internal implementation owners only
+    - [x] Update package README examples that show public v2 routes or client usage
+- [x] Task: Automated verification gate for terminology replacement
+    - [x] Run rest-api2 tests/typecheck and OpenAPI/schema-mode fixture tests
+    - [x] Run focused Host, Manager, MultiManager v2 tests/typechecks
+    - [x] Run grep checks for disallowed public v2 `managers`, `managerId`, and Host-as-public-concept occurrences in generated/public docs and route contracts
+    - [x] Run narrowed lint and `git diff --check`
+    - [x] Record validation results and any intentionally retained internal Manager/Host references in `plan.md`
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Public v2 Space/Hub Terminology Replacement' (Protocol in workflow.md)
+    - [~] Covered by the combined Phase 2/3 checkpoint commit and manual verification
     - [ ] Push the review branch before asking for manual verification
     - [ ] Begin the manual verification request/note with `Phase 3: Manual Verification` so the checkpoint is visible in the PR
 

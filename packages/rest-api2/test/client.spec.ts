@@ -4,14 +4,14 @@ import { ApiClientRequest, ApiClientTransport, HttpMethod, createRouter } from "
 import { RestAPI2, RestAPI2Routes, createRestAPI2Client } from "../src";
 
 const representativeOperations: Array<{ scope: RestAPI2.ScopeName; operationId: RestAPI2.OperationId; path: string }> = [
-    { scope: "mmgr", operationId: "GET /api/v2/managers", path: "/managers" },
-    { scope: "mgr", operationId: "GET /api/v2/managers/:managerId/health", path: "/managers/:managerId/health" },
-    { scope: "hub", operationId: "GET /api/v2/managers/:managerId/hubs/:hubId/status", path: "/managers/:managerId/hubs/:hubId/status" },
-    { scope: "seq", operationId: "POST /api/v2/managers/:managerId/hubs/:hubId/sequences", path: "/managers/:managerId/hubs/:hubId/sequences" },
-    { scope: "inst", operationId: "PATCH /api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId", path: "/managers/:managerId/hubs/:hubId/instances/:instanceId" },
-    { scope: "audit", operationId: "GET /api/v2/managers/:managerId/audit", path: "/managers/:managerId/audit" },
-    { scope: "stdio", operationId: "GET /api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio", path: "/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio" },
-    { scope: "rpc", operationId: "POST /api/v2/managers/:managerId/hubs/:hubId/rpc/*", path: "/managers/:managerId/hubs/:hubId/rpc/*" }
+    { scope: "root", operationId: "GET /api/v2/spaces", path: "/spaces" },
+    { scope: "space", operationId: "GET /api/v2/spaces/:spaceId/health", path: "/spaces/:spaceId/health" },
+    { scope: "hub", operationId: "GET /api/v2/spaces/:spaceId/hubs/:hubId/status", path: "/spaces/:spaceId/hubs/:hubId/status" },
+    { scope: "seq", operationId: "POST /api/v2/spaces/:spaceId/hubs/:hubId/sequences", path: "/spaces/:spaceId/hubs/:hubId/sequences" },
+    { scope: "inst", operationId: "PATCH /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId", path: "/spaces/:spaceId/hubs/:hubId/instances/:instanceId" },
+    { scope: "audit", operationId: "GET /api/v2/spaces/:spaceId/audit", path: "/spaces/:spaceId/audit" },
+    { scope: "stdio", operationId: "GET /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio", path: "/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio" },
+    { scope: "rpc", operationId: "POST /api/v2/spaces/:spaceId/hubs/:hubId/rpc/*", path: "/spaces/:spaceId/hubs/:hubId/rpc/*" }
 ];
 
 function createRepresentativeManifest() {
@@ -67,33 +67,33 @@ test("generic contract shapes are independent v2 outputs", t => {
 
 test("route ownership separates public paths from implementer paths", t => {
     const hubLoad: RestAPI2.RouteOwnership = {
-        owner: "host",
-        operationId: "GET /api/v2/managers/:managerId/hubs/:hubId/load",
-        publicPath: "/api/v2/managers/:managerId/hubs/:hubId/load",
-        mountPath: "/api/v2/managers/:managerId/hubs/:hubId",
+        owner: "hub",
+        operationId: "GET /api/v2/spaces/:spaceId/hubs/:hubId/load",
+        publicPath: "/api/v2/spaces/:spaceId/hubs/:hubId/load",
+        mountPath: "/api/v2/spaces/:spaceId/hubs/:hubId",
         implementerPath: "/load"
     };
     const stdio: RestAPI2.RouteOwnership = {
-        owner: "host",
-        operationId: "GET /api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio",
-        publicPath: "/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio",
-        mountPath: "/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId",
+        owner: "hub",
+        operationId: "GET /api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio",
+        publicPath: "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio",
+        mountPath: "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId",
         implementerPath: "/stdio"
     };
 
     t.is(hubLoad.implementerPath, "/load");
-    t.false(hubLoad.implementerPath.includes(":managerId"));
+    t.false(hubLoad.implementerPath.includes(":spaceId"));
     t.false(hubLoad.implementerPath.includes(":hubId"));
     t.is(stdio.implementerPath, "/stdio");
     t.false(stdio.implementerPath.includes(":instanceId"));
 });
 
 test("shared v2 route contracts are handlerless and expose nested virtual paths", t => {
-    const hostRoutes = RestAPI2Routes.host.hubRouter().definitions();
-    const expanded = RestAPI2Routes.multiManager.router("/api/v2").collect({ expandResolvers: true });
+    const hostRoutes = RestAPI2Routes.hub.hubRouter().definitions();
+    const expanded = RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true });
 
     t.true(hostRoutes.every(route => !route.handler));
-    t.true(expanded.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/load"));
-    t.true(expanded.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio"));
+    t.true(expanded.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/load"));
+    t.true(expanded.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio"));
     t.true(expanded.routes.filter(route => route.virtual).every(route => route.id.startsWith(`${route.method.toUpperCase()} ${route.fullPath}`)));
 });

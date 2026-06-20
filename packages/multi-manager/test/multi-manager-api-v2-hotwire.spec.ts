@@ -39,12 +39,12 @@ test("MultiManagerAPIHandler registers the v2 MultiManager API route surface sep
     t.true(recorder.has("get", "/api/v2/version"));
     t.true(recorder.has("get", "/api/v2/info"));
     t.true(recorder.has("get", "/api/v2/load"));
-    t.true(recorder.has("get", "/api/v2/list"));
+    t.true(recorder.has("get", "/api/v2/spaces"));
     t.true(recorder.has("get", "/api/v2/health"));
     t.true(recorder.has("get", "/api/v2/verser2/trust/:id?"));
     t.true(recorder.has("upstream", "/api/v2/audit"));
-    t.true(recorder.has("use", "/api/v2/managers/:managerId"));
-    t.true(recorder.has("use", "/api/v2/managers/:managerId/*"));
+    t.true(recorder.has("use", "/api/v2/spaces/:spaceId"));
+    t.true(recorder.has("use", "/api/v2/spaces/:spaceId/*"));
 });
 
 test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t => {
@@ -62,13 +62,13 @@ test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t
         apiBase: "/api/v2",
         apiPort: 20000,
         id: "mm-hotwire",
-        managersCount: 0
+        spacesCount: 0
     });
     t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
-    t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({}), { items: [{ id: "manager-1", apiBase: "/api/v2", managers: undefined }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/spaces").handler as Function)({}), { items: [{ id: "manager-1", apiBase: "/api/v2", spaces: undefined }] });
     const health = await (recorder.require("get", "/api/v2/health").handler as Function)({});
 
-    t.deepEqual(health.scope, { id: "mm-hotwire", apiBase: "/api/v2", managers: 0 });
+    t.deepEqual(health.scope, { id: "mm-hotwire", apiBase: "/api/v2", spaces: 0 });
     t.true(health.healthy);
     t.true(["healthy", "degraded"].includes(health.status));
     t.true(health.components.some((component: { name: string }) => component.name === "multi-manager"));
@@ -114,7 +114,7 @@ test("MultiManagerAPIHandler v2 trust route preserves manager lookup behavior", 
     await t.throwsAsync(() => trustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
 });
 
-test("MultiManagerAPIHandler v2 resolves Manager-owned routes with a verser2 redirect", async t => {
+test("MultiManagerAPIHandler v2 resolves Space-owned routes with a verser2 redirect", async t => {
     const recorder = new RouteRecorder();
     const multiManager = createMultiManagerStub(recorder);
 
@@ -130,9 +130,9 @@ test("MultiManagerAPIHandler v2 resolves Manager-owned routes with a verser2 red
         },
         end() {}
     };
-    const handler = recorder.require("use", "/api/v2/managers/:managerId/*").handler as Function;
+    const handler = recorder.require("use", "/api/v2/spaces/:spaceId/*").handler as Function;
 
-    await handler({ url: "/api/v2/managers/manager-1/hubs/sth-1/load", params: {}, headers: {} }, response, () => t.fail());
+    await handler({ url: "/api/v2/spaces/manager-1/hubs/sth-1/load", params: {}, headers: {} }, response, () => t.fail());
 
     t.is(response.statusCode, 308);
     t.is(response.headers.location, "http://manager-1.scramjet.internal/api/v2/hubs/sth-1/load");

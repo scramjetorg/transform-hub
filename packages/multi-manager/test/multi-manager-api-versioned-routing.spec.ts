@@ -51,7 +51,7 @@ test("MultiManager low-risk routes are reachable through verser2 for v1 and v2",
         "/api/v2/version",
         "/api/v2/info",
         "/api/v2/load",
-        "/api/v2/list",
+        "/api/v2/spaces",
         "/api/v2/health",
         "/api/v2/verser2/trust/:id?",
         "/api/v2/audit"
@@ -74,27 +74,27 @@ test("MultiManager v2 manifest constructs a generic client", async t => {
         }
     });
 
-    t.deepEqual(await client.request("multi-manager.v2.health"), {
+    t.deepEqual(await client.request("root.v2.health"), {
         status: 200,
         headers: {},
-        body: { route: "multi-manager.v2.health" }
+        body: { route: "root.v2.health" }
     });
-    t.deepEqual(await client.request("multi-manager.v2.load"), {
+    t.deepEqual(await client.request("root.v2.load"), {
         status: 200,
         headers: {},
-        body: { route: "multi-manager.v2.load" }
+        body: { route: "root.v2.load" }
     });
 });
 
-test("MultiManager v2 expanded manifest includes shared nested Manager and Host paths without Host imports", t => {
+test("MultiManager v2 expanded manifest includes shared nested Space and Hub paths without Hub imports", t => {
     const handler = new MultiManagerAPIV2Handler(createMultiManagerStub(new RouteRecorder()) as any);
     const runtimeManifest = handler.createV2Router().collect();
     const expandedManifest = handler.createV2Router().collect({ expandResolvers: true });
     const source = readFileSync(resolve(__dirname, "../src/lib/api/multi-manager-api-v2.ts"), "utf8");
 
-    t.false(runtimeManifest.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/load"));
-    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/load"));
-    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/managers/:managerId/hubs/:hubId/instances/:instanceId/stdio"));
+    t.false(runtimeManifest.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/load"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/load"));
+    t.true(expandedManifest.routes.some(route => route.fullPath === "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId/stdio"));
     t.false(source.includes("@scramjet/host"));
     t.false(source.includes("packages/host"));
 });
