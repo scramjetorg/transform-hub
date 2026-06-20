@@ -67,8 +67,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Build orchestration**: custom scripts under `scripts/`, including package builds and workspace script runners.
 - **Development entrypoint**: `npm run start:dev` for source-based hub startup.
 - **Built entrypoint**: `npm run start` after package build output exists in `dist/`.
-- **Linting**: ESLint with TypeScript parser and project-wide rules.
-- **Formatting**: Prettier with minimal configuration.
+- **Linting/Formatting**: Migrating from ESLint/Prettier to Biome. During the Biome migration track, use the initial Biome command surface and do not run legacy ESLint lint commands.
 - **Docs**: generated documentation under `docs/` and package README files.
 - **API routing**: `@scramjet/api-router` provides decorator and imperative route declaration, Zod-first validation, route hooks, OpenAPI 3.1 generation, schema-mode route loading, HTTP registration, verser2 registration, and generic client transports.
 - **API contracts**: `@scramjet/rest-api2` provides v2 DTO contracts, Zod schemas, handlerless route sets, typed route binding, and the common v2 client surface.

@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: biome for transform hub**
+- [~] **Track: biome for transform hub**
 *Link: [./tracks/biome_transform_hub_20260620/](./tracks/biome_transform_hub_20260620/)*

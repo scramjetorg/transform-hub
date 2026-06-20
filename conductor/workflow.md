@@ -157,7 +157,7 @@ Choose the narrowest sufficient validation:
 
 - Package build: `npm run build:packages`
 - Serial package tests: `npm run test:packages-no-concurrent`
-- Lint: `npm run lint`
+- Lint/check: follow the active track tooling. During the Biome migration track, use Biome commands and do not run legacy ESLint lint commands.
 - Runtime invariant check: `npm run check:runtime-invariants`
 - BDD node smoke: `npm run test:bdd-ci-node`
 - BDD python smoke: `npm run test:bdd-ci-python`

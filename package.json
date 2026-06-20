@@ -37,6 +37,9 @@
     "lint": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --ext .ts --cache --cache-strategy=content\"",
     "lint:fix": "TIMING=1 NODE_OPTIONS=\"--max-old-space-size=2048\" scripts/run-script.js -w modules -j 4 -e \"! ls .eslintrc* > /dev/null || npx eslint ./ --fix --ext .ts --cache --cache-strategy=content\"",
     "lint:uncached": "find . -name .eslintcache -delete && npm run lint",
+    "biome:check": "biome check .",
+    "biome:format": "biome format .",
+    "biome:lint": "biome lint .",
     "check:runtime-invariants": "bash scripts/check-runtime-wrapper-invariants.sh",
     "check:verser2-packages": "node scripts/check-verser2-github-packages.js",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
@@ -81,6 +84,7 @@
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "4.2.1",
     "@types/node": "^22.15.0",
