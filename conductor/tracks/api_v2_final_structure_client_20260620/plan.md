@@ -230,6 +230,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - Focused MultiManager v2 route tests under memory guard — passed, 8 tests.
     - Focused source lint for changed `api-router`/`rest-api2` source files under memory guard — passed.
     - Focused package builds/typechecks: `packages/api-router` and `packages/rest-api2` `npm run build` under memory guard — passed.
+    - Phase 5 checkpoint commit: `41641a76`.
 
 - [x] Task: Strengthen runtime binding coverage checks
     - [x] Ensure adding a normal route to a route set fails typecheck in the owning runtime implementation until a handler is added
@@ -259,7 +260,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Run narrowed lint and `git diff --check`
     - [x] Record validation results and any explicit exceptions in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients' (Protocol in workflow.md)
-    - [ ] Create a scoped Phase 5 checkpoint commit after validation and before asking for manual verification
+    - [x] Create a scoped Phase 5 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification
     - [ ] Begin the manual verification request/note with `Phase 5: Manual Verification` so the checkpoint is visible in the PR
 
