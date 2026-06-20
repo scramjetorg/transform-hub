@@ -12,7 +12,7 @@ import {
 } from "@scramjet/api-router";
 
 import { RestAPI2 } from "./contracts";
-import { RestAPI2RouteTree, RestAPI2Routes } from "./routes";
+import { RestAPI2RouteTree, RestAPI2RouteTreeRouteNode, RestAPI2Routes, getOpaqueRouteKeys } from "./routes";
 
 export type RestAPI2ClientOptions = {
     manifest: RouteManifest;
@@ -37,23 +37,22 @@ export function createRestAPI2Client({ manifest, transport }: RestAPI2ClientOpti
 export type FluentClientRequest<TContract extends RouteDefinition> = Partial<Omit<RouteRequestFor<TContract>, "raw">>;
 
 export type FluentEndpoint<TContract extends RouteDefinition> = {
-    get(request?: FluentClientRequest<TContract>): Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, RouteResponseFor<TContract>>>;
-    post(request?: FluentClientRequest<TContract>): Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, RouteResponseFor<TContract>>>;
-    put(request?: FluentClientRequest<TContract>): Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, RouteResponseFor<TContract>>>;
-    patch(request?: FluentClientRequest<TContract>): Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, RouteResponseFor<TContract>>>;
-    delete(request?: FluentClientRequest<TContract>): Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, RouteResponseFor<TContract>>>;
+    [M in TContract["method"]]: (request?: FluentClientRequest<TContract>) => Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, RouteResponseFor<TContract>>>;
 };
 
 type FluentRouteMethods<TSet extends Record<string, RouteDefinition>> = {
     [K in keyof TSet]: FluentEndpoint<TSet[K]>;
 };
 
+export type FluentClientForRouteTreeNode<TNode extends RestAPI2RouteTreeRouteNode<string, string, Record<string, RouteDefinition>>> = FluentRouteMethods<ReturnType<TNode["routes"]>>;
+
 type RootRouteSet = ReturnType<typeof RestAPI2RouteTree.root.routes>;
 type SpaceRouteSet = ReturnType<typeof RestAPI2RouteTree.space.routes>;
 type HubRouteSet = ReturnType<typeof RestAPI2RouteTree.hub.routes>;
 type InstanceRouteSet = ReturnType<typeof RestAPI2RouteTree.instance.routes>;
+type InstanceStandardRouteSet = Omit<InstanceRouteSet, "rpc">;
 
-export type InstanceClient = FluentRouteMethods<InstanceRouteSet>;
+export type InstanceClient = FluentRouteMethods<InstanceStandardRouteSet>;
 
 export type HubClient = FluentRouteMethods<HubRouteSet> & {
     instance(instanceId: string): InstanceClient;
@@ -70,6 +69,7 @@ export type RootClient = FluentRouteMethods<RootRouteSet> & {
 export type RestAPI2FluentClientOptions = {
     transport: ApiClientTransport;
     basePath?: string;
+    manifest?: RouteManifest;
 };
 
 type FluentBuildContext = {
@@ -130,13 +130,24 @@ function routeMethods<TSet extends Record<string, RouteDefinition>>(context: Flu
     return Object.fromEntries(entries) as FluentRouteMethods<TSet>;
 }
 
+function standardRouteMethods<TSet extends Record<string, RouteDefinition>>(
+    context: FluentBuildContext,
+    routes: TSet,
+    opaqueKeys: readonly string[] = []
+): FluentRouteMethods<TSet> {
+    const opaque = new Set(opaqueKeys);
+    const standardRoutes = Object.fromEntries(Object.entries(routes).filter(([key]) => !opaque.has(key))) as TSet;
+
+    return routeMethods(context, standardRoutes);
+}
+
 function buildInstanceClient(context: FluentBuildContext): InstanceClient {
-    return routeMethods(context, RestAPI2RouteTree.instance.routes());
+    return standardRouteMethods(context, RestAPI2RouteTree.instance.routes(), getOpaqueRouteKeys(RestAPI2RouteTree.instance)) as InstanceClient;
 }
 
 function buildHubClient(context: FluentBuildContext): HubClient {
     return {
-        ...routeMethods(context, RestAPI2RouteTree.hub.routes()),
+        ...standardRouteMethods(context, RestAPI2RouteTree.hub.routes(), getOpaqueRouteKeys(RestAPI2RouteTree.hub)),
         instance(instanceId: string) {
             return buildInstanceClient({
                 ...context,
@@ -149,7 +160,7 @@ function buildHubClient(context: FluentBuildContext): HubClient {
 
 function buildSpaceClient(context: FluentBuildContext): SpaceClient {
     return {
-        ...routeMethods(context, RestAPI2RouteTree.space.routes()),
+        ...standardRouteMethods(context, RestAPI2RouteTree.space.routes(), getOpaqueRouteKeys(RestAPI2RouteTree.space)),
         hub(hubId: string) {
             return buildHubClient({
                 ...context,
@@ -162,7 +173,7 @@ function buildSpaceClient(context: FluentBuildContext): SpaceClient {
 
 function buildRootClient(context: FluentBuildContext): RootClient {
     return {
-        ...routeMethods(context, RestAPI2RouteTree.root.routes()),
+        ...standardRouteMethods(context, RestAPI2RouteTree.root.routes(), getOpaqueRouteKeys(RestAPI2RouteTree.root)),
         space(spaceId: string) {
             return buildSpaceClient({
                 ...context,
@@ -207,6 +218,16 @@ export function createInstanceClient({ transport, basePath = "/" }: RestAPI2Flue
         : Router.create({ basePath }).mount("/", instanceRouter).collect({ expandResolvers: true });
 
     return buildInstanceClient(createFluentContext(manifest, transport, basePath));
+}
+
+export function createFluentClientFromRouteTreeNode<TNode extends RestAPI2RouteTreeRouteNode<string, string, Record<string, RouteDefinition>>>(
+    node: TNode,
+    { transport, basePath = "/", manifest }: RestAPI2FluentClientOptions
+): FluentClientForRouteTreeNode<TNode> {
+    const router = Object.values(node.routes()).reduce((current, route) => current.route(route), Router.create({ basePath }));
+    const routeManifest = manifest || router.collect({ expandResolvers: true });
+
+    return standardRouteMethods(createFluentContext(routeManifest, transport, basePath), node.routes(), getOpaqueRouteKeys(node)) as FluentClientForRouteTreeNode<TNode>;
 }
 
 export { createHttpClientTransport, createVerser2ClientTransport };

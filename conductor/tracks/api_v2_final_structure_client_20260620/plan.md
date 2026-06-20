@@ -212,33 +212,52 @@ Phase 2 is intentionally combined with the public terminology replacement work f
 
 ## Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients
 
-- [ ] Task: Strengthen runtime binding coverage checks
-    - [ ] Ensure adding a normal route to a route set fails typecheck in the owning runtime implementation until a handler is added
-    - [ ] Ensure extra handler keys fail typecheck
-    - [ ] Ensure wrong params/body/query/header usage fails typecheck
-    - [ ] Ensure wrong response shape fails typecheck
-    - [ ] Keep explicit skip/forward/contract-only behavior available only where justified and recorded
-- [ ] Task: Strengthen fluent client coverage checks
-    - [ ] Ensure adding a normal route to a route set fails typecheck in the fluent client mapping until the client exposes it
-    - [ ] Ensure generated endpoint methods preserve method-specific request and response types
-    - [ ] Ensure nested resolver routes are covered by fluent nested clients
-    - [ ] Add runtime manifest-vs-client coverage assertions where TypeScript cannot directly prove coverage
-- [ ] Task: Define and test RPC/custom route tree exceptions
-    - [ ] Mark RPC endpoints as explicit opaque/dynamic escapes in route metadata and docs
-    - [ ] Add a custom RestAPI2-compatible route tree fixture representing a user/sequence-provided route set
-    - [ ] Prove a typed custom client can be constructed from the custom route tree
-    - [ ] Prove opaque RPC exceptions do not weaken strict coverage for normal endpoints
-- [ ] Task: Add compile-time regression tests for route additions
-    - [ ] Add type tests that intentionally simulate a new route missing from runtime binding and assert a compile-time failure
-    - [ ] Add type tests that intentionally simulate a new route missing from fluent client coverage and assert a compile-time failure
-    - [ ] Add type tests for resolver param inference from `spaceId`, `hubId`, and `instanceId`
-    - [ ] Add type tests proving route schemas cannot be weakened by implementation-local handlers
-- [ ] Task: Automated verification gate for coverage guards
-    - [ ] Run rest-api2 type tests and package tests
-    - [ ] Run api-router type tests if binding utilities changed
-    - [ ] Run Host, Manager, MultiManager build typechecks
-    - [ ] Run narrowed lint and `git diff --check`
-    - [ ] Record validation results and any explicit exceptions in `plan.md`
+- Phase 5 start notes:
+  - Affected packages/entrypoints: `packages/api-router/src/bind.ts`, `packages/api-router/test/bind.spec.ts`, `packages/rest-api2/src/routes.ts`, `packages/rest-api2/src/client.ts`, `packages/rest-api2/test/client.spec.ts`, `packages/rest-api2/test/routes.spec.ts`, and existing Host/Manager/MultiManager v2 bindings that consume `bindRoutes`/`bindResolver`.
+  - Shared-package review: reuse existing `@scramjet/api-router` binding helpers, route definitions, manifests, and generic client transport; reuse `@scramjet/rest-api2` route tree/route-set accessors and fluent client runtime rather than adding implementation-local coverage helpers.
+  - Initial gap inventory: route binding exact-key checks already exist in `bindRoutes` but need stronger executable coverage for skip, handler overrides, plural resolver bindings, and active `@ts-expect-error` type regression cases; fluent clients need coverage assertions/error-path tests around route-method exposure and missing manifest routes; RPC opaque route-group metadata exists but is not formally typed/tested; custom route tree/client support needs a minimal typed fixture.
+  - Implementation summary:
+    - Preserved HTTP method literals in `@scramjet/api-router` facade route definitions so fluent clients expose only the contract method instead of all HTTP verbs.
+    - Expanded `bindRoutes`/`bindResolvers` tests to cover `skip`, `contractOnly`, handler metadata overrides, plural resolver binding, missing/extra binding type failures, wrong params, and wrong response shapes.
+    - Added typed route-group metadata and `getOpaqueRouteKeys()` for explicit opaque RPC exceptions.
+    - Excluded opaque Instance RPC from standard fluent clients and added a generic `createFluentClientFromRouteTreeNode()` fixture path for custom RestAPI2-compatible route nodes.
+    - Added fluent client tests for direct-level non-health endpoints, missing manifest coverage, custom route tree clients, method-specific endpoint typing, schema-shaped requests, resolver param typing, and opaque RPC exclusion.
+  - Phase 5 validation:
+    - `packages/api-router`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 47 tests.
+    - `packages/rest-api2`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" npm test` — passed, 27 tests. One session-introduced assertion issue was fixed by using `t.throws()` for a synchronous missing-manifest error.
+    - Focused Host v2 route tests under memory guard — passed, 42 tests.
+    - Focused Manager v2 route tests under memory guard — passed, 11 tests.
+    - Focused MultiManager v2 route tests under memory guard — passed, 8 tests.
+    - Focused source lint for changed `api-router`/`rest-api2` source files under memory guard — passed.
+    - Focused package builds/typechecks: `packages/api-router` and `packages/rest-api2` `npm run build` under memory guard — passed.
+
+- [x] Task: Strengthen runtime binding coverage checks
+    - [x] Ensure adding a normal route to a route set fails typecheck in the owning runtime implementation until a handler is added
+    - [x] Ensure extra handler keys fail typecheck
+    - [x] Ensure wrong params/body/query/header usage fails typecheck
+    - [x] Ensure wrong response shape fails typecheck
+    - [x] Keep explicit skip/forward/contract-only behavior available only where justified and recorded
+- [x] Task: Strengthen fluent client coverage checks
+    - [x] Ensure adding a normal route to a route set fails typecheck in the fluent client mapping until the client exposes it
+    - [x] Ensure generated endpoint methods preserve method-specific request and response types
+    - [x] Ensure nested resolver routes are covered by fluent nested clients
+    - [x] Add runtime manifest-vs-client coverage assertions where TypeScript cannot directly prove coverage
+- [x] Task: Define and test RPC/custom route tree exceptions
+    - [x] Mark RPC endpoints as explicit opaque/dynamic escapes in route metadata and docs
+    - [x] Add a custom RestAPI2-compatible route tree fixture representing a user/sequence-provided route set
+    - [x] Prove a typed custom client can be constructed from the custom route tree
+    - [x] Prove opaque RPC exceptions do not weaken strict coverage for normal endpoints
+- [x] Task: Add compile-time regression tests for route additions
+    - [x] Add type tests that intentionally simulate a new route missing from runtime binding and assert a compile-time failure
+    - [x] Add type tests that intentionally simulate a new route missing from fluent client coverage and assert a compile-time failure
+    - [x] Add type tests for resolver param inference from `spaceId`, `hubId`, and `instanceId`
+    - [x] Add type tests proving route schemas cannot be weakened by implementation-local handlers
+- [x] Task: Automated verification gate for coverage guards
+    - [x] Run rest-api2 type tests and package tests
+    - [x] Run api-router type tests if binding utilities changed
+    - [x] Run Host, Manager, MultiManager build typechecks
+    - [x] Run narrowed lint and `git diff --check`
+    - [x] Record validation results and any explicit exceptions in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients' (Protocol in workflow.md)
     - [ ] Create a scoped Phase 5 checkpoint commit after validation and before asking for manual verification
     - [ ] Push the review branch before asking for manual verification

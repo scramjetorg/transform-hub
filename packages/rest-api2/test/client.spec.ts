@@ -1,7 +1,7 @@
 import test from "ava";
 
-import { ApiClientRequest, ApiClientTransport, HttpMethod, createRouter } from "@scramjet/api-router";
-import { RestAPI2, RestAPI2Routes, createHubClient, createInstanceClient, createRestAPI2Client, createRootClient, createSpaceClient } from "../src";
+import { ApiClientRequest, ApiClientTransport, HttpMethod, Router, createRouter } from "@scramjet/api-router";
+import { RestAPI2, RestAPI2Routes, createFluentClientFromRouteTreeNode, createHubClient, createInstanceClient, createRestAPI2Client, createRootClient, createSpaceClient } from "../src";
 
 const representativeOperations: Array<{ scope: RestAPI2.ScopeName; operationId: RestAPI2.OperationId; path: string }> = [
     { scope: "root", operationId: "GET /api/v2/spaces", path: "/spaces" },
@@ -144,6 +144,30 @@ test("direct level fluent clients dispatch through the manifest transport", asyn
     ]);
 });
 
+test("direct level fluent clients expose non-health route methods with typed params", async t => {
+    const seen: ApiClientRequest[] = [];
+    const transport: ApiClientTransport = {
+        async request<T>(request: ApiClientRequest) {
+            seen.push(request);
+
+            return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+        }
+    };
+
+    await createSpaceClient({ transport }).storageClear.delete({ query: { force: true } });
+    await createHubClient({ transport }).deleteTopic.delete({ params: { name: "topic-1" } });
+    await createInstanceClient({ transport }).sendEvent.post({ body: { name: "event-1", data: { ok: true } } });
+
+    t.deepEqual(seen.map(request => request.route.id), [
+        "DELETE /storage",
+        "DELETE /topics/:name",
+        "POST /events"
+    ]);
+    t.deepEqual(seen[0].query, { force: true });
+    t.deepEqual(seen[1].params, { name: "topic-1" });
+    t.deepEqual(seen[2].body, { name: "event-1", data: { ok: true } });
+});
+
 test("fluent client forwards body query and headers for representative endpoints", async t => {
     const seen: ApiClientRequest[] = [];
     const transport: ApiClientTransport = {
@@ -165,4 +189,86 @@ test("fluent client forwards body query and headers for representative endpoints
     t.deepEqual(seen[0].body, { topic: { name: "topic-1", contentType: "application/json" } });
     t.deepEqual(seen[1].params, { spaceId: "space-1" });
     t.deepEqual(seen[1].query, { force: true });
+});
+
+test("fluent clients omit opaque RPC route exceptions from standard endpoint methods", t => {
+    const instance = createInstanceClient({
+        transport: {
+            async request<T>() {
+                return { status: 200, headers: {}, body: undefined as unknown as T };
+            }
+        }
+    });
+
+    t.false("rpc" in instance);
+});
+
+test("fluent client reports missing manifest route coverage", async t => {
+    const client = createFluentClientFromRouteTreeNode({
+        concept: "custom",
+        owner: "custom",
+        routes: () => ({
+            health: Router.get("/health")
+        })
+    }, {
+        basePath: "/custom",
+        manifest: { basePath: "/custom", routes: [] },
+        transport: {
+            async request<T>() {
+                return { status: 200, headers: {}, body: undefined as unknown as T };
+            }
+        }
+    });
+
+    t.throws(() => client.health.get(), { message: "Missing fluent RestAPI2 route: GET /custom/health" });
+});
+
+test("custom route tree nodes can construct typed fluent clients", async t => {
+    const seen: ApiClientRequest[] = [];
+    const customNode = {
+        concept: "custom",
+        owner: "custom",
+        routes: () => ({
+            inspect: Router.post("/inspect")
+        })
+    } as const;
+    const client = createFluentClientFromRouteTreeNode(customNode, {
+        basePath: "/custom",
+        transport: {
+            async request<T>(request: ApiClientRequest) {
+                seen.push(request);
+
+                return { status: 200, headers: {}, body: { route: request.route.id } as unknown as T };
+            }
+        }
+    });
+    const response = await client.inspect.post();
+
+    t.is((response.body as any).route, "POST /custom/inspect");
+    t.deepEqual(seen.map(request => request.route.id), ["POST /custom/inspect"]);
+});
+
+test("fluent client compile-time route method and schema assertions", t => {
+    const client = createRootClient({
+        transport: {
+            async request<T>() {
+                return { status: 200, headers: {}, body: undefined as unknown as T };
+            }
+        }
+    });
+
+    if (false) {
+        // @ts-expect-error GET routes must not expose POST methods
+        client.health.post();
+        // @ts-expect-error resolver ids must be strings
+        client.space(123);
+        // @ts-expect-error topic delete params must use topic name
+        client.space("space-1").hub("hub-1").deleteTopic.delete({ params: { topic: "wrong" } });
+        // @ts-expect-error topic create body must match route schema
+        client.space("space-1").hub("hub-1").createTopic.post({ body: { name: "topic-1" } });
+        // @ts-expect-error opaque RPC routes are not standard fluent methods
+        client.space("space-1").hub("hub-1").instance("inst-1").rpc.post();
+    }
+
+    t.pass();
 });

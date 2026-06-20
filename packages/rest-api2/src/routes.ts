@@ -54,10 +54,20 @@ const handlerless = () => undefined;
 type RouteSetFactory<T extends Record<string, RouteDefinition>> = () => T;
 type ResolverSetFactory<T extends Record<string, ResolverDefinition>, TArgs extends unknown[] = []> = (...args: TArgs) => T;
 
+export type RestAPI2RouteGroup<TRoutes extends Record<string, RouteDefinition>> = {
+    readonly routeKeys?: ReadonlyArray<Extract<keyof TRoutes, string>>;
+    readonly opaque?: boolean;
+    readonly node?: string;
+    readonly routes?: RouteSetFactory<Record<string, RouteDefinition>>;
+};
+
+export type RestAPI2RouteGroups<TRoutes extends Record<string, RouteDefinition>> = Record<string, RestAPI2RouteGroup<TRoutes>>;
+
 export type RestAPI2RouteTreeRouteNode<TConcept extends string, TOwner extends string, TRoutes extends Record<string, RouteDefinition>> = {
     readonly concept: TConcept;
     readonly owner: TOwner;
     readonly routes: RouteSetFactory<TRoutes>;
+    readonly groups?: RestAPI2RouteGroups<TRoutes>;
 };
 
 export type RestAPI2RouteTreeResolverNode<
@@ -306,6 +316,14 @@ export const RestAPI2Routes = {
     sequence: { router: sequenceRouter },
     instance: { router: instanceRouter }
 };
+
+export function getOpaqueRouteKeys<TRoutes extends Record<string, RouteDefinition>>(
+    node: RestAPI2RouteTreeRouteNode<string, string, TRoutes>
+): Array<Extract<keyof TRoutes, string>> {
+    return Object.values(node.groups || {})
+        .filter(group => group.opaque)
+        .flatMap(group => group.routeKeys ? [...group.routeKeys] : []) as Array<Extract<keyof TRoutes, string>>;
+}
 
 export function getRestAPI2Route(router: RouterDefinition, method: HttpMethod, path: string): RouteDefinition {
     const route = router.definitions().find(definition => definition.method === method && definition.path === path);

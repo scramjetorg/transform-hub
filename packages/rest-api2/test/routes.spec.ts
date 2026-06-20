@@ -1,7 +1,7 @@
 import test from "ava";
 
 import { bindRoutes, routeBinding } from "@scramjet/api-router";
-import { RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes } from "../src";
+import { RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes, getOpaqueRouteKeys } from "../src";
 
 test("typed route sets build the existing handlerless router factories", t => {
     const contract = RestAPI2Routes.hub.hubRouter().collect();
@@ -57,4 +57,12 @@ test("manager route set exposes inventory hub delete and storage contracts", t =
     t.true(paths.includes("put /api/v2/storage/objects/:filename?"));
     t.true(paths.includes("delete /api/v2/storage/objects/:filename"));
     t.true(paths.includes("delete /api/v2/storage"));
+});
+
+test("RPC route group is an explicit opaque route-tree exception", t => {
+    const opaqueKeys = getOpaqueRouteKeys(RestAPI2RouteTree.instance);
+
+    t.deepEqual(opaqueKeys, ["rpc"]);
+    t.true(RestAPI2RouteTree.instance.groups.rpc.opaque);
+    t.true(RestAPI2RouteTree.instance.routes().rpc.path.includes("/rpc"));
 });
