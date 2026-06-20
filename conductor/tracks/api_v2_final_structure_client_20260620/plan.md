@@ -261,7 +261,7 @@ Phase 2 is intentionally combined with the public terminology replacement work f
     - [x] Record validation results and any explicit exceptions in `plan.md`
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Strict Coverage Guards for Runtime Bindings and Fluent Clients' (Protocol in workflow.md)
     - [x] Create a scoped Phase 5 checkpoint commit after validation and before asking for manual verification
-    - [ ] Push the review branch before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
     - [ ] Begin the manual verification request/note with `Phase 5: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 6: Tree-Shaking Inventory, User Interview, and Approved Removal
