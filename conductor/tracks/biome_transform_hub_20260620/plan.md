@@ -40,7 +40,7 @@
     - Validation run: `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); JSON.parse(require('fs').readFileSync('package-lock.json','utf8')); console.log('package metadata json ok')"` passed.
     - Validation run: `npm run biome:check -- --help` passed, confirming the initial Biome command surface executes without running a full repository check.
     - Skipped validation: legacy ESLint lint commands were intentionally not run per track requirement.
-    - Phase 1 checkpoint commit: pending.
+    - Phase 1 checkpoint commit: `59ada29f`.
 
 ## Phase 2: Configure Biome and Replace CI/Local Lint Workflows
 
