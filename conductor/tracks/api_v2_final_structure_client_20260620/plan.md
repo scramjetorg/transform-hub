@@ -31,6 +31,7 @@
   - `packages/manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/manager-api-v2-hotwire.spec.ts test/manager-api-versioned-routing.spec.ts` — passed, 11 tests.
   - `packages/multi-manager`: `ulimit -v 1835008; NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/multi-manager-api-v2-hotwire.spec.ts test/multi-manager-api-versioned-routing.spec.ts` — passed, 8 tests.
   - Baseline grep checks recorded for `/api/v2/managers`, `managerId`, `RestAPI2RouteSets.(multiManager|manager|host)`, `RestAPI2Routes.(multiManager|manager|host)`, `RestAPI2.Manager`, `RestAPI2.MultiManager`, and `HostInfoResponse`; current matches are expected before Phase 3 terminology replacement.
+- Phase 1 checkpoint commit: `fa42032b`.
 
 ## Phase 1: Track Setup, Current Surface Inventory, and Review Surface
 
@@ -55,9 +56,9 @@
     - [x] Add or record grep checks for current public `/api/v2/managers`, `managerId`, and public Host wording so later phases can prove removal
     - [x] Record baseline command results, skipped checks, and known failures in `plan.md`
 - [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Current Surface Inventory, and Review Surface' (Protocol in workflow.md)
-    - [~] Create a scoped Phase 1 checkpoint commit after validation and before asking for manual verification
-    - [ ] Push the review branch before asking for manual verification
-    - [ ] Begin the manual verification request/note with `Phase 1: Manual Verification` so the checkpoint is visible in the PR
+    - [x] Create a scoped Phase 1 checkpoint commit after validation and before asking for manual verification
+    - [x] Push the review branch before asking for manual verification
+    - [~] Begin the manual verification request/note with `Phase 1: Manual Verification` so the checkpoint is visible in the PR
 
 ## Phase 2: Route Tree Source of Truth and Derived RouteSets/Routers
 
