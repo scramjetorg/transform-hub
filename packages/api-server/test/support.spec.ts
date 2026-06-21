@@ -184,6 +184,15 @@ test("forwarding strategies select targets deterministically", t => {
     t.deepEqual(consistentHashStrategy(firstRequest, targets), consistentHashStrategy(secondRequest, targets));
 });
 
+test("consistent hash strategy tolerates requests without socket", t => {
+    const request = {
+        headers: {},
+        url: "/no-socket"
+    } as any;
+
+    t.deepEqual(consistentHashStrategy(request, ["http://a"]), ["http://a", "/no-socket"]);
+});
+
 test("DuplexStream bridges readable input and writable output", async t => {
     const input = new PassThrough();
     const output = new PassThrough();

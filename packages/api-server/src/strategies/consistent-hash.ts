@@ -1,3 +1,4 @@
+import { getRequestRemoteAddress } from "@scramjet/utility";
 import { IncomingMessage } from "http";
 
 /**
@@ -8,7 +9,7 @@ import { IncomingMessage } from "http";
  * @returns A tuple containing the chosen URL and the request URL.
  */
 export function consistentHashStrategy<X>(req: IncomingMessage, urls: X[]): [X, string] {
-    let key = req.headers["x-source-id"] || req.socket.remoteAddress;
+    let key = req.headers["x-source-id"] || req.headers["x-forwarded-for"] || getRequestRemoteAddress(req);
 
     if (Array.isArray(key)) key = key[0];
     if (!key) key = "";

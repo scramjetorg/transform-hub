@@ -1,6 +1,7 @@
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { NextCallback, ParsedMessage } from "@scramjet/types";
+import { getRequestBytesRead, getRequestBytesWritten } from "@scramjet/utility";
 import { ServerResponse } from "http";
 import { AuditedRequest, Auditor } from "../auditor";
 
@@ -20,8 +21,8 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
     request.auditData = {
         id: IDProvider.generate(),
         object: (request.params || {}).id,
-        get tx() { return request.socket.bytesWritten; },
-        get rx() { return request.socket.bytesRead; },
+        get tx() { return getRequestBytesWritten(request); },
+        get rx() { return getRequestBytesRead(request); },
         requestorId: (request.headers["x-mw-billable"] || "system") as string
     };
 
