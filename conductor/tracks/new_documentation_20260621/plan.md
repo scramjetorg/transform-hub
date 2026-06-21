@@ -155,10 +155,11 @@
   - Added TypeScript and Bun to runtime listings in `docs-source/transform-hub/overview.md`, `core-concepts.md`, and `build-run.md` where only JavaScript/Python were listed.
   - Follow-up corrections updated rest-api2 examples to include route manifest construction, moved v1 API examples behind legacy compatibility notes, corrected Manager connection examples to include both legacy CPM fields and `--verser2-host-url`, and updated `packages/rest-api2/README.md` examples that were not generated from `docs-source`.
   - These corrections were identified by reviewing the docs-source against archived tracks (conductor/archive/) and source-of-truth references in the repository.
+  - Manual verification: Phase 1 approved after these corrections.
 
 ## Phase 2: README Pipeline Replacement
 
-- [ ] Task: Design README source model
+- [~] Task: Design README source model
     - [ ] Define root README source and package README source conventions under `docs-source/readmes/` or approved equivalent.
     - [ ] Map old `.mtpl` package templates to new README source files when any content remains to migrate.
     - [ ] Define reusable partial/include support for README generation.
