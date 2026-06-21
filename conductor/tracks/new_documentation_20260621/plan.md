@@ -253,7 +253,7 @@
     - [x] Validate legacy v1 docs are emitted under the legacy folder only.
     - [x] Confirm API docs generators honor root `package.json` endpoint config and the higher-priority environment variable override.
     - [x] Validation run: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, `npm run docs:generate:readmes` — all pass.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Full API v2 Documentation and Legacy v1 Separation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Full API v2 Documentation and Legacy v1 Separation' (Protocol in workflow.md)
 
 ### Phase 3 notes (updated 2026-06-21, Phase 3 correction track)
 
@@ -279,6 +279,7 @@
 - Validation results: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, and `npm run docs:generate:readmes` all pass. A generated `dist-docs` markdown link check across 77 files also passes.
 - Review: `@oracle` blocker review returned `none` after correcting source parsing, generated links, `generate:readmes`, and plan status issues.
 - Phase checkpoint commit: `37473fb3` (`docs(conductor): Complete new docs phase 3`).
+- Manual verification: approved by user after checkpoint branch push (`d094ca95`).
 - Deferred: "Document API v2 client usage" and "Document custom API definitions and definition-level data" remain **unstarted** — they cover prose documentation of client helpers and custom route definitions, not generated route docs. These require editorial content, not generator changes, and are NOT marked complete.
 
 ## Phase 4: CLI Reference and Final Export Replacement
