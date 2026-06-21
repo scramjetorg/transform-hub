@@ -170,4 +170,6 @@
     - `git diff --check` passed.
 
     Phase 3 checkpoint commit: `400314ad`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate' (Protocol in workflow.md)
+
+    Phase 3 approved and merged via PR #20 into `feat/manager-oss` at merge commit `b66bb361`.
