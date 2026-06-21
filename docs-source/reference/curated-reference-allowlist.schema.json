@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Scramjet Transform Hub curated reference allowlist",
+  "type": "object",
+  "required": ["version", "entrypoints"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "entrypoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["package", "entrypoint", "audience", "stability", "outputPath", "reason", "reviewers"],
+        "additionalProperties": false,
+        "properties": {
+          "package": { "type": "string", "pattern": "^@scramjet/[a-z0-9-]+$" },
+          "entrypoint": { "type": "string", "pattern": "^packages/[a-z0-9-]+/src/[A-Za-z0-9_./-]+\\.ts$" },
+          "audience": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "stability": { "enum": ["stable", "experimental", "internal-but-useful"] },
+          "outputPath": { "type": "string", "pattern": "^reference/typescript/[a-z0-9-]+/$" },
+          "reason": { "type": "string" },
+          "includeModules": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "includeSymbols": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "reviewers": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

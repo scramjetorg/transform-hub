@@ -85,6 +85,11 @@
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
+  "scramjet": {
+    "docs": {
+      "outputDir": "dist-docs"
+    }
+  },
   "devDependencies": {
     "@biomejs/biome": "2.5.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",

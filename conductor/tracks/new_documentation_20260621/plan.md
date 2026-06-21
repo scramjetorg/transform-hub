@@ -2,51 +2,62 @@
 
 ## Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture
 
-- [ ] Task: Create review surface for the track
-    - [ ] Inspect current git status, current branch, recent commits, and remote tracking.
-    - [ ] Create a dedicated feature branch for the track unless explicitly skipped.
-    - [ ] Create one scoped plan-update commit for the approved `spec.md`/`plan.md` changes before implementation work begins.
-    - [ ] Prepare a draft PR after initial planning artifacts are committed when appropriate.
-    - [ ] Keep the PR description updated with phase status, validation, and deferred items.
-- [ ] Task: Read Conductor workflow and known solutions
-    - [ ] Read `conductor/workflow.md` before implementation work and follow its phase checkpoint, validation, delegation, and commit guidance.
-    - [ ] Read `conductor/known-solutions.md` before handling recurring or recognizable failures.
-    - [ ] Record any applicable known-solution constraints in the phase notes before applying them.
-- [ ] Task: Inventory current documentation generation flows
-    - [ ] Read root docs scripts, especially `build:docs`, `build:all-docs`, and `build:readme`.
-    - [ ] Inventory package-level `build:docs` scripts and TypeDoc configuration/version usage.
-    - [ ] Inventory current root-level generated docs under `docs/` and identify generated vs handwritten content.
-    - [ ] Inventory `scripts/mk-readme.js`, package `.mtpl` files, and reusable README parts.
-    - [ ] Inventory current CLI command-reference generation and API/client reference sources.
-- [ ] Task: Define migration and retirement strategy
-    - [ ] Document which old docs outputs are replaced, retained temporarily, or deleted.
-    - [ ] Define when broad per-package TypeDoc output is disabled or removed.
-    - [ ] Define when the old README template flow is disabled or removed.
-    - [ ] Record risks for npm package README publishing and docs site consumption.
-- [ ] Task: Create canonical docs source skeleton
-    - [ ] Add `docs-source/` with folders for intro, transform-hub, manager, sequences, testing, cli, api, deployment, development, reference, readmes, examples, and partials.
-    - [ ] Add authoring conventions for frontmatter, slugs/doc IDs, headings, partials, examples, generated-file markers, and link rules.
-    - [ ] Define which files are handwritten source and which files are generated artifacts.
-- [ ] Task: Define Docusaurus export contract
-    - [ ] Define `dist-docs/` output layout for content, reference, readmes, sidebars, and metadata.
-    - [ ] Define the configurable generator endpoint/output root, including the root `package.json` config entry and higher-priority environment variable.
-    - [ ] Document that all generators must honor the endpoint configuration for content, reference, README, CLI, API, sidebar, and metadata output.
-    - [ ] Define sidebar/category metadata conventions for prose and generated reference.
-    - [ ] Define link rewriting and link rebasing rules for docs site, root README, package READMEs, and npm README contexts.
-    - [ ] Define deterministic metadata requirements for `dist-docs/metadata.json`.
-- [ ] Task: Define curated reference allowlist format
-    - [ ] Create a machine-readable or documented allowlist format for generated reference entrypoints.
-    - [ ] Include entrypoint path, package, audience, stability label, output path, inclusion reason, and reviewer expectations.
-    - [ ] Mark experimental surfaces explicitly, including `@scramjet/sequence-test` if included.
-    - [ ] Ensure non-allowlisted internals cannot be exported accidentally.
-- [ ] Task: Automated review after source architecture
-    - [ ] Run review focused on information architecture, export contract clarity, migration safety, and accidental public API exposure risk.
-    - [ ] Address in-scope findings or record deferred findings.
-- [ ] Task: Validate Phase 0
-    - [ ] Run the narrowest relevant validation for Markdown/metadata/docs-source changes.
-    - [ ] Record skipped validation and reasons in phase notes.
-    - [ ] Confirm no runtime, adapter, API, or CLI behavior changed.
+- [x] Task: Create review surface for the track
+    - [x] Inspect current git status, current branch, recent commits, and remote tracking.
+    - [x] Create a dedicated feature branch for the track unless explicitly skipped.
+    - [x] Create one scoped plan-update commit for the approved `spec.md`/`plan.md` changes before implementation work begins.
+    - [x] Prepare a draft PR after initial planning artifacts are committed when appropriate.
+    - [x] Keep the PR description updated with phase status, validation, and deferred items.
+- [x] Task: Read Conductor workflow and known solutions
+    - [x] Read `conductor/workflow.md` before implementation work and follow its phase checkpoint, validation, delegation, and commit guidance.
+    - [x] Read `conductor/known-solutions.md` before handling recurring or recognizable failures.
+    - [x] Record any applicable known-solution constraints in the phase notes before applying them.
+- [x] Task: Inventory current documentation generation flows
+    - [x] Read root docs scripts, especially `build:docs`, `build:all-docs`, and `build:readme`.
+    - [x] Inventory package-level `build:docs` scripts and TypeDoc configuration/version usage.
+    - [x] Inventory current root-level generated docs under `docs/` and identify generated vs handwritten content.
+    - [x] Inventory `scripts/mk-readme.js`, package `.mtpl` files, and reusable README parts.
+    - [x] Inventory current CLI command-reference generation and API/client reference sources.
+- [x] Task: Define migration and retirement strategy
+    - [x] Document which old docs outputs are replaced, retained temporarily, or deleted.
+    - [x] Define when broad per-package TypeDoc output is disabled or removed.
+    - [x] Define when the old README template flow is disabled or removed.
+    - [x] Record risks for npm package README publishing and docs site consumption.
+- [x] Task: Create canonical docs source skeleton
+    - [x] Add `docs-source/` with folders for intro, transform-hub, manager, sequences, testing, cli, api, deployment, development, reference, readmes, examples, and partials.
+    - [x] Add authoring conventions for frontmatter, slugs/doc IDs, headings, partials, examples, generated-file markers, and link rules.
+    - [x] Define which files are handwritten source and which files are generated artifacts.
+- [x] Task: Define Docusaurus export contract
+    - [x] Define `dist-docs/` output layout for content, reference, readmes, sidebars, and metadata.
+    - [x] Define the configurable generator endpoint/output root, including the root `package.json` config entry and higher-priority environment variable.
+    - [x] Document that all generators must honor the endpoint configuration for content, reference, README, CLI, API, sidebar, and metadata output.
+    - [x] Define sidebar/category metadata conventions for prose and generated reference.
+    - [x] Define link rewriting and link rebasing rules for docs site, root README, package READMEs, and npm README contexts.
+    - [x] Define deterministic metadata requirements for `dist-docs/metadata.json`.
+- [x] Task: Define curated reference allowlist format
+    - [x] Create a machine-readable or documented allowlist format for generated reference entrypoints.
+    - [x] Include entrypoint path, package, audience, stability label, output path, inclusion reason, and reviewer expectations.
+    - [x] Mark experimental surfaces explicitly, including `@scramjet/sequence-test` if included.
+    - [x] Ensure non-allowlisted internals cannot be exported accidentally.
+- [x] Task: Automated review after source architecture
+    - [x] Run review focused on information architecture, export contract clarity, migration safety, and accidental public API exposure risk.
+    - [x] Address in-scope findings or record deferred findings.
+- [x] Task: Validate Phase 0
+    - [x] Run the narrowest relevant validation for Markdown/metadata/docs-source changes.
+    - [x] Record skipped validation and reasons in phase notes.
+    - [x] Confirm no runtime, adapter, API, or CLI behavior changed.
 - [ ] Task: Conductor - User Manual Verification 'Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture' (Protocol in workflow.md)
+
+### Phase 0 notes
+
+- Review surface: created branch `conductor/new-documentation-20260621` and draft PR #25 (`https://github.com/0rail/transform-hub/pull/25`).
+- Current docs inventory: root `build:readme` uses `scripts/mk-readme.js`; root `build:docs` runs package TypeDoc outputs and then CLI `dev cmdToMd`; package `build:docs` scripts currently produce broad root-level `docs/<package>/` TypeDoc outputs; `docs/` mixes generated and handwritten content.
+- Known-solution constraints reviewed: use memory-constrained Node validation where applicable; no known failure recovery was needed in Phase 0.
+- Shared package review: Phase 0 is documentation architecture only; no shared runtime/type helper was added or duplicated.
+- Deduplication result: not applicable for runtime code; documentation policy is centralized in `docs-source/README.md`, `docs-source/reference/export-contract.md`, and `docs-source/reference/curated-reference-allowlist.json`.
+- Automated review findings: fixed schema `$schema` validation, narrowed `@scramjet/types` allowlist entries, added path/output/reviewer constraints, clarified README write modes, added old-doc disposition inventory, documented generator globs, and fixed a typo.
+- Validation run: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node -e "..."` parsed `package.json`, the allowlist schema, and the allowlist, checked allowlist path/output safety, checked entrypoint existence, checked output uniqueness, and checked reviewer metadata. Result: passed for 6 allowlist entries.
+- Skipped validation: no docs generator, markdown link checker, or README drift checker exists yet; those are planned for later phases. Package build/tests were not run because Phase 0 changed documentation architecture and root docs config only, with no runtime, adapter, API, or CLI behavior changes.
 
 ## Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content
 
