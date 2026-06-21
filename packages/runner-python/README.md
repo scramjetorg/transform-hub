@@ -95,10 +95,10 @@ requires = {"topic": "my-input", "content_type": "application/x-ndjson"}
 provides = {"topic": "my-output", "content_type": "application/octet-stream"}
 ```
 
-Legacy camelCase keys remain supported:
+Legacy keys are accepted as an unsupported best-effort fallback:
 
 ```python
-# Legacy - still accepted
+# Legacy - best-effort fallback only
 requires = {"requires": "my-input", "contentType": "application/x-ndjson"}
 provides = {"provides": "my-output", "contentType": "application/octet-stream"}
 ```
@@ -186,6 +186,24 @@ should not be used in new sequences:
   context lifecycle methods instead).
 - Legacy metadata shapes using only `provides`/`requires` as strings (still
   best-effort compatible but not the primary contract).
+
+### Unsupported best-effort legacy boundary
+
+Legacy behavior is intentionally isolated and unsupported. The runtime only keeps
+these best-effort affordances for old sequences:
+
+- `run(context, input_stream, *args)` is accepted when `main` is absent.
+- Legacy metadata dict keys (`requires`, `provides`, `contentType`) are read as
+  fallbacks when canonical `topic` / `content_type` keys are absent.
+- Returned Stream-like objects may provide string attributes named `provides`,
+  `requires`, and `content_type`; those attributes are used for topic/content
+  PANGs and output content-type selection.
+- Context methods `set_health_check` and `set_stop_handler` remain aliases for
+  `add_monitoring_handler`/`add_stop_handler` on the passed `context` object.
+
+The runtime does **not** recreate module-global legacy APIs such as global
+`set_health_check(...)`, global `set_stop_handler(...)`, or scramjet-framework-py
+module bootstrap behavior. Non-string legacy metadata/attributes are ignored.
 
 ## Development
 

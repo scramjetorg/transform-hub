@@ -386,19 +386,55 @@
 
 ## Phase 5: Isolated Legacy Compatibility Structure
 
-- [ ] Task: Design minimal unsupported compatibility boundary
-    - [ ] Identify the smallest isolated shim needed for old Python sequences to run best-effort without changing the new primary runtime contract.
-    - [ ] Keep compatibility out of new AppContext and new refapp implementation paths unless explicitly documented as an alias layer.
-    - [ ] Define unsupported behavior and failure modes for old `scramjet.streams.Stream`, old health/stop APIs, legacy metadata shapes, and legacy module-global assumptions.
-- [ ] Task: Implement isolated compatibility shims last
-    - [ ] Add loader or adapter shims for legacy sequences only after all new-contract tests and BDD refapps are complete.
-    - [ ] Keep any aliases such as old health/stop helpers minimal and clearly marked unsupported if added.
-    - [ ] Add tests proving compatibility shims do not affect new-contract behavior.
-    - [ ] Add tests for a small representative set of old sequence shapes that should still run best-effort.
-- [ ] Task: Validate compatibility isolation
-    - [ ] Run focused compatibility and new-contract regression tests.
-    - [ ] Run full `npm test` in `packages/runner-python`.
-    - [ ] Run `npm run build` in `packages/runner-python`.
-    - [ ] Run `npm run test:bdd-ci-python` or document why compatibility-only changes do not require rerunning the full smoke gate.
-    - [ ] Update documentation to state that legacy compatibility is unsupported and not the primary contract.
+- [x] Task: Design minimal unsupported compatibility boundary
+    - [x] Identify the smallest isolated shim needed for old Python sequences to run best-effort without changing the new primary runtime contract.
+    - [x] Keep compatibility out of new AppContext and new refapp implementation paths unless explicitly documented as an alias layer.
+    - [x] Define unsupported behavior and failure modes for old `scramjet.streams.Stream`, old health/stop APIs, legacy metadata shapes, and legacy module-global assumptions.
+- [~] Task: Implement isolated compatibility shims last
+    - [x] Add loader or adapter shims for legacy sequences only after all new-contract tests and BDD refapps are complete. (No outdated BDD/refapp changes; isolated helper boundary only.)
+    - [x] Keep any aliases such as old health/stop helpers minimal and clearly marked unsupported if added.
+    - [x] Add tests proving compatibility shims do not affect new-contract behavior.
+    - [x] Add tests for a small representative set of old sequence shapes that should still run best-effort.
+- [~] Task: Validate compatibility isolation
+    - [x] Run focused compatibility and new-contract regression tests.
+    - [x] Run full `npm test` in `packages/runner-python`.
+    - [x] Run `npm run build` in `packages/runner-python`.
+    - [x] Run `npm run test:bdd-ci-python` or document why compatibility-only changes do not require rerunning the full smoke gate.
+    - [x] Update documentation to state that legacy compatibility is unsupported and not the primary contract.
 - [ ] Task: Conductor - User Manual Verification 'Isolated Legacy Compatibility Structure' (Protocol in workflow.md)
+
+### Implementation notes (Phase 5, 2026-06-21)
+
+**Design:**
+
+- Added an isolated `runner_python.legacy` helper boundary for unsupported
+  best-effort legacy behavior. The new primary contract remains `main(...)` with
+  snake_case metadata and AppContext methods; legacy handling is limited to
+  interpreting already-present old metadata/result attributes.
+- No outdated BDD/refapp archives or scenarios were updated, per user
+  instruction. BDD smoke remains deferred until a later track recreates the full
+  BDD suite.
+
+**Changes made:**
+
+- `legacy.py`: centralizes fallback parsing for legacy `requires`/`provides`
+  topic keys, `contentType`, and Stream-like result attributes (`provides`,
+  `requires`, `content_type`). Non-string values are ignored.
+- `utils.py`: routes legacy metadata/result-attribute handling through
+  `legacy.py`, while preserving canonical snake_case precedence.
+- `test_legacy.py`: verifies the unsupported boundary, snake_case precedence,
+  Stream-like result attribute compatibility, and that module-global legacy hooks
+  are not interpreted as runtime contract.
+- `README.md`: documents the unsupported best-effort legacy boundary and states
+  that module-global old framework APIs are not recreated.
+
+**Validation:**
+
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_legacy.py tests/test_utils.py tests/parity/test_golden_replay.py` in `packages/runner-python`: 52 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 277 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages` from the repository root: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
+- `npm run test:bdd-ci-python` was not run because this change only isolates
+  package-local unsupported legacy fallbacks and user instructed not to run the
+  outdated refapp BDD suite; a later track will recreate full BDD coverage.
