@@ -681,7 +681,9 @@ export class CPMConnector extends TypedEmitter<Events> {
         headers: http.OutgoingHttpHeaders | Record<string, string> = {}
     ): http.ClientRequest {
         //@TODO: Disconnecting/error handling
-        const url = `http://${this.config.verser2.broker.targetDomain}/api/v1/${reqPath}`;
+        const path = reqPath.replace(/^\/+/, "");
+        const versionedPath = /^api\/v[12](?:\/|$)/.test(path) ? path : `api/v1/${path}`;
+        const url = `http://${this.config.verser2.broker.targetDomain}/${versionedPath}`;
 
         this.logger.debug("make HTTP Req to CPM", url);
 

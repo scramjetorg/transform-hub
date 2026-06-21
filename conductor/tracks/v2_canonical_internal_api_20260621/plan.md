@@ -39,25 +39,25 @@
 
 ## Phase 2: Canonical v2 Internal Sequence and Runner Access
 
-- [ ] Task: Write failing tests for sequence context v2 client accessors
-    - [ ] Add runner-node app context tests for `this.hubClient()` and `this.spaceClient()` availability.
-    - [ ] Assert the accessors are v2-backed and route through `@scramjet/rest-api2` client contracts.
-    - [ ] Assert hub-level and space-level operations remain isolated.
-    - [ ] Assert existing `this.hub` and `this.space` remain backwards compatible.
-- [ ] Task: Implement sequence context `hubClient()` and `spaceClient()`
-    - [ ] Add sequence-facing interfaces in a shared package when appropriate.
-    - [ ] Back the new accessors with v2 fluent clients/transports.
-    - [ ] Keep existing app context constructor compatibility.
-    - [ ] Run focused runner-node tests.
-- [ ] Task: Write failing tests for runner/host internal v2 routing
-    - [ ] Capture current hardcoded runner internal `/api/v1` usage in tests or regression inventories.
-    - [ ] Add tests for runner host API base selection using v2 for internal canonical access.
-    - [ ] Add tests that legacy v1 sequence access still works through compatibility paths.
-- [ ] Task: Migrate runner and host internal access to canonical v2
-    - [ ] Replace internal runner-node/runner hardcoded v1 paths with v2-backed client access where feasible.
-    - [ ] Keep v1 paths only where serving external legacy compatibility requires them.
-    - [ ] Update host-to-space/CPM internal helpers to prefer v2 route contracts where safe.
-    - [ ] Run focused runner and host tests.
+- [x] Task: Write failing tests for sequence context v2 client accessors
+    - [x] Add runner-node app context tests for `this.hubClient()` and `this.spaceClient()` availability.
+    - [x] Assert the accessors are v2-backed and route through `@scramjet/rest-api2` client contracts.
+    - [x] Assert hub-level and space-level operations remain isolated.
+    - [x] Assert existing `this.hub` and `this.space` remain backwards compatible.
+- [x] Task: Implement sequence context `hubClient()` and `spaceClient()`
+    - [x] Add sequence-facing interfaces in a shared package when appropriate.
+    - [x] Back the new accessors with v2 fluent clients/transports.
+    - [x] Keep existing app context constructor compatibility.
+    - [x] Run focused runner-node tests.
+- [x] Task: Write failing tests for runner/host internal v2 routing
+    - [x] Capture current hardcoded runner internal `/api/v1` usage in tests or regression inventories.
+    - [x] Add tests for runner host API base selection using v2 for internal canonical access.
+    - [x] Add tests that legacy v1 sequence access still works through compatibility paths.
+- [x] Task: Migrate runner and host internal access to canonical v2
+    - [x] Replace internal runner-node/runner hardcoded v1 paths with v2-backed client access where feasible.
+    - [x] Keep v1 paths only where serving external legacy compatibility requires them.
+    - [x] Update host-to-space/CPM internal helpers to prefer v2 route contracts where safe.
+    - [x] Run focused runner and host tests.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Canonical v2 Internal Sequence and Runner Access' (Protocol in workflow.md)
 
 ## Phase 3: Legacy API Client as v2 Compatibility Facade
@@ -141,3 +141,9 @@
 - Phase 1 deduplication check: reused `@scramjet/rest-api2` schemas/contracts for v2 metadata, `@scramjet/api-router` compatibility route patterns, existing Manager `STHInfoRegister`, and existing Host runner Verser2 config module. No repeated package-local helper needed beyond the Host-specific unsafe-default identity derivation helper.
 - Phase 1 checkpoint commit: `033fb819` (`feat(conductor): Complete v2 canonical API phase 1`).
 - Phase 1 manual verification: approved by user after PR push.
+- Phase 2 sequence context validation: `test/app-context-parity.spec.ts` passed (10 tests) and `test/context-v2-client.spec.ts` passed (1 test). A first attempt to place the buildAppContext v2 assertion in `runtime-entry.spec.ts` passed the assertion but hit an unrelated preexisting `WebAssembly is not defined` unhandled rejection from the broader runtime-entry file under AVA match loading, so the coverage was moved to a context-only spec.
+- Phase 2 runner/host routing inventory: runner-node now exposes `HostClient.getV2ApiBase()` and builds `hubClient()`/`spaceClient()` from `@scramjet/rest-api2` fluent clients over `/api/v2`; existing `getApiBase()` and `this.hub`/`this.space` remain v1 compatibility paths. Remaining runner-node `/api/v1` literals are legacy compatibility (`this.hub`, `this.space`). Legacy `packages/runner/src/runner.ts` still constructs v1 clients because it uses the legacy `RunnerAppContext`; replacing that surface is deferred until the legacy runner package is explicitly migrated. Host `/api/v1` literals are v1 compatibility routing, RPC compatibility, or CPM/storage compatibility paths and are not safe Phase 2 replacements without the Phase 3 client facade/Phase 4 readiness work.
+- Phase 2 oracle review: initial review found `spaceClient()` incorrectly targeting Host hub v2 routes and constructor/deep-import compatibility risk. Fixed `spaceClient()` to route via Host CPM v2 proxy (`/api/v1/cpm/api/v2/...`) and added Host space middleware support for preserving requested Manager API version. User explicitly said to disregard constructor compatibility, so deep-import constructor compatibility is non-blocking.
+- Phase 2 oracle re-review: no code correctness blockers; optional CPM version detection tightening was applied after review.
+- Phase 2 validation: `test/app-context-parity.spec.ts` + `test/context-v2-client.spec.ts` passed (11 tests), `test/api-hotwire.spec.ts` passed with `-T 50000` (20 tests), direct changed-file Biome lint passed, and `npm run build:packages` passed. `test/host-client-channels.spec.ts` assertions passed but the file still emits the preexisting out-of-scope `WebAssembly is not defined` unhandled rejection under AVA.
+- User instruction during Phase 2: disregard constructor/deep-import compatibility for the new sequence context v2 accessors; continue preserving public v1 API compatibility per track scope.

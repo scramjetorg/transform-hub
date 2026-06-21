@@ -2,7 +2,9 @@ import type { AppConfig, KeepAliveMessageData, LogLevel } from "@scramjet/types"
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { createServer } from "@scramjet/api-server";
 import { HostClient as ApiHostClient } from "@scramjet/api-client";
+import type { ApiClientRequest, ApiClientTransport } from "@scramjet/api-router";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { createHubClient, createSpaceClient } from "@scramjet/rest-api2";
 
 import { LocalStorageAgent } from "./local-storage-agent";
 import type { LocalStorageAgentHost } from "./local-storage-agent";
@@ -17,6 +19,65 @@ import type {
     SequenceLocalContext,
 } from "./types";
 import { writeMonitoring } from "./utils";
+
+function materializePath(path: string, params: unknown): string {
+    if (!params || typeof params !== "object") {
+        return path;
+    }
+
+    return Object.entries(params as Record<string, string>).reduce(
+        (current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))),
+        path
+    );
+}
+
+function appendQuery(path: string, query: unknown): string {
+    if (!query || typeof query !== "object") {
+        return path;
+    }
+
+    const params = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(query as Record<string, unknown>)) {
+        if (value !== undefined) {
+            params.set(key, String(value));
+        }
+    }
+
+    const text = params.toString();
+
+    return text ? `${path}?${text}` : path;
+}
+
+function responseHeaders(response: Response): Record<string, string> {
+    const headers: Record<string, string> = {};
+
+    response.headers.forEach((value, key) => {
+        headers[key] = value;
+    });
+
+    return headers;
+}
+
+function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClientTransport {
+    return {
+        async request<T>(request: ApiClientRequest) {
+            const path = appendQuery(materializePath(request.route.fullPath, request.params), request.query).replace(/^\//, "");
+            const headers = { ...request.headers };
+            const response = await clientUtils.request(request.route.method as any, path, {
+                headers,
+                body: request.body === undefined ? undefined : JSON.stringify(request.body)
+            });
+            const text = await response.text();
+
+            return {
+                status: response.status,
+                headers: responseHeaders(response),
+                body: (text ? JSON.parse(text) : undefined) as T
+            };
+        }
+    };
+}
 
 export function buildSequenceContext(deps: BuildContextDeps): BuildSequenceContextResult {
     const { bootConfig, streams, emitter, logger, onKeepAliveIssued } = deps;
@@ -112,6 +173,10 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     const hostClientUtils = new ClientUtilsCustomAgent(apiBase, hostClient.getAgent());
     const hub = new ApiHostClient(apiBase, hostClientUtils);
     const space = hub.getManagerClient("/api/v1");
+    const apiRoot = hostClient.getV2ApiBase().replace(/\/api\/v2\/?$/, "");
+    const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent(apiRoot, hostClient.getAgent()));
+    const v2Hub = createHubClient({ transport: restApi2Transport, basePath: "/api/v2" });
+    const v2Space = createSpaceClient({ transport: restApi2Transport, basePath: "/api/v1/cpm/api/v2" });
 
     const proxy: RunnerProxy = {
         keepAliveIssued: () => onKeepAliveIssued(),
@@ -131,6 +196,8 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
         proxy,
         hub,
         space,
+        v2Hub,
+        v2Space,
         instanceId,
         logLevel,
         api,

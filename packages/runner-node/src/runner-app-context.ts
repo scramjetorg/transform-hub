@@ -21,6 +21,9 @@ import {
 } from "@scramjet/types";
 import { EventEmitter } from "events";
 
+export type V2HubClient = object;
+export type V2SpaceClient = object;
+
 /**
  * Runtime guard that asserts a value is a function.
  * Throws if it is not – used by handler registration methods.
@@ -61,6 +64,8 @@ implements AppContext<AppConfigType, State> {
     logger: IObjectLogger;
     hub: HostClient;
     space: ManagerClient;
+    private v2HubClient: V2HubClient;
+    private v2SpaceClient: V2SpaceClient;
     instanceId: string;
     api: APIExpose;
     localStorage: ILocalStorage;
@@ -72,6 +77,8 @@ implements AppContext<AppConfigType, State> {
         runner: RunnerProxy,
         hostClient: HostClient,
         spaceClient: ManagerClient,
+        v2HubClient: V2HubClient,
+        v2SpaceClient: V2SpaceClient,
         id: string,
         logLevel: LogLevel,
         api: APIExpose,
@@ -83,10 +90,20 @@ implements AppContext<AppConfigType, State> {
         this.runner = runner;
         this.hub = hostClient;
         this.space = spaceClient;
+        this.v2HubClient = v2HubClient;
+        this.v2SpaceClient = v2SpaceClient;
         this.instanceId = id;
         this.api = api;
         this.localStorage = localStorage;
         this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
+    }
+
+    hubClient(): V2HubClient {
+        return this.v2HubClient;
+    }
+
+    spaceClient(): V2SpaceClient {
+        return this.v2SpaceClient;
     }
 
     private handleSave(_state: State): void {

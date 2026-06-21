@@ -267,7 +267,7 @@ export class HostAPIV1Handler {
      * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
      */
     spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
-        const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
+        const url = req.url!.replace(`${this.apiBase}/cpm/`, "");
 
         this.logger.debug("SPACE REQUEST", req.url, url, this.apiBase);
 
