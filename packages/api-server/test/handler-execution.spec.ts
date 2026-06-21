@@ -178,6 +178,7 @@ test("stream handlers execute upstream, downstream and duplex paths", async t =>
     await run(router.handlers.get("get:/up")!, req, response);
     t.is(response.statusCode, 200);
     t.is(response.getHeader("content-type"), "text/plain; charset=utf-8");
+    t.is(response.getHeader("transfer-encoding"), undefined);
     t.is(await response.body, "hello");
 
     const sink = new PassThrough();
