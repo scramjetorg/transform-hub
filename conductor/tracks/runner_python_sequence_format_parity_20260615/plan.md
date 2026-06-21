@@ -158,6 +158,8 @@
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 238 passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
 
+**Phase checkpoint commit:** `599ede41` (`feat(runner-python): add AppContext parity APIs`).
+
 ## Phase 3: Input/Output Format Parity and Metadata
 
 - [ ] Task: Implement input parsing parity
