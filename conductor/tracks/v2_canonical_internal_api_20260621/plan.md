@@ -58,7 +58,7 @@
     - [x] Keep v1 paths only where serving external legacy compatibility requires them.
     - [x] Update host-to-space/CPM internal helpers to prefer v2 route contracts where safe.
     - [x] Run focused runner and host tests.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Canonical v2 Internal Sequence and Runner Access' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Canonical v2 Internal Sequence and Runner Access' (Protocol in workflow.md)
 
 ## Phase 3: Legacy API Client as v2 Compatibility Facade
 
@@ -149,3 +149,4 @@
 - Phase 2 checkpoint commit: `3a50a0b3` (`feat(conductor): Complete v2 canonical API phase 2`).
 - User instruction during Phase 2: disregard constructor/deep-import compatibility for the new sequence context v2 accessors; continue preserving public v1 API compatibility per track scope.
 - Phase 2 feedback fix: replaced opaque `object` v2 accessor return types with generic/inferred `RunnerAppContext` client types and typed `buildAppContext()` as returning `@scramjet/rest-api2` `HubClient`/`SpaceClient`; focused context tests, direct lint, and `npm run build:packages` passed after the typing change.
+- Phase 2 manual verification: approved by user after strong typing feedback fix.
