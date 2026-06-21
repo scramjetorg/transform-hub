@@ -4,15 +4,15 @@
     "output": "README.md"
   },
   {
-    "source": "packages/adapter-docker/package.json",
+    "source": "docs-source/readmes/packages/adapter-docker.md",
     "output": "packages/adapter-docker/README.md"
   },
   {
-    "source": "packages/adapter-kubernetes/package.json",
+    "source": "docs-source/readmes/packages/adapter-kubernetes.md",
     "output": "packages/adapter-kubernetes/README.md"
   },
   {
-    "source": "packages/adapter-process/package.json",
+    "source": "docs-source/readmes/packages/adapter-process.md",
     "output": "packages/adapter-process/README.md"
   },
   {
@@ -24,7 +24,7 @@
     "output": "packages/adapters-common/README.md"
   },
   {
-    "source": "packages/api-client/package.json",
+    "source": "docs-source/readmes/packages/api-client.md",
     "output": "packages/api-client/README.md"
   },
   {
@@ -32,7 +32,7 @@
     "output": "packages/api-router/README.md"
   },
   {
-    "source": "packages/api-server/package.json",
+    "source": "docs-source/readmes/packages/api-server.md",
     "output": "packages/api-server/README.md"
   },
   {
@@ -40,7 +40,7 @@
     "output": "packages/bpmux/README.md"
   },
   {
-    "source": "packages/cli/package.json",
+    "source": "docs-source/readmes/packages/cli.md",
     "output": "packages/cli/README.md"
   },
   {
@@ -68,7 +68,7 @@
     "output": "packages/logger/README.md"
   },
   {
-    "source": "packages/manager/package.json",
+    "source": "docs-source/readmes/packages/manager.md",
     "output": "packages/manager/README.md"
   },
   {
@@ -92,7 +92,7 @@
     "output": "packages/monitoring-server/README.md"
   },
   {
-    "source": "packages/multi-manager/package.json",
+    "source": "docs-source/readmes/packages/multi-manager.md",
     "output": "packages/multi-manager/README.md"
   },
   {
@@ -132,7 +132,7 @@
     "output": "packages/sequence-test/README.md"
   },
   {
-    "source": "packages/sth/package.json",
+    "source": "docs-source/readmes/packages/sth.md",
     "output": "packages/sth/README.md"
   },
   {

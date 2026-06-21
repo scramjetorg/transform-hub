@@ -199,7 +199,7 @@
     - [x] Run README generation and drift checks.
     - [x] Run docs generation/check commands affected by README outputs.
     - [x] Review root and package README outputs for stale claims and excessive detail.
-- [~] Task: Conductor - User Manual Verification 'Phase 2: README Pipeline Replacement' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: README Pipeline Replacement' (Protocol in workflow.md)
 
 ### Phase 2 notes
 
@@ -213,6 +213,13 @@
 - Overlay source model: Package README generation now always emits Install, Import, and Documentation sections regardless of whether an overlay exists. Overlays supply only the description/body content. `docs-source/readmes/README.md` updated to document this behavior.
 - Validation: `npm run docs:generate`, `docs:check`, `docs:generate:readmes`, and `build:readme` all pass.
 - Phase checkpoint commit: `d2c47f7d` (`docs(conductor): Complete new docs phase 2`).
+- Manual verification correction: improved client-facing package README overlays for `@scramjet/sth`, `@scramjet/multi-manager`, `@scramjet/manager`, `@scramjet/cli`, `@scramjet/rest-api2`, `@scramjet/api-server`, `@scramjet/api-client`, and the process/Docker/Kubernetes adapters. Examples were reviewed against source for signatures and command availability; README mirrors and package READMEs were regenerated and validated with `npm run docs:generate` and `npm run docs:check`.
+- Phase 2 correction: Created/improved README overlays for 10 client-facing and operator-facing packages:
+  - **Core user-facing packages**: `sth`, `manager`, `multi-manager`, `cli` — each now has a full overlay with purpose, when-to-use, quick start (install + basic commands), configuration notes, stability, and cross-references to docs-source.
+  - **API packages**: `rest-api2` (improved with source-aligned `createHttpClientTransport`/`RestAPI2Routes`/`createRootClient` examples, experimental notice, v1→v2 guidance), `api-client` (clearly labeled legacy v1, links to rest-api2 for new integrations, typed client examples from source), `api-server` (HTTP server library docs, APIServer example from source).
+  - **Adapter packages**: `adapter-process`, `adapter-docker`, `adapter-kubernetes` — operator-facing overlays with adapter-specific CLI flags sourced from `augmentOptions()`, runtime selection guidance, stability labels, and cross-links to deployment docs.
+  - Each overlay includes: purpose, when-to-use, conservative usage examples verified against source exports, configuration notes, stability/legacy labels, and "See also" links. No fabricated flags or methods. `api-server` example uses the actual `APIServer` class constructor pattern from source. `rest-api2` examples use the actual manifest/transport/fluent-client exports verified against `packages/rest-api2/src/client.ts`.
+  - Generated READMEs and dist-docs readmes regenerated and validated: `npm run docs:generate:readmes` and `npm run docs:check` both pass.
 
 ## Phase 3: Full API v2 Documentation and Legacy v1 Separation
 
