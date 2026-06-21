@@ -139,14 +139,15 @@ async def perform_shutdown(
     original_keep_alive = getattr(app_context, "keep_alive", None)
     restore_keep_alive = hasattr(app_context, "keep_alive")
 
-    async def tracked_keep_alive(timeout: int = 0) -> Any:
+    async def tracked_keep_alive(timeout: int = 0, *, milliseconds: int = 0) -> Any:
+        effective_timeout = milliseconds if milliseconds else timeout
         result = None
         if callable(original_keep_alive):
-            result = await maybe_await(original_keep_alive(timeout))
+            result = await maybe_await(original_keep_alive(timeout, milliseconds=milliseconds))
 
         if can_call_keepalive:
             try:
-                keep_alive_timeout = int(timeout)
+                keep_alive_timeout = int(effective_timeout)
             except (TypeError, ValueError):
                 keep_alive_timeout = 0
 

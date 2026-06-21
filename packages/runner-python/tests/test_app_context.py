@@ -16,6 +16,9 @@ from typing import Any
 import pytest
 
 from runner_python.app_context import AppContext
+from runner_python.sequence_loader import load_sequence
+from runner_python.utils import resolve_sequence_result
+from runner_python.verser2_runtime import PythonSequenceApiExposure
 
 runner_main = importlib.import_module("runner_python.__main__")
 
@@ -350,6 +353,19 @@ def test_built_sequence_context_sets_instance_id() -> None:
     assert ctx.config == {"mode": "test"}
 
 
+def test_built_sequence_context_stop_handler_registration_is_chainable() -> None:
+    writer = RecordingMonitoringWriter()
+    logger = logging.getLogger("test_built_sequence_context_stop_handler_registration_is_chainable")
+    ctx = runner_main._build_sequence_context(writer, logger, {}, "INFO", instance_id="i")
+
+    def handler(_payload: Any) -> None:
+        pass
+
+    assert ctx.add_stop_handler(handler) is ctx
+    assert ctx.set_stop_handler(handler) is ctx
+    assert len(ctx._stop_handlers) == 2
+
+
 def test_built_sequence_context_emit_writes_host_scope_event() -> None:
     writer = RecordingMonitoringWriter()
     logger = logging.getLogger("test_built_sequence_context_emit")
@@ -370,6 +386,34 @@ def test_built_sequence_context_emit_to_space_writes_space_scope_event() -> None
     assert writer.frames == [
         (5001, {"eventName": "broadcast", "message": "payload", "scope": "space"})
     ]
+
+
+@pytest.mark.asyncio
+async def test_new_contract_main_can_attach_asgi_app_to_context_api(tmp_path) -> None:
+    sequence_file = tmp_path / "main.py"
+    sequence_file.write_text(
+        "async def app(scope, receive, send):\n"
+        "    await send({'type': 'http.response.start', 'status': 204, 'headers': []})\n"
+        "    await send({'type': 'http.response.body', 'body': b''})\n"
+        "\n"
+        "async def main(context, input_stream):\n"
+        "    context.api.attach(app)\n"
+        "    return 'attached'\n",
+        encoding="utf-8",
+    )
+    sequence = load_sequence(str(sequence_file))
+    exposure = PythonSequenceApiExposure()
+    writer = RecordingMonitoringWriter()
+    logger = logging.getLogger("test_new_contract_main_can_attach_asgi_app_to_context_api")
+    ctx = runner_main._build_sequence_context(writer, logger, {}, "INFO", api_exposure=exposure, instance_id="i")
+
+    try:
+        result = await resolve_sequence_result(sequence.run(ctx, []))
+    finally:
+        sequence.cleanup()
+
+    assert result == "attached"
+    assert exposure.app is not None
 
 
 def test_describe_stores_definition() -> None:

@@ -109,6 +109,73 @@ precedence.
 The `topic` value maps to the monitoring PANG payload's `provides`/`requires`
 field. The `content_type` value determines input/output content-type handling.
 
+## AppContext
+
+The `context` argument is a Python `AppContext` with Node-style API names adapted
+to snake_case.
+
+### Public fields
+
+| Field | Behaviour |
+|-------|-----------|
+| `context.config` | Mutable application configuration. Host `SET` control messages replace/update this dict. |
+| `context.instance_id` | Current instance id from the boot config. |
+| `context.logger` | Runtime logger forwarded to the host log stream. Host `SET` `logLevel` updates this logger. |
+| `context.hub` / `context.api` | Verser2-backed hub client and ASGI exposure handle when configured; otherwise `None`. |
+| `context.initial_state` | Present for parity; currently defaults to `None`. |
+| `context.local_storage` | Present for parity; currently `None` because Python local storage is not wired. |
+
+### Lifecycle and monitoring
+
+Use `add_stop_handler`, `add_kill_handler`, and `add_monitoring_handler` for new
+code:
+
+```python
+async def main(context, input_stream):
+    context.add_monitoring_handler(lambda: {"healthy": True})
+
+    async def on_stop(payload):
+        await context.keep_alive(milliseconds=500)
+
+    context.add_stop_handler(on_stop)
+```
+
+- `keep_alive(milliseconds=...)` extends the STOP shutdown window while STOP
+  handlers are running. Positional `keep_alive(timeout)` remains accepted for
+  transitional compatibility.
+- `add_monitoring_handler(fn)` contributes heartbeat payload fields. Boolean
+  results become `{"healthy": bool}` and dict results are shallow-merged.
+- `set_health_check(fn)` and `set_stop_handler(fn)` remain aliases for
+  compatibility, but new code should prefer `add_monitoring_handler` and
+  `add_stop_handler`.
+- `end()` and `destroy(error=None)` mark local context state only; they are safe
+  to call but do not currently terminate the instance by themselves.
+
+### Events
+
+`context.on(event_name, handler)` registers local event handlers. `context.emit`
+emits an instance event on the monitoring channel, and `context.emit_to_space`
+emits the same event payload with `scope: "space"`. A distinct Python space
+transport is not implemented yet.
+
+### ASGI exposure
+
+When the sequence is started with an expose path and verser2 runtime config,
+`context.api` is a `PythonSequenceApiExposure`. Attach an ASGI 3 app from
+`main()`:
+
+```python
+async def app(scope, receive, send):
+    await send({"type": "http.response.start", "status": 200, "headers": []})
+    await send({"type": "http.response.body", "body": b"ok"})
+
+async def main(context, input_stream):
+    if context.api:
+        context.api.attach(app)
+```
+
+The runtime binds the attached app to the verser2 Guest after sequence startup.
+
 ### Legacy / unsupported APIs
 
 The following legacy APIs are **not** part of the primary sequence contract and

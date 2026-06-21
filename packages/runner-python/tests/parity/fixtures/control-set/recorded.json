@@ -23,17 +23,11 @@
         "ts_ms_relative": 94
       }
     ],
-    "STDERR": [
-      {
-        "direction": "host-recv",
-        "bytes_b64": "cGFja2FnZXMvcHl0aG9uLXJ1bm5lci9ydW5uZXIucHk6MTU4OiBSdW50aW1lV2FybmluZzogY29yb3V0aW5lICdSdW5uZXIuaGFuZGxlX3NldCcgd2FzIG5ldmVyIGF3YWl0ZWQKICBzZWxmLmhhbmRsZV9zZXQoZGF0YSkKUnVudGltZVdhcm5pbmc6IEVuYWJsZSB0cmFjZW1hbGxvYyB0byBnZXQgdGhlIG9iamVjdCBhbGxvY2F0aW9uIHRyYWNlYmFjawo=",
-        "ts_ms_relative": 95
-      }
-    ],
+    "STDERR": [],
     "OUT": [
       {
         "direction": "host-recv",
-        "bytes_b64": "ZGVidWctZGlzYWJsZWQ=",
+        "bytes_b64": "ZGVidWctZW5hYmxlZA==",
         "ts_ms_relative": 586
       }
     ],

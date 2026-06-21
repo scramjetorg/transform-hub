@@ -41,6 +41,7 @@ class AppContext:
         self._destroy_error: BaseException | None = None
         self._last_definition: Any = None
         self._last_saved_state: Any = None
+        self._sequence_logger: logging.Logger | None = None
 
         # Public fields
         self.config: dict[str, Any] = {}

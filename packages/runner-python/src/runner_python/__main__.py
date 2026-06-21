@@ -288,8 +288,9 @@ def _build_sequence_context(
         )
         return app_context
 
-    def wrapped_stop_handler(handler: Any) -> None:
+    def wrapped_stop_handler(handler: Any) -> AppContext:
         app_context._stop_handlers.append(_wrap_stop_handler(handler))
+        return app_context
 
     app_context.emit = emit  # type: ignore[assignment]
     app_context.emit_to_space = emit_to_space  # type: ignore[assignment]
@@ -304,6 +305,7 @@ def _build_control_context(shared_context: AppContext, control_logger: logging.L
     control_context.config = shared_context.config
     control_context._app_config = shared_context._app_config
     control_context.logger = control_logger
+    control_context._sequence_logger = shared_context.logger
     control_context._stop_handlers = []
     # Share kill/monitoring handler lists so the control loop can dispatch
     # them against the sequence's registered handlers.

@@ -108,6 +108,23 @@ async def test_set_updates_logger_level_without_polluting_config() -> None:
 
 
 @pytest.mark.asyncio
+async def test_set_updates_sequence_logger_when_control_context_wraps_runtime_context() -> None:
+    control_context = make_app_context()
+    sequence_logger = logging.getLogger("test_set_updates_sequence_logger")
+    sequence_logger.setLevel(logging.INFO)
+    control_context._sequence_logger = sequence_logger
+
+    await control_loop(
+        ScriptedControlDecoder([encode_control_line(SET, {"logLevel": "DEBUG"})]),
+        control_context,
+        RecordingTerminator(),
+    )
+
+    assert control_context.logger.getEffectiveLevel() == logging.DEBUG
+    assert sequence_logger.getEffectiveLevel() == logging.DEBUG
+
+
+@pytest.mark.asyncio
 async def test_kill_raises_hard_kill_signal_immediately() -> None:
     app_context = make_app_context()
 

@@ -96,11 +96,14 @@ def _apply_set(app_context: Any, payload: Any) -> None:
         _replace_app_config(app_context, app_config)
 
     log_level = payload.get("logLevel")
-    app_logger = getattr(app_context, "logger", None)
     if isinstance(log_level, str):
-        set_level = getattr(app_logger, "setLevel", None)
-        if callable(set_level):
-            set_level(log_level)
+        for app_logger in (
+            getattr(app_context, "logger", None),
+            getattr(app_context, "_sequence_logger", None),
+        ):
+            set_level = getattr(app_logger, "setLevel", None)
+            if callable(set_level):
+                set_level(log_level)
 
 
 async def _dispatch_stop(app_context: Any, terminator: Any, payload: Any) -> None:

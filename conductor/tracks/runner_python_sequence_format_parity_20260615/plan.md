@@ -276,8 +276,11 @@
     - [ ] ~~Run targeted BDD paths needed for the changed Python refapps.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
     - [ ] ~~Run `npm run test:bdd-ci-python` as the final Python runtime smoke gate.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
     - [x] Record any skipped broad Docker/Kubernetes validation and reason.
-- [ ] Task: Complete runtime parity review
-    - [ ] Review Python behavior against Node/Bun platform-visible semantics for logs, health, lifecycle, events, topics, input, output, and ASGI API exposure.
+- [~] Task: Complete runtime parity review
+    - [x] Review Python behavior against Node/Bun platform-visible semantics for logs, health, lifecycle, events, topics, input, output, and ASGI API exposure.
+    - [x] Fix non-BDD lifecycle parity blockers found by review: STOP `keep_alive(milliseconds=...)`, sequence-facing stop-handler chainability, and SET log-level propagation to the sequence logger.
+    - [x] Add focused non-BDD ASGI API exposure coverage for new-contract `main()` sequences.
+    - [x] Expand AppContext/ASGI/lifecycle README docs so docs, tests, and runtime describe the same Python contract.
     - [ ] Confirm no new refapp depends on old `scramjet.streams.Stream`, old health/stop APIs, or legacy module-global assumptions.
     - [ ] Confirm docs, tests, and runtime behavior describe the same Python contract.
 - [ ] Task: Conductor - User Manual Verification 'New Python BDD Refapps and Final Runtime Validation' (Protocol in workflow.md)
@@ -335,6 +338,45 @@
 - Scoped TLS checkpoint commit `f25e9283` was pushed and manually approved by
   the user on 2026-06-21. Outdated refapp BDD coverage remains deferred to a
   later track by user instruction.
+
+**Runtime parity review (non-BDD):**
+
+- Oracle review found no need to run or refactor outdated refapp BDD coverage,
+  but identified non-BDD runtime parity blockers to fix before moving to legacy
+  compatibility: STOP keepalive should accept `milliseconds` in the real
+  shutdown path, sequence-facing stop-handler registration should remain
+  chainable after runtime wrapping, SET log-level control should update the
+  sequence-facing logger, and ASGI API exposure needs focused new-contract
+  runtime coverage. README AppContext/ASGI/lifecycle docs also need alignment
+  with implemented and deferred behavior.
+
+**Runtime parity fixes (non-BDD):**
+
+- `lifecycle.py`: STOP shutdown keepalive tracking now accepts
+  `context.keep_alive(milliseconds=...)`, forwards the keyword to the underlying
+  AppContext method, and extends the shutdown deadline using the effective
+  keyword/positional timeout.
+- `__main__.py`: runtime-wrapped `add_stop_handler`/`set_stop_handler` now
+  preserve AppContext chainability and the control context keeps a reference to
+  the sequence-facing logger.
+- `control_loop.py`: `SET` `logLevel` updates both the control logger and the
+  sequence-facing logger.
+- `tests/parity/fixtures/control-set`: updated the fixture to assert
+  `debug-enabled` and remove the old legacy unawaited-SET stderr warning.
+- `tests/test_app_context.py`, `tests/test_lifecycle.py`, and
+  `tests/test_control_codes.py`: added focused regression coverage for
+  chainability, STOP `milliseconds`, sequence logger propagation, and
+  new-contract `main()` ASGI app attachment through `context.api`.
+- `README.md`: documented AppContext fields, lifecycle/monitoring, events,
+  ASGI exposure, and current local-only/deferred behavior.
+
+**Validation (runtime parity fixes):**
+
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_app_context.py tests/test_lifecycle.py tests/test_control_codes.py tests/parity/test_golden_replay.py` in `packages/runner-python`: 76 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 272 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages` from the repository root: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
 
 ## Phase 5: Isolated Legacy Compatibility Structure
 
