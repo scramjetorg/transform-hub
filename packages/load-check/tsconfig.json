@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/load-check",
+    "out": "../../dist-docs/reference/typescript/load-check",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

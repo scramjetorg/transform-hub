@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+console.error("scripts/mk-readme.js is deprecated and no longer generates README files.");
+console.error("Use npm run docs:generate:readmes instead, which reads from docs-source/readmes/");
+console.error("and generates repo README.md and packages/*/README.md via scripts/docs.js.");
+process.exit(1);
+
 const { createReadStream, createWriteStream, readFileSync } = require("fs");
 const glob = require("glob");
 const { resolve, dirname, relative, } = require("path");

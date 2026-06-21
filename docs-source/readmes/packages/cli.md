@@ -1,0 +1,87 @@
+The Transform Hub CLI (`si`) is the primary command-line interface for interacting with Transform Hub. It connects to a Hub or Manager API and provides commands for deploying, monitoring, and managing Sequences, Instances, Topics, and connected Hubs.
+
+## When to use
+
+Install `@scramjet/cli` on any machine that needs to interact with a Transform Hub — developer workstations for local testing, CI/CD pipelines for automated deployments, or operator consoles for production monitoring.
+
+## Quick start
+
+Install globally:
+
+```bash
+npm install -g @scramjet/cli
+```
+
+Verify installation:
+
+```bash
+si --version
+```
+
+### Targeting a Hub or Manager
+
+By default the CLI connects to `http://localhost:8000`. Change the target:
+
+```bash
+si config set apiUrl http://manager-host:8200
+```
+
+### Common commands
+
+Manage Sequences:
+
+```bash
+si sequence pack ./sequence-dir -o output.tar.gz
+si sequence deploy ./my-sequence.tar.gz
+si sequence list
+```
+
+Manage running Instances:
+
+```bash
+si instance list
+si instance info <id>
+si instance log <id>
+si instance stop <id> <timeout>
+si instance kill <id>
+```
+
+Manage Topics:
+
+```bash
+si topic create my-topic
+si topic list
+si topic send my-topic < data.json
+```
+
+Inspect Hubs where hub commands are available in the active profile/environment:
+
+```bash
+si hub list
+si hub info
+```
+
+Run `si --help` for all commands, or `si <resource> --help` for resource-specific options.
+
+> **Note**: The CLI currently uses compatibility workflows targeting the v1 Hub/Manager API (`/api/v1` route tree). A v2 API update is planned; backwards compatibility will be maintained.
+
+## Configuration
+
+The CLI stores profiles and configuration in `~/.scramjet/`. Use `si config` to view and update settings:
+
+```bash
+si config print
+si config set apiUrl <url>
+si config set <key> <value>
+```
+
+## Stability
+
+This package is **stable**. The CLI command surface is part of the public API.
+
+## See also
+
+- [CLI usage](../../docs-source/cli/usage.md) for detailed command patterns and examples.
+- [Generated CLI reference](../../dist-docs/reference/cli/index.md) for command, argument, and option details.
+- [Transform Hub overview](../../docs-source/transform-hub/overview.md) for platform architecture.
+- [API client documentation](../../docs-source/api/client-usage.md) for programmatic access.

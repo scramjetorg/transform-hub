@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/api-client",
+    "out": "../../dist-docs/reference/typescript/api-client",
     "plugin": "typedoc-plugin-markdown",
     "gitRevision": "HEAD",
     "sort": "alphabetical"

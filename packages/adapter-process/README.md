@@ -1,61 +1,51 @@
-# Scramjet Transform Hub Adapters
+# @scramjet/adapter-process
 
-This module holds two types of adapters utilized by Scramjet Transform Hub: Instance Adapter and Sequence Adapter. These Adapters allows for running the Sequence identification and Instance execution in two basic modes: as a non containerized standalone processes or in a process container.
+Process adapter for Transform Hub. Runs Sequences as child processes on the host machine using Node.js, Bun, or Python runners.
 
-The adapter provides two main exports:
+## When to use
 
-* [processSequenceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapter-process/src/process-sequence-adapter.ts) - An adapter for preparing Sequence to be run in process container.
-* [processInstanceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapter-process/src/process-instance-adapter.ts) - An adapter for running Instance by Runner executed in process container.
+The process adapter is the default adapter for Transform Hub. It is suitable for development, testing, and production deployments where each Sequence runs as a dedicated OS process on the same machine as the Hub. No Docker or Kubernetes infrastructure is required.
 
-## Docs
+The adapter is selected via the `--runtime-adapter process` flag or the `adapters` configuration. It provides:
 
-See the code documentation here: [scramjetorg/transform-hub/docs/adapters-process/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/adapters-process/modules.md)
+- **ProcessSequenceAdapter** — manages sequence storage and retrieval
+- **ProcessInstanceAdapter** — manages instance lifecycle as child processes
 
-## Scramjet Transform Hub
+## Configuration
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
+The process adapter is configured through STH configuration and does not require additional setup beyond ensuring the runtimes (Node.js, Bun, Python) are available on the host.
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
+```bash
+scramjet-transform-hub --runtime-adapter process
+```
 
-## Use cases
+## Stability
 
-There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Discord](https://scr.je/join-community-mg1)!
+This package is **stable**. The process adapter is the default and most-tested adapter.
 
-## Some important links
+## See also
 
-* Scramjet, the company behind [Transform Hub](https://scramjet.org)
-* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
-* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
-* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
-* Don't forget to ⭐ this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
-* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
+- [Process adapter deployment](../../docs-source/deployment/process-adapter.md) for detailed setup and configuration.
+- [Docker adapter](../adapter-docker/README.md) for container-based deployment.
+- [Kubernetes adapter](../adapter-kubernetes/README.md) for Kubernetes-based deployment.
+- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for adapter configuration options.
 
-## License and contributions
+## Install
 
-This module is licensed under AGPL-3.0 license.
+```bash
+npm install @scramjet/adapter-process
+```
 
-The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+## Import
 
-## Contributions
+```typescript
+import { /* ... */ } from "@scramjet/adapter-process";
+```
 
-We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
+## Documentation
 
-We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
+See the [package docs](../../docs-source/README.md) for full documentation.
 
-### Help wanted 👩‍🎓🧑👱‍♀️
+---
 
-The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://scr.je/join-community-mg1) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
-
-### Donation 💸
-
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ☕ Thanks a lot! 😉
-
-[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
-
-* There's also a Paypal donation link if you prefer that:
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-
+<!-- Generated by scripts/docs.js from docs-source/readmes/packages/adapter-process.md. Do not edit this file directly. -->

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "intro-overview",
+    "title": "Transform Hub documentation",
+    "slug": "/intro",
+    "source": "docs-source/intro/overview.md",
+    "output": "intro/overview.md"
+  },
+  {
+    "id": "transform-hub-build-run",
+    "title": "Build and run workflows",
+    "slug": "/transform-hub/build-run",
+    "source": "docs-source/transform-hub/build-run.md",
+    "output": "transform-hub/build-run.md"
+  },
+  {
+    "id": "transform-hub-configuration",
+    "title": "Transform Hub configuration",
+    "slug": "/transform-hub/configuration",
+    "source": "docs-source/transform-hub/configuration.md",
+    "output": "transform-hub/configuration.md"
+  },
+  {
+    "id": "transform-hub-core-concepts",
+    "title": "Core concepts",
+    "slug": "/transform-hub/core-concepts",
+    "source": "docs-source/transform-hub/core-concepts.md",
+    "output": "transform-hub/core-concepts.md"
+  },
+  {
+    "id": "transform-hub-getting-started",
+    "title": "Getting started",
+    "slug": "/transform-hub/getting-started",
+    "source": "docs-source/transform-hub/getting-started.md",
+    "output": "transform-hub/getting-started.md"
+  },
+  {
+    "id": "transform-hub-overview",
+    "title": "Transform Hub overview",
+    "slug": "/transform-hub/overview",
+    "source": "docs-source/transform-hub/overview.md",
+    "output": "transform-hub/overview.md"
+  },
+  {
+    "id": "manager-connecting-hubs",
+    "title": "Connecting Hubs to a Manager",
+    "slug": "/manager/connecting-hubs",
+    "source": "docs-source/manager/connecting-hubs.md",
+    "output": "manager/connecting-hubs.md"
+  },
+  {
+    "id": "manager-overview",
+    "title": "Manager overview",
+    "slug": "/manager/overview",
+    "source": "docs-source/manager/overview.md",
+    "output": "manager/overview.md"
+  },
+  {
+    "id": "manager-running",
+    "title": "Running the Manager",
+    "slug": "/manager/running",
+    "source": "docs-source/manager/running.md",
+    "output": "manager/running.md"
+  },
+  {
+    "id": "sequences-packaging",
+    "title": "Packaging and deploying sequences",
+    "slug": "/sequences/packaging",
+    "source": "docs-source/sequences/packaging-deploying.md",
+    "output": "sequences/packaging-deploying.md"
+  },
+  {
+    "id": "sequences-lifecycle",
+    "title": "Sequence lifecycle, input/output streams, and content types",
+    "slug": "/sequences/lifecycle",
+    "source": "docs-source/sequences/sequence-lifecycle.md",
+    "output": "sequences/sequence-lifecycle.md"
+  },
+  {
+    "id": "sequences-monitoring",
+    "title": "Health, logging, events, monitoring, and stop/kill behavior",
+    "slug": "/sequences/monitoring",
+    "source": "docs-source/sequences/sequence-monitoring.md",
+    "output": "sequences/sequence-monitoring.md"
+  },
+  {
+    "id": "sequences-topics",
+    "title": "Topics, data routing, and sequence metadata",
+    "slug": "/sequences/topics",
+    "source": "docs-source/sequences/sequence-topics.md",
+    "output": "sequences/sequence-topics.md"
+  },
+  {
+    "id": "sequences-writing",
+    "title": "Writing sequences for Transform Hub",
+    "slug": "/sequences/writing",
+    "source": "docs-source/sequences/writing-sequences.md",
+    "output": "sequences/writing-sequences.md"
+  },
+  {
+    "id": "testing-sequences",
+    "title": "Testing sequences with @scramjet/sequence-test",
+    "slug": "/testing/sequences",
+    "source": "docs-source/testing/testing-sequences.md",
+    "output": "testing/testing-sequences.md"
+  },
+  {
+    "id": "cli-usage",
+    "title": "CLI usage",
+    "slug": "/cli/usage",
+    "source": "docs-source/cli/usage.md",
+    "output": "cli/usage.md"
+  },
+  {
+    "id": "api-client-usage",
+    "title": "API client usage",
+    "slug": "/api/client-usage",
+    "source": "docs-source/api/client-usage.md",
+    "output": "api/client-usage.md"
+  },
+  {
+    "id": "legacy-v1-api-client",
+    "title": "Legacy v1 API client (@scramjet/api-client)",
+    "slug": "/api/legacy/v1-api-client",
+    "source": "docs-source/api/legacy/v1-api-client.md",
+    "output": "api/legacy/v1-api-client.md"
+  },
+  {
+    "id": "deployment-docker-adapter",
+    "title": "Docker Adapter",
+    "slug": "/deployment/docker-adapter",
+    "source": "docs-source/deployment/docker-adapter.md",
+    "output": "deployment/docker-adapter.md"
+  },
+  {
+    "id": "deployment-kubernetes-adapter",
+    "title": "Kubernetes Adapter",
+    "slug": "/deployment/kubernetes-adapter",
+    "source": "docs-source/deployment/kubernetes-adapter.md",
+    "output": "deployment/kubernetes-adapter.md"
+  },
+  {
+    "id": "deployment-process-adapter",
+    "title": "Process Adapter",
+    "slug": "/deployment/process-adapter",
+    "source": "docs-source/deployment/process-adapter.md",
+    "output": "deployment/process-adapter.md"
+  },
+  {
+    "id": "development-contributing",
+    "title": "Contributing to Scramjet Transform Hub",
+    "slug": "/development/contributing",
+    "source": "docs-source/development/contributing.md",
+    "output": "development/contributing.md"
+  },
+  {
+    "id": "examples-python-log-processor",
+    "title": "Python log processor sequence",
+    "slug": "/examples/python-log-processor",
+    "source": "docs-source/examples/python-log-processor.md",
+    "output": "examples/python-log-processor.md"
+  },
+  {
+    "id": "examples-simple-transform",
+    "title": "Simple data transform sequence",
+    "slug": "/examples/simple-transform",
+    "source": "docs-source/examples/simple-transform.md",
+    "output": "examples/simple-transform.md"
+  }
+]

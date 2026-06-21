@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
+    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "node ../../scripts/run-ava.js"
   },

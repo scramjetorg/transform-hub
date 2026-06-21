@@ -14,7 +14,7 @@
         "entryPoints": [
             "src/index.ts"
         ],
-        "out": "../../docs/middleware-api-client",
+        "out": "../../dist-docs/reference/typescript/middleware-api-client",
         "plugin": "typedoc-plugin-markdown",
         "excludePrivate": "true",
         "gitRevision": "HEAD",

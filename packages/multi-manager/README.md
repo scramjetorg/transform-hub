@@ -1,103 +1,62 @@
-# MultiManager (aka `MM`, `mCPM`)
+# @scramjet/multi-manager
 
-Scramjet MultiManager is a service responsible for supervising Mangers and exposing their APIs. It can start new managers (all within a single process) and stop them, and route requests to specific Manger instances it had started.
+The MultiManager is a cloud-platform orchestration component that manages a fleet of STH Hubs across multiple spaces and environments. It provides a unified control plane for deploying, monitoring, and managing Sequences across distributed infrastructure.
 
-## Setting up and starting MultiManager
+## When to use
 
-As MultiManager is one of the many packages in the project, follow the instruction on building entire project. After that, you can start MultiManger built version via:
+Use `@scramjet/multi-manager` when you need to coordinate multiple Hubs across different spaces (organizational or functional groupings). It is the recommended control plane for Scramjet Cloud Platform deployments where topology spans multiple locations or tenants.
 
-```bash
-node dist/multi-manager/bin/start.js
-```
+For single-Manager deployments or smaller topologies, see [@scramjet/manager](../../docs-source/manager/overview.md).
 
-or from source (*this does not requires building*):
+## Quick start
 
-```bash
-ts-node sth/packages/multi-manager/src/bin/start.ts
-```
-
-In both cases, you should see logs like:
-
-```plain
-Starting MultiManager with config: { ... }
-2022-04-11T13:22:25.517Z INFO  MultiManager Starting mCPM [ '0.20.0' ]
-```
-
-By default it will start on `http://0.0.0.0:11000`. You can check if it is functional by querying its `/version` endpoint:
+Install the executable package:
 
 ```bash
-curl http://0.0.0.0:11000/api/v1/version
+npm install @scramjet/multi-manager
 ```
 
-## Configuration
-
-At the moment, MultiManager settings can be changed via command line options when starting its instance.
-
-> **ProTip**: If you would like to see all defined options directly in the code, refer to `sth/packages/multi-manager/src/bin/start.ts` file.
-
-### Default config
-
-There is also a file with default config defined, available in `sth/packages/multi-manager/src/lib/default-config.ts`.
-
-### Available settings
-
-Below is table with all configuration options available.
-
-<!-- For editing the table below, I recommend https://tableconvert.com -->
-
-| Config name | CMD Parameter     | Required | Description                                                                  | Default value |
-|-------------|-------------------|----------|------------------------------------------------------------------------------|---------------|
-| id          | --id              | no       | MultiManager id.                                                             | -             |
-| apiBase     | --server-api-base | no       | MultiManager API server base path.                                           | /api/v1       |
-| apiPort     | --server-api-port | no       | MultiManager API server port.                                                | 11000         |
-| version     | --server-version  | no       | MultiManager API server version.                                             | -             |
-| logLevel    | --log-level       | no       | Log levels displayed during runtime.                                         | TRACE         |
-| sslKeyPath  | --ssl-key-path    | no       | Path to SSL Key to encrypt Manager <-> Host communication.                   | -             |
-| sslCertPath | --ssl-cert-path   | no       | Path to SSL Certificate to encrypt Manager <-> Host communication.           | -             |
-| manager     | --manager         | no       | Instruct MultiManager to start Manager with a given id after initialization. | -             |
-
-## Spawning and supervising Managers
-
-One of the main purposes of MultiManager is the ability to start and stop Managers. It can be done through dedicated `/start` endpoint:
+Run the MultiManager executable:
 
 ```bash
-curl -X POST 'localhost:11000/api/v1/start' \
-  -H 'Accept: */*' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "manager": {
-        "id": "Mgr-1"
-    }
-}'
+npx multi-manager --help
 ```
-It accepts several parameters which controls how Manager is spawned. 
-For all the options refer to [Manager README](../manager/README.md).  
-To stop Manager instance\, dedicated `/stop` endpoint needs to be queried:
+
+The package publishes two bin names:
 
 ```bash
-curl -X POST http://0.0.0.0:11000/api/v1/cpm/:managerId/stop
+multi-manager
+scramjet-cloud-platform-multi-manager
 ```
 
-## Starting Manager on MultiManager start
-
-You can also tell MultiManager to initialize single Manager instance right after it is started. This is the purpose of `--manager` config option which can be used like:
+In this repository workspace, run the source entrypoint with:
 
 ```bash
-node dist/multi-manager/bin/start.js --manager Mgr-1
+npm run start -w @scramjet/multi-manager
 ```
 
-## Querying Manager instances
+Use the executable help output as the source of truth for current flags. MultiManager owns server/API startup and sub-Manager lifecycle orchestration for multi-space deployments.
 
-To query specific Manager instance via MultiManager, there is a dedicated API endpoint exposed:
+## Stability
 
+This package is part of the Scramjet Cloud Platform. Its API is stable for cloud-platform use cases.
+
+## See also
+
+- [Manager overview](../../docs-source/manager/overview.md) for understanding Hub-to-Manager relationships.
+- [Connecting Hubs](../../docs-source/manager/connecting-hubs.md) for topology configuration.
+- [Transform Hub overview](../../docs-source/transform-hub/overview.md) for platform architecture.
+
+## Install
+
+```bash
+npm install @scramjet/multi-manager
 ```
-http://0.0.0.0:11000/api/v1/cpm/:managerId/api/v1/:managerEndpoint
-```
 
-This means if you want to query `/version` endpoint of manager with id `Mgr-1` started via MultiManager available on `http://0.0.0.0:11000` it will be:
+## Documentation
 
-> curl 0.0.0.0:11000/api/v1/cpm/**Mgr-1**/api/v1/**version**
+See the [package docs](../../docs-source/README.md) for full documentation.
 
-## STH Connectivity
+---
 
-MultiManager and its managed Manager instances use verser2 Host/Broker/Guest routing for STH connectivity. The previous forwarding path is retired.
+<!-- Generated by scripts/docs.js from docs-source/readmes/packages/multi-manager.md. Do not edit this file directly. -->

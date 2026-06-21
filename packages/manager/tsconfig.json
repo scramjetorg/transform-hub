@@ -14,7 +14,7 @@
         "entryPoints": [
             "./src/index.ts"
         ],
-        "out": "../../docs/manager-api",
+        "out": "../../dist-docs/reference/typescript/manager-api",
         "plugin": "typedoc-plugin-markdown",
         "readme": "none"
     }

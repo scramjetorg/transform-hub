@@ -1,0 +1,38 @@
+[
+  {
+    "id": "reference-api-v2",
+    "title": "API v2 Reference",
+    "slug": "/reference/api/v2",
+    "output": "reference/api/v2/index.md"
+  },
+  {
+    "id": "reference-api-v2-root",
+    "title": "Root routes",
+    "slug": "/reference/api/v2/root",
+    "output": "reference/api/v2/root.md"
+  },
+  {
+    "id": "reference-api-v2-space",
+    "title": "Space routes",
+    "slug": "/reference/api/v2/space",
+    "output": "reference/api/v2/space.md"
+  },
+  {
+    "id": "reference-api-v2-hub",
+    "title": "Hub routes",
+    "slug": "/reference/api/v2/hub",
+    "output": "reference/api/v2/hub.md"
+  },
+  {
+    "id": "reference-api-v2-sequence",
+    "title": "Sequence routes",
+    "slug": "/reference/api/v2/sequence",
+    "output": "reference/api/v2/sequence.md"
+  },
+  {
+    "id": "reference-api-v2-instance",
+    "title": "Instance routes",
+    "slug": "/reference/api/v2/instance",
+    "output": "reference/api/v2/instance.md"
+  }
+]

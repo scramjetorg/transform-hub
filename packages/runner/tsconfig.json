@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/runner",
+    "out": "../../dist-docs/reference/typescript/runner",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

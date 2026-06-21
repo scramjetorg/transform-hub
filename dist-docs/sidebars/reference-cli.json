@@ -1,0 +1,14 @@
+[
+  {
+    "id": "reference-cli",
+    "title": "CLI Reference",
+    "slug": "/reference/cli",
+    "output": "reference/cli/index.md"
+  },
+  {
+    "id": "reference-cli-commands",
+    "title": "CLI Commands",
+    "slug": "/reference/cli/commands",
+    "output": "reference/cli/commands.md"
+  }
+]

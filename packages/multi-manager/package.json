@@ -11,7 +11,7 @@
     "start": "ts-node ./src/bin/start",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docker": "docker build -t ${SCRAMJET_INT_REPO_PATH}scramjetorg/multimanager:$npm_package_version -f Dockerfile ../../..",
-    "build:docs": "typedoc",
+    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
     "test:ava": "node ../../scripts/run-ava.js",

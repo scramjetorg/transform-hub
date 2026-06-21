@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/rest-api2",
+    "out": "../../dist-docs/reference/typescript/rest-api2",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

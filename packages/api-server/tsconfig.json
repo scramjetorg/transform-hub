@@ -16,7 +16,7 @@
       "src/handlers",
       "src/lib"
     ],
-    "out": "../../docs/api-server",
+    "out": "../../dist-docs/reference/typescript/api-server",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

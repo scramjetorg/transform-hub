@@ -1,61 +1,63 @@
-# Scramjet Transform Hub Adapters
+# @scramjet/adapter-docker
 
-This module holds two types of adapters utilized by Scramjet Transform Hub: Instance Adapter and Sequence Adapter. These Adapters allows for running the Sequence identification and Instance execution in two basic modes: as a non containerized standalone processes or in a Docker container.
+Docker adapter for Transform Hub. Runs Sequences as Docker containers instead of direct host processes.
 
-The adapter provides two main exports:
+## When to use
 
-* [DockerSequenceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapter-docker/src/docker-sequence-adapter.ts) - An adapter for preparing Sequence to be run in docker container.
-* [DockerInstanceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapter-docker/src/docker-instance-adapter.ts) - An adapter for running Instance by Runner executed in docker container.
+Use the Docker adapter when you need process isolation, environment consistency, or Docker-based deployment workflows. Each Sequence runs in its own container with configurable images for Node.js, Python, and Bun runners.
 
-## Docs
+The adapter is selected via the `--runtime-adapter docker` flag or STH configuration. It provides:
 
-See the code documentation here: [scramjetorg/transform-hub/docs/adapters-docker/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/adapters-docker/modules.md)
+- **DockerSequenceAdapter** — manages sequence storage using Docker volumes
+- **DockerInstanceAdapter** — manages instance lifecycle as Docker containers
+- Configurable runner images (`--runner-image`, `--runner-py-image`, `--runner-bun-image`)
+- Docker networking setup for inter-container communication
 
-## Scramjet Transform Hub
+## Quick start
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
+```bash
+# Start STH with Docker adapter
+scramjet-transform-hub --runtime-adapter docker
+```
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
+## Configuration
 
-## Use cases
+Key STH options when using the Docker adapter:
 
-There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Discord](https://scr.je/join-community-mg1)!
+- `--runner-image <image>` — Docker image for Node.js runner containers
+- `--runner-py-image <image>` — Docker image for Python runner containers
+- `--runner-bun-image <image>` — Docker image for Bun runner containers
+- `--runner-max-mem <mb>` — maximum memory per runner container
 
-## Some important links
+Docker must be installed and the Docker daemon must be accessible from the STH process.
 
-* Scramjet, the company behind [Transform Hub](https://scramjet.org)
-* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
-* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
-* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
-* Don't forget to ⭐ this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
-* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
+## Stability
 
-## License and contributions
+This package is **stable**.
 
-This module is licensed under AGPL-3.0 license.
+## See also
 
-The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+- [Docker adapter deployment](../../docs-source/deployment/docker-adapter.md) for detailed setup.
+- [Process adapter](../adapter-process/README.md) for direct process execution.
+- [Kubernetes adapter](../adapter-kubernetes/README.md) for Kubernetes-based deployment.
+- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for adapter configuration options.
 
-## Contributions
+## Install
 
-We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
+```bash
+npm install @scramjet/adapter-docker
+```
 
-We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
+## Import
 
-### Help wanted 👩‍🎓🧑👱‍♀️
+```typescript
+import { /* ... */ } from "@scramjet/adapter-docker";
+```
 
-The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://scr.je/join-community-mg1) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
+## Documentation
 
-### Donation 💸
+See the [package docs](../../docs-source/README.md) for full documentation.
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ☕ Thanks a lot! 😉
+---
 
-[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
-
-* There's also a Paypal donation link if you prefer that:
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-
+<!-- Generated by scripts/docs.js from docs-source/readmes/packages/adapter-docker.md. Do not edit this file directly. -->

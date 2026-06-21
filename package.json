@@ -20,10 +20,17 @@
     "build:packages": "scripts/build-all.js -v -w modules --ts-config tsconfig.build.json",
     "build:docker": "scripts/run-script.js -w modules build:docker",
     "build:docker:runners": "scripts/run-script.js -w runners build:docker",
-    "build:readme": "node ./scripts/mk-readme",
+    "build:readme": "npm run docs:generate:readmes",
+    "docs:clean": "node ./scripts/docs.js clean",
+    "docs:generate": "node ./scripts/docs.js generate",
+    "docs:generate:content": "node ./scripts/docs.js generate:content",
+    "docs:generate:reference": "node ./scripts/docs.js generate:reference",
+    "docs:generate:readmes": "node ./scripts/docs.js generate:readmes",
+    "docs:generate:api": "node ./scripts/docs.js generate:api",
+    "docs:check": "node ./scripts/docs.js check",
     "build:runner-images": "scripts/run-script.js -v -w packages export:docker",
-    "build:docs": "scripts/run-script.js -w modules build:docs && NODE_ENV=development npm run start:dev:cli -- dev cmdToMd -o docs/cli/commands-description.md",
-    "build:all-docs": "npm run build:readme && npm run build:docs",
+    "build:docs": "npm run docs:generate",
+    "build:all-docs": "npm run docs:generate",
     "prepack:pub": "scripts/run-script.js -w '!bdd' build:only",
     "pack:pub": "npm run clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir npm publish \\;",
@@ -84,6 +91,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "scramjet": {
+    "docs": {
+      "outputDir": "dist-docs"
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.0",

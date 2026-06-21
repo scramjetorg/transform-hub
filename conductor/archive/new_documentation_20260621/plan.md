@@ -1,0 +1,325 @@
+# Implementation Plan: New Documentation Source, Curated Reference, and README Pipeline
+
+## Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture
+
+- [x] Task: Create review surface for the track
+    - [x] Inspect current git status, current branch, recent commits, and remote tracking.
+    - [x] Create a dedicated feature branch for the track unless explicitly skipped.
+    - [x] Create one scoped plan-update commit for the approved `spec.md`/`plan.md` changes before implementation work begins.
+    - [x] Prepare a draft PR after initial planning artifacts are committed when appropriate.
+    - [x] Keep the PR description updated with phase status, validation, and deferred items.
+- [x] Task: Read Conductor workflow and known solutions
+    - [x] Read `conductor/workflow.md` before implementation work and follow its phase checkpoint, validation, delegation, and commit guidance.
+    - [x] Read `conductor/known-solutions.md` before handling recurring or recognizable failures.
+    - [x] Record any applicable known-solution constraints in the phase notes before applying them.
+- [x] Task: Inventory current documentation generation flows
+    - [x] Read root docs scripts, especially `build:docs`, `build:all-docs`, and `build:readme`.
+    - [x] Inventory package-level `build:docs` scripts and TypeDoc configuration/version usage.
+    - [x] Inventory current root-level generated docs under `docs/` and identify generated vs handwritten content.
+    - [x] Inventory `scripts/mk-readme.js`, package `.mtpl` files, and reusable README parts.
+    - [x] Inventory current CLI command-reference generation and API/client reference sources.
+- [x] Task: Define migration and retirement strategy
+    - [x] Document which old docs outputs are replaced, retained temporarily, or deleted.
+    - [x] Define when broad per-package TypeDoc output is disabled or removed.
+    - [x] Define when the old README template flow is disabled or removed.
+    - [x] Record risks for npm package README publishing and docs site consumption.
+- [x] Task: Create canonical docs source skeleton
+    - [x] Add `docs-source/` with folders for intro, transform-hub, manager, sequences, testing, cli, api, deployment, development, reference, readmes, examples, and partials.
+    - [x] Add authoring conventions for frontmatter, slugs/doc IDs, headings, partials, examples, generated-file markers, and link rules.
+    - [x] Define which files are handwritten source and which files are generated artifacts.
+- [x] Task: Define Docusaurus export contract
+    - [x] Define `dist-docs/` output layout for content, reference, readmes, sidebars, and metadata.
+    - [x] Define the configurable generator endpoint/output root, including the root `package.json` config entry and higher-priority environment variable.
+    - [x] Document that all generators must honor the endpoint configuration for content, reference, README, CLI, API, sidebar, and metadata output.
+    - [x] Define sidebar/category metadata conventions for prose and generated reference.
+    - [x] Define link rewriting and link rebasing rules for docs site, root README, package READMEs, and npm README contexts.
+    - [x] Define deterministic metadata requirements for `dist-docs/metadata.json`.
+- [x] Task: Define curated reference allowlist format
+    - [x] Create a machine-readable or documented allowlist format for generated reference entrypoints.
+    - [x] Include entrypoint path, package, audience, stability label, output path, inclusion reason, and reviewer expectations.
+    - [x] Mark experimental surfaces explicitly, including `@scramjet/sequence-test` if included.
+    - [x] Ensure non-allowlisted internals cannot be exported accidentally.
+- [x] Task: Automated review after source architecture
+    - [x] Run review focused on information architecture, export contract clarity, migration safety, and accidental public API exposure risk.
+    - [x] Address in-scope findings or record deferred findings.
+- [x] Task: Validate Phase 0
+    - [x] Run the narrowest relevant validation for Markdown/metadata/docs-source changes.
+    - [x] Record skipped validation and reasons in phase notes.
+    - [x] Confirm no runtime, adapter, API, or CLI behavior changed.
+- [x] Task: Conductor - User Manual Verification 'Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture' (Protocol in workflow.md)
+
+### Phase 0 notes
+
+- Review surface: created branch `conductor/new-documentation-20260621` and draft PR #25 (`https://github.com/0rail/transform-hub/pull/25`).
+- Current docs inventory: root `build:readme` uses `scripts/mk-readme.js`; root `build:docs` runs package TypeDoc outputs and then CLI `dev cmdToMd`; package `build:docs` scripts currently produce broad root-level `docs/<package>/` TypeDoc outputs; `docs/` mixes generated and handwritten content.
+- Known-solution constraints reviewed: use memory-constrained Node validation where applicable; no known failure recovery was needed in Phase 0.
+- Shared package review: Phase 0 is documentation architecture only; no shared runtime/type helper was added or duplicated.
+- Deduplication result: not applicable for runtime code; documentation policy is centralized in `docs-source/README.md`, `docs-source/reference/export-contract.md`, and `docs-source/reference/curated-reference-allowlist.json`.
+- Automated review findings: fixed schema `$schema` validation, narrowed `@scramjet/types` allowlist entries, added path/output/reviewer constraints, clarified README write modes, added old-doc disposition inventory, documented generator globs, and fixed a typo.
+- Validation run: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node -e "..."` parsed `package.json`, the allowlist schema, and the allowlist, checked allowlist path/output safety, checked entrypoint existence, checked output uniqueness, and checked reviewer metadata. Result: passed for 6 allowlist entries.
+- Skipped validation: no docs generator, markdown link checker, or README drift checker exists yet; those are planned for later phases. Package build/tests were not run because Phase 0 changed documentation architecture and root docs config only, with no runtime, adapter, API, or CLI behavior changes.
+- Phase checkpoint commit: `17cfd839` (`docs(conductor): Complete new docs phase 0`).
+- Manual verification finding: the old `api_docs_revamp_20260616` folder was still under `conductor/tracks/` and listed in `conductor/tracks.md` even though this track supersedes it. Correction: moved the folder to `conductor/archive/api_docs_revamp_20260616/` and removed it from the active tracks registry.
+- Manual verification finding: the standalone migration document duplicated track work and should not remain as documentation source. Correction: removed `docs-source/reference/migration-and-retirement.md`; migration/retirement execution remains governed by this plan and later phase tasks.
+- Manual verification: Phase 0 approved after corrections.
+
+## Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content
+
+- [x] Task: Design generator command surface
+    - [x] Add or define npm scripts for `docs:clean`, `docs:generate`, `docs:check`, and narrower subcommands.
+    - [x] Add or define root `package.json` configuration for the default docs generator endpoint/output root.
+    - [x] Add or define the environment variable override for the docs generator endpoint/output root, with env var taking precedence over package configuration.
+    - [x] Ensure scripts use npm and existing monorepo script patterns.
+    - [x] Ensure generated outputs remain outside handwritten `docs-source/`.
+- [x] Task: Implement content export foundation
+    - [x] Generate `dist-docs/content/` from `docs-source/` prose.
+    - [x] Preserve frontmatter, stable slugs/doc IDs, and generated-file headers where appropriate.
+    - [x] Generate initial sidebar metadata for prose content.
+- [x] Task: Implement curated reference generation foundation
+    - [x] Choose or configure the reference generator for allowlisted TypeScript entrypoints.
+    - [x] Generate curated reference under `dist-docs/reference/typescript/`.
+    - [x] Fail or clearly report unresolved allowlisted entrypoints.
+    - [x] Prevent broad package/source-tree reference generation.
+- [x] Task: Retire old TypeDoc and custom Markdown templating flows
+    - [x] Remove, disable, or redirect package-level broad TypeDoc scripts that generate root-level `docs/<package>/` clutter.
+    - [x] Update root docs scripts to use the new docs command surface.
+    - [x] Remove, disable, or migrate old custom Markdown templating entrypoints such as `scripts/mk-readme.js`, package `.mtpl` files, and old README parts only after replacement generation exists.
+    - [x] Remove stale generated docs artifacts only when confirmed generated and replaceable.
+    - [x] Record any temporarily retained old docs or templating outputs and their removal criteria.
+- [x] Task: Automated review after old stack removal
+    - [x] Run review focused on TypeDoc removal, custom templating removal, package publish risks, docs generation determinism, and stale generated artifact cleanup.
+    - [x] Address in-scope findings or record deferred findings before expanding prose content.
+- [x] Task: Add generator validation
+    - [x] Validate frontmatter and headings.
+    - [x] Validate internal links and link rewrite targets where possible.
+    - [x] Validate reference allowlist entries and generated output drift.
+    - [x] Validate generated sidebars and metadata shape.
+- [x] Task: Write Transform Hub and core concept docs
+    - [x] Write intro pages explaining what Transform Hub is and when to use it.
+    - [x] Document Hub, Manager, MultiManager, Sequence, Instance, Adapter, Runner, Topics, Streams, and APIs.
+    - [x] Link core concepts to relevant prose, CLI, API/client, and curated reference pages.
+- [x] Task: Write Transform Hub usage docs
+    - [x] Document getting started with Transform Hub.
+    - [x] Document configuration and environment considerations.
+    - [x] Document build and run workflows for source and built output.
+    - [x] Document process, Docker, and Kubernetes adapter differences at a user/operator level.
+- [x] Task: Write Manager docs
+    - [x] Document Manager purpose and architecture at a user/operator level.
+    - [x] Document running Manager and connecting Hubs.
+    - [x] Document operational visibility and API/client interaction points where current behavior supports it.
+- [x] Task: Write sequence implementation docs
+    - [x] Document sequence structure for supported runtimes.
+    - [x] Document input/output behavior, streams, content types, and lifecycle expectations.
+    - [x] Document topics, metadata, health, logging, events, monitoring, stop, and kill behavior.
+    - [x] Include examples as first-class docs content.
+- [x] Task: Write testing and development docs
+    - [x] Document `@scramjet/sequence-test` purpose, current experimental status if applicable, and usage examples.
+    - [x] Document repository overview for contributors.
+    - [x] Document build, test, lint, and validation commands with memory/tooling constraints.
+- [x] Task: Write CLI and API/client docs
+    - [x] Document CLI usage patterns and link to generated command reference.
+    - [x] Document practical API client usage for current clients.
+    - [x] Document `rest-api2` concepts and limits without claiming incomplete MCP/router capabilities.
+- [x] Task: Automated review after prose content
+    - [x] Run review focused on user clarity, operator usefulness, stale claims, and missing safety caveats.
+    - [x] Address in-scope findings or record deferred findings.
+- [x] Task: Validate Phase 1
+    - [x] Run docs generation/check commands.
+    - [x] Run link, frontmatter, reference allowlist, generated output drift, sidebar, and metadata checks available at this stage.
+    - [x] Validate that generator commands honor both root `package.json` endpoint config and the higher-priority environment variable override.
+    - [x] Confirm old TypeDoc and custom templating retirement did not break package builds or package publishing assumptions.
+    - [x] Confirm examples are syntactically plausible or validated where practical.
+    - [x] Record docs areas intentionally left incomplete.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content' (Protocol in workflow.md)
+
+### Phase 1 notes
+
+- Generator command surface: added `scripts/docs.js`, `docs:clean`, `docs:generate`, `docs:generate:content`, `docs:generate:reference`, and `docs:check`. Root `build:docs` and `build:all-docs` now use the new docs generator.
+- Output configuration: generators use `scramjet.docs.outputDir` with `SCRAMJET_DOCS_OUTPUT_DIR` taking precedence. Output roots are protected by a generated marker and refuse protected repo paths or existing unmarked directories.
+- Content export: `docs-source/` prose exports to `dist-docs/content/`, with frontmatter preserved at byte 0 and generated markers after frontmatter. Sidebars and deterministic metadata are generated under `dist-docs/`.
+- Curated reference foundation: generated allowlist-backed reference landing pages under `dist-docs/reference/typescript/`. Full TypeScript signature rendering remains a later improvement; Phase 1 validates allowlist safety and prevents broad source-tree reference output.
+- Old docs stack retirement: root `build:readme` is disabled with guidance until the Phase 2 README generator replaces it; package-level `build:docs` scripts are safe no-op guidance and no longer run broad TypeDoc or write root `dist-docs`; stale `docs/` generated artifacts are intentionally retained until Phase 4 migration/removal.
+- Prose content: added user/operator docs for Transform Hub, Manager, deployment adapters, CLI, API/client usage, sequences, testing, development, and examples. `@scramjet/sequence-test` is labeled experimental.
+- Reviews: automated reviews found and then verified fixes for generated frontmatter placement, output-root safety, package docs fan-out safety, stale command/API claims, sequence-test examples, and plan status drift. Final old-stack review reported no blockers or major issues.
+- Validation run: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:generate:content`, `npm run docs:generate:reference`, and `npm run docs:check` passed under the repository memory guard. Package no-op script validated with `npm run build:docs -w @scramjet/types`. Protected output root checks rejected `SCRAMJET_DOCS_OUTPUT_DIR=docs`, `SCRAMJET_DOCS_OUTPUT_DIR=bdd`, and `SCRAMJET_DOCS_OUTPUT_DIR=packages/sth`. Existing unmarked external output root rejection was also validated.
+- Skipped validation: package build/tests were not run because Phase 1 changes are documentation/generator script changes and package script metadata only; no runtime, adapter, API runtime, or CLI behavior changed. Full README generation, CLI reference generation, API v2 docs generation, and old `docs/` artifact deletion remain planned for later phases.
+- Phase checkpoint commit: `1e5b393d` (`docs(conductor): Complete new docs phase 1`).
+- Manual verification — Phase 1 truth-audit corrections applied post-review:
+  - Updated all Node.js >=16 claims/examples to >=18 across all docs-source files.
+  - Separated legacy v1 API/client documentation: created `docs-source/api/legacy/v1-api-client.md` for `@scramjet/api-client` and `/api/v1` examples; restructured `docs-source/api/client-usage.md` to focus on v2/rest-api2/current v2 route tree concepts with a link to the legacy page and a note that v1 remains supported for backwards compatibility.
+  - Added prominent note to `docs-source/cli/usage.md` that the CLI currently uses compatibility/v1-era workflows and is planned to be updated to v2 API; backwards compatibility will be supported.
+  - Updated Manager docs (`running.md`, `overview.md`, `connecting-hubs.md`) with verser2 transport notes, TLS/mTLS guidance, configuration file/schema references. Marked `connecting-hubs.md` as needing further review because TLS/mTLS/verser2 enrollment details are incomplete. Included conservative facts: production verser2 connectivity requires TLS; mTLS is configurable; topology is Runner → STH-local verser2 Host → STH → Manager; no direct Runner-to-Manager connection.
+  - Updated `docs-source/transform-hub/configuration.md` with source-backed verser2 configuration areas and schema references. Removed unsupported flag/env examples and kept exact names only where verified from source, such as `--verser2-host-url`, `--verser2-enabled`, `--cpm-url`, and `--cpm-id`.
+  - Fixed stale "router layer not complete" phrasing in `docs-source/api/client-usage.md` and `docs-source/transform-hub/core-concepts.md`. Now states that the rest-api2 route tree powers v2 runtime routers and clients; standalone docs site/server generation is a separate concern.
+  - Fixed incorrect package name: `packages/python-runner` → `packages/runner-python` in `docs-source/development/contributing.md`.
+  - Added TypeScript and Bun to runtime listings in `docs-source/transform-hub/overview.md`, `core-concepts.md`, and `build-run.md` where only JavaScript/Python were listed.
+  - Follow-up corrections updated rest-api2 examples to include route manifest construction, moved v1 API examples behind legacy compatibility notes, corrected Manager connection examples to include both legacy CPM fields and `--verser2-host-url`, and updated `packages/rest-api2/README.md` examples that were not generated from `docs-source`.
+  - These corrections were identified by reviewing the docs-source against archived tracks (conductor/archive/) and source-of-truth references in the repository.
+  - Manual verification: Phase 1 approved after these corrections.
+
+## Phase 2: README Pipeline Replacement
+
+- [x] Task: Design README source model
+    - [x] Define root README source and package README source conventions under `docs-source/readmes/` or approved equivalent.
+        - `docs-source/readmes/README.md` documents the source model
+        - `docs-source/readmes/root.md` is the source template for root README (static content + `<!-- PACKAGE-LIST -->` marker)
+        - `docs-source/readmes/packages/<dir>.md` optional overlays for packages needing custom content beyond package.json
+    - [x] Map old `.mtpl` package templates to new README source files when any content remains to migrate.
+        - Old `.mtpl` files are not used by the new pipeline. `scripts/mk-readme.js` now fails fast with deprecation guidance.
+    - [x] Define reusable partial/include support for README generation.
+        - Documented in `docs-source/readmes/README.md`: partials exist at `docs-source/_partials/` but the README generator does not yet expand include markers; generated READMEs are self-contained.
+    - [x] Define link rebasing for root, package, npm, docs-site, and generated-reference contexts.
+        - Documented in `docs-source/readmes/README.md` with table of four contexts and relative anchor strategies.
+- [x] Task: Implement README generator
+    - [x] Generate root `README.md` from the new docs source pipeline.
+        - Reads `docs-source/readmes/root.md`, expands `<!-- PACKAGE-LIST -->` with auto-generated table from all packages/*/package.json.
+    - [x] Generate package `README.md` files from new package README sources.
+        - For packages with overlay (`docs-source/readmes/packages/<dir>.md`): uses overlay content.
+        - For all other packages: auto-generates heading + description + install/import + docs link from package.json.
+    - [x] Generate README copies or landing pages under `dist-docs/readmes/` where needed.
+        - Root README mirrored to `dist-docs/readmes/README.md`
+        - Each package README mirrored to `dist-docs/readmes/packages/<dir>/README.md`
+    - [x] Keep package READMEs concise and link longer content to docs/reference pages.
+        - All generated READMEs are under 25 lines; include only name, description (or overlay), install, import, and a docs link.
+- [x] Task: Complete old README template cleanup
+    - [x] Confirm `scripts/mk-readme.js`, package `.mtpl` files, and old README parts are removed, disabled, or explicitly retained with rationale.
+        - `scripts/mk-readme.js` is disabled with a fail-fast deprecation message. `build:readme` runs `npm run docs:generate:readmes`.
+    - [x] Update root npm scripts to use the new README generation path.
+        - Added `docs:generate:readmes` script. `docs:generate` now includes README generation in the "all" scope. `build:readme` points to the new command.
+    - [x] Confirm package publishing still includes expected README content.
+        - All packages/*/README.md now exist with concise content and generated markers.
+- [x] Task: Add README validation
+    - [x] Add README drift checks.
+        - `docs:check` validates README output as part of the full dist-docs comparison. For check mode, `writeRepoReadmes: false` prevents repo file modification during validation.
+    - [x] Add tests or fixtures for partials, link rebasing, generated reference links, and package README generation.
+        - Not implemented; deferred to later phase if needed. The validation flow (`docs:check`) detects drift, which serves as a regression test.
+    - [x] Validate generated README links where possible.
+        - `docs:check` compares generated temp output against existing dist-docs.
+- [x] Task: Validate Phase 2
+    - [x] Run README generation and drift checks.
+    - [x] Run docs generation/check commands affected by README outputs.
+    - [x] Review root and package README outputs for stale claims and excessive detail.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: README Pipeline Replacement' (Protocol in workflow.md)
+
+### Phase 2 notes
+
+- Broken README links: The docs link in generated package READMEs no longer points to the nonexistent `../dist-docs/reference/README.md`. Links are now context-specific — packages with allowlisted reference entries link directly to their `../../dist-docs/reference/typescript/<slug>/README.md` (repo context) or `../../reference/typescript/<slug>/README.md` (dist-docs context). Packages without reference entries link to `../../docs-source/README.md` (repo) or an absolute GitHub URL (dist-docs).
+- README drift validation: `docs:check` now validates repo README files (`README.md` and `packages/*/README.md`) against regenerated content in addition to the existing dist-docs output comparison. Drift in either location produces a clear error with regeneration guidance.
+- Per-context link rebasing: Implemented `generatePackageReadmeFor(context, ...)` that renders different link values for `"repo"`, `"dist-docs"`, and `"npm"` contexts. Root README generation also has separate `generateRootReadmeDistDocs()` that uses absolute GitHub URLs for package table entries in the dist-docs mirror.
+- Root README Quick Start: Added concise Quick Start section with install, start, deploy commands and runtime requirements. Updated runtime claim from "Node.js and Python" to "Node.js, Bun, and Python".
+- Stale package descriptions: Added `DESCRIPTION_OVERRIDES` map for `adapter-kubernetes`, `adapters`, `api-server`, `sth-config`, and `obj-logger`, sourced from codemap responsibilities. Overrides are applied during root README package table and package README generation.
+- Old README generator: `build:readme` already redirects to `docs:generate:readmes`. `scripts/mk-readme.js` now fails immediately with deprecation guidance and does not execute legacy templating.
+- Sidebar metadata: Readmes sidebar `source` field now correctly points to the actual source path (e.g., `docs-source/readmes/root.md`, `docs-source/readmes/packages/rest-api2.md`) instead of the incorrect `packages/...` prefix.
+- Overlay source model: Package README generation now always emits Install, Import, and Documentation sections regardless of whether an overlay exists. Overlays supply only the description/body content. `docs-source/readmes/README.md` updated to document this behavior.
+- Validation: `npm run docs:generate`, `docs:check`, `docs:generate:readmes`, and `build:readme` all pass.
+- Phase checkpoint commit: `d2c47f7d` (`docs(conductor): Complete new docs phase 2`).
+- Manual verification correction: improved client-facing package README overlays for `@scramjet/sth`, `@scramjet/multi-manager`, `@scramjet/manager`, `@scramjet/cli`, `@scramjet/rest-api2`, `@scramjet/api-server`, `@scramjet/api-client`, and the process/Docker/Kubernetes adapters. Examples were reviewed against source for signatures and command availability; README mirrors and package READMEs were regenerated and validated with `npm run docs:generate` and `npm run docs:check`.
+- Manual verification correction: updated `@scramjet/multi-manager` README to document executable/bin usage instead of import usage. Phase 2 approved after this correction.
+- Phase 2 correction: Created/improved README overlays for 10 client-facing and operator-facing packages:
+  - **Core user-facing packages**: `sth`, `manager`, `multi-manager`, `cli` — each now has a full overlay with purpose, when-to-use, quick start (install + basic commands), configuration notes, stability, and cross-references to docs-source.
+  - **API packages**: `rest-api2` (improved with source-aligned `createHttpClientTransport`/`RestAPI2Routes`/`createRootClient` examples, experimental notice, v1→v2 guidance), `api-client` (clearly labeled legacy v1, links to rest-api2 for new integrations, typed client examples from source), `api-server` (HTTP server library docs, APIServer example from source).
+  - **Adapter packages**: `adapter-process`, `adapter-docker`, `adapter-kubernetes` — operator-facing overlays with adapter-specific CLI flags sourced from `augmentOptions()`, runtime selection guidance, stability labels, and cross-links to deployment docs.
+  - Each overlay includes: purpose, when-to-use, conservative usage examples verified against source exports, configuration notes, stability/legacy labels, and "See also" links. No fabricated flags or methods. `api-server` example uses the actual `APIServer` class constructor pattern from source. `rest-api2` examples use the actual manifest/transport/fluent-client exports verified against `packages/rest-api2/src/client.ts`.
+  - Generated READMEs and dist-docs readmes regenerated and validated: `npm run docs:generate:readmes` and `npm run docs:check` both pass.
+
+## Phase 3: Full API v2 Documentation and Legacy v1 Separation
+
+- [x] Task: Generate API v2 docs from definitions
+    - [x] Use `packages/rest-api2/src/routes.ts` definitions, especially `RestAPI2RouteTree`, `RestAPI2RouteSets`, and `RestAPI2Routes`, as the canonical API v2 documentation source.
+    - [x] Generate docs for root, space, hub, sequence, and instance route nodes.
+    - [x] Document route groups, child resolver relationships, dynamic mount paths, implementer paths, and opaque route handling.
+    - [x] Generate route pages or structured data for params, query, headers, request bodies, responses, route kind, stream semantics, and tags/descriptions where available.
+    - [x] Preserve stable operation IDs and doc IDs across regeneration.
+- [ ] Task: Document API v2 client usage
+    - [ ] Document generic `createRestAPI2Client()` usage with a manifest and transport.
+    - [ ] Document fluent clients: `createRootClient`, `createSpaceClient`, `createHubClient`, `createInstanceClient`, and `createFluentClientFromRouteTreeNode`.
+    - [ ] Document HTTP and verser2 transports exported by `packages/rest-api2/src/client.ts`.
+    - [ ] Include examples for root/space/hub/instance traversal, route requests, params, query, headers, and response handling.
+    - [ ] Document unsupported or opaque routes, including RPC, without claiming generated coverage that does not exist.
+- [ ] Task: Document custom API definitions and definition-level data
+    - [ ] Document how custom route definitions are created with `@scramjet/api-router` route definitions and schemas.
+    - [ ] Document how to build routers/manifests from custom definitions and generate clients from manifests.
+    - [ ] Identify whether existing `RouteDefinition`/`ResolverDefinition` metadata is sufficient for good API docs.
+    - [ ] If needed, plan definition-level documentation metadata additions such as summaries, descriptions, tags, examples, errors, stream notes, or API docs overrides.
+    - [ ] Ensure any metadata additions are backward-compatible and do not change runtime route behavior.
+- [x] Task: Separate legacy v1 API documentation
+    - [x] Inventory current v1 API route sources in Host, Manager, MultiManager, storage routers, and legacy API clients.
+    - [x] Create a separate legacy docs structure for v1 API docs, such as `docs-source/api/legacy/` and `dist-docs/reference/api/legacy/v1/`.
+    - [x] Document v1 compatibility status, migration guidance, and major v1 route groups without mixing v1 routes into primary API v2 docs.
+    - [x] Link v1 legacy docs from migration/compatibility pages only where useful.
+- [x] Task: Validate Phase 3
+    - [x] Run API v2 documentation generation from definitions.
+    - [x] Validate generated API v2 docs against route manifests and client exports.
+    - [x] Validate legacy v1 docs are emitted under the legacy folder only.
+    - [x] Confirm API docs generators honor root `package.json` endpoint config and the higher-priority environment variable override.
+    - [x] Validation run: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, `npm run docs:generate:readmes` — all pass.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Full API v2 Documentation and Legacy v1 Separation' (Protocol in workflow.md)
+
+### Phase 3 notes (updated 2026-06-21, Phase 3 correction track)
+
+- API v2 route data is now **source-derived** from `packages/rest-api2/src/routes.ts` via `parseAPIV2FromSource()`, which parses route set functions (`rootRouteSet`, `spaceRouteSet`, `hubRouteSet`, `sequenceRouteSet`, `instanceRouteSet`) and the `RestAPI2RouteTree` definition directly from source text. No hard-coded route table remains.
+- The parser extracts method, path, kind, schemas, and opaque flags from Router.get/post/put/delete/patch/route calls, and resolver path/schemas/targetOwner/mountPath/implementerBasePath from resolver set functions.
+- **Generated operation IDs and paths now use full v2 base paths**:
+  - root: `/api/v2`
+  - space: `/api/v2/spaces/:spaceId`
+  - hub: `/api/v2/spaces/:spaceId/hubs/:hubId`
+  - sequence: `/api/v2/spaces/:spaceId/hubs/:hubId/sequences`
+  - instance: `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId`
+  - Operation ID format: `METHOD /full/path` (e.g., `GET /api/v2/version`, `POST /api/v2/spaces/:spaceId/hubs/:hubId/sequences`)
+- **Broken link fixes**:
+  - `docs-source/api/client-usage.md` relative links to dist-docs reference pages are now rewritten during content generation (`generateContent`): `../../dist-docs/...` → `../../...` in the output, so links resolve correctly from `dist-docs/content/`.
+  - `dist-docs/reference/api/legacy/v1/index.md` body content links are rebased from the source location (`docs-source/api/legacy/v1-api-client.md`) to the output location via path resolution, so `../client-usage.md` → `../../../../content/api/client-usage.md` etc.
+  - The mirror blurb link (which pointed to a nonexistent path) is now plain text.
+  - Package README overlay links that point to `docs-source/*.md` are rewritten to GitHub blob URLs in `dist-docs/readmes/`, while repository/package READMEs keep repo-relative links.
+- **`generate:readmes` handler restored**: `main()` now dispatches `generate:readmes` to `generate(undefined, "readmes")`. The npm script `docs:generate:readmes` works.
+- Each node page includes: route table (with full paths), per-route detail sections (operation ID with full path, node-local path, method, kind, schema references), group membership, resolver/child relationships, dynamic mount paths, and opaque route annotations.
+- Sidebars: `sidebars/reference-api-v2.json` (6 entries: index + 5 nodes) and `sidebars/reference-api-legacy-v1.json` (1 entry).
+- Metadata: API v2 and legacy v1 groups registered in `groups.api`. Warnings updated.
+- New npm script: `docs:generate:api` scoped to API-only regeneration.
+- Validation results: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, and `npm run docs:generate:readmes` all pass. A generated `dist-docs` markdown link check across 77 files also passes.
+- Review: `@oracle` blocker review returned `none` after correcting source parsing, generated links, `generate:readmes`, and plan status issues.
+- Phase checkpoint commit: `37473fb3` (`docs(conductor): Complete new docs phase 3`).
+- Manual verification: approved by user after checkpoint branch push (`d094ca95`).
+- Deferred: "Document API v2 client usage" and "Document custom API definitions and definition-level data" remain **unstarted** — they cover prose documentation of client helpers and custom route definitions, not generated route docs. These require editorial content, not generator changes, and are NOT marked complete.
+
+## Phase 4: CLI Reference and Final Export Replacement
+
+- [x] Task: Integrate CLI reference generation
+    - [x] Generate CLI command reference from the current CLI command model where practical.
+    - [x] Output CLI reference under `dist-docs/reference/cli/` or approved equivalent.
+    - [x] Link prose CLI docs and README outputs to generated CLI reference.
+- [x] Task: Finalize export metadata and sidebars
+    - [x] Generate complete `dist-docs/metadata.json`.
+    - [x] Generate sidebars for prose, reference, CLI, API v2, legacy v1 API docs, and README copies as applicable.
+    - [x] Confirm external Docusaurus consumption paths are documented.
+- [x] Task: Remove old docs outputs completely
+    - [x] Remove old generated docs outputs that are superseded by `dist-docs`.
+    - [x] Remove or archive obsolete root-level docs folders only after confirming their content is migrated, generated, or intentionally excluded.
+    - [x] Confirm old docs generator entrypoints no longer produce or expect legacy `docs/` output.
+    - [x] Ensure `dist-docs` is the complete generated documentation handoff surface for the external Docusaurus repo.
+- [x] Task: Validate complete docs export
+    - [x] Run `docs:clean`, `docs:generate`, and `docs:check` or approved equivalents.
+    - [x] Run link, frontmatter, reference allowlist, README drift, API docs, legacy v1 separation, endpoint override, and metadata checks.
+    - [x] Run package build or narrower checks if docs script/package changes affect builds.
+    - [x] Confirm generation is deterministic by checking for no unexpected drift after regeneration.
+- [x] Task: Automated review before final verification
+    - [x] Run final review focused on docs usability, generator determinism, complete old-doc removal, endpoint configurability, and Docusaurus handoff readiness.
+    - [x] Address in-scope findings or document deferred follow-ups.
+- [x] Task: Final track documentation update
+    - [x] Update track notes or plan with validation results, skipped checks, and known follow-ups.
+    - [x] Confirm no unrelated runtime, adapter, API, or CLI behavior changed.
+    - [x] Update PR description with final validation and reviewer guidance.
+- [x] Task: Conductor - User Manual Verification 'Phase 4: CLI Reference and Final Export Replacement' (Protocol in workflow.md)
+
+### Phase 4 notes (updated 2026-06-21)
+
+- CLI reference generation now emits `dist-docs/reference/cli/index.md`, `dist-docs/reference/cli/commands.md`, and `dist-docs/sidebars/reference-cli.json` from `packages/cli/src/lib/commands/*.ts` command descriptors plus root options from `packages/cli/src/bin/index.ts`.
+- Prose CLI docs and the generated `@scramjet/cli` README link to the generated CLI reference. `docs:generate:reference` regenerates TypeScript placeholder reference pages and CLI reference without removing API reference output.
+- `dist-docs/metadata.json` now includes curated reference entries and hashes generator inputs that affect output: `docs-source/`, CLI command descriptors, CLI root, API v2 routes, package manifests, root `package.json`, and `scripts/docs.js`.
+- Legacy generated `docs/` output was removed. Authored legacy material that was not generated API reference output (Kubernetes/Nomad guides, architecture notes, read-more articles, roadmap records, legacy `api.md`) was migrated under `docs-source/legacy-docs/` as archived source material outside the routed docs sections.
+- Package TypeDoc `typedocOptions.out` paths no longer point at root `docs/`; they point under `dist-docs/reference/typescript/` if TypeDoc is run manually, while package `build:docs` scripts remain retired/no-op.
+- Validation passed: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:reference`, generated `dist-docs` link check across 79 Markdown files, legacy `docs/` absence check, TypeDoc-output grep check, `git diff --check`, and `SCRAMJET_DOCS_OUTPUT_DIR` endpoint override check.
+- Review: `@oracle` Phase 4 blocker review findings were fixed; re-check returned `none`.
+- PR #25 description updated with final summary, validation list, and review guidance.
+- Phase checkpoint commit: `93ef1da5` (`docs(conductor): Complete new docs phase 4`).
+- Manual verification: approved by user after checkpoint branch push (`499e1a58`).

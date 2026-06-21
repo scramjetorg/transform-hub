@@ -15,7 +15,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/verser",
+    "out": "../../dist-docs/reference/typescript/verser",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

@@ -1,0 +1,162 @@
+[
+  {
+    "source": "docs-source/readmes/root.md",
+    "output": "README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/adapter-docker.md",
+    "output": "packages/adapter-docker/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/adapter-kubernetes.md",
+    "output": "packages/adapter-kubernetes/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/adapter-process.md",
+    "output": "packages/adapter-process/README.md"
+  },
+  {
+    "source": "packages/adapters/package.json",
+    "output": "packages/adapters/README.md"
+  },
+  {
+    "source": "packages/adapters-common/package.json",
+    "output": "packages/adapters-common/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/api-client.md",
+    "output": "packages/api-client/README.md"
+  },
+  {
+    "source": "packages/api-router/package.json",
+    "output": "packages/api-router/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/api-server.md",
+    "output": "packages/api-server/README.md"
+  },
+  {
+    "source": "packages/bpmux/package.json",
+    "output": "packages/bpmux/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/cli.md",
+    "output": "packages/cli/README.md"
+  },
+  {
+    "source": "packages/client-utils/package.json",
+    "output": "packages/client-utils/README.md"
+  },
+  {
+    "source": "packages/config/package.json",
+    "output": "packages/config/README.md"
+  },
+  {
+    "source": "packages/frame-stream/package.json",
+    "output": "packages/frame-stream/README.md"
+  },
+  {
+    "source": "packages/host/package.json",
+    "output": "packages/host/README.md"
+  },
+  {
+    "source": "packages/load-check/package.json",
+    "output": "packages/load-check/README.md"
+  },
+  {
+    "source": "packages/logger/package.json",
+    "output": "packages/logger/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/manager.md",
+    "output": "packages/manager/README.md"
+  },
+  {
+    "source": "packages/manager-config/package.json",
+    "output": "packages/manager-config/README.md"
+  },
+  {
+    "source": "packages/middleware-api-client/package.json",
+    "output": "packages/middleware-api-client/README.md"
+  },
+  {
+    "source": "packages/model/package.json",
+    "output": "packages/model/README.md"
+  },
+  {
+    "source": "packages/module-loader/package.json",
+    "output": "packages/module-loader/README.md"
+  },
+  {
+    "source": "packages/monitoring-server/package.json",
+    "output": "packages/monitoring-server/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/multi-manager.md",
+    "output": "packages/multi-manager/README.md"
+  },
+  {
+    "source": "packages/multi-manager-api-client/package.json",
+    "output": "packages/multi-manager-api-client/README.md"
+  },
+  {
+    "source": "packages/obj-logger/package.json",
+    "output": "packages/obj-logger/README.md"
+  },
+  {
+    "source": "packages/pre-runner/package.json",
+    "output": "packages/pre-runner/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/rest-api2.md",
+    "output": "packages/rest-api2/README.md"
+  },
+  {
+    "source": "packages/runner/package.json",
+    "output": "packages/runner/README.md"
+  },
+  {
+    "source": "packages/runner-bun/package.json",
+    "output": "packages/runner-bun/README.md"
+  },
+  {
+    "source": "packages/runner-node/package.json",
+    "output": "packages/runner-node/README.md"
+  },
+  {
+    "source": "packages/runner-python/package.json",
+    "output": "packages/runner-python/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/sequence-test.md",
+    "output": "packages/sequence-test/README.md"
+  },
+  {
+    "source": "docs-source/readmes/packages/sth.md",
+    "output": "packages/sth/README.md"
+  },
+  {
+    "source": "packages/sth-config/package.json",
+    "output": "packages/sth-config/README.md"
+  },
+  {
+    "source": "packages/symbols/package.json",
+    "output": "packages/symbols/README.md"
+  },
+  {
+    "source": "packages/telemetry/package.json",
+    "output": "packages/telemetry/README.md"
+  },
+  {
+    "source": "packages/types/package.json",
+    "output": "packages/types/README.md"
+  },
+  {
+    "source": "packages/utility/package.json",
+    "output": "packages/utility/README.md"
+  },
+  {
+    "source": "packages/verser/package.json",
+    "output": "packages/verser/README.md"
+  }
+]

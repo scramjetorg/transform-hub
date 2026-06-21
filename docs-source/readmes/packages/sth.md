@@ -1,0 +1,52 @@
+Scramjet Transform Hub (STH) is the core runtime process that deploys, executes, and monitors Transform Sequences on a host. It is the primary server component of the Scramjet Transform Hub platform.
+
+## When to use
+
+Install and run `@scramjet/sth` on any machine where you want to execute Sequences — a development workstation, a production server, an edge device, or a cloud VM. The Hub manages Sequence lifecycle, inter-process communication via Topics, health monitoring, and adapter-based runner execution (process, Docker, or Kubernetes).
+
+For multi-host orchestration, connect STH instances to a [Manager](../../docs-source/manager/overview.md) or [MultiManager](../../docs-source/manager/connecting-hubs.md).
+
+## Quick start
+
+Install globally:
+
+```bash
+npm install -g @scramjet/sth
+```
+
+Start the Hub (defaults to port 8000 with automatic adapter detection):
+
+```bash
+scramjet-transform-hub
+```
+
+With the [CLI](../../docs-source/cli/usage.md) installed, deploy a sequence from another terminal:
+
+```bash
+si sequence pack /path/to/sequence -o sequence.tar.gz
+si sequence deploy sequence.tar.gz
+```
+
+## Configuration
+
+STH accepts command-line flags and a configuration file. Common options:
+
+- `--port`, `-P` — API port (default: 8000)
+- `--hostname`, `-H` — API bind address (default: 0.0.0.0)
+- `--log-level`, `-L` — log level (trace, debug, info, warn, error)
+- `--cpm-url`, `-C` — Manager URL for Hub-to-Manager connectivity
+- `--runtime-adapter` — runner adapter: `process`, `docker`, or `kubernetes`
+- `--config`, `-c` — path to JSON configuration file
+
+Run `scramjet-transform-hub --help` for the full option listing.
+
+## Stability
+
+This package is **stable**. The core Hub runtime contract is part of the public API surface.
+
+## See also
+
+- [Transform Hub overview](../../docs-source/transform-hub/overview.md) for architecture and workflow.
+- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for detailed configuration reference.
+- [Build and run workflows](../../docs-source/transform-hub/build-run.md) for Sequence lifecycle details.
+- [Manager overview](../../docs-source/manager/overview.md) for multi-host orchestration.

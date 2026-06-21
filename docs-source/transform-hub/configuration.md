@@ -1,0 +1,103 @@
+---
+id: transform-hub-configuration
+slug: /transform-hub/configuration
+title: Transform Hub configuration
+---
+
+# Transform Hub configuration
+
+The Hub process accepts configuration through command-line flags, environment variables, and a configuration file. This page covers the key settings for running Transform Hub in different environments.
+
+## Command-line flags
+
+Start the Hub with common options:
+
+```bash
+sth \
+  --port 8000 \
+  --hostname ::
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--port` | `8000` | Hub API HTTP port |
+| `--hostname` | `::` | Bind address (all interfaces) |
+| `--runtime-adapter` | `detect` | Adapter type: `detect`, `process`, `docker`, or `kubernetes` |
+| `--config` | — | Path to configuration file |
+
+## Environment variables
+
+Common command-line flags have corresponding environment variables:
+
+- `SCRAMJET_PORT` — API port
+- `SCRAMJET_HOSTNAME` — bind address
+
+Pass configuration files explicitly with `--config`.
+
+## Configuration file
+
+The Hub reads a JSON or YAML configuration file when started with `--config`. The file top-level keys mirror the flag names:
+
+```json
+{
+  "port": 8000,
+  "hostname": "0.0.0.0",
+  "runtimeAdapter": "detect"
+}
+```
+
+## Adapter configuration
+
+Each [adapter](../deployment/process-adapter.md) has additional configuration options:
+
+- **Process adapter**: `cwd` (working directory), `maxProcesses` (concurrency limit)
+- **Docker adapter**: `dockerSocket` (Docker socket path), `networkName`, `defaultImage`
+- **Kubernetes adapter**: `kubeConfigPath`, `namespace`, `defaultImage`
+
+Set these under the `adapter` key in the configuration file or pass them as Hub startup options. See the [deployment documentation](../deployment/process-adapter.md) for adapter-specific guidance.
+
+## Logging
+
+Configure log level with the `--log-level` flag or `SCRAMJET_LOG_LEVEL` environment variable. Supported levels: `debug`, `info`, `warn`, `error`. The default is `info`.
+
+## Verser2 transport
+
+The Hub uses the **verser2** protocol for connectivity to the Manager. Verser2-related configuration covers the connection endpoint, TLS settings, and transport options.
+
+The connection topology is:
+
+```
+Runner → STH-local verser2 Host → STH → Manager
+```
+
+No Runner process connects directly to the Manager; all communication flows through the Hub's local verser2 host.
+
+Important configuration areas include:
+
+- upstream host connectivity, such as `--verser2-host-url` and `--verser2-enabled`;
+- TLS trust and client certificate material, such as CA, certificate, and key file options;
+- runner-local verser2 host settings used by launched runtimes;
+- Manager-side mTLS requirements, configured on the Manager/MultiManager side where supported by the active command surface.
+
+In production, verser2 connectivity requires TLS. mTLS is configurable for additional mutual authentication. The authoritative option descriptors and environment mappings live in `packages/config/src/verser2-config.ts`, and the effective config schema is emitted under `schemas/`.
+
+## Configuration file and schema
+
+The Hub reads JSON/YAML/JSONC configuration through the `@scramjet/config` loader. The generated schema for STH configuration is `schemas/sth-config.schema.json`; sequence startup config is described by `schemas/startup-config.schema.json`.
+
+For the authoritative configuration schema, refer to the generated curated reference for `@scramjet/sth-config` and `@scramjet/types`.
+
+## Hub identification
+
+Each Hub should have a unique identity for Manager coordination:
+
+- `--id` — explicit Hub identifier (auto-generated if omitted)
+- `--cpm-url` — CPM/Manager URL for the legacy registration flow (requires `--cpm-id`)
+
+When `--cpm-url` is set together with `--cpm-id`, the Hub attempts the legacy Manager registration flow on startup. Current production deployments should also review `--verser2-host-url` and verser2 TLS/mTLS configuration in the [connecting Hubs guide](../manager/connecting-hubs.md).
+
+## Next steps
+
+- [Build and run workflows](build-run.md) for packaging and deploying Sequences.
+- Adapter-specific settings: [Process](../deployment/process-adapter.md) | [Docker](../deployment/docker-adapter.md) | [Kubernetes](../deployment/kubernetes-adapter.md)
+- [Manager configuration](../manager/running.md) for the orchestration layer.
