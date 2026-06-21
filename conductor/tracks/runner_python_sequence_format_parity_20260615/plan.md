@@ -330,6 +330,12 @@
   be added later if this path changes further. Existing runtime paths close the
   hub client and sequence guest.
 
+**Manual verification:**
+
+- Scoped TLS checkpoint commit `f25e9283` was pushed and manually approved by
+  the user on 2026-06-21. Outdated refapp BDD coverage remains deferred to a
+  later track by user instruction.
+
 ## Phase 5: Isolated Legacy Compatibility Structure
 
 - [ ] Task: Design minimal unsupported compatibility boundary
