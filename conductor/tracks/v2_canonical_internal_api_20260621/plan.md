@@ -35,7 +35,7 @@
     - [x] Preserve explicit configuration and existing override paths.
     - [x] Avoid persisted identity churn unless the current value is the unsafe default.
     - [x] Run focused STH config and Host runner Verser2 config tests.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Tests, and Reported Issue Locks' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Tests, and Reported Issue Locks' (Protocol in workflow.md)
 
 ## Phase 2: Canonical v2 Internal Sequence and Runner Access
 
@@ -140,3 +140,4 @@
 - Phase 1 lint/build validation: `npm run lint -- <changed files>` invokes Biome on `.` in this repo and reported preexisting out-of-scope `scripts/docs.js` warnings only; corrected direct changed-file `RAYON_NUM_THREADS=12 npx biome lint <changed files>` passed. `npm run build:packages` passed.
 - Phase 1 deduplication check: reused `@scramjet/rest-api2` schemas/contracts for v2 metadata, `@scramjet/api-router` compatibility route patterns, existing Manager `STHInfoRegister`, and existing Host runner Verser2 config module. No repeated package-local helper needed beyond the Host-specific unsafe-default identity derivation helper.
 - Phase 1 checkpoint commit: `033fb819` (`feat(conductor): Complete v2 canonical API phase 1`).
+- Phase 1 manual verification: approved by user after PR push.
