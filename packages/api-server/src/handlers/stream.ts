@@ -83,6 +83,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res.socket?.on("end", disconnect);
             res.socket?.on("close", disconnect);
+            res.once("close", disconnect);
 
             return out.pipe(res);
         } catch (e: any) {

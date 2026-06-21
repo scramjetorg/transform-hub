@@ -1,4 +1,4 @@
-import { Readable } from "stream";
+import { Readable, Transform, TransformCallback } from "stream";
 
 type SocketLike = {
     bytesRead?: number;
@@ -18,28 +18,35 @@ type StreamLike = Partial<Readable> & {
 
 type ChunkLike = Buffer | string | { byteLength?: number; length?: number };
 
+type ByteCounterStream = Transform & { getBytes: () => number };
+
 function numericValue(value: unknown): number | undefined {
     return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function streamByteLength(stream?: StreamLike): number | undefined {
-    return numericValue(stream?.readableLength)
-        ?? numericValue(stream?.writableLength)
-        ?? numericValue(stream?.bytesRead)
-        ?? numericValue(stream?.bytesWritten);
+function chunkByteLength(chunk: ChunkLike): number {
+    if (Buffer.isBuffer(chunk)) {
+        return chunk.byteLength;
+    }
+
+    if (typeof chunk === "string") {
+        return Buffer.byteLength(chunk);
+    }
+
+    return numericValue(chunk?.byteLength) ?? numericValue(chunk?.length) ?? 0;
 }
 
 export function getRequestBytesRead(request?: StreamLike, fallbackStream?: StreamLike): number {
     return numericValue(request?.socket?.bytesRead)
-        ?? streamByteLength(fallbackStream)
-        ?? streamByteLength(request)
+        ?? numericValue(fallbackStream?.bytesRead)
+        ?? numericValue(request?.bytesRead)
         ?? 0;
 }
 
 export function getRequestBytesWritten(request?: StreamLike, fallbackStream?: StreamLike): number {
     return numericValue(request?.socket?.bytesWritten)
-        ?? streamByteLength(fallbackStream)
-        ?? streamByteLength(request)
+        ?? numericValue(fallbackStream?.bytesWritten)
+        ?? numericValue(request?.bytesWritten)
         ?? 0;
 }
 
@@ -47,20 +54,18 @@ export function getRequestRemoteAddress(request?: StreamLike): string | undefine
     return request?.socket?.remoteAddress;
 }
 
-export function trackStreamBytes(stream: StreamLike): () => number {
+export function createByteCounterStream(): ByteCounterStream {
     let bytes = 0;
-
-    stream.on?.("data", (chunk: ChunkLike) => {
-        if (Buffer.isBuffer(chunk)) {
-            bytes += chunk.byteLength;
-        } else if (typeof chunk === "string") {
-            bytes += Buffer.byteLength(chunk);
-        } else {
-            bytes += numericValue(chunk?.byteLength) ?? numericValue(chunk?.length) ?? 0;
+    const stream = new Transform({
+        transform(chunk: ChunkLike, _encoding: BufferEncoding, callback: TransformCallback) {
+            bytes += chunkByteLength(chunk);
+            callback(null, chunk);
         }
-    });
+    }) as ByteCounterStream;
 
-    return () => bytes;
+    stream.getBytes = () => bytes;
+
+    return stream;
 }
 
 export function onRequestSocketEvent(request: StreamLike | undefined, event: string, listener: (...args: any[]) => void): void {
@@ -70,5 +75,23 @@ export function onRequestSocketEvent(request: StreamLike | undefined, event: str
         socket.once(event, listener);
     } else if (typeof socket?.on === "function") {
         socket.on(event, listener);
+    }
+}
+
+export function onRequestDisconnect(request: StreamLike | undefined, listener: (...args: any[]) => void): void {
+    let handled = false;
+    const once = () => {
+        if (!handled) {
+            handled = true;
+            listener();
+        }
+    };
+
+    for (const event of ["end", "close", "error"]) {
+        onRequestSocketEvent(request, event, once);
+    }
+
+    for (const event of ["aborted", "close", "end", "error"]) {
+        request?.once?.(event, once);
     }
 }

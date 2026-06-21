@@ -276,6 +276,42 @@ test("DiskProxy unit upload handler identifies stores and indexes sequences", as
     t.is(putObjectCalls[0][1], "manager-storage-hotwire/uploaded.tar.gz");
 });
 
+test("DiskProxy unit upload handler measures package size without socket", async t => {
+    const recorder = new RouteRecorder();
+    const proxy = new DiskProxy({
+        ...storageConfig,
+        router: recorder.asApiRoute(),
+        s3Client: {
+            putObject: async () => undefined,
+            removeObject: async () => undefined
+        } as any,
+        sequenceAdapter: {
+            logger: new ObjLogger("disk-proxy-no-socket-adapter"),
+            identify: async () => ({
+                id: "seq-no-socket",
+                name: "no-socket",
+                entrypointPath: "index.js",
+                sequenceDir: "/tmp/sequence",
+                type: "node"
+            }) as any,
+            remove: async () => undefined
+        } as any
+    });
+
+    proxy.saveIndex = async () => undefined;
+
+    const req = Object.assign(new PassThrough(), { params: { filename: "uploaded.tar.gz" } });
+    const uploadHandler = recorder.require("downstream", "/api/v1/s3/:filename?", "put").handler as Function;
+    const resultPromise = uploadHandler(req);
+
+    req.end("package");
+
+    const result = await resultPromise;
+
+    t.is(result.opStatus, "Accepted");
+    t.is(result.packageSize, 7);
+});
+
 test("DiskProxy unit upload handler reports index update and storage dependency failures", async t => {
     const indexFailRecorder = new RouteRecorder();
     const validConfig = { id: "seq", name: "seq", entrypointPath: "index.js", sequenceDir: "/tmp/sequence", type: "node" };
