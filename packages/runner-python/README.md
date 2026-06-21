@@ -4,7 +4,7 @@ Python runtime wrapper for `packages/runner`. Do not invoke directly -
 the outer runner (`packages/runner`) spawns this via
 `python3 -m runner_python <bootConfigPath>`.
 
-## Sequence Entrypoint Contract (Phase 1)
+## Sequence Entrypoint Contract
 
 ### Primary entrypoint: `main(context, input_stream, *args)`
 
@@ -71,16 +71,16 @@ or the upstream content-type header:
 |---------------------------------|-----------------------------------------------------------------|
 | `text/plain` (default)          | UTF-8 decoded, split on `\n`. Yields `str` lines.               |
 | `application/octet-stream`      | Raw bytes, no decoding or line splitting. Yields `bytes` chunks.|
-| `application/x-ndjson`          | Planned for Phase 3; currently rejected by the input iterator.  |
+| `application/x-ndjson`          | Not currently accepted by the input iterator.                   |
 | Other                           | Raises `ValueError` at iteration time.                          |
 
 ### Canonical metadata: `requires` and `provides`
 
-Phase 1 introduces canonical **snake_case** keys for topic metadata in
-module-level `requires` and `provides` dicts:
+Use canonical **snake_case** keys for topic metadata in module-level
+`requires` and `provides` dicts:
 
 ```python
-# Canonical (Phase 1) - preferred
+# Canonical - preferred
 requires = {"topic": "my-input", "content_type": "application/x-ndjson"}
 provides = {"topic": "my-output", "content_type": "application/octet-stream"}
 ```
@@ -101,13 +101,12 @@ field. The `content_type` value determines input/output content-type handling.
 
 ### Legacy / unsupported APIs
 
-The following legacy APIs are **not** part of the Phase 1 contract and should
-not be used in new sequences:
+The following legacy APIs are **not** part of the primary sequence contract and
+should not be used in new sequences:
 
 - `scramjet.streams.Stream` globals and scramjet-framework-py module-level helpers for new code. The runtime still uses the installed stream helper internally during this transition.
 - `set_health_check` / `set_stop_handler` as module-level globals (use
-  `context.set_stop_handler()` instead — the new AppContext surface is
-  documented in Phase 2).
+  context lifecycle methods instead).
 - Legacy metadata shapes using only `provides`/`requires` as strings (still
   best-effort compatible but not the primary contract).
 
