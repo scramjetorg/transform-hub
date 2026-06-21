@@ -184,7 +184,7 @@
     - [x] Run full `npm test` in `packages/runner-python`.
     - [x] Run `npm run build` in `packages/runner-python`.
     - [x] Run `npm run check:runtime-invariants` if runtime protocol wording or invariant coverage changes.
-- [ ] Task: Conductor - User Manual Verification 'Input/Output Format Parity and Metadata' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Input/Output Format Parity and Metadata' (Protocol in workflow.md)
 
 ### Implementation notes (Phase 3, 2026-06-21)
 
@@ -261,24 +261,74 @@
 
 ## Phase 4: New Python BDD Refapps and Final Runtime Validation
 
-- [ ] Task: Replace Python BDD refapps with new-contract examples
-    - [ ] Create or update Python BDD refapps for exception stderr, text input, binary input, NDJSON input/output, health override, logger forwarding, topics, async generator output, stop/keep_alive, kill handler, events, and ASGI API exposure.
-    - [ ] Ensure new Python BDD refapps use `main(context, input_stream, *args)` and the new AppContext API.
-    - [ ] Ensure new Python BDD refapps do not depend on `scramjet-framework-py`.
-    - [ ] Keep BDD scenario intent stable while changing Python refapp internals.
-- [ ] Task: Run staged validation gates
-    - [ ] Run full `npm test` in `packages/runner-python`.
-    - [ ] Run `npm run build` in `packages/runner-python`.
-    - [ ] Run `npm run build:packages` if package-level changes affect shared build output.
-    - [ ] Run `npm run check:runtime-invariants`.
-    - [ ] Run targeted BDD paths needed for the changed Python refapps.
-    - [ ] Run `npm run test:bdd-ci-python` as the final Python runtime smoke gate.
-    - [ ] Record any skipped broad Docker/Kubernetes validation and reason.
+- [~] Task: Replace Python BDD refapps with new-contract examples
+    - [ ] ~~Create or update Python BDD refapps for exception stderr, text input, binary input, NDJSON input/output, health override, logger forwarding, topics, async generator output, stop/keep_alive, kill handler, events, and ASGI API exposure.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [ ] ~~Ensure new Python BDD refapps use `main(context, input_stream, *args)` and the new AppContext API.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [ ] ~~Ensure new Python BDD refapps do not depend on `scramjet-framework-py`.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [ ] ~~Keep BDD scenario intent stable while changing Python refapp internals.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] Add a new fixture-format regression reproducing the Phase 4 Python verser2 TLS failure (`tls.ca` inline CA passed to a dependency that accepts only `tls_ca_file`).
+    - [x] Fix runner-python verser2 TLS mapping so inline CA bundles are materialized as temporary PEM files and cleaned up on close/failure.
+- [~] Task: Run staged validation gates
+    - [x] Run full `npm test` in `packages/runner-python`.
+    - [x] Run `npm run build` in `packages/runner-python`.
+    - [x] Run `npm run build:packages` if package-level changes affect shared build output.
+    - [x] Run `npm run check:runtime-invariants`.
+    - [ ] ~~Run targeted BDD paths needed for the changed Python refapps.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [ ] ~~Run `npm run test:bdd-ci-python` as the final Python runtime smoke gate.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] Record any skipped broad Docker/Kubernetes validation and reason.
 - [ ] Task: Complete runtime parity review
     - [ ] Review Python behavior against Node/Bun platform-visible semantics for logs, health, lifecycle, events, topics, input, output, and ASGI API exposure.
     - [ ] Confirm no new refapp depends on old `scramjet.streams.Stream`, old health/stop APIs, or legacy module-global assumptions.
     - [ ] Confirm docs, tests, and runtime behavior describe the same Python contract.
 - [ ] Task: Conductor - User Manual Verification 'New Python BDD Refapps and Final Runtime Validation' (Protocol in workflow.md)
+
+### Implementation notes (Phase 4 partial, 2026-06-21)
+
+**Scope adjustment:**
+
+- A targeted BDD run exposed a Python verser2 TLS failure before old Python
+  sequence behavior could be validated. The root cause was in runner-python's
+  verser2 adapter mapping, not in sequence contract code: boot config can carry
+  inline `verser2Runtime.tls.ca`, while `verser2_guest_python` accepts only a
+  CA file path (`tls_ca_file`). Passing `tls_ca` reproduced the dependency
+  contract failure.
+- Per user instruction, outdated Python BDD/refapp coverage is not being
+  addressed in this checkpoint and will be recreated in a later track. The
+  previously attempted ignored refapp archive changes were unstaged and are not
+  part of this scoped fix.
+
+**Changes made:**
+
+- `verser2_runtime.py`: inline CA bundles are written to temporary PEM files and
+  passed to Broker/Guest factories as `tls_ca_file`. Temporary files are cleaned
+  up when the underlying Broker/Guest `close()` runs, and also on factory/connect
+  failure.
+- `tests/parity/fixtures/verser2-inline-ca/fixture.json`: added a new fixture
+  describing the inline-CA boot-config shape and expected dependency-facing TLS
+  kwargs.
+- `tests/parity/test_verser2_runtime_fixtures.py`: added fixture-driven tests
+  for Broker and Guest paths. The fake dependency rejects `tls_ca` to reproduce
+  the observed issue and verifies cleanup of the generated CA file.
+- `tests/test_verser2_runtime.py`: kept generic TLS mapping tests focused on
+  file-based CA, PEM identity, PFX identity, and lifecycle binding; moved inline
+  CA regression coverage to the new fixture format.
+
+**Validation:**
+
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_verser2_runtime.py tests/parity/test_verser2_runtime_fixtures.py` in `packages/runner-python`: 11 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 268 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages` from the repository root: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
+- Targeted Python BDD (`BDD_INCLUDE_LONG_RUNNING=1 ... -t "@ci-instance-python"`) after the TLS fix showed outdated refapp-suite failures in health/log/topic scenarios; those are deferred by user instruction and not treated as blockers for this scoped TLS fix.
+
+**Review notes:**
+
+- Oracle review approved the scoped TLS inline-CA fix. No blocking issues found.
+  Non-blocking risks: direct callers that create a Broker/Guest and never close it
+  can leak the temporary CA file; cleanup-on-factory/connect-failure tests could
+  be added later if this path changes further. Existing runtime paths close the
+  hub client and sequence guest.
 
 ## Phase 5: Isolated Legacy Compatibility Structure
 

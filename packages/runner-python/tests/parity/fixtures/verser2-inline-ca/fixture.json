@@ -1,0 +1,18 @@
+{
+  "scenario": "verser2-inline-ca",
+  "summary": "Runner boot config may provide verser2Runtime.tls.ca as an inline PEM bundle. The Python verser2 dependency only accepts tls_ca_file, so runner-python must materialize the inline CA into a temporary PEM file and clean it up after close.",
+  "verser2Runtime": {
+    "hostUrl": "https://verser2.example",
+    "runnerGuestId": "runner.fixture.guest",
+    "runnerRouteDomain": "runner.fixture.scramjet.internal",
+    "hubBrokerId": "runner.fixture.hub.broker",
+    "hubTargetDomain": "sth.fixture.scramjet.internal",
+    "tls": {
+      "ca": "-----BEGIN CERTIFICATE-----\nfixture-inline-ca\n-----END CERTIFICATE-----"
+    }
+  },
+  "expected": {
+    "tls_ca_file_contains": "-----BEGIN CERTIFICATE-----\nfixture-inline-ca\n-----END CERTIFICATE-----",
+    "forbidden_tls_kwargs": ["tls_ca"]
+  }
+}
