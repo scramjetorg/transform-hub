@@ -7,7 +7,7 @@ import { DataStream } from "scramjet";
 import { augment } from "@scramjet/adapter-process";
 import { ServerResponse } from "http";
 import { Readable } from "stream";
-import { defer, promiseTimeout } from "@scramjet/utility";
+import { defer, getRequestBytesRead, promiseTimeout, trackStreamBytes } from "@scramjet/utility";
 import { readFile, stat, unlink, writeFile, mkdir } from "fs/promises";
 import { dirname, resolve } from "path";
 import { createReadStream, createWriteStream } from "fs";
@@ -275,12 +275,13 @@ export class DiskProxy {
         this.router.downstream(`${this.base}/:filename?`, async (request) => {
             const reqFilename = (request.params || {}).filename || "";
             const packageStream = DataStream.from(request).keep(-1);
+            const requestStreamBytes = trackStreamBytes(request);
             const fileId = IDProvider.generate();
             const filename = reqFilename || `${fileId}.tar.gz`;
 
             const seqConfig = { ...await processSequenceAdapter.identify(packageStream.rewind(), fileId, true) };
 
-            const size = request.socket.bytesRead;
+            const size = getRequestBytesRead(request, { bytesRead: requestStreamBytes() });
 
             if (seqConfig && (!seqConfig.name || !seqConfig.entrypointPath || !seqConfig.id)) {
                 return {

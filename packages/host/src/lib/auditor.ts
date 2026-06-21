@@ -1,6 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceLimits, InstanceStats, OpRecord, ParsedMessage } from "@scramjet/types";
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
+import { onRequestSocketEvent } from "@scramjet/utility";
 import { StringStream } from "scramjet";
 import { ReReadable } from "rereadable-stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -28,7 +29,7 @@ export class Auditor {
     getOutputStream(req: IncomingMessage, res: ServerResponse) {
         this.logger.debug("request", req.url, req.method);
 
-        req.socket.on("end", () => {
+        onRequestSocketEvent(req, "end", () => {
             this.logger.debug("request close", req.url, req.method);
             res.end();
         });

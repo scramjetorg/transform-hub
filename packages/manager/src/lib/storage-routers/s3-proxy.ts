@@ -7,7 +7,7 @@ import { Client as MinioClient, UploadedObjectInfo } from "minio";
 import { DataStream, StringStream } from "scramjet";
 import { augment } from "@scramjet/adapter-process";
 import { ServerResponse } from "http";
-import { defer, promiseTimeout } from "@scramjet/utility";
+import { defer, getRequestBytesRead, promiseTimeout, trackStreamBytes } from "@scramjet/utility";
 
 type SequenceInfo = Awaited<ReturnType<ISequenceAdapter["identify"]>> & {
     _filename: string;
@@ -201,12 +201,13 @@ export class S3Proxy {
         this.router.downstream(`${this.base}/:filename?`, async (request) => {
             const reqFilename = (request.params || {}).filename || "";
             const packageStream = DataStream.from(request).keep(-1);
+            const requestStreamBytes = trackStreamBytes(request);
             const fileId = IDProvider.generate();
             const filename = reqFilename || `${fileId}.tar.gz`;
 
             const seqConfig = { ...await processSequenceAdapter.identify(packageStream.rewind(), fileId, true) };
 
-            const size = request.socket.bytesRead;
+            const size = getRequestBytesRead(request, { bytesRead: requestStreamBytes() });
 
             if (seqConfig && (!seqConfig.name || !seqConfig.entrypointPath || !seqConfig.id)) {
                 return {

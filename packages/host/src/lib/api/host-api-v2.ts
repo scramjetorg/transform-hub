@@ -1,6 +1,7 @@
 import { APIExpose } from "@scramjet/types";
 import { RawHttpRouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, routeBinding, resolverBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
+import { onRequestSocketEvent } from "@scramjet/utility";
 import { createDefaultHealthComponents, degradedComponent, summarizeHealth } from "@scramjet/load-check";
 import { PassThrough, Readable } from "stream";
 
@@ -183,8 +184,8 @@ export class HostAPIV2Handler {
             ret.end();
         };
 
-        req.raw.request.socket.on("end", unpipe);
-        req.raw.request.socket.on("error", unpipe);
+        onRequestSocketEvent(req.raw.request, "end", unpipe);
+        onRequestSocketEvent(req.raw.request, "error", unpipe);
 
         return ret;
     }

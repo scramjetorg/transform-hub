@@ -2,7 +2,7 @@ import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRe
 import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
 import { RouteDefinition, Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { isStartSequenceEndpointPayloadDTO } from "@scramjet/utility";
+import { isStartSequenceEndpointPayloadDTO, onRequestSocketEvent } from "@scramjet/utility";
 import { z } from "zod";
 import { IHost } from "../types";
 import type { HostAPIV2Handler } from "./host-api-v2";
@@ -340,8 +340,8 @@ export class HostAPIV1Handler {
             ret.end();
         };
 
-        req.socket.on("end", unpipe);
-        req.socket.on("error", unpipe);
+        onRequestSocketEvent(req, "end", unpipe);
+        onRequestSocketEvent(req, "error", unpipe);
 
         return ret;
     }
