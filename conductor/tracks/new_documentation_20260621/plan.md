@@ -1,12 +1,17 @@
 # Implementation Plan: New Documentation Source, Curated Reference, and README Pipeline
 
-## Phase 0: Track Setup, Branch, and Current-State Inventory
+## Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture
 
 - [ ] Task: Create review surface for the track
     - [ ] Inspect current git status, current branch, recent commits, and remote tracking.
     - [ ] Create a dedicated feature branch for the track unless explicitly skipped.
+    - [ ] Create one scoped plan-update commit for the approved `spec.md`/`plan.md` changes before implementation work begins.
     - [ ] Prepare a draft PR after initial planning artifacts are committed when appropriate.
     - [ ] Keep the PR description updated with phase status, validation, and deferred items.
+- [ ] Task: Read Conductor workflow and known solutions
+    - [ ] Read `conductor/workflow.md` before implementation work and follow its phase checkpoint, validation, delegation, and commit guidance.
+    - [ ] Read `conductor/known-solutions.md` before handling recurring or recognizable failures.
+    - [ ] Record any applicable known-solution constraints in the phase notes before applying them.
 - [ ] Task: Inventory current documentation generation flows
     - [ ] Read root docs scripts, especially `build:docs`, `build:all-docs`, and `build:readme`.
     - [ ] Inventory package-level `build:docs` scripts and TypeDoc configuration/version usage.
@@ -18,20 +23,14 @@
     - [ ] Define when broad per-package TypeDoc output is disabled or removed.
     - [ ] Define when the old README template flow is disabled or removed.
     - [ ] Record risks for npm package README publishing and docs site consumption.
-- [ ] Task: Validate Phase 0
-    - [ ] Run the narrowest relevant validation for Markdown/metadata-only changes.
-    - [ ] Record skipped validation and reasons in phase notes.
-    - [ ] Confirm no runtime, adapter, API, or CLI behavior changed.
-- [ ] Task: Conductor - User Manual Verification 'Phase 0: Track Setup, Branch, and Current-State Inventory' (Protocol in workflow.md)
-
-## Phase 1: Documentation Source Architecture and Export Contract
-
 - [ ] Task: Create canonical docs source skeleton
     - [ ] Add `docs-source/` with folders for intro, transform-hub, manager, sequences, testing, cli, api, deployment, development, reference, readmes, examples, and partials.
     - [ ] Add authoring conventions for frontmatter, slugs/doc IDs, headings, partials, examples, generated-file markers, and link rules.
     - [ ] Define which files are handwritten source and which files are generated artifacts.
 - [ ] Task: Define Docusaurus export contract
     - [ ] Define `dist-docs/` output layout for content, reference, readmes, sidebars, and metadata.
+    - [ ] Define the configurable generator endpoint/output root, including the root `package.json` config entry and higher-priority environment variable.
+    - [ ] Document that all generators must honor the endpoint configuration for content, reference, README, CLI, API, sidebar, and metadata output.
     - [ ] Define sidebar/category metadata conventions for prose and generated reference.
     - [ ] Define link rewriting and link rebasing rules for docs site, root README, package READMEs, and npm README contexts.
     - [ ] Define deterministic metadata requirements for `dist-docs/metadata.json`.
@@ -41,18 +40,20 @@
     - [ ] Mark experimental surfaces explicitly, including `@scramjet/sequence-test` if included.
     - [ ] Ensure non-allowlisted internals cannot be exported accidentally.
 - [ ] Task: Automated review after source architecture
-    - [ ] Run review focused on information architecture, export contract clarity, and accidental public API exposure risk.
+    - [ ] Run review focused on information architecture, export contract clarity, migration safety, and accidental public API exposure risk.
     - [ ] Address in-scope findings or record deferred findings.
-- [ ] Task: Validate Phase 1
-    - [ ] Run docs metadata/frontmatter validation available at this stage, or record why not yet available.
-    - [ ] Confirm source/export contract files are deterministic and linkable.
-    - [ ] Confirm no old generation flow has been removed before replacement scope is defined.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Documentation Source Architecture and Export Contract' (Protocol in workflow.md)
+- [ ] Task: Validate Phase 0
+    - [ ] Run the narrowest relevant validation for Markdown/metadata/docs-source changes.
+    - [ ] Record skipped validation and reasons in phase notes.
+    - [ ] Confirm no runtime, adapter, API, or CLI behavior changed.
+- [ ] Task: Conductor - User Manual Verification 'Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture' (Protocol in workflow.md)
 
-## Phase 2: Generator Infrastructure and Old TypeDoc Retirement
+## Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content
 
 - [ ] Task: Design generator command surface
     - [ ] Add or define npm scripts for `docs:clean`, `docs:generate`, `docs:check`, and narrower subcommands.
+    - [ ] Add or define root `package.json` configuration for the default docs generator endpoint/output root.
+    - [ ] Add or define the environment variable override for the docs generator endpoint/output root, with env var taking precedence over package configuration.
     - [ ] Ensure scripts use npm and existing monorepo script patterns.
     - [ ] Ensure generated outputs remain outside handwritten `docs-source/`.
 - [ ] Task: Implement content export foundation
@@ -64,24 +65,20 @@
     - [ ] Generate curated reference under `dist-docs/reference/typescript/`.
     - [ ] Fail or clearly report unresolved allowlisted entrypoints.
     - [ ] Prevent broad package/source-tree reference generation.
-- [ ] Task: Retire old broad TypeDoc flow
+- [ ] Task: Retire old TypeDoc and custom Markdown templating flows
     - [ ] Remove, disable, or redirect package-level broad TypeDoc scripts that generate root-level `docs/<package>/` clutter.
     - [ ] Update root docs scripts to use the new docs command surface.
+    - [ ] Remove, disable, or migrate old custom Markdown templating entrypoints such as `scripts/mk-readme.js`, package `.mtpl` files, and old README parts only after replacement generation exists.
     - [ ] Remove stale generated docs artifacts only when confirmed generated and replaceable.
-    - [ ] Record any temporarily retained old docs outputs and their removal criteria.
+    - [ ] Record any temporarily retained old docs or templating outputs and their removal criteria.
+- [ ] Task: Automated review after old stack removal
+    - [ ] Run review focused on TypeDoc removal, custom templating removal, package publish risks, docs generation determinism, and stale generated artifact cleanup.
+    - [ ] Address in-scope findings or record deferred findings before expanding prose content.
 - [ ] Task: Add generator validation
     - [ ] Validate frontmatter and headings.
     - [ ] Validate internal links and link rewrite targets where possible.
     - [ ] Validate reference allowlist entries and generated output drift.
     - [ ] Validate generated sidebars and metadata shape.
-- [ ] Task: Validate Phase 2
-    - [ ] Run the narrowest docs generation/check commands.
-    - [ ] Run lint or format checks only for files changed in this phase where practical.
-    - [ ] Confirm old TypeDoc retirement did not break package builds.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Generator Infrastructure and Old TypeDoc Retirement' (Protocol in workflow.md)
-
-## Phase 3: Prose Documentation Content
-
 - [ ] Task: Write Transform Hub and core concept docs
     - [ ] Write intro pages explaining what Transform Hub is and when to use it.
     - [ ] Document Hub, Manager, MultiManager, Sequence, Instance, Adapter, Runner, Topics, Streams, and APIs.
@@ -111,17 +108,20 @@
 - [ ] Task: Automated review after prose content
     - [ ] Run review focused on user clarity, operator usefulness, stale claims, and missing safety caveats.
     - [ ] Address in-scope findings or record deferred findings.
-- [ ] Task: Validate Phase 3
-    - [ ] Run docs content generation and link/frontmatter checks.
+- [ ] Task: Validate Phase 1
+    - [ ] Run docs generation/check commands.
+    - [ ] Run link, frontmatter, reference allowlist, generated output drift, sidebar, and metadata checks available at this stage.
+    - [ ] Validate that generator commands honor both root `package.json` endpoint config and the higher-priority environment variable override.
+    - [ ] Confirm old TypeDoc and custom templating retirement did not break package builds or package publishing assumptions.
     - [ ] Confirm examples are syntactically plausible or validated where practical.
     - [ ] Record docs areas intentionally left incomplete.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Prose Documentation Content' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content' (Protocol in workflow.md)
 
-## Phase 4: README Pipeline Replacement
+## Phase 2: README Pipeline Replacement
 
 - [ ] Task: Design README source model
     - [ ] Define root README source and package README source conventions under `docs-source/readmes/` or approved equivalent.
-    - [ ] Map old `.mtpl` package templates to new README source files.
+    - [ ] Map old `.mtpl` package templates to new README source files when any content remains to migrate.
     - [ ] Define reusable partial/include support for README generation.
     - [ ] Define link rebasing for root, package, npm, docs-site, and generated-reference contexts.
 - [ ] Task: Implement README generator
@@ -129,46 +129,77 @@
     - [ ] Generate package `README.md` files from new package README sources.
     - [ ] Generate README copies or landing pages under `dist-docs/readmes/` where needed.
     - [ ] Keep package READMEs concise and link longer content to docs/reference pages.
-- [ ] Task: Retire old README template flow
-    - [ ] Remove or disable `scripts/mk-readme.js` after replacement generation is working.
-    - [ ] Remove or migrate package `.mtpl` files and old README parts.
+- [ ] Task: Complete old README template cleanup
+    - [ ] Confirm `scripts/mk-readme.js`, package `.mtpl` files, and old README parts are removed, disabled, or explicitly retained with rationale.
     - [ ] Update root npm scripts to use the new README generation path.
     - [ ] Confirm package publishing still includes expected README content.
 - [ ] Task: Add README validation
     - [ ] Add README drift checks.
     - [ ] Add tests or fixtures for partials, link rebasing, generated reference links, and package README generation.
     - [ ] Validate generated README links where possible.
-- [ ] Task: Validate Phase 4
+- [ ] Task: Validate Phase 2
     - [ ] Run README generation and drift checks.
     - [ ] Run docs generation/check commands affected by README outputs.
     - [ ] Review root and package README outputs for stale claims and excessive detail.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: README Pipeline Replacement' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: README Pipeline Replacement' (Protocol in workflow.md)
 
-## Phase 5: CLI, API/Client Reference, and Final Export Integration
+## Phase 3: Full API v2 Documentation and Legacy v1 Separation
+
+- [ ] Task: Generate API v2 docs from definitions
+    - [ ] Use `packages/rest-api2/src/routes.ts` definitions, especially `RestAPI2RouteTree`, `RestAPI2RouteSets`, and `RestAPI2Routes`, as the canonical API v2 documentation source.
+    - [ ] Generate docs for root, space, hub, sequence, and instance route nodes.
+    - [ ] Document route groups, child resolver relationships, dynamic mount paths, implementer paths, and opaque route handling.
+    - [ ] Generate route pages or structured data for params, query, headers, request bodies, responses, route kind, stream semantics, and tags/descriptions where available.
+    - [ ] Preserve stable operation IDs and doc IDs across regeneration.
+- [ ] Task: Document API v2 client usage
+    - [ ] Document generic `createRestAPI2Client()` usage with a manifest and transport.
+    - [ ] Document fluent clients: `createRootClient`, `createSpaceClient`, `createHubClient`, `createInstanceClient`, and `createFluentClientFromRouteTreeNode`.
+    - [ ] Document HTTP and verser2 transports exported by `packages/rest-api2/src/client.ts`.
+    - [ ] Include examples for root/space/hub/instance traversal, route requests, params, query, headers, and response handling.
+    - [ ] Document unsupported or opaque routes, including RPC, without claiming generated coverage that does not exist.
+- [ ] Task: Document custom API definitions and definition-level data
+    - [ ] Document how custom route definitions are created with `@scramjet/api-router` route definitions and schemas.
+    - [ ] Document how to build routers/manifests from custom definitions and generate clients from manifests.
+    - [ ] Identify whether existing `RouteDefinition`/`ResolverDefinition` metadata is sufficient for good API docs.
+    - [ ] If needed, plan definition-level documentation metadata additions such as summaries, descriptions, tags, examples, errors, stream notes, or API docs overrides.
+    - [ ] Ensure any metadata additions are backward-compatible and do not change runtime route behavior.
+- [ ] Task: Separate legacy v1 API documentation
+    - [ ] Inventory current v1 API route sources in Host, Manager, MultiManager, storage routers, and legacy API clients.
+    - [ ] Create a separate legacy docs structure for v1 API docs, such as `docs-source/api/legacy/` and `dist-docs/reference/api/legacy/v1/`.
+    - [ ] Document v1 compatibility status, migration guidance, and major v1 route groups without mixing v1 routes into primary API v2 docs.
+    - [ ] Link v1 legacy docs from migration/compatibility pages only where useful.
+- [ ] Task: Validate Phase 3
+    - [ ] Run API v2 documentation generation from definitions.
+    - [ ] Validate generated API v2 docs against route manifests and client exports.
+    - [ ] Validate legacy v1 docs are emitted under the legacy folder only.
+    - [ ] Confirm API docs generators honor root `package.json` endpoint config and the higher-priority environment variable override.
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Full API v2 Documentation and Legacy v1 Separation' (Protocol in workflow.md)
+
+## Phase 4: CLI Reference and Final Export Replacement
 
 - [ ] Task: Integrate CLI reference generation
     - [ ] Generate CLI command reference from the current CLI command model where practical.
     - [ ] Output CLI reference under `dist-docs/reference/cli/` or approved equivalent.
     - [ ] Link prose CLI docs and README outputs to generated CLI reference.
-- [ ] Task: Integrate API/client documentation outputs
-    - [ ] Generate or export current supported API/client reference artifacts where practical.
-    - [ ] Document current `api-client` and `rest-api2` usage surfaces.
-    - [ ] Include OpenAPI output only for currently supported route metadata.
-    - [ ] Clearly mark deferred MCP/OpenAPI completeness if not supported.
 - [ ] Task: Finalize export metadata and sidebars
     - [ ] Generate complete `dist-docs/metadata.json`.
-    - [ ] Generate sidebars for prose, reference, CLI, API/client docs, and README copies as applicable.
+    - [ ] Generate sidebars for prose, reference, CLI, API v2, legacy v1 API docs, and README copies as applicable.
     - [ ] Confirm external Docusaurus consumption paths are documented.
+- [ ] Task: Remove old docs outputs completely
+    - [ ] Remove old generated docs outputs that are superseded by `dist-docs`.
+    - [ ] Remove or archive obsolete root-level docs folders only after confirming their content is migrated, generated, or intentionally excluded.
+    - [ ] Confirm old docs generator entrypoints no longer produce or expect legacy `docs/` output.
+    - [ ] Ensure `dist-docs` is the complete generated documentation handoff surface for the external Docusaurus repo.
 - [ ] Task: Validate complete docs export
     - [ ] Run `docs:clean`, `docs:generate`, and `docs:check` or approved equivalents.
-    - [ ] Run link, frontmatter, reference allowlist, README drift, and metadata checks.
+    - [ ] Run link, frontmatter, reference allowlist, README drift, API docs, legacy v1 separation, endpoint override, and metadata checks.
     - [ ] Run package build or narrower checks if docs script/package changes affect builds.
     - [ ] Confirm generation is deterministic by checking for no unexpected drift after regeneration.
 - [ ] Task: Automated review before final verification
-    - [ ] Run final review focused on docs usability, generator determinism, stale source removal, and Docusaurus handoff readiness.
+    - [ ] Run final review focused on docs usability, generator determinism, complete old-doc removal, endpoint configurability, and Docusaurus handoff readiness.
     - [ ] Address in-scope findings or document deferred follow-ups.
 - [ ] Task: Final track documentation update
     - [ ] Update track notes or plan with validation results, skipped checks, and known follow-ups.
     - [ ] Confirm no unrelated runtime, adapter, API, or CLI behavior changed.
     - [ ] Update PR description with final validation and reviewer guidance.
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: CLI, API/Client Reference, and Final Export Integration' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Reference and Final Export Replacement' (Protocol in workflow.md)

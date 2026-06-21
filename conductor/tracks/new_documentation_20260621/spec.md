@@ -46,6 +46,9 @@ A secondary audience is repository implementers who need curated reference entry
 - Generate curated TypeScript/API reference only for explicitly allowlisted entrypoints.
 - Replace the old TypeDoc and README templating flows with the new docs-source-based pipeline.
 - Generate root README, package READMEs, generated reference, sidebars/metadata, and Docusaurus-consumable content deterministically.
+- Generate full API v2 documentation from the existing API definitions and route tree.
+- Separate v1 API documentation into a legacy documentation area.
+- Fully supersede old documentation outputs with the new `dist-docs` export by the end of the track.
 
 ## Non-Goals
 
@@ -195,7 +198,28 @@ The metadata file should describe:
 - warnings or deferred documentation areas;
 - paths consumed by the external Docusaurus repo.
 
-### 8. Validation
+All generators must support a configurable output/export endpoint. The environment variable must take precedence because CI, local agents, and external docs-site integrations need to redirect output without mutating repository files. A root `package.json` configuration entry should provide the default value.
+
+The generator endpoint configuration should cover content export, curated reference export, README copies, CLI reference, API docs, sidebars, and metadata. The chosen environment variable name and package configuration key must be documented in the docs export contract.
+
+### 8. API documentation
+
+Generate full API v2 documentation from the existing definitions rather than hand-maintaining a parallel route list.
+
+The API v2 documentation should cover:
+
+- the `RestAPI2RouteTree` root/space/hub/sequence/instance structure;
+- route groups, resolver relationships, dynamic mount paths, and opaque routes;
+- request params, query, headers, bodies, responses, stream semantics, and errors where definitions expose them;
+- generated operation IDs and stable docs page IDs;
+- API client usage for generic and fluent clients;
+- HTTP and verser2 transport usage where supported;
+- creating custom API definitions and clients from route definitions;
+- adding definition-level documentation or metadata if current definitions need additional data to generate useful docs.
+
+The v1 API must be documented separately under a legacy docs path, for example `dist-docs/reference/api/legacy/v1/` and matching `docs-source/api/legacy/` prose. V1 docs should explain compatibility status and should not be mixed into the primary API v2 documentation structure.
+
+### 9. Validation
 
 Add docs validation suitable for CI and local development:
 
@@ -231,8 +255,12 @@ Add docs validation suitable for CI and local development:
 - Curated reference entrypoints are defined in an allowlist.
 - Generated reference output includes only allowlisted entrypoints.
 - Generated docs are exported under a structured `dist-docs/` layout or approved equivalent.
+- All docs generators honor a configurable output/export endpoint from root `package.json` config and a higher-priority environment variable override.
 - Sidebars and metadata are generated for Docusaurus consumption.
 - Validation catches broken links, invalid frontmatter, missing reference entrypoints, generated reference drift, and README drift.
+- Full API v2 docs are generated from `rest-api2` definitions and include client usage and custom-definition guidance.
+- V1 API docs are separated into a legacy docs area.
+- Old docs outputs and legacy docs generator expectations are fully superseded by `dist-docs` by the final phase.
 - API/client docs reflect current supported behavior and do not claim incomplete MCP/router/OpenAPI capabilities.
 
 ## Out of Scope
