@@ -91,7 +91,7 @@
     - [x] Run full `npm test` in `packages/runner-python`.
     - [x] Run `npm run build` in `packages/runner-python`.
     - [x] Record any intentionally deferred AppContext fields or behavior with rationale.
-- [ ] Task: Conductor - User Manual Verification 'AppContext Parity and Lifecycle Semantics' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'AppContext Parity and Lifecycle Semantics' (Protocol in workflow.md)
 
 ### Implementation notes (Phase 2, 2026-06-21)
 
@@ -162,29 +162,100 @@
 
 ## Phase 3: Input/Output Format Parity and Metadata
 
-- [ ] Task: Implement input parsing parity
-    - [ ] Support text input streams without breaking existing protocol framing.
-    - [ ] Support binary input streams without lossy encoding conversions.
-    - [ ] Support JSON-compatible input where the current runner protocol provides JSON content.
-    - [ ] Add `application/x-ndjson` parsing with item-by-item semantics and malformed-line error behavior documented by tests.
-    - [ ] Preserve backpressure and streaming behavior; avoid mandatory full buffering for large inputs.
-- [ ] Task: Implement output/result normalization parity
-    - [ ] Normalize `None`, `str`, `bytes`, JSON-serializable values, sync iterables, async iterables, async generators, and awaitables to runner output frames.
-    - [ ] Preserve binary payloads and text encoding boundaries.
-    - [ ] Emit NDJSON output consistently for `application/x-ndjson` where metadata or content type requests it.
-    - [ ] Preserve completion, error, stderr, and terminal monitoring semantics for each output shape.
-    - [ ] Introduce a runtime-owned output wrapper such as `runner_python.Output` only if needed for topic/content-type clarity, and cover it with tests if added.
-- [ ] Task: Implement canonical metadata handling
-    - [ ] Parse snake_case `requires` and `provides` metadata for topic and `content_type` values.
-    - [ ] Map canonical metadata to existing Hub/CLI-visible topic behavior.
-    - [ ] Add tests for topic rename/content-type behavior using the new metadata convention.
-    - [ ] Document legacy metadata behavior as non-primary and defer compatibility handling to Phase 5.
-- [ ] Task: Validate format and metadata parity
-    - [ ] Run focused runner-python format and metadata tests.
-    - [ ] Run full `npm test` in `packages/runner-python`.
-    - [ ] Run `npm run build` in `packages/runner-python`.
-    - [ ] Run `npm run check:runtime-invariants` if runtime protocol wording or invariant coverage changes.
+- [x] Task: Implement input parsing parity
+    - [x] Support text input streams without breaking existing protocol framing.
+    - [x] Support binary input streams without lossy encoding conversions.
+    - [x] Support JSON-compatible input where the current runner protocol provides JSON content.
+    - [x] Add `application/x-ndjson` parsing with item-by-item semantics and malformed-line error behavior documented by tests.
+    - [x] Preserve backpressure and streaming behavior; avoid mandatory full buffering for large inputs.
+- [x] Task: Implement output/result normalization parity
+    - [x] Normalize `None`, `str`, `bytes`, JSON-serializable values, sync iterables, async iterables, async generators, and awaitables to runner output frames.
+    - [x] Preserve binary payloads and text encoding boundaries.
+    - [x] Emit NDJSON output consistently for `application/x-ndjson` where metadata or content type requests it.
+    - [x] Preserve completion, error, stderr, and terminal monitoring semantics for each output shape.
+    - [ ] ~~Introduce a runtime-owned output wrapper such as `runner_python.Output`~~ (Deferred: not clearly needed; existing `as_output_stream`/`forward_output_stream` provide sufficient coverage.)
+- [x] Task: Implement canonical metadata handling
+    - [x] Parse snake_case `requires` and `provides` metadata for topic and `content_type` values.
+    - [x] Map canonical metadata to existing Hub/CLI-visible topic behavior.
+    - [x] Add tests for topic rename/content-type behavior using the new metadata convention.
+    - [x] Document legacy metadata behavior as non-primary and defer compatibility handling to Phase 5.
+- [x] Task: Validate format and metadata parity
+    - [x] Run focused runner-python format and metadata tests.
+    - [x] Run full `npm test` in `packages/runner-python`.
+    - [x] Run `npm run build` in `packages/runner-python`.
+    - [x] Run `npm run check:runtime-invariants` if runtime protocol wording or invariant coverage changes.
 - [ ] Task: Conductor - User Manual Verification 'Input/Output Format Parity and Metadata' (Protocol in workflow.md)
+
+### Implementation notes (Phase 3, 2026-06-21)
+
+**Changes made:**
+
+- `input_stream.py`: Added `_iter_json()` (full-buffer JSON parse, single yield) and
+  `_iter_ndjson_lines()` (streaming line-by-line JSON parse with blank-line skip
+  and malformed-line `ValueError`). Updated `make_input_stream` return type and
+  `content_type` dispatch to support `application/json`, `application/x-ndjson`,
+  and `text/x-ndjson`/`*x-ndjson` aliases.
+  Documented that JSON is whole-value buffered by nature (intentional).
+
+- `utils.py`: Restructured `_iter_headered_input` to keep text/plain and
+  octet-stream backward-compatible (preserving `readline()` trailing `\n` for
+  `Stream`-based sequences) while delegating `application/json` and
+  `*x-ndjson` to `make_input_stream` for unified parsing. Unknown content types
+  still raise `ValueError`.
+
+- `__main__.py`: Fixed `_run_sequence_output` NDJSON path to use
+  `json.dumps(..., separators=(",", ":"), ensure_ascii=False)` — matching
+  `forward_output_stream`'s compact JSON-line encoding for byte-for-byte
+  parity with Node `JSON.stringify`.
+
+- `README.md`: Updated input expectations table to document `application/json`
+  and `application/x-ndjson`/`text/x-ndjson` support, the runtime header framing
+  requirement, and the current output content-type support boundary.
+
+- `tests/test_input_stream.py`: Added tests covering JSON dict/list/primitive
+  parsing, empty JSON, NDJSON line-by-line, blank-skip, backpressure,
+  malformed-line `ValueError`, malformed JSON, trailing data, empty input,
+  primitives, whitespace-only lines, no-header framing behavior, and
+  `text/x-ndjson` alias handling.
+
+- `tests/test_output_stream.py`: Added `text/x-ndjson` alias coverage; existing
+  tests cover compact NDJSON output via `forward_output_stream`, and the
+  `_run_sequence_output` fix brings the runtime path into parity.
+
+- `tests/test_utils.py`: Added `as_output_stream` normalization tests (None,
+  bytes, dict, list, async iterable, async generator), `_iter_headered_input`
+  delegation tests (text/plain, json, ndjson, octet-stream, default
+  content-type), and `text/x-ndjson` output/input alias coverage.
+
+- `tests/parity/fixtures/ndjson-output/recorded.json`: Updated OUT channel
+  bytes_b64 from spaced JSON (default `json.dumps`) to compact JSON
+  (`separators=(",", ":")`) to match the new runtime NDJSON output encoding.
+
+**Deferred considerations:**
+
+- `runner_python.Output` wrapper was not introduced — the existing
+  `as_output_stream`/`forward_output_stream`/`_run_sequence_output` pipeline
+  provides sufficient coverage for all supported return shapes.
+
+- `text/plain` backward compat in `_iter_headered_input`: the header path
+  retains `readline()`-based line reading (including trailing `\n`) to avoid
+  breaking existing `scramjet.streams.Stream` sequences that depend on the
+  newline-terminated chunk behavior. The direct `make_input_stream` path strips
+  newlines for clean line-by-line semantics.
+
+- `application/json` output metadata remains advisory: runtime output framing
+  currently has explicit behavior for binary and NDJSON outputs, while ordinary
+  JSON-serializable values are serialized through the default output path. No
+  `runner_python.Output` wrapper was introduced.
+
+- No-header raw input remains unsupported in the runtime wrapper header path;
+  host input framing is expected to include the HTTP-like blank-line terminator.
+
+**Validation:**
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_input_stream.py tests/test_output_stream.py tests/test_utils.py tests/parity/test_golden_replay.py` in `packages/runner-python`: 82 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 268 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
 
 ## Phase 4: New Python BDD Refapps and Final Runtime Validation
 

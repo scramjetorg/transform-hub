@@ -36,6 +36,7 @@ from runner_python.fd_streams import FdStreams, open_fd_streams
 from runner_python.handshake import MONITORING, PING, perform_handshake
 from runner_python.heartbeat import run_heartbeat
 from runner_python.host_channels import HostChannels, connect_host_channels
+from runner_python.input_stream import is_ndjson_content_type
 from runner_python.lifecycle import perform_shutdown
 from runner_python.monitoring_codec import MonitoringWriter
 from runner_python.output_stream import PANG, forward_output_stream
@@ -347,9 +348,11 @@ async def _run_sequence_output(
 
     content_type = get_output_content_type(sequence, resolved)
 
-    if content_type == "application/x-ndjson":
+    if is_ndjson_content_type(content_type):
         async for item in output_stream:
-            output_writer.write(json.dumps(item).encode("utf-8") + b"\n")
+            output_writer.write(
+                json.dumps(item, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+            )
             await output_writer.drain()
         return
 

@@ -71,8 +71,18 @@ or the upstream content-type header:
 |---------------------------------|-----------------------------------------------------------------|
 | `text/plain` (default)          | UTF-8 decoded, split on `\n`. Yields `str` lines.               |
 | `application/octet-stream`      | Raw bytes, no decoding or line splitting. Yields `bytes` chunks.|
-| `application/x-ndjson`          | Not currently accepted by the input iterator.                   |
-| Other                           | Raises `ValueError` at iteration time.                          |
+| `application/json`              | Buffers all input, parses as JSON, yields the parsed value once.|
+| `application/x-ndjson`, `text/x-ndjson` | Line-by-line JSON parsing, streaming with backpressure. Blank |
+|                                 | lines are skipped. Malformed lines raise ``ValueError``.        |
+| Other                           | Raises ``ValueError`` at iteration time.                        |
+
+Runtime input from the host is expected to include the HTTP-like header block
+terminator (`\r\n\r\n`). Raw no-header bodies are not supported by the runtime
+wrapper input-framing path.
+
+Output content-type metadata affects binary and NDJSON framing. Plain text
+output chunks are forwarded exactly by the runtime path for backward-compatible
+sequence behavior.
 
 ### Canonical metadata: `requires` and `provides`
 

@@ -95,6 +95,21 @@ async def test_ndjson_byte_for_byte_parity_with_node_json_stringify():
 
 
 @pytest.mark.asyncio
+async def test_text_x_ndjson_alias_encodes_json_lines():
+    out = FakeOutputWriter()
+    mon = RecordingMonitoringWriter()
+
+    await forward_output_stream(
+        _aiter([{"a": 1}]),
+        out,
+        mon,
+        content_type="text/x-ndjson",
+    )
+
+    assert out.buffer == b'{"a":1}\n'
+
+
+@pytest.mark.asyncio
 async def test_raw_bytes_pass_through_unchanged():
     out = FakeOutputWriter()
     mon = RecordingMonitoringWriter()

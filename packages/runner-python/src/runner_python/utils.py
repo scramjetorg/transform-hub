@@ -5,7 +5,7 @@ from collections.abc import Iterable, Mapping
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 from typing import TYPE_CHECKING, Any
 
-from runner_python.input_stream import read_http_headers
+from runner_python.input_stream import make_input_stream, is_ndjson_content_type, read_http_headers
 
 if TYPE_CHECKING:
     from runner_python.sequence_loader import SequenceModule
@@ -26,6 +26,18 @@ def build_input_stream(reader: Any, content_type: str) -> Stream:
 
 
 async def _iter_headered_input(reader: Any, default_content_type: str):
+    """Read HTTP-like headers from *reader*, then parse the body according
+    to ``content-type``.
+
+    The content type is taken from the ``content-type`` header (if
+    present), falling back to *default_content_type*.
+
+    ``text/plain`` and ``application/octet-stream`` preserve the original
+    line-oriented / raw-chunk behaviour (including trailing ``\\n`` on text
+    lines for backward compatibility with ``scramjet.streams.Stream``
+    sequences).  ``application/json`` and ``application/x-ndjson`` delegate
+    to :func:`make_input_stream` for unified parsing.
+    """
     headers = await read_http_headers(reader)
     content_type = headers.get("content-type", default_content_type)
 
@@ -35,6 +47,7 @@ async def _iter_headered_input(reader: Any, default_content_type: str):
             if not chunk:
                 return
             yield chunk
+        return  # not reached, but explicit
 
     if content_type == "text/plain":
         while True:
@@ -42,6 +55,12 @@ async def _iter_headered_input(reader: Any, default_content_type: str):
             if not line:
                 return
             yield line.decode("utf-8")
+        return  # not reached, but explicit
+
+    if content_type == "application/json" or is_ndjson_content_type(content_type):
+        async for item in make_input_stream(reader, content_type):
+            yield item
+        return
 
     raise ValueError(f"unsupported content_type: {content_type!r}")
 
@@ -153,7 +172,10 @@ def get_output_content_type(sequence: SequenceModule, result: Any) -> str:
                 if isinstance(raw_content_type, str):
                     content_type = raw_content_type
 
-    if content_type in {"application/octet-stream", "application/x-ndjson"}:
+    if not isinstance(content_type, str):
+        return ""
+
+    if content_type == "application/octet-stream" or is_ndjson_content_type(content_type):
         return content_type
 
     return ""

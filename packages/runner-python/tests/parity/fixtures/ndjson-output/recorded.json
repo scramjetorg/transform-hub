@@ -21,7 +21,7 @@
     "OUT": [
       {
         "direction": "host-recv",
-        "bytes_b64": "eyJzdGVwIjogMSwgInZhbHVlIjogImFscGhhIn0KeyJzdGVwIjogMiwgInZhbHVlIjogImJldGEifQo=",
+        "bytes_b64": "eyJzdGVwIjoxLCJ2YWx1ZSI6ImFscGhhIn0KeyJzdGVwIjoyLCJ2YWx1ZSI6ImJldGEifQo=",
         "ts_ms_relative": 79
       }
     ],
