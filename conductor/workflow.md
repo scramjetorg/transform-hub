@@ -153,6 +153,8 @@ required, and committing only scoped completed work.
 Choose the narrowest sufficient validation:
 
 - Default memory guard for agent-run Node/test validation: `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`. Start tests and Node-based validation under this guard unless the command is run through a repo/package test runner that already owns process setup and memory behavior. Do not wait for an OOM before applying the guard.
+- AVA package tests use `scripts/run-ava.js`, which sets the spawned AVA process to `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` by default, replacing the generic `--max-old-space-size=1024` guard for the AVA child process. This is intentional because AVA workers can fail under the virtual-memory cap with V8 CodeRange reservation OOMs when JIT is enabled.
+- Biome scripts set `RAYON_NUM_THREADS=12` by default. This bounded parallelism has been measured at ~98 MB max RSS for `npm run lint` under the virtual-memory cap on the current 24-core agent host; record any native allocation failure before considering a cap change.
 - If a command fails under the default memory guard, classify the failure normally before retrying. Do not silently raise the cap; record the attempted command, cap, failure mode, and reason for any narrower or runner-specific retry.
 
 - Package build: `npm run build:packages`

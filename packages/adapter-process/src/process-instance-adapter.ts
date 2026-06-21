@@ -12,15 +12,13 @@ import {
     SequenceConfig,
     SequenceInfo,
     RunnerConnectInfo } from "@scramjet/types";
-import { streamToString } from "@scramjet/utility";
+import { development, streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 
 import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables, getRunnerTransportEnv } from "@scramjet/adapters-common";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
-import { development } from "@scramjet/sth-config";
 
 const CRASH_LOG_TAIL_BYTES = 4096;
 

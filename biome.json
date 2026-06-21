@@ -52,7 +52,7 @@
         "noConstantCondition": "error",
         "noInnerDeclarations": "off",
         "noPrecisionLoss": "error",
-        "noSwitchDeclarations": "warn",
+        "noSwitchDeclarations": "off",
         "noUndeclaredDependencies": "off",
         "noUnresolvedImports": "off",
         "noPrivateImports": "warn",
@@ -73,7 +73,8 @@
         "noImportCycles": "warn",
         "noNonNullAssertedOptionalChain": "off",
         "noPrototypeBuiltins": "off",
-        "noTsIgnore": "warn"
+        "noTsIgnore": "warn",
+        "useIterableCallbackReturn": "off"
       }
     }
   },

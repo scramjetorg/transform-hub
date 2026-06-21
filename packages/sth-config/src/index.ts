@@ -1,9 +1,6 @@
 import { STHCommandOptions } from "@scramjet/types";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
+import { development } from "@scramjet/utility";
 import { ConfigService, defaultConfig } from "./config-service";
-
-const PRODUCTION: boolean = !!process.env.PRODUCTION;
-const DEVELOPMENT: boolean = !!(process.env.DEVELOPMENT || process.env.SCRAMJET_DEVELOPMENT);
 
 // If --runtime-adapter is not supplied we can check for legacy --no-docker option
 export function getRuntimeAdapterOption(options: STHCommandOptions): string|undefined {
@@ -14,14 +11,11 @@ export function getRuntimeAdapterOption(options: STHCommandOptions): string|unde
     return options.docker ? undefined : "process";
 }
 
-export function development() {
-    return !PRODUCTION && DEVELOPMENT;
-}
-
 export const debug = development() && process.env.SCRAMJET_DEBUG
     ? (arg: string) => process.stdout.write(arg)
     : () => {};
 
 export { ConfigService, defaultConfig };
+export { development };
 export { applyManagerTrustBootstrap } from "./manager-trust-bootstrap";
 export type { ManagerTrustBootstrapMaterial, ManagerTrustBootstrapOptions } from "./manager-trust-bootstrap";

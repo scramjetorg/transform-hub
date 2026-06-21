@@ -1,13 +1,11 @@
 /// <reference path="./definitions.d.ts" />
 
-// eslint-disable-next-line import/no-cycle
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
-import { HostClient } from "./host-client";
 import { ClientUtils, ClientProvider, HttpClient, ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { MRestAPI, LoadCheckStat } from "@scramjet/types";
+import { ApiClientFactory, MRestAPI, LoadCheckStat } from "@scramjet/types";
 import { Readable } from "stream";
+import type { HostClient } from "./host-client";
 
-export class ManagerClient implements ClientProvider {
+export class ManagerClient<THostClient = HostClient> implements ClientProvider {
     apiBase: string;
 
     #_client: ClientUtils;
@@ -16,17 +14,22 @@ export class ManagerClient implements ClientProvider {
         return this.#_client;
     }
 
-    constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
+    #hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>;
+
+    constructor(apiBase: string, utils = new ClientUtils(apiBase), hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
         this.#_client = utils;
+        this.#hostClientFactory = hostClientFactory;
     }
 
-    getHostClient(id: string, hostApiBase = "/api/v1") {
-        return new HostClient(
-            `${this.apiBase}/sth/${id}${hostApiBase}`,
-            new ClientUtilsCustomAgent(`${this.apiBase}/sth/${id}${hostApiBase}`, this.client.agent)
-        );
+    getHostClient(id: string, hostApiBase = "/api/v1"): THostClient {
+        const apiBase = `${this.apiBase}/sth/${id}${hostApiBase}`;
+        const utils = new ClientUtilsCustomAgent(apiBase, this.client.agent);
+
+        if (!this.#hostClientFactory) throw new Error("Host client factory is not configured");
+
+        return this.#hostClientFactory(apiBase, utils);
     }
 
     async getHosts() {

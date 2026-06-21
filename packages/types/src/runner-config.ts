@@ -1,11 +1,9 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
-import { InstanceLimits } from "./instance-limits";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
-import { InstanceArgs } from "./instance";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
-import { PortConfig } from "./sequence-package-json";
-import { RunnerContainerConfiguration } from "./sth-configuration";
+import type { InstanceLimits } from "./instance-limits";
+import type { InstanceArgs } from "./instance";
+import type { PortConfig } from "./sequence-package-json";
+import type { RunnerContainerConfiguration } from "./sth-configuration";
 
 export type CommonSequenceConfig = {
     type: string;

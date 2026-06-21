@@ -1,5 +1,4 @@
 import { ISequenceAdapter, STHConfiguration } from "@scramjet/types";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { getAdapter } from "./get-adapters";
 
 /**

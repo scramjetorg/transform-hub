@@ -1,13 +1,13 @@
 /// <reference path="./definitions.d.ts" />
 
 import { ClientProvider, ClientUtils, ClientUtilsCustomAgent, Headers, HttpClient } from "@scramjet/client-utils";
-import { STHRestAPI } from "@scramjet/types";
+import { ApiClientFactory, STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 import { HostHeaders } from "@scramjet/symbols";
-// eslint-disable-next-line import/no-cycle
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { ManagerClient } from "./manager-client";
+
+export const createHostClient: ApiClientFactory<HostClient, ClientUtils> = (apiBase, utils) => new HostClient(apiBase, utils);
 
 /**
  * Host client.
@@ -292,6 +292,6 @@ export class HostClient implements ClientProvider {
      * @returns ManagerClient
      */
     getManagerClient(apiBase: string = "/api/v1") {
-        return new ManagerClient(`${this.apiBase}/cpm${apiBase}`, new ClientUtilsCustomAgent(`${this.apiBase}/cpm${apiBase}`, this.client.agent));
+        return new ManagerClient(`${this.apiBase}/cpm${apiBase}`, new ClientUtilsCustomAgent(`${this.apiBase}/cpm${apiBase}`, this.client.agent), createHostClient);
     }
 }

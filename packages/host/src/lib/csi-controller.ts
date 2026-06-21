@@ -470,9 +470,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             streams[CC.STDERR].pipe(process.stderr);
         }
 
-        this.upStreams.forEach((stream, i) => { stream?.on("error", (err) => {
+        this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
             this.logger.error("Downstream error on channel", i, err);
-        }); });
+        }));
 
         const runnerBroker = this.runnerBrokerProvider?.();
 

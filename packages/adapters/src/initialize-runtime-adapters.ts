@@ -1,5 +1,4 @@
 import { IObjectLogger, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { getAdapter, getValidAdapters } from "./get-adapters";
 
 export function updateAdaptersConfig(adapter: string, config: STHConfiguration) {

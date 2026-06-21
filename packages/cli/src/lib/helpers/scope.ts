@@ -15,7 +15,7 @@ const getScopePath = (scopeName: string) => {
  * Prints list of available scopes
  */
 export const listScopes = () => {
-    listDirFileNames(scopesDir).forEach((scopeFile) => { displayMessage(basename(scopeFile, configFileExt)); });
+    listDirFileNames(scopesDir).forEach((scopeFile) => displayMessage(basename(scopeFile, configFileExt)));
 };
 
 /**

@@ -1,5 +1,4 @@
 import { STHConfiguration, IAdapterAugmentation, RuntimeOptionRegistry } from "@scramjet/types";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
 import { ProcessInstanceAdapter } from "./process-instance-adapter";
 import { ProcessSequenceAdapter } from "./process-sequence-adapter";
 

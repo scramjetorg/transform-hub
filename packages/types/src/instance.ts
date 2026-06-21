@@ -1,7 +1,6 @@
 import { InstanceStatus } from "@scramjet/symbols";
-import { AppConfig } from "./app-config";
-// biome-ignore lint/suspicious/noImportCycles: existing package cycle retained during Biome migration
-import { SequenceInfo } from "./sequence-adapter";
+import type { AppConfig } from "./app-config";
+import type { SequenceInfo } from "./sequence-adapter";
 
 export type InstanceId = string;
 

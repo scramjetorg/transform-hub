@@ -79,7 +79,7 @@ const checkIfPublished = async (opts, item) => {
     }));
     const graph = filesWithDeps.reduce((acc, x) => {
         x.deps?.forEach(
-            (y) => { acc.push([x.name, y]); }
+            (y) => acc.push([x.name, y])
         );
         return acc;
     }, []);

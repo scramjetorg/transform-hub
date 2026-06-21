@@ -238,7 +238,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async onStorageMessage(data: { values: Record<string, string> }) {
         // this.logger.debug("Received local storage state from Host", data.values);  // <-- uncomment for debugging
-        Object.keys(this.localCache).forEach(k => { delete this.localCache[k]; });
+        Object.keys(this.localCache).forEach(k => delete this.localCache[k]);
         Object.assign(this.localCache, data.values);
     }
 

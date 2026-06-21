@@ -174,14 +174,12 @@ export class MultiManager {
         }
 
         if (Array.isArray(this.config.manager)) {
-            this.config.manager.forEach((managerConfiguration: ManagerConfiguration) => {
-                void ({
-                    ...defaultConfig,
-                    ...managerConfiguration,
-                    logLevel: this.config.getEntry("logLevel"),
-                    logColors: this.config.getEntry("logColors")
-                });
-            });
+            this.config.manager.forEach((managerConfiguration: ManagerConfiguration) => ({
+                ...defaultConfig,
+                ...managerConfiguration,
+                logLevel: this.config.getEntry("logLevel"),
+                logColors: this.config.getEntry("logColors")
+            }));
         } else if (typeof this.config.manager === "object") {
             managerConfigs.push({ ...defaultConfig, ...this.config.manager, logColors: this.config.getEntry("logColors") });
         }

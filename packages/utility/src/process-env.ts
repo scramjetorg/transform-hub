@@ -11,3 +11,7 @@ export function processCommanderRunnerEnvs(envString: string): Record<string, st
 
     return transformedObject;
 }
+
+export function development(env: NodeJS.ProcessEnv = process.env): boolean {
+    return !env.PRODUCTION && !!(env.DEVELOPMENT || env.SCRAMJET_DEVELOPMENT);
+}

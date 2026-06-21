@@ -178,7 +178,7 @@ console.time(BUILD_NAME);
             .catch(async (e) => {
                 process.once("beforeExit", () => {
                     console.error(`Pack error occured in ${e.chunk.currDir}`);
-                    e.chunk.logs.forEach((log) => { console.error(...log); });
+                    e.chunk.logs.forEach((log) => console.error(...log));
                 });
                 throw e.cause;
             });

@@ -113,6 +113,19 @@
     - `npm run build:packages` passed under the repository memory guard.
     - `git diff --check` passed.
     - Legacy ESLint lint commands were not run.
+
+    Follow-up cycle-fix work before checkpoint:
+    - Replaced `packages/types` cycle suppressions with type-only imports and added `ApiClientFactory` to the types package for client factory wiring.
+    - Extracted `development()` from `@scramjet/sth-config` into `@scramjet/utility` and updated `@scramjet/adapter-process` to import it from the leaf utility package, removing the adapter-process -> sth-config cycle edge and dependency.
+    - Rewired api-client Host/Manager creation through a typed host-client factory and updated middleware/multi-manager API clients to pass that factory, removing the HostClient/ManagerClient static import cycle.
+    - Removed obsolete `noImportCycles` Biome suppressions.
+    - Updated Biome config to disable `useIterableCallbackReturn` and `noSwitchDeclarations`, then reverted callback/switch wrapping-only edits.
+    - Validation after cycle fixes: `npm run lint` passed under a 2GB cap, checking 555 files in 111ms with max RSS 108096 KB; `npm run build:packages` passed under the repository memory guard; api-client, middleware-api-client, and multi-manager-api-client package tests passed; `git diff --check` passed.
+    - Utility package tests initially failed under the default memory guard and a serial AVA retry with V8 CodeRange virtual-memory reservation OOM. A minimal `worker_threads` probe reproduced the OOM under `ulimit -v 1835008` with `NODE_OPTIONS="--max-old-space-size=1536"`; adding `--jitless` avoided executable CodeRange reservation. `NODE_OPTIONS="--max-old-space-size=1536 --jitless" npm --prefix packages/utility test` passed, 6 tests and 1 skipped. Legacy ESLint lint commands were not run.
+    - Updated `scripts/run-ava.js` so package AVA runs spawn AVA with `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` by default, replacing the generic parent heap guard for the AVA child; updated `AGENTS.md`, `conductor/workflow.md`, and `conductor/tech-stack.md` with this AVA memory behavior.
+    - Validation after the AVA runner update: `NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/utility test` passed under `ulimit -v 1835008`, 6 tests and 1 skipped. `npm run lint` under the same cap failed twice with Biome native memory allocation errors when using default Rayon parallelism; `RAYON_NUM_THREADS=1 NODE_OPTIONS="--max-old-space-size=1024" npm run lint` passed under the cap, checking 555 files in 1278ms. `git diff --check` passed. Legacy ESLint lint commands were not run.
+    - Biome bounded-parallelism memory checks under `ulimit -v 1835008`: `RAYON_NUM_THREADS=1` max RSS 83712 KB, `2` 84672 KB, `4` 88512 KB, `6` 91392 KB, `8` 92736 KB, `12` 97344 KB, and `16` 100800 KB; all passed. The host reports 24 CPUs, and `RAYON_NUM_THREADS=24` reproduced Biome native memory allocation failure despite only 71424 KB max RSS, consistent with virtual address/thread reservation pressure rather than resident-memory pressure. Root Biome scripts and guidance now lock in `RAYON_NUM_THREADS=12` as the default bounded parallelism.
+    - Validation after locking scripts to 12 threads: `npm run lint` passed under `ulimit -v 1835008` with `NODE_OPTIONS="--max-old-space-size=1024"`, checking 555 files in 154ms with max RSS 96960 KB; `npm --prefix packages/utility test` passed under the same guard, 6 tests and 1 skipped; `npm run build:packages` passed under the repository memory guard; `git diff --check` passed. Legacy ESLint lint commands were not run.
 - [~] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
 
     Phase 2.5 checkpoint commit: `6b69afc2`.

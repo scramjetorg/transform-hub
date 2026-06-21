@@ -55,7 +55,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 
 ## Testing Stack
 
-- **Unit/package tests**: AVA-style TypeScript specs using `ts-node/register`.
+- **Unit/package tests**: AVA-style TypeScript specs using `ts-node/register`; package AVA runs go through `scripts/run-ava.js`, which applies `--max-old-space-size=1536 --jitless` to the spawned AVA process to avoid worker CodeRange OOMs under the repository virtual-memory cap.
 - **BDD tests**: Cucumber-based scenarios under `bdd/`.
 - **Coverage**: nyc/istanbul tooling.
 - **Runtime parity tests**: used especially for runtime wrapper behavior.
@@ -67,7 +67,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Build orchestration**: custom scripts under `scripts/`, including package builds and workspace script runners.
 - **Development entrypoint**: `npm run start:dev` for source-based hub startup.
 - **Built entrypoint**: `npm run start` after package build output exists in `dist/`.
-- **Linting/Formatting**: Biome is the active lint/format command surface during the migration from ESLint/Prettier. Use `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, and `npm run format`; `lint` runs Biome linting while formatting is explicit to avoid broad format churn. Do not run legacy ESLint commands unless a track explicitly re-enables them.
+- **Linting/Formatting**: Biome is the active lint/format command surface during the migration from ESLint/Prettier. Use `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, and `npm run format`; scripts set `RAYON_NUM_THREADS=12`, `lint` runs Biome linting, and formatting is explicit to avoid broad format churn. Do not run legacy ESLint commands unless a track explicitly re-enables them.
 - **Docs**: generated documentation under `docs/` and package README files.
 - **API routing**: `@scramjet/api-router` provides decorator and imperative route declaration, Zod-first validation, route hooks, OpenAPI 3.1 generation, schema-mode route loading, HTTP registration, verser2 registration, and generic client transports.
 - **API contracts**: `@scramjet/rest-api2` provides v2 DTO contracts, Zod schemas, handlerless route sets, typed route binding, and the common v2 client surface.
