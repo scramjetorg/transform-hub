@@ -100,6 +100,30 @@ async def test_perform_shutdown_keep_alive_within_timeout_defers_sequence_stoppe
 
 
 @pytest.mark.asyncio
+async def test_perform_shutdown_keep_alive_accepts_milliseconds_keyword() -> None:
+    ctx = make_app_context()
+    writer = RecordingMonitoringWriter()
+
+    async def on_stop(_payload: dict[str, Any]) -> None:
+        await asyncio.sleep(0.005)
+        await ctx.keep_alive(milliseconds=50)
+
+    ctx.add_stop_handler(on_stop)
+
+    start = asyncio.get_running_loop().time()
+    await perform_shutdown(
+        ctx,
+        writer,
+        {"timeout": 20, "canCallKeepalive": True},
+    )
+    elapsed = asyncio.get_running_loop().time() - start
+
+    assert elapsed >= 0.04
+    assert ctx._keep_alive_timeout == 50
+    assert writer.frames == [(SEQUENCE_STOPPED, {})]
+
+
+@pytest.mark.asyncio
 async def test_perform_shutdown_emits_sequence_stopped_at_timeout_without_cancelling_handler() -> None:
     ctx = make_app_context()
     writer = RecordingMonitoringWriter()

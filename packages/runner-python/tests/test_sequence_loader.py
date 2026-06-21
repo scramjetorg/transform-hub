@@ -5,7 +5,10 @@ Verifies the loader contract described in the module docstring:
 * Loads a sequence module from a filesystem path via importlib.
 * Performs ``os.chdir`` into the sequence directory while the module is live.
 * Optionally prepends ``python_path`` to ``sys.path``.
-* Exposes the module's ``run`` callable, or raises ``SequenceLoadError``.
+* Entrypoint resolution: ``main`` (primary), ``run`` (transitional fallback),
+  ``main`` takes precedence, non-callable ``main`` is an error even when
+  ``run`` is available.
+* Exposes the module's entrypoint via ``.run`` and ``.entrypoint_name``.
 * :meth:`SequenceModule.cleanup` restores cwd, sys.path, and sys.modules.
 * On load failure, all side effects are rolled back before the exception
   propagates.
@@ -159,26 +162,161 @@ def test_pythonpath_prepended_for_sibling_imports(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Error paths
+# Entrypoint resolution: main primary, run fallback
 # ---------------------------------------------------------------------------
 
 
-def test_missing_run_raises_structured_error(tmp_path: Path) -> None:
-    seq_file = _write_sequence(tmp_path, "seq_no_run", "VALUE = 1\n")
+def test_main_only_entrypoint(tmp_path: Path) -> None:
+    """A module with only a callable ``main`` loads with entrypoint_name='main'."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_main_only",
+        "def main(context, input_stream, *args):\n    return 'from-main'\n",
+    )
+
+    loaded = load_sequence(str(seq_file))
+    try:
+        assert callable(loaded.run)
+        assert loaded.entrypoint_name == "main"
+        assert loaded.run(None, None) == "from-main"
+    finally:
+        loaded.cleanup()
+
+
+def test_run_only_fallback(tmp_path: Path) -> None:
+    """A module with only a callable ``run`` loads as transitional fallback."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_run_only",
+        "def run(context, input_stream, *args):\n    return 'from-run'\n",
+    )
+
+    loaded = load_sequence(str(seq_file))
+    try:
+        assert callable(loaded.run)
+        assert loaded.entrypoint_name == "run"
+        assert loaded.run(None, None) == "from-run"
+    finally:
+        loaded.cleanup()
+
+
+def test_main_takes_precedence_over_run(tmp_path: Path) -> None:
+    """When both ``main`` and ``run`` are present, ``main`` is used."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_both",
+        "def main(context, input_stream, *args):\n    return 'from-main'\n"
+        "def run(context, input_stream, *args):\n    return 'from-run'\n",
+    )
+
+    loaded = load_sequence(str(seq_file))
+    try:
+        assert loaded.entrypoint_name == "main"
+        assert loaded.run(None, None) == "from-main"
+    finally:
+        loaded.cleanup()
+
+
+def test_non_callable_main_raises_even_with_callable_run(tmp_path: Path) -> None:
+    """Non-callable ``main`` is an error — never silently fall back to ``run``."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_bad_main",
+        "main = 42\n"
+        "def run(context, input_stream, *args):\n    return 'from-run'\n",
+    )
 
     with pytest.raises(SequenceLoadError) as excinfo:
         load_sequence(str(seq_file))
 
-    assert "missing run callable" in str(excinfo.value)
+    msg = str(excinfo.value)
+    assert "main" in msg
+    assert "not callable" in msg
 
 
-def test_non_callable_run_raises_structured_error(tmp_path: Path) -> None:
+def test_non_callable_main_without_run_raises(tmp_path: Path) -> None:
+    """Non-callable ``main`` with no ``run`` also raises."""
+    seq_file = _write_sequence(tmp_path, "seq_bad_main_no_run", "main = 42\n")
+
+    with pytest.raises(SequenceLoadError) as excinfo:
+        load_sequence(str(seq_file))
+
+    msg = str(excinfo.value)
+    assert "main" in msg
+    assert "not callable" in msg
+
+
+def test_main_none_raises_even_with_callable_run(tmp_path: Path) -> None:
+    """A present-but-None ``main`` is non-callable and must not fall back."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_none_main",
+        "main = None\n"
+        "def run(context, input_stream, *args):\n    return 'from-run'\n",
+    )
+
+    with pytest.raises(SequenceLoadError) as excinfo:
+        load_sequence(str(seq_file))
+
+    msg = str(excinfo.value)
+    assert "main" in msg
+    assert "not callable" in msg
+
+
+def test_entrypoint_name_is_main_when_selected(tmp_path: Path) -> None:
+    """entrypoint_name is 'main' when main is used."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_en_main",
+        "async def main(context, input_stream, *args):\n    return 'm'\n"
+        "async def run(context, input_stream, *args):\n    return 'r'\n",
+    )
+
+    loaded = load_sequence(str(seq_file))
+    try:
+        assert loaded.entrypoint_name == "main"
+    finally:
+        loaded.cleanup()
+
+
+def test_entrypoint_name_is_run_when_fallback(tmp_path: Path) -> None:
+    """entrypoint_name is 'run' when falling back to run."""
+    seq_file = _write_sequence(
+        tmp_path,
+        "seq_en_run",
+        "async def run(context, input_stream, *args):\n    return 'r'\n",
+    )
+
+    loaded = load_sequence(str(seq_file))
+    try:
+        assert loaded.entrypoint_name == "run"
+    finally:
+        loaded.cleanup()
+
+
+# ---------------------------------------------------------------------------
+# Error paths
+# ---------------------------------------------------------------------------
+
+
+def test_missing_entrypoint_raises_error(tmp_path: Path) -> None:
+    seq_file = _write_sequence(tmp_path, "seq_no_entry", "VALUE = 1\n")
+
+    with pytest.raises(SequenceLoadError) as excinfo:
+        load_sequence(str(seq_file))
+
+    assert "no callable" in str(excinfo.value)
+    assert "main" in str(excinfo.value) and "run" in str(excinfo.value)
+
+
+def test_non_callable_run_raises_error(tmp_path: Path) -> None:
     seq_file = _write_sequence(tmp_path, "seq_bad_run", "run = 42\n")
 
     with pytest.raises(SequenceLoadError) as excinfo:
         load_sequence(str(seq_file))
 
-    assert "missing run callable" in str(excinfo.value)
+    assert "no callable" in str(excinfo.value)
+    assert "main" in str(excinfo.value) and "run" in str(excinfo.value)
 
 
 def test_import_error_wrapped_preserving_cause(tmp_path: Path) -> None:

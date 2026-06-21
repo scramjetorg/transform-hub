@@ -20,6 +20,8 @@ import json
 import logging
 from typing import Any, AsyncIterator
 
+from runner_python.input_stream import is_ndjson_content_type
+
 logger = logging.getLogger(__name__)
 
 PANG = 3012
@@ -55,7 +57,7 @@ async def forward_output_stream(
                     f"Expected str for text/plain, got {type(item).__name__}"
                 )
             output_writer.write(item.encode("utf-8") + b"\n")
-        elif content_type == "application/x-ndjson":
+        elif is_ndjson_content_type(content_type):
             line = json.dumps(item, separators=(",", ":"), ensure_ascii=False)
             output_writer.write(line.encode("utf-8") + b"\n")
         else:

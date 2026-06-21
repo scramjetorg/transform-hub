@@ -65,6 +65,9 @@ def make_app_context() -> AppContext:
     return app_context
 
 
+
+
+
 def load_recorded_control_lines(scenario: str) -> list[bytes]:
     recorded = json.loads((FIXTURE_ROOT / scenario / "recorded.json").read_text(encoding="utf-8"))
 
@@ -102,6 +105,23 @@ async def test_set_updates_logger_level_without_polluting_config() -> None:
 
     assert app_context.config == {}
     assert app_context.logger.getEffectiveLevel() == logging.DEBUG
+
+
+@pytest.mark.asyncio
+async def test_set_updates_sequence_logger_when_control_context_wraps_runtime_context() -> None:
+    control_context = make_app_context()
+    sequence_logger = logging.getLogger("test_set_updates_sequence_logger")
+    sequence_logger.setLevel(logging.INFO)
+    control_context._sequence_logger = sequence_logger
+
+    await control_loop(
+        ScriptedControlDecoder([encode_control_line(SET, {"logLevel": "DEBUG"})]),
+        control_context,
+        RecordingTerminator(),
+    )
+
+    assert control_context.logger.getEffectiveLevel() == logging.DEBUG
+    assert sequence_logger.getEffectiveLevel() == logging.DEBUG
 
 
 @pytest.mark.asyncio
@@ -289,3 +309,68 @@ async def test_parity_replay_control_frames_match_recorded_behaviour(
 
     if expected_stop is not None:
         assert stop_calls == [expected_stop]
+
+
+# --- Kill handler dispatch tests ---
+
+
+@pytest.mark.asyncio
+async def test_kill_invokes_kill_handlers_before_hard_kill() -> None:
+    """Kill handlers must be called before HardKillSignal is raised."""
+    app_context = make_app_context()
+    kill_order: list[str] = []
+
+    async def handler_a() -> None:
+        kill_order.append("a")
+
+    async def handler_b() -> None:
+        kill_order.append("b")
+
+    app_context.add_kill_handler(handler_a)
+    app_context.add_kill_handler(handler_b)
+
+    with pytest.raises(HardKillSignal, match="killed"):
+        await control_loop(
+            ScriptedControlDecoder([encode_control_line(KILL, {})]),
+            app_context,
+            RecordingTerminator(),
+        )
+
+    assert kill_order == ["a", "b"]
+
+
+@pytest.mark.asyncio
+async def test_kill_works_without_kill_handlers() -> None:
+    """KILL still raises HardKillSignal when no kill handlers are registered."""
+    app_context = make_app_context()
+
+    with pytest.raises(HardKillSignal, match="killed"):
+        await control_loop(
+            ScriptedControlDecoder([encode_control_line(KILL, {})]),
+            app_context,
+            RecordingTerminator(),
+        )
+
+    # No handlers registered is not an error.
+    assert getattr(app_context, "_kill_handlers", []) == []
+
+
+@pytest.mark.asyncio
+async def test_kill_handler_sync_works() -> None:
+    """Synchronous kill handlers should also be supported."""
+    app_context = make_app_context()
+    called: list[str] = []
+
+    def sync_handler() -> None:
+        called.append("sync")
+
+    app_context.add_kill_handler(sync_handler)
+
+    with pytest.raises(HardKillSignal, match="killed"):
+        await control_loop(
+            ScriptedControlDecoder([encode_control_line(KILL, {})]),
+            app_context,
+            RecordingTerminator(),
+        )
+
+    assert called == ["sync"]

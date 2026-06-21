@@ -32,6 +32,7 @@ class FakeBroker:
 class FakeGuest:
     def __init__(self) -> None:
         self.connected = False
+        self.closed = False
         self.attached = []
 
     def attach(self, app):
@@ -40,6 +41,9 @@ class FakeGuest:
 
     async def connect(self) -> None:
         self.connected = True
+
+    async def close(self) -> None:
+        self.closed = True
 
 
 def config(**overrides) -> Verser2RuntimeConfig:
@@ -151,41 +155,6 @@ def test_create_python_sequence_guest_maps_pfx_passphrase() -> None:
 
     assert calls[0]["tls_pfx_file"] == "/client.p12"
     assert calls[0]["tls_pfx_password"] == "secret"
-
-
-@pytest.mark.asyncio
-async def test_create_python_hub_client_maps_inline_ca_bundle() -> None:
-    calls = []
-    broker = FakeBroker()
-
-    def broker_factory(**kwargs):
-        calls.append(kwargs)
-        return broker
-
-    await create_python_hub_client(
-        config(tls={"ca": "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----"}),
-        broker_factory=broker_factory,
-    )
-
-    assert calls[0]["tls_ca"] == "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----"
-    assert "tls_ca_file" not in calls[0]
-
-
-def test_create_python_sequence_guest_maps_inline_ca_bundle() -> None:
-    calls = []
-
-    def guest_factory(**kwargs):
-        calls.append(kwargs)
-        return "guest"
-
-    create_python_sequence_guest(
-        config(tls={"ca": "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----"}),
-        object(),
-        guest_factory=guest_factory,
-    )
-
-    assert calls[0]["tls_ca"] == "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----"
-    assert "tls_ca_file" not in calls[0]
 
 
 def test_python_sequence_api_exposure_attaches_app_to_bound_guest() -> None:

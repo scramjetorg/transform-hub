@@ -176,3 +176,156 @@ async def test_default_interval_is_one_second():
 
     sig = _inspect.signature(run_heartbeat)
     assert sig.parameters["interval"].default == 1.0
+
+
+# --- Monitoring handler composition tests ---
+
+@pytest.mark.asyncio
+async def test_monitoring_handler_payload_composition():
+    """Single monolithic handler returning dict should be used as payload."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+    app_context.add_monitoring_handler(lambda: {"healthy": True, "load": 0.5})
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    assert payload == {"healthy": True, "load": 0.5}
+
+
+@pytest.mark.asyncio
+async def test_async_monitoring_handler_is_awaited():
+    """Async monitoring handlers should be awaited and their result merged."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+
+    async def async_mon():
+        await asyncio.sleep(0)
+        return {"healthy": True, "async": True}
+
+    app_context.add_monitoring_handler(async_mon)
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    assert payload == {"healthy": True, "async": True}
+
+
+@pytest.mark.asyncio
+async def test_bool_monitoring_handler_result():
+    """Bool monitoring handler result should be wrapped to {'healthy': bool}."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+    app_context.add_monitoring_handler(lambda: False)
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    assert payload == {"healthy": False}
+
+
+@pytest.mark.asyncio
+async def test_multiple_monitoring_handlers_merge():
+    """Multiple handlers should merge in registration order."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+
+    app_context.add_monitoring_handler(lambda: {"healthy": True, "load": 0.3})
+    app_context.add_monitoring_handler(lambda: {"load": 0.8, "cpu": 50})
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    # Second handler overwrites load, adds cpu
+    assert payload == {"healthy": True, "load": 0.8, "cpu": 50}
+
+
+@pytest.mark.asyncio
+async def test_legacy_set_health_check_still_works():
+    """Existing set_health_check must produce the same heartbeat payload."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+    app_context.set_health_check(lambda: {"healthy": False, "reason": "draining"})
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    assert payload == {"healthy": False, "reason": "draining"}
+
+
+@pytest.mark.asyncio
+async def test_no_monitoring_handlers_falls_back_to_default():
+    """Without handlers, heartbeat should emit default {'healthy': True}."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+    # Ensure no handlers and no overridden _health_check
+    app_context._monitoring_handlers.clear()
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    assert payload == {"healthy": True}
+
+
+@pytest.mark.asyncio
+async def test_existing_health_check_tests_pass():
+    """Regression: all existing set_health_check test scenarios still pass
+    via the adapted monitoring-handler path."""
+    writer = RecordingWriter()
+    app_context = AppContext()
+    app_context.set_health_check(lambda: {"healthy": True, "custom": "ok"})
+
+    task = asyncio.create_task(
+        run_heartbeat(writer, app_context, interval=0.1)
+    )
+    await asyncio.sleep(0.15)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert len(writer.frames) >= 1
+    _, payload, _ = writer.frames[0]
+    # Full dict from the health check is returned, not just {"healthy": True}
+    assert payload == {"healthy": True, "custom": "ok"}

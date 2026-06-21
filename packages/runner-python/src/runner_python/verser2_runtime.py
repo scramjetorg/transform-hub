@@ -9,18 +9,60 @@ Guest exposure.
 from __future__ import annotations
 
 import inspect
+import os
+import tempfile
 from collections.abc import Callable
 from typing import Any
 
 from runner_python.boot_config import Verser2RuntimeConfig
 
 
-def _tls_kwargs(config: Verser2RuntimeConfig) -> dict[str, Any]:
+def _wrap_close_with_cleanup(handle: Any, cleanup: Callable[[], None]) -> Any:
+    close = getattr(handle, "close", None)
+
+    if callable(close):
+
+        async def wrapped_close(*args: Any, **kwargs: Any) -> Any:
+            try:
+                result = close(*args, **kwargs)
+                if inspect.isawaitable(result):
+                    return await result
+                return result
+            finally:
+                cleanup()
+
+        setattr(handle, "close", wrapped_close)
+    else:
+        try:
+            setattr(handle, "close", cleanup)
+        except (AttributeError, TypeError):
+            cleanup()
+
+    return handle
+
+
+def _tls_kwargs(config: Verser2RuntimeConfig) -> tuple[dict[str, Any], Callable[[], None], bool]:
     tls = config.tls or {}
     kwargs: dict[str, Any] = {}
+    cleanup_paths: list[str] = []
+
+    def cleanup() -> None:
+        while cleanup_paths:
+            path = cleanup_paths.pop()
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+
+    ca = tls.get("ca")
+    if isinstance(ca, str) and ca.strip():
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as ca_file:
+            ca_file.write(ca)
+            ca_file.flush()
+            cleanup_paths.append(ca_file.name)
+            kwargs["tls_ca_file"] = ca_file.name
 
     mapping = {
-        "ca": "tls_ca",
         "caFile": "tls_ca_file",
         "certFile": "tls_cert_file",
         "keyFile": "tls_key_file",
@@ -29,7 +71,7 @@ def _tls_kwargs(config: Verser2RuntimeConfig) -> dict[str, Any]:
 
     for source, target in mapping.items():
         value = tls.get(source)
-        if value:
+        if value and target not in kwargs:
             kwargs[target] = value
 
     passphrase = tls.get("passphrase")
@@ -39,7 +81,7 @@ def _tls_kwargs(config: Verser2RuntimeConfig) -> dict[str, Any]:
         if "tls_pfx_file" in kwargs:
             kwargs["tls_pfx_password"] = passphrase
 
-    return kwargs
+    return kwargs, cleanup, bool(cleanup_paths)
 
 
 class PythonHubClient:
@@ -142,12 +184,19 @@ async def create_python_hub_client(
     else:
         factory = broker_factory
 
-    broker = factory(
-        host_url=config.hostUrl,
-        broker_id=config.hubBrokerId,
-        **_tls_kwargs(config),
-    )
-    await broker.connect()
+    tls_kwargs, cleanup_tls, has_tls_cleanup = _tls_kwargs(config)
+    try:
+        broker = factory(
+            host_url=config.hostUrl,
+            broker_id=config.hubBrokerId,
+            **tls_kwargs,
+        )
+        if has_tls_cleanup:
+            _wrap_close_with_cleanup(broker, cleanup_tls)
+        await broker.connect()
+    except Exception:
+        cleanup_tls()
+        raise
     return PythonHubClient(broker, config.hubTargetDomain)
 
 
@@ -165,14 +214,22 @@ def create_python_sequence_guest(
     else:
         factory = guest_factory
 
-    return factory(
-        host_url=config.hostUrl,
-        guest_id=config.runnerGuestId,
-        app=app,
-        routed_domains=[config.runnerRouteDomain],
-        min_waiting_streams=config.minWaitingStreams or 1,
-        **_tls_kwargs(config),
-    )
+    tls_kwargs, cleanup_tls, has_tls_cleanup = _tls_kwargs(config)
+    try:
+        guest = factory(
+            host_url=config.hostUrl,
+            guest_id=config.runnerGuestId,
+            app=app,
+            routed_domains=[config.runnerRouteDomain],
+            min_waiting_streams=config.minWaitingStreams or 1,
+            **tls_kwargs,
+        )
+        if has_tls_cleanup:
+            return _wrap_close_with_cleanup(guest, cleanup_tls)
+        return guest
+    except Exception:
+        cleanup_tls()
+        raise
 
 
 async def start_python_sequence_guest(
@@ -188,5 +245,13 @@ async def start_python_sequence_guest(
 
     guest = create_python_sequence_guest(config, exposure.app, guest_factory=guest_factory)
     exposure.bind_guest(guest)
-    await guest.connect()
+    try:
+        await guest.connect()
+    except Exception:
+        close = getattr(guest, "close", None)
+        if callable(close):
+            result = close()
+            if inspect.isawaitable(result):
+                await result
+        raise
     return guest
