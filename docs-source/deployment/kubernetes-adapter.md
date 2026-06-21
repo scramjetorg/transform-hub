@@ -1,0 +1,84 @@
+---
+id: deployment-kubernetes-adapter
+slug: /deployment/kubernetes-adapter
+title: Kubernetes Adapter
+---
+
+# Kubernetes Adapter
+
+The **Kubernetes Adapter** runs Sequence Runners as Kubernetes Pods. It integrates Transform Hub with existing Kubernetes infrastructure for scheduling, scaling, and resource management. This adapter is suitable for organizations already running Kubernetes who want to manage data processing workloads alongside their existing services.
+
+## How it works
+
+When the Kubernetes Adapter receives a deployment request, the Hub:
+
+1. Unpacks the Sequence archive.
+2. Creates a Kubernetes Pod definition based on the Sequence and Hub configuration.
+3. Submits the Pod to the Kubernetes API server in the configured namespace.
+4. Bridges the Pod's streams to the Hub's topic infrastructure through a sidecar or stream proxy.
+5. Monitors the Pod for health, restart events, and termination.
+
+## Configuration
+
+Select the Kubernetes Adapter at Hub startup:
+
+```bash
+sth --runtime-adapter kubernetes
+```
+
+Adapter-specific options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `kubeConfigPath` | `~/.kube/config` | Path to kubeconfig file |
+| `namespace` | `default` | Kubernetes namespace for Runner Pods |
+| `defaultImage` | `node:18` | Base image for Node.js Sequences |
+| `memoryLimit` | no limit | Per-Pod memory limit |
+| `cpuLimit` | no limit | Per-Pod CPU limit |
+| `serviceAccount` | — | Service account for Runner Pods |
+
+Configure in the Hub configuration file:
+
+```json
+{
+  "runtimeAdapter": "kubernetes",
+  "adapter": {
+    "kubeConfigPath": "/etc/kubernetes/kubeconfig.yaml",
+    "namespace": "scramjet-sequences",
+    "defaultImage": "node:20",
+    "memoryLimit": "1Gi",
+    "cpuLimit": "500m",
+    "serviceAccount": "scramjet-runner"
+  }
+}
+```
+
+## Prerequisites
+
+- A running Kubernetes cluster (minikube for development, managed K8s for production).
+- The Hub must be deployed in or have network access to the cluster.
+- Appropriate RBAC permissions to create, list, and delete Pods in the target namespace.
+- A kubeconfig file with sufficient credentials (or in-cluster config when running the Hub inside Kubernetes).
+
+## When to use
+
+The Kubernetes Adapter is ideal for:
+
+- **Existing Kubernetes deployments** — leverage your K8s investment for data processing.
+- **Multi-node scheduling** — let Kubernetes schedule Runner Pods across cluster nodes.
+- **Infrastructure integration** — use K8s secrets, config maps, and network policies with Sequences.
+- **Scaling workloads** — benefit from K8s autoscaling and resource quotas.
+
+## Limitations
+
+- Higher operational complexity than Process or Docker adapters.
+- Requires Kubernetes cluster management expertise.
+- Stream proxying between Hub and Pod adds some latency compared to local process execution.
+- Pod startup time is typically longer than container or process startup.
+
+## Next steps
+
+- [Process Adapter](process-adapter.md) for lightweight, non-containerized deployments.
+- [Docker Adapter](docker-adapter.md) for single-host container isolation.
+- [Transform Hub configuration](../transform-hub/configuration.md) for general Hub settings.
+- [Manager overview](../manager/overview.md) for multi-Hub orchestration.

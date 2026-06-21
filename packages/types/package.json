@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf ./dist .bic_cache",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
+    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "test:expose": "scripts/generate.js",
     "test": "npm run test:expose && node ../../node_modules/typescript/bin/tsc -p ./tsconfig.test.json --noEmit",
     "build:only": "npm run test:expose"

@@ -1,0 +1,124 @@
+---
+id: transform-hub-build-run
+slug: /transform-hub/build-run
+title: Build and run workflows
+---
+
+# Build and run workflows
+
+This page covers the lifecycle of a Sequence from source code to running Instance, including packaging, deployment, monitoring, and cleanup.
+
+## Development workflow
+
+During development, iterate quickly by deploying a Sequence directly from source:
+
+1. Write your Sequence code in JavaScript (Node.js) or Python.
+2. Package it using the `si sequence pack` CLI command.
+3. Deploy to a local or remote Hub.
+4. Inspect logs and output.
+5. Stop and re-deploy as needed.
+
+See the [getting started guide](getting-started.md) for a walk-through of this cycle.
+
+## Packaging
+
+Transform Hub Sequences are distributed as `.tar.gz` archives. The archive contains:
+
+- **`index.js`** (or `index.py`) — the entry point that exports the Sequence class.
+- **`package.json`** — dependencies and metadata (Node.js Sequences).
+- **`requirements.txt`** — Python dependencies (Python Sequences).
+- **`__scramjet_meta__.json`** — automatically generated metadata.
+
+Create a package:
+
+```bash
+si sequence pack ./my-sequence -o my-sequence.tar.gz
+```
+
+For a single-file Sequence:
+
+```bash
+si sequence pack my-sequence.js -o my-sequence.tar.gz
+```
+
+The `si sequence pack` command analyses the source, resolves dependencies, and produces a deployable archive.
+
+## Inspecting packages
+
+Use CLI help for the current package-inspection commands and options:
+
+```bash
+si sequence --help
+```
+
+Inspection support is evolving, so avoid relying on undocumented package metadata commands in automation.
+
+## Deploying
+
+Deploy a Sequence to a Hub through the Manager:
+
+```bash
+si sequence deploy my-sequence.tar.gz
+```
+
+Additional deployment options:
+
+- `--args` — pass arguments to the Sequence
+- `--config-file` — provide a startup configuration file
+- `--input-topic` / `--output-topic` — connect to named topics
+
+The Manager routes the deployment to an available Hub and returns the Instance ID.
+
+## Monitoring Instances
+
+Track running Instances:
+
+```bash
+si instance list          # List all Instances
+si instance log <id>      # Stream logs for an Instance
+si instance stdout <id>   # View Instance output stream
+```
+
+## Sending input and reading output
+
+Send data to a running Instance:
+
+```bash
+echo "data" | si instance input <id>
+```
+
+Read the Instance's output with the stream command supported by your CLI version:
+
+```bash
+si instance stdout <id>
+```
+
+## Stopping and cleanup
+
+Stop a running Instance:
+
+```bash
+si instance stop <id> <timeout>
+```
+
+Remove a stopped Instance:
+
+```bash
+si instance kill <id> --removeImmediately
+```
+
+## Production workflows
+
+For production deployments, consider:
+
+- Use the [Manager](../manager/overview.md) to coordinate multiple Hubs.
+- Configure [Docker](../deployment/docker-adapter.md) or [Kubernetes](../deployment/kubernetes-adapter.md) adapters for isolation.
+- Set up environment-specific [configuration](configuration.md).
+- Use the [API client](../api/client-usage.md) for programmatic deployment pipelines.
+- Implement health checks and automated restart policies via the Manager.
+
+## See also
+
+- [CLI usage patterns](../cli/usage.md) for common `si` workflows.
+- [API client documentation](../api/client-usage.md) for programmatic control.
+- [Manager overview](../manager/overview.md) for multi-Hub orchestration.

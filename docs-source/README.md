@@ -29,11 +29,11 @@ title: Documentation source overview
 
 ## Generator globs
 
-- Routed prose pages: `intro/**/*.md`, `transform-hub/**/*.md`, `manager/**/*.md`, `sequences/**/*.md`, `testing/**/*.md`, `cli/**/*.md`, `api/**/*.md`, `deployment/**/*.md`, and `development/**/*.md`.
+- Routed prose pages: `intro/**/*.md`, `transform-hub/**/*.md`, `manager/**/*.md`, `sequences/**/*.md`, `testing/**/*.md`, `cli/**/*.md`, `api/**/*.md`, `deployment/**/*.md`, `development/**/*.md`, and frontmatter-backed `examples/**/*.md` pages.
 - Reference policy/configuration: `reference/**/*.md`, `reference/**/*.json`, and `reference/**/*.schema.json` are consumed by generators or copied as reference content according to their frontmatter/schema type.
 - Partials: `_partials/**` is include-only content and must not be routed as standalone pages.
 - README sources: `readmes/**` is consumed by the README generator and may have README-specific metadata instead of routed-page frontmatter.
-- Examples: `examples/**` is copied or validated as example content and is not routed unless a specific page frontmatter opts in.
+- Examples: `examples/**/*.md` pages with frontmatter are routed; raw example assets may also live under `examples/**` and are copied or validated by later generator phases.
 
 ## Link rules
 

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
+    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "test": "npm run test:ava",
     "test:ava": "# nyc node ../../scripts/run-ava.js",
     "clean": "rm -rf ./dist .bic_cache"

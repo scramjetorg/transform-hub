@@ -1,0 +1,162 @@
+---
+id: api-client-usage
+slug: /api/client-usage
+title: API client usage
+---
+
+# API client usage
+
+Transform Hub exposes HTTP APIs at the Hub and Manager levels. You can interact with these APIs directly over HTTP or through the `@scramjet/api-client` TypeScript/JavaScript library, which provides typed methods for all common operations.
+
+## API surfaces
+
+There are two API surfaces:
+
+- **Hub API** — direct control of a single Hub. Used internally by the Manager and by advanced users for direct Hub access.
+- **Manager API** — unified control plane for a fleet of Hubs. This is the primary API for operators.
+
+Both APIs follow RESTful conventions with JSON request and response bodies.
+
+## The API Client (`@scramjet/api-client`)
+
+The `@scramjet/api-client` package is the recommended programmatic interface for interacting with Transform Hub. It wraps the Manager and Hub HTTP APIs in a typed, promise-based library.
+
+### Installation
+
+```bash
+npm install @scramjet/api-client
+```
+
+### Basic usage
+
+#### HostClient (Hub API)
+
+The `HostClient` provides direct access to a single Hub's API. It takes the API base URL as a string:
+
+```typescript
+import { HostClient } from "@scramjet/api-client";
+
+const host = new HostClient("http://localhost:8000/api/v1");
+
+// List Instances on this Hub
+const instances = await host.listInstances();
+
+// Inspect a specific Instance
+const info = await host.getInstanceInfo(instanceId);
+
+// List Sequences
+const sequences = await host.listSequences();
+
+// Upload a Sequence package
+const sequence = await host.sendSequence(fs.createReadStream("./my-sequence.tar.gz"));
+```
+
+#### ManagerClient (Manager API)
+
+The `ManagerClient` provides access to the Manager's unified control plane. Like `HostClient`, it takes the API base URL as a string:
+
+```typescript
+import { createHostClient, ManagerClient } from "@scramjet/api-client";
+
+const manager = new ManagerClient("http://localhost:8200/api/v1", undefined, createHostClient);
+
+// List all Instances across all Hubs
+const instances = await manager.getInstances();
+
+// List all Sequences across all Hubs
+const sequences = await manager.getAllSequences();
+
+// List registered Hubs
+const hubs = await manager.getHosts();
+
+// Get a HostClient for a specific Hub
+const hostClient = await manager.getHostClient(hubId);
+```
+
+### Key client concepts
+
+The `HostClient` provides operations scoped to a single Hub:
+
+- `listInstances()` — list Instances on this Hub
+- `getInstanceInfo(id)` — inspect an Instance
+- `listSequences()` — list Sequences on this Hub
+- `sendSequence(stream)` — upload a Sequence package
+- `sendTopic(topic, stream)` — publish data to a Topic
+- `getTopic(topic)` — read data from a Topic
+- `createTopic(id, contentType)` — create a Topic
+
+The `ManagerClient` provides a fleet-wide view:
+
+- `getInstances()` — list all Instances across all Hubs
+- `getAllSequences()` — list all Sequences across all Hubs
+- `getHosts()` — list registered Hubs
+- `getHostClient(id)` — obtain a `HostClient` for a specific Hub when the `ManagerClient` was constructed with a host-client factory
+- `sendNamedData(topic, stream)` — publish data to a named topic
+- `getNamedData(topic)` — read data from a named topic
+
+> **Note**: The exact method signatures and available operations are evolving. For the complete up-to-date API, refer to the TypeScript type definitions in the `@scramjet/api-client` package or the generated API reference.
+
+### Creating sub-clients
+
+Both `HostClient` and `ManagerClient` provide factory methods for scoped sub-clients:
+
+```typescript
+// From HostClient
+const instanceClient = host.getInstanceClient(instanceId);
+const sequenceClient = host.getSequenceClient(sequenceId);
+
+// From ManagerClient constructed with a host-client factory
+const hostClient = await manager.getHostClient(hubId);
+```
+
+## Direct HTTP access
+
+You can call the Hub or Manager API directly with any HTTP client:
+
+List Instances:
+
+```bash
+curl http://localhost:8000/api/v1/instances
+```
+
+Upload a Sequence:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/sequence \
+  -F "package=@./my-sequence.tar.gz"
+```
+
+Get Instance info:
+
+```bash
+curl http://localhost:8000/api/v1/instance/<id>
+```
+
+## rest-api2 package (experimental)
+
+The `@scramjet/rest-api2` package provides schema-generated TypeScript types and client helpers for the evolving API surface. It is **experimental** and its scope is limited to:
+
+- Type definitions for API request and response payloads.
+- Client helper functions that mirror the v2 API contracts.
+
+Important limitations:
+
+- The router layer is not yet complete — you cannot yet run a standalone v2 API server from this package.
+- The package does not include MCP (Model Context Protocol) features.
+- Use it for type-safe client development, but rely on the `@scramjet/api-client` for practical runtime API access.
+- The generated curated reference for rest-api2 includes stability labels reflecting this experimental status.
+
+## When to use which
+
+| Approach | When to use |
+|----------|-------------|
+| `@scramjet/api-client` | Production applications, tools, and integrations |
+| Direct HTTP calls | Scripting, quick tests, non-Node.js environments |
+| `@scramjet/rest-api2` types | Type-safe client development with the v2 API contract |
+
+## Next steps
+
+- [CLI usage patterns](../cli/usage.md) for command-line interaction.
+- [Build and run workflows](../transform-hub/build-run.md) for lifecycle management.
+- [Transform Hub core concepts](../transform-hub/core-concepts.md) for API context.
+- Generated API reference for complete endpoint documentation.

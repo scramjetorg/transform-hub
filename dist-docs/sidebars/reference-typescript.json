@@ -1,0 +1,38 @@
+[
+  {
+    "package": "@scramjet/sth",
+    "title": "@scramjet/sth reference",
+    "stability": "stable",
+    "outputPath": "reference/typescript/sth/README.md"
+  },
+  {
+    "package": "@scramjet/types",
+    "title": "@scramjet/types reference",
+    "stability": "stable",
+    "outputPath": "reference/typescript/types-app-context/README.md"
+  },
+  {
+    "package": "@scramjet/types",
+    "title": "@scramjet/types reference",
+    "stability": "internal-but-useful",
+    "outputPath": "reference/typescript/types-runtime-executor/README.md"
+  },
+  {
+    "package": "@scramjet/sequence-test",
+    "title": "@scramjet/sequence-test reference",
+    "stability": "experimental",
+    "outputPath": "reference/typescript/sequence-test/README.md"
+  },
+  {
+    "package": "@scramjet/rest-api2",
+    "title": "@scramjet/rest-api2 reference",
+    "stability": "experimental",
+    "outputPath": "reference/typescript/rest-api2/README.md"
+  },
+  {
+    "package": "@scramjet/api-client",
+    "title": "@scramjet/api-client reference",
+    "stability": "stable",
+    "outputPath": "reference/typescript/api-client/README.md"
+  }
+]

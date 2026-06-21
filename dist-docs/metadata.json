@@ -1,0 +1,62 @@
+{
+  "generatedBy": "scripts/docs.js",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "sourceIdentifier": "sha256:ef02c66fc7fc1b2f9740204b6b058448a1bf9e7819f5f9398082a62b3f4fb211",
+  "outputRoot": {
+    "value": "dist-docs",
+    "resolvedPath": "dist-docs",
+    "source": "package",
+    "envVar": "SCRAMJET_DOCS_OUTPUT_DIR",
+    "packageConfig": "scramjet.docs.outputDir"
+  },
+  "groups": {
+    "content": [
+      "intro/overview.md",
+      "transform-hub/build-run.md",
+      "transform-hub/configuration.md",
+      "transform-hub/core-concepts.md",
+      "transform-hub/getting-started.md",
+      "transform-hub/overview.md",
+      "manager/connecting-hubs.md",
+      "manager/overview.md",
+      "manager/running.md",
+      "sequences/packaging-deploying.md",
+      "sequences/sequence-lifecycle.md",
+      "sequences/sequence-monitoring.md",
+      "sequences/sequence-topics.md",
+      "sequences/writing-sequences.md",
+      "testing/testing-sequences.md",
+      "cli/usage.md",
+      "api/client-usage.md",
+      "deployment/docker-adapter.md",
+      "deployment/kubernetes-adapter.md",
+      "deployment/process-adapter.md",
+      "development/contributing.md",
+      "examples/python-log-processor.md",
+      "examples/simple-transform.md"
+    ],
+    "reference": [
+      "reference/typescript/sth/",
+      "reference/typescript/types-app-context/",
+      "reference/typescript/types-runtime-executor/",
+      "reference/typescript/sequence-test/",
+      "reference/typescript/rest-api2/",
+      "reference/typescript/api-client/"
+    ],
+    "readmes": [],
+    "sidebars": [
+      "sidebars/content.json",
+      "sidebars/reference-typescript.json"
+    ]
+  },
+  "docusaurusHandoff": {
+    "content": "content/",
+    "reference": "reference/",
+    "readmes": "readmes/",
+    "sidebars": "sidebars/"
+  },
+  "warnings": [
+    "CLI reference generation, README generation, and API v2 documentation generation are implemented in later phases.",
+    "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
+  ]
+}

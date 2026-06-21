@@ -46,7 +46,7 @@
     - [x] Run the narrowest relevant validation for Markdown/metadata/docs-source changes.
     - [x] Record skipped validation and reasons in phase notes.
     - [x] Confirm no runtime, adapter, API, or CLI behavior changed.
-- [~] Task: Conductor - User Manual Verification 'Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 0: Track Setup, Current-State Inventory, and Documentation Architecture' (Protocol in workflow.md)
 
 ### Phase 0 notes
 
@@ -61,75 +61,88 @@
 - Phase checkpoint commit: `17cfd839` (`docs(conductor): Complete new docs phase 0`).
 - Manual verification finding: the old `api_docs_revamp_20260616` folder was still under `conductor/tracks/` and listed in `conductor/tracks.md` even though this track supersedes it. Correction: moved the folder to `conductor/archive/api_docs_revamp_20260616/` and removed it from the active tracks registry.
 - Manual verification finding: the standalone migration document duplicated track work and should not remain as documentation source. Correction: removed `docs-source/reference/migration-and-retirement.md`; migration/retirement execution remains governed by this plan and later phase tasks.
+- Manual verification: Phase 0 approved after corrections.
 
 ## Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content
 
-- [ ] Task: Design generator command surface
-    - [ ] Add or define npm scripts for `docs:clean`, `docs:generate`, `docs:check`, and narrower subcommands.
-    - [ ] Add or define root `package.json` configuration for the default docs generator endpoint/output root.
-    - [ ] Add or define the environment variable override for the docs generator endpoint/output root, with env var taking precedence over package configuration.
-    - [ ] Ensure scripts use npm and existing monorepo script patterns.
-    - [ ] Ensure generated outputs remain outside handwritten `docs-source/`.
-- [ ] Task: Implement content export foundation
-    - [ ] Generate `dist-docs/content/` from `docs-source/` prose.
-    - [ ] Preserve frontmatter, stable slugs/doc IDs, and generated-file headers where appropriate.
-    - [ ] Generate initial sidebar metadata for prose content.
-- [ ] Task: Implement curated reference generation foundation
-    - [ ] Choose or configure the reference generator for allowlisted TypeScript entrypoints.
-    - [ ] Generate curated reference under `dist-docs/reference/typescript/`.
-    - [ ] Fail or clearly report unresolved allowlisted entrypoints.
-    - [ ] Prevent broad package/source-tree reference generation.
-- [ ] Task: Retire old TypeDoc and custom Markdown templating flows
-    - [ ] Remove, disable, or redirect package-level broad TypeDoc scripts that generate root-level `docs/<package>/` clutter.
-    - [ ] Update root docs scripts to use the new docs command surface.
-    - [ ] Remove, disable, or migrate old custom Markdown templating entrypoints such as `scripts/mk-readme.js`, package `.mtpl` files, and old README parts only after replacement generation exists.
-    - [ ] Remove stale generated docs artifacts only when confirmed generated and replaceable.
-    - [ ] Record any temporarily retained old docs or templating outputs and their removal criteria.
-- [ ] Task: Automated review after old stack removal
-    - [ ] Run review focused on TypeDoc removal, custom templating removal, package publish risks, docs generation determinism, and stale generated artifact cleanup.
-    - [ ] Address in-scope findings or record deferred findings before expanding prose content.
-- [ ] Task: Add generator validation
-    - [ ] Validate frontmatter and headings.
-    - [ ] Validate internal links and link rewrite targets where possible.
-    - [ ] Validate reference allowlist entries and generated output drift.
-    - [ ] Validate generated sidebars and metadata shape.
-- [ ] Task: Write Transform Hub and core concept docs
-    - [ ] Write intro pages explaining what Transform Hub is and when to use it.
-    - [ ] Document Hub, Manager, MultiManager, Sequence, Instance, Adapter, Runner, Topics, Streams, and APIs.
-    - [ ] Link core concepts to relevant prose, CLI, API/client, and curated reference pages.
-- [ ] Task: Write Transform Hub usage docs
-    - [ ] Document getting started with Transform Hub.
-    - [ ] Document configuration and environment considerations.
-    - [ ] Document build and run workflows for source and built output.
-    - [ ] Document process, Docker, and Kubernetes adapter differences at a user/operator level.
-- [ ] Task: Write Manager docs
-    - [ ] Document Manager purpose and architecture at a user/operator level.
-    - [ ] Document running Manager and connecting Hubs.
-    - [ ] Document operational visibility and API/client interaction points where current behavior supports it.
-- [ ] Task: Write sequence implementation docs
-    - [ ] Document sequence structure for supported runtimes.
-    - [ ] Document input/output behavior, streams, content types, and lifecycle expectations.
-    - [ ] Document topics, metadata, health, logging, events, monitoring, stop, and kill behavior.
-    - [ ] Include examples as first-class docs content.
-- [ ] Task: Write testing and development docs
-    - [ ] Document `@scramjet/sequence-test` purpose, current experimental status if applicable, and usage examples.
-    - [ ] Document repository overview for contributors.
-    - [ ] Document build, test, lint, and validation commands with memory/tooling constraints.
-- [ ] Task: Write CLI and API/client docs
-    - [ ] Document CLI usage patterns and link to generated command reference.
-    - [ ] Document practical API client usage for current clients.
-    - [ ] Document `rest-api2` concepts and limits without claiming incomplete MCP/router capabilities.
-- [ ] Task: Automated review after prose content
-    - [ ] Run review focused on user clarity, operator usefulness, stale claims, and missing safety caveats.
-    - [ ] Address in-scope findings or record deferred findings.
-- [ ] Task: Validate Phase 1
-    - [ ] Run docs generation/check commands.
-    - [ ] Run link, frontmatter, reference allowlist, generated output drift, sidebar, and metadata checks available at this stage.
-    - [ ] Validate that generator commands honor both root `package.json` endpoint config and the higher-priority environment variable override.
-    - [ ] Confirm old TypeDoc and custom templating retirement did not break package builds or package publishing assumptions.
-    - [ ] Confirm examples are syntactically plausible or validated where practical.
-    - [ ] Record docs areas intentionally left incomplete.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content' (Protocol in workflow.md)
+- [x] Task: Design generator command surface
+    - [x] Add or define npm scripts for `docs:clean`, `docs:generate`, `docs:check`, and narrower subcommands.
+    - [x] Add or define root `package.json` configuration for the default docs generator endpoint/output root.
+    - [x] Add or define the environment variable override for the docs generator endpoint/output root, with env var taking precedence over package configuration.
+    - [x] Ensure scripts use npm and existing monorepo script patterns.
+    - [x] Ensure generated outputs remain outside handwritten `docs-source/`.
+- [x] Task: Implement content export foundation
+    - [x] Generate `dist-docs/content/` from `docs-source/` prose.
+    - [x] Preserve frontmatter, stable slugs/doc IDs, and generated-file headers where appropriate.
+    - [x] Generate initial sidebar metadata for prose content.
+- [x] Task: Implement curated reference generation foundation
+    - [x] Choose or configure the reference generator for allowlisted TypeScript entrypoints.
+    - [x] Generate curated reference under `dist-docs/reference/typescript/`.
+    - [x] Fail or clearly report unresolved allowlisted entrypoints.
+    - [x] Prevent broad package/source-tree reference generation.
+- [x] Task: Retire old TypeDoc and custom Markdown templating flows
+    - [x] Remove, disable, or redirect package-level broad TypeDoc scripts that generate root-level `docs/<package>/` clutter.
+    - [x] Update root docs scripts to use the new docs command surface.
+    - [x] Remove, disable, or migrate old custom Markdown templating entrypoints such as `scripts/mk-readme.js`, package `.mtpl` files, and old README parts only after replacement generation exists.
+    - [x] Remove stale generated docs artifacts only when confirmed generated and replaceable.
+    - [x] Record any temporarily retained old docs or templating outputs and their removal criteria.
+- [x] Task: Automated review after old stack removal
+    - [x] Run review focused on TypeDoc removal, custom templating removal, package publish risks, docs generation determinism, and stale generated artifact cleanup.
+    - [x] Address in-scope findings or record deferred findings before expanding prose content.
+- [x] Task: Add generator validation
+    - [x] Validate frontmatter and headings.
+    - [x] Validate internal links and link rewrite targets where possible.
+    - [x] Validate reference allowlist entries and generated output drift.
+    - [x] Validate generated sidebars and metadata shape.
+- [x] Task: Write Transform Hub and core concept docs
+    - [x] Write intro pages explaining what Transform Hub is and when to use it.
+    - [x] Document Hub, Manager, MultiManager, Sequence, Instance, Adapter, Runner, Topics, Streams, and APIs.
+    - [x] Link core concepts to relevant prose, CLI, API/client, and curated reference pages.
+- [x] Task: Write Transform Hub usage docs
+    - [x] Document getting started with Transform Hub.
+    - [x] Document configuration and environment considerations.
+    - [x] Document build and run workflows for source and built output.
+    - [x] Document process, Docker, and Kubernetes adapter differences at a user/operator level.
+- [x] Task: Write Manager docs
+    - [x] Document Manager purpose and architecture at a user/operator level.
+    - [x] Document running Manager and connecting Hubs.
+    - [x] Document operational visibility and API/client interaction points where current behavior supports it.
+- [x] Task: Write sequence implementation docs
+    - [x] Document sequence structure for supported runtimes.
+    - [x] Document input/output behavior, streams, content types, and lifecycle expectations.
+    - [x] Document topics, metadata, health, logging, events, monitoring, stop, and kill behavior.
+    - [x] Include examples as first-class docs content.
+- [x] Task: Write testing and development docs
+    - [x] Document `@scramjet/sequence-test` purpose, current experimental status if applicable, and usage examples.
+    - [x] Document repository overview for contributors.
+    - [x] Document build, test, lint, and validation commands with memory/tooling constraints.
+- [x] Task: Write CLI and API/client docs
+    - [x] Document CLI usage patterns and link to generated command reference.
+    - [x] Document practical API client usage for current clients.
+    - [x] Document `rest-api2` concepts and limits without claiming incomplete MCP/router capabilities.
+- [x] Task: Automated review after prose content
+    - [x] Run review focused on user clarity, operator usefulness, stale claims, and missing safety caveats.
+    - [x] Address in-scope findings or record deferred findings.
+- [x] Task: Validate Phase 1
+    - [x] Run docs generation/check commands.
+    - [x] Run link, frontmatter, reference allowlist, generated output drift, sidebar, and metadata checks available at this stage.
+    - [x] Validate that generator commands honor both root `package.json` endpoint config and the higher-priority environment variable override.
+    - [x] Confirm old TypeDoc and custom templating retirement did not break package builds or package publishing assumptions.
+    - [x] Confirm examples are syntactically plausible or validated where practical.
+    - [x] Record docs areas intentionally left incomplete.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content' (Protocol in workflow.md)
+
+### Phase 1 notes
+
+- Generator command surface: added `scripts/docs.js`, `docs:clean`, `docs:generate`, `docs:generate:content`, `docs:generate:reference`, and `docs:check`. Root `build:docs` and `build:all-docs` now use the new docs generator.
+- Output configuration: generators use `scramjet.docs.outputDir` with `SCRAMJET_DOCS_OUTPUT_DIR` taking precedence. Output roots are protected by a generated marker and refuse protected repo paths or existing unmarked directories.
+- Content export: `docs-source/` prose exports to `dist-docs/content/`, with frontmatter preserved at byte 0 and generated markers after frontmatter. Sidebars and deterministic metadata are generated under `dist-docs/`.
+- Curated reference foundation: generated allowlist-backed reference landing pages under `dist-docs/reference/typescript/`. Full TypeScript signature rendering remains a later improvement; Phase 1 validates allowlist safety and prevents broad source-tree reference output.
+- Old docs stack retirement: root `build:readme` is disabled with guidance until the Phase 2 README generator replaces it; package-level `build:docs` scripts are safe no-op guidance and no longer run broad TypeDoc or write root `dist-docs`; stale `docs/` generated artifacts are intentionally retained until Phase 4 migration/removal.
+- Prose content: added user/operator docs for Transform Hub, Manager, deployment adapters, CLI, API/client usage, sequences, testing, development, and examples. `@scramjet/sequence-test` is labeled experimental.
+- Reviews: automated reviews found and then verified fixes for generated frontmatter placement, output-root safety, package docs fan-out safety, stale command/API claims, sequence-test examples, and plan status drift. Final old-stack review reported no blockers or major issues.
+- Validation run: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:generate:content`, `npm run docs:generate:reference`, and `npm run docs:check` passed under the repository memory guard. Package no-op script validated with `npm run build:docs -w @scramjet/types`. Protected output root checks rejected `SCRAMJET_DOCS_OUTPUT_DIR=docs`, `SCRAMJET_DOCS_OUTPUT_DIR=bdd`, and `SCRAMJET_DOCS_OUTPUT_DIR=packages/sth`. Existing unmarked external output root rejection was also validated.
+- Skipped validation: package build/tests were not run because Phase 1 changes are documentation/generator script changes and package script metadata only; no runtime, adapter, API runtime, or CLI behavior changed. Full README generation, CLI reference generation, API v2 docs generation, and old `docs/` artifact deletion remain planned for later phases.
 
 ## Phase 2: README Pipeline Replacement
 
