@@ -1,8 +1,9 @@
 """Monitoring heartbeat loop for the fd5 monitoring stream.
 
-Emits a MONITORING frame on a steady cadence (default 1s) using the result
-of ``app_context._health_check`` as the payload. The loop is cancelled by
-cancelling the surrounding asyncio task.
+Emits a MONITORING frame on a steady cadence (default 1s) using composed
+monitoring handler results as the payload. Monitoring handlers are registered
+via ``add_monitoring_handler()`` or the legacy ``set_health_check()``. The
+loop is cancelled by cancelling the surrounding asyncio task.
 """
 
 from __future__ import annotations
@@ -18,21 +19,38 @@ MONITORING = 3001
 
 
 async def _resolve_health(app_context: Any) -> dict:
-    """Call the AppContext health check, awaiting it if it is a coroutine.
+    """Compose monitoring handler results into a health payload.
 
-    Normalises bare ``bool`` results into ``{"healthy": <bool>}`` so the
-    payload always matches the Node serializer shape.
+    Behaviour:
+    - Starts with an empty payload.
+    - Iterates over ``_monitoring_handlers`` in registration order.
+    - Awaits each handler result if it is awaitable.
+    - ``bool`` results are wrapped into ``{"healthy": <bool>}``.
+    - ``dict`` results are shallow-merged into the accumulating payload.
+    - If no handler contributed a ``healthy`` key, ``{"healthy": True}`` is
+      used as the fallback.
     """
-    health_check = app_context._health_check
-    result = health_check()
+    handlers = getattr(app_context, "_monitoring_handlers", None)
+    if not handlers:
+        # No monitoring handlers registered → stable default.
+        return {"healthy": True}
 
-    if inspect.isawaitable(result):
-        result = await result
+    payload: dict[str, Any] = {}
+    for handler in handlers:
+        result = handler()
 
-    if isinstance(result, bool):
-        return {"healthy": result}
+        if inspect.isawaitable(result):
+            result = await result
 
-    return result
+        if isinstance(result, bool):
+            payload["healthy"] = result
+        elif isinstance(result, dict):
+            payload.update(result)
+
+    if "healthy" not in payload:
+        payload["healthy"] = True
+
+    return payload
 
 
 async def run_heartbeat(

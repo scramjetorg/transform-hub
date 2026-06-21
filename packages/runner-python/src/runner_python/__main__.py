@@ -264,6 +264,7 @@ def _build_sequence_context(
     log_level: str,
     hub_client: PythonHubClient | None = None,
     api_exposure: PythonSequenceApiExposure | None = None,
+    instance_id: str = "",
 ) -> AppContext:
     app_context = AppContext()
     app_context.logger = runtime_logger
@@ -273,21 +274,26 @@ def _build_sequence_context(
     app_context._app_config = app_context.config
     app_context.hub = hub_client
     app_context.api = api_exposure
+    app_context.instance_id = instance_id
 
-    def emit(event_name: str, message: Any = "") -> None:
+    def emit(event_name: str, message: Any = "") -> AppContext:
+        monitoring_writer.write_frame(EVENT, {"eventName": event_name, "message": message})
+        return app_context
+
+    def emit_to_space(event_name: str, message: Any = "") -> AppContext:
         monitoring_writer.write_frame(
             EVENT,
-            {
-                "eventName": event_name,
-                "message": message,
-            },
+            {"eventName": event_name, "message": message, "scope": "space"},
         )
+        return app_context
 
-    def set_stop_handler(handler: Any) -> None:
+    def wrapped_stop_handler(handler: Any) -> None:
         app_context._stop_handlers.append(_wrap_stop_handler(handler))
 
     app_context.emit = emit  # type: ignore[assignment]
-    app_context.set_stop_handler = set_stop_handler  # type: ignore[assignment]
+    app_context.emit_to_space = emit_to_space  # type: ignore[assignment]
+    app_context.set_stop_handler = wrapped_stop_handler  # type: ignore[assignment]
+    app_context.add_stop_handler = wrapped_stop_handler  # type: ignore[assignment]
     return app_context
 
 
@@ -298,6 +304,10 @@ def _build_control_context(shared_context: AppContext, control_logger: logging.L
     control_context._app_config = shared_context._app_config
     control_context.logger = control_logger
     control_context._stop_handlers = []
+    # Share kill/monitoring handler lists so the control loop can dispatch
+    # them against the sequence's registered handlers.
+    control_context._kill_handlers = shared_context._kill_handlers
+    control_context._monitoring_handlers = shared_context._monitoring_handlers
 
     def emit(event_name: str, message: Any = "") -> None:
         shared_context._emitter.emit(event_name, message)
@@ -436,6 +446,7 @@ async def main() -> int:
             handshake_result.logLevel,
             hub_client,
             api_exposure,
+            instance_id=boot_config.instanceId,
         )
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)

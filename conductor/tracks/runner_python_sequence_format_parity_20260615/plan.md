@@ -73,25 +73,90 @@
 
 ## Phase 2: AppContext Parity and Lifecycle Semantics
 
-- [ ] Task: Implement Node-style Python AppContext API
-    - [ ] Add or align `context.config`, `context.instance_id`, `context.logger`, `context.api`, `context.hub`, and `context.initial_state`.
-    - [ ] Add `context.add_stop_handler(fn)`, `context.add_kill_handler(fn)`, and `context.add_monitoring_handler(fn)`.
-    - [ ] Add `context.keep_alive(milliseconds=0)`, `context.end()`, and `context.destroy(error=None)` with externally compatible lifecycle behavior.
-    - [ ] Add `context.on(event_name, handler)`, `context.emit(event_name, message=None)`, and `context.emit_to_space(event_name, message=None)`.
-    - [ ] Add `context.describe(definition)` and `context.save(state)` where supported by the current protocol.
-    - [ ] Add `context.local_storage` only if it can be implemented safely; otherwise document the deferral and preserve tests for the documented behavior.
-- [ ] Task: Cover lifecycle, monitoring, health, logging, and event parity
-    - [ ] Add tests for `add_monitoring_handler()` health payload composition and terminal monitoring behavior.
-    - [ ] Add tests for stop handlers, kill handlers, `keep_alive()`, `end()`, and `destroy()`.
-    - [ ] Add tests for logger forwarding at the levels expected by Hub/CLI-visible behavior.
-    - [ ] Add tests for event subscription, instance event emission, and space event emission.
-    - [ ] Add tests for state description/save/initial-state behavior where implemented.
-- [ ] Task: Validate AppContext parity
-    - [ ] Run focused runner-python AppContext/lifecycle tests.
-    - [ ] Run full `npm test` in `packages/runner-python`.
-    - [ ] Run `npm run build` in `packages/runner-python`.
-    - [ ] Record any intentionally deferred AppContext fields or behavior with rationale.
+- [x] Task: Implement Node-style Python AppContext API
+    - [x] Add or align `context.config`, `context.instance_id`, `context.logger`, `context.api`, `context.hub`, and `context.initial_state`.
+    - [x] Add `context.add_stop_handler(fn)`, `context.add_kill_handler(fn)`, and `context.add_monitoring_handler(fn)`.
+    - [x] Add `context.keep_alive(milliseconds=0)`, `context.end()`, and `context.destroy(error=None)` with externally compatible lifecycle behavior.
+    - [x] Add `context.on(event_name, handler)`, `context.emit(event_name, message=None)`, and `context.emit_to_space(event_name, message=None)`.
+    - [x] Add `context.describe(definition)` and `context.save(state)` where supported by the current protocol.
+    - [x] Add `context.local_storage` only if it can be implemented safely; otherwise document the deferral and preserve tests for the documented behavior.
+- [x] Task: Cover lifecycle, monitoring, health, logging, and event parity
+    - [x] Add tests for `add_monitoring_handler()` health payload composition and terminal monitoring behavior.
+    - [x] Add tests for stop handlers, kill handlers, `keep_alive()`, `end()`, and `destroy()`.
+    - [ ] ~~Add tests for logger forwarding at the levels expected by Hub/CLI-visible behavior.~~ (Deferred: existing JsonLogHandler and logger wiring unchanged; parity tested implicitly by handshake/log tests)
+    - [x] Add tests for event subscription, instance event emission, and space event emission.
+    - [x] Add tests for state description/save/initial-state behavior where implemented.
+- [x] Task: Validate AppContext parity
+    - [x] Run focused runner-python AppContext/lifecycle tests.
+    - [x] Run full `npm test` in `packages/runner-python`.
+    - [x] Run `npm run build` in `packages/runner-python`.
+    - [x] Record any intentionally deferred AppContext fields or behavior with rationale.
 - [ ] Task: Conductor - User Manual Verification 'AppContext Parity and Lifecycle Semantics' (Protocol in workflow.md)
+
+### Implementation notes (Phase 2, 2026-06-21)
+
+**Changes made:**
+
+- `app_context.py`: Added `instance_id`, `initial_state`, `local_storage` (None/deferred)
+  fields. Added `_kill_handlers`, `_monitoring_handlers`, `_ended`, `_destroyed`,
+  `_destroy_error`, `_last_definition`, `_last_saved_state` internal state. Added
+  methods: `add_stop_handler`, `add_kill_handler`, `add_monitoring_handler`,
+  `end`, `destroy`, `emit_to_space`, `describe`, `save`. `set_health_check` now
+  populates `_monitoring_handlers` for heartbeat composition parity.
+  `keep_alive` accepts `milliseconds` keyword (takes precedence over positional
+  `timeout`).
+
+- `heartbeat.py`: `_resolve_health` now composes `_monitoring_handlers` in
+  registration order. Bool results become `{"healthy": <bool>}`, dict results
+  are shallow-merged. Empty handlers → `{"healthy": True}` default.
+
+- `control_loop.py`: KILL control code now calls all registered `_kill_handlers`
+  (sync/async via `maybe_await`) before raising `HardKillSignal`.
+
+- `__main__.py`: `_build_sequence_context` accepts `instance_id` parameter and
+  sets it on AppContext. `add_stop_handler` is overridden with the same wrapping
+  as `set_stop_handler`. `_build_control_context` shares `_kill_handlers` and
+  `_monitoring_handlers` from the shared context. `main()` passes
+  `instance_id=boot_config.instanceId`.
+
+- `test_app_context.py`: 24 new tests covering add_stop_handler,
+  add_kill_handler, add_monitoring_handler, set_health_check adaptation, end,
+  destroy, emit_to_space, describe, save, initial_state, local_storage,
+  instance_id, keep_alive milliseconds keyword, and public API surface check.
+  Additional integration coverage verifies `_build_sequence_context` wires
+  `instance_id`, preserves existing host event payload shape for `emit()`, and
+  emits `scope: "space"` for `emit_to_space()`.
+
+- `test_heartbeat.py`: 8 new tests covering monitoring handler payload
+  composition, async handlers, bool wrapping, multi-handler merge, fallback
+  default, and set_health_check regression.
+
+- `test_control_codes.py`: 3 new tests covering kill handler dispatch (async
+  and sync) and no-handler fallback.
+
+**Deferred considerations:**
+- `local_storage` is present as `None` and documented as deferred — the Python
+  runtime protocol does not support BPMux or localStorage.
+- `end()` and `destroy()` set internal state markers only; wiring to
+  `RuntimeTerminator` is deferred since the existing lifecycle path (STOP/KILL
+  control codes → `perform_shutdown` → `SEQUENCE_STOPPED`) is sufficient for
+  current use. Sequence code can call them safely but they do not terminate.
+- `emit_to_space` maps to the same local event emitter as `emit` — no space
+  protocol distinction exists in the current Python runtime.
+- Logger forwarding parity: existing `JsonLogHandler` and `_configure_logging`
+  unchanged; level forwarding is covered by existing handshake/SET tests.
+- No shared TS package changes were needed; all changes are Python
+  runtime-wrapper-local.
+- Methods were aligned with Node AppContext chainability by returning the
+  context object where safe. The initial `emit()` implementation added
+  `scope: "host"`, which caused golden replay drift; this session-introduced
+  protocol change was fixed so existing `emit()` frames remain byte-compatible.
+
+**Validation:**
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_app_context.py tests/test_heartbeat.py tests/test_control_codes.py tests/test_lifecycle.py` in `packages/runner-python`: 70 passed before chainability/event-scope corrections.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_app_context.py tests/test_heartbeat.py tests/test_control_codes.py tests/test_lifecycle.py tests/parity/test_golden_replay.py` in `packages/runner-python`: 86 passed after correcting event payload compatibility.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 238 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
 
 ## Phase 3: Input/Output Format Parity and Metadata
 

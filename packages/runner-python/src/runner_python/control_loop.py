@@ -167,6 +167,9 @@ async def control_loop(control_decoder: Any, app_context: Any, terminator: Any) 
                 continue
 
             if code == KILL:
+                kill_handlers = getattr(app_context, "_kill_handlers", [])
+                for handler in list(kill_handlers):
+                    await maybe_await(handler())
                 raise HardKillSignal("Sequence killed by host")
 
             if code == STOP:
