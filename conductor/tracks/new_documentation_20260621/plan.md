@@ -309,7 +309,7 @@
     - [x] Update track notes or plan with validation results, skipped checks, and known follow-ups.
     - [x] Confirm no unrelated runtime, adapter, API, or CLI behavior changed.
     - [x] Update PR description with final validation and reviewer guidance.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Reference and Final Export Replacement' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: CLI Reference and Final Export Replacement' (Protocol in workflow.md)
 
 ### Phase 4 notes (updated 2026-06-21)
 
@@ -322,3 +322,4 @@
 - Review: `@oracle` Phase 4 blocker review findings were fixed; re-check returned `none`.
 - PR #25 description updated with final summary, validation list, and review guidance.
 - Phase checkpoint commit: `93ef1da5` (`docs(conductor): Complete new docs phase 4`).
+- Manual verification: approved by user after checkpoint branch push (`499e1a58`).

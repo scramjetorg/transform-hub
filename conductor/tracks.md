@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: new documentation**
+- [x] **Track: new documentation**
 *Link: [./tracks/new_documentation_20260621/](./tracks/new_documentation_20260621/)*
