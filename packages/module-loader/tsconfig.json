@@ -15,7 +15,7 @@
         "entryPoints": [
             "src/index.ts"
         ],
-        "out": "../../docs/module-loader",
+        "out": "../../dist-docs/reference/typescript/module-loader",
         "plugin": "typedoc-plugin-markdown",
         "excludePrivate": "true",
         "gitRevision": "HEAD",

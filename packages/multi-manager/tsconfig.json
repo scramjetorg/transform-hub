@@ -14,7 +14,7 @@
     "entryPoints": [
       "./src/lib/multi-manager.ts"
     ],
-    "out": "../../docs/multi-manager",
+    "out": "../../dist-docs/reference/typescript/multi-manager",
     "plugin": "typedoc-plugin-markdown",
     "readme": "none"
   }

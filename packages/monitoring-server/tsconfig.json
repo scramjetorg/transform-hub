@@ -14,7 +14,7 @@
         "entryPoints": [
             "src/index.ts"
         ],
-        "out": "../../docs/monitoring-server",
+        "out": "../../dist-docs/reference/typescript/monitoring-server",
         "plugin": "typedoc-plugin-markdown",
         "excludePrivate": "true",
         "gitRevision": "HEAD",

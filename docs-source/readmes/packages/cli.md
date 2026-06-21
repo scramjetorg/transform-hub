@@ -82,5 +82,6 @@ This package is **stable**. The CLI command surface is part of the public API.
 ## See also
 
 - [CLI usage](../../docs-source/cli/usage.md) for detailed command patterns and examples.
+- [Generated CLI reference](../../dist-docs/reference/cli/index.md) for command, argument, and option details.
 - [Transform Hub overview](../../docs-source/transform-hub/overview.md) for platform architecture.
 - [API client documentation](../../docs-source/api/client-usage.md) for programmatic access.

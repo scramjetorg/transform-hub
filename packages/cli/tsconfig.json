@@ -17,7 +17,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/cli",
+    "out": "../../dist-docs/reference/typescript/cli",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

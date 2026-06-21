@@ -284,29 +284,40 @@
 
 ## Phase 4: CLI Reference and Final Export Replacement
 
-- [ ] Task: Integrate CLI reference generation
-    - [ ] Generate CLI command reference from the current CLI command model where practical.
-    - [ ] Output CLI reference under `dist-docs/reference/cli/` or approved equivalent.
-    - [ ] Link prose CLI docs and README outputs to generated CLI reference.
-- [ ] Task: Finalize export metadata and sidebars
-    - [ ] Generate complete `dist-docs/metadata.json`.
-    - [ ] Generate sidebars for prose, reference, CLI, API v2, legacy v1 API docs, and README copies as applicable.
-    - [ ] Confirm external Docusaurus consumption paths are documented.
-- [ ] Task: Remove old docs outputs completely
-    - [ ] Remove old generated docs outputs that are superseded by `dist-docs`.
-    - [ ] Remove or archive obsolete root-level docs folders only after confirming their content is migrated, generated, or intentionally excluded.
-    - [ ] Confirm old docs generator entrypoints no longer produce or expect legacy `docs/` output.
-    - [ ] Ensure `dist-docs` is the complete generated documentation handoff surface for the external Docusaurus repo.
-- [ ] Task: Validate complete docs export
-    - [ ] Run `docs:clean`, `docs:generate`, and `docs:check` or approved equivalents.
-    - [ ] Run link, frontmatter, reference allowlist, README drift, API docs, legacy v1 separation, endpoint override, and metadata checks.
-    - [ ] Run package build or narrower checks if docs script/package changes affect builds.
-    - [ ] Confirm generation is deterministic by checking for no unexpected drift after regeneration.
-- [ ] Task: Automated review before final verification
-    - [ ] Run final review focused on docs usability, generator determinism, complete old-doc removal, endpoint configurability, and Docusaurus handoff readiness.
-    - [ ] Address in-scope findings or document deferred follow-ups.
-- [ ] Task: Final track documentation update
-    - [ ] Update track notes or plan with validation results, skipped checks, and known follow-ups.
-    - [ ] Confirm no unrelated runtime, adapter, API, or CLI behavior changed.
-    - [ ] Update PR description with final validation and reviewer guidance.
+- [x] Task: Integrate CLI reference generation
+    - [x] Generate CLI command reference from the current CLI command model where practical.
+    - [x] Output CLI reference under `dist-docs/reference/cli/` or approved equivalent.
+    - [x] Link prose CLI docs and README outputs to generated CLI reference.
+- [x] Task: Finalize export metadata and sidebars
+    - [x] Generate complete `dist-docs/metadata.json`.
+    - [x] Generate sidebars for prose, reference, CLI, API v2, legacy v1 API docs, and README copies as applicable.
+    - [x] Confirm external Docusaurus consumption paths are documented.
+- [x] Task: Remove old docs outputs completely
+    - [x] Remove old generated docs outputs that are superseded by `dist-docs`.
+    - [x] Remove or archive obsolete root-level docs folders only after confirming their content is migrated, generated, or intentionally excluded.
+    - [x] Confirm old docs generator entrypoints no longer produce or expect legacy `docs/` output.
+    - [x] Ensure `dist-docs` is the complete generated documentation handoff surface for the external Docusaurus repo.
+- [x] Task: Validate complete docs export
+    - [x] Run `docs:clean`, `docs:generate`, and `docs:check` or approved equivalents.
+    - [x] Run link, frontmatter, reference allowlist, README drift, API docs, legacy v1 separation, endpoint override, and metadata checks.
+    - [x] Run package build or narrower checks if docs script/package changes affect builds.
+    - [x] Confirm generation is deterministic by checking for no unexpected drift after regeneration.
+- [x] Task: Automated review before final verification
+    - [x] Run final review focused on docs usability, generator determinism, complete old-doc removal, endpoint configurability, and Docusaurus handoff readiness.
+    - [x] Address in-scope findings or document deferred follow-ups.
+- [x] Task: Final track documentation update
+    - [x] Update track notes or plan with validation results, skipped checks, and known follow-ups.
+    - [x] Confirm no unrelated runtime, adapter, API, or CLI behavior changed.
+    - [x] Update PR description with final validation and reviewer guidance.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Reference and Final Export Replacement' (Protocol in workflow.md)
+
+### Phase 4 notes (updated 2026-06-21)
+
+- CLI reference generation now emits `dist-docs/reference/cli/index.md`, `dist-docs/reference/cli/commands.md`, and `dist-docs/sidebars/reference-cli.json` from `packages/cli/src/lib/commands/*.ts` command descriptors plus root options from `packages/cli/src/bin/index.ts`.
+- Prose CLI docs and the generated `@scramjet/cli` README link to the generated CLI reference. `docs:generate:reference` regenerates TypeScript placeholder reference pages and CLI reference without removing API reference output.
+- `dist-docs/metadata.json` now includes curated reference entries and hashes generator inputs that affect output: `docs-source/`, CLI command descriptors, CLI root, API v2 routes, package manifests, root `package.json`, and `scripts/docs.js`.
+- Legacy generated `docs/` output was removed. Authored legacy material that was not generated API reference output (Kubernetes/Nomad guides, architecture notes, read-more articles, roadmap records, legacy `api.md`) was migrated under `docs-source/legacy-docs/` as archived source material outside the routed docs sections.
+- Package TypeDoc `typedocOptions.out` paths no longer point at root `docs/`; they point under `dist-docs/reference/typescript/` if TypeDoc is run manually, while package `build:docs` scripts remain retired/no-op.
+- Validation passed: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:reference`, generated `dist-docs` link check across 79 Markdown files, legacy `docs/` absence check, TypeDoc-output grep check, `git diff --check`, and `SCRAMJET_DOCS_OUTPUT_DIR` endpoint override check.
+- Review: `@oracle` Phase 4 blocker review findings were fixed; re-check returned `none`.
+- PR #25 description updated with final summary, validation list, and review guidance.

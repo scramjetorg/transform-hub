@@ -425,10 +425,310 @@ function generateReference(out) {
     return generated;
 }
 
+// ============================================================
+// CLI reference generation — source-derived from command descriptors
+// ============================================================
+
+const CLI_COMMANDS_DIR = path.join(root, "packages/cli/src/lib/commands");
+const CLI_ROOT_SOURCE = "packages/cli/src/bin/index.ts";
+
+function findMatching(text, openIndex, openChar = "(", closeChar = ")") {
+    let depth = 1;
+    let quote = null;
+    let escaped = false;
+
+    for (let i = openIndex + 1; i < text.length; i++) {
+        const ch = text[i];
+
+        if (quote) {
+            if (escaped) {
+                escaped = false;
+            } else if (ch === "\\") {
+                escaped = true;
+            } else if (ch === quote) {
+                quote = null;
+            }
+            continue;
+        }
+
+        if (ch === '"' || ch === "'" || ch === "`") {
+            quote = ch;
+        } else if (ch === openChar) {
+            depth++;
+        } else if (ch === closeChar) {
+            depth--;
+            if (depth === 0) return i;
+        }
+    }
+
+    return -1;
+}
+
+function parseStringLiteralArgs(argsText) {
+    const args = [];
+    const re = /"((?:\\.|[^"])*)"/g;
+    let match;
+
+    while ((match = re.exec(argsText)) !== null) {
+        args.push(match[1].replace(/\\"/g, '"'));
+    }
+
+    return args;
+}
+
+function findCmdCalls(text) {
+    const calls = [];
+    const re = /cmd\s*\(\s*"((?:\\.|[^"])*)"/g;
+    let match;
+
+    while ((match = re.exec(text)) !== null) {
+        const open = text.indexOf("(", match.index);
+        const close = findMatching(text, open);
+
+        if (close === -1) continue;
+        calls.push({
+            name: match[1].replace(/\\"/g, '"'),
+            start: match.index,
+            end: close + 1,
+            text: text.slice(match.index, close + 1)
+        });
+    }
+
+    return calls;
+}
+
+function directNestedCmdCalls(text) {
+    const calls = findCmdCalls(text).filter((call) => call.start !== 0);
+
+    return calls.filter((call) => !calls.some((other) => other !== call && other.start < call.start && call.end <= other.end));
+}
+
+function parseChainString(commandText, methodName) {
+    const methodRe = new RegExp(`\\.${methodName}\\s*\\(`);
+    const match = methodRe.exec(commandText);
+
+    if (!match) return undefined;
+    const open = commandText.indexOf("(", match.index);
+    const close = findMatching(commandText, open);
+
+    if (close === -1) return undefined;
+    const args = parseStringLiteralArgs(commandText.slice(open + 1, close));
+
+    return args[0];
+}
+
+function parseChainStringPairs(commandText, methodName) {
+    const pairs = [];
+    const methodRe = new RegExp(`\\.${methodName}\\s*\\(`, "g");
+    let match;
+
+    while ((match = methodRe.exec(commandText)) !== null) {
+        const open = commandText.indexOf("(", match.index);
+        const close = findMatching(commandText, open);
+
+        if (close === -1) continue;
+        const args = parseStringLiteralArgs(commandText.slice(open + 1, close));
+
+        if (args.length > 0) {
+            pairs.push({ value: args[0], description: args[1] || "" });
+        }
+    }
+
+    return pairs;
+}
+
+function parseCliCommandCall(call, source) {
+    const children = directNestedCmdCalls(call.text).map((child) => parseCliCommandCall(child, source));
+    let ownText = call.text;
+
+    for (const child of findCmdCalls(call.text).filter((nested) => nested.start !== 0).sort((a, b) => b.start - a.start)) {
+        ownText = `${ownText.slice(0, child.start)}${" ".repeat(child.end - child.start)}${ownText.slice(child.end)}`;
+    }
+
+    return {
+        name: call.name,
+        alias: parseChainString(ownText, "alias"),
+        description: parseChainString(ownText, "desc") || "",
+        usage: parseChainString(ownText, "usage") || "",
+        arguments: parseChainStringPairs(ownText, "argument"),
+        options: parseChainStringPairs(ownText, "option"),
+        source,
+        children,
+    };
+}
+
+function parseCliCommandFile(file) {
+    const source = fs.readFileSync(file, "utf8");
+    const relative = relativeToRoot(file);
+    const exportedMatch = /export\s+const\s+\w+Command\s*:[^=]+?=\s*cmd\s*\(/.exec(source);
+    const allCalls = findCmdCalls(source);
+
+    if (!exportedMatch) return null;
+    const rootCall = allCalls.find((call) => call.start >= exportedMatch.index);
+
+    if (!rootCall) return null;
+    const command = parseCliCommandCall(rootCall, relative);
+
+    if (command.children.length === 0) {
+        command.children = allCalls
+            .filter((call) => call !== rootCall && !call.text.includes("developersOnly"))
+            .filter((call) => !allCalls.some((other) => other !== call && other !== rootCall && other.start < call.start && call.end <= other.end))
+            .map((call) => parseCliCommandCall(call, relative));
+    }
+
+    return command;
+}
+
+function commandSourceOrder() {
+    const indexFile = path.join(CLI_COMMANDS_DIR, "index.ts");
+    const source = fs.readFileSync(indexFile, "utf8");
+    const order = [];
+    const re = /import\s+\{\s*(\w+)Command\s*\}\s+from\s+"\.\/(\w+)"/g;
+    let match;
+
+    while ((match = re.exec(source)) !== null) {
+        if (match[2] !== "developerTools") order.push(match[2]);
+    }
+
+    return order;
+}
+
+function parseCliCommandTree() {
+    const byName = new Map();
+
+    for (const name of commandSourceOrder()) {
+        const file = path.join(CLI_COMMANDS_DIR, `${name}.ts`);
+
+        if (!fs.existsSync(file)) continue;
+        const command = parseCliCommandFile(file);
+
+        if (command) byName.set(name, command);
+    }
+
+    return {
+        name: "si",
+        alias: "",
+        description: "Scramjet Command Line Interface for Transform Hub and Cloud Platform.",
+        usage: "[command] [options...]",
+        arguments: [],
+        options: [
+            { value: "--config <profile-name>", description: "Use configuration from profile" },
+            { value: "--config-path <path>", description: "Use configuration from file" },
+            { value: "--progress", description: "Global flag, used to display progress (currently used only in 'si seq send/deploy' command" }
+        ],
+        source: CLI_ROOT_SOURCE,
+        children: commandSourceOrder().map((name) => byName.get(name)).filter(Boolean),
+    };
+}
+
+function flattenCliCommands(command, parent = "") {
+    const fullName = parent ? `${parent} ${command.name}` : command.name;
+    const rows = [{ ...command, fullName }];
+
+    for (const child of command.children || []) {
+        rows.push(...flattenCliCommands(child, fullName));
+    }
+
+    return rows;
+}
+
+function cliCommandAnchor(command) {
+    return command.fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function formatCliList(items) {
+    if (!items || items.length === 0) return "_None._";
+
+    return items.map((item) => `- \`${item.value}\`${item.description ? ` — ${item.description}` : ""}`).join("\n");
+}
+
+function generateCliReference(out) {
+    const cliDir = path.join(out.path, "reference", "cli");
+    const tree = parseCliCommandTree();
+    const commands = flattenCliCommands(tree).filter((command) => command.fullName !== "si");
+    const sidebar = [
+        { id: "reference-cli", title: "CLI Reference", slug: "/reference/cli", output: "reference/cli/index.md" }
+    ];
+
+    removeDir(cliDir);
+    ensureDir(cliDir);
+
+    const indexLines = [
+        "---",
+        "id: reference-cli",
+        "slug: /reference/cli",
+        "title: CLI Reference",
+        "---",
+        "",
+        generatedMarker("packages/cli/src/lib/commands/*.ts").trimEnd(),
+        "",
+        "# CLI Reference",
+        "",
+        "This reference is generated from the native CLI command descriptors in `packages/cli/src/lib/commands/*.ts` and the root command options in `packages/cli/src/bin/index.ts`.",
+        "",
+        "## Global options",
+        "",
+        formatCliList(tree.options),
+        "",
+        "## Commands",
+        "",
+        "| Command | Alias | Description | Source |",
+        "|---------|-------|-------------|--------|",
+    ];
+
+    for (const command of commands) {
+        indexLines.push(`| [\`${command.fullName}\`](commands.md#${cliCommandAnchor(command)}) | ${command.alias ? `\`${command.alias}\`` : "—"} | ${command.description || "—"} | \`${command.source}\` |`);
+    }
+
+    indexLines.push("");
+    writeFile(path.join(cliDir, "index.md"), indexLines.join("\n"));
+
+    const commandLines = [
+        "---",
+        "id: reference-cli-commands",
+        "slug: /reference/cli/commands",
+        "title: CLI Commands",
+        "---",
+        "",
+        generatedMarker("packages/cli/src/lib/commands/*.ts").trimEnd(),
+        "",
+        "# CLI Commands",
+        "",
+    ];
+
+    for (const command of commands) {
+        commandLines.push(`## \`${command.fullName}\`${command.alias ? ` (alias: \`${command.alias}\`)` : ""}`, "");
+        commandLines.push(command.description || "_No description provided._", "");
+        commandLines.push(`- **Usage**: \`${command.fullName}${command.usage ? ` ${command.usage}` : ""}\``);
+        commandLines.push(`- **Source**: \`${command.source}\``);
+        commandLines.push("", "### Arguments", "", formatCliList(command.arguments), "");
+        commandLines.push("### Options", "", formatCliList(command.options), "");
+
+        if (command.children && command.children.length > 0) {
+            commandLines.push("### Subcommands", "");
+            for (const child of command.children) {
+                const fullName = `${command.fullName} ${child.name}`;
+                commandLines.push(`- [\`${fullName}\`](#${fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")})`);
+            }
+            commandLines.push("");
+        }
+    }
+
+    writeFile(path.join(cliDir, "commands.md"), commandLines.join("\n"));
+    sidebar.push({ id: "reference-cli-commands", title: "CLI Commands", slug: "/reference/cli/commands", output: "reference/cli/commands.md" });
+    writeFile(path.join(out.path, "sidebars", "reference-cli.json"), `${JSON.stringify(sidebar, null, 2)}\n`);
+
+    console.log(`Generated CLI reference documentation in reference/cli/ (${commands.length} commands)`);
+}
+
 function sourceIdentifier() {
     const hash = crypto.createHash("sha256");
     const files = [
         ...listFiles(sourceRoot),
+        ...listFiles(CLI_COMMANDS_DIR).filter((file) => file.endsWith(".ts")),
+        ...listPackages().map((pkgDir) => path.join(packagesDir, pkgDir, "package.json")),
+        path.join(root, CLI_ROOT_SOURCE),
+        path.join(root, "packages/rest-api2/src/routes.ts"),
         path.join(root, "package.json"),
         path.join(root, "scripts", "docs.js")
     ].filter((file) => fs.existsSync(file) && fs.statSync(file).isFile())
@@ -598,6 +898,7 @@ function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMa
 
         if (context === "dist-docs") {
             overlayContent = overlayContent.replaceAll("(../../docs-source/", `(${GITHUB_BLOB_ROOT}/docs-source/`);
+            overlayContent = overlayContent.replaceAll("(../../dist-docs/", `(${GITHUB_BLOB_ROOT}/dist-docs/`);
         }
 
         lines.push(overlayContent);
@@ -701,6 +1002,7 @@ function generateReadmes(out, repoReadmesOutputDir) {
 }
 
 function generateMetadata(out, groups) {
+    const allowlist = loadAllowlist();
     const metadata = {
         generatedBy: "scripts/docs.js",
         generatedAt: "1970-01-01T00:00:00.000Z",
@@ -713,6 +1015,14 @@ function generateMetadata(out, groups) {
             packageConfig: "scramjet.docs.outputDir"
         },
         groups,
+        curatedReferences: allowlist.entrypoints.map((entry) => ({
+            package: entry.package,
+            entrypoint: entry.entrypoint,
+            outputPath: entry.outputPath,
+            stability: entry.stability,
+            audience: entry.audience,
+            reviewers: entry.reviewers,
+        })),
         docusaurusHandoff: {
             content: "content/",
             reference: "reference/",
@@ -722,7 +1032,7 @@ function generateMetadata(out, groups) {
         warnings: [
             "API v2 documentation is generated from packages/rest-api2/src/routes.ts RestAPI2RouteTree definitions.",
             "Legacy v1 API documentation mirrors docs-source/api/legacy/v1-api-client.md under reference/api/legacy/v1/.",
-            "CLI reference generation is implemented in a later phase.",
+            "CLI reference documentation is generated from packages/cli/src/lib/commands/*.ts command descriptors.",
             "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
             "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
         ]
@@ -1453,10 +1763,8 @@ function removeGeneratedGroup(out, group) {
     if (group === "reference") {
         removeDir(path.join(out.path, "reference", "typescript"));
         removeDir(path.join(out.path, "reference", "cli"));
-        removeDir(path.join(out.path, "reference", "api"));
         removeDir(path.join(out.path, "sidebars", "reference-typescript.json"));
-        removeDir(path.join(out.path, "sidebars", "reference-api-v2.json"));
-        removeDir(path.join(out.path, "sidebars", "reference-api-legacy-v1.json"));
+        removeDir(path.join(out.path, "sidebars", "reference-cli.json"));
     }
 
     if (group === "readmes") {
@@ -1507,9 +1815,11 @@ function generate(customOut, scope = "all") {
     if (scope === "all" || scope === "reference") {
         removeGeneratedGroup(out, "reference");
         const reference = generateReference(out);
+        generateCliReference(out);
 
         groups.reference = reference.map((entry) => entry.outputPath);
-        groups.sidebars = mergeSidebars(groups, ["sidebars/reference-typescript.json"]);
+        groups.reference.push("reference/cli/");
+        groups.sidebars = mergeSidebars(groups, ["sidebars/reference-typescript.json", "sidebars/reference-cli.json"]);
     }
 
     if (scope === "all" || scope === "readmes") {
@@ -1527,10 +1837,6 @@ function generate(customOut, scope = "all") {
 
         groups.api = ["reference/api/v2/", "reference/api/legacy/v1/"];
         groups.sidebars = mergeSidebars(groups, ["sidebars/reference-api-v2.json", "sidebars/reference-api-legacy-v1.json"]);
-    }
-
-    if (scope === "all") {
-        ensureDir(path.join(out.path, "reference", "cli"));
     }
 
     generateMetadata(out, groups);

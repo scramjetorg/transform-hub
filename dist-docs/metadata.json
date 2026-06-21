@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:b9bfcc43a19cb585c015525a712c76549fee2ea6fc56e6641c095f5d50d47326",
+  "sourceIdentifier": "sha256:22c4c943d8c35d949b00d98c943a1a27b0c70bbee2da0288d9ee46eae252129e",
   "outputRoot": {
     "value": "dist-docs",
     "resolvedPath": "dist-docs",
@@ -42,7 +42,8 @@
       "reference/typescript/types-runtime-executor/",
       "reference/typescript/sequence-test/",
       "reference/typescript/rest-api2/",
-      "reference/typescript/api-client/"
+      "reference/typescript/api-client/",
+      "reference/cli/"
     ],
     "readmes": [
       "README.md",
@@ -89,6 +90,7 @@
     "sidebars": [
       "sidebars/content.json",
       "sidebars/reference-typescript.json",
+      "sidebars/reference-cli.json",
       "sidebars/readmes.json",
       "sidebars/reference-api-v2.json",
       "sidebars/reference-api-legacy-v1.json"
@@ -98,6 +100,86 @@
       "reference/api/legacy/v1/"
     ]
   },
+  "curatedReferences": [
+    {
+      "package": "@scramjet/sth",
+      "entrypoint": "packages/sth/src/index.ts",
+      "outputPath": "reference/typescript/sth/",
+      "stability": "stable",
+      "audience": [
+        "users",
+        "operators",
+        "implementers"
+      ],
+      "reviewers": [
+        "runtime-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/types",
+      "entrypoint": "packages/types/src/app-context.ts",
+      "outputPath": "reference/typescript/types-app-context/",
+      "stability": "stable",
+      "audience": [
+        "implementers"
+      ],
+      "reviewers": [
+        "runtime-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/types",
+      "entrypoint": "packages/types/src/runtime-executor.ts",
+      "outputPath": "reference/typescript/types-runtime-executor/",
+      "stability": "internal-but-useful",
+      "audience": [
+        "implementers"
+      ],
+      "reviewers": [
+        "runtime-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/sequence-test",
+      "entrypoint": "packages/sequence-test/src/index.ts",
+      "outputPath": "reference/typescript/sequence-test/",
+      "stability": "experimental",
+      "audience": [
+        "implementers",
+        "contributors"
+      ],
+      "reviewers": [
+        "test-tooling-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/rest-api2",
+      "entrypoint": "packages/rest-api2/src/index.ts",
+      "outputPath": "reference/typescript/rest-api2/",
+      "stability": "experimental",
+      "audience": [
+        "implementers",
+        "api-client-users"
+      ],
+      "reviewers": [
+        "api-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/api-client",
+      "entrypoint": "packages/api-client/src/index.ts",
+      "outputPath": "reference/typescript/api-client/",
+      "stability": "stable",
+      "audience": [
+        "users",
+        "operators",
+        "api-client-users"
+      ],
+      "reviewers": [
+        "api-maintainers"
+      ]
+    }
+  ],
   "docusaurusHandoff": {
     "content": "content/",
     "reference": "reference/",
@@ -107,7 +189,7 @@
   "warnings": [
     "API v2 documentation is generated from packages/rest-api2/src/routes.ts RestAPI2RouteTree definitions.",
     "Legacy v1 API documentation mirrors docs-source/api/legacy/v1-api-client.md under reference/api/legacy/v1/.",
-    "CLI reference generation is implemented in a later phase.",
+    "CLI reference documentation is generated from packages/cli/src/lib/commands/*.ts command descriptors.",
     "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
     "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
   ]
