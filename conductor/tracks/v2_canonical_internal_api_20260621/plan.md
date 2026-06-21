@@ -80,7 +80,7 @@
     - [x] Run affected package AVA tests through package runners.
     - [x] Run narrow build checks for changed packages.
     - [x] Record any skipped broader validation and rationale.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Legacy API Client as v2 Compatibility Facade' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Legacy API Client as v2 Compatibility Facade' (Protocol in workflow.md)
 
 ## Phase 4: Manager Aggregation Readiness and BDD Coverage
 
@@ -155,3 +155,4 @@
 - Phase 3 validation: `ulimit -v 1835008 && node ../../scripts/run-ava.js test/v2-facade.spec.ts test/pass.spec.ts` in `packages/api-client` passed (4 tests); direct changed-file `RAYON_NUM_THREADS=12 npx biome lint packages/api-client/src/host-client.ts packages/api-client/src/manager-client.ts packages/api-client/test/v2-facade.spec.ts packages/types/src/api-client/manager-client.ts conductor/tracks/v2_canonical_internal_api_20260621/plan.md` passed; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages` passed. Broader BDD and unrelated package suites are deferred to Phase 4/5 because Phase 3 touched the api-client facade, public API-client declarations, and plan notes only.
 - Phase 3 oracle review: final re-review found no blockers and marked the phase safe to commit/push and proceed to manual validation. Non-blocking manual validation focus: direct HostClient, direct ManagerClient, ManagerClient via MultiManager proxy, and MiddlewareClient space proxy paths.
 - Phase 3 checkpoint commit: `3b535d92` (`feat(conductor): Complete v2 canonical API phase 3`).
+- Phase 3 manual verification: approved by user after PR push.
