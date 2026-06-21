@@ -1,8 +1,9 @@
 {
   "track_id": "api_docs_revamp_20260616",
   "type": "feature",
-  "status": "new",
+  "status": "archived",
   "created_at": "2026-06-16T09:03:27Z",
-  "updated_at": "2026-06-16T09:03:27Z",
-  "description": "api and docs revamp"
+  "updated_at": "2026-06-21T00:00:00Z",
+  "description": "api and docs revamp",
+  "archive_reason": "Superseded by a narrower implementer documentation and curated reference direction. The original track assumed broad generated source docs and a larger API/router/docs revamp that no longer matches the intended documentation model."
 }

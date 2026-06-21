@@ -1,5 +1,11 @@
 # Specification: API and Docs Revamp
 
+> Archived 2026-06-21. This specification is retained for historical context.
+> It has been superseded by a narrower implementer documentation and curated
+> reference direction: prose Docusaurus source plus selected implementer-facing
+> reference entrypoints, rather than broad generated source documentation and a
+> combined API/router/docs revamp.
+
 ## Overview
 
 Create a documentation and API foundation for Scramjet Transform Hub that lets this repository generate structured documentation inputs for a separate Docusaurus repository while also making API routes metadata-driven. The track includes a docs export contract, a canonical written-docs source tree, generated TypeScript/API reference artifacts, a replacement README generation pipeline, and integration of a decorator-based API router with MCP, OpenAPI generation, and generated API client support.
