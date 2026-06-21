@@ -278,6 +278,7 @@
 - New npm script: `docs:generate:api` scoped to API-only regeneration.
 - Validation results: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, and `npm run docs:generate:readmes` all pass. A generated `dist-docs` markdown link check across 77 files also passes.
 - Review: `@oracle` blocker review returned `none` after correcting source parsing, generated links, `generate:readmes`, and plan status issues.
+- Phase checkpoint commit: `37473fb3` (`docs(conductor): Complete new docs phase 3`).
 - Deferred: "Document API v2 client usage" and "Document custom API definitions and definition-level data" remain **unstarted** — they cover prose documentation of client helpers and custom route definitions, not generated route docs. These require editorial content, not generator changes, and are NOT marked complete.
 
 ## Phase 4: CLI Reference and Final Export Replacement
