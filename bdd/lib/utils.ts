@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable no-loop-func */
 import fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
@@ -84,7 +82,6 @@ export function fileContains(filename: any, key: any) {
 
     let line;
 
-    // eslint-disable-next-line no-cond-assign
     while (line = stdoutFile.next()) {
         if (line.includes(key)) {
             return;
@@ -199,7 +196,6 @@ export async function getStreamsFromSpawnSuccess(
 }
 
 export function removeBoundaryQuotes(str: string) {
-    // eslint-disable-next-line quotes
     if (str.charAt(0) === '"' && str.charAt(str.length - 1) === '"') {
         return str.substr(1, str.length - 2);
     }
@@ -231,7 +227,6 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
             for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
                 response += chunk;
 
-                // eslint-disable-next-line no-console
                 console.log(response, chunk);
 
                 if (response === expected) return expected;
@@ -391,7 +386,6 @@ export async function waitUntilStreamStartsWith(stream: Readable, expected: stri
 
 export function isTemplateCreated(templateType: string, workingDirectory: string) {
     return new Promise<boolean>((resolve, reject) => {
-        // eslint-disable-next-line complexity
         fs.readdir(workingDirectory, (err, files) => {
             if (err) {
                 logger.error(`Can not read from directory: ${workingDirectory}`);

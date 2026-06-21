@@ -17,7 +17,6 @@ export const sessionConfig = new SessionConfig();
 
 profileManager.setConfigProfile(profileManager.getProfileName());
 
-// eslint-disable-next-line complexity
 export const initConfig = () => {
     let profile = siConfig.profile;
 

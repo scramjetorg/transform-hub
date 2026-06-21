@@ -143,7 +143,6 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         message: T,
         comm: ICommunicationHandler
     ) => {
-        // eslint-disable-next-line no-extra-parens
         const obj = ((await getData(req)) as Array<any>)[1] as MessageDataType<T>;
 
         await comm.sendControlMessage(message, checkMessage(message, obj));

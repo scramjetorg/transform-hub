@@ -404,7 +404,6 @@ export class HostAPIV1Handler {
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
-    // eslint-disable-next-line complexity
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
         if (!req.params?.id || typeof req.params.id !== "string") {
             return {

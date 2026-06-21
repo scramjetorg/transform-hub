@@ -234,7 +234,6 @@ export class Host implements IHost, IComponent {
      * @param {APIExpose} apiServer Server to attach API to.
      * @param {STHConfiguration} sthConfig Configuration.
      */
-    // eslint-disable-next-line complexity
     constructor(apiServer: APIExpose, sthConfig: STHConfiguration) {
         this.config = sthConfig;
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
@@ -794,7 +793,6 @@ export class Host implements IHost, IComponent {
      * @param {HostOptions} identifyExisting Indicates if existing Instances should be identified.
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
-    // eslint-disable-next-line complexity
     async main(): Promise<void> {
         await this.setTelemetry().catch(() => {
             this.logger.error("Setting telemetry failed");
@@ -1115,7 +1113,6 @@ export class Host implements IHost, IComponent {
             this.logger.warn("Unknown Sequence", id);
             throw new HostError("UNKNOWN_SEQUENCE", `Unknown Sequence: ${id}`);
         }
-        // eslint-disable-next-line no-console
         this.logger.info("Instances of sequence", sequence.id, sequence.instances);
 
         if (sequence.instances.length > 0) {
@@ -1202,7 +1199,6 @@ export class Host implements IHost, IComponent {
                 this.logger.trace(`Sequence identified: ${config.id}`);
 
                 if (this.config.host.id) {
-                    // eslint-disable-next-line max-len
                     this.sequenceStore.set({ id: config.id, config: config, instances: [], location: this.config.host.id });
                 } else {
                     this.sequenceStore.set({ id: config.id, config: config, instances: [], location: "STH" });
@@ -1246,7 +1242,6 @@ export class Host implements IHost, IComponent {
         config.packageSize = socket?.bytesRead;
 
         if (this.config.host.id) {
-            // eslint-disable-next-line max-len
             this.sequenceStore.set({ id, config, instances: [], location: this.config.host.id });
         } else {
             this.sequenceStore.set({ id, config, instances: [], location: "STH" });
@@ -1254,7 +1249,6 @@ export class Host implements IHost, IComponent {
 
         this.logger.trace(`Sequence identified: ${config.id}`);
 
-        // eslint-disable-next-line max-len
         await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED, config as unknown as STHRestAPI.GetSequenceResponse);
 
         this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
@@ -1308,7 +1302,6 @@ export class Host implements IHost, IComponent {
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
-    // eslint-disable-next-line complexity
     async startSequence(sequenceId: string, requestConfig: STHRestAPI.StartSequencePayload): Promise<StartInstanceReturnType> {
         if (await this.loadCheck.overloaded()) {
             throw new HostError("HOST_OVERLOAD", "Host overloaded");

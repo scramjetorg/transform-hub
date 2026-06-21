@@ -423,7 +423,6 @@ grunt lint
 
 # API
 */
-/*eslint-env node */
 'use strict';
 
 var util = require('util'),
@@ -1295,7 +1294,7 @@ BPMux.prototype.__send = function ()
         n -= 1;
     }
 
-    while (true) // eslint-disable-line no-constant-condition
+    while (true)
     {
         space = this._out_stream._writableState.highWaterMark - this._out_stream._writableState.length;
         output = [];

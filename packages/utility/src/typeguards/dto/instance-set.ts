@@ -1,7 +1,6 @@
 import { StartSequenceDTO, StartSequenceEndpointPayloadDTO, SetSequenceEndpointPayloadDTO } from "@scramjet/types";
 import { LogLevelStrings } from "../../constants";
 
-// eslint-disable-next-line complexity
 export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof arg !== "object") throw new Error("DTO is not an object");
     const { id, appConfig, args, instanceId, logLevel, exposePath, ...rest } = arg;
@@ -28,7 +27,6 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     return true;
 }
 
-// eslint-disable-next-line complexity
 export function isStartSequenceEndpointPayloadDTO(arg: any): arg is StartSequenceEndpointPayloadDTO {
     if (typeof arg !== "object") {
         throw new Error("DTO is not an object");

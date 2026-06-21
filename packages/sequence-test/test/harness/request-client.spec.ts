@@ -32,7 +32,6 @@ const loadRequestClientModule = (): RequestClientModule => {
 
     for (const candidate of candidates) {
         try {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
             return require(candidate) as RequestClientModule;
         } catch (_err) {
             // Optional/phase-gated API may not exist yet.

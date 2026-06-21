@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { strict as assert, fail } from "assert";
 import { When } from "@cucumber/cucumber";
 

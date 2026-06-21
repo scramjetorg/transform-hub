@@ -1,5 +1,4 @@
 #!/usr/bin/env ts-node
-/* eslint-disable no-console */
 
 import { cmd, resolveCommandPath, parseCommandContext, executeCommand, generateHelp, isHelpRequested, type CommandDescriptor } from "@scramjet/config";
 import chalk from "chalk";

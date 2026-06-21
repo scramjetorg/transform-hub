@@ -9,7 +9,6 @@ export type RouterOptions = {
 
 export type RouterMount = {
     path: string;
-    // eslint-disable-next-line no-use-before-define
     router: RouterDefinition;
     hooks: RouteHook[];
 };

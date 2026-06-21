@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
 import { createHostClient, ManagerClient } from "@scramjet/api-client";
 import { DeepPartial, LoadCheckStat, ManagerConfiguration, MMRestAPI } from "@scramjet/types";

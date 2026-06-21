@@ -126,37 +126,46 @@
     - Validation after the AVA runner update: `NODE_OPTIONS="--max-old-space-size=1024" npm --prefix packages/utility test` passed under `ulimit -v 1835008`, 6 tests and 1 skipped. `npm run lint` under the same cap failed twice with Biome native memory allocation errors when using default Rayon parallelism; `RAYON_NUM_THREADS=1 NODE_OPTIONS="--max-old-space-size=1024" npm run lint` passed under the cap, checking 555 files in 1278ms. `git diff --check` passed. Legacy ESLint lint commands were not run.
     - Biome bounded-parallelism memory checks under `ulimit -v 1835008`: `RAYON_NUM_THREADS=1` max RSS 83712 KB, `2` 84672 KB, `4` 88512 KB, `6` 91392 KB, `8` 92736 KB, `12` 97344 KB, and `16` 100800 KB; all passed. The host reports 24 CPUs, and `RAYON_NUM_THREADS=24` reproduced Biome native memory allocation failure despite only 71424 KB max RSS, consistent with virtual address/thread reservation pressure rather than resident-memory pressure. Root Biome scripts and guidance now lock in `RAYON_NUM_THREADS=12` as the default bounded parallelism.
     - Validation after locking scripts to 12 threads: `npm run lint` passed under `ulimit -v 1835008` with `NODE_OPTIONS="--max-old-space-size=1024"`, checking 555 files in 154ms with max RSS 96960 KB; `npm --prefix packages/utility test` passed under the same guard, 6 tests and 1 skipped; `npm run build:packages` passed under the repository memory guard; `git diff --check` passed. Legacy ESLint lint commands were not run.
-- [~] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
 
     Phase 2.5 checkpoint commit: `6b69afc2`.
     Phase 2.5 follow-up checkpoint commit: `94515a6e`.
 
 ## Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate
 
-- [ ] Task: Remove obsolete ESLint and Prettier tooling
-    - [ ] Remove ESLint-specific dependencies from `package.json` and `package-lock.json`.
-    - [ ] Remove Prettier dependency/configuration if Biome fully owns formatting.
-    - [ ] Remove root ESLint and Prettier configuration replaced by Biome.
-    - [ ] Remove package-level ESLint config files.
-    - [ ] Remove obsolete ESLint ignore/cache assumptions from tracked files.
-- [ ] Task: Remove or convert ESLint suppressions
-    - [ ] Remove clearly obsolete `eslint-disable` comments.
-    - [ ] Convert only necessary suppressions to Biome-compatible syntax.
-    - [ ] Avoid unrelated source refactors while touching suppressions.
-- [ ] Task: Validate package metadata and stale references
-    - [ ] Inspect `package.json` and `package-lock.json` for removed ESLint/Prettier dependencies and added Biome dependency.
-    - [ ] Search active scripts, workflows, docs, and source comments for stale ESLint/Prettier references.
-    - [ ] Confirm no old lint commands are needed or invoked.
-- [ ] Task: Validate Biome under memory constraints
-    - [ ] Run the Biome validation command under a 2GB memory limit.
-    - [ ] Observe and record memory usage where feasible.
-    - [ ] If Biome finds issues, classify them using the workflow failure policy and fix in-scope configuration or source issues.
-    - [ ] Do not run legacy ESLint lint commands for comparison.
-- [ ] Task: Run narrow non-lint validation if needed
-    - [ ] Run only the smallest relevant non-lint validation command if package metadata or generated files require it.
-    - [ ] Record skipped validation and reasons in `plan.md`.
+- [x] Task: Remove obsolete ESLint and Prettier tooling
+    - [x] Remove ESLint-specific dependencies from `package.json` and `package-lock.json`.
+    - [x] Remove Prettier dependency/configuration if Biome fully owns formatting.
+    - [x] Remove root ESLint and Prettier configuration replaced by Biome.
+    - [x] Remove package-level ESLint config files.
+    - [x] Remove obsolete ESLint ignore/cache assumptions from tracked files.
+- [x] Task: Remove or convert ESLint suppressions
+    - [x] Remove clearly obsolete `eslint-disable` comments.
+    - [x] Convert only necessary suppressions to Biome-compatible syntax.
+    - [x] Avoid unrelated source refactors while touching suppressions.
+- [x] Task: Validate package metadata and stale references
+    - [x] Inspect `package.json` and `package-lock.json` for removed ESLint/Prettier dependencies and added Biome dependency.
+    - [x] Search active scripts, workflows, docs, and source comments for stale ESLint/Prettier references.
+    - [x] Confirm no old lint commands are needed or invoked.
+- [x] Task: Validate Biome under memory constraints
+    - [x] Run the Biome validation command under a 2GB memory limit.
+    - [x] Observe and record memory usage where feasible.
+    - [x] If Biome finds issues, classify them using the workflow failure policy and fix in-scope configuration or source issues.
+    - [x] Do not run legacy ESLint lint commands for comparison.
+- [x] Task: Run narrow non-lint validation if needed
+    - [x] Run only the smallest relevant non-lint validation command if package metadata or generated files require it.
+    - [x] Record skipped validation and reasons in `plan.md`.
 - [ ] Task: Final review and checkpoint
-    - [ ] Review changed files for unrelated formatting or cleanup churn.
-    - [ ] Confirm docs, scripts, CI, and Biome config describe the same workflow.
+    - [x] Review changed files for unrelated formatting or cleanup churn.
+    - [x] Confirm docs, scripts, CI, and Biome config describe the same workflow.
     - [ ] Create a scoped phase/track commit and record the commit SHA in `plan.md` when applicable.
+
+    Phase 3 validation:
+    - Removed root/package/local ESLint config files, root Prettier config, the unused ESLint-derived `scripts/editorconfig.js`, legacy lint dependencies, obsolete `.eslintcache` ignore assumptions, and local untracked `.eslintcache` artifacts.
+    - Removed `eslint-disable` suppression comments from tracked JS/TS files; no Biome-compatible replacements were necessary for the active Biome surface.
+    - `npm run lint` passed under `ulimit -v 1835008` with `NODE_OPTIONS="--max-old-space-size=1024"`: checked 554 files in 152ms, max RSS 98304 KB.
+    - `npm run build:packages` passed under the repository memory guard.
+    - JSON parse validation for `package.json` and `package-lock.json` passed.
+    - Tracked-reference search found only historical/track-spec ESLint mentions outside active scripts/source and `.opencode` sandbox files; no legacy ESLint lint commands were run.
+    - `git diff --check` passed.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate' (Protocol in workflow.md)

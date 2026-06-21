@@ -443,7 +443,6 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
 
         await defer(1000);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         if (reason !== "disconnected") {
             this.communicationChannel?.destroy();
         }

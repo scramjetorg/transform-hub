@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 
 import { ClientError } from "@scramjet/client-utils";
 import { displayFormat } from "../types";

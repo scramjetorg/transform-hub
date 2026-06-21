@@ -208,7 +208,6 @@ class PrePack {
         return { ...dependencies };
     }
 
-    // eslint-disable-next-line complexity
     async transformPackageJson() {
         const content = this.currPackageJson;
 

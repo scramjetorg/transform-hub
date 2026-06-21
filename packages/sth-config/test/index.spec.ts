@@ -1,6 +1,5 @@
 import test from "ava";
 
-/* eslint-disable-next-line import/no-extraneous-dependencies */
 import { ConfigService } from "@scramjet/sth-config";
 
 const configService = new ConfigService();

@@ -14,7 +14,6 @@ function objectToJsonSchema(schema: z.ZodObject<any>): JsonSchema {
     const required: string[] = [];
 
     for (const [key, value] of Object.entries(schema.shape)) {
-        // eslint-disable-next-line no-use-before-define
         properties[key] = zodToJsonSchema(value as z.ZodTypeAny) || {};
 
         if (!(value instanceof z.ZodOptional)) {

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { profileManager } from "../config";

@@ -68,7 +68,6 @@ module.exports = async function(_input) {
 
         for (let i = 0; i < 4; i++) {
             res.write(`chunk-${i}${padding}\n`);
-            // eslint-disable-next-line no-await-in-loop
             await sleep(250);
         }
 

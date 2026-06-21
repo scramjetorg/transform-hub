@@ -275,7 +275,6 @@ export class Manager implements IComponent {
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {
         const ps = new PassThrough({ emitClose: true });
         const params = req.params || {};
-        // eslint-disable-next-line no-extra-parens
         const contentType = ((req.headers || {}).contentType as string) || "";
 
         this.logger.debug("GET topic ", req.url);

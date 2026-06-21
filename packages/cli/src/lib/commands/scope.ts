@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";

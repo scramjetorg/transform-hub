@@ -32,7 +32,6 @@ export interface PipeableStream<Produces> extends Readable {
     read(count?: number): Produces[] | null;
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean }): T;
     // Again a hen-egg issue
-    // eslint-disable-next-line no-use-before-define
     pipe<T extends WritableStream<Produces>>(destination: T, options?: { end?: boolean }): T;
 }
 /**

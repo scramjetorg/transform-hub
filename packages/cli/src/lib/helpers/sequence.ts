@@ -221,7 +221,6 @@ export const waitForInstanceKills = (seq: STHRestAPI.GetSequenceResponse, timeou
     return promiseTimeout((async () => {
         let l;
 
-        // eslint-disable-next-line no-cond-assign
         while (true) {
             l = (await getHostClient().getSequence(seq.id)).instances.length;
             if (!l) break;

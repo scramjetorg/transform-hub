@@ -115,7 +115,6 @@ const findClosestPackageJSONLocation = (_cwd = ".") => {
 };
 
 const readClosestPackageJSON = (wd) => {
-    // eslint-disable-next-line import/no-dynamic-require
     return require(findClosestPackageJSONLocation(wd));
 };
 

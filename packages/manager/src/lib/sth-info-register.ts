@@ -139,7 +139,6 @@ export class STHInfoRegister implements ISTHInfoRegister {
         for (const [, sequences] of this.sequencesStore) {
             sequences.map(sequenceInfo => {
                 if ("container" in sequenceInfo.config) {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { type, config, container, ...rest } = sequenceInfo.config;
                     const seqConfig : CommonSequenceConfig = {
                         ...rest,

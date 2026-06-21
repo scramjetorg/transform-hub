@@ -12,7 +12,6 @@ export function consistentHashStrategy<X>(req: IncomingMessage, urls: X[]): [X, 
 
     if (Array.isArray(key)) key = key[0];
     if (!key) key = "";
-    // eslint-disable-next-line no-use-before-define
     const hash = hashString(key);
     const index = hash % urls.length;
 

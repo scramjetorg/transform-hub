@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-/* eslint-disable no-console */
 
 import { spawn } from "child_process";
 import { existsSync, readFileSync } from "fs";
@@ -13,7 +12,6 @@ interface RunnerNodeEntry {
 }
 
 function resolveRunnerNodeEntry(): RunnerNodeEntry {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const pkgJson = require.resolve("@scramjet/runner-node/package.json");
     const pkgRoot = dirname(pkgJson);
     const srcEntry = resolve(pkgRoot, "src/bin/runner-node.ts");
@@ -117,7 +115,6 @@ export async function bootstrap(): Promise<number> {
         let loaded: unknown;
 
         try {
-            // eslint-disable-next-line import/no-dynamic-require, @typescript-eslint/no-var-requires
             loaded = require(bootConfig.sequencePath);
         } catch (err) {
             logRuntimeError("sequence-load", bootConfig, err);

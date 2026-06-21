@@ -150,7 +150,6 @@ const addLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<a
 
     // Transform source stream into "objectMode" stream.
     if (!stream.objectMode) {
-        // eslint-disable-next-line no-extra-parens
         const colors = (stream as typeof stream & { hasColors?: Function }).hasColors?.();
 
         outputStream.output = new DataStream();

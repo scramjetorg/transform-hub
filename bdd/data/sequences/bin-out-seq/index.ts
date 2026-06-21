@@ -1,5 +1,3 @@
-/* eslint-disable consistent-return */
-/* eslint-disable no-console */
 import { AppConfig, AppContext } from "@scramjet/types";
 import { createReadStream } from "fs";
 import { PassThrough } from "stream";

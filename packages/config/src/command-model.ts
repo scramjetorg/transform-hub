@@ -353,7 +353,6 @@ export async function runCommandTree(
 
     if (hasHelp && !resolve.command.children?.length) {
         // Show help for the resolved command
-        // eslint-disable-next-line no-console
         console.log(generateHelp(resolve.command));
         return;
     }
@@ -362,7 +361,6 @@ export async function runCommandTree(
         // Version is handled via the root action or argv check
         const versionOpt = (root.options || []).find((o) => o.name === "version");
         if (versionOpt && versionOpt.default) {
-            // eslint-disable-next-line no-console
             console.log(versionOpt.default);
         }
         return;

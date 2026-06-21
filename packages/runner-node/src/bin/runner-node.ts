@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 import { EventEmitter } from "events";
 import { AddressInfo } from "net";
 import { Readable, Writable } from "stream";

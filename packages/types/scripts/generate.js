@@ -21,7 +21,6 @@ const { readdir } = require("fs").promises;
     out.end();
 })()
     .catch(e => {
-        // eslint-disable-next-line no-console
         console.error(e.stack);
         process.exitCode = e.exitCode || 10;
     });

@@ -33,7 +33,6 @@ test("process adapter launches runner with STH-local verser2 topology", async t 
     installSpawnStub(spawnCalls);
     delete require.cache[require.resolve("../src/process-instance-adapter")];
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { ProcessInstanceAdapter } = require("../src/process-instance-adapter");
     const adapter = new ProcessInstanceAdapter({
         ...defaultConfig,

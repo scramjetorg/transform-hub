@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Readable, Stream, Writable } from "stream";
 import { MaybePromise } from "@scramjet/types";
 import { inspect } from "util";

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { ClientProvider, ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { createHostClient, ManagerClient } from "@scramjet/api-client";
 import { MWRestAPI, MMRestAPI } from "@scramjet/types";

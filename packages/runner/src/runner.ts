@@ -255,7 +255,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         return this._context;
     }
-    // eslint-disable-next-line complexity
     async controlStreamHandler([code, data]: EncodedControlMessage) {
         if (this.monitoringMessageReplyTimeout) {
             clearTimeout(this.monitoringMessageReplyTimeout);
@@ -827,7 +826,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     getSequence(): ApplicationInterface[] {
-        /* eslint-disable-next-line import/no-dynamic-require */
         const sequenceFromFile = require(this.sequencePath);
         const _sequence: MaybeArray<ApplicationFunction> =
             Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
@@ -843,7 +841,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         return sequenceArr;
     }
 
-    // eslint-disable-next-line complexity
     async runSequence(sequence: any[], args: any[] = []): Promise<void> {
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -923,7 +920,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
-        // eslint-disable-next-line complexity
         await new Promise<void>((res, rej) => {
             /**
              * @analyze-how-to-pass-in-out-streams

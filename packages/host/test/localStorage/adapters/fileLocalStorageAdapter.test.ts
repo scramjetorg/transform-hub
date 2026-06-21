@@ -1,7 +1,6 @@
 import test from "ava";
 import fs from "fs";
 import path from "path";
-// eslint-disable-next-line import/no-useless-path-segments
 import { FileLocalStorageAdapter } from "../../../";
 
 const testStorageName = "localstorage_test";

@@ -7,7 +7,6 @@ export interface ResolvedRunnerBunEntry {
 
 function tryResolvePackageRoot(): string | undefined {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const pkgJson = require.resolve("@scramjet/runner-bun/package.json");
 
         return dirname(pkgJson);

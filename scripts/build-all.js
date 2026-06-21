@@ -86,7 +86,6 @@ const BUILD_NAME = "build";
 
 console.time(BUILD_NAME);
 
-// eslint-disable-next-line complexity
 (async function() {
     let exitcode;
 

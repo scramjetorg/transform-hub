@@ -92,7 +92,6 @@ export class ClientError extends Error {
         return stack;
     }
 
-    // eslint-disable-next-line complexity
     static from(error: Error | QueryError, message?: string, source?: Error): ClientError {
         if (error instanceof QueryError) {
             if (error.status) {

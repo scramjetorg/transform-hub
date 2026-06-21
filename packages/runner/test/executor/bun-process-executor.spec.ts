@@ -1,7 +1,6 @@
 import test from "ava";
 import { join } from "path";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const loadModule = (): any => require("../../src/executor/bun-process-executor");
 
 async function waitAndCleanup(handles: any): Promise<void> {

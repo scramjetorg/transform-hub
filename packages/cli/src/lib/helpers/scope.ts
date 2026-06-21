@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { existsSync, rmSync, readFileSync } from "fs";
 import { basename, format } from "path";
 import { displayMessage } from "../output";

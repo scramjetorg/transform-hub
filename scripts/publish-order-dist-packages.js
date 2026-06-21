@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-loop-func */
 
-/* eslint-disable no-return-assign */
 
 const { exec: _exec } = require("child_process");
 const { writeFile, readFile } = require("fs/promises");
@@ -54,7 +52,6 @@ const checkIfPublished = async (opts, item) => {
     }
 };
 
-// eslint-disable-next-line complexity
 (async () => {
     const files = await DataStream.from(pkgs)
         .map((x) => resolve(cwd, x))

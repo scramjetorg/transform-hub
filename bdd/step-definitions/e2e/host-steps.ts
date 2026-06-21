@@ -1,6 +1,3 @@
-/* eslint-disable no-loop-func */
-/* eslint-disable no-console */
-// eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import {
@@ -622,7 +619,6 @@ When("send kill message to instance", async function(this: CustomWorld) {
     assert.ok(resp);
 });
 
-// eslint-disable-next-line complexity
 When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;

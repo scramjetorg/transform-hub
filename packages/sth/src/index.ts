@@ -15,7 +15,6 @@ export class STH {
             this.config
         )
             .catch((e: Error & { exitCode?: number }) => {
-                // eslint-disable-next-line no-console
                 console.error(e.stack);
                 process.exitCode = e.exitCode || 1;
                 process.exit();

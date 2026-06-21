@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { instanceKill, instanceRestart } from "../helpers/instance";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";

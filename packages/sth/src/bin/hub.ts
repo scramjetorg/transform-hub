@@ -1,5 +1,4 @@
 #!/usr/bin/env ts-node
-/* eslint-disable complexity */
 
 import {
     ConfigOptionDescriptor,
@@ -309,10 +308,8 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         if ((e as HostError).code) {
             const hostError = e as HostError;
 
-            // eslint-disable-next-line no-console
             console.error(`Error occured with code: ${hostError.code}\nData:${inspect(hostError.data)}\n${e.stack}`);
         } else {
-            // eslint-disable-next-line no-console
             console.error(e.stack);
         }
 

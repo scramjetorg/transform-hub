@@ -49,9 +49,6 @@ web_modules/
 # Optional npm cache directory
 .npm
 
-# Optional eslint cache
-.eslintcache
-
 # Microbundle cache
 .rpt2_cache/
 .rts2_cache_cjs/
@@ -154,7 +151,6 @@ bundle
 
 # build.info.json files
 packages/**/build.info.json
-.eslintcache_scramjet-csi
 bdd/timing-log.ndjson
 timing-log.ndjson
 .all-deps

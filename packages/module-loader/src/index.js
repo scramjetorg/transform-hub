@@ -15,10 +15,8 @@ exports.loadModule = async function loadModule(opts) {
 
     try {
         if (!opts.mode || opts.mode === "import") {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
             mod = await import(opts.name);
         } else if (opts.mode === "require") {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
             mod = module.require(opts.name);
         } else {
             throw new Error("Invalid mode");

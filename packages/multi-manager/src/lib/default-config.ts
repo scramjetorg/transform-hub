@@ -99,7 +99,6 @@ export const defaultConfig: MultiManagerOptions = {
  * @param options command line options
  * @returns multi manager options
  */
-// eslint-disable-next-line complexity
 export function createSettings(options: MultiManagerCommandOptions): MultiManagerOptions {
     const s3 = {
         accessKey: process.env.S3_AKEY,

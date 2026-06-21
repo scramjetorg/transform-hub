@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
@@ -26,7 +25,6 @@ process.on("exit", () => {
         try {
             HostUtils.killProcessGroup(child, SIGTERM);
         } catch {
-            // eslint-disable-next-line no-console
             console.error(`Had problems killing PID: ${child.pid}`);
         }
     });
