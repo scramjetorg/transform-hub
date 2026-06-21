@@ -70,23 +70,23 @@ function createLocalStorageStub(): ILocalStorage {
     };
 }
 
-interface ContextDeps {
+interface ContextDeps<V2Hub extends object, V2Space extends object> {
     config: AppConfig;
     monitorStream: WritableStream<unknown>;
     emitter: EventEmitter;
     proxy: RunnerProxy;
     hub: HostClient;
     space: ManagerClient;
-    v2Hub: object;
-    v2Space: object;
+    v2Hub: V2Hub;
+    v2Space: V2Space;
     instanceId: string;
     logLevel: LogLevel;
     api: APIExpose;
     localStorage: ILocalStorage;
 }
 
-function createContext(deps: ContextDeps): RunnerAppContext<AppConfig, unknown> {
-    return new RunnerAppContext<AppConfig, unknown>(
+function createContext<V2Hub extends object, V2Space extends object>(deps: ContextDeps<V2Hub, V2Space>): RunnerAppContext<AppConfig, unknown, V2Hub, V2Space> {
+    return new RunnerAppContext<AppConfig, unknown, V2Hub, V2Space>(
         deps.config,
         deps.monitorStream,
         deps.emitter,
@@ -158,7 +158,9 @@ test("app-context parity: hubClient() and spaceClient() expose v2-backed clients
     t.is(ctx.space, space, "legacy this.space remains unchanged");
     t.is(ctx.hubClient(), v2Hub);
     t.is(ctx.spaceClient(), v2Space);
-    t.not(ctx.hubClient(), ctx.spaceClient(), "hub and space v2 accessors remain isolated");
+    t.truthy(ctx.hubClient().status.get);
+    t.truthy(ctx.spaceClient().hubs.get);
+    t.false(Object.is(ctx.hubClient(), ctx.spaceClient()), "hub and space v2 accessors remain isolated");
 });
 
 test("app-context parity: keepAlive() issues keepalive and sends frame with timeout", t => {

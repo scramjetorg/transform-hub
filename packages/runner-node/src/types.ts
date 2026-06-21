@@ -15,6 +15,7 @@ import type {
 import type { RunnerNodeBootConfig } from "./boot-config";
 import type { RunnerNodeFdStreams } from "./fd-streams";
 import type { HostClient } from "./host-client";
+import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
 import type { LifecycleContext } from "./lifecycle";
 import type { LocalStorageAgent } from "./local-storage-agent";
 import type { RunnerAppContext } from "./runner-app-context";
@@ -73,7 +74,7 @@ export interface BuildAppContextDeps {
 }
 
 export interface BuildAppContextResult {
-    context: RunnerAppContext<AppConfig, unknown> & LifecycleContext;
+    context: RunnerAppContext<AppConfig, unknown, HubClient, SpaceClient> & LifecycleContext;
     api: APIExpose;
     localStorage: LocalStorageAgent;
 }

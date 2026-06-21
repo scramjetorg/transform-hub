@@ -21,9 +21,6 @@ import {
 } from "@scramjet/types";
 import { EventEmitter } from "events";
 
-export type V2HubClient = object;
-export type V2SpaceClient = object;
-
 /**
  * Runtime guard that asserts a value is a function.
  * Throws if it is not – used by handler registration methods.
@@ -51,7 +48,7 @@ export interface RunnerProxy {
  * Mirrors the behavior of the legacy `@scramjet/runner` `RunnerAppContext`
  * for the sequence-facing surface, but with tightened typing.
  */
-export class RunnerAppContext<AppConfigType extends AppConfig, State>
+export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType extends object = object, SpaceClientType extends object = object>
 implements AppContext<AppConfigType, State> {
     private runner: RunnerProxy;
 
@@ -64,8 +61,8 @@ implements AppContext<AppConfigType, State> {
     logger: IObjectLogger;
     hub: HostClient;
     space: ManagerClient;
-    private v2HubClient: V2HubClient;
-    private v2SpaceClient: V2SpaceClient;
+    private v2HubClient: HubClientType;
+    private v2SpaceClient: SpaceClientType;
     instanceId: string;
     api: APIExpose;
     localStorage: ILocalStorage;
@@ -77,8 +74,8 @@ implements AppContext<AppConfigType, State> {
         runner: RunnerProxy,
         hostClient: HostClient,
         spaceClient: ManagerClient,
-        v2HubClient: V2HubClient,
-        v2SpaceClient: V2SpaceClient,
+        v2HubClient: HubClientType,
+        v2SpaceClient: SpaceClientType,
         id: string,
         logLevel: LogLevel,
         api: APIExpose,
@@ -98,11 +95,11 @@ implements AppContext<AppConfigType, State> {
         this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
     }
 
-    hubClient(): V2HubClient {
+    hubClient(): HubClientType {
         return this.v2HubClient;
     }
 
-    spaceClient(): V2SpaceClient {
+    spaceClient(): SpaceClientType {
         return this.v2SpaceClient;
     }
 

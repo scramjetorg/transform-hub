@@ -189,7 +189,7 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     const appConfig: AppConfig = bootConfig.appConfig ?? {};
     const instanceId = bootConfig.instanceId;
 
-    const context = new RunnerAppContext<AppConfig, unknown>(
+    const context = new RunnerAppContext<AppConfig, unknown, typeof v2Hub, typeof v2Space>(
         appConfig,
         monitorStream,
         emitter,
