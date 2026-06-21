@@ -1,4 +1,3 @@
-/* eslint-disable no-extra-parens */
 import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
@@ -49,7 +48,6 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
     return true;
 }
 
-// eslint-disable-next-line complexity
 export const checkMessage = <X extends RunnerMessageCode | CPMMessageCode>(
     msgCode: X,
     msgData: MessageDataType<RunnerMessageCode | CPMMessageCode>

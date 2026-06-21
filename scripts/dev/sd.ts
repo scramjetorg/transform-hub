@@ -1,9 +1,7 @@
 import fs from "fs";
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChildProcess, spawn } from "child_process";
 
-// eslint-disable-next-line import/no-relative-packages
 import { HostClient } from "../../packages/api-client/src/host-client";
 import { Stream } from "stream";
 import { StringDecoder } from "string_decoder";
@@ -37,7 +35,6 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
     });
 });
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
     scenario = await new Promise(res => {
         require("readline").createInterface({
@@ -79,7 +76,6 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
         console.log("Host 1 started");
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let seq1, seq2, inst1, inst2;
 
     switch (scenario) {

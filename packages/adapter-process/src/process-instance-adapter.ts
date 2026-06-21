@@ -12,14 +12,13 @@ import {
     SequenceConfig,
     SequenceInfo,
     RunnerConnectInfo } from "@scramjet/types";
-import { streamToString } from "@scramjet/utility";
+import { development, streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 
 import { constants } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables, getRunnerTransportEnv } from "@scramjet/adapters-common";
-import { development } from "@scramjet/sth-config";
 
 const CRASH_LOG_TAIL_BYTES = 4096;
 
@@ -232,7 +231,7 @@ class ProcessInstanceAdapter implements
                     });
 
                     res(parseInt(data!, 10));
-                } catch (err) {
+                } catch {
                     /** OK. file not exists. check if process is*/
 
                     try {
@@ -257,7 +256,7 @@ class ProcessInstanceAdapter implements
         //noop
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     monitorRate(_rps: number): this {
         /** ignore */
     }

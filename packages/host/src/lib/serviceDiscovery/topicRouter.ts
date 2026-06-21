@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { ObjLogger } from "@scramjet/obj-logger";
 import { APIExpose, ContentType, IObjectLogger, OpResponse, ParsedMessage, StreamOrigin, TopicState } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
@@ -172,7 +171,7 @@ class TopicRouter {
             }
 
             return topic;
-        } catch (e: any) {
+        } catch {
             throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);
         }
     }

@@ -1,5 +1,3 @@
-/* eslint-disable quote-props */
-/* eslint-disable quotes */
 export const expectedResponses: { [key:string]: any} = {
     "endless-names-10": `{"name":"Alice"}\n{"name":"Ada"}\n{"name":"Aga"}\n{"name":"Michał"}\n{"name":"Patryk"}\n{"name":"Rafał"}\n{"name":"Aida"}\n{"name":"Basia"}\n{"name":"Natalia"}\n{"name":"Monika"}\n{"name":"Wojtek"}\n`,
     "nyc-city-nl": `{ \"city\": \"New York\" }`,

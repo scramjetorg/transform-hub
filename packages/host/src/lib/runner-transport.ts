@@ -66,9 +66,7 @@ class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
 
         await new Promise<void>((resolve, reject) => {
             let finished = false;
-            // eslint-disable-next-line prefer-const
             let interval: ReturnType<typeof setInterval> | undefined;
-            // eslint-disable-next-line prefer-const
             let timeout: ReturnType<typeof setTimeout> | undefined;
             const finish = (error?: Error) => {
                 if (finished) return;

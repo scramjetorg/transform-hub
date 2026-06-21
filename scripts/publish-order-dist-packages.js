@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-loop-func */
 
-/* eslint-disable no-return-assign */
 
 const { exec: _exec } = require("child_process");
 const { writeFile, readFile } = require("fs/promises");
@@ -49,12 +47,11 @@ const checkIfPublished = async (opts, item) => {
         const out = await exec(`npm view --json ${item.name}@${item.version}`, opts);
 
         return out.stdout.length > 0;
-    } catch (e) {
+    } catch {
         return false;
     }
 };
 
-// eslint-disable-next-line complexity
 (async () => {
     const files = await DataStream.from(pkgs)
         .map((x) => resolve(cwd, x))
@@ -128,7 +125,7 @@ const checkIfPublished = async (opts, item) => {
                 throw new Error("Package still not available after 600 secs");
 
             console.error(" `-> ops done, waiting until new package visible");
-        } catch (e) {
+    } catch (e) {
             if (!force)
                 throw e;
             else

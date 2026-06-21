@@ -139,7 +139,6 @@ function hubResolverSet() {
     return {
         instance: Router.resolve("/instances/:instanceId", {
             schemas: { params: RestAPI2Schemas.params.instance },
-            // eslint-disable-next-line no-use-before-define
             targetDefinitions: { owner: "instance", definitions: instanceRouter(), mountPath: "/instances/:instanceId", implementerBasePath: "/" },
             handler: handlerless
         })
@@ -178,7 +177,6 @@ function spaceResolverSet(basePath = "/api/v2") {
     return {
         hub: Router.resolve("/hubs/:hubId", {
             schemas: { params: RestAPI2Schemas.params.hub },
-            // eslint-disable-next-line no-use-before-define
             targetDefinitions: { owner: "hub", definitions: hubRouter(basePath), mountPath: "/hubs/:hubId", implementerBasePath: basePath },
             handler: handlerless
         })
@@ -201,7 +199,6 @@ function rootResolverSet(basePath = "/api/v2") {
     return {
         space: Router.resolve("/spaces/:spaceId", {
             schemas: { params: RestAPI2Schemas.params.space },
-            // eslint-disable-next-line no-use-before-define
             targetDefinitions: { owner: "space", definitions: spaceRouter(basePath), mountPath: "/spaces/:spaceId", implementerBasePath: basePath },
             handler: handlerless
         })

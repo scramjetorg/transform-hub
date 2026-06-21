@@ -1,9 +1,9 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
-import { InstanceLimits } from "./instance-limits";
-import { InstanceArgs } from "./instance";
-import { PortConfig } from "./sequence-package-json";
-import { RunnerContainerConfiguration } from "./sth-configuration";
+import type { InstanceLimits } from "./instance-limits";
+import type { InstanceArgs } from "./instance";
+import type { PortConfig } from "./sequence-package-json";
+import type { RunnerContainerConfiguration } from "./sth-configuration";
 
 export type CommonSequenceConfig = {
     type: string;
@@ -48,7 +48,6 @@ export type KubernetesSequenceConfig = CommonSequenceConfig & {
     type: "kubernetes"
 }
 
-// eslint-disable-next-line max-len
 export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig | CommonSequenceConfig;
 
 export type InstanceConfig = SequenceConfig & { instanceAdapterExitDelay: number, limits: InstanceLimits }

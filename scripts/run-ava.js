@@ -33,8 +33,38 @@ function resolveAvaCli() {
     return resolve(packageRoot, bin);
 }
 
+function appendNodeOption(options, option) {
+    const parts = options.split(/\s+/).filter(Boolean);
+    const optionName = option.split("=")[0];
+
+    if (parts.some(part => part === option || part.startsWith(`${optionName}=`))) {
+        return options;
+    }
+
+    return [...parts, option].join(" ");
+}
+
+function replaceNodeOption(options, option) {
+    const optionName = option.split("=")[0];
+    const parts = options.split(/\s+/).filter(Boolean).filter(part => part !== optionName && !part.startsWith(`${optionName}=`));
+
+    return [...parts, option].join(" ");
+}
+
+function avaNodeOptions(options = process.env.NODE_OPTIONS || "") {
+    const withHeapLimit = replaceNodeOption(options, "--max-old-space-size=1536");
+
+    return appendNodeOption(withHeapLimit, "--jitless");
+}
+
 const avaCli = resolveAvaCli();
-const result = spawnSync(process.execPath, [avaCli, ...process.argv.slice(2)], { stdio: "inherit" });
+const result = spawnSync(process.execPath, [avaCli, ...process.argv.slice(2)], {
+    env: {
+        ...process.env,
+        NODE_OPTIONS: avaNodeOptions()
+    },
+    stdio: "inherit"
+});
 
 if (result.error) {
     throw result.error;

@@ -105,7 +105,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 });
             })
 
-            // eslint-disable-next-line complexity
             .on("pang", async (data: PangMessageData) => {
                 this.logger.trace("PANG received", [csiController.id, data]);
 

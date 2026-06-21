@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 export const expectedResponses: { [key: string]: any } = {
     HelloWorld: "Hello World!",
     hulkName: "Name is: Hulk\n",

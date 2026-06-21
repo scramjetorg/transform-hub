@@ -108,7 +108,6 @@ export class HostUtils {
 
     async spawnHost(ommit: NoDefault, ...extraArgs: any[]): Promise<string> {
         if (this.hostUrl) {
-            // eslint-disable-next-line no-console
             console.error("Host is supposedly running at", this.hostUrl);
             const hostClient = new HostClient(this.hostUrl);
 
@@ -159,7 +158,6 @@ export class HostUtils {
             hub.stdout?.on("data", listener);
 
             this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
-                // eslint-disable-next-line no-console
                 console.log("host process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
 
@@ -170,7 +168,6 @@ export class HostUtils {
         });
     }
 
-    // eslint-disable-next-line complexity
     private setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
         if (!noDefault.includes("port") && !extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
@@ -194,7 +191,6 @@ export class HostUtils {
         }
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            // eslint-disable-next-line no-console
             console.log("Spawning with command:", ...command);
         }
     }

@@ -2,7 +2,6 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import { StopSequenceMessage } from "@scramjet/types";
 import testModel from "ava";
 
-/* eslint-disable-next-line import/no-extraneous-dependencies */
 import { MessageUtilities } from "@scramjet/model";
 
 testModel("Serialization must return a message in the correct format", async t => {

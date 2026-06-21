@@ -45,7 +45,6 @@ const validateConfigLogValue = (key: string, value: any): boolean | null => {
     return true;
 };
 
-// eslint-disable-next-line complexity
 export const validateProfileEntry = (key: string, value: any,): boolean | null => {
     switch (key) {
         case "apiUrl":

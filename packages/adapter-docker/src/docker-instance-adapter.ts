@@ -184,7 +184,6 @@ IComponent {
         return this.waitUntilExit(config, instanceId, sequenceInfo);
     }
 
-    // eslint-disable-next-line complexity
     async dispatch(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         if (!(config.type === "docker" && "container" in config)) {
             throw new Error("Docker instance adapter run with invalid runner config");
@@ -287,7 +286,7 @@ IComponent {
         }
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     monitorRate(_rps: number): this {
         /** ignore */
     }

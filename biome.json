@@ -1,0 +1,93 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "feat/manager-oss"
+  },
+  "files": {
+    "includes": [
+      "biome.json",
+      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.js",
+      "scripts/**/*.ts",
+      "scripts/**/*.js",
+      "!!**/dist",
+      "!!**/node_modules",
+      "!!**/coverage",
+      "!!**/test",
+      "!!**/tests",
+      "!!**/fixtures",
+      "!!bdd/data",
+      "!!conductor/archive",
+      "!!packages/*/lib",
+      "!!packages/pre-runner/sample-package",
+      "!!scripts/deps-update.js",
+      "!!scripts/dev"
+    ],
+    "ignoreUnknown": true
+  },
+  "formatter": {
+    "enabled": true,
+    "useEditorconfig": true,
+    "indentStyle": "space",
+    "indentWidth": 4,
+    "lineWidth": 180
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": "off",
+      "complexity": "off",
+      "performance": "off",
+      "a11y": "off",
+      "correctness": {
+        "noConstantCondition": "error",
+        "noInnerDeclarations": "off",
+        "noPrecisionLoss": "error",
+        "noSwitchDeclarations": "off",
+        "noUndeclaredDependencies": "off",
+        "noUnresolvedImports": "off",
+        "noPrivateImports": "warn",
+        "noUnusedImports": "error",
+        "noUnusedFunctionParameters": "off",
+        "noUnusedPrivateClassMembers": "off",
+        "noUnusedVariables": "warn"
+      },
+      "suspicious": {
+        "noAssignInExpressions": "warn",
+        "noConfusingVoidType": "off",
+        "noConstEnum": "off",
+        "noExplicitAny": "off",
+        "noFallthroughSwitchClause": "off",
+        "noGlobalAssign": "error",
+        "noGlobalIsNan": "off",
+        "noImplicitAnyLet": "off",
+        "noImportCycles": "warn",
+        "noNonNullAssertedOptionalChain": "off",
+        "noPrototypeBuiltins": "off",
+        "noTsIgnore": "warn",
+        "useIterableCallbackReturn": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/*/src/**/*.ts", "packages/*/src/**/*.js"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUndeclaredDependencies": "warn"
+          }
+        }
+      }
+    }
+  ]
+}

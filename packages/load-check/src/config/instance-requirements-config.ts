@@ -6,7 +6,6 @@ export class InstanceRequirementsConfig extends ReadOnlyConfig<InstanceRequireme
     get cpuLoad() { return this.configuration.cpuLoad; }
     get freeSpace() { return this.configuration.freeSpace; }
 
-    // eslint-disable-next-line complexity
     protected validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "freeMem": {

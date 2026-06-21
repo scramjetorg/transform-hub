@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {
     ExitCode,
     IComponent,
@@ -171,7 +170,8 @@ class KubernetesInstanceAdapter implements
 
         this.limits = config.limits;
 
-        const runnerName = this._runnerName = `runner-${instanceId}`;
+        this._runnerName = `runner-${instanceId}`;
+        const runnerName = this._runnerName;
 
         this.logger.debug("Creating Runner Pod");
 
@@ -344,7 +344,7 @@ class KubernetesInstanceAdapter implements
         await this.remove(this.adapterConfig.timeout);
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     monitorRate(_rps: number): this {
         /** ignore */
     }

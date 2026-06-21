@@ -108,7 +108,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         stream: StreamOutput,
         { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post", postponeContinue = false }: StreamConfig = {}
     ): void => {
-        // eslint-disable-next-line complexity
         router[method](path, async (req: ParsedMessage, res, next) => {
             try {
                 if (checkContentType) {
@@ -129,7 +128,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 const end = checkEndHeader ? shouldEndTargetStream(req, _end) : _end;
                 const data = await getWritable(stream, req, res);
 
-                // eslint-disable-next-line no-extra-parens
                 if (data && typeof (data as Writable).writable !== "undefined") {
                     if (end) {
                         res.writeHead(200, "OK");

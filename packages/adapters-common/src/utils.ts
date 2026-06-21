@@ -46,7 +46,6 @@ type SequenceConfig<T extends Adapters> =
  * @param {string} id Sequence Id.
  * @returns {SequenceConfig} Sequence configuration.
  */
-// eslint-disable-next-line complexity
 export async function getRunnerConfigForStoredSequence<T extends Adapters>(adapter: T, sequencesRoot: string, id: string): Promise<SequenceConfig<T>> {
     const sequenceDir = join(sequencesRoot, id);
 

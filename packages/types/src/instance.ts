@@ -1,6 +1,6 @@
 import { InstanceStatus } from "@scramjet/symbols";
-import { AppConfig } from "./app-config";
-import { SequenceInfo } from "./sequence-adapter";
+import type { AppConfig } from "./app-config";
+import type { SequenceInfo } from "./sequence-adapter";
 
 export type InstanceId = string;
 

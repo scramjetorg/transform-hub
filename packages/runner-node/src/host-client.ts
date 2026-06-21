@@ -1,4 +1,3 @@
-/* eslint-disable dot-notation */
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
@@ -247,7 +246,6 @@ class HostClient implements IHostClient {
 
                         stream
                             .on("error", (e) => {
-                                // eslint-disable-next-line no-console
                                 console.error("Error on stream", i, e.stack);
                             })
                             .on("close", finish)

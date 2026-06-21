@@ -11,7 +11,6 @@ printHelpAndExitIfRequested(process.argv, {
 
 startManager()
     .catch(e => {
-        // eslint-disable-next-line no-console
         console.error(e.stack);
         process.exitCode = e.exitCode || 1;
         process.exit();

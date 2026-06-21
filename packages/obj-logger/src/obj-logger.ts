@@ -22,7 +22,6 @@ const getCircularReplacer = () => {
             seen.add(value);
         }
 
-        // eslint-disable-next-line consistent-return
         return value;
     };
 };
@@ -30,7 +29,7 @@ const getCircularReplacer = () => {
 const stringifier = (line: any): string => {
     try {
         return JSON.stringify(line) + "\n";
-    } catch (e) {
+    } catch {
         return JSON.stringify(line, getCircularReplacer()) + "\n";
     }
 };
@@ -93,22 +92,16 @@ export class ObjLogger implements IObjectLogger {
         switch (value) {
             case "TRACE":
                 this.trace = ObjLogger.prototype.trace;
-            // eslint-disable-next-line no-fallthrough
             case "DEBUG":
                 this.debug = ObjLogger.prototype.debug;
-            // eslint-disable-next-line no-fallthrough
             case "INFO":
                 this.info = ObjLogger.prototype.info;
-            // eslint-disable-next-line no-fallthrough
             case "WARN":
                 this.warn = ObjLogger.prototype.warn;
-            // eslint-disable-next-line no-fallthrough
             case "ERROR":
                 this.error = ObjLogger.prototype.error;
-            // eslint-disable-next-line no-fallthrough
             case "FATAL":
                 this.fatal = ObjLogger.prototype.fatal;
-            // eslint-disable-next-line no-fallthrough
             default:
                 break;
         }
@@ -244,7 +237,6 @@ export class ObjLogger implements IObjectLogger {
                 .pipe(new JSONStringifierStream({
                     stringifier
                 }))
-                // eslint-disable-next-line no-console
                 .on("error", (e: any) => { console.error(e); });
 
         return this._stringifiedOutput;

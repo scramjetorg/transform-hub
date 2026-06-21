@@ -43,6 +43,7 @@ export * from "./sth-command-options";
 export * from "./telemetry-config";
 export * from "./verser2-transport-configuration";
 export * from "./host-proxy";
+export * from "./api-client/factory";
 export * from "./api-client/host-client";
 export * from "./api-client/manager-client";
 export * from "./sd-content-type";

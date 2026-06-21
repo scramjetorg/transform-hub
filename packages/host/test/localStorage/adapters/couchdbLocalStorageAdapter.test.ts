@@ -1,5 +1,4 @@
 import test from "ava";
-// eslint-disable-next-line import/no-useless-path-segments
 import { CouchdbLocalStorageAdapter } from "../../..";
 import { CouchDbAdapterConf } from "@scramjet/types";
 

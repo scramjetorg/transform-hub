@@ -14,7 +14,8 @@
 - Full build is expensive: `npm run build` includes packages, downloaded refapps, and Docker builds.
 - Unit/package tests: `npm run test:packages-no-concurrent` is the CI-safe serial variant; `npm run test:packages` runs package tests concurrently.
 - BDD smoke paths: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, or `npm run test:bdd`.
-- Lint: `npm run lint`; quick changed-file lint script uses `git diff --name-only HEAD`.
+- Biome lint/format: `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, `npm run format`, or the lower-level `npm run biome:check`/`npm run biome:lint`/`npm run biome:format` scripts. `lint` runs Biome linting; formatting remains an explicit `format` operation to avoid broad format churn.
+- Biome scripts set `RAYON_NUM_THREADS=12` by default. This passed on the 24-core agent host under the repo virtual-memory cap with ~98 MB max RSS, while 24/default parallelism failed from native allocation pressure; do not silently raise the cap.
 - Runtime invariant check: `npm run check:runtime-invariants`.
 - Dev hub: `npm run start:dev`; built hub: `npm run start` after building `dist/`.
 
@@ -29,6 +30,7 @@
 ## Testing and generated files
 - Most package tests use AVA with `ts-node/register` and match `**/*.spec.ts`.
 - Agent-run tests and Node validation commands must start under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless run through a repo/package test runner that already controls the test process and memory behavior. Do not wait for OOM before applying this guard; use it by default when invoking tests directly or through npm scripts without runner-level memory handling.
+- AVA package tests run through `scripts/run-ava.js`, which sets the spawned AVA process to `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` by default, replacing the generic `--max-old-space-size=1024` guard for the AVA child process. This avoids V8 worker CodeRange OOMs under the repo virtual-memory cap; do not override it unless the active task explicitly requires a different AVA runtime profile.
 - `packages/types` generates exposed type files via `packages/types/scripts/generate.js`; its `build:only` runs that generator.
 - BDD tests use `bdd/` (`cucumber-js`) and often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
@@ -40,8 +42,7 @@
 
 ## Toolchain constraints
 - TypeScript base is strict CommonJS targeting ES2019, with `allowJs`, decorators, declarations, and `noUnusedLocals` enabled.
-- ESLint parses with `./tsconfig.base.json`; `dist/` and `node_modules/` are ignored.
-- Prettier config only sets `trailingComma: none`.
+- Lint/format tooling uses Biome during the migration track. Do not run legacy ESLint commands unless the active track explicitly re-enables them.
 
 ## Repository Map
 

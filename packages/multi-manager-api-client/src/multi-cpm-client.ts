@@ -1,6 +1,5 @@
-/* eslint-disable no-console */
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/api-client";
+import { createHostClient, ManagerClient } from "@scramjet/api-client";
 import { DeepPartial, LoadCheckStat, ManagerConfiguration, MMRestAPI } from "@scramjet/types";
 
 export class MultiManagerClient implements ClientProvider {
@@ -14,7 +13,7 @@ export class MultiManagerClient implements ClientProvider {
     }
 
     getManagerClient(id: string, managerApiBase = "/api/v1") {
-        return new ManagerClient(this.apiBase + "/cpm/" + id + managerApiBase);
+        return new ManagerClient(this.apiBase + "/cpm/" + id + managerApiBase, undefined, createHostClient);
     }
 
     async startManager(config: DeepPartial<ManagerConfiguration>, managersApiBase = "/api/v1"): Promise<ManagerClient> {
@@ -29,7 +28,7 @@ export class MultiManagerClient implements ClientProvider {
             { json: true, parse: "json" }
         );
 
-        return new ManagerClient(this.apiBase + "/cpm/" + startResponse.id + managersApiBase);
+        return new ManagerClient(this.apiBase + "/cpm/" + startResponse.id + managersApiBase, undefined, createHostClient);
     }
 
     async getManagers() {

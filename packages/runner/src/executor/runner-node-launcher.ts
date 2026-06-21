@@ -24,7 +24,6 @@ function tryResolvePackageRoot(): string | undefined {
     try {
         // require.resolve respects the workspace symlink under
         // node_modules/@scramjet/runner-node and also a regular install.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const pkgJson = require.resolve("@scramjet/runner-node/package.json");
 
         return dirname(pkgJson);

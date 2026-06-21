@@ -1,7 +1,3 @@
-/* eslint-disable space-before-function-paren */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable quote-props */
-/* eslint-disable quotes */
 
 import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";

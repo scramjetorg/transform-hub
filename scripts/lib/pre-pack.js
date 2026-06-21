@@ -117,7 +117,7 @@ class PrePack {
                 const contents = await fse.readJSON(packageJson);
 
                 return [contents.name, path.basename(path.dirname(packageJson))];
-            } catch (e) {
+            } catch {
                 console.warn(`Can't read package.json (${packageJson}) `);
                 return null;
             }
@@ -208,7 +208,6 @@ class PrePack {
         return { ...dependencies };
     }
 
-    // eslint-disable-next-line complexity
     async transformPackageJson() {
         const content = this.currPackageJson;
 
@@ -242,10 +241,10 @@ class PrePack {
         const browser = _browser && srcRe(_browser);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
-            : Object.entries(_bin)
-            .map(([k, v]) => [k, srcRe(v)])
-            // eslint-disable-next-line no-return-assign,no-sequences
-            .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
+            : Object.fromEntries(
+                Object.entries(_bin)
+                .map(([k, v]) => [k, srcRe(v)])
+            )
         );
 
         let types;

@@ -39,7 +39,6 @@ const loadHubMockModule = (): { createHubMock?: () => HubMock } => {
 
     for (const candidate of candidates) {
         try {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
             return require(candidate) as { createHubMock?: () => HubMock };
         } catch (_e) {
             // API may be phase-gated; keep test intentionally focused on this import path.

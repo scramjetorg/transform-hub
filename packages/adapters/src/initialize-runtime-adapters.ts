@@ -55,7 +55,7 @@ export async function initializeRuntimeAdapters(config: STHConfiguration, logger
         try {
             await getAdapter("docker").initialize(config.adapters.docker);
             config.runtimeAdapter = "docker";
-        } catch (e) {
+        } catch {
             logger.info("Docker not available, falling back to process adapter.");
             await getAdapter("process").initialize(config.adapters.process);
             config.runtimeAdapter = "process";

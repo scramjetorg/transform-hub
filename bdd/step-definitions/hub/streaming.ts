@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import * as http from "http";
@@ -53,7 +52,6 @@ When(
         const chunks: StreamingChunk[] = [];
         const start = Date.now();
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             const { value, done } = await reader.read();
 

@@ -149,7 +149,6 @@ class KubernetesClientAdapter {
     async waitForPodStatus(podName: string, expectedStatuses: string[]): Promise<{ status: string, code?: number }> {
         let failCount = 0;
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
@@ -245,7 +244,7 @@ class KubernetesClientAdapter {
 
                 return used >= hard;
             }
-        } catch (e) {
+        } catch {
             this.logger.warn("Can't get quota object. ");
         }
 

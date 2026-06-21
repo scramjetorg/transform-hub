@@ -128,7 +128,6 @@ export class ServiceDiscovery {
 
         if (!foundTopic) return;
 
-        // eslint-disable-next-line consistent-return
         return {
             contentType: foundTopic.options().contentType,
             stream: foundTopic

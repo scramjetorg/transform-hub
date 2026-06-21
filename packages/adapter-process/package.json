@@ -20,7 +20,6 @@
     "@scramjet/runner": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "@scramjet/adapters-common": "1.1.0",
-    "@scramjet/sth-config": "^1.1.0",
     "scramjet": "^4.37.0",
     "tar": "^7.4.3",
     "ws": "^7.3.1"

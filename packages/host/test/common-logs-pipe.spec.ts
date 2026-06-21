@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import test from "ava";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";

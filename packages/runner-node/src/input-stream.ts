@@ -11,9 +11,7 @@ function loopStream<T extends unknown>(
 ): Promise<T> {
     return new Promise((res, rej) => {
         const onReadable = () => {
-            let chunk;
-
-            while ((chunk = stream.read()) !== null) {
+            for (let chunk = stream.read(); chunk !== null; chunk = stream.read()) {
                 const result = iter(chunk);
 
                 if (result.action === "continue") {

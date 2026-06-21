@@ -148,7 +148,6 @@ export class ManagerAPIV1Handler {
         }
 
         router.op("post", `${apiBase}/disconnect`, async (req: IncomingMessage): Promise<MRestAPI.PostDisconnectResponse> => {
-            // eslint-disable-next-line no-extra-parens
             const payload = (req as IncomingMessage & { body: MRestAPI.PostDisconnectPayload }).body || {};
 
             manager.logger.debug("Received disconnect request", payload);

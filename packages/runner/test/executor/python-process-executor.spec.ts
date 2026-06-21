@@ -4,7 +4,6 @@ import { join } from "path";
 // All tests fail until python-process-executor.ts is implemented (RED tests).
 // We use a runtime require() so that the missing module doesn't break TS compilation
 // at file-load time — it must throw inside the test body to register as a failure.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const loadModule = (): any => require("../../src/executor/python-process-executor");
 
 test("RUNNER_PYTHON_STDIO matches RUNNER_NODE_STDIO layout", (t) => {

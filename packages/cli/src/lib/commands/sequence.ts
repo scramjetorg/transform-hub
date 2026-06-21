@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { createWriteStream, lstatSync } from "fs";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
@@ -226,7 +225,6 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         const format = profileManager.getProfileConfig().format;
 
                         if (lstatSync(path).isDirectory()) {
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             const sendSeqPromise = getHostClient().sendSequence(compressedPackageStream).then(seq => {
                                 sessionConfig.setLastSequenceId(seq.id);
                             });

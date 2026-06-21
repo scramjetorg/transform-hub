@@ -46,7 +46,7 @@ export class ConfigService {
 
         try {
             updateAdaptersConfig = (await import("@scramjet/adapters")).updateAdaptersConfig;
-        } catch (error) {
+        } catch {
             // ignore
         }
         if (updateAdaptersConfig) {

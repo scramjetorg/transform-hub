@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { ObjLogger } from "@scramjet/obj-logger";
 import { IObjectLogger, MRestAPI, ReadableStream, WritableStream } from "@scramjet/types";
 import { Readable } from "stream";
@@ -81,7 +80,6 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
      *
      * @param targetActor target Actor.
      */
-    // eslint-disable-next-line complexity
     async connectoTo(targetActor: TopicActor<ActorType, ActorRole.CONSUMER>): Promise<void> {
         if (this.type === "host" && targetActor.type === "host" && this.host!.id === targetActor.host!.id) {
             this.logger.trace("Won't connect host to it self");
@@ -139,7 +137,6 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
                     "...from",
                     targetActor.role, targetActor.type, targetActor.host?.id
                 );
-                // eslint-disable-next-line no-extra-parens
                 (this.stream as ReadableStream<any>).unpipe(targetActor.stream as WritableStream<any>);
             };
 

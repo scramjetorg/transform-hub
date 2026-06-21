@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { stringToBoolean } from "../../utils/stringToBoolean";

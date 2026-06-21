@@ -63,9 +63,7 @@ export type CollectManifestOptions = {
     maxResolverDepth?: number;
 };
 
-// eslint-disable-next-line no-use-before-define
 export type RouteDefinitionSource = RouteManifest | {
-    // eslint-disable-next-line no-use-before-define
     collect(options?: CollectManifestOptions): RouteManifest;
 };
 

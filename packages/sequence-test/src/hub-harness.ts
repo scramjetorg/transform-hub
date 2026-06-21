@@ -573,7 +573,6 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     };
 
     // Route dispatch intentionally mirrors the supported harness endpoint matrix.
-    // eslint-disable-next-line complexity
     const defaultResponse = async (
         method: string,
         requestPath: string,

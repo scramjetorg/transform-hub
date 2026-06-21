@@ -2,7 +2,6 @@ const { stdout } = require("process");
 
 const defer = (ts) => new Promise(res => setTimeout(res, ts));
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Simple Hubclient test
  *
@@ -28,7 +27,6 @@ module.exports = async function(_stream) {
 
         log.pipe(stdout);
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             let bytes = output.read(16384);
 

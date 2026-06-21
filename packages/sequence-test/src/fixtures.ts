@@ -78,7 +78,7 @@ export async function resolveSequenceFixtureMetadata(directory: string): Promise
 
     try {
         packageJsonStats = await stat(packageJsonPath);
-    } catch (error) {
+    } catch {
         throw new Error(`fixture package.json not found at ${packageJsonPath}`);
     }
 

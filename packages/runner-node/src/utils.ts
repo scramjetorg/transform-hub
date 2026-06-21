@@ -86,7 +86,6 @@ export function resolveSequenceFunctions(mod: SequenceModule): SequenceFunction[
 }
 
 export function loadSequenceModule(sequencePath: string): SequenceFunction[] {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
     const loaded: SequenceModule = require(sequencePath);
 
     return resolveSequenceFunctions(loaded);

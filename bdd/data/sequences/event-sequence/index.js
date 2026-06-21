@@ -1,6 +1,4 @@
-/* eslint-disable no-console */
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Simple test event sequence.
  *

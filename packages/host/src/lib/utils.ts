@@ -1,11 +1,9 @@
 import { InstanceStatus, RunnerExitCode } from "@scramjet/symbols";
 import { SequenceInfo } from "@scramjet/types";
 
-// eslint-disable-next-line complexity
 export const mapRunnerExitCode = async (exitcode: number, sequence: SequenceInfo): Promise<
 { message: string, exitcode: number, status: InstanceStatus }
 > => {
-// eslint-disable-next-line default-case
     switch (exitcode) {
         case RunnerExitCode.INVALID_ENV_VARS: {
             return Promise.reject({

@@ -750,8 +750,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     private createInstanceAPIRouter() {
-        const router = this.router = getRouter();
-        const v2Router = this.v2Router = getRouter();
+        this.router = getRouter();
+        const router = this.router;
+        this.v2Router = getRouter();
+        const v2Router = this.v2Router;
 
         this.api.attach(router, this.communicationHandler!);
         registerHttpRoutes(v2Router, this.apiV2.createRouter());

@@ -291,7 +291,6 @@ export class CPMConnector extends TypedEmitter<Events> {
                 const messageCode = message[0] as unknown as CPMMessageCode;
 
                 if (messageCode === CPMMessageCode.STH_ID) {
-                    // eslint-disable-next-line no-extra-parens
                     this.info.id = (message[1] as STHIDMessageData).id;
 
                     this.logger.trace("Received id", this.info.id);
@@ -559,7 +558,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             await this.communicationStream?.whenWrote(
                 [CPMMessageCode.LOAD, await this.getLoad()]
             );
-        } catch (e) {
+        } catch {
             this.logger.error("Error sending loadcheck");
         }
     }
@@ -629,7 +628,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {string} sequenceId Sequence id.
      * @param {SequenceMessageCode} seqStatus Sequence status.
      */
-    // eslint-disable-next-line max-len
     async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse) : Promise<void> {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 

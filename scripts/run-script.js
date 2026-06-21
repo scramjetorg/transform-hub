@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-"use strict";
+
 
 const {
     getPackagesInWorkspace,
@@ -95,7 +95,6 @@ function execCommand(path, command, verbose) {
     });
 }
 
-// eslint-disable-next-line complexity
 (async function() {
     const pkg = findClosestPackageJSONLocation(opts.root);
     const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));

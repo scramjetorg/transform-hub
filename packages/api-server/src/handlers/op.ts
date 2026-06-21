@@ -79,7 +79,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             const body = await getBody(req, encoding);
 
             return body && (rawBody ? body : JSON.parse(body));
-        } catch (e: any) {
+        } catch {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };
@@ -143,7 +143,6 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         message: T,
         comm: ICommunicationHandler
     ) => {
-        // eslint-disable-next-line no-extra-parens
         const obj = ((await getData(req)) as Array<any>)[1] as MessageDataType<T>;
 
         await comm.sendControlMessage(message, checkMessage(message, obj));
@@ -189,7 +188,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
                     return await opControlMessageHandler(req, res, message, comm);
                 }
                 throw new Error("ERR_UNSUPPORTED_HANDLER_CONFIGURATION");
-            } catch (e: any) {
+        } catch (e: any) {
                 return next(e);
             }
         };

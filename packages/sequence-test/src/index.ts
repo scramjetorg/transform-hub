@@ -189,7 +189,6 @@ export async function runSequence(options: SequenceTestOptions): Promise<Sequenc
     await harness.start();
 
     if (options.runtime === "node") {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require, import/no-dynamic-require
         const loaded = require(options.sequencePath) as unknown;
         const fn = typeof loaded === "function"
             ? loaded

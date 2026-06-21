@@ -23,7 +23,6 @@ export function getAdapter(adapter: string): IAdapterAugmentation {
         throw new Error(`Invalid runtime adapter: ${adapter}`);
     }
 
-    // eslint-disable-next-line import/no-dynamic-require
     adapters[adapter] = require(`@scramjet/adapter-${adapter}`).augment();
 
     return adapters[adapter];

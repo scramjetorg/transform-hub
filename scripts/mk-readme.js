@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-return-assign */
 
 const { createReadStream, createWriteStream, readFileSync } = require("fs");
 const glob = require("glob");

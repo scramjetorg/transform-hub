@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable padding-line-between-statements */
 
 const { glob } = require("glob");
 const { readFileSync, writeFileSync } = require("fs");
@@ -38,7 +37,6 @@ for (const file of packages) {
 
     try {
         const str = readFileSync(resolve(cwd, file), { encoding: "utf-8" });
-        // eslint-disable-next-line import/no-dynamic-require
         const contents = JSON.parse(str);
 
         if (del || value) {

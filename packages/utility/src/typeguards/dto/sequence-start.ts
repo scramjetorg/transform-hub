@@ -1,7 +1,6 @@
 import { StartSequenceDTO, StartSequenceEndpointPayloadDTO } from "@scramjet/types";
 import { LogLevelStrings } from "../../constants";
 
-// eslint-disable-next-line complexity
 export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     if (typeof arg !== "object") throw new Error("DTO is not an object");
     const { id, name, sequenceName, instanceName, required, restartLimit, appConfig, args, instanceId, logLevel, keepAlive, exposePath, ...rest } = arg;
@@ -50,7 +49,7 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
 
         if (n.length === 0) throw new Error("DTO name is empty");
         // Map deprecated name -> instanceName
-        arg.instanceName = n; // eslint-disable-line @typescript-eslint/no-explicit-any
+        arg.instanceName = n;
     }
 
     if (typeof required !== "undefined" && typeof required !== "boolean") {
@@ -70,7 +69,6 @@ export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {
     return true;
 }
 
-// eslint-disable-next-line complexity
 export function isStartSequenceEndpointPayloadDTO(arg: any): arg is StartSequenceEndpointPayloadDTO {
     if (typeof arg !== "object") {
         throw new Error("DTO is not an object");

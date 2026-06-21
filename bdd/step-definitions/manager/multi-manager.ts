@@ -182,6 +182,5 @@ Then("MultiManager with id {string} lists {int} running hosts on Manager id {str
 
     this.resources.multiManagerResponse = response;
 
-    // eslint-disable-next-line no-extra-parens
     assert.equal((this.resources.multiManagerResponse as any).length, itemsLength);
 });
