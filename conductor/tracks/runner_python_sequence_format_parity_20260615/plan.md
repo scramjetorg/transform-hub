@@ -281,8 +281,8 @@
     - [x] Fix non-BDD lifecycle parity blockers found by review: STOP `keep_alive(milliseconds=...)`, sequence-facing stop-handler chainability, and SET log-level propagation to the sequence logger.
     - [x] Add focused non-BDD ASGI API exposure coverage for new-contract `main()` sequences.
     - [x] Expand AppContext/ASGI/lifecycle README docs so docs, tests, and runtime describe the same Python contract.
-    - [ ] Confirm no new refapp depends on old `scramjet.streams.Stream`, old health/stop APIs, or legacy module-global assumptions.
-    - [ ] Confirm docs, tests, and runtime behavior describe the same Python contract.
+    - [x] Confirm no new refapp depends on old `scramjet.streams.Stream`, old health/stop APIs, or legacy module-global assumptions. (No refapp changes in this checkpoint; outdated refapp BDD coverage deferred.)
+    - [x] Confirm docs, tests, and runtime behavior describe the same Python contract.
 - [ ] Task: Conductor - User Manual Verification 'New Python BDD Refapps and Final Runtime Validation' (Protocol in workflow.md)
 
 ### Implementation notes (Phase 4 partial, 2026-06-21)
@@ -377,6 +377,12 @@
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages` from the repository root: passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
+
+**Manual verification (runtime parity fixes):**
+
+- Runtime parity checkpoint commit `763d2362` was pushed and manually approved by
+  the user on 2026-06-21. Outdated refapp BDD coverage remains deferred to a
+  later track by user instruction.
 
 ## Phase 5: Isolated Legacy Compatibility Structure
 
