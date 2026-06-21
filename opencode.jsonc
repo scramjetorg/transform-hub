@@ -1,5 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "eslint": { "disabled": true },
+    "biome": {
+      "command": ["npx", "biome", "lsp-proxy"],
+      "extensions": ["js", "jsx", "ts", "tsx", "json", "jsonc"]
+    }
+  },
   "plugin": ["oh-my-opencode-slim@latest", "opencode-conductor-plugin@latest"],
   "permission": {
     "bash": "allow",
