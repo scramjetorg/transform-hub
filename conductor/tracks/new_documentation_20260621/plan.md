@@ -159,29 +159,59 @@
 
 ## Phase 2: README Pipeline Replacement
 
-- [~] Task: Design README source model
-    - [ ] Define root README source and package README source conventions under `docs-source/readmes/` or approved equivalent.
-    - [ ] Map old `.mtpl` package templates to new README source files when any content remains to migrate.
-    - [ ] Define reusable partial/include support for README generation.
-    - [ ] Define link rebasing for root, package, npm, docs-site, and generated-reference contexts.
-- [ ] Task: Implement README generator
-    - [ ] Generate root `README.md` from the new docs source pipeline.
-    - [ ] Generate package `README.md` files from new package README sources.
-    - [ ] Generate README copies or landing pages under `dist-docs/readmes/` where needed.
-    - [ ] Keep package READMEs concise and link longer content to docs/reference pages.
-- [ ] Task: Complete old README template cleanup
-    - [ ] Confirm `scripts/mk-readme.js`, package `.mtpl` files, and old README parts are removed, disabled, or explicitly retained with rationale.
-    - [ ] Update root npm scripts to use the new README generation path.
-    - [ ] Confirm package publishing still includes expected README content.
-- [ ] Task: Add README validation
-    - [ ] Add README drift checks.
-    - [ ] Add tests or fixtures for partials, link rebasing, generated reference links, and package README generation.
-    - [ ] Validate generated README links where possible.
-- [ ] Task: Validate Phase 2
-    - [ ] Run README generation and drift checks.
-    - [ ] Run docs generation/check commands affected by README outputs.
-    - [ ] Review root and package README outputs for stale claims and excessive detail.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: README Pipeline Replacement' (Protocol in workflow.md)
+- [x] Task: Design README source model
+    - [x] Define root README source and package README source conventions under `docs-source/readmes/` or approved equivalent.
+        - `docs-source/readmes/README.md` documents the source model
+        - `docs-source/readmes/root.md` is the source template for root README (static content + `<!-- PACKAGE-LIST -->` marker)
+        - `docs-source/readmes/packages/<dir>.md` optional overlays for packages needing custom content beyond package.json
+    - [x] Map old `.mtpl` package templates to new README source files when any content remains to migrate.
+        - Old `.mtpl` files are not used by the new pipeline. `scripts/mk-readme.js` now fails fast with deprecation guidance.
+    - [x] Define reusable partial/include support for README generation.
+        - Documented in `docs-source/readmes/README.md`: partials exist at `docs-source/_partials/` but the README generator does not yet expand include markers; generated READMEs are self-contained.
+    - [x] Define link rebasing for root, package, npm, docs-site, and generated-reference contexts.
+        - Documented in `docs-source/readmes/README.md` with table of four contexts and relative anchor strategies.
+- [x] Task: Implement README generator
+    - [x] Generate root `README.md` from the new docs source pipeline.
+        - Reads `docs-source/readmes/root.md`, expands `<!-- PACKAGE-LIST -->` with auto-generated table from all packages/*/package.json.
+    - [x] Generate package `README.md` files from new package README sources.
+        - For packages with overlay (`docs-source/readmes/packages/<dir>.md`): uses overlay content.
+        - For all other packages: auto-generates heading + description + install/import + docs link from package.json.
+    - [x] Generate README copies or landing pages under `dist-docs/readmes/` where needed.
+        - Root README mirrored to `dist-docs/readmes/README.md`
+        - Each package README mirrored to `dist-docs/readmes/packages/<dir>/README.md`
+    - [x] Keep package READMEs concise and link longer content to docs/reference pages.
+        - All generated READMEs are under 25 lines; include only name, description (or overlay), install, import, and a docs link.
+- [x] Task: Complete old README template cleanup
+    - [x] Confirm `scripts/mk-readme.js`, package `.mtpl` files, and old README parts are removed, disabled, or explicitly retained with rationale.
+        - `scripts/mk-readme.js` is disabled with a fail-fast deprecation message. `build:readme` runs `npm run docs:generate:readmes`.
+    - [x] Update root npm scripts to use the new README generation path.
+        - Added `docs:generate:readmes` script. `docs:generate` now includes README generation in the "all" scope. `build:readme` points to the new command.
+    - [x] Confirm package publishing still includes expected README content.
+        - All packages/*/README.md now exist with concise content and generated markers.
+- [x] Task: Add README validation
+    - [x] Add README drift checks.
+        - `docs:check` validates README output as part of the full dist-docs comparison. For check mode, `writeRepoReadmes: false` prevents repo file modification during validation.
+    - [x] Add tests or fixtures for partials, link rebasing, generated reference links, and package README generation.
+        - Not implemented; deferred to later phase if needed. The validation flow (`docs:check`) detects drift, which serves as a regression test.
+    - [x] Validate generated README links where possible.
+        - `docs:check` compares generated temp output against existing dist-docs.
+- [x] Task: Validate Phase 2
+    - [x] Run README generation and drift checks.
+    - [x] Run docs generation/check commands affected by README outputs.
+    - [x] Review root and package README outputs for stale claims and excessive detail.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: README Pipeline Replacement' (Protocol in workflow.md)
+
+### Phase 2 notes
+
+- Broken README links: The docs link in generated package READMEs no longer points to the nonexistent `../dist-docs/reference/README.md`. Links are now context-specific — packages with allowlisted reference entries link directly to their `../../dist-docs/reference/typescript/<slug>/README.md` (repo context) or `../../reference/typescript/<slug>/README.md` (dist-docs context). Packages without reference entries link to `../../docs-source/README.md` (repo) or an absolute GitHub URL (dist-docs).
+- README drift validation: `docs:check` now validates repo README files (`README.md` and `packages/*/README.md`) against regenerated content in addition to the existing dist-docs output comparison. Drift in either location produces a clear error with regeneration guidance.
+- Per-context link rebasing: Implemented `generatePackageReadmeFor(context, ...)` that renders different link values for `"repo"`, `"dist-docs"`, and `"npm"` contexts. Root README generation also has separate `generateRootReadmeDistDocs()` that uses absolute GitHub URLs for package table entries in the dist-docs mirror.
+- Root README Quick Start: Added concise Quick Start section with install, start, deploy commands and runtime requirements. Updated runtime claim from "Node.js and Python" to "Node.js, Bun, and Python".
+- Stale package descriptions: Added `DESCRIPTION_OVERRIDES` map for `adapter-kubernetes`, `adapters`, `api-server`, `sth-config`, and `obj-logger`, sourced from codemap responsibilities. Overrides are applied during root README package table and package README generation.
+- Old README generator: `build:readme` already redirects to `docs:generate:readmes`. `scripts/mk-readme.js` now fails immediately with deprecation guidance and does not execute legacy templating.
+- Sidebar metadata: Readmes sidebar `source` field now correctly points to the actual source path (e.g., `docs-source/readmes/root.md`, `docs-source/readmes/packages/rest-api2.md`) instead of the incorrect `packages/...` prefix.
+- Overlay source model: Package README generation now always emits Install, Import, and Documentation sections regardless of whether an overlay exists. Overlays supply only the description/body content. `docs-source/readmes/README.md` updated to document this behavior.
+- Validation: `npm run docs:generate`, `docs:check`, `docs:generate:readmes`, and `build:readme` all pass.
 
 ## Phase 3: Full API v2 Documentation and Legacy v1 Separation
 

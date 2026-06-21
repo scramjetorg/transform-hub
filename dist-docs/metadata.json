@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:51a8ab9ccb5076fce6438bd8e3763c34362e72134ccd933498fa88224c71c2cb",
+  "sourceIdentifier": "sha256:eee34212e47eedc3edc9b01d8b03d1b4f553518b7f3798550e87c41b140896e8",
   "outputRoot": {
     "value": "dist-docs",
     "resolvedPath": "dist-docs",
@@ -44,10 +44,52 @@
       "reference/typescript/rest-api2/",
       "reference/typescript/api-client/"
     ],
-    "readmes": [],
+    "readmes": [
+      "README.md",
+      "packages/adapter-docker/README.md",
+      "packages/adapter-kubernetes/README.md",
+      "packages/adapter-process/README.md",
+      "packages/adapters/README.md",
+      "packages/adapters-common/README.md",
+      "packages/api-client/README.md",
+      "packages/api-router/README.md",
+      "packages/api-server/README.md",
+      "packages/bpmux/README.md",
+      "packages/cli/README.md",
+      "packages/client-utils/README.md",
+      "packages/config/README.md",
+      "packages/frame-stream/README.md",
+      "packages/host/README.md",
+      "packages/load-check/README.md",
+      "packages/logger/README.md",
+      "packages/manager/README.md",
+      "packages/manager-config/README.md",
+      "packages/middleware-api-client/README.md",
+      "packages/model/README.md",
+      "packages/module-loader/README.md",
+      "packages/monitoring-server/README.md",
+      "packages/multi-manager/README.md",
+      "packages/multi-manager-api-client/README.md",
+      "packages/obj-logger/README.md",
+      "packages/pre-runner/README.md",
+      "packages/rest-api2/README.md",
+      "packages/runner/README.md",
+      "packages/runner-bun/README.md",
+      "packages/runner-node/README.md",
+      "packages/runner-python/README.md",
+      "packages/sequence-test/README.md",
+      "packages/sth/README.md",
+      "packages/sth-config/README.md",
+      "packages/symbols/README.md",
+      "packages/telemetry/README.md",
+      "packages/types/README.md",
+      "packages/utility/README.md",
+      "packages/verser/README.md"
+    ],
     "sidebars": [
       "sidebars/content.json",
-      "sidebars/reference-typescript.json"
+      "sidebars/reference-typescript.json",
+      "sidebars/readmes.json"
     ]
   },
   "docusaurusHandoff": {
@@ -57,7 +99,8 @@
     "sidebars": "sidebars/"
   },
   "warnings": [
-    "CLI reference generation, README generation, and API v2 documentation generation are implemented in later phases.",
+    "CLI reference generation and API v2 documentation generation are implemented in later phases.",
+    "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
     "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
   ]
 }

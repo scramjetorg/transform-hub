@@ -7,6 +7,20 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const sourceRoot = path.join(root, "docs-source");
+const readmesSourceDir = path.join(sourceRoot, "readmes");
+const packagesDir = path.join(root, "packages");
+
+const GITHUB_BLOB_ROOT = "https://github.com/scramjetorg/transform-hub/blob/HEAD";
+const GITHUB_TREE_ROOT = "https://github.com/scramjetorg/transform-hub/tree/HEAD";
+
+const DESCRIPTION_OVERRIDES = {
+    "adapter-kubernetes": "Kubernetes adapter for sequence storage, runner pod execution, CLI/config augmentation, and client initialization.",
+    "adapters": "Legacy adapter re-export barrel; prefer individual adapter packages (adapter-docker, adapter-kubernetes, adapter-process) for new usage.",
+    "api-server": "HTTP API server for router construction, server setup, REST/stream handlers, middleware, and routed forwarding.",
+    "sth-config": "STH configuration defaults, image defaults, deep-merge updates, runtime-adapter selection, and public-safe config extraction.",
+    "obj-logger": "Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation.",
+};
+
 const routedSections = [
     "intro",
     "transform-hub",
@@ -244,6 +258,45 @@ function validateAllowlist() {
     return allowlist;
 }
 
+function loadReferenceEntryMap() {
+    const allowlist = loadAllowlist();
+    const map = {};
+
+    for (const entry of allowlist.entrypoints) {
+        const pkgName = entry.package.replace(/^@scramjet\//, "");
+
+        if (!map[pkgName]) map[pkgName] = [];
+        map[pkgName].push(entry);
+    }
+
+    return map;
+}
+
+function docsLink(context, pkgDir, refEntries) {
+    if (refEntries && refEntries.length > 0) {
+        const slug = refEntries[0].outputPath.replace(/\/$/, "");
+
+        if (context === "dist-docs") {
+            return `../../../${slug}/README.md`;
+        }
+        if (context === "npm") {
+            return `${GITHUB_BLOB_ROOT}/dist-docs/${slug}/README.md`;
+        }
+        // repo context (packages/<pkg>/README.md)
+        return `../../dist-docs/${slug}/README.md`;
+    }
+
+    // No reference entry
+    if (context === "dist-docs") {
+        return `${GITHUB_TREE_ROOT}/packages/${pkgDir}`;
+    }
+    if (context === "npm") {
+        return `${GITHUB_BLOB_ROOT}/docs-source/README.md`;
+    }
+    // repo context
+    return `../../docs-source/README.md`;
+}
+
 function validateSource() {
     if (!fs.existsSync(sourceRoot)) throw new Error("docs-source/ does not exist");
 
@@ -378,6 +431,255 @@ function sourceIdentifier() {
     return `sha256:${hash.digest("hex")}`;
 }
 
+function listPackages() {
+    if (!fs.existsSync(packagesDir)) return [];
+
+    return fs.readdirSync(packagesDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(packagesDir, entry.name, "package.json")))
+        .map((entry) => entry.name)
+        .sort((a, b) => a.localeCompare(b));
+}
+
+function readPackageJson(pkgDir) {
+    return readJson(path.join(packagesDir, pkgDir, "package.json"));
+}
+
+function loadExperimentalPackages() {
+    const allowlist = loadAllowlist();
+    const experimental = new Set();
+
+    for (const entry of allowlist.entrypoints) {
+        if (entry.stability === "experimental") {
+            const name = entry.package.replace(/^@scramjet\//, "");
+            experimental.add(name);
+        }
+    }
+
+    return experimental;
+}
+
+function readmeSourceFilePath(pkgDir) {
+    return path.join(readmesSourceDir, "packages", `${pkgDir}.md`);
+}
+
+function readmeSourcePath(file) {
+    return `docs-source/readmes/${path.relative(readmesSourceDir, file).split(path.sep).join("/")}`;
+}
+
+function packageRowLink(context, pkgDir) {
+    if (context === "dist-docs") {
+        return `${GITHUB_TREE_ROOT}/packages/${pkgDir}/`;
+    }
+    return `./packages/${pkgDir}/`;
+}
+
+function getDescription(pkgDir) {
+    if (DESCRIPTION_OVERRIDES[pkgDir]) {
+        return DESCRIPTION_OVERRIDES[pkgDir];
+    }
+
+    const pkg = readPackageJson(pkgDir);
+    return (pkg.description || "").replace(/^This package is part of Scramjet Transform Hub\.\s*/i, "");
+}
+
+function generateRootReadme(out, repoReadmesOutputDir) {
+    const sourceFile = path.join(readmesSourceDir, "root.md");
+
+    if (!fs.existsSync(sourceFile)) {
+        console.warn("Root README source not found, skipping root README generation.");
+        return null;
+    }
+
+    let content = fs.readFileSync(sourceFile, "utf8");
+    const pkgs = listPackages();
+
+    // Build package list table (per-context links)
+    const rows = pkgs.map((pkgDir) => {
+        const pkg = readPackageJson(pkgDir);
+        const name = pkg.name || `@scramjet/${pkgDir}`;
+        const desc = getDescription(pkgDir);
+        return `| [${name}](${packageRowLink("repo", pkgDir)}) | ${desc} |`;
+    });
+
+    const packageTable = [
+        "| Package | Description |",
+        "|---------|-------------|",
+        ...rows,
+        ""
+    ].join("\n");
+
+    content = content.replace("<!-- PACKAGE-LIST -->", packageTable);
+
+    const marker = generatedMarker(`docs-source/readmes/root.md`).trimEnd();
+    content = `${content.trimEnd()}\n\n---\n\n${marker}\n`;
+
+    // Write to repo root README when not in check/validation mode
+    if (out.writeRepoReadmes !== false) {
+        const target = repoReadmesOutputDir
+            ? path.join(repoReadmesOutputDir, "README.md")
+            : path.join(root, "README.md");
+        writeFile(target, content);
+    }
+
+    return { content, relPath: "README.md", sourcePath: "docs-source/readmes/root.md" };
+}
+
+function generateRootReadmeDistDocs(out) {
+    const sourceFile = path.join(readmesSourceDir, "root.md");
+
+    if (!fs.existsSync(sourceFile)) {
+        console.warn("Root README source not found, skipping root README generation.");
+        return null;
+    }
+
+    let content = fs.readFileSync(sourceFile, "utf8");
+    const pkgs = listPackages();
+
+    // Build package list table with absolute GitHub URLs for dist-docs context
+    const rows = pkgs.map((pkgDir) => {
+        const pkg = readPackageJson(pkgDir);
+        const name = pkg.name || `@scramjet/${pkgDir}`;
+        const desc = getDescription(pkgDir);
+        return `| [${name}](${packageRowLink("dist-docs", pkgDir)}) | ${desc} |`;
+    });
+
+    const packageTable = [
+        "| Package | Description |",
+        "|---------|-------------|",
+        ...rows,
+        ""
+    ].join("\n");
+
+    content = content.replace("<!-- PACKAGE-LIST -->", packageTable);
+    content = content
+        .replaceAll("(./docs-source/", `(${GITHUB_BLOB_ROOT}/docs-source/`)
+        .replaceAll("(./packages/", `(${GITHUB_TREE_ROOT}/packages/`)
+        .replaceAll("(./dist-docs/", "(../");
+    content = content.replaceAll(`(${GITHUB_BLOB_ROOT}/docs-source/)`, `(${GITHUB_TREE_ROOT}/docs-source/)`);
+
+    const marker = generatedMarker(`docs-source/readmes/root.md`).trimEnd();
+    content = `${content.trimEnd()}\n\n---\n\n${marker}\n`;
+
+    return { content, relPath: "README.md", sourcePath: "docs-source/readmes/root.md" };
+}
+
+function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMap, repoReadmesOutputDir) {
+    const pkg = readPackageJson(pkgDir);
+    const pkgName = pkg.name || `@scramjet/${pkgDir}`;
+    const desc = DESCRIPTION_OVERRIDES[pkgDir] || pkg.description || "";
+    const overlayFile = readmeSourceFilePath(pkgDir);
+    const hasOverlay = fs.existsSync(overlayFile);
+    const refEntries = refEntryMap[pkgDir];
+
+    const lines = [`# ${pkgName}`, ""];
+
+    // Stability notice for experimental packages
+    if (experimental) {
+        lines.push("> **⚠ Experimental**: This package is experimental. Its API may change without notice in minor or patch releases.");
+        lines.push("");
+    }
+
+    if (hasOverlay) {
+        // Use overlay content for the body
+        const overlayContent = fs.readFileSync(overlayFile, "utf8").trim();
+        lines.push(overlayContent);
+        lines.push("");
+    } else if (desc) {
+        lines.push(desc);
+        lines.push("");
+    }
+
+    // Install section (always present)
+    lines.push("## Install");
+    lines.push("");
+    lines.push("```bash");
+    lines.push(`npm install ${pkgName}`);
+    lines.push("```");
+    lines.push("");
+
+    // Import section (always present)
+    lines.push("## Import");
+    lines.push("");
+    lines.push("```typescript");
+    lines.push(`import { /* ... */ } from "${pkgName}";`);
+    lines.push("```");
+    lines.push("");
+
+    // Documentation link (context-specific)
+    lines.push("## Documentation");
+    lines.push("");
+
+    const link = docsLink(context, pkgDir, refEntries);
+    lines.push(`See the [package docs](${link}) for full documentation.`);
+    lines.push("");
+
+    const sourceRelPath = hasOverlay
+        ? readmeSourcePath(overlayFile)
+        : `packages/${pkgDir}/package.json`;
+    const marker = generatedMarker(sourceRelPath);
+
+    lines.push("---");
+    lines.push("");
+    lines.push(marker.trimEnd());
+
+    const content = lines.join("\n");
+    const relPath = `packages/${pkgDir}/README.md`;
+
+    // Write to repo package README when not in check/validation mode
+    if (context === "repo" && out.writeRepoReadmes !== false) {
+        const target = repoReadmesOutputDir
+            ? path.join(repoReadmesOutputDir, relPath)
+            : path.join(packagesDir, pkgDir, "README.md");
+        writeFile(target, content);
+    }
+
+    return { content, relPath, sourcePath: sourceRelPath };
+}
+
+function generateReadmes(out, repoReadmesOutputDir) {
+    const readmesOut = path.join(out.path, "readmes");
+    removeDir(readmesOut);
+    ensureDir(readmesOut);
+
+    const experimental = loadExperimentalPackages();
+    const refEntryMap = loadReferenceEntryMap();
+    const generated = [];
+    const sidebar = [];
+    const pkgs = listPackages();
+
+    // Root README — repo context
+    const rootResult = generateRootReadme(out, repoReadmesOutputDir);
+    if (rootResult) {
+        // Root README — dist-docs context (absolute GitHub URLs)
+        const rootDistDocs = generateRootReadmeDistDocs(out);
+        writeFile(path.join(readmesOut, rootResult.relPath), rootDistDocs.content);
+        generated.push(rootResult.relPath);
+        sidebar.push({
+            source: rootResult.sourcePath,
+            output: rootResult.relPath
+        });
+    }
+
+    // Package READMEs — repo context
+    for (const pkgDir of pkgs) {
+        const pkgResult = generatePackageReadmeFor("repo", out, pkgDir, experimental.has(pkgDir), refEntryMap, repoReadmesOutputDir);
+        generated.push(pkgResult.relPath);
+        sidebar.push({
+            source: pkgResult.sourcePath,
+            output: pkgResult.relPath
+        });
+
+        // Package READMEs — dist-docs context
+        const pkgDistDocs = generatePackageReadmeFor("dist-docs", out, pkgDir, experimental.has(pkgDir), refEntryMap);
+        writeFile(path.join(readmesOut, "packages", pkgDir, "README.md"), pkgDistDocs.content);
+    }
+
+    // Generate readmes sidebar with correct source metadata
+    writeFile(path.join(out.path, "sidebars", "readmes.json"), `${JSON.stringify(sidebar, null, 2)}\n`);
+
+    return generated;
+}
+
 function generateMetadata(out, groups) {
     const metadata = {
         generatedBy: "scripts/docs.js",
@@ -398,7 +700,8 @@ function generateMetadata(out, groups) {
             sidebars: "sidebars/"
         },
         warnings: [
-            "CLI reference generation, README generation, and API v2 documentation generation are implemented in later phases.",
+            "CLI reference generation and API v2 documentation generation are implemented in later phases.",
+            "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
             "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
         ]
     };
@@ -415,6 +718,11 @@ function removeGeneratedGroup(out, group) {
     if (group === "reference") {
         removeDir(path.join(out.path, "reference", "typescript"));
         removeDir(path.join(out.path, "sidebars", "reference-typescript.json"));
+    }
+
+    if (group === "readmes") {
+        removeDir(path.join(out.path, "readmes"));
+        removeDir(path.join(out.path, "sidebars", "readmes.json"));
     }
 }
 
@@ -459,12 +767,18 @@ function generate(customOut, scope = "all") {
         groups.sidebars = mergeSidebars(groups, ["sidebars/reference-typescript.json"]);
     }
 
+    if (scope === "all" || scope === "readmes") {
+        removeGeneratedGroup(out, "readmes");
+        const readmes = generateReadmes(out, out.repoReadmesOutputDir);
+
+        groups.readmes = readmes;
+        groups.sidebars = mergeSidebars(groups, ["sidebars/readmes.json"]);
+    }
+
     if (scope === "all") {
-        ensureDir(path.join(out.path, "readmes"));
         ensureDir(path.join(out.path, "reference", "cli"));
         ensureDir(path.join(out.path, "reference", "api", "v2"));
         ensureDir(path.join(out.path, "reference", "api", "legacy", "v1"));
-        groups.readmes = [];
     }
 
     generateMetadata(out, groups);
@@ -484,7 +798,8 @@ function check() {
             source: out.source,
             value: out.value,
             resolvedPath: path.relative(root, out.path).split(path.sep).join("/"),
-            allowUnmarkedExisting: true
+            allowUnmarkedExisting: true,
+            writeRepoReadmes: false
         };
 
         try {
@@ -501,6 +816,56 @@ function check() {
 
     if (!fs.existsSync(out.path)) {
         throw new Error(`Docs output root does not exist: ${out.path}. Run npm run docs:generate first.`);
+    }
+
+    // Validate repo README drift (README.md and packages/*/README.md)
+    const repoDrift = [];
+    const tempRepo = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-docs-repo-check-"));
+
+    try {
+        const repoOut = {
+            path: path.join(tempRepo, "dist-docs"),
+            source: out.source,
+            value: out.value,
+            resolvedPath: path.relative(root, tempRepo).split(path.sep).join("/"),
+            allowUnmarkedExisting: true,
+            writeRepoReadmes: false
+        };
+
+        // Generate only readmes to temp with repo override path
+        generateReadmes(repoOut, path.join(tempRepo, "repo"));
+
+        // Compare generated root README against actual
+        const genRoot = path.join(tempRepo, "repo", "README.md");
+        const actRoot = path.join(root, "README.md");
+
+        if (fs.existsSync(genRoot) && fs.existsSync(actRoot)) {
+            if (fs.readFileSync(genRoot, "utf8") !== fs.readFileSync(actRoot, "utf8")) {
+                repoDrift.push("changed README.md");
+            }
+        } else if (!fs.existsSync(actRoot)) {
+            repoDrift.push("missing README.md");
+        }
+
+        // Compare generated package READMEs against actual
+        for (const pkgDir of listPackages()) {
+            const genPkg = path.join(tempRepo, "repo", "packages", pkgDir, "README.md");
+            const actPkg = path.join(packagesDir, pkgDir, "README.md");
+
+            if (fs.existsSync(genPkg) && fs.existsSync(actPkg)) {
+                if (fs.readFileSync(genPkg, "utf8") !== fs.readFileSync(actPkg, "utf8")) {
+                    repoDrift.push(`changed packages/${pkgDir}/README.md`);
+                }
+            } else if (fs.existsSync(genPkg) && !fs.existsSync(actPkg)) {
+                repoDrift.push(`missing packages/${pkgDir}/README.md`);
+            }
+        }
+    } finally {
+        removeDir(tempRepo);
+    }
+
+    if (repoDrift.length > 0) {
+        throw new Error(`Repo README drift detected — run npm run docs:generate:readmes to regenerate:\n${repoDrift.map((line) => `- ${line}`).join("\n")}`);
     }
 
     console.log("Docs source validation passed.");
@@ -527,6 +892,11 @@ function main() {
 
     if (command === "generate:reference") {
         generate(undefined, "reference");
+        return;
+    }
+
+    if (command === "generate:readmes") {
+        generate(undefined, "readmes");
         return;
     }
 
