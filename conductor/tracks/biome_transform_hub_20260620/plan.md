@@ -155,10 +155,10 @@
 - [x] Task: Run narrow non-lint validation if needed
     - [x] Run only the smallest relevant non-lint validation command if package metadata or generated files require it.
     - [x] Record skipped validation and reasons in `plan.md`.
-- [ ] Task: Final review and checkpoint
+- [x] Task: Final review and checkpoint
     - [x] Review changed files for unrelated formatting or cleanup churn.
     - [x] Confirm docs, scripts, CI, and Biome config describe the same workflow.
-    - [ ] Create a scoped phase/track commit and record the commit SHA in `plan.md` when applicable.
+    - [x] Create a scoped phase/track commit and record the commit SHA in `plan.md` when applicable.
 
     Phase 3 validation:
     - Removed root/package/local ESLint config files, root Prettier config, the unused ESLint-derived `scripts/editorconfig.js`, legacy lint dependencies, obsolete `.eslintcache` ignore assumptions, and local untracked `.eslintcache` artifacts.
@@ -168,4 +168,6 @@
     - JSON parse validation for `package.json` and `package-lock.json` passed.
     - Tracked-reference search found only historical/track-spec ESLint mentions outside active scripts/source and `.opencode` sandbox files; no legacy ESLint lint commands were run.
     - `git diff --check` passed.
+
+    Phase 3 checkpoint commit: `400314ad`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate' (Protocol in workflow.md)
