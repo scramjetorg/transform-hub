@@ -143,6 +143,7 @@
 - Reviews: automated reviews found and then verified fixes for generated frontmatter placement, output-root safety, package docs fan-out safety, stale command/API claims, sequence-test examples, and plan status drift. Final old-stack review reported no blockers or major issues.
 - Validation run: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:generate:content`, `npm run docs:generate:reference`, and `npm run docs:check` passed under the repository memory guard. Package no-op script validated with `npm run build:docs -w @scramjet/types`. Protected output root checks rejected `SCRAMJET_DOCS_OUTPUT_DIR=docs`, `SCRAMJET_DOCS_OUTPUT_DIR=bdd`, and `SCRAMJET_DOCS_OUTPUT_DIR=packages/sth`. Existing unmarked external output root rejection was also validated.
 - Skipped validation: package build/tests were not run because Phase 1 changes are documentation/generator script changes and package script metadata only; no runtime, adapter, API runtime, or CLI behavior changed. Full README generation, CLI reference generation, API v2 docs generation, and old `docs/` artifact deletion remain planned for later phases.
+- Phase checkpoint commit: `1e5b393d` (`docs(conductor): Complete new docs phase 1`).
 
 ## Phase 2: README Pipeline Replacement
 
