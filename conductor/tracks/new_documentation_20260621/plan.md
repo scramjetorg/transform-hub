@@ -59,6 +59,7 @@
 - Validation run: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node -e "..."` parsed `package.json`, the allowlist schema, and the allowlist, checked allowlist path/output safety, checked entrypoint existence, checked output uniqueness, and checked reviewer metadata. Result: passed for 6 allowlist entries.
 - Skipped validation: no docs generator, markdown link checker, or README drift checker exists yet; those are planned for later phases. Package build/tests were not run because Phase 0 changed documentation architecture and root docs config only, with no runtime, adapter, API, or CLI behavior changes.
 - Phase checkpoint commit: `17cfd839` (`docs(conductor): Complete new docs phase 0`).
+- Manual verification finding: the old `api_docs_revamp_20260616` folder was still under `conductor/tracks/` and listed in `conductor/tracks.md` even though this track supersedes it. Correction: moved the folder to `conductor/archive/api_docs_revamp_20260616/` and removed it from the active tracks registry.
 
 ## Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content
 
