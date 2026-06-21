@@ -212,6 +212,7 @@
 - Sidebar metadata: Readmes sidebar `source` field now correctly points to the actual source path (e.g., `docs-source/readmes/root.md`, `docs-source/readmes/packages/rest-api2.md`) instead of the incorrect `packages/...` prefix.
 - Overlay source model: Package README generation now always emits Install, Import, and Documentation sections regardless of whether an overlay exists. Overlays supply only the description/body content. `docs-source/readmes/README.md` updated to document this behavior.
 - Validation: `npm run docs:generate`, `docs:check`, `docs:generate:readmes`, and `build:readme` all pass.
+- Phase checkpoint commit: `d2c47f7d` (`docs(conductor): Complete new docs phase 2`).
 
 ## Phase 3: Full API v2 Documentation and Legacy v1 Separation
 
