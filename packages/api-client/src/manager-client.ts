@@ -5,10 +5,19 @@ import { ApiClientFactory, MRestAPI, LoadCheckStat } from "@scramjet/types";
 import { Readable } from "stream";
 import type { HostClient } from "./host-client";
 
+function createV2Client(apiBase: string, utils: ClientUtils): ClientUtils {
+    const v2ApiBase = apiBase.replace(/\/api\/v1\/?$/, "/api/v2");
+
+    return utils instanceof ClientUtilsCustomAgent
+        ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent)
+        : new ClientUtils(v2ApiBase);
+}
+
 export class ManagerClient<THostClient = HostClient> implements ClientProvider {
     apiBase: string;
 
     #_client: ClientUtils;
+    #_v2Client: ClientUtils;
 
     get client(): ClientUtils {
         return this.#_client;
@@ -16,10 +25,11 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
 
     #hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>;
 
-    constructor(apiBase: string, utils = new ClientUtils(apiBase), hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>) {
+    constructor(apiBase: string, utils = new ClientUtils(apiBase), hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>, v2Utils?: ClientUtils) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
         this.#_client = utils;
+        this.#_v2Client = v2Utils || createV2Client(this.apiBase, this.client);
         this.#hostClientFactory = hostClientFactory;
     }
 
@@ -50,7 +60,7 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
         return this.client.get<MRestAPI.GetVersionResponse>("version");
     }
 
-    async getLoad() {
+    async getLoad(): Promise<LoadCheckStat> {
         return this.client.get<LoadCheckStat>("load");
     }
 
@@ -76,20 +86,37 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
         return this.client.getStream("audit", requestInit);
     }
 
-    async getConfig() {
-        return this.client.get<any>("config");
+    async getConfig(): Promise<MRestAPI.GetConfigResponse> {
+        const response = await this.#_v2Client.get<{ config?: any } | any>("config");
+
+        return response && typeof response === "object" && "config" in response
+            ? response as MRestAPI.GetConfigResponse
+            : { config: response } as MRestAPI.GetConfigResponse;
     }
 
-    async getAllSequences() {
-        return this.client.get<MRestAPI.GetSequencesResponse>("all_sequences");
+    async getAllSequences(): Promise<MRestAPI.GetSequencesResponse> {
+        const response = await this.#_v2Client.get<{ items?: MRestAPI.GetSequencesResponse } | MRestAPI.GetSequencesResponse>("all_sequences");
+
+        return response && typeof response === "object" && "items" in response
+            ? response.items ?? []
+            : response as MRestAPI.GetSequencesResponse;
     }
 
-    async getSequences() {
-        return this.client.get<MRestAPI.GetSequencesResponse>("sequences");
+    async getSequences(): Promise<MRestAPI.GetSequenceIDSResponse> {
+        const response = await this.#_v2Client.get<{ items?: Array<{ id: string } | string> } | MRestAPI.GetSequencesResponse>("sequences");
+
+        return response && typeof response === "object" && "items" in response
+            ? response.items?.map(item => typeof item === "string" ? item : item.id) || []
+            : (response as MRestAPI.GetSequenceIDSResponse | MRestAPI.GetSequencesResponse)
+                .map(item => typeof item === "string" ? item : item.id);
     }
 
-    async getInstances() {
-        return this.client.get<MRestAPI.GetInstancesResponse>("instances");
+    async getInstances(): Promise<MRestAPI.GetInstancesResponse> {
+        const response = await this.#_v2Client.get<{ items?: MRestAPI.GetInstancesResponse } | MRestAPI.GetInstancesResponse>("instances");
+
+        return response && typeof response === "object" && "items" in response
+            ? response.items ?? []
+            : response as MRestAPI.GetInstancesResponse;
     }
 
     async getTopics() {
