@@ -257,6 +257,8 @@
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
 
+**Phase checkpoint commit:** `17b05ce2` (`feat(runner-python): align input output format parity`).
+
 ## Phase 4: New Python BDD Refapps and Final Runtime Validation
 
 - [ ] Task: Replace Python BDD refapps with new-contract examples
