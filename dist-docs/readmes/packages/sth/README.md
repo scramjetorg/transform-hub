@@ -6,7 +6,7 @@ Scramjet Transform Hub (STH) is the core runtime process that deploys, executes,
 
 Install and run `@scramjet/sth` on any machine where you want to execute Sequences — a development workstation, a production server, an edge device, or a cloud VM. The Hub manages Sequence lifecycle, inter-process communication via Topics, health monitoring, and adapter-based runner execution (process, Docker, or Kubernetes).
 
-For multi-host orchestration, connect STH instances to a [Manager](../manager/overview.md) or [MultiManager](../manager/connecting-hubs.md).
+For multi-host orchestration, connect STH instances to a [Manager](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/overview.md) or [MultiManager](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/connecting-hubs.md).
 
 ## Quick start
 
@@ -22,7 +22,7 @@ Start the Hub (defaults to port 8000 with automatic adapter detection):
 scramjet-transform-hub
 ```
 
-With the [CLI](../cli/usage.md) installed, deploy a sequence from another terminal:
+With the [CLI](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/cli/usage.md) installed, deploy a sequence from another terminal:
 
 ```bash
 si sequence pack /path/to/sequence -o sequence.tar.gz
@@ -48,10 +48,10 @@ This package is **stable**. The core Hub runtime contract is part of the public 
 
 ## See also
 
-- [Transform Hub overview](../../docs-source/transform-hub/overview.md) for architecture and workflow.
-- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for detailed configuration reference.
-- [Build and run workflows](../../docs-source/transform-hub/build-run.md) for Sequence lifecycle details.
-- [Manager overview](../../docs-source/manager/overview.md) for multi-host orchestration.
+- [Transform Hub overview](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/overview.md) for architecture and workflow.
+- [Transform Hub configuration](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/configuration.md) for detailed configuration reference.
+- [Build and run workflows](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/build-run.md) for Sequence lifecycle details.
+- [Manager overview](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/overview.md) for multi-host orchestration.
 
 ## Install
 

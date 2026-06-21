@@ -214,6 +214,7 @@
 - Validation: `npm run docs:generate`, `docs:check`, `docs:generate:readmes`, and `build:readme` all pass.
 - Phase checkpoint commit: `d2c47f7d` (`docs(conductor): Complete new docs phase 2`).
 - Manual verification correction: improved client-facing package README overlays for `@scramjet/sth`, `@scramjet/multi-manager`, `@scramjet/manager`, `@scramjet/cli`, `@scramjet/rest-api2`, `@scramjet/api-server`, `@scramjet/api-client`, and the process/Docker/Kubernetes adapters. Examples were reviewed against source for signatures and command availability; README mirrors and package READMEs were regenerated and validated with `npm run docs:generate` and `npm run docs:check`.
+- Manual verification correction: updated `@scramjet/multi-manager` README to document executable/bin usage instead of import usage. Phase 2 approved after this correction.
 - Phase 2 correction: Created/improved README overlays for 10 client-facing and operator-facing packages:
   - **Core user-facing packages**: `sth`, `manager`, `multi-manager`, `cli` — each now has a full overlay with purpose, when-to-use, quick start (install + basic commands), configuration notes, stability, and cross-references to docs-source.
   - **API packages**: `rest-api2` (improved with source-aligned `createHttpClientTransport`/`RestAPI2Routes`/`createRootClient` examples, experimental notice, v1→v2 guidance), `api-client` (clearly labeled legacy v1, links to rest-api2 for new integrations, typed client examples from source), `api-server` (HTTP server library docs, APIServer example from source).
@@ -223,12 +224,12 @@
 
 ## Phase 3: Full API v2 Documentation and Legacy v1 Separation
 
-- [ ] Task: Generate API v2 docs from definitions
-    - [ ] Use `packages/rest-api2/src/routes.ts` definitions, especially `RestAPI2RouteTree`, `RestAPI2RouteSets`, and `RestAPI2Routes`, as the canonical API v2 documentation source.
-    - [ ] Generate docs for root, space, hub, sequence, and instance route nodes.
-    - [ ] Document route groups, child resolver relationships, dynamic mount paths, implementer paths, and opaque route handling.
-    - [ ] Generate route pages or structured data for params, query, headers, request bodies, responses, route kind, stream semantics, and tags/descriptions where available.
-    - [ ] Preserve stable operation IDs and doc IDs across regeneration.
+- [x] Task: Generate API v2 docs from definitions
+    - [x] Use `packages/rest-api2/src/routes.ts` definitions, especially `RestAPI2RouteTree`, `RestAPI2RouteSets`, and `RestAPI2Routes`, as the canonical API v2 documentation source.
+    - [x] Generate docs for root, space, hub, sequence, and instance route nodes.
+    - [x] Document route groups, child resolver relationships, dynamic mount paths, implementer paths, and opaque route handling.
+    - [x] Generate route pages or structured data for params, query, headers, request bodies, responses, route kind, stream semantics, and tags/descriptions where available.
+    - [x] Preserve stable operation IDs and doc IDs across regeneration.
 - [ ] Task: Document API v2 client usage
     - [ ] Document generic `createRestAPI2Client()` usage with a manifest and transport.
     - [ ] Document fluent clients: `createRootClient`, `createSpaceClient`, `createHubClient`, `createInstanceClient`, and `createFluentClientFromRouteTreeNode`.
@@ -241,17 +242,43 @@
     - [ ] Identify whether existing `RouteDefinition`/`ResolverDefinition` metadata is sufficient for good API docs.
     - [ ] If needed, plan definition-level documentation metadata additions such as summaries, descriptions, tags, examples, errors, stream notes, or API docs overrides.
     - [ ] Ensure any metadata additions are backward-compatible and do not change runtime route behavior.
-- [ ] Task: Separate legacy v1 API documentation
-    - [ ] Inventory current v1 API route sources in Host, Manager, MultiManager, storage routers, and legacy API clients.
-    - [ ] Create a separate legacy docs structure for v1 API docs, such as `docs-source/api/legacy/` and `dist-docs/reference/api/legacy/v1/`.
-    - [ ] Document v1 compatibility status, migration guidance, and major v1 route groups without mixing v1 routes into primary API v2 docs.
-    - [ ] Link v1 legacy docs from migration/compatibility pages only where useful.
-- [ ] Task: Validate Phase 3
-    - [ ] Run API v2 documentation generation from definitions.
-    - [ ] Validate generated API v2 docs against route manifests and client exports.
-    - [ ] Validate legacy v1 docs are emitted under the legacy folder only.
-    - [ ] Confirm API docs generators honor root `package.json` endpoint config and the higher-priority environment variable override.
+- [x] Task: Separate legacy v1 API documentation
+    - [x] Inventory current v1 API route sources in Host, Manager, MultiManager, storage routers, and legacy API clients.
+    - [x] Create a separate legacy docs structure for v1 API docs, such as `docs-source/api/legacy/` and `dist-docs/reference/api/legacy/v1/`.
+    - [x] Document v1 compatibility status, migration guidance, and major v1 route groups without mixing v1 routes into primary API v2 docs.
+    - [x] Link v1 legacy docs from migration/compatibility pages only where useful.
+- [x] Task: Validate Phase 3
+    - [x] Run API v2 documentation generation from definitions.
+    - [x] Validate generated API v2 docs against route manifests and client exports.
+    - [x] Validate legacy v1 docs are emitted under the legacy folder only.
+    - [x] Confirm API docs generators honor root `package.json` endpoint config and the higher-priority environment variable override.
+    - [x] Validation run: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, `npm run docs:generate:readmes` — all pass.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Full API v2 Documentation and Legacy v1 Separation' (Protocol in workflow.md)
+
+### Phase 3 notes (updated 2026-06-21, Phase 3 correction track)
+
+- API v2 route data is now **source-derived** from `packages/rest-api2/src/routes.ts` via `parseAPIV2FromSource()`, which parses route set functions (`rootRouteSet`, `spaceRouteSet`, `hubRouteSet`, `sequenceRouteSet`, `instanceRouteSet`) and the `RestAPI2RouteTree` definition directly from source text. No hard-coded route table remains.
+- The parser extracts method, path, kind, schemas, and opaque flags from Router.get/post/put/delete/patch/route calls, and resolver path/schemas/targetOwner/mountPath/implementerBasePath from resolver set functions.
+- **Generated operation IDs and paths now use full v2 base paths**:
+  - root: `/api/v2`
+  - space: `/api/v2/spaces/:spaceId`
+  - hub: `/api/v2/spaces/:spaceId/hubs/:hubId`
+  - sequence: `/api/v2/spaces/:spaceId/hubs/:hubId/sequences`
+  - instance: `/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId`
+  - Operation ID format: `METHOD /full/path` (e.g., `GET /api/v2/version`, `POST /api/v2/spaces/:spaceId/hubs/:hubId/sequences`)
+- **Broken link fixes**:
+  - `docs-source/api/client-usage.md` relative links to dist-docs reference pages are now rewritten during content generation (`generateContent`): `../../dist-docs/...` → `../../...` in the output, so links resolve correctly from `dist-docs/content/`.
+  - `dist-docs/reference/api/legacy/v1/index.md` body content links are rebased from the source location (`docs-source/api/legacy/v1-api-client.md`) to the output location via path resolution, so `../client-usage.md` → `../../../../content/api/client-usage.md` etc.
+  - The mirror blurb link (which pointed to a nonexistent path) is now plain text.
+  - Package README overlay links that point to `docs-source/*.md` are rewritten to GitHub blob URLs in `dist-docs/readmes/`, while repository/package READMEs keep repo-relative links.
+- **`generate:readmes` handler restored**: `main()` now dispatches `generate:readmes` to `generate(undefined, "readmes")`. The npm script `docs:generate:readmes` works.
+- Each node page includes: route table (with full paths), per-route detail sections (operation ID with full path, node-local path, method, kind, schema references), group membership, resolver/child relationships, dynamic mount paths, and opaque route annotations.
+- Sidebars: `sidebars/reference-api-v2.json` (6 entries: index + 5 nodes) and `sidebars/reference-api-legacy-v1.json` (1 entry).
+- Metadata: API v2 and legacy v1 groups registered in `groups.api`. Warnings updated.
+- New npm script: `docs:generate:api` scoped to API-only regeneration.
+- Validation results: `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:api`, and `npm run docs:generate:readmes` all pass. A generated `dist-docs` markdown link check across 77 files also passes.
+- Review: `@oracle` blocker review returned `none` after correcting source parsing, generated links, `generate:readmes`, and plan status issues.
+- Deferred: "Document API v2 client usage" and "Document custom API definitions and definition-level data" remain **unstarted** — they cover prose documentation of client helpers and custom route definitions, not generated route docs. These require editorial content, not generator changes, and are NOT marked complete.
 
 ## Phase 4: CLI Reference and Final Export Replacement
 

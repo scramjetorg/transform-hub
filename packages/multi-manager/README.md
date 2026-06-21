@@ -6,7 +6,7 @@ The MultiManager is a cloud-platform orchestration component that manages a flee
 
 Use `@scramjet/multi-manager` when you need to coordinate multiple Hubs across different spaces (organizational or functional groupings). It is the recommended control plane for Scramjet Cloud Platform deployments where topology spans multiple locations or tenants.
 
-For single-Manager deployments or smaller topologies, see [@scramjet/manager](../manager/overview.md).
+For single-Manager deployments or smaller topologies, see [@scramjet/manager](../../docs-source/manager/overview.md).
 
 ## Quick start
 

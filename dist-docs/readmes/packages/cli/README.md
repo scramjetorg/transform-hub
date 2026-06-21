@@ -83,9 +83,9 @@ This package is **stable**. The CLI command surface is part of the public API.
 
 ## See also
 
-- [CLI usage](../../docs-source/cli/usage.md) for detailed command patterns and examples.
-- [Transform Hub overview](../../docs-source/transform-hub/overview.md) for platform architecture.
-- [API client documentation](../../docs-source/api/client-usage.md) for programmatic access.
+- [CLI usage](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/cli/usage.md) for detailed command patterns and examples.
+- [Transform Hub overview](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/overview.md) for platform architecture.
+- [API client documentation](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/client-usage.md) for programmatic access.
 
 ## Install
 

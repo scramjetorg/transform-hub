@@ -26,6 +26,7 @@
     "docs:generate:content": "node ./scripts/docs.js generate:content",
     "docs:generate:reference": "node ./scripts/docs.js generate:reference",
     "docs:generate:readmes": "node ./scripts/docs.js generate:readmes",
+    "docs:generate:api": "node ./scripts/docs.js generate:api",
     "docs:check": "node ./scripts/docs.js check",
     "build:runner-images": "scripts/run-script.js -v -w packages export:docker",
     "build:docs": "npm run docs:generate",

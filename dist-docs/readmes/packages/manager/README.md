@@ -41,9 +41,9 @@ Manager-side verser2 TLS/mTLS settings are documented in the Manager and Hub con
 
 ## See also
 
-- [Manager overview](../../docs-source/manager/overview.md) for architecture and deployment.
-- [Connecting Hubs](../../docs-source/manager/connecting-hubs.md) for Hub-to-Manager topology.
-- [Transform Hub overview](../../docs-source/transform-hub/overview.md) for the full platform picture.
+- [Manager overview](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/overview.md) for architecture and deployment.
+- [Connecting Hubs](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/connecting-hubs.md) for Hub-to-Manager topology.
+- [Transform Hub overview](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/overview.md) for the full platform picture.
 
 ## Install
 

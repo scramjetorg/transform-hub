@@ -58,8 +58,8 @@ This package is labeled **experimental** in the curated reference. Its type cont
 
 ## See also
 
-- [API client usage](../../docs-source/api/client-usage.md) for conceptual usage and examples.
-- [Legacy v1 API client](../../docs-source/api/legacy/v1-api-client.md) for backwards-compatible `@scramjet/api-client` usage.
+- [API client usage](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/client-usage.md) for conceptual usage and examples.
+- [Legacy v1 API client](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/legacy/v1-api-client.md) for backwards-compatible `@scramjet/api-client` usage.
 
 ## Install
 

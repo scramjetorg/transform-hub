@@ -92,9 +92,14 @@ See the generated curated reference for full type signatures and transport confi
 
 The v1 API (`@scramjet/api-client`, `/api/v1` route tree) remains supported for backwards compatibility. See the [legacy v1 API client documentation](legacy/v1-api-client.md) for details.
 
+## Generated API reference
+
+The API v2 route tree is documented in the [generated API v2 reference](../../reference/api/v2/index.md), which is produced from the canonical route definitions in `packages/rest-api2/src/routes.ts`. It covers all route nodes (root, space, hub, sequence, instance), operations, schemas, route kinds, and resolver relationships.
+
+For the legacy v1 API (backwards-compatible), see the [generated legacy v1 API reference](../../reference/api/legacy/v1/index.md), which mirrors the legacy client documentation.
+
 ## Next steps
 
 - [CLI usage patterns](../cli/usage.md) for command-line interaction.
 - [Build and run workflows](../transform-hub/build-run.md) for lifecycle management.
 - [Transform Hub core concepts](../transform-hub/core-concepts.md) for API context.
-- Generated API reference for complete endpoint documentation.

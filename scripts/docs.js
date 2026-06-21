@@ -205,6 +205,9 @@ function validateLinks(file, content) {
 
         if (!target || target.startsWith("/")) continue;
 
+        // Skip links to generated dist-docs/ paths — they are created by docs:generate
+        if (target.startsWith("../../dist-docs/") || target.startsWith("../dist-docs/") || target.startsWith("dist-docs/")) continue;
+
         const resolved = path.resolve(path.dirname(file), target);
 
         if (!fs.existsSync(resolved)) {
@@ -346,7 +349,15 @@ function generateContent(out, pages) {
     for (const page of pages) {
         const relative = relativeToSource(page.file);
         const target = path.join(contentOut, relative);
-        const content = fs.readFileSync(page.file, "utf8");
+        let content = fs.readFileSync(page.file, "utf8");
+
+        // Rewrite relative dist-docs links for the output context.
+        // Source files may use ../../dist-docs/... links (which work on GitHub),
+        // but in the dist-docs/content/ output these need to drop the dist-docs/ segment
+        // to resolve correctly within the dist-docs tree.
+        content = content.replace(/\[([^\]]+)\]\(\.\.\/\.\.\/dist-docs\//g, "[$1](../../");
+        content = content.replace(/\[([^\]]+)\]\(\.\.\/dist-docs\//g, "[$1](../");
+        content = content.replace(/\[([^\]]+)\]\(dist-docs\//g, "[$1](");
 
         writeFile(target, withGeneratedMarkerAfterFrontmatter(page.file, content, `docs-source/${relative}`));
         sidebar.push({
@@ -557,7 +568,7 @@ function generateRootReadmeDistDocs(out) {
         .replaceAll("(./docs-source/", `(${GITHUB_BLOB_ROOT}/docs-source/`)
         .replaceAll("(./packages/", `(${GITHUB_TREE_ROOT}/packages/`)
         .replaceAll("(./dist-docs/", "(../");
-    content = content.replaceAll(`(${GITHUB_BLOB_ROOT}/docs-source/)`, `(${GITHUB_TREE_ROOT}/docs-source/)`);
+    content = content.replace(`(${GITHUB_BLOB_ROOT}/docs-source/)`, `(${GITHUB_TREE_ROOT}/docs-source/)`);
 
     const marker = generatedMarker(`docs-source/readmes/root.md`).trimEnd();
     content = `${content.trimEnd()}\n\n---\n\n${marker}\n`;
@@ -583,7 +594,12 @@ function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMa
 
     if (hasOverlay) {
         // Use overlay content for the body
-        const overlayContent = fs.readFileSync(overlayFile, "utf8").trim();
+        let overlayContent = fs.readFileSync(overlayFile, "utf8").trim();
+
+        if (context === "dist-docs") {
+            overlayContent = overlayContent.replaceAll("(../../docs-source/", `(${GITHUB_BLOB_ROOT}/docs-source/`);
+        }
+
         lines.push(overlayContent);
         lines.push("");
     } else if (desc) {
@@ -704,13 +720,728 @@ function generateMetadata(out, groups) {
             sidebars: "sidebars/"
         },
         warnings: [
-            "CLI reference generation and API v2 documentation generation are implemented in later phases.",
+            "API v2 documentation is generated from packages/rest-api2/src/routes.ts RestAPI2RouteTree definitions.",
+            "Legacy v1 API documentation mirrors docs-source/api/legacy/v1-api-client.md under reference/api/legacy/v1/.",
+            "CLI reference generation is implemented in a later phase.",
             "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
             "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
         ]
     };
 
     writeFile(path.join(out.path, "metadata.json"), `${JSON.stringify(metadata, null, 2)}\n`);
+}
+
+// ============================================================
+// API v2 route definitions — parsed from packages/rest-api2/src/routes.ts
+// ============================================================
+
+const API_V2_SOURCE_PATH = path.join(root, "packages/rest-api2/src/routes.ts");
+const API_V2_BASE_PATHS = {
+    root: "/api/v2",
+    space: "/api/v2/spaces/:spaceId",
+    hub: "/api/v2/spaces/:spaceId/hubs/:hubId",
+    sequence: "/api/v2/spaces/:spaceId/hubs/:hubId/sequences",
+    instance: "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId",
+};
+
+function parseAPIV2RouteSet(source, funcName) {
+    // Find the function: function funcName() { ... }
+    const funcRe = new RegExp(`function\\s+${funcName}\\s*\\(\\)\\s*\\{`);
+    const funcStart = source.search(funcRe);
+    if (funcStart === -1) throw new Error(`Cannot find function ${funcName} in routes.ts`);
+
+    // Find the matching closing brace for the function body
+    // The function body starts after the first '{'
+    const bodyStart = source.indexOf("{", funcStart) + 1;
+    let depth = 1;
+    let pos = bodyStart;
+    while (depth > 0 && pos < source.length) {
+        const ch = source[pos];
+        if (ch === "{") depth++;
+        else if (ch === "}") depth--;
+        pos++;
+    }
+    const body = source.slice(bodyStart, pos - 1);
+
+    const routes = [];
+    // Match each route entry: key: Router.method(...) or key: Router.route("method", ...)
+    // Two patterns:
+    //   1) key: Router.get|post|put|delete|patch(
+    //   2) key: Router.route("method",
+    const entryRe = /(\w+)\s*:\s*Router\.(?:route\s*\(\s*"(\w+)"|(get|post|put|delete|patch)\s*\()/g;
+    let entryMatch;
+    while ((entryMatch = entryRe.exec(body)) !== null) {
+        const key = entryMatch[1];
+        let method;
+        let argsStart;
+
+        if (entryMatch[3]) {
+            // Pattern 1: Router.get/post/put/delete/patch
+            method = entryMatch[3].toUpperCase();
+            argsStart = entryMatch.index + entryMatch[0].length;
+        } else {
+            // Pattern 2: Router.route("method", ...)
+            method = entryMatch[2].toUpperCase();
+            // Find second argument start (after the quoted method and comma)
+            const afterMethod = body.indexOf(",", entryMatch.index + entryMatch[0].length);
+            argsStart = afterMethod + 1;
+        }
+
+        // Extract the path string
+        const pathMatch = body.slice(argsStart).match(/^\s*"([^"]*)"/);
+        if (!pathMatch) continue;
+        const routePath = pathMatch[1];
+        const restStart = argsStart + pathMatch[0].length;
+
+        // Extract options: { ... }
+        const optsMatch = body.slice(restStart).match(/^\s*,\s*(\{)/);
+        if (!optsMatch) {
+            routes.push({ key, method: method, path: routePath });
+            continue;
+        }
+
+        const optsBodyStart = restStart + optsMatch.index + optsMatch[0].length - 1; // position of {
+        let depth2 = 1;
+        let pos2 = optsBodyStart + 1;
+        while (depth2 > 0 && pos2 < body.length) {
+            const ch2 = body[pos2];
+            if (ch2 === "{") depth2++;
+            else if (ch2 === "}") depth2--;
+            pos2++;
+        }
+        const optsText = body.slice(optsBodyStart, pos2);
+
+        // Parse kind
+        let kind = undefined;
+        const kindMatch = optsText.match(/\bkind\s*:\s*"([^"]+)"/);
+        if (kindMatch) kind = kindMatch[1];
+
+        // Parse opaque
+        let opaque = false;
+        if (/\bopaque\s*:\s*true/.test(optsText)) opaque = true;
+
+        // Parse schemas
+        const schemas = {};
+        const schemasMatch = optsText.match(/\bschemas\s*:\s*\{([^}]*)\}/);
+        if (schemasMatch) {
+            const schemasText = schemasMatch[1];
+            const schemaEntryRe = /(\w+)\s*:\s*([^,}]+)/g;
+            let sMatch;
+            while ((sMatch = schemaEntryRe.exec(schemasText)) !== null) {
+                const skey = sMatch[1];
+                let sval = sMatch[2].trim();
+                // Simplify schema references: remove RestAPI2Schemas.xxx. prefix, handle function calls
+                sval = sval.replace(/RestAPI2Schemas\.[a-z]+\./g, "");
+                sval = sval.replace(/\.optional\(\)/g, "(optional)");
+                schemas[skey] = sval;
+            }
+        }
+
+        routes.push({ key, method, path: routePath, kind, schemas, opaque });
+    }
+
+    return routes;
+}
+
+function parseAPIV2ResolverSet(source, funcName) {
+    const funcRe = new RegExp(`function\\s+${funcName}\\s*\\(`);
+    const funcStart = source.search(funcRe);
+    if (funcStart === -1) return null;
+
+    const bodyStart = source.indexOf("{", funcStart) + 1;
+    let depth = 1;
+    let pos = bodyStart;
+    while (depth > 0 && pos < source.length) {
+        const ch = source[pos];
+        if (ch === "{") depth++;
+        else if (ch === "}") depth--;
+        pos++;
+    }
+    const body = source.slice(bodyStart, pos - 1);
+
+    // Find Router.resolve("PATH", { ... })
+    const resolveMatch = body.match(/Router\.resolve\s*\(\s*"([^"]+)"\s*,\s*\{/);
+    if (!resolveMatch) return null;
+
+    const resolverPath = resolveMatch[1];
+    // Find the options object
+    const optsStart = body.indexOf("{", resolveMatch.index + resolveMatch[0].length - 1) + 1;
+    depth = 1;
+    pos = optsStart;
+    while (depth > 0 && pos < body.length) {
+        const ch = body[pos];
+        if (ch === "{") depth++;
+        else if (ch === "}") depth--;
+        pos++;
+    }
+    const optsText = body.slice(optsStart, pos - 1);
+
+    // Parse schemas
+    const schemas = {};
+    const schemasMatch = optsText.match(/\bschemas\s*:\s*\{([^}]*)\}/);
+    if (schemasMatch) {
+        const schemaEntryRe = /(\w+)\s*:\s*([^,}]+)/g;
+        let sMatch;
+        while ((sMatch = schemaEntryRe.exec(schemasMatch[1])) !== null) {
+            let sval = sMatch[2].trim();
+            sval = sval.replace(/RestAPI2Schemas\.[a-z]+\./g, "");
+            schemas[sMatch[1]] = sval;
+        }
+    }
+
+    // Parse targetDefinitions
+    let targetOwner = "";
+    let mountPath = "";
+    let implementerBasePath = undefined;
+    const tdMatch = optsText.match(/targetDefinitions\s*:\s*\{([^}]*)\}/);
+    if (tdMatch) {
+        const ownerMatch = tdMatch[1].match(/\bowner\s*:\s*"([^"]+)"/);
+        if (ownerMatch) targetOwner = ownerMatch[1];
+        const mountMatch = tdMatch[1].match(/\bmountPath\s*:\s*"([^"]+)"/);
+        if (mountMatch) mountPath = mountMatch[1];
+        const impMatch = tdMatch[1].match(/\bimplementerBasePath\s*:\s*"([^"]+)"/);
+        if (impMatch) implementerBasePath = impMatch[1];
+    }
+
+    return { path: resolverPath, schemas, targetOwner, mountPath, implementerBasePath };
+}
+
+function parseAPIV2Tree(source) {
+    // Find the RestAPI2RouteTree definition
+    const treeStart = source.indexOf("export const RestAPI2RouteTree = {");
+    if (treeStart === -1) throw new Error("Cannot find RestAPI2RouteTree in routes.ts");
+
+    const bodyStart = source.indexOf("{", treeStart) + 1;
+    let depth = 1;
+    let pos = bodyStart;
+    while (depth > 0 && pos < source.length) {
+        const ch = source[pos];
+        if (ch === "{") depth++;
+        else if (ch === "}") depth--;
+        pos++;
+    }
+    const treeText = source.slice(bodyStart, pos - 1);
+
+    // Extract each top-level node by scanning the tree object body at depth 1.
+    // Walk through treeText character by character tracking brace depth.
+    // At depth 0 (in the tree object), capture keys.
+    const nodeNames = ["root", "space", "hub", "sequence", "instance"];
+    const tree = {};
+    const topLevelNodes = {};
+    let depth0 = 0;
+    let i = 0;
+    let currentKey = null;
+    let currentStart = -1;
+    while (i < treeText.length) {
+        if (treeText[i] === "{") {
+            if (depth0 === 0) {
+                // Starting a new object — if we have a pending key, record its value start
+                if (currentKey) currentStart = i + 1;
+            }
+            depth0++;
+        } else if (treeText[i] === "}") {
+            depth0--;
+            if (depth0 === 0 && currentKey && currentStart !== -1) {
+                // End of a depth-1 object value
+                const nodeText = treeText.slice(currentStart, i);
+                topLevelNodes[currentKey] = nodeText;
+                currentKey = null;
+                currentStart = -1;
+            }
+        } else if (depth0 === 0) {
+            // At depth 0, look for key: patterns
+            const keyMatch = treeText.slice(i).match(/^(\w+)\s*:/);
+            if (keyMatch) {
+                currentKey = keyMatch[1];
+                i += keyMatch[0].length - 1;
+            }
+        }
+        i++;
+    }
+
+    for (const nodeName of nodeNames) {
+        const nodeText = topLevelNodes[nodeName];
+        if (!nodeText) continue;
+
+        // Parse concept
+        const conceptMatch = nodeText.match(/\bconcept\s*:\s*"([^"]+)"/);
+        // Parse owner
+        const ownerMatch = nodeText.match(/\bowner\s*:\s*"([^"]+)"/);
+        // Parse routes factory name
+        const routesMatch = nodeText.match(/\broutes\s*:\s*(\w+)/);
+
+        const groups = parseAPIV2TreeGroups(nodeText);
+        const children = parseAPIV2TreeChildren(nodeText);
+
+        tree[nodeName] = {
+            concept: conceptMatch ? conceptMatch[1] : "",
+            owner: ownerMatch ? ownerMatch[1] : "",
+            routesFactory: routesMatch ? routesMatch[1] : null,
+            groups: groups,
+            children: children,
+        };
+    }
+
+    return tree;
+}
+
+function extractObjectProperty(text, propertyName) {
+    const propertyRe = new RegExp(`\\b${propertyName}\\s*:\\s*\\{`);
+    const propertyStart = text.search(propertyRe);
+    if (propertyStart === -1) return null;
+
+    const openBrace = text.indexOf("{", propertyStart);
+    let depth = 1;
+    let pos = openBrace + 1;
+
+    while (depth > 0 && pos < text.length) {
+        const ch = text[pos];
+
+        if (ch === "{") depth++;
+        else if (ch === "}") depth--;
+        pos++;
+    }
+
+    if (depth !== 0) return null;
+    return text.slice(openBrace + 1, pos - 1);
+}
+
+function parseObjectEntries(text) {
+    const entries = [];
+    let i = 0;
+
+    while (i < text.length) {
+        const keyMatch = text.slice(i).match(/^\s*(\w+)\s*:\s*\{/);
+
+        if (!keyMatch) {
+            i++;
+            continue;
+        }
+
+        const key = keyMatch[1];
+        const openBrace = i + keyMatch[0].lastIndexOf("{");
+        let depth = 1;
+        let pos = openBrace + 1;
+
+        while (depth > 0 && pos < text.length) {
+            const ch = text[pos];
+
+            if (ch === "{") depth++;
+            else if (ch === "}") depth--;
+            pos++;
+        }
+
+        if (depth !== 0) break;
+        entries.push({ key, text: text.slice(openBrace + 1, pos - 1) });
+        i = pos;
+    }
+
+    return entries;
+}
+
+function parseAPIV2TreeGroups(nodeText) {
+    const groupsText = extractObjectProperty(nodeText, "groups");
+    if (!groupsText) return [];
+
+    return parseObjectEntries(groupsText).map(({ key, text }) => {
+        const group = { name: key };
+        const rkMatch = text.match(/\brouteKeys\s*:\s*\[([^\]]*)\]/);
+
+        if (rkMatch) {
+            group.routeKeys = rkMatch[1].split(",").map(s => s.trim().replace(/^"|"$/g, "")).filter(Boolean);
+        }
+
+        const nodeRefMatch = text.match(/\bnode\s*:\s*"([^"]+)"/);
+        if (nodeRefMatch) group.node = nodeRefMatch[1];
+
+        const routesRefMatch = text.match(/\broutes\s*:\s*(\w+)/);
+        if (routesRefMatch) group.routes = routesRefMatch[1];
+
+        if (/\bopaque\s*:\s*true/.test(text)) group.opaque = true;
+
+        return group;
+    });
+}
+
+function parseAPIV2TreeChildren(nodeText) {
+    const childrenText = extractObjectProperty(nodeText, "children");
+    if (!childrenText) return [];
+
+    return parseObjectEntries(childrenText).map(({ text }) => {
+        const resolverMatch = text.match(/\bresolver\s*:\s*"([^"]+)"/);
+        const nodeMatch = text.match(/\bnode\s*:\s*"([^"]+)"/);
+
+        return {
+            resolver: resolverMatch ? resolverMatch[1] : "",
+            node: nodeMatch ? nodeMatch[1] : ""
+        };
+    });
+}
+
+function parseAPIV2FromSource() {
+    const source = fs.readFileSync(API_V2_SOURCE_PATH, "utf8");
+    const tree = parseAPIV2Tree(source);
+
+    const routeSetToFuncName = {
+        root: "rootRouteSet",
+        space: "spaceRouteSet",
+        hub: "hubRouteSet",
+        sequence: "sequenceRouteSet",
+        instance: "instanceRouteSet",
+    };
+    const resolverSetToFuncName = {
+        root: "rootResolverSet",
+        space: "spaceResolverSet",
+        hub: "hubResolverSet",
+    };
+
+    const nodes = {};
+    const nodeNames = ["root", "space", "hub", "sequence", "instance"];
+
+    for (const nodeName of nodeNames) {
+        const treeNode = tree[nodeName];
+        if (!treeNode) throw new Error(`Missing tree node: ${nodeName}`);
+
+        // Parse routes from the route set function
+        const funcName = routeSetToFuncName[nodeName];
+        const routes = parseAPIV2RouteSet(source, funcName);
+
+        // Parse resolver
+        let resolver = null;
+        const resolverFuncName = resolverSetToFuncName[nodeName];
+        if (resolverFuncName) {
+            const parsedResolver = parseAPIV2ResolverSet(source, resolverFuncName);
+            if (parsedResolver) {
+                resolver = {
+                    key: parsedResolver.path.split("/").pop()?.replace(/:.*/, "") || "",
+                    path: parsedResolver.path,
+                    schemas: parsedResolver.schemas,
+                    targetOwner: parsedResolver.targetOwner,
+                    mountPath: parsedResolver.mountPath,
+                };
+                if (parsedResolver.implementerBasePath) {
+                    resolver.implementerBasePath = parsedResolver.implementerBasePath;
+                }
+                // Set resolver key from targetOwner
+                resolver.key = resolver.targetOwner;
+            }
+        }
+
+        // Convert groups to array format
+        const nodeGroups = (treeNode.groups || []).map(g => {
+            const group = { name: g.name };
+            if (g.routeKeys) group.routeKeys = g.routeKeys;
+            if (g.node) group.node = g.node;
+            if (g.routes) group.routes = g.routes;
+            if (g.opaque) group.opaque = true;
+            return group;
+        });
+
+        // Build children array
+        const nodeChildren = (treeNode.children || []).map(c => ({
+            resolver: c.resolver,
+            node: c.node,
+        }));
+
+        nodes[nodeName] = {
+            concept: treeNode.concept,
+            owner: treeNode.owner,
+            routes,
+            groups: nodeGroups.length > 0 ? nodeGroups : undefined,
+            children: nodeChildren.length > 0 ? nodeChildren : undefined,
+            basePath: API_V2_BASE_PATHS[nodeName],
+        };
+
+        if (resolver) {
+            nodes[nodeName].resolver = resolver;
+        }
+    }
+
+    return nodes;
+}
+
+const API_V2_NODES = parseAPIV2FromSource();
+const API_V2_NODE_NAMES = ["root", "space", "hub", "sequence", "instance"];
+
+function routeKindBadge(kind) {
+    if (!kind || kind === "request") return "";
+    return ` \`${kind}\``;
+}
+
+function schemasList(schemas) {
+    if (!schemas) return "—";
+    const parts = [];
+    for (const [key, val] of Object.entries(schemas)) {
+        if (val) parts.push(`\`${key}\`: \`${val}\``);
+    }
+    return parts.join(", ") || "—";
+}
+
+function makeFullPath(nodeName, routePath) {
+    const base = API_V2_BASE_PATHS[nodeName] || "";
+    // Remove trailing slash from base if routePath starts with /
+    if (routePath === "/" && base) return base;
+    if (routePath.startsWith("/")) return base + routePath;
+    if (!base) return routePath;
+    return base + "/" + routePath;
+}
+
+function generateAPIV2(out) {
+    const apiDir = path.join(out.path, "reference", "api", "v2");
+    removeDir(apiDir);
+    ensureDir(apiDir);
+
+    const sidebar = [];
+
+    // Index page
+    const indexLines = [
+        "---",
+        `id: reference-api-v2`,
+        `slug: /reference/api/v2`,
+        `title: API v2 Reference`,
+        "---",
+        "",
+        generatedMarker("packages/rest-api2/src/routes.ts").trimEnd(),
+        "",
+        "# API v2 Reference",
+        "",
+        "This reference is generated from the `RestAPI2RouteTree` definition in `packages/rest-api2/src/routes.ts`. It documents all available route nodes, their operations, schemas, and relationships.",
+        "",
+        "## Route Tree Overview",
+        "",
+        "The API v2 route tree is organized hierarchically:",
+        "",
+        "```",
+        "root",
+        " └─ /spaces/:spaceId → space",
+        "     ├─ (space routes + storage routes)",
+        "     ├─ /hubs/:hubId → hub",
+        "     │   ├─ (hub routes)",
+        "     │   ├─ /sequences → sequence (mounted sub-router)",
+        "     │   └─ /instances/:instanceId → instance",
+        "     │       └─ (instance routes including stdio, events, rpc)",
+        "     └─ (topic routes: read, write)",
+        "```",
+        "",
+        "### Nodes",
+        "",
+    ];
+
+    for (const nodeName of API_V2_NODE_NAMES) {
+        const node = API_V2_NODES[nodeName];
+        indexLines.push(`- [${nodeName}](${nodeName}.md) — ${node.concept} routes (owner: \`${node.owner}\`)`);
+    }
+
+    indexLines.push("", "### Route kinds", "");
+    indexLines.push("Routes carry a **kind** that describes stream semantics:");
+    indexLines.push("");
+    indexLines.push("| Kind | Description |");
+    indexLines.push("|------|-------------|");
+    indexLines.push("| *(normal/request)* | Standard REST request-response |");
+    indexLines.push("| `upstream` | Server-to-client stream (read data from the server) |");
+    indexLines.push("| `downstream` | Client-to-server stream (send data to the server) |");
+    indexLines.push("| `duplex` | Bidirectional stream (both directions) |");
+    indexLines.push("");
+
+    writeFile(path.join(apiDir, "index.md"), indexLines.join("\n"));
+    sidebar.push({ id: "reference-api-v2", title: "API v2 Reference", slug: "/reference/api/v2", output: "reference/api/v2/index.md" });
+
+    // Node pages
+    for (const nodeName of API_V2_NODE_NAMES) {
+        const node = API_V2_NODES[nodeName];
+        const lines = [
+            "---",
+            `id: reference-api-v2-${nodeName}`,
+            `slug: /reference/api/v2/${nodeName}`,
+            `title: API v2 — ${nodeName.charAt(0).toUpperCase() + nodeName.slice(1)} routes`,
+            "---",
+            "",
+            generatedMarker("packages/rest-api2/src/routes.ts").trimEnd(),
+            "",
+            `# ${nodeName.charAt(0).toUpperCase() + nodeName.slice(1)} routes`,
+            "",
+            `- **Concept**: \`${node.concept}\``,
+            `- **Owner**: \`${node.owner}\``,
+            "",
+        ];
+
+        // Groups
+        if (node.groups && node.groups.length > 0) {
+            lines.push("### Route groups", "");
+            for (const group of node.groups) {
+                const names = group.routeKeys ? group.routeKeys.join(", ") : group.name;
+                const tag = group.opaque ? " (opaque)" : group.node ? ` (mounted node: \`${group.node}\`)` : "";
+                lines.push(`- **${group.name}**: ${names}${tag}`);
+            }
+            lines.push("");
+        }
+
+        // Resolver (child relationship)
+        if (node.resolver) {
+            lines.push("### Child resolver", "");
+            lines.push(`Routes can be resolved to a child \`${node.resolver.targetOwner}\` via:`, "");
+            lines.push(`- **Resolver key**: \`${node.resolver.key}\``);
+            lines.push(`- **Path pattern**: \`${node.resolver.path}\``);
+            lines.push(`- **Mount path**: \`${node.resolver.mountPath}\``);
+            if (node.resolver.implementerBasePath) {
+                lines.push(`- **Implementer base path**: \`${node.resolver.implementerBasePath}\``);
+            }
+            lines.push(`- **Schemas**: ${schemasList(node.resolver.schemas)}`);
+            lines.push("");
+        }
+
+        // Children
+        if (node.children && node.children.length > 0) {
+            lines.push("### Child nodes", "");
+            for (const child of node.children) {
+                lines.push(`- \`${child.node}\` (via resolver \`${child.resolver}\`)`);
+            }
+            lines.push("");
+        }
+
+        // Mounted sub-routers
+        if (node.groups) {
+            const mountedGroups = node.groups.filter(g => g.node && g.routes);
+            if (mountedGroups.length > 0) {
+                lines.push("### Mounted sub-routers", "");
+                lines.push("The following sub-routers are mounted under this node:", "");
+                for (const group of mountedGroups) {
+                    const mountPath = API_V2_BASE_PATHS[group.node] || group.name;
+                    lines.push(`- \`${mountPath}\` → **${group.node}** route set`);
+                }
+                lines.push("");
+            }
+        }
+
+        // Route table
+        lines.push("### Routes", "");
+        lines.push("| Operation | Method | Path (full) | Kind | Schemas |");
+        lines.push("|-----------|--------|-------------|------|---------|");
+
+        for (const route of node.routes) {
+            const fullPath = makeFullPath(nodeName, route.path);
+            const opId = `${route.method.toUpperCase()} ${fullPath}`;
+            const kind = route.kind || "request";
+            const schemas = schemasList(route.schemas);
+            lines.push(`| \`${route.key}\` | \`${route.method.toUpperCase()}\` | \`${fullPath}\` | ${kind} | ${schemas} |`);
+        }
+
+        lines.push("");
+
+        // Per-route detail
+        lines.push("### Route details", "");
+        for (const route of node.routes) {
+            const fullPath = makeFullPath(nodeName, route.path);
+            const opId = `${route.method.toUpperCase()} ${fullPath}`;
+            lines.push(`#### \`${route.key}\``, "");
+            lines.push(`- **Operation ID**: \`${opId}\``);
+            lines.push(`- **Method**: \`${route.method.toUpperCase()}\``);
+            lines.push(`- **Path (full)**: \`${fullPath}\``);
+            lines.push(`- **Path (node-local)**: \`${route.path}\``);
+            if (route.kind) {
+                lines.push(`- **Kind**: \`${route.kind}\``);
+            }
+            if (route.opaque) {
+                lines.push(`- **Opaque**: This route belongs to an opaque group. The server does not expose its internal structure; the client must use the documented contract directly.`);
+            }
+            const schemas = schemasList(route.schemas);
+            if (schemas !== "—") {
+                lines.push(`- **Schemas**: ${schemas}`);
+            }
+            lines.push("");
+        }
+
+        writeFile(path.join(apiDir, `${nodeName}.md`), lines.join("\n"));
+        sidebar.push({
+            id: `reference-api-v2-${nodeName}`,
+            title: `${nodeName.charAt(0).toUpperCase() + nodeName.slice(1)} routes`,
+            slug: `/reference/api/v2/${nodeName}`,
+            output: `reference/api/v2/${nodeName}.md`,
+        });
+    }
+
+    // Write sidebar
+    writeFile(path.join(out.path, "sidebars", "reference-api-v2.json"), `${JSON.stringify(sidebar, null, 2)}\n`);
+
+    console.log(`Generated API v2 documentation in reference/api/v2/ (${API_V2_NODE_NAMES.length + 1} pages)`);
+}
+
+function generateLegacyV1(out) {
+    const apiV1Dir = path.join(out.path, "reference", "api", "legacy", "v1");
+    const apiV1IndexFile = path.join(apiV1Dir, "index.md");
+    removeDir(apiV1Dir);
+    ensureDir(apiV1Dir);
+
+    const sourceFile = path.join(sourceRoot, "api", "legacy", "v1-api-client.md");
+    const sourceContent = fs.existsSync(sourceFile) ? fs.readFileSync(sourceFile, "utf8") : "";
+
+    // Extract body content (after frontmatter)
+    let bodyContent = sourceContent;
+    const frontmatterMatch = /^---\n[\s\S]*?\n---\n/.exec(sourceContent);
+    if (frontmatterMatch) {
+        bodyContent = sourceContent.slice(frontmatterMatch[0].length);
+    }
+
+    // Rewrite body content relative links to work from the output location.
+    // Source is at docs-source/api/legacy/v1-api-client.md (depth 3 from sourceRoot).
+    // Output is at dist-docs/reference/api/legacy/v1/index.md (depth 4 from dist-docs root).
+    // We resolve each link against the source file dir and re-emit relative to the output file dir.
+    // Use a stepwise approach: find all relative markdown links, resolve, rebase.
+    bodyContent = bodyContent.replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        (match, text, link) => {
+            // Skip absolute URLs, mailto, anchors, or absolute paths
+            if (/^(https?:|mailto:|#|\/)/.test(link)) return match;
+            const targetPart = link.split("#")[0];
+            if (!targetPart) return match;
+            // Resolve against the source file's directory
+            const resolvedSource = path.resolve(path.dirname(sourceFile), targetPart);
+            // Find the path relative to sourceRoot
+            const relToSourceRoot = path.relative(sourceRoot, resolvedSource).split(path.sep).join("/");
+            // The content mirror lives at dist-docs/content/<relToSourceRoot>
+            // Output is at dist-docs/reference/api/legacy/v1/index.md
+            const contentMirrorPath = path.join("content", relToSourceRoot);
+            // Compute relative path from output file to content mirror
+            const outputDir = path.dirname(apiV1IndexFile);
+            const relLink = path.relative(outputDir, path.join(out.path, contentMirrorPath)).split(path.sep).join("/");
+            const hashPart = link.includes("#") ? "#" + link.split("#")[1] : "";
+            return "[" + text + "](" + relLink + hashPart + ")";
+        }
+    );
+
+    const indexLines = [
+        "---",
+        "id: reference-api-legacy-v1",
+        "slug: /reference/api/legacy/v1",
+        "title: Legacy v1 API Reference",
+        "---",
+        "",
+        generatedMarker("docs-source/api/legacy/v1-api-client.md").trimEnd(),
+        "",
+        "# Legacy v1 API Reference",
+        "",
+        "> **Backwards compatibility**: The v1 API (route tree `/api/v1`, package `@scramjet/api-client`) remains available and supported for existing deployments. New projects should use the [API v2 reference](../../v2/index.md).",
+        "",
+        "This page mirrors the content from \`docs-source/api/legacy/v1-api-client.md\`.",
+        "",
+        bodyContent.trim(),
+        "",
+    ];
+
+    writeFile(path.join(apiV1Dir, "index.md"), indexLines.join("\n"));
+
+    // Write sidebar
+    const sidebar = [
+        {
+            id: "reference-api-legacy-v1",
+            title: "Legacy v1 API Reference",
+            slug: "/reference/api/legacy/v1",
+            output: "reference/api/legacy/v1/index.md",
+        },
+    ];
+    writeFile(path.join(out.path, "sidebars", "reference-api-legacy-v1.json"), `${JSON.stringify(sidebar, null, 2)}\n`);
+
+    console.log("Generated legacy v1 API documentation in reference/api/legacy/v1/");
 }
 
 function removeGeneratedGroup(out, group) {
@@ -721,12 +1452,22 @@ function removeGeneratedGroup(out, group) {
 
     if (group === "reference") {
         removeDir(path.join(out.path, "reference", "typescript"));
+        removeDir(path.join(out.path, "reference", "cli"));
+        removeDir(path.join(out.path, "reference", "api"));
         removeDir(path.join(out.path, "sidebars", "reference-typescript.json"));
+        removeDir(path.join(out.path, "sidebars", "reference-api-v2.json"));
+        removeDir(path.join(out.path, "sidebars", "reference-api-legacy-v1.json"));
     }
 
     if (group === "readmes") {
         removeDir(path.join(out.path, "readmes"));
         removeDir(path.join(out.path, "sidebars", "readmes.json"));
+    }
+
+    if (group === "api") {
+        removeDir(path.join(out.path, "reference", "api"));
+        removeDir(path.join(out.path, "sidebars", "reference-api-v2.json"));
+        removeDir(path.join(out.path, "sidebars", "reference-api-legacy-v1.json"));
     }
 }
 
@@ -734,10 +1475,10 @@ function existingGroups(out) {
     const metadataPath = path.join(out.path, "metadata.json");
 
     if (!fs.existsSync(metadataPath)) {
-        return { content: [], reference: [], readmes: [], sidebars: [] };
+        return { content: [], reference: [], readmes: [], sidebars: [], api: [] };
     }
 
-    return readJson(metadataPath).groups || { content: [], reference: [], readmes: [], sidebars: [] };
+    return readJson(metadataPath).groups || { content: [], reference: [], readmes: [], sidebars: [], api: [] };
 }
 
 function mergeSidebars(groups, sidebars) {
@@ -753,7 +1494,7 @@ function generate(customOut, scope = "all") {
     if (scope === "all" && fs.existsSync(out.path) && fs.existsSync(markerPath(out.path))) removeDir(out.path);
     ensureDir(out.path);
     writeMarker(out.path);
-    const groups = scope === "all" ? { content: [], reference: [], readmes: [], sidebars: [] } : existingGroups(out);
+    const groups = scope === "all" ? { content: [], reference: [], readmes: [], sidebars: [], api: [] } : existingGroups(out);
 
     if (scope === "all" || scope === "content") {
         removeGeneratedGroup(out, "content");
@@ -779,10 +1520,17 @@ function generate(customOut, scope = "all") {
         groups.sidebars = mergeSidebars(groups, ["sidebars/readmes.json"]);
     }
 
+    if (scope === "all" || scope === "api") {
+        removeGeneratedGroup(out, "api");
+        generateAPIV2(out);
+        generateLegacyV1(out);
+
+        groups.api = ["reference/api/v2/", "reference/api/legacy/v1/"];
+        groups.sidebars = mergeSidebars(groups, ["sidebars/reference-api-v2.json", "sidebars/reference-api-legacy-v1.json"]);
+    }
+
     if (scope === "all") {
         ensureDir(path.join(out.path, "reference", "cli"));
-        ensureDir(path.join(out.path, "reference", "api", "v2"));
-        ensureDir(path.join(out.path, "reference", "api", "legacy", "v1"));
     }
 
     generateMetadata(out, groups);
@@ -901,6 +1649,11 @@ function main() {
 
     if (command === "generate:readmes") {
         generate(undefined, "readmes");
+        return;
+    }
+
+    if (command === "generate:api") {
+        generate(undefined, "api");
         return;
     }
 

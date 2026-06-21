@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:a13a82520d9b060c235da5688b81cd73eed2b2fd16cf1373434ade08afc71cc5",
+  "sourceIdentifier": "sha256:b9bfcc43a19cb585c015525a712c76549fee2ea6fc56e6641c095f5d50d47326",
   "outputRoot": {
     "value": "dist-docs",
     "resolvedPath": "dist-docs",
@@ -89,7 +89,13 @@
     "sidebars": [
       "sidebars/content.json",
       "sidebars/reference-typescript.json",
-      "sidebars/readmes.json"
+      "sidebars/readmes.json",
+      "sidebars/reference-api-v2.json",
+      "sidebars/reference-api-legacy-v1.json"
+    ],
+    "api": [
+      "reference/api/v2/",
+      "reference/api/legacy/v1/"
     ]
   },
   "docusaurusHandoff": {
@@ -99,7 +105,9 @@
     "sidebars": "sidebars/"
   },
   "warnings": [
-    "CLI reference generation and API v2 documentation generation are implemented in later phases.",
+    "API v2 documentation is generated from packages/rest-api2/src/routes.ts RestAPI2RouteTree definitions.",
+    "Legacy v1 API documentation mirrors docs-source/api/legacy/v1-api-client.md under reference/api/legacy/v1/.",
+    "CLI reference generation is implemented in a later phase.",
     "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
     "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
   ]

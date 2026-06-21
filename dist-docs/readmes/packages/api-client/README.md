@@ -29,12 +29,12 @@ This package is **stable** and maintained for backwards compatibility. The v1 AP
 
 The v1 API client targets the `/api/v1` route tree on STH and Manager. The `HostClient`, `InstanceClient`, and `SequenceClient` provide methods for lifecycle management, input/output streaming, and monitoring using the v1 API contract.
 
-See the [legacy v1 API client documentation](../../docs-source/api/legacy/v1-api-client.md) for detailed v1 usage patterns.
+See the [legacy v1 API client documentation](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/legacy/v1-api-client.md) for detailed v1 usage patterns.
 
 ## See also
 
-- [API client usage](../../docs-source/api/client-usage.md) for the current v2 API surface.
-- [Legacy v1 API client docs](../../docs-source/api/legacy/v1-api-client.md) for v1-only features.
+- [API client usage](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/client-usage.md) for the current v2 API surface.
+- [Legacy v1 API client docs](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/legacy/v1-api-client.md) for v1-only features.
 
 ## Install
 

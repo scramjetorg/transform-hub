@@ -33,8 +33,8 @@ This package is **stable** as an internal Transform Hub dependency. Its public A
 
 ## See also
 
-- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for server configuration context.
-- [API client usage](../../docs-source/api/client-usage.md) for interacting with running servers.
+- [Transform Hub configuration](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/configuration.md) for server configuration context.
+- [API client usage](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/api/client-usage.md) for interacting with running servers.
 
 ## Install
 

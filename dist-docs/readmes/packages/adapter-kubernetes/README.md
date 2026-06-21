@@ -44,10 +44,10 @@ This package is **stable**.
 
 ## See also
 
-- [Kubernetes adapter deployment](../../docs-source/deployment/kubernetes-adapter.md) for detailed setup.
+- [Kubernetes adapter deployment](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/deployment/kubernetes-adapter.md) for detailed setup.
 - [Process adapter](../adapter-process/README.md) for direct process execution.
 - [Docker adapter](../adapter-docker/README.md) for Docker-based deployment.
-- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for adapter configuration options.
+- [Transform Hub configuration](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/transform-hub/configuration.md) for adapter configuration options.
 
 ## Install
 
