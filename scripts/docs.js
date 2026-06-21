@@ -21,6 +21,8 @@ const DESCRIPTION_OVERRIDES = {
     "obj-logger": "Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation.",
 };
 
+const SKIP_IMPORT_PACKAGES = new Set(["multi-manager"]);
+
 const routedSections = [
     "intro",
     "transform-hub",
@@ -597,13 +599,15 @@ function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMa
     lines.push("```");
     lines.push("");
 
-    // Import section (always present)
-    lines.push("## Import");
-    lines.push("");
-    lines.push("```typescript");
-    lines.push(`import { /* ... */ } from "${pkgName}";`);
-    lines.push("```");
-    lines.push("");
+    if (!SKIP_IMPORT_PACKAGES.has(pkgDir)) {
+        // Import section (present for library packages)
+        lines.push("## Import");
+        lines.push("");
+        lines.push("```typescript");
+        lines.push(`import { /* ... */ } from "${pkgName}";`);
+        lines.push("```");
+        lines.push("");
+    }
 
     // Documentation link (context-specific)
     lines.push("## Documentation");

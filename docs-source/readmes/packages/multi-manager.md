@@ -8,13 +8,32 @@ For single-Manager deployments or smaller topologies, see [@scramjet/manager](..
 
 ## Quick start
 
+Install the executable package:
+
 ```bash
 npm install @scramjet/multi-manager
 ```
 
-```typescript
-import { /* multi-manager exports */ } from "@scramjet/multi-manager";
+Run the MultiManager executable:
+
+```bash
+npx multi-manager --help
 ```
+
+The package publishes two bin names:
+
+```bash
+multi-manager
+scramjet-cloud-platform-multi-manager
+```
+
+In this repository workspace, run the source entrypoint with:
+
+```bash
+npm run start -w @scramjet/multi-manager
+```
+
+Use the executable help output as the source of truth for current flags. MultiManager owns server/API startup and sub-Manager lifecycle orchestration for multi-space deployments.
 
 ## Stability
 
