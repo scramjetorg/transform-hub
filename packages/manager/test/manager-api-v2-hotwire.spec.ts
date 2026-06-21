@@ -42,7 +42,7 @@ function createManagerStub(recorder: RouteRecorder) {
         handleSthRegistration: async () => "sth-1",
         validateQueries: () => true,
         getList: () => ({ hosts: [{ id: "sth-1" }] }),
-        getInstances: () => ({ instances: [{ id: "inst-1", sequenceId: "seq-1" }] }),
+        getInstances: () => ({ instances: [{ id: "inst-1", instanceName: "friendly-instance", sequenceId: "seq-1", sequence: { id: "seq-1", name: "friendly-sequence" }, hubId: "sth-1", location: "sth-1" }] }),
         getSequencesIds: () => ({ sequences: ["seq-1"] }),
         getSequences: () => ({ sequences: [{ id: "seq-1", status: "ready" }] }),
         getEntities: () => ({ sequences: ["seq-1"], instances: ["inst-1"] }),
@@ -147,13 +147,32 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     });
     t.deepEqual(await (recorder.require("get", "/api/v2/list").handler as Function)({ query: { offset: "1", limit: "2" } }), { items: [{ id: "sth-1" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/hubs").handler as Function)({ query: { offset: "1", limit: "2" } }), { items: [{ id: "sth-1" }] });
-    t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)({ query: {} }), { items: [{ id: "inst-1", sequenceId: "seq-1" }] });
+    t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)({ query: {} }), { items: [{ id: "inst-1", instanceName: "friendly-instance", sequenceId: "seq-1", sequence: { id: "seq-1", name: "friendly-sequence" }, hubId: "sth-1", location: "sth-1" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/sequences").handler as Function)({}), { items: [{ id: "seq-1" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/all_sequences").handler as Function)({ query: {} }), { items: [{ id: "seq-1", status: "ready" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/entities").handler as Function)({}), { items: [{ id: "seq-1", type: "sequence" }, { id: "inst-1", type: "instance" }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [{ name: "topic-1", contentType: "application/x-ndjson", direction: undefined }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/storage/sequences").handler as Function)({}), { items: [{ path: "seq.tar.gz", size: 123 }] });
     t.deepEqual(await (recorder.require("op", "/api/v2/storage", "delete").handler as Function)({}), { cleared: true });
+});
+
+test("ManagerAPIHandler preserves v1 and v2 instance aggregation metadata", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder);
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    const expected = [{
+        id: "inst-1",
+        instanceName: "friendly-instance",
+        sequenceId: "seq-1",
+        sequence: { id: "seq-1", name: "friendly-sequence" },
+        hubId: "sth-1",
+        location: "sth-1"
+    }];
+
+    t.deepEqual(await (recorder.require("get", "/api/v1/instances").handler as Function)({ query: {} }), { instances: expected });
+    t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)({ query: {} }), { items: expected });
 });
 
 test("ManagerAPIHandler v2 audit handler returns auditor output and toggles flow", async t => {

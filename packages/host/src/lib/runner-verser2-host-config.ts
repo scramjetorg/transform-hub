@@ -10,6 +10,11 @@ const GENERATED_CA_CERT_FILE = "ca.pem";
 const GENERATED_CA_KEY_FILE = "ca-key.pem";
 const GENERATED_SERVER_CERT_FILE = "server.pem";
 const GENERATED_SERVER_KEY_FILE = "server-key.pem";
+const UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID = "sth.default.runner.broker";
+
+function runnerBrokerPeerIdForHost(hostId: string): string {
+    return `sth.${hostId}.runner.broker`;
+}
 
 function hasConfiguredHostIdentity(config: STHRunnerVerser2HostConfig): boolean {
     const tls = config.host.tls;
@@ -151,6 +156,16 @@ async function loadConfiguredRunnerHostCa(config: STHRunnerVerser2HostConfig): P
 
 export function createSthRunnerVerser2HostId(config: Pick<STHRunnerVerser2HostConfig, "localBroker">): string {
     return `${config.localBroker.peerId}.host`;
+}
+
+export function deriveSthRunnerVerser2HostIdentity(config: STHRunnerVerser2HostConfig, hostId?: string): STHRunnerVerser2HostConfig {
+    if (!hostId || config.localBroker.peerId !== UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID) {
+        return config;
+    }
+
+    config.localBroker.peerId = runnerBrokerPeerIdForHost(hostId);
+
+    return config;
 }
 
 function createSthRunnerVerser2HostTlsOptions(config: STHRunnerVerser2HostConfig): VerserHostTlsOptions {

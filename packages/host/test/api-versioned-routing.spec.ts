@@ -17,7 +17,10 @@ function createHostStub(): any {
         auditor: {},
         service: "sth",
         apiVersion: "v1",
-        loadCheck: { getLoadCheck: () => ({ load: 1 }) },
+        loadCheck: {
+            getLoadCheck: () => ({ load: 1 }),
+            constants: { SAFE_OPERATION_LIMIT: 536870912 }
+        },
         commonLogsPipe: { getOut: () => new PassThrough() },
         serviceDiscovery: {},
         cpmConnector: undefined,
@@ -37,7 +40,11 @@ function createHostStub(): any {
         getSequenceInstances: () => [],
         getSequences: () => [{ id: "seq-1", status: "ready" }],
         getInstances: () => [{ id: "inst-1", sequenceId: "seq-1", status: "running" }],
-        getStatus: () => ({ status: "ok" })
+        getStatus: () => ({ status: "ok" }),
+        config: {
+            host: { id: "test-hub" },
+            sequencesRoot: "/tmp/sequences"
+        }
     };
 }
 
@@ -56,12 +63,12 @@ test("Host v1 compatibility and v2 mounted routes are reachable through verser2"
         "/api/v1/load-check",
         "/api/v1/version",
         "/api/v1/config",
+        "/api/v1/health",
         "/api/v1/status",
         "/api/v2/load",
         "/api/v2/version",
         "/api/v2/config",
-        "/api/v2/health",
-        "/api/v2/status"
+        "/api/v2/health"
     ]);
     t.true(registrations.some(registration => registration.fullPath === "/api/v2/sequences/:sequenceId"));
     t.true(registrations.some(registration => registration.fullPath === "/api/v2/sequences/:sequenceId/instances"));
@@ -71,10 +78,37 @@ test("Host v1 compatibility and v2 mounted routes are reachable through verser2"
         status: 200,
         body: { service: "sth", apiVersion: "v1", version: "1.2.3", build: "build" }
     });
-    t.deepEqual(await registrations[5].handle({ method: "GET", path: "/api/v2/version" }), {
+    t.deepEqual(await registrations[6].handle({ method: "GET", path: "/api/v2/version" }), {
         status: 200,
         body: { version: "1.2.3" }
     });
+});
+
+test("Host v1 compatibility health delegates to canonical v2 health shape", async t => {
+    const host = createHostStub();
+    const v2 = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), host, "1.2.3");
+    const v1 = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host, "1.2.3", "build", v2 as any);
+    const regs = collectRegs(v1.createV1CompatibilityRouter());
+
+    t.deepEqual(regs.map((registration: any) => registration.fullPath), [
+        "/api/v1/load-check",
+        "/api/v1/version",
+        "/api/v1/config",
+        "/api/v1/health",
+        "/api/v1/status"
+    ]);
+
+    const health = await regs.find((r: any) => r.fullPath === "/api/v1/health").handle({});
+    const status = await regs.find((r: any) => r.fullPath === "/api/v1/status").handle({});
+    const loadCheck = await regs.find((r: any) => r.fullPath === "/api/v1/load-check").handle({});
+
+    t.is(health.status, 200);
+    t.truthy(health.body.scope, "v1 health compatibility should return the canonical v2 health response body");
+    t.is(health.body.scope.id, "test-hub");
+    t.true(Array.isArray(health.body.components));
+    t.true(health.body.components.some((component: any) => component.name === "hub"));
+    t.deepEqual(status.body, { status: "ok" }, "existing v1 /status response remains unwrapped");
+    t.deepEqual(loadCheck.body, { load: 1 }, "existing v1 /load-check response remains unchanged");
 });
 
 test("Host v2 manifest constructs a generic client", async t => {

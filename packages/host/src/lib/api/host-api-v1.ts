@@ -143,6 +143,15 @@ export class HostAPIV1Handler {
                     return response?.config ?? host.publicConfig;
                 }
             }))
+            .route(Router.get("/health", {
+                id: "host.v1.health",
+                schemas: { response: z.unknown() },
+                handler: async () => {
+                    const response = await v2Handler("/health")?.({} as never);
+
+                    return response ?? host.getStatus();
+                }
+            }))
             .route(Router.get("/status", {
                 id: "host.v1.status",
                 schemas: { response: objectResponse },

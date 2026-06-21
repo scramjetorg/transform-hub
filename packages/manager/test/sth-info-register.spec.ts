@@ -134,6 +134,34 @@ test("STHInfoRegister: addInstance also stores in instancesStore", (t) => {
     t.is(allInstances[0].id, "inst-1");
 });
 
+test("STHInfoRegister: addInstance preserves friendly startup metadata", (t) => {
+    const reg = new STHInfoRegister();
+
+    reg.addHub("hub-a");
+    reg.addSequence("hub-a", "seq-1", makeSeqConfig("seq-1"));
+
+    const inst = makeInstance("inst-1", "seq-1", {
+        instanceName: "friendly-instance",
+        sequence: { id: "seq-1" } as any,
+    } as any);
+
+    reg.addInstance("hub-a", inst);
+
+    const [stored] = reg.getInstances() as any[];
+
+    t.like(stored, {
+        id: "inst-1",
+        instanceName: "friendly-instance",
+        hubId: "hub-a",
+        location: "hub-a",
+        sequence: {
+            id: "seq-1",
+            name: "seq-1",
+            location: "hub-a",
+        },
+    });
+});
+
 test("STHInfoRegister: addInstance throws for missing host", (t) => {
     const reg = new STHInfoRegister();
     const inst = makeInstance("inst-1", "seq-1");

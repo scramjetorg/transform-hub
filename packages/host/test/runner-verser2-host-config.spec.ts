@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import {
+    deriveSthRunnerVerser2HostIdentity,
     createSthRunnerVerser2HostOptions,
     resolveSthRunnerVerser2HostConfig
 } from "../src/lib/runner-verser2-host-config";
@@ -47,6 +48,41 @@ test("createSthRunnerVerser2HostOptions maps STH-local endpoint and PEM TLS file
             passphrase: "secret"
         }
     });
+});
+
+test("deriveSthRunnerVerser2HostIdentity replaces unsafe default broker peer ID from owning STH identity", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "sth.default.runner.broker";
+
+    const derived = deriveSthRunnerVerser2HostIdentity(config, "sth-alpha");
+
+    t.is(derived.localBroker.peerId, "sth.sth-alpha.runner.broker");
+    t.is(createSthRunnerVerser2HostOptions(derived).hostId, "sth.sth-alpha.runner.broker.host");
+});
+
+test("deriveSthRunnerVerser2HostIdentity preserves explicit broker peer ID", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "custom.runner.broker";
+
+    const derived = deriveSthRunnerVerser2HostIdentity(config, "sth-alpha");
+
+    t.is(derived.localBroker.peerId, "custom.runner.broker");
+    t.is(derived, config);
+});
+
+test("deriveSthRunnerVerser2HostIdentity is stable and unique per STH identity", t => {
+    const first = baseConfig();
+    const second = baseConfig();
+
+    first.localBroker.peerId = "sth.default.runner.broker";
+    second.localBroker.peerId = "sth.default.runner.broker";
+
+    t.is(deriveSthRunnerVerser2HostIdentity(first, "sth-alpha").localBroker.peerId, "sth.sth-alpha.runner.broker");
+    t.is(deriveSthRunnerVerser2HostIdentity(first, "sth-alpha").localBroker.peerId, "sth.sth-alpha.runner.broker");
+    t.is(deriveSthRunnerVerser2HostIdentity(second, "sth-beta").localBroker.peerId, "sth.sth-beta.runner.broker");
+    t.not(first.localBroker.peerId, second.localBroker.peerId);
 });
 
 test("createSthRunnerVerser2HostOptions maps PFX TLS identity", t => {

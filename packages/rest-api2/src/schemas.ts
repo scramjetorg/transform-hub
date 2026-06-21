@@ -56,8 +56,17 @@ export const Sequence = z.object({
 
 export const Instance = z.object({
     id: z.string(),
+    instanceName: z.string().optional(),
     sequenceId: z.string().optional(),
-    status: z.string().optional()
+    status: z.string().optional(),
+    hubId: z.string().optional(),
+    location: z.string().optional(),
+    sequence: z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        status: z.string().optional(),
+        location: z.string().optional()
+    }).optional()
 });
 
 export const Entity = z.object({

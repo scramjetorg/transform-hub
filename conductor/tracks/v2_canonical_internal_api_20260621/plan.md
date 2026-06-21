@@ -2,40 +2,40 @@
 
 ## Phase 1: Track Setup, Baseline Tests, and Reported Issue Locks
 
-- [ ] Task: Conductor - create dedicated branch and PR review surface
-    - [ ] Branch from the current branch unless the user chooses another base.
-    - [ ] Create a PR describing the complete TO-BE state for v2 canonical internal API migration.
-    - [ ] Record branch/PR details in the active track notes.
-- [ ] Task: Read package codemaps and verify reusable shared contracts
-    - [ ] Read package codemaps for `packages/rest-api2`, `packages/api-router`, `packages/api-client`, `packages/host`, `packages/manager`, `packages/runner-node`, `packages/runner`, `packages/cli`, and `bdd` if present.
-    - [ ] Record shared package reuse decisions for `@scramjet/rest-api2`, `@scramjet/api-router`, `@scramjet/types`, and `@scramjet/symbols`.
-- [ ] Task: Write failing tests for Host health/readiness issue #28
-    - [ ] Add Host v1 route registration test for `GET /api/v1/health`.
-    - [ ] Add Host v1 compatibility response test showing it delegates to or matches canonical v2 health behavior.
-    - [ ] Confirm existing v1 `/load-check`, `/version`, `/config`, and `/status` expectations remain unchanged.
-- [ ] Task: Implement Host health/readiness compatibility
-    - [ ] Add `/api/v1/health` to the Host v1 compatibility router.
-    - [ ] Reuse v2 health implementation where possible.
-    - [ ] Run focused Host API tests.
-- [ ] Task: Write failing tests for Manager aggregation metadata issue #29
-    - [ ] Add `STHInfoRegister` tests proving `instanceName`, sequence identity/name, and hub/location metadata are preserved.
-    - [ ] Add Manager v1 aggregation tests for `/instances` response metadata.
-    - [ ] Add Manager v2 aggregation tests for equivalent metadata in v2 shape.
-- [ ] Task: Implement Manager aggregation metadata
-    - [ ] Preserve full instance metadata in Manager aggregation stores.
-    - [ ] Expose explicit hub/location and sequence metadata without breaking existing v1 clients.
-    - [ ] Update v2 schemas/contracts if needed.
-    - [ ] Run focused Manager tests.
-- [ ] Task: Write failing tests for unique runner Verser2 identity issue #26
-    - [ ] Add config/host tests for deriving runner broker identity from the owning STH host identity when the unsafe default is present.
-    - [ ] Add tests proving explicitly configured `verser2.runnerHost.localBroker.peerId` is preserved.
-    - [ ] Add tests proving generated runner Host ID is stable and unique per STH identity.
-- [ ] Task: Implement unique runner Verser2 identity derivation
-    - [ ] Derive the default STH-local runner broker peer ID from host identity when safe.
-    - [ ] Preserve explicit configuration and existing override paths.
-    - [ ] Avoid persisted identity churn unless the current value is the unsafe default.
-    - [ ] Run focused STH config and Host runner Verser2 config tests.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Tests, and Reported Issue Locks' (Protocol in workflow.md)
+- [x] Task: Conductor - create dedicated branch and PR review surface
+    - [x] Branch from the current branch unless the user chooses another base.
+    - [x] Create a PR describing the complete TO-BE state for v2 canonical internal API migration.
+    - [x] Record branch/PR details in the active track notes.
+- [x] Task: Read package codemaps and verify reusable shared contracts
+    - [x] Read package codemaps for `packages/rest-api2`, `packages/api-router`, `packages/api-client`, `packages/host`, `packages/manager`, `packages/runner-node`, `packages/runner`, `packages/cli`, and `bdd` if present.
+    - [x] Record shared package reuse decisions for `@scramjet/rest-api2`, `@scramjet/api-router`, `@scramjet/types`, and `@scramjet/symbols`.
+- [x] Task: Write failing tests for Host health/readiness issue #28
+    - [x] Add Host v1 route registration test for `GET /api/v1/health`.
+    - [x] Add Host v1 compatibility response test showing it delegates to or matches canonical v2 health behavior.
+    - [x] Confirm existing v1 `/load-check`, `/version`, `/config`, and `/status` expectations remain unchanged.
+- [x] Task: Implement Host health/readiness compatibility
+    - [x] Add `/api/v1/health` to the Host v1 compatibility router.
+    - [x] Reuse v2 health implementation where possible.
+    - [x] Run focused Host API tests.
+- [x] Task: Write failing tests for Manager aggregation metadata issue #29
+    - [x] Add `STHInfoRegister` tests proving `instanceName`, sequence identity/name, and hub/location metadata are preserved.
+    - [x] Add Manager v1 aggregation tests for `/instances` response metadata.
+    - [x] Add Manager v2 aggregation tests for equivalent metadata in v2 shape.
+- [x] Task: Implement Manager aggregation metadata
+    - [x] Preserve full instance metadata in Manager aggregation stores.
+    - [x] Expose explicit hub/location and sequence metadata without breaking existing v1 clients.
+    - [x] Update v2 schemas/contracts if needed.
+    - [x] Run focused Manager tests.
+- [x] Task: Write failing tests for unique runner Verser2 identity issue #26
+    - [x] Add config/host tests for deriving runner broker identity from the owning STH host identity when the unsafe default is present.
+    - [x] Add tests proving explicitly configured `verser2.runnerHost.localBroker.peerId` is preserved.
+    - [x] Add tests proving generated runner Host ID is stable and unique per STH identity.
+- [x] Task: Implement unique runner Verser2 identity derivation
+    - [x] Derive the default STH-local runner broker peer ID from host identity when safe.
+    - [x] Preserve explicit configuration and existing override paths.
+    - [x] Avoid persisted identity churn unless the current value is the unsafe default.
+    - [x] Run focused STH config and Host runner Verser2 config tests.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Track Setup, Baseline Tests, and Reported Issue Locks' (Protocol in workflow.md)
 
 ## Phase 2: Canonical v2 Internal Sequence and Runner Access
 
@@ -124,3 +124,18 @@
     - [ ] Run relevant BDD smoke commands for API/node sequence behavior.
     - [ ] Run lint or narrow Biome validation for changed files.
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness' (Protocol in workflow.md)
+
+## Active Track Notes
+
+- Review branch: `conductor/v2-canonical-internal-api-20260621` (branched from `feat/manager-oss`).
+- Pull request: https://github.com/0rail/transform-hub/pull/30
+- User instruction: follow `conductor/workflow.md` for wrong tool calls and similar problems; run @oracle review before every manual validation except Phase 1.
+- User instruction: codemaps may be updated if needed; avoid codemap churn unless missing/stale maps block implementation or materially improve handoff.
+- Phase 1 codemap read: `packages/rest-api2/codemap.md`, `packages/api-router/codemap.md`, `packages/api-client/codemap.md`, `packages/host/codemap.md`, `packages/host/src/lib/codemap.md`, `packages/host/src/lib/api/codemap.md`, `packages/manager/codemap.md`, `packages/manager/src/lib/codemap.md`, `packages/manager/src/lib/api/codemap.md`, `packages/runner-node/codemap.md`, `packages/runner/codemap.md`, `bdd/codemap.md`, `packages/types/codemap.md`, and `packages/symbols/codemap.md`; `packages/cli/codemap.md` is absent.
+- Shared reuse decisions: use `@scramjet/rest-api2` health DTOs/routes as canonical v2 shapes, `@scramjet/api-router` compatibility-router and route binding patterns, `@scramjet/types` existing v1/v2 config and Manager/Host contracts, and `@scramjet/symbols` protocol constants; no new shared abstraction is justified before Phase 1 tests reveal repeated behavior.
+- Host health validation: initial package-runner match command (`npm test -- --match='*v1 compatibility health*'`) failed with the intended missing `/api/v1/health` assertion and unrelated preexisting AVA unhandled `WebAssembly is not defined` rejections from other Host tests under that runner profile; corrected narrow file invocation passed with `npx ava test/api-versioned-routing.spec.ts --match='*v1 compatibility health*' --require=ts-node/register`, and full `test/api-versioned-routing.spec.ts` passed (31 tests).
+- Manager metadata validation: direct AVA invocation without repo runner profile failed with V8 CodeRange OOM, then a `NODE_OPTIONS=--jitless` direct retry misapplied AVA worker options; corrected to `node ../../scripts/run-ava.js <file>`. Focused metadata tests first exposed missing register metadata and v2 schema stripping, then passed. Full `test/sth-info-register.spec.ts` passed (28 tests) and `test/manager-api-v2-hotwire.spec.ts` passed (9 tests).
+- Runner identity validation: focused `test/runner-verser2-host-config.spec.ts --match='*deriveSthRunnerVerser2HostIdentity*'` passed (3 tests); full `test/runner-verser2-host-config.spec.ts` passed (14 tests). Implementation only mutates the runner broker peer ID when it still equals the unsafe default `sth.default.runner.broker`; explicit peer IDs are preserved.
+- Phase 1 integration validation: Host focused phase files passed (45 tests), Manager focused phase files passed (37 tests), and `@scramjet/rest-api2` package tests passed (33 tests). Broader package/build validation deferred to later phases because Phase 1 changed only focused route contracts, metadata enrichment, and runner identity derivation.
+- Phase 1 lint/build validation: `npm run lint -- <changed files>` invokes Biome on `.` in this repo and reported preexisting out-of-scope `scripts/docs.js` warnings only; corrected direct changed-file `RAYON_NUM_THREADS=12 npx biome lint <changed files>` passed. `npm run build:packages` passed.
+- Phase 1 deduplication check: reused `@scramjet/rest-api2` schemas/contracts for v2 metadata, `@scramjet/api-router` compatibility route patterns, existing Manager `STHInfoRegister`, and existing Host runner Verser2 config module. No repeated package-local helper needed beyond the Host-specific unsafe-default identity derivation helper.

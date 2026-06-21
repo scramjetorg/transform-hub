@@ -60,7 +60,7 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
-import { createSthRunnerVerser2HostOptions, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
+import { createSthRunnerVerser2HostOptions, deriveSthRunnerVerser2HostIdentity, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
 import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
 
@@ -954,7 +954,9 @@ export class Host implements IHost, IComponent {
             return;
         }
 
-        const runnerHostConfig = await resolveSthRunnerVerser2HostConfig(this.config.verser2.runnerHost);
+        const runnerHostConfig = await resolveSthRunnerVerser2HostConfig(
+            deriveSthRunnerVerser2HostIdentity(this.config.verser2.runnerHost, this.config.host.id)
+        );
 
         this.config.verser2.runnerHost = runnerHostConfig;
         this.runnerVerser2Host = createVerserHost(createSthRunnerVerser2HostOptions(runnerHostConfig));

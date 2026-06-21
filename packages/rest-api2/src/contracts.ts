@@ -104,8 +104,17 @@ export namespace RestAPI2 {
 
     export type Instance = {
         id: string;
+        instanceName?: string;
         sequenceId?: string;
         status?: string;
+        hubId?: string;
+        location?: string;
+        sequence?: {
+            id: string;
+            name?: string;
+            status?: string;
+            location?: string;
+        };
     };
 
     export type Entity = { id: string; type?: string };
