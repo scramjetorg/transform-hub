@@ -8,11 +8,15 @@ Loads a sequence Python module from a filesystem path using
 * Optionally augments ``sys.path`` with a caller-provided ``python_path``
   (typically ``BootConfig.pythonPath``) for the lifetime of the loaded
   module - the entry is removed on :meth:`SequenceModule.cleanup`.
-* Exposes the loaded module's ``run`` callable. Missing/non-callable ``run``
-  raises :class:`SequenceLoadError`.
+* Exposes the loaded module's entrypoint: ``main`` (primary) or ``run``
+  (transitional fallback). ``main`` takes precedence when both are present.
+  If ``main`` exists but is not callable an error is raised even when
+  ``run`` is available. Missing/non-callable entrypoint raises
+  :class:`SequenceLoadError`.
 
-Invoking ``run()`` is the caller's responsibility; this module is purely a
-loader so it can be tested independently of stream wiring.
+Invoking the entrypoint (via ``.run`` or ``.entrypoint_name`` introspection)
+is the caller's responsibility; this module is purely a loader so it can be
+tested independently of stream wiring.
 """
 
 from __future__ import annotations
@@ -26,12 +30,18 @@ from typing import Any, Callable, Optional
 
 
 class SequenceLoadError(RuntimeError):
-    """Raised when a sequence module cannot be loaded or has no ``run`` callable."""
+    """Raised when a sequence module cannot be loaded or has no callable entrypoint."""
 
 
 @dataclass
 class SequenceModule:
-    """Loaded sequence module with its ``run`` entry point.
+    """Loaded sequence module with its selected entrypoint.
+
+    The selected callable is exposed through both ``run`` (for backward
+    compatibility with existing runtime call sites) and ``entrypoint_name``
+    (for introspection). ``entrypoint_name`` is ``"main"`` when the module
+    provides a callable ``main``, or ``"run"`` when falling back to the
+    transitional ``run`` entrypoint.
 
     Holds onto the resources acquired during load (original cwd, sys.path
     entry, registered ``sys.modules`` key) so they can be released via
@@ -41,7 +51,8 @@ class SequenceModule:
     module: Any
     run: Callable[..., Any]
     sequence_dir: str
-    _original_cwd: str = field(repr=False)
+    entrypoint_name: str = "run"
+    _original_cwd: str = field(default="", repr=False)
     _added_sys_path: Optional[str] = field(default=None, repr=False)
     _module_name: Optional[str] = field(default=None, repr=False)
     _cleaned: bool = field(default=False, repr=False)
@@ -92,10 +103,23 @@ def load_sequence(
     * ``python_path`` - optional directory prepended to ``sys.path`` so the
       sequence can import sibling helper modules. Removed again on cleanup.
 
+    Entrypoint resolution follows the Phase-1 contract:
+
+    1. If the module exposes a callable ``main``, it is used as the primary
+       entrypoint and ``entrypoint_name`` is ``"main"``.
+    2. If ``main`` is absent, a callable ``run`` is accepted as a transitional
+       fallback (``entrypoint_name`` = ``"run"``).
+    3. If ``main`` exists **but is not callable**, an error is raised even
+       when ``run`` is available — a broken ``main`` is never silently
+       ignored.
+    4. If neither is callable, :class:`SequenceLoadError` is raised with a
+       message mentioning both ``main`` and ``run``.
+
     Returns a :class:`SequenceModule`. Raises :class:`SequenceLoadError` on
-    any import failure or when the module does not expose a callable ``run``.
-    On failure all side effects (cwd change, ``sys.path`` mutation, partially
-    registered module) are reverted before the exception propagates.
+    any import failure or when the module does not expose a callable
+    entrypoint. On failure all side effects (cwd change, ``sys.path``
+    mutation, partially registered module) are reverted before the exception
+    propagates.
     """
     resolved = Path(sequence_path).resolve()
     sequence_dir = str(resolved.parent)
@@ -142,14 +166,31 @@ def load_sequence(
                 f"failed to import sequence at {resolved}: {err}"
             ) from err
 
-        run = getattr(module, "run", None)
-        if run is None or not callable(run):
-            raise SequenceLoadError("missing run callable")
+        entrypoint_name = "run"
+        has_main = "main" in vars(module)
+        entrypoint = getattr(module, "main", None)
+        if has_main and callable(entrypoint):
+            entrypoint_name = "main"
+        elif has_main:
+            # main exists but is not callable — reject even if run is available.
+            raise SequenceLoadError(
+                f"sequence module has a 'main' attribute but it is not callable "
+                f"(got {type(entrypoint).__name__})"
+            )
+        else:
+            entrypoint = getattr(module, "run", None)
+            if entrypoint is not None and callable(entrypoint):
+                entrypoint_name = "run"
+            else:
+                raise SequenceLoadError(
+                    "sequence module has no callable 'main' or 'run' entrypoint"
+                )
 
         return SequenceModule(
             module=module,
-            run=run,
+            run=entrypoint,
             sequence_dir=sequence_dir,
+            entrypoint_name=entrypoint_name,
             _original_cwd=original_cwd,
             _added_sys_path=added_path,
             _module_name=_MODULE_NAME,

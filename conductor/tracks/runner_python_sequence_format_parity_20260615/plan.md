@@ -2,29 +2,72 @@
 
 ## Phase 1: Entrypoint Contract Definition and Baseline Coverage
 
-- [ ] Task: Confirm runner-python current behavior and entrypoints
-    - [ ] Read `packages/runner-python/codemap.md` and current runner-python source entrypoints for boot config, AppContext, sequence loading, input/output handling, lifecycle, monitoring, logging, events, topics, and API exposure.
-    - [ ] Read the relevant verser2 rollout notes for current Python runtime migration state and deferred Python BDD blockers.
-    - [ ] Identify current `run(...)` loader behavior and current parity fixtures using `run` in `main.py`.
-    - [ ] Identify current legacy API assumptions, including `scramjet.streams.Stream`, `set_health_check`, `set_stop_handler`, legacy metadata shapes, and module-global refapp behavior.
-    - [ ] Record the current behavior and gaps in the track notes or implementation summary before changing runtime behavior.
-- [ ] Task: Define the new Python sequence contract
-    - [ ] Document `main(context, input_stream, *args)` as the primary supported entrypoint.
-    - [ ] Document `run(context, input_stream, *args)` as a transitional alias/fallback for the current runner-python proposal.
-    - [ ] Define loader precedence for `main` only, `run` only, and both present; prefer `main` when both are available.
-    - [ ] Document supported result shapes: `None`, `str`, `bytes`, JSON-serializable values, sync iterable, async iterable, and awaitables resolving to supported shapes.
-    - [ ] Document input stream expectations and content-type behavior, including text, binary, JSON values, and `application/x-ndjson`.
-    - [ ] Document canonical snake_case topic metadata conventions for `requires` and `provides`.
-    - [ ] Explicitly document unsupported or non-primary legacy APIs without implementing compatibility yet.
-- [ ] Task: Add baseline focused tests for the entrypoint contract
-    - [ ] Add or update runner-python loader tests for `main` only.
-    - [ ] Add or update runner-python loader tests for `run` only as a transitional alias/fallback.
-    - [ ] Add or update runner-python loader tests proving `main` takes precedence when both `main` and `run` are present.
-    - [ ] Add failing or pending-focused tests for supported return shapes and input parsing behavior.
-    - [ ] Add tests for canonical topic metadata parsing/mapping.
-    - [ ] Add tests proving old APIs are not required for new-contract refapps.
-    - [ ] Run `npm test -- tests/<focused-runner-python-tests> -v` in `packages/runner-python` or the narrowest equivalent focused command.
+- [x] Task: Confirm runner-python current behavior and entrypoints
+    - [x] Read `packages/runner-python/codemap.md` and current runner-python source entrypoints for boot config, AppContext, sequence loading, input/output handling, lifecycle, monitoring, logging, events, topics, and API exposure.
+    - [x] Read the relevant verser2 rollout notes for current Python runtime migration state and deferred Python BDD blockers.
+    - [x] Identify current `run(...)` loader behavior and current parity fixtures using `run` in `main.py`.
+    - [x] Identify current legacy API assumptions, including `scramjet.streams.Stream`, `set_health_check`, `set_stop_handler`, legacy metadata shapes, and module-global refapp behavior.
+    - [x] Record the current behavior and gaps in the track notes or implementation summary before changing runtime behavior.
+- [x] Task: Define the new Python sequence contract
+    - [x] Document `main(context, input_stream, *args)` as the primary supported entrypoint.
+    - [x] Document `run(context, input_stream, *args)` as a transitional alias/fallback for the current runner-python proposal.
+    - [x] Define loader precedence for `main` only, `run` only, and both present; prefer `main` when both are available.
+    - [x] Document supported result shapes: `None`, `str`, `bytes`, JSON-serializable values, sync iterable, async iterable, and awaitables resolving to supported shapes.
+    - [x] Document input stream expectations and content-type behavior, including text, binary, JSON values, and `application/x-ndjson`.
+    - [x] Document canonical snake_case topic metadata conventions for `requires` and `provides`.
+    - [x] Explicitly document unsupported or non-primary legacy APIs without implementing compatibility yet.
+- [x] Task: Add baseline focused tests for the entrypoint contract
+    - [x] Add or update runner-python loader tests for `main` only.
+    - [x] Add or update runner-python loader tests for `run` only as a transitional alias/fallback.
+    - [x] Add or update runner-python loader tests proving `main` takes precedence when both `main` and `run` are present.
+    - [x] Add failing or pending-focused tests for supported return shapes and input parsing behavior (deferred to Phase 3; existing `as_output_stream`/`resolve_sequence_result` tests remain).
+    - [x] Add tests for canonical topic metadata parsing/mapping.
+    - [x] Add tests proving old APIs are not required for new-contract refapps (test_utils.py verifies new snake_case metadata independently of legacy paths).
+    - [x] Run `npm test -- tests/<focused-runner-python-tests> -v` in `packages/runner-python` or the narrowest equivalent focused command.
 - [ ] Task: Conductor - User Manual Verification 'Entrypoint Contract Definition and Baseline Coverage' (Protocol in workflow.md)
+
+### Implementation notes (Phase 1, 2026-06-21)
+
+**Changes made:**
+
+- `sequence_loader.py`: `load_sequence` now resolves `main` as the primary
+  entrypoint with `run` as transitional fallback. Non-callable `main` raises
+  `SequenceLoadError` even when `run` is available. Added `entrypoint_name`
+  field to `SequenceModule`. Error messages reference both `main` and `run`.
+- `utils.py`: Added `_topic_from_meta()` and `_content_type_from_meta()`
+  helpers. Updated `get_input_content_type`, `get_output_content_type`, and
+  `build_runtime_pangs` to support canonical snake_case keys
+  (`topic`, `content_type`) alongside legacy camelCase keys. Snake_case takes
+  precedence when both are present.
+- `__main__.py`: No changes needed — `SequenceModule.run` still points to the
+  selected callable.
+- `test_sequence_loader.py`: Updated error-message assertions for new wording.
+  Added 7 new tests: `main_only`, `run_only_fallback`, `main_precedence`,
+  `non_callable_main_with_callable_run`, `non_callable_main_without_run`,
+  `entrypoint_name_main`, `entrypoint_name_run`.
+- `test_utils.py` (new): 14 focused tests for snake_case metadata parsing,
+  legacy compatibility, precedence rules, and edge cases.
+- `README.md`: Full Phase 1 contract documentation covering entrypoint
+  signatures, precedence table, result shapes, input content-types, canonical
+  metadata, and legacy API status.
+
+**Deferred considerations:**
+- `application/x-ndjson` input parsing (Phase 3).
+- Comprehensive return-shape integration tests through the runtime path
+  (partially covered by existing `output_stream` tests; full result
+  normalisation integration deferred).
+- Old `<app>/main.py` parity fixtures using `run` only — these continue to
+  work via the fallback path.
+- Backward compatibility of result-object-based requires/provides overrides
+  is preserved (`result.provides`, `result.requires`, `result.content_type`).
+
+**Validation:**
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_sequence_loader.py tests/test_utils.py tests/test_input_stream.py tests/test_output_stream.py` in `packages/runner-python`: 58 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 203 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
+
+**Review notes:**
+- Oracle review found and the implementation fixed: `main = None` now raises instead of falling back to `run`; README now states NDJSON input parsing is deferred to Phase 3; sync iterable output normalization is implemented and tested; empty topic-only metadata no longer emits PANG frames.
 
 ## Phase 2: AppContext Parity and Lifecycle Semantics
 
