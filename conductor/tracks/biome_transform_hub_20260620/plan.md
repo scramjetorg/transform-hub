@@ -129,6 +129,7 @@
 - [~] Task: Conductor - User Manual Verification 'Phase 2.5: Fix Current Biome Diagnostics' (Protocol in workflow.md)
 
     Phase 2.5 checkpoint commit: `6b69afc2`.
+    Phase 2.5 follow-up checkpoint commit: `94515a6e`.
 
 ## Phase 3: Remove ESLint/Prettier Tooling, Suppressions, and Validate
 
