@@ -24,14 +24,14 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | Group | Packages |
 |-------|----------|
 | `modules` | All `packages/*` |
-| `runners` | `packages/runner`, `packages/runner-bun`, `packages/python-runner`, `packages/pre-runner` |
+| `runners` | `packages/runner`, `packages/runner-bun`, `packages/runner-python`, `packages/pre-runner` |
 | `bdd` | `bdd/` |
 
 ## Getting started
 
 ### Prerequisites
 
-- Node.js 16+ (20+ recommended)
+- Node.js 18+ (20+ recommended)
 - npm 10+
 - Python 3.9+ (for Python sequence development)
 - Bun 1.x (for Bun sequence development)

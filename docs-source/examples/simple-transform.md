@@ -76,6 +76,8 @@ export default async function (
 
 ## Running the example
 
+The HTTP commands below use legacy `/api/v1` compatibility routes. They remain supported for backwards compatibility; generated v2 API examples will be documented separately.
+
 **package.json:**
 
 ```json
@@ -84,7 +86,7 @@ export default async function (
   "version": "1.0.0",
   "main": "dist/simple-transform.js",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   }
 }
 ```

@@ -13,6 +13,8 @@ title: Topics, data routing, and sequence metadata
 
 Topics are named data channels that sequences can publish to or subscribe from independently of the main input/output stream. They enable decoupled data flows between sequences and external systems.
 
+HTTP route examples on this page use legacy v1 compatibility paths. The v1 API remains supported; v2 topic documentation will be generated from the v2 route tree in a later phase.
+
 ### Creating a topic
 
 Topics are created through the Hub API or programmatically:
@@ -84,7 +86,7 @@ Each sequence package includes metadata that the platform uses for routing, runt
   "version": "1.0.0",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   }
 }
 ```

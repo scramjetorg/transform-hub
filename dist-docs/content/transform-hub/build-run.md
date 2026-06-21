@@ -15,7 +15,7 @@ This page covers the lifecycle of a Sequence from source code to running Instanc
 
 During development, iterate quickly by deploying a Sequence directly from source:
 
-1. Write your Sequence code in JavaScript (Node.js) or Python.
+1. Write your Sequence code in JavaScript (Node.js), TypeScript, Bun, or Python.
 2. Package it using the `si sequence pack` CLI command.
 3. Deploy to a local or remote Hub.
 4. Inspect logs and output.

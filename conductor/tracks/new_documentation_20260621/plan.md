@@ -130,7 +130,7 @@
     - [x] Confirm old TypeDoc and custom templating retirement did not break package builds or package publishing assumptions.
     - [x] Confirm examples are syntactically plausible or validated where practical.
     - [x] Record docs areas intentionally left incomplete.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Generator Infrastructure, Old Stack Retirement, and Prose Documentation Content' (Protocol in workflow.md)
 
 ### Phase 1 notes
 
@@ -144,6 +144,17 @@
 - Validation run: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:generate:content`, `npm run docs:generate:reference`, and `npm run docs:check` passed under the repository memory guard. Package no-op script validated with `npm run build:docs -w @scramjet/types`. Protected output root checks rejected `SCRAMJET_DOCS_OUTPUT_DIR=docs`, `SCRAMJET_DOCS_OUTPUT_DIR=bdd`, and `SCRAMJET_DOCS_OUTPUT_DIR=packages/sth`. Existing unmarked external output root rejection was also validated.
 - Skipped validation: package build/tests were not run because Phase 1 changes are documentation/generator script changes and package script metadata only; no runtime, adapter, API runtime, or CLI behavior changed. Full README generation, CLI reference generation, API v2 docs generation, and old `docs/` artifact deletion remain planned for later phases.
 - Phase checkpoint commit: `1e5b393d` (`docs(conductor): Complete new docs phase 1`).
+- Manual verification — Phase 1 truth-audit corrections applied post-review:
+  - Updated all Node.js >=16 claims/examples to >=18 across all docs-source files.
+  - Separated legacy v1 API/client documentation: created `docs-source/api/legacy/v1-api-client.md` for `@scramjet/api-client` and `/api/v1` examples; restructured `docs-source/api/client-usage.md` to focus on v2/rest-api2/current v2 route tree concepts with a link to the legacy page and a note that v1 remains supported for backwards compatibility.
+  - Added prominent note to `docs-source/cli/usage.md` that the CLI currently uses compatibility/v1-era workflows and is planned to be updated to v2 API; backwards compatibility will be supported.
+  - Updated Manager docs (`running.md`, `overview.md`, `connecting-hubs.md`) with verser2 transport notes, TLS/mTLS guidance, configuration file/schema references. Marked `connecting-hubs.md` as needing further review because TLS/mTLS/verser2 enrollment details are incomplete. Included conservative facts: production verser2 connectivity requires TLS; mTLS is configurable; topology is Runner → STH-local verser2 Host → STH → Manager; no direct Runner-to-Manager connection.
+  - Updated `docs-source/transform-hub/configuration.md` with source-backed verser2 configuration areas and schema references. Removed unsupported flag/env examples and kept exact names only where verified from source, such as `--verser2-host-url`, `--verser2-enabled`, `--cpm-url`, and `--cpm-id`.
+  - Fixed stale "router layer not complete" phrasing in `docs-source/api/client-usage.md` and `docs-source/transform-hub/core-concepts.md`. Now states that the rest-api2 route tree powers v2 runtime routers and clients; standalone docs site/server generation is a separate concern.
+  - Fixed incorrect package name: `packages/python-runner` → `packages/runner-python` in `docs-source/development/contributing.md`.
+  - Added TypeScript and Bun to runtime listings in `docs-source/transform-hub/overview.md`, `core-concepts.md`, and `build-run.md` where only JavaScript/Python were listed.
+  - Follow-up corrections updated rest-api2 examples to include route manifest construction, moved v1 API examples behind legacy compatibility notes, corrected Manager connection examples to include both legacy CPM fields and `--verser2-host-url`, and updated `packages/rest-api2/README.md` examples that were not generated from `docs-source`.
+  - These corrections were identified by reviewing the docs-source against archived tracks (conductor/archive/) and source-of-truth references in the repository.
 
 ## Phase 2: README Pipeline Replacement
 

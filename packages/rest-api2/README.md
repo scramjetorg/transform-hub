@@ -45,12 +45,13 @@ Build the client from a route manifest and a transport:
 
 ```ts
 import { createHttpClientTransport } from "@scramjet/api-router";
-import { createRestAPI2Client } from "@scramjet/rest-api2";
+import { RestAPI2Routes, createRestAPI2Client } from "@scramjet/rest-api2";
 
 const transport = createHttpClientTransport({
     baseUrl: "http://localhost:8000",
     fetch: globalThis.fetch
 });
+const manifest = RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true });
 
 const client = createRestAPI2Client({ manifest, transport });
 const response = await client.request({
@@ -67,7 +68,7 @@ const response = await client.request({
 The preferred public client can be constructed at Root, Space, Hub, or Instance level. Fluent calls dispatch through the same manifest client and transport stack as `createRestAPI2Client`.
 
 ```ts
-import { createRootClient, createHubClient } from "@scramjet/rest-api2";
+import { createRootClient } from "@scramjet/rest-api2";
 
 const root = createRootClient({ transport });
 
@@ -75,10 +76,6 @@ await root.health.get();
 await root.space("space-1").health.get();
 await root.space("space-1").hub("hub-1").health.get();
 await root.space("space-1").hub("hub-1").instance("inst-1").health.get();
-
-const hub = createHubClient({ transport, basePath: "/" });
-
-await hub.health.get();
 ```
 
 ## HTTP Client Transport Setup
@@ -213,7 +210,7 @@ These are used by shared route contract definitions in `RestAPI2Routes` and are 
 Package tests (in `packages/rest-api2/test/`) prove that one common client can address all operation identifiers. Use `createRestAPI2Client` with a mock transport or probe for unit tests:
 
 ```ts
-import { createRestAPI2Client } from "@scramjet/rest-api2";
+import { RestAPI2Routes, createRestAPI2Client } from "@scramjet/rest-api2";
 import { createClientRequestProbe } from "@scramjet/api-router/test/lib/no-circumvention";
 
 const probe = createClientRequestProbe({
@@ -221,6 +218,7 @@ const probe = createClientRequestProbe({
         return { status: 200, headers: {}, body: {} };
     }
 });
+const manifest = RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true });
 const client = createRestAPI2Client({ manifest, transport: probe.transport });
 const response = await client.request({ operationId: "GET /api/v2/health" });
 probe.assertUsed();

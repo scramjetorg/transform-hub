@@ -30,11 +30,12 @@ sth \
 
 ## Environment variables
 
-All command-line flags have corresponding environment variables:
+Common command-line flags have corresponding environment variables:
 
 - `SCRAMJET_PORT` — API port
 - `SCRAMJET_HOSTNAME` — bind address
-- `SCRAMJET_CONFIG_PATH` — path to configuration file
+
+Pass configuration files explicitly with `--config`.
 
 ## Configuration file
 
@@ -62,14 +63,41 @@ Set these under the `adapter` key in the configuration file or pass them as Hub 
 
 Configure log level with the `--log-level` flag or `SCRAMJET_LOG_LEVEL` environment variable. Supported levels: `debug`, `info`, `warn`, `error`. The default is `info`.
 
+## Verser2 transport
+
+The Hub uses the **verser2** protocol for connectivity to the Manager. Verser2-related configuration covers the connection endpoint, TLS settings, and transport options.
+
+The connection topology is:
+
+```
+Runner → STH-local verser2 Host → STH → Manager
+```
+
+No Runner process connects directly to the Manager; all communication flows through the Hub's local verser2 host.
+
+Important configuration areas include:
+
+- upstream host connectivity, such as `--verser2-host-url` and `--verser2-enabled`;
+- TLS trust and client certificate material, such as CA, certificate, and key file options;
+- runner-local verser2 host settings used by launched runtimes;
+- Manager-side mTLS requirements, configured on the Manager/MultiManager side where supported by the active command surface.
+
+In production, verser2 connectivity requires TLS. mTLS is configurable for additional mutual authentication. The authoritative option descriptors and environment mappings live in `packages/config/src/verser2-config.ts`, and the effective config schema is emitted under `schemas/`.
+
+## Configuration file and schema
+
+The Hub reads JSON/YAML/JSONC configuration through the `@scramjet/config` loader. The generated schema for STH configuration is `schemas/sth-config.schema.json`; sequence startup config is described by `schemas/startup-config.schema.json`.
+
+For the authoritative configuration schema, refer to the generated curated reference for `@scramjet/sth-config` and `@scramjet/types`.
+
 ## Hub identification
 
 Each Hub should have a unique identity for Manager coordination:
 
 - `--id` — explicit Hub identifier (auto-generated if omitted)
-- `--cpm-url` — CPM/Manager URL for automatic registration
+- `--cpm-url` — CPM/Manager URL for the legacy registration flow (requires `--cpm-id`)
 
-When `--cpm-url` is set, the Hub attempts to register with the Manager on startup. This is the recommended way to [connect Hubs to a Manager](../manager/connecting-hubs.md).
+When `--cpm-url` is set together with `--cpm-id`, the Hub attempts the legacy Manager registration flow on startup. Current production deployments should also review `--verser2-host-url` and verser2 TLS/mTLS configuration in the [connecting Hubs guide](../manager/connecting-hubs.md).
 
 ## Next steps
 

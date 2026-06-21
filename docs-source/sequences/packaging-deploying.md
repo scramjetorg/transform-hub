@@ -40,7 +40,7 @@ The `package.json` is the primary metadata source. Minimal example:
   "version": "1.0.0",
   "main": "index.js",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "scramjet": {
     "sequence": {
@@ -66,7 +66,9 @@ Deployment is done through the Hub API or CLI. The typical flow:
 2. **Send** the package to the Hub
 3. **Start** an instance with optional arguments and config
 
-### Via API
+### Via legacy v1 API
+
+These examples use the legacy `/api/v1` route tree, which remains supported for backwards compatibility. New API documentation should prefer generated v2 route docs when available.
 
 ```bash
 # Upload the sequence package

@@ -15,7 +15,7 @@ Welcome to the Scramjet Transform Hub documentation. This is the primary prose r
 
 - **Concepts and architecture** — learn how Transform Hub's Hub, Manager, Adapters, and Runners fit together.
 - **Getting started guides** — install Transform Hub and run your first Sequence.
-- **CLI and API reference** — use the `si` command-line tool or the `@scramjet/api-client` library to deploy and manage Sequences programmatically.
+- **CLI and API reference** — use the `si` command-line tool, current v2 API clients, or legacy v1 clients where compatibility is required.
 - **Deployment guides** — configure Process, Docker, and Kubernetes adapters for different environments.
 - **Sequence authoring** — write Sequences in JavaScript (Node.js), TypeScript, Bun, or Python.
 - **Manager orchestration** — set up multi-Hub deployments with the control plane.

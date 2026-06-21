@@ -28,6 +28,24 @@ npx ts-node ./node_modules/@scramjet/manager/src/bin/start.ts
 
 By default the Manager does not start its own HTTP server; it relies on the `@scramjet/multi-manager` package or a host process to provide the API surface.
 
+## Verser2 transport
+
+The Manager uses **verser2** as its transport protocol for Hub-to-Manager connectivity. The topology is:
+
+```
+Runner → STH-local verser2 Host → STH → Manager
+```
+
+There is no direct Runner-to-Manager connection. The verser2 transport runs within the STH (Hub) process and provides the communication channel to the Manager.
+
+In production, verser2 connectivity requires TLS. mTLS is configurable for additional mutual authentication. The Hub's configuration file and CLI flags support verser2 settings — see the [configuration reference](../transform-hub/configuration.md) for conceptual flag descriptions and available knobs.
+
+## Configuration and schema
+
+The standalone Manager entrypoint is currently a programmatic package entrypoint, not a full CLI configuration surface. It uses defaults from `@scramjet/manager-config` and Manager configuration types from `@scramjet/types`.
+
+File and CLI configuration loading is available through the newer `@scramjet/config` command surfaces and the MultiManager package where implemented. For Hub-side configuration, see the [Transform Hub configuration](../transform-hub/configuration.md) page. For Manager type details, refer to `@scramjet/manager-config` and the generated curated reference for `@scramjet/types`.
+
 ## MultiManager
 
 For production deployments with high-availability requirements, use the **MultiManager** package (`@scramjet/multi-manager`), which provides:

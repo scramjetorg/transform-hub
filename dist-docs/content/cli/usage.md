@@ -100,6 +100,8 @@ si config print                                       # Show current CLI configu
 si config set apiUrl http://...                       # Set default API URL
 ```
 
+> **Note on API version**: The CLI currently uses compatibility workflows targeting the v1 Hub/Manager API (`/api/v1` route tree). It is planned to be updated to the v2 API. Backwards compatibility will be supported when the migration occurs.
+
 ## Connecting conceptually to command help
 
 The commands above cover common workflows. For the current listing of commands, flags, and options:

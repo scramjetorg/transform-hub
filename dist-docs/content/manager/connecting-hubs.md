@@ -9,27 +9,37 @@ title: Connecting Hubs to a Manager
 
 # Connecting Hubs to a Manager
 
+> **⚠️ Needs review**: This page documents the v1-era CPM/HTTP registration flow. TLS/mTLS configuration and verser2 enrollment details are incomplete. For production deployments, consult the Manager configuration schema and generated reference for the authoritative up-to-date connection parameters.
+
 A Hub connects to a Manager so the Manager can route commands, aggregate status, and provide a unified view of all running Sequences. This page covers Hub registration and connection management.
 
-## Automatic registration
+## Connection topology
 
-Pass the CPM/Manager URL when starting the Hub:
+The Hub-to-Manager connection uses the **verser2** transport protocol. The communication path is:
 
-```bash
-sth --cpm-url http://manager-host:8200
+```
+Runner → STH-local verser2 Host → STH → Manager
 ```
 
-The Hub sends a registration request on startup. If the Manager is reachable, the Hub is registered and ready to receive routed commands.
+There is no direct connection between a Runner process and the Manager. All communication flows through the local verser2 host running inside the STH (Hub) process.
+
+In production, verser2 connectivity requires TLS. mTLS is configurable for mutual authentication. See the [Transform Hub configuration](../transform-hub/configuration.md) for verser2-related settings and the generated curated reference for exact type definitions.
+
+## Legacy automatic registration
+
+The v1-era CPM registration flow requires both a CPM identifier and the CPM/Manager URL:
+
+```bash
+sth --cpm-id production-node-1 \
+  --cpm-url http://manager-host:8200 \
+  --verser2-host-url https://manager-host:2443
+```
+
+The Hub sends a registration request on startup and uses the verser2 host URL for transport connectivity. This remains available for backwards compatibility, but production setups must also configure TLS trust and, where required, client certificates for mTLS.
 
 ## Manual registration
 
-If a Hub is already running, register it through the Manager API:
-
-```bash
-curl -X POST http://manager-host:8200/api/hub \
-  -H "Content-Type: application/json" \
-  -d '{"id": "my-hub", "apiUrl": "http://hub-host:8000"}'
-```
+If a Hub is already running, use the Manager API route documented by the active Manager version. This page intentionally avoids a hard-coded manual registration route until the v1/v2 Manager route documentation is generated from source.
 
 ## Managing registered Hubs
 
@@ -53,13 +63,16 @@ si hub delete <hub-id>
 
 ## Hub identity
 
-Each Hub should have a stable identifier for Manager coordination. Pass an explicit ID at startup:
+Each Hub should have a stable Hub identifier for operations and, when using legacy CPM registration, a CPM registration identifier:
 
 ```bash
-sth --id production-node-1 --cpm-url http://manager:8200
+sth --id production-hub-1 \
+  --cpm-id production-node-1 \
+  --cpm-url http://manager:8200 \
+  --verser2-host-url https://manager:2443
 ```
 
-If no ID is provided, the Hub generates a random one. Using explicit IDs makes it easier to identify Hubs in the Manager's registry.
+If no Hub ID is provided, the Hub generates a random one. Using explicit IDs makes it easier to identify Hubs in the Manager's registry.
 
 ## Connection lifecycle
 
@@ -70,13 +83,15 @@ If no ID is provided, the Hub generates a random one. Using explicit IDs makes i
 
 ## MultiManager considerations
 
-In a [MultiManager](overview.md#multimanager) setup, Hubs should be configured with the address of the Manager instances:
+In a [MultiManager](overview.md#multimanager) setup, Hubs should be configured with the current Manager/MultiManager connection endpoint and TLS policy:
 
 ```bash
-sth --cpm-url http://manager-a:8200
+sth --cpm-id production-node-1 \
+  --cpm-url http://manager-a:8200 \
+  --verser2-host-url https://manager-a:2443
 ```
 
-If the primary Manager fails, the Hub falls back to a standby.
+Exact failover and enrollment behavior depends on the deployed Manager/MultiManager configuration and should be reviewed with the generated config schema and verser2 settings.
 
 ## Next steps
 

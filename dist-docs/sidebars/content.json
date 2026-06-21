@@ -119,6 +119,13 @@
     "output": "api/client-usage.md"
   },
   {
+    "id": "legacy-v1-api-client",
+    "title": "Legacy v1 API client (@scramjet/api-client)",
+    "slug": "/api/legacy/v1-api-client",
+    "source": "docs-source/api/legacy/v1-api-client.md",
+    "output": "api/legacy/v1-api-client.md"
+  },
+  {
     "id": "deployment-docker-adapter",
     "title": "Docker Adapter",
     "slug": "/deployment/docker-adapter",

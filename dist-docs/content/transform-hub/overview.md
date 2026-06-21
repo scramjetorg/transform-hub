@@ -27,7 +27,7 @@ Transform Hub is well-suited for:
 - **Stream processing workloads** — process data as it arrives, without batching or storage intermediaries.
 - **Event-driven pipelines** — chain Sequences together through Topics to build multi-stage transformations.
 - **Edge-to-cloud data flows** — deploy Sequences on lightweight hosts near data sources, coordinated through a central Manager.
-- **Multi-language data transformation** — write Sequences in JavaScript (Node.js) or Python and deploy them side by side.
+- **Multi-language data transformation** — write Sequences in JavaScript (Node.js), TypeScript, Bun, or Python and deploy them side by side.
 - **Platform-controlled runners** — let Transform Hub manage process lifecycle, scaling, and health checks while your code focuses on data logic.
 
 Consider Transform Hub when you need a lightweight, programmable data plane rather than a heavyweight stream-processing framework.

@@ -20,7 +20,7 @@ Input → function1 → function2 → … → functionN → Output
 
 | Runtime | Identifier | Engine key in package.json |
 |---------|-----------|---------------------------|
-| Node.js 16+ | `node` | `engines.node` |
+| Node.js 18+ | `node` | `engines.node` |
 | Bun 1.x | `bun` | `engines.bun` |
 | Python 3.9+ | `python3` | `engines.python3` |
 

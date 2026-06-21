@@ -10,7 +10,7 @@ The **Manager** is the central orchestration service in Transform Hub. It provid
 
 ## Key responsibilities
 
-- **Command routing** — receives deployment, stop, inspect, and monitoring commands and forwards them to the correct Hub.
+- **Command routing** — receives deployment, stop, inspect, and monitoring commands and forwards them to the correct Hub via the verser2 transport protocol.
 - **Hub registry** — maintains a registry of connected Hubs, their health status, and their load.
 - **Instance tracking** — tracks all running Sequence Instances across the fleet, providing a global view.
 - **API surface** — exposes the primary REST API that the [CLI](../cli/usage.md) and [API client](../api/client-usage.md) target.

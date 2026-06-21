@@ -24,7 +24,7 @@ See the [Manager documentation](../manager/overview.md) for details.
 
 ## Sequence
 
-A **Sequence** is a data processing program — written in JavaScript (Node.js) or Python — that receives input, processes it, and produces output. Sequences are packaged in a Scramjet-specific format (a `.tar.gz` archive containing the code, manifest, and dependencies) and deployed to a Hub. Sequences are the fundamental unit of computation in Transform Hub.
+A **Sequence** is a data processing program — written in JavaScript (Node.js), TypeScript, Bun, or Python — that receives input, processes it, and produces output. Sequences are packaged in a Scramjet-specific format (a `.tar.gz` archive containing the code, manifest, and dependencies) and deployed to a Hub. Sequences are the fundamental unit of computation in Transform Hub.
 
 ## Instance
 
@@ -56,9 +56,9 @@ Transform Hub exposes HTTP APIs at both the Hub and Manager level:
 
 - **Hub API** — direct control of a single Hub: deploy Sequences, inspect Instances, manage Topics. Used by the Manager internally and by advanced users for direct Hub access.
 - **Manager API** — unified control plane for a fleet of Hubs. The primary interface for operators.
-- **API Client** (`@scramjet/api-client`) — a TypeScript/JavaScript library that wraps Hub and Manager APIs. The recommended programmatic interface for building tools and integrations. See the [API client documentation](../api/client-usage.md) for usage.
+- **API Client** — schema-aware v2 client helpers live in `@scramjet/rest-api2`; the legacy `@scramjet/api-client` package remains supported for v1/backwards-compatible integrations. See the [API client documentation](../api/client-usage.md) for current usage.
 
-The newer `@scramjet/rest-api2` package provides schema-generated type definitions and client helpers for the evolving API surface. This package is experimental; its type contracts inform client and server implementations, but the router layer is not yet complete.
+The newer `@scramjet/rest-api2` package provides schema-generated type definitions and client helpers for the evolving API surface. Its route tree powers the v2 runtime routers and client implementations. The package is labeled experimental in the curated reference.
 
 ## Next steps
 

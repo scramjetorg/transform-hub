@@ -93,6 +93,8 @@ pyee>=12,<13
 
 **Send and test:**
 
+The HTTP commands below use legacy `/api/v1` compatibility routes. They remain supported for backwards compatibility; generated v2 API examples will be documented separately.
+
 ```bash
 # Upload to Hub
 curl -X POST http://localhost:8000/api/v1/sequence \

@@ -6,7 +6,9 @@ title: API client usage
 
 # API client usage
 
-Transform Hub exposes HTTP APIs at the Hub and Manager levels. You can interact with these APIs directly over HTTP or through the `@scramjet/api-client` TypeScript/JavaScript library, which provides typed methods for all common operations.
+Transform Hub exposes HTTP APIs at the Hub and Manager levels. This page covers the current **v2 API** surface via the `@scramjet/rest-api2` package.
+
+> The legacy v1 API (via `@scramjet/api-client` and the `/api/v1` route tree) remains supported for backwards compatibility. See the [legacy v1 API client documentation](legacy/v1-api-client.md) if you are using the v1 client.
 
 ## API surfaces
 
@@ -17,142 +19,75 @@ There are two API surfaces:
 
 Both APIs follow RESTful conventions with JSON request and response bodies.
 
-## The API Client (`@scramjet/api-client`)
+## rest-api2 package
 
-The `@scramjet/api-client` package is the recommended programmatic interface for interacting with Transform Hub. It wraps the Manager and Hub HTTP APIs in a typed, promise-based library.
-
-### Installation
-
-```bash
-npm install @scramjet/api-client
-```
-
-### Basic usage
-
-#### HostClient (Hub API)
-
-The `HostClient` provides direct access to a single Hub's API. It takes the API base URL as a string:
-
-```typescript
-import { HostClient } from "@scramjet/api-client";
-
-const host = new HostClient("http://localhost:8000/api/v1");
-
-// List Instances on this Hub
-const instances = await host.listInstances();
-
-// Inspect a specific Instance
-const info = await host.getInstanceInfo(instanceId);
-
-// List Sequences
-const sequences = await host.listSequences();
-
-// Upload a Sequence package
-const sequence = await host.sendSequence(fs.createReadStream("./my-sequence.tar.gz"));
-```
-
-#### ManagerClient (Manager API)
-
-The `ManagerClient` provides access to the Manager's unified control plane. Like `HostClient`, it takes the API base URL as a string:
-
-```typescript
-import { createHostClient, ManagerClient } from "@scramjet/api-client";
-
-const manager = new ManagerClient("http://localhost:8200/api/v1", undefined, createHostClient);
-
-// List all Instances across all Hubs
-const instances = await manager.getInstances();
-
-// List all Sequences across all Hubs
-const sequences = await manager.getAllSequences();
-
-// List registered Hubs
-const hubs = await manager.getHosts();
-
-// Get a HostClient for a specific Hub
-const hostClient = await manager.getHostClient(hubId);
-```
-
-### Key client concepts
-
-The `HostClient` provides operations scoped to a single Hub:
-
-- `listInstances()` — list Instances on this Hub
-- `getInstanceInfo(id)` — inspect an Instance
-- `listSequences()` — list Sequences on this Hub
-- `sendSequence(stream)` — upload a Sequence package
-- `sendTopic(topic, stream)` — publish data to a Topic
-- `getTopic(topic)` — read data from a Topic
-- `createTopic(id, contentType)` — create a Topic
-
-The `ManagerClient` provides a fleet-wide view:
-
-- `getInstances()` — list all Instances across all Hubs
-- `getAllSequences()` — list all Sequences across all Hubs
-- `getHosts()` — list registered Hubs
-- `getHostClient(id)` — obtain a `HostClient` for a specific Hub when the `ManagerClient` was constructed with a host-client factory
-- `sendNamedData(topic, stream)` — publish data to a named topic
-- `getNamedData(topic)` — read data from a named topic
-
-> **Note**: The exact method signatures and available operations are evolving. For the complete up-to-date API, refer to the TypeScript type definitions in the `@scramjet/api-client` package or the generated API reference.
-
-### Creating sub-clients
-
-Both `HostClient` and `ManagerClient` provide factory methods for scoped sub-clients:
-
-```typescript
-// From HostClient
-const instanceClient = host.getInstanceClient(instanceId);
-const sequenceClient = host.getSequenceClient(sequenceId);
-
-// From ManagerClient constructed with a host-client factory
-const hostClient = await manager.getHostClient(hubId);
-```
-
-## Direct HTTP access
-
-You can call the Hub or Manager API directly with any HTTP client:
-
-List Instances:
-
-```bash
-curl http://localhost:8000/api/v1/instances
-```
-
-Upload a Sequence:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/sequence \
-  -F "package=@./my-sequence.tar.gz"
-```
-
-Get Instance info:
-
-```bash
-curl http://localhost:8000/api/v1/instance/<id>
-```
-
-## rest-api2 package (experimental)
-
-The `@scramjet/rest-api2` package provides schema-generated TypeScript types and client helpers for the evolving API surface. It is **experimental** and its scope is limited to:
+The `@scramjet/rest-api2` package provides schema-generated TypeScript types and client helpers for the current API surface. Its route tree powers the v2 runtime routers and client implementations. The package scope includes:
 
 - Type definitions for API request and response payloads.
 - Client helper functions that mirror the v2 API contracts.
+- Generic `createRestAPI2Client()` usage with a manifest and transport.
+- Fluent clients: `createRootClient`, `createSpaceClient`, `createHubClient`, `createInstanceClient`, and `createFluentClientFromRouteTreeNode`.
+- HTTP and verser2 transports exported by `packages/rest-api2/src/client.ts`.
 
-Important limitations:
+Standalone docs site or server generation from rest-api2 route definitions is a separate concern handled by later documentation phases.
 
-- The router layer is not yet complete — you cannot yet run a standalone v2 API server from this package.
-- The package does not include MCP (Model Context Protocol) features.
-- Use it for type-safe client development, but rely on the `@scramjet/api-client` for practical runtime API access.
-- The generated curated reference for rest-api2 includes stability labels reflecting this experimental status.
+> **Note**: The package is labeled experimental in the curated reference. Its type contracts inform both client and server implementations. The package does not include MCP (Model Context Protocol) features.
+
+### Basic usage
+
+The rest-api2 client is transport-agnostic. Create a client with a manifest and a transport:
+
+```typescript
+import { RestAPI2Routes, createHttpClientTransport, createRestAPI2Client } from "@scramjet/rest-api2";
+
+const manifest = RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true });
+const transport = createHttpClientTransport({ baseUrl: "http://localhost:8000", fetch });
+const client = createRestAPI2Client({
+  manifest,
+  transport,
+});
+
+const health = await client.request({ operationId: "GET /api/v2/health" });
+```
+
+### Fluent client examples
+
+```typescript
+import { createHttpClientTransport, createRootClient } from "@scramjet/rest-api2";
+
+const transport = createHttpClientTransport({ baseUrl: "http://localhost:8000", fetch });
+const root = createRootClient({ transport });
+
+// Root-level operations
+const spaces = await root.spaces.get();
+
+// Space and Hub traversal
+const hub = root.space("space-id").hub("hub-id");
+const sequences = await hub.sequences.get();
+
+// Instance-scoped operations
+const instance = hub.instance("instance-id");
+const health = await instance.health.get();
+```
+
+### Transport options
+
+- **HTTP transport** — standard HTTP client for REST API access.
+- **Verser2 transport** — experimental transport using the verser2 protocol for Hub-to-Manager communication.
+
+See the generated curated reference for full type signatures and transport configuration.
 
 ## When to use which
 
 | Approach | When to use |
 |----------|-------------|
-| `@scramjet/api-client` | Production applications, tools, and integrations |
+| `@scramjet/rest-api2` (v2) | New projects, type-safe client development |
+| `@scramjet/api-client` (v1) | Existing deployments using the legacy API |
 | Direct HTTP calls | Scripting, quick tests, non-Node.js environments |
-| `@scramjet/rest-api2` types | Type-safe client development with the v2 API contract |
+
+## Legacy v1 API
+
+The v1 API (`@scramjet/api-client`, `/api/v1` route tree) remains supported for backwards compatibility. See the [legacy v1 API client documentation](legacy/v1-api-client.md) for details.
 
 ## Next steps
 

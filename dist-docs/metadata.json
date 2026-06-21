@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:ef02c66fc7fc1b2f9740204b6b058448a1bf9e7819f5f9398082a62b3f4fb211",
+  "sourceIdentifier": "sha256:51a8ab9ccb5076fce6438bd8e3763c34362e72134ccd933498fa88224c71c2cb",
   "outputRoot": {
     "value": "dist-docs",
     "resolvedPath": "dist-docs",
@@ -28,6 +28,7 @@
       "testing/testing-sequences.md",
       "cli/usage.md",
       "api/client-usage.md",
+      "api/legacy/v1-api-client.md",
       "deployment/docker-adapter.md",
       "deployment/kubernetes-adapter.md",
       "deployment/process-adapter.md",

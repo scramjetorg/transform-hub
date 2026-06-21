@@ -61,7 +61,7 @@ The outer runner writes a **boot config** JSON file before spawning the child. T
   "instanceId": "uuid",
   "instancesServerPort": 12345,
   "instancesServerHost": "127.0.0.1",
-  "sequenceInfo": { "id": "seq-1", "config": { "engines": { "node": ">=16" } } },
+  "sequenceInfo": { "id": "seq-1", "config": { "engines": { "node": ">=18" } } },
   "sequenceArgs": ["--flag", "value"],
   "appConfig": { "key": "value" },
   "instanceName": "my-instance",
