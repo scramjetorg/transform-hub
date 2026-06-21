@@ -321,3 +321,4 @@
 - Validation passed: `npm run docs:clean`, `npm run docs:generate`, `npm run docs:check`, `npm run docs:generate:reference`, generated `dist-docs` link check across 79 Markdown files, legacy `docs/` absence check, TypeDoc-output grep check, `git diff --check`, and `SCRAMJET_DOCS_OUTPUT_DIR` endpoint override check.
 - Review: `@oracle` Phase 4 blocker review findings were fixed; re-check returned `none`.
 - PR #25 description updated with final summary, validation list, and review guidance.
+- Phase checkpoint commit: `93ef1da5` (`docs(conductor): Complete new docs phase 4`).
