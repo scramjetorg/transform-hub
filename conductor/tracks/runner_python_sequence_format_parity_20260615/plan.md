@@ -69,6 +69,8 @@
 **Review notes:**
 - Oracle review found and the implementation fixed: `main = None` now raises instead of falling back to `run`; README now states NDJSON input parsing is deferred to Phase 3; sync iterable output normalization is implemented and tested; empty topic-only metadata no longer emits PANG frames.
 
+**Phase checkpoint commit:** `f76ed59a` (`feat(runner-python): define main entrypoint contract`).
+
 ## Phase 2: AppContext Parity and Lifecycle Semantics
 
 - [ ] Task: Implement Node-style Python AppContext API
