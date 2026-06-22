@@ -605,7 +605,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             return createResponse(200, { status: "ok", details: { cpm: { cpmId: "local", connected: true } } });
         }
 
-        if (normalized === "/api/v2/hubs" && methodUpper === "GET") {
+        if (normalized === "/api/v1/cpm/api/v2/hubs" && methodUpper === "GET") {
             return createResponse(200, { items: [{ id: "hub-test" }] });
         }
 
@@ -1057,7 +1057,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
     const v2SpaceClient = {
         hubs: {
-            get: async () => ({ body: await parseJson(await hub.handle({ method: "GET", path: "/api/v2/hubs", headers: {}, body: undefined })) })
+            get: async () => ({ body: await parseJson(await hub.handle({ method: "GET", path: "/api/v1/cpm/api/v2/hubs", headers: {}, body: undefined })) })
         }
     };
 

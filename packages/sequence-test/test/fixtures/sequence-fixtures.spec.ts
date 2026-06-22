@@ -117,7 +117,7 @@ test("v2-client-calls fixture makes expected canonical v2 calls", async t => {
 
     t.deepEqual(result.output.ndjson(), [{ id: "job-1", hubStatus: "ok", hubs: 1 }]);
     harness.assert.called({ method: "GET", path: "/api/v2/status" });
-    harness.assert.called({ method: "GET", path: "/api/v2/hubs" });
+    harness.assert.called({ method: "GET", path: "/api/v1/cpm/api/v2/hubs" });
 });
 
 test("lifecycle-calls fixture uses keepAlive and end", async t => {

@@ -79,6 +79,7 @@ type OverrideConfig = {
     drainCb: (...x: any[]) => void;
     errorCb: (...x: any[]) => void;
 };
+type RestApi2TransportRequest = Parameters<ApiClientTransport["request"]>[0];
 
 function materializePath(path: string, params: unknown): string {
     if (!params || typeof params !== "object") {
@@ -121,7 +122,7 @@ function responseHeaders(response: Response): Record<string, string> {
 
 function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClientTransport {
     return {
-        async request<T>(request: any) {
+        async request<T>(request: RestApi2TransportRequest) {
             const path = appendQuery(materializePath(request.route.fullPath, request.params), request.query).replace(/^\//, "");
             const response = await clientUtils.request(request.route.method as any, path, {
                 headers: { ...request.headers },
