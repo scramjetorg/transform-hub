@@ -275,7 +275,7 @@ test("Host v2 hub config handler returns public config", async t => {
     t.deepEqual(result.body, { config: host.publicConfig });
 });
 
-test("Host v2 hub sequences handler returns mapped list", async t => {
+test("Host v2 hub sequences handler returns mapped list with full metadata", async t => {
     const host = createV2HostStub();
     const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), host, "1.2.3");
     const regs = collectRegs(handler.createHubRouter());
@@ -283,10 +283,20 @@ test("Host v2 hub sequences handler returns mapped list", async t => {
     const result = await regs.find((r: any) => r.fullPath === "/sequences").handle({});
 
     t.is(result.status, 200);
-    t.deepEqual(result.body, { items: [{ id: "seq-1", status: "ready" }] });
+    t.deepEqual(result.body, {
+        items: [{
+            id: "seq-1",
+            name: "seq-1",
+            status: "ready",
+            hubId: "test-hub",
+            location: undefined,
+            apiBase: "/api/v2/sequences/seq-1",
+            instances: undefined,
+        }]
+    });
 });
 
-test("Host v2 hub instances handler returns mapped list", async t => {
+test("Host v2 hub instances handler returns mapped list with full metadata", async t => {
     const host = createV2HostStub();
     const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), host, "1.2.3");
     const regs = collectRegs(handler.createHubRouter());
@@ -294,7 +304,14 @@ test("Host v2 hub instances handler returns mapped list", async t => {
     const result = await regs.find((r: any) => r.fullPath === "/instances").handle({});
 
     t.is(result.status, 200);
-    t.deepEqual(result.body, { items: [{ id: "inst-1", sequenceId: "seq-1", status: "running" }] });
+    // When instance has no sequence object, only the id is returned.
+    t.is(result.body.items[0].id, "inst-1");
+    t.is(result.body.items[0].sequenceId, "seq-1");
+    t.is(result.body.items[0].status, "running");
+    t.is(result.body.items[0].hubId, "test-hub");
+    t.is(result.body.items[0].location, "test-hub");
+    t.is(result.body.items[0].apiBase, "/api/v2/instances/inst-1");
+    t.deepEqual(result.body.items[0].sequence, { id: "seq-1" });
 });
 
 test("Host v2 hub entities handler returns combined sequence and instance items", async t => {
@@ -411,6 +428,21 @@ test("Host v2 health uses hub scope id fallback when config.host.id is missing",
 
     t.is(result.status, 200);
     t.is(result.body.scope.id, "hub", "scope id should fall back to 'hub'");
+});
+
+test("Host v2 handler uses custom apiBase when configured", async t => {
+    const host = createV2HostStub();
+
+    host.apiBase = "/custom/v1";
+
+    const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), host, "1.2.3");
+    const regs = collectRegs(handler.createHubRouter());
+
+    const seqResult = await regs.find((r: any) => r.fullPath === "/sequences").handle({});
+    t.is(seqResult.body.items[0].apiBase, "/custom/v2/sequences/seq-1");
+
+    const instResult = await regs.find((r: any) => r.fullPath === "/instances").handle({});
+    t.is(instResult.body.items[0].apiBase, "/custom/v2/instances/inst-1");
 });
 
 test("Host v2 health defaults hub.upstream to configured:false when runnerVerser2UpstreamHealth is absent", async t => {

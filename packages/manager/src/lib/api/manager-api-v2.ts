@@ -43,9 +43,15 @@ export class ManagerAPIV2Handler {
             health: routeBinding.handler<typeof routes.health>(() => manager.getV2HealthCheckInfo(), { id: "space.v2.health" }),
             list: routeBinding.handler<typeof routes.list>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.list" }),
             hubs: routeBinding.handler<typeof routes.hubs>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.hubs" }),
-            instances: routeBinding.handler<typeof routes.instances>(req => this.listResponse<RestAPI2.Instance>(this.getPaginated(req, manager.getInstances.bind(manager)), "instances", id => ({ id })), { id: "space.v2.instances" }),
-            sequences: routeBinding.handler<typeof routes.sequences>(() => this.listResponse<RestAPI2.Sequence>(manager.getSequencesIds(), "sequences", id => ({ id })), { id: "space.v2.sequences" }),
-            allSequences: routeBinding.handler<typeof routes.allSequences>(req => this.listResponse<RestAPI2.Sequence>(this.getPaginated(req, manager.getSequences.bind(manager)), "sequences", id => ({ id })), { id: "space.v2.all_sequences" }),
+            instances: routeBinding.handler<typeof routes.instances>(req => ({
+                items: this.mapManagerInstances(this.getPaginated(req, manager.getInstances.bind(manager)))
+            }), { id: "space.v2.instances" }),
+            sequences: routeBinding.handler<typeof routes.sequences>(() => ({
+                items: manager.getSequencesIds().map(id => ({ id: String(id) }))
+            }), { id: "space.v2.sequences" }),
+            allSequences: routeBinding.handler<typeof routes.allSequences>(req => ({
+                items: this.mapManagerSequences(this.getPaginated(req, manager.getSequences.bind(manager)))
+            }), { id: "space.v2.all_sequences" }),
             entities: routeBinding.handler<typeof routes.entities>(() => this.entityListResponse(manager.getEntities()), { id: "space.v2.entities" }),
             topics: routeBinding.handler<typeof routes.topics>(() => this.topicListResponse(manager.apiServiceDiscovery.list()), { id: "space.v2.topics" }),
             topicInfo: routeBinding.handler<typeof routes.topicInfo>(({ params }) => this.topicInfo(params.name), { id: "space.v2.topic.info" }),
@@ -296,6 +302,60 @@ export class ManagerAPIV2Handler {
         await this.manager.apiS3Middleware.clearIndex();
 
         return { cleared: true };
+    }
+
+    private mapManagerInstances(source: unknown): RestAPI2.Instance[] {
+        const items = Array.isArray(source) ? source : (source as Record<string, unknown> | undefined)?.["instances"] ?? [];
+        const instancesArray = Array.isArray(items) ? items : [];
+
+        return instancesArray.map((inst: any) => {
+            const hubId = inst.hubId;
+            const instanceId = String(inst.id || "");
+            const seqId = inst.sequenceId || inst.sequence?.id;
+            const seqName = inst.sequence?.name ?? inst.sequence?.config?.name ?? inst.sequence?.config?.id ?? inst.sequenceName ?? seqId;
+            const seqInfo: RestAPI2.Instance["sequence"] = seqId ? {
+                id: seqId,
+                name: seqName,
+                hubId: hubId || seqId,
+                location: inst.sequence?.location || hubId || seqId,
+                apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/sequences/${seqId}` : `${this.v2ApiBase}/sequences/${seqId}`,
+            } : undefined;
+
+            const item: RestAPI2.Instance = {
+                id: instanceId,
+                instanceName: inst.instanceName,
+                sequenceId: seqId,
+                status: inst.status,
+                hubId,
+                location: inst.location || hubId,
+                apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/instances/${instanceId}` : `${this.v2ApiBase}/instances/${instanceId}`,
+                sequence: seqInfo,
+            };
+
+            return item;
+        });
+    }
+
+    private mapManagerSequences(source: unknown): RestAPI2.Sequence[] {
+        const items = Array.isArray(source) ? source : (source as Record<string, unknown> | undefined)?.["sequences"] ?? [];
+        const seqArray = Array.isArray(items) ? items : [];
+
+        return seqArray.map((seq: any) => {
+            const seqId = String(seq.id || "");
+            const hubId = seq.hubId;
+
+            const item: RestAPI2.Sequence = {
+                id: seqId,
+                name: seq.name ?? seq.config?.name ?? seq.config?.id ?? seqId,
+                status: seq.status,
+                hubId,
+                location: seq.location,
+                apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/sequences/${seqId}` : `${this.v2ApiBase}/sequences/${seqId}`,
+                instances: seq.instances,
+            };
+
+            return item;
+        });
     }
 
     private failedOperation<TOutput>(code: string, message: string, id: string): RestAPI2.OpResponse<TOutput> {

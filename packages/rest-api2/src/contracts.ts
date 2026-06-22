@@ -99,7 +99,12 @@ export namespace RestAPI2 {
 
     export type Sequence = {
         id: string;
+        name?: string;
         status?: string;
+        hubId?: string;
+        location?: string;
+        apiBase?: string;
+        instances?: string[];
     };
 
     export type Instance = {
@@ -109,11 +114,14 @@ export namespace RestAPI2 {
         status?: string;
         hubId?: string;
         location?: string;
+        apiBase?: string;
         sequence?: {
             id: string;
             name?: string;
             status?: string;
+            hubId?: string;
             location?: string;
+            apiBase?: string;
         };
     };
 

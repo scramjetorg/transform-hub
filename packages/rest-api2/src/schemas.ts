@@ -51,7 +51,12 @@ export const Hub = z.object({
 
 export const Sequence = z.object({
     id: z.string(),
-    status: z.string().optional()
+    name: z.string().optional(),
+    status: z.string().optional(),
+    hubId: z.string().optional(),
+    location: z.string().optional(),
+    apiBase: z.string().optional(),
+    instances: z.array(z.string()).optional()
 });
 
 export const Instance = z.object({
@@ -61,11 +66,14 @@ export const Instance = z.object({
     status: z.string().optional(),
     hubId: z.string().optional(),
     location: z.string().optional(),
+    apiBase: z.string().optional(),
     sequence: z.object({
         id: z.string(),
         name: z.string().optional(),
         status: z.string().optional(),
-        location: z.string().optional()
+        hubId: z.string().optional(),
+        location: z.string().optional(),
+        apiBase: z.string().optional()
     }).optional()
 });
 

@@ -67,10 +67,46 @@ export class HostAPIV2Handler {
                 details: host.getStatus()
             }),
             sequences: (): RestAPI2.ListResponse<RestAPI2.Sequence> => ({
-                items: (host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), status: sequence.status }))
+                items: (host.getSequences() as any[]).map(sequence => {
+                    const id = String(sequence.id);
+                    const hostId = (host as any).config?.host?.id;
+
+                    return {
+                        id,
+                        name: sequence.name ?? sequence.config?.name ?? sequence.config?.id ?? id,
+                        status: sequence.status,
+                        hubId: sequence.hubId || hostId,
+                        location: sequence.location,
+                        apiBase: `${this.v2ApiBase}/sequences/${id}`,
+                        instances: sequence.instances,
+                    };
+                })
             }),
             instances: (): RestAPI2.ListResponse<RestAPI2.Instance> => ({
-                items: (host.getInstances() as any[]).map(instance => ({ id: String(instance.id), sequenceId: instance.sequenceId, status: instance.status }))
+                items: (host.getInstances() as any[]).map(instance => {
+                    const id = String(instance.id);
+                    const seqId = instance.sequenceId || instance.sequence?.id;
+                    const hostId = (host as any).config?.host?.id;
+                    const hubId = instance.hubId || hostId;
+
+                    return {
+                        id,
+                        instanceName: instance.instanceName,
+                        sequenceId: seqId,
+                        status: instance.status,
+                        hubId,
+                        location: instance.location || hubId,
+                        apiBase: `${this.v2ApiBase}/instances/${id}`,
+                        sequence: instance.sequence ? {
+                            id: instance.sequence.id,
+                            name: instance.sequence.name ?? instance.sequence.config?.name ?? instance.sequence.config?.id ?? instance.sequence.id,
+                            status: instance.sequence.status,
+                            hubId: instance.sequence.hubId || hubId,
+                            location: instance.sequence.location,
+                            apiBase: `${this.v2ApiBase}/sequences/${instance.sequence.id}`,
+                        } : seqId ? { id: seqId } : undefined,
+                    };
+                })
             }),
             entities: (): RestAPI2.ListResponse<RestAPI2.Entity> => ({
                 items: [

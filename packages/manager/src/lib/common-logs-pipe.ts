@@ -5,6 +5,8 @@ import { StringStream } from "scramjet";
 import { ObjLogger } from "@scramjet/obj-logger";
 
 export class CommonLogsPipe {
+    private static readonly MAX_LISTENERS = 200;
+
     private pipe: ReReadable;
     private readonly instreamPipes: Map<string, Readable> = new Map();
 
@@ -14,6 +16,7 @@ export class CommonLogsPipe {
         this.pipe = new ReReadable({ length: bufferLength });
         // drain the outStream so that it never pauses the participating inStreams from instances
         this.pipe.rewind().resume();
+        this.pipe.setMaxListeners(CommonLogsPipe.MAX_LISTENERS);
     }
 
     public addInStream(hostId: string, stream: Readable): void {
@@ -42,6 +45,8 @@ export class CommonLogsPipe {
 
     getOut(): Readable {
         const out = this.pipe.rewind();
+
+        this.pipe.setMaxListeners(CommonLogsPipe.MAX_LISTENERS);
 
         return out;
     }

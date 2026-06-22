@@ -410,7 +410,9 @@ export class Host implements IHost, IComponent {
 
         await this.cpmConnector?.sendInstanceInfo({
             id: instance.id,
-            sequence: instance.sequence
+            sequence: instance.sequence,
+            instanceName: csiController?.instanceName || (instance as any).instanceName,
+            status: csiController?.status || instance.status,
         });
 
         this.pushTelemetry("Instance connected", {

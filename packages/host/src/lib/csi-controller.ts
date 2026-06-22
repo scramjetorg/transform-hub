@@ -38,7 +38,7 @@ import { PassThrough, Readable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 
 import { forwardRoutedRequest, getRouter, normalizeForwardedHeaders } from "@scramjet/api-server";
-import { registerHttpRoutes } from "@scramjet/api-router";
+import { registerHttpRoutes, replacePathVersion } from "@scramjet/api-router";
 import { EventEmitter, once } from "events";
 import { DataStream } from "scramjet";
 
@@ -241,7 +241,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         ];
 
         this.api = new InstanceAPI(this, this.logger, this.localEmitter);
-        this.apiV2 = new InstanceAPIV2(this, this.logger, this.localEmitter);
+        this.apiV2 = new InstanceAPIV2(this, this.logger, this.localEmitter, replacePathVersion(this.sthConfig.host.apiBase, "v2"));
     }
 
     getInfo(): STHRestAPI.GetInstanceResponse {

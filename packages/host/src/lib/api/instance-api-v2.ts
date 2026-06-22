@@ -12,7 +12,8 @@ export class InstanceAPIV2 {
     constructor(
         private csi: ICSI,
         private logger: IObjectLogger,
-        private localEmitter?: EventEmitter & { lastEvents?: { [evname: string]: any } }
+        private localEmitter?: EventEmitter & { lastEvents?: { [evname: string]: any } },
+        private apiBase: string = "/api/v2"
     ) {}
 
     createRouter(): RouterDefinition {
@@ -43,12 +44,27 @@ export class InstanceAPIV2 {
 
     private handleInfo(): RestAPI2.InstanceResponse {
         const info = this.csi.getInfo();
+        const id = String(info.id || this.csi.id);
+        const seqId = info.sequence?.id;
+        const seqLoc = info.sequence?.location;
+        const seqName = info.sequence?.name ?? info.sequence?.config?.name ?? info.sequence?.config?.id ?? seqId;
 
         return {
             instance: {
-                id: String(info.id || this.csi.id),
-                sequenceId: info.sequence?.id,
-                status: info.status
+                id,
+                instanceName: info.instanceName || this.csi.instanceName,
+                sequenceId: seqId,
+                status: info.status,
+                hubId: seqLoc,
+                location: seqLoc,
+                apiBase: `${this.apiBase}/instances/${id}`,
+                sequence: seqId ? {
+                    id: seqId,
+                    name: seqName,
+                    hubId: seqLoc,
+                    location: seqLoc,
+                    apiBase: `${this.apiBase}/sequences/${seqId}`,
+                } : undefined,
             }
         };
     }

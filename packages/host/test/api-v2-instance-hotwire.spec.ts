@@ -139,9 +139,20 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
 
     registerHttpRoutes(recorder.asApiRoute(), new InstanceAPIV2(createCsiStub(calls), logger, emitter).createRouter());
 
-    t.deepEqual(await (recorder.require("get", "/").handler as Function)({}), {
-        instance: { id: "inst-1", sequenceId: "seq-1", status: InstanceStatus.RUNNING }
-    });
+    const infoResult = await (recorder.require("get", "/").handler as Function)({});
+    t.is(infoResult.instance.id, "inst-1");
+    t.is(infoResult.instance.sequenceId, "seq-1");
+    t.is(infoResult.instance.status, InstanceStatus.RUNNING);
+    t.is(infoResult.instance.apiBase, "/api/v2/instances/inst-1");
+    t.is(infoResult.instance.instanceName, undefined);
+    t.is(infoResult.instance.hubId, undefined);
+    t.is(infoResult.instance.location, undefined);
+    t.truthy(infoResult.instance.sequence);
+    t.is(infoResult.instance.sequence!.id, "seq-1");
+    t.is(infoResult.instance.sequence!.name, "seq-1");
+    t.is(infoResult.instance.sequence!.hubId, undefined);
+    t.is(infoResult.instance.sequence!.location, undefined);
+    t.is(infoResult.instance.sequence!.apiBase, "/api/v2/sequences/seq-1");
     t.deepEqual(await (recorder.require("op", "/", "delete").handler as Function)({
         body: { mode: "kill" }
     }), {
@@ -211,6 +222,19 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
         { set: { logLevel: "debug" } },
         { event: { eventName: "custom", source: "api", message: { value: 1 } } }
     ]);
+});
+
+test("InstanceAPIV2 custom apiBase is reflected in info response", async t => {
+    const calls: any[] = [];
+    const recorder = new RouteRecorder();
+    const csi = createCsiStub(calls);
+
+    registerHttpRoutes(recorder.asApiRoute(), new InstanceAPIV2(csi, logger, undefined, "/custom/v2").createRouter());
+
+    const infoResult = await (recorder.require("get", "/").handler as Function)({});
+
+    t.is(infoResult.instance.apiBase, "/custom/v2/instances/inst-1");
+    t.is(infoResult.instance.sequence!.apiBase, "/custom/v2/sequences/seq-1");
 });
 
 test("HostAPIHandler v2 plural instance resolver dispatches to the v2 CSI router", async t => {

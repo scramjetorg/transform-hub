@@ -24,6 +24,81 @@ test("host hubRouter /sequences response accepts items with id/status and reject
 // ============================================================
 // Assertion (2): manager router /hubs response schema
 // ============================================================
+// ============================================================
+// Assertion (1b): host hubRouter /sequences response accepts enriched items
+// ============================================================
+test("host hubRouter /sequences response accepts enriched sequences with name/hubId/location/apiBase/instances", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.hub.hubRouter(), "get", "/sequences");
+    const schema = route.schemas!.response!;
+
+    // Accepts minimal item (id only)
+    t.true(schema.safeParse({ items: [{ id: "seq-1" }] }).success);
+
+    // Accepts fully enriched item
+    const enriched = schema.safeParse({
+        items: [{
+            id: "seq-1",
+            name: "my-sequence",
+            status: "ready",
+            hubId: "hub-1",
+            location: "hub-1",
+            apiBase: "/api/v2/sequences/seq-1",
+            instances: ["inst-1", "inst-2"]
+        }]
+    });
+    t.true(enriched.success, "should accept item with all optional fields");
+    if (enriched.success) {
+        t.is(enriched.data.items[0].name, "my-sequence");
+        t.is(enriched.data.items[0].hubId, "hub-1");
+        t.is(enriched.data.items[0].apiBase, "/api/v2/sequences/seq-1");
+        t.deepEqual(enriched.data.items[0].instances, ["inst-1", "inst-2"]);
+    }
+
+    // Rejects items missing id
+    t.false(schema.safeParse({ items: [{ name: "only-name" }] }).success, "should reject item missing id");
+});
+
+// ============================================================
+// Assertion (1c): host hubRouter /instances response accepts enriched items
+// ============================================================
+test("host hubRouter /instances response accepts enriched instances with apiBase and nested sequence", t => {
+    const route = getRestAPI2Route(RestAPI2Routes.hub.hubRouter(), "get", "/instances");
+    const schema = route.schemas!.response!;
+
+    // Accepts minimal item
+    t.true(schema.safeParse({ items: [{ id: "inst-1" }] }).success);
+
+    // Accepts fully enriched item
+    const enriched = schema.safeParse({
+        items: [{
+            id: "inst-1",
+            instanceName: "my-instance",
+            sequenceId: "seq-1",
+            status: "running",
+            hubId: "hub-1",
+            location: "hub-1",
+            apiBase: "/api/v2/instances/inst-1",
+            sequence: {
+                id: "seq-1",
+                name: "my-sequence",
+                status: "ready",
+                hubId: "hub-1",
+                location: "hub-1",
+                apiBase: "/api/v2/sequences/seq-1"
+            }
+        }]
+    });
+    t.true(enriched.success, "should accept item with all optional fields");
+    if (enriched.success) {
+        t.is(enriched.data.items[0].instanceName, "my-instance");
+        t.is(enriched.data.items[0].apiBase, "/api/v2/instances/inst-1");
+        t.is(enriched.data.items[0].sequence?.apiBase, "/api/v2/sequences/seq-1");
+    }
+
+    // Rejects items missing id
+    t.false(schema.safeParse({ items: [{ sequenceId: "seq-1" }] }).success, "should reject item missing id");
+});
+
 test("space /hubs response schema is not unknown and rejects invalid list item", t => {
     const route = getRestAPI2Route(RestAPI2Routes.space.router("/api/v2"), "get", "/hubs");
     const schema = route.schemas!.response!;

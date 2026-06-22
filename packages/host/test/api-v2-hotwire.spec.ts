@@ -104,12 +104,25 @@ test("HostAPIHandler local v2 Hub handlers return RestAPI2 envelopes", async t =
     t.deepEqual(await (recorder.require("get", "/api/v2/version").handler as Function)(req), {
         version: "1.2.3"
     });
-    t.deepEqual(await (recorder.require("get", "/api/v2/sequences").handler as Function)(req), {
-        items: [{ id: "seq-1", status: "ready" }]
-    });
-    t.deepEqual(await (recorder.require("get", "/api/v2/instances").handler as Function)(req), {
-        items: [{ id: "inst-1", sequenceId: "seq-1", status: "running" }]
-    });
+    const seqResult = await (recorder.require("get", "/api/v2/sequences").handler as Function)(req);
+    t.is(seqResult.items[0].id, "seq-1");
+    t.is(seqResult.items[0].status, "ready");
+    t.is(seqResult.items[0].apiBase, "/api/v2/sequences/seq-1");
+    t.true("name" in seqResult.items[0]);
+    t.true("hubId" in seqResult.items[0]);
+    t.true("location" in seqResult.items[0]);
+    t.true("instances" in seqResult.items[0]);
+
+    const instResult = await (recorder.require("get", "/api/v2/instances").handler as Function)(req);
+    t.is(instResult.items[0].id, "inst-1");
+    t.is(instResult.items[0].sequenceId, "seq-1");
+    t.is(instResult.items[0].status, "running");
+    t.is(instResult.items[0].apiBase, "/api/v2/instances/inst-1");
+    t.true("instanceName" in instResult.items[0]);
+    t.true("hubId" in instResult.items[0]);
+    t.true("location" in instResult.items[0]);
+    t.true("sequence" in instResult.items[0]);
+
     t.deepEqual(await (recorder.require("get", "/api/v2/entities").handler as Function)(req), {
         items: [{ id: "seq-1", type: "sequence" }, { id: "inst-1", type: "instance" }]
     });
@@ -155,7 +168,10 @@ test("HostAPIHandler local v2 Sequence handlers adapt existing Host behavior", a
     t.deepEqual(await (recorder.require("get", "/api/v2/sequences/:sequenceId").handler as Function)({
         params: { sequenceId: "seq-1" }
     }), { sequence: { id: "seq-1", status: "ready" } });
-    t.deepEqual(await (recorder.require("get", "/api/v2/sequences/:sequenceId/instances").handler as Function)({
+    const seqInstResult = await (recorder.require("get", "/api/v2/sequences/:sequenceId/instances").handler as Function)({
         params: { sequenceId: "seq-1" }
-    }), { items: [{ id: "inst-1", sequenceId: "seq-1", status: "running" }] });
+    });
+    t.is(seqInstResult.items[0].id, "inst-1");
+    t.is(seqInstResult.items[0].sequenceId, "seq-1");
+    t.is(seqInstResult.items[0].status, "running");
 });

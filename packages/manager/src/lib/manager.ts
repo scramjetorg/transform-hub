@@ -692,6 +692,7 @@ export class Manager implements IComponent {
         sth.on("disconnected", () => {
             this.sthInfoRegister.handleHubDisconnect(sth.id);
             this.clearHubInventory(sth.id);
+            this.commonLogsPipe.removeInStream(sth.id);
             this.auditor.hubConnectionChange(sth.id, false);
             this.serviceDiscovery.onUpdate("hub disconnect");
         });
