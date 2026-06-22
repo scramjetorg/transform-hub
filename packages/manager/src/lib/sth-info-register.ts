@@ -103,8 +103,30 @@ export class STHInfoRegister implements ISTHInfoRegister {
                 sequence?.instances.push(instance.id);
             }
 
-            this.instancesStore.set(instance.id, instance);
+            this.instancesStore.set(this.getInstanceStoreKey(hostId, instance.id), this.withAggregationMetadata(hostId, instance));
         }
+    }
+
+    private getInstanceStoreKey(hostId: string, instanceId: string): string {
+        return `${hostId}:${instanceId}`;
+    }
+
+    private withAggregationMetadata(hostId: string, instance: Instance): Instance {
+        const sequenceInfo = this.sequencesStore.get(hostId)?.find(sequence => sequence.id === instance.sequence.id);
+        const sequenceConfig = sequenceInfo?.config as Record<string, unknown> | undefined;
+        const sequence = instance.sequence as Record<string, unknown>;
+
+        return {
+            ...instance,
+            hubId: (instance as any).hubId ?? hostId,
+            location: (instance as any).location ?? hostId,
+            sequenceId: (instance as any).sequenceId ?? instance.sequence.id,
+            sequence: {
+                ...instance.sequence,
+                name: sequence.name ?? sequenceConfig?.name ?? sequenceConfig?.id ?? instance.sequence.id,
+                location: sequence.location ?? sequenceInfo?.location ?? hostId,
+            }
+        } as Instance;
     }
 
     deleteInstance(hostId: string, seqId: string, instanceId: string): void {
@@ -124,7 +146,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
                     sequence.instances = sequence.instances.filter(item => item !== instanceId);
                 }
 
-                this.instancesStore.delete(instanceId);
+                this.instancesStore.delete(this.getInstanceStoreKey(hostId, instanceId));
             }
         }
     }
@@ -177,7 +199,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
 
         this.hostsMap.get(id)?.forEach((instancesSet, _sequenceId) => {
             instancesSet.forEach((instanceId) => {
-                this.instancesStore.delete(instanceId);
+                this.instancesStore.delete(this.getInstanceStoreKey(id, instanceId));
             });
         });
 

@@ -335,6 +335,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
                 sequences.forEach(sequence => {
                     this.emit("sequence", sequence);
                 });
+                this.emit("sequences", sequences);
 
                 break;
             }
@@ -356,6 +357,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
                 instancesMsgPayload.instances?.forEach((instanceData: InstanceMessageData) => {
                     this.emit("instance", instanceData);
                 });
+                this.emit("instances", instancesMsgPayload.instances || []);
                 break;
             }
             case CPMMessageCode.TOPIC:
@@ -426,6 +428,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         }
 
         this.disconnectReason = reason;
+        this.emit("disconnected");
 
         switch (reason) {
             case "key_revoked":

@@ -59,6 +59,11 @@ const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
 
+type HubInventoryState = {
+    sequencesReceived: boolean;
+    instancesReceived: boolean;
+}
+
 export type SthRegistrationPayload = {
     id?: string;
     routeDomain?: string;
@@ -91,6 +96,7 @@ export class Manager implements IComponent {
     private serviceDiscovery: ServiceDiscovery = new ServiceDiscovery();
     private readonly _config: ManagerConfiguration = getDefaultConfig();
     private sthBrokerTransport?: ManagerSthBrokerTransport;
+    private hubInventoryState = new Map<string, HubInventoryState>();
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
@@ -259,17 +265,81 @@ export class Manager implements IComponent {
             timestamp: Date.now(),
             modules: { sthServer: false }
         };
-        const managerList = typeof this.getList === "function" ? this.getList() : [];
-        const hubs = Array.isArray(managerList) ? managerList.length : ((managerList as { hosts?: unknown[] } | undefined)?.hosts || []).length;
-        const scope = { id: this.id || this._config.id, hubs };
+        const aggregation = this.getAggregationReadiness();
+        const scope = { id: this.id || this._config.id, hubs: aggregation.hubs };
         const currentHealthy = Object.values(info.modules || {}).every(Boolean);
         const components = await createDefaultHealthComponents({
-            current: { name: "manager", healthy: currentHealthy, scope, details: info },
+            current: { name: "manager", healthy: currentHealthy, scope, details: { ...info, aggregation } },
             processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
-            osDiskPaths: this.loadCheck?.config?.fsPaths
+            osDiskPaths: this.loadCheck?.config?.fsPaths,
+            extraComponents: [{
+                name: "manager.aggregation",
+                healthy: aggregation.ready,
+                status: aggregation.ready ? "healthy" : "degraded",
+                scope,
+                details: aggregation
+            }]
         });
 
-        return summarizeHealth(scope, components, info);
+        return summarizeHealth(scope, components, { ...info, aggregation });
+    }
+
+    getAggregationReadiness() {
+        const hubs = this.sthConnectionStore.getSTHControllersInfo();
+        const storeSequences = this.s3Middleware?.index?.sequences?.length || 0;
+        const sthSequences = this.sthInfoRegister.getSequences().length;
+        const instances = this.sthInfoRegister.getInstances().length;
+        const byHub = hubs.map((hub) => ({
+            id: hub.id,
+            active: Boolean(hub.isConnectionActive),
+            healthy: Boolean(hub.healthy),
+            sequences: this.getSequencesByHubSafe(hub.id).length,
+            instances: this.getInstancesByHubSafe(hub.id).length,
+            inventoryConsumed: this.isHubInventoryConsumed(hub.id)
+        }));
+        const activeHubs = byHub.filter(hub => hub.active);
+
+        return {
+            ready: activeHubs.every(hub => hub.inventoryConsumed),
+            hubs: byHub.length,
+            activeHubs: activeHubs.length,
+            sequences: storeSequences + sthSequences,
+            instances,
+            byHub
+        };
+    }
+
+    private markHubInventory(hostId: string, kind: keyof HubInventoryState) {
+        const state = this.hubInventoryState.get(hostId) || { sequencesReceived: false, instancesReceived: false };
+
+        state[kind] = true;
+        this.hubInventoryState.set(hostId, state);
+    }
+
+    private clearHubInventory(hostId: string) {
+        this.hubInventoryState.delete(hostId);
+    }
+
+    private isHubInventoryConsumed(hostId: string) {
+        const state = this.hubInventoryState.get(hostId);
+
+        return Boolean(state?.sequencesReceived && state.instancesReceived);
+    }
+
+    private getSequencesByHubSafe(hostId: string) {
+        try {
+            return this.sthInfoRegister.getSequencesByHub(hostId);
+        } catch (_error) {
+            return [];
+        }
+    }
+
+    private getInstancesByHubSafe(hostId: string) {
+        try {
+            return this.sthInfoRegister.getInstancesByHub(hostId);
+        } catch (_error) {
+            return [];
+        }
     }
 
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {
@@ -374,6 +444,7 @@ export class Manager implements IComponent {
             sth.logger.pipe(this.logger, { end: false });
 
             this.sthInfoRegister.clearHostEntities(sth.id);
+            this.clearHubInventory(sth.id);
             this.sthInfoRegister.addHub(sth.id);
             this.sthConnectionStore.add(sth);
             this.attachSTHEventHandlers(sth);
@@ -398,6 +469,7 @@ export class Manager implements IComponent {
 
             this.sthConnectionStore.add(sth);
             this.sthInfoRegister.addHub(sth.id);
+            this.clearHubInventory(sth.id);
             this.attachSTHEventHandlers(sth);
 
             try {
@@ -425,6 +497,7 @@ export class Manager implements IComponent {
         this.commonLogsPipe.removeInStream(sth.id);
         this.sthInfoRegister.clearHostEntities(sth.id);
         this.sthInfoRegister.removeHub(sth.id);
+        this.clearHubInventory(sth.id);
         this.sthConnectionStore.remove(sth.id);
     }
 
@@ -564,6 +637,10 @@ export class Manager implements IComponent {
             }
         });
 
+        sth.on("sequences", () => {
+            this.markHubInventory(sth.id, "sequencesReceived");
+        });
+
         sth.on("instance", (message: InstanceMessageData) => {
             const instance = this.normalizeInstanceEventPayload(message);
 
@@ -583,6 +660,10 @@ export class Manager implements IComponent {
                     this.sthInfoRegister.addInstance(sth.id, instance);
                     break;
             }
+        });
+
+        sth.on("instances", () => {
+            this.markHubInventory(sth.id, "instancesReceived");
         });
 
         sth.on("topic", (topicData) => {
@@ -610,6 +691,7 @@ export class Manager implements IComponent {
 
         sth.on("disconnected", () => {
             this.sthInfoRegister.handleHubDisconnect(sth.id);
+            this.clearHubInventory(sth.id);
             this.auditor.hubConnectionChange(sth.id, false);
             this.serviceDiscovery.onUpdate("hub disconnect");
         });

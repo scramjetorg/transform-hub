@@ -48,8 +48,8 @@ export interface RunnerProxy {
  * Mirrors the behavior of the legacy `@scramjet/runner` `RunnerAppContext`
  * for the sequence-facing surface, but with tightened typing.
  */
-export class RunnerAppContext<AppConfigType extends AppConfig, State>
-implements AppContext<AppConfigType, State> {
+export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType = unknown, SpaceClientType = unknown>
+implements AppContext<AppConfigType, State, HubClientType, SpaceClientType> {
     private runner: RunnerProxy;
 
     config: AppConfigType;
@@ -61,6 +61,8 @@ implements AppContext<AppConfigType, State> {
     logger: IObjectLogger;
     hub: HostClient;
     space: ManagerClient;
+    private v2HubClient: HubClientType;
+    private v2SpaceClient: SpaceClientType;
     instanceId: string;
     api: APIExpose;
     localStorage: ILocalStorage;
@@ -72,6 +74,8 @@ implements AppContext<AppConfigType, State> {
         runner: RunnerProxy,
         hostClient: HostClient,
         spaceClient: ManagerClient,
+        v2HubClient: HubClientType,
+        v2SpaceClient: SpaceClientType,
         id: string,
         logLevel: LogLevel,
         api: APIExpose,
@@ -83,10 +87,20 @@ implements AppContext<AppConfigType, State> {
         this.runner = runner;
         this.hub = hostClient;
         this.space = spaceClient;
+        this.v2HubClient = v2HubClient;
+        this.v2SpaceClient = v2SpaceClient;
         this.instanceId = id;
         this.api = api;
         this.localStorage = localStorage;
         this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
+    }
+
+    hubClient(): HubClientType {
+        return this.v2HubClient;
+    }
+
+    spaceClient(): SpaceClientType {
+        return this.v2SpaceClient;
     }
 
     private handleSave(_state: State): void {

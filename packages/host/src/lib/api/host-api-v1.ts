@@ -143,6 +143,15 @@ export class HostAPIV1Handler {
                     return response?.config ?? host.publicConfig;
                 }
             }))
+            .route(Router.get("/health", {
+                id: "host.v1.health",
+                schemas: { response: z.unknown() },
+                handler: async () => {
+                    const response = await v2Handler("/health")?.({} as never);
+
+                    return response ?? host.getStatus();
+                }
+            }))
             .route(Router.get("/status", {
                 id: "host.v1.status",
                 schemas: { response: objectResponse },
@@ -258,7 +267,7 @@ export class HostAPIV1Handler {
      * @param {NextCallback} _next Function to call when request is not handled by Instance middleware.
      */
     spaceMiddleware(req: ParsedMessage, res: ServerResponse) {
-        const url = req.url!.replace(`${this.apiBase}/cpm/api/v1/`, "");
+        const url = req.url!.replace(`${this.apiBase}/cpm/`, "");
 
         this.logger.debug("SPACE REQUEST", req.url, url, this.apiBase);
 

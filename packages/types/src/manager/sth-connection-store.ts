@@ -14,6 +14,7 @@ export type STHControllerEvents = {
     sequence: (sequence: SequenceMessageData) => void;
     sequences: (sequences: SequenceMessageData[]) => void;
     instance: (instance: InstanceMessageData) => void;
+    instances: (instances: InstanceMessageData[]) => void;
     event: (event: SpaceEventMessageData) => void;
 }
 

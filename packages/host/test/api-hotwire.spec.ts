@@ -396,6 +396,28 @@ test("HostAPIHandler unit space middleware pipes CPM responses", async t => {
     t.is(res.statusCode, 202);
 });
 
+test("HostAPIHandler unit space middleware preserves requested CPM API version", t => {
+    const host = createHostStub();
+    const api = new HostAPIV1Handler(new RouteRecorder().asApiExpose(), host as any, "1.0.0", "build") as any;
+    const calls: string[] = [];
+    const clientRequest = Object.assign(new PassThrough(), {
+        flushHeaders() {}
+    });
+    const res = createResponseStub();
+
+    host.cpmConnector = {
+        makeHttpRequestToCpm: (_method: string, url: string) => {
+            calls.push(url);
+            return clientRequest;
+        }
+    };
+
+    api.spaceMiddleware(Object.assign(new PassThrough(), { url: "/api/v1/cpm/api/v1/health", method: "GET", headers: {} }), res);
+    api.spaceMiddleware(Object.assign(new PassThrough(), { url: "/api/v1/cpm/api/v2/hubs", method: "GET", headers: {} }), res);
+
+    t.deepEqual(calls, ["api/v1/health", "api/v2/hubs"]);
+});
+
 test("InstanceAPI registers the v1 instance route surface", t => {
     const recorder = new RouteRecorder();
     const csi = createCsiStub();

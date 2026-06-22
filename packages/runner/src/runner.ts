@@ -30,6 +30,7 @@ import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ApiClientTransport, createHubClient, createSpaceClient, HubClient, SpaceClient } from "@scramjet/rest-api2";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
@@ -78,6 +79,65 @@ type OverrideConfig = {
     drainCb: (...x: any[]) => void;
     errorCb: (...x: any[]) => void;
 };
+type RestApi2TransportRequest = Parameters<ApiClientTransport["request"]>[0];
+
+function materializePath(path: string, params: unknown): string {
+    if (!params || typeof params !== "object") {
+        return path;
+    }
+
+    return Object.entries(params as Record<string, string>).reduce(
+        (current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))),
+        path
+    );
+}
+
+function appendQuery(url: string, query: unknown): string {
+    if (!query || typeof query !== "object") {
+        return url;
+    }
+
+    const params = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(query as Record<string, unknown>)) {
+        if (value !== undefined) {
+            params.set(key, String(value));
+        }
+    }
+
+    const text = params.toString();
+
+    return text ? `${url}?${text}` : url;
+}
+
+function responseHeaders(response: Response): Record<string, string> {
+    const headers: Record<string, string> = {};
+
+    response.headers.forEach((value, key) => {
+        headers[key] = value;
+    });
+
+    return headers;
+}
+
+function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClientTransport {
+    return {
+        async request<T>(request: RestApi2TransportRequest) {
+            const path = appendQuery(materializePath(request.route.fullPath, request.params), request.query).replace(/^\//, "");
+            const response = await clientUtils.request(request.route.method as any, path, {
+                headers: { ...request.headers },
+                body: request.body === undefined ? undefined : JSON.stringify(request.body)
+            });
+            const text = await response.text();
+
+            return {
+                status: response.status,
+                headers: responseHeaders(response),
+                body: (text ? JSON.parse(text) : undefined) as T
+            };
+        }
+    };
+}
 
 export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
     obj is SynchronousStreamable<any> {
@@ -143,7 +203,7 @@ type RunnerArgs = {
 export class Runner<X extends AppConfig> implements IComponent {
     private localCache: Record<string, string | null> = {};
     private emitter;
-    private _context?: RunnerAppContext<X, any>;
+    private _context?: RunnerAppContext<X, any, HubClient, SpaceClient>;
     private monitoringInterval?: NodeJS.Timeout;
     private keepAliveRequested?: boolean;
 
@@ -246,7 +306,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         (this.context.localStorage as any).handleBroadcastUpdate(data);
     }
 
-    get context(): RunnerAppContext<X, any> {
+    get context(): RunnerAppContext<X, any, HubClient, SpaceClient> {
         if (!this._context) {
             this.logger.error("Uninitialized context");
 
@@ -767,6 +827,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         const managerApiClient = hostApiClient.getManagerClient(
             "/api/v1"
         );
+        const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent("http://scramjet-host", this.hostClient.getAgent()));
+        const v2HubClient = createHubClient({ transport: restApi2Transport, basePath: "/api/v2" });
+        const v2SpaceClient = createSpaceClient({ transport: restApi2Transport, basePath: "/api/v1/cpm/api/v2" });
 
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
@@ -784,6 +847,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             runner,
             hostApiClient,
             managerApiClient,
+            v2HubClient,
+            v2SpaceClient,
             this.instanceId,
             this.logger.logLevel,
             this.api,

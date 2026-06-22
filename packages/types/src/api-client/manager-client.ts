@@ -3,7 +3,6 @@
 import * as STHRestAPI from "../rest-api-sth";
 import * as MRestAPI from "../rest-api-manager";
 import { HostClient } from "./host-client";
-import { PublicSTHConfiguration } from "../sth-configuration";
 import { ClientUtils, HttpClient } from "../client-utils";
 import { Readable } from "stream";
 
@@ -20,9 +19,9 @@ export declare class ManagerClient {
     getNamedData(topic: string, requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
     getAuditStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]>;
-    getConfig(): Promise<PublicSTHConfiguration>;
+    getConfig(): Promise<MRestAPI.GetConfigResponse>;
     getAllSequences(): Promise<MRestAPI.GetSequencesResponse>;
-    getSequences(sequenceId?: string): Promise<MRestAPI.GetSequencesResponse>;
+    getSequences(sequenceId?: string): Promise<MRestAPI.GetSequenceIDSResponse>;
     getInstances(): Promise<MRestAPI.GetInstancesResponse>;
     getTopics(): Promise<MRestAPI.GetTopicsResponse>;
     getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse>

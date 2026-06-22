@@ -84,6 +84,12 @@ class HostClient implements IHostClient {
             : "http://scramjet-host/api/v1";
     }
 
+    getV2ApiBase(): string {
+        return this.verser2Runtime?.hubTargetDomain
+            ? `http://${this.verser2Runtime.hubTargetDomain}/api/v2`
+            : "http://scramjet-host/api/v2";
+    }
+
     private async connectOne(i: number): Promise<Socket> {
         return new Promise<Socket>((res, rej) => {
             try {

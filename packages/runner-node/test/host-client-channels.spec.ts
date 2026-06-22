@@ -147,6 +147,7 @@ test("runner-node HostClient uses verser2 Broker agent and omits REQUESTS channe
     await new Promise(res => setTimeout(res, 30));
 
     t.is(client.getApiBase(), "http://sth.domain/api/v1");
+    t.is(client.getV2ApiBase(), "http://sth.domain/api/v2");
     t.is(client.getAgent(), agent);
     t.is(connectCalled, 1);
     t.deepEqual(brokerOptions, [{
@@ -192,6 +193,7 @@ test("runner-node HostClient creates verser2 Broker agent even without hub targe
     await new Promise(res => setTimeout(res, 30));
 
     t.is(client.getApiBase(), "http://scramjet-host/api/v1");
+    t.is(client.getV2ApiBase(), "http://scramjet-host/api/v2");
     t.is(client.getAgent(), agent);
     t.is(connectCalled, 1);
     t.deepEqual(brokerOptions, [{

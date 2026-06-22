@@ -176,6 +176,9 @@ interface HubContext {
         delete(path: string): Promise<unknown>;
         request(method: string, path: string, body?: unknown): Promise<unknown>;
     };
+    hubClient(): {
+        status: { get(): Promise<{ body: unknown }> };
+    };
     keepAlive(milliseconds?: number): HubContext;
     end(): HubContext;
     destroy(error?: unknown): HubContext;
@@ -193,6 +196,9 @@ interface HubContext {
         use(path: string, handler: unknown): void;
     };
     space: HubHarnessSpace;
+    spaceClient(): {
+        hubs: { get(): Promise<{ body: unknown }> };
+    };
 }
 
 interface HubContextInspectors {
@@ -593,6 +599,14 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
         if (normalized === `${normalizedBase}/status` && methodUpper === "GET") {
             return createResponse(200, { cpm: { cpmId: "local", connected: true } });
+        }
+
+        if (normalized === "/api/v2/status" && methodUpper === "GET") {
+            return createResponse(200, { status: "ok", details: { cpm: { cpmId: "local", connected: true } } });
+        }
+
+        if (normalized === "/api/v1/cpm/api/v2/hubs" && methodUpper === "GET") {
+            return createResponse(200, { items: [{ id: "hub-test" }] });
         }
 
         if (normalized === `${normalizedBase}/config` && methodUpper === "GET") {
@@ -1035,6 +1049,18 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         getNamedData: async (name: string) => hub.getNamedData(name)
     };
 
+    const v2HubClient = {
+        status: {
+            get: async () => ({ body: await parseJson(await hub.handle({ method: "GET", path: "/api/v2/status", headers: {}, body: undefined })) })
+        }
+    };
+
+    const v2SpaceClient = {
+        hubs: {
+            get: async () => ({ body: await parseJson(await hub.handle({ method: "GET", path: "/api/v1/cpm/api/v2/hubs", headers: {}, body: undefined })) })
+        }
+    };
+
     const callLookup = (entry: HubTimelineEntry): HubTimelineEntry => ({
         sequence: entry.sequence,
         method: entry.method,
@@ -1090,6 +1116,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
     const context = {
         hub: contextHubExtended,
+        hubClient: () => v2HubClient,
         keepAlive(milliseconds?: number) {
             recordLifecycle("keepAlive", milliseconds);
 
@@ -1197,7 +1224,8 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
                 return { path, body, headers };
             }
-        }
+        },
+        spaceClient: () => v2SpaceClient
     } as HubContext & HubContextInspectors;
 
     return {

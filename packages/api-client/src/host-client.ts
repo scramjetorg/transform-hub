@@ -1,13 +1,21 @@
 /// <reference path="./definitions.d.ts" />
 
 import { ClientProvider, ClientUtils, ClientUtilsCustomAgent, Headers, HttpClient } from "@scramjet/client-utils";
-import { ApiClientFactory, STHRestAPI } from "@scramjet/types";
+import { ApiClientFactory, PublicSTHConfiguration, STHRestAPI } from "@scramjet/types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 import { HostHeaders } from "@scramjet/symbols";
 import { ManagerClient } from "./manager-client";
 
 export const createHostClient: ApiClientFactory<HostClient, ClientUtils> = (apiBase, utils) => new HostClient(apiBase, utils);
+
+function createV2Client(apiBase: string, utils: ClientUtils): ClientUtils {
+    const v2ApiBase = apiBase.replace(/\/api\/v1\/?$/, "/api/v2");
+
+    return utils instanceof ClientUtilsCustomAgent
+        ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent)
+        : new ClientUtils(v2ApiBase);
+}
 
 /**
  * Host client.
@@ -17,15 +25,17 @@ export class HostClient implements ClientProvider {
     apiBase: string;
 
     #_client: ClientUtils;
+    #_v2Client: ClientUtils;
 
     get client(): ClientUtils {
         return this.#_client;
     }
 
-    constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
+    constructor(apiBase: string, utils = new ClientUtils(apiBase), v2Utils?: ClientUtils) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
         this.#_client = utils;
+        this.#_v2Client = v2Utils || createV2Client(this.apiBase, this.client);
     }
 
     /**
@@ -185,8 +195,12 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host status.
      */
-    async getStatus() {
-        return this.client.get<STHRestAPI.GetStatusResponse>("status");
+    async getStatus(): Promise<STHRestAPI.GetStatusResponse> {
+        const response = await this.#_v2Client.get<{ details?: STHRestAPI.GetStatusResponse } | STHRestAPI.GetStatusResponse>("status");
+
+        return response && typeof response === "object" && "details" in response
+            ? response.details as STHRestAPI.GetStatusResponse
+            : response as STHRestAPI.GetStatusResponse;
     }
 
     /**
@@ -194,8 +208,12 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<GetConfigResponse>} Promise resolving to Host configuration (public part).
      */
-    async getConfig() {
-        return this.client.get<STHRestAPI.GetConfigResponse>("config");
+    async getConfig(): Promise<PublicSTHConfiguration> {
+        const response = await this.#_v2Client.get<{ config?: PublicSTHConfiguration } | PublicSTHConfiguration>("config");
+
+        return response && typeof response === "object" && "config" in response
+            ? response.config as PublicSTHConfiguration
+            : response as PublicSTHConfiguration;
     }
 
     /**
