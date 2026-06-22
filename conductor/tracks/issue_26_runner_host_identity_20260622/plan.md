@@ -5,7 +5,8 @@
 - [x] Task: Create the Conductor review surface
     - [x] Branch from the current branch into a dedicated track branch unless the user asks to continue in-place.
     - [x] Prepare a PR description describing the final intended behavior.
-    - [ ] Create or update the PR after the first implementation checkpoint is ready.
+    - [x] Create or update the PR after the first implementation checkpoint is ready.
+        - PR: https://github.com/0rail/transform-hub/pull/31
 - [x] Task: Confirm affected package entrypoints
     - [x] Read package codemaps for `packages/sth-config`, `packages/config`, and `packages/host` when present.
     - [x] Inspect `packages/sth-config/src/default-config.ts` for current runner Host defaults.
@@ -90,14 +91,16 @@
     - [x] Verify custom peer ID compatibility is preserved.
     - [x] Verify warnings are actionable and not emitted for safe custom config.
         - Oracle review found no blockers after adding stable Host ID fallback.
-- [~] Task: Update issue and track notes
+- [x] Task: Update issue and track notes
     - [x] Record validation commands and outcomes in this `plan.md`.
     - [x] Note any skipped downstream integration validation and rationale.
         - Full downstream drumwave-integration E2E and BDD smoke were skipped as out of scope for this focused package-level identity fix.
         - Broad package-test invocation accidentally ran `packages/api-server`; direct `packages/api-server` wrapper run failed with `ReferenceError: WebAssembly is not defined`, while `npm exec -- ava -T 50000 --serial` passed 50 tests. Classified as preexisting/out-of-scope wrapper `--jitless`/WebAssembly interaction, not introduced by this track; no `api-server` files changed.
-    - [ ] Prepare a concise issue #26 comment summarizing the fix after implementation is committed.
-- [ ] Task: Create phase checkpoint commit and push
-    - [ ] Commit the scoped implementation changes after validation.
-    - [ ] Push the review branch before manual verification.
-    - [ ] Update `plan.md` with the checkpoint commit SHA if this track is being executed through Conductor.
+    - [x] Prepare a concise issue #26 comment summarizing the fix after implementation is committed.
+        - Draft issue comment: Implemented in PR #31. The STH-local runner broker peer ID now defaults to `auto`, resolves from the stable Host ID as `sth.<hostId>.runner.broker`, preserves custom and explicit legacy values, warns on unsafe legacy `sth.default.runner.broker`, and adds focused tests for derivation, default config, warnings, and clean-start Host ID persistence.
+- [x] Task: Create phase checkpoint commit and push
+    - [x] Commit the scoped implementation changes after validation.
+        - Checkpoint commit: `f350ee9e` (`fix: derive runner host broker identity`).
+    - [x] Push the review branch before manual verification.
+    - [x] Update `plan.md` with the checkpoint commit SHA if this track is being executed through Conductor.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Validate, Review, and Checkpoint' (Protocol in workflow.md)
