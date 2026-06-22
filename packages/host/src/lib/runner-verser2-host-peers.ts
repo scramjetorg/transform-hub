@@ -1,15 +1,10 @@
-import { Server, ServerResponse } from "http";
+import { Server } from "http";
 import { ParsedMessage, STHRunnerVerser2HostConfig, STHOutboundVerser2Config } from "@scramjet/types";
 import { VerserHost } from "@signicode/verser2-host";
 import { createVerser2ClientTlsOptions } from "./cpm-connector";
 import { createVerser2RunnerBrokerTransport, Verser2RunnerBroker } from "./runner-transport";
 
 type Closeable = { close?: () => Promise<void> };
-
-type FlushableResponse = ServerResponse & {
-    started?: boolean;
-    start?: () => void;
-};
 
 export type SthLocalRunnerVerser2Peers = {
     broker: Verser2RunnerBroker;
@@ -37,24 +32,6 @@ export function getRunnerVerser2HostUpstreamParams(
     };
 }
 
-function ensureFlushHeaders(res: FlushableResponse): ServerResponse {
-    if (typeof res.flushHeaders === "function") {
-        return res;
-    }
-
-    // Temporary compatibility shim for @signicode/verser2-host local guest responses.
-    // Remove once https://github.com/signicode/verser2/issues/46 is fixed and adopted.
-    res.flushHeaders = function flushHeaders(this: FlushableResponse) {
-        if (!this.started && typeof this.start === "function") {
-            this.start();
-        }
-
-        return this;
-    };
-
-    return res;
-}
-
 export async function attachSthLocalRunnerVerser2Peers(
     host: Pick<VerserHost, "attachLocalBroker" | "attachLocalGuest">,
     runnerHostConfig: STHRunnerVerser2HostConfig,
@@ -67,7 +44,7 @@ export async function attachSthLocalRunnerVerser2Peers(
     const guest = await host.attachLocalGuest({
         guestId: verser2Config.guest.peerId,
         routedDomains: [verser2Config.guest.routeDomain],
-        listener: (req, res) => apiServer.emit("request", req as ParsedMessage, ensureFlushHeaders(res as FlushableResponse))
+        listener: (req, res) => apiServer.emit("request", req as ParsedMessage, res)
     });
 
     return { broker, guest };

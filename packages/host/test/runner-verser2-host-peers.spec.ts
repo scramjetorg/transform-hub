@@ -65,7 +65,7 @@ test("attachSthLocalRunnerVerser2Peers exposes runner Broker and local STH API G
     t.is(await finished, 204);
 });
 
-test("attachSthLocalRunnerVerser2Peers adapts local guest responses without flushHeaders", async t => {
+test("attachSthLocalRunnerVerser2Peers uses native local guest flushHeaders", async t => {
     const guestOptions: any[] = [];
     const apiServer = createServer((_req, res) => {
         res.writeHead(200, { "content-type": "text/plain" });
@@ -88,14 +88,12 @@ test("attachSthLocalRunnerVerser2Peers adapts local guest responses without flus
 
     const req = new PassThrough() as any;
     const res = new PassThrough() as any;
-    let startCalls = 0;
+    let flushCalls = 0;
 
     req.method = "GET";
     req.url = "/api/v1/topic/messages";
-    res.started = false;
-    res.start = () => {
-        startCalls += 1;
-        res.started = true;
+    res.flushHeaders = () => {
+        flushCalls += 1;
     };
     res.writeHead = (statusCode: number, headers: Record<string, string>) => {
         res.statusCode = statusCode;
@@ -113,7 +111,7 @@ test("attachSthLocalRunnerVerser2Peers adapts local guest responses without flus
     guestOptions[0].listener(req, res);
 
     t.is(await finished, "ok");
-    t.is(startCalls, 1);
+    t.is(flushCalls, 1);
     t.is(res.statusCode, 200);
     t.deepEqual(res.headers, { "content-type": "text/plain" });
 });

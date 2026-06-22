@@ -29,7 +29,7 @@
     "@scramjet/runner-node": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "@signicode/verser2-guest-node": "0.4.2",
+    "@signicode/verser2-guest-node": "0.4.5",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {
