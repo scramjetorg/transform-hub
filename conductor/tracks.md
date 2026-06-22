@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: v2 canonical internal API**
+- [x] **Track: v2 canonical internal API**
 *Link: [./tracks/v2_canonical_internal_api_20260621/](./tracks/v2_canonical_internal_api_20260621/)*
