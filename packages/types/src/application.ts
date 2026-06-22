@@ -22,8 +22,8 @@ export type TransformApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
     ReturnType = Streamable<Produces>,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = (
         this: AppContext<AppConfigType, S, HubClientType, SpaceClientType>,
         source: ReadableStream<Consumes>,
@@ -42,8 +42,8 @@ export type ReadableApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
     VoidType = void,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = TransformApp<VoidType, Produces, Z, S, AppConfigType, Streamable<Produces>, HubClientType, SpaceClientType>;
 /**
  * A Writable App is an app that accepts the data from the platform, performs any number
@@ -58,8 +58,8 @@ export type WritableApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
     VoidType = void,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = TransformApp<Consumes, VoidType, Z, S, AppConfigType, void, HubClientType, SpaceClientType>;
 
 /**
@@ -72,8 +72,8 @@ export type InertApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
     VoidType = void,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = TransformApp<VoidType, VoidType, Z, S, AppConfigType, void, HubClientType, SpaceClientType>;
 
 export type ApplicationFunction = ReadableApp | WritableApp | TransformApp | InertApp;
@@ -90,8 +90,8 @@ export type Application<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > =
     TransformApp<Consumes, Produces, Z, S, AppConfigType, Streamable<Produces>, HubClientType, SpaceClientType> |
     ReadableApp<Produces, Z, S, AppConfigType, void, HubClientType, SpaceClientType> |
@@ -104,8 +104,8 @@ export type ApplicationExpose<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = {
         [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType, HubClientType, SpaceClientType>;
     };

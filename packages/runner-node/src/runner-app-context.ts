@@ -48,7 +48,7 @@ export interface RunnerProxy {
  * Mirrors the behavior of the legacy `@scramjet/runner` `RunnerAppContext`
  * for the sequence-facing surface, but with tightened typing.
  */
-export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType extends object = object, SpaceClientType extends object = object>
+export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType = unknown, SpaceClientType = unknown>
 implements AppContext<AppConfigType, State, HubClientType, SpaceClientType> {
     private runner: RunnerProxy;
 

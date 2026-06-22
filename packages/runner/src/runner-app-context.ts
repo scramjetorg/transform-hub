@@ -23,7 +23,7 @@ export interface RunnerProxy {
     keepAliveIssued(): void;
 }
 
-export class RunnerAppContext<AppConfigType extends AppConfig, State extends any, HubClientType extends object = object, SpaceClientType extends object = object>
+export class RunnerAppContext<AppConfigType extends AppConfig, State extends any, HubClientType = unknown, SpaceClientType = unknown>
 implements AppContext<AppConfigType, State, HubClientType, SpaceClientType> {
     private runner;
     config: AppConfigType;

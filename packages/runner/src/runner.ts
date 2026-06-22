@@ -30,7 +30,7 @@ import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { ApiClientTransport, createHubClient, createSpaceClient } from "@scramjet/rest-api2";
+import { ApiClientTransport, createHubClient, createSpaceClient, HubClient, SpaceClient } from "@scramjet/rest-api2";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
@@ -202,7 +202,7 @@ type RunnerArgs = {
 export class Runner<X extends AppConfig> implements IComponent {
     private localCache: Record<string, string | null> = {};
     private emitter;
-    private _context?: RunnerAppContext<X, any>;
+    private _context?: RunnerAppContext<X, any, HubClient, SpaceClient>;
     private monitoringInterval?: NodeJS.Timeout;
     private keepAliveRequested?: boolean;
 
@@ -305,7 +305,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         (this.context.localStorage as any).handleBroadcastUpdate(data);
     }
 
-    get context(): RunnerAppContext<X, any> {
+    get context(): RunnerAppContext<X, any, HubClient, SpaceClient> {
         if (!this._context) {
             this.logger.error("Uninitialized context");
 

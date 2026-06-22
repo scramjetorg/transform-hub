@@ -37,8 +37,8 @@ export type MonitoringHandler =
 export interface AppContext<
     AppConfigType extends AppConfig,
     State extends any,
-    HubClientType extends object = object,
-    SpaceClientType extends object = object
+    HubClientType = unknown,
+    SpaceClientType = unknown
 > {
     logger: IObjectLogger;
 
