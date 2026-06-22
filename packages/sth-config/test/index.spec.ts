@@ -43,7 +43,7 @@ test("default STH connectivity selects verser2 route roles", t => {
     t.true(config.verser2.runnerHost!.identityDir.endsWith(".scramjet/verser2-runner-host"));
     t.is(config.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2444");
     t.not(config.verser2.runnerHost?.host.publicUrl, config.verser2.hostUrl);
-    t.is(config.verser2.runnerHost?.localBroker.peerId, "sth.default.runner.broker");
+    t.is(config.verser2.runnerHost?.localBroker.peerId, "auto");
     t.is(config.verser2.broker.peerId, "sth.default.broker");
     t.is(config.verser2.broker.targetDomain, "manager.cpm-manager.scramjet.internal");
     t.is(config.verser2.guest.peerId, "sth.default.guest");

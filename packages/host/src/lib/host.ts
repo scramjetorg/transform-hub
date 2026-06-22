@@ -52,7 +52,7 @@ import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { S3Client } from "./s3-client";
 import { createVerserHost, VerserHost } from "@signicode/verser2-host";
 
-import { existsSync, mkdirSync, readFileSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 
 import SequenceStore from "./sequence-store";
 
@@ -60,7 +60,8 @@ import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, Dispat
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
-import { createSthRunnerVerser2HostOptions, deriveSthRunnerVerser2HostIdentity, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
+import { readHostInfoFile, resolveStableHostId, writeHostInfoFile } from "./host-id";
+import { checkSthRunnerVerser2LegacyBrokerPeerId, createSthRunnerVerser2HostOptions, deriveSthRunnerVerser2HostIdentity, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
 import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
 
@@ -750,16 +751,11 @@ export class Host implements IHost, IComponent {
     }
 
     getId() {
-        let id = this.config.host.id;
+        return resolveStableHostId(this.config.host.id, this.config.host.infoFilePath, this.logger);
+    }
 
-        if (id) {
-            this.logger.info("Initialized with custom id", id);
-        } else {
-            id = this.readInfoFile().id;
-            this.logger.info("Initialized with id", id);
-        }
-
-        return id;
+    writeInfoFile(info: object) {
+        writeHostInfoFile(this.config.host.infoFilePath, info);
     }
 
     /**
@@ -768,23 +764,7 @@ export class Host implements IHost, IComponent {
      * @returns {object} Configuration object.
      */
     readInfoFile() {
-        let fileContents = "";
-
-        try {
-            fileContents = readFileSync(this.config.host.infoFilePath, { encoding: "utf-8" });
-        } catch {
-            this.logger.warn("Can not read id file");
-
-            return {};
-        }
-
-        try {
-            return JSON.parse(fileContents);
-        } catch (err) {
-            this.logger.error("Can not parse id file", err);
-
-            return {};
-        }
+        return readHostInfoFile(this.config.host.infoFilePath, this.logger);
     }
 
     /**
@@ -954,6 +934,12 @@ export class Host implements IHost, IComponent {
     private async startRunnerVerser2Host() {
         if (!this.config.verser2.runnerHost?.enabled) {
             return;
+        }
+
+        const legacyWarning = checkSthRunnerVerser2LegacyBrokerPeerId(this.config.verser2.runnerHost);
+
+        if (legacyWarning) {
+            this.logger.warn(legacyWarning);
         }
 
         const runnerHostConfig = await resolveSthRunnerVerser2HostConfig(

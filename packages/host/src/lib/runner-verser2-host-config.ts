@@ -10,6 +10,7 @@ const GENERATED_CA_CERT_FILE = "ca.pem";
 const GENERATED_CA_KEY_FILE = "ca-key.pem";
 const GENERATED_SERVER_CERT_FILE = "server.pem";
 const GENERATED_SERVER_KEY_FILE = "server-key.pem";
+const AUTO_RUNNER_BROKER_PEER_ID = "auto";
 const UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID = "sth.default.runner.broker";
 
 function runnerBrokerPeerIdForHost(hostId: string): string {
@@ -159,13 +160,38 @@ export function createSthRunnerVerser2HostId(config: Pick<STHRunnerVerser2HostCo
 }
 
 export function deriveSthRunnerVerser2HostIdentity(config: STHRunnerVerser2HostConfig, hostId?: string): STHRunnerVerser2HostConfig {
-    if (!hostId || config.localBroker.peerId !== UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID) {
-        return config;
+    const peerId = config.localBroker.peerId;
+
+    if (peerId === AUTO_RUNNER_BROKER_PEER_ID) {
+        if (!hostId) {
+            throw new Error(
+                "STH-local runner verser2 Broker peerId is 'auto' but no host ID was provided. " +
+                "Set verser2.runnerHost.localBroker.peerId to an explicit value or ensure a host ID is available."
+            );
+        }
+
+        return {
+            ...config,
+            localBroker: {
+                ...config.localBroker,
+                peerId: runnerBrokerPeerIdForHost(hostId)
+            }
+        };
     }
 
-    config.localBroker.peerId = runnerBrokerPeerIdForHost(hostId);
-
     return config;
+}
+
+export function checkSthRunnerVerser2LegacyBrokerPeerId(config: STHRunnerVerser2HostConfig): string | null {
+    if (config.localBroker.peerId === UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID && config.enabled) {
+        return (
+            `STH-local runner verser2 Broker peerId "${UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID}" is unsafe for multi-STH deployments ` +
+            `because it can collide across STH instances. Set verser2.runnerHost.localBroker.peerId to 'auto' for automatic ` +
+            `resolution based on host ID, or configure a unique value such as 'sth.<hostId>.runner.broker'.`
+        );
+    }
+
+    return null;
 }
 
 function createSthRunnerVerser2HostTlsOptions(config: STHRunnerVerser2HostConfig): VerserHostTlsOptions {

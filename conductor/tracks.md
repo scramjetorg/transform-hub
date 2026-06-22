@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: fix for issue 26**
+- [~] **Track: fix for issue 26**
 *Link: [./tracks/issue_26_runner_host_identity_20260622/](./tracks/issue_26_runner_host_identity_20260622/)*

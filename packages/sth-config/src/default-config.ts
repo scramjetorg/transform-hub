@@ -86,7 +86,7 @@ export const defaultConfig: STHConfiguration = {
                 allowedClientFingerprints: []
             },
             localBroker: {
-                peerId: "sth.default.runner.broker"
+                peerId: "auto"
             }
         },
         broker: {
