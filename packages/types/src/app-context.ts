@@ -34,7 +34,12 @@ export type MonitoringHandler =
  * with the Platform to ensure that it's in operation and should be kept alive without
  * interruption.
  */
-export interface AppContext<AppConfigType extends AppConfig, State extends any> {
+export interface AppContext<
+    AppConfigType extends AppConfig,
+    State extends any,
+    HubClientType extends object = object,
+    SpaceClientType extends object = object
+> {
     logger: IObjectLogger;
 
     /**
@@ -187,13 +192,13 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     hub: import("./api-client/host-client").HostClient;
 
     /** Allows to access canonical v2 Hub API client. */
-    hubClient(): object;
+    hubClient(): HubClientType;
 
     /** Allows to access Space, for details please refer to @scramjet/api-client */
     space: import("./api-client/manager-client").ManagerClient;
 
     /** Allows to access canonical v2 Space API client. */
-    spaceClient(): object;
+    spaceClient(): SpaceClientType;
 
     /** Instance Id */
     instanceId: string;

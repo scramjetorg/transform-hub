@@ -49,7 +49,7 @@ export interface RunnerProxy {
  * for the sequence-facing surface, but with tightened typing.
  */
 export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType extends object = object, SpaceClientType extends object = object>
-implements AppContext<AppConfigType, State> {
+implements AppContext<AppConfigType, State, HubClientType, SpaceClientType> {
     private runner: RunnerProxy;
 
     config: AppConfigType;

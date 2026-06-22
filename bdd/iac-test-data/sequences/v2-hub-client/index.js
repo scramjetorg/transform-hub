@@ -8,7 +8,7 @@ const defer = (ts) => new Promise(res => setTimeout(res, ts));
 module.exports = async function() {
     const status = await this.hubClient().status.get();
 
-    if (!status) {
+    if (!status.body) {
         throw new Error("Cannot run without v2 hub client");
     }
 

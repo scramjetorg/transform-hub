@@ -4,7 +4,7 @@ module.exports = async function v2ClientCallsSequence(input) {
 
     return input.map((item) => ({
         id: item.id,
-        hubStatus: status.status,
-        hubs: hubs.items.length
+        hubStatus: status.body.status,
+        hubs: hubs.body.items.length
     }));
 };

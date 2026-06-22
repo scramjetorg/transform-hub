@@ -5,6 +5,7 @@ import { PassThrough } from "stream";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
 
 import { buildAppContext } from "../src/context";
 
@@ -43,8 +44,11 @@ test("buildAppContext: hubClient and spaceClient dispatch through v2 route contr
             onKeepAliveIssued: () => undefined,
         });
 
-        await (context.hubClient() as any).status.get();
-        await (context.spaceClient() as any).hubs.get();
+        const hubClient: HubClient = context.hubClient();
+        const spaceClient: SpaceClient = context.spaceClient();
+
+        await hubClient.status.get();
+        await spaceClient.hubs.get();
 
         t.deepEqual(requests, [
             { method: "get", path: "api/v2/status" },

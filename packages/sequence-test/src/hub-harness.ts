@@ -177,7 +177,7 @@ interface HubContext {
         request(method: string, path: string, body?: unknown): Promise<unknown>;
     };
     hubClient(): {
-        status: { get(): Promise<unknown> };
+        status: { get(): Promise<{ body: unknown }> };
     };
     keepAlive(milliseconds?: number): HubContext;
     end(): HubContext;
@@ -197,7 +197,7 @@ interface HubContext {
     };
     space: HubHarnessSpace;
     spaceClient(): {
-        hubs: { get(): Promise<unknown> };
+        hubs: { get(): Promise<{ body: unknown }> };
     };
 }
 
@@ -1051,13 +1051,13 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
     const v2HubClient = {
         status: {
-            get: async () => parseJson(await hub.handle({ method: "GET", path: "/api/v2/status", headers: {}, body: undefined }))
+            get: async () => ({ body: await parseJson(await hub.handle({ method: "GET", path: "/api/v2/status", headers: {}, body: undefined })) })
         }
     };
 
     const v2SpaceClient = {
         hubs: {
-            get: async () => parseJson(await hub.handle({ method: "GET", path: "/api/v2/hubs", headers: {}, body: undefined }))
+            get: async () => ({ body: await parseJson(await hub.handle({ method: "GET", path: "/api/v2/hubs", headers: {}, body: undefined })) })
         }
     };
 

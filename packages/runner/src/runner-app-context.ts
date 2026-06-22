@@ -23,8 +23,8 @@ export interface RunnerProxy {
     keepAliveIssued(): void;
 }
 
-export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
-implements AppContext<AppConfigType, State> {
+export class RunnerAppContext<AppConfigType extends AppConfig, State extends any, HubClientType extends object = object, SpaceClientType extends object = object>
+implements AppContext<AppConfigType, State, HubClientType, SpaceClientType> {
     private runner;
     config: AppConfigType;
     AppError!: AppErrorConstructor;
@@ -35,31 +35,36 @@ implements AppContext<AppConfigType, State> {
     logger: IObjectLogger;
     hub: HostClient;
     space: ManagerClient;
+    private v2HubClient: HubClientType;
+    private v2SpaceClient: SpaceClientType;
     instanceId: string;
     api: APIExpose;
     localStorage: ILocalStorage;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient,
-        spaceClient: ManagerClient, id: string, logLevel: LogLevel, api: APIExpose, localStorage: ILocalStorage) {
+        spaceClient: ManagerClient, v2HubClient: HubClientType, v2SpaceClient: SpaceClientType,
+        id: string, logLevel: LogLevel, api: APIExpose, localStorage: ILocalStorage) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
         this.hub = hostClient;
         this.space = spaceClient;
+        this.v2HubClient = v2HubClient;
+        this.v2SpaceClient = v2SpaceClient;
         this.instanceId = id;
         this.api = api;
         this.localStorage = localStorage;
         this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
     }
 
-    hubClient(): object {
-        return this.hub;
+    hubClient(): HubClientType {
+        return this.v2HubClient;
     }
 
-    spaceClient(): object {
-        return this.space;
+    spaceClient(): SpaceClientType {
+        return this.v2SpaceClient;
     }
 
     private handleSave(_state: any): void {
