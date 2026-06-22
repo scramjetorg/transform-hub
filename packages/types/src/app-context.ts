@@ -186,8 +186,14 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     /** Allows to access Hub, for details please refer to @scramjet/api-client */
     hub: import("./api-client/host-client").HostClient;
 
+    /** Allows to access canonical v2 Hub API client. */
+    hubClient(): object;
+
     /** Allows to access Space, for details please refer to @scramjet/api-client */
     space: import("./api-client/manager-client").ManagerClient;
+
+    /** Allows to access canonical v2 Space API client. */
+    spaceClient(): object;
 
     /** Instance Id */
     instanceId: string;

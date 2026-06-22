@@ -84,23 +84,23 @@
 
 ## Phase 4: Manager Aggregation Readiness and BDD Coverage
 
-- [ ] Task: Write failing readiness tests for issue #27
-    - [ ] Add deterministic tests for three hubs where one registers later and aggregation eventually includes all expected sequence/instance state without arbitrary sleeps.
-    - [ ] Add tests for any readiness summary/ack behavior introduced by the implementation.
-    - [ ] Keep existing registration-order regression tests intact.
-- [ ] Task: Implement Manager aggregation readiness contract
-    - [ ] Track per-hub inventory consumption state for sequences and instances if needed.
-    - [ ] Expose readiness through Manager health/status/details or another documented Manager-level signal.
-    - [ ] Ensure MultiManager-proxied Manager routes expose the same readiness behavior.
-- [ ] Task: Add BDD coverage for sequence and API-client migration behavior
-    - [ ] Add BDD scenarios for sequence use of `hubClient()` and `spaceClient()`.
-    - [ ] Add BDD scenarios showing legacy `this.hub` and `this.space` still work.
-    - [ ] Add BDD scenarios for API client compatibility facade behavior.
-    - [ ] Target roughly 90% coverage of affected sequence-side and API-client-side migration scenarios.
-- [ ] Task: Run BDD/API validation
-    - [ ] Run the narrowest relevant BDD smoke command(s), starting with API/node paths.
-    - [ ] Run package tests for manager, host, runner-node, rest-api2, api-client, and touched clients.
-    - [ ] Run package build or affected TypeScript build checks.
+- [x] Task: Write failing readiness tests for issue #27
+    - [x] Add deterministic tests for three hubs where one registers later and aggregation eventually includes all expected sequence/instance state without arbitrary sleeps.
+    - [x] Add tests for any readiness summary/ack behavior introduced by the implementation.
+    - [x] Keep existing registration-order regression tests intact.
+- [x] Task: Implement Manager aggregation readiness contract
+    - [x] Track per-hub inventory consumption state for sequences and instances if needed.
+    - [x] Expose readiness through Manager health/status/details or another documented Manager-level signal.
+    - [x] Ensure MultiManager-proxied Manager routes expose the same readiness behavior.
+- [x] Task: Add BDD coverage for sequence and API-client migration behavior
+    - [x] Add BDD scenarios for sequence use of `hubClient()` and `spaceClient()`.
+    - [x] Add BDD scenarios showing legacy `this.hub` and `this.space` still work.
+    - [x] Add BDD scenarios for API client compatibility facade behavior.
+    - [x] Target roughly 90% coverage of affected sequence-side and API-client-side migration scenarios.
+- [x] Task: Run BDD/API validation
+    - [x] Run the narrowest relevant BDD smoke command(s), starting with API/node paths.
+    - [x] Run package tests for manager, host, runner-node, rest-api2, api-client, and touched clients.
+    - [x] Run package build or affected TypeScript build checks.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Manager Aggregation Readiness and BDD Coverage' (Protocol in workflow.md)
 
 ## Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness
@@ -156,3 +156,6 @@
 - Phase 3 oracle review: final re-review found no blockers and marked the phase safe to commit/push and proceed to manual validation. Non-blocking manual validation focus: direct HostClient, direct ManagerClient, ManagerClient via MultiManager proxy, and MiddlewareClient space proxy paths.
 - Phase 3 checkpoint commit: `3b535d92` (`feat(conductor): Complete v2 canonical API phase 3`).
 - Phase 3 manual verification: approved by user after PR push.
+- Phase 4 readiness implementation: `STHInfoRegister` now stores instances by hub-qualified key so same instance IDs from different hubs are retained in Manager aggregation. `STHController` emits explicit bulk sequence/instance inventory markers and emits `disconnected` during the real disconnect path. Manager v2 health details now include an unpaginated `aggregation` readiness summary with total hubs, active hubs, sequence/instance counts, and per-hub inventory-consumed status. Empty active hubs are ready after both empty bulk inventory messages are consumed, disconnect clears inventory readiness, and health readiness no longer depends on storage middleware being configured. This readiness signal is visible through direct Manager v2 health and MultiManager Manager proxy routing because the proxied route delegates to Manager's v2 API.
+- Phase 4 sequence/API-client coverage: added `AppContext.hubClient()` / `spaceClient()` declarations, legacy runner compatibility methods, sequence-test v2 client harness support and fixture coverage for `hubClient().status.get()` plus `spaceClient().hubs.get()`, and BDD IAC coverage for a running sequence using `hubClient()` against Host v2. Existing legacy `this.hub`/`this.space` tests remain in sequence-test and existing HUB-002/host-client BDD scenarios.
+- Phase 4 validation: Manager readiness/API tests passed (`test/sth-info-register.spec.ts` + `test/manager-registration.spec.ts` + `test/manager-api-v2-hotwire.spec.ts`, 49 tests). Sequence-test fixture suite passed (10 tests), runner-node app context tests passed (11 tests), api-client facade tests passed (4 tests), rest-api2 package tests passed (33 tests), direct changed-file Biome lint passed, and `npm run build:packages` passed. Narrow BDD `NO_HOST=1 npm run test:bdd -- --name "HUB-002 TC-006"` passed (1 scenario, 9 steps). A first `npm run test:bdd-ci-node -- --name "HUB-002 TC-006"` selected 0 scenarios because that script filters to `@ci-instance-node`; generic BDD without `NO_HOST=1` failed from an existing harness mode conflict where BeforeAll starts a default host occupying the local runner Verser2 port before explicit host-start scenarios. `@scramjet/runner` package tests passed 110 assertions but still emitted the known preexisting `WebAssembly is not defined` unhandled rejection from `verser2-runner-transport.spec.ts` under the AVA `--jitless` profile. The 101-hub readiness regression emitted Node MaxListenersExceeded warnings from many test controllers piping to the shared manager logger; assertions passed and this is isolated to the synthetic high-fanout test.

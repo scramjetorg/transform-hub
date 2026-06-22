@@ -391,6 +391,26 @@ test("STHInfoRegister: getInstances returns all instances across hosts", (t) => 
     t.true(allInstances.some((i) => i.id === "inst-b"));
 });
 
+test("STHInfoRegister: keeps same instance id from different hubs", (t) => {
+    const reg = new STHInfoRegister();
+
+    reg.addHub("host-1");
+    reg.addHub("host-2");
+    reg.addSequence("host-1", "seq-1", makeSeqConfig("seq-1"));
+    reg.addSequence("host-2", "seq-2", makeSeqConfig("seq-2"));
+
+    reg.addInstance("host-1", makeInstance("shared-inst", "seq-1", { instanceName: "instance-on-host-1" } as any));
+    reg.addInstance("host-2", makeInstance("shared-inst", "seq-2", { instanceName: "instance-on-host-2" } as any));
+
+    const allInstances = reg.getInstances() as any[];
+
+    t.is(allInstances.length, 2);
+    t.deepEqual(allInstances.map((instance) => instance.location).sort(), ["host-1", "host-2"]);
+    t.deepEqual(allInstances.map((instance) => instance.instanceName).sort(), ["instance-on-host-1", "instance-on-host-2"]);
+    t.deepEqual(reg.getInstancesByHub("host-1"), ["shared-inst"]);
+    t.deepEqual(reg.getInstancesByHub("host-2"), ["shared-inst"]);
+});
+
 test("STHInfoRegister: multiple hosts and sequences in sequencesStore", (t) => {
     const reg = new STHInfoRegister();
 

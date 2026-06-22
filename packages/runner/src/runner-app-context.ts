@@ -54,6 +54,14 @@ implements AppContext<AppConfigType, State> {
         this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
     }
 
+    hubClient(): object {
+        return this.hub;
+    }
+
+    spaceClient(): object {
+        return this.space;
+    }
+
     private handleSave(_state: any): void {
         throw new Error("Method not implemented.");
     }

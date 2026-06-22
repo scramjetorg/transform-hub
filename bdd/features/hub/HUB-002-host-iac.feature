@@ -30,6 +30,18 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
         And host is running
         * exit hub process
 
+    @ci-hub
+    Scenario: HUB-002 TC-006 Start host with v2 hubclient controller
+        When hub process is started with random ports and parameters "--sequences-root iac-test-data/sequences/ --identify-existing --startup-config iac-test-data/start-config-v2-hubclient.json --runtime-adapter=process -K"
+        Then host is running
+        Then I get list of instances
+        And there are some instances
+        And instances of sequence "v2-hub-client" are available
+        And send kill message to instances of sequence "v2-hub-client"
+        And wait for "500" ms
+        And host is running
+        * exit hub process
+
     @ci-hub @starts-host @slow
     Scenario: HUB-002 TC-004 Event forwarding works between sequences
         When hub process is started with random ports and parameters "--sequences-root=data/sequences/ --instance-lifetime-extension-delay=10 --identify-existing --runtime-adapter=process"

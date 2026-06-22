@@ -101,6 +101,25 @@ test("hub-calls fixture makes expected host calls", async t => {
     ));
 });
 
+test("v2-client-calls fixture makes expected canonical v2 calls", async t => {
+    const harness = createHubHarness();
+    const sequencePath = await fixtureMetadataPath("v2-client-calls");
+
+    const result = await runSequence({
+        runtime: "node",
+        sequencePath,
+        context: harness.context,
+        input: {
+            contentType: "application/x-ndjson",
+            body: [{ id: "job-1" }]
+        }
+    });
+
+    t.deepEqual(result.output.ndjson(), [{ id: "job-1", hubStatus: "ok", hubs: 1 }]);
+    harness.assert.called({ method: "GET", path: "/api/v2/status" });
+    harness.assert.called({ method: "GET", path: "/api/v2/hubs" });
+});
+
 test("lifecycle-calls fixture uses keepAlive and end", async t => {
     const harness = createHubHarness();
     const sequencePath = await fixtureMetadataPath("lifecycle-calls");

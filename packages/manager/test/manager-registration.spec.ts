@@ -98,6 +98,142 @@ test.serial("Manager re-registration captures init inventory after clearing stal
     });
 });
 
+test.serial("Manager aggregation includes three hubs when one registers later", async (t) => {
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.logStream = new PassThrough();
+
+        if (this.id === "hub-late") {
+            await Promise.resolve();
+        }
+
+        const sequenceId = `${this.id}-seq`;
+        const sequence = makeSequence(sequenceId);
+        const instance = makeInstance("startup-main", sequenceId, { instanceName: `${this.id}-startup` } as any);
+
+        this.emit("sequences", [sequence] as any);
+        this.emit("sequence", sequence);
+        this.emit("instances", [instance] as any);
+        this.emit("instance", { instance } as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport({
+            isRouteReady: () => true
+        } as any);
+        (manager as any).s3Middleware = { index: { sequences: [] } };
+
+        await manager.handleSthRegistration({ id: "hub-a", routeDomain: "hub-a.test" } as any);
+        await manager.handleSthRegistration({ id: "hub-b", routeDomain: "hub-b.test" } as any);
+        await manager.handleSthRegistration({ id: "hub-late", routeDomain: "hub-late.test" } as any);
+
+        t.deepEqual(manager.getSequences().map((sequence: any) => sequence.id).sort(), ["hub-a-seq", "hub-b-seq", "hub-late-seq"]);
+        t.deepEqual(manager.getInstances().map((instance: any) => instance.instanceName).sort(), ["hub-a-startup", "hub-b-startup", "hub-late-startup"]);
+
+        const health = await manager.getV2HealthCheckInfo() as any;
+
+        t.like(health.details.aggregation, {
+            ready: true,
+            hubs: 3,
+            sequences: 3,
+            instances: 3
+        });
+        t.deepEqual(health.details.aggregation.byHub.map((hub: any) => hub.id).sort(), ["hub-a", "hub-b", "hub-late"]);
+    });
+});
+
+test.serial("Manager aggregation readiness supports empty hub inventory without storage", async (t) => {
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.logStream = new PassThrough();
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport({
+            isRouteReady: () => true
+        } as any);
+
+        await manager.handleSthRegistration({ id: "empty-hub", routeDomain: "empty-hub.test" } as any);
+
+        const health = await manager.getV2HealthCheckInfo() as any;
+
+        t.like(health.details.aggregation, {
+            ready: true,
+            hubs: 1,
+            activeHubs: 1,
+            sequences: 0,
+            instances: 0
+        });
+        t.deepEqual(health.details.aggregation.byHub, [{
+            id: "empty-hub",
+            active: true,
+            healthy: false,
+            sequences: 0,
+            instances: 0,
+            inventoryConsumed: true
+        }]);
+    });
+});
+
+test.serial("Manager aggregation readiness considers active hubs beyond the first page", async (t) => {
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.logStream = new PassThrough();
+
+        if (this.id === "hub-101") {
+            return;
+        }
+
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport({
+            isRouteReady: () => true
+        } as any);
+
+        for (let index = 1; index <= 101; index++) {
+            const id = `hub-${String(index).padStart(3, "0")}`;
+
+            await manager.handleSthRegistration({ id, routeDomain: `${id}.test` } as any);
+        }
+
+        const readiness = manager.getAggregationReadiness();
+
+        t.is(readiness.hubs, 101);
+        t.is(readiness.activeHubs, 101);
+        t.false(readiness.ready);
+        t.like(readiness.byHub.find(hub => hub.id === "hub-101"), {
+            active: true,
+            inventoryConsumed: false
+        });
+    });
+});
+
+test.serial("Manager aggregation readiness clears inventory markers on disconnect", async (t) => {
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.logStream = new PassThrough();
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport({
+            isRouteReady: () => true
+        } as any);
+
+        await manager.handleSthRegistration({ id: "hub-1", routeDomain: "hub-1.test" } as any);
+        t.true(manager.getAggregationReadiness().ready);
+
+        await manager.apiSthConnectionStore.getById("hub-1")?.disconnect("id_drop");
+
+        const readiness = manager.getAggregationReadiness();
+
+        t.false(readiness.ready);
+        t.like(readiness.byHub[0], { id: "hub-1", inventoryConsumed: false });
+    });
+});
+
 test.serial("Manager rolls back registration state when STH init fails", async (t) => {
     await withPatchedInit(async function patchedInit(this: STHController) {
         this.logStream = new PassThrough();

@@ -103,8 +103,12 @@ export class STHInfoRegister implements ISTHInfoRegister {
                 sequence?.instances.push(instance.id);
             }
 
-            this.instancesStore.set(instance.id, this.withAggregationMetadata(hostId, instance));
+            this.instancesStore.set(this.getInstanceStoreKey(hostId, instance.id), this.withAggregationMetadata(hostId, instance));
         }
+    }
+
+    private getInstanceStoreKey(hostId: string, instanceId: string): string {
+        return `${hostId}:${instanceId}`;
     }
 
     private withAggregationMetadata(hostId: string, instance: Instance): Instance {
@@ -142,7 +146,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
                     sequence.instances = sequence.instances.filter(item => item !== instanceId);
                 }
 
-                this.instancesStore.delete(instanceId);
+                this.instancesStore.delete(this.getInstanceStoreKey(hostId, instanceId));
             }
         }
     }
@@ -195,7 +199,7 @@ export class STHInfoRegister implements ISTHInfoRegister {
 
         this.hostsMap.get(id)?.forEach((instancesSet, _sequenceId) => {
             instancesSet.forEach((instanceId) => {
-                this.instancesStore.delete(instanceId);
+                this.instancesStore.delete(this.getInstanceStoreKey(id, instanceId));
             });
         });
 
