@@ -1,12 +1,7 @@
 import { IDProvider } from "@scramjet/model";
+import type { IObjectLogger } from "@scramjet/types";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname } from "path";
-
-type HostIdLogger = {
-    info: (entry: any, ...optionalParams: any[]) => void;
-    warn: (entry: any, ...optionalParams: any[]) => void;
-    error: (entry: any, ...optionalParams: any[]) => void;
-};
 
 export type HostInfoFile = {
     id?: string;
@@ -18,7 +13,7 @@ export function writeHostInfoFile(infoFilePath: string, info: object): void {
     writeFileSync(infoFilePath, JSON.stringify(info));
 }
 
-export function readHostInfoFile(infoFilePath: string, logger: HostIdLogger): HostInfoFile {
+export function readHostInfoFile(infoFilePath: string, logger: Pick<IObjectLogger, "warn" | "error">): HostInfoFile {
     let fileContents = "";
 
     try {
@@ -38,7 +33,7 @@ export function readHostInfoFile(infoFilePath: string, logger: HostIdLogger): Ho
     }
 }
 
-export function resolveStableHostId(configuredId: string | undefined, infoFilePath: string, logger: HostIdLogger): string {
+export function resolveStableHostId(configuredId: string | undefined, infoFilePath: string, logger: Pick<IObjectLogger, "info" | "warn" | "error">): string {
     if (configuredId) {
         logger.info("Initialized with custom id", configuredId);
         return configuredId;
