@@ -123,7 +123,7 @@
     - [x] Run `npm run build:packages` if package boundaries or shared contracts changed.
     - [x] Run relevant BDD smoke commands for API/node sequence behavior.
     - [x] Run lint or narrow Biome validation for changed files.
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness' (Protocol in workflow.md)
 
 ## Active Track Notes
 
@@ -172,3 +172,4 @@
 - Phase 5 oracle review: first review found a documentation blocker because MultiManager v2 health was not explicitly documented in the health/readiness notes. Fixed `docs-source/api/client-usage.md` to document canonical MultiManager `GET /api/v2/health` and v1 compatibility health.
 - Phase 5 oracle re-review: previous blocker resolved; no new blockers; safe to commit/push and proceed to manual verification.
 - Phase 5 checkpoint commit: `2d17588f` (`feat(conductor): Complete v2 canonical API phase 5`).
+- Phase 5 manual verification: approved by user after PR push.
