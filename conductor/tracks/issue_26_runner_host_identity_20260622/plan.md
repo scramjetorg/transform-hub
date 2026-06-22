@@ -46,7 +46,7 @@
     - [x] Run the relevant package tests or targeted AVA specs under the repo memory guidance.
     - [x] Record expected failures in `plan.md` before implementation.
         - Tests were added and then validated after implementation because the implementation delegate completed tests and code in one bounded pass.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Contract the Desired Config Behavior with Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Contract the Desired Config Behavior with Tests' (Protocol in workflow.md)
 
 ## Phase 3: Implement Automatic Runner Broker Identity Resolution
 
@@ -70,7 +70,7 @@
 - [x] Task: Update option descriptions or docs comments where appropriate
     - [x] Document `auto` in `packages/config/src/verser2-config.ts` option/help text if applicable.
     - [x] Avoid broader docs churn unless needed for the changed option behavior.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Implement Automatic Runner Broker Identity Resolution' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Implement Automatic Runner Broker Identity Resolution' (Protocol in workflow.md)
 
 ## Phase 4: Validate, Review, and Checkpoint
 
@@ -103,4 +103,4 @@
         - Checkpoint commit: `f350ee9e` (`fix: derive runner host broker identity`).
     - [x] Push the review branch before manual verification.
     - [x] Update `plan.md` with the checkpoint commit SHA if this track is being executed through Conductor.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Validate, Review, and Checkpoint' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Validate, Review, and Checkpoint' (Protocol in workflow.md)
