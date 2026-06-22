@@ -101,7 +101,7 @@
     - [x] Run the narrowest relevant BDD smoke command(s), starting with API/node paths.
     - [x] Run package tests for manager, host, runner-node, rest-api2, api-client, and touched clients.
     - [x] Run package build or affected TypeScript build checks.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Manager Aggregation Readiness and BDD Coverage' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Manager Aggregation Readiness and BDD Coverage' (Protocol in workflow.md)
 
 ## Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness
 
@@ -162,3 +162,5 @@
 - Phase 4 oracle review: final quick re-review found no blockers after the health scope consistency fix and marked Phase 4 safe to commit/push and proceed to manual validation.
 - Phase 4 checkpoint commit: `25179523` (`feat(conductor): Complete v2 canonical API phase 4`).
 - Phase 4 feedback fix: `AppContext` and application function aliases now carry generic `hubClient()` / `spaceClient()` types so sequence authors can use `@scramjet/rest-api2` `HubClient` / `SpaceClient` fluent API types without making `@scramjet/types` depend on rest-api2. `@scramjet/runner-node` already returns real v2 clients and now implements the generic `AppContext`; legacy `@scramjet/runner` now depends on `@scramjet/rest-api2`, constructs real v2 Hub/Space fluent clients, and no longer returns v1 clients from the v2-named accessors. Sequence-test and BDD fixtures now use the real fluent response wrapper shape via `.body`. Validation for the feedback fix: types package test passed, runner app-context test passed (1), runner-node context tests passed (11), sequence-test fixture suite passed (10), direct changed-file Biome lint passed, `npm run build:packages` passed, and `NO_HOST=1 npm run test:bdd -- --name "HUB-002 TC-006"` passed.
+- Phase 4 typing follow-up commit: `b0a846eb` (`fix(conductor): Default app context clients to unknown`) keeps `@scramjet/types` dependency-free, changes generic client defaults from `object` to `unknown`, and concretely types legacy runner context as `HubClient` / `SpaceClient`; @oracle review found no blockers, targeted runner/runner-node tests passed, direct Biome lint passed, and `npm run build:packages` passed.
+- Phase 4 manual verification: approved by user after the feedback fixes and generic client default follow-up were pushed.
