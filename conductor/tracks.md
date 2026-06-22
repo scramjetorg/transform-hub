@@ -11,3 +11,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [ ] **Track: typings split and full sequence appcontext typings**
 *Link: [./tracks/typings_split_appcontext_20260622/](./tracks/typings_split_appcontext_20260622/)*
+
+---
+
+- [ ] **Track: fix for issue 26**
+*Link: [./tracks/issue_26_runner_host_identity_20260622/](./tracks/issue_26_runner_host_identity_20260622/)*
