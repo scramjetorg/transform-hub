@@ -105,24 +105,24 @@
 
 ## Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness
 
-- [ ] Task: Revalidate stream compatibility issues #23 and #24
-    - [ ] Confirm streamed topic responses do not explicitly set forbidden `transfer-encoding` headers.
-    - [ ] Confirm local Verser2 guest response `flushHeaders()` shim/regression remains covered.
-    - [ ] Check upstream `signicode/verser2#46`; if still open, keep shim and document deferral.
-- [ ] Task: Final internal v1 boundary audit
-    - [ ] Search all affected packages for `/api/v1` usage.
-    - [ ] Confirm remaining usages are external compatibility endpoints, legacy tests, docs, or intentionally isolated adapters.
-    - [ ] Add or update notes documenting each intentional remaining internal-looking v1 usage.
-- [ ] Task: Documentation and compatibility notes
-    - [ ] Update API/client/sequence documentation for `hubClient()` and `spaceClient()`.
-    - [ ] Document v1 as legacy external compatibility and v2 as canonical internal API.
-    - [ ] Document Host/Manager/MultiManager health/readiness endpoints.
-    - [ ] Document reported issue resolution/deferral status.
-- [ ] Task: Final validation
-    - [ ] Run focused package tests for all touched packages.
-    - [ ] Run `npm run build:packages` if package boundaries or shared contracts changed.
-    - [ ] Run relevant BDD smoke commands for API/node sequence behavior.
-    - [ ] Run lint or narrow Biome validation for changed files.
+- [x] Task: Revalidate stream compatibility issues #23 and #24
+    - [x] Confirm streamed topic responses do not explicitly set forbidden `transfer-encoding` headers.
+    - [x] Confirm local Verser2 guest response `flushHeaders()` shim/regression remains covered.
+    - [x] Check upstream `signicode/verser2#46`; if still open, keep shim and document deferral.
+- [x] Task: Final internal v1 boundary audit
+    - [x] Search all affected packages for `/api/v1` usage.
+    - [x] Confirm remaining usages are external compatibility endpoints, legacy tests, docs, or intentionally isolated adapters.
+    - [x] Add or update notes documenting each intentional remaining internal-looking v1 usage.
+- [x] Task: Documentation and compatibility notes
+    - [x] Update API/client/sequence documentation for `hubClient()` and `spaceClient()`.
+    - [x] Document v1 as legacy external compatibility and v2 as canonical internal API.
+    - [x] Document Host/Manager/MultiManager health/readiness endpoints.
+    - [x] Document reported issue resolution/deferral status.
+- [x] Task: Final validation
+    - [x] Run focused package tests for all touched packages.
+    - [x] Run `npm run build:packages` if package boundaries or shared contracts changed.
+    - [x] Run relevant BDD smoke commands for API/node sequence behavior.
+    - [x] Run lint or narrow Biome validation for changed files.
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Stream Compatibility, Final v1 Boundary Audit, and Release Readiness' (Protocol in workflow.md)
 
 ## Active Track Notes
@@ -164,3 +164,10 @@
 - Phase 4 feedback fix: `AppContext` and application function aliases now carry generic `hubClient()` / `spaceClient()` types so sequence authors can use `@scramjet/rest-api2` `HubClient` / `SpaceClient` fluent API types without making `@scramjet/types` depend on rest-api2. `@scramjet/runner-node` already returns real v2 clients and now implements the generic `AppContext`; legacy `@scramjet/runner` now depends on `@scramjet/rest-api2`, constructs real v2 Hub/Space fluent clients, and no longer returns v1 clients from the v2-named accessors. Sequence-test and BDD fixtures now use the real fluent response wrapper shape via `.body`. Validation for the feedback fix: types package test passed, runner app-context test passed (1), runner-node context tests passed (11), sequence-test fixture suite passed (10), direct changed-file Biome lint passed, `npm run build:packages` passed, and `NO_HOST=1 npm run test:bdd -- --name "HUB-002 TC-006"` passed.
 - Phase 4 typing follow-up commit: `b0a846eb` (`fix(conductor): Default app context clients to unknown`) keeps `@scramjet/types` dependency-free, changes generic client defaults from `object` to `unknown`, and concretely types legacy runner context as `HubClient` / `SpaceClient`; @oracle review found no blockers, targeted runner/runner-node tests passed, direct Biome lint passed, and `npm run build:packages` passed.
 - Phase 4 manual verification: approved by user after the feedback fixes and generic client default follow-up were pushed.
+- Phase 5 stream compatibility revalidation: `packages/api-server/test/handler-execution.spec.ts` still asserts upstream stream responses do not explicitly set `transfer-encoding`; `packages/host/test/runner-verser2-host-peers.spec.ts` still covers the local verser2 guest response `flushHeaders()` shim. `gh issue view 46 --repo signicode/verser2` reports upstream issue `signicode/verser2#46` as OPEN, so the local shim remains intentionally deferred until upstream support is released and adopted.
+- Phase 5 stream validation: `ulimit -v 1835008 && node ../../scripts/run-ava.js test/handler-execution.spec.ts test/routed-forward.spec.ts` in `packages/api-server` passed (30 tests). `ulimit -v 1835008 && node ../../scripts/run-ava.js test/runner-verser2-host-peers.spec.ts` in `packages/host` passed its 2 assertions but emitted the known preexisting `ReferenceError: WebAssembly is not defined` unhandled rejection under AVA `--jitless`; classified as preexisting/out-of-scope and not caused by the stream shim.
+- Phase 5 final `/api/v1` audit: searched runner, runner-node, host, manager, multi-manager, sth, api-client, middleware-api-client, multi-manager-api-client, CLI, BDD, and the active track. Remaining `/api/v1` literals are classified as public v1 compatibility route registrations/tests, legacy API client defaults and docs, CLI defaults/docs, BDD fixtures, Manager/Host RPC/topic/storage compatibility paths, route-classifier compatibility rules, generated/historical reports, or the deliberate Hub space proxy path `/api/v1/cpm/api/v2`. No new unsafe internal v1 dependency was found.
+- Phase 5 documentation updates: `docs-source/sequences/writing-sequences.md` now documents `this.hubClient()` and `this.spaceClient()` with typed v2 fluent client usage and legacy `this.hub`/`this.space` compatibility; `docs-source/api/client-usage.md` now states v2 is canonical for new internal/sequence-facing integrations, documents sequence context clients, and records Hub/Manager health/readiness behavior; `docs-source/manager/overview.md` now documents v2 aggregation readiness and v1 health compatibility.
+- Phase 5 final validation: api-server stream/routed-forward tests passed (30); Host focused compatibility tests passed (53 tests) with the known preexisting `WebAssembly is not defined` unhandled rejection under AVA `--jitless`; Manager readiness/API tests passed (49) with the known synthetic high-fanout MaxListeners warnings; api-client facade tests passed (4); runner-node context tests passed (11); runner app-context test passed (1); rest-api2 client/manifest/openapi tests passed (17); sequence-test fixture tests passed (10); BDD `NO_HOST=1 npm run test:bdd -- --name "HUB-002 TC-006"` passed (1 scenario, 9 steps); `npm run build:packages` passed; `git diff --check` passed. `npx biome lint <markdown files>` processed 0 files because Biome ignores Markdown in this repo, so narrow Biome validation is not applicable for the Phase 5 docs/plan-only changes.
+- Phase 5 oracle review: first review found a documentation blocker because MultiManager v2 health was not explicitly documented in the health/readiness notes. Fixed `docs-source/api/client-usage.md` to document canonical MultiManager `GET /api/v2/health` and v1 compatibility health.
+- Phase 5 oracle re-review: previous blocker resolved; no new blockers; safe to commit/push and proceed to manual verification.

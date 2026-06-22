@@ -13,6 +13,7 @@ The **Manager** is the central orchestration service in Transform Hub. It provid
 - **Command routing** — receives deployment, stop, inspect, and monitoring commands and forwards them to the correct Hub via the verser2 transport protocol.
 - **Hub registry** — maintains a registry of connected Hubs, their health status, and their load.
 - **Instance tracking** — tracks all running Sequence Instances across the fleet, providing a global view.
+- **Aggregation readiness** — exposes deterministic v2 health details that show whether connected Hubs have reported sequence and instance inventory.
 - **API surface** — exposes the primary REST API that the [CLI](../cli/usage.md) and [API client](../api/client-usage.md) target.
 
 ## Manager vs Hub
@@ -26,6 +27,12 @@ The **Manager** is the central orchestration service in Transform Hub. It provid
 | Persistence | Ephemeral | Instance registry |
 
 For single-Hub development scenarios, you can interact with the Hub directly. For production deployments with multiple hosts, always route through the Manager.
+
+## Health and readiness
+
+The Manager exposes canonical health data at `GET /api/v2/health`. The health details include an aggregation readiness summary with connected Hub counts, active Hub counts, aggregate sequence and instance counts, and per-Hub inventory readiness. Operators can poll this signal to wait until Manager aggregation has consumed Hub inventory updates.
+
+Legacy `GET /api/v1/health` remains available for backwards-compatible callers.
 
 ## MultiManager
 

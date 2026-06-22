@@ -10,6 +10,8 @@ Transform Hub exposes HTTP APIs at the Hub and Manager levels. This page covers 
 
 > The legacy v1 API (via `@scramjet/api-client` and the `/api/v1` route tree) remains supported for backwards compatibility. See the [legacy v1 API client documentation](legacy/v1-api-client.md) if you are using the v1 client.
 
+> Internally, new Hub, Manager, runner, and sequence-facing integrations should use the v2 route contracts and fluent clients. v1 routes are compatibility boundaries for existing callers.
+
 ## API surfaces
 
 There are two API surfaces:
@@ -69,6 +71,32 @@ const sequences = await hub.sequences.get();
 const instance = hub.instance("instance-id");
 const health = await instance.health.get();
 ```
+
+### Sequence context clients
+
+Node.js sequences can access the same v2 fluent route contracts from the runtime `AppContext`:
+
+```typescript
+export default async function () {
+  const hubHealth = await this.hubClient().health.get();
+  const hubs = await this.spaceClient().hubs.get();
+
+  return {
+    hub: hubHealth.body,
+    hubCount: hubs.body.items.length,
+  };
+}
+```
+
+Use `this.hubClient()` for current-Hub operations and `this.spaceClient()` for Manager/Space-level operations. Existing `this.hub` and `this.space` properties remain available as legacy v1-compatible clients.
+
+### Health and readiness
+
+Hub health is canonical at `GET /api/v2/health`. `GET /api/v1/health` remains available as a compatibility route and returns the same operational health information for legacy callers.
+
+Manager health is canonical at `GET /api/v2/health`. Its response details include aggregation readiness information for connected Hubs, including active Hub counts, aggregated sequence/instance counts, and per-Hub inventory readiness. This signal is intended for polling instead of arbitrary sleeps when waiting for Manager aggregation to settle. Manager and MultiManager v1 health routes remain compatibility endpoints.
+
+MultiManager health is canonical at `GET /api/v2/health` on the MultiManager API surface. It reports root-level control-plane health and scope details for the managed spaces/Managers. `GET /api/v1/health` remains available for backwards-compatible MultiManager callers.
 
 ### Transport options
 
