@@ -1,7 +1,7 @@
 @manager-migration @full-api-verser2-forwarding
 Feature: MANAGER-003 Full API capability through Verser2 forwarding
   # To run:
-  #   NO_HOST=true BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding"
+  #   BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_JS=1 SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=180000 npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding"
   #
   # Regression coverage for full API forwarding across Hub/STH, Manager,
   # MultiManager, and sequence RPC surfaces.
@@ -10,6 +10,8 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
     When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-named-required.json --runtime-adapter=process --verser2-runner-host-bind-port=2445 --verser2-runner-host-public-url=https://127.0.0.1:2445 --verser2-runner-host-identity-dir=/work-tmp/full-api-direct-runner-host"
     Then host is running
     And stable instance name "orders-rpc" becomes available
+    And I use instance client for stable name "orders-rpc"
+    And wait for instance healthy is "true"
     When I send a "POST" request to "/instance/orders-rpc/rpc/test/abc" with body "direct-v1" and headers "{\"Content-Type\":\"text/plain\",\"Connection\":\"keep-alive, X-Debug-Hop\",\"X-Debug-Hop\":\"remove-me\",\"Keep-Alive\":\"timeout=5\"}"
     Then the response status should be 200
     And the response body should be "POST /abc direct-v1"
@@ -40,7 +42,7 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
     Given an isolated MultiManager aggregation stack
     And an STH hub "hub-1" is connected to the aggregation Manager
     And I wait for hubs to register with the Manager
-    When I send a "GET" request to aggregation hub "hub-1" at "/api/v1/cpm/list" with headers "{}"
+    When I send a "GET" request to aggregation hub "hub-1" at "/api/v1/cpm/list" with headers "{\"X-Scramjet-Sequence-Origin\":\"spoofed-client\"}"
     Then the response status should be 308
 
   @aggregation-repro-cleanup @sequence-to-sequence

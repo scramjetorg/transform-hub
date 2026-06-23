@@ -78,46 +78,69 @@
         - Phase 1 checkpoint commit: `ae39ec61`.
     - [x] Push the review branch before manual verification.
     - [x] Update `plan.md` with the checkpoint commit SHA.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: BDD Reproduction and Focused Test Contracts' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: BDD Reproduction and Focused Test Contracts' (Protocol in workflow.md)
+    - User approved Phase 1 red BDD/package contracts after OOM investigation and memory-safe validation corrections.
 
 ## Phase 2: Implement Verser2 Forwarding, Policy, and v2 RPC
 
-- [ ] Task: Implement shared header sanitization and redirect parsing
-    - [ ] Update `normalizeForwardedHeaders()` or its call sites to strip standard hop-by-hop headers.
-    - [ ] Strip headers nominated by the incoming `Connection` header.
-    - [ ] Add a reusable redirect metadata parser/helper in a separate file.
-    - [ ] Keep generic redirect parsing free of Scramjet-specific authorization policy.
-- [ ] Task: Implement forwarding policy helpers
-    - [ ] Add a separate policy/helper file for route direction and allowed tunnel decisions.
-    - [ ] Distinguish local/downward sequence routes, upward Manager routes, peer/sideways routes, and unknown routes.
-    - [ ] Ensure external API-originated upward requests return `308` instead of tunneling.
-    - [ ] Ensure client-supplied internal routing/auth headers cannot spoof allowed origin.
-- [ ] Task: Implement direct STH v1/v2 sequence RPC forwarding
-    - [ ] Preserve existing v1 instance and host RPC compatibility.
-    - [ ] Implement v2 instance RPC forwarding for `/api/v2/instances/:instanceId/rpc/*` without requiring sequence-specific typings.
-    - [ ] Reuse the same safe forwarding/header behavior for v1 and v2 where possible.
-- [ ] Task: Implement Manager and MultiManager downward tunneling
-    - [ ] Extend Manager follow-route handling so allowed downward targets tunnel through the Manager-to-STH Verser2 broker transport.
-    - [ ] Preserve `308` redirect responses for disallowed external upward requests.
-    - [ ] Ensure MultiManager `/cpm/:id` paths can use the Manager behavior without adding parallel routing logic.
-    - [ ] Keep Manager/MultiManager trust changes minimal and explicit.
-- [ ] Task: Implement authorized sequence/runtime upward resolution
-    - [ ] Wire Host-side 308 resolution for authorized sequence/runtime-originated Manager calls.
-    - [ ] Support sequence-to-sequence Manager-routed calls across two Hubs/STHs.
-    - [ ] Shorten same-Hub sequence-to-sequence resolution to the local Hub/STH path where practical.
-    - [ ] Ensure external API-originated calls to Manager via Hub/STH still return `308`.
-    - [ ] Enforce a maximum redirect count and reject unknown route domains.
-- [ ] Task: Run focused implementation validation
-    - [ ] Run focused `api-server` tests for header sanitization and redirect helper behavior.
-    - [ ] Run focused Host/API-router tests for v2 RPC forwarding.
-    - [ ] Run focused Manager/MultiManager tests for downward tunneling and upward semi-deny behavior.
-    - [ ] Run the new BDD feature tag under the process adapter/source execution mode.
-    - [ ] Run targeted TypeScript build checks for changed packages.
-- [ ] Task: Perform implementation review and deduplication
-    - [ ] Verify shared package reuse was considered and repeated code was extracted where safe.
-    - [ ] Verify route direction policy is centralized and not duplicated across handlers.
-    - [ ] Verify no unrelated API contract, trust, or adapter behavior changed.
-    - [ ] Use Oracle or another read-only review pass for the forwarding/authz design before checkpointing if substantial cross-package changes were made.
+- [x] Task: Implement shared header sanitization and redirect parsing
+    - [x] Update `normalizeForwardedHeaders()` or its call sites to strip standard hop-by-hop headers.
+    - [x] Strip headers nominated by the incoming `Connection` header.
+    - [x] Add a reusable redirect metadata parser/helper in a separate file.
+    - [x] Keep generic redirect parsing free of Scramjet-specific authorization policy.
+- [x] Task: Implement forwarding policy helpers
+    - [x] Add a separate policy/helper file for route direction and allowed tunnel decisions.
+    - [x] Distinguish local/downward sequence routes, upward Manager routes, peer/sideways routes, and unknown routes.
+    - [x] Ensure external API-originated upward requests return `308` instead of tunneling.
+    - [x] Ensure client-supplied internal routing/auth headers cannot spoof allowed origin.
+        - External requests without trusted runtime-origin context are semi-denied with `308`; client hop-by-hop/internal routing headers are sanitized before forwarding.
+- [x] Task: Implement direct STH v1/v2 sequence RPC forwarding
+    - [x] Preserve existing v1 instance and host RPC compatibility.
+    - [x] Implement v2 instance RPC forwarding for `/api/v2/instances/:instanceId/rpc/*` without requiring sequence-specific typings.
+    - [x] Reuse the same safe forwarding/header behavior for v1 and v2 where possible.
+- [x] Task: Implement Manager and MultiManager downward tunneling
+    - [x] Extend Manager follow-route handling so allowed downward targets tunnel through the Manager-to-STH Verser2 broker transport.
+    - [x] Preserve `308` redirect responses for disallowed external upward requests.
+    - [x] Ensure MultiManager `/cpm/:id` paths can use the Manager behavior without adding parallel routing logic.
+    - [x] Keep Manager/MultiManager trust changes minimal and explicit.
+- [x] Task: Implement authorized sequence/runtime upward resolution
+    - [x] Wire Host-side 308 resolution for authorized sequence/runtime-originated Manager calls.
+    - [x] Support sequence-to-sequence Manager-routed calls across two Hubs/STHs.
+    - [x] Shorten same-Hub sequence-to-sequence resolution to the local Hub/STH path where practical.
+    - [x] Ensure external API-originated calls to Manager via Hub/STH still return `308`.
+    - [x] Enforce a maximum redirect count and reject unknown route domains.
+- [x] Task: Run focused implementation validation
+    - [x] Run focused `api-server` tests for header sanitization and redirect helper behavior.
+        - Passed serial guarded: `packages/api-server/test/routed-forward.spec.ts`.
+        - Re-passed after response hop-by-hop sanitization was added.
+        - Passed serial guarded: `packages/api-server/test/routed-redirect.spec.ts`.
+    - [x] Run focused Host/API-router tests for v2 RPC forwarding.
+        - Passed serial guarded: `packages/host/test/api-v2-instance-hotwire.spec.ts`.
+        - Passed serial guarded: `packages/host/test/api-hotwire.spec.ts`.
+        - Passed serial guarded: `packages/host/test/cpm-connector.spec.ts`.
+    - [x] Run focused Manager/MultiManager tests for downward tunneling and upward semi-deny behavior.
+        - Passed serial guarded: `packages/manager/test/route-forwarding-policy.spec.ts`.
+        - Re-passed after STH route-domain trust validation was added.
+        - Passed serial guarded: `packages/manager/test/manager-api-v2-hotwire.spec.ts`.
+        - Passed serial guarded: `packages/multi-manager/test/multi-manager-api-v2-hotwire.spec.ts`.
+    - [x] Run the new BDD feature tag under the process adapter/source execution mode.
+        - Passed serial guarded Docker/JS-mode scenarios: `MANAGER-003 TC-000`, `MANAGER-003 TC-001`, `MANAGER-003 TC-002`, `MANAGER-003 TC-003`, `MANAGER-003 TC-004`, and `MANAGER-003 TC-005`.
+        - Re-passed `MANAGER-003 TC-003` after spoofed `X-Scramjet-Sequence-Origin` was denied with `308`.
+        - Re-passed `MANAGER-003 TC-004` after converting the scenario to a real source-sequence-initiated call and after route-domain validation.
+        - Re-passed `MANAGER-003 TC-005` after same-Hub same-instance calls were shortened to the local sequence API path.
+        - Re-passed `MANAGER-003 TC-001` after route-domain validation.
+    - [x] Run targeted TypeScript build checks for changed packages.
+        - Passed guarded: `npm run build:packages`.
+- [x] Task: Perform implementation review and deduplication
+    - [x] Verify shared package reuse was considered and repeated code was extracted where safe.
+        - Request/response hop-by-hop header sanitization now shares one helper in `@scramjet/api-server`.
+    - [x] Verify route direction policy is centralized and not duplicated across handlers.
+        - Manager route tunneling decisions use `decideRouteForwardingPolicy()`; STH route-domain trust is scoped through `isTrustedSthRouteDomain()` before policy use.
+    - [x] Verify no unrelated API contract, trust, or adapter behavior changed.
+        - External Host `/api/v1/cpm/*` now semi-denies spoofed runtime-origin headers with `308`; Manager registration ignores untrusted custom STH route domains.
+    - [x] Use Oracle or another read-only review pass for the forwarding/authz design before checkpointing if substantial cross-package changes were made.
+        - Oracle initial review found blockers around spoofable origin headers, response header sanitization, and route-domain trust; these were fixed and revalidated.
+        - Final Oracle follow-up found no critical blockers for Phase 2 checkpoint. Non-blocking hardening: validate STH ids before deriving route domains, make response `Connection` lookup fully case-insensitive, and optionally tighten scoped STH domains to one DNS label.
 - [ ] Task: Create Phase 2 checkpoint and push
     - [ ] Commit the scoped implementation changes after validation.
     - [ ] Push the review branch before manual verification.
@@ -136,6 +159,10 @@
     - [ ] Verify user-facing `308` behavior is clear and actionable where exposed.
     - [ ] Update docs only if behavior changes are user-facing and not already covered by tests/spec.
     - [ ] Record skipped broad validation and rationale.
+- [ ] Task: Halt for user review of waiting upstream sessions
+    - [ ] Stop work at this point before final checkpoint/PR readiness.
+    - [ ] Present findings and implementation notes about waiting upstream sessions for user review.
+    - [ ] Resume only after explicit user direction.
 - [ ] Task: Final checkpoint and PR readiness
     - [ ] Commit final documentation, validation note, or cleanup changes if any.
     - [ ] Push the review branch.

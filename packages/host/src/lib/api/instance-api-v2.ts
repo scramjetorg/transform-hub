@@ -7,6 +7,7 @@ import { IncomingHttpHeaders } from "http";
 import EventEmitter from "events";
 
 import { ICSI } from "../types";
+import { normalizeRpcForwardPath, stripRpcExposePath } from "../rpc-path";
 
 export class InstanceAPIV2 {
     constructor(
@@ -38,8 +39,36 @@ export class InstanceAPIV2 {
             getEvent: ({ params }) => this.handleEvent(params.name, false),
             getNextEvent: ({ params }) => this.handleEvent(params.name, true),
             sendEvent: ({ body }) => this.handleSendEvent(body),
-            rpc: routeBinding.contractOnly("RPC duplex forwarding remains handled by v1 compatibility surface.")
+            rpc: routeBinding.handler(((req: any, res?: any) => this.handleRpc(req, res)) as any)
         });
+    }
+
+    private async handleRpc(req: any, res: any): Promise<void> {
+        const rawReq = req.raw?.request || req.input || req;
+        const rawRes = req.raw?.response || req.output || res;
+
+        if (!rawReq.headers) {
+            rawReq.headers = req.headers || res || {};
+        }
+
+        if (!this.csi.forwardRpcRequest) {
+            rawRes.writeHead?.(501);
+            rawRes.end?.();
+            return;
+        }
+
+        const rpcPath = rawReq.url?.startsWith("/rpc") ? rawReq.url.slice("/rpc".length) || "/" : rawReq.url || "/";
+        const apiVersion = this.csi.expose?.path?.startsWith("/api/v1") ? "v1" : undefined;
+        const path = stripRpcExposePath(
+            normalizeRpcForwardPath(rpcPath, this.csi.expose?.path, apiVersion),
+            this.csi.expose?.path
+        );
+        const handled = await this.csi.forwardRpcRequest(rawReq, rawRes, path);
+
+        if (!handled && !rawRes.headersSent) {
+            rawRes.writeHead?.(503);
+            rawRes.end?.();
+        }
     }
 
     private handleInfo(): RestAPI2.InstanceResponse {

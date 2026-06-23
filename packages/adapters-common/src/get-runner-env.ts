@@ -2,7 +2,9 @@ import path from "path";
 import { STHConfiguration } from "@scramjet/types";
 import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
 
-const RUNNER_VERSER2_MIN_WAITING_STREAMS = 8;
+const RUNNER_VERSER2_LONG_LIVED_STREAMS = 8;
+const RUNNER_VERSER2_MIN_SPARE_RPC_STREAMS = 1;
+const RUNNER_VERSER2_MIN_WAITING_STREAMS = RUNNER_VERSER2_LONG_LIVED_STREAMS + RUNNER_VERSER2_MIN_SPARE_RPC_STREAMS;
 
 function normalizePem(value: string | undefined): string | undefined {
     if (!value?.trim()) {

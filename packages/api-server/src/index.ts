@@ -15,6 +15,8 @@ import { roundRobinStrategy } from "./strategies/round-robin";
 export { createForwardController } from "./handlers/forward";
 export { forwardRoutedRequest, normalizeForwardedHeaders } from "./handlers/routed-forward";
 export type { RoutedForwardTransport, RoutedForwardTransportResponse } from "./handlers/routed-forward";
+export { parseRoutedRedirect } from "./handlers/routed-redirect";
+export type { RoutedRedirectParseResult } from "./handlers/routed-redirect";
 export { roundRobinStrategy } from "./strategies/round-robin";
 export { consistentHashStrategy } from "./strategies/consistent-hash";
 

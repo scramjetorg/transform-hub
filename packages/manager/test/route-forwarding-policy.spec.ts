@@ -1,6 +1,6 @@
 import test from "ava";
 
-import { decideRouteForwardingPolicy } from "../src/lib/route-forwarding-policy";
+import { decideRouteForwardingPolicy, isTrustedSthRouteDomain } from "../src/lib/route-forwarding-policy";
 
 test("decideRouteForwardingPolicy tunnels local and downward sequence routes", t => {
     t.deepEqual(decideRouteForwardingPolicy({
@@ -30,4 +30,13 @@ test("decideRouteForwardingPolicy allows trusted runtime upward Manager routes",
         targetPath: "/api/v1/sth/hub-2/instance/hub-2-api-main/rpc/test/abc",
         origin: "runtime-sequence"
     }), { action: "tunnel", direction: "upward" });
+});
+
+test("isTrustedSthRouteDomain only accepts domains scoped to the registered STH id", t => {
+    t.true(isTrustedSthRouteDomain("hub-1", "sth.hub-1.scramjet.internal"));
+    t.true(isTrustedSthRouteDomain("hub-1", "sth.hub-1-manager-123.scramjet.internal"));
+
+    t.false(isTrustedSthRouteDomain("hub-1", "manager.space-1.scramjet.internal"));
+    t.false(isTrustedSthRouteDomain("hub-1", "sth.hub-2.scramjet.internal"));
+    t.false(isTrustedSthRouteDomain("hub-1", "sth.hub-1.evil.example"));
 });

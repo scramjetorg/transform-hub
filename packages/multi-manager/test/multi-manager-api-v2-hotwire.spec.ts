@@ -121,11 +121,19 @@ test("MultiManagerAPIHandler v2 trust route preserves manager lookup behavior", 
     await t.throwsAsync(() => trustHandler({ params: { id: "missing" } }), { message: "Manager missing not found" });
 });
 
-test("MultiManagerAPIHandler v2 resolves Space-owned routes with a verser2 redirect", async t => {
+test("MultiManagerAPIHandler v2 resolves Space-owned routes through the local Manager router", async t => {
     const recorder = new RouteRecorder();
     const multiManager = createMultiManagerStub(recorder);
+    const calls: any[] = [];
 
-    multiManager.managersStore.add("manager-1", { id: "manager-1", config: { verser2: { localGuest: { routeDomain: "manager-1.scramjet.internal" } } } } as any);
+    multiManager.managersStore.add("manager-1", {
+        id: "manager-1",
+        router: {
+            lookup(req: any, _res: any) {
+                calls.push({ url: req.url });
+            }
+        }
+    } as any);
     new MultiManagerAPIHandler(multiManager as any).attach();
 
     const response = {
@@ -141,8 +149,6 @@ test("MultiManagerAPIHandler v2 resolves Space-owned routes with a verser2 redir
 
     await handler({ url: "/api/v2/spaces/manager-1/hubs/sth-1/load", params: {}, headers: {} }, response, () => t.fail());
 
-    t.is(response.statusCode, 308);
-    t.is(response.headers.location, "http://manager-1.scramjet.internal/api/v2/hubs/sth-1/load");
-    t.is(response.headers["x-scramjet-route-domain"], "manager-1.scramjet.internal");
-    t.is(response.headers["x-scramjet-route-target-path"], "/api/v2/hubs/sth-1/load");
+    t.deepEqual(calls, [{ url: "/api/v2/hubs/sth-1/load" }]);
+    t.is(response.statusCode, 200);
 });

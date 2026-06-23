@@ -21,7 +21,7 @@ import {
     ISTHController,
     ISTHInfoRegister
 } from "@scramjet/types";
-import { CeroError, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
+import { CeroError, forwardRoutedRequest, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { Router, registerHttpRoutes } from "@scramjet/api-router";
 import { RestAPI2 } from "@scramjet/rest-api2";
 import { z } from "zod";
@@ -40,6 +40,7 @@ import { defer, merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
 import { ManagerSthBrokerTransport } from "./verser2-transport";
 import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
+import { decideRouteForwardingPolicy, isTrustedSthRouteDomain } from "./route-forwarding-policy";
 import { managerVerser2Options, maskConfig } from "@scramjet/config";
 
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -406,10 +407,17 @@ export class Manager implements IComponent {
         }
 
         const id = typeof payload.id === "string" && payload.id.trim().length ? payload.id : IDProvider.generate();
-        const routeDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length
-            ? payload.routeDomain
+        const offeredRouteDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length
+            ? payload.routeDomain.trim()
+            : undefined;
+        const routeDomain = offeredRouteDomain && isTrustedSthRouteDomain(id, offeredRouteDomain)
+            ? offeredRouteDomain
             : this.getSthRouteDomain(id);
         const registrationToken = this.config.verser2.registration.token;
+
+        if (offeredRouteDomain && offeredRouteDomain !== routeDomain) {
+            this.logger.warn("Ignoring untrusted STH route domain", id, offeredRouteDomain, routeDomain);
+        }
 
         if (registrationToken && payload.enrollmentToken !== registrationToken) {
             this.logger.warn("Refusing STH registration with invalid verser2 enrollment token", id);
@@ -559,14 +567,78 @@ export class Manager implements IComponent {
         headers: Record<string, string>
     ) {
         const forwarding = prepareManagerFollowForwarding(decision, req.url, headers);
+        const routeDomain = sth.routeDomain || forwarding.routeDomain || "";
+        const targetPath = this.normalizeSthTargetPath(forwarding.targetPath || req.url || "/");
 
         if (forwarding.kind === "direct-route-metadata") {
-            this.writeDirectRouteMetadata(sth.routeDomain, forwarding.targetPath, res);
+            this.writeDirectRouteMetadata(routeDomain, targetPath, res);
 
             return;
         }
 
-        this.writeNativeFollowRedirect(forwarding.location, forwarding.routeDomain || sth.routeDomain, forwarding.targetPath, res);
+        await this.forwardRequestToSTH(sth, req, res, targetPath, headers, forwarding.location);
+    }
+
+    public async forwardRequestToSTH(
+        sth: ISTHController,
+        req: ParsedMessage,
+        res: ServerResponse,
+        targetPath: string,
+        headers: Record<string, string> = normalizeForwardedHeaders(req.headers),
+        fallbackLocation?: string
+    ) {
+        const routeDomain = sth.routeDomain || "";
+        const normalizedTargetPath = this.normalizeSthTargetPath(targetPath);
+        const policy = decideRouteForwardingPolicy({
+            routeDomain,
+            targetPath: normalizedTargetPath,
+            origin: "manager-downward"
+        });
+
+        if (policy.action === "tunnel" && this.sthBrokerTransport) {
+            await forwardRoutedRequest({
+                transport: this.sthBrokerTransport,
+                domain: routeDomain,
+                req,
+                res,
+                path: normalizedTargetPath,
+                headers,
+                routeReadinessMs: this._config.verser2.timeouts.routeReadinessMs,
+                requestTimeoutMs: this._config.verser2.timeouts.requestMs,
+                onError: (error) => this.logger.warn("Manager routed follow request failed", error)
+            });
+
+            return;
+        }
+
+        this.writeNativeFollowRedirect(
+            this.createVerserRouteLocation(routeDomain, normalizedTargetPath, fallbackLocation || normalizedTargetPath),
+            routeDomain,
+            normalizedTargetPath,
+            res
+        );
+    }
+
+    private normalizeSthTargetPath(targetPath: string): string {
+        const path = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;
+
+        if (/^\/api\/v\d+(?:\/|$)/.test(path)) {
+            return path;
+        }
+
+        const apiBase = this._config.apiBase.endsWith("/") ? this._config.apiBase.slice(0, -1) : this._config.apiBase;
+
+        return `${apiBase}${path}`;
+    }
+
+    private createVerserRouteLocation(routeDomain: string | undefined, targetPath: string, fallback: string): string {
+        if (!routeDomain) {
+            return fallback;
+        }
+
+        const path = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;
+
+        return `http://${routeDomain}${path}`;
     }
 
     private writeNativeFollowRedirect(location: string, routeDomain: string | undefined, targetPath: string, res: ServerResponse) {

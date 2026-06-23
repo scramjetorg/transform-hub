@@ -53,6 +53,7 @@ function createCsiStub(calls: any[] = []): any {
         lastStats: { current: { memory: 1 } },
         apiInputEnabled: true,
         outputEncoding: "utf8",
+        expose: { path: "/test" },
         getInfo: () => ({
             id: "inst-1",
             sequence: { id: "seq-1" },
@@ -154,7 +155,20 @@ test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t =
     t.is(calls.length, 1);
     t.is(calls[0].forwardRpcRequest[0], req);
     t.is(calls[0].forwardRpcRequest[1], res);
-    t.is(calls[0].forwardRpcRequest[2], "/rpc/test/abc");
+    t.is(calls[0].forwardRpcRequest[2], "/abc");
+
+    calls.length = 0;
+
+    const duplexReq: any = { url: "/rpc/test/def", method: "POST", headers: { "content-type": "text/plain" }, params: {} };
+    const duplexRes = createResponseStub();
+    const duplex: any = { input: duplexReq, output: duplexRes };
+
+    await (route.handler as Function)(duplex, { "content-type": "text/plain" });
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0], duplexReq);
+    t.is(calls[0].forwardRpcRequest[1], duplexRes);
+    t.is(calls[0].forwardRpcRequest[2], "/def");
 });
 
 test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {

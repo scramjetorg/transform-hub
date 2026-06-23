@@ -32,6 +32,7 @@ import { DuplexStream } from "@scramjet/api-server";
 import { networkInterfaces } from "os";
 import { HostError } from "@scramjet/model";
 import { Verser2ClientTlsConfig } from "@scramjet/types";
+import { getManagerGuestMinWaitingStreams } from "./cpm-connector-leases";
 
 type STHInformation = {
     id?: string;
@@ -207,7 +208,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             hostUrl: this.config.verser2.hostUrl,
             guestId: this.config.verser2.guest.peerId,
             routedDomains: [this.config.verser2.guest.routeDomain],
-            minWaitingStreams: this.config.verser2.leases.minimumWaitingLeases,
+            minWaitingStreams: getManagerGuestMinWaitingStreams(this.config.verser2.leases.minimumWaitingLeases),
             leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
             tls
         }).attach(server, this.config.verser2.guest.routeDomain);
@@ -691,6 +692,16 @@ export class CPMConnector extends TypedEmitter<Events> {
             url,
             { method, agent: this.getHttpAgent(), headers }
         );
+    }
+
+    public getCpmRouteMetadata(reqPath: string) {
+        const path = reqPath.replace(/^\/+/, "");
+        const versionedPath = /^api\/v[12](?:\/|$)/.test(path) ? path : `api/v1/${path}`;
+
+        return {
+            routeDomain: this.config.verser2.broker.targetDomain,
+            targetPath: `/${versionedPath}`
+        };
     }
 
     /**

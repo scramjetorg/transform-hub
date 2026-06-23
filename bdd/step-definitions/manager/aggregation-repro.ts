@@ -542,15 +542,19 @@ When("I send a {string} request to aggregation hub {string} at {string} with hea
 
 When("source sequence {string} calls target sequence {string} through the aggregation Manager", async function (
     this: CustomWorld,
-    _sourceInstanceName: string,
+    sourceInstanceName: string,
     targetInstanceName: string
 ) {
+    const sourceHubName = sourceInstanceName.startsWith("hub-2-") ? "hub-2" : "hub-1";
     const targetHubName = targetInstanceName.startsWith("hub-2-") ? "hub-2" : "hub-1";
+    const sourceHub = encodeURIComponent(sourceHubName);
+    const targetHub = encodeURIComponent(targetHubName);
+    const targetInstance = encodeURIComponent(targetInstanceName);
 
-    this.response = await fetch(aggregationManagerProxyUrl(this, `/sth/${targetHubName}/instance/${targetInstanceName}/rpc/test/abc`), {
+    this.response = await fetch(aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`), {
         method: "POST",
         body: "sequence-to-sequence",
-        headers: { "Content-Type": "text/plain", "X-Scramjet-Sequence-Origin": _sourceInstanceName }
+        headers: { "Content-Type": "text/plain" }
     });
 });
 
