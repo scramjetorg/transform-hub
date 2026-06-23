@@ -7,7 +7,7 @@ A minimal package template/scaffold for creating new Scramjet Transform Hub pack
 ## Design/Patterns
 
 - **Scaffold pattern**: Intended to be copied as a starting point for new packages. The `package.json` includes a `"---remove-next-line"` marker comment indicating lines to remove after copying.
-- **Standard toolchain**: Pre-configured with AVA for testing, TypeScript for compilation, and typedoc for documentation generation — matching the monorepo conventions.
+- **Standard toolchain**: Pre-configured with AVA for testing, TypeScript for compilation — matching the monorepo conventions.
 - **Private package**: Marked `"private": true` to prevent accidental publication.
 
 ## Source Structure
@@ -15,9 +15,8 @@ A minimal package template/scaffold for creating new Scramjet Transform Hub pack
 | Path | Role |
 |------|------|
 | `src/index.ts` | Entry point (empty file to be replaced). |
-| `src/lib/` | Library code directory (empty, ready for modules). |
 | `test/` | Test directory. |
-| `package.json` | Standardized package manifest with monorepo scripts. |
+| `package.json` | Standardized package manifest with monorepo scripts (`build` uses `tsc -p tsconfig.build.json`). |
 | `tsconfig.json` / `tsconfig.build.json` | TypeScript configuration for development and build. |
 
 ## Integration Points
