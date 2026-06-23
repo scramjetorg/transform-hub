@@ -2,16 +2,18 @@
 
 ## Phase 0: Branch, Track Artifacts, and PR Review Surface
 
-- [ ] Task: Create the Conductor review branch and initial artifacts
-    - [ ] Branch from the current branch into a dedicated track branch.
-    - [ ] Create the track directory, `metadata.json`, `spec.md`, `plan.md`, and `index.md` from the approved Conductor artifacts.
-    - [ ] Update `conductor/tracks.md` with the new track entry.
-    - [ ] Commit only the initial Conductor track artifacts and tracks registry update.
-    - [ ] Push the dedicated track branch after the initial Conductor artifact commit.
-- [ ] Task: Create the GitHub PR after the initial commit
-    - [ ] Prepare a real multiline Markdown PR description file describing the complete intended TO-BE behavior.
-    - [ ] Create the PR with `gh pr create --body-file <file>` after the initial Conductor artifact commit has been pushed.
-    - [ ] Record the PR URL in `plan.md`.
+- [x] Task: Create the Conductor review branch and initial artifacts
+    - [x] Branch from the current branch into a dedicated track branch.
+    - [x] Create the track directory, `metadata.json`, `spec.md`, `plan.md`, and `index.md` from the approved Conductor artifacts.
+    - [x] Update `conductor/tracks.md` with the new track entry.
+    - [x] Commit only the initial Conductor track artifacts and tracks registry update.
+        - Initial artifact commit: `164f8bd4`.
+    - [x] Push the dedicated track branch after the initial Conductor artifact commit.
+- [x] Task: Create the GitHub PR after the initial commit
+    - [x] Prepare a real multiline Markdown PR description file describing the complete intended TO-BE behavior.
+    - [x] Create the PR with `gh pr create --body-file <file>` after the initial Conductor artifact commit has been pushed.
+    - [x] Record the PR URL in `plan.md`.
+        - PR: https://github.com/0rail/transform-hub/pull/34
 - [ ] Task: Confirm affected entrypoints and shared surfaces
     - [ ] Read relevant codemaps for `bdd`, `packages/api-server`, `packages/api-router`, `packages/host`, `packages/manager`, and `packages/multi-manager`.
     - [ ] Confirm the current direct STH v1 RPC path through `HostAPIV1Handler`, `CSIController.forwardRpcRequest()`, and `forwardRoutedRequest()`.
