@@ -151,10 +151,23 @@
 ## Phase 3: Final Validation, Review, and Track Completion
 
 - [ ] Task: Run final validation gates
-    - [ ] Rerun the new BDD feature tag and record the result.
-    - [ ] Rerun focused package tests for all changed packages.
-    - [ ] Run the narrowest sufficient package build or `npm run build:packages` if cross-package changes require it.
-    - [ ] Run lint or a narrower Biome check if changed files require formatting/lint validation.
+    - [x] Implement approved waiting-stream defaults/configurability before final validation:
+        - Runner/sequence-to-STH default floor is now `32` via `leases.minimumRunnerWaitingStreams`, falling back to legacy `minimumWaitingLeases` when unset.
+        - STH-to-Manager upstream default floor is now `128` via `leases.minimumUpstreamWaitingStreams`, falling back to legacy `minimumWaitingLeases` when unset.
+        - Added STH config/env/CLI descriptors: `SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS` / `--verser2-runner-minimum-waiting-streams` and `SCRAMJET_VERSER2_UPSTREAM_MINIMUM_WAITING_STREAMS` / `--verser2-upstream-minimum-waiting-streams`.
+    - [x] Rerun focused package tests for all changed packages.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/runner-transport-env.spec.ts` in `packages/adapters-common`: passed, 9 tests.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 50000 test/cpm-connector.spec.ts` in `packages/host`: passed, 1 test.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 test/index.spec.ts` in `packages/config`: passed, 15 tests.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 test/index.spec.ts` in `packages/sth-config`: passed, 4 tests.
+    - [x] Run the narrowest sufficient package build or `npm run build:packages` if cross-package changes require it.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages`: passed.
+    - [x] Run lint or a narrower Biome check if changed files require formatting/lint validation.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" RAYON_NUM_THREADS=12 npx biome lint <changed files>`: passed.
+    - [x] Rerun the new BDD feature tag and record the result.
+        - Initial full focused tag run under Docker/JS mode passed TC-000, TC-001, and TC-002, then TC-003 failed while starting a fresh isolated stack before exercising route behavior; TC-003/TC-004/TC-005 each passed alone.
+        - Fixed the full-tag harness issue by explicitly exiting TC-000's direct Hub, restoring direct-Hub process env after cleanup, and waiting for aggregation subprocesses to exit before deleting their temp directory.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_JS=1 NO_HOST=true npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding and not @ignore"`: passed, 6 scenarios / 42 steps.
 - [ ] Task: Final review and documentation alignment
     - [ ] Verify `spec.md`, `plan.md`, PR description, and implementation behavior agree.
     - [ ] Verify user-facing `308` behavior is clear and actionable where exposed.

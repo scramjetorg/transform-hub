@@ -2,9 +2,14 @@ import path from "path";
 import { STHConfiguration } from "@scramjet/types";
 import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
 
-const RUNNER_VERSER2_LONG_LIVED_STREAMS = 8;
-const RUNNER_VERSER2_MIN_SPARE_RPC_STREAMS = 1;
-const RUNNER_VERSER2_MIN_WAITING_STREAMS = RUNNER_VERSER2_LONG_LIVED_STREAMS + RUNNER_VERSER2_MIN_SPARE_RPC_STREAMS;
+const RUNNER_VERSER2_MIN_WAITING_STREAMS = 32;
+
+function getRunnerMinWaitingStreams(sthConfig: Pick<STHConfiguration, "verser2">): number {
+    const configuredMinimum = sthConfig.verser2.leases.minimumRunnerWaitingStreams
+        ?? sthConfig.verser2.leases.minimumWaitingLeases;
+
+    return Math.max(configuredMinimum, RUNNER_VERSER2_MIN_WAITING_STREAMS);
+}
 
 function normalizePem(value: string | undefined): string | undefined {
     if (!value?.trim()) {
@@ -52,7 +57,7 @@ export function getRunnerTransportEnv(
             hubBrokerId: `runner.${instanceId}.hub.broker`,
             hubTargetDomain: sthConfig.verser2.guest.routeDomain,
             leaseAcquireTimeoutMs: sthConfig.verser2.timeouts.leaseAcquireMs,
-            minWaitingStreams: Math.max(sthConfig.verser2.leases.minimumWaitingLeases, RUNNER_VERSER2_MIN_WAITING_STREAMS),
+            minWaitingStreams: getRunnerMinWaitingStreams(sthConfig),
             tls: { ca: trustBundle }
         })
     };

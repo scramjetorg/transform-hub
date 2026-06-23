@@ -223,6 +223,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
             SCRAMJET_VERSER2_HOST_URL: "https://manager.example:2443",
             SCRAMJET_VERSER2_CA: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
             SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://sth-local.example:2444",
+            SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS: "40",
             CPM_SSL_CA_PATH: "/ca/from-alias.pem",
             SCRAMJET_VERSER2_CERT_FILE: "/safe/cert.pem",
             SCRAMJET_VERSER2_KEY_FILE: "/secret/key.pem"
@@ -236,7 +237,8 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
             verser2BrokerPeerId: "sth.a.broker",
             verser2BrokerTargetDomain: "manager.a.scramjet.internal",
             verser2GuestPeerId: "sth.a.guest",
-            verser2GuestRouteDomain: "sth.a.scramjet.internal"
+            verser2GuestRouteDomain: "sth.a.scramjet.internal",
+            verser2UpstreamMinimumWaitingStreams: 160
         },
         options: sthOutboundVerser2Options
     });
@@ -249,6 +251,8 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
     t.is(loaded.config.verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
     t.is(loaded.config.verser2.tls.caFile, "/ca/from-cli.pem");
     t.is(loaded.config.verser2.tls.keyFile, "/secret/key.pem");
+    t.is(loaded.config.verser2.leases.minimumRunnerWaitingStreams, 40);
+    t.is(loaded.config.verser2.leases.minimumUpstreamWaitingStreams, 160);
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.runnerHost.host.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");

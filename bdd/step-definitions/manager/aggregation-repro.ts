@@ -40,19 +40,42 @@ function aggregationProcesses(world: CustomWorld): ChildProcess[] {
 }
 
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
-    for (const proc of aggregationProcesses(this)) {
-        if (proc.pid) {
+    const killAndWait = async (proc: ChildProcess): Promise<void> => {
+        if (!proc.pid || proc.exitCode !== null || proc.signalCode !== null) return;
+
+        await new Promise<void>((resolve) => {
+            const timer = setTimeout(() => {
+                try {
+                    proc.kill("SIGKILL");
+                } catch { /* ignore */ }
+                resolve();
+            }, 5000);
+
+            proc.once("exit", () => {
+                clearTimeout(timer);
+                resolve();
+            });
+
             try {
                 proc.kill("SIGTERM");
-            } catch { /* ignore */ }
-        }
+            } catch {
+                clearTimeout(timer);
+                resolve();
+            }
+        });
+    };
+
+    const waitForExit: Promise<void>[] = [];
+
+    for (const proc of aggregationProcesses(this)) {
+        waitForExit.push(killAndWait(proc));
     }
     if (this.resources.aggMMProcess) {
-        try {
-            this.resources.aggMMProcess.kill("SIGTERM");
-        } catch { /* ignore */ }
+        waitForExit.push(killAndWait(this.resources.aggMMProcess));
         delete this.resources.aggMMProcess;
     }
+
+    await Promise.all(waitForExit);
 
     if (this.resources.aggTempDir) {
         rmSync(this.resources.aggTempDir, { recursive: true, force: true });

@@ -52,6 +52,34 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[], 
     resources.startOutput = out;
 }
 
+function saveHostEnv(): Record<string, string | undefined> {
+    return {
+        LOCAL_HOST_PORT: process.env.LOCAL_HOST_PORT,
+        LOCAL_HOST_INSTANCES_SERVER_PORT: process.env.LOCAL_HOST_INSTANCES_SERVER_PORT,
+        LOCAL_HOST_BASE_URL: process.env.LOCAL_HOST_BASE_URL,
+        SCRAMJET_HOST_BASE_URL: process.env.SCRAMJET_HOST_BASE_URL
+    };
+}
+
+function restoreHostEnv(saved: Record<string, string | undefined>) {
+    for (const [key, value] of Object.entries(saved)) {
+        if (value === undefined) {
+            delete process.env[key];
+        } else {
+            process.env[key] = value;
+        }
+    }
+}
+
+function restoreSavedHostEnv(resources: CustomWorld["resources"]) {
+    const savedHostEnv = resources.savedHostEnv as Record<string, string | undefined> | undefined;
+
+    if (!savedHostEnv) return;
+
+    restoreHostEnv(savedHostEnv);
+    delete resources.savedHostEnv;
+}
+
 function getHostClient() {
     assert.notStrictEqual(process.env.LOCAL_HOST_BASE_URL, undefined);
 
@@ -171,6 +199,7 @@ Then("the response status should be {int}", async function(int) {
 When("hub process is started with random ports and parameters {string}",
     async function(this: CustomWorld, params: string) {
         this.resources.expectedHubExitCode = undefined;
+        const savedHostEnv = saveHostEnv();
         const apiPort = await freeport();
         const instancesServerPort = await freeport();
 
@@ -181,12 +210,14 @@ When("hub process is started with random ports and parameters {string}",
                 `http://127.0.0.1:${apiPort}/api/v1`;
 
         this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        this.resources.savedHostEnv = savedHostEnv;
         return startHubWithParams(this, params.split(" "));
     });
 
 When("hub process is started with random ports expecting exit code {int} and parameters {string}",
     async function(this: CustomWorld, expectedExitCode: number, params: string) {
         this.resources.expectedHubExitCode = expectedExitCode;
+        const savedHostEnv = saveHostEnv();
 
         const apiPort = await freeport();
         const instancesServerPort = await freeport();
@@ -198,6 +229,7 @@ When("hub process is started with random ports expecting exit code {int} and par
                 `http://127.0.0.1:${apiPort}/api/v1`;
 
         this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        this.resources.savedHostEnv = savedHostEnv;
         return startHubWithParams(this, params.split(" "));
     });
 
@@ -320,6 +352,7 @@ Then("exit hub process", async function(this: CustomWorld) {
     });
 
     spawned.delete(hub);
+    restoreSavedHostEnv(this.resources);
 });
 
 Then("hub process exits on its own with code {int} within {int} ms", async function(this: CustomWorld, expectedCode: number, timeoutMs: number) {

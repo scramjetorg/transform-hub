@@ -208,7 +208,10 @@ export class CPMConnector extends TypedEmitter<Events> {
             hostUrl: this.config.verser2.hostUrl,
             guestId: this.config.verser2.guest.peerId,
             routedDomains: [this.config.verser2.guest.routeDomain],
-            minWaitingStreams: getManagerGuestMinWaitingStreams(this.config.verser2.leases.minimumWaitingLeases),
+            minWaitingStreams: getManagerGuestMinWaitingStreams(
+                this.config.verser2.leases.minimumWaitingLeases,
+                this.config.verser2.leases.minimumUpstreamWaitingStreams
+            ),
             leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
             tls
         }).attach(server, this.config.verser2.guest.routeDomain);

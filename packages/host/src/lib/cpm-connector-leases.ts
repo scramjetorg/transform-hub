@@ -1,7 +1,5 @@
-const MANAGER_GUEST_CONTROL_STREAMS = 2;
-const MANAGER_GUEST_API_SPARE_STREAMS = 2;
-const MANAGER_GUEST_MIN_WAITING_STREAMS = MANAGER_GUEST_CONTROL_STREAMS + MANAGER_GUEST_API_SPARE_STREAMS;
+const MANAGER_GUEST_MIN_WAITING_STREAMS = 128;
 
-export function getManagerGuestMinWaitingStreams(configuredMinimum: number): number {
-    return Math.max(configuredMinimum, MANAGER_GUEST_MIN_WAITING_STREAMS);
+export function getManagerGuestMinWaitingStreams(configuredMinimum: number, configuredUpstreamMinimum?: number): number {
+    return Math.max(configuredUpstreamMinimum ?? configuredMinimum, MANAGER_GUEST_MIN_WAITING_STREAMS);
 }

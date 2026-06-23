@@ -8,7 +8,9 @@ const timeoutsSchema = z.object({
     requestMs: z.number().int().nonnegative()
 }).strict();
 const leasesSchema = z.object({
-    minimumWaitingLeases: z.number().int().nonnegative()
+    minimumWaitingLeases: z.number().int().nonnegative(),
+    minimumRunnerWaitingStreams: z.number().int().nonnegative().optional(),
+    minimumUpstreamWaitingStreams: z.number().int().nonnegative().optional()
 }).strict();
 
 function addIssue(ctx: z.RefinementCtx, path: string[], message: string): void {
@@ -186,5 +188,7 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2RouteReadinessMs", flag: "verser2-route-readiness-ms", path: sthPath("timeouts.routeReadinessMs"), env: "SCRAMJET_VERSER2_ROUTE_READINESS_MS", type: "number", description: "Route readiness timeout in milliseconds" },
     { name: "verser2LeaseAcquireMs", flag: "verser2-lease-acquire-ms", path: sthPath("timeouts.leaseAcquireMs"), env: "SCRAMJET_VERSER2_LEASE_ACQUIRE_MS", type: "number", description: "Lease acquisition timeout in milliseconds" },
     { name: "verser2RequestMs", flag: "verser2-request-ms", path: sthPath("timeouts.requestMs"), env: "SCRAMJET_VERSER2_REQUEST_MS", type: "number", description: "Routed request timeout in milliseconds" },
-    { name: "verser2MinimumWaitingLeases", flag: "verser2-minimum-waiting-leases", path: sthPath("leases.minimumWaitingLeases"), env: "SCRAMJET_VERSER2_MINIMUM_WAITING_LEASES", type: "number", description: "Minimum waiting leases per route" }
+    { name: "verser2MinimumWaitingLeases", flag: "verser2-minimum-waiting-leases", path: sthPath("leases.minimumWaitingLeases"), env: "SCRAMJET_VERSER2_MINIMUM_WAITING_LEASES", type: "number", description: "Backward-compatible fallback for minimum waiting leases per route" },
+    { name: "verser2RunnerMinimumWaitingStreams", flag: "verser2-runner-minimum-waiting-streams", path: sthPath("leases.minimumRunnerWaitingStreams"), env: "SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS", type: "number", description: "Minimum waiting streams for runner-to-STH verser2 routes" },
+    { name: "verser2UpstreamMinimumWaitingStreams", flag: "verser2-upstream-minimum-waiting-streams", path: sthPath("leases.minimumUpstreamWaitingStreams"), env: "SCRAMJET_VERSER2_UPSTREAM_MINIMUM_WAITING_STREAMS", type: "number", description: "Minimum waiting streams for STH-to-Manager verser2 routes" }
 ];

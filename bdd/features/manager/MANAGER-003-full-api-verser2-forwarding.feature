@@ -18,6 +18,7 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
     When I send a "POST" root API request to "/api/v2/instances/orders-rpc/rpc/test/abc" with body "direct-v2" and headers "{\"Content-Type\":\"text/plain\"}"
     Then the response status should be 200
     And the response body should be "POST /abc direct-v2"
+    Then exit hub process
 
   @aggregation-repro-cleanup
   Scenario: MANAGER-003 TC-001 Manager downward v1 RPC tunnels to a sequence with hop-by-hop headers stripped
