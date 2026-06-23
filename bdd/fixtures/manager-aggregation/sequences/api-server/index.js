@@ -1,7 +1,5 @@
 "use strict";
 
-const http = require("http");
-
 /** @this {import("@scramjet/types").AppContext}*/
 module.exports = async function(_stream) {
     this.logger.info("Aggregation API server started");
@@ -16,30 +14,6 @@ module.exports = async function(_stream) {
 
         return body;
     };
-
-    const postToLocalApi = (path, body) => new Promise((resolve, reject) => {
-        const address = this.api.server.address();
-        const port = typeof address === "object" && address ? address.port : 0;
-        const request = http.request({
-            host: "127.0.0.1",
-            port,
-            path,
-            method: "POST",
-            headers: {
-                "Content-Type": "text/plain",
-                "Content-Length": Buffer.byteLength(body)
-            }
-        }, (response) => {
-            let responseBody = "";
-
-            response.setEncoding("utf8");
-            response.on("data", chunk => { responseBody += chunk; });
-            response.on("end", () => resolve(responseBody));
-        });
-
-        request.on("error", reject);
-        request.end(body);
-    });
 
     this.api.server.on("request", (req, res) => {
         console.log("Aggregation API request", req.method, req.url);
@@ -87,13 +61,6 @@ module.exports = async function(_stream) {
             }
 
             const body = await readBody(req);
-            if (sourceHub === targetHub) {
-                const targetResponse = await postToLocalApi("/abc", body);
-
-                res.writeHead(200).end(targetResponse);
-                return;
-            }
-
             const rpc = this.space
                 .getHostClient(targetHub)
                 .getInstanceClient(targetInstance)

@@ -5,8 +5,10 @@ import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
 const RUNNER_VERSER2_MIN_WAITING_STREAMS = 32;
 
 function getRunnerMinWaitingStreams(sthConfig: Pick<STHConfiguration, "verser2">): number {
-    const configuredMinimum = sthConfig.verser2.leases.minimumRunnerWaitingStreams
-        ?? sthConfig.verser2.leases.minimumWaitingLeases;
+    const configuredMinimum = Math.max(
+        sthConfig.verser2.leases.minimumWaitingLeases,
+        sthConfig.verser2.leases.minimumRunnerWaitingStreams ?? 0
+    );
 
     return Math.max(configuredMinimum, RUNNER_VERSER2_MIN_WAITING_STREAMS);
 }

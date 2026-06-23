@@ -83,4 +83,6 @@ export type STHCommandOptions = {
     verser2LeaseAcquireMs?: number;
     verser2RequestMs?: number;
     verser2MinimumWaitingLeases?: number;
+    verser2RunnerMinimumWaitingStreams?: number;
+    verser2UpstreamMinimumWaitingStreams?: number;
 }

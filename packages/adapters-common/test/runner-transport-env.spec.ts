@@ -89,6 +89,18 @@ test("getRunnerTransportEnv falls back to legacy lease minimum when runner-speci
     t.is(parsed.minWaitingStreams, 48);
 });
 
+test("getRunnerTransportEnv honors legacy lease minimum as a global floor", t => {
+    const env = getRunnerTransportEnv({
+        verser2: withRunnerHost({
+            ...baseVerser2,
+            leases: { minimumWaitingLeases: 96, minimumRunnerWaitingStreams: 32 }
+        })
+    }, "inst-42");
+    const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
+
+    t.is(parsed.minWaitingStreams, 96);
+});
+
 test("getRunnerTransportEnv fails closed without STH-local CA", t => {
     const verser2 = withRunnerHost();
 

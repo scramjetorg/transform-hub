@@ -152,11 +152,11 @@
 
 - [ ] Task: Run final validation gates
     - [x] Implement approved waiting-stream defaults/configurability before final validation:
-        - Runner/sequence-to-STH default floor is now `32` via `leases.minimumRunnerWaitingStreams`, falling back to legacy `minimumWaitingLeases` when unset.
-        - STH-to-Manager upstream default floor is now `128` via `leases.minimumUpstreamWaitingStreams`, falling back to legacy `minimumWaitingLeases` when unset.
+        - Runner/sequence-to-STH default floor is now `32` via `leases.minimumRunnerWaitingStreams`, with legacy `minimumWaitingLeases` still honored as a global floor.
+        - STH-to-Manager upstream default floor is now `128` via `leases.minimumUpstreamWaitingStreams`, with legacy `minimumWaitingLeases` still honored as a global floor.
         - Added STH config/env/CLI descriptors: `SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS` / `--verser2-runner-minimum-waiting-streams` and `SCRAMJET_VERSER2_UPSTREAM_MINIMUM_WAITING_STREAMS` / `--verser2-upstream-minimum-waiting-streams`.
     - [x] Rerun focused package tests for all changed packages.
-        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/runner-transport-env.spec.ts` in `packages/adapters-common`: passed, 9 tests.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/runner-transport-env.spec.ts` in `packages/adapters-common`: passed, 10 tests after adding legacy-global-floor coverage.
         - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 50000 test/cpm-connector.spec.ts` in `packages/host`: passed, 1 test.
         - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 test/index.spec.ts` in `packages/config`: passed, 15 tests.
         - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 test/index.spec.ts` in `packages/sth-config`: passed, 4 tests.
@@ -167,16 +167,22 @@
     - [x] Rerun the new BDD feature tag and record the result.
         - Initial full focused tag run under Docker/JS mode passed TC-000, TC-001, and TC-002, then TC-003 failed while starting a fresh isolated stack before exercising route behavior; TC-003/TC-004/TC-005 each passed alone.
         - Fixed the full-tag harness issue by explicitly exiting TC-000's direct Hub, restoring direct-Hub process env after cleanup, and waiting for aggregation subprocesses to exit before deleting their temp directory.
-        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_JS=1 NO_HOST=true npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding and not @ignore"`: passed, 6 scenarios / 42 steps.
-- [ ] Task: Final review and documentation alignment
-    - [ ] Verify `spec.md`, `plan.md`, PR description, and implementation behavior agree.
-    - [ ] Verify user-facing `308` behavior is clear and actionable where exposed.
-    - [ ] Update docs only if behavior changes are user-facing and not already covered by tests/spec.
-    - [ ] Record skipped broad validation and rationale.
-- [ ] Task: Halt for user review of waiting upstream sessions
-    - [ ] Stop work at this point before final checkpoint/PR readiness.
-    - [ ] Present findings and implementation notes about waiting upstream sessions for user review.
-    - [ ] Resume only after explicit user direction.
+        - Removed the same-Hub fixture-local shortcut and reran the full focused tag so TC-005 now exercises the same sequence client route as TC-004 with source and target on the same Hub.
+        - Latest `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_JS=1 NO_HOST=true npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding and not @ignore"`: passed, 6 scenarios / 42 steps.
+- [x] Task: Final review and documentation alignment
+    - [x] Verify `spec.md`, `plan.md`, PR description, and implementation behavior agree.
+        - Oracle final review initially found waiting-stream fallback and same-Hub proof blockers; both were addressed and the follow-up review reported no blockers.
+    - [x] Verify user-facing `308` behavior is clear and actionable where exposed.
+        - External upward Hub-to-Manager access remains observable as `308` route metadata and is covered by MANAGER-003 TC-003 plus route-forwarding policy tests.
+    - [x] Update docs only if behavior changes are user-facing and not already covered by tests/spec.
+        - No standalone user docs were updated; behavior is covered by `spec.md`, BDD, and package tests.
+    - [x] Record skipped broad validation and rationale.
+        - Skipped full `npm run build`, full package test suite, and broad BDD suites because this track changed focused forwarding/config/BDD harness paths and the repository guidance marks full build/Docker paths as expensive. Focused package tests, package build, focused BDD tag, and narrow Biome lint were run instead.
+- [x] Task: Halt for user review of waiting upstream sessions
+    - [x] Stop work at this point before final checkpoint/PR readiness.
+    - [x] Present findings and implementation notes about waiting upstream sessions for user review.
+    - [x] Resume only after explicit user direction.
+        - User approved the waiting-stream phase and then requested continued track work.
 - [ ] Task: Final checkpoint and PR readiness
     - [ ] Commit final documentation, validation note, or cleanup changes if any.
     - [ ] Push the review branch.
