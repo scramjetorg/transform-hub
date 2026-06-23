@@ -20,13 +20,15 @@ Feature / bug fix for API forwarding correctness.
 4. Sequence/runtime-originated calls that reach Manager through Hub/STH may resolve Manager `308` route decisions in the Host and tunnel upward when policy authorizes that origin.
 5. External API-originated calls that attempt to tunnel upward through Hub/STH to Manager must not silently tunnel. They must return `308` route metadata to the client.
 6. API v2 instance RPC paths must be implemented as working request forwarding paths, including `/api/v2/instances/:instanceId/rpc/*`.
-7. API v2 RPC implementation does not need to provide complete static sequence-specific typings. If a client knows the sequence route shape, it may call it; closing the typing gap is out of scope.
-8. Standard client hop-by-hop headers must be stripped before HTTP headers become Verser2 routed metadata.
-9. The `Connection` header must also be parsed so any additional header names nominated by it are stripped.
-10. Redirect parsing and resolution logic must be kept in a separate reusable file so future authorization rules can be added without burying policy in route handlers.
-11. Authorization/policy logic must distinguish at least local/downward requests, upward Manager requests, and unknown or disallowed routes.
-12. Client-supplied internal routing/auth headers must not be trusted to bypass upward-tunnel restrictions.
-13. The Conductor workflow must use a dedicated branch and PR review surface. Phase 0 must create the branch, create track artifacts, commit the initial Conductor artifact commit, push it, and create the PR after that initial commit.
+7. Sequence-to-sequence calls routed through Manager must work when the source and target sequences run on different Hubs/STHs.
+8. Sequence-to-sequence calls where the source and target sequences run on the same Hub/STH should resolve to a shortened local path instead of unnecessarily tunneling through Manager.
+9. API v2 RPC implementation does not need to provide complete static sequence-specific typings. If a client knows the sequence route shape, it may call it; closing the typing gap is out of scope.
+10. Standard client hop-by-hop headers must be stripped before HTTP headers become Verser2 routed metadata.
+11. The `Connection` header must also be parsed so any additional header names nominated by it are stripped.
+12. Redirect parsing and resolution logic must be kept in a separate reusable file so future authorization rules can be added without burying policy in route handlers.
+13. Authorization/policy logic must distinguish at least local/downward requests, upward Manager requests, and unknown or disallowed routes.
+14. Client-supplied internal routing/auth headers must not be trusted to bypass upward-tunnel restrictions.
+15. The Conductor workflow must use a dedicated branch and PR review surface. Phase 0 must create the branch, create track artifacts, commit the initial Conductor artifact commit, push it, and create the PR after that initial commit.
 
 ## BDD Requirements
 
@@ -37,8 +39,10 @@ Feature / bug fix for API forwarding correctness.
 5. Cover Manager to Host/STH to sequence downward forwarding.
 6. Cover MultiManager to Manager to Host/STH to sequence downward forwarding.
 7. Cover sequence/runtime-originated Manager access through Hub/STH where authorized 308 resolution tunnels to Manager.
-8. Cover external API-originated upward access through Hub/STH returning `308` instead of tunneling.
-9. Include a standard HTTP client request shape that sends `Connection` and other hop-by-hop headers to reproduce the original failure.
+8. Cover sequence-to-sequence communication through Manager across two Hubs/STHs.
+9. Cover sequence-to-sequence communication on a single Hub/STH where redirect resolution shortens the connection path locally.
+10. Cover external API-originated upward access through Hub/STH returning `308` instead of tunneling.
+11. Include a standard HTTP client request shape that sends `Connection` and other hop-by-hop headers to reproduce the original failure.
 
 ## Non-Functional Requirements
 
@@ -58,11 +62,13 @@ Feature / bug fix for API forwarding correctness.
 4. Manager downward forwarding reaches the target sequence and returns the sequence response.
 5. MultiManager downward forwarding reaches Manager, then Host/STH, then the target sequence and returns the sequence response.
 6. Sequence/runtime-originated Manager access through Hub/STH follows allowed `308` route decisions and tunnels to Manager.
-7. External API-originated upward Manager access through Hub/STH returns `308` route metadata and does not tunnel.
-8. Hop-by-hop headers, including `Connection`-nominated headers, are not present in Verser2 routed metadata.
-9. Focused package tests cover header sanitization, redirect parsing/policy behavior, and v2 RPC forwarding where package-level coverage is practical.
-10. Focused BDD validation for the new feature passes.
-11. A dedicated track branch exists, an initial Conductor artifact commit is pushed, and a GitHub PR is created after that initial commit.
+7. Sequence-to-sequence communication through Manager works across two Hubs/STHs and returns the target sequence response to the source sequence.
+8. Single-Hub sequence-to-sequence communication resolves to a shorter local path rather than taking an unnecessary Manager tunnel.
+9. External API-originated upward Manager access through Hub/STH returns `308` route metadata and does not tunnel.
+10. Hop-by-hop headers, including `Connection`-nominated headers, are not present in Verser2 routed metadata.
+11. Focused package tests cover header sanitization, redirect parsing/policy behavior, and v2 RPC forwarding where package-level coverage is practical.
+12. Focused BDD validation for the new feature passes.
+13. A dedicated track branch exists, an initial Conductor artifact commit is pushed, and a GitHub PR is created after that initial commit.
 
 ## Out of Scope
 

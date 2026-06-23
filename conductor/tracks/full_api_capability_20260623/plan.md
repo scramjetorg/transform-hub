@@ -43,6 +43,8 @@
     - [ ] Assert these requests tunnel and return the target sequence response rather than stopping at `308`.
 - [ ] Task: Cover upward policy behavior in BDD
     - [ ] Add a sequence/runtime-originated route scenario where an authorized upward Manager `308` is resolved and tunneled.
+    - [ ] Add a sequence-to-sequence routed scenario where a source sequence on one Hub/STH reaches a target sequence on another Hub/STH through Manager.
+    - [ ] Add a single-Hub sequence-to-sequence scenario where redirect resolution shortens to the local Hub/STH path instead of using an unnecessary Manager tunnel.
     - [ ] Add an external API-originated upward route scenario where the Hub/STH returns `308` route metadata and does not tunnel.
     - [ ] Add spoofing coverage for client-supplied internal routing/auth headers where practical.
 - [ ] Task: Add focused package-level regression tests
@@ -83,6 +85,8 @@
     - [ ] Keep Manager/MultiManager trust changes minimal and explicit.
 - [ ] Task: Implement authorized sequence/runtime upward resolution
     - [ ] Wire Host-side 308 resolution for authorized sequence/runtime-originated Manager calls.
+    - [ ] Support sequence-to-sequence Manager-routed calls across two Hubs/STHs.
+    - [ ] Shorten same-Hub sequence-to-sequence resolution to the local Hub/STH path where practical.
     - [ ] Ensure external API-originated calls to Manager via Hub/STH still return `308`.
     - [ ] Enforce a maximum redirect count and reject unknown route domains.
 - [ ] Task: Run focused implementation validation
