@@ -29,38 +29,55 @@
 
 ## Phase 1: BDD Reproduction and Focused Test Contracts
 
-- [ ] Task: Add the full API Verser2 forwarding BDD feature
-    - [ ] Create a new focused BDD feature for full API Verser2 forwarding.
-    - [ ] Copy the existing `api-server` sequence fixture into the Manager/MultiManager fixture area.
-    - [ ] Add or adapt startup config for a stable instance name suitable for Manager and MultiManager routed scenarios.
-    - [ ] Add raw HTTP request steps that can send `Connection` and other hop-by-hop headers intentionally.
-- [ ] Task: Cover direct STH-to-sequence RPC behavior in BDD
-    - [ ] Add a direct STH v1 scenario for API to local sequence RPC with standard hop-by-hop headers at ingress.
-    - [ ] Add a direct STH v2 scenario for `/api/v2/instances/:instanceId/rpc/*` with equivalent request behavior.
-    - [ ] Assert the sequence response body proves the request reached the fixture.
-- [ ] Task: Cover downward Manager and MultiManager forwarding in BDD
-    - [ ] Add a Manager-to-Host/STH-to-sequence downward scenario.
-    - [ ] Add a MultiManager-to-Manager-to-Host/STH-to-sequence downward scenario.
-    - [ ] Assert these requests tunnel and return the target sequence response rather than stopping at `308`.
-- [ ] Task: Cover upward policy behavior in BDD
-    - [ ] Add a sequence/runtime-originated route scenario where an authorized upward Manager `308` is resolved and tunneled.
-    - [ ] Add a sequence-to-sequence routed scenario where a source sequence on one Hub/STH reaches a target sequence on another Hub/STH through Manager.
-    - [ ] Add a single-Hub sequence-to-sequence scenario where redirect resolution shortens to the local Hub/STH path instead of using an unnecessary Manager tunnel.
-    - [ ] Add an external API-originated upward route scenario where the Hub/STH returns `308` route metadata and does not tunnel.
-    - [ ] Add spoofing coverage for client-supplied internal routing/auth headers where practical.
-- [ ] Task: Add focused package-level regression tests
-    - [ ] Add `@scramjet/api-server` tests for stripping standard hop-by-hop headers and `Connection`-nominated headers.
-    - [ ] Add tests for redirect metadata parsing and invalid/unknown redirect handling in the new reusable redirect helper.
-    - [ ] Add Host or API-router tests proving v2 instance RPC dispatches through the same forwarding path as v1 where practical.
-    - [ ] Add Manager policy or forwarding tests proving allowed downward routes tunnel while external upward routes return `308`.
-- [ ] Task: Run the narrowest expected-failure validation
-    - [ ] Run the new BDD tag under the process adapter/source execution mode expected for this track.
-    - [ ] Run focused package tests expected to fail before implementation.
-    - [ ] Record expected failures and any skipped checks in `plan.md`.
-- [ ] Task: Create Phase 1 checkpoint and push
-    - [ ] Commit only BDD and focused test contract changes.
+- [x] Task: Add the full API Verser2 forwarding BDD feature
+    - [x] Create a new focused BDD feature for full API Verser2 forwarding.
+        - Added `bdd/features/manager/MANAGER-003-full-api-verser2-forwarding.feature` with Docker-wrapper run guidance using `NO_HOST=true`.
+    - [x] Copy the existing `api-server` sequence fixture into the Manager/MultiManager fixture area.
+        - Added `bdd/fixtures/manager-aggregation/sequences/api-server/`.
+    - [x] Add or adapt startup config for a stable instance name suitable for Manager and MultiManager routed scenarios.
+        - Added `hub-1-api-main` and `hub-2-api-main` startup entries.
+    - [x] Add raw HTTP request steps that can send `Connection` and other hop-by-hop headers intentionally.
+        - Added raw `http.request`-based BDD steps for Hub and Manager aggregation requests because Fetch rejects hop-by-hop `Connection` headers.
+- [x] Task: Cover direct STH-to-sequence RPC behavior in BDD
+    - [x] Add a direct STH v1 scenario for API to local sequence RPC with standard hop-by-hop headers at ingress.
+    - [x] Add a direct STH v2 scenario for `/api/v2/instances/:instanceId/rpc/*` with equivalent request behavior.
+    - [x] Assert the sequence response body proves the request reached the fixture.
+- [x] Task: Cover downward Manager and MultiManager forwarding in BDD
+    - [x] Add a Manager-to-Host/STH-to-sequence downward scenario.
+    - [x] Add a MultiManager-to-Manager-to-Host/STH-to-sequence downward scenario.
+    - [x] Assert these requests tunnel and return the target sequence response rather than stopping at `308`.
+- [x] Task: Cover upward policy behavior in BDD
+    - [x] Add a sequence/runtime-originated route scenario where an authorized upward Manager `308` is resolved and tunneled.
+        - Covered as a sequence-origin contract path in the focused feature; Phase 2 will replace the temporary origin marker with trusted runtime-origin policy plumbing.
+    - [x] Add a sequence-to-sequence routed scenario where a source sequence on one Hub/STH reaches a target sequence on another Hub/STH through Manager.
+    - [x] Add a single-Hub sequence-to-sequence scenario where redirect resolution shortens to the local Hub/STH path instead of using an unnecessary Manager tunnel.
+    - [x] Add an external API-originated upward route scenario where the Hub/STH returns `308` route metadata and does not tunnel.
+    - [x] Add spoofing coverage for client-supplied internal routing/auth headers where practical.
+        - Spoofing remains represented by external requests carrying no trusted runtime-origin context; Phase 2 policy tests should harden this with explicit header-spoofing unit coverage.
+- [x] Task: Add focused package-level regression tests
+    - [x] Add `@scramjet/api-server` tests for stripping standard hop-by-hop headers and `Connection`-nominated headers.
+    - [x] Add tests for redirect metadata parsing and invalid/unknown redirect handling in the new reusable redirect helper.
+        - Added red contract coverage in `packages/api-server/test/routed-redirect.spec.ts` for the future `parseRoutedRedirect()` helper.
+    - [x] Add Host or API-router tests proving v2 instance RPC dispatches through the same forwarding path as v1 where practical.
+    - [x] Add Manager policy or forwarding tests proving allowed downward routes tunnel while external upward routes return `308`.
+        - Added red contract coverage in `packages/manager/test/route-forwarding-policy.spec.ts` for the future route forwarding policy helper.
+- [x] Task: Run the narrowest expected-failure validation
+    - [x] Run the new BDD tag under the process adapter/source execution mode expected for this track.
+        - Serial Docker BDD validation: `NO_HOST=true BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 BDD_TIMEOUT_MS=180000 npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding" --name "MANAGER-003 TC-000"` failed as expected at direct v1 RPC status `503 !== 200`.
+        - Serial Docker BDD validation: `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=180000 npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding" --name "MANAGER-003 TC-001"` failed as expected at Manager downward status `308 !== 200` after setup fixes.
+    - [x] Run focused package tests expected to fail before implementation.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/routed-forward.spec.ts` from `packages/api-server` failed as expected: hop-by-hop and `Connection`-nominated headers are still forwarded.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/routed-redirect.spec.ts` from `packages/api-server` failed as expected on red assertions after adding a Phase 1 placeholder helper file; no OOM occurred with default jitless AVA.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/api-v2-instance-hotwire.spec.ts` from `packages/host` failed as expected: v2 RPC route handler is undefined because it is still contract-only.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/route-forwarding-policy.spec.ts` from `packages/manager` failed as expected on red policy assertions.
+        - OOM investigation: `SCRAMJET_AVA_JITLESS=0` in the `api-server` package test script removed the repo default `--jitless` AVA behavior and OOMed under the documented virtual-memory cap. The package script now uses the default `scripts/run-ava.js` jitless behavior to match repository memory guidance.
+    - [x] Record expected failures and any skipped checks in `plan.md`.
+        - No unguarded tests should be run; package tests must use the documented `ulimit`/`NODE_OPTIONS` guard and BDD tests must use the Docker wrapper. Tests were run serially, one file/scenario at a time.
+- [~] Task: Create Phase 1 checkpoint and push
+    - [x] Commit only BDD and focused test contract changes.
+        - Phase 1 checkpoint commit: `00b93709`.
     - [ ] Push the review branch before manual verification.
-    - [ ] Update `plan.md` with the checkpoint commit SHA.
+    - [x] Update `plan.md` with the checkpoint commit SHA.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: BDD Reproduction and Focused Test Contracts' (Protocol in workflow.md)
 
 ## Phase 2: Implement Verser2 Forwarding, Policy, and v2 RPC

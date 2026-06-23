@@ -8,6 +8,8 @@ import Dockerode = require("dockerode");
 import { strict as assert } from "assert";
 import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
+import { request as httpRequest } from "http";
+import { request as httpsRequest } from "https";
 import { defer, streamToString } from "../../lib/utils";
 import { promisify } from "util";
 import { readFile } from "fs/promises";
@@ -56,6 +58,43 @@ function getHostClient() {
     return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
 }
 
+async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
+    return new Promise<{ status: number; text: () => Promise<string> }>((resolve, reject) => {
+        const target = new URL(url);
+        const request = (target.protocol === "https:" ? httpsRequest : httpRequest)({
+            method,
+            protocol: target.protocol,
+            hostname: target.hostname,
+            port: target.port,
+            path: `${target.pathname}${target.search}`,
+            headers
+        }, (response) => {
+            const chunks: Buffer[] = [];
+
+            response.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+            response.on("error", reject);
+            response.on("end", () => {
+                const text = Buffer.concat(chunks).toString("utf8");
+
+                resolve({ status: response.statusCode || 0, text: async () => text });
+            });
+        });
+
+        request.on("error", reject);
+        if (body !== undefined) {
+            request.write(body);
+        }
+        request.end();
+    });
+}
+
+function hostRootUrl(path: string): string {
+    const base = new URL(process.env.LOCAL_HOST_BASE_URL as string);
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+    return `${base.protocol}//${base.host}${normalizedPath}`;
+}
+
 When("I send a {string} request to {string} with body {string}", async function(method, path, body) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
     const options: RequestInit = {
@@ -68,6 +107,26 @@ When("I send a {string} request to {string} with body {string}", async function(
     const response = await fetch(url, options);
 
     this.response = response;
+});
+
+When("I send a {string} request to {string} with headers {string}", async function(method, path, headersJson) {
+    const url = process.env.LOCAL_HOST_BASE_URL + path;
+    const headers = JSON.parse(headersJson) as Record<string, string>;
+
+    this.response = await rawHttpRequest(method, url, undefined, headers);
+});
+
+When("I send a {string} request to {string} with body {string} and headers {string}", async function(method, path, body, headersJson) {
+    const url = process.env.LOCAL_HOST_BASE_URL + path;
+    const headers = JSON.parse(headersJson) as Record<string, string>;
+
+    this.response = await rawHttpRequest(method, url, body, headers);
+});
+
+When("I send a {string} root API request to {string} with body {string} and headers {string}", async function(method, path, body, headersJson) {
+    const headers = JSON.parse(headersJson) as Record<string, string>;
+
+    this.response = await rawHttpRequest(method, hostRootUrl(path), body, headers);
 });
 
 When("I send a {string} request to {string}", async function(method, path) {

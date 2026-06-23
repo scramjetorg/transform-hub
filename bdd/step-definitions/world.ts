@@ -20,6 +20,7 @@ export class CustomWorld implements World {
     readonly attach: ICreateAttachment;
     readonly log: ICreateLog;
     readonly parameters: any;
+    response?: any;
 
     resources: {
         [key: string]: any;

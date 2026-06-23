@@ -67,7 +67,11 @@ function createCsiStub(calls: any[] = []): any {
         emitEvent: async (payload: unknown) => calls.push({ event: payload }),
         set: async (payload: unknown) => calls.push({ set: payload }),
         stop: async (payload: unknown) => calls.push({ stop: payload }),
-        kill: async (payload: unknown) => calls.push({ kill: payload })
+        kill: async (payload: unknown) => calls.push({ kill: payload }),
+        forwardRpcRequest: async (...args: unknown[]) => {
+            calls.push({ forwardRpcRequest: args });
+            return true;
+        }
     };
 }
 
@@ -130,6 +134,27 @@ test("InstanceAPIV2 registers local per-instance v2 routes", t => {
     t.true(recorder.has("get", "/events/:name/once"));
     t.true(recorder.has("op", "/events", "post"));
     t.true(recorder.has("duplex", "/rpc/*"));
+});
+
+test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const csi = createCsiStub(calls);
+    const req: any = { url: "/rpc/test/abc", method: "POST", headers: { "content-type": "text/plain" }, params: {} };
+    const res = createResponseStub();
+
+    registerHttpRoutes(recorder.asApiRoute(), new InstanceAPIV2(csi, logger).createRouter());
+
+    const route = recorder.require("duplex", "/rpc/*");
+
+    t.is(typeof route.handler, "function");
+
+    await (route.handler as Function)(req, res);
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0], req);
+    t.is(calls[0].forwardRpcRequest[1], res);
+    t.is(calls[0].forwardRpcRequest[2], "/rpc/test/abc");
 });
 
 test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
