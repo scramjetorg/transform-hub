@@ -73,12 +73,12 @@
         - OOM investigation: `SCRAMJET_AVA_JITLESS=0` in the `api-server` package test script removed the repo default `--jitless` AVA behavior and OOMed under the documented virtual-memory cap. The package script now uses the default `scripts/run-ava.js` jitless behavior to match repository memory guidance.
     - [x] Record expected failures and any skipped checks in `plan.md`.
         - No unguarded tests should be run; package tests must use the documented `ulimit`/`NODE_OPTIONS` guard and BDD tests must use the Docker wrapper. Tests were run serially, one file/scenario at a time.
-- [~] Task: Create Phase 1 checkpoint and push
+- [x] Task: Create Phase 1 checkpoint and push
     - [x] Commit only BDD and focused test contract changes.
         - Phase 1 checkpoint commit: `ae39ec61`.
-    - [ ] Push the review branch before manual verification.
+    - [x] Push the review branch before manual verification.
     - [x] Update `plan.md` with the checkpoint commit SHA.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: BDD Reproduction and Focused Test Contracts' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: BDD Reproduction and Focused Test Contracts' (Protocol in workflow.md)
 
 ## Phase 2: Implement Verser2 Forwarding, Policy, and v2 RPC
 
