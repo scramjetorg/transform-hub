@@ -209,7 +209,7 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
                         tls: { mtlsRequired: false }
                     },
                     registration: { allowedClientFingerprints: [] },
-                    localBroker: { peerId: "sth.default.runner.broker" }
+                    localBroker: { peerId: "auto" }
                 },
                 broker: { peerId: "", targetDomain: "" },
                 guest: { peerId: "", routeDomain: "" },
@@ -252,6 +252,10 @@ test("verser2 descriptors map env cli aliases and mask secrets", t => {
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.runnerHost.host.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
+
+    const runnerBrokerPeerIdOption = sthOutboundVerser2Options.find(option => option.name === "verser2RunnerHostBrokerPeerId");
+
+    t.true(Boolean(runnerBrokerPeerIdOption?.description?.includes("auto")));
 });
 
 test("verser2 schema requires usable routed config in verser2 mode", t => {

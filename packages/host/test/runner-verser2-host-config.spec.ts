@@ -6,7 +6,8 @@ import { join } from "path";
 import {
     deriveSthRunnerVerser2HostIdentity,
     createSthRunnerVerser2HostOptions,
-    resolveSthRunnerVerser2HostConfig
+    resolveSthRunnerVerser2HostConfig,
+    checkSthRunnerVerser2LegacyBrokerPeerId
 } from "../src/lib/runner-verser2-host-config";
 
 const baseConfig = (): STHRunnerVerser2HostConfig => ({
@@ -27,7 +28,7 @@ const baseConfig = (): STHRunnerVerser2HostConfig => ({
         allowedClientFingerprints: []
     },
     localBroker: {
-        peerId: "sth.runner.broker"
+        peerId: "custom.runner.broker"
     }
 });
 
@@ -39,7 +40,7 @@ test("createSthRunnerVerser2HostOptions maps STH-local endpoint and PEM TLS file
     const options = createSthRunnerVerser2HostOptions(baseConfig());
 
     t.deepEqual(options, {
-        hostId: "sth.runner.broker.host",
+        hostId: "custom.runner.broker.host",
         host: "127.0.0.1",
         port: 2444,
         tls: {
@@ -50,15 +51,27 @@ test("createSthRunnerVerser2HostOptions maps STH-local endpoint and PEM TLS file
     });
 });
 
-test("deriveSthRunnerVerser2HostIdentity replaces unsafe default broker peer ID from owning STH identity", t => {
+test("deriveSthRunnerVerser2HostIdentity replaces auto broker peer ID from owning STH identity", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "auto";
+
+    const derived = deriveSthRunnerVerser2HostIdentity(config, "sth-alpha");
+
+    t.is(derived.localBroker.peerId, "sth.sth-alpha.runner.broker");
+    t.is(createSthRunnerVerser2HostOptions(derived).hostId, "sth.sth-alpha.runner.broker.host");
+});
+
+test("deriveSthRunnerVerser2HostIdentity preserves explicit legacy default broker peer ID", t => {
     const config = baseConfig();
 
     config.localBroker.peerId = "sth.default.runner.broker";
 
     const derived = deriveSthRunnerVerser2HostIdentity(config, "sth-alpha");
 
-    t.is(derived.localBroker.peerId, "sth.sth-alpha.runner.broker");
-    t.is(createSthRunnerVerser2HostOptions(derived).hostId, "sth.sth-alpha.runner.broker.host");
+    t.is(derived, config);
+    t.is(derived.localBroker.peerId, "sth.default.runner.broker");
+    t.is(createSthRunnerVerser2HostOptions(derived).hostId, "sth.default.runner.broker.host");
 });
 
 test("deriveSthRunnerVerser2HostIdentity preserves explicit broker peer ID", t => {
@@ -76,13 +89,82 @@ test("deriveSthRunnerVerser2HostIdentity is stable and unique per STH identity",
     const first = baseConfig();
     const second = baseConfig();
 
-    first.localBroker.peerId = "sth.default.runner.broker";
-    second.localBroker.peerId = "sth.default.runner.broker";
+    first.localBroker.peerId = "auto";
+    second.localBroker.peerId = "auto";
 
-    t.is(deriveSthRunnerVerser2HostIdentity(first, "sth-alpha").localBroker.peerId, "sth.sth-alpha.runner.broker");
-    t.is(deriveSthRunnerVerser2HostIdentity(first, "sth-alpha").localBroker.peerId, "sth.sth-alpha.runner.broker");
-    t.is(deriveSthRunnerVerser2HostIdentity(second, "sth-beta").localBroker.peerId, "sth.sth-beta.runner.broker");
-    t.not(first.localBroker.peerId, second.localBroker.peerId);
+    const derivedFirst = deriveSthRunnerVerser2HostIdentity(first, "sth-alpha");
+    const derivedFirstAgain = deriveSthRunnerVerser2HostIdentity(first, "sth-alpha");
+    const derivedSecond = deriveSthRunnerVerser2HostIdentity(second, "sth-beta");
+
+    t.is(derivedFirst.localBroker.peerId, "sth.sth-alpha.runner.broker");
+    t.is(derivedFirstAgain.localBroker.peerId, "sth.sth-alpha.runner.broker");
+    t.is(derivedSecond.localBroker.peerId, "sth.sth-beta.runner.broker");
+    t.not(derivedFirst.localBroker.peerId, derivedSecond.localBroker.peerId);
+});
+
+test("deriveSthRunnerVerser2HostIdentity fails on auto without host ID", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "auto";
+
+    t.throws(() => deriveSthRunnerVerser2HostIdentity(config), {
+        message: /auto.*no host ID/
+    });
+});
+
+test("deriveSthRunnerVerser2HostIdentity returns config unchanged for legacy default without host ID", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "sth.default.runner.broker";
+
+    const derived = deriveSthRunnerVerser2HostIdentity(config);
+
+    t.is(derived, config);
+    t.is(derived.localBroker.peerId, "sth.default.runner.broker");
+});
+
+test("checkSthRunnerVerser2LegacyBrokerPeerId warns on legacy default with runnerHost enabled", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "sth.default.runner.broker";
+
+    const warning = checkSthRunnerVerser2LegacyBrokerPeerId(config);
+
+    t.not(warning, null);
+    t.true(warning!.includes("unsafe for multi-STH deployments"));
+    t.true(warning!.includes("auto"));
+    t.true(warning!.includes("sth.<hostId>.runner.broker"));
+});
+
+test("checkSthRunnerVerser2LegacyBrokerPeerId returns null for auto sentinel", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "auto";
+
+    const warning = checkSthRunnerVerser2LegacyBrokerPeerId(config);
+
+    t.is(warning, null);
+});
+
+test("checkSthRunnerVerser2LegacyBrokerPeerId returns null for explicit custom peer ID", t => {
+    const config = baseConfig();
+
+    config.localBroker.peerId = "custom.runner.broker";
+
+    const warning = checkSthRunnerVerser2LegacyBrokerPeerId(config);
+
+    t.is(warning, null);
+});
+
+test("checkSthRunnerVerser2LegacyBrokerPeerId returns null for legacy default when runnerHost disabled", t => {
+    const config = baseConfig();
+
+    config.enabled = false;
+    config.localBroker.peerId = "sth.default.runner.broker";
+
+    const warning = checkSthRunnerVerser2LegacyBrokerPeerId(config);
+
+    t.is(warning, null);
 });
 
 test("createSthRunnerVerser2HostOptions maps PFX TLS identity", t => {
