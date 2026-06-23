@@ -24,7 +24,8 @@
         - Confirmed: `packages/manager/src/lib/route-classifier.ts` classifies follow routes and `packages/manager/src/lib/manager.ts` currently writes external `308` redirects or internal route metadata; `packages/multi-manager/src/lib/multi-manager.ts` strips `/cpm/:id` and delegates to `manager.router.lookup()`.
     - [x] Review shared packages for existing route metadata, forwarding, and header utilities before adding new code.
         - Shared inventory: `forwardRoutedRequest()` and `normalizeForwardedHeaders()` exist in `@scramjet/api-server`; `@scramjet/api-router` has private redirect response helpers and v2 redirect resolver types; no generic hop-by-hop header sanitizer or shared `x-scramjet-route-*` constants were found.
-- [~] Task: Conductor - User Manual Verification 'Phase 0: Branch, Track Artifacts, and PR Review Surface' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 0: Branch, Track Artifacts, and PR Review Surface' (Protocol in workflow.md)
+    - User approved Phase 0 after planned tests were updated for sequence-to-sequence communication across two Hubs/STHs and same-Hub local path shortening.
 
 ## Phase 1: BDD Reproduction and Focused Test Contracts
 
