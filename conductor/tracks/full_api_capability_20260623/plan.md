@@ -142,9 +142,10 @@
         - Oracle initial review found blockers around spoofable origin headers, response header sanitization, and route-domain trust; these were fixed and revalidated.
         - Final Oracle follow-up found no critical blockers for Phase 2 checkpoint. Non-blocking hardening: validate STH ids before deriving route domains, make response `Connection` lookup fully case-insensitive, and optionally tighten scoped STH domains to one DNS label.
 - [ ] Task: Create Phase 2 checkpoint and push
-    - [ ] Commit the scoped implementation changes after validation.
+    - [x] Commit the scoped implementation changes after validation.
+        - Phase 2 implementation checkpoint commit: `82e8bb74`.
     - [ ] Push the review branch before manual verification.
-    - [ ] Update `plan.md` with the checkpoint commit SHA and validation summary.
+    - [x] Update `plan.md` with the checkpoint commit SHA and validation summary.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Implement Verser2 Forwarding, Policy, and v2 RPC' (Protocol in workflow.md)
 
 ## Phase 3: Final Validation, Review, and Track Completion
