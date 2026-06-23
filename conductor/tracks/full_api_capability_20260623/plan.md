@@ -14,13 +14,17 @@
     - [x] Create the PR with `gh pr create --body-file <file>` after the initial Conductor artifact commit has been pushed.
     - [x] Record the PR URL in `plan.md`.
         - PR: https://github.com/0rail/transform-hub/pull/34
-- [ ] Task: Confirm affected entrypoints and shared surfaces
-    - [ ] Read relevant codemaps for `bdd`, `packages/api-server`, `packages/api-router`, `packages/host`, `packages/manager`, and `packages/multi-manager`.
-    - [ ] Confirm the current direct STH v1 RPC path through `HostAPIV1Handler`, `CSIController.forwardRpcRequest()`, and `forwardRoutedRequest()`.
-    - [ ] Confirm the current v2 instance RPC route contract and `InstanceAPIV2` contract-only behavior.
-    - [ ] Confirm Manager v1/v2 follow-route redirect behavior and MultiManager `/cpm/:id` Manager handoff behavior.
-    - [ ] Review shared packages for existing route metadata, forwarding, and header utilities before adding new code.
-- [ ] Task: Conductor - User Manual Verification 'Phase 0: Branch, Track Artifacts, and PR Review Surface' (Protocol in workflow.md)
+- [x] Task: Confirm affected entrypoints and shared surfaces
+    - [x] Read relevant codemaps for `bdd`, `packages/api-server`, `packages/api-router`, `packages/host`, `packages/manager`, and `packages/multi-manager`.
+    - [x] Confirm the current direct STH v1 RPC path through `HostAPIV1Handler`, `CSIController.forwardRpcRequest()`, and `forwardRoutedRequest()`.
+        - Confirmed: `packages/host/src/lib/api/host-api-v1.ts` routes RPC through `rpcMiddleware()`, `packages/host/src/lib/csi-controller.ts` implements `forwardRpcRequest()`, and `packages/api-server/src/handlers/routed-forward.ts` provides the Verser2 routed HTTP forwarder.
+    - [x] Confirm the current v2 instance RPC route contract and `InstanceAPIV2` contract-only behavior.
+        - Confirmed: `packages/host/src/lib/api/instance-api-v2.ts` binds `rpc` as `routeBinding.contractOnly("RPC duplex forwarding remains handled by v1 compatibility surface.")`.
+    - [x] Confirm Manager v1/v2 follow-route redirect behavior and MultiManager `/cpm/:id` Manager handoff behavior.
+        - Confirmed: `packages/manager/src/lib/route-classifier.ts` classifies follow routes and `packages/manager/src/lib/manager.ts` currently writes external `308` redirects or internal route metadata; `packages/multi-manager/src/lib/multi-manager.ts` strips `/cpm/:id` and delegates to `manager.router.lookup()`.
+    - [x] Review shared packages for existing route metadata, forwarding, and header utilities before adding new code.
+        - Shared inventory: `forwardRoutedRequest()` and `normalizeForwardedHeaders()` exist in `@scramjet/api-server`; `@scramjet/api-router` has private redirect response helpers and v2 redirect resolver types; no generic hop-by-hop header sanitizer or shared `x-scramjet-route-*` constants were found.
+- [~] Task: Conductor - User Manual Verification 'Phase 0: Branch, Track Artifacts, and PR Review Surface' (Protocol in workflow.md)
 
 ## Phase 1: BDD Reproduction and Focused Test Contracts
 

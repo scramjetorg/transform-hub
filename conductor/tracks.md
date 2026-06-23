@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Full API capability via Verser2 forwarding**
+- [~] **Track: Full API capability via Verser2 forwarding**
 *Link: [./tracks/full_api_capability_20260623/](./tracks/full_api_capability_20260623/)*
