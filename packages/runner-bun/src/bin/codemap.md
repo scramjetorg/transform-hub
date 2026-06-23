@@ -9,7 +9,9 @@ Executable Bun entrypoint (`runner-bun`). Normalizes boot config (including `ver
 - **Conditional branching** on host transport presence in boot config.
 - **Verser2 support**: in direct mode, optionally creates verser2 guest (`startBunSequenceGuest`) for API exposure and verser2 broker (`createBunHubFetch`) for hub API calls.
 - **Separation of concerns**: Bun-specific runtime validation and logging isolated from Node delegation code path.
-- **Error normalization**: failure paths consistently serialize error details and map to process exit codes.
+- **Error normalization**: failure paths consistently serialize error details (`logRuntimeError` with phase, runtime, sequence/instance IDs) and map to process exit codes.
+- **Legacy env var cleanup**: explicitly deletes `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO` before child spawn to avoid environment-based config leakage.
+- **`resolveRunnerNodeEntry()`**: dynamic resolution strategy — checks compiled dist first (`dist/bin/runner-node.js`), then source with ts-node registration (`src/bin/runner-node.ts`).
 
 ## Data & Control Flow
 
@@ -20,4 +22,4 @@ Executable Bun entrypoint (`runner-bun`). Normalizes boot config (including `ver
 
 ## Integration Points
 
-Relies on Bun/Node process spawning, `@scramjet/runner-node` entry resolution, `@signicode/verser2-guest-bun` for verser2 connectivity, and shared error/logging conventions used by outer and node runtimes.
+Relies on Bun/Node process spawning, `@scramjet/runner-node` entry resolution (`resolveRunnerNodeEntry`), `@signicode/verser2-guest-bun` for verser2 connectivity, and shared error/logging conventions used by outer and node runtimes.

@@ -6,7 +6,7 @@ CLI tooling for the `@scramjet/api-router` package. Provides a code-generation e
 
 ## Modules
 
-### `generate.ts` — OpenAPI generator CLI (28 lines)
+### `generate.ts` — OpenAPI generator CLI
 
 Standalone Node.js script that loads a route manifest from a TypeScript/JavaScript module and writes an OpenAPI 3.1 JSON document.
 
@@ -16,12 +16,14 @@ scramjet-api-router-generate <api-definition-module-path> [output.json]
 ```
 
 Flow:
-1. Dynamic `import()` of the target module.
-2. `loadManifestFromSchemaModule()` (from `schema-mode.ts`) extracts a `RouteManifest`.
-3. `generateOpenApi()` (from `openapi.ts`) produces an OpenAPI 3.1 document.
-4. Writes to file or stdout.
+1. Parses CLI args via `@scramjet/config` `printHelpAndExitIfRequested()`.
+2. Dynamic `import()` of the target module at the resolved path.
+3. `loadManifestFromSchemaModule()` (from `schema-mode.ts`) extracts a `RouteManifest` (supports `.manifest`, `.collect()`, or `.default` exports).
+4. `generateOpenApi()` (from `openapi.ts`) produces an OpenAPI 3.1 document.
+5. Writes to file or stdout.
 
 ## Integration Points
 
-- Relies on `schema-mode.ts` for manifest extraction (supports `.manifest`, `.collect()`, or `.default` exports).
+- Relies on `schema-mode.ts` for manifest extraction.
 - Relies on `openapi.ts` for document generation with Zod-to-JSON-Schema conversion.
+- Uses `@scramjet/config` for argument parsing and help generation.

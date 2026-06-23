@@ -1,4 +1,4 @@
-# @scramjet/monitoring-server
+# packages/monitoring-server/
 
 ## Responsibility
 

@@ -1,4 +1,4 @@
-# Package Atlas: bdd
+# bdd/
 
 ## Responsibility
 
@@ -7,7 +7,7 @@ BDD smoke and end-to-end validation workspace for Scramjet Transform Hub. It def
 ## Design/Patterns
 
 - Cucumber test harness: `cucumber.js` loads TypeScript step definitions through `ts-node/register`, excludes `@ignore` and harness self-tests by default, and can emit HTML reports under `reports/`.
-- Shared World object: `step-definitions/world.ts` centralizes mutable test resources, API clients, spawned processes, selected sequence/instance IDs, and CLI command state.
+- Shared World object: `step-definitions/world.ts` (`CustomWorld`) centralizes mutable test resources, API clients, spawned processes, selected sequence/instance IDs, and CLI command state.
 - Process fixture pattern: `lib/host-utils.ts` starts either the built hub (`../dist/sth/bin/hub.js`) or source hub (`packages/sth/src/bin/hub.ts`) based on environment flags, tracks child process groups, and installs cleanup handlers.
 - Utility polling and stream helpers: `lib/utils.ts` provides CLI command selection, spawn output collection, retry loops, file/log assertions, stream-to-string conversion, and profile helpers.
 

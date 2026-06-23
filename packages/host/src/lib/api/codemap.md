@@ -35,6 +35,7 @@ V2 REST API using `@scramjet/api-router` contracts and `@scramjet/rest-api2` rou
   - `sendSequence`/`updateSequence` → contract-only (delegated to v1 compatibility).
   - `deleteSequence`, `startSequence`, `getSequence`, `getSequenceInstances`.
 - **`createV2Router()`**: Composes hub + sequence routers and adds an `instance` resolver that looks up `instancesStore.getByNameOrId()` and returns the instance's `v2Router` as a `local` target.
+- **Route metadata**: v2 handlers return local/direct-route metadata used by Manager and MultiManager forwarding layers to decide whether to follow, redirect, or proxy a route.
 - **`attach()`**: Calls `registerHttpRoutes()` to wire the composed v2 router onto the host API surface.
 
 ### `instance-api.ts` — `InstanceAPI` (246 lines)

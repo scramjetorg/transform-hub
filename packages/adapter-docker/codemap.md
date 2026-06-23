@@ -11,6 +11,7 @@ Implements the Docker runtime adapter plugin for sequence storage and execution.
 - Uses the host adapter augmentation contract (`augment`, `augmentOptions`, `initialize`).
 - Splits concerns into `DockerSequenceAdapter` (identify/list/metadata) and `DockerInstanceAdapter` (run/remove/inspect).
 - Centralizes Docker API calls in `DockerodeDockerHelper` to keep adapter logic thin.
+- Runner image selection delegates to `selectRunnerImageForEngines` from adapters-common, which uses `selectRuntimeKind` from `@scramjet/symbols` with node > bun > python3 precedence.
 
 ## Data & Control Flow
 Sequence flow:
@@ -25,7 +26,7 @@ Instance flow:
 3. Cleanup routines remove containers and related sequence volumes.
 
 ## Integration Points
-- `@scramjet/adapters-common`: runner env config + package decoding + image selection.
+- `@scramjet/adapters-common`: runner env config + package decoding + image selection + transport config.
 - Docker bridge `transformhub0` and host-container linking logic in `setupDockerNetworking` for cross-container reachability.
 - Shared sequence abstraction packages (`@scramjet/types`, `@scramjet/model`, `@scramjet/utility`).
 - Verser2 runner transport config injected via `getRunnerTransportEnv()` from adapters-common, producing `SCRAMJET_RUNNER_TRANSPORT_CONFIG` in runner container environment.

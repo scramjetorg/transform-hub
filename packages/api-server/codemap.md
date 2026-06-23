@@ -1,4 +1,4 @@
-# Package Atlas: api-server
+# packages/api-server/
 
 ## Responsibility
 
@@ -13,6 +13,7 @@ HTTP API server package for Scramjet Transform Hub. It provides router construct
 - **Defensive middleware wrapping**: `safeHandler()` and `safeDecorator()` catch middleware/decorator errors and preserve router error handling.
 - **Server config**: `src/config/ServerConfiguration.ts` validates SSL/key/cert paths for HTTPS setup.
 - **CORS/OPTIONS**: Built-in `corsMiddleware` and `optionsMiddleware` in `src/middlewares/`.
+- **No-jitless AVA mode**: Tests use `SCRAMJET_AVA_JITLESS=0` to opt out of jitless AVA child process mode.
 
 ## Data & Control Flow
 
@@ -26,6 +27,6 @@ HTTP API server package for Scramjet Transform Hub. It provides router construct
 
 - Consumed by `packages/host`, Manager/instance API code, and tests that need a local API server/router abstraction.
 - Depends on `@scramjet/types` route/server contracts, `@scramjet/obj-logger`, `@scramjet/symbols`, `@scramjet/utility`, `0http`, and `scramjet` streams.
-- Verser2 rollout additions use `src/handlers/routed-forward.ts` for streaming broker-backed HTTP forwarding without relying on test-only buffering paths.
+- Verser2 rollout additions use `src/handlers/routed-forward.ts` for streaming broker-backed HTTP forwarding (`forwardRoutedRequest()`, `normalizeForwardedHeaders()`).
 - Package-level AVA tests under `test/` cover server behavior, REST/stream methods, forwarding, and routed-forward semantics.
 - API v2 route registration uses `@scramjet/api-router`'s `registerHttpRoutes()` instead of direct handler factories, though the api-server surfaces remain the target.

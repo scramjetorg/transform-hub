@@ -1,4 +1,4 @@
-# package adapter-process
+# packages/adapter-process/
 
 ## Responsibility
 Local process runtime adapter package that runs sequences as direct host processes for development/edge execution.
@@ -10,6 +10,7 @@ Local process runtime adapter package that runs sequences as direct host process
 - Light-weight implementation of the adapter augmentation interface.
 - Minimal orchestration layer: sequence metadata + process execution with `@scramjet/runner` utilities.
 - Uses shared environment helpers from `@scramjet/adapters-common` (runner config + env serialization).
+- Runner image selection delegates to `selectRunnerImageForEngines` which uses `selectRuntimeKind` from `@scramjet/symbols` with node > bun > python3 precedence.
 
 ## Data & Control Flow
 - `augment` injects sequence directory settings and `instanceRequirements`.

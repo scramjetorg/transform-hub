@@ -4,6 +4,8 @@
 
 Outer orchestration runtime for sequence launch from adapters. It reads `SCRAMJET_RUNNER_TRANSPORT_CONFIG` to establish a verser2-based host transport, validates adapter-sourced env, creates a temporary boot-config file, spawns the selected child runtime (Node/Bun/Python), wires host <-> child channels via `RunnerVerser2Transport`, and translates process termination into stable runner exit behavior.
 
+Also provides the inner runner engine (`Runner` class with `RunnerAppContext`, `InputStream` parsing, `LocalStorageAgent`, message utilities) used by `runner-node` for sequence execution.
+
 ## Design / Patterns
 
 - **Verser2-based host transport**: uses `@signicode/verser2-guest-node` to connect to the verser2 host as a guest; exposes a local `LocalChannelServer` for the inner runtime to connect its semantic channels (IN/OUT/LOG).
@@ -11,6 +13,9 @@ Outer orchestration runtime for sequence launch from adapters. It reads `SCRAMJE
 - **Strategy selection**: runtime is chosen via `selectExecutor(config)` from sequence/app config engines.
 - **Process abstraction**: executor modules expose a consistent `RuntimeExecutor` contract (`spawn(...)`) and fixed 6-slot stdio layout (`fd0`–`fd5`).
 - **Resilient lifecycle handling**: stdout/stderr forwarding is raw passthrough; lifecycle observer non-destructively inspects the monitoring stream for terminal frames without consuming bytes.
+- **Inner runner decoupling**: `runner.ts` provides the runtime-agnostic `Runner` class (loads sequence, creates `RunnerAppContext`, wires input/output/control/monitoring, handles control messages), while executor modules handle child process spawning.
+- **`RunnerAppContext`**: implements `AppContext` with v2 `hubClient()`/`spaceClient()` (via `@scramjet/rest-api2`), v1 `HostClient`/`ManagerClient`, `ILocalStorage` agent, `APIExpose` server, and lifecycle handler registries.
+- **InputStream protocol**: `input-stream.ts` parses HTTP-style headers (`\r\n\r\n`) from the beginning of the input stream and maps to `DataStream` variants based on `Content-Type` (ndjson, text/plain, octet-stream).
 
 ## Data & Control Flow
 
@@ -32,5 +37,7 @@ Outer orchestration runtime for sequence launch from adapters. It reads `SCRAMJE
 
 - `@scramjet/types`, `@scramjet/symbols`, `@scramjet/api-client`, `@scramjet/api-server`, `@scramjet/client-utils`
 - `@scramjet/runner-node`, `@scramjet/runner-bun`, `@scramjet/runner-python`
+- `@scramjet/rest-api2` for v2 canonical API clients.
 - `@signicode/verser2-guest-node` for verser2 guest connectivity.
 - Host transport via `RunnerVerser2Transport` + `LocalChannelServer` and Node child process APIs.
+- Inner `Runner` class consumed directly by `runner-node` bootstrap.

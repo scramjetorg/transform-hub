@@ -1,4 +1,4 @@
-# Package Atlas: verser
+# packages/verser/
 
 ## Responsibility
 

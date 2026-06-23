@@ -27,7 +27,7 @@ Registers stream-oriented route handlers:
 
 ### `forward.ts` — `createForwardController(path, urls, strategy)`
 
-Creates a forwarding middleware controller that proxies HTTP requests to one of the configured target URLs using a pluggable strategy (round-robin, consistent-hash). Used for RPC forwarding to instance-level HTTP servers.
+Creates a forwarding middleware controller that proxies HTTP requests to one of the configured target URLs using a pluggable strategy (round-robin, consistent-hash). Used for RPC forwarding to instance-level HTTP servers. Strips the matched base path from the request URL before forwarding.
 
 ### `routed-forward.ts` — `forwardRoutedRequest(transport, opts)`
 
@@ -35,3 +35,11 @@ Streaming broker-backed HTTP forwarding without buffering. Used by verser2-based
 - Forwards an incoming request body stream through an injected `RoutedForwardTransport`.
 - Pipes the routed response back to the client.
 - Handles `x-scramjet-route-domain` and `x-scramjet-route-target-path` headers for verser2 redirect.
+- Interfaces: `RoutedForwardTransport`, `RoutedForwardTransportResponse`, `RoutedForwardOptions`.
+- Exports `normalizeForwardedHeaders()` for header sanitization.
+
+## Integration Points
+
+- All handler factories are imported by `src/index.ts` and wired into `getRouter()` and `createServer()`.
+- `forwardRoutedRequest` and `normalizeForwardedHeaders` are re-exported from the package entry point for use by Host/Manager verser2 paths.
+- Uses `@scramjet/types` for middleware/next/handler contracts and `CeroError` from `src/lib/definitions.ts`.

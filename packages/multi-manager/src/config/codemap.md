@@ -2,11 +2,11 @@
 
 ## Responsibility
 
-Configuration classes for the Multi-Manager process. Validates and merges settings from JSON files, CLI options, and compile-time defaults into a typed, read-only configuration object. Includes verser2 configuration for v2 API routing.
+Configuration classes for the Multi-Manager process. Validates and merges settings from JSON files, CLI options, and compile-time defaults into a typed, read-only configuration object. Includes verser2 configuration for v2 API routing and manager lifecycle.
 
 ## Design/Patterns
 
-- **`MultiManagerConfig`**: Extends `ReadOnlyConfig<MultiManagerOptions>`. Performs a three-way merge in its constructor: defaults → file config → CLI options. Exposes typed getters for each config section (`logLevel`, `server`, `manager`, `loadCheckRequirements`, `s3`, `monitoringServer`, `verser2`). Provides `getMasked()` for safe logging (redacts S3 credentials). Static `validateEntry()` delegates to `isLogLevel`, `MultiManagerServerConfig.validateEntry`, and `LoadCheckConfig.validateEntry`.
+- **`MultiManagerConfig`**: Extends `ReadOnlyConfig<MultiManagerOptions>`. Performs a three-way merge in its constructor: defaults → file config → CLI options. Exposes typed getters for each config section (`logLevel`, `server`, `manager`, `loadCheckRequirements`, `s3`, `monitoringServer`, `verser2`). Provides `getMasked()` for safe logging (redacts S3 credentials and verser2 secrets). Static `validateEntry()` delegates to `isLogLevel`, `MultiManagerServerConfig.validateEntry`, and `LoadCheckConfig.validateEntry`.
 - **`MultiManagerServerConfig`**: Extends `ReadOnlyConfig<MultiManagerServerOptions>`. Validates server sub-fields (`apiBase` via `isUrlPath`, `apiPort` via `isPort`, `apiHost` via `isIP`, `version` via `isApiVersion`).
 
 ## Data & Control Flow
@@ -17,6 +17,6 @@ Configuration classes for the Multi-Manager process. Validates and merges settin
 
 - `@scramjet/utility`: `ReadOnlyConfig`, `JsonFile`, `isLogLevel`, `isPort`, `isUrlPath`, `isApiVersion`, `merge`.
 - `@scramjet/load-check`: `LoadCheckConfig`.
-- `@scramjet/types`: `LoadCheckRequirements`.
+- `@scramjet/types`: `LoadCheckRequirements`, `ManagerVerser2Config`.
 - `../types/multi-manager-types`: `MultiManagerOptions`, `MultiManagerCommandOptions`, `MultiManagerServerOptions`.
 - Node.js `net`: `isIP`.

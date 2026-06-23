@@ -10,7 +10,7 @@ Implements the Kubernetes runtime adapter package:
 ## Design/Patterns
 - `adapterConfigDecoder` is strict and normalized in package scope (`kubernetes-config-decoder.ts`).
 - `KubernetesClientAdapter` encapsulates Kubernetes API client creation and namespace-specific interactions.
-- `selectRunnerImageForEngines` and adapters-common decoders provide shared runtime decision logic.
+- `selectRunnerImageForEngines` and adapters-common decoders provide shared runtime decision logic, using `selectRuntimeKind` from `@scramjet/symbols` with node > bun > python3 precedence.
 
 ## Data & Control Flow
 1. `augmentOptions` merges adapter defaults (pod/namespace/cpu/memory/resource settings, timeouts, image map).

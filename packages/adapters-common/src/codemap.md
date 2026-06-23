@@ -15,18 +15,21 @@ Implementation layer for shared adapter utilities used during sequence bootstrap
 - Shared JSON decoders (`validate-sequence-package-json.ts`) are source of truth for required sequence fields.
 - Helper composition (`utils.ts` + `get-runner-env.ts`) avoids adapter-specific duplication.
 - Transport env generation (`get-runner-env.ts`) includes verser2 runner host configuration with TLS trust bundle assembly, default domain derivation, and lease timeout propagation.
+- Runtime kind selection uses `selectRuntimeKind` from `@scramjet/symbols` for consistent node > bun > python3 precedence across all adapters.
 
 ## Data & Control Flow
 
-- `validate-sequence-package-json.ts` defines and validates the schema for stored sequence metadata.
-- `utils.ts` provides `getRunnerConfigForStoredSequence()`, `selectRunnerImageForEngines()`, and `detectLanguage()` to produce a normalized runtime config.
+- `validate-sequence-package-json.ts` defines and validates the schema for stored sequence metadata using `ts.data.json` decoders.
+- `utils.ts` provides `getRunnerConfigForStoredSequence()`, `selectRunnerImageForEngines()`, `detectLanguage()`, and `RunnerImages` type to produce a normalized runtime config.
 - `get-runner-env.ts` provides:
   - `getRunnerEnvVariables()` / `getRunnerEnvEntries()` — converts normalized config into env array payload expected by all runtimes.
   - `getRunnerTransportEnv()` — builds the `SCRAMJET_RUNNER_TRANSPORT_CONFIG` env var for verser2 runner connectivity, used by all adapter `dispatch()` methods.
   - `buildRunnerTrustBundle()` — assembles CA trust chain for verser2 TLS.
+- `types.ts` — shared type definitions for runner env config.
+- `index.ts` — barrel re-export of all modules.
 
 ## Integration Points
 
 - Consumed by `adapter-docker`, `adapter-kubernetes`, and `adapter-process` source adapters.
 - Transport env consumed by all three adapter packages during runner process dispatch.
-- Uses `@scramjet/types`, `@scramjet/utility`, and `ts.data.json` codecs for type-safe data conversion.
+- Uses `@scramjet/symbols` (runtime-kind), `@scramjet/types`, `@scramjet/utility`, and `ts.data.json` codecs for type-safe data conversion.

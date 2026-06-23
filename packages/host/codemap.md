@@ -10,8 +10,10 @@ Host package implementing the Scramjet Transform Hub node runtime: API exposure 
 - **Controller/dispatcher split**: `CSIController` handles persisted instance lifecycle operations; `CSIDispatcher` schedules dispatch/monitoring against a runtime adapter.
 - **V1 + V2 API handlers**: `src/lib/api/host-api.ts` composes `HostAPIV1Handler` (legacy REST) and `HostAPIV2Handler` (v2 REST via `@scramjet/api-router` contracts). Instance-level v2 handled by `InstanceAPIV2` via `ICSI.v2Router`.
 - **Store abstractions**: `SequenceStore`, `InstanceStore` for local sequence and instance registries.
-- **Connector pattern**: `CPMConnector` for optional Manager/CPM platform connectivity.
-- **verser2 runner control plane**: Explicit channel handlers for runner transport with verser2 host peers.
+- **Connector pattern**: `CPMConnector` for optional Manager/CPM platform connectivity via verser2 guest-node.
+- **verser2 runner control plane**: Explicit channel handlers for runner transport with verser2 host peers (`runner-transport.ts`, `runner-verser2-host-config.ts`, `runner-verser2-host-peers.ts`).
+- **Host identity management**: `src/lib/host-id.ts` provides three-tier stable ID resolution (explicit → persisted file → auto-generated UUID), consumed by CPM registration and runner verser2 broker peerId derivation.
+- **Self-signed TLS identity**: `src/lib/runner-verser2-host-config.ts` auto-generates CA + server certificates for the STH-local runner verser2 Host when explicit TLS is not configured, with automatic SAN derivation from publicUrl/bindHost.
 
 ## Data & Control Flow
 

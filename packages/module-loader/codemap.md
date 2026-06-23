@@ -1,4 +1,4 @@
-# @scramjet/module-loader
+# packages/module-loader/
 
 ## Responsibility
 

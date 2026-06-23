@@ -18,7 +18,7 @@ Source implementation for Kubernetes-based sequence persistence and runner pod l
 1. Adapter config is validated once and injected into adapters.
 2. Sequence `identify` writes incoming package payload, optionally inflates it in a dedicated folder, and reads package metadata through common decoders.
 3. `list` enumerates stored sequence dirs while filtering hidden/system entries.
-4. On dispatch, the instance adapter calculates runner image from `engines`, checks quotas, creates pod spec, sets env/labels/commands, and applies resource limits.
+4. On dispatch, the instance adapter calculates runner image from `engines` using `selectRuntimeKind`, checks quotas, creates pod spec, sets env/labels/commands, and applies resource limits.
 5. Pod runtime is started, sequence bytes are piped via `tar` into `unpack.sh`, and state is awaited (`Running` then terminal) with crash-log retrieval.
 6. On completion/failure, pod is removed and exit code is returned.
 

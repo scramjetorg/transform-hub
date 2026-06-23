@@ -6,7 +6,7 @@
 |------|-------|------|
 | `index.ts` | 1 | Re-exports from `config-service` barrel. |
 | `config-service.ts` | 27 | `ConfigService` class with singleton export, `defaultConfig` re-export, and `getDefaultConfig()` deep-clone factory. |
-| `default-config.ts` | 44 | Hardcoded `ManagerConfiguration` defaults including `logColors`, `logLevel`, `apiBase`, `id`, `sthController`, and `verser2` settings. |
+| `default-config.ts` | 44 | Hardcoded `ManagerConfiguration` defaults including `logColors`, `logLevel`, `apiBase`, `id`, `sthController`, and full `verser2` settings (host TLS, registration, local broker/guest peers, timeouts, leases). |
 
 ## Responsibility
 
@@ -22,4 +22,4 @@ Provides the concrete default configuration and a module-level singleton `Config
 
 - Consumes `ManagerConfiguration` type from `@scramjet/types`.
 - Uses `merge` from `@scramjet/utility`.
-- Imported by Manager host processes (`@scramjet/manager`) at startup.
+- Imported by Manager host processes (`@scramjet/manager` and `@scramjet/multi-manager`) at startup.

@@ -12,11 +12,11 @@ Minimal barrel export (`index.ts` re-exports `portsParser` from `lib/ports-parse
 
 | Directory | Responsibility |
 |-----------|---------------|
-| `bin/` | CLI entrypoint (`start.ts`) |
-| `config/` | Configuration classes (`MultiManagerConfig`, `MultiManagerServerConfig`) |
-| `lib/` | Core orchestration (`MultiManager`, manager store, auditor, ports parser, verser2 host/trust helpers) |
-| `lib/api/` | V1 and V2 REST API handlers |
-| `types/` | Shared type definitions |
+| `bin/` | CLI entrypoint (`start.ts`) with heap-dump monitor support |
+| `config/` | Configuration classes (`MultiManagerConfig`, `MultiManagerServerConfig`) with verser2 config |
+| `lib/` | Core orchestration (`MultiManager` — 345 lines, manager store, auditor, ports parser, verser2 host config/identity/trust helpers, default config) |
+| `lib/api/` | V1 and V2 REST API handlers (composite `MultiManagerAPIHandler`, v1 handler with `/start`/`/cpm` routing, v2 handler via `RestAPI2RouteSets.root`) |
+| `types/` | Shared type definitions (`MultiManagerOptions`, `MultiManagerCommandOptions`, `StartManagerRequestParams`) |
 
 ## Data & Control Flow
 
@@ -24,4 +24,4 @@ Minimal barrel export (`index.ts` re-exports `portsParser` from `lib/ports-parse
 
 ## Integration Points
 
-Re-exported function `portsParser` is used externally for port-range validation. Internal modules integrate with `@scramjet/manager`, `@signicode/verser2-host`, `@scramjet/api-router`, `@scramjet/rest-api2`, `@scramjet/api-server`, `@scramjet/obj-logger`, `@scramjet/utility`, and `@scramjet/types`.
+Re-exported function `portsParser` is used externally for port-range validation. Internal modules integrate with `@scramjet/manager`, `@signicode/verser2-host`, `@scramjet/api-router`, `@scramjet/rest-api2`, `@scramjet/api-server`, `@scramjet/obj-logger`, `@scramjet/utility`, `@scramjet/load-check`, and `@scramjet/types`.

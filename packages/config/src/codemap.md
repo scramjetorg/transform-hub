@@ -58,3 +58,20 @@ Native Scramjet CLI Command Model — replaces Commander with descriptors + a sm
 | `arg(name, desc?, required?)` | Shorthand argument descriptor factory |
 
 **Internal helpers:** `optionTokens`, `coerceOptionValue`, `parseOptionDescriptor`, `parseArgumentDescriptor`, `toCamelCase`, `coerceArgValue`, `validateChoice`.
+
+### `verser2-config.ts` (190 lines)
+
+Zod validation schemas and CLI option descriptor arrays for verser2 transport configuration across Manager and STH outbound modes.
+
+**Schemas:**
+- `managerVerser2ConfigSchema` — Zod schema for Manager/MultiManager verser2 Host configuration: host binding (identityDir, bindHost/bindPort, publicUrl, TLS), registration (token, allowed fingerprints), local broker/guest peer identities, timeouts, and leases.
+- `sthOutboundVerser2ConfigSchema` — Zod schema for STH outbound verser2 client configuration: hostUrl, runnerHost sub-config (host binding, TLS, registration, local broker peer identity), broker/guest peer identities, TLS/ca/enrollment, timeouts, and leases. Includes `superRefine` validation for PEM pair pairing, mTLS constraints, and required-field checks when enabled.
+
+**Option descriptors:**
+- `managerVerser2Options` — 23 `ConfigOptionDescriptor` entries mapping `verser2.*` paths to CLI flags (`--verser2-*`), env vars (`SCRAMJET_VERSER2_*`), types, and secret masking markers.
+- `sthOutboundVerser2Options` — 34 `ConfigOptionDescriptor` entries for STH outbound verser2 config, including runnerHost sub-options, TLS, enrollment, and a `verser2RunnerHostBrokerPeerId` flag that documents the `"auto"` identity derivation mode (resolves to `sth.<hostId>.runner.broker`).
+
+**Design:** Schemas use `strict()` to reject unknown fields. PEM pair validation (`validatePemPair`) ensures cert and key are provided together. `validateRequiredRoutes` ensures critical fields are non-empty when verser2 is enabled. The `"auto"` runner broker peerId semantic is documented in the flag description rather than validated in the schema.
+
+**Integration:**
+- Both schema and option arrays are exported and consumed by `packages/sth-config` (ConfigService masking via `maskConfig()`), `packages/sth/src/bin/hub.ts` (CLI wiring + `loadConfig` validation), and `packages/manager` (Manager config loading).

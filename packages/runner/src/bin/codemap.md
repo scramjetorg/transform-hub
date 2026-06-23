@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Outer runner bootstrap executable (`start-runner.ts`). It is the startup boundary between host adapter env and the actual runtime child process, now using verser2 transport as the default connectivity path.
+Outer runner bootstrap executable (`start-runner.ts`). It is the startup boundary between host adapter env and the actual runtime child process, now using verser2 transport as the default connectivity path. Also includes a legacy startup shell script (`start.sh`).
 
 ## Design / Patterns
 
@@ -11,6 +11,7 @@ Outer runner bootstrap executable (`start-runner.ts`). It is the startup boundar
 - **Boot config with verser2 block**: `writeBootConfig()` includes `verser2Runtime` with `hostUrl`, `runnerGuestId`, `runnerRouteDomain`, `hubBrokerId`, TLS config, and lease timeouts.
 - **RPC exposure**: `observeRpcExpose` monitors the child monitoring stream for PING frames containing `exposePort`/`exposeHost`, forwarding to `RunnerVerser2Transport.setRpcTarget()` so sequence API routes are proxied through the verser2 guest.
 - **Deterministic stream wiring**: raw passthrough with `{ end: false }` semantics for host-facing streams; lifecycle observer non-destructively inspects monitoring for terminal frames.
+- **Legacy start.sh**: Bash wrapper that sets up pipe FDs (`STDIO_IN`, `STDIO_OUT`, `STDIO_ERR`) with crash log capture — maintained for backward compatibility but the main path is now `start-runner.ts` directly.
 
 ## Data & Control Flow
 
@@ -29,4 +30,4 @@ Outer runner bootstrap executable (`start-runner.ts`). It is the startup boundar
 
 ## Integration Points
 
-`RunnerVerser2Transport`, `parseRunnerTransportConfig`, `LocalChannelServer`, `selectExecutor`, launcher resolvers, stream forwarder, lifecycle observer, exit translator, and `runner-node`/`runner-bun` runtime packages.
+`RunnerVerser2Transport`, `parseRunnerTransportConfig`, `LocalChannelServer`, `selectExecutor`, launcher resolvers (`runner-node-launcher.ts`, `runner-bun-launcher.ts`), `forwardChildStdio`, `lifecycle-observer`, `exit-translation` (`translateChildClose`, `writeTerminalLifecycleFrame`), and `runner-node`/`runner-bun` runtime packages.

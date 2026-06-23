@@ -6,11 +6,11 @@ Implementation layer for experimental sequence test infrastructure.
 
 The source tree is organized around composable harness primitives:
 
-- `index.ts`: top-level public API surface and `runSequence` helper.
+- `index.ts`: top-level public API surface, `createSequenceTest`, `runSequence`, and barrel re-exports of all harness primitives and types.
 - `runner-launcher.ts`: runner env/launch abstraction.
 - `fake-instances-server.ts`: low-level transport shim for runner instance channels.
-- `hub-harness.ts`: full mock Hub API + timeline/recording/assertion engine.
-- `hub-mock.ts`: compatibility facade that exports `createHubMock`.
+- `hub-harness.ts`: full mock Hub API + timeline/recording/assertion engine (1246 lines — largest file).
+- `hub-mock.ts`: thin compatibility facade exporting `createHubMock` as `createHubHarness().hub`.
 - `fixtures.ts`: sequence fixture creation and metadata validation.
 - `captures.ts`: byte-stream and monitoring frame capture utilities.
 - `input-driver.ts`: write helpers for sequence input payloads.
@@ -25,14 +25,12 @@ The source tree is organized around composable harness primitives:
 `createRunnerLaunchPlan` adds `process.execPath` + resolved start-runner script path (`resolveRunnerEntry`) and stdio wiring for test transport interception.
 
 Engine requirements are either:
-
 - explicit in options (`engines`), validated as string map, or
 - resolved by runtime (`node >=16`, `python3 >=3.8`, `bun >=1`).
 
 ### 2) Sequence execution path (`index.ts`)
 
 `createSequenceTest` returns a `SequenceTestHarness` with:
-
 - lifecycle control methods (`start`, `close`, `waitForCompletion`)
 - I/O and monitoring bridges (`input`, `output`, `logs`, `monitoring`)
 - assertion accessor (`assert`)
@@ -49,7 +47,6 @@ Engine requirements are either:
 ### 4) Input path (`input-driver.ts`)
 
 `createInputDriver` turns a writable stream into content-type aware input APIs:
-
 - `text`, `bytes`, `ndjson`, `stream`
 - emits `content-type` header only on first payload
 - enforces idempotent `end()`.
@@ -70,6 +67,7 @@ Engine requirements are either:
   - logs/events/lifecycle/api routes/space calls
 - Supports assertions over timeline (`called`, `callCount`, `body`, `order`) and returns canned/default API behavior.
 - Normalizes method/path, body parsing (JSON/buffers/streams), and response helpers (text/json, optional stream body).
+- **V2 client integration**: provides `hubClient()` and `spaceClient()` on `HubContext`, with `v2HubClient`/`v2SpaceClient` implementations that delegate to `hub.handle()`. Default responses for `GET /api/v2/status` (`{ status: "ok" }`) and `GET /api/v1/cpm/api/v2/hubs` (`{ items: [...] }`).
 - `createHubMock` is a minimal convenience wrapper around `createHubHarness().hub`.
 
 ### 7) Fixtures (`fixtures.ts`)
@@ -88,3 +86,5 @@ Engine requirements are either:
 - `sequence-test` is designed to plug into tests that would otherwise require a live runner process + hub infrastructure.
 - It intentionally reuses runner protocol constants/types and mirrors existing runner endpoint conventions for compatibility.
 - The package is experimental and not yet a full parity replacement for a real Hub + runner deployment.
+- 12 test fixtures exist including `v2-client-calls/` (new — exercises `hubClient().status.get()` and `spaceClient().hubs.get()` via the v2 canonical API).
+- Harness tests (14 spec files in `test/harness/`) cover all primitives with Node, Python, and Bun runtime variants.

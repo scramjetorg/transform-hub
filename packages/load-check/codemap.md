@@ -1,4 +1,4 @@
-# @scramjet/load-check
+# packages/load-check/
 
 ## Responsibility
 
@@ -7,8 +7,9 @@ Provides system resource monitoring and load-checking capabilities for Scramjet 
 ## Design / Patterns
 
 - **Component-based health checks**: `health-components.ts` exports composable health check functions (`processMemoryComponent`, `processCpuComponent`, `osMemoryComponent`, `osLoadComponent`, `osDiskComponents`) that produce `HealthComponent` results with `"healthy" | "degraded" | "unhealthy"` status.
-- **Configurable thresholds**: `LoadCheckConfig` and `InstanceRequirementsConfig` allow configurable limits for safe operation and per-instance resource requirements.
-- **Summary aggregation**: `summarizeHealth()` reduces multiple `HealthComponent` results into a single `HealthSummary`.
+- **Configurable thresholds**: `LoadCheckConfig` and `InstanceRequirementsConfig` (extending `ReadOnlyConfig`) allow configurable limits for safe operation and per-instance resource requirements. Validated via `validateEntry()`.
+- **Summary aggregation**: `summarizeHealth()` reduces multiple `HealthComponent` results into a single `HealthSummary` with aggregate status.
+- **Default health options**: `createDefaultHealthComponents(options)` creates a standard set of health components with configurable thresholds for memory, CPU, load, and disk.
 
 ## Data & Control Flow
 
@@ -23,7 +24,17 @@ createDefaultHealthComponents(options)
   → summarizeHealth(scope, components) → HealthSummary
 ```
 
+## Source Structure
+
+| Path | Role |
+|------|------|
+| `src/index.ts` | Barrel re-export of LoadCheck, health-components, and LoadCheckConfig |
+| `src/load-check.ts` | `LoadCheck` class — monitors CPU/memory/disk, stores SAFE_OPERATION_LIMIT and MIN_INSTANCE_REQUIREMENTS |
+| `src/health-components.ts` | Composable health check functions and HealthSummary aggregation |
+| `src/config/load-check-config.ts` | `LoadCheckConfig` class with safeOperationLimit and instanceRequirements validation |
+| `src/config/instance-requirements-config.ts` | `InstanceRequirementsConfig` with freeMem, cpuLoad, freeSpace validation |
+
 ## Integration Points
 
 - Consumed by `@scramjet/host` for instance scheduling decisions and health endpoint responses.
-- Depends on `@scramjet/obj-logger` (logging), `@scramjet/utility` (defer), `scramjet` (streams), `diskusage-ng`, `node-os-utils`.
+- Depends on `@scramjet/obj-logger` (logging), `@scramjet/utility` (defer, ReadOnlyConfig), `scramjet` (streams), `diskusage-ng`, `node-os-utils`.

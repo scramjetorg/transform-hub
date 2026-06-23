@@ -10,9 +10,11 @@ Small, side-effect-free constants-first module set. Most values are numeric/stri
 
 ## Data & Control Flow
 
-`runtime-kind.ts` infers execution runtime from package `engines` metadata and is re-exported by `@scramjet/types` for consistent executor selection. `index.ts` composes public exports across symbols, headers, stream states, and runtime kind helpers so downstream packages import a single contract surface.
+`runtime-kind.ts` infers execution runtime from package `engines` metadata (node > bun > python3, default node) and is re-exported by `@scramjet/types` for consistent executor selection. `index.ts` composes public exports across symbols, headers, stream states, and runtime kind helpers so downstream packages import a single contract surface.
 
 `CommunicationChannel` values map to host/runner fd stream surfaces; message code enums are used by typed message unions in `@scramjet/types` and by host/runner dispatchers to branch behavior.
+
+`headers/host.ts` defines `HostHeaders` enum with HTTP headers like `SEQUENCE_FORCE_REMOVE = "x-seq-kill-inst"`.
 
 ## Integration Points
 

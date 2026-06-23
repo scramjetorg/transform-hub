@@ -23,4 +23,4 @@ Instance dispatch composes runner config from shared decoders/helpers, computes 
 Container operations (streaming logs/output, wait, stats, remove, lookup by label, volume cleanup) are centralized in helper methods to keep adapter logic deterministic.
 
 ## Integration Points
-Integrates with `@scramjet/adapters-common` (`getRunnerConfigForStoredSequence`, `getRunnerEnvEntries`, `getRunnerTransportEnv`, runtime detection), shared model/types, and `dockerode`.
+Integrates with `@scramjet/adapters-common` (`getRunnerConfigForStoredSequence`, `getRunnerEnvEntries`, `getRunnerTransportEnv`, runtime detection via `selectRuntimeKind` from `@scramjet/symbols`), shared model/types, and `dockerode`.

@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Provides Zod-backed configuration loading, validation, secret masking, and CLI option metadata for Scramjet Transform Hub tools. Also implements a **native Scramjet CLI Command Model** (`command-model.ts`) that replaces Commander with a fully typed, descriptor-driven command tree system — used by the `si` CLI.
+Provides Zod-backed configuration loading, validation, secret masking, CLI option metadata, and Verser2-specific configuration schemas for Scramjet Transform Hub tools. Also implements a **native Scramjet CLI Command Model** (`command-model.ts`) that replaces Commander with a fully typed, descriptor-driven command tree system — used by the `si` CLI.
 
 ## Design / Patterns
 
@@ -11,6 +11,7 @@ Provides Zod-backed configuration loading, validation, secret masking, and CLI o
 - **Secret masking**: Options marked `secret: true` are replaced with `"********"` in the `publicConfig` output via deep clone + path-based replacement.
 - **CLI parsing** (`parseCliOptions`): Wraps the `cac` library behind Scramjet's own `ConfigOptionDescriptor` interface. Coerces raw CLI values by declared type (`string`, `number`, `boolean`, `string[]`, `number[]`, `json`).
 - **Config file support**: JSON, JSONC (via `jsonc-parser`), and YAML (via `yaml`) are supported. The extension determines the parser.
+- **Verser2 config descriptors** (`src/verser2-config.ts`): Shared Zod schemas and option descriptors for Manager host TLS, STH outbound broker/guest peers, mTLS PEM pairs, peer id defaults, lease/heartbeat timeouts, and the `auto` identity sentinel.
 - **Alias resolution** (`applyAliases`): Dot-path aliases are applied after merge but before validation; old paths are deleted after the value is moved.
 - **Command Model** (`command-model.ts`):
   - **Descriptor-driven**: Commands, options, arguments, and hooks are plain `CommandDescriptor` / `OptionDescriptor` / `ArgumentDescriptor` objects — no class hierarchy.
@@ -50,3 +51,4 @@ executeCommand → preAction → action(args, options) → postAction
 - `ConfigOptionDescriptor` is the shared option metadata type consumed by `packages/sth` (the main `si` CLI) for both option registration and env-var/CLI mapping.
 - The `command-model` module (`cmd`, `CommandBuilder`, `runCommandTree`) is the foundation for the `si` CLI's entire command tree in `packages/sth`. The `CommandDescriptor`/`OptionDescriptor` types form the public API surface for all STH subcommands.
 - `parseCliOptions` is used by the runner package for runtime option parsing; `loadConfig` is used by STH and other host processes to load unified configuration.
+- `managerVerser2Options` and `sthOutboundVerser2Options` are consumed by STH, Manager, MultiManager, and public-safe config masking paths.

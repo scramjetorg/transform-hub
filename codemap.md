@@ -9,14 +9,15 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 - `package.json`: Private workspace manifest for `packages/*` and `bdd/`, monorepo build/test scripts, published `scramjet-transform-hub` bin mapping to `dist/sth/bin/hub.js`, and runner workspace grouping.
 - `package-lock.json`: npm lockfile for reproducible agent/CI installs; prefer npm commands for agent-run workflows.
 - `tsconfig*.json`: TypeScript project references and strict CommonJS/ES2019 build configuration used by package builds.
-- `scripts/`: Monorepo orchestration scripts for workspace builds, package script fan-out, Docker image checks, BDD wrappers, and generated assets.
+- `scripts/`: Monorepo orchestration scripts for workspace builds, package script fan-out, Docker image checks, BDD wrappers, generated assets, AVA runtime wrapping, and codemap staleness reporting.
 - `AGENTS.md`: Agent operating notes, high-value commands, and repository map discovery instructions.
 - `.slim/codemap.json`: Codemap state file used to detect additions, removals, and modifications for targeted atlas refreshes.
 
 ## System Entry Points
 
 - `packages/sth/src/bin/hub.ts`: CLI bootstrap that parses flags, merges command options into STH configuration, selects the runtime adapter, and starts the host.
-- `packages/sth-config/src/config-service.ts`: Configuration assembly layer that merges defaults, image config, adapter options, and public-safe config views.
+- `packages/sth-config/src/config-service.ts`: Configuration assembly layer that merges defaults, image config, adapter options, Verser2 defaults, trust bootstrap, and public-safe config views.
+- `packages/host/src/lib/host-id.ts`: Stable Host identity derivation used to register runner Verser2 hosts without colliding across MultiManager-controlled hubs.
 - `packages/runner/src/bin/start-runner.ts`: Adapter-launched outer runner entrypoint that validates environment, writes boot config, selects a runtime executor, and connects host channels.
 - `packages/runner/src/executor/select.ts`: Runtime executor strategy selection for Node, Bun, and Python child processes.
 - `packages/adapter-docker/src/docker-sequence-adapter.ts`: Docker stored-sequence adapter and runner image/container orchestration.
@@ -95,7 +96,10 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/utility/src/typeguards/` | Runtime type-checking functions for DTO validation, URL/path/port/id validation, and log level checking. | [View Map](packages/utility/src/typeguards/codemap.md) |
 | `packages/utility/src/typeguards/dto/` | DTO-specific type guard functions for sequence start and instance set endpoint payload validation. | [View Map](packages/utility/src/typeguards/dto/codemap.md) |
 | `packages/utility/src/file/` | File abstraction helpers that choose concrete file implementations by extension. | [View Map](packages/utility/src/file/codemap.md) |
-| `packages/host/src/lib/` | Shared host-side library code for service discovery and low-level utilities. | [View Map](packages/host/src/lib/codemap.md) |
+| `packages/host/src/lib/` | Shared host-side library code for host identity derivation, API controllers, service discovery, runner transport, audit middleware, and low-level utilities. | [View Map](packages/host/src/lib/codemap.md) |
+| `packages/host/src/lib/api/` | Host v1/v2 API handlers that bind legacy APIExpose routes and typed RestAPI2 routers to host runtime controllers. | [View Map](packages/host/src/lib/api/codemap.md) |
+| `packages/host/src/lib/middlewares/` | Host API middleware modules, currently audit lifecycle/byte-count tracking around request streams. | [View Map](packages/host/src/lib/middlewares/codemap.md) |
+| `packages/host/src/lib/serviceDiscovery/` | Topic-based service discovery facade, routers, topic stream transforms, and topic-id validation utilities. | [View Map](packages/host/src/lib/serviceDiscovery/codemap.md) |
 | `packages/verser/` | Legacy CONNECT/BPMux reverse-server connectivity package targeted for removal from active paths by the verser2 rollout. | [View Map](packages/verser/codemap.md) |
 | `packages/verser/src/` | Source implementation of Verser server, client, and connection modules with BPMux multiplexing. | [View Map](packages/verser/src/codemap.md) |
 | `packages/verser/src/lib/` | Concrete Verser, VerserClient, and VerserConnection class implementations with default config. | [View Map](packages/verser/src/lib/codemap.md) |
@@ -105,8 +109,15 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 ## Runtime Wrapper Implementation Flow
 
 1. CLI/config code in `packages/sth` and `packages/sth-config` builds adapter configuration, including runner image names and runtime defaults.
-2. Docker/Kubernetes/process adapters inspect stored sequence metadata through `packages/adapters-common`, use `packages/symbols` runtime-kind semantics, and choose a runtime-specific runner image or process executor path.
-3. The selected adapter still launches `packages/runner/src/bin/start-runner.ts` as the outer runner.
-4. The outer runner writes a boot-config file, selects an executor via `selectExecutor()`, resolves the runtime wrapper entry, and spawns the child process with the fixed fd layout.
-5. Runtime wrapper packages (`runner-node`, `runner-bun`, and `runner-python`) consume the same boot config protocol and report lifecycle/monitoring over the same channels.
-6. `packages/sequence-test` can exercise portions of this protocol through generated fixtures, fake instance channels, captures, and hub mocks; it remains experimental and is not the default package testing strategy.
+2. Host startup derives a stable runner Verser2 host identity from explicit config, hub id, or endpoint metadata before registering with Manager/MultiManager control planes.
+3. Docker/Kubernetes/process adapters inspect stored sequence metadata through `packages/adapters-common`, use `packages/symbols` runtime-kind semantics, and choose a runtime-specific runner image or process executor path.
+4. The selected adapter still launches `packages/runner/src/bin/start-runner.ts` as the outer runner.
+5. The outer runner writes a boot-config file, selects an executor via `selectExecutor()`, resolves the runtime wrapper entry, and spawns the child process with the fixed fd layout.
+6. Runtime wrapper packages (`runner-node`, `runner-bun`, and `runner-python`) consume the same boot config protocol and report lifecycle/monitoring over the same channels.
+7. `packages/sequence-test` can exercise portions of this protocol through generated fixtures, fake instance channels, captures, and hub mocks; it remains experimental and is not the default package testing strategy.
+
+## Codemap Maintenance Flow
+
+1. `.slim/codemap.json` stores the file/folder hash state for the codemap skill.
+2. `scripts/codemap-staleness.mjs` compares codemap creation/update commits with the latest non-codemap commit in each mapped folder.
+3. Stale folder maps are refreshed in place, then `node ~/.config/opencode/skills/codemap/scripts/codemap.mjs update --root ./` records the new content hashes.

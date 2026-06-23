@@ -13,6 +13,7 @@ Source implementation for process-based sequence storage and execution.
 - **Lightweight orchestration**: sequences are simply tar-extracted into `sequencesRoot` directories; runner is spawned as a child process using `@scramjet/runner` entry.
 - **Shared adapter-common decoders**: `getRunnerConfigForStoredSequence("process", …)` from `@scramjet/adapters-common` provides metadata / env resolution.
 - **Transport config injection**: uses `getRunnerTransportEnv()` to set `SCRAMJET_RUNNER_TRANSPORT_CONFIG` env var for the runner child process.
+- **Runtime kind selection**: delegates to `selectRuntimeKind` from `@scramjet/symbols` to determine runner binary from engine metadata.
 
 ## Data & Control Flow
 

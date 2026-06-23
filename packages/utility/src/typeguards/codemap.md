@@ -4,16 +4,16 @@
 
 | File | Role |
 |------|------|
-| `index.ts` | Barrel re-export of all type guard functions. |
-| `is-defined.ts` | `isDefined(value)` — checks value is not null/undefined. |
+| `index.ts` | Barrel re-export of all type guard functions (11 exports). |
+| `is-defined.ts` | `isDefined(value)` — checks value is not null/undefined with `value is T` predicate. |
 | `is-boolean.ts` | `isBoolean(value)` — checks value is a boolean. |
-| `is-empty-string.ts` | `isEmptyString(value)` — checks value is empty string. |
-| `is-api-version.ts` | `isApiVersion(value)` — validates API version string format. |
-| `is-id-string.ts` | `isIdString(value)` — validates STH ID string format. |
-| `is-port.ts` | `isPort(value)` — validates TCP port number. |
-| `is-url-path.ts` | `isUrlPath(value)` — validates URL path format. |
-| `is-http-url.ts` | `isHttpUrl(value)` — validates HTTP/HTTPS URL. |
-| `is-log-level.ts` | `isLogLevel(value)` — validates log level string. |
+| `is-empty-string.ts` | `isEmptyString(value)` — checks value is empty string `""`. |
+| `is-api-version.ts` | `isApiVersion(value)` — validates API version string format (`v1`, `v2.13`, `v3.333.111`). |
+| `is-id-string.ts` | `isIdString(value)` — validates STH ID string format (alphanumeric + `_-`, max 50 chars). |
+| `is-port.ts` | `isPort(value)` — validates TCP port number (0–65535, accepts string/number). |
+| `is-url-path.ts` | `isUrlPath(value)` — validates URL path/slug format. |
+| `is-http-url.ts` | `isHttpUrl(value)` — validates HTTP/HTTPS URL via `new URL()`. |
+| `is-log-level.ts` | `isLogLevel(value)` — validates log level string against `LogLevelStrings`. |
 | `dto/` | DTO-specific type guard functions (separate codemap). |
 
 ## Responsibility
