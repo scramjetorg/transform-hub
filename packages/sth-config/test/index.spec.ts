@@ -48,6 +48,8 @@ test("default STH connectivity selects verser2 route roles", t => {
     t.is(config.verser2.broker.targetDomain, "manager.cpm-manager.scramjet.internal");
     t.is(config.verser2.guest.peerId, "sth.default.guest");
     t.is(config.verser2.guest.routeDomain, "sth.default.scramjet.internal");
+    t.is(config.verser2.leases.minimumRunnerWaitingStreams, 32);
+    t.is(config.verser2.leases.minimumUpstreamWaitingStreams, 128);
 });
 
 test("getConfigInfo masks public verser2 client secrets", t => {

@@ -8,6 +8,8 @@ import Dockerode = require("dockerode");
 import { strict as assert } from "assert";
 import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
+import { request as httpRequest } from "http";
+import { request as httpsRequest } from "https";
 import { defer, streamToString } from "../../lib/utils";
 import { promisify } from "util";
 import { readFile } from "fs/promises";
@@ -50,10 +52,75 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[], 
     resources.startOutput = out;
 }
 
+function saveHostEnv(): Record<string, string | undefined> {
+    return {
+        LOCAL_HOST_PORT: process.env.LOCAL_HOST_PORT,
+        LOCAL_HOST_INSTANCES_SERVER_PORT: process.env.LOCAL_HOST_INSTANCES_SERVER_PORT,
+        LOCAL_HOST_BASE_URL: process.env.LOCAL_HOST_BASE_URL,
+        SCRAMJET_HOST_BASE_URL: process.env.SCRAMJET_HOST_BASE_URL
+    };
+}
+
+function restoreHostEnv(saved: Record<string, string | undefined>) {
+    for (const [key, value] of Object.entries(saved)) {
+        if (value === undefined) {
+            delete process.env[key];
+        } else {
+            process.env[key] = value;
+        }
+    }
+}
+
+function restoreSavedHostEnv(resources: CustomWorld["resources"]) {
+    const savedHostEnv = resources.savedHostEnv as Record<string, string | undefined> | undefined;
+
+    if (!savedHostEnv) return;
+
+    restoreHostEnv(savedHostEnv);
+    delete resources.savedHostEnv;
+}
+
 function getHostClient() {
     assert.notStrictEqual(process.env.LOCAL_HOST_BASE_URL, undefined);
 
     return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
+}
+
+async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
+    return new Promise<{ status: number; text: () => Promise<string> }>((resolve, reject) => {
+        const target = new URL(url);
+        const request = (target.protocol === "https:" ? httpsRequest : httpRequest)({
+            method,
+            protocol: target.protocol,
+            hostname: target.hostname,
+            port: target.port,
+            path: `${target.pathname}${target.search}`,
+            headers
+        }, (response) => {
+            const chunks: Buffer[] = [];
+
+            response.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+            response.on("error", reject);
+            response.on("end", () => {
+                const text = Buffer.concat(chunks).toString("utf8");
+
+                resolve({ status: response.statusCode || 0, text: async () => text });
+            });
+        });
+
+        request.on("error", reject);
+        if (body !== undefined) {
+            request.write(body);
+        }
+        request.end();
+    });
+}
+
+function hostRootUrl(path: string): string {
+    const base = new URL(process.env.LOCAL_HOST_BASE_URL as string);
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+    return `${base.protocol}//${base.host}${normalizedPath}`;
 }
 
 When("I send a {string} request to {string} with body {string}", async function(method, path, body) {
@@ -68,6 +135,26 @@ When("I send a {string} request to {string} with body {string}", async function(
     const response = await fetch(url, options);
 
     this.response = response;
+});
+
+When("I send a {string} request to {string} with headers {string}", async function(method, path, headersJson) {
+    const url = process.env.LOCAL_HOST_BASE_URL + path;
+    const headers = JSON.parse(headersJson) as Record<string, string>;
+
+    this.response = await rawHttpRequest(method, url, undefined, headers);
+});
+
+When("I send a {string} request to {string} with body {string} and headers {string}", async function(method, path, body, headersJson) {
+    const url = process.env.LOCAL_HOST_BASE_URL + path;
+    const headers = JSON.parse(headersJson) as Record<string, string>;
+
+    this.response = await rawHttpRequest(method, url, body, headers);
+});
+
+When("I send a {string} root API request to {string} with body {string} and headers {string}", async function(method, path, body, headersJson) {
+    const headers = JSON.parse(headersJson) as Record<string, string>;
+
+    this.response = await rawHttpRequest(method, hostRootUrl(path), body, headers);
 });
 
 When("I send a {string} request to {string}", async function(method, path) {
@@ -112,6 +199,7 @@ Then("the response status should be {int}", async function(int) {
 When("hub process is started with random ports and parameters {string}",
     async function(this: CustomWorld, params: string) {
         this.resources.expectedHubExitCode = undefined;
+        const savedHostEnv = saveHostEnv();
         const apiPort = await freeport();
         const instancesServerPort = await freeport();
 
@@ -122,12 +210,14 @@ When("hub process is started with random ports and parameters {string}",
                 `http://127.0.0.1:${apiPort}/api/v1`;
 
         this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        this.resources.savedHostEnv = savedHostEnv;
         return startHubWithParams(this, params.split(" "));
     });
 
 When("hub process is started with random ports expecting exit code {int} and parameters {string}",
     async function(this: CustomWorld, expectedExitCode: number, params: string) {
         this.resources.expectedHubExitCode = expectedExitCode;
+        const savedHostEnv = saveHostEnv();
 
         const apiPort = await freeport();
         const instancesServerPort = await freeport();
@@ -139,6 +229,7 @@ When("hub process is started with random ports expecting exit code {int} and par
                 `http://127.0.0.1:${apiPort}/api/v1`;
 
         this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        this.resources.savedHostEnv = savedHostEnv;
         return startHubWithParams(this, params.split(" "));
     });
 
@@ -261,6 +352,7 @@ Then("exit hub process", async function(this: CustomWorld) {
     });
 
     spawned.delete(hub);
+    restoreSavedHostEnv(this.resources);
 });
 
 Then("hub process exits on its own with code {int} within {int} ms", async function(this: CustomWorld, expectedCode: number, timeoutMs: number) {

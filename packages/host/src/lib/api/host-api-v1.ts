@@ -1,5 +1,5 @@
 import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
-import { corsMiddleware, DuplexStream, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
+import { corsMiddleware, DuplexStream, normalizeForwardedHeaders, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
 import { RouteDefinition, Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { isStartSequenceEndpointPayloadDTO, onRequestDisconnect } from "@scramjet/utility";
@@ -271,7 +271,21 @@ export class HostAPIV1Handler {
 
         this.logger.debug("SPACE REQUEST", req.url, url, this.apiBase);
 
-        const clientRequest = this.host.cpmConnector?.makeHttpRequestToCpm(req.method!, url, req.headers);
+        if (this.host.cpmConnector?.getCpmRouteMetadata) {
+            const metadata = this.host.cpmConnector.getCpmRouteMetadata(url);
+
+            res.writeHead(308, {
+                location: `http://${metadata.routeDomain}${metadata.targetPath}`,
+                "x-scramjet-route-decision": "follow",
+                "x-scramjet-route-domain": metadata.routeDomain,
+                "x-scramjet-route-target-path": metadata.targetPath
+            });
+            res.end();
+
+            return;
+        }
+
+        const clientRequest = this.host.cpmConnector?.makeHttpRequestToCpm(req.method!, url, normalizeForwardedHeaders(req.headers));
 
         if (clientRequest) {
             clientRequest.on("response", (response: IncomingMessage) => {

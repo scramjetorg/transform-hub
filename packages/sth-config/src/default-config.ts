@@ -105,7 +105,9 @@ export const defaultConfig: STHConfiguration = {
             requestMs: 30_000
         },
         leases: {
-            minimumWaitingLeases: 1
+            minimumWaitingLeases: 1,
+            minimumRunnerWaitingStreams: 32,
+            minimumUpstreamWaitingStreams: 128
         }
     },
     timings: {

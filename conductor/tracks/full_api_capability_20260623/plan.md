@@ -1,0 +1,196 @@
+# Implementation Plan: Full API Capability via Verser2 Forwarding
+
+## Phase 0: Branch, Track Artifacts, and PR Review Surface
+
+- [x] Task: Create the Conductor review branch and initial artifacts
+    - [x] Branch from the current branch into a dedicated track branch.
+    - [x] Create the track directory, `metadata.json`, `spec.md`, `plan.md`, and `index.md` from the approved Conductor artifacts.
+    - [x] Update `conductor/tracks.md` with the new track entry.
+    - [x] Commit only the initial Conductor track artifacts and tracks registry update.
+        - Initial artifact commit: `164f8bd4`.
+    - [x] Push the dedicated track branch after the initial Conductor artifact commit.
+- [x] Task: Create the GitHub PR after the initial commit
+    - [x] Prepare a real multiline Markdown PR description file describing the complete intended TO-BE behavior.
+    - [x] Create the PR with `gh pr create --body-file <file>` after the initial Conductor artifact commit has been pushed.
+    - [x] Record the PR URL in `plan.md`.
+        - PR: https://github.com/0rail/transform-hub/pull/34
+- [x] Task: Confirm affected entrypoints and shared surfaces
+    - [x] Read relevant codemaps for `bdd`, `packages/api-server`, `packages/api-router`, `packages/host`, `packages/manager`, and `packages/multi-manager`.
+    - [x] Confirm the current direct STH v1 RPC path through `HostAPIV1Handler`, `CSIController.forwardRpcRequest()`, and `forwardRoutedRequest()`.
+        - Confirmed: `packages/host/src/lib/api/host-api-v1.ts` routes RPC through `rpcMiddleware()`, `packages/host/src/lib/csi-controller.ts` implements `forwardRpcRequest()`, and `packages/api-server/src/handlers/routed-forward.ts` provides the Verser2 routed HTTP forwarder.
+    - [x] Confirm the current v2 instance RPC route contract and `InstanceAPIV2` contract-only behavior.
+        - Confirmed: `packages/host/src/lib/api/instance-api-v2.ts` binds `rpc` as `routeBinding.contractOnly("RPC duplex forwarding remains handled by v1 compatibility surface.")`.
+    - [x] Confirm Manager v1/v2 follow-route redirect behavior and MultiManager `/cpm/:id` Manager handoff behavior.
+        - Confirmed: `packages/manager/src/lib/route-classifier.ts` classifies follow routes and `packages/manager/src/lib/manager.ts` currently writes external `308` redirects or internal route metadata; `packages/multi-manager/src/lib/multi-manager.ts` strips `/cpm/:id` and delegates to `manager.router.lookup()`.
+    - [x] Review shared packages for existing route metadata, forwarding, and header utilities before adding new code.
+        - Shared inventory: `forwardRoutedRequest()` and `normalizeForwardedHeaders()` exist in `@scramjet/api-server`; `@scramjet/api-router` has private redirect response helpers and v2 redirect resolver types; no generic hop-by-hop header sanitizer or shared `x-scramjet-route-*` constants were found.
+- [x] Task: Conductor - User Manual Verification 'Phase 0: Branch, Track Artifacts, and PR Review Surface' (Protocol in workflow.md)
+    - User approved Phase 0 after planned tests were updated for sequence-to-sequence communication across two Hubs/STHs and same-Hub local path shortening.
+
+## Phase 1: BDD Reproduction and Focused Test Contracts
+
+- [x] Task: Add the full API Verser2 forwarding BDD feature
+    - [x] Create a new focused BDD feature for full API Verser2 forwarding.
+        - Added `bdd/features/manager/MANAGER-003-full-api-verser2-forwarding.feature` with Docker-wrapper run guidance using `NO_HOST=true`.
+    - [x] Copy the existing `api-server` sequence fixture into the Manager/MultiManager fixture area.
+        - Added `bdd/fixtures/manager-aggregation/sequences/api-server/`.
+    - [x] Add or adapt startup config for a stable instance name suitable for Manager and MultiManager routed scenarios.
+        - Added `hub-1-api-main` and `hub-2-api-main` startup entries.
+    - [x] Add raw HTTP request steps that can send `Connection` and other hop-by-hop headers intentionally.
+        - Added raw `http.request`-based BDD steps for Hub and Manager aggregation requests because Fetch rejects hop-by-hop `Connection` headers.
+- [x] Task: Cover direct STH-to-sequence RPC behavior in BDD
+    - [x] Add a direct STH v1 scenario for API to local sequence RPC with standard hop-by-hop headers at ingress.
+    - [x] Add a direct STH v2 scenario for `/api/v2/instances/:instanceId/rpc/*` with equivalent request behavior.
+    - [x] Assert the sequence response body proves the request reached the fixture.
+- [x] Task: Cover downward Manager and MultiManager forwarding in BDD
+    - [x] Add a Manager-to-Host/STH-to-sequence downward scenario.
+    - [x] Add a MultiManager-to-Manager-to-Host/STH-to-sequence downward scenario.
+    - [x] Assert these requests tunnel and return the target sequence response rather than stopping at `308`.
+- [x] Task: Cover upward policy behavior in BDD
+    - [x] Add a sequence/runtime-originated route scenario where an authorized upward Manager `308` is resolved and tunneled.
+        - Covered as a sequence-origin contract path in the focused feature; Phase 2 will replace the temporary origin marker with trusted runtime-origin policy plumbing.
+    - [x] Add a sequence-to-sequence routed scenario where a source sequence on one Hub/STH reaches a target sequence on another Hub/STH through Manager.
+    - [x] Add a single-Hub sequence-to-sequence scenario where redirect resolution shortens to the local Hub/STH path instead of using an unnecessary Manager tunnel.
+    - [x] Add an external API-originated upward route scenario where the Hub/STH returns `308` route metadata and does not tunnel.
+    - [x] Add spoofing coverage for client-supplied internal routing/auth headers where practical.
+        - Spoofing remains represented by external requests carrying no trusted runtime-origin context; Phase 2 policy tests should harden this with explicit header-spoofing unit coverage.
+- [x] Task: Add focused package-level regression tests
+    - [x] Add `@scramjet/api-server` tests for stripping standard hop-by-hop headers and `Connection`-nominated headers.
+    - [x] Add tests for redirect metadata parsing and invalid/unknown redirect handling in the new reusable redirect helper.
+        - Added red contract coverage in `packages/api-server/test/routed-redirect.spec.ts` for the future `parseRoutedRedirect()` helper.
+    - [x] Add Host or API-router tests proving v2 instance RPC dispatches through the same forwarding path as v1 where practical.
+    - [x] Add Manager policy or forwarding tests proving allowed downward routes tunnel while external upward routes return `308`.
+        - Added red contract coverage in `packages/manager/test/route-forwarding-policy.spec.ts` for the future route forwarding policy helper.
+- [x] Task: Run the narrowest expected-failure validation
+    - [x] Run the new BDD tag under the process adapter/source execution mode expected for this track.
+        - Serial Docker BDD validation: `NO_HOST=true BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 BDD_TIMEOUT_MS=180000 npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding" --name "MANAGER-003 TC-000"` failed as expected at direct v1 RPC status `503 !== 200`.
+        - Serial Docker BDD validation: `BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_TS=1 SCRAMJET_TEST_LOG=1 BDD_TIMEOUT_MS=180000 npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding" --name "MANAGER-003 TC-001"` failed as expected at Manager downward status `308 !== 200` after setup fixes.
+    - [x] Run focused package tests expected to fail before implementation.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/routed-forward.spec.ts` from `packages/api-server` failed as expected: hop-by-hop and `Connection`-nominated headers are still forwarded.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/routed-redirect.spec.ts` from `packages/api-server` failed as expected on red assertions after adding a Phase 1 placeholder helper file; no OOM occurred with default jitless AVA.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/api-v2-instance-hotwire.spec.ts` from `packages/host` failed as expected: v2 RPC route handler is undefined because it is still contract-only.
+        - Serial guarded package validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 --serial test/route-forwarding-policy.spec.ts` from `packages/manager` failed as expected on red policy assertions.
+        - OOM investigation: `SCRAMJET_AVA_JITLESS=0` in the `api-server` package test script removed the repo default `--jitless` AVA behavior and OOMed under the documented virtual-memory cap. The package script now uses the default `scripts/run-ava.js` jitless behavior to match repository memory guidance.
+    - [x] Record expected failures and any skipped checks in `plan.md`.
+        - No unguarded tests should be run; package tests must use the documented `ulimit`/`NODE_OPTIONS` guard and BDD tests must use the Docker wrapper. Tests were run serially, one file/scenario at a time.
+- [x] Task: Create Phase 1 checkpoint and push
+    - [x] Commit only BDD and focused test contract changes.
+        - Phase 1 checkpoint commit: `ae39ec61`.
+    - [x] Push the review branch before manual verification.
+    - [x] Update `plan.md` with the checkpoint commit SHA.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: BDD Reproduction and Focused Test Contracts' (Protocol in workflow.md)
+    - User approved Phase 1 red BDD/package contracts after OOM investigation and memory-safe validation corrections.
+
+## Phase 2: Implement Verser2 Forwarding, Policy, and v2 RPC
+
+- [x] Task: Implement shared header sanitization and redirect parsing
+    - [x] Update `normalizeForwardedHeaders()` or its call sites to strip standard hop-by-hop headers.
+    - [x] Strip headers nominated by the incoming `Connection` header.
+    - [x] Add a reusable redirect metadata parser/helper in a separate file.
+    - [x] Keep generic redirect parsing free of Scramjet-specific authorization policy.
+- [x] Task: Implement forwarding policy helpers
+    - [x] Add a separate policy/helper file for route direction and allowed tunnel decisions.
+    - [x] Distinguish local/downward sequence routes, upward Manager routes, peer/sideways routes, and unknown routes.
+    - [x] Ensure external API-originated upward requests return `308` instead of tunneling.
+    - [x] Ensure client-supplied internal routing/auth headers cannot spoof allowed origin.
+        - External requests without trusted runtime-origin context are semi-denied with `308`; client hop-by-hop/internal routing headers are sanitized before forwarding.
+- [x] Task: Implement direct STH v1/v2 sequence RPC forwarding
+    - [x] Preserve existing v1 instance and host RPC compatibility.
+    - [x] Implement v2 instance RPC forwarding for `/api/v2/instances/:instanceId/rpc/*` without requiring sequence-specific typings.
+    - [x] Reuse the same safe forwarding/header behavior for v1 and v2 where possible.
+- [x] Task: Implement Manager and MultiManager downward tunneling
+    - [x] Extend Manager follow-route handling so allowed downward targets tunnel through the Manager-to-STH Verser2 broker transport.
+    - [x] Preserve `308` redirect responses for disallowed external upward requests.
+    - [x] Ensure MultiManager `/cpm/:id` paths can use the Manager behavior without adding parallel routing logic.
+    - [x] Keep Manager/MultiManager trust changes minimal and explicit.
+- [x] Task: Implement authorized sequence/runtime upward resolution
+    - [x] Wire Host-side 308 resolution for authorized sequence/runtime-originated Manager calls.
+    - [x] Support sequence-to-sequence Manager-routed calls across two Hubs/STHs.
+    - [x] Shorten same-Hub sequence-to-sequence resolution to the local Hub/STH path where practical.
+    - [x] Ensure external API-originated calls to Manager via Hub/STH still return `308`.
+    - [x] Enforce a maximum redirect count and reject unknown route domains.
+- [x] Task: Run focused implementation validation
+    - [x] Run focused `api-server` tests for header sanitization and redirect helper behavior.
+        - Passed serial guarded: `packages/api-server/test/routed-forward.spec.ts`.
+        - Re-passed after response hop-by-hop sanitization was added.
+        - Passed serial guarded: `packages/api-server/test/routed-redirect.spec.ts`.
+    - [x] Run focused Host/API-router tests for v2 RPC forwarding.
+        - Passed serial guarded: `packages/host/test/api-v2-instance-hotwire.spec.ts`.
+        - Passed serial guarded: `packages/host/test/api-hotwire.spec.ts`.
+        - Passed serial guarded: `packages/host/test/cpm-connector.spec.ts`.
+    - [x] Run focused Manager/MultiManager tests for downward tunneling and upward semi-deny behavior.
+        - Passed serial guarded: `packages/manager/test/route-forwarding-policy.spec.ts`.
+        - Re-passed after STH route-domain trust validation was added.
+        - Passed serial guarded: `packages/manager/test/manager-api-v2-hotwire.spec.ts`.
+        - Passed serial guarded: `packages/multi-manager/test/multi-manager-api-v2-hotwire.spec.ts`.
+    - [x] Run the new BDD feature tag under the process adapter/source execution mode.
+        - Passed serial guarded Docker/JS-mode scenarios: `MANAGER-003 TC-000`, `MANAGER-003 TC-001`, `MANAGER-003 TC-002`, `MANAGER-003 TC-003`, `MANAGER-003 TC-004`, and `MANAGER-003 TC-005`.
+        - Re-passed `MANAGER-003 TC-003` after spoofed `X-Scramjet-Sequence-Origin` was denied with `308`.
+        - Re-passed `MANAGER-003 TC-004` after converting the scenario to a real source-sequence-initiated call and after route-domain validation.
+        - Re-passed `MANAGER-003 TC-005` after same-Hub same-instance calls were shortened to the local sequence API path.
+        - Re-passed `MANAGER-003 TC-001` after route-domain validation.
+    - [x] Run targeted TypeScript build checks for changed packages.
+        - Passed guarded: `npm run build:packages`.
+- [x] Task: Perform implementation review and deduplication
+    - [x] Verify shared package reuse was considered and repeated code was extracted where safe.
+        - Request/response hop-by-hop header sanitization now shares one helper in `@scramjet/api-server`.
+    - [x] Verify route direction policy is centralized and not duplicated across handlers.
+        - Manager route tunneling decisions use `decideRouteForwardingPolicy()`; STH route-domain trust is scoped through `isTrustedSthRouteDomain()` before policy use.
+    - [x] Verify no unrelated API contract, trust, or adapter behavior changed.
+        - External Host `/api/v1/cpm/*` now semi-denies spoofed runtime-origin headers with `308`; Manager registration ignores untrusted custom STH route domains.
+    - [x] Use Oracle or another read-only review pass for the forwarding/authz design before checkpointing if substantial cross-package changes were made.
+        - Oracle initial review found blockers around spoofable origin headers, response header sanitization, and route-domain trust; these were fixed and revalidated.
+        - Final Oracle follow-up found no critical blockers for Phase 2 checkpoint. Non-blocking hardening: validate STH ids before deriving route domains, make response `Connection` lookup fully case-insensitive, and optionally tighten scoped STH domains to one DNS label.
+- [ ] Task: Create Phase 2 checkpoint and push
+    - [x] Commit the scoped implementation changes after validation.
+        - Phase 2 implementation checkpoint commit: `82e8bb74`.
+    - [ ] Push the review branch before manual verification.
+    - [x] Update `plan.md` with the checkpoint commit SHA and validation summary.
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Implement Verser2 Forwarding, Policy, and v2 RPC' (Protocol in workflow.md)
+
+## Phase 3: Final Validation, Review, and Track Completion
+
+- [ ] Task: Run final validation gates
+    - [x] Implement approved waiting-stream defaults/configurability before final validation:
+        - Runner/sequence-to-STH default floor is now `32` via `leases.minimumRunnerWaitingStreams`, with legacy `minimumWaitingLeases` still honored as a global floor.
+        - STH-to-Manager upstream default floor is now `128` via `leases.minimumUpstreamWaitingStreams`, with legacy `minimumWaitingLeases` still honored as a global floor.
+        - Added STH config/env/CLI descriptors: `SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS` / `--verser2-runner-minimum-waiting-streams` and `SCRAMJET_VERSER2_UPSTREAM_MINIMUM_WAITING_STREAMS` / `--verser2-upstream-minimum-waiting-streams`.
+    - [x] Rerun focused package tests for all changed packages.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/runner-transport-env.spec.ts` in `packages/adapters-common`: passed, 10 tests after adding legacy-global-floor coverage.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 50000 test/cpm-connector.spec.ts` in `packages/host`: passed, 1 test.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 test/index.spec.ts` in `packages/config`: passed, 15 tests.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js -T 50000 test/index.spec.ts` in `packages/sth-config`: passed, 4 tests.
+    - [x] Run the narrowest sufficient package build or `npm run build:packages` if cross-package changes require it.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages`: passed.
+    - [x] Run lint or a narrower Biome check if changed files require formatting/lint validation.
+        - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" RAYON_NUM_THREADS=12 npx biome lint <changed files>`: passed.
+    - [x] Rerun the new BDD feature tag and record the result.
+        - Initial full focused tag run under Docker/JS mode passed TC-000, TC-001, and TC-002, then TC-003 failed while starting a fresh isolated stack before exercising route behavior; TC-003/TC-004/TC-005 each passed alone.
+        - Fixed the full-tag harness issue by explicitly exiting TC-000's direct Hub, restoring direct-Hub process env after cleanup, and waiting for aggregation subprocesses to exit before deleting their temp directory.
+        - Removed the same-Hub fixture-local shortcut and reran the full focused tag so TC-005 now exercises the same sequence client route as TC-004 with source and target on the same Hub.
+        - Latest `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_SPAWN_JS=1 NO_HOST=true npm run test:bdd -- --format=@cucumber/pretty-formatter -t "@full-api-verser2-forwarding and not @ignore"`: passed, 6 scenarios / 42 steps.
+- [x] Task: Final review and documentation alignment
+    - [x] Verify `spec.md`, `plan.md`, PR description, and implementation behavior agree.
+        - Oracle final review initially found waiting-stream fallback and same-Hub proof blockers; both were addressed and the follow-up review reported no blockers.
+    - [x] Verify user-facing `308` behavior is clear and actionable where exposed.
+        - External upward Hub-to-Manager access remains observable as `308` route metadata and is covered by MANAGER-003 TC-003 plus route-forwarding policy tests.
+    - [x] Update docs only if behavior changes are user-facing and not already covered by tests/spec.
+        - No standalone user docs were updated; behavior is covered by `spec.md`, BDD, and package tests.
+    - [x] Record skipped broad validation and rationale.
+        - Skipped full `npm run build`, full package test suite, and broad BDD suites because this track changed focused forwarding/config/BDD harness paths and the repository guidance marks full build/Docker paths as expensive. Focused package tests, package build, focused BDD tag, and narrow Biome lint were run instead.
+- [x] Task: Halt for user review of waiting upstream sessions
+    - [x] Stop work at this point before final checkpoint/PR readiness.
+    - [x] Present findings and implementation notes about waiting upstream sessions for user review.
+    - [x] Resume only after explicit user direction.
+        - User approved the waiting-stream phase and then requested continued track work.
+- [x] Task: Final checkpoint and PR readiness
+    - [x] Commit final documentation, validation note, or cleanup changes if any.
+        - Final review fixes and track completion metadata were committed.
+    - [x] Push the review branch.
+        - Pushed `conductor/full-api-capability`.
+    - [x] Update the PR description with final validation results using a body file.
+        - Updated PR #34 body with final behavior, validation, and review notes.
+    - [x] Confirm the PR is ready for manual review.
+        - PR #34: https://github.com/0rail/transform-hub/pull/34
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Final Validation, Review, and Track Completion' (Protocol in workflow.md)
+    - [x] Phase 3 validation/review evidence recorded above and PR #34 is ready for manual review.

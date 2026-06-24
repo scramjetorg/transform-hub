@@ -77,9 +77,13 @@ export class ManagerAPIV2Handler {
             }
 
             return {
-                redirect: {
-                    routeDomain: sth.routeDomain,
-                    targetPath: this.toImplementerPath(remainingPath)
+                local: {
+                    lookup: (req: ParsedMessage, res: ServerResponse) => manager.forwardRequestToSTH(
+                        sth,
+                        req,
+                        res,
+                        this.toImplementerPath(remainingPath)
+                    )
                 }
             };
         }, {

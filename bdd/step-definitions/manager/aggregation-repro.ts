@@ -18,6 +18,8 @@ import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { resolve } from "path";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { request as httpRequest } from "http";
+import { request as httpsRequest } from "https";
 import { tmpdir } from "os";
 import { promisify } from "util";
 import { CustomWorld } from "../world";
@@ -38,19 +40,42 @@ function aggregationProcesses(world: CustomWorld): ChildProcess[] {
 }
 
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
-    for (const proc of aggregationProcesses(this)) {
-        if (proc.pid) {
+    const killAndWait = async (proc: ChildProcess): Promise<void> => {
+        if (!proc.pid || proc.exitCode !== null || proc.signalCode !== null) return;
+
+        await new Promise<void>((resolve) => {
+            const timer = setTimeout(() => {
+                try {
+                    proc.kill("SIGKILL");
+                } catch { /* ignore */ }
+                resolve();
+            }, 5000);
+
+            proc.once("exit", () => {
+                clearTimeout(timer);
+                resolve();
+            });
+
             try {
                 proc.kill("SIGTERM");
-            } catch { /* ignore */ }
-        }
+            } catch {
+                clearTimeout(timer);
+                resolve();
+            }
+        });
+    };
+
+    const waitForExit: Promise<void>[] = [];
+
+    for (const proc of aggregationProcesses(this)) {
+        waitForExit.push(killAndWait(proc));
     }
     if (this.resources.aggMMProcess) {
-        try {
-            this.resources.aggMMProcess.kill("SIGTERM");
-        } catch { /* ignore */ }
+        waitForExit.push(killAndWait(this.resources.aggMMProcess));
         delete this.resources.aggMMProcess;
     }
+
+    await Promise.all(waitForExit);
 
     if (this.resources.aggTempDir) {
         rmSync(this.resources.aggTempDir, { recursive: true, force: true });
@@ -173,6 +198,39 @@ async function waitForGet(baseUrl: string, endpoint: string, timeoutMs = 20_000)
     throw new Error(`Timed out waiting for ${baseUrl}/${endpoint}: ${lastError?.message || "no response"}`);
 }
 
+async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
+    return new Promise<{ status: number; text: () => Promise<string> }>((resolve, reject) => {
+        const target = new URL(url);
+        const request = (target.protocol === "https:" ? httpsRequest : httpRequest)({
+            method,
+            protocol: target.protocol,
+            hostname: target.hostname,
+            port: target.port,
+            path: `${target.pathname}${target.search}`,
+            headers
+        }, (response) => {
+            const chunks: Buffer[] = [];
+
+            response.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+            response.on("error", reject);
+            response.on("end", () => {
+                const text = Buffer.concat(chunks).toString("utf8");
+
+                resolve({
+                    status: response.statusCode || 0,
+                    text: async () => text
+                });
+            });
+        });
+
+        request.on("error", reject);
+        if (body !== undefined) {
+            request.write(body);
+        }
+        request.end();
+    });
+}
+
 async function queryManagerProxy(world: CustomWorld, endpoint: string): Promise<void> {
     const mmClient = world.resources.aggMMClient as MultiManagerClient;
     const managerId = world.resources.aggManagerId as string;
@@ -191,6 +249,36 @@ async function queryManagerProxy(world: CustomWorld, endpoint: string): Promise<
         world.resources.aggProxyError = e;
         world.resources.aggProxyEndpoint = endpoint;
     }
+}
+
+function aggregationManagerProxyUrl(world: CustomWorld, endpoint: string): string {
+    const mmClient = world.resources.aggMMClient as MultiManagerClient;
+    const managerId = world.resources.aggManagerId as string;
+    const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+    return `${mmClient.apiBase}/cpm/${managerId}/api/v1${normalizedEndpoint}`;
+}
+
+function aggregationRootUrl(world: CustomWorld, endpoint: string): string {
+    const mmClient = world.resources.aggMMClient as MultiManagerClient;
+    const managerId = world.resources.aggManagerId as string;
+    const rootBase = mmClient.apiBase.replace(/\/api\/v1\/?$/, "");
+    const resolvedEndpoint = endpoint.replace("mgr-PLACEHOLDER", managerId);
+    const normalizedEndpoint = resolvedEndpoint.startsWith("/") ? resolvedEndpoint : `/${resolvedEndpoint}`;
+
+    return `${rootBase}${normalizedEndpoint}`;
+}
+
+function aggregationHubUrl(world: CustomWorld, hubName: string, endpoint: string): string {
+    const hubs = world.resources.aggHubs as Record<string, { apiBase: string }> || {};
+    const hub = hubs[hubName];
+
+    assert.ok(hub, `Hub ${hubName} not found`);
+
+    const rootBase = hub.apiBase.replace(/\/api\/v1\/?$/, "");
+    const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+    return `${rootBase}${normalizedEndpoint}`;
 }
 
 // =========================================================================
@@ -306,9 +394,6 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
                     bindPort: runnerHostPort,
                     publicUrl: `https://127.0.0.1:${runnerHostPort}`,
                 },
-                registration: {
-                    allowLocalPeers: true,
-                },
                 localBroker: {
                     peerId: `sth.${runHubName}.runner.broker`,
                 },
@@ -421,6 +506,79 @@ When("I query the Manager {string} through the MultiManager proxy", async functi
     endpoint: string
 ) {
     await queryManagerProxy(this, endpoint);
+});
+
+When("I send a {string} request through the aggregation Manager proxy to {string} with headers {string}", async function (
+    this: CustomWorld,
+    method: string,
+    endpoint: string,
+    headersJson: string
+) {
+    this.response = await fetch(aggregationManagerProxyUrl(this, endpoint), {
+        method,
+        headers: JSON.parse(headersJson) as Record<string, string>
+    });
+});
+
+When("I send a {string} request through the aggregation Manager proxy to {string} with body {string} and headers {string}", async function (
+    this: CustomWorld,
+    method: string,
+    endpoint: string,
+    body: string,
+    headersJson: string
+) {
+    this.response = await rawHttpRequest(
+        method,
+        aggregationManagerProxyUrl(this, endpoint),
+        body,
+        JSON.parse(headersJson) as Record<string, string>
+    );
+});
+
+When("I send a {string} request through the aggregation MultiManager root to {string} with body {string} and headers {string}", async function (
+    this: CustomWorld,
+    method: string,
+    endpoint: string,
+    body: string,
+    headersJson: string
+) {
+    this.response = await fetch(aggregationRootUrl(this, endpoint), {
+        method,
+        body,
+        headers: JSON.parse(headersJson) as Record<string, string>
+    });
+});
+
+When("I send a {string} request to aggregation hub {string} at {string} with headers {string}", async function (
+    this: CustomWorld,
+    method: string,
+    hubName: string,
+    endpoint: string,
+    headersJson: string
+) {
+    this.response = await fetch(aggregationHubUrl(this, hubName, endpoint), {
+        method,
+        headers: JSON.parse(headersJson) as Record<string, string>,
+        redirect: "manual"
+    });
+});
+
+When("source sequence {string} calls target sequence {string} through the aggregation Manager", async function (
+    this: CustomWorld,
+    sourceInstanceName: string,
+    targetInstanceName: string
+) {
+    const sourceHubName = sourceInstanceName.startsWith("hub-2-") ? "hub-2" : "hub-1";
+    const targetHubName = targetInstanceName.startsWith("hub-2-") ? "hub-2" : "hub-1";
+    const sourceHub = encodeURIComponent(sourceHubName);
+    const targetHub = encodeURIComponent(targetHubName);
+    const targetInstance = encodeURIComponent(targetInstanceName);
+
+    this.response = await fetch(aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`), {
+        method: "POST",
+        body: "sequence-to-sequence",
+        headers: { "Content-Type": "text/plain" }
+    });
 });
 
 When("I query hub {string} for its sequences", async function (

@@ -61,6 +61,33 @@ test("normalizeForwardedHeaders handles mixed single and array values", t => {
     t.is(result.host, "example.com");
 });
 
+test("normalizeForwardedHeaders strips standard hop-by-hop headers", t => {
+    const result = normalizeForwardedHeaders({
+        connection: "keep-alive",
+        "keep-alive": "timeout=5",
+        "proxy-authenticate": "Basic realm=proxy",
+        "proxy-authorization": "Basic token",
+        te: "trailers",
+        trailer: "x-checksum",
+        "transfer-encoding": "chunked",
+        upgrade: "websocket",
+        accept: "application/json"
+    });
+
+    t.deepEqual(result, { accept: "application/json" });
+});
+
+test("normalizeForwardedHeaders strips headers nominated by Connection", t => {
+    const result = normalizeForwardedHeaders({
+        connection: "keep-alive, X-Request-Id, x-debug-hop",
+        "x-request-id": "client-hop-id",
+        "x-debug-hop": "remove-me",
+        "x-safe-header": "preserve-me"
+    });
+
+    t.deepEqual(result, { "x-safe-header": "preserve-me" });
+});
+
 // =========================================================================
 // forwardRoutedRequest
 // =========================================================================
@@ -317,9 +344,21 @@ test("forwardRoutedRequest forwards status code and headers from transport respo
     });
 });
 
-test("forwardRoutedRequest strips unsupported response trailer declarations", async t => {
+test("forwardRoutedRequest strips hop-by-hop response headers and connection-nominated headers", async t => {
     const { transport, responseBody } = fakeTransport({
-        headers: { "content-type": "text/plain", trailer: "x-checksum", "x-custom": "ok" }
+        headers: {
+            "content-type": "text/plain",
+            Connection: "keep-alive, X-Debug-Hop",
+            "Keep-Alive": "timeout=5",
+            "proxy-authenticate": "Basic realm=proxy",
+            "proxy-authorization": "Basic token",
+            te: "trailers",
+            trailer: "x-checksum",
+            "transfer-encoding": "chunked",
+            upgrade: "websocket",
+            "X-Debug-Hop": "remove-me",
+            "x-custom": "ok"
+        }
     });
     const { req, res, getWriteHeadHeaders } = fakeReqRes();
 
@@ -549,6 +588,37 @@ test("forwardRoutedRequest aborts routed request when response closes after pipe
 
     t.true(requestCalls[0].signal.aborted);
     t.true(responseBody.destroyed);
+});
+
+test("forwardRoutedRequest does not abort when completed request body closes before response", async t => {
+    const responseBody = new PassThrough();
+    let capturedSignal: AbortSignal | undefined;
+    const transport: RoutedForwardTransport = {
+        waitForRoute: async () => undefined,
+        request: async opts => {
+            capturedSignal = opts.signal;
+            setImmediate(() => {
+                (opts.body as IncomingMessage).emit("end");
+                Object.defineProperty(opts.body as IncomingMessage, "complete", { value: true, configurable: true });
+                (opts.body as IncomingMessage).emit("close");
+                responseBody.end("ok");
+            });
+            return { statusCode: 200, body: responseBody };
+        }
+    };
+    const { req, res, getChunks } = fakeReqRes("POST", "/rpc/test");
+
+    await forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/test"
+    });
+    await new Promise<void>(resolve => res.on("end", resolve));
+
+    t.false(capturedSignal?.aborted);
+    t.is(Buffer.concat(getChunks()).toString("utf8"), "ok");
 });
 
 test("forwardRoutedRequest destroys response on upstream response-body error", async t => {

@@ -31,11 +31,38 @@ export interface RoutedForwardOptions {
     onError?: (error: unknown) => void;
 }
 
+function hopByHopHeaderSet(headers: IncomingHttpHeaders | Record<string, string | string[] | number | undefined>): Set<string> {
+    const hopByHopHeaders = new Set([
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade"
+    ]);
+    const connectionEntry = Object.entries(headers).find(([name]) => name.toLowerCase() === "connection");
+    const connection = connectionEntry?.[1];
+    const connectionValues = Array.isArray(connection) ? connection.join(",") : connection;
+
+    for (const value of String(connectionValues || "").split(",")) {
+        const header = value.trim().toLowerCase();
+
+        if (header) {
+            hopByHopHeaders.add(header);
+        }
+    }
+
+    return hopByHopHeaders;
+}
+
 export function normalizeForwardedHeaders(headers: IncomingHttpHeaders): Record<string, string> {
     const normalized: Record<string, string> = {};
+    const hopByHopHeaders = hopByHopHeaderSet(headers);
 
     for (const [name, value] of Object.entries(headers)) {
-        if (value === undefined) {
+        if (value === undefined || hopByHopHeaders.has(name.toLowerCase())) {
             continue;
         }
 
@@ -54,9 +81,10 @@ function isUnsupportedRequest(req: IncomingMessage): boolean {
 
 function normalizeResponseHeaders(headers: RoutedForwardTransportResponse["headers"]): Record<string, string | string[] | number> {
     const normalized: Record<string, string | string[] | number> = {};
+    const hopByHopHeaders = hopByHopHeaderSet(headers || {});
 
     for (const [name, value] of Object.entries(headers || {})) {
-        if (value === undefined || name.toLowerCase() === "trailer") {
+        if (value === undefined || hopByHopHeaders.has(name.toLowerCase())) {
             continue;
         }
 
@@ -119,14 +147,22 @@ export async function forwardRoutedRequest({
         cleanup();
     };
 
+    const abortOnRequestClose = () => {
+        if (req.complete || req.readableEnded) {
+            return;
+        }
+
+        abortRequest();
+    };
+
     removeCloseListeners = () => {
         res.off("close", abortRequest);
-        req.off("close", abortRequest);
+        req.off("close", abortOnRequestClose);
     };
 
     try {
         res.once("close", abortRequest);
-        req.once("close", abortRequest);
+        req.once("close", abortOnRequestClose);
         await Promise.race([transport.waitForRoute(domain, routeReadinessMs), abortPromise]);
         throwIfAborted();
 

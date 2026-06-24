@@ -44,16 +44,25 @@ export class MultiManagerAPIV2Handler {
         return bindResolver(resolver, resolverBinding.handler(({ params, remainingPath }) => {
             const spaceId = params.spaceId;
             const manager = this.multiManager.managersStore.getById(spaceId);
-            const routeDomain = manager?.config?.verser2?.localGuest?.routeDomain;
 
-            if (!routeDomain) {
+            if (!manager?.router) {
                 return undefined;
             }
 
             return {
-                redirect: {
-                    routeDomain,
-                    targetPath: this.toManagerImplementerPath(remainingPath)
+                local: {
+                    lookup: (req: unknown, res: unknown, next: (err?: Error) => void) => {
+                        const request = req as { url?: string };
+                        const originalUrl = request.url;
+
+                        request.url = this.toManagerImplementerPath(remainingPath);
+
+                        try {
+                            return manager.router.lookup(req as any, res as any, next);
+                        } finally {
+                            request.url = originalUrl;
+                        }
+                    }
                 }
             };
         }, {

@@ -53,6 +53,7 @@ function createCsiStub(calls: any[] = []): any {
         lastStats: { current: { memory: 1 } },
         apiInputEnabled: true,
         outputEncoding: "utf8",
+        expose: { path: "/test" },
         getInfo: () => ({
             id: "inst-1",
             sequence: { id: "seq-1" },
@@ -67,7 +68,11 @@ function createCsiStub(calls: any[] = []): any {
         emitEvent: async (payload: unknown) => calls.push({ event: payload }),
         set: async (payload: unknown) => calls.push({ set: payload }),
         stop: async (payload: unknown) => calls.push({ stop: payload }),
-        kill: async (payload: unknown) => calls.push({ kill: payload })
+        kill: async (payload: unknown) => calls.push({ kill: payload }),
+        forwardRpcRequest: async (...args: unknown[]) => {
+            calls.push({ forwardRpcRequest: args });
+            return true;
+        }
     };
 }
 
@@ -130,6 +135,62 @@ test("InstanceAPIV2 registers local per-instance v2 routes", t => {
     t.true(recorder.has("get", "/events/:name/once"));
     t.true(recorder.has("op", "/events", "post"));
     t.true(recorder.has("duplex", "/rpc/*"));
+});
+
+test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const csi = createCsiStub(calls);
+    const req: any = { url: "/rpc/test/abc", method: "POST", headers: { "content-type": "text/plain" }, params: {} };
+    const res = createResponseStub();
+
+    registerHttpRoutes(recorder.asApiRoute(), new InstanceAPIV2(csi, logger).createRouter());
+
+    const route = recorder.require("duplex", "/rpc/*");
+
+    t.is(typeof route.handler, "function");
+
+    await (route.handler as Function)(req, res);
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0], req);
+    t.is(calls[0].forwardRpcRequest[1], res);
+    t.is(calls[0].forwardRpcRequest[2], "/abc");
+
+    calls.length = 0;
+
+    const duplexReq: any = { url: "/rpc/test/def", method: "POST", headers: { "content-type": "text/plain" }, params: {} };
+    const duplexRes = createResponseStub();
+    const duplex: any = { input: duplexReq, output: duplexRes };
+
+    await (route.handler as Function)(duplex, { "content-type": "text/plain" });
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0], duplexReq);
+    t.is(calls[0].forwardRpcRequest[1], duplexRes);
+    t.is(calls[0].forwardRpcRequest[2], "/def");
+
+    calls.length = 0;
+
+    const noHeaderReq: any = { url: "/rpc/test/no-headers", method: "POST", params: {} };
+    const noHeaderRes = createResponseStub();
+
+    await (route.handler as Function)(noHeaderReq, noHeaderRes);
+
+    t.is(calls.length, 1);
+    t.deepEqual(calls[0].forwardRpcRequest[0].headers, {});
+    t.not(calls[0].forwardRpcRequest[0].headers, noHeaderRes);
+
+    calls.length = 0;
+
+    const duplexReqWithoutHeaders: any = { url: "/rpc/test/header-record", method: "POST", params: {} };
+    const duplexWithHeaderRecord: any = { input: duplexReqWithoutHeaders, output: createResponseStub() };
+    const headerRecord = { "content-type": "text/plain" };
+
+    await (route.handler as Function)(duplexWithHeaderRecord, headerRecord);
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0].headers, headerRecord);
 });
 
 test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {

@@ -44,6 +44,8 @@ export type Verser2TimeoutConfig = {
 
 export type Verser2LeaseConfig = {
     minimumWaitingLeases: number;
+    minimumRunnerWaitingStreams?: number;
+    minimumUpstreamWaitingStreams?: number;
 };
 
 export type ManagerVerser2Config = {

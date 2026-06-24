@@ -334,10 +334,16 @@ test("ManagerAPIHandler v2 inventory hub delete disconnects by default and delet
     t.deepEqual(calls, [{ disconnect: "id_drop" }, { delete: "sth-1", force: true }]);
 });
 
-test("ManagerAPIHandler v2 resolves Hub-owned routes with a verser2 redirect", async t => {
+test("ManagerAPIHandler v2 resolves Hub-owned routes through Manager forwarding", async t => {
     const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const manager = createManagerStub(recorder) as any;
 
-    await new ManagerAPIHandler(createManagerStub(recorder) as any).attach();
+    manager.forwardRequestToSTH = async (sth: any, req: any, _res: any, targetPath: string) => {
+        calls.push({ sthId: sth.id, url: req.url, targetPath });
+    };
+
+    await new ManagerAPIHandler(manager).attach();
 
     const response = {
         statusCode: 200,
@@ -352,10 +358,8 @@ test("ManagerAPIHandler v2 resolves Hub-owned routes with a verser2 redirect", a
 
     await handler({ url: "/api/v2/hubs/sth-1/load", params: {}, headers: {} }, response, () => t.fail());
 
-    t.is(response.statusCode, 308);
-    t.is(response.headers.location, "http://sth-1.scramjet.internal/api/v2/load");
-    t.is(response.headers["x-scramjet-route-domain"], "sth-1.scramjet.internal");
-    t.is(response.headers["x-scramjet-route-target-path"], "/api/v2/load");
+    t.deepEqual(calls, [{ sthId: "sth-1", url: "/load", targetPath: "/api/v2/load" }]);
+    t.is(response.statusCode, 200);
 });
 
 test("Manager setupHealthEndpoint only registers legacy v1 health", async t => {
