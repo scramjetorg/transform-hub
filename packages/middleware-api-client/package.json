@@ -15,11 +15,9 @@
   },
   "dependencies": {
     "@scramjet/api-client": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/client-utils": "^1.1.0",
     "@scramjet/multi-manager-api-client": "^1.1.0"
-  },
-  "dependencies": {
-    "@scramjet/api-types": "^1.1.0"
   },
   "devDependencies": {
     "ava": "^3.15.0",
