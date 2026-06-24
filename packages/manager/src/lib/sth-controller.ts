@@ -1,19 +1,19 @@
-import { DisconnectReason, ISTHController, STHControllerEvents, STHTopicEventData } from "@scramjet/types";
+import { DisconnectReason, ISTHController, STHControllerEvents } from "./types/from-types";
+import { STHTopicEventData } from "@scramjet/runtime-types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { ManagerConfiguration, MRestAPI } from "@scramjet/api-types";
 import {
     CPMMessageSTHID,
     EncodedCPMSTHMessage,
     InstanceBulkMessage,
     InstanceMessage,
     InstanceMessageData,
-    IObjectLogger,
     LoadCheckStatMessage,
-    ManagerConfiguration,
-    MRestAPI,
     NetworkInfo,
     SequenceMessage,
     SequenceMessageData,
     SpaceEventMessageData
-} from "@scramjet/types";
+} from "./types/from-types";
 import { Duplex, PassThrough, Readable, Writable } from "stream";
 
 import { CPMMessageCode } from "@scramjet/symbols";

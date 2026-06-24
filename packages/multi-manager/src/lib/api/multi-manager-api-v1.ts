@@ -1,5 +1,5 @@
 import { RouteRequest, Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
-import { MMRestAPI } from "@scramjet/types";
+import { MMRestAPI } from "@scramjet/api-types";
 import { ReasonPhrases } from "http-status-codes";
 import { z } from "zod";
 

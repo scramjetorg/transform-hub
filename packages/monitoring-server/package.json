@@ -12,6 +12,7 @@
     "test:ava": "# nyc node ../../scripts/run-ava.js"
   },
   "dependencies": {
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/utility": "^1.1.0"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
-import { StopSequenceMessageData, WritableStream } from "@scramjet/types";
+import { WritableStream } from "@scramjet/runtime-types";
+import { StopSequenceMessageData } from "@scramjet/runtime-types";
 
 import { MessageUtils } from "./message-utils";
 

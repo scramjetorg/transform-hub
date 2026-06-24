@@ -1,0 +1,13 @@
+{
+  "name": "@scramjet/test-appcontext-lifecycle",
+  "version": "0.1.0",
+  "description": "BDD fixture: AppContext lifecycle (keepAlive, end).",
+  "main": "index.js",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "private": true
+}

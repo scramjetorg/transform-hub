@@ -1,5 +1,5 @@
 import path from "path";
-import { STHConfiguration } from "@scramjet/types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { RunnerEnvConfig, RunnerEnvironmentVariables } from "./types";
 
 const RUNNER_VERSER2_MIN_WAITING_STREAMS = 32;

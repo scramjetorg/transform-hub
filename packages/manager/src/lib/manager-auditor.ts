@@ -1,7 +1,7 @@
-import { ISTHConnectionStore } from "@scramjet/types";
+import { ISTHConnectionStore } from "./types/from-types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { OpRecordCode } from "@scramjet/symbols";
-import { OpRecord } from "@scramjet/types";
+import { OpRecord } from "@scramjet/runtime-types";
 import { ReReadable } from "rereadable-stream";
 import { DataStream, MultiStream, StringStream } from "scramjet";
 import { Readable } from "stream";
@@ -65,7 +65,7 @@ export class ManagerAuditor {
     async onUpdate() {
         if (this.flowing) {
             for (const sthController of this.sthConnectionStore.list()) {
-                const hostAudit = await sthController.getAuditStream().catch((err) => {
+                const hostAudit = await sthController.getAuditStream().catch((err: Error) => {
                     this.logger.error("Can't get audit stream", err);
                 });
 
@@ -96,7 +96,7 @@ export class ManagerAuditor {
     }
 
     disconnectSTHAuditStreams() {
-        this.sthConnectionStore.list().forEach((sthController) => {
+        this.sthConnectionStore.list().forEach((sthController: any) => {
             if (sthController.auditStream) {
                 this.ms.remove(sthController.auditStream);
                 sthController.disconnectAuditStream();

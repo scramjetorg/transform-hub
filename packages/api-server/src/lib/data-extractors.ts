@@ -1,4 +1,4 @@
-import { ParsedMessage, StreamInput, StreamOutput } from "@scramjet/types";
+import { ParsedMessage, StreamInput, StreamOutput } from "@scramjet/api-types";
 import { ServerResponse, IncomingMessage } from "http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";

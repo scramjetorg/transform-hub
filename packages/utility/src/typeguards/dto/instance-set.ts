@@ -1,4 +1,4 @@
-import { StartSequenceDTO, StartSequenceEndpointPayloadDTO, SetSequenceEndpointPayloadDTO } from "@scramjet/types";
+import { StartSequenceDTO, StartSequenceEndpointPayloadDTO, SetSequenceEndpointPayloadDTO } from "./types";
 import { LogLevelStrings } from "../../constants";
 
 export function isStartSequenceDTO(arg: any): arg is StartSequenceDTO {

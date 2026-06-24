@@ -5,14 +5,13 @@ import {
     EventMessageData,
     SetMessageData,
     StopSequenceMessageData,
-    STHRestAPI,
     InstanceStats,
-    MessageDataType,
     DownstreamStreamsConfig,
-    APIRoute,
     InstanceId,
     SequenceInfo
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
+import { STHRestAPI, APIRoute } from "@scramjet/api-types";
+import { MessageDataType } from "./from-types";
 import { IncomingMessage, ServerResponse } from "http";
 import { TypedEmitter } from "@scramjet/utility";
 

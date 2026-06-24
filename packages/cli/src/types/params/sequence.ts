@@ -1,6 +1,14 @@
-import { DeepPartial, STHRestAPI } from "@scramjet/types";
+import { AppConfig, DeepPartial } from "@scramjet/runtime-types";
 
-export type SequenceDeployArgs = STHRestAPI.StartSequencePayload & {
+export type SequenceDeployArgs = {
+    appConfig?: AppConfig;
+    args?: string[];
+    instanceId?: string;
+    inputTopic?: string;
+    outputTopic?: string;
+    limits?: Record<string, number>;
+    instanceName?: string;
+    sequenceName?: string;
     output?: string;
 };
 

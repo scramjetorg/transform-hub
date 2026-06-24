@@ -5,10 +5,10 @@ import * as os from "os";
 import { dirname, resolve } from "path";
 import { Readable, Writable } from "stream";
 
-import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
+import { AppConfig, LogLevel } from "@scramjet/runtime-types";
 import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
 
-import { RuntimeProcessHandles } from "@scramjet/types";
+import { RunnerConnectInfo, RuntimeProcessHandles, SequenceInfo } from "@scramjet/runtime-types";
 
 import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
@@ -293,15 +293,15 @@ async function main(): Promise<void> {
     pipeRaw(handles.monitoring, hostClient.monitorStream);
     let childStderrTail = "";
 
-    handles.child.stderr?.on("data", chunk => {
+    handles.child.stderr?.on("data", (chunk: Buffer) => {
         childStderrTail = appendTail(childStderrTail, chunk);
     });
 
-    handles.child.once("error", err => {
+    handles.child.once("error", (err: Error) => {
         console.error("runner-node child errored:", err instanceof Error ? err.message : err);
     });
 
-    handles.child.once("close", (code, signal) => {
+    handles.child.once("close", (code: number | null, signal: NodeJS.Signals | null) => {
         const translated = translateChildClose(code, signal);
 
         if (translated.exitCode !== RunnerExitCode.SUCCESS) {

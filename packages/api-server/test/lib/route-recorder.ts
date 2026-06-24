@@ -1,4 +1,4 @@
-import { APIExpose, APIRoute, ForwardStrategy, HttpMethod, Middleware, StreamConfig } from "@scramjet/types";
+import { APIExpose, APIRoute, ForwardStrategy, HttpMethod, Middleware, StreamConfig } from "@scramjet/api-types";
 
 export type RecordedRoute = {
     kind: string;

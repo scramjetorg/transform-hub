@@ -1,4 +1,4 @@
-import { LoggerOptions, WritableStream } from "@scramjet/types";
+import { LoggerOptions, WritableStream } from "@scramjet/runtime-types";
 
 import { Console } from "console";
 import { inspect, InspectOptions } from "util";

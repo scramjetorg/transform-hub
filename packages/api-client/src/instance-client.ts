@@ -1,6 +1,6 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData, HttpMethod } from "@scramjet/types";
-import { ClientProvider, HttpClient, SendStreamOptions } from "@scramjet/client-utils";
+import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/api-types";
+import { ClientProvider, HttpClient, HttpMethod, SendStreamOptions } from "@scramjet/client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";

@@ -2,7 +2,7 @@ import { setWorldConstructor, World, setDefaultTimeout } from "@cucumber/cucumbe
 import { ICreateAttachment, ICreateLog } from "@cucumber/cucumber/lib/runtime/attachment_manager";
 import { HostClient, InstanceClient, ManagerClient, SequenceClient } from "@scramjet/api-client";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
-import { STHRestAPI } from "@scramjet/types";
+import { STHRestAPI } from "@scramjet/api-types";
 import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
 import * as dns from "dns";

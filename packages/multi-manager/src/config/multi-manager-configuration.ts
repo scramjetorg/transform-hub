@@ -1,6 +1,6 @@
 import { loadConfig, managerVerser2ConfigSchema, managerVerser2Options, maskConfig, z } from "@scramjet/config";
 import { ReadOnlyConfig, isLogLevel, merge } from "@scramjet/utility";
-import { LoadCheckRequirements } from "@scramjet/types";
+import { LoadCheckRequirements } from "@scramjet/runtime-types";
 import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-manager-types";
 import { MultiManagerServerConfig } from "./multi-manager-server-configuration";
 import { LoadCheckConfig } from "@scramjet/load-check";

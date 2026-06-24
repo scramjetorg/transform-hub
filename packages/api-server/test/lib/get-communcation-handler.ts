@@ -1,8 +1,6 @@
 import { CommunicationHandler } from "@scramjet/model";
-import {
-    ReadableStream, WritableStream,
-    EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage
-} from "@scramjet/types";
+import { ReadableStream, WritableStream } from "@scramjet/runtime-types";
+import { EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage } from "@scramjet/api-types";
 import { PassThrough } from "stream";
 import { DataStream } from "scramjet";
 

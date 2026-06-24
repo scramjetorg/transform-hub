@@ -11,7 +11,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { Socket } from "net";
 import { VerserRequestResult, VerserAgent } from "../types";
 import { BPDuplex, BPMux } from "@scramjet/bpmux";
-import { IObjectLogger } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
 import { once } from "events";
 
 /**

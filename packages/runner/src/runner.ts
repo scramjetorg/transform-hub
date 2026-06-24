@@ -2,30 +2,31 @@ import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
-    APIExpose,
     AppConfig,
-    ApplicationFunction,
-    ApplicationInterface,
+    HasTopicInformation,
+    IComponent,
+    IObjectLogger,
+    MaybePromise,
+    Streamable,
+    SynchronousStreamable,
+} from "@scramjet/runtime-types";
+import type { SequenceApplicationFunction, SequenceApplicationInterface } from "@scramjet/sequence-types";
+import {
     EncodedControlMessage,
     EncodedMonitoringMessage,
     EventMessageData,
     HandshakeAcknowledgeMessageData,
-    HasTopicInformation,
-    IComponent,
     IHostClient,
-    IObjectLogger,
-    MaybePromise,
     MonitoringRateMessageData,
     PangMessageData,
     RunnerConnectInfo,
     SequenceInfo,
-    StopSequenceMessageData,
-    Streamable,
-    SynchronousStreamable,
     SetMessageData,
+    StopSequenceMessageData,
     StorageMessageData,
     StorageUpdateMessageData
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
+import { APIExpose } from "@scramjet/api-types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
@@ -631,7 +632,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         this.hostClient.stdinStream
-            .on("data", (chunk) => process.stdin.unshift(chunk))
+            .on("data", (chunk: Buffer) => process.stdin.unshift(chunk))
             .on("end", () => process.stdin.emit("end"));
 
         process.stdin.on("pause", () => this.hostClient.stdinStream.pause());
@@ -890,9 +891,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         });
     }
 
-    getSequence(): ApplicationInterface[] {
+    getSequence(): SequenceApplicationInterface[] {
         const sequenceFromFile = require(this.sequencePath);
-        const _sequence: MaybeArray<ApplicationFunction> =
+        const _sequence: MaybeArray<SequenceApplicationFunction> =
             Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
                 ? sequenceFromFile.default
                 : sequenceFromFile;

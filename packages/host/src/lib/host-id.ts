@@ -1,5 +1,5 @@
 import { IDProvider } from "@scramjet/model";
-import type { IObjectLogger } from "@scramjet/types";
+import type { IObjectLogger } from "@scramjet/runtime-types";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname } from "path";
 

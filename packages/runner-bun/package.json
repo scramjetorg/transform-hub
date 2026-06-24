@@ -17,6 +17,7 @@
     "@signicode/verser2-guest-bun": "0.4.5"
   },
   "devDependencies": {
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@types/node": "^22.15.0",
     "typescript": "~4.7.4"

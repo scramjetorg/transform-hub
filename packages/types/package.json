@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/types",
   "version": "1.1.0",
-  "description": "This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces.",
+  "description": "[DEPRECATED] This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces. Deprecated in favor of @scramjet/runtime-types, @scramjet/sequence-types, and @scramjet/api-types. Existing imports continue to resolve; new code should import from the split packages.",
   "main": "./src/index.ts",
   "scripts": {
     "clean": "rm -rf ./dist .bic_cache",

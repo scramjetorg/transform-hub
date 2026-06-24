@@ -1,4 +1,5 @@
-import { ILifeCycleAdapterMain, ILifeCycleAdapterRun, STHConfiguration } from "@scramjet/types";
+import { ILifeCycleAdapterMain, ILifeCycleAdapterRun } from "@scramjet/runtime-types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { getAdapter } from "./get-adapters";
 
 /**

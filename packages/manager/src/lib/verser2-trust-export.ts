@@ -1,6 +1,6 @@
 import { X509Certificate } from "crypto";
 import { readFile } from "fs/promises";
-import { ManagerConfiguration } from "@scramjet/types";
+import { ManagerConfiguration } from "@scramjet/api-types";
 
 export type ManagerVerser2TrustExport = {
     ca: string;

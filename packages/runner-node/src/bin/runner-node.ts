@@ -5,7 +5,9 @@ import { Readable, Writable } from "stream";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";
-import type { APIExpose, AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
+import { AppConfig } from "@scramjet/runtime-types";
+import type { EncodedMonitoringMessage } from "@scramjet/runtime-types";
+import type { APIExpose } from "@scramjet/api-types";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
 import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig } from "../boot-config";

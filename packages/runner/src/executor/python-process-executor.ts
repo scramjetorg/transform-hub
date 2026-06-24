@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { Duplex } from "stream";
-import { PythonSpawnOptions, RuntimeExecutor, RuntimeProcessHandles } from "@scramjet/types";
+import { PythonSpawnOptions, RuntimeExecutor, RuntimeProcessHandles } from "@scramjet/runtime-types";
 
 /**
  * Exact stdio layout for the runner-python child - same 6-slot layout as the Node runner.

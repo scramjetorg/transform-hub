@@ -1,4 +1,4 @@
-import { APIExpose } from "@scramjet/types";
+import { APIExpose } from "@scramjet/api-types";
 import { RawHttpRouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, routeBinding, resolverBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { onRequestDisconnect } from "@scramjet/utility";

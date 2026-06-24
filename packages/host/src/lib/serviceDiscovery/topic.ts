@@ -1,5 +1,6 @@
 import { TransformOptions, Readable, Transform } from "stream";
-import { ContentType, StreamOrigin, TopicHandler, TopicOptions, TopicState, ParsedMessage } from "@scramjet/types";
+import { ParsedMessage } from "@scramjet/api-types";
+import { ContentType, StreamOrigin, TopicHandler, TopicOptions, TopicState } from "../types/from-types";
 import TopicId from "./topicId";
 import { ReadableState, StreamType, WorkState, WritableState } from "@scramjet/symbols";
 

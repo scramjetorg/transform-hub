@@ -11,7 +11,7 @@ import { isDevelopment } from "../../utils/envs";
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
 import { ClientError } from "@scramjet/client-utils";
-import { AppConfig, DeepPartial } from "@scramjet/types";
+import { AppConfig, DeepPartial } from "@scramjet/runtime-types";
 import { isStartSequenceEndpointPayloadDTO, merge } from "@scramjet/utility";
 import { SequenceDeployArgs } from "../../types/params";
 
@@ -289,7 +289,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         let fullSuccess = true;
 
                         await Promise.all(
-                            seqs.map(async seq => sequenceDelete(seq.id, { force }, lastSequenceId))
+                            seqs.map(async (seq: any) => sequenceDelete(seq.id, { force }, lastSequenceId))
                         ).catch(error => {
                             fullSuccess = false;
 

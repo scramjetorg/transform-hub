@@ -1,17 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import {
-    ExitCode,
-    IComponent,
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterRun,
-    IObjectLogger,
-    InstanceConfig,
-    InstanceLimits,
-    MonitoringMessageData,
-    STHConfiguration,
-    SequenceConfig,
-    SequenceInfo,
-    RunnerConnectInfo } from "@scramjet/types";
+import { IComponent, IObjectLogger } from "@scramjet/runtime-types";
+import { ExitCode, ILifeCycleAdapterMain, ILifeCycleAdapterRun, InstanceConfig, InstanceLimits, MonitoringMessageData, SequenceConfig, SequenceInfo, RunnerConnectInfo } from "@scramjet/runtime-types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { development, streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 

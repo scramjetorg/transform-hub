@@ -18,9 +18,11 @@
     "@scramjet/adapter-docker": "^1.1.0",
     "@scramjet/adapter-kubernetes": "^1.1.0",
     "@scramjet/adapter-process": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
     "ts.data.json": "^2.2.0"
   },
   "devDependencies": {
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@types/node": "^22.15.0",
     "ava": "^3.15.0",

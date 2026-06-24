@@ -5,7 +5,7 @@ const defer = (ts) => new Promise(res => setTimeout(res, ts));
 /**
  * Simple Hubclient test
  *
- * @this {import("@scramjet/types").AppContext} this
+ * @this {import("@scramjet/sequence-types").SequenceAppContext} this
  * @param {never} _stream
  * @returns {Proomise<void>}
  */

@@ -8,7 +8,7 @@ import type {
     EventMessageData,
     StopSequenceMessageData,
     StorageUpdateMessageData,
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
 import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
 
 import { MessageUtils } from "./message-utils";

@@ -29,7 +29,7 @@ const debugLog = (msg) => {
  *   the BDD harness can assert that the handler observed multiple
  *   request body chunks instead of one aggregated payload.
  *
- * @this {import("@scramjet/types").AppContext}
+ * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function(_input) {
     this.logger.info("api-streaming sequence started");

@@ -8,7 +8,7 @@ import {
     OpOptions,
     OpResolver,
     ParsedMessage,
-} from "@scramjet/types";
+} from "@scramjet/api-types";
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage, ServerResponse } from "http";
 import { mimeAccepts } from "../lib/mime";
@@ -145,7 +145,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
     ) => {
         const obj = ((await getData(req)) as Array<any>)[1] as MessageDataType<T>;
 
-        await comm.sendControlMessage(message, checkMessage(message, obj));
+        await comm.sendControlMessage(message, checkMessage(message as any, obj));
 
         res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
         return res.end(JSON.stringify({ accepted: true }));

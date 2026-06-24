@@ -5,10 +5,12 @@
   "main": "_cucumber.js",
   "dependencies": {
     "@scramjet/api-client": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/client-utils": "^1.1.0",
     "@scramjet/logger": "^1.1.0",
     "@scramjet/multi-manager-api-client": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
+    "@scramjet/sequence-types": "^1.1.0",
     "@scramjet/sth-config": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "@signicode/verser2-guest-node": "0.4.5",
@@ -23,8 +25,7 @@
   "devDependencies": {
     "@cucumber/cucumber": "^7.3.2",
     "@cucumber/messages": "^14.0.0",
-    "@cucumber/pretty-formatter": "^1.0.0",
-    "@scramjet/types": "^1.1.0"
+    "@cucumber/pretty-formatter": "^1.0.0"
   },
   "scripts": {
     "build:bdd": "tsc -p tsconfig.json",

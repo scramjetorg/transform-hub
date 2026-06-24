@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { IComponent, LoadCheckStat, LoadCheckRequirements, LoadCheckContstants } from "@scramjet/types";
+import { IComponent } from "@scramjet/runtime-types";
+import { LoadCheckStat, LoadCheckRequirements, LoadCheckContstants } from "@scramjet/runtime-types";
 import { defer } from "@scramjet/utility";
 
 import { DataStream, StringStream } from "scramjet";

@@ -1,4 +1,5 @@
-import { ISequenceAdapter, STHConfiguration } from "@scramjet/types";
+import { ISequenceAdapter } from "@scramjet/runtime-types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { getAdapter } from "./get-adapters";
 
 /**

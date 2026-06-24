@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { IObjectLogger, MRestAPI, ReadableStream, WritableStream } from "@scramjet/types";
+import { IObjectLogger, ReadableStream, WritableStream } from "@scramjet/runtime-types";
+import { MRestAPI } from "@scramjet/api-types";
 import { Readable } from "stream";
 import {
     ActorRole,
@@ -9,7 +10,7 @@ import {
     ISTHController,
     ITopicActor,
     Topic,
-} from "@scramjet/types";
+} from "./types/from-types";
 import { TypedEmitter } from "@scramjet/utility";
 
 type TopicActorEvents = {
@@ -197,7 +198,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
     findRole<R extends ActorRole>(role: R, topicName: string): TopicActor<ActorType, R>[] {
         const topic = this.topics.get(topicName)!;
 
-        return (topic ? topic.actors.filter((a) => a.role === role) : []) as TopicActor<ActorType, R>[];
+        return (topic ? topic.actors.filter((a: any) => a.role === role) : []) as TopicActor<ActorType, R>[];
     }
 
     private updatedTopics: Set<string> = new Set();
@@ -261,7 +262,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
             return;
         }
 
-        topic.actors = topic.actors.filter((actor) => {
+        topic.actors = topic.actors.filter((actor: any) => {
             if (actor.retired) {
                 this.logger.debug("Dropping out actor", actor.role, actor.type, actor.host?.id);
             }
@@ -380,7 +381,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
         return Array.from(this.topics, ([topicName, topic]) => ({
             name: topicName,
             contentType: topic.contentType,
-            actors: topic.actors.map((actor) => ({
+            actors: topic.actors.map((actor: any) => ({
                 role: actor.role,
                 type: actor.type,
                 stream: !!actor.stream,

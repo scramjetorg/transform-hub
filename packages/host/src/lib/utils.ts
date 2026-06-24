@@ -1,5 +1,5 @@
 import { InstanceStatus, RunnerExitCode } from "@scramjet/symbols";
-import { SequenceInfo } from "@scramjet/types";
+import { SequenceInfo } from "@scramjet/runtime-types";
 
 export const mapRunnerExitCode = async (exitcode: number, sequence: SequenceInfo): Promise<
 { message: string, exitcode: number, status: InstanceStatus }

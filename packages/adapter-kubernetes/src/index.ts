@@ -1,4 +1,4 @@
-import { AdapterConfig, IAdapterAugmentation, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
+import { AdapterConfig, IAdapterAugmentation, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/api-types";
 import { KubernetesSequenceAdapter } from "./kubernetes-sequence-adapter";
 import { KubernetesInstanceAdapter } from "./kubernetes-instance-adapter";
 import { initializeImports } from "./kubernetes-client-adapter";

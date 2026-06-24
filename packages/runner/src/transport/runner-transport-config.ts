@@ -1,4 +1,20 @@
 /**
+ * Default verser2 route contracts for runner HTTP path routing.
+ */
+export const DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS = {
+    runnerDomain: "runner.<instanceId>.scramjet.internal",
+    stdinPath: "/stdin",
+    stdoutPath: "/stdout",
+    stderrPath: "/stderr",
+    controlPath: "/control",
+    monitoringPath: "/monitoring",
+    inputPath: "/input",
+    outputPath: "/output",
+    logPath: "/log",
+    requestsPath: "/requests"
+};
+
+/**
  * Runner transport config parser for SCRAMJET_RUNNER_TRANSPORT_CONFIG.
  *
  * Parses the runner transport environment variable and derives defaults from

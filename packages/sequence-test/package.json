@@ -13,8 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "@scramjet/runner": "^1.1.0",
-    "@scramjet/symbols": "^1.1.0",
-    "@scramjet/types": "^1.1.0"
+    "@scramjet/symbols": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

@@ -32,6 +32,7 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "dependencies": {
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "winston": "^3.8.2",

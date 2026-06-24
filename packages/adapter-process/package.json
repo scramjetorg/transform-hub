@@ -15,16 +15,18 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/adapters-common": "1.1.0",
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/model": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/runner": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "@scramjet/adapters-common": "1.1.0",
     "scramjet": "^4.37.0",
     "tar": "^7.4.3",
     "ws": "^7.3.1"
   },
   "devDependencies": {
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@types/node": "^22.15.0",
     "@types/request": "2.48.8",

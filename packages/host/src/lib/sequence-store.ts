@@ -1,4 +1,4 @@
-import { SequenceInfo } from "@scramjet/types";
+import { SequenceInfo } from "@scramjet/runtime-types";
 import { ISequenceStore } from "./types/sequence-store";
 
 class SequenceStore implements ISequenceStore {

@@ -235,7 +235,7 @@ After({}, async () => {
     }
 
     await Promise.all(
-        insts.map(i => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
+        insts.map((i: any) => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
     );
 });
 
@@ -861,7 +861,7 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
     if (!sequenceId) assert.fail();
 
     const sequences = await hostClient.listSequences() || [];
-    const sequenceExist = !!sequences.find((sequenceInfo) => sequenceId === sequenceInfo.id);
+    const sequenceExist = !!sequences.find((sequenceInfo: any) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
 });
@@ -1047,7 +1047,7 @@ Given("topic {string} is created", async function(this: CustomWorld, topicId: st
 Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
     const topics = await hostClient.getTopics();
 
-    const topic = topics.find((topicElement) => topicElement.topicName === topicId);
+    const topic = topics.find((topicElement: any) => topicElement.topicName === topicId);
 
     assert.notEqual(topic, undefined);
 });
@@ -1058,7 +1058,7 @@ Then("remove topic {string}", async function(this: CustomWorld, topicId: string)
 
 Then("confirm topic {string} is removed", async function(this: CustomWorld, topicName: string) {
     const topics = await hostClient.getTopics();
-    const removedTopic = topics.find((topicElement) => topicElement.topicName === topicName);
+    const removedTopic = topics.find((topicElement: any) => topicElement.topicName === topicName);
 
     assert.equal(removedTopic, undefined);
 

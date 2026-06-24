@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ParsedMessage } from "@scramjet/types";
+import type { ParsedMessage } from "@scramjet/api-types";
 import type { ServerResponse } from "http";
 import type { RouteHook } from "./hooks";
 

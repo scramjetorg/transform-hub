@@ -6,7 +6,7 @@
  * Start STH with `DEVELOPMENT=true` and the process adapter to have the host
  * mirror sequence stdout/stderr to the main process streams.
  *
- * @this {import("@scramjet/types").AppContext}
+ * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function loggingSequence(input, label = "logging-sequence") {
     this.logger.info("sequence logger info", { label });

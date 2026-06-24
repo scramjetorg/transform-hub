@@ -1,6 +1,7 @@
 import { RawHttpRouteRequest, RouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, resolverBinding, routeBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
-import { DisconnectReason, ParsedMessage } from "@scramjet/types";
+import { ParsedMessage } from "@scramjet/api-types";
+import { DisconnectReason } from "@scramjet/api-types";
 import { ServerResponse } from "http";
 
 import { getManagerVerser2TrustExport } from "../verser2-trust-export";
@@ -47,7 +48,7 @@ export class ManagerAPIV2Handler {
                 items: this.mapManagerInstances(this.getPaginated(req, manager.getInstances.bind(manager)))
             }), { id: "space.v2.instances" }),
             sequences: routeBinding.handler<typeof routes.sequences>(() => ({
-                items: manager.getSequencesIds().map(id => ({ id: String(id) }))
+                items: manager.getSequencesIds().map((id: any) => ({ id: String(id) }))
             }), { id: "space.v2.sequences" }),
             allSequences: routeBinding.handler<typeof routes.allSequences>(req => ({
                 items: this.mapManagerSequences(this.getPaginated(req, manager.getSequences.bind(manager)))

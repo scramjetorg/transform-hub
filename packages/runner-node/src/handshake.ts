@@ -1,5 +1,5 @@
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import type { PingMessageData } from "@scramjet/types";
+import type { PingMessageData } from "@scramjet/runtime-types";
 import type { RunnerHandshakeInputs } from "./types";
 
 export function buildPing(inputs: RunnerHandshakeInputs): [

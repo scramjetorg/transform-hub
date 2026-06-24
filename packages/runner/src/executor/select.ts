@@ -1,4 +1,4 @@
-import { RuntimeExecutor } from "@scramjet/types";
+import { RuntimeExecutor } from "@scramjet/runtime-types";
 import { selectRuntimeKind } from "@scramjet/symbols";
 import { nodeExecutor } from "./node-process-executor";
 import { pythonExecutor } from "./python-process-executor";

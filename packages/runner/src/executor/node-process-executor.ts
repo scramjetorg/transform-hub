@@ -1,4 +1,4 @@
-import { NodeSpawnOptions, RuntimeExecutor } from "@scramjet/types";
+import { NodeSpawnOptions, RuntimeExecutor } from "@scramjet/runtime-types";
 import { ChildProcess, spawn } from "child_process";
 import { isAbsolute } from "path";
 import { Duplex, Readable } from "stream";

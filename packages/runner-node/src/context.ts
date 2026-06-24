@@ -1,4 +1,5 @@
-import type { AppConfig, KeepAliveMessageData, LogLevel } from "@scramjet/types";
+import { AppConfig, LogLevel } from "@scramjet/runtime-types";
+import type { KeepAliveMessageData } from "@scramjet/runtime-types";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { createServer } from "@scramjet/api-server";
 import { HostClient as ApiHostClient } from "@scramjet/api-client";

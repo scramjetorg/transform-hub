@@ -1,4 +1,4 @@
-import { DeepPartial } from "@scramjet/types";
+import { DeepPartial } from "@scramjet/runtime-types";
 
 /**
  * Deep merge objects.

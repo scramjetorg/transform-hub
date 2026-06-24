@@ -15,8 +15,11 @@
     "@scramjet/api-client": "^1.1.0",
     "@scramjet/client-utils": "^1.1.0"
   },
+  "dependencies": {
+    "@scramjet/api-types": "^1.1.0",
+    "@scramjet/runtime-types": "^1.1.0"
+  },
   "devDependencies": {
-    "@scramjet/types": "^1.1.0",
     "@types/node": "^22.15.0",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",

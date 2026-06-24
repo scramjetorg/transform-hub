@@ -1,20 +1,7 @@
 import { InstanceAdapterError } from "@scramjet/model";
-import {
-    ContainerConfiguration,
-    ContainerConfigurationWithExposedPorts,
-    ExitCode,
-    IComponent,
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterRun,
-    IObjectLogger,
-    MonitoringMessageData,
-    InstanceConfig,
-    RunnerContainerConfiguration,
-    InstanceLimits,
-    STHConfiguration,
-    SequenceInfo,
-    RunnerConnectInfo
-} from "@scramjet/types";
+import { IComponent, IObjectLogger } from "@scramjet/runtime-types";
+import { ExitCode, ILifeCycleAdapterMain, ILifeCycleAdapterRun, MonitoringMessageData, InstanceConfig, InstanceLimits, SequenceInfo, RunnerConnectInfo } from "@scramjet/runtime-types";
+import { ContainerConfiguration, ContainerConfigurationWithExposedPorts, RunnerContainerConfiguration, STHConfiguration } from "@scramjet/api-types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";

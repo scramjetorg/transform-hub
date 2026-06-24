@@ -1,4 +1,17 @@
-import { ExitCode, IObjectLogger } from "@scramjet/types";
+import { IObjectLogger, CommonSequenceConfig } from "@scramjet/runtime-types";
+import { ExitCode } from "@scramjet/runtime-types";
+import { RunnerContainerConfiguration } from "@scramjet/api-types";
+
+/**
+ * Docker-specific sequence config extending CommonSequenceConfig.
+ */
+export type DockerSequenceConfig = CommonSequenceConfig & {
+    type: "docker";
+    container: RunnerContainerConfiguration;
+    config?: {
+        ports?: any[] | null;
+    };
+};
 import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";

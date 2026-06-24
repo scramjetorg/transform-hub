@@ -1,6 +1,6 @@
-import { DisconnectReason, ISTHConnectionStore, ISTHController, SthConnectionStoreErrors } from "@scramjet/types";
+import { DisconnectReason, ISTHConnectionStore, ISTHController, SthConnectionStoreErrors } from "./types/from-types";
 import { DisconnectHubErrors } from "@scramjet/symbols";
-import { MRestAPI } from "@scramjet/types";
+import { MRestAPI } from "@scramjet/api-types";
 import { ReasonPhrases } from "http-status-codes";
 
 export function translateDeleteError(e: any) {
@@ -107,17 +107,17 @@ export function prepareDisconnectDroplist(
     if (payload.accessKey) {
         dropList.push(
             ...sthConnectionStore.getByAccessKey(payload.accessKey)
-                .filter((sthController) => sthController.isConnectionActive)
-                .map(sthController => ({ sthController, reason: "key_revoked" as DisconnectReason }))
+                .filter((sthController: any) => sthController.isConnectionActive)
+                .map((sthController: any) => ({ sthController, reason: "key_revoked" as DisconnectReason }))
         );
     }
 
     if (payload.limit !== undefined) {
         dropList.push(
             ...sthConnectionStore.list()
-                .filter((sthController) => sthController.isConnectionActive && sthController.selfHosted)
+                .filter((sthController: any) => sthController.isConnectionActive && sthController.selfHosted)
                 .slice(payload.limit)
-                .map(sthController => ({ sthController, reason: "limit_exceeded" as DisconnectReason }))
+                .map((sthController: any) => ({ sthController, reason: "limit_exceeded" as DisconnectReason }))
         );
     }
     return dropList;

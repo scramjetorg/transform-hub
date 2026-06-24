@@ -56,7 +56,7 @@ export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClien
 }
 
 export { ClientError, ClientErrorCode } from "./client-error";
-export { RequestLogger, Headers } from "./types";
+export { RequestLogger, Headers, RequestConfig, HttpMethod } from "./types";
 
 export interface ClientProvider {
     client: HttpClient;

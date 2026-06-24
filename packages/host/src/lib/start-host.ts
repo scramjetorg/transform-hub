@@ -1,5 +1,5 @@
 import { createServer, ServerConfig } from "@scramjet/api-server";
-import { STHConfiguration } from "@scramjet/types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { Host } from "./host";
 
 function createHost(apiServerConfig: ServerConfig, sthConfig: STHConfiguration) {

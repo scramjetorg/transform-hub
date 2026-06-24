@@ -1,14 +1,14 @@
 import type { RoutedForwardTransport } from "@scramjet/api-server";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { Readable } from "stream";
+import { PassThroughStreamsConfig } from "@scramjet/runtime-types";
 import {
     DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS,
     ICommunicationHandler,
-    PassThroughStreamsConfig,
     RunnerTransport,
     RunnerTransportConnectOptions,
     RunnerTransportRouteContracts
-} from "@scramjet/types";
+} from "./types/from-types";
 
 type Verser2RunnerRoute = {
     targetId: string;

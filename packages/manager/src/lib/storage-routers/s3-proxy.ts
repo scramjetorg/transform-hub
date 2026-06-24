@@ -1,7 +1,9 @@
 import { getRouter } from "@scramjet/api-server";
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIRoute, ISequenceAdapter, ParsedMessage, STHConfiguration } from "@scramjet/types";
+import { APIRoute, ParsedMessage } from "@scramjet/api-types";
+import { ISequenceAdapter } from "@scramjet/runtime-types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { ReasonPhrases } from "http-status-codes";
 import { Client as MinioClient, UploadedObjectInfo } from "minio";
 import { DataStream, StringStream } from "scramjet";
@@ -153,7 +155,8 @@ export class S3Proxy {
         const { SequenceAdapterClass: ProcessSequenceAdapter } = augment();
 
         const processSequenceAdapter = new ProcessSequenceAdapter({
-            sequencesRoot: `/tmp/manager/${this.id}`
+            sequencesRoot: `/tmp/manager/${this.id}`,
+            verser2: {} as any,
         } as STHConfiguration);
 
         processSequenceAdapter.logger.pipe(this.logger);

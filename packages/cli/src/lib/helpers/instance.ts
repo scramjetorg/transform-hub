@@ -1,4 +1,4 @@
-import { STHRestAPI } from "@scramjet/types";
+import { STHRestAPI } from "@scramjet/api-types";
 import { getHostClient, getInstance } from "../common";
 import { getInstanceId, sessionConfig } from "../config";
 import { SequenceClient } from "@scramjet/api-client";

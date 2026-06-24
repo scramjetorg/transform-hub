@@ -7,32 +7,36 @@ import {
 import { development } from "@scramjet/sth-config";
 
 import {
-    APIRoute,
     AppConfig,
     DownstreamStreamsConfig,
-    EncodedMessage,
     EventMessageData,
-    HandshakeAcknowledgeMessage,
     HostProxy,
-    ICommunicationHandler,
     ILifeCycleAdapterRun,
     InstanceLimits,
     InstanceStats,
     IObjectLogger,
-    MessageDataType,
-    MonitoringMessageData,
     PassThroughStreamsConfig,
     ReadableStream,
     SequenceInfo,
     SetMessageData,
-    STHConfiguration,
-    STHRestAPI,
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
     IStorageAdapter,
-    RunnerTransport
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
+import {
+    APIRoute,
+    STHConfiguration,
+    STHRestAPI,
+} from "@scramjet/api-types";
+import {
+    EncodedMessage,
+    HandshakeAcknowledgeMessage,
+    ICommunicationHandler,
+    MessageDataType,
+    MonitoringMessageData,
+} from "./types/from-types";
+import { RunnerTransport } from "./types/from-types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -470,7 +474,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             streams[CC.STDERR].pipe(process.stderr);
         }
 
-        this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
+        this.upStreams.forEach((stream, i) => stream?.on("error", (err: Error) => {
             this.logger.error("Downstream error on channel", i, err);
         }));
 

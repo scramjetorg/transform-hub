@@ -1,4 +1,4 @@
-import { IDuplexStream, ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
+import { IDuplexStream, ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/api-types";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 import { Writable, Readable } from "stream";
 import { DuplexStream } from "../lib/duplex-stream";

@@ -1,17 +1,6 @@
-import {
-    ExitCode,
-    IComponent,
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterRun,
-    InstanceConfig,
-    InstanceLimits,
-    IObjectLogger,
-    K8SAdapterConfiguration,
-    MonitoringMessageData,
-    RunnerConnectInfo,
-    SequenceInfo,
-    STHConfiguration
-} from "@scramjet/types";
+import { IComponent, IObjectLogger } from "@scramjet/runtime-types";
+import { ExitCode, ILifeCycleAdapterMain, ILifeCycleAdapterRun, InstanceConfig, InstanceLimits, MonitoringMessageData, RunnerConnectInfo, SequenceInfo } from "@scramjet/runtime-types";
+import { K8SAdapterConfiguration, STHConfiguration } from "@scramjet/api-types";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { createWriteStream, readFileSync } from "fs";
@@ -193,7 +182,7 @@ class KubernetesInstanceAdapter implements
 
         const runnerImage = selectRunnerImageForEngines(config.engines, this.adapterConfig.runnerImages);
 
-        const tagLabels = Object.fromEntries((sequenceInfo.config?.tags || []).map((tag) => [`tag.${tag}`, "true"]));
+        const tagLabels = Object.fromEntries((sequenceInfo.config?.tags || []).map((tag: string) => [`tag.${tag}`, "true"]));
 
         const labels = {
             app: "runner",

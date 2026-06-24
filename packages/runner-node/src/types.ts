@@ -2,15 +2,14 @@ import type { EventEmitter } from "events";
 import type { Writable } from "stream";
 
 import type { ObjLogger } from "@scramjet/obj-logger";
+import { AppConfig, AppError } from "@scramjet/runtime-types";
+import type { APIExpose } from "@scramjet/api-types";
 import type {
-    APIExpose,
-    AppConfig,
-    AppError,
     EventMessageData,
     StopSequenceMessageData,
     StorageUpdateMessageData,
     SequenceInfo,
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
 
 import type { RunnerNodeBootConfig } from "./boot-config";
 import type { RunnerNodeFdStreams } from "./fd-streams";

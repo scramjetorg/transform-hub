@@ -1,4 +1,4 @@
-import { STHConfiguration } from "@scramjet/types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { Host, startHost } from "@scramjet/host";
 
 export class STH {

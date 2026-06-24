@@ -1,4 +1,4 @@
-import { IObjectLogger } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
 import { RouterDefinition, bindRoutes, routeBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { summarizeHealth } from "@scramjet/load-check";

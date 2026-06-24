@@ -1,5 +1,5 @@
 import { ClientProvider, HttpClient } from "@scramjet/client-utils";
-import { STHRestAPI } from "@scramjet/types";
+import { STHRestAPI } from "@scramjet/api-types";
 import { Readable } from "stream";
 
 import { InstanceClient } from "./instance-client";

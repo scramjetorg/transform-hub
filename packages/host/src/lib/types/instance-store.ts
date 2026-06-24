@@ -1,4 +1,4 @@
-import { InstanceId } from "@scramjet/types";
+import { InstanceId } from "@scramjet/runtime-types";
 import { ICSI } from "./csi";
 
 export interface IInstanceStore extends Map<InstanceId, ICSI> {

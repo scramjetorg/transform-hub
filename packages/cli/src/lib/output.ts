@@ -1,5 +1,5 @@
 import { Readable, Stream, Writable } from "stream";
-import { MaybePromise } from "@scramjet/types";
+import { MaybePromise } from "@scramjet/runtime-types";
 import { inspect } from "util";
 import { displayFormat, isJsonFormat } from "../types";
 

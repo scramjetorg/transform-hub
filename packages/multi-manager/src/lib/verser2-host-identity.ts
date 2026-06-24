@@ -1,4 +1,4 @@
-import { ManagerVerser2Config } from "@scramjet/types";
+import { ManagerVerser2Config } from "@scramjet/api-types";
 import { existsSync } from "fs";
 import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import { isIP } from "net";

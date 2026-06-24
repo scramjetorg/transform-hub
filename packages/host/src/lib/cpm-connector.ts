@@ -4,18 +4,20 @@ import * as http from "http";
 
 import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
-    STHRestAPI,
-    CPMConnectorOptions,
     EncodedControlMessage,
     Instance,
+    IObjectLogger,
+    STHTopicEventData,
+} from "@scramjet/runtime-types";
+import { STHRestAPI } from "@scramjet/api-types";
+import {
+    CPMConnectorOptions,
     LoadCheckStatMessage,
     NetworkInfo,
     STHIDMessageData,
-    IObjectLogger,
-    STHTopicEventData,
     AddSTHTopicEventData,
     SpaceEventMessageData
-} from "@scramjet/types";
+} from "./types/from-types";
 
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
@@ -31,7 +33,7 @@ import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
 import { networkInterfaces } from "os";
 import { HostError } from "@scramjet/model";
-import { Verser2ClientTlsConfig } from "@scramjet/types";
+import { Verser2ClientTlsConfig } from "@scramjet/api-types";
 import { getManagerGuestMinWaitingStreams } from "./cpm-connector-leases";
 
 type STHInformation = {
@@ -304,7 +306,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                         JSON.stringify(this.info)
                     );
 
-                    this.emit("id", this.info.id);
+                    this.emit("id", this.info.id ?? "");
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
 

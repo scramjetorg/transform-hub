@@ -1,5 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, ContentType, IObjectLogger, OpResponse, ParsedMessage, StreamOrigin, TopicState } from "@scramjet/types";
+import { APIExpose, ParsedMessage } from "@scramjet/api-types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { ContentType, OpResponse, StreamOrigin, TopicState } from "../types/from-types";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
 import { IncomingMessage } from "http";

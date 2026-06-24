@@ -21,6 +21,8 @@
   },
   "devDependencies": {
     "@scramjet/api-server": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@types/node": "^22.15.0",
     "ava": "^3.15.0",

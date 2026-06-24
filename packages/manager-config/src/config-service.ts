@@ -1,4 +1,5 @@
-import { DeepPartial, ManagerConfiguration } from "@scramjet/types";
+import { DeepPartial } from "@scramjet/runtime-types";
+import { ManagerConfiguration } from "@scramjet/api-types";
 import { merge } from "@scramjet/utility";
 import { defaultConfig as managerDefaultConfig } from "./default-config";
 

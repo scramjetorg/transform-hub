@@ -341,7 +341,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
         },
     };
 
-    const response = await mmClient.startManager(managerConfig);
+    const response = await mmClient.startManager(managerConfig as any);
 
     assert.ok(response, "Expected Manager to be started");
 

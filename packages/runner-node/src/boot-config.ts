@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { isAbsolute, resolve } from "path";
-import { AppConfig, LogLevel, SequenceInfo } from "@scramjet/types";
+import { AppConfig, LogLevel } from "@scramjet/runtime-types";
+import { SequenceInfo } from "@scramjet/runtime-types";
 import { isObject } from "./utils";
 
 /**

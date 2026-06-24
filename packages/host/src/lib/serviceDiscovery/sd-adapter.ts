@@ -5,7 +5,8 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import TopicId from "./topicId";
 import TopicsMap from "./topicsController";
 import { Topic } from "./topic";
-import { ContentType, IObjectLogger, STHTopicEventData, StreamOrigin } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { ContentType, STHTopicEventData, StreamOrigin } from "../types/from-types";
 
 export type DataType = {
     topic: TopicId,

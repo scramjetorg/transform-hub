@@ -9,7 +9,7 @@
  * It writes a marker line so BDD can verify stdout was forwarded, then
  * resolves with a primitive so `runSequence()` finishes naturally.
  *
- * @this {import("@scramjet/types").AppContext}
+ * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function(_input) {
     process.stdout.write("NODE_COMPLETES_OK\n");
