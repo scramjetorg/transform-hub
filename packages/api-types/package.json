@@ -12,7 +12,8 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/runtime-types": "^1.1.0"
+    "@scramjet/runtime-types": "^1.1.0",
+    "@scramjet/symbols": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

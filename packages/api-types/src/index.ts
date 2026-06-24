@@ -2,7 +2,7 @@
 // @scramjet/api-types — API/user-facing type contracts
 // ---------------------------------------------------------------------------
 // Owns APIExpose, APIRoute, APIServer, client factory and client contracts,
-// REST API DTO namespace stubs, message protocol types needed by API
+// REST API DTO types, message protocol types needed by API
 // client/server packages, config types, and strict API-specific AppContext
 // aliases built on @scramjet/runtime-types.
 //
@@ -19,6 +19,7 @@ export * from "./rest-api-sth";
 export * from "./rest-api-manager";
 export * from "./rest-api-middleware";
 export * from "./rest-api-multi-manager";
+export * from "./rest-api-error/rest-api-error";
 export * from "./strict-app-context";
 
 // New modules added during Phase 3 typings split migration:

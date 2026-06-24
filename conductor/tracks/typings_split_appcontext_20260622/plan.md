@@ -106,11 +106,8 @@
     - [ ] Update runtime implementation packages (`runner`, `runner-node`, runtime wrappers where applicable) to import generic/runtime contracts from `@scramjet/runtime-types`.
     - [ ] Update API/client/server/CLI packages to import API contracts from `@scramjet/api-types` or local owning packages.
     - [ ] Update adapter, host, manager, config, and utility packages to use split packages or local owning types based on the Phase 1 inventory.
-- [ ] Task: Move non-shared and single-package typings to owning packages via `fixer`
-    - [ ] Move types used only by one package or direct dependents into that owning package.
-    - [ ] Update direct dependents to import from the owning package when appropriate.
-    - [ ] Keep old `@scramjet/types` compatibility exports intact or bridged.
-    - [ ] Document intentional exceptions for public/protocol contracts that remain shared.
+- [x] Task: Move non-shared and single-package typings to owning packages via `fixer`
+    - [x] REST API DTO ownership cleanup: Replaced all `any`-based placeholder stubs in `packages/api-types/src/rest-api-*.ts` with full canonical type definitions migrated from `packages/types/src/rest-api-*/`. Created 45 files across 6 subdirectories (`rest-api-sth/`, `rest-api-manager/`, `rest-api-multi-manager/`, `rest-api-middleware/`, `rest-api-commons/`, `rest-api-error/`). Flat namespace files now re-export from subdirectory barrel modules. `@scramjet/types` compatibility re-exports namespaces from `@scramjet/api-types` rather than maintaining local copies. Import rewrites: `http-status-codes` → inline string literals, legacy relative paths → `@scramjet/runtime-types` or `@scramjet/api-types` config-types. Validated: api-types test PASS, types test PASS, boundaries PASS, build PASS.
 - [ ] Task: Update package dependencies and build ordering via `fixer`
     - [ ] Add new package dependencies to affected `package.json` files.
     - [ ] Remove obsolete `@scramjet/types` dependencies from repository packages that no longer use it.
@@ -133,7 +130,7 @@
 - [x] Task: Request `oracle` review of Phase 3
     - [x] Review migration completeness, type ownership decisions, dependency churn, and AppContext behavior preservation.
     - [x] Incorporate or explicitly defer review findings before continuing.
-    - Oracle review initially blocked on Guard 3 over-allowlisting BDD source paths and BDD AppContext fixture JSDoc references to `@scramjet/types`; fixes were applied and revalidated. Final oracle re-review result: Pass — Phase 3 can proceed to the user manual verification checkpoint / draft PR. Non-blocking recommendations deferred to later phases: tighten transitional API/config placeholders and local `from-types` shims, revisit broad `runtime-types` ownership in Phase 6, and clean nested BDD fixture metadata references if they become part of final canonical split validation.
+    - Oracle review initially blocked on Guard 3 over-allowlisting BDD source paths and BDD AppContext fixture JSDoc references to `@scramjet/types`; fixes were applied and revalidated. Final oracle re-review result: Pass — Phase 3 can proceed to the user manual verification checkpoint / draft PR. Follow-up user review identified that REST API DTO namespaces in `@scramjet/api-types` were still placeholder shortcuts; this was fixed in Phase 3 by moving the full legacy REST DTO definitions for STH, Manager, MultiManager, Middleware, REST commons, and REST API errors into `@scramjet/api-types`, then re-exporting canonical REST namespaces through `@scramjet/types` compatibility and `@scramjet/api-client`. Remaining non-blocking recommendations deferred to later phases: tighten local `from-types` shims, revisit broad `runtime-types` ownership in Phase 6, and clean nested BDD fixture metadata references if they become part of final canonical split validation.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Repository Import Migration and Type Ownership Reduction' (Protocol in workflow.md)
     - [ ] After oracle review passes, prepare the draft PR according to Branching Policy and provide the PR URL for manual verification.
     - [ ] Ask the user to manually verify the Phase 3 migration before moving to Phase 4.

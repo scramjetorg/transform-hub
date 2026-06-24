@@ -1,7 +1,4 @@
-import * as STHRestAPI from "./rest-api-sth";
-import * as MWRestAPI from "./rest-api-middleware";
-import * as MMRestAPI from "./rest-api-multi-manager";
-import * as MRestAPI from "./rest-api-manager";
+import { STHRestAPI, MWRestAPI, MMRestAPI, MRestAPI } from "@scramjet/api-types";
 
 export * from "./api-expose";
 export * from "./error-codes";
@@ -64,7 +61,7 @@ export * from "./sequence-adapter";
 
 export * from "./dto/index";
 
-export * from "./rest-api-error/rest-api-error";
+export { APIErrorMessage } from "@scramjet/api-types";
 
 export { StreamState, StreamOptions, OriginType, StreamHandler, StreamOrigin } from "./sd-stream-handler";
 
