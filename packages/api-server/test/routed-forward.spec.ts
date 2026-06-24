@@ -348,15 +348,15 @@ test("forwardRoutedRequest strips hop-by-hop response headers and connection-nom
     const { transport, responseBody } = fakeTransport({
         headers: {
             "content-type": "text/plain",
-            connection: "keep-alive, X-Debug-Hop",
-            "keep-alive": "timeout=5",
+            Connection: "keep-alive, X-Debug-Hop",
+            "Keep-Alive": "timeout=5",
             "proxy-authenticate": "Basic realm=proxy",
             "proxy-authorization": "Basic token",
             te: "trailers",
             trailer: "x-checksum",
             "transfer-encoding": "chunked",
             upgrade: "websocket",
-            "x-debug-hop": "remove-me",
+            "X-Debug-Hop": "remove-me",
             "x-custom": "ok"
         }
     });

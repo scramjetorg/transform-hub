@@ -48,7 +48,7 @@ export class InstanceAPIV2 {
         const rawRes = req.raw?.response || req.output || res;
 
         if (!rawReq.headers) {
-            rawReq.headers = req.headers || res || {};
+            rawReq.headers = req.headers || (this.isHeaderRecord(res) ? res : {});
         }
 
         if (!this.csi.forwardRpcRequest) {
@@ -69,6 +69,13 @@ export class InstanceAPIV2 {
             rawRes.writeHead?.(503);
             rawRes.end?.();
         }
+    }
+
+    private isHeaderRecord(value: unknown): value is IncomingHttpHeaders {
+        return !!value
+            && typeof value === "object"
+            && !("writeHead" in value)
+            && !("end" in value);
     }
 
     private handleInfo(): RestAPI2.InstanceResponse {

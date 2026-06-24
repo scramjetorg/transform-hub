@@ -42,7 +42,8 @@ function hopByHopHeaderSet(headers: IncomingHttpHeaders | Record<string, string 
         "transfer-encoding",
         "upgrade"
     ]);
-    const connection = headers.connection;
+    const connectionEntry = Object.entries(headers).find(([name]) => name.toLowerCase() === "connection");
+    const connection = connectionEntry?.[1];
     const connectionValues = Array.isArray(connection) ? connection.join(",") : connection;
 
     for (const value of String(connectionValues || "").split(",")) {

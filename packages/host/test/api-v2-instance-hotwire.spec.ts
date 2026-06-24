@@ -169,6 +169,28 @@ test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t =
     t.is(calls[0].forwardRpcRequest[0], duplexReq);
     t.is(calls[0].forwardRpcRequest[1], duplexRes);
     t.is(calls[0].forwardRpcRequest[2], "/def");
+
+    calls.length = 0;
+
+    const noHeaderReq: any = { url: "/rpc/test/no-headers", method: "POST", params: {} };
+    const noHeaderRes = createResponseStub();
+
+    await (route.handler as Function)(noHeaderReq, noHeaderRes);
+
+    t.is(calls.length, 1);
+    t.deepEqual(calls[0].forwardRpcRequest[0].headers, {});
+    t.not(calls[0].forwardRpcRequest[0].headers, noHeaderRes);
+
+    calls.length = 0;
+
+    const duplexReqWithoutHeaders: any = { url: "/rpc/test/header-record", method: "POST", params: {} };
+    const duplexWithHeaderRecord: any = { input: duplexReqWithoutHeaders, output: createResponseStub() };
+    const headerRecord = { "content-type": "text/plain" };
+
+    await (route.handler as Function)(duplexWithHeaderRecord, headerRecord);
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0].headers, headerRecord);
 });
 
 test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
