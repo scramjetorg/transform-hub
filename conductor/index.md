@@ -11,5 +11,6 @@
 - [Code Style Guides](./code_styleguides/)
 
 ## Management
+- [Conductor Config](./config.yaml)
 - [Tracks Registry](./tracks.md)
 - [Tracks Directory](./tracks/)

@@ -7,7 +7,7 @@
       "extensions": ["js", "jsx", "ts", "tsx", "json", "jsonc"]
     }
   },
-  "plugin": ["oh-my-opencode-slim@latest", "opencode-conductor-plugin@latest"],
+  "plugin": ["file:///home/michal/_oc-plugins/oh-my-opencode-slim/index.js", "file:///home/michal/_oc-plugins/opencode-conductor/index.js"],
   "permission": {
     "bash": "allow",
     "edit": "allow",

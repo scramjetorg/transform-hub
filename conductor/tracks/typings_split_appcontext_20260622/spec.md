@@ -29,8 +29,10 @@ The track stabilizes `@scramjet/sequence-test` as a supported harness and uses i
 
 4. Preserve and deprecate `@scramjet/types` compatibility.
    - Keep the existing package available for external compatibility.
+   - Preserve existing `@scramjet/types` package/module/type-resolution behavior for external consumers; deprecation must not make existing imports resolve differently or disappear.
    - Mark it deprecated in package metadata and/or documentation.
    - Add tests proving old `@scramjet/types` exports remain compatible with the new split typings where equivalent contracts exist.
+   - Add tests proving representative external-style TypeScript imports from `@scramjet/types` still resolve and type-check through the compatibility package after the split.
    - Do not treat old `@scramjet/types` as a frozen API surface; it can be extended as new split-package types are introduced for compatibility.
 
 ### Type ownership and shared-surface reduction
@@ -101,16 +103,17 @@ The track stabilizes `@scramjet/sequence-test` as a supported harness and uses i
 3. Sequence-facing AppContext/API exports are available from `sequence-types` and API-specific strict aliases are available from `api-types`.
 4. Current repository source no longer imports `@scramjet/types`; this is enforced by an automated test/check.
 5. `@scramjet/types` remains available, is marked deprecated, and compatibility tests prove equivalent old/new typings are assignable where expected.
-6. Old `@scramjet/types` compatibility exports can be extended as needed when new split-package canonical types are introduced.
-7. Non-shared and single-package typings are moved to owning packages when practical, with documented exceptions for public/protocol contracts.
-8. `runner` and `runner-node` compile and their AppContext tests pass using the new typings.
-9. `@scramjet/sequence-test` is documented and tested as a supported harness and no longer depends on `@scramjet/types`.
-10. Stable AppContext sequence-test fixtures cover the frozen sequence AppContext API.
-11. BDD scenarios exercise the full AppContext path through a real host/process adapter run.
-12. Refapp-style sequence/AppContext validation is separated into an explicit replacement CI/npm step using stable local fixtures, and old downloaded/refapp sequence packages are retired from that path.
-13. Targeted affected package tests pass.
-14. `npm run build:packages` passes.
-15. The targeted BDD AppContext scenario passes.
+6. `@scramjet/types` module/type resolution remains stable for representative external-style imports, proven by an automated TypeScript resolution/type-check test.
+7. Old `@scramjet/types` compatibility exports can be extended as needed when new split-package canonical types are introduced.
+8. Non-shared and single-package typings are moved to owning packages when practical, with documented exceptions for public/protocol contracts.
+9. `runner` and `runner-node` compile and their AppContext tests pass using the new typings.
+10. `@scramjet/sequence-test` is documented and tested as a supported harness and no longer depends on `@scramjet/types`.
+11. Stable AppContext sequence-test fixtures cover the frozen sequence AppContext API.
+12. BDD scenarios exercise the full AppContext path through a real host/process adapter run.
+13. Refapp-style sequence/AppContext validation is separated into an explicit replacement CI/npm step using stable local fixtures, and old downloaded/refapp sequence packages are retired from that path.
+14. Targeted affected package tests pass.
+15. `npm run build:packages` passes.
+16. The targeted BDD AppContext scenario passes.
 
 ## Out of Scope
 
