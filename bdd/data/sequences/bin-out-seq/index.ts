@@ -1,10 +1,11 @@
-import { AppConfig, AppContext } from "@scramjet/types";
+import { AppConfig } from "@scramjet/runtime-types";
+import type { SequenceAppContext } from "@scramjet/sequence-types";
 import { createReadStream } from "fs";
 import { PassThrough } from "stream";
 import * as crypto from "crypto";
 
 const mod = [
-    async function(this: AppContext<AppConfig, any>, _stream, filePath: string = `${__dirname}/random.bin`) {
+    async function(this: SequenceAppContext<AppConfig, any>, _stream, filePath: string = `${__dirname}/random.bin`) {
         this.logger.info("Sequence started");
 
         try {

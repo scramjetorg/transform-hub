@@ -1,8 +1,7 @@
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
 import { ClientError, QueryError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, SendStreamOptions, GetStreamOptions } from "./types";
-import { HttpMethod, RequestConfig } from "@scramjet/types";
+import { Headers, HttpClient, HttpMethod, RequestLogger, SendStreamOptions, GetStreamOptions, RequestConfig } from "./types";
 
 /**
  * Provides HTTP communication methods.

@@ -1,4 +1,5 @@
-import { InstanceId, SequenceInfo, STHRestAPI } from "@scramjet/types";
+import { InstanceId, SequenceInfo } from "@scramjet/runtime-types";
+import { STHRestAPI } from "@scramjet/api-types";
 
 export type InstanceAdapterOptions = {
     exitDelay: number;

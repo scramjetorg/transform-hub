@@ -1,5 +1,5 @@
 import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
-import { CPMMessage, MessageType, RunnerMessage } from "@scramjet/types";
+import { CPMMessage, MessageType, RunnerMessage } from "./types";
 import { getMessage } from "./get-message";
 
 // TODO: this serializes the message to array and deserializeMessage from string.

@@ -277,7 +277,7 @@ Then("stable instance name {string} becomes available", { timeout: 10000 }, asyn
 
     do {
         const instances = await hostClient.listInstances();
-        instance = instances.find((candidate) => candidate.instanceName === instanceName || candidate.id === instanceName);
+        instance = instances.find((candidate: any) => candidate.instanceName === instanceName || candidate.id === instanceName);
 
         if (!instance) {
             await defer(100);
@@ -319,7 +319,7 @@ Then("I see a sequence called {string}", function(string: string) {
 Then("the output of an instance of {string} is as in {string} file", async function(this: CustomWorld, sequenceId, outputContentsFile) {
     const fileData = await readFile(outputContentsFile, "utf-8");
     const hostClient = getHostClient();
-    const instance = this.cliResources.instances?.find(inst => inst.sequence.id === sequenceId);
+    const instance = this.cliResources.instances?.find((inst: any) => inst.sequence.id === sequenceId);
 
     if (!instance) throw new Error("Instance not found");
 

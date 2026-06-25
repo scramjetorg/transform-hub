@@ -167,6 +167,7 @@ export type {
 
 export type {
     HubCallMatch,
+    HubContext,
     HubHarness,
     HubMock,
     HubMockRequest,

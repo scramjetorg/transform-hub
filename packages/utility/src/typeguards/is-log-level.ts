@@ -1,4 +1,4 @@
-import { LogLevel } from "@scramjet/types";
+import { LogLevel } from "@scramjet/runtime-types";
 import { LogLevelStrings } from "../constants";
 
 export const isLogLevel = (lvl: string): lvl is LogLevel => {

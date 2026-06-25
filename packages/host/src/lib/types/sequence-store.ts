@@ -1,4 +1,4 @@
-import { SequenceInfo } from "@scramjet/types";
+import { SequenceInfo } from "@scramjet/runtime-types";
 
 export interface ISequenceStore {
     get sequences(): SequenceInfo[];

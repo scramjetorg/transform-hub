@@ -1,4 +1,4 @@
-import { K8SAdapterConfiguration } from "@scramjet/types";
+import { K8SAdapterConfiguration } from "@scramjet/api-types";
 import { JsonDecoder } from "ts.data.json";
 
 export const adapterConfigDecoder = JsonDecoder.object<K8SAdapterConfiguration>({

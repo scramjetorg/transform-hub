@@ -1,6 +1,6 @@
 "use strict";
 
-/** @this {import("@scramjet/types").AppContext}*/
+/** @this {import("@scramjet/sequence-types").SequenceAppContext}*/
 module.exports = async function(_stream) {
     this.logger.info("API server started");
 

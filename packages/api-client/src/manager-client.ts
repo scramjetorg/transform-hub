@@ -1,7 +1,8 @@
 /// <reference path="./definitions.d.ts" />
 
 import { ClientUtils, ClientProvider, HttpClient, ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { ApiClientFactory, MRestAPI, LoadCheckStat } from "@scramjet/types";
+import { ApiClientFactory, MRestAPI } from "@scramjet/api-types";
+import { LoadCheckStat } from "@scramjet/runtime-types";
 import { Readable } from "stream";
 import type { HostClient } from "./host-client";
 
@@ -106,9 +107,9 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
         const response = await this.#_v2Client.get<{ items?: Array<{ id: string } | string> } | MRestAPI.GetSequencesResponse>("sequences");
 
         return response && typeof response === "object" && "items" in response
-            ? response.items?.map(item => typeof item === "string" ? item : item.id) || []
+            ? response.items?.map((item: any) => typeof item === "string" ? item : item.id) || []
             : (response as MRestAPI.GetSequenceIDSResponse | MRestAPI.GetSequencesResponse)
-                .map(item => typeof item === "string" ? item : item.id);
+                .map((item: any) => typeof item === "string" ? item : item.id);
     }
 
     async getInstances(): Promise<MRestAPI.GetInstancesResponse> {

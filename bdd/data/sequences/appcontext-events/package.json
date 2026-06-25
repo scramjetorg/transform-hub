@@ -1,0 +1,13 @@
+{
+  "name": "@scramjet/test-appcontext-events",
+  "version": "0.1.0",
+  "description": "BDD fixture: AppContext event emission and reception.",
+  "main": "index.js",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "private": true
+}

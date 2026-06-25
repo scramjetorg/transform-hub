@@ -1,19 +1,19 @@
-import { DisconnectReason, ISTHController, STHControllerEvents, STHTopicEventData } from "@scramjet/types";
+import { DisconnectReason, ISTHController, STHControllerEvents } from "./types/from-types";
+import { STHTopicEventData } from "@scramjet/runtime-types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { ManagerConfiguration, MRestAPI } from "@scramjet/api-types";
 import {
     CPMMessageSTHID,
     EncodedCPMSTHMessage,
     InstanceBulkMessage,
     InstanceMessage,
     InstanceMessageData,
-    IObjectLogger,
     LoadCheckStatMessage,
-    ManagerConfiguration,
-    MRestAPI,
     NetworkInfo,
     SequenceMessage,
     SequenceMessageData,
     SpaceEventMessageData
-} from "@scramjet/types";
+} from "./types/from-types";
 import { Duplex, PassThrough, Readable, Writable } from "stream";
 
 import { CPMMessageCode } from "@scramjet/symbols";
@@ -381,21 +381,33 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.logger.debug("Creating upstream topic request", name);
 
         return (
-            await this.makeSthRequest("GET", `/api/v1/topic/${name}`, { cpm: "true", contentType })
+            await this.makeSthRequest("GET", `/api/v1/topic/${name}`, { cpm: "true", "Content-Type": contentType })
         ).incomingMessage;
     }
 
     async createDownstreamTopicRequest(name: string, contentType: string): Promise<Writable> {
         this.logger.debug("Creating downstream topic request", name, contentType);
 
-        return (
-            await this.makeSthRequest("POST", `/api/v1/topic/${name}`, {
+        const clientRequest = new PassThrough();
+
+        this.verser2.brokerTransport.request({
+            domain: this.verser2.routeDomain,
+            method: "POST",
+            path: `/api/v1/topic/${name}`,
+            headers: {
                 "Transfer-Encoding": "chunked",
                 "Content-Type": contentType,
                 cpm: "true",
-                Expect: "100-continue",
-            })
-        ).clientRequest;
+            },
+            body: clientRequest
+        }).then((response) => {
+            response.body.resume();
+        }).catch((error) => {
+            this.logger.warn("Downstream topic request failed", name, error);
+            clientRequest.destroy(error);
+        });
+
+        return clientRequest;
     }
 
     private async makeSthRequest(method: string, path: string, headers: Record<string, string>): Promise<{ incomingMessage: Readable; clientRequest: Writable }> {

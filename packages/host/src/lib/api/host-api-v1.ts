@@ -1,4 +1,7 @@
-import { APIExpose, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHRestAPI } from "@scramjet/types";
+import { APIExpose, NextCallback, ParsedMessage } from "@scramjet/api-types";
+import { SequenceInfo } from "@scramjet/runtime-types";
+import { STHRestAPI } from "@scramjet/api-types";
+import { OpResponse } from "../types/from-types";
 import { corsMiddleware, DuplexStream, normalizeForwardedHeaders, optionsMiddleware, roundRobinStrategy } from "@scramjet/api-server";
 import { RouteDefinition, Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
 import { ObjLogger } from "@scramjet/obj-logger";

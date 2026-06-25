@@ -5,17 +5,19 @@ import { createServer } from "@scramjet/api-server";
 import { HostClient as ApiHostClient, ManagerClient as ApiManagerClient } from "@scramjet/api-client";
 
 import {
-    APIExpose,
     AppError,
     AppConfig,
+    ILocalStorage,
+    LogLevel,
+    WritableStream,
+} from "@scramjet/runtime-types";
+import type {
+    APIExpose,
     EventMessageData,
     HostClient,
-    ILocalStorage,
     KeepAliveMessageData,
-    LogLevel,
     ManagerClient,
     Middleware,
-    WritableStream,
 } from "@scramjet/types";
 
 import { RunnerAppContext, RunnerProxy } from "../src/runner-app-context";

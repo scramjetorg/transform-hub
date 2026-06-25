@@ -1,4 +1,4 @@
-import { STHRunnerVerser2HostConfig } from "@scramjet/types";
+import { STHRunnerVerser2HostConfig } from "@scramjet/api-types";
 import { VerserHostOptions, VerserHostTlsOptions } from "@signicode/verser2-host";
 import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import { existsSync } from "fs";

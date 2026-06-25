@@ -1,5 +1,5 @@
 import http, { IncomingMessage, ServerResponse } from "http";
-import { ForwardStrategy, NextCallback } from "@scramjet/types";
+import { ForwardStrategy, NextCallback } from "@scramjet/api-types";
 import https from "https";
 import { CeroError } from "../lib/definitions";
 

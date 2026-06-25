@@ -1,9 +1,9 @@
-import { ReadableApp } from "@scramjet/types";
+import type { SequenceReadableApp } from "@scramjet/sequence-types";
 import { PassThrough } from "stream";
 
 type Arguments = [string, number, { abc: string }, [string]]
 
-const exp: ReadableApp<string, Arguments> = function(_stream, arg1, arg2, arg3, arg4) {
+const exp: SequenceReadableApp<string, Arguments> = function(_stream, arg1, arg2, arg3, arg4) {
     const out = new PassThrough();
 
     out.write(arg1 + "\n");

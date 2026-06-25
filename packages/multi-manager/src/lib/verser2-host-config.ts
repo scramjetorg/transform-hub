@@ -1,4 +1,4 @@
-import { ManagerVerser2Config } from "@scramjet/types";
+import { ManagerVerser2Config } from "@scramjet/api-types";
 import { VerserHostOptions, VerserHostTlsOptions } from "@signicode/verser2-host";
 
 function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTlsOptions {

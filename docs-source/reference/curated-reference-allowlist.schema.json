@@ -17,7 +17,7 @@
           "package": { "type": "string", "pattern": "^@scramjet/[a-z0-9-]+$" },
           "entrypoint": { "type": "string", "pattern": "^packages/[a-z0-9-]+/src/[A-Za-z0-9_./-]+\\.ts$" },
           "audience": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-          "stability": { "enum": ["stable", "experimental", "internal-but-useful"] },
+          "stability": { "enum": ["stable", "experimental", "internal-but-useful", "supported-scoped"] },
           "outputPath": { "type": "string", "pattern": "^reference/typescript/[a-z0-9-]+/$" },
           "reason": { "type": "string" },
           "includeModules": { "type": "array", "items": { "type": "string" }, "minItems": 1 },

@@ -3,7 +3,7 @@ import {
     SequencePackageJSON,
     SequencePackageJSONScramjetConfig,
     SequencePackageJSONScramjetSection
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
 
 import { Err, JsonDecoder, Ok } from "ts.data.json";
 

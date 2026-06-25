@@ -1,4 +1,4 @@
-import { IAdapterAugmentation } from "@scramjet/types";
+import { IAdapterAugmentation } from "@scramjet/api-types";
 import { augment as processAugment } from "@scramjet/adapter-process";
 import { augment as dockerAugment } from "@scramjet/adapter-docker";
 import { augment as kubernetesAugment } from "@scramjet/adapter-kubernetes";

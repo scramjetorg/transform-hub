@@ -1,4 +1,4 @@
-import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
+import { PublicSTHConfiguration, STHConfiguration } from "@scramjet/api-types";
 import { maskConfig, sthOutboundVerser2Options } from "@scramjet/config";
 
 import { merge } from "@scramjet/utility";
@@ -21,7 +21,7 @@ export const defaultConfig = _defaultConfig;
 export class ConfigService {
     private config: STHConfiguration;
 
-    constructor(config?: DeepPartial<STHConfiguration>) {
+    constructor(config?: Record<string, any>) {
         this.config = defaultConfig;
 
         if (config) {
@@ -37,7 +37,7 @@ export class ConfigService {
         return this.config.docker;
     }
 
-    update(config: DeepPartial<STHConfiguration>) {
+    update(config: Record<string, any>) {
         merge(this.config, config);
     }
 

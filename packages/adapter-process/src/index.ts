@@ -1,4 +1,4 @@
-import { STHConfiguration, IAdapterAugmentation, RuntimeOptionRegistry } from "@scramjet/types";
+import { STHConfiguration, IAdapterAugmentation, RuntimeOptionRegistry } from "@scramjet/api-types";
 import { ProcessInstanceAdapter } from "./process-instance-adapter";
 import { ProcessSequenceAdapter } from "./process-sequence-adapter";
 

@@ -1,5 +1,5 @@
 import net from "net";
-import { MRestAPI } from "@scramjet/types";
+import { MRestAPI } from "@scramjet/api-types";
 
 export class HealthCheck {
     sthServer: net.Server;

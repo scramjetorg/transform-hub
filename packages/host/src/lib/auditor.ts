@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { InstanceLimits, InstanceStats, OpRecord, ParsedMessage } from "@scramjet/types";
+import { ParsedMessage } from "@scramjet/api-types";
+import { InstanceLimits, InstanceStats, OpRecord } from "@scramjet/runtime-types";
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { onRequestDisconnect } from "@scramjet/utility";
 import { StringStream } from "scramjet";

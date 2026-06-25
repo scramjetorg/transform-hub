@@ -1,4 +1,4 @@
-import { APIExpose } from "@scramjet/types";
+import { APIExpose } from "@scramjet/api-types";
 
 import { IHost } from "../types";
 import { HostAPIV1Handler } from "./host-api-v1";

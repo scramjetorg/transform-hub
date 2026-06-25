@@ -1,6 +1,7 @@
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
 import { createHostClient, ManagerClient } from "@scramjet/api-client";
-import { DeepPartial, LoadCheckStat, ManagerConfiguration, MMRestAPI } from "@scramjet/types";
+import { DeepPartial, LoadCheckStat } from "@scramjet/runtime-types";
+import { ManagerConfiguration, MMRestAPI } from "@scramjet/api-types";
 
 export class MultiManagerClient implements ClientProvider {
     client: HttpClient;

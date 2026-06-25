@@ -1,6 +1,6 @@
 import { homedir } from "os";
 import { join } from "path";
-import { ManagerVerser2Config } from "@scramjet/types";
+import { ManagerVerser2Config } from "@scramjet/api-types";
 import { MultiManagerCommandOptions, MultiManagerOptions } from "../types/multi-manager-types";
 
 const defaultVerser2Config: ManagerVerser2Config = {

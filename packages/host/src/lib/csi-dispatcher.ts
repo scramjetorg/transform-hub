@@ -2,7 +2,10 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, DownstreamStreamsConfig, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { DownstreamStreamsConfig, EventMessageData, HostProxy, Instance, InstanceConfig, PangMessageData, PingMessageData, SequenceInfo, SequenceInfoInstance, IStorageAdapter, StartInstanceReturnType } from "@scramjet/runtime-types";
+import { STHConfiguration, STHRestAPI } from "@scramjet/api-types";
+import { ContentType, ICommunicationHandler, MessageDataType } from "./types/from-types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
 import { Verser2RunnerBroker } from "./runner-transport";
@@ -117,10 +120,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
                     await this.serviceDiscovery.routeTopicToStream(
                         { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
-                        csiController.getInputStream()
+                        await csiController.getInput(data.contentType as ContentType)
                     );
-
-                    csiController.inputHeadersSent = true;
 
                     await this.serviceDiscovery.update({
                         requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"

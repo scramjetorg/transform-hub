@@ -1,6 +1,7 @@
 import { CeroError } from "@scramjet/api-server";
 import { Router, RouterDefinition, registerHttpRoutes } from "@scramjet/api-router";
-import { MRestAPI, ParsedMessage } from "@scramjet/types";
+import { ParsedMessage } from "@scramjet/api-types";
+import { MRestAPI } from "@scramjet/api-types";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
 import { z } from "zod";

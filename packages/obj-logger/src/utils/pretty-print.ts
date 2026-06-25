@@ -1,4 +1,4 @@
-import { LogEntry, LogLevel } from "@scramjet/types";
+import { LogEntry, LogLevel } from "@scramjet/runtime-types";
 
 import { COLORS } from "./colors";
 import { inspect } from "util";

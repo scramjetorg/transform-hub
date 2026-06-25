@@ -5,10 +5,10 @@ import * as os from "os";
 import { dirname, resolve } from "path";
 import { Readable, Writable } from "stream";
 
-import { SequenceInfo, RunnerConnectInfo, AppConfig, LogLevel } from "@scramjet/types";
+import { AppConfig, LogLevel } from "@scramjet/runtime-types";
 import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
 
-import { RuntimeProcessHandles } from "@scramjet/types";
+import { RunnerConnectInfo, RuntimeProcessHandles, SequenceInfo } from "@scramjet/runtime-types";
 
 import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
@@ -96,6 +96,8 @@ interface RunnerNodeBootConfigShape {
     instanceName?: string;
     logLevel?: LogLevel;
     exposePath?: string;
+    inputTopic?: string;
+    outputTopic?: string;
     exposeHost?: string;
     requestsUnsupported?: string;
     verser2Runtime?: {
@@ -104,6 +106,7 @@ interface RunnerNodeBootConfigShape {
         runnerRouteDomain: string;
         hubBrokerId: string;
         hubTargetDomain?: string;
+        spaceTargetDomain?: string;
         tls?: unknown;
         leaseAcquireTimeoutMs?: number;
         minWaitingStreams?: number;
@@ -130,6 +133,8 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
     if (parsedRunnerConnectInfo.instanceName) payload.instanceName = parsedRunnerConnectInfo.instanceName;
     if (parsedRunnerConnectInfo.logLevel) payload.logLevel = parsedRunnerConnectInfo.logLevel;
     if (parsedRunnerConnectInfo.exposePath) payload.exposePath = parsedRunnerConnectInfo.exposePath;
+    if (parsedRunnerConnectInfo.inputTopic) payload.inputTopic = parsedRunnerConnectInfo.inputTopic;
+    if (parsedRunnerConnectInfo.outputTopic) payload.outputTopic = parsedRunnerConnectInfo.outputTopic;
 
     const exposeHostResolved = parsedRunnerConnectInfo.exposeHost ?? process.env.EXPOSE_HOST;
 
@@ -142,6 +147,7 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
             runnerRouteDomain: runnerTransportConfig.routeDomain,
             hubBrokerId: runnerTransportConfig.hubBrokerId,
             ...(runnerTransportConfig.hubTargetDomain ? { hubTargetDomain: runnerTransportConfig.hubTargetDomain } : {}),
+            ...(runnerTransportConfig.spaceTargetDomain ? { spaceTargetDomain: runnerTransportConfig.spaceTargetDomain } : {}),
             ...(runnerTransportConfig.tls ? { tls: runnerTransportConfig.tls } : {}),
             ...(runnerTransportConfig.leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs: runnerTransportConfig.leaseAcquireTimeoutMs } : {}),
             ...(runnerTransportConfig.minWaitingStreams !== undefined ? { minWaitingStreams: runnerTransportConfig.minWaitingStreams } : {})
@@ -231,6 +237,15 @@ async function main(): Promise<void> {
             {};
         const executor = selectExecutor({ engines });
         const childEnv: NodeJS.ProcessEnv = {};
+
+        // Forward target domains for hubClient() / spaceClient() direct v2 routing.
+        if (runnerTransportConfig.hubTargetDomain) {
+            childEnv.HUB_TARGET_DOMAIN = runnerTransportConfig.hubTargetDomain;
+        }
+        if (runnerTransportConfig.spaceTargetDomain) {
+            childEnv.SPACE_TARGET_DOMAIN = runnerTransportConfig.spaceTargetDomain;
+        }
+
         let runtimeEntry = "";
 
         if (executor.kind === "bun") {
@@ -293,15 +308,15 @@ async function main(): Promise<void> {
     pipeRaw(handles.monitoring, hostClient.monitorStream);
     let childStderrTail = "";
 
-    handles.child.stderr?.on("data", chunk => {
+    handles.child.stderr?.on("data", (chunk: Buffer) => {
         childStderrTail = appendTail(childStderrTail, chunk);
     });
 
-    handles.child.once("error", err => {
+    handles.child.once("error", (err: Error) => {
         console.error("runner-node child errored:", err instanceof Error ? err.message : err);
     });
 
-    handles.child.once("close", (code, signal) => {
+    handles.child.once("close", (code: number | null, signal: NodeJS.Signals | null) => {
         const translated = translateChildClose(code, signal);
 
         if (translated.exitCode !== RunnerExitCode.SUCCESS) {

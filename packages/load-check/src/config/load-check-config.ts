@@ -1,4 +1,4 @@
-import { LoadCheckRequirements } from "@scramjet/types";
+import { LoadCheckRequirements } from "@scramjet/runtime-types";
 import { ReadOnlyConfig } from "@scramjet/utility";
 import { InstanceRequirementsConfig } from "./instance-requirements-config";
 

@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { Duplex } from "stream";
-import { RuntimeExecutor, RuntimeProcessHandles, SpawnOptions } from "@scramjet/types";
+import { RuntimeExecutor, RuntimeProcessHandles, SpawnOptions } from "@scramjet/runtime-types";
 
 /** Exact stdio layout for the runner-bun child - same 6-slot layout as Node/Python. */
 export const RUNNER_BUN_STDIO = ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe"] as const;

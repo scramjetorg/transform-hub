@@ -1,6 +1,7 @@
-import { ISTHInfoRegister, HostId, SequenceId, InstanceId } from "@scramjet/types";
+import { ISTHInfoRegister, HostId, SequenceId } from "./types/from-types";
+import { InstanceId } from "@scramjet/runtime-types";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { Instance, SequenceConfig, CommonSequenceConfig, SequenceInfo } from "@scramjet/types";
+import { Instance, SequenceConfig, CommonSequenceConfig, SequenceInfo } from "@scramjet/runtime-types";
 
 type InstancesSet = Set<InstanceId>;
 type SequencesMap = Map<SequenceId, InstancesSet>;

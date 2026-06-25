@@ -1,4 +1,20 @@
 /**
+ * Default verser2 route contracts for runner HTTP path routing.
+ */
+export const DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS = {
+    runnerDomain: "runner.<instanceId>.scramjet.internal",
+    stdinPath: "/stdin",
+    stdoutPath: "/stdout",
+    stderrPath: "/stderr",
+    controlPath: "/control",
+    monitoringPath: "/monitoring",
+    inputPath: "/input",
+    outputPath: "/output",
+    logPath: "/log",
+    requestsPath: "/requests"
+};
+
+/**
  * Runner transport config parser for SCRAMJET_RUNNER_TRANSPORT_CONFIG.
  *
  * Parses the runner transport environment variable and derives defaults from
@@ -7,7 +23,7 @@
  * Environment variable shape (JSON):
  *   { kind: "verser2", hostUrl: string, routeDomain?: string, tls?: {...},
  *     leaseAcquireTimeoutMs?: number, minWaitingStreams?: number, guestId?: string,
- *     hubBrokerId?: string, hubTargetDomain?: string }
+ *     hubBrokerId?: string, hubTargetDomain?: string, spaceTargetDomain?: string }
  *
  * Derivation rules:
  *   - Absent / empty / whitespace env → throws
@@ -37,6 +53,7 @@ export type RunnerTransportConfigVerser2Input = {
     guestId?: string;
     hubBrokerId?: string;
     hubTargetDomain?: string;
+    spaceTargetDomain?: string;
 };
 
 /** Fully resolved verser2 config with derived defaults. */
@@ -50,6 +67,7 @@ export type RunnerTransportConfigVerser2 = {
     minWaitingStreams?: number;
     hubBrokerId: string;
     hubTargetDomain?: string;
+    spaceTargetDomain?: string;
 };
 
 export type RunnerTransportConfigResult = RunnerTransportConfigVerser2;
@@ -152,6 +170,10 @@ export function parseRunnerTransportConfig(
         typeof parsed.hubTargetDomain === "string" && parsed.hubTargetDomain.trim() !== ""
             ? parsed.hubTargetDomain.trim()
             : undefined;
+    const spaceTargetDomain =
+        typeof parsed.spaceTargetDomain === "string" && parsed.spaceTargetDomain.trim() !== ""
+            ? parsed.spaceTargetDomain.trim()
+            : undefined;
 
     const tls = normalizeTls(parsed.tls);
     const leaseAcquireTimeoutMs =
@@ -170,6 +192,7 @@ export function parseRunnerTransportConfig(
         guestId,
         hubBrokerId,
         ...(hubTargetDomain !== undefined ? { hubTargetDomain } : {}),
+        ...(spaceTargetDomain !== undefined ? { spaceTargetDomain } : {}),
         ...(tls !== undefined ? { tls } : {}),
         ...(leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs } : {}),
         ...(minWaitingStreams !== undefined ? { minWaitingStreams } : {})

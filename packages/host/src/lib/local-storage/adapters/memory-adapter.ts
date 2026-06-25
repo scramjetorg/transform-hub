@@ -1,4 +1,4 @@
-import { IStorageAdapter } from "@scramjet/types";
+import { IStorageAdapter } from "@scramjet/runtime-types";
 
 /**
  * Used when storage path for file-based adapter is NOT specified.

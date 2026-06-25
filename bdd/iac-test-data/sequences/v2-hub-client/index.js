@@ -3,7 +3,7 @@ const defer = (ts) => new Promise(res => setTimeout(res, ts));
 /**
  * Canonical v2 Hub/Space client smoke sequence.
  *
- * @this {import("@scramjet/types").AppContext} this
+ * @this {import("@scramjet/sequence-types").SequenceAppContext} this
  */
 module.exports = async function() {
     const status = await this.hubClient().status.get();

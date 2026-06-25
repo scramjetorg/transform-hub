@@ -9,7 +9,7 @@ title: Testing sequences with @scramjet/sequence-test
 
 # Testing sequences with @scramjet/sequence-test
 
-> **⚠️ Experimental**: `@scramjet/sequence-test` is an in-progress test harness. It is not the default testing solution for packages in this repository. Keep using each package's existing AVA tests plus package build/lint validation unless the task explicitly requires this package. See the [contributing guide](../development/contributing.md) for the current testing policy.
+> **⚠️ Scope**: `@scramjet/sequence-test` is supported for scoped local sequence fixture, hub-harness, and AppContext validation. It is **not** a replacement for package tests, BDD, adapter/runtime invariant checks, or full live Hub/process/Docker/Kubernetes parity. See the [contributing guide](../development/contributing.md) for the current testing policy.
 
 ## Overview
 
@@ -184,9 +184,19 @@ const port = server.port; // assigned port
 await server.close();
 ```
 
+## AppContext type imports
+
+Sequence authors should import their AppContext type from the canonical split package:
+
+```typescript
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+```
+
+This provides the frozen sequence-facing AppContext surface (`this.config`, `this.hub`, `this.space`, `this.logger`, `this.localStorage`, `this.api.use()`, lifecycle methods, and v2 `hubClient()`/`spaceClient()` accessors) without coupling to REST DTOs or API client implementation details.
+
+Legacy `@scramjet/types` imports continue to resolve but are deprecated. Internal packages use `@scramjet/runtime-types` for runtime-neutral contracts and `@scramjet/api-types` for API-facing contracts.
+
 ## Limitations
 
-- `createSequenceTest()` and `runSequence()` are **phase 1 shells** — runtime wiring is incomplete
 - `runSequence()` only supports Node sequences; Python and Bun runtimes are not yet wired
-- The hub harness (`createHubHarness()`) is the most mature component and is suitable for unit-testing sequence logic that interacts with the Hub API
-- This package is **not a replacement** for package-level AVA tests, BDD tests, adapter tests, or runtime invariant checks
+- This package is **supported** for scoped local sequence fixture, hub-harness, and AppContext validation, but is **not a replacement** for package-level AVA tests, BDD tests, adapter tests, or runtime invariant checks

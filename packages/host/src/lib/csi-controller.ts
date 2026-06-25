@@ -7,32 +7,36 @@ import {
 import { development } from "@scramjet/sth-config";
 
 import {
-    APIRoute,
     AppConfig,
     DownstreamStreamsConfig,
-    EncodedMessage,
     EventMessageData,
-    HandshakeAcknowledgeMessage,
     HostProxy,
-    ICommunicationHandler,
     ILifeCycleAdapterRun,
     InstanceLimits,
     InstanceStats,
     IObjectLogger,
-    MessageDataType,
-    MonitoringMessageData,
     PassThroughStreamsConfig,
     ReadableStream,
     SequenceInfo,
     SetMessageData,
-    STHConfiguration,
-    STHRestAPI,
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
     IStorageAdapter,
-    RunnerTransport
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
+import {
+    APIRoute,
+    STHConfiguration,
+    STHRestAPI,
+} from "@scramjet/api-types";
+import {
+    EncodedMessage,
+    HandshakeAcknowledgeMessage,
+    ICommunicationHandler,
+    MessageDataType,
+    MonitoringMessageData,
+} from "./types/from-types";
+import { RunnerTransport } from "./types/from-types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -470,7 +474,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             streams[CC.STDERR].pipe(process.stderr);
         }
 
-        this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
+        this.upStreams.forEach((stream, i) => stream?.on("error", (err: Error) => {
             this.logger.error("Downstream error on channel", i, err);
         }));
 
@@ -584,6 +588,21 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.localEmitter.lastEvents[event.eventName] = event.message;
             this.localEmitter.emit(event.eventName, event);
         });
+
+        // Handle storage updates FROM the runner so setItem/getItem
+        // roundtrips complete.  When the runner writes STORAGE_UPDATE
+        // on the monitoring channel, apply the change locally and
+        // broadcast it to all instances (including the originator).
+        this.communicationHandler.addMonitoringHandler(
+            RunnerMessageCode.STORAGE_UPDATE,
+            async (message) => {
+                const { key, value } = message[1];
+
+                await this.applyUpdate(key, value);
+                await this.broadcastUpdate(key, value);
+                return message;
+            }
+        );
 
         this.upStreams[CC.MONITORING].resume();
     }

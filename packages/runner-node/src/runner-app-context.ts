@@ -1,24 +1,28 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
     AppConfig,
-    AppContext,
     AppError,
     AppErrorConstructor,
-    APIExpose,
-    EventMessageData,
+    BaseAppContext,
     FunctionDefinition,
-    HostClient,
     IObjectLogger,
     ILocalStorage,
-    KeepAliveMessageData,
     KillHandler,
     LogLevel,
-    ManagerClient,
     MonitoringHandler,
     MonitoringMessageFromRunnerData,
     StopHandler,
     WritableStream,
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
+import type {
+    EventMessageData,
+    KeepAliveMessageData,
+} from "@scramjet/runtime-types";
+import type {
+    APIExpose,
+    HostClient,
+    ManagerClient,
+} from "@scramjet/api-types";
 import { EventEmitter } from "events";
 
 /**
@@ -49,7 +53,7 @@ export interface RunnerProxy {
  * for the sequence-facing surface, but with tightened typing.
  */
 export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType = unknown, SpaceClientType = unknown>
-implements AppContext<AppConfigType, State, HubClientType, SpaceClientType> {
+implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> {
     private runner: RunnerProxy;
 
     config: AppConfigType;

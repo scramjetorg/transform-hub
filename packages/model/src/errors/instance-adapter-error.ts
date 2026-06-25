@@ -1,4 +1,4 @@
-import { InstanceAdapterErrorCode } from "@scramjet/types";
+import { InstanceAdapterErrorCode } from "@scramjet/runtime-types";
 import { AppError } from "./app-error";
 
 export class InstanceAdapterError extends AppError {

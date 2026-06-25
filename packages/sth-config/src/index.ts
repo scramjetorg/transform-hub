@@ -1,4 +1,4 @@
-import { STHCommandOptions } from "@scramjet/types";
+import { STHCommandOptions } from "@scramjet/api-types";
 import { development } from "@scramjet/utility";
 import { ConfigService, defaultConfig } from "./config-service";
 

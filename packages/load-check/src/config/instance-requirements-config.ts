@@ -1,4 +1,4 @@
-import { InstanceRequirements } from "@scramjet/types";
+import { InstanceRequirements } from "@scramjet/runtime-types";
 import { ReadOnlyConfig } from "@scramjet/utility";
 
 export class InstanceRequirementsConfig extends ReadOnlyConfig<InstanceRequirements> {

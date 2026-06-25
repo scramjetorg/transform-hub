@@ -34,11 +34,11 @@
       "package": "@scramjet/sequence-test",
       "entrypoint": "packages/sequence-test/src/index.ts",
       "audience": ["implementers", "contributors"],
-      "stability": "experimental",
+      "stability": "supported-scoped",
       "outputPath": "reference/typescript/sequence-test/",
-      "reason": "Documented as an experimental sequence testing harness; consumers need explicit stability context.",
+      "reason": "Supported for scoped local sequence fixture/hub-harness/AppContext validation. Not a replacement for package tests, BDD, adapter/runtime invariant checks, or full live Hub/process/Docker/Kubernetes parity.",
       "reviewers": ["test-tooling-maintainers"],
-      "notes": "Generator must preserve the experimental label prominently."
+      "notes": "Generator must prominently display the scoped support boundary: supported for local fixture/harness/AppContext validation, not full Hub/runner parity."
     },
     {
       "package": "@scramjet/rest-api2",

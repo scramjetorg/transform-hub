@@ -2,30 +2,31 @@ import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
-    APIExpose,
     AppConfig,
-    ApplicationFunction,
-    ApplicationInterface,
+    HasTopicInformation,
+    IComponent,
+    IObjectLogger,
+    MaybePromise,
+    Streamable,
+    SynchronousStreamable,
+} from "@scramjet/runtime-types";
+import type { SequenceApplicationFunction, SequenceApplicationInterface } from "@scramjet/sequence-types";
+import {
     EncodedControlMessage,
     EncodedMonitoringMessage,
     EventMessageData,
     HandshakeAcknowledgeMessageData,
-    HasTopicInformation,
-    IComponent,
     IHostClient,
-    IObjectLogger,
-    MaybePromise,
     MonitoringRateMessageData,
     PangMessageData,
     RunnerConnectInfo,
     SequenceInfo,
-    StopSequenceMessageData,
-    Streamable,
-    SynchronousStreamable,
     SetMessageData,
+    StopSequenceMessageData,
     StorageMessageData,
     StorageUpdateMessageData
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
+import { APIExpose } from "@scramjet/api-types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
 import { HostClient as HostApiClient } from "@scramjet/api-client";
@@ -120,20 +121,61 @@ function responseHeaders(response: Response): Record<string, string> {
     return headers;
 }
 
+/**
+ * Wraps JSON parse errors from RestAPI2 v2 client flows with a clear,
+ * actionable message.  Without this, route-metadata redirects (308) or
+ * empty-body CPM proxy responses surface as a bare SyntaxError that is
+ * indistinguishable from a genuine JSON bug.
+ *
+ * Only SyntaxErrors mentioning JSON parsing are caught; other errors
+ * propagate unchanged.
+ */
+function normalizeRestApiResponseError(original: unknown, routePath: string, status?: number): Error {
+    if (original instanceof SyntaxError && /JSON|parse|end of input|Unexpected/.test(original.message)) {
+        const code = status !== undefined ? ` status=${status}` : "";
+        return new Error(
+            `RestAPI2 response parse error for ${routePath}${code}: ${original.message}. ` +
+            `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
+            `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
+            `routing, or handle route-aware responses explicitly.`
+        );
+    }
+
+    return original instanceof Error ? original : new Error(String(original));
+}
+
 function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClientTransport {
     return {
         async request<T>(request: RestApi2TransportRequest) {
             const path = appendQuery(materializePath(request.route.fullPath, request.params), request.query).replace(/^\//, "");
-            const response = await clientUtils.request(request.route.method as any, path, {
-                headers: { ...request.headers },
-                body: request.body === undefined ? undefined : JSON.stringify(request.body)
-            });
+            let response: Response;
+
+            try {
+                response = await clientUtils.request(request.route.method as any, path, {
+                    headers: { ...request.headers },
+                    body: request.body === undefined ? undefined : JSON.stringify(request.body)
+                });
+            } catch (err) {
+                // Catches JSON parse errors from the verser-common/agent layer
+                // before a Response object is formed (e.g. empty-body 308).
+                throw normalizeRestApiResponseError(err, request.route.fullPath);
+            }
+
             const text = await response.text();
+            let body: T | undefined;
+
+            if (text) {
+                try {
+                    body = JSON.parse(text) as T;
+                } catch (err) {
+                    throw normalizeRestApiResponseError(err, request.route.fullPath, response.status);
+                }
+            }
 
             return {
                 status: response.status,
                 headers: responseHeaders(response),
-                body: (text ? JSON.parse(text) : undefined) as T
+                body: body as T
             };
         }
     };
@@ -631,7 +673,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         this.hostClient.stdinStream
-            .on("data", (chunk) => process.stdin.unshift(chunk))
+            .on("data", (chunk: Buffer) => process.stdin.unshift(chunk))
             .on("end", () => process.stdin.emit("end"));
 
         process.stdin.on("pause", () => this.hostClient.stdinStream.pause());
@@ -827,9 +869,22 @@ export class Runner<X extends AppConfig> implements IComponent {
         const managerApiClient = hostApiClient.getManagerClient(
             "/api/v1"
         );
-        const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent("http://scramjet-host", this.hostClient.getAgent()));
+        const hubTargetDomain = process.env.HUB_TARGET_DOMAIN;
+        const hubApiBase = hubTargetDomain ? `http://${hubTargetDomain}` : "http://scramjet-host";
+        const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent(hubApiBase, this.hostClient.getAgent()));
         const v2HubClient = createHubClient({ transport: restApi2Transport, basePath: "/api/v2" });
-        const v2SpaceClient = createSpaceClient({ transport: restApi2Transport, basePath: "/api/v1/cpm/api/v2" });
+
+        // Space v2 client: direct Manager/space routing when SPACE_TARGET_DOMAIN
+        // env is available, otherwise Hub-local v2 fallback.
+        const spaceTargetDomain = process.env.SPACE_TARGET_DOMAIN;
+        const v2SpaceClient = spaceTargetDomain
+            ? createSpaceClient({
+                transport: createRestApi2Transport(
+                    new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, this.hostClient.getAgent())
+                ),
+                basePath: "/api/v2",
+            })
+            : createSpaceClient({ transport: restApi2Transport, basePath: "/api/v2" });
 
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
@@ -890,9 +945,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         });
     }
 
-    getSequence(): ApplicationInterface[] {
+    getSequence(): SequenceApplicationInterface[] {
         const sequenceFromFile = require(this.sequencePath);
-        const _sequence: MaybeArray<ApplicationFunction> =
+        const _sequence: MaybeArray<SequenceApplicationFunction> =
             Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
                 ? sequenceFromFile.default
                 : sequenceFromFile;

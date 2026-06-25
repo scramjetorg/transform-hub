@@ -21,6 +21,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/api-client": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/client-utils": "^1.1.0",
     "@scramjet/config": "^1.1.0",
     "@scramjet/middleware-api-client": "^1.1.0",
@@ -34,6 +35,7 @@
     "validator": "^13.7.0"
   },
   "devDependencies": {
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@types/find-package-json": "^1.2.3",
     "@types/minimatch": "^3.0.5",

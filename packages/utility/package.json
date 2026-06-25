@@ -33,6 +33,7 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "devDependencies": {
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "ava": "^4.3.3",
     "typed-emitter": "^1.4.0",

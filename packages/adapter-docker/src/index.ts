@@ -1,4 +1,4 @@
-import { IAdapterAugmentation, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
+import { IAdapterAugmentation, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/api-types";
 
 function augmentOptions(options: RuntimeOptionRegistry): RuntimeOptionRegistry {
     return options

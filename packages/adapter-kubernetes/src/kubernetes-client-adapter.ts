@@ -1,4 +1,4 @@
-import { IObjectLogger } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defer } from "@scramjet/utility";
 import { Writable, Readable } from "stream";

@@ -12,7 +12,7 @@
  * marker is present in the captured stream (i.e. it was forwarded prior to
  * the terminal frame closing the stream).
  *
- * @this {import("@scramjet/types").AppContext}
+ * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function(_input) {
     process.stdout.write("STDOUT_BEFORE_THROW\n");

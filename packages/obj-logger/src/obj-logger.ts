@@ -1,4 +1,4 @@
-import { IObjectLogger, IObjectLoggerOptions, LogEntry, LogLevel } from "@scramjet/types";
+import { IObjectLogger, IObjectLoggerOptions, LogEntry, LogLevel } from "@scramjet/runtime-types";
 import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { LogLevelStrings } from "@scramjet/utility";
 import { getName } from "./utils/get-name";

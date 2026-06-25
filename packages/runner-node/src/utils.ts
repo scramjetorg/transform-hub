@@ -8,7 +8,7 @@ import type {
     EventMessageData,
     StopSequenceMessageData,
     StorageUpdateMessageData,
-} from "@scramjet/types";
+} from "@scramjet/runtime-types";
 import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
 
 import { MessageUtils } from "./message-utils";
@@ -136,6 +136,9 @@ export function wireControlStream(
                     break;
                 case RunnerMessageCode.EVENT:
                     dispatch.onEvent(data as EventMessageData);
+                    break;
+                case RunnerMessageCode.STORAGE:
+                    dispatch.onStorage(data as { values: Record<string, string> });
                     break;
                 case RunnerMessageCode.STORAGE_UPDATE:
                     dispatch.onStorageUpdate(data as StorageUpdateMessageData);

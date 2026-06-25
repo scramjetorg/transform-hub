@@ -37,6 +37,20 @@ test("buildPing includes exposed API metadata when supplied", t => {
     t.is(message.payload.exposePort, 12345);
 });
 
+test("buildPing includes input and output topic metadata when supplied", t => {
+    const [, message] = buildPing({
+        instanceId: "instance-1",
+        sequenceInfo,
+        appConfig: {},
+        args: [],
+        inputTopic: "topic-in",
+        outputTopic: "topic-out",
+    });
+
+    t.is(message.payload.inputTopic, "topic-in");
+    t.is(message.payload.outputTopic, "topic-out");
+});
+
 test("buildPing omits exposed API metadata when no server was started", t => {
     const [, message] = buildPing({
         instanceId: "instance-1",

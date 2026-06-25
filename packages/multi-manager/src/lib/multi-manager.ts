@@ -1,6 +1,7 @@
 import findPackage from "find-package-json";
 
-import { APIExpose, ManagerConfiguration, MMRestAPI, MonitoringServerConfig, NextCallback, ParsedMessage } from "@scramjet/types";
+import { APIExpose, NextCallback, ParsedMessage } from "@scramjet/api-types";
+import { ManagerConfiguration, MMRestAPI, MonitoringServerConfig } from "@scramjet/api-types";
 
 import { FreePortsFinder, merge, promiseTimeout, readJsonFile } from "@scramjet/utility";
 
@@ -305,9 +306,7 @@ export class MultiManager {
 
         const id = IDProvider.generate();
 
-        merge(managerConfig, {
-            id,
-        });
+        managerConfig.id = id;
         merge(managerConfig, requestPayload.manager);
 
         if (this.managersStore.getById(managerConfig.id)) {

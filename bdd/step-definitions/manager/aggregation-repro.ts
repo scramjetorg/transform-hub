@@ -16,6 +16,7 @@
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
+import { PassThrough } from "stream";
 import { resolve } from "path";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { request as httpRequest } from "http";
@@ -180,6 +181,52 @@ function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function waitUntilStreamContainsBounded(
+    stream: NodeJS.ReadableStream,
+    expected: string,
+    timeout = 20_000,
+    maxBuffered = 8_192
+): Promise<boolean> {
+    const maxWindow = Math.max(maxBuffered, expected.length * 2);
+    let recent = "";
+
+    return new Promise((resolve, reject) => {
+        const cleanup = () => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("end", onEnd);
+            stream.off("error", onError);
+        };
+        const finish = (result: boolean) => {
+            cleanup();
+            resolve(result);
+        };
+        const fail = (error: Error) => {
+            cleanup();
+            reject(error);
+        };
+        const onData = (chunk: Buffer | string) => {
+            recent += chunk.toString();
+            if (recent.length > maxWindow) {
+                recent = recent.slice(-maxWindow);
+            }
+
+            if (recent.includes(expected)) {
+                finish(true);
+            }
+        };
+        const onEnd = () => fail(new Error("End of stream reached"));
+        const onError = (error: Error) => fail(error);
+        const timer = setTimeout(() => {
+            fail(new Error(`Stream did not contain ${JSON.stringify(expected)} before timeout`));
+        }, timeout);
+
+        stream.on("data", onData);
+        stream.on("end", onEnd);
+        stream.on("error", onError);
+    });
+}
+
 async function waitForGet(baseUrl: string, endpoint: string, timeoutMs = 20_000): Promise<void> {
     const client = new ClientUtils(baseUrl);
     const deadline = Date.now() + timeoutMs;
@@ -196,6 +243,44 @@ async function waitForGet(baseUrl: string, endpoint: string, timeoutMs = 20_000)
     }
 
     throw new Error(`Timed out waiting for ${baseUrl}/${endpoint}: ${lastError?.message || "no response"}`);
+}
+
+async function waitForManagerTopicActor(
+    world: CustomWorld,
+    topicName: string,
+    hubName: string,
+    role: "provider" | "consumer",
+    timeoutMs = 15_000
+): Promise<void> {
+    const client = new ClientUtils((world.resources.aggMMClient as MultiManagerClient).apiBase);
+    const managerId = world.resources.aggManagerId as string;
+    const deadline = Date.now() + timeoutMs;
+    let lastTopics: unknown;
+
+    while (Date.now() < deadline) {
+        lastTopics = await client.get<any>(`cpm/${managerId}/api/v1/topics`);
+
+        const topics = Array.isArray(lastTopics) ? lastTopics : [];
+        const topic = topics.find((item: any) => item.name === topicName || item.topicName === topicName);
+        const actors = Array.isArray(topic?.actors) ? topic.actors : [];
+        const matchingActor = actors.find((actor: any) =>
+            actor.hostId === hubName &&
+            actor.type === "host" &&
+            actor.role === role &&
+            actor.retired !== true
+        );
+
+        if (matchingActor) {
+            return;
+        }
+
+        await sleep(500);
+    }
+
+    assert.fail(
+        `Expected Manager topic ${topicName} to include ${role} actor for ${hubName}, ` +
+        `last topics: ${JSON.stringify(lastTopics)}`
+    );
 }
 
 async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
@@ -281,6 +366,15 @@ function aggregationHubUrl(world: CustomWorld, hubName: string, endpoint: string
     return `${rootBase}${normalizedEndpoint}`;
 }
 
+function aggregationHub(world: CustomWorld, hubName: string): { client: HostClient } {
+    const hubs = world.resources.aggHubs as Record<string, { client: HostClient }> || {};
+    const hub = hubs[hubName];
+
+    assert.ok(hub, `Hub ${hubName} not found`);
+
+    return hub;
+}
+
 // =========================================================================
 // Background steps
 // =========================================================================
@@ -341,7 +435,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
         },
     };
 
-    const response = await mmClient.startManager(managerConfig);
+    const response = await mmClient.startManager(managerConfig as any);
 
     assert.ok(response, "Expected Manager to be started");
 
@@ -488,13 +582,29 @@ Given("I wait for hubs to register with the Manager", { timeout: 15000 }, async 
         const hubs = Array.isArray(lastResponse) ? lastResponse : [];
 
         if (hubs.length >= expectedHubCount) {
-            return;
+            // Verify each hub has an active Verser2 route before proceeding.
+            // isConnectionActive reflects STHController.isConnectionActive which
+            // calls brokerTransport.isRouteReady(routeDomain) — true only after
+            // the Verser2 route subscription handshake completes.
+            const allActive = hubs.every((h: any) => h.isConnectionActive === true);
+
+            if (allActive) {
+                return;
+            }
         }
 
         await sleep(500);
     }
 
-    assert.fail(`Expected ${expectedHubCount} hubs to register with Manager, last response: ${JSON.stringify(lastResponse)}`);
+    const activeInfo = (Array.isArray(lastResponse) ? lastResponse : [])
+        .map((h: any) => `${h.id}:isConnectionActive=${h.isConnectionActive}`)
+        .join("; ");
+
+    assert.fail(
+        `Expected ${expectedHubCount} hubs to register with active routes, ` +
+        `last response: ${JSON.stringify(lastResponse)}. ` +
+        `Active states: ${activeInfo}`
+    );
 });
 
 // =========================================================================
@@ -627,6 +737,82 @@ When("I query hub {string} for its instances", async function (
     }
 });
 
+When("aggregation hub {string} opens topic {string} with content-type {string}", async function (
+    this: CustomWorld,
+    hubName: string,
+    topicName: string,
+    contentType: string
+) {
+    this.resources.aggTopicStream = await aggregationHub(this, hubName).client.getTopic(topicName, {}, contentType);
+});
+
+When("aggregation topic {string} is opened on hub {string} with content-type {string}", async function (
+    this: CustomWorld,
+    topicName: string,
+    hubName: string,
+    contentType: string
+) {
+    this.resources.aggTopicStream = await aggregationHub(this, hubName).client.getTopic(topicName, {}, contentType);
+});
+
+When("aggregation hub {string} sends topic {string} data {string} with content-type {string}", async function (
+    this: CustomWorld,
+    hubName: string,
+    topicName: string,
+    data: string,
+    contentType: string
+) {
+    const stream = new PassThrough({ encoding: undefined });
+    const sendPromise = aggregationHub(this, hubName).client.sendTopic(topicName, stream, {}, contentType, true);
+
+    stream.write(data);
+    stream.end();
+
+    await sendPromise;
+});
+
+When("aggregation sequence {string} on hub {string} starts with input topic {string}", async function (
+    this: CustomWorld,
+    sequenceName: string,
+    hubName: string,
+    topicName: string
+) {
+    const sequence = aggregationHub(this, hubName).client.getSequenceClient(sequenceName);
+
+    this.resources.aggInstance = await sequence.start({
+        appConfig: {},
+        inputTopic: topicName
+    });
+    this.resources.aggInstanceOutput = await this.resources.aggInstance.getStream("output");
+    await waitForManagerTopicActor(this, topicName, hubName, "consumer");
+});
+
+When("aggregation sequence {string} on hub {string} starts with output topic {string}", async function (
+    this: CustomWorld,
+    sequenceName: string,
+    hubName: string,
+    topicName: string
+) {
+    const sequence = aggregationHub(this, hubName).client.getSequenceClient(sequenceName);
+
+    this.resources.aggInstance = await sequence.start({
+        appConfig: {},
+        outputTopic: topicName
+    });
+    await waitForManagerTopicActor(this, topicName, hubName, "provider");
+});
+
+When("aggregation instance receives input {string}", async function (this: CustomWorld, data: string) {
+    assert.ok(this.resources.aggInstance, "No aggregation instance is active");
+
+    await this.resources.aggInstance.sendStream(
+        "input",
+        data,
+        {},
+        { type: "text/plain", end: true }
+    );
+});
+
 // =========================================================================
 // Then steps
 // =========================================================================
@@ -702,4 +888,53 @@ Then("the hub response should contain at least {int} instance", function (
         arr.length >= minCount,
         `Expected direct hub API to contain at least ${minCount} instance(s), got ${arr.length}: ${JSON.stringify(response)}`
     );
+});
+
+Then("aggregation topic data should contain {string}", { timeout: 30000 }, async function (
+    this: CustomWorld,
+    expected: string
+) {
+    assert.ok(this.resources.aggTopicStream, "No aggregation topic stream is open");
+
+    const received = await waitUntilStreamContainsBounded(this.resources.aggTopicStream, expected, 20_000);
+
+    assert.equal(received, true);
+    this.resources.aggTopicStream.destroy?.();
+});
+
+Then("aggregation instance output should contain {string}", { timeout: 30000 }, async function (
+    this: CustomWorld,
+    expected: string
+) {
+    assert.ok(this.resources.aggInstanceOutput, "No aggregation instance output stream is open");
+
+    const received = await waitUntilStreamContainsBounded(this.resources.aggInstanceOutput, expected, 20_000);
+
+    assert.equal(received, true);
+    this.resources.aggInstanceOutput.destroy?.();
+});
+
+Then("aggregation routed input should contain {string} and routed output topic should contain {string}", { timeout: 45000 }, async function (
+    this: CustomWorld,
+    inputExpected: string,
+    outputExpected: string
+) {
+    assert.ok(this.resources.aggInstanceOutput, "No aggregation instance output stream is open");
+    assert.ok(this.resources.aggTopicStream, "No aggregation topic stream is open");
+
+    const results = await Promise.allSettled([
+        waitUntilStreamContainsBounded(this.resources.aggInstanceOutput, inputExpected, 20_000),
+        waitUntilStreamContainsBounded(this.resources.aggTopicStream, outputExpected, 20_000)
+    ]);
+
+    this.resources.aggInstanceOutput.destroy?.();
+    this.resources.aggTopicStream.destroy?.();
+
+    const failures = results
+        .map((result, index) => result.status === "rejected"
+            ? `${index === 0 ? "routed input" : "routed output"}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`
+            : null)
+        .filter(Boolean);
+
+    assert.deepEqual(failures, []);
 });

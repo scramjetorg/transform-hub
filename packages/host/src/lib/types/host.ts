@@ -1,4 +1,7 @@
-import { IObjectLogger, OpResponse, StartInstanceReturnType, STHRestAPI } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { StartInstanceReturnType } from "@scramjet/runtime-types";
+import { STHRestAPI } from "@scramjet/api-types";
+import { OpResponse } from "./from-types";
 import { RefCountHandler } from "@scramjet/utility";
 import { Auditor } from "../auditor";
 import { HealthComponent, LoadCheck } from "@scramjet/load-check";

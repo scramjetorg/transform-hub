@@ -3,11 +3,8 @@ import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { RunnerError } from "@scramjet/model";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import {
-    IObjectLogger,
-    PangMessageData,
-    SynchronousStreamable,
-} from "@scramjet/types";
+import { IObjectLogger, SynchronousStreamable } from "@scramjet/runtime-types";
+import { PangMessageData } from "@scramjet/runtime-types";
 
 import { MessageUtils } from "./message-utils";
 

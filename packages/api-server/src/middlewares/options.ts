@@ -1,4 +1,4 @@
-import { NextCallback, ParsedMessage } from "@scramjet/types";
+import { NextCallback, ParsedMessage } from "@scramjet/api-types";
 import { ServerResponse } from "http";
 
 export const optionsMiddleware = (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {

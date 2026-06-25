@@ -1,6 +1,6 @@
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { NextCallback, ParsedMessage } from "@scramjet/types";
+import { NextCallback, ParsedMessage } from "@scramjet/api-types";
 import { getRequestBytesRead, getRequestBytesWritten } from "@scramjet/utility";
 import { ServerResponse } from "http";
 import { AuditedRequest, Auditor } from "../auditor";

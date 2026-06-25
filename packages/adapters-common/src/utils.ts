@@ -1,5 +1,5 @@
-import { selectRuntimeKind } from "@scramjet/symbols";
-import type { KubernetesSequenceConfig, ProcessSequenceConfig, RuntimeKind } from "@scramjet/types";
+import { selectRuntimeKind, RuntimeKind } from "@scramjet/symbols";
+import type { KubernetesSequenceConfig, ProcessSequenceConfig } from "@scramjet/runtime-types";
 import { readStreamedJSON } from "@scramjet/utility";
 import { createReadStream } from "fs";
 import { stat } from "fs/promises";

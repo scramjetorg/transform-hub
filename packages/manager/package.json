@@ -27,6 +27,8 @@
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/rest-api2": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "@signicode/verser-common": "0.4.5",

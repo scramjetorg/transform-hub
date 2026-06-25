@@ -1,4 +1,4 @@
-import { STHConfiguration } from "@scramjet/types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { X509Certificate } from "crypto";
 
 export type ManagerTrustBootstrapMaterial = {

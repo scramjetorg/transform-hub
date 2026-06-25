@@ -1,4 +1,4 @@
-import { MaybePromise } from "@scramjet/types";
+import { MaybePromise } from "@scramjet/runtime-types";
 import { RouteDefinition, RouteRequest } from "./manifest";
 
 export type RouteHookContext = {

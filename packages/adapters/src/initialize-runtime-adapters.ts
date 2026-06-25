@@ -1,4 +1,5 @@
-import { IObjectLogger, RuntimeOptionRegistry, STHConfiguration } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { RuntimeOptionRegistry, STHConfiguration } from "@scramjet/api-types";
 import { getAdapter, getValidAdapters } from "./get-adapters";
 
 export function updateAdaptersConfig(adapter: string, config: STHConfiguration) {

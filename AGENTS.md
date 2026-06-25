@@ -35,8 +35,15 @@
 - BDD tests use `bdd/` (`cucumber-js`) and often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
+## Type split packages
+- `@scramjet/types` is **deprecated** in favor of `@scramjet/runtime-types`, `@scramjet/sequence-types`, and `@scramjet/api-types`. Existing imports continue to resolve through the compatibility barrel.
+- Sequence authors should import `SequenceAppContext` from `@scramjet/sequence-types`. Internal packages use `@scramjet/runtime-types` for runtime-neutral contracts and `@scramjet/api-types` for API DTOs/client stubs.
+- Split-package boundary enforcement: `npm run check:typings-split`.
+- Sequence AppContext API validation: `npm run test:sequence-appcontext`.
+- BDD AppContext coverage: `npm run test:bdd-appcontext`.
+
 ## Sequence-test package status
-- `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
+- `@scramjet/sequence-test` is supported for scoped local sequence fixture/hub-harness/AppContext validation. It must not be treated as the default replacement for package tests, BDD tests, adapter tests, or runtime invariant checks unless explicitly directed.
 - Keep using each package's existing AVA tests plus package build/lint validation unless the task explicitly asks for `@scramjet/sequence-test`.
 - Do not replace package tests, BDD tests, adapter tests, or runtime invariant checks with `@scramjet/sequence-test` unless explicitly directed.
 

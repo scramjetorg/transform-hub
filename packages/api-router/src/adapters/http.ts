@@ -1,4 +1,4 @@
-import { APIRoute, ParsedMessage, StreamConfig } from "@scramjet/types";
+import { APIRoute, ParsedMessage, StreamConfig } from "@scramjet/api-types";
 import { ServerResponse } from "http";
 import { ResolverDefinition, ResolverRedirectTarget, ResolverTarget, RouteDefinition, RouteRequest, normalizePath } from "../manifest";
 import { RouterDefinition } from "../router";

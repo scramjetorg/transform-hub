@@ -1,6 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
-import { IHostClient, IObjectLogger, UpstreamStreamsConfig } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { IHostClient, UpstreamStreamsConfig } from "@scramjet/runtime-types";
 import { defer } from "@scramjet/utility";
 import { createVerserBroker } from "@signicode/verser2-guest-node";
 import { Agent } from "http";

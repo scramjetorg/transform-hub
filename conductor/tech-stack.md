@@ -36,7 +36,10 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - `packages/api-router`: schema-aware route declaration, hook pipeline, HTTP/verser2 registration adapters, OpenAPI generation, schema-mode loading, and generic client transport contracts.
 - `packages/rest-api2`: v2 REST API contracts, Zod schemas, handlerless route sets, and common v2 client surface.
 - `packages/cli`: command-line client behavior and completion support.
-- `packages/types`: shared contracts, DTOs, config types, and runtime interfaces.
+- `packages/runtime-types`: runtime-neutral type foundation for AppContext, logger/storage primitives, runtime config, and protocol-neutral contracts.
+- `packages/sequence-types`: sequence-author-facing AppContext and sequence application/function types; canonical import surface for sequence authors.
+- `packages/api-types`: API/user-facing DTOs, REST contracts, APIExpose, client interface stubs, and strict API-specific AppContext aliases.
+- `packages/types`: deprecated compatibility barrel preserving legacy shared type imports while new code uses the split packages.
 - `packages/runner`: outer runner launcher and executor selection.
 - `packages/runner-node`: Node runtime wrapper reference implementation.
 - `packages/runner-python`: Python runtime wrapper implementation and parity reference.
@@ -71,6 +74,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Docs**: generated documentation under `docs/` and package README files.
 - **API routing**: `@scramjet/api-router` provides decorator and imperative route declaration, Zod-first validation, route hooks, OpenAPI 3.1 generation, schema-mode route loading, HTTP registration, verser2 registration, and generic client transports.
 - **API contracts**: `@scramjet/rest-api2` provides v2 DTO contracts, Zod schemas, handlerless route sets, typed route binding, and the common v2 client surface.
+- **Type contracts**: `@scramjet/runtime-types`, `@scramjet/sequence-types`, and `@scramjet/api-types` split runtime-neutral, sequence-author, and API/user contract ownership. `@scramjet/types` remains as a deprecated compatibility package.
 - **Config validation**: Zod is used by `@scramjet/config` as the canonical validation and type inference layer for migrated config flows.
 - **CLI parsing**: `cac` is used internally behind `@scramjet/config`; parser types must not leak into package public APIs.
 - **Config file loading**: `@scramjet/config` supports JSON, YAML, and JSONC for migrated consumers.

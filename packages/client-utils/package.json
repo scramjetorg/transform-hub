@@ -26,7 +26,6 @@
     "scramjet": "^4.37.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^1.1.0",
     "@types/node": "^22.15.0",
     "@types/node-fetch": "^2.6.12",
     "ava": "^3.15.0",

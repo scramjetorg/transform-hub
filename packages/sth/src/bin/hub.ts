@@ -12,7 +12,8 @@ import {
     z
 } from "@scramjet/config";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
-import { DeepPartial, STHCommandOptions, STHConfiguration, StorageAdapterType } from "@scramjet/types";
+import { DeepPartial, StorageAdapterType } from "@scramjet/runtime-types";
+import { STHCommandOptions, STHConfiguration } from "@scramjet/api-types";
 import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";

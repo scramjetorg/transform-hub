@@ -1,5 +1,6 @@
 import { Server } from "http";
-import { ParsedMessage, STHRunnerVerser2HostConfig, STHOutboundVerser2Config } from "@scramjet/types";
+import { ParsedMessage } from "@scramjet/api-types";
+import { STHRunnerVerser2HostConfig, STHOutboundVerser2Config } from "@scramjet/api-types";
 import { VerserHost } from "@signicode/verser2-host";
 import { createVerser2ClientTlsOptions } from "./cpm-connector";
 import { createVerser2RunnerBrokerTransport, Verser2RunnerBroker } from "./runner-transport";

@@ -330,7 +330,7 @@ test("ServiceDiscovery: same-host provider and consumer are not connected to the
     });
 });
 
-test("ServiceDiscovery: exact host-to-host topic pair does not use Manager data-plane pipe", (t) => {
+test("ServiceDiscovery: exact host-to-host topic pair uses Manager data-plane pipe", (t) => {
     const sd = new ServiceDiscovery();
     const hostCtrl1 = mockHostController("host-1");
     const hostCtrl2 = mockHostController("host-2");
@@ -343,13 +343,95 @@ test("ServiceDiscovery: exact host-to-host topic pair does not use Manager data-
 
     return new Promise<void>((resolve) => {
         setImmediate(() => {
-            t.is(hostCtrl1.calls.upstream, 0);
-            t.is(hostCtrl2.calls.downstream, 0);
-            t.is(provider.stream, undefined);
-            t.is(consumer.stream, undefined);
+            t.is(hostCtrl1.calls.upstream, 1);
+            t.is(hostCtrl2.calls.downstream, 1);
+            t.not(provider.stream, undefined);
+            t.not(consumer.stream, undefined);
             resolve();
         });
     });
+});
+
+test("ServiceDiscovery: host provider to host consumer cross-hub live data flow", async (t) => {
+    const sd = new ServiceDiscovery();
+    const hostCtrl1 = mockHostController("host-1");
+    const hostCtrl2 = mockHostController("host-2");
+
+    const provider = new TopicActor("topic-host-flow", ActorRole.PROVIDER, ActorType.HOST, "text/plain", hostCtrl1 as any);
+    const consumer = new TopicActor("topic-host-flow", ActorRole.CONSUMER, ActorType.HOST, "text/plain", hostCtrl2 as any);
+
+    sd.register(provider);
+    sd.register(consumer);
+    await waitImmediate();
+
+    // Provider upstream feeds consumer downstream via Manager pipe
+    t.is(hostCtrl1.calls.upstream, 1);
+    t.is(hostCtrl2.calls.downstream, 1);
+    t.not(provider.stream, undefined);
+    t.not(consumer.stream, undefined);
+
+    const received = readChunk(hostCtrl2.streams.downstream[0]);
+
+    hostCtrl1.streams.upstream[0].write("cross-hub-payload");
+
+    t.is(await received, "cross-hub-payload");
+});
+
+test("ServiceDiscovery: host provider end closes cross-hub consumer stream", async (t) => {
+    const sd = new ServiceDiscovery();
+    const hostCtrl1 = mockHostController("host-1");
+    const hostCtrl2 = mockHostController("host-2");
+
+    const provider = new TopicActor("topic-host-end", ActorRole.PROVIDER, ActorType.HOST, "text/plain", hostCtrl1 as any);
+    const consumer = new TopicActor("topic-host-end", ActorRole.CONSUMER, ActorType.HOST, "text/plain", hostCtrl2 as any);
+
+    sd.register(provider);
+    sd.register(consumer);
+    await waitImmediate();
+
+    const ended = new Promise<void>(resolve => hostCtrl2.streams.downstream[0].once("finish", resolve));
+
+    hostCtrl1.streams.upstream[0].end("final-payload");
+
+    await ended;
+    t.true(hostCtrl2.streams.downstream[0].writableEnded);
+});
+
+test("ServiceDiscovery: host provider to host consumer cross-hub cleanup on both stream close", async (t) => {
+    const sd = new ServiceDiscovery();
+    const hostCtrl1 = mockHostController("host-1");
+    const hostCtrl2 = mockHostController("host-2");
+
+    const provider = new TopicActor("topic-host-cleanup", ActorRole.PROVIDER, ActorType.HOST, "text/plain", hostCtrl1 as any);
+    const consumer = new TopicActor("topic-host-cleanup", ActorRole.CONSUMER, ActorType.HOST, "text/plain", hostCtrl2 as any);
+
+    sd.register(provider);
+    sd.register(consumer);
+    await waitImmediate();
+
+    t.is(hostCtrl1.calls.upstream, 1);
+    t.is(hostCtrl2.calls.downstream, 1);
+
+    // Close both streams — triggers retired on each actor and topic cleanup
+    await new Promise<void>((resolve) => {
+        let updates = 0;
+        const onUpdate = () => {
+            updates++;
+            if (updates >= 2) resolve();
+        };
+        consumer.on("update", onUpdate);
+        provider.on("update", onUpdate);
+
+        consumer.stream!.destroy();
+        provider.stream!.destroy();
+    });
+
+    t.true(consumer.retired);
+    t.true(provider.retired);
+
+    // After async cleanup, the topic should be removed (no active actors remain)
+    await waitImmediate();
+    t.false(sd.exists("topic-host-cleanup"));
 });
 
 test("ServiceDiscovery: api-type provider stream reaches consumer stream", (t) => {

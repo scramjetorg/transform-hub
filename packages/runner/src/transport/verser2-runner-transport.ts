@@ -2,7 +2,7 @@ import http from "http";
 import { PassThrough, Readable, Writable } from "stream";
 
 import { CommunicationChannel as CC } from "@scramjet/symbols";
-import { DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS } from "@scramjet/types";
+import { DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS } from "./runner-transport-config";
 import { createVerserNodeGuest } from "@signicode/verser2-guest-node";
 
 import { LocalChannelServer } from "./local-channel-server";

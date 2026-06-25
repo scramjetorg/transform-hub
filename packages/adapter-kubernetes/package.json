@@ -17,17 +17,19 @@
   "dependencies": {
     "@kubernetes/client-node": "^1.1.2",
     "@scramjet/adapters-common": "1.1.0",
-    "@scramjet/obj-logger": "^1.1.0",
-    "@scramjet/symbols": "^1.1.0",
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/model": "^1.1.0",
     "@scramjet/module-loader": "^1.1.0",
+    "@scramjet/obj-logger": "^1.1.0",
+    "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "tar": "^7.4.3",
     "js-yaml": "^4.1.0",
+    "tar": "^7.4.3",
     "ts.data.json": "^2.2.0",
     "ws": "^7.3.1"
   },
   "devDependencies": {
+    "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "@types/ws": "^8.18.1",
     "@types/node": "^22.15.0",

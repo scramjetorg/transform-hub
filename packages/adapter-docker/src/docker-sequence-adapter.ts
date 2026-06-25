@@ -1,12 +1,8 @@
 import { SequenceAdapterError } from "@scramjet/model";
-import {
-    ISequenceAdapter,
-    SequenceConfig,
-    STHConfiguration,
-    DockerSequenceConfig,
-    IObjectLogger,
-    DockerAdapterConfiguration
-} from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { ISequenceAdapter, SequenceConfig } from "@scramjet/runtime-types";
+import { STHConfiguration, DockerAdapterConfiguration } from "@scramjet/api-types";
+import { DockerSequenceConfig } from "./types";
 import { Readable } from "stream";
 import { appendFile } from "fs";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";

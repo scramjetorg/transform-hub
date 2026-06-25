@@ -1,6 +1,7 @@
 
-import { STHRestAPI } from "@scramjet/types";
-import { AppConfig, InstanceLimits } from "@scramjet/types";
+import { STHRestAPI } from "@scramjet/api-types";
+import { InstanceLimits } from "@scramjet/runtime-types";
+import { AppConfig } from "@scramjet/runtime-types";
 import { constants, createReadStream, createWriteStream, PathLike } from "fs";
 import { readdir, access, lstat } from "fs/promises";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";

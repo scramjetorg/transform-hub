@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Implementation layer for experimental sequence test infrastructure.
+Implementation layer for the supported @scramjet/sequence-test package (scoped local sequence fixture/harness validation).
 
 The source tree is organized around composable harness primitives:
 
@@ -85,6 +85,6 @@ Engine requirements are either:
 
 - `sequence-test` is designed to plug into tests that would otherwise require a live runner process + hub infrastructure.
 - It intentionally reuses runner protocol constants/types and mirrors existing runner endpoint conventions for compatibility.
-- The package is experimental and not yet a full parity replacement for a real Hub + runner deployment.
+- The package is supported for scoped local sequence fixture/harness validation and is not a full parity replacement for a real Hub + runner deployment.
 - 12 test fixtures exist including `v2-client-calls/` (new — exercises `hubClient().status.get()` and `spaceClient().hubs.get()` via the v2 canonical API).
 - Harness tests (14 spec files in `test/harness/`) cover all primitives with Node, Python, and Bun runtime variants.

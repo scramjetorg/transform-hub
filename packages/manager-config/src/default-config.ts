@@ -1,4 +1,4 @@
-import { ManagerConfiguration } from "@scramjet/types";
+import { ManagerConfiguration } from "@scramjet/api-types";
 import { homedir } from "os";
 import { join } from "path";
 

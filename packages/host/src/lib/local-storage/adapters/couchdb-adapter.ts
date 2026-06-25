@@ -1,5 +1,5 @@
 import { DocumentScope, ServerScope } from "nano";
-import { IStorageAdapter, CouchDbAdapterConf } from "@scramjet/types";
+import { IStorageAdapter, CouchDbAdapterConf } from "@scramjet/runtime-types";
 
 export class CouchdbLocalStorageAdapter implements IStorageAdapter {
     private db!: DocumentScope<any>;

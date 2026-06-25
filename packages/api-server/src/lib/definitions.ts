@@ -1,4 +1,4 @@
-import { APIError, Middleware, NextCallback } from "@scramjet/types";
+import { APIError, Middleware, NextCallback } from "@scramjet/api-types";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import TRouter from "trouter";
 

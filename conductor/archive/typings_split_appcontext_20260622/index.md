@@ -2,5 +2,6 @@
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
+- [Type Inventory](./type-inventory.md)
 - [Metadata](./metadata.json)
 - [Config](./config.yml)

@@ -17,8 +17,9 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/api-types": "^1.1.0",
     "@scramjet/config": "^1.1.0",
-    "@scramjet/types": "^1.1.0",
+    "@scramjet/runtime-types": "^1.1.0",
     "zod": "^3.25.67"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 /// <reference path="./definitions.d.ts" />
 
 import { ClientProvider, ClientUtils, ClientUtilsCustomAgent, Headers, HttpClient } from "@scramjet/client-utils";
-import { ApiClientFactory, PublicSTHConfiguration, STHRestAPI } from "@scramjet/types";
+import { ApiClientFactory, PublicSTHConfiguration, STHRestAPI } from "@scramjet/api-types";
 import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 import { HostHeaders } from "@scramjet/symbols";
@@ -62,13 +62,13 @@ export class HostClient implements ClientProvider {
 
     async getSequenceId(sequenceName: string) : Promise<string[]> {
         const sequenceList = await this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
-        const result = sequenceList.filter(sequence => sequence.config.name === sequenceName);
+        const result = sequenceList.filter((sequence: any) => sequence.config.name === sequenceName);
 
         if (!result.length) {
             throw new Error("No results found");
         }
 
-        return result.map(element => element.id);
+        return result.map((element: any) => element.id);
     }
 
     /**

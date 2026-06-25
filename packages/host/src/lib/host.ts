@@ -9,27 +9,31 @@ import { constants, cpus, homedir, totalmem } from "os";
 import { HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 import {
-    APIExpose,
-    CPMConnectorOptions,
     EventMessageData,
     HostProxy,
     IComponent,
     IObjectLogger,
     Instance,
     LogLevel,
+    SequenceInfo,
+    StartInstanceReturnType,
+    IStorageAdapter,
+    InstanceId,
+} from "@scramjet/runtime-types";
+import {
+    APIExpose,
     MonitoringServerConfig,
-    OpResponse,
     ParsedMessage,
     PublicSTHConfiguration,
     STHConfiguration,
     STHRestAPI,
-    SequenceInfo,
-    StartInstanceReturnType,
+} from "@scramjet/api-types";
+import {
+    CPMConnectorOptions,
+    OpResponse,
     StartSequenceDTO,
-    IStorageAdapter,
-    InstanceId,
     SpaceEventMessageData
-} from "@scramjet/types";
+} from "./types/from-types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 import { HealthComponent, LoadCheck, LoadCheckConfig, degradedComponent } from "@scramjet/load-check";
@@ -359,6 +363,13 @@ export class Host implements IHost, IComponent {
     attachDispatcherEvents() {
         this.csiDispatcher
             .on("event", async ({ event, id }) => {
+                const sourceInstance = this.instancesStore.get(id) as any;
+
+                if (sourceInstance?.localEmitter) {
+                    sourceInstance.localEmitter.lastEvents[event.eventName] = event.message;
+                    sourceInstance.localEmitter.emit(event.eventName, event);
+                }
+
                 await this.eventBus({ ...event, source: id });
             })
             .on("end", async (eventData: DispatcherInstanceEndEventData) => {
@@ -1079,7 +1090,7 @@ export class Host implements IHost, IComponent {
         connector.on("communicationReady", () => {
             Promise.resolve()
                 .then(async () => {
-                    await connector.sendSequencesInfo(this.getSequences().map(s => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
+                    await connector.sendSequencesInfo(this.getSequences().map((s: any) => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
                     await connector.sendInstancesInfo(this.getInstances());
                     await connector.sendTopicsInfo(this.getTopics());
 

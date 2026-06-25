@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { APIRoute, APIServer, ForwardStrategy, ListenArgs, MaybePromise, Middleware, NextCallback, ParsedMessage } from "@scramjet/types";
+import { MaybePromise } from "@scramjet/runtime-types";
+import { APIRoute, APIServer, ForwardStrategy, ListenArgs, Middleware, NextCallback, ParsedMessage } from "@scramjet/api-types";
 import { IncomingMessage, ServerResponse, createServer as createHttpServer } from "http";
 import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";

@@ -1,5 +1,9 @@
 import { HostError } from "@scramjet/model";
-import { APIRoute, EventMessageData, ICommunicationHandler, IDuplexStream, IObjectLogger, OpResponse, ParsedMessage, STHRestAPI } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { APIRoute, IDuplexStream, ParsedMessage } from "@scramjet/api-types";
+import { EventMessageData } from "@scramjet/runtime-types";
+import { ICommunicationHandler, STHRestAPI } from "@scramjet/api-types";
+import { OpResponse } from "../types/from-types";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ReasonPhrases } from "http-status-codes";
 import { development } from "@scramjet/sth-config";

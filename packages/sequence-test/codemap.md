@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-**Experimental / in-progress** test harness package for Scramjet Transform Sequence testing.
+**Supported** test harness package for Scramjet Transform Sequence testing (scoped to local sequence fixture/harness validation).
 
 The package provides a lightweight way to exercise sequence execution paths through the runner protocol without standing up a full Transform Hub stack. It currently offers:
 
@@ -36,12 +36,14 @@ The package provides a lightweight way to exercise sequence execution paths thro
 - `packages/runner/src/bin/start-runner.ts` (entrypoint resolution via `resolveRunnerEntry`)
 - `@scramjet/runner` (runner protocol contracts and launch semantics)
 - `@scramjet/symbols` (runtime selection and message frame constants)
-- `@scramjet/types` (consumer-facing type dependencies)
+- `@scramjet/sequence-types` (sequence-facing AppContext type checks for fixture/harness validation)
 - `packages/runner-*` runtimes are exercised as external adapters through generated runner plans (node/python/bun paths are supported by API surface).
 - Test fixtures include `v2-client-calls/` (exercises `hubClient().status.get()`/`spaceClient().hubs.get()`), `appcontext/`, `events/`, `exposed-api/`, `hub-calls/`, `lifecycle-calls/`, `map-ndjson/`, `ordered-behavior/`, `python-echo/`, `space-minimal/`, `stream-behavior/`, and `bun-direct/`.
 
 ## Current state and caveats
 
-- Public API is available and used across tests, but the package is **explicitly experimental** and remains incomplete.
+- The package is **supported** for scoped local sequence fixture and hub-harness validation. It is not a full live Hub/process/Docker/Kubernetes parity replacement.
+- Public API is available and used across tests.
 - `runSequence` currently includes a simplified node-only execution shortcut; full multi-runtime process orchestration is not yet production complete.
 - Harness behavior is intentionally permissive for testing and observability, trading some runtime parity for speed and determinism.
+- The supported public exports used for AppContext fixture validation are: `createHubHarness`, `createHubMock`, `createSequenceFixture`, `createNodeSequenceFixture`, `runSequence`, `resolveSequenceFixtureMetadata`, `createSequenceAssertions`, and the `HubHarness`/`HubMock`/`HubContext` types.

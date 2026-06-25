@@ -18,7 +18,7 @@ import {
     PassThoughStream,
     UpstreamStreamsConfig,
     WritableStream
-} from "@scramjet/types";
+} from "./types";
 
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
@@ -32,6 +32,7 @@ export type ConfiguredMessageHandler<T extends RunnerMessageCode | CPMMessageCod
 };
 
 type MonitoringMessageHandlerList = {
+    [key: number]: ConfiguredMessageHandler<any>[];
     [RunnerMessageCode.ACKNOWLEDGE]: ConfiguredMessageHandler<RunnerMessageCode.ACKNOWLEDGE>[];
     [RunnerMessageCode.DESCRIBE_SEQUENCE]: ConfiguredMessageHandler<RunnerMessageCode.DESCRIBE_SEQUENCE>[];
     [RunnerMessageCode.STATUS]: ConfiguredMessageHandler<RunnerMessageCode.STATUS>[];
@@ -50,7 +51,8 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.STORAGE_UPDATE]: ConfiguredMessageHandler<RunnerMessageCode.STORAGE_UPDATE>[];
 };
 
-type ControlMessageHandlerList<T extends ControlMessageCode = ControlMessageCode> = Record<T, ConfiguredMessageHandler<T>[]> & {
+type ControlMessageHandlerList = {
+    [key: number]: ConfiguredMessageHandler<any>[];
     [RunnerMessageCode.KILL]: ConfiguredMessageHandler<RunnerMessageCode.KILL>[];
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
     [RunnerMessageCode.MONITORING_REPLY]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_REPLY>[];
@@ -191,11 +193,13 @@ export class CommunicationHandler implements ICommunicationHandler {
                 this.logger.error("Can't parse message in monitoring stream", error.chunk);
             })
             .map(async (message: EncodedMonitoringMessage) => {
-                // TODO: WARN if (!this.monitoringHandlerHash[message[0]])
-                if (this.monitoringHandlerHash[message[0]].length) {
+                const monHash = this.monitoringHandlerHash as Record<number, ConfiguredMessageHandler<any>[]>;
+                const monCode = message[0] as unknown as number;
+                // TODO: WARN if (!monHash[monCode])
+                if (monHash[monCode]?.length) {
                     let currentMessage = message as any;
 
-                    for (const item of this.monitoringHandlerHash[message[0]]) {
+                    for (const item of monHash[monCode]) {
                         const { handler, blocking } = item;
                         const result = handler(currentMessage);
 
@@ -222,11 +226,13 @@ export class CommunicationHandler implements ICommunicationHandler {
                 this.logger.error("Can't parse message in control stream", error.chunk);
             })
             .map(async (message: EncodedControlMessage) => {
-                // TODO: WARN if (!this.controlHandlerHash[message[0]])
-                if (this.controlHandlerHash[message[0]].length) {
+                const ctrlHash = this.controlHandlerHash as Record<number, ConfiguredMessageHandler<any>[]>;
+                const ctrlCode = message[0] as unknown as number;
+                // TODO: WARN if (!ctrlHash[ctrlCode])
+                if (ctrlHash[ctrlCode]?.length) {
                     let currentMessage = message as any;
 
-                    for (const item of this.controlHandlerHash[message[0]]) {
+                    for (const item of ctrlHash[ctrlCode]) {
                         const { handler, blocking } = item;
                         const result = handler(currentMessage);
 
@@ -296,7 +302,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         handler: MonitoringMessageHandler<T> | MutatingMonitoringMessageHandler<T>,
         blocking: boolean = false
     ): this {
-        this.monitoringHandlerHash[_code].push({
+        (this.monitoringHandlerHash as Record<number, ConfiguredMessageHandler<any>[]>)[_code as unknown as number].push({
             handler,
             blocking
         } as any);
@@ -309,7 +315,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         handler: ControlMessageHandler<T>,
         blocking: boolean = false
     ): this {
-        this.controlHandlerHash[_code].push({
+        (this.controlHandlerHash as Record<number, ConfiguredMessageHandler<any>[]>)[_code as unknown as number].push({
             handler,
             blocking
         } as any);

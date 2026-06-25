@@ -1,5 +1,5 @@
 import { cmd, type CommandDescriptor } from "@scramjet/config";
-import { MRestAPI } from "@scramjet/types";
+import { MRestAPI } from "@scramjet/api-types";
 import { isProductionEnv } from "../../types";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";

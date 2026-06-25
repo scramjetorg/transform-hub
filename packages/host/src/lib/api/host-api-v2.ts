@@ -1,4 +1,4 @@
-import { APIExpose } from "@scramjet/types";
+import { APIExpose } from "@scramjet/api-types";
 import { RawHttpRouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, routeBinding, resolverBinding } from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { onRequestDisconnect } from "@scramjet/utility";
@@ -196,6 +196,13 @@ export class HostAPIV2Handler {
     }
 
     attach() {
+        this.api.get(`${this.v2ApiBase}/hubs`, (): RestAPI2.ListResponse<RestAPI2.Hub> => ({
+            items: [{
+                id: String((this.host as any).config?.host?.id || "hub"),
+                status: "ok"
+            }]
+        }));
+
         registerHttpRoutes(this.api, this.createV2Router());
     }
 

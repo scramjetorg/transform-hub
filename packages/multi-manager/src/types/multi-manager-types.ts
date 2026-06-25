@@ -1,4 +1,6 @@
-import { ApiVersion, DeepPartial, IdString, LoadCheckRequirements, LogLevel, ManagerConfiguration, ManagerVerser2Config, Port, UrlPath } from "@scramjet/types";
+import { ApiVersion, DeepPartial, IdString, LogLevel, Port, UrlPath } from "@scramjet/runtime-types";
+import { LoadCheckRequirements } from "@scramjet/runtime-types";
+import { ManagerConfiguration, ManagerVerser2Config } from "@scramjet/api-types";
 
 export type MultiManagerServerOptions = {
     apiBase: UrlPath

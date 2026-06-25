@@ -6,7 +6,7 @@
  * @param {string} inputEvent - input
  * @param {string} outputEvent - output
  * @returns {void}
- * @this {import("@scramjet/types").AppContext<{}, {}>} - context
+ * @this {import("@scramjet/sequence-types").SequenceAppContext<{}, {}>} - context
  */
 module.exports = async function(_input, inputEvent = "in", outputEvent = "out") {
     this.logger.info("started");
@@ -23,4 +23,3 @@ module.exports = async function(_input, inputEvent = "in", outputEvent = "out") 
         });
     });
 };
-

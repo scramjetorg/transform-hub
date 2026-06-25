@@ -1,7 +1,7 @@
 import { OutgoingHttpHeaders, Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent, request } from "https";
 import { merge, TypedEmitter } from "@scramjet/utility";
-import { IObjectLogger } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
 import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";

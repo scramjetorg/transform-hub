@@ -1,8 +1,19 @@
 import { Readable } from "stream";
 import { ClientError } from "../client-error";
-import { HttpMethod, RequestConfig } from "@scramjet/types";
 
-export { RequestConfig } from "@scramjet/types";
+/**
+ * HTTP method literals.
+ */
+export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
+
+/**
+ * Request configuration for HTTP client methods.
+ */
+export type RequestConfig = {
+    parse: "json" | "text" | "stream" | "response";
+    json?: boolean;
+    throwOnErrorHttpCode?: boolean;
+}
 
 /**
  * Options for sending sending stream.

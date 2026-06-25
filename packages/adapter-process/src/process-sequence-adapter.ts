@@ -1,10 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import {
-    ISequenceAdapter,
-    STHConfiguration,
-    SequenceConfig,
-    IObjectLogger,
-} from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { ISequenceAdapter, SequenceConfig } from "@scramjet/runtime-types";
+import { STHConfiguration } from "@scramjet/api-types";
 import { Readable } from "stream";
 import fs from "fs/promises";
 import path from "path";

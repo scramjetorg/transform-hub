@@ -84,6 +84,30 @@ test("validateBootConfig accepts and validates instancesServerPort/Host", t => {
     }), { message: /must be set together/ });
 });
 
+test("validateBootConfig accepts and validates topic metadata", t => {
+    t.deepEqual(
+        validateBootConfig({
+            sequencePath: "/x",
+            instanceId: "i-1",
+            inputTopic: "topic-in",
+            outputTopic: "topic-out",
+        }),
+        {
+            sequencePath: "/x",
+            instanceId: "i-1",
+            inputTopic: "topic-in",
+            outputTopic: "topic-out",
+        }
+    );
+
+    t.throws(() => validateBootConfig({
+        sequencePath: "/x", instanceId: "i", inputTopic: "",
+    }), { message: /inputTopic/ });
+    t.throws(() => validateBootConfig({
+        sequencePath: "/x", instanceId: "i", outputTopic: "",
+    }), { message: /outputTopic/ });
+});
+
 test("validateBootConfig accepts and validates verser2 runtime handoff", t => {
     const verser2Runtime = {
         hostUrl: "https://verser2.example",

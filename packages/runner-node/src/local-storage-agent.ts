@@ -1,4 +1,5 @@
-import { ILocalStorage, EncodedMonitoringMessage } from "@scramjet/types";
+import { ILocalStorage } from "@scramjet/runtime-types";
+import { EncodedMonitoringMessage } from "@scramjet/runtime-types";
 import { RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 
 /**

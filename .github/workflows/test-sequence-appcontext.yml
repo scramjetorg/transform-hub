@@ -1,0 +1,30 @@
+name: Test sequence AppContext API stability
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        default: '18.x'
+        type: string
+
+jobs:
+  test-sequence-appcontext:
+    name: Test sequence AppContext API stability (Nodejs ${{ inputs.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Nodejs ${{ inputs.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --silent
+
+      - name: Run local sequence AppContext fixture validation
+        run: npm run test:sequence-appcontext

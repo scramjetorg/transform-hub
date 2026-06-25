@@ -15,12 +15,12 @@ import {
     SpaceEventMessageData,
     LogLevel,
     ActorRole,
-    ActorType,
     DisconnectReason,
     ISTHConnectionStore,
     ISTHController,
     ISTHInfoRegister
-} from "@scramjet/types";
+} from "./types/from-types";
+import { ActorType } from "./types/from-types";
 import { CeroError, forwardRoutedRequest, getRouter, normalizeForwardedHeaders as normalizeApiForwardedHeaders } from "@scramjet/api-server";
 import { Router, registerHttpRoutes } from "@scramjet/api-router";
 import { RestAPI2 } from "@scramjet/rest-api2";
@@ -290,7 +290,7 @@ export class Manager implements IComponent {
         const storeSequences = this.s3Middleware?.index?.sequences?.length || 0;
         const sthSequences = this.sthInfoRegister.getSequences().length;
         const instances = this.sthInfoRegister.getInstances().length;
-        const byHub = hubs.map((hub) => ({
+        const byHub = hubs.map((hub: any) => ({
             id: hub.id,
             active: Boolean(hub.isConnectionActive),
             healthy: Boolean(hub.healthy),
@@ -298,10 +298,10 @@ export class Manager implements IComponent {
             instances: this.getInstancesByHubSafe(hub.id).length,
             inventoryConsumed: this.isHubInventoryConsumed(hub.id)
         }));
-        const activeHubs = byHub.filter(hub => hub.active);
+        const activeHubs = byHub.filter((hub: any) => hub.active);
 
         return {
-            ready: activeHubs.every(hub => hub.inventoryConsumed),
+            ready: activeHubs.every((hub: any) => hub.inventoryConsumed),
             hubs: byHub.length,
             activeHubs: activeHubs.length,
             sequences: storeSequences + sthSequences,
@@ -682,7 +682,7 @@ export class Manager implements IComponent {
 
     attachSTHEventHandlers(sth: ISTHController) {
         sth.on("event", (event: SpaceEventMessageData) => {
-            this.sthConnectionStore.forEach((id, controller) => {
+            this.sthConnectionStore.forEach((id: any, controller: any) => {
                 if (!controller.isConnectionActive) return;
                 if (id !== event.sourceHost) {
                     controller.sendEvent(event).catch((err: Error) => {
@@ -738,7 +738,7 @@ export class Manager implements IComponent {
             this.markHubInventory(sth.id, "instancesReceived");
         });
 
-        sth.on("topic", (topicData) => {
+        sth.on("topic", (topicData: any) => {
             this.logger.trace("STH topic", topicData);
 
             const topicName = topicData.topicName;
@@ -753,7 +753,7 @@ export class Manager implements IComponent {
                 );
             } else if (topicData.status === "remove") {
                 const topic = this.serviceDiscovery.topics.get(topicName);
-                const hostActor = topic?.actors.find(actor => actor.host?.id === sth.id);
+                const hostActor = topic?.actors.find((actor: any) => actor.host?.id === sth.id);
 
                 if (hostActor) {
                     this.serviceDiscovery.unregister(hostActor);
@@ -805,12 +805,12 @@ export class Manager implements IComponent {
         const topics = this.serviceDiscovery.list().slice(offset, offset + limit);
         const hubs = this.sthConnectionStore.getSTHControllersInfo().slice(offset, offset + limit);
 
-        const response = hubs.sort((a, b) => {
+        const response = hubs.sort((a: any, b: any) => {
             const aVal = a.isConnectionActive ? 10 : 0 + (a.healthy ? 1 : 0);
             const bVal = b.isConnectionActive ? 10 : 0 + (b.healthy ? 1 : 0);
 
             return bVal - aVal;
-        }).map(hub => {
+        }).map((hub: any) => {
             return {
                 id : hub.id,
                 info: hub.info,
@@ -821,8 +821,8 @@ export class Manager implements IComponent {
                 tags: hub.tags,
                 disconnectReason: hub.disconnectReason,
                 topics: topics
-                    .filter((topic) => topic.actors.some((actor) => actor.hostId === hub.id))
-                    .map((topic) => topic.name),
+                    .filter((topic: any) => topic.actors.some((actor: any) => actor.hostId === hub.id))
+                    .map((topic: any) => topic.name),
                 sequences: this.sthInfoRegister.getSequencesByHub(hub.id),
                 instances: this.sthInfoRegister.getInstancesByHub(hub.id),
             };
@@ -834,8 +834,8 @@ export class Manager implements IComponent {
     getSequencesIds() {
         return this.sthInfoRegister
             .getHubs()
-            .map((host) => this.sthInfoRegister.getSequencesByHub(host))
-            .reduce((prev, curr) => prev.concat(curr), []);
+            .map((host: any) => this.sthInfoRegister.getSequencesByHub(host))
+            .reduce((prev: any, curr: any) => prev.concat(curr), []);
     }
 
     getSequences(offset = defaultOffset, limit = defaultLimit) {
@@ -854,9 +854,9 @@ export class Manager implements IComponent {
 
     getEntities() {
         const hubs = this.sthInfoRegister.getHubs();
-        const topics = this.serviceDiscovery.list().map(topic => topic.name);
-        const sequences = this.getSequences().map(seq => seq.id);
-        const instances = this.getInstances().map(inst => inst.id);
+        const topics = this.serviceDiscovery.list().map((topic: any) => topic.name);
+        const sequences = this.getSequences().map((seq: any) => seq.id);
+        const instances = this.getInstances().map((inst: any) => inst.id);
 
         return {
             topics : topics,

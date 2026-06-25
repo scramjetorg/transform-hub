@@ -1,4 +1,4 @@
-import { ValidationResult, ValidationSchema } from "@scramjet/types";
+import { ValidationResult, ValidationSchema } from "@scramjet/runtime-types";
 
 /**
  * Validates objects using schema and stores validation errors inside
