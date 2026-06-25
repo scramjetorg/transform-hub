@@ -9,7 +9,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: typings split and full sequence appcontext typings**
+- [x] **Track: typings split and full sequence appcontext typings**
 *Link: [./tracks/typings_split_appcontext_20260622/](./tracks/typings_split_appcontext_20260622/)*
 
 ---
