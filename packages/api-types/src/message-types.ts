@@ -24,7 +24,7 @@ export type EncodedControlMessage = [any, any];
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;
 
-export type MessageDataType<T> = any;
+export type MessageDataType<_T> = any;
 
 // ---------------------------------------------------------------------------
 // Sequence stop/kill message data

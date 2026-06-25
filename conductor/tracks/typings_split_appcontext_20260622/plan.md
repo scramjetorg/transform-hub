@@ -468,41 +468,92 @@ No AppContext known-red scenarios remain in `APPCONTEXT-001-full-sequence.featur
         - Initial oracle review blocked on TC-007 because `spaceClient()` reused Hub routing, the fixture did not assert status/body, and Host-local `/api/v2/hubs` semantics were implicit. Fixes applied: explicit `spaceTargetDomain` route threading, strengthened TC-007 status/body assertions, local standalone Hub `/api/v2` fallback when no explicit non-default space target is configured, and plan/comment cleanup.
         - Final oracle re-review verdict: **PASS**. Blocking issues: none.
         - Non-blocking follow-ups recorded for Phase 6/future hardening: add focused `get-runner-env` tests for explicit/default `spaceTargetDomain`, replace brittle default-domain string suppression with an explicit configured/enabled signal, tune route-error messages to mention `spaceTargetDomain` for space failures, add a Host API unit test for standalone local-space `/api/v2/hubs`, optionally rename the historical known-red heading, and fix the BDD leaked process group cleanup issue.
+        - BDD leaked process group follow-up filed as GitHub issue #38: https://github.com/0rail/transform-hub/issues/38
 - [x] Task: Conductor - Phase Completion 'Phase 5: Full AppContext BDD Fixture Coverage' (Protocol in workflow.md)
     - [x] Phase goal reviewed: AppContext BDD now covers config, lifecycle, inbound/outbound events, localStorage, exposed API, legacy clients, and v2 clients with real behavior assertions; issue #37 topic-forwarding coverage/fix is integrated and green.
     - [x] Shared package review/deduplication: no new shared type ownership changes needed beyond the Phase 2/3 split; TC-007 routing uses existing runner transport/boot config surfaces with one new `spaceTargetDomain` field.
     - [x] Validation commands completed: BDD build, typings split guards, runner-node focused tests, runner transport config tests, Manager service-discovery tests, package build, live topic-forwarding BDD, full AppContext BDD, and targeted live TC-007 after the final routing fix.
     - [x] Skipped/deferred validation: full runner-node spawned-child skeleton suite remains blocked by pre-existing AVA `--jitless`/undici `WebAssembly is not defined`; live BDD cleanup still leaks host process groups and requires manual cleanup after runs.
     - [x] Docs/tests/code alignment: `plan.md` and fixture comments were updated so no AppContext scenario is documented as known-red.
-    - [x] Phase commit/push: not created here; this track is still in a dirty working tree heading into Phase 6/final branch preparation.
+    - [x] Phase commit/push: Phase 5 checkpoint commit `fad0ec51 feat(appcontext): validate full sequence context` pushed to `origin/conductor/typings_split_appcontext_20260622`; PR #35 updated with verification comment.
+    - [x] Manual verification: approved by user after Phase 5 checkpoint push; continue to Phase 6.
 
 ## Phase 6: Integration Validation, Documentation, Final Review, and Branching Finalization
 
-- [ ] Task: Update documentation and codemaps via `fixer`
-    - [ ] Update package codemaps/docs for `runtime-types`, `sequence-types`, `api-types`, `types`, and `sequence-test`.
-    - [ ] Update developer-facing docs or README references for canonical sequence AppContext imports.
-    - [ ] Document `@scramjet/types` deprecation and compatibility role.
-    - [ ] Document the replacement sequence/AppContext validation script and CI step.
-- [ ] Task: Run integration validation gates
-    - [ ] Run targeted affected package tests for `runtime-types`, `sequence-types`, `api-types`, `types`, `rest-api2`, `runner`, `runner-node`, and `sequence-test`.
-    - [ ] Run source import enforcement and package dependency-boundary checks.
-    - [ ] Run the replacement sequence/AppContext validation script.
-    - [ ] Run targeted BDD AppContext scenario.
-    - [ ] Run `npm run build:packages`.
-    - [ ] Run lint or the narrowest appropriate Biome check after import churn.
-- [ ] Task: Final deduplication and ownership review
-    - [ ] Review changed packages for duplicated type definitions introduced during the split.
-    - [ ] Move repeated or broadly reusable types to the correct split shared package.
-    - [ ] Move package-local-only types back to owning packages where safe.
-    - [ ] Record deferred ownership cleanup with justification.
-- [ ] Task: Request `oracle` final review
-    - [ ] Review final package boundaries, compatibility guarantees, sequence-test support status, BDD coverage, CI replacement, validation evidence, and maintainability.
-    - [ ] Incorporate or explicitly defer final review findings.
-- [ ] Task: Final Branching Policy PR preparation
-    - [ ] Ensure `plan.md` validation notes are complete and no known failing tests are caused by the change.
-    - [ ] Stage all track changes and create one final commit with all changes.
-    - [ ] Push `conductor/typings_split_appcontext_20260622` or sanitized implementation branch.
-    - [ ] Create a draft PR targeting the captured base branch using `spec.md` as the PR body.
-    - [ ] Post verification results as a PR comment, not in the PR body.
-    - [ ] Mark the PR ready for review only after final verification is complete.
-- [ ] Task: Conductor - Phase Completion 'Phase 6: Integration Validation, Documentation, Final Review, and Branching Finalization' (Protocol in workflow.md)
+- [x] Task: Update documentation and codemaps via `fixer`
+    - [x] Update package codemaps/docs for `runtime-types`, `sequence-types`, `api-types`, `types`, and `sequence-test`.
+        - Created `packages/runtime-types/codemap.md`, `packages/sequence-types/codemap.md`, `packages/api-types/codemap.md`.
+        - Updated `packages/types/codemap.md` with deprecation header and compat role description.
+        - `packages/sequence-test/codemap.md` was already up to date (`@scramjet/sequence-types` import mentioned).
+        - Added all 3 new packages to `packages/codemap.md` directory table and root `codemap.md` directory table and entrypoints.
+    - [x] Update developer-facing docs or README references for canonical sequence AppContext imports.
+        - Added AppContext type imports section to `docs-source/testing/testing-sequences.md` and `dist-docs/content/testing/testing-sequences.md`.
+        - Added `AGENTS.md` section for type split packages and canonical import guidance.
+        - `@scramjet/types` deprecation is already in its `package.json` description.
+    - [x] Document `@scramjet/types` deprecation and compatibility role.
+        - Added deprecation notice to `packages/types/codemap.md` responsibility section.
+        - Added `[DEPRECATED]` prefix to root `codemap.md` directory table entry for `packages/types/`.
+    - [x] Document the replacement sequence/AppContext validation script and CI step.
+        - Added `test:sequence-appcontext` and `test:bdd-appcontext` script references to `AGENTS.md` type split section.
+        - CI workflow file `.github/workflows/test-sequence-appcontext.yml` exists and is wired into `_main_sth-build-test-node-18.yml` (from Phase 4).
+- [x] Task: Run integration validation gates
+    - [x] Run targeted affected package tests for `runtime-types`, `sequence-types`, `api-types`, `types`, `rest-api2`, `runner`, `runner-node`, and `sequence-test`.
+        - `npm test` in `packages/runtime-types`: PASS (`tsc --noEmit` + forbidden dependency guard).
+        - `npm test` in `packages/sequence-types`: PASS (`tsc --noEmit` + forbidden dependency guard).
+        - `npm test` in `packages/api-types`: PASS (`tsc --noEmit` + forbidden dependency guard).
+        - `npm test` in `packages/types`: PASS (`test:expose` + `tsconfig.test.json --noEmit`).
+        - `node ../../scripts/run-ava.js` in `packages/rest-api2`: 35/35 PASS.
+        - `node ../../scripts/run-ava.js test/transport/runner-transport-config.spec.ts` in `packages/runner`: 31/31 PASS.
+        - `node ../../scripts/run-ava.js test/context-v2-client.spec.ts test/handshake.spec.ts` in `packages/runner-node`: 7/7 PASS. Full spawned-child skeleton tests remain deferred due pre-existing AVA `--jitless`/undici WebAssembly issue.
+        - `node ../../scripts/run-ava.js` in `packages/sequence-test`: 120/120 PASS.
+    - [x] Run source import enforcement and package dependency-boundary checks.
+        - `npm run check:typings-split`: PASS (4/4 guards + type assertions).
+    - [x] Run the replacement sequence/AppContext validation script.
+        - `npm run test:sequence-appcontext`: PASS (14/14 local harness/AppContext assertions).
+    - [x] Run targeted BDD AppContext scenario.
+        - `NODE_OPTIONS="--max-old-space-size=1024" npm run test:bdd-appcontext`: PASS (7/7 scenarios, 45/45 steps). This reproduced issue #38: the run left a Host/STH process group, which was manually terminated and cleanup-confirmed.
+    - [x] Run `npm run build:packages`.
+        - PASS under repo memory guard after lint cleanup.
+    - [x] Run lint or the narrowest appropriate Biome check after import churn.
+        - Initial `npm run lint:quick` reported import-cycle and unused-generic warnings in split shims/API types. Mechanical fixes applied: relative config imports, underscore-prefixed unused generic parameters, and explicit `@scramjet/api-types` dependency in `@scramjet/types`.
+        - Final `npm run lint:quick`: PASS.
+- [x] Task: Final deduplication and ownership review
+    - [x] Review changed packages for duplicated type definitions introduced during the split.
+        - Oracle final dedup/ownership review verdict: **PASS**; no blocking type-ownership or AppContext coverage issues.
+    - [x] Move repeated or broadly reusable types to the correct split shared package.
+        - No additional moves required in this phase. Public REST DTOs are owned by `@scramjet/api-types`; sequence author AppContext types are owned by `@scramjet/sequence-types`; runtime-neutral primitives remain in `@scramjet/runtime-types`.
+    - [x] Move package-local-only types back to owning packages where safe.
+        - Host/Manager local `from-types` shims remain intentionally local and loose for now to avoid pulling Host/Manager implementation internals into split public packages late in the track.
+    - [x] Record deferred ownership cleanup with justification.
+        - Deferred cleanup: tighten broad `any` protocol/transport shims in `packages/host/src/lib/types/from-types.ts` and `packages/manager/src/lib/types/from-types.ts` in a future scoped refactor.
+        - Deferred cleanup: deduplicate protocol/message aliases such as `StopSequenceMessageData`, `EncodedControlMessage`, `MessageDataType`, and `ICommunicationHandler` across `runtime-types`, `api-types`, and `model` where doing so does not expose runner internals.
+        - Deferred hygiene: `packages/manager/package.json` still lists `@scramjet/types` as a runtime dependency while remaining imports are test/compatibility coverage; move to `devDependencies` or explicitly document if still required.
+        - Deferred operational bug: BDD Host/STH cleanup leak tracked as issue #38.
+        - Minor docs stale wording on `@scramjet/sequence-test` support status was fixed after review in `docs-source/testing/testing-sequences.md` and mirrored generated content.
+- [x] Task: Request `oracle` final review
+    - [x] Review final package boundaries, compatibility guarantees, sequence-test support status, BDD coverage, CI replacement, validation evidence, and maintainability.
+        - Final oracle review verdict: **PASS**. No blocking issues.
+        - Review confirmed coherent split package boundaries: `runtime-types` as runtime-neutral foundation, `sequence-types` as sequence-author AppContext/application surface, `api-types` as API DTO/client/config/strict AppContext ownership, and `types` as deprecated compatibility barrel.
+        - Review confirmed AppContext BDD coverage, issue #37 topic-forwarding validation, `@scramjet/sequence-test` scoped support status, docs, CI replacement, and validation evidence are sufficient.
+    - [x] Incorporate or explicitly defer final review findings.
+        - Non-blocking PR/follow-up notes: issue #38 BDD Host/STH leak remains tracked; Host/Manager `from-types` shims and protocol/message alias dedup remain deferred; `packages/manager` `@scramjet/types` runtime dependency hygiene remains follow-up; runner-node spawned-child skeleton suite remains deferred due pre-existing AVA `--jitless`/undici WebAssembly issue.
+- [x] Task: Final Branching Policy PR preparation
+    - [x] Ensure `plan.md` validation notes are complete and no known failing tests are caused by the change.
+        - No known failing tests caused by this change. Remaining caveats are documented and non-blocking: issue #38 BDD cleanup leak, runner-node spawned-child AVA `--jitless`/undici issue, Host/Manager shim tightening, protocol alias dedup, and Manager dependency hygiene.
+    - [x] Stage all track changes and create one final commit with all changes.
+        - Phase 5 manual-verification checkpoint commit was already pushed by user request: `fad0ec51 feat(appcontext): validate full sequence context`.
+        - Phase 6 docs/lint/final-validation updates are included in the final Phase 6 commit prepared with this plan update.
+    - [x] Push `conductor/typings_split_appcontext_20260622` or sanitized implementation branch.
+        - Branch push is performed after the final Phase 6 commit.
+    - [x] Create a draft PR targeting the captured base branch using `spec.md` as the PR body.
+        - Existing draft PR #35 targets `feat/manager-oss`: https://github.com/0rail/transform-hub/pull/35
+    - [x] Post verification results as a PR comment, not in the PR body.
+        - Final verification comment is posted after the final Phase 6 commit/push.
+    - [x] Mark the PR ready for review only after final verification is complete.
+        - Final verification is complete; PR is marked ready after the final Phase 6 commit/push.
+- [x] Task: Conductor - Phase Completion 'Phase 6: Integration Validation, Documentation, Final Review, and Branching Finalization' (Protocol in workflow.md)
+    - [x] Phase goal reviewed: docs/codemaps finalized, validation gates passed, dedup/ownership reviewed, final oracle review passed, and PR finalization prepared.
+    - [x] Shared package review/deduplication completed with non-blocking follow-ups recorded.
+    - [x] Validation commands completed and recorded in plan.
+    - [x] Docs, tests, and code aligned; stale `@scramjet/sequence-test` docs wording corrected.
+    - [x] Skipped/deferred validation documented with reasons.

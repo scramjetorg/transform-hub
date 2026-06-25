@@ -32,7 +32,7 @@ export type OpResponse<PayloadType extends Record<string, unknown> = any> =
 export type StartSequenceDTO = any;
 export type SpaceEventMessageData = any;
 
-export type MessageDataType<T> = any;
+export type MessageDataType<_T> = any;
 
 export type RunnerTransport = any;
 export type RunnerTransportConnectOptions = any;
@@ -44,7 +44,7 @@ export type NetworkInfo = any;
 export type STHIDMessageData = any;
 export type AddSTHTopicEventData = any;
 
-export type EncodedMessage<T> = [any, any];
+export type EncodedMessage<_T> = [any, any];
 export type HandshakeAcknowledgeMessage = any;
 export type MonitoringMessageData = any;
 

@@ -9,6 +9,7 @@ Monorepo workspace directory containing all Scramjet Transform Hub packages unde
 | Package | Responsibility | Map |
 |---------|---------------|------|
 | `adapter-docker/` | Docker stored-sequence adapter and runner image/container orchestration. | [View](adapter-docker/codemap.md) |
+| `api-types/` | API/user-facing type contracts: REST DTOs, APIExpose, client stubs, config types, and strict AppContext aliases. Split from `@scramjet/types`. | [View](api-types/codemap.md) |
 | `adapter-kubernetes/` | Kubernetes sequence persistence, runner pod lifecycle management, config decoding, and client access. | [View](adapter-kubernetes/codemap.md) |
 | `adapter-process/` | Process adapter runtime bridging host-side adapter contracts to process-based execution. | [View](adapter-process/codemap.md) |
 | `adapters/` | Adapter selector and host-side runtime adapter abstraction layer. | [View](adapters/codemap.md) |
@@ -32,11 +33,13 @@ Monorepo workspace directory containing all Scramjet Transform Hub packages unde
 | `multi-manager-api-client/` | MultiManager API client for starting and managing sub-Managers. | [View](multi-manager-api-client/codemap.md) |
 | `obj-logger/` | Object-mode structured logger with pipeable stream output and log level control. | [View](obj-logger/codemap.md) |
 | `rest-api2/` | Second-generation typed REST API contracts, fluent route sets, schemas, and client builders. | [View](rest-api2/codemap.md) |
+| `runtime-types/` | Generic low-level runtime-neutral types: BaseAppContext, logger/storage interfaces, error types, function/stream primitives, runner configs. Foundation layer of the typings split. | [View](runtime-types/codemap.md) |
 | `runner/` | Outer runtime launcher for adapter-launched sequences; validates env, selects Bun/Node/Python child runtimes, and runs fetch-disabled AVA under jitless. | [View](runner/codemap.md) |
 | `runner-bun/` | Bun sequence runtime wrapper for boot-config validation and delegated execution. | [View](runner-bun/codemap.md) |
 | `runner-node/` | Node sequence runtime: boot-config parsing, host channel setup, lifecycle, and sequence execution. | [View](runner-node/codemap.md) |
 | `runner-python/` | Python sequence runtime and parity reference for host-channel connection. | [View](runner-python/codemap.md) |
 | `sequence-test/` | Supported sequence testing harness for scoped local fixture/hub-harness/AppContext validation (not full Hub/runner parity replacement). | [View](sequence-test/codemap.md) |
+| `sequence-types/` | Sequence-author-facing types: frozen SequenceAppContext API, application/function types. Canonical import for sequence authors. | [View](sequence-types/codemap.md) |
 | `sth/` | Top-level STH wrapper owning process-facing lifecycle around a configured host instance. | [View](sth/codemap.md) |
 | `sth-config/` | STH configuration defaults, image defaults, deep-merge updates, and runtime-adapter selection. | [View](sth-config/codemap.md) |
 | `symbols/` | Shared constants and protocol symbols — message codes, statuses, stream states, headers, exit/error codes, runtime-kind. | [View](symbols/codemap.md) |

@@ -9,9 +9,9 @@
 import { RunnerMessageCode, CPMMessageCode } from "@scramjet/symbols";
 
 export type MaybePromise<T> = Promise<T> | T;
-export type PassThoughStream<T> = any;
-export type WritableStream<T> = any;
-export type ReadableStream<T> = any;
+export type PassThoughStream<_T> = any;
+export type WritableStream<_T> = any;
+export type ReadableStream<_T> = any;
 
 export type UpstreamStreamsConfig = any[];
 export type DownstreamStreamsConfig = any[];
@@ -27,14 +27,14 @@ export type LoggerOutput = { out: any; err: any };
 
 export type CPMMessage = [any, any];
 export type RunnerMessage = [any, any];
-export type MessageType<T> = any;
-export type MessageDataType<T> = any;
+export type MessageType<_T> = any;
+export type MessageDataType<_T> = any;
 
 export type ControlMessageCode = RunnerMessageCode | CPMMessageCode;
 export type MonitoringMessageCode = string | number;
-export type ControlMessageHandler<T> = (msg: any) => any;
-export type MonitoringMessageHandler<T> = (msg: any) => void;
-export type MutatingMonitoringMessageHandler<T> = (msg: any) => any;
+export type ControlMessageHandler<_T> = (msg: any) => any;
+export type MonitoringMessageHandler<_T> = (msg: any) => void;
+export type MutatingMonitoringMessageHandler<_T> = (msg: any) => any;
 
 // Communication handler interface (simplified)
 export interface ICommunicationHandler {

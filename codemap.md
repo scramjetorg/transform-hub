@@ -23,15 +23,21 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 - `packages/adapter-docker/src/docker-sequence-adapter.ts`: Docker stored-sequence adapter and runner image/container orchestration.
 - `packages/adapter-kubernetes/src/kubernetes-instance-adapter.ts`: Kubernetes runner pod lifecycle and runtime image selection.
 - `packages/symbols/src/runtime-kind.ts`: Canonical runtime-kind inference from sequence engine metadata, shared by adapters, runner selection, and tests.
-- `packages/types/src/runtime-executor.ts`: Shared runtime executor contracts used by the outer runner and runtime-specific launchers.
+- `packages/types/src/runtime-executor.ts`: Shared runtime executor contracts used by the outer runner and runtime-specific launchers (also re-exported from `@scramjet/runtime-types`).
 - `packages/sequence-test/src/index.ts`: Sequence testing harness API (scoped local fixture/harness validation) that composes fixtures, runner launch plans, fake instance transport, captures, and hub mocks.
+- `packages/runtime-types/src/index.ts`: Foundation layer of the typings split — `BaseAppContext`, runtime-neutral logger/storage/error types.
+- `packages/sequence-types/src/index.ts`: Sequence-author-facing types — `SequenceAppContext`, application/function entrypoint types.
+- `packages/api-types/src/index.ts`: API/user-facing type contracts — REST DTOs, `APIExpose`, `StrictAppContext`, client stubs.
 
 ## Repository Directory Map
 
 | Directory | Responsibility Summary | Detailed Map |
 |-----------|------------------------|--------------|
-| `packages/` | Monorepo workspace directory index for all 39 `@scramjet/*` packages including adapters, runners, API clients, config, types, utilities, and manager. | [View Map](packages/codemap.md) |
-| `packages/types/` | Shared type package for CLI options, merged STH config, runtime executor contracts, and adapter-facing DTOs. | [View Map](packages/types/codemap.md) |
+| `packages/` | Monorepo workspace directory index for all 42 `@scramjet/*` packages including adapters, runners, API clients, config, types, utilities, manager, and split type packages. | [View Map](packages/codemap.md) |
+| `packages/runtime-types/` | Generic low-level runtime-neutral types: BaseAppContext, logger/storage interfaces, runner configs. Foundation of the typings split. | [View Map](packages/runtime-types/codemap.md) |
+| `packages/sequence-types/` | Sequence-author-facing frozen AppContext API and application/function types. Canonical import for sequence authors. | [View Map](packages/sequence-types/codemap.md) |
+| `packages/api-types/` | API/user-facing type contracts: REST DTOs, APIExpose, client stubs, and StrictAppContext. | [View Map](packages/api-types/codemap.md) |
+| `packages/types/` | [DEPRECATED] Compatibility re-export package for `@scramjet/types`. New code should import from `@scramjet/runtime-types`, `@scramjet/sequence-types`, or `@scramjet/api-types`. | [View Map](packages/types/codemap.md) |
 | `packages/types/src/` | Canonical configuration, adapter, and runtime-executor declarations shared across STH packages. | [View Map](packages/types/src/codemap.md) |
 | `packages/types/src/manager/` | Manager-facing type contracts for STH connection lifecycle, service discovery, topic-based actor registration, and host/sequence/instance info tracking. | [View Map](packages/types/src/manager/codemap.md) |
 | `packages/symbols/` | Shared constants and protocol symbol package for message codes, statuses, stream states, headers, exit/error codes, and runtime-kind inference. | [View Map](packages/symbols/codemap.md) |

@@ -2,7 +2,9 @@
 
 ## Responsibility
 
-Canonical shared type package for Scramjet Transform Hub. Defines all CLI options, merged STH configuration, runtime executor contracts, adapter-facing DTOs, message protocol types, REST API contracts (STH, Manager, Multi-Manager, Middleware), manager-side connection lifecycle types, verser2 networking config, v1/v2 API client factories, and sequence/application interface types.
+**Deprecated** compatibility package for Scramjet Transform Hub. Previously the canonical shared type package; now re-exports from `@scramjet/runtime-types`, `@scramjet/sequence-types`, and `@scramjet/api-types`. Existing imports continue to resolve. New code should import from the split packages directly.
+
+Legacy surface includes: CLI options, merged STH configuration, runtime executor contracts, adapter-facing DTOs, message protocol types, REST API contracts (STH, Manager, Multi-Manager, Middleware), manager-side connection lifecycle types, verser2 networking config, v1/v2 API client factories, and sequence/application interface types.
 
 ## Design / Patterns
 

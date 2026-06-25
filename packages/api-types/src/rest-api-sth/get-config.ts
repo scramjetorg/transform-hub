@@ -1,3 +1,3 @@
-import { PublicSTHConfiguration } from "@scramjet/api-types";
+import { PublicSTHConfiguration } from "../config-types";
 
 export type GetConfigResponse = PublicSTHConfiguration;

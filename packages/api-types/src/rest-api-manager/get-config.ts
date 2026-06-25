@@ -1,4 +1,4 @@
-import { ManagerConfiguration } from "@scramjet/api-types";
+import { ManagerConfiguration } from "../config-types";
 
 export type GetConfigResponse = {
     config: ManagerConfiguration

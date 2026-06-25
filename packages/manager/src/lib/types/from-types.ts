@@ -71,11 +71,11 @@ export enum ActorRole {
     CONSUMER = "consumer",
 }
 
-export type ActorStreamType<R> = any;
+export type ActorStreamType<_R> = any;
 export interface IServiceDiscovery {
     [key: string]: any;
 }
-export interface ITopicActor<T, R> {
+export interface ITopicActor<_T, _R> {
     [key: string]: any;
 }
 export type Topic = any;
