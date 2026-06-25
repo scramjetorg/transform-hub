@@ -362,7 +362,7 @@ export class Manager implements IComponent {
                 ps.end();
                 this.serviceDiscovery.onUpdate("upstream close");
             })
-            .on("error", e => {
+            .on("error", (e: Error) => {
                 ps.emit("error", e);
             });
 
