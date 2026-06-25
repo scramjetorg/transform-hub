@@ -1,0 +1,8 @@
+{
+  "track_id": "test_memory_efficiency_20260625",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-06-25T23:22:56Z",
+  "updated_at": "2026-06-25T23:22:56Z",
+  "description": "memory efficiency in tests (issues 38 and 39): create a new track with a goal of being able to run the full test suite in a small memory limit (<2G) without post test process leakage. Current limits cause issues due to many CPUs and tests starting many threads. Balance speed with stability and memory constraints. Avoid stale processes. Include both BDD and AVA tests; all testing systems should use a single solution. Testing must always run under memory limits to avoid crashing the host, and cleanup of remaining processes is critical."
+}
