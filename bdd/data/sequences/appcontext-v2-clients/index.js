@@ -2,56 +2,50 @@
 
 /**
  * BDD AppContext fixture: v2 hubClient and spaceClient.
- *
- * Uses this.hubClient() and this.spaceClient() to make canonical
- * v2 API calls, then reports results.
+ * Spec: calls hubClient().status.get() and spaceClient().hubs.get().
+ * Asserts status 200 and valid response bodies before writing the
+ * stdout marker. If the runtime cannot serve these endpoints the fixture
+ * throws instead of emitting a false-positive marker.
  *
  * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function appcontextV2ClientsSequence(input) {
-    const results = [];
+    const statusResp = await this.hubClient().status.get();
 
-    try {
-        const statusResp = await this.hubClient().status.get();
-        results.push({
-            client: "hubClient",
-            method: "status.get",
-            status: "ok",
-            body: statusResp.body,
-        });
-    } catch (err) {
-        results.push({
-            client: "hubClient",
-            method: "status.get",
-            status: "error",
-            error: String(err),
-        });
+    if (statusResp.status !== 200) {
+        throw new Error(
+            "hubClient().status.get() returned status " + statusResp.status
+        );
+    }
+    if (statusResp.body?.status !== "ok") {
+        throw new Error(
+            'hubClient().status.get() body.status is not "ok": ' +
+                JSON.stringify(statusResp.body)
+        );
     }
 
-    try {
-        const hubsResp = await this.spaceClient().hubs.get();
-        results.push({
-            client: "spaceClient",
-            method: "hubs.get",
-            status: "ok",
-            items: hubsResp.body.items ? hubsResp.body.items.length : 0,
-        });
-    } catch (err) {
-        results.push({
-            client: "spaceClient",
-            method: "hubs.get",
-            status: "error",
-            error: String(err),
-        });
+    const hubsResp = await this.spaceClient().hubs.get();
+
+    if (hubsResp.status !== 200) {
+        throw new Error(
+            "spaceClient().hubs.get() returned status " + hubsResp.status
+        );
+    }
+    if (!Array.isArray(hubsResp.body?.items)) {
+        throw new Error(
+            "spaceClient().hubs.get() body.items is not an array: " +
+                JSON.stringify(hubsResp.body)
+        );
     }
 
     process.stdout.write(
         JSON.stringify({
             type: "appcontext-v2-clients",
-            results,
+            hubStatus: statusResp.body?.status,
+            spaceItems: hubsResp.body?.items?.length ?? 0,
             timestamp: Date.now(),
         }) + "\n"
     );
 
-    return { v2Clients: results.length, handled: true };
+    return { v2ClientsHandled: true };
 };

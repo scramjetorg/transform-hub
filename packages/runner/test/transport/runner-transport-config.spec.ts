@@ -73,6 +73,7 @@ test("returns verser2 config with minimal valid env", t => {
     t.is(result.guestId, DEFAULT_GUEST_ID);
     t.is(result.hubBrokerId, DEFAULT_HUB_BROKER_ID);
     t.is(result.hubTargetDomain, undefined);
+    t.is(result.spaceTargetDomain, undefined);
     t.is(result.tls, undefined);
     t.is(result.leaseAcquireTimeoutMs, undefined);
     t.is(result.minWaitingStreams, undefined);
@@ -108,6 +109,7 @@ test("returns verser2 config with all optional fields", t => {
         routeDomain: "my.domain.internal",
         hubBrokerId: "my.hub.broker",
         hubTargetDomain: "sth.domain.internal",
+        spaceTargetDomain: "manager.domain.internal",
         tls: { caFile: "/etc/ca.pem", certFile: "/etc/cert.pem", keyFile: "/etc/key.pem" },
         leaseAcquireTimeoutMs: 5000,
         minWaitingStreams: 3
@@ -121,6 +123,7 @@ test("returns verser2 config with all optional fields", t => {
     t.is(result.routeDomain, "my.domain.internal");
     t.is(result.hubBrokerId, "my.hub.broker");
     t.is(result.hubTargetDomain, "sth.domain.internal");
+    t.is(result.spaceTargetDomain, "manager.domain.internal");
     t.deepEqual(result.tls, { caFile: "/etc/ca.pem", certFile: "/etc/cert.pem", keyFile: "/etc/key.pem" });
     t.is(result.leaseAcquireTimeoutMs, 5000);
     t.is(result.minWaitingStreams, 3);

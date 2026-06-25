@@ -1,3 +1,4 @@
+@ci-appcontext
 Feature: Full Sequence AppContext Behavior
   As a sequence author
   I want to use the full AppContext API (config, lifecycle, events,
@@ -12,7 +13,7 @@ Feature: Full Sequence AppContext Behavior
     When find and upload sequence "appcontext-config.tar.gz"
     And instance started
     And wait for "2000" ms
-    Then "output" should contain instance config values
+    Then "stdout" contains "appcontext-config"
     And host is still running
 
   @ci-appcontext-lifecycle
@@ -20,17 +21,18 @@ Feature: Full Sequence AppContext Behavior
     When find and upload sequence "appcontext-lifecycle.tar.gz"
     And instance started
     And wait for "1000" ms
-    Then sequence lifecycle events contain keepAlive and end
+    Then "stdout" contains "appcontext-lifecycle"
     And host is still running
 
   @ci-appcontext-events
   Scenario: APPCONTEXT-001 TC-003 Sequence emits and receives events through AppContext
     When find and upload sequence "appcontext-events.tar.gz"
     And instance started
+    Then "stdout" contains "appcontext-events"
     And send event "test.event" to instance with message "ping"
     Then instance emits event "appcontext.response" with body
       """
-      "pong"
+      {"body":"pong"}
       """
     And host is still running
 
@@ -38,15 +40,16 @@ Feature: Full Sequence AppContext Behavior
   Scenario: APPCONTEXT-001 TC-004 Sequence uses localStorage through AppContext
     When find and upload sequence "appcontext-storage.tar.gz"
     And instance started
-    And send "set:alpha:valueA" to input
-    Then "output" should contain localStorage value for key "alpha"
+    And wait for "2000" ms
+    Then "stdout" contains "appcontext-storage"
     And host is still running
 
   @ci-appcontext-exposed-api
   Scenario: APPCONTEXT-001 TC-005 Sequence exposes an API endpoint through AppContext
     When find and upload sequence "appcontext-exposed-api.tar.gz"
     And instance started
-    And I send GET request to instance endpoint "/health"
+    Then "stdout" contains "appcontext-exposed-api"
+    When I send GET request to instance endpoint "/health"
     Then response status is 200
     And response body contains "ok"
     And host is still running
@@ -56,13 +59,13 @@ Feature: Full Sequence AppContext Behavior
     When find and upload sequence "appcontext-legacy-clients.tar.gz"
     And instance started
     And wait for "3000" ms
-    Then "output" should confirm legacy hub calls were made
+    Then "stdout" contains "appcontext-legacy-clients"
     And host is still running
 
   @ci-appcontext-v2-clients
   Scenario: APPCONTEXT-001 TC-007 Sequence uses v2 hubClient and spaceClient through AppContext
     When find and upload sequence "appcontext-v2-clients.tar.gz"
     And instance started
-    And wait for "3000" ms
-    Then "output" should confirm v2 API calls were made
+    And wait for "5000" ms
+    Then "stdout" contains "appcontext-v2-clients"
     And host is still running

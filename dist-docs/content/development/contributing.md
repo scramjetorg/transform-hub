@@ -19,7 +19,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 - **Shared type contracts and symbols** (`packages/types`, `packages/symbols`)
 - **Manager control plane** (`packages/manager`, `packages/multi-manager`)
 - **API surface** (`packages/api-server`, `packages/api-client`)
-- **Experimental sequence test harness** (`packages/sequence-test`)
+- **Sequence test harness (scoped local fixture/harness validation)** (`packages/sequence-test`)
 - **BDD integration tests** (`bdd/`)
 
 ### Workspace groups
@@ -202,7 +202,7 @@ When running through `scripts/run-ava.js`, the AVA child process automatically u
 | `@scramjet/runner-node` | `packages/runner-node/src/bin/runner-node.ts` | Node.js sequence runtime |
 | `@scramjet/runner-python` | `runner_python/__main__.py` | Python sequence runtime |
 | `@scramjet/runner-bun` | `packages/runner-bun/src/bin/runner-bun.ts` | Bun sequence runtime |
-| `@scramjet/sequence-test` | `packages/sequence-test/src/index.ts` | Experimental test harness |
+| `@scramjet/sequence-test` | `packages/sequence-test/src/index.ts` | Supported scoped local fixture/harness/AppContext validation |
 | `@scramjet/types` | `packages/types/src/` | Shared type contracts |
 | `@scramjet/symbols` | `packages/symbols/src/` | Protocol constants and enums |
 | `@scramjet/sth-config` | `packages/sth-config/src/config-service.ts` | Configuration assembly |

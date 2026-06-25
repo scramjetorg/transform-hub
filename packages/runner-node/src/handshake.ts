@@ -13,6 +13,8 @@ export function buildPing(inputs: RunnerHandshakeInputs): [
         instanceName: inputs.instanceName,
     };
 
+    if (inputs.inputTopic) payload.inputTopic = inputs.inputTopic;
+    if (inputs.outputTopic) payload.outputTopic = inputs.outputTopic;
     if (inputs.exposePath) payload.exposePath = inputs.exposePath;
     if (inputs.exposeHost) payload.exposeHost = inputs.exposeHost;
     if (inputs.exposePort !== undefined) payload.exposePort = inputs.exposePort;

@@ -35,6 +35,10 @@ export interface RunnerNodeBootConfig {
     logLevel?: LogLevel;
     /** Optional path prefix under which `context.api.use(...)` handlers are exposed. */
     exposePath?: string;
+    /** Optional topic used as this instance input source. */
+    inputTopic?: string;
+    /** Optional topic used as this instance output sink. */
+    outputTopic?: string;
     /** Optional bind host/IP for the locally exposed API server. */
     exposeHost?: string;
     /** If set, REQUESTS/context.hub is disabled and client calls fail fast with this reason. */
@@ -46,6 +50,7 @@ export interface RunnerNodeBootConfig {
         runnerRouteDomain: string;
         hubBrokerId: string;
         hubTargetDomain?: string;
+        spaceTargetDomain?: string;
         tls?: Record<string, unknown>;
         leaseAcquireTimeoutMs?: number;
         minWaitingStreams?: number;
@@ -81,7 +86,7 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
     }
 
     const { sequencePath, sequenceArgs, instanceId, instancesServerPort, instancesServerHost,
-        appConfig, sequenceInfo, instanceName, logLevel, exposePath, exposeHost, requestsUnsupported, verser2Runtime } = value;
+        appConfig, sequenceInfo, instanceName, logLevel, exposePath, inputTopic, outputTopic, exposeHost, requestsUnsupported, verser2Runtime } = value;
 
     if (typeof sequencePath !== "string" || sequencePath.length === 0) {
         throw new Error("runner-node: boot config field 'sequencePath' must be a non-empty string");
@@ -135,6 +140,14 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
         throw new Error("runner-node: boot config field 'exposePath' must be a non-empty string when provided");
     }
 
+    if (inputTopic !== undefined && (typeof inputTopic !== "string" || inputTopic.length === 0)) {
+        throw new Error("runner-node: boot config field 'inputTopic' must be a non-empty string when provided");
+    }
+
+    if (outputTopic !== undefined && (typeof outputTopic !== "string" || outputTopic.length === 0)) {
+        throw new Error("runner-node: boot config field 'outputTopic' must be a non-empty string when provided");
+    }
+
     if (exposeHost !== undefined && (typeof exposeHost !== "string" || exposeHost.length === 0)) {
         throw new Error("runner-node: boot config field 'exposeHost' must be a non-empty string when provided");
     }
@@ -157,6 +170,10 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
         if (verser2Runtime.hubTargetDomain !== undefined && (typeof verser2Runtime.hubTargetDomain !== "string" || verser2Runtime.hubTargetDomain.length === 0)) {
             throw new Error("runner-node: boot config field 'verser2Runtime.hubTargetDomain' must be a non-empty string when provided");
         }
+
+        if (verser2Runtime.spaceTargetDomain !== undefined && (typeof verser2Runtime.spaceTargetDomain !== "string" || verser2Runtime.spaceTargetDomain.length === 0)) {
+            throw new Error("runner-node: boot config field 'verser2Runtime.spaceTargetDomain' must be a non-empty string when provided");
+        }
     }
 
     const result: RunnerNodeBootConfig = { sequencePath, instanceId };
@@ -169,6 +186,8 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
     if (instanceName !== undefined) result.instanceName = instanceName as string;
     if (logLevel !== undefined) result.logLevel = logLevel as LogLevel;
     if (exposePath !== undefined) result.exposePath = exposePath as string;
+    if (inputTopic !== undefined) result.inputTopic = inputTopic as string;
+    if (outputTopic !== undefined) result.outputTopic = outputTopic as string;
     if (exposeHost !== undefined) result.exposeHost = exposeHost as string;
     if (requestsUnsupported !== undefined) result.requestsUnsupported = requestsUnsupported as string;
     if (verser2Runtime !== undefined) result.verser2Runtime = verser2Runtime as RunnerNodeBootConfig["verser2Runtime"];

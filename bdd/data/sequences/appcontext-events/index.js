@@ -2,38 +2,39 @@
 
 /**
  * BDD AppContext fixture: event emission and reception.
+ * Spec: registers a handler for "test.event".  When the event is
+ * received via the runtime event system, it emits
+ * "appcontext.response" with body "pong" via emitToSpace.
  *
- * Emits a host event on startup and listens for incoming events.
- * When an event is received, it emits a response event and writes
- * a marker to stdout.
+ * If the runtime does not wire this.on() handlers to inbound
+ * events from the host, the appcontext.response will never be
+ * emitted and this scenario will time out.
  *
  * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function appcontextEventsSequence(_input) {
-    this.emit("appcontext.ready", { status: "initialized" });
+    const received = new Promise((resolve) => {
+        // Register handler for inbound "test.event".
+        this.on("test.event", (message) => {
+            this.emitToSpace("appcontext.response", { body: "pong" });
+            resolve({ event: "test.event", message });
+        });
+    });
 
+    this.keepAlive(15_000);
+
+    // Signal that the handler was registered.
     process.stdout.write(
         JSON.stringify({
             type: "appcontext-events",
-            action: "ready-emitted",
+            action: "handler-registered",
             timestamp: Date.now(),
         }) + "\n"
     );
 
-    // Wait briefly for potential incoming events.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const event = await received;
 
-    // Emit a response event to prove emitToSpace also works.
-    this.emitToSpace("appcontext.response", { body: "pong" });
+    this.end();
 
-    process.stdout.write(
-        JSON.stringify({
-            type: "appcontext-events",
-            action: "response-emitted",
-            scope: "space",
-            timestamp: Date.now(),
-        }) + "\n"
-    );
-
-    return { events: ["emit", "emitToSpace"], handled: true };
+    return { events: ["emit", "on"], handled: true, event };
 };

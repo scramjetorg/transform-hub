@@ -2,7 +2,7 @@
 
 ## Project Responsibility
 
-Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deployment, execution, and monitoring across process, Docker, and Kubernetes runtime adapters. The repository combines the host-facing CLI/configuration packages, adapter implementations, shared symbols/type contracts, experimental sequence test harnesses, and runtime wrapper packages that execute Node, Bun, and Python sequences behind a common outer runner protocol.
+Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deployment, execution, and monitoring across process, Docker, and Kubernetes runtime adapters. The repository combines the host-facing CLI/configuration packages, adapter implementations, shared symbols/type contracts, sequence test harnesses (scoped local fixture/harness validation), and runtime wrapper packages that execute Node, Bun, and Python sequences behind a common outer runner protocol.
 
 ## Root Assets
 
@@ -24,7 +24,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 - `packages/adapter-kubernetes/src/kubernetes-instance-adapter.ts`: Kubernetes runner pod lifecycle and runtime image selection.
 - `packages/symbols/src/runtime-kind.ts`: Canonical runtime-kind inference from sequence engine metadata, shared by adapters, runner selection, and tests.
 - `packages/types/src/runtime-executor.ts`: Shared runtime executor contracts used by the outer runner and runtime-specific launchers.
-- `packages/sequence-test/src/index.ts`: Experimental sequence testing harness API that composes fixtures, runner launch plans, fake instance transport, captures, and hub mocks.
+- `packages/sequence-test/src/index.ts`: Sequence testing harness API (scoped local fixture/harness validation) that composes fixtures, runner launch plans, fake instance transport, captures, and hub mocks.
 
 ## Repository Directory Map
 
@@ -67,7 +67,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/runner-bun/src/` | Bun runtime helpers for boot config parsing/validation, runtime constants, and bootstrap delegation logic. | [View Map](packages/runner-bun/src/codemap.md) |
 | `packages/runner-bun/src/bin/` | Executable Bun runtime entrypoint that loads boot config and either executes locally or hands off to Node runtime bootstrap. | [View Map](packages/runner-bun/src/bin/codemap.md) |
 | `packages/runner-python/` | Python sequence runtime and parity reference for host-channel connection, control/monitoring codecs, context, lifecycle, and sequence loading. | [View Map](packages/runner-python/codemap.md) |
-| `packages/sequence-test/` | Experimental sequence testing harness for exercising runner protocol paths with fixtures, fake instance transport, hub mocks, captures, and assertions. | [View Map](packages/sequence-test/codemap.md) |
+| `packages/sequence-test/` | Supported sequence testing harness for scoped local fixture/hub-harness/AppContext validation with fixtures, fake instance transport, hub mocks, captures, and assertions (not a full Hub/runner parity replacement). | [View Map](packages/sequence-test/codemap.md) |
 | `packages/sequence-test/src/` | Implementation layer for test harness primitives: runner launch plans, fake transport, hub simulation, fixtures, captures, input drivers, and request helpers. | [View Map](packages/sequence-test/src/codemap.md) |
 | `packages/adapters-common/` | Shared adapter helpers for stored-sequence metadata loading, language detection, and runner env shaping. | [View Map](packages/adapters-common/codemap.md) |
 | `packages/adapters-common/src/` | Implementation of runner env generation, sequence package validation, and stored-sequence config reconstruction. | [View Map](packages/adapters-common/src/codemap.md) |
@@ -114,7 +114,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 4. The selected adapter still launches `packages/runner/src/bin/start-runner.ts` as the outer runner.
 5. The outer runner writes a boot-config file, selects an executor via `selectExecutor()`, resolves the runtime wrapper entry, and spawns the child process with the fixed fd layout.
 6. Runtime wrapper packages (`runner-node`, `runner-bun`, and `runner-python`) consume the same boot config protocol and report lifecycle/monitoring over the same channels.
-7. `packages/sequence-test` can exercise portions of this protocol through generated fixtures, fake instance channels, captures, and hub mocks; it remains experimental and is not the default package testing strategy.
+7. `packages/sequence-test` provides fixtures, fake instance channels, captures, and hub mocks for scoped local fixture/harness/AppContext validation; it is supported for this scope and is not the default package testing strategy for other concerns.
 
 ## Codemap Maintenance Flow
 

@@ -60,21 +60,62 @@ function responseHeaders(response: Response): Record<string, string> {
     return headers;
 }
 
+/**
+ * Wraps JSON parse errors from RestAPI2 v2 client flows with a clear,
+ * actionable message.  Without this, route-metadata redirects (308) or
+ * empty-body CPM proxy responses surface as a bare SyntaxError that is
+ * indistinguishable from a genuine JSON bug.
+ *
+ * Only SyntaxErrors mentioning JSON parsing are caught; other errors
+ * propagate unchanged.
+ */
+function normalizeRestApiResponseError(original: unknown, routePath: string, status?: number): Error {
+    if (original instanceof SyntaxError && /JSON|parse|end of input|Unexpected/.test(original.message)) {
+        const code = status !== undefined ? ` status=${status}` : "";
+        return new Error(
+            `RestAPI2 response parse error for ${routePath}${code}: ${original.message}. ` +
+            `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
+            `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
+            `routing, or handle route-aware responses explicitly.`
+        );
+    }
+
+    return original instanceof Error ? original : new Error(String(original));
+}
+
 function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClientTransport {
     return {
         async request<T>(request: ApiClientRequest) {
             const path = appendQuery(materializePath(request.route.fullPath, request.params), request.query).replace(/^\//, "");
             const headers = { ...request.headers };
-            const response = await clientUtils.request(request.route.method as any, path, {
-                headers,
-                body: request.body === undefined ? undefined : JSON.stringify(request.body)
-            });
+            let response: Response;
+
+            try {
+                response = await clientUtils.request(request.route.method as any, path, {
+                    headers,
+                    body: request.body === undefined ? undefined : JSON.stringify(request.body)
+                });
+            } catch (err) {
+                // Catches JSON parse errors from the verser-common/agent layer
+                // before a Response object is formed (e.g. empty-body 308).
+                throw normalizeRestApiResponseError(err, request.route.fullPath);
+            }
+
             const text = await response.text();
+            let body: T | undefined;
+
+            if (text) {
+                try {
+                    body = JSON.parse(text) as T;
+                } catch (err) {
+                    throw normalizeRestApiResponseError(err, request.route.fullPath, response.status);
+                }
+            }
 
             return {
                 status: response.status,
                 headers: responseHeaders(response),
-                body: (text ? JSON.parse(text) : undefined) as T
+                body: body as T
             };
         }
     };
@@ -177,7 +218,20 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     const apiRoot = hostClient.getV2ApiBase().replace(/\/api\/v2\/?$/, "");
     const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent(apiRoot, hostClient.getAgent()));
     const v2Hub = createHubClient({ transport: restApi2Transport, basePath: "/api/v2" });
-    const v2Space = createSpaceClient({ transport: restApi2Transport, basePath: "/api/v1/cpm/api/v2" });
+
+    // Space v2 client: direct Manager/space v2 routing when spaceTargetDomain
+    // is explicitly configured, Hub-local v2 fallback otherwise. The
+    // hubClient() continues to use hubTargetDomain (from hostClient.getV2ApiBase())
+    // — the two target domains are independent.
+    const spaceTargetDomain = bootConfig.verser2Runtime?.spaceTargetDomain;
+    const v2Space = spaceTargetDomain
+        ? createSpaceClient({
+            transport: createRestApi2Transport(
+                new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, hostClient.getAgent())
+            ),
+            basePath: "/api/v2",
+        })
+        : createSpaceClient({ transport: restApi2Transport, basePath: "/api/v2" });
 
     const proxy: RunnerProxy = {
         keepAliveIssued: () => onKeepAliveIssued(),

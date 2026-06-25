@@ -137,6 +137,9 @@ export function wireControlStream(
                 case RunnerMessageCode.EVENT:
                     dispatch.onEvent(data as EventMessageData);
                     break;
+                case RunnerMessageCode.STORAGE:
+                    dispatch.onStorage(data as { values: Record<string, string> });
+                    break;
                 case RunnerMessageCode.STORAGE_UPDATE:
                     dispatch.onStorageUpdate(data as StorageUpdateMessageData);
                     break;

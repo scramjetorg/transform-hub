@@ -45,6 +45,11 @@ jobs:
     with:
       node-version: 18.x
 
+  test-sequence-appcontext:
+    uses: ./.github/workflows/test-sequence-appcontext.yml
+    with:
+      node-version: 18.x
+
   test-bdd-hub:
     needs: [build-sth, build-refapps]
     uses: ./.github/workflows/test-bdd-process.yml

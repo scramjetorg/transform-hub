@@ -50,6 +50,11 @@ export function getRunnerTransportEnv(
         throw new Error("STH-local verser2 runner Host configuration is required");
     }
 
+    const spaceTargetDomain = sthConfig.verser2.broker.targetDomain.trim();
+    const hasExplicitSpaceTargetDomain =
+        spaceTargetDomain !== "" &&
+        spaceTargetDomain !== "manager.cpm-manager.scramjet.internal";
+
     return {
         SCRAMJET_RUNNER_TRANSPORT_CONFIG: JSON.stringify({
             kind: "verser2",
@@ -58,6 +63,7 @@ export function getRunnerTransportEnv(
             guestId: `runner.${instanceId}.guest`,
             hubBrokerId: `runner.${instanceId}.hub.broker`,
             hubTargetDomain: sthConfig.verser2.guest.routeDomain,
+            ...(hasExplicitSpaceTargetDomain ? { spaceTargetDomain } : {}),
             leaseAcquireTimeoutMs: sthConfig.verser2.timeouts.leaseAcquireMs,
             minWaitingStreams: getRunnerMinWaitingStreams(sthConfig),
             tls: { ca: trustBundle }

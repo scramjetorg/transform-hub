@@ -16,6 +16,7 @@ import { createFdStreams } from "../fd-streams";
 import { buildPing } from "../handshake";
 import { HostClient } from "../host-client";
 import { mapToInputDataStream, readInputStreamHeaders } from "../input-stream";
+import { defer } from "@scramjet/utility";
 import { RunnerLifecycle } from "../lifecycle";
 import type { LifecycleContext } from "../lifecycle";
 import { MessageUtils } from "../message-utils";
@@ -220,6 +221,8 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                     appConfig,
                     args,
                     instanceName: bootConfig.instanceName,
+                    inputTopic: bootConfig.inputTopic,
+                    outputTopic: bootConfig.outputTopic,
                     exposePath: bootConfig.exposePath,
                     exposeHost: exposed?.host,
                     exposePort: exposed?.port,
@@ -283,6 +286,11 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             resolveKilled();
         },
         onEvent: (data) => emitter.emit(data.eventName, data.message),
+        onStorage: (data) => {
+            for (const [key, value] of Object.entries(data.values)) {
+                context.localStorage.handleBroadcastUpdate({ key, value });
+            }
+        },
         onStorageUpdate: (data) => context.localStorage.handleBroadcastUpdate(data),
     }, logger);
 
@@ -306,6 +314,18 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             sequenceRun.catch(error => logger.debug("Sequence rejected after terminal STOP", error));
         } else {
             await sequenceRun;
+
+            // Legacy parity: wait for exitTimeout after sequence completes
+            // so post-return control messages (events, storage updates) are
+            // still processed before writing SEQUENCE_COMPLETED.
+            const exitTimeout = bootConfig.verser2Runtime?.hubTargetDomain
+                ? 10_000
+                : 5_000;
+            await Promise.race([
+                defer(exitTimeout),
+                killedPromise,
+                terminalStopPromise,
+            ]);
 
             writeMonitoring(streams.monitoringOut, [
                 RunnerMessageCode.SEQUENCE_COMPLETED,

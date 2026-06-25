@@ -47,6 +47,7 @@ export interface ControlDispatch {
     onStop(data: StopSequenceMessageData): Promise<void>;
     onKill(): Promise<void>;
     onEvent(data: EventMessageData): void;
+    onStorage(data: { values: Record<string, string> }): void;
     onStorageUpdate(data: StorageUpdateMessageData): void;
 }
 
@@ -88,6 +89,8 @@ export interface RunnerHandshakeInputs {
     appConfig: AppConfig;
     args: unknown[];
     instanceName?: string;
+    inputTopic?: string;
+    outputTopic?: string;
     exposePath?: string;
     exposeHost?: string;
     exposePort?: number;

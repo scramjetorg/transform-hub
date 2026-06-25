@@ -169,7 +169,7 @@ interface HubContextLogger {
     error: (...args: unknown[]) => void;
 }
 
-interface HubContext {
+export interface HubContext {
     hub: {
         get(path: string): Promise<unknown>;
         post(path: string, body?: unknown): Promise<unknown>;

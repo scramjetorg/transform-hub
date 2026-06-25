@@ -179,7 +179,6 @@ guard3() {
             --glob '!**/*.d.ts' \
             --glob '!**/*.mtpl' \
             --glob '!**/*.cjs' \
-            --glob '!packages/sequence-test/**' \
             --glob '!packages/api-types/src/**' \
             2> /dev/null \
         || true

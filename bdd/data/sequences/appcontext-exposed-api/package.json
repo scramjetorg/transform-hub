@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "BDD fixture: AppContext exposed API endpoint.",
   "main": "index.js",
+  "exposePath": "/",
   "license": "ISC",
   "author": "Scramjet <open-source@scramjet.org>",
   "repository": {

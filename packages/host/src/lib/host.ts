@@ -363,6 +363,13 @@ export class Host implements IHost, IComponent {
     attachDispatcherEvents() {
         this.csiDispatcher
             .on("event", async ({ event, id }) => {
+                const sourceInstance = this.instancesStore.get(id) as any;
+
+                if (sourceInstance?.localEmitter) {
+                    sourceInstance.localEmitter.lastEvents[event.eventName] = event.message;
+                    sourceInstance.localEmitter.emit(event.eventName, event);
+                }
+
                 await this.eventBus({ ...event, source: id });
             })
             .on("end", async (eventData: DispatcherInstanceEndEventData) => {

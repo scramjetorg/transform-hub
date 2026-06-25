@@ -120,10 +120,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
                     await this.serviceDiscovery.routeTopicToStream(
                         { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
-                        csiController.getInputStream()
+                        await csiController.getInput(data.contentType as ContentType)
                     );
-
-                    csiController.inputHeadersSent = true;
 
                     await this.serviceDiscovery.update({
                         requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"

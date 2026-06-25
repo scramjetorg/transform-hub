@@ -9,10 +9,15 @@
  * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function appcontextExposedApiSequence(_input) {
-    this.api.use("/health", (_req, res) => {
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ status: "ok", service: "appcontext-exposed-api" }));
+    const handled = new Promise((resolve) => {
+        this.api.use("/health", (_req, res) => {
+            res.writeHead(200, { "content-type": "application/json" });
+            res.end(JSON.stringify({ status: "ok", service: "appcontext-exposed-api" }));
+            resolve(true);
+        });
     });
+
+    this.keepAlive(15_000);
 
     process.stdout.write(
         JSON.stringify({
@@ -22,6 +27,9 @@ module.exports = async function appcontextExposedApiSequence(_input) {
             timestamp: Date.now(),
         }) + "\n"
     );
+
+    await handled;
+    this.end();
 
     return { apiRoute: "/health", handled: true };
 };

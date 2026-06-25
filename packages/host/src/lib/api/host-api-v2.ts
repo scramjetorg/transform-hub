@@ -196,6 +196,13 @@ export class HostAPIV2Handler {
     }
 
     attach() {
+        this.api.get(`${this.v2ApiBase}/hubs`, (): RestAPI2.ListResponse<RestAPI2.Hub> => ({
+            items: [{
+                id: String((this.host as any).config?.host?.id || "hub"),
+                status: "ok"
+            }]
+        }));
+
         registerHttpRoutes(this.api, this.createV2Router());
     }
 

@@ -1,8 +1,16 @@
-AVA-friendly helpers for testing Scramjet Transform Sequences from the sequence developer's point of view. Supports running Node sequences directly, capturing outputs, and asserting lifecycle behavior without starting a full Transform Hub instance.
+AVA-friendly helpers for testing Scramjet Transform Sequences from the sequence developer's point of view, using local fixtures and the hub harness without starting a full Transform Hub instance.
+
+**Scope**: This package is supported for scoped local sequence fixture and hub-harness validation. It is not a full live Hub/process/Docker/Kubernetes parity replacement. For end-to-end host/process BDD coverage, use the `bdd/` test suite.
 
 Key features:
 - `runSequence()` — execute a Node sequence fixture and capture output
 - `createHubHarness()` — in-memory Hub/context simulation for lifecycle, events, logging, and API registration tests
 - `resolveSequenceFixtureMetadata()` — validate fixture metadata from package.json
 
-See the generated package docs for detailed usage and stability notes.
+Supported public exports for AppContext fixture validation:
+- **Hub harness**: `createHubHarness`, `createHubMock`, `createSequenceAssertions`
+- **Fixtures**: `createSequenceFixture`, `createNodeSequenceFixture`, `resolveSequenceFixtureMetadata`
+- **Execution**: `runSequence`, `createSequenceTest`
+- **Types**: `HubHarness`, `HubMock`, `HubContext`, `HubCallMatch`, `SequenceFixture`
+
+See the generated package docs for detailed usage and examples.

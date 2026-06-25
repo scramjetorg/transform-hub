@@ -9,7 +9,7 @@ title: Testing sequences with @scramjet/sequence-test
 
 # Testing sequences with @scramjet/sequence-test
 
-> **⚠️ Experimental**: `@scramjet/sequence-test` is an in-progress test harness. It is not the default testing solution for packages in this repository. Keep using each package's existing AVA tests plus package build/lint validation unless the task explicitly requires this package. See the [contributing guide](../development/contributing.md) for the current testing policy.
+> **⚠️ Scope**: `@scramjet/sequence-test` is supported for scoped local sequence fixture, hub-harness, and AppContext validation. It is **not** a replacement for package tests, BDD, adapter/runtime invariant checks, or full live Hub/process/Docker/Kubernetes parity. See the [contributing guide](../development/contributing.md) for the current testing policy.
 
 ## Overview
 

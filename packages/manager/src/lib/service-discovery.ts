@@ -147,7 +147,7 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
                 this.emit("update");
             });
 
-            this.stream.pipe(targetActor.stream as WritableStream<any>, { end: false });
+            this.stream.pipe(targetActor.stream as WritableStream<any>);
         } else {
             this.logger.error("Can't connect", this.role, this.type, this.host?.id);
             this.logger.error("...to", targetActor.role, targetActor.type, targetActor.host?.id);
@@ -280,16 +280,6 @@ export class ServiceDiscovery implements IServiceDiscovery {
 
         const providers = this.findRole(ActorRole.PROVIDER, topicName);
         const consumers = this.findRole(ActorRole.CONSUMER, topicName);
-
-        if (
-            providers.length === 1 &&
-            consumers.length === 1 &&
-            providers[0].type === ActorType.HOST &&
-            consumers[0].type === ActorType.HOST
-        ) {
-            this.logger.debug("Skipping Manager data-plane topic pipe for exact host-to-host topic pair", topicName);
-            return;
-        }
 
         await Promise.all(providers.map(async (provider) => {
             await Promise.all(consumers.map(async (consumer) => {

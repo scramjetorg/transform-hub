@@ -36,7 +36,7 @@ Monorepo workspace directory containing all Scramjet Transform Hub packages unde
 | `runner-bun/` | Bun sequence runtime wrapper for boot-config validation and delegated execution. | [View](runner-bun/codemap.md) |
 | `runner-node/` | Node sequence runtime: boot-config parsing, host channel setup, lifecycle, and sequence execution. | [View](runner-node/codemap.md) |
 | `runner-python/` | Python sequence runtime and parity reference for host-channel connection. | [View](runner-python/codemap.md) |
-| `sequence-test/` | Experimental sequence testing harness for exercising runner protocol paths. | [View](sequence-test/codemap.md) |
+| `sequence-test/` | Supported sequence testing harness for scoped local fixture/hub-harness/AppContext validation (not full Hub/runner parity replacement). | [View](sequence-test/codemap.md) |
 | `sth/` | Top-level STH wrapper owning process-facing lifecycle around a configured host instance. | [View](sth/codemap.md) |
 | `sth-config/` | STH configuration defaults, image defaults, deep-merge updates, and runtime-adapter selection. | [View](sth-config/codemap.md) |
 | `symbols/` | Shared constants and protocol symbols — message codes, statuses, stream states, headers, exit/error codes, runtime-kind. | [View](symbols/codemap.md) |

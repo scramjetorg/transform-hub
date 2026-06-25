@@ -25,6 +25,8 @@ export class CustomWorld implements World {
     resources: {
         [key: string]: any;
         hub?: ChildProcess;
+        appcontextExposeResponse?: { status: number; body: string };
+        hostClient?: HostClient;
         multiManagers: Record<string, MultiManagerClient & { process?: ChildProcess }>;
         managers: Record<string, ManagerClient>;
         hosts: Record<string, HostClient>;

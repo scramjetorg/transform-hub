@@ -80,7 +80,7 @@ Package-backed fixtures can use `resolveSequenceFixtureMetadata(directory)` to v
 
 ## Limitations
 
-- The package remains an experimental sequence behavior harness.
+- The package is **supported** for scoped local sequence fixture and hub-harness validation. It is **not** a full live Hub/process/Docker/Kubernetes parity replacement.
 - It does not replace package unit tests, BDD tests, adapter tests, runtime invariant checks, or full runner-protocol validation.
 - It does not start a real Transform Hub, Docker adapter, Kubernetes adapter, or BDD workflow.
 - `runSequence()` currently executes the direct Node fixture path; Python and Bun support is limited to runner planning in this package.

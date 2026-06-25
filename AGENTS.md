@@ -36,7 +36,7 @@
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
 ## Sequence-test package status
-- `@scramjet/sequence-test` is experimental/in-progress and must not be treated as the default valid testing solution for other packages.
+- `@scramjet/sequence-test` is supported for scoped local sequence fixture/hub-harness/AppContext validation. It must not be treated as the default replacement for package tests, BDD tests, adapter tests, or runtime invariant checks unless explicitly directed.
 - Keep using each package's existing AVA tests plus package build/lint validation unless the task explicitly asks for `@scramjet/sequence-test`.
 - Do not replace package tests, BDD tests, adapter tests, or runtime invariant checks with `@scramjet/sequence-test` unless explicitly directed.
 
