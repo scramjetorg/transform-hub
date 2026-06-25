@@ -131,8 +131,10 @@
     - [x] Review migration completeness, type ownership decisions, dependency churn, and AppContext behavior preservation.
     - [x] Incorporate or explicitly defer review findings before continuing.
     - Oracle review initially blocked on Guard 3 over-allowlisting BDD source paths and BDD AppContext fixture JSDoc references to `@scramjet/types`; fixes were applied and revalidated. Final oracle re-review result: Pass — Phase 3 can proceed to the user manual verification checkpoint / draft PR. Follow-up user review identified that REST API DTO namespaces in `@scramjet/api-types` were still placeholder shortcuts; this was fixed in Phase 3 by moving the full legacy REST DTO definitions for STH, Manager, MultiManager, Middleware, REST commons, and REST API errors into `@scramjet/api-types`, then re-exporting canonical REST namespaces through `@scramjet/types` compatibility and `@scramjet/api-client`. Remaining non-blocking recommendations deferred to later phases: tighten local `from-types` shims, revisit broad `runtime-types` ownership in Phase 6, and clean nested BDD fixture metadata references if they become part of final canonical split validation.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Repository Import Migration and Type Ownership Reduction' (Protocol in workflow.md)
-    - [ ] After oracle review passes, prepare the draft PR according to Branching Policy and provide the PR URL for manual verification.
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Repository Import Migration and Type Ownership Reduction' (Protocol in workflow.md)
+    - [x] After oracle review passes, prepare the draft PR according to Branching Policy and provide the PR URL for manual verification.
+        - Draft PR #35 is available at https://github.com/0rail/transform-hub/pull/35 targeting `feat/manager-oss` from `conductor/typings_split_appcontext_20260622`.
+        - Latest Phase 3 REST DTO ownership follow-up was pushed in commit `b5992ebe` and summarized in PR comment https://github.com/0rail/transform-hub/pull/35#issuecomment-4792091353.
     - [ ] Ask the user to manually verify the Phase 3 migration before moving to Phase 4.
 - [ ] Task: Conductor - Phase Completion 'Phase 3: Repository Import Migration and Type Ownership Reduction' (Protocol in workflow.md)
 
