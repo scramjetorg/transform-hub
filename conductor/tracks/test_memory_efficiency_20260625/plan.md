@@ -168,6 +168,8 @@ All validation commands in this track must run under a memory guard. Do not inte
 - Guarded validation:
   - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run test:runner`: 93/93 passed.
   - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" timeout 30 node scripts/run-bdd.js -- --dry-run --format @cucumber/pretty-formatter -t "@ci-appcontext and not @ignore"`: Docker-backed BDD dry-run completed with 7 skipped scenarios and 45 skipped steps; leak detection reported no leaked repository processes.
+  - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run test:packages-no-concurrent`: passed across package workspaces after stabilizing memory-heavy package scripts for `api-server`, `manager`, `runner`, `runner-node`, and `sth-config`.
+  - Targeted guarded reruns passed for `packages/api-server` (55 tests), `packages/manager` (166 tests), `packages/runner` (111 tests), `packages/runner-node` (89 tests), and `packages/sth-config` (8 tests).
   - `node -e "const leaked = require('./scripts/lib/bdd-cleanup.js').reportLeakedProcesses(); process.exit(leaked ? 1 : 0);"`: no leaked repository processes detected.
 - Lint validation:
   - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run lint`: completed with only pre-existing `scripts/docs.js` warnings (`noAssignInExpressions`, unused `routeKindBadge`/`opId`, and one escapable backtick). Session-introduced runner lint warnings were fixed and did not recur.

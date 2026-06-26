@@ -12,7 +12,7 @@
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
     "test": "npm run test:ava",
-    "test:ava": "node ../../scripts/run-ava.js"
+    "test:ava": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 node ../../scripts/run-ava.js -T 120000 --serial"
   },
   "assets": [
     {

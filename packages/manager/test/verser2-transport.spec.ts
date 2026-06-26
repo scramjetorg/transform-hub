@@ -122,11 +122,43 @@ class FakeBroker implements VerserBroker {
 function collectText(stream: Readable): Promise<string> {
     const chunks: Buffer[] = [];
 
-    stream.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-
     return new Promise((resolve, reject) => {
-        stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-        stream.on("error", reject);
+        const timer = setTimeout(() => {
+            stream.off("data", onData);
+            stream.off("end", onEnd);
+            stream.off("close", onClose);
+            stream.off("error", onError);
+            reject(new Error(`collectText timed out after 2000ms, got ${Buffer.concat(chunks).toString("utf8").length} chars`));
+        }, 2000);
+
+        const onData = (chunk: Buffer) => {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        };
+        const onEnd = () => {
+            clearTimeout(timer);
+            stream.off("close", onClose);
+            stream.off("error", onError);
+            resolve(Buffer.concat(chunks).toString("utf8"));
+        };
+        const onClose = () => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("end", onEnd);
+            stream.off("error", onError);
+            reject(new Error("collectText stream closed without end"));
+        };
+        const onError = (err: Error) => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("end", onEnd);
+            stream.off("close", onClose);
+            reject(err);
+        };
+
+        stream.on("data", onData);
+        stream.once("end", onEnd);
+        stream.once("close", onClose);
+        stream.once("error", onError);
     });
 }
 

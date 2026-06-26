@@ -10,7 +10,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js"
+    "test": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000 --serial"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",

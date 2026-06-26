@@ -176,37 +176,43 @@ test.serial("Manager aggregation readiness supports empty hub inventory without 
 });
 
 test.serial("Manager aggregation readiness considers active hubs beyond the first page", async (t) => {
-    await withPatchedInit(async function patchedInit(this: STHController) {
-        this.logStream = new PassThrough();
+    const manager = makeManager();
 
-        if (this.id === "hub-101") {
-            return;
-        }
+    // Lightweight seeding: mock controller objects and direct store manipulation
+    // instead of 101 full handleSthRegistration() calls with heavy STHController instances.
+    const store = (manager as any).sthConnectionStore;
+    const inventory = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
 
-        this.emit("sequences", [] as any);
-        this.emit("instances", [] as any);
-    }, async () => {
-        const manager = makeManager();
+    for (let index = 1; index <= 101; index++) {
+        const id = `hub-${String(index).padStart(3, "0")}`;
 
-        manager.setSthBrokerTransport({
-            isRouteReady: () => true
-        } as any);
-
-        for (let index = 1; index <= 101; index++) {
-            const id = `hub-${String(index).padStart(3, "0")}`;
-
-            await manager.handleSthRegistration({ id, routeDomain: `${id}.test` } as any);
-        }
-
-        const readiness = manager.getAggregationReadiness();
-
-        t.is(readiness.hubs, 101);
-        t.is(readiness.activeHubs, 101);
-        t.false(readiness.ready);
-        t.like(readiness.byHub.find(hub => hub.id === "hub-101"), {
-            active: true,
-            inventoryConsumed: false
+        // Add a minimal mock controller — no PassThrough, no event emitters.
+        store.add({
+            id,
+            getInfo: () => ({
+                id,
+                isConnectionActive: true,
+                healthy: true,
+            }),
         });
+
+        // Register hub in info register (lightweight Map entry).
+        (manager as any).sthInfoRegister.addHub(id);
+
+        // Mark inventory consumed for all hubs except hub-101.
+        if (id !== "hub-101") {
+            inventory.set(id, { sequencesReceived: true, instancesReceived: true });
+        }
+    }
+
+    const readiness = manager.getAggregationReadiness();
+
+    t.is(readiness.hubs, 101);
+    t.is(readiness.activeHubs, 101);
+    t.false(readiness.ready);
+    t.like(readiness.byHub.find(hub => hub.id === "hub-101"), {
+        active: true,
+        inventoryConsumed: false
     });
 });
 

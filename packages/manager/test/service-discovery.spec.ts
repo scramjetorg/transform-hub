@@ -44,24 +44,75 @@ function waitImmediate(): Promise<void> {
 }
 
 function readChunk(stream: PassThrough): Promise<string> {
-    return new Promise(resolve => {
-        stream.once("data", chunk => resolve(Buffer.from(chunk).toString("utf8")));
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            stream.off("data", onData);
+            stream.off("close", onClose);
+            stream.off("error", onError);
+            reject(new Error("readChunk timed out after 1000ms"));
+        }, 1000);
+
+        const onData = (chunk: Buffer) => {
+            clearTimeout(timer);
+            stream.off("close", onClose);
+            stream.off("error", onError);
+            resolve(Buffer.from(chunk).toString("utf8"));
+        };
+        const onClose = () => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("error", onError);
+            reject(new Error("readChunk stream closed without data"));
+        };
+        const onError = (err: Error) => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("close", onClose);
+            reject(err);
+        };
+
+        stream.once("data", onData);
+        stream.once("close", onClose);
+        stream.once("error", onError);
     });
 }
 
 function readChunks(stream: PassThrough, count: number): Promise<string[]> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         const chunks: string[] = [];
+        const timer = setTimeout(() => {
+            stream.off("data", onData);
+            stream.off("close", onClose);
+            stream.off("error", onError);
+            reject(new Error(`readChunks timed out after 2000ms, got ${chunks.length}/${count} chunks: ${JSON.stringify(chunks)}`));
+        }, 2000);
+
         const onData = (chunk: Buffer) => {
             chunks.push(Buffer.from(chunk).toString("utf8"));
 
             if (chunks.length === count) {
-                stream.off("data", onData);
+                clearTimeout(timer);
+                stream.off("close", onClose);
+                stream.off("error", onError);
                 resolve(chunks);
             }
         };
+        const onClose = () => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("error", onError);
+            reject(new Error(`readChunks stream closed after ${chunks.length}/${count} chunks`));
+        };
+        const onError = (err: Error) => {
+            clearTimeout(timer);
+            stream.off("data", onData);
+            stream.off("close", onClose);
+            reject(err);
+        };
 
         stream.on("data", onData);
+        stream.once("close", onClose);
+        stream.once("error", onError);
     });
 }
 
