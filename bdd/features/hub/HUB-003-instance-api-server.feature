@@ -11,6 +11,7 @@ Feature: Expose API route in sequence
         When I send a "GET" request to "/rpc/test/abc"
         Then the response status should be 200
         And the response body should be "GET /abc"
+        * exit hub process
 
     # API POST
     @ci-hub @starts-host
@@ -20,6 +21,7 @@ Feature: Expose API route in sequence
         When I send a "POST" request to "/rpc/test/abc" with body "test"
         Then the response status should be 200
         And the response body should be "POST /abc test"
+        * exit hub process
 
     # API DELETE
     @ci-hub @starts-host
@@ -29,6 +31,7 @@ Feature: Expose API route in sequence
         When I send a "DELETE" request to "/rpc/test/abc"
         Then the response status should be 200
         And the response body should be "DELETE /abc"
+        * exit hub process
 
     # API UNKNOWN (in this example PUT)
     @ci-hub @starts-host
@@ -38,6 +41,7 @@ Feature: Expose API route in sequence
         When I send a "PUT" request to "/rpc/test/abc" with body "test"
         Then the response status should be 405
         And the response body should be "Method Not Allowed"
+        * exit hub process
 
     # API INSTANCE ALIAS ROUTING
     @ci-hub @starts-host @slow
@@ -50,3 +54,4 @@ Feature: Expose API route in sequence
         When I send a "GET" request to "/instance/orders-rpc/rpc/test/abc"
         Then the response status should be 200
         And the response body should be "GET /abc"
+        * exit hub process

@@ -10,7 +10,7 @@ import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
-import { defer, streamToString } from "../../lib/utils";
+import { defer, waitUntilStreamEquals } from "../../lib/utils";
 import { promisify } from "util";
 import { readFile } from "fs/promises";
 import { HostUtils } from "../../lib/host-utils";
@@ -325,7 +325,7 @@ Then("the output of an instance of {string} is as in {string} file", async funct
 
     const instClient = InstanceClient.from(instance.id, hostClient);
 
-    const out = await streamToString(await instClient.getStream("output"));
+    const out = await waitUntilStreamEquals(await instClient.getStream("output"), fileData);
 
     assert.strictEqual(out, fileData);
 });
