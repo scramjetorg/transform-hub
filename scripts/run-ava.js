@@ -1,103 +1,103 @@
 #!/usr/bin/env node
 
-const { spawnSync } = require("child_process");
-const { existsSync, readFileSync } = require("fs");
-const { dirname, join, resolve } = require("path");
+/**
+ * @file scripts/run-ava.js
+ *
+ * Supported AVA / package‑test runner for the Scramjet Transform Hub monorepo.
+ *
+ * This script is the sole supported entry point for running AVA‑based package
+ * tests.  All package `test` / `test:ava` / `npm test` scripts route through
+ * this runner, which enforces consistent resource‑control defaults:
+ *
+ *   – Heap limit:    --max-old-space-size=1536 (configurable via
+ *                    SCRAMJET_AVA_MAX_OLD_SPACE_SIZE)
+ *   – JIT profile:   --jitless by default (avoids V8 CodeRange OOM under
+ *                    <2G memory; opt out via SCRAMJET_AVA_JITLESS=0 which
+ *                    adds WASM limits for tests that need WebAssembly)
+ *   – WASM limits:   applied automatically when JIT is enabled
+ *   – Fetch:         --no-experimental-fetch on SCRAMJET_AVA_FETCH=0
+ *   – Workers:       default 2, override via SCRAMJET_AVA_WORKERS env var
+ *   – Timeout:       runner‑level timeout via SCRAMJET_AVA_TIMEOUT env var
+ *                    (default 600000 ms = 10 min).  AVA's per‑test timeout
+ *                    (-T flag, passed through to ava CLI) is independent.
+ *   – Bypass guard:  SCRAMJET_AVA_RUNNER=1 set in child env;
+ *                    opt‑in preload warning on SCRAMJET_AVA_GUARD=1.
+ *                    NOTE: the guard only protects runner‑spawned AVA
+ *                    processes; direct `npx ava` cannot be intercepted.
+ *
+ * Usage (from a package directory):
+ *   node ../../scripts/run-ava.js [AVA-OPTIONS...]
+ *
+ * Environment variables (all optional):
+ *   See scripts/lib/ava-options.js for the full list.
+ */
 
-function findPackageRoot(entrypoint) {
-    let current = dirname(entrypoint);
 
-    while (current !== dirname(current)) {
-        const packageFile = join(current, "package.json");
+const { spawnSync } = require("node:child_process");
 
-        if (existsSync(packageFile)) {
-            return current;
-        }
+const {
+	buildAvaArgs,
+	avaNodeOptions,
+	runnerInvocationEnv,
+	runnerTimeout,
+} = require("./lib/ava-options.js");
 
-        current = dirname(current);
-    }
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-    throw new Error(`Could not find AVA package root from ${entrypoint}`);
+/**
+ * Print a one‑line usage message and exit.
+ */
+function printUsage() {
+	const bin = "node ../../scripts/run-ava.js";
+
+	console.error(`Usage: ${bin} [AVA-OPTIONS...]
+
+Supported AVA options are passed through to the ava CLI.
+Environment variables honoured by the runner are documented in
+scripts/lib/ava-options.js.`);
+	process.exit(1);
 }
 
-function resolveAvaCli() {
-    const avaEntrypoint = require.resolve("ava", { paths: [process.cwd()] });
-    const packageRoot = findPackageRoot(avaEntrypoint);
-    const packageJson = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
-    const bin = typeof packageJson.bin === "string" ? packageJson.bin : packageJson.bin?.ava;
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
 
-    if (!bin) {
-        throw new Error("AVA package does not declare an ava binary");
-    }
-
-    return resolve(packageRoot, bin);
+// --help shortcut
+if (process.argv.slice(2).includes("--help")) {
+	printUsage();
 }
 
-function appendNodeOption(options, option) {
-    const parts = options.split(/\s+/).filter(Boolean);
-    const optionName = option.split("=")[0];
+// Build the spawn arguments using the centralised helper.
+const cliArgs = process.argv.slice(2);
+const args = buildAvaArgs(cliArgs);
 
-    if (parts.some(part => part === option || part.startsWith(`${optionName}=`))) {
-        return options;
-    }
+// Build the child environment.
+const childEnv = {
+	...process.env,
+	NODE_OPTIONS: avaNodeOptions(),
+	...runnerInvocationEnv(),
+};
 
-    return [...parts, option].join(" ");
-}
+// Resolve timeout.
+const timeout = runnerTimeout();
 
-function replaceNodeOption(options, option) {
-    const optionName = option.split("=")[0];
-    const parts = options.split(/\s+/).filter(Boolean).filter(part => part !== optionName && !part.startsWith(`${optionName}=`));
-
-    return [...parts, option].join(" ");
-}
-
-function removeNodeOption(options, option) {
-    const optionName = option.split("=")[0];
-
-    return options.split(/\s+/).filter(Boolean).filter(part => part !== optionName && !part.startsWith(`${optionName}=`)).join(" ");
-}
-
-function isDisabled(value) {
-    return ["0", "false", "no", "off"].includes(String(value).toLowerCase());
-}
-
-function avaNodeOptions(options = process.env.NODE_OPTIONS || "") {
-    const withHeapLimit = replaceNodeOption(options, "--max-old-space-size=1536");
-    const withFetchMode = isDisabled(process.env.SCRAMJET_AVA_FETCH)
-        ? appendNodeOption(withHeapLimit, "--no-experimental-fetch")
-        : withHeapLimit;
-
-    if (isDisabled(process.env.SCRAMJET_AVA_JITLESS)) {
-        return removeNodeOption(withFetchMode, "--jitless");
-    }
-
-    return appendNodeOption(withFetchMode, "--jitless");
-}
-
-function avaNodeArgs() {
-    if (!isDisabled(process.env.SCRAMJET_AVA_JITLESS)) {
-        return [];
-    }
-
-    return [
-        "--wasm-num-compilation-tasks=1",
-        "--wasm-max-mem-pages=4096",
-        "--wasm-max-committed-code-mb=128",
-        "--wasm-max-code-space-size-mb=128"
-    ];
-}
-
-const avaCli = resolveAvaCli();
-const result = spawnSync(process.execPath, [...avaNodeArgs(), avaCli, ...process.argv.slice(2)], {
-    env: {
-        ...process.env,
-        NODE_OPTIONS: avaNodeOptions()
-    },
-    stdio: "inherit"
+// Spawn AVA.
+const result = spawnSync(process.execPath, args, {
+	env: childEnv,
+	stdio: "inherit",
+	timeout,
 });
 
+// Report / exit.
 if (result.error) {
-    throw result.error;
+	if (result.error.code === "ETIMEDOUT") {
+		console.error(`\n[run-ava.js] AVA timed out after ${timeout} ms`);
+		process.exit(124);
+	}
+
+	throw result.error;
 }
 
 process.exit(result.status === null ? 1 : result.status);

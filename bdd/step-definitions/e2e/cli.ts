@@ -324,6 +324,20 @@ Then("I confirm data named {string} will be received", async function (
     this.cliResources!.commandInProgress!.kill();
 });
 
+Then("I confirm collected topic data named {string} will be received", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
+    this: CustomWorld,
+    data
+) {
+    const expected = expectedResponses[data];
+    const startedAt = Date.now();
+
+    while (this.cliResources.collectedTopicData !== expected && Date.now() - startedAt < BDD_MAX_STEP_TIMEOUT_MS) {
+        await defer(100);
+    }
+
+    assert.equal(this.cliResources.collectedTopicData, expected);
+});
+
 Then("I confirm all topic data named {string} received", async function (
     this: CustomWorld,
     data

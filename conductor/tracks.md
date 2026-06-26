@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: memory efficiency in tests (issues 38 and 39)**
-*Link: [./tracks/test_memory_efficiency_20260625/](./tracks/test_memory_efficiency_20260625/)*
+- [x] **Track: memory efficiency in tests (issues 38 and 39)**
+*Link: [./archive/test_memory_efficiency_20260625/](./archive/test_memory_efficiency_20260625/)*

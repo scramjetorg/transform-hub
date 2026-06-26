@@ -48,26 +48,24 @@ This feature checks topic functionalities over CLI
         Then send json data "Rosa" named "pets"
         Then send json data "Fahume" named "pets"
         Then I execute CLI with "topic get pets" and collect data
-        Then I confirm data named "pets" will be received
+        Then I confirm collected topic data named "pets" will be received
         Then send json data "Yogi" named "pets"
         Then send json data "Molly" named "pets"
         Then send json data "Sisi" named "pets"
-        And wait for "1000" ms
-        Then I confirm all topic data named "pets2" received
+        Then I confirm collected topic data named "pets2" will be received
         And host is still running
         And kill process "topic get"
 
-    @ci-topic @cli
+    @ci-topic @cli @slow
     Scenario: E2E-011 TC-006 Complete data delivery when topic initiated by "topic get"
         Given host is running
         Then I execute CLI with "topic get pets" and collect data
         Then send json data "Bonnie" named "pets"
         Then send json data "Rosa" named "pets"
         Then send json data "Fahume" named "pets"
-        Then I confirm data named "pets" will be received
+        Then I confirm collected topic data named "pets" will be received
         Then send json data "Yogi" named "pets"
         Then send json data "Molly" named "pets"
         Then send json data "Sisi" named "pets"
-        And wait for "1000" ms
-        Then I confirm all topic data named "pets2" received
+        Then I confirm collected topic data named "pets2" will be received
         And host is still running

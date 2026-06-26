@@ -1,22 +1,45 @@
 #!/usr/bin/env node
 
+/**
+ * @file scripts/run-bdd-docker.js
+ *
+ * Supported BDD (Cucumber) runner for the Scramjet Transform Hub monorepo.
+ *
+ * Runs BDD tests inside a Docker container with resource‑control defaults
+ * chosen for stability under a host‑level <2G memory limit.
+ *
+ * Defaults (overridable via env vars):
+ *   – Container memory:  1536m  (BDD_DOCKER_MEMORY)
+ *   – Container CPUs:    2      (BDD_DOCKER_CPUS)
+ *   – Runner timeout:    600s   (BDD_TIMEOUT_MS)
+ *   – Grace period:      10s    (BDD_GRACE_MS)
+ *
+ * Usage:
+ *   node scripts/run-bdd-docker.js [-- [CUCUMBER-OPTIONS...]]
+ *
+ * All arguments after an optional `--` separator are forwarded to
+ * `npm --prefix ./bdd run test:bdd`.
+ */
+
 const { spawn, spawnSync } = require("child_process");
 const crypto = require("crypto");
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 
-const readPositiveInteger = (raw, fallback) => {
-    const value = Number(raw);
+const {
+    memoryLimit,
+    cpuLimit,
+    timeoutMs,
+    graceMs,
+} = require("./lib/bdd-options.js");
 
-    return Number.isFinite(value) && value > 0 ? value : fallback;
-};
+const { reportLeakedProcesses } = require("./lib/bdd-cleanup.js");
 
 const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || "node:22";
-const BDD_DOCKER_MEMORY = process.env.BDD_DOCKER_MEMORY || "4096m";
-const BDD_DOCKER_CPUS = process.env.BDD_DOCKER_CPUS || "";
-const BDD_TIMEOUT_MS = readPositiveInteger(process.env.BDD_TIMEOUT_MS, 0);
-const BDD_GRACE_MS = readPositiveInteger(process.env.BDD_GRACE_MS, 15000);
+const BDD_DOCKER_MEMORY = memoryLimit();
+const BDD_DOCKER_CPUS = cpuLimit();
+const BDD_TIMEOUT_MS = timeoutMs();
+const BDD_GRACE_MS = graceMs();
 
 const TIMEOUT_EXIT_CODE = 124;
 const MISSING_DEPENDENCY_EXIT_CODE = 127;
@@ -52,7 +75,7 @@ if (!dockerGid) {
 }
 
 const repoRoot = path.resolve(__dirname, "..");
-const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-runner."));
+const tmpDir = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "bdd-runner."));
 const containerName = `bdd-runner-${process.pid}-${crypto.randomBytes(3).toString("hex")}`;
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
@@ -170,8 +193,21 @@ const cleanup = () => {
     }
 };
 
+// Scope cleanup to current run resources only.
+process.once("exit", () => {
+    // Remove only this run's temp dir.
+    try {
+        if (tmpDir && require("fs").existsSync(tmpDir)) {
+            require("fs").rmSync(tmpDir, { recursive: true, force: true });
+        }
+    } catch {
+        // best effort
+    }
+});
+
 const exitWith = (code) => {
     cleanup();
+    reportLeakedProcesses();
     process.exit(code);
 };
 

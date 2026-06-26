@@ -68,14 +68,57 @@ function spawnProcess(
     });
 }
 
-function stopProcess(childProcess: ChildProcess): Promise<void> {
+/**
+ * Gracefully stop a child process with TERM‑to‑KILL escalation.
+ *
+ * 1. Sends SIGTERM to the process.
+ * 2. Waits up to `graceMs` (default 10000) for it to exit.
+ * 3. If still alive, sends SIGKILL.
+ *
+ * @param childProcess  The ChildProcess to stop.
+ * @param graceMs       Grace period in ms before SIGKILL (default 10000).
+ * @returns             Resolves when the process has exited.
+ */
+function stopProcess(childProcess: ChildProcess, graceMs = 10000): Promise<void> {
     return new Promise((resolve) => {
-        if (childProcess && childProcess.pid !== undefined) {
-            childProcess.once("exit", () => resolve());
-            childProcess.kill("SIGTERM");
-        } else {
+        if (!childProcess || childProcess.pid === undefined) {
             resolve();
+            return;
         }
+
+        let settled = false;
+
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+        };
+
+        childProcess.once("exit", () => finish());
+
+        // 1. Send SIGTERM.
+        childProcess.kill("SIGTERM");
+
+        // 2. Wait grace period.
+        const timer = setTimeout(() => {
+            if (settled) return;
+
+            // 3. Escalate to SIGKILL.
+            try {
+                childProcess.kill("SIGKILL");
+            } catch {
+                // May already be gone.
+            }
+
+            // Give the kill a moment to take effect, then resolve.
+            setTimeout(finish, 500);
+        }, graceMs);
+
+        // Cancel escalation if the process exits on its own.
+        childProcess.once("exit", () => {
+            clearTimeout(timer);
+            finish();
+        });
     });
 }
 

@@ -85,7 +85,7 @@ test("Verser2RunnerTransport exposes verser2 kind and route contracts", t => {
     const transport = new Verser2RunnerTransport();
 
     t.is(transport.kind, "verser2");
-    t.is(transport.routeContracts, DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS);
+    t.deepEqual(transport.routeContracts, DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS);
     t.truthy(transport.routeContracts.runnerDomain);
 });
 

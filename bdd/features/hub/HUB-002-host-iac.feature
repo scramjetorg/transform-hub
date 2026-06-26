@@ -60,7 +60,7 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
         And host is running
         * exit hub process
 
-    @ci-hub @starts-host
+    @ci-hub @starts-host @slow
     Scenario: HUB-002 TC-005 Required startup restart exhaustion should fail host fast
         When hub process is started with random ports expecting exit code 1 and parameters "--sequences-root data/sequences/ --identify-existing --startup-config data/sample-config-required-exit.json --runtime-adapter=process"
         Then host is running

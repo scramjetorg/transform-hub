@@ -12,7 +12,6 @@ Feature: Full Sequence AppContext Behavior
   Scenario: APPCONTEXT-001 TC-001 Sequence reads config and instanceId from AppContext
     When find and upload sequence "appcontext-config.tar.gz"
     And instance started
-    And wait for "2000" ms
     Then "stdout" contains "appcontext-config"
     And host is still running
 
@@ -20,7 +19,6 @@ Feature: Full Sequence AppContext Behavior
   Scenario: APPCONTEXT-001 TC-002 Sequence calls keepAlive and end through AppContext
     When find and upload sequence "appcontext-lifecycle.tar.gz"
     And instance started
-    And wait for "1000" ms
     Then "stdout" contains "appcontext-lifecycle"
     And host is still running
 
@@ -40,7 +38,6 @@ Feature: Full Sequence AppContext Behavior
   Scenario: APPCONTEXT-001 TC-004 Sequence uses localStorage through AppContext
     When find and upload sequence "appcontext-storage.tar.gz"
     And instance started
-    And wait for "2000" ms
     Then "stdout" contains "appcontext-storage"
     And host is still running
 
@@ -58,7 +55,6 @@ Feature: Full Sequence AppContext Behavior
   Scenario: APPCONTEXT-001 TC-006 Sequence uses legacy hub and space clients through AppContext
     When find and upload sequence "appcontext-legacy-clients.tar.gz"
     And instance started
-    And wait for "3000" ms
     Then "stdout" contains "appcontext-legacy-clients"
     And host is still running
 
@@ -66,6 +62,5 @@ Feature: Full Sequence AppContext Behavior
   Scenario: APPCONTEXT-001 TC-007 Sequence uses v2 hubClient and spaceClient through AppContext
     When find and upload sequence "appcontext-v2-clients.tar.gz"
     And instance started
-    And wait for "5000" ms
     Then "stdout" contains "appcontext-v2-clients"
     And host is still running
