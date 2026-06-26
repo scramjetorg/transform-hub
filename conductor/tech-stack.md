@@ -58,8 +58,9 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 
 ## Testing Stack
 
-- **Unit/package tests**: AVA-style TypeScript specs using `ts-node/register`; package AVA runs go through `scripts/run-ava.js`, which applies `--max-old-space-size=1536 --jitless` to the spawned AVA process to avoid worker CodeRange OOMs under the repository virtual-memory cap.
-- **BDD tests**: Cucumber-based scenarios under `bdd/`.
+- **Unit/package tests**: AVA-style TypeScript specs using `ts-node/register`; all package AVA runs go through `scripts/run-ava.js` which applies safe defaults (`--max-old-space-size=1536`, `--jitless`, concurrency 2, runner timeout 600000 ms) to avoid worker CodeRange OOMs under the repository virtual-memory cap.
+- **BDD tests**: Cucumber-based scenarios under `bdd/`. The supported entrypoint is `scripts/run-bdd.js` (Docker mode default for memory-constrained runs). Direct mode (`--mode=direct`) is diagnostic/local only. All exit paths include post-run leak detection for STH/Host/runner/Manager/MultiManager/cucumber processes.
+- **Runner regression tests**: `npm run test:runner` covers AVA and BDD runner helper tests.
 - **Coverage**: nyc/istanbul tooling.
 - **Runtime parity tests**: used especially for runtime wrapper behavior.
 - **API route/client tests**: package-level route-manifest, OpenAPI, generic-client, no-circumvention, and v1/v2 compatibility tests for migrated API surfaces.

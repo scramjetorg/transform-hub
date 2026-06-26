@@ -1,7 +1,7 @@
 import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
-import { SIGTERM } from "constants";
+import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
@@ -54,33 +54,72 @@ export class HostUtils {
             return;
         }
 
-        if (!this.host || !HostUtils.killProcessGroup(this.host, SIGTERM)) {
+        // Use TERM-to-KILL escalation with default 10s grace period.
+        if (!this.host || !HostUtils.killProcessGroup(this.host, SIGTERM, 10000)) {
             throw new Error("Couldn't stop host");
         }
     }
 
-    static killProcessGroup(child: ChildProcess, signal: NodeJS.Signals | number = SIGTERM): boolean {
+    /**
+     * Send a signal to a child's process group.
+     *
+     * Provides TERM‑to‑KILL escalation: when `signal` is SIGTERM and the
+     * process is still alive after `escalateMs`, a SIGKILL is sent to the
+     * same process group.
+     *
+     * @param child        ChildProcess to signal.
+     * @param signal       Signal name or number (default SIGTERM).
+     * @param escalateMs   Grace period before SIGKILL (default 0 = no escalation).
+     * @returns            True if the signal was sent (or process already gone).
+     */
+    static killProcessGroup(
+        child: ChildProcess,
+        signal: NodeJS.Signals | number = SIGTERM,
+        escalateMs = 0
+    ): boolean {
         if (!child.pid) {
             return false;
         }
 
-        try {
-            process.kill(-child.pid, signal);
-            return true;
-        } catch (error) {
-            const code = (error as NodeJS.ErrnoException).code;
-
-            if (code === "ESRCH") {
+        const doKill = (sig: NodeJS.Signals | number): boolean => {
+            try {
+                process.kill(-child.pid!, sig);
                 return true;
-            }
+            } catch (error) {
+                const code = (error as NodeJS.ErrnoException).code;
 
-            return child.kill(signal);
+                if (code === "ESRCH") {
+                    return true;
+                }
+
+                return child.kill(sig);
+            }
+        };
+
+        const sent = doKill(signal);
+
+        if (signal === SIGTERM && escalateMs > 0 && sent) {
+            // Schedule escalation to SIGKILL after the grace period.
+            const timer = setTimeout(() => {
+                try {
+                    process.kill(-child.pid!, SIGKILL);
+                } catch {
+                    // process already gone — fine
+                }
+            }, escalateMs);
+
+            // Cancel escalation if the process exits on its own.
+            child.once("exit", () => clearTimeout(timer));
         }
+
+        return sent;
     }
 
     private static cleanup(signal: NodeJS.Signals | number = SIGTERM) {
+        const escalate = signal === SIGTERM ? 10000 : 0;
+
         for (const host of HostUtils.hosts) {
-            HostUtils.killProcessGroup(host, signal);
+            HostUtils.killProcessGroup(host, signal, escalate);
         }
     }
 

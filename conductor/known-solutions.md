@@ -19,8 +19,8 @@ Constraints: Only apply when package-level configs exist and the task is package
 Ignore-If: The task explicitly requires root TypeScript config files; package-level configs are also missing; the missing file is not a TypeScript config discovery issue.
 
 ### AVA binary mismatch in newly added workspace package
-Problem: A workspace package test script using bare `ava` exits with “Test files must be run with the AVA CLI” because the resolved binary and imported package can come from different workspace locations.
-Solution: Invoke AVA through `scripts/run-ava.js`, which resolves `ava/cli.js` from the active package context and spawns it as a real CLI process without hard-coded relative `node_modules` paths.
+Problem: A workspace package test script using bare `ava` exits with "Test files must be run with the AVA CLI" because the resolved binary and imported package can come from different workspace locations.
+Solution: Invoke AVA through `scripts/run-ava.js`, which resolves `ava/cli.js` from the active package context and spawns it as a real CLI process without hard-coded relative `node_modules` paths. The runner enforces consistent heap, JIT/WASM, concurrency, and timeout defaults; do not bypass it.
 Constraints: Do not call AVA through hard-coded relative `node_modules` paths; keep package-specific AVA flags such as timeouts or coverage wrappers intact.
 Ignore-If: The package has a working local AVA binary; the failure is an assertion failure or intentional red TDD case; a broader dependency install strategy is being changed intentionally.
 
@@ -32,7 +32,7 @@ Ignore-If: The install or package resolution actually failed; direct reads of kn
 
 ### Memory-constrained Node validation
 Problem: Broad Node/npm validation or subagent-triggered tests can exceed available heap and cause OOM in this repository.
-Solution: Start agent-invoked tests and Node validation with `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`; instruct review agents not to run direct commands unless they use this guard, and prefer focused package tests/builds over broad suites.
+Solution: Start agent-invoked tests and Node validation with `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`; instruct review agents not to run direct commands unless they use this guard, and prefer focused package tests/builds over broad suites. For BDD, use Docker mode (`scripts/run-bdd.js` default) which applies container-level memory limits; direct mode may fail under strict host ulimit due to ssh2/poly1305 WebAssembly allocation.
 Constraints: Apply to validation/test/build commands unless run through a repo/package test runner that already owns process setup and memory behavior; do not use it to hide real test failures; still inspect non-OOM failures normally.
 Ignore-If: The command is non-Node/non-npm; the failure is an assertion/type/build error rather than heap pressure; the command already runs under a runner-specific or equivalent memory guard; the user explicitly requests an unguarded run.
 

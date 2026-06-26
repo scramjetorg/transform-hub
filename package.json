@@ -51,9 +51,10 @@
     "biome:lint": "RAYON_NUM_THREADS=12 biome lint .",
     "check:runtime-invariants": "bash scripts/check-runtime-wrapper-invariants.sh",
     "check:typings-split": "bash scripts/check-typings-split-boundaries.sh && node node_modules/typescript/bin/tsc -p packages/types/test-typings-split/tsconfig.json --noEmit",
-    "test:sequence-appcontext": "cd packages/sequence-test && ulimit -v 1835008 2>/dev/null; node ../../scripts/run-ava.js test/harness/sequence-types-api.spec.ts",
+    "test:runner": "ulimit -v 1835008 2>/dev/null && node scripts/run-ava.js scripts/test/*.spec.js --serial",
+    "test:sequence-appcontext": "cd packages/sequence-test && ulimit -v 1835008 2>/dev/null && node ../../scripts/run-ava.js test/harness/sequence-types-api.spec.ts",
     "pack:appcontext-fixtures": "node scripts/pack-appcontext-fixtures.js",
-    "test:bdd-appcontext": "npm run pack:appcontext-fixtures && cd bdd && SCRAMJET_SPAWN_TS=1 RUNTIME_ADAPTER=process PACKAGES_DIR=\"data/sequences/appcontext-packages/\" npx cucumber-js features/appcontext/APPCONTEXT-001-full-sequence.feature --tags \"@ci-appcontext and not @ignore\" --exit --format @cucumber/pretty-formatter",
+    "test:bdd-appcontext": "npm run pack:appcontext-fixtures && SCRAMJET_SPAWN_TS=1 RUNTIME_ADAPTER=process PACKAGES_DIR=\"data/sequences/appcontext-packages/\" node scripts/run-bdd.js -- features/appcontext/APPCONTEXT-001-full-sequence.feature --tags \"@ci-appcontext and not @ignore\" --exit --format @cucumber/pretty-formatter",
     "check:typings-split:boundaries": "bash scripts/check-typings-split-boundaries.sh",
     "check:typings-split:types": "node node_modules/typescript/bin/tsc -p packages/types/test-typings-split/tsconfig.json --noEmit",
     "check:verser2-packages": "node scripts/check-verser2-github-packages.js",
@@ -68,11 +69,11 @@
     "test:packages-no-concurrent": "scripts/run-script.js -j 1 test",
     "test:bdd-ci-hub": "NO_HOST=true node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-hub and not @requires-docker and not @docker-specific and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-hub-docker": "NO_HOST=true RUNTIME_ADAPTER=docker node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-hub and @requires-docker and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
-    "test:bdd-manager-migration": "BDD_INCLUDE_LONG_RUNNING=1 npm --prefix bdd run test:bdd -- --format=@cucumber/pretty-formatter -t \"@manager-migration and not @ignore and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
+    "test:bdd-manager-migration": "BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd.js -- --format=@cucumber/pretty-formatter -t \"@manager-migration and not @ignore and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-api": "npm run test:bdd-ci-api-node",
     "test:bdd-ci-api-node": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-api and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-api-topic": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-topic and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
-    "test:bdd-ci-verser2": "NO_HOST=true npm --prefix bdd run test:bdd -- --format=@cucumber/pretty-formatter -t \"@ci-verser2 and not @ignore\"",
+    "test:bdd-ci-verser2": "NO_HOST=true node scripts/run-bdd.js -- --format=@cucumber/pretty-formatter -t \"@ci-verser2 and not @ignore\"",
     "test:bdd-ci-python": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-instance-python and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-node": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-instance-node and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-long": "BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd-docker.js -- --fail-fast -t \"@slow or @stress or @perf or @load or @external-dependency or @compatibility or @manager-migration or @requires-docker or @docker-specific\"",
@@ -139,6 +140,12 @@
     "bdd": [
       "bdd/"
     ]
+  },
+  "ava": {
+    "files": [
+      "scripts/test/*.spec.js"
+    ],
+    "serial": true
   },
   "husky": {
     "hooks": {

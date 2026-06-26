@@ -30,9 +30,19 @@
 ## Testing and generated files
 - Most package tests use AVA with `ts-node/register` and match `**/*.spec.ts`.
 - Agent-run tests and Node validation commands must start under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless run through a repo/package test runner that already controls the test process and memory behavior. Do not wait for OOM before applying this guard; use it by default when invoking tests directly or through npm scripts without runner-level memory handling.
-- AVA package tests run through `scripts/run-ava.js`, which sets the spawned AVA process to `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` by default, replacing the generic `--max-old-space-size=1024` guard for the AVA child process. This avoids V8 worker CodeRange OOMs under the repo virtual-memory cap; do not override it unless the active task explicitly requires a different AVA runtime profile.
+- AVA package tests run through `scripts/run-ava.js` — the **sole supported** AVA/package-test entrypoint. All package `test`/`test:ava` scripts route through it. The runner applies safe defaults: `--max-old-space-size=1536`, `--jitless` by default, concurrency 2, runner timeout 600000 ms. Overridable via env vars:
+  - `SCRAMJET_AVA_JITLESS=0` — opt out of `--jitless`, enables JIT+WASM-limited profile
+  - `SCRAMJET_AVA_FETCH=0` — adds `--no-experimental-fetch`
+  - `SCRAMJET_AVA_WORKERS` — AVA concurrency (default 2)
+  - `SCRAMJET_AVA_TIMEOUT` — runner-level timeout ms (default 600000)
+  - `SCRAMJET_AVA_MAX_OLD_SPACE_SIZE` — override heap limit (default 1536)
+  - `SCRAMJET_AVA_GUARD=1` — opt-in bypass guard (warns on direct `npx ava` without runner; only protects runner-spawned/preloaded processes)
+- Runner regression tests: `npm run test:runner` (scripts/test/*.spec.js).
+- BDD tests use `scripts/run-bdd.js` (supported entrypoint) or `scripts/run-bdd-docker.js` (internal). The **supported** BDD path under host memory constraints is `--mode=docker` (default), which runs Cucumber inside a Docker container with memory 1536m, CPUs 2, timeout 600000 ms, grace 10000 ms. Direct mode (`--mode=direct`) is for diagnostic/local runs only — under strict host ulimit, step definitions may fail from ssh2/poly1305 WASM allocation.
+- BDD root npm scripts (`test:bdd*`, `test:bdd-ci*`) route through the supported runner.
+- Leak detection: `reportLeakedProcesses()` runs at exit for BDD runner paths, reporting leftover STH/Host/runner/Manager/MultiManager/cucumber processes. Cleanup is current-run scoped.
 - `packages/types` generates exposed type files via `packages/types/scripts/generate.js`; its `build:only` runs that generator.
-- BDD tests use `bdd/` (`cucumber-js`) and often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
+- BDD tests often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
 ## Type split packages

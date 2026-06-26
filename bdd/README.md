@@ -123,7 +123,7 @@ The Manager migration command covers the current Manager/MultiManager API paths 
 
 ### Running BDD in a container
 
-The root `npm run test:bdd` command runs through `scripts/run-bdd-docker.js`, which launches Cucumber inside a Docker container. This isolates the test from the host and prevents orphaned processes.
+The root `npm run test:bdd` command runs through `scripts/run-bdd.js`, which defaults to Docker mode and delegates to `scripts/run-bdd-docker.js`. The Cucumber test runs inside a Docker container, isolating the test from the host and preventing orphaned processes. Post-run leak detection (`reportLeakedProcesses()`) runs automatically on exit, and Docker/temp cleanup is scoped to the current run.
 
 **Prerequisites**
 
@@ -132,7 +132,7 @@ The root `npm run test:bdd` command runs through `scripts/run-bdd-docker.js`, wh
 
 **Default invocation**
 
-By default, `npm run test:bdd` starts a `node:22` container with `--memory=4096m` (and `--memory-swap` set to the same value). You don't need to change anything to get the containerized behavior.
+`npm run test:bdd` starts a `node:22` container with `--memory=1536m`, `--memory-swap=1536m`, and `--cpus=2`. The container is removed automatically on exit.
 
 **Environment variables**
 
@@ -141,14 +141,18 @@ You can tune the wrapper with these variables:
 | Variable | Default | Description |
 |---|---|---|
 | `BDD_NODE_IMAGE` | `node:22` | Docker image to use |
-| `BDD_DOCKER_MEMORY` | `4096m` | Container memory cap (`--memory` + `--memory-swap`) |
-| `BDD_DOCKER_CPUS` | (unset) | CPU limit (`--cpus`); unset = unlimited |
-| `BDD_TIMEOUT_MS` | `0` | Wrapper wall-clock timeout in ms; `0` = disabled |
-| `BDD_GRACE_MS` | `15000` | Grace period before SIGKILL after SIGTERM |
+| `BDD_DOCKER_MEMORY` | `1536m` | Container memory cap (`--memory` + `--memory-swap`) |
+| `BDD_DOCKER_CPUS` | `2` | CPU limit (`--cpus`) |
+| `BDD_TIMEOUT_MS` | `600000` | Wrapper wall-clock timeout in ms (10 min) |
+| `BDD_GRACE_MS` | `10000` | Grace period before SIGKILL after SIGTERM (10 s) |
 
 **Environment passthrough**
 
 The wrapper forwards variables that match the following allowlist into the container: `SCRAMJET_*`, `NO_HOST`, `TEST_REPORT`, `DEVELOPMENT`, `PACKAGES_DIR`, `SCP_ENV_VALUE`, `BDD_*`, `CI`.
+
+**Direct (non-Docker) mode**
+
+`scripts/run-bdd.js --mode=direct` runs `cucumber-js` directly from the `bdd/` directory with safe `NODE_OPTIONS` defaults (`--max-old-space-size=1536`, `--no-experimental-fetch`). This mode is intended for diagnostic or local runs; under a strict host `<2G` memory limit, BDD step definitions load `ssh2/poly1305` WebAssembly which may fail to allocate. The supported memory-constrained BDD path is Docker mode. Raw `bdd/package.json` cucumber scripts are internal and unsupported for memory-constrained validation.
 
 **Exit codes**
 
