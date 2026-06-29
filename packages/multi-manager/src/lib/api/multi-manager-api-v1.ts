@@ -83,12 +83,9 @@ export class MultiManagerAPIV1Handler {
             "post",
             `${multiManager.apiBase}/cpm/:id/stop`,
             async (req, _res): Promise<MMRestAPI.OpResponse<MMRestAPI.SendStopManagerResponse>> => {
-                const manager = multiManager.managersStore.getById(req.params!.id);
+                const stopped = await multiManager.stopManager(req.params!.id);
 
-                if (manager) {
-                    await manager.stop();
-
-                    multiManager.managersStore.remove(req.params!.id);
+                if (stopped) {
                     return { id: req.params!.id, opStatus: ReasonPhrases.OK };
                 }
 

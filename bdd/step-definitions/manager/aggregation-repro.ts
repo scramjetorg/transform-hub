@@ -375,6 +375,21 @@ function aggregationHub(world: CustomWorld, hubName: string): { client: HostClie
     return hub;
 }
 
+async function sendAggregationManagerProxyRequest(
+    world: CustomWorld,
+    method: string,
+    endpoint: string,
+    body: string,
+    headersJson: string
+): Promise<void> {
+    world.response = await rawHttpRequest(
+        method,
+        aggregationManagerProxyUrl(world, endpoint),
+        body,
+        JSON.parse(headersJson) as Record<string, string>
+    );
+}
+
 // =========================================================================
 // Background steps
 // =========================================================================
@@ -450,6 +465,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
         console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
     }
 
+    this.resources.aggManagerConfig = managerConfig;
     this.resources.aggManagerClient = mmClient.getManagerClient(managerId);
     if (trustMaterial?.ca) {
         this.resources.aggVerser2CA = trustMaterial.ca;
@@ -637,12 +653,36 @@ When("I send a {string} request through the aggregation Manager proxy to {string
     body: string,
     headersJson: string
 ) {
-    this.response = await rawHttpRequest(
-        method,
-        aggregationManagerProxyUrl(this, endpoint),
-        body,
-        JSON.parse(headersJson) as Record<string, string>
-    );
+    await sendAggregationManagerProxyRequest(this, method, endpoint, body, headersJson);
+});
+
+When("I eventually send a {string} request through the aggregation Manager proxy to {string} with body {string} and headers {string}", { timeout: 20000 }, async function (
+    this: CustomWorld,
+    method: string,
+    endpoint: string,
+    body: string,
+    headersJson: string
+) {
+    const deadline = Date.now() + 15_000;
+    let lastError: Error | undefined;
+
+    while (Date.now() < deadline) {
+        try {
+            await sendAggregationManagerProxyRequest(this, method, endpoint, body, headersJson);
+
+            if (this.response?.status === 200) {
+                return;
+            }
+        } catch (error) {
+            lastError = error as Error;
+        }
+
+        await sleep(500);
+    }
+
+    if (lastError) {
+        throw lastError;
+    }
 });
 
 When("I send a {string} request through the aggregation MultiManager root to {string} with body {string} and headers {string}", async function (
@@ -811,6 +851,68 @@ When("aggregation instance receives input {string}", async function (this: Custo
         {},
         { type: "text/plain", end: true }
     );
+});
+
+When("the aggregation Manager is restarted", { timeout: 30000 }, async function (this: CustomWorld) {
+    const mmClient = this.resources.aggMMClient as MultiManagerClient;
+    const client = new ClientUtils(mmClient.apiBase);
+    const managerId = this.resources.aggManagerId as string;
+
+    // Stop the Manager via MultiManager API.
+    await client.post(
+        `cpm/${managerId}/stop`,
+        undefined,
+        { headers: { "content-type": "application/json" } }
+    );
+
+    // Wait for Manager to be removed from the store.
+    const stopDeadline = Date.now() + 10_000;
+    let stopped = false;
+
+    while (Date.now() < stopDeadline) {
+        const managers = await client.get<any[]>("list");
+
+        if (Array.isArray(managers) && !managers.some((m: any) => m.id === managerId)) {
+            stopped = true;
+            break;
+        }
+
+        await sleep(500);
+    }
+
+    assert.ok(stopped, `Expected Manager ${managerId} to stop before restart`);
+
+    // Start Manager again with the same configuration (store the config for reuse).
+    const managerConfig = this.resources.aggManagerConfig || {
+        id: managerId,
+        verser2: {
+            localBroker: {
+                peerId: `manager.${managerId}.broker`,
+                routeDomain: `manager.${managerId}.scramjet.internal`,
+            },
+            localGuest: {
+                peerId: `manager.${managerId}.guest`,
+                routeDomain: `manager.${managerId}.scramjet.internal`,
+            },
+        },
+    };
+
+    const response = await mmClient.startManager(managerConfig as any);
+
+    assert.ok(response, "Expected Manager to be restarted");
+
+    this.resources.aggManagerClient = response;
+
+    // Re-fetch verser2 trust material (the new Manager may have different credentials).
+    try {
+        const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
+
+        if (trustMaterial?.ca) {
+            this.resources.aggVerser2CA = trustMaterial.ca;
+        }
+    } catch (e) {
+        console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
+    }
 });
 
 // =========================================================================

@@ -329,10 +329,12 @@ export class CPMConnector extends TypedEmitter<Events> {
             })
             .catch((e: any) => {
                 this.logger.warn("communicationChannel error", e.message);
+                void this.handleConnectionClose(1006);
             })
             .run()
             .catch((e: any) => {
                 this.logger.warn("communicationChannel run error", e.message);
+                void this.handleConnectionClose(1006);
             });
 
         this.communicationStream = new StringStream().JSONStringify();
@@ -354,14 +356,14 @@ export class CPMConnector extends TypedEmitter<Events> {
             duplex.on("end", () => {
                 this.logger.debug("Platform request close");
 
-                this.handleCommunicationRequestEnd();
+                void this.handleConnectionClose(1000);
                 resolve({});
             });
 
             duplex.on("error", () => {
                 this.logger.error("Platform request error");
 
-                this.handleCommunicationRequestEnd();
+                void this.handleConnectionClose(1006);
                 reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
             });
         });

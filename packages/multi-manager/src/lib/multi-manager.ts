@@ -15,7 +15,7 @@ import { Writable } from "stream";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
 import { getDefaultConfig as getManagerDefaultConfig } from "@scramjet/manager-config";
-import { createVerserHost, VerserHost } from "@signicode/verser2-host";
+import { createVerserHost, VerserHost, VerserLocalBrokerHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";
 import { MultiManagerAuditor } from "./mulit-manager-auditor";
@@ -53,6 +53,7 @@ export class MultiManager {
 
     freePortsFinder = new FreePortsFinder();
     private commonLogsPipe = new CommonLogsPipe();
+    private managerVerser2Handles = new Map<string, { broker?: VerserLocalBrokerHandle; guest?: VerserLocalGuestHandle }>();
 
     public get logStream(): Writable {
         return this.commonLogsPipe.getIn();
@@ -235,6 +236,20 @@ export class MultiManager {
         return this.auditor.output;
     }
 
+    async stopManager(id: string) {
+        const manager = this.managersStore.getById(id);
+
+        if (!manager) {
+            return false;
+        }
+
+        await manager.stop();
+        await this.detachManagerVerser2Peers(id);
+        this.managersStore.remove(id);
+
+        return true;
+    }
+
     private async attachManagerVerser2Peers(manager: Manager) {
         if (!this.verser2Host || !manager.config.verser2.enabled) {
             return;
@@ -246,7 +261,7 @@ export class MultiManager {
 
         manager.setSthBrokerTransport(createManagerSthLocalBrokerTransport(broker));
 
-        await this.verser2Host.attachLocalGuest({
+        const guest = await this.verser2Host.attachLocalGuest({
             guestId: manager.config.verser2.localGuest.peerId,
             routedDomains: [manager.config.verser2.localGuest.routeDomain],
             listener: (req, res) => manager.router.lookup(req as ParsedMessage, res as ServerResponse, () => {
@@ -254,6 +269,22 @@ export class MultiManager {
                 res.end();
             })
         });
+
+        this.managerVerser2Handles.set(manager.config.id, { broker, guest });
+    }
+
+    private async detachManagerVerser2Peers(managerId: string) {
+        const handles = this.managerVerser2Handles.get(managerId);
+
+        if (!handles) {
+            return;
+        }
+
+        this.managerVerser2Handles.delete(managerId);
+        await Promise.allSettled([
+            handles.broker?.close("manager-stop"),
+            handles.guest?.close("manager-stop")
+        ]);
     }
 
     async cpmMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
