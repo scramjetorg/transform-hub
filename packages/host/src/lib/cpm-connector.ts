@@ -353,19 +353,35 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.emit("communicationReady");
 
         return new Promise((resolve, reject) => {
-            duplex.on("end", () => {
+            let requestSettled = false;
+
+            const settleRequest = (handler: () => void) => {
+                if (requestSettled) return;
+
+                requestSettled = true;
+                handler();
+            };
+
+            duplex.on("end", () => settleRequest(() => {
                 this.logger.debug("Platform request close");
 
                 void this.handleConnectionClose(1000);
                 resolve({});
-            });
+            }));
 
-            duplex.on("error", () => {
+            duplex.on("close", () => settleRequest(() => {
+                this.logger.debug("Platform request closed");
+
+                void this.handleConnectionClose(1006);
+                resolve({});
+            }));
+
+            duplex.on("error", () => settleRequest(() => {
                 this.logger.error("Platform request error");
 
                 void this.handleConnectionClose(1006);
                 reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
-            });
+            }));
         });
     }
 
