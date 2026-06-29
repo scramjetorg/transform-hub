@@ -15,7 +15,7 @@
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, spawn, spawnSync } from "child_process";
 import { PassThrough } from "stream";
 import { resolve } from "path";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
@@ -40,43 +40,81 @@ function aggregationProcesses(world: CustomWorld): ChildProcess[] {
     return world.resources.aggProcesses;
 }
 
-After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
-    const killAndWait = async (proc: ChildProcess): Promise<void> => {
-        if (!proc.pid || proc.exitCode !== null || proc.signalCode !== null) return;
+async function terminateProcess(proc: ChildProcess): Promise<void> {
+    if (!proc.pid || proc.exitCode !== null || proc.signalCode !== null) return;
 
-        await new Promise<void>((resolve) => {
-            const timer = setTimeout(() => {
-                try {
-                    proc.kill("SIGKILL");
-                } catch { /* ignore */ }
-                resolve();
-            }, 5000);
+    await new Promise<void>((resolve) => {
+        let settled = false;
+        let sigkillTimer: NodeJS.Timeout;
+        let giveUpTimer: NodeJS.Timeout;
 
-            proc.once("exit", () => {
-                clearTimeout(timer);
-                resolve();
-            });
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(sigkillTimer);
+            clearTimeout(giveUpTimer);
+            resolve();
+        };
 
+        proc.once("exit", finish);
+
+        sigkillTimer = setTimeout(() => {
             try {
-                proc.kill("SIGTERM");
-            } catch {
-                clearTimeout(timer);
-                resolve();
-            }
-        });
-    };
+                proc.kill("SIGKILL");
+            } catch { /* ignore */ }
+        }, 5000);
 
+        giveUpTimer = setTimeout(finish, 8000);
+
+        try {
+            proc.kill("SIGTERM");
+        } catch {
+            finish();
+        }
+    });
+}
+
+async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 10_000): Promise<void> {
+    const client = new ClientUtils(baseUrl);
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        try {
+            await client.get(endpoint);
+        } catch {
+            return;
+        }
+
+        await sleep(250);
+    }
+
+    throw new Error(`Timed out waiting for ${baseUrl}/${endpoint} to stop responding`);
+}
+
+async function killProcessesMatching(pattern: string): Promise<void> {
+    spawnSync("pkill", ["-f", "--", pattern], { stdio: "ignore" });
+    await sleep(500);
+}
+
+After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
     const waitForExit: Promise<void>[] = [];
 
     for (const proc of aggregationProcesses(this)) {
-        waitForExit.push(killAndWait(proc));
+        waitForExit.push(terminateProcess(proc));
     }
     if (this.resources.aggMMProcess) {
-        waitForExit.push(killAndWait(this.resources.aggMMProcess));
+        waitForExit.push(terminateProcess(this.resources.aggMMProcess));
         delete this.resources.aggMMProcess;
     }
 
     await Promise.all(waitForExit);
+
+    if (this.resources.aggMMId) {
+        await killProcessesMatching(`--id=${this.resources.aggMMId}`);
+    }
+    if (this.resources.aggTempDir) {
+        await killProcessesMatching(this.resources.aggTempDir);
+    }
 
     if (this.resources.aggTempDir) {
         rmSync(this.resources.aggTempDir, { recursive: true, force: true });
@@ -417,15 +455,21 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     ];
 
     const cmd = getExecutableCmd("multi-manager");
-    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, {
+    const mmEnv = {
         SCRAMJET_VERSER2_HOST_BIND_PORT: String(verser2Port),
         SCRAMJET_VERSER2_HOST_BIND_HOST: "0.0.0.0",
         SCRAMJET_VERSER2_HOST_PUBLIC_URL: `https://127.0.0.1:${verser2Port}`,
         SCRAMJET_VERSER2_ALLOW_LOCAL_PEERS: "true",
         SCRAMJET_VERSER2_HOST_IDENTITY_DIR: `${tempDir}/verser2-mm`
+    };
+    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, {
+        ...mmEnv
     });
 
     this.resources.aggMMProcess = proc;
+    this.resources.aggMMCommand = cmd;
+    this.resources.aggMMOptions = mmOptions;
+    this.resources.aggMMEnv = mmEnv;
     this.resources.aggMMId = id;
     this.resources.aggMMApiBase = `http://127.0.0.1:${mmPort}/api/v1`;
     this.resources.aggMMClient = new MultiManagerClient(this.resources.aggMMApiBase);
@@ -912,6 +956,62 @@ When("the aggregation Manager is restarted", { timeout: 30000 }, async function 
         }
     } catch (e) {
         console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
+    }
+});
+
+When("the aggregation MultiManager process is restarted", { timeout: 45000 }, async function (this: CustomWorld) {
+    const oldProcess = this.resources.aggMMProcess as ChildProcess | undefined;
+    const cmd = this.resources.aggMMCommand as string[] | undefined;
+    const mmOptions = this.resources.aggMMOptions as string[] | undefined;
+    const mmEnv = this.resources.aggMMEnv as Record<string, string> | undefined;
+    const mmApiBase = this.resources.aggMMApiBase as string;
+    const managerId = this.resources.aggManagerId as string;
+    const managerConfig = this.resources.aggManagerConfig || {
+        id: managerId,
+        verser2: {
+            localBroker: {
+                peerId: `manager.${managerId}.broker`,
+                routeDomain: `manager.${managerId}.scramjet.internal`,
+            },
+            localGuest: {
+                peerId: `manager.${managerId}.guest`,
+                routeDomain: `manager.${managerId}.scramjet.internal`,
+            },
+        },
+    };
+
+    assert.ok(oldProcess, "Expected aggregation MultiManager process to exist");
+    assert.ok(cmd, "Expected aggregation MultiManager command to be stored");
+    assert.ok(mmOptions, "Expected aggregation MultiManager options to be stored");
+    assert.ok(mmEnv, "Expected aggregation MultiManager environment to be stored");
+
+    await terminateProcess(oldProcess);
+    await killProcessesMatching(`--id=${this.resources.aggMMId}`);
+    await waitForGetFailure(mmApiBase, "version", 10_000);
+
+    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv);
+
+    this.resources.aggMMProcess = proc;
+    this.resources.aggMMClient = new MultiManagerClient(mmApiBase);
+
+    await waitForGet(mmApiBase, "version", 20_000);
+
+    const mmClient = this.resources.aggMMClient as MultiManagerClient;
+    const response = await mmClient.startManager(managerConfig as any);
+
+    assert.ok(response, "Expected Manager to be started after MultiManager restart");
+
+    this.resources.aggManagerClient = response;
+
+    try {
+        const client = new ClientUtils(mmApiBase);
+        const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
+
+        if (trustMaterial?.ca) {
+            this.resources.aggVerser2CA = trustMaterial.ca;
+        }
+    } catch {
+        // Keep the previous trust material; reconnect assertions below prove whether it is still usable.
     }
 });
 
