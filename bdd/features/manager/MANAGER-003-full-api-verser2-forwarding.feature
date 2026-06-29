@@ -98,3 +98,21 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
     When I eventually send a "POST" request through the aggregation Manager proxy to "/sth/hub-rpc/instance/hub-rpc-api-main/rpc/test/abc" with body "rpc-after-restart" and headers "{\"Content-Type\":\"text/plain\"}"
     Then the response status should be 200
     And the response body should be "POST /abc rpc-after-restart"
+
+  @aggregation-repro-cleanup
+  Scenario: MANAGER-003 TC-008 MultiManager process restart preserves hub reconnection and inventory
+    Given an isolated MultiManager aggregation stack
+    And an STH hub "hub-1" is connected to the aggregation Manager
+    And I wait for hubs to register with the Manager
+    When I query the Manager "/list" through the MultiManager proxy
+    Then the Manager proxy response should contain at least 1 items
+    When the aggregation MultiManager process is restarted
+    And I wait for hubs to register with the Manager
+    When I query the Manager "/list" through the MultiManager proxy
+    Then the Manager proxy response should contain at least 1 items
+    When I query the Manager "/all_sequences" through the MultiManager proxy
+    Then the Manager proxy response should contain at least 1 items
+    When I query the Manager "/instances" through the MultiManager proxy
+    Then the Manager proxy response should contain at least 1 items
+    When I send a "GET" request through the aggregation Manager proxy to "/sth/hub-1/version" with headers "{}"
+    Then the response status should be 200
