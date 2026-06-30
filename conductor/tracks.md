@@ -9,15 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Full API capability via Verser2 forwarding**
-*Link: [./tracks/full_api_capability_20260623/](./tracks/full_api_capability_20260623/)*
-
----
-
-- [x] **Track: memory efficiency in tests (issues 38 and 39)**
-*Link: [./archive/test_memory_efficiency_20260625/](./archive/test_memory_efficiency_20260625/)*
-
----
-
 - [ ] **Track: owasp review hardening**
 *Link: [./tracks/owasp_review_hardening_20260630/](./tracks/owasp_review_hardening_20260630/)*
