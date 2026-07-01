@@ -339,3 +339,306 @@ test("STHController emits raw bulk instance payloads from legacy inventory messa
 
     t.deepEqual(emitted, [instance]);
 });
+
+test.serial("Same-id re-registration replaces active STH controller instead of rejecting", async (t) => {
+    let initCount = 0;
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        initCount++;
+        this.logStream = new PassThrough();
+        this.emit("sequence", makeSequence(initCount === 1 ? "first-seq" : "replacement-seq"));
+    }, async () => {
+        const manager = makeManager();
+
+        // Use a transport where isRouteReady returns true (simulating active route).
+        manager.setSthBrokerTransport({
+            isRouteReady: () => true
+        } as any);
+
+        // First registration creates a controller.
+        const id1 = await manager.handleSthRegistration({ id: "hub-active", routeDomain: "hub-active.test" } as any);
+        t.is(id1, "hub-active");
+
+        const store = (manager as any).sthConnectionStore;
+        const firstController = store.getById("hub-active");
+
+        // Controller is active (route is ready).
+        t.true(firstController.isConnectionActive);
+
+        // Second registration with same ID should succeed and replace the controller.
+        const id2 = await manager.handleSthRegistration({ id: "hub-active", routeDomain: "hub-active.test" } as any);
+        t.is(id2, "hub-active");
+
+        // The controller in the store should now be a new instance (replaced).
+        const secondController = store.getById("hub-active");
+
+        t.not(firstController, secondController, "Controller should be replaced, not reused");
+
+        // Inventory should reflect the replacement init, not stale data.
+        const infoRegister = (manager as any).sthInfoRegister;
+
+        t.deepEqual(infoRegister.getHubs(), ["hub-active"]);
+        t.deepEqual(infoRegister.getSequences().map((sequence: any) => sequence.id), ["replacement-seq"]);
+    });
+});
+
+test.serial("Same-id re-registration rolls back to previous controller on init failure without disposing it", async (t) => {
+    let initCount = 0;
+    let previousDisposeCalled = false;
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        initCount++;
+        this.logStream = new PassThrough();
+
+        if (initCount === 1) {
+            this.emit("sequence", makeSequence("initial-seq"));
+            this.emit("instance", { instance: makeInstance("initial-inst", "initial-seq") } as any);
+            this.emit("sequences", ["initial-seq"] as any);
+            this.emit("instances", ["initial-inst"] as any);
+        } else {
+            // Second init (replacement) fails.
+            this.emit("sequence", makeSequence("replacement-seq"));
+            throw new Error("replacement init failed");
+        }
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport({
+            isRouteReady: () => true
+        } as any);
+
+        // First registration succeeds.
+        const id1 = await manager.handleSthRegistration({ id: "hub-rollback", routeDomain: "hub-rollback.test" } as any);
+        t.is(id1, "hub-rollback");
+
+        const storeBefore = (manager as any).sthConnectionStore;
+        const infoBefore = (manager as any).sthInfoRegister;
+        const firstController = storeBefore.getById("hub-rollback");
+
+        t.truthy(firstController, "First controller should be in store after initial registration");
+        t.deepEqual(infoBefore.getSequences().map((seq: any) => seq.id), ["initial-seq"],
+            "Initial sequences present before re-registration");
+
+        // Spy on dispose to verify it is NOT called during rollback.
+        firstController.dispose = () => { previousDisposeCalled = true; };
+
+        // Second registration with same ID fails during init.
+        const error = await t.throwsAsync(
+            manager.handleSthRegistration({ id: "hub-rollback", routeDomain: "hub-rollback.test" } as any)
+        );
+        t.is(error?.message, "replacement init failed");
+
+        // The previous controller must not have been disposed.
+        t.false(previousDisposeCalled, "Previous controller must not be disposed on replacement init failure");
+
+        // The original controller should still be in the store.
+        const storeAfter = (manager as any).sthConnectionStore;
+        const controllerAfter = storeAfter.getById("hub-rollback");
+
+        t.truthy(controllerAfter, "Store should still have a controller after failed replacement");
+        t.is(controllerAfter, firstController, "Previous controller should be restored, not a new instance");
+
+        // The previous controller's sequences and instances must be restored.
+        const infoAfter = (manager as any).sthInfoRegister;
+
+        t.deepEqual(infoAfter.getSequences().map((seq: any) => seq.id), ["initial-seq"],
+            "Original sequences must be restored after failed replacement");
+        t.deepEqual(infoAfter.getInstances().map((inst: any) => inst.id), ["initial-inst"],
+            "Original instances must be restored after failed replacement");
+
+        // Hub inventory state must be restored (aggregation readiness preserved).
+        const hubInventoryState = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
+
+        t.true(hubInventoryState.has("hub-rollback"), "Hub inventory state must be restored after failed replacement");
+        t.deepEqual(hubInventoryState.get("hub-rollback"), { sequencesReceived: true, instancesReceived: true },
+            "Hub inventory markers must be restored to pre-replacement values");
+
+        // Replacement sequences/instances must NOT leak.
+        t.notDeepEqual(infoAfter.getSequences().map((seq: any) => seq.id), ["replacement-seq"],
+            "Replacement sequences should not be present");
+        t.notDeepEqual(infoAfter.getInstances().map((inst: any) => inst.id), ["replacement-inst"],
+            "Replacement instances should not be present");
+    });
+});
+
+test.serial("Manager route-change listener cleans up on route removed when route is not ready", async (t) => {
+    const routeChangeListeners: Array<(event: any) => void> = [];
+    const fakeTransport = {
+        isRouteReady: (domain: string) => false, // route is NOT ready → cleanup allowed
+        onRouteChange: (listener: (event: any) => void) => {
+            routeChangeListeners.push(listener);
+            return () => {
+                const idx = routeChangeListeners.indexOf(listener);
+                if (idx >= 0) routeChangeListeners.splice(idx, 1);
+            };
+        }
+    };
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.healthy = true; // Simulate successful init with active connection.
+        this.logStream = new PassThrough();
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport(fakeTransport as any);
+
+        // Use the canonical routeDomain pattern that isTrustedSthRouteDomain accepts.
+        await manager.handleSthRegistration({ id: "route-hub", routeDomain: "sth.route-hub.scramjet.internal" } as any);
+
+        const store = (manager as any).sthConnectionStore;
+        const controller = store.getById("route-hub");
+
+        t.true(controller.healthy, "STH should start healthy");
+        t.truthy(store.getById("route-hub"), "Controller should be in store");
+
+        // Fire a route removed event for the matching domain.
+        const listener = routeChangeListeners[0];
+        t.truthy(listener, "Route change listener should be registered");
+
+        listener({ type: "removed", domain: "sth.route-hub.scramjet.internal", targetId: "route-hub:guest", reason: "revoked" });
+
+        t.false(controller.healthy, "STH should be marked unhealthy after route removed");
+
+        // Cleanup mirroring STH disconnected handler should also trigger.
+        const hubInventoryState = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
+
+        t.false(hubInventoryState.has("route-hub"), "Hub inventory state should be cleared on route removed");
+
+        const commonLogsPipe = (manager as any).commonLogsPipe as any;
+
+        t.false(commonLogsPipe.instreamPipes.has("route-hub"), "Common log stream should be removed on route removed");
+    });
+});
+
+test.serial("Manager route-change listener does not clean up on removed when route still ready", async (t) => {
+    const routeChangeListeners: Array<(event: any) => void> = [];
+    const fakeTransport = {
+        isRouteReady: (domain: string) => true, // route IS ready → guard should skip cleanup
+        onRouteChange: (listener: (event: any) => void) => {
+            routeChangeListeners.push(listener);
+            return () => {
+                const idx = routeChangeListeners.indexOf(listener);
+                if (idx >= 0) routeChangeListeners.splice(idx, 1);
+            };
+        }
+    };
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.healthy = true;
+        this.logStream = new PassThrough();
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport(fakeTransport as any);
+
+        await manager.handleSthRegistration({ id: "route-hub-guarded", routeDomain: "sth.route-hub-guarded.scramjet.internal" } as any);
+
+        const store = (manager as any).sthConnectionStore;
+        const controller = store.getById("route-hub-guarded");
+
+        t.true(controller.healthy, "STH should start healthy");
+
+        // Fire a route removed event for the matching domain.
+        const listener = routeChangeListeners[0];
+        t.truthy(listener, "Route change listener should be registered");
+
+        listener({ type: "removed", domain: "sth.route-hub-guarded.scramjet.internal", targetId: "route-hub-guarded:guest", reason: "revoked" });
+
+        // Guard should have skipped cleanup because route is still ready.
+        t.true(controller.healthy, "STH should remain healthy when route still reports ready");
+
+        const hubInventoryState = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
+
+        t.true(hubInventoryState.has("route-hub-guarded"), "Hub inventory state should NOT be cleared when route still ready");
+    });
+});
+
+test.serial("Manager route-change listener does not clean up on degraded when route still ready", async (t) => {
+    const routeChangeListeners: Array<(event: any) => void> = [];
+    const fakeTransport = {
+        isRouteReady: (domain: string) => true, // route IS ready → skip cleanup
+        onRouteChange: (listener: (event: any) => void) => {
+            routeChangeListeners.push(listener);
+            return () => {
+                const idx = routeChangeListeners.indexOf(listener);
+                if (idx >= 0) routeChangeListeners.splice(idx, 1);
+            };
+        }
+    };
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.healthy = true;
+        this.logStream = new PassThrough();
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport(fakeTransport as any);
+
+        await manager.handleSthRegistration({ id: "route-hub-degraded", routeDomain: "sth.route-hub-degraded.scramjet.internal" } as any);
+
+        const store = (manager as any).sthConnectionStore;
+        const controller = store.getById("route-hub-degraded");
+
+        t.true(controller.healthy, "STH should start healthy");
+
+        const listener = routeChangeListeners[0];
+        t.truthy(listener, "Route change listener should be registered");
+
+        listener({ type: "degraded", domain: "sth.route-hub-degraded.scramjet.internal", targetId: "route-hub-degraded:guest", reason: "latency" });
+
+        t.true(controller.healthy, "STH should remain healthy on degraded event when route still ready");
+
+        const hubInventoryState = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
+
+        t.true(hubInventoryState.has("route-hub-degraded"), "Hub inventory state should NOT be cleared on degraded when route still ready");
+    });
+});
+
+test.serial("Manager route-change listener cleans up on degraded when route is not ready", async (t) => {
+    const routeChangeListeners: Array<(event: any) => void> = [];
+    const fakeTransport = {
+        isRouteReady: (domain: string) => false, // route NOT ready → cleanup allowed
+        onRouteChange: (listener: (event: any) => void) => {
+            routeChangeListeners.push(listener);
+            return () => {
+                const idx = routeChangeListeners.indexOf(listener);
+                if (idx >= 0) routeChangeListeners.splice(idx, 1);
+            };
+        }
+    };
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        this.healthy = true;
+        this.logStream = new PassThrough();
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const manager = makeManager();
+
+        manager.setSthBrokerTransport(fakeTransport as any);
+
+        await manager.handleSthRegistration({ id: "route-hub-deg-cleanup", routeDomain: "sth.route-hub-deg-cleanup.scramjet.internal" } as any);
+
+        const store = (manager as any).sthConnectionStore;
+        const controller = store.getById("route-hub-deg-cleanup");
+
+        t.true(controller.healthy, "STH should start healthy");
+
+        const listener = routeChangeListeners[0];
+        t.truthy(listener, "Route change listener should be registered");
+
+        listener({ type: "degraded", domain: "sth.route-hub-deg-cleanup.scramjet.internal", targetId: "route-hub-deg-cleanup:guest", reason: "latency" });
+
+        t.false(controller.healthy, "STH should be marked unhealthy on degraded event when route is not ready");
+
+        const hubInventoryState = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
+
+        t.false(hubInventoryState.has("route-hub-deg-cleanup"), "Hub inventory state should be cleared on degraded when route not ready");
+    });
+});

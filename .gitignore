@@ -158,6 +158,8 @@ timing-log.ndjson
 # private working directories
 /temp
 /conductor/prompts/
+/conductor/active_state.json
+/packages/manager/bucket/
 
 # extra dist dirs
 

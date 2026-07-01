@@ -1,10 +1,5 @@
 import { Readable } from "stream";
-import {
-    createVerserBroker,
-    type VerserBrokerOptions,
-    type VerserBrokerRequest,
-    type VerserBrokerResponse,
-} from "@signicode/verser2-guest-node";
+import { createVerserBroker, type VerserBrokerOptions, type VerserBrokerRequest, type VerserBrokerResponse } from "@signicode/verser2-guest-node";
 
 export class Verser2RouteUnavailableError extends Error {
     constructor(domain: string, message = `Verser2 route is unavailable: ${domain}`) {
@@ -34,6 +29,15 @@ export type ManagerSthRoutedRequest = {
     signal?: AbortSignal;
 };
 
+export type RouteChangeEvent = {
+    type: "added" | "removed" | "changed" | "degraded";
+    targetId: string;
+    domain: string;
+    reason?: string;
+};
+
+export type RouteChangeListener = (event: RouteChangeEvent) => void;
+
 export interface ManagerSthBrokerTransport {
     connect(): Promise<void>;
     close(reason?: string): Promise<void>;
@@ -41,6 +45,7 @@ export interface ManagerSthBrokerTransport {
     isRouteReady(domain: string): boolean;
     waitForRoute(domain: string, timeoutMs?: number): Promise<void>;
     request(request: ManagerSthRoutedRequest): Promise<VerserBrokerResponse>;
+    onRouteChange?(listener: RouteChangeListener): () => void;
 }
 
 export interface Verser2BrokerLike {
@@ -48,6 +53,7 @@ export interface Verser2BrokerLike {
     close(reason?: string): Promise<void>;
     getRoutes(): Verser2Route[];
     request(request: VerserBrokerRequest): Promise<VerserBrokerResponse>;
+    onRouteChange?(listener: (event: RouteChangeEvent) => void): () => void;
 }
 
 export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTransport {
@@ -55,7 +61,7 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
     private suppressedRouteSignature: string | undefined;
     private readonly routeWaiters = new Set<{
         promise: Promise<void>;
-        reject:(error: Error) => void;
+        reject: (error: Error) => void;
         timer: NodeJS.Timeout;
         timeout?: NodeJS.Timeout;
     }>();
@@ -135,25 +141,27 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
                 method: request.method,
                 path: request.path,
                 headers: request.headers,
-                body: request.body,
+                body: request.body
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
 
-            throw new Verser2RouteUnavailableError(
-                request.domain,
-                `Verser2 request failed for route ${request.domain}: ${message}`
-            );
+            throw new Verser2RouteUnavailableError(request.domain, `Verser2 request failed for route ${request.domain}: ${message}`);
         } finally {
             request.signal?.removeEventListener("abort", abortBody);
         }
     }
 
     private findRoute(domain: string): Verser2Route | undefined {
-        const routes = this.getRoutes().filter(route => route.domain === domain);
+        const routes = this.getRoutes().filter((route) => route.domain === domain);
 
         if (routes.length > 1) {
-            throw new Verser2DuplicateRouteError(domain);
+            // Tolerate duplicate {domain, targetId} entries (identical route table duplication).
+            const uniqueTargetIds = new Set(routes.map((r) => r.targetId));
+
+            if (uniqueTargetIds.size > 1) {
+                throw new Verser2DuplicateRouteError(domain);
+            }
         }
 
         return routes[0];
@@ -172,7 +180,7 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
         } = {
             promise: Promise.resolve() as Promise<void>,
             reject: (() => {}) as unknown as (error: Error) => void,
-            timer: undefined as unknown as NodeJS.Timeout,
+            timer: undefined as unknown as NodeJS.Timeout
         };
 
         const finish = (error?: Error) => {
@@ -217,16 +225,21 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
         });
 
         if (timeoutMs !== undefined) {
-            waiter.timeout = setTimeout(() => finish(new Verser2RouteUnavailableError(
-                domain,
-                `Timed out waiting for verser2 route: ${domain}`
-            )), timeoutMs);
+            waiter.timeout = setTimeout(() => finish(new Verser2RouteUnavailableError(domain, `Timed out waiting for verser2 route: ${domain}`)), timeoutMs);
         }
 
         this.routeWaiters.add(waiter);
         check();
 
         return waiter.promise;
+    }
+
+    onRouteChange(listener: RouteChangeListener): () => void {
+        if (typeof this.broker.onRouteChange === "function") {
+            return this.broker.onRouteChange(listener);
+        }
+
+        return () => {};
     }
 
     private rejectRouteWaiters(error: Error) {
@@ -240,7 +253,7 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
 
     private routeSignature(routes: Verser2Route[]): string {
         return routes
-            .map(route => `${route.domain}\u0000${route.targetId}`)
+            .map((route) => `${route.domain}\u0000${route.targetId}`)
             .sort()
             .join("\u0001");
     }

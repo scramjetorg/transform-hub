@@ -256,6 +256,15 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.connection = undefined;
         }
 
+        // Best-effort revoke our advertised route before disconnecting.
+        if (this.verser2Guest) {
+            try {
+                await this.verser2Guest.revokeRoutes([this.config.verser2.guest.routeDomain]);
+            } catch (error: any) {
+                this.logger.warn("Failed to revoke guest route on disconnect", error?.message ?? error);
+            }
+        }
+
         await this.verser2Broker?.close("disconnect");
         await this.verser2Guest?.close("disconnect");
 

@@ -32,7 +32,7 @@
     "@scramjet/sequence-types": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
-    "@signicode/verser2-guest-node": "0.4.5",
+    "@signicode/verser2-guest-node": "0.5.0",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

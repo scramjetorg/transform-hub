@@ -36,9 +36,9 @@ import { STHController } from "./sth-controller";
 import { STHInfoRegister } from "./sth-info-register";
 import { SthConnectionStore } from "./sth-connection-store";
 import { getDefaultConfig } from "@scramjet/manager-config";
-import { defer, merge, readJsonFile } from "@scramjet/utility";
+import { merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
-import { ManagerSthBrokerTransport } from "./verser2-transport";
+import { ManagerSthBrokerTransport, type RouteChangeEvent } from "./verser2-transport";
 import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
 import { decideRouteForwardingPolicy, isTrustedSthRouteDomain } from "./route-forwarding-policy";
 import { managerVerser2Options, maskConfig } from "@scramjet/config";
@@ -63,7 +63,20 @@ const defaultOffset = 0;
 type HubInventoryState = {
     sequencesReceived: boolean;
     instancesReceived: boolean;
-}
+};
+
+type SequenceInfoWithInstances = {
+    id: string;
+    config: any;
+    location: string;
+    instances: string[];
+};
+
+type HubStateSnapshot = {
+    sequences: SequenceInfoWithInstances[];
+    instances: Array<{ key: string; instance: any }>;
+    inventory: HubInventoryState | undefined;
+};
 
 export type SthRegistrationPayload = {
     id?: string;
@@ -97,6 +110,7 @@ export class Manager implements IComponent {
     private serviceDiscovery: ServiceDiscovery = new ServiceDiscovery();
     private readonly _config: ManagerConfiguration = getDefaultConfig();
     private sthBrokerTransport?: ManagerSthBrokerTransport;
+    private routeChangeUnsubscribe?: () => void;
     private hubInventoryState = new Map<string, HubInventoryState>();
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
@@ -155,7 +169,48 @@ export class Manager implements IComponent {
     }
 
     public setSthBrokerTransport(transport: ManagerSthBrokerTransport) {
+        // Unsubscribe previous listener if any.
+        this.routeChangeUnsubscribe?.();
+        this.routeChangeUnsubscribe = undefined;
+
         this.sthBrokerTransport = transport;
+
+        // Subscribe to route-change events if the transport supports it.
+        if (typeof transport.onRouteChange === "function") {
+            this.routeChangeUnsubscribe = transport.onRouteChange((event: RouteChangeEvent) => {
+                if (event.type === "removed") {
+                    // Guard: if the transport still reports the route as ready, this is
+                    // a stale event targeting a new replacement hub. Skip cleanup.
+                    if (this.sthBrokerTransport?.isRouteReady(event.domain)) {
+                        return;
+                    }
+
+                    this.sthConnectionStore.forEach((_id: string, controller: any) => {
+                        if (controller.routeDomain === event.domain) {
+                            controller.healthy = false;
+                            this.logger.warn(`Route ${event.type} for STH ${controller.id} domain ${event.domain}`, event.reason || "");
+                            this.cleanupHubState(controller.id, event.type);
+                            this.auditor.onUpdate().catch((err: Error) => this.logger.warn("Auditor update after route event failed", err.message));
+                        }
+                    });
+                } else if (event.type === "degraded") {
+                    this.sthConnectionStore.forEach((_id: string, controller: any) => {
+                        if (controller.routeDomain === event.domain) {
+                            // If the route is currently ready, be conservative: skip
+                            // cleanup to avoid clearing a new replacement hub.
+                            if (this.sthBrokerTransport?.isRouteReady(event.domain)) {
+                                return;
+                            }
+
+                            controller.healthy = false;
+                            this.logger.warn(`Route ${event.type} for STH ${controller.id} domain ${event.domain}`, event.reason || "");
+                            this.cleanupHubState(controller.id, event.type);
+                            this.auditor.onUpdate().catch((err: Error) => this.logger.warn("Auditor update after route event failed", err.message));
+                        }
+                    });
+                }
+            });
+        }
     }
 
     public getSthBrokerTransport(): ManagerSthBrokerTransport | undefined {
@@ -225,7 +280,7 @@ export class Manager implements IComponent {
                 accessKey: this.config.s3.accessKey!,
                 secretKey: this.config.s3.secretKey!,
                 useSSL: this.config.s3.useSSL,
-                port: this.config.s3.port,
+                port: this.config.s3.port
             });
         } else {
             this.logger.info("No s3 configuration found, falling back to disk.");
@@ -251,11 +306,14 @@ export class Manager implements IComponent {
     setupHealthEndpoint(healthCheck: HealthCheck) {
         // We may need some additional logic here later.
         this.managerHealthCheck = healthCheck;
-        const createV1HealthRouter = () => Router.create({ basePath: this._config.apiBase }).route(Router.get("/health", {
-            id: "manager.v1.health",
-            schemas: { response: z.object({}).passthrough() },
-            handler: () => healthCheck.getHealthCheckInfo()
-        }));
+        const createV1HealthRouter = () =>
+            Router.create({ basePath: this._config.apiBase }).route(
+                Router.get("/health", {
+                    id: "manager.v1.health",
+                    schemas: { response: z.object({}).passthrough() },
+                    handler: () => healthCheck.getHealthCheckInfo()
+                })
+            );
 
         registerHttpRoutes(this._apiRouter, createV1HealthRouter());
     }
@@ -273,13 +331,15 @@ export class Manager implements IComponent {
             current: { name: "manager", healthy: currentHealthy, scope, details: { ...info, aggregation } },
             processMemoryLimitBytes: this.loadCheck?.constants?.SAFE_OPERATION_LIMIT || undefined,
             osDiskPaths: this.loadCheck?.config?.fsPaths,
-            extraComponents: [{
-                name: "manager.aggregation",
-                healthy: aggregation.ready,
-                status: aggregation.ready ? "healthy" : "degraded",
-                scope,
-                details: aggregation
-            }]
+            extraComponents: [
+                {
+                    name: "manager.aggregation",
+                    healthy: aggregation.ready,
+                    status: aggregation.ready ? "healthy" : "degraded",
+                    scope,
+                    details: aggregation
+                }
+            ]
         });
 
         return summarizeHealth(scope, components, { ...info, aggregation });
@@ -356,15 +416,13 @@ export class Manager implements IComponent {
 
         this.serviceDiscovery.register(topicActor, { contentType });
 
-        req
-            .on("close", () => {
-                topicActor.retired = true;
-                ps.end();
-                this.serviceDiscovery.onUpdate("upstream close");
-            })
-            .on("error", (e: Error) => {
-                ps.emit("error", e);
-            });
+        req.on("close", () => {
+            topicActor.retired = true;
+            ps.end();
+            this.serviceDiscovery.onUpdate("upstream close");
+        }).on("error", (e: Error) => {
+            ps.emit("error", e);
+        });
 
         return ps;
     }
@@ -407,12 +465,8 @@ export class Manager implements IComponent {
         }
 
         const id = typeof payload.id === "string" && payload.id.trim().length ? payload.id : IDProvider.generate();
-        const offeredRouteDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length
-            ? payload.routeDomain.trim()
-            : undefined;
-        const routeDomain = offeredRouteDomain && isTrustedSthRouteDomain(id, offeredRouteDomain)
-            ? offeredRouteDomain
-            : this.getSthRouteDomain(id);
+        const offeredRouteDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length ? payload.routeDomain.trim() : undefined;
+        const routeDomain = offeredRouteDomain && isTrustedSthRouteDomain(id, offeredRouteDomain) ? offeredRouteDomain : this.getSthRouteDomain(id);
         const registrationToken = this.config.verser2.registration.token;
 
         if (offeredRouteDomain && offeredRouteDomain !== routeDomain) {
@@ -424,23 +478,20 @@ export class Manager implements IComponent {
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         }
 
-        if (id && this.sthConnectionStore.getById(id)?.isConnectionActive) {
-            await defer(100); // Wait for 100 ms before responding, so that a prevous connection can be closed.
-
-            if (this.sthConnectionStore.getById(id)?.isConnectionActive) {
-                this.logger.warn(`Refusing STH connection. STH with ${id} already connected.`);
-                throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
-            }
-        }
-
         const previousSth = this.sthConnectionStore.getById(id);
         let sth: ISTHController | undefined = previousSth;
 
         if (sth) {
+            // Unpipe previous controller but do NOT dispose yet.
+            // Disposal happens only after the new init succeeds so that
+            // rollback can restore a live controller.
             sth.logger.unpipe(this.logger);
-            sth.dispose();
 
             this.logger.info("STH re-registering, id:", id);
+
+            // Snapshot previous hub state so we can restore it on rollback.
+            const snapshot = this.captureHubSnapshot(previousSth.id);
+
             sth = new STHController(id, {
                 brokerTransport: this.sthBrokerTransport,
                 routeDomain,
@@ -461,9 +512,12 @@ export class Manager implements IComponent {
             try {
                 await sth.init();
             } catch (error) {
-                this.rollbackFailedSthRegistration(sth);
+                this.rollbackFailedSthRegistration(sth, previousSth, snapshot);
                 throw error;
             }
+
+            // Init succeeded: dispose the previous controller now.
+            previousSth.dispose();
         } else {
             this.logger.info("New STH registered", id);
             sth = new STHController(id, {
@@ -498,7 +552,15 @@ export class Manager implements IComponent {
         return sth.id;
     }
 
-    private rollbackFailedSthRegistration(sth: ISTHController) {
+    private cleanupHubState(id: string, routeEventType?: string) {
+        this.sthInfoRegister.handleHubDisconnect(id);
+        this.clearHubInventory(id);
+        this.commonLogsPipe.removeInStream(id);
+        this.auditor.hubConnectionChange(id, false);
+        this.serviceDiscovery.onUpdate(routeEventType ? `route ${routeEventType}` : "hub disconnect");
+    }
+
+    private rollbackFailedSthRegistration(sth: ISTHController, previousSth?: ISTHController, previousSnapshot?: HubStateSnapshot) {
         this.logger.warn("Rolling back failed STH registration", sth.id);
         sth.logger.unpipe(this.logger);
         sth.dispose();
@@ -507,6 +569,63 @@ export class Manager implements IComponent {
         this.sthInfoRegister.removeHub(sth.id);
         this.clearHubInventory(sth.id);
         this.sthConnectionStore.remove(sth.id);
+
+        // On replacement failure, restore the previous controller to the store.
+        if (previousSth) {
+            this.sthConnectionStore.add(previousSth);
+            previousSth.logger.pipe(this.logger, { end: false });
+            // Re-add the previous controller's log stream since it was removed
+            // before the replacement init attempt.
+            this.commonLogsPipe.addInStream(previousSth.id, previousSth.logStream!);
+
+            // Restore the previous hub's sequences, instances and inventory
+            // state that were cleared before the replacement init attempt.
+            if (previousSnapshot) {
+                this.restoreHubSnapshot(previousSth.id, previousSnapshot);
+            }
+        }
+    }
+
+    private captureHubSnapshot(hostId: string): HubStateSnapshot {
+        const reg = this.sthInfoRegister as any;
+        const sequences: SequenceInfoWithInstances[] = (reg.sequencesStore.get(hostId) || []).map((s: any) => ({ ...s, instances: [...s.instances] }));
+
+        const instances: Array<{ key: string; instance: Instance }> = [];
+        const instStore = reg.instancesStore as Map<string, Instance>;
+
+        for (const [key, instance] of instStore) {
+            if (key.startsWith(hostId + ":")) {
+                instances.push({ key, instance });
+            }
+        }
+
+        const inventory = this.hubInventoryState.get(hostId) ? { ...this.hubInventoryState.get(hostId)! } : undefined;
+
+        return { sequences, instances, inventory };
+    }
+
+    private restoreHubSnapshot(hostId: string, snapshot: HubStateSnapshot) {
+        const reg = this.sthInfoRegister as any;
+
+        // Re-create the hub entry with its sequence→instances map.
+        const seqMap = new Map(snapshot.sequences.map((s: any) => [s.id, new Set(s.instances)]));
+
+        reg.hostsMap.set(hostId, seqMap);
+
+        // Restore the sequences store.
+        if (snapshot.sequences.length > 0) {
+            reg.sequencesStore.set(hostId, snapshot.sequences);
+        }
+
+        // Restore instance entries.
+        for (const { key, instance } of snapshot.instances) {
+            reg.instancesStore.set(key, instance);
+        }
+
+        // Restore the hub inventory state.
+        if (snapshot.inventory) {
+            this.hubInventoryState.set(hostId, snapshot.inventory);
+        }
     }
 
     async handleHostDisconnect(id: string, reason: DisconnectReason) {
@@ -747,10 +866,7 @@ export class Manager implements IComponent {
                 const role = topicData.localProvider || topicData.provides ? ActorRole.PROVIDER : ActorRole.CONSUMER;
 
                 this.logger.debug("Registering host topic", { name: topicName, role, hostId: sth.id }, topicData.contentType);
-                this.serviceDiscovery.register(
-                    new TopicActor(topicName, role, ActorType.HOST, topicData.contentType, sth),
-                    { contentType: topicData.contentType }
-                );
+                this.serviceDiscovery.register(new TopicActor(topicName, role, ActorType.HOST, topicData.contentType, sth), { contentType: topicData.contentType });
             } else if (topicData.status === "remove") {
                 const topic = this.serviceDiscovery.topics.get(topicName);
                 const hostActor = topic?.actors.find((actor: any) => actor.host?.id === sth.id);
@@ -762,11 +878,7 @@ export class Manager implements IComponent {
         });
 
         sth.on("disconnected", () => {
-            this.sthInfoRegister.handleHubDisconnect(sth.id);
-            this.clearHubInventory(sth.id);
-            this.commonLogsPipe.removeInStream(sth.id);
-            this.auditor.hubConnectionChange(sth.id, false);
-            this.serviceDiscovery.onUpdate("hub disconnect");
+            this.cleanupHubState(sth.id);
         });
     }
 
@@ -779,7 +891,7 @@ export class Manager implements IComponent {
             id: input.id,
             config: input,
             location: "store",
-            instances : []
+            instances: []
         };
 
         return output;
@@ -805,28 +917,28 @@ export class Manager implements IComponent {
         const topics = this.serviceDiscovery.list().slice(offset, offset + limit);
         const hubs = this.sthConnectionStore.getSTHControllersInfo().slice(offset, offset + limit);
 
-        const response = hubs.sort((a: any, b: any) => {
-            const aVal = a.isConnectionActive ? 10 : 0 + (a.healthy ? 1 : 0);
-            const bVal = b.isConnectionActive ? 10 : 0 + (b.healthy ? 1 : 0);
+        const response = hubs
+            .sort((a: any, b: any) => {
+                const aVal = a.isConnectionActive ? 10 : 0 + (a.healthy ? 1 : 0);
+                const bVal = b.isConnectionActive ? 10 : 0 + (b.healthy ? 1 : 0);
 
-            return bVal - aVal;
-        }).map((hub: any) => {
-            return {
-                id : hub.id,
-                info: hub.info,
-                healthy : hub.healthy,
-                selfHosted: hub.selfHosted,
-                isConnectionActive: hub.isConnectionActive,
-                description: hub.description,
-                tags: hub.tags,
-                disconnectReason: hub.disconnectReason,
-                topics: topics
-                    .filter((topic: any) => topic.actors.some((actor: any) => actor.hostId === hub.id))
-                    .map((topic: any) => topic.name),
-                sequences: this.sthInfoRegister.getSequencesByHub(hub.id),
-                instances: this.sthInfoRegister.getInstancesByHub(hub.id),
-            };
-        });
+                return bVal - aVal;
+            })
+            .map((hub: any) => {
+                return {
+                    id: hub.id,
+                    info: hub.info,
+                    healthy: hub.healthy,
+                    selfHosted: hub.selfHosted,
+                    isConnectionActive: hub.isConnectionActive,
+                    description: hub.description,
+                    tags: hub.tags,
+                    disconnectReason: hub.disconnectReason,
+                    topics: topics.filter((topic: any) => topic.actors.some((actor: any) => actor.hostId === hub.id)).map((topic: any) => topic.name),
+                    sequences: this.sthInfoRegister.getSequencesByHub(hub.id),
+                    instances: this.sthInfoRegister.getInstancesByHub(hub.id)
+                };
+            });
 
         return response;
     }
@@ -859,15 +971,17 @@ export class Manager implements IComponent {
         const instances = this.getInstances().map((inst: any) => inst.id);
 
         return {
-            topics : topics,
-            hubs : hubs,
-            sequences : sequences,
-            instances : instances
+            topics: topics,
+            hubs: hubs,
+            sequences: sequences,
+            instances: instances
         };
     }
 
     async stop() {
         this.logger.info("Stopping manager...");
+        this.routeChangeUnsubscribe?.();
+        this.routeChangeUnsubscribe = undefined;
         this.logger.info("Manager stopped successfully.");
     }
 }
