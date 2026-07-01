@@ -117,6 +117,10 @@ class FakeBroker implements VerserBroker {
         });
         return this.requestStarted;
     }
+
+    onRouteChange(_listener: (event: any) => void): () => void {
+        return () => {};
+    }
 }
 
 function collectText(stream: Readable): Promise<string> {
@@ -437,6 +441,23 @@ test("Verser2ManagerSthBrokerTransport treats shorter non-empty route replacemen
 
     t.false(transport.isRouteReady("sth.sth-1.scramjet.internal"));
     t.true(transport.isRouteReady("sth.sth-2.scramjet.internal"));
+});
+
+test("Verser2ManagerSthBrokerTransport tolerates identical duplicate route entries", async t => {
+    const broker = new FakeBroker();
+    const transport = new Verser2ManagerSthBrokerTransport(broker);
+
+    // Two identical {domain, targetId} entries.
+    broker.setRoutes([
+        { targetId: "sth:sth-1:guest", domain: "sth.sth-1.scramjet.internal" },
+        { targetId: "sth:sth-1:guest", domain: "sth.sth-1.scramjet.internal" },
+    ]);
+
+    t.notThrows(
+        () => transport.isRouteReady("sth.sth-1.scramjet.internal"),
+        "Identical duplicate entries should not throw"
+    );
+    t.true(transport.isRouteReady("sth.sth-1.scramjet.internal"));
 });
 
 test("Verser2ManagerSthBrokerTransport rejects duplicate route domains", async t => {
