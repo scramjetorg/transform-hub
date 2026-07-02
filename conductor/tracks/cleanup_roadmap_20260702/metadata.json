@@ -1,0 +1,8 @@
+{
+  "track_id": "cleanup_roadmap_20260702",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-07-02T23:00:18Z",
+  "updated_at": "2026-07-02T23:00:18Z",
+  "description": "cleanup roadmap phases for archival cleanup tasks with prerequisites; include phase for redundant packages while retaining verser, bpmux, and old package/types"
+}

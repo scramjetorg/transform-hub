@@ -11,3 +11,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [ ] **Track: owasp review hardening**
 *Link: [./tracks/owasp_review_hardening_20260630/](./tracks/owasp_review_hardening_20260630/)*
+
+---
+
+- [ ] **Track: cleanup roadmap phases for archival cleanup tasks with prerequisites; include phase for redundant packages while retaining verser, bpmux, and old package/types**
+*Link: [./tracks/cleanup_roadmap_20260702/](./tracks/cleanup_roadmap_20260702/)*
