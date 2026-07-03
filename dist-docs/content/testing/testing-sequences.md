@@ -15,7 +15,7 @@ title: Testing sequences with @scramjet/sequence-test
 
 `@scramjet/sequence-test` provides utilities for testing sequence behavior in isolation, without requiring a running Transform Hub instance. It includes:
 
-Where route paths appear in examples, they use legacy v1-compatible Hub mock routes from the current experimental harness.
+Where route paths appear in examples, they use legacy v1-compatible Hub mock routes from the current harness.
 
 - **Test harnesses**: `createSequenceTest()` and `runSequence()` for basic sequence execution
 - **Hub mocks**: `createHubMock()` and `createHubHarness()` for simulating the Hub API
@@ -73,8 +73,8 @@ await testHarness.input({ some: "data" });
 await testHarness.waitForCompletion();
 
 // Inspect captures exposed by the returned harness object.
-// Exact helper names are experimental; prefer the package exports and tests as
-// the source of truth while the package is still in progress.
+// Exact helper names may vary; prefer the package exports and tests as
+// the source of truth for the current API surface.
 
 await testHarness.close();
 ```
@@ -96,7 +96,7 @@ console.log(result.output.ndjson());
 
 ## Fixtures
 
-Fixtures create temporary directories with sequence files for testing. The fixture helpers are asynchronous and accept file maps, so keep examples close to the package tests while the API is experimental:
+Fixtures create temporary directories with sequence files for testing. The fixture helpers are asynchronous and accept file maps, so keep examples close to the package tests for the current API surface:
 
 ```typescript
 import { createNodeSequenceFixture } from "@scramjet/sequence-test";
@@ -119,7 +119,7 @@ await fixture.cleanup();
 
 ## Captures
 
-Captures record data flowing through output, log, and monitoring streams. The capture APIs are experimental, so use the exported helpers and the package's own tests as the source of truth for exact method names:
+Captures record data flowing through output, log, and monitoring streams. Use the exported helpers and the package's own tests as the source of truth for exact method names:
 
 ```typescript
 import { createOutputCapture, createLogCapture, createMonitoringCapture } from "@scramjet/sequence-test";
@@ -153,7 +153,7 @@ const plan = createRunnerLaunchPlan({
 
 ## Hub mock
 
-`createHubMock()` creates an in-memory mock of the STH Hub API. Route coverage follows the current harness implementation and may change while the package is experimental:
+`createHubMock()` creates an in-memory mock of the STH Hub API. Route coverage follows the current harness implementation and may change across versions:
 
 ```typescript
 import { createHubMock } from "@scramjet/sequence-test";

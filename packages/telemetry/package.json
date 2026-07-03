@@ -8,7 +8,6 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
     "test": "echo \"Warning: no test specified\""
@@ -40,8 +39,6 @@
   },
   "devDependencies": {
     "@scramjet/types": "^1.1.0",
-    "ava": "^3.15.0",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6"
+    "ava": "^3.15.0"
   }
 }

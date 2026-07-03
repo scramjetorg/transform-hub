@@ -124,11 +124,34 @@ The `AppContext` interface (defined in `@scramjet/types`) is the primary interac
 | `this.destroy(error?)` | Signal fatal error |
 | `this.emit(event, message)` | Send an event to the host |
 | `this.hub` | Hub API client (`HostClient`) |
+| `this.hubClient()` | Canonical v2 Hub API fluent client |
 | `this.space` | Manager / Space API client |
+| `this.spaceClient()` | Canonical v2 Space API fluent client routed through the connected Manager/space proxy |
 | `this.instanceId` | Current instance identifier |
 | `this.api` | Local API expose surface |
 | `this.localStorage` | Key-value local storage |
 | `this.exitTimeout` | Milliseconds before force exit (default 10000) |
+
+### Hub and Space API access
+
+Existing sequences can keep using `this.hub` and `this.space`; those properties remain legacy v1-compatible clients for backwards compatibility. New sequence code should prefer `this.hubClient()` and `this.spaceClient()`, which return v2 fluent clients backed by `@scramjet/rest-api2`.
+
+```typescript
+import type { AppConfig, AppContext } from "@scramjet/types";
+import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
+
+type V2Context = AppContext<AppConfig, unknown, HubClient, SpaceClient>;
+
+export default async function (this: V2Context) {
+  const hubHealth = await this.hubClient().health.get();
+  const spaceHubs = await this.spaceClient().hubs.get();
+
+  this.logger.info("hub health", hubHealth.body);
+  this.logger.info("space hubs", spaceHubs.body.items);
+}
+```
+
+`hubClient()` is scoped to the current Hub v2 API. `spaceClient()` is scoped to the Manager/Space v2 API and is routed through the Hub's space proxy, so Hub-level and Space-level operations remain separate.
 
 ## Input and output
 

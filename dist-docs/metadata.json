@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:22c4c943d8c35d949b00d98c943a1a27b0c70bbee2da0288d9ee46eae252129e",
+  "sourceIdentifier": "sha256:47d565a6deef033cc351c7f6f7f8ce1c316a55d7b9596ecea5166af5ee2b2e5e",
   "outputRoot": {
     "value": "dist-docs",
     "resolvedPath": "dist-docs",
@@ -55,6 +55,7 @@
       "packages/api-client/README.md",
       "packages/api-router/README.md",
       "packages/api-server/README.md",
+      "packages/api-types/README.md",
       "packages/bpmux/README.md",
       "packages/cli/README.md",
       "packages/client-utils/README.md",
@@ -78,7 +79,9 @@
       "packages/runner-bun/README.md",
       "packages/runner-node/README.md",
       "packages/runner-python/README.md",
+      "packages/runtime-types/README.md",
       "packages/sequence-test/README.md",
+      "packages/sequence-types/README.md",
       "packages/sth/README.md",
       "packages/sth-config/README.md",
       "packages/symbols/README.md",
@@ -143,7 +146,7 @@
       "package": "@scramjet/sequence-test",
       "entrypoint": "packages/sequence-test/src/index.ts",
       "outputPath": "reference/typescript/sequence-test/",
-      "stability": "experimental",
+      "stability": "supported-scoped",
       "audience": [
         "implementers",
         "contributors"

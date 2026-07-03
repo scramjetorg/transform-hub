@@ -1,21 +1,13 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist"
-    },
-    "extends": "../../tsconfig.base.json",
-    "include": [
-        "./src",
-        "./test"
-    ],
-    "exclude": [
-        "node_modules"
-    ],
-    "typedocOptions": {
-        "entryPoints": [
-            "./src/index.ts"
-        ],
-        "out": "../../dist-docs/reference/typescript/manager-api",
-        "plugin": "typedoc-plugin-markdown",
-        "readme": "none"
-    }
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "./src",
+    "./test"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

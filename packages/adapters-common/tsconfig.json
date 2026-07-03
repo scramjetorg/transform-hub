@@ -9,14 +9,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "src/index.ts"
-    ],
-    "out": "../../dist-docs/reference/typescript/adapters",
-    "plugin": "typedoc-plugin-markdown",
-    "gitRevision": "HEAD",
-    "sort": "alphabetical"
-  }
+  ]
 }

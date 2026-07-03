@@ -10,8 +10,5 @@
   ],
   "exclude": [
     "../node_modules"
-  ],
-  "typedocOptions": {
-    "gitRevision": "HEAD"
-  }
+  ]
 }

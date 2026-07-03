@@ -9,12 +9,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "index.ts"
-    ],
-    "out": "../../dist-docs/reference/typescript/template",
-    "gitRevision": "HEAD"
-  }
+  ]
 }

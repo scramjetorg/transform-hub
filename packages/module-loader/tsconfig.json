@@ -1,24 +1,14 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist"
-    },
-    "extends": "../../tsconfig.base.json",
-    "include": [
-        "./src/**.ts",
-        "./test"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ],
-    "typedocOptions": {
-        "entryPoints": [
-            "src/index.ts"
-        ],
-        "out": "../../dist-docs/reference/typescript/module-loader",
-        "plugin": "typedoc-plugin-markdown",
-        "excludePrivate": "true",
-        "gitRevision": "HEAD",
-        "sort": "alphabetical"
-    }
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "./src/**.ts",
+    "./test"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

@@ -44,7 +44,7 @@ The endpoint applies to prose content export, curated TypeScript reference, CLI 
 - **README write mode** updates repository `README.md` and package `README.md` files from `docs-source/readmes/`. The output root still receives mirrored copies under `dist-docs/readmes/` or the configured equivalent.
 - **Check mode** validates generated output drift without mutating repository README files or the export root.
 
-The existing root scripts `build:docs`, `build:all-docs`, and `build:readme` are legacy command surfaces until replaced by `docs:generate`, `docs:check`, and narrower generator subcommands.
+The `docs:generate`, `docs:check`, and narrower generator subcommands (`docs:generate:content`, `docs:generate:reference`, `docs:generate:readmes`, `docs:generate:api`) are the canonical documentation commands. Legacy root aliases (`build:docs`, `build:all-docs`, `build:readme`) have been removed.
 
 ## Sidebar and category metadata
 

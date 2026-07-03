@@ -9,7 +9,6 @@
     "build:docker": "docker build -t scramjetorg/runner:$(git rev-parse HEAD) -t scramjetorg/runner:dev -f Dockerfile ../../",
     "preexport:docker": "mkdir -p ../../dist/docker && rm -rf ../../dist/docker/scramjetorg-runner.tar.gz",
     "export:docker": "npm run build:docker && docker save scramjetorg/runner:$(git rev-parse HEAD) | gzip > ../../dist/docker/scramjetorg-runner.tar.gz",
-    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "start": "ts-node ./src/index",
     "test": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000 --serial",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$(git rev-parse HEAD)",
@@ -44,8 +43,6 @@
     "proxyquire": "^2.1.3",
     "sinon": "^14.0.1",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "ava": {

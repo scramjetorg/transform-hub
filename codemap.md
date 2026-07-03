@@ -109,7 +109,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/verser/` | Legacy CONNECT/BPMux reverse-server connectivity package targeted for removal from active paths by the verser2 rollout. | [View Map](packages/verser/codemap.md) |
 | `packages/verser/src/` | Source implementation of Verser server, client, and connection modules with BPMux multiplexing. | [View Map](packages/verser/src/codemap.md) |
 | `packages/verser/src/lib/` | Concrete Verser, VerserClient, and VerserConnection class implementations with default config. | [View Map](packages/verser/src/lib/codemap.md) |
-| `template/` | Package template/scaffold with standard AVA, TypeScript, and typedoc configuration for bootstrapping new packages. | [View Map](template/codemap.md) |
+| `template/` | Package template/scaffold with standard AVA and TypeScript configuration for bootstrapping new packages. | [View Map](template/codemap.md) |
 | `bdd/` | Cucumber BDD smoke and end-to-end validation workspace for CLI, hub, Manager, instance API, runtime, and streaming behavior. | [View Map](bdd/codemap.md) |
 
 ## Runtime Wrapper Implementation Flow
