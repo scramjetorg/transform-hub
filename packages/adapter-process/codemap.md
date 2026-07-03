@@ -20,7 +20,7 @@ Local process runtime adapter package that runs sequences as direct host process
 - Failure handling preserves return codes and writes diagnostic logs via host logger adapter interface.
 
 ## Integration Points
-- Shared packages: `@scramjet/runner`, `@scramjet/model`, `@scramjet/adapters-common`, `@scramjet/sth-config`.
+- Shared packages: `@scramjet/runner`, `@scramjet/model`, `@scramjet/adapters-common`.
 - Uses `getRunnerTransportEnv()` from adapters-common to inject `SCRAMJET_RUNNER_TRANSPORT_CONFIG` verser2 transport env into the spawned runner process.
 - Host discovers and executes this adapter via runner package registration.
 - Used as non-containerized execution path and thus bypasses Docker/Kubernetes orchestration.

@@ -11,7 +11,6 @@ COPY package.json yarn.lock lerna.json tsconfig.base.json LICENSE ./
 COPY cpm/scripts ./cpm/scripts
 
 COPY cpm/packages/manager ./cpm/packages/manager
-COPY cpm/packages/manager-config ./cpm/packages/manager-config
 COPY cpm/packages/multi-manager ./cpm/packages/multi-manager
 COPY cpm/packages/platform-types ./cpm/packages/platform-types
 
@@ -32,7 +31,6 @@ COPY sth/packages/obj-logger ./sth/packages/obj-logger
 COPY sth/packages/pre-runner ./sth/packages/pre-runner
 COPY sth/packages/python-runner ./sth/packages/python-runner
 COPY sth/packages/runner ./sth/packages/runner
-COPY sth/packages/sth-config ./sth/packages/sth-config
 COPY sth/packages/symbols ./sth/packages/symbols
 COPY sth/packages/types ./sth/packages/types
 COPY sth/packages/utility ./sth/packages/utility

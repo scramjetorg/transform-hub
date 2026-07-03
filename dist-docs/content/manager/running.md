@@ -42,9 +42,9 @@ In production, verser2 connectivity requires TLS. mTLS is configurable for addit
 
 ## Configuration and schema
 
-The standalone Manager entrypoint is currently a programmatic package entrypoint, not a full CLI configuration surface. It uses defaults from `@scramjet/manager-config` and Manager configuration types from `@scramjet/types`.
+The standalone Manager entrypoint is currently a programmatic package entrypoint, not a full CLI configuration surface. It uses defaults from `@scramjet/config` and Manager configuration types from `@scramjet/types`.
 
-File and CLI configuration loading is available through the newer `@scramjet/config` command surfaces and the MultiManager package where implemented. For Hub-side configuration, see the [Transform Hub configuration](../transform-hub/configuration.md) page. For Manager type details, refer to `@scramjet/manager-config` and the generated curated reference for `@scramjet/types`.
+File and CLI configuration loading is available through the newer `@scramjet/config` command surfaces and the MultiManager package where implemented. For Hub-side configuration, see the [Transform Hub configuration](../transform-hub/configuration.md) page. For Manager type details, refer to `@scramjet/config` and the generated curated reference for `@scramjet/types`.
 
 ## MultiManager
 

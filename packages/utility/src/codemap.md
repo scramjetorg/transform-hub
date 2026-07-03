@@ -36,7 +36,7 @@ Implements shared utility functions for the STH ecosystem: deferred promises, de
 
 ## Integration Points
 
-- The `merge` function is consumed by `@scramjet/config`, `@scramjet/sth-config`, `@scramjet/manager-config` for config merging.
+- The `merge` function is consumed by `@scramjet/config` for config merging.
 - `defer` used across the system for async control flow.
 - `LogLevelStrings` from `constants/` is the canonical log level ordering.
 - `typed-emitter` used for type-safe event emitters throughout the codebase.

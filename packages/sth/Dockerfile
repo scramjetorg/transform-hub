@@ -11,7 +11,6 @@ COPY ./dist/api-client ./dist/api-client
 COPY ./dist/frame-stream ./dist/frame-stream
 COPY ./dist/client-utils ./dist/client-utils
 COPY ./dist/api-server ./dist/api-server
-COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
 COPY ./dist/obj-logger ./dist/obj-logger
 COPY ./dist/model ./dist/model

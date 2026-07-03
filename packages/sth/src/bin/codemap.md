@@ -21,5 +21,5 @@ Imperative startup pipeline: parse options, merge config file and CLI overlays, 
 
 ## Integration Points
 
-- Talks to `@scramjet/sth-config` (`ConfigService`), `@scramjet/config` (`loadConfig`, `sthOutboundVerser2ConfigSchema`, `sthOutboundVerser2Options`, `createOptionRegistry`), `@scramjet/types`, `@scramjet/host` (`startHost`), `@scramjet/adapters` (`augmentOptions`), `@scramjet/utility`, and Node process signals.
+- Talks to `@scramjet/config` (`ConfigService`, `loadConfig`, `sthOutboundVerser2ConfigSchema`, `sthOutboundVerser2Options`, `createOptionRegistry`), `@scramjet/types`, `@scramjet/host` (`startHost`), `@scramjet/adapters` (`augmentOptions`), `@scramjet/utility`, and Node process signals.
 - Verser2 config validation uses Zod schema from `@scramjet/config` with environment and CLI fallback support.

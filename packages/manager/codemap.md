@@ -68,7 +68,6 @@ CPM Message Flow (STH → Manager):
 - **`@scramjet/symbols`**: Shared enum constants.
 - **`@scramjet/api-client` / `@scramjet/client-utils`**: `HostClient` used by `STHController`.
 - **`@scramjet/obj-logger`**: Structured logging.
-- **`@scramjet/manager-config`**: Default configuration including verser2 settings.
 - **`@scramjet/model`**: `IDProvider`.
 - **`@scramjet/load-check`**: OS resource load checking.
 - **`@scramjet/adapter-process`**: Sequence package identification.

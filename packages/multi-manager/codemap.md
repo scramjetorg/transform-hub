@@ -40,7 +40,6 @@ Multi-Manager is the Scramjet Cloud Platform control plane that orchestrates mul
 - **`@scramjet/rest-api2`**: V2 route sets and schemas for Root-owned routes (version, info, load, spaces, health, trust, audit).
 - **`@scramjet/config`**: CLI option parsing and verser2 config masking.
 - **`@scramjet/manager`**: Sub-Manager lifecycle, audit streams, health endpoints, verser2 STH routing helpers (`createManagerSthLocalBrokerTransport`, `CommonLogsPipe`, `HealthCheck`).
-- **`@scramjet/manager-config`**: Default Manager configuration factory.
 - **`@signicode/verser2-host` / `@signicode/verser-common`**: Verser2 Host and route/trust support (local broker/guest attachments).
 - **`@scramjet/load-check`**: Resource pressure gating.
 - **`@scramjet/monitoring-server`**: Health-check endpoint on separate port.

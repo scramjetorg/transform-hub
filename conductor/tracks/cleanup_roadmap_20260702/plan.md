@@ -151,10 +151,10 @@
       - Step E: migrated `packages/adapter-process` test and BDD hub config `defaultConfig` imports from `@scramjet/sth-config` to `@scramjet/config`; dependencies updated.
       - Integration cleanup reduced the migration diff to import/dependency-only changes; no runtime formatting churn retained.
       - No-active-import gates now show only compatibility package self-tests and package `name` fields for old config package references.
-- [ ] Task: Remove old config services after parity proof
-    - [ ] Remove `sth-config` and `manager-config` code/workspace references only after no-active-import and parity tests pass.
-    - [ ] Update docs, codemaps, package manifests, and runtime invariants that mention the removed packages.
-    - [ ] Treat old config package/service removal as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
+- [x] Task: Remove old config services after parity proof
+    - [x] Remove `sth-config` and `manager-config` code/workspace references only after no-active-import and parity tests pass.
+    - [x] Update docs, codemaps, package manifests, and runtime invariants that mention the removed packages.
+    - [x] Treat old config package/service removal as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate config cleanup
     - [x] Run focused config package tests.
       - `packages/config` tests passed: 49 tests.
@@ -167,6 +167,10 @@
       - `npm run lint:quick` passed after adding the explicit `@scramjet/adapters` dependency for the optional dynamic adapter import in `@scramjet/config`.
       - No-active-import gates for `@scramjet/sth-config` and `@scramjet/manager-config` in active package/BDD TS files and package dependencies passed; only compatibility package self-tests and package `name` fields remain.
       - Wrong initial adapter-process test invocation (`test:ava`) was corrected to the supported package `test` script.
+      - Old package directories `packages/sth-config/` and `packages/manager-config/` deleted.
+      - Updated 16 codemap files, root README, scripts/docs.js, scripts/bump_docker_images.sh, scripts/bump-dependencies-versions.sh to remove stale references.
+      - `npm run build:packages` and `npm run check:runtime-invariants` pass under memory guard.
+      - Follow-up cleanup: removed stale lockfile workspace entries (packages/manager-config, packages/sth-config); updated 4 docs-source files (contributing.md, manager/running.md, transform-hub/configuration.md, readmes/packages/manager.md); regenerated docs (dist-docs/) which removed stale `readmes/packages/{manager-config,sth-config}/README.md` output; `npm run docs:generate` and `npm run docs:check` pass.
 - [ ] Task: Conductor - Phase Checkpoint 'Config Parity Before Removing Old Config Services' (Protocol in workflow.md)
     - [ ] Commit and push Phase 3 changes before completing this checkpoint.
     - [ ] Update the draft PR with the pushed Phase 3 commit and post config parity/removal validation results as a PR comment.

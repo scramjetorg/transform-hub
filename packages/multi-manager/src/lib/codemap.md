@@ -46,7 +46,6 @@ Core orchestration library for the Multi-Manager. Contains the main `MultiManage
 - `@scramjet/manager`: `Manager`, `CommonLogsPipe`, `HealthCheck`, `ManagerAuditor`, `createManagerSthLocalBrokerTransport`.
 - `@scramjet/api-router`: Route contracts, binding, HTTP adapter for v2 API.
 - `@scramjet/rest-api2`: V2 route sets and schemas (Root-owned routes).
-- `@scramjet/manager-config`: `getDefaultConfig()`.
 - `@signicode/verser2-host`: Verser2 Host and local Broker/Guest attachments.
 - `@scramjet/api-server`: `APIExpose`.
 - `@scramjet/load-check`: `LoadCheck`, `LoadCheckConfig`.

@@ -74,4 +74,4 @@ Zod validation schemas and CLI option descriptor arrays for verser2 transport co
 **Design:** Schemas use `strict()` to reject unknown fields. PEM pair validation (`validatePemPair`) ensures cert and key are provided together. `validateRequiredRoutes` ensures critical fields are non-empty when verser2 is enabled. The `"auto"` runner broker peerId semantic is documented in the flag description rather than validated in the schema.
 
 **Integration:**
-- Both schema and option arrays are exported and consumed by `packages/sth-config` (ConfigService masking via `maskConfig()`), `packages/sth/src/bin/hub.ts` (CLI wiring + `loadConfig` validation), and `packages/manager` (Manager config loading).
+- Both schema and option arrays are exported and consumed by `packages/config` (ConfigService masking via `maskConfig()`), `packages/sth/src/bin/hub.ts` (CLI wiring + `loadConfig` validation), and `packages/manager` (Manager config loading).

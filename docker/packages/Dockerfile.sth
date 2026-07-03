@@ -13,7 +13,6 @@ WORKDIR /dist
 COPY --from=builder /build/dist/sth                 ./sth
 COPY --from=builder /build/dist/host                ./host
 COPY --from=builder /build/dist/obj-logger          ./obj-logger
-COPY --from=builder /build/dist/sth-config          ./sth-config
 COPY --from=builder /build/dist/utility             ./utility
 COPY --from=builder /build/dist/adapters            ./adapters
 COPY --from=builder /build/dist/model               ./model

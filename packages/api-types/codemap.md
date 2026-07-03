@@ -23,6 +23,6 @@ The types in this package flow through:
 
 ## Integration points
 
-- Consumed by `@scramjet/sth`, `@scramjet/host`, `@scramjet/manager`, `@scramjet/multi-manager`, `@scramjet/sth-config`, `@scramjet/manager-config`, adapters, runners, and API client packages.
+- Consumed by `@scramjet/sth`, `@scramjet/host`, `@scramjet/manager`, `@scramjet/multi-manager`, adapters, runners, and API client packages.
 - Consumed by `@scramjet/types` (re-exports REST DTO namespaces and AppContext types via compatibility barrel).
 - ~45 exported modules across the package root.

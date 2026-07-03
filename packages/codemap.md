@@ -24,7 +24,6 @@ Monorepo workspace directory containing all Scramjet Transform Hub packages unde
 | `load-check/` | System resource monitoring, load checking, and health summary generation. | [View](load-check/codemap.md) |
 | `logger/` | Console Web API-compatible logger with streaming output support. | [View](logger/codemap.md) |
 | `manager/` | Manager control plane for connected STH nodes, metadata-rich hub inventory, cluster API routing, and registry. | [View](manager/codemap.md) |
-| `manager-config/` | Manager default configuration, Verser2 defaults, and singleton config service for deep-merge runtime updates. | [View](manager-config/codemap.md) |
 | `middleware-api-client/` | Middleware API client for space-level Manager routing through the Middleware layer. | [View](middleware-api-client/codemap.md) |
 | `model/` | Domain model classes — stream handler, message serialization, error types, ID provider. | [View](model/codemap.md) |
 | `module-loader/` | Runtime module loading utility (import/require) with memory tracking. | [View](module-loader/codemap.md) |
@@ -41,7 +40,6 @@ Monorepo workspace directory containing all Scramjet Transform Hub packages unde
 | `sequence-test/` | Supported sequence testing harness for scoped local fixture/hub-harness/AppContext validation (not full Hub/runner parity replacement). | [View](sequence-test/codemap.md) |
 | `sequence-types/` | Sequence-author-facing types: frozen SequenceAppContext API, application/function types. Canonical import for sequence authors. | [View](sequence-types/codemap.md) |
 | `sth/` | Top-level STH wrapper owning process-facing lifecycle around a configured host instance. | [View](sth/codemap.md) |
-| `sth-config/` | STH configuration defaults, image defaults, deep-merge updates, and runtime-adapter selection. | [View](sth-config/codemap.md) |
 | `symbols/` | Shared constants and protocol symbols — message codes, statuses, stream states, headers, exit/error codes, runtime-kind. | [View](symbols/codemap.md) |
 | `telemetry/` | Telemetry adapter registry, Loki integration, and telemetry data contracts. | [View](telemetry/codemap.md) |
 | `types/` | Shared type package for CLI options, merged STH configuration, runtime executor contracts, and adapter-facing DTOs. | [View](types/codemap.md) |

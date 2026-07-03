@@ -83,7 +83,6 @@ The monorepo contains the following npm packages:
 | [@scramjet/load-check](./packages/load-check/) | The package provides health info for STH. |
 | [@scramjet/logger](./packages/logger/) | The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice. |
 | [@scramjet/manager](./packages/manager/) | Scramjet Manager |
-| [@scramjet/manager-config](./packages/manager-config/) | Scramjet CPM Config |
 | [@scramjet/middleware-api-client](./packages/middleware-api-client/) | Scramjet Middleware API Client |
 | [@scramjet/model](./packages/model/) | The package provides the domain model for STH and the CLI. |
 | [@scramjet/module-loader](./packages/module-loader/) | Scramjet Module Loader |
@@ -101,7 +100,6 @@ The monorepo contains the following npm packages:
 | [@scramjet/sequence-test](./packages/sequence-test/) | Test harness for Scramjet Transform Sequences using the runner protocol without starting a full Transform Hub. Supported for scoped local sequence fixture/harness validation. |
 | [@scramjet/sequence-types](./packages/sequence-types/) | Sequence-author-facing types for Scramjet Transform Hub. Exports the frozen sequence AppContext API backed by BaseAppContext from @scramjet/runtime-types, plus canonical sequence application/function types for sequence authors. |
 | [@scramjet/sth](./packages/sth/) | Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like. |
-| [@scramjet/sth-config](./packages/sth-config/) | STH configuration defaults, image defaults, deep-merge updates, runtime-adapter selection, and public-safe config extraction. |
 | [@scramjet/symbols](./packages/symbols/) | The package holds the symbols and enumerations for STH. |
 | [@scramjet/telemetry](./packages/telemetry/) | The package provides modules for gathering analytics data. |
 | [@scramjet/types](./packages/types/) | [DEPRECATED] This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces. Deprecated in favor of @scramjet/runtime-types, @scramjet/sequence-types, and @scramjet/api-types. Existing imports continue to resolve; new code should import from the split packages. |

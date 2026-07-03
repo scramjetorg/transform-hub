@@ -76,10 +76,6 @@
     "output": "packages/manager/README.md"
   },
   {
-    "source": "packages/manager-config/package.json",
-    "output": "packages/manager-config/README.md"
-  },
-  {
     "source": "packages/middleware-api-client/package.json",
     "output": "packages/middleware-api-client/README.md"
   },
@@ -146,10 +142,6 @@
   {
     "source": "docs-source/readmes/packages/sth.md",
     "output": "packages/sth/README.md"
-  },
-  {
-    "source": "packages/sth-config/package.json",
-    "output": "packages/sth-config/README.md"
   },
   {
     "source": "packages/symbols/package.json",
