@@ -2,13 +2,15 @@
 
 ## Phase 1: Inventory, Safety Gates, and Branch Setup
 
-- [~] Task: Create implementation review surface
+- [x] Task: Create implementation review surface
     - [x] Capture the current branch as the base branch during implementation execution.
     - [x] Create the implementation branch `conductor/cleanup_roadmap_20260702` from current HEAD.
-    - [ ] Do not create granular start-marker commits or open an early PR during planning/track creation.
-    - [ ] At the end of Phase 1, after the scoped Phase 1 commit is created and pushed, create the draft PR using this track's `spec.md` as the PR body.
-    - [ ] Perform implementation work on the branch and commit according to the resolved task-level commit policy.
-    - [ ] Keep the draft PR updated with pushed commits after every completed phase and after any important mutating task that changes package topology, public docs, tests, workflows, dependency manifests, runtime invariants, or transport/config behavior.
+    - [x] Do not create granular start-marker commits or open an early PR during planning/track creation.
+    - [x] At the end of Phase 1, after the scoped Phase 1 commit is created and pushed, create the draft PR using this track's `spec.md` as the PR body.
+    - [x] Perform implementation work on the branch and commit according to the resolved task-level commit policy.
+    - [x] Keep the draft PR updated with pushed commits after every completed phase and after any important mutating task that changes package topology, public docs, tests, workflows, dependency manifests, runtime invariants, or transport/config behavior.
+    - Notes:
+      - Base branch: `feat/manager-oss`; implementation branch: `conductor/cleanup_roadmap_20260702`; draft PR: https://github.com/0rail/transform-hub/pull/53.
 - [x] Task: Inventory cleanup candidates from archival plans and current repo state
     - [x] Delegate repository-local cleanup inventory to @explorer, covering docs, config, API/client, BDD/refapps, test infrastructure, redundant packages, and transport fallbacks.
     - [x] Compare archival cleanup candidates against current files, package manifests, scripts, workflows, and docs references.
@@ -32,10 +34,13 @@
       - Legacy `this.hub`/`this.space` retained.
       - Deprecated `@scramjet/types` retained.
       - `packages/verser` and `packages/bpmux` retained with standalone proof gates.
-- [ ] Task: Conductor - Phase Checkpoint 'Inventory, Safety Gates, and Branch Setup' (Protocol in workflow.md)
-    - [ ] Create and push the scoped Phase 1 commit before completing this checkpoint.
-    - [ ] Create the draft PR after the Phase 1 commit is pushed, using `spec.md` as the PR body.
-    - [ ] Post Phase 1 validation and retained/removal classification notes as a PR comment.
+- [x] Task: Conductor - Phase Checkpoint 'Inventory, Safety Gates, and Branch Setup' (Protocol in workflow.md)
+    - [x] Create and push the scoped Phase 1 commit before completing this checkpoint.
+    - [x] Create the draft PR after the Phase 1 commit is pushed, using `spec.md` as the PR body.
+    - [x] Post Phase 1 validation and retained/removal classification notes as a PR comment.
+    - Notes:
+      - Validation: `npm run check:runtime-invariants` passed with 8 guards and 0 failures.
+      - PR comment: https://github.com/0rail/transform-hub/pull/53#issuecomment-4874689156.
 
 ## Phase 2: Documentation Output Cleanup and Docs Parity
 
