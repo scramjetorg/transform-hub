@@ -128,7 +128,20 @@
     - [x] All 49 tests pass (18 existing + 31 new) under memory guard.
     - [x] Build succeeds (npm run build in packages/config).
     - Notes: Existing tests use TS_NODE_TRANSPILE_ONLY=1 + --serial to stay under memory limit. Circular dependency avoided by ordering re-exports after verser2-config in index.ts and importing directly from source files where needed.
-- [~] Task: Migrate internal consumers from old config services
+- [x] Step B: Convert old config packages into compatibility wrappers around `@scramjet/config` (no consumer migration, no deletion).
+    - [x] `packages/sth-config/src/index.ts`: Re-export `development`, `getRuntimeAdapterOption`, `ConfigService`, `defaultConfig`, `applyManagerTrustBootstrap` (and types) from `@scramjet/config`. Keep `debug` const locally (uses `development()` at module level).
+    - [x] `packages/sth-config/src/config-service.ts`: Re-export `ConfigService`, `defaultConfig` from `@scramjet/config`.
+    - [x] `packages/sth-config/src/default-config.ts`: Re-export `defaultConfig` from `@scramjet/config`.
+    - [x] `packages/sth-config/src/manager-trust-bootstrap.ts`: Re-export `applyManagerTrustBootstrap` and types from `@scramjet/config`.
+    - [x] `packages/sth-config/src/image-config.json`: Keep unchanged for compatibility.
+    - [x] `packages/manager-config/src/index.ts`: Keep `export * from "./config-service"` (unchanged barrel).
+    - [x] `packages/manager-config/src/config-service.ts`: Re-export `managerConfigService` as `configService`, `managerDefaultConfig` as `defaultConfig`, `getDefaultManagerConfig` as `getDefaultConfig` from `@scramjet/config`.
+    - [x] `packages/manager-config/src/default-config.ts`: Re-export `managerDefaultConfig` as `defaultConfig` from `@scramjet/config` (kept for compatibility, not directly used by barrel).
+    - [x] `packages/manager-config/package.json`: Added `@scramjet/config` dependency.
+    - [x] Preserved all old tests unchanged — 23/23 sth-config tests pass, 10/10 manager-config tests pass.
+    - [x] Build: `npm run build:packages` passed.
+    - [x] Note: Orchestrator re-ran `packages/config` with the memory-safe serial invocation used in Step A; 49/49 tests passed.
+- [ ] Task: Migrate internal consumers from old config services
     - [ ] Replace active internal imports of `sth-config` and `manager-config` with the proven replacement config APIs.
     - [ ] Remove package dependencies/scripts only after consumers and tests are migrated.
     - [ ] Pause for approval before destructive package removal or broad dependency/tooling changes.
