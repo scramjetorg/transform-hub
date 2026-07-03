@@ -112,7 +112,23 @@
       - **Deferred/blocker**: old-format compatibility migration path for STH config (e.g., `cpmUrl` → new config) is not exportable/testable from the public API without either (a) extracting the alias merge logic into `@scramjet/config`, or (b) refactoring `sth-config` consumer code. Added as deferral note for Phase 3b.
       - **Manager-config singleton `configService.update()` test**: uses a temporary key injection to avoid cross-test interference with the module-level singleton state. Real deep-merge update behavior (change a real field and restore it) is not testable concurrently without exporting the ConfigService class.
       - **Validation commands**: all passed: config package tests (18 tests), sth-config package tests (23 tests), manager-config package tests (10 tests), targeted manager masking tests (11 tests), `npm run build:packages`, and `npm run check:runtime-invariants`.
-- [ ] Task: Migrate internal consumers from old config services
+- [x] Step A: Implement canonical replacement exports in @scramjet/config only.
+    - [x] Added packages/config/src/env.ts (development() helper).
+    - [x] Added packages/config/src/sth/image-config.ts (TS copy of image-config.json).
+    - [x] Added packages/config/src/sth/default-config.ts (STH defaults).
+    - [x] Added packages/config/src/sth/config-service.ts (ConfigService class, defaultConfig with image merge, selectRuntimeAdapter, static getConfigInfo).
+    - [x] Added packages/config/src/sth/public-config.ts (toPublicSTHConfig standalone function).
+    - [x] Added packages/config/src/sth/runtime-adapter-option.ts (getRuntimeAdapterOption).
+    - [x] Added packages/config/src/sth/manager-trust-bootstrap.ts (applyManagerTrustBootstrap + types).
+    - [x] Added packages/config/src/manager/default-config.ts (managerDefaultConfig).
+    - [x] Added packages/config/src/manager/config-service.ts (ManagerConfigService, managerConfigService, getDefaultManagerConfig).
+    - [x] Re-exported from packages/config/src/index.ts.
+    - [x] Added @scramjet/api-types, @scramjet/utility, @scramjet/runtime-types dependencies to packages/config.
+    - [x] Added 31 parity tests in packages/config/test/parity.spec.ts (development, imageConfig, defaultConfig, getRuntimeAdapterOption, applyManagerTrustBootstrap, ConfigService, toPublicSTHConfig, manager config).
+    - [x] All 49 tests pass (18 existing + 31 new) under memory guard.
+    - [x] Build succeeds (npm run build in packages/config).
+    - Notes: Existing tests use TS_NODE_TRANSPILE_ONLY=1 + --serial to stay under memory limit. Circular dependency avoided by ordering re-exports after verser2-config in index.ts and importing directly from source files where needed.
+- [~] Task: Migrate internal consumers from old config services
     - [ ] Replace active internal imports of `sth-config` and `manager-config` with the proven replacement config APIs.
     - [ ] Remove package dependencies/scripts only after consumers and tests are migrated.
     - [ ] Pause for approval before destructive package removal or broad dependency/tooling changes.

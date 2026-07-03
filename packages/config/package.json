@@ -13,6 +13,9 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/api-types": "^1.1.0",
+    "@scramjet/runtime-types": "^1.1.0",
+    "@scramjet/utility": "^1.1.0",
     "cac": "^6.7.14",
     "jsonc-parser": "^3.3.1",
     "yaml": "^2.2.2",
