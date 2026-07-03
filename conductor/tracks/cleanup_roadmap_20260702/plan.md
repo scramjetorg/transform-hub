@@ -6,7 +6,9 @@
     - [ ] Capture the current branch as the base branch during implementation execution.
     - [ ] Create the implementation branch `conductor/cleanup_roadmap_20260702` from current HEAD.
     - [ ] Do not create granular start-marker commits or open an early PR during planning/track creation.
+    - [ ] At the end of Phase 1, after the scoped Phase 1 commit is created and pushed, create the draft PR using this track's `spec.md` as the PR body.
     - [ ] Perform implementation work on the branch and commit according to the resolved task-level commit policy.
+    - [ ] Keep the draft PR updated with pushed commits after every completed phase and after any important mutating task that changes package topology, public docs, tests, workflows, dependency manifests, runtime invariants, or transport/config behavior.
 - [ ] Task: Inventory cleanup candidates from archival plans and current repo state
     - [ ] Delegate repository-local cleanup inventory to @explorer, covering docs, config, API/client, BDD/refapps, test infrastructure, redundant packages, and transport fallbacks.
     - [ ] Compare archival cleanup candidates against current files, package manifests, scripts, workflows, and docs references.
@@ -22,6 +24,9 @@
     - [ ] Confirm deprecated `@scramjet/types` package/types are retained.
     - [ ] Confirm `packages/verser` and `packages/bpmux` are retained in the repository.
 - [ ] Task: Conductor - Phase Checkpoint 'Inventory, Safety Gates, and Branch Setup' (Protocol in workflow.md)
+    - [ ] Create and push the scoped Phase 1 commit before completing this checkpoint.
+    - [ ] Create the draft PR after the Phase 1 commit is pushed, using `spec.md` as the PR body.
+    - [ ] Post Phase 1 validation and retained/removal classification notes as a PR comment.
 
 ## Phase 2: Documentation Output Cleanup and Docs Parity
 
@@ -43,6 +48,8 @@
     - [ ] Run `npm run docs:check` or the narrow current docs drift command.
     - [ ] Record skipped docs validation with reason if commands have changed.
 - [ ] Task: Conductor - Phase Checkpoint 'Documentation Output Cleanup and Docs Parity' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 2 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 2 commit and post docs validation results as a PR comment.
 
 ## Phase 3: Config Parity Before Removing Old Config Services
 
@@ -61,11 +68,14 @@
 - [ ] Task: Remove old config services after parity proof
     - [ ] Remove `sth-config` and `manager-config` code/workspace references only after no-active-import and parity tests pass.
     - [ ] Update docs, codemaps, package manifests, and runtime invariants that mention the removed packages.
+    - [ ] Treat old config package/service removal as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate config cleanup
     - [ ] Run focused config package tests.
     - [ ] Run `npm run build:packages` if package graph changes.
     - [ ] Run `npm run check:runtime-invariants` if config/package invariants are affected.
 - [ ] Task: Conductor - Phase Checkpoint 'Config Parity Before Removing Old Config Services' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 3 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 3 commit and post config parity/removal validation results as a PR comment.
 
 ## Phase 4: API/Client Parity and Retained v1 Compatibility
 
@@ -86,6 +96,8 @@
     - [ ] Run targeted BDD/API smoke only if behavior crosses CLI/API/Hub boundaries.
     - [ ] Record any skipped broad BDD and reason.
 - [ ] Task: Conductor - Phase Checkpoint 'API/Client Parity and Retained v1 Compatibility' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 4 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 4 commit and post API/client validation plus retained compatibility notes as a PR comment.
 
 ## Phase 5: Refapps and Legacy BDD Cleanup
 
@@ -105,12 +117,15 @@
 - [ ] Task: Remove stale BDD/refapp references after replacement proof
     - [ ] Remove dead empty feature files and stale script paths after no-active-use checks.
     - [ ] Update workflows/scripts/docs that referenced removed BDD/refapp paths.
+    - [ ] Treat BDD/refapp deletion or workflow mutation as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate BDD/refapp cleanup
     - [ ] Run `npm run test:sequence-appcontext` if AppContext fixtures are affected.
     - [ ] Run `npm run test:bdd-appcontext` if AppContext BDD is affected.
     - [ ] Run `npm run test:bdd-ci-python` or narrower Python BDD tags if Python BDD is affected.
     - [ ] Record skipped Docker/Kubernetes BDD with reason.
 - [ ] Task: Conductor - Phase Checkpoint 'Refapps and Legacy BDD Cleanup' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 5 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 5 commit and post BDD/refapp validation results as a PR comment.
 
 ## Phase 6: BDD/Test Infrastructure Hardening
 
@@ -127,6 +142,8 @@
     - [ ] Run affected BDD runner/package tests.
     - [ ] Record failure classifications and skipped broad suites.
 - [ ] Task: Conductor - Phase Checkpoint 'BDD/Test Infrastructure Hardening' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 6 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 6 commit and post test-infrastructure validation results as a PR comment.
 
 ## Phase 7: Redundant Package Cleanup and Retained Legacy Package Proof
 
@@ -152,11 +169,14 @@
     - [ ] Move runtime dependencies to devDependencies where usage is test/compat-only and validation proves it safe.
     - [ ] Remove dead package scripts, stale package references, and non-existent package paths.
     - [ ] Document why `packages/verser`, `packages/bpmux`, and `@scramjet/types` remain retained.
+    - [ ] Treat dependency manifest, package script, standalone proof, or type-surface changes as important mutating tasks: create scoped commits, push them, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate redundant package cleanup
     - [ ] Run `npm run check:typings-split` if type-package boundaries change.
     - [ ] Run `npm run check:runtime-invariants` to preserve no-reimport guarantees.
     - [ ] Run affected package builds/tests and standalone proof commands.
 - [ ] Task: Conductor - Phase Checkpoint 'Redundant Package Cleanup and Retained Legacy Package Proof' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 7 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 7 commit and post standalone proof/runtime-invariant validation results as a PR comment.
 
 ## Phase 8: Transport / Local-Forwarding Cleanup After Verser2 Parity
 
@@ -169,12 +189,15 @@
     - [ ] Remove legacy runner socket/local-forwarding paths only where no active use remains.
     - [ ] Keep compatibility/fallback paths that are still active or unsupported by public verser2 APIs.
     - [ ] Hard-fail explicit legacy `sth.default.runner.broker` config only if migration policy approves it.
+    - [ ] Treat transport deletion or legacy config hard-fail work as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate transport cleanup
     - [ ] Run runner RPC/control tests for affected paths.
     - [ ] Run Manager/STH routing tests for affected paths.
     - [ ] Run targeted BDD only where package tests cannot prove behavior.
     - [ ] Run `npm run check:runtime-invariants`.
 - [ ] Task: Conductor - Phase Checkpoint 'Transport / Local-Forwarding Cleanup After Verser2 Parity' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 8 changes before completing this checkpoint.
+    - [ ] Update the draft PR with the pushed Phase 8 commit and post transport parity/removal validation results as a PR comment.
 
 ## Phase 9: Breaking-Change Readiness and Deferred Removal Record
 
@@ -192,5 +215,7 @@
     - [ ] Run the narrowest sufficient final build/test/docs/runtime-invariant checks for touched areas.
     - [ ] Delegate final maintainability/risk review to @oracle.
     - [ ] Update plan notes with validation results, skipped checks, retained surfaces, and follow-up candidates.
-    - [ ] Open or update the draft PR when required by the branching policy and post verification results as a PR comment.
+    - [ ] Update the draft PR with final pushed commits and post final verification results as a PR comment.
 - [ ] Task: Conductor - Phase Checkpoint 'Breaking-Change Readiness and Deferred Removal Record' (Protocol in workflow.md)
+    - [ ] Commit and push Phase 9 changes before completing this checkpoint.
+    - [ ] Confirm the draft PR includes all phase commits and comments for final validation, retained surfaces, and deferred removal candidates.
