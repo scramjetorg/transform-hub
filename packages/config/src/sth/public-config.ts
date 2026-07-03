@@ -1,5 +1,5 @@
 import { PublicSTHConfiguration, STHConfiguration } from "@scramjet/api-types";
-import { maskConfig } from "../..";
+import { maskConfig } from "../mask-config";
 import { sthOutboundVerser2Options } from "../verser2-config";
 
 export function toPublicSTHConfig(config: STHConfiguration): PublicSTHConfiguration {

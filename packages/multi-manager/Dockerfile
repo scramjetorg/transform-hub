@@ -22,6 +22,7 @@ COPY sth/packages/adapter-process ./sth/packages/adapter-process
 COPY sth/packages/api-client ./sth/packages/api-client
 COPY sth/packages/api-server ./sth/packages/api-server
 COPY sth/packages/client-utils ./sth/packages/client-utils
+COPY sth/packages/config ./sth/packages/config
 COPY sth/packages/frame-stream ./sth/packages/frame-stream
 COPY sth/packages/load-check ./sth/packages/load-check
 COPY sth/packages/model ./sth/packages/model

@@ -4,6 +4,7 @@ import { cac } from "cac";
 import { parse as parseJsonc } from "jsonc-parser";
 import YAML from "yaml";
 import { z, ZodError, ZodIssue, ZodType } from "zod";
+import { maskConfig } from "./mask-config";
 
 export type ConfigPath = string | readonly string[];
 export type CliOptionType = "string" | "number" | "boolean" | "string[]" | "number[]" | "json";
@@ -228,19 +229,7 @@ export function mergeConfig<T extends Record<string, unknown>>(target: T, source
     return target;
 }
 
-export function maskConfig(value: unknown, options: readonly ConfigOptionDescriptor[], mask = "********"): unknown {
-    const clone = cloneValue(value);
-
-    options
-        .filter((option) => option.secret)
-        .forEach((option) => {
-            const path = toPath(option.path || option.name);
-
-            if (getPath(clone, path) !== undefined) setPath(clone, path, mask);
-        });
-
-    return clone;
-}
+export { maskConfig } from "./mask-config";
 
 export function formatZodError(error: ZodError): string {
     return error.issues.map((issue: ZodIssue) => `${issue.path.join(".") || "<root>"}: ${issue.message}`).join("\n");
@@ -424,19 +413,6 @@ function deletePath(target: unknown, path: readonly string[]): void {
     const parent = path.slice(0, -1).reduce((cursor, part) => (isPlainObject(cursor) ? cursor[part] : undefined), target);
 
     if (isPlainObject(parent)) delete parent[path[path.length - 1]];
-}
-
-function cloneValue(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(cloneValue);
-    if (!isPlainObject(value)) return value;
-
-    return Object.keys(value).reduce(
-        (copy, key) => {
-            copy[key] = cloneValue(value[key]);
-            return copy;
-        },
-        {} as Record<string, unknown>
-    );
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

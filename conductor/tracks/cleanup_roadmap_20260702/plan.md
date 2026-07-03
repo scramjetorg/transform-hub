@@ -170,10 +170,26 @@
       - Old package directories `packages/sth-config/` and `packages/manager-config/` deleted.
       - Updated 16 codemap files, root README, scripts/docs.js, scripts/bump_docker_images.sh, scripts/bump-dependencies-versions.sh to remove stale references.
       - `npm run build:packages` and `npm run check:runtime-invariants` pass under memory guard.
+      - Oracle blocker fixes: `packages/config/src/sth/public-config.ts` no longer imports via the package root; `maskConfig` moved to `packages/config/src/mask-config.ts`; affected Dockerfiles now copy `config`; `@scramjet/adapters` is an optional peer/dev dependency for `@scramjet/config`; `.slim/codemap.json` and `packages/config/codemap.md` were updated.
+      - Final validation: `packages/config` tests (49) pass; `npm run lint:quick` exits successfully with only pre-existing `scripts/docs.js` warnings; `npm run build:packages` passes; built `dist/config` smoke passes; built `dist/sth/bin/hub.js --help` passes; `npm run check:runtime-invariants` passes; `git diff --check` passes.
       - Follow-up cleanup: removed stale lockfile workspace entries (packages/manager-config, packages/sth-config); updated 4 docs-source files (contributing.md, manager/running.md, transform-hub/configuration.md, readmes/packages/manager.md); regenerated docs (dist-docs/) which removed stale `readmes/packages/{manager-config,sth-config}/README.md` output; `npm run docs:generate` and `npm run docs:check` pass.
 - [ ] Task: Conductor - Phase Checkpoint 'Config Parity Before Removing Old Config Services' (Protocol in workflow.md)
     - [ ] Commit and push Phase 3 changes before completing this checkpoint.
     - [ ] Update the draft PR with the pushed Phase 3 commit and post config parity/removal validation results as a PR comment.
+    - Notes:
+      - **Oracle review findings (Phase 3 blocker fixes applied 2026-07-03)**:
+        - P0: `packages/config/src/sth/public-config.ts` import `maskConfig` from `"../.."` changed to `"../index"` — source-relative within `src/`, avoids resolve-relative-to-package-root fragility. The circular re-export (index.ts → public-config.ts → index.ts) already exists in the current code and works because `maskConfig` is defined before the re-export require is reached in CommonJS execution order.
+        - P0: Added `config` COPY lines to 3 Dockerfiles: `docker/packages/Dockerfile.sth`, `packages/sth/Dockerfile`, `packages/multi-manager/Dockerfile`. These were missing after old config packages were removed but `@scramjet/config` usage was added.
+        - P1: `@scramjet/adapters` moved from `dependencies` to `optionalDependencies` in `packages/config/package.json` — avoids pulling adapter stack transitively into lightweight config consumers. Dynamic `import("@scramjet/adapters")` in `sth/config-service.ts` already has try/catch and works when adapters installed by STH.
+        - P2: `.slim/codemap.json` cleaned — removed `packages/sth-config/*` and `packages/manager-config/*` file_hashes entries, removed stale `packages/sth-config/src/image-config.json` include pattern.
+        - P2: `packages/config/codemap.md` dependency statement updated from "No internal Scramjet dependencies" to list actual deps (`@scramjet/api-types`, `@scramjet/runtime-types`, `@scramjet/utility`; optional `@scramjet/adapters`).
+      - **Follow-up blocker fix (2026-07-03)**: `npm run lint:quick` reported an import cycle (`index.ts` → `public-config.ts` → `index.ts`). Fixed by:
+        - Extracted `maskConfig` (and helpers `cloneValue`, `isPlainObject`, `toPath`, `getPath`, `setPath`) into `packages/config/src/mask-config.ts`.
+        - `public-config.ts` now imports `maskConfig` from `"../mask-config"` instead of `"../index"`, breaking the cycle.
+        - `index.ts` re-exports `maskConfig` from `./mask-config` for external consumers, and imports it internally via `import { maskConfig } from "./mask-config"`.
+        - Removed now-unused `cloneValue` helper from `index.ts`.
+        - Refined `@scramjet/adapters` from `optionalDependencies` to `optional peerDependency` + `devDependency` (cleaner npm semantics, same dynamic-import behavior at runtime).
+      - Validation: All above fixes pass `npm run lint:quick` (zero config-package warnings), `npm run build:packages`, dist config smoke test (`maskConfig`, `ConfigService.getConfigInfo`, `getRuntimeAdapterOption`, `getDefaultManagerConfig`), and `npm run check:runtime-invariants` (8/8 passed). All 18 `packages/config` tests pass. `git diff --check` shows no whitespace issues.
 
 ## Phase 4: API/Client Parity and Retained v1 Compatibility
 
