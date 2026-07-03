@@ -155,7 +155,7 @@
     - [x] Remove `sth-config` and `manager-config` code/workspace references only after no-active-import and parity tests pass.
     - [x] Update docs, codemaps, package manifests, and runtime invariants that mention the removed packages.
     - [x] Treat old config package/service removal as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
-- [ ] Task: Validate config cleanup
+- [x] Task: Validate config cleanup
     - [x] Run focused config package tests.
       - `packages/config` tests passed: 49 tests.
       - `packages/sth-config` compatibility tests passed: 23 tests.
@@ -174,9 +174,9 @@
       - Final validation: `packages/config` tests (49) pass; `npm run lint:quick` exits successfully with only pre-existing `scripts/docs.js` warnings; `npm run build:packages` passes; built `dist/config` smoke passes; built `dist/sth/bin/hub.js --help` passes; `npm run check:runtime-invariants` passes; `git diff --check` passes.
       - Follow-up re-review blocker fixed: `.slim/codemap.json` trailing comma removed and parsed successfully with `JSON.parse`; `packages/config/src/codemap.md` refreshed for extracted `mask-config.ts` plus STH/Manager config source files; `git diff --check` passes.
       - Follow-up cleanup: removed stale lockfile workspace entries (packages/manager-config, packages/sth-config); updated 4 docs-source files (contributing.md, manager/running.md, transform-hub/configuration.md, readmes/packages/manager.md); regenerated docs (dist-docs/) which removed stale `readmes/packages/{manager-config,sth-config}/README.md` output; `npm run docs:generate` and `npm run docs:check` pass.
-- [ ] Task: Conductor - Phase Checkpoint 'Config Parity Before Removing Old Config Services' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 3 changes before completing this checkpoint.
-    - [ ] Update the draft PR with the pushed Phase 3 commit and post config parity/removal validation results as a PR comment.
+- [x] Task: Conductor - Phase Checkpoint 'Config Parity Before Removing Old Config Services' (Protocol in workflow.md)
+    - [x] Commit and push Phase 3 changes before completing this checkpoint.
+    - [x] Update the draft PR with the pushed Phase 3 commit and post config parity/removal validation results as a PR comment.
     - Notes:
       - **Oracle review findings (Phase 3 blocker fixes applied 2026-07-03)**:
         - P0: `packages/config/src/sth/public-config.ts` import `maskConfig` from `"../.."` changed to `"../index"` — source-relative within `src/`, avoids resolve-relative-to-package-root fragility. The circular re-export (index.ts → public-config.ts → index.ts) already exists in the current code and works because `maskConfig` is defined before the re-export require is reached in CommonJS execution order.
@@ -191,6 +191,7 @@
         - Removed now-unused `cloneValue` helper from `index.ts`.
         - Refined `@scramjet/adapters` from `optionalDependencies` to `optional peerDependency` + `devDependency` (cleaner npm semantics, same dynamic-import behavior at runtime).
       - Validation: All above fixes pass `npm run lint:quick` (zero config-package warnings), `npm run build:packages`, dist config smoke test (`maskConfig`, `ConfigService.getConfigInfo`, `getRuntimeAdapterOption`, `getDefaultManagerConfig`), and `npm run check:runtime-invariants` (8/8 passed). All 18 `packages/config` tests pass. `git diff --check` shows no whitespace issues.
+      - Final Phase 3 re-review approved after codemap fix: `.slim/codemap.json` parses and closes cleanly; `packages/config/src/codemap.md` documents `mask-config.ts` and canonical STH/Manager config source files; `public-config.ts` imports `maskConfig` source-relatively; working tree clean. Phase 4 may start after checkpoint bookkeeping.
 
 ## Phase 4: API/Client Parity and Retained v1 Compatibility
 
