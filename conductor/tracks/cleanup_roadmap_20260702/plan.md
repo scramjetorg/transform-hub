@@ -85,10 +85,19 @@
 
 ## Phase 3: Config Parity Before Removing Old Config Services
 
-- [ ] Task: Inventory old and new config behavior
-    - [ ] Compare `packages/sth-config` behavior against the replacement config system.
-    - [ ] Compare `packages/manager-config` behavior against the replacement config system.
-    - [ ] Include defaults, CLI/env/file merging, image config, adapter options, TLS/upstream fields, masking/public-safe config views, and runtime startup consumers.
+- [x] Task: Inventory old and new config behavior
+    - [x] Compare `packages/sth-config` behavior against the replacement config system.
+    - [x] Compare `packages/manager-config` behavior against the replacement config system.
+    - [x] Include defaults, CLI/env/file merging, image config, adapter options, TLS/upstream fields, masking/public-safe config views, and runtime startup consumers.
+    - Notes:
+      - **Active `@scramjet/sth-config` consumers**: `packages/sth/src/bin/hub.ts` (ConfigService/getRuntimeAdapterOption), `packages/host/src/lib/host.ts` + instance/csi files (ConfigService/development), `packages/adapter-process/test` (defaultConfig), bdd step definitions (defaultConfig). Package dependencies remain.
+      - **Active `@scramjet/manager-config` consumers**: `packages/manager/manager.ts` (getDefaultConfig), `packages/sth/src/bin/sth-controller.ts` (configService singleton), `packages/multi-manager/multi-manager.ts` (getDefaultConfig as getManagerDefaultConfig). Package dependencies remain.
+      - **Old sth-config behavior**: defaults, `image-config.json` merge, `ConfigService.update` deep merge, `getRuntimeAdapterOption`/`selectRuntimeAdapter` adapter augmentation, manager trust bootstrap, public-safe masking, `development` helper.
+      - **Old manager-config behavior**: manager defaults, mutable singleton `configService`, `getDefaultConfig` clone; manager masking in `packages/manager/src/lib/manager.ts` with `@scramjet/config` `maskConfig` plus S3 masking.
+      - **Replacement `packages/config` capabilities**: `loadConfig` layers, Zod validation, CLI parsing, aliases, `maskConfig`, verser2 schemas/options. **Gaps**: no image defaults, no runtime adapter selection, no trust bootstrap, no `development` helper, no singleton, no full `ManagerConfiguration` defaults.
+      - **Missing parity tests**: image config, runtime adapter selection, trust bootstrap extraction target, manager mask S3, full STH config load, manager defaults completeness, JSONC config read, old-format compatibility, `development` flag.
+      - **No-go blockers before removal**: hybrid hub config path, manager singleton in `sth-controller`, active package imports/dependencies, BDD/test `defaultConfig` usages.
+      - **Validation direction**: Phase 3a — add parity tests first; migration/removal requires explicit approval.
 - [ ] Task: Add or update config parity tests
     - [ ] Add focused tests for behavior gaps found in the inventory.
     - [ ] Ensure tests prove replacement behavior before old config services are removed.
