@@ -7,8 +7,8 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
-    "test": "echo no tests yet -- # npm run test:ava",
-    "test:ava": "node ../../scripts/run-ava.js"
+    "test": "npm run test:ava",
+    "test:ava": "TS_NODE_TRANSPILE_ONLY=1 node ../../scripts/run-ava.js -T 60000"
   },
   "dependencies": {
     "@scramjet/api-types": "^1.1.0",

@@ -309,3 +309,64 @@ test("verser2 schema requires PEM cert and key together", t => {
     t.is((certOnly as z.ZodError).issues[0].path.join("."), "tls.keyFile");
     t.is((keyOnly as z.ZodError).issues[0].path.join("."), "tls.certFile");
 });
+
+test("readConfigFile parses JSONC with comments and trailing commas", t => {
+    const dir = mkdtempSync(join(tmpdir(), "scramjet-config-jsonc-"));
+    const configPath = join(dir, "config.jsonc");
+
+    writeFileSync(configPath, `{
+        // comment
+        "feature": {
+            "enabled": true,
+            "retries": 5,
+            "label": "jsonc-file",
+            "tags": [
+                "tag1",
+                "tag2",
+            ],
+        },
+        "secret": "jsonc-secret",
+    }`);
+
+    const loaded = loadConfig<z.infer<typeof schema>>({
+        schema,
+        defaults: { feature: { enabled: false, retries: 1, label: "default", tags: [] }, secret: "" },
+        configFilePath: configPath,
+        options
+    });
+
+    t.true(loaded.config.feature.enabled);
+    t.is(loaded.config.feature.retries, 5);
+    t.is(loaded.config.feature.label, "jsonc-file");
+    t.deepEqual(loaded.config.feature.tags, ["tag1", "tag2"]);
+    t.is(loaded.config.secret, "jsonc-secret");
+});
+
+test("loadConfig returns publicConfig with masked secrets", t => {
+    const loaded = loadConfig<z.infer<typeof schema>>({
+        schema,
+        defaults: { feature: { enabled: true, retries: 1, label: "default", tags: [] }, secret: "my-secret" },
+        options
+    });
+
+    t.is((loaded.publicConfig as any).secret, "********");
+    t.is((loaded.publicConfig as any).feature.enabled, true);
+});
+
+test("loadConfig with empty config file returns defaults", t => {
+    const dir = mkdtempSync(join(tmpdir(), "scramjet-config-empty-"));
+    const configPath = join(dir, "config.yaml");
+
+    writeFileSync(configPath, "");
+
+    const loaded = loadConfig<z.infer<typeof schema>>({
+        schema,
+        defaults: { feature: { enabled: true, retries: 1, label: "default", tags: [] }, secret: "default-secret" },
+        configFilePath: configPath,
+        options
+    });
+
+    t.true(loaded.config.feature.enabled);
+    t.is(loaded.config.feature.retries, 1);
+    t.is(loaded.config.secret, "default-secret");
+});
