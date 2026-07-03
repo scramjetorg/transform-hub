@@ -1,7 +1,6 @@
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import {
-    removeBoundaryQuotes,
     defer,
     waitUntilStreamEquals,
     waitUntilStreamStartsWith,
@@ -43,7 +42,6 @@ const freeport = promisify(require("freeport"));
 const profileName = "test_bdd";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
-const testPath = "../packages/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
@@ -508,24 +506,6 @@ When(
 Then("file {string} is generated", async (filename) => {
     assert.ok(await promisify(fs.exists)(`${filename}`));
 });
-
-When(
-    "response in every line contains {string} followed by name from file {string} finished by {string}",
-    async (greeting: string, file2: any, suffix: string) => {
-        const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
-        const lines: string[] = actualLogResponse.split("\n");
-
-        let i: number;
-
-        for (i = 0; i < input.length; i++) {
-            const line1: string = input[i].name;
-
-            assert.deepEqual(greeting + line1 + suffix, removeBoundaryQuotes(lines[i]));
-        }
-
-        assert.equal(i, input.length, "incorrect number of elements compared");
-    }
-);
 
 When("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);

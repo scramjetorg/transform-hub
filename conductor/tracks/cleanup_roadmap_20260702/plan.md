@@ -232,10 +232,14 @@
 
 ## Phase 5: Refapps and Legacy BDD Cleanup
 
-- [ ] Task: Inventory stale refapp and BDD references
-    - [ ] Locate empty `bdd/features/reference-apps/RA-*` files and decide whether they are safe to remove.
-    - [ ] Locate stale references to non-existent `packages/reference-apps/` paths.
-    - [ ] Identify downloaded `refapps/` and `build-refapps` coverage that must remain until replacement coverage exists.
+- [x] Task: Inventory stale refapp and BDD references
+    - [x] Locate empty `bdd/features/reference-apps/RA-*` files and decide whether they are safe to remove.
+    - [x] Locate stale references to non-existent `packages/reference-apps/` paths.
+    - [x] Identify downloaded `refapps/` and `build-refapps` coverage that must remain until replacement coverage exists.
+    - Notes:
+      - Approved safe removals: nine empty, unreferenced BDD feature placeholders; dead dev utilities `scripts/dev/sd.ts` and `scripts/dev/start-seq.ts`; unused Cucumber step and `testPath` pointing at deleted `packages/reference-apps/hello-alice-out/`.
+      - Retained/no-delete boundaries: root `refapps/` downloads, `download:refapps`, CI `build-refapps` workflow/artifacts, and active BDD features using `../refapps/*.tar.gz` remain until replacement coverage exists.
+      - Python BDD feature `E2E-014-python.feature` currently matches zero CI scenarios due to `@compatibility`, but it was not removed in this approved cleanup batch; Python current-contract coverage remains a later decision.
 - [ ] Task: Replace outdated Python BDD/refapp coverage
     - [ ] Create or update Python BDD fixtures/refapps using `main(context, input_stream, *args)`.
     - [ ] Use the new AppContext API and avoid `scramjet-framework-py` dependencies.
@@ -245,10 +249,14 @@
     - [ ] Add Python current-contract BDD coverage where currently missing.
     - [ ] Add Bun BDD coverage if still required by current runtime parity expectations.
     - [ ] Keep broader downloaded refapps only while broader CLI/topics/runtime lifecycle/performance/error coverage still depends on them.
-- [ ] Task: Remove stale BDD/refapp references after replacement proof
-    - [ ] Remove dead empty feature files and stale script paths after no-active-use checks.
-    - [ ] Update workflows/scripts/docs that referenced removed BDD/refapp paths.
-    - [ ] Treat BDD/refapp deletion or workflow mutation as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
+- [x] Task: Remove stale BDD/refapp references after replacement proof
+    - [x] Remove dead empty feature files and stale script paths after no-active-use checks.
+    - [x] Update workflows/scripts/docs that referenced removed BDD/refapp paths.
+    - [x] Treat BDD/refapp deletion or workflow mutation as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
+    - Notes:
+      - No workflow/docs updates were required for the removed empty features and dev utilities; static searches found no active references to their names or script paths.
+      - The removed `response in every line contains ...` step was not referenced by any feature file; removing it also removed the last active `packages/reference-apps/hello-alice-out/` BDD step-def reference.
+      - Cleanup-batch validation passed: static searches found no active references to the removed empty feature names, dev utility paths, or deleted step text; `npm run test:bdd-appcontext` passed (7 scenarios, 40 steps); `npm run check:runtime-invariants` passed (8/8); `git diff --check` passed.
 - [ ] Task: Validate BDD/refapp cleanup
     - [ ] Run `npm run test:sequence-appcontext` if AppContext fixtures are affected.
     - [ ] Run `npm run test:bdd-appcontext` if AppContext BDD is affected.
