@@ -2,7 +2,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { HostClient, InstanceClient } from "@scramjet/api-client";
-import { defaultConfig } from "@scramjet/sth-config";
+import { defaultConfig } from "@scramjet/config";
 import Dockerode = require("dockerode");
 
 import { strict as assert } from "assert";

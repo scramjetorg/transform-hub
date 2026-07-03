@@ -24,7 +24,7 @@
     "@scramjet/monitoring-server": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/rest-api2": "^1.1.0",
-    "@scramjet/sth-config": "^1.1.0",
+    "@scramjet/config": "^1.1.0",
     "@scramjet/symbols": "^1.1.0",
     "@scramjet/telemetry": "^1.1.0",
     "@scramjet/utility": "^1.1.0",

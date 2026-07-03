@@ -1,6 +1,6 @@
 import test from "ava";
 import { PassThrough } from "stream";
-import { defaultConfig } from "@scramjet/sth-config";
+import { defaultConfig } from "@scramjet/config";
 
 const originalChildProcess = require("child_process");
 const childProcessPath = require.resolve("child_process");

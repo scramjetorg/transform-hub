@@ -6,7 +6,7 @@ import { ICommunicationHandler, STHRestAPI } from "@scramjet/api-types";
 import { OpResponse } from "../types/from-types";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ReasonPhrases } from "http-status-codes";
-import { development } from "@scramjet/sth-config";
+import { development } from "@scramjet/config";
 import { ICSI } from "../types";
 import { isSetSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { IncomingHttpHeaders, ServerResponse } from "http";

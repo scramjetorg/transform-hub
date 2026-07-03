@@ -11,7 +11,7 @@
     "@scramjet/multi-manager-api-client": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/sequence-types": "^1.1.0",
-    "@scramjet/sth-config": "^1.1.0",
+    "@scramjet/config": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "@signicode/verser2-guest-node": "0.5.0",
     "@signicode/verser2-host": "0.5.0",

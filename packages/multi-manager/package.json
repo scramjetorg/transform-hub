@@ -26,7 +26,6 @@
     "@scramjet/config": "^1.1.0",
     "@scramjet/load-check": "^1.1.0",
     "@scramjet/manager": "^0.35.1",
-    "@scramjet/manager-config": "^0.35.1",
     "@scramjet/model": "^1.1.0",
     "@scramjet/monitoring-server": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",

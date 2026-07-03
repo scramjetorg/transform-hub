@@ -14,6 +14,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/api-types": "^1.1.0",
+    "@scramjet/adapters": "^1.1.0",
     "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/utility": "^1.1.0",
     "cac": "^6.7.14",

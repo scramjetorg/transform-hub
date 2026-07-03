@@ -123,7 +123,7 @@
     - [x] Added packages/config/src/manager/default-config.ts (managerDefaultConfig).
     - [x] Added packages/config/src/manager/config-service.ts (ManagerConfigService, managerConfigService, getDefaultManagerConfig).
     - [x] Re-exported from packages/config/src/index.ts.
-    - [x] Added @scramjet/api-types, @scramjet/utility, @scramjet/runtime-types dependencies to packages/config.
+    - [x] Added @scramjet/api-types, @scramjet/utility, @scramjet/runtime-types, and @scramjet/adapters dependencies to packages/config.
     - [x] Added 31 parity tests in packages/config/test/parity.spec.ts (development, imageConfig, defaultConfig, getRuntimeAdapterOption, applyManagerTrustBootstrap, ConfigService, toPublicSTHConfig, manager config).
     - [x] All 49 tests pass (18 existing + 31 new) under memory guard.
     - [x] Build succeeds (npm run build in packages/config).
@@ -141,18 +141,32 @@
     - [x] Preserved all old tests unchanged — 23/23 sth-config tests pass, 10/10 manager-config tests pass.
     - [x] Build: `npm run build:packages` passed.
     - [x] Note: Orchestrator re-ran `packages/config` with the memory-safe serial invocation used in Step A; 49/49 tests passed.
-- [ ] Task: Migrate internal consumers from old config services
-    - [ ] Replace active internal imports of `sth-config` and `manager-config` with the proven replacement config APIs.
-    - [ ] Remove package dependencies/scripts only after consumers and tests are migrated.
-    - [ ] Pause for approval before destructive package removal or broad dependency/tooling changes.
+- [x] Task: Migrate internal consumers from old config services
+    - [x] Replace active internal imports of `sth-config` and `manager-config` with the proven replacement config APIs.
+    - [x] Remove package dependencies/scripts only after consumers and tests are migrated.
+    - [x] Pause for approval before destructive package removal or broad dependency/tooling changes.
+    - Notes:
+      - Step C: migrated `packages/sth` and `packages/host` runtime imports from `@scramjet/sth-config` to `@scramjet/config`; package dependencies updated.
+      - Step D: migrated `packages/manager` and `packages/multi-manager` runtime imports from `@scramjet/manager-config` to `@scramjet/config`; package dependencies updated while preserving singleton semantics through `managerConfigService`.
+      - Step E: migrated `packages/adapter-process` test and BDD hub config `defaultConfig` imports from `@scramjet/sth-config` to `@scramjet/config`; dependencies updated.
+      - Integration cleanup reduced the migration diff to import/dependency-only changes; no runtime formatting churn retained.
+      - No-active-import gates now show only compatibility package self-tests and package `name` fields for old config package references.
 - [ ] Task: Remove old config services after parity proof
     - [ ] Remove `sth-config` and `manager-config` code/workspace references only after no-active-import and parity tests pass.
     - [ ] Update docs, codemaps, package manifests, and runtime invariants that mention the removed packages.
     - [ ] Treat old config package/service removal as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate config cleanup
-    - [ ] Run focused config package tests.
-    - [ ] Run `npm run build:packages` if package graph changes.
-    - [ ] Run `npm run check:runtime-invariants` if config/package invariants are affected.
+    - [x] Run focused config package tests.
+      - `packages/config` tests passed: 49 tests.
+      - `packages/sth-config` compatibility tests passed: 23 tests.
+      - `packages/manager-config` compatibility tests passed: 10 tests.
+      - `packages/adapter-process` targeted process runner topology test passed: 1 test.
+    - [x] Run `npm run build:packages` if package graph changes. — Passed under memory guard after consumer/dependency migration.
+    - [x] Run `npm run check:runtime-invariants` if config/package invariants are affected. — Passed with 8 guards and 0 failures.
+    - Notes:
+      - `npm run lint:quick` passed after adding the explicit `@scramjet/adapters` dependency for the optional dynamic adapter import in `@scramjet/config`.
+      - No-active-import gates for `@scramjet/sth-config` and `@scramjet/manager-config` in active package/BDD TS files and package dependencies passed; only compatibility package self-tests and package `name` fields remain.
+      - Wrong initial adapter-process test invocation (`test:ava`) was corrected to the supported package `test` script.
 - [ ] Task: Conductor - Phase Checkpoint 'Config Parity Before Removing Old Config Services' (Protocol in workflow.md)
     - [ ] Commit and push Phase 3 changes before completing this checkpoint.
     - [ ] Update the draft PR with the pushed Phase 3 commit and post config parity/removal validation results as a PR comment.
