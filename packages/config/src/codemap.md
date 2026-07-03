@@ -2,9 +2,9 @@
 
 ## Files
 
-### `index.ts` (365 lines, single entry point)
+### `index.ts` (437 lines, package barrel + generic config loader)
 
-The main configuration module. Exports everything including the command model.
+The main configuration module. Defines and exports the generic configuration loader/CLI option helpers, then re-exports the command model, verser2 schemas, STH config surface, Manager config surface, and shared helpers.
 
 **Exported types:**
 - `ConfigPath` — `string | readonly string[]` for dot-path references
@@ -24,10 +24,45 @@ The main configuration module. Exports everything including the command model.
 | `loadConfig<T>() | Layered load: defaults → file → package.json → dotenv → env → cli → overrides, validate with Zod |
 | `readConfigFile(path)` | Read JSON/JSONC/YAML file, return parsed object |
 | `mergeConfig(target, source)` | Deep recursive merge (plain objects merge, arrays replace, primitives overwrite) |
-| `maskConfig(value, options)` | Deep clone; replace `secret` option values with mask string |
 | `formatZodError(error)` | Format `ZodError` as `path: message` lines |
 
-**Internal helper functions:** `mergeAll`, `readPackageJsonSection`, `readDotEnvFile`, `envToConfig`, `cliToConfig`, `applyAliases`, `coerceEnv`, `toPath`, `normalizeOptionKey`, `setPath`, `getPath`, `deletePath`, `cloneValue`, `isPlainObject`, `formatFlags`, `optionConfig`, `coerceCliValue`, `coerceValue`.
+**Internal helper functions:** `mergeAll`, `readPackageJsonSection`, `readDotEnvFile`, `envToConfig`, `cliToConfig`, `applyAliases`, `coerceEnv`, `toPath`, `normalizeOptionKey`, `setPath`, `getPath`, `deletePath`, `isPlainObject`, `formatFlags`, `optionConfig`, `coerceCliValue`, `coerceValue`.
+
+**Canonical config re-exports:** STH defaults/services/public masking/runtime adapter/trust bootstrap from `sth/*.ts`, Manager defaults/services from `manager/*.ts`, `development` from `env.ts`, and `maskConfig` from `mask-config.ts`.
+
+### `mask-config.ts` (37 lines)
+
+Shared secret-masking helper extracted outside `index.ts` so STH public config code can mask secrets without importing through the package root.
+
+**Key function:** `maskConfig(value, options, mask?)` deep-clones config values and replaces paths marked with `secret: true` in option descriptors with the mask string.
+
+**Internal helper:** `cloneValue` recursively clones arrays and plain objects before path replacement.
+
+### `env.ts` (1 line)
+
+Exports the shared `development` environment flag used by legacy-compatible config surfaces.
+
+### `sth/` config files
+
+Canonical replacement surface for the removed `@scramjet/sth-config` package.
+
+| File | Purpose |
+|---|---|
+| `default-config.ts` | STH default configuration object, including runner, API, Docker, storage, and verser2 defaults. |
+| `config-service.ts` | `ConfigService` facade and `defaultConfig` export for STH config loading/masking compatibility. |
+| `public-config.ts` | `toPublicSTHConfig()` masking/public projection using `maskConfig` source-relatively. |
+| `runtime-adapter-option.ts` | `getRuntimeAdapterOption()` helper for selecting process/docker runtime adapter option values. |
+| `manager-trust-bootstrap.ts` | Trust bootstrap material application helpers for Manager/STH connection config. |
+| `image-config.ts` | Runtime image metadata export. |
+
+### `manager/` config files
+
+Canonical replacement surface for the removed `@scramjet/manager-config` package.
+
+| File | Purpose |
+|---|---|
+| `default-config.ts` | Manager/MultiManager default configuration object, including API, hosts, Docker, and verser2 defaults. |
+| `config-service.ts` | `ManagerConfigService`, singleton `managerConfigService`, and `getDefaultManagerConfig()` exports. |
 
 ### `command-model.ts` (622 lines)
 

@@ -8,7 +8,7 @@
       "tsconfig*.json",
       "packages/*/package.json",
       "packages/*/tsconfig*.json",
-      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.ts"
     ],
     "exclude_patterns": [
       "**/*.test.ts",
