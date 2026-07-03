@@ -1,2 +1,2 @@
-def transform(input):
-    return input
+def main(context, input_stream, *args):
+    return input_stream

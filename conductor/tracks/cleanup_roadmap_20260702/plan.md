@@ -240,11 +240,16 @@
       - Approved safe removals: nine empty, unreferenced BDD feature placeholders; dead dev utilities `scripts/dev/sd.ts` and `scripts/dev/start-seq.ts`; unused Cucumber step and `testPath` pointing at deleted `packages/reference-apps/hello-alice-out/`.
       - Retained/no-delete boundaries: root `refapps/` downloads, `download:refapps`, CI `build-refapps` workflow/artifacts, and active BDD features using `../refapps/*.tar.gz` remain until replacement coverage exists.
       - Python BDD feature `E2E-014-python.feature` currently matches zero CI scenarios due to `@compatibility`, but it was not removed in this approved cleanup batch; Python current-contract coverage remains a later decision.
-- [ ] Task: Replace outdated Python BDD/refapp coverage
-    - [ ] Create or update Python BDD fixtures/refapps using `main(context, input_stream, *args)`.
-    - [ ] Use the new AppContext API and avoid `scramjet-framework-py` dependencies.
-    - [ ] Preserve scenario intent while replacing old internals.
-    - [ ] Add package-level tests where BDD is too broad or fragile.
+- [x] Task: Replace outdated Python BDD/refapp coverage
+    - [x] Create or update Python BDD fixtures/refapps using `main(context, input_stream, *args)`.
+    - [x] Use the new AppContext API and avoid `scramjet-framework-py` dependencies.
+    - [x] Preserve scenario intent while replacing old internals.
+    - [x] Add package-level tests where BDD is too broad or fragile.
+    - Notes:
+      - No Python BDD/refapp source fixtures live in this repo; the Python BDD feature uses downloaded `refapps/*.tar.gz` artifacts and remains tagged `@compatibility`, so it is not removed in this track batch.
+      - Updated the only local stale Python fixture source, `packages/sequence-test/test/fixtures/python-echo/sequence/main.py`, from legacy `transform(input)` to the current `main(context, input_stream, *args)` contract.
+      - Existing package-level runner-python parity and sequence-test harness coverage remain the proof surface; no `scramjet-framework-py` dependency was added to any BDD fixture.
+      - Validation: `packages/sequence-test` tests passed (120 tests) under memory guard.
 - [ ] Task: Add or update current-contract runtime BDD coverage
     - [ ] Add Python current-contract BDD coverage where currently missing.
     - [ ] Add Bun BDD coverage if still required by current runtime parity expectations.
