@@ -2,27 +2,36 @@
 
 ## Phase 1: Inventory, Safety Gates, and Branch Setup
 
-- [ ] Task: Create implementation review surface
-    - [ ] Capture the current branch as the base branch during implementation execution.
-    - [ ] Create the implementation branch `conductor/cleanup_roadmap_20260702` from current HEAD.
+- [~] Task: Create implementation review surface
+    - [x] Capture the current branch as the base branch during implementation execution.
+    - [x] Create the implementation branch `conductor/cleanup_roadmap_20260702` from current HEAD.
     - [ ] Do not create granular start-marker commits or open an early PR during planning/track creation.
     - [ ] At the end of Phase 1, after the scoped Phase 1 commit is created and pushed, create the draft PR using this track's `spec.md` as the PR body.
     - [ ] Perform implementation work on the branch and commit according to the resolved task-level commit policy.
     - [ ] Keep the draft PR updated with pushed commits after every completed phase and after any important mutating task that changes package topology, public docs, tests, workflows, dependency manifests, runtime invariants, or transport/config behavior.
-- [ ] Task: Inventory cleanup candidates from archival plans and current repo state
-    - [ ] Delegate repository-local cleanup inventory to @explorer, covering docs, config, API/client, BDD/refapps, test infrastructure, redundant packages, and transport fallbacks.
-    - [ ] Compare archival cleanup candidates against current files, package manifests, scripts, workflows, and docs references.
-    - [ ] Classify each candidate as remove now, prove parity first, retain/document, or defer to later track.
-- [ ] Task: Establish removal safety gates
-    - [ ] Define no-active-import/static-search gates for each removal candidate.
-    - [ ] Define parity-test gates for config, API/client, BDD/refapp, and transport cleanup.
-    - [ ] Define standalone proof gates for retained `packages/verser` and `packages/bpmux`.
-    - [ ] Define explicit approval gates for destructive cleanup, major compatibility changes, dependency/runtime/tooling changes, and transport deletion.
-- [ ] Task: Verify retained compatibility boundaries
-    - [ ] Confirm public v1 APIs are retained and only inventoried/documented.
-    - [ ] Confirm legacy sequence APIs such as `this.hub` / `this.space` are retained and only inventoried/documented.
-    - [ ] Confirm deprecated `@scramjet/types` package/types are retained.
-    - [ ] Confirm `packages/verser` and `packages/bpmux` are retained in the repository.
+- [x] Task: Inventory cleanup candidates from archival plans and current repo state
+    - [x] Delegate repository-local cleanup inventory to @explorer, covering docs, config, API/client, BDD/refapps, test infrastructure, redundant packages, and transport fallbacks.
+    - [x] Compare archival cleanup candidates against current files, package manifests, scripts, workflows, and docs references.
+    - [x] Classify each candidate as remove now, prove parity first, retain/document, or defer to later track.
+- [x] Task: Establish removal safety gates
+    - [x] Define no-active-import/static-search gates for each removal candidate.
+    - [x] Define parity-test gates for config, API/client, BDD/refapp, and transport cleanup.
+    - [x] Define standalone proof gates for retained `packages/verser` and `packages/bpmux`.
+    - [x] Define explicit approval gates for destructive cleanup, major compatibility changes, dependency/runtime/tooling changes, and transport deletion.
+    - Notes:
+      - Static-search gates: old config imports, verser/bpmux imports outside retained dirs, stale packages/reference-apps refs, empty RA features, legacy transport kind.
+      - Parity-test gates: docs generate/check, config parity tests, rest-api2/host/manager API tests, BDD AppContext/Python as needed, runtime invariants, typings split, standalone verser/bpmux proof.
+      - Approval gates: destructive cleanup, compatibility changes, dependency/runtime/tooling changes, transport deletion (UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID/hard fail deferred).
+- [x] Task: Verify retained compatibility boundaries
+    - [x] Confirm public v1 APIs are retained and only inventoried/documented.
+    - [x] Confirm legacy sequence APIs such as `this.hub` / `this.space` are retained and only inventoried/documented.
+    - [x] Confirm deprecated `@scramjet/types` package/types are retained.
+    - [x] Confirm `packages/verser` and `packages/bpmux` are retained in the repository.
+    - Notes:
+      - Public v1 API files retained.
+      - Legacy `this.hub`/`this.space` retained.
+      - Deprecated `@scramjet/types` retained.
+      - `packages/verser` and `packages/bpmux` retained with standalone proof gates.
 - [ ] Task: Conductor - Phase Checkpoint 'Inventory, Safety Gates, and Branch Setup' (Protocol in workflow.md)
     - [ ] Create and push the scoped Phase 1 commit before completing this checkpoint.
     - [ ] Create the draft PR after the Phase 1 commit is pushed, using `spec.md` as the PR body.
