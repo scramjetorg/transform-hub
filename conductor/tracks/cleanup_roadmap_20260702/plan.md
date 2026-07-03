@@ -76,9 +76,12 @@
     - Notes:
       - Static cleanup checks found zero remaining JSON `typedoc`/`typedoc-plugin-markdown` references, zero `build:docs` scripts, zero `packages/**/src/readme.mtpl`, zero `mk-readme.js`, and zero `readme-helpers.js`.
       - `npm run build:packages` passed under memory guard after package manifest and tsconfig cleanup.
-- [ ] Task: Conductor - Phase Checkpoint 'Documentation Output Cleanup and Docs Parity' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 2 changes before completing this checkpoint.
-    - [ ] Update the draft PR with the pushed Phase 2 commit and post docs validation results as a PR comment.
+- [x] Task: Conductor - Phase Checkpoint 'Documentation Output Cleanup and Docs Parity' (Protocol in workflow.md)
+    - [x] Commit and push Phase 2 changes before completing this checkpoint.
+    - [x] Update the draft PR with the pushed Phase 2 commit and post docs validation results as a PR comment.
+    - Notes:
+      - Phase 2 commit: `0684c7ca` (`docs: retire legacy package docs tooling`).
+      - PR comment: https://github.com/0rail/transform-hub/pull/53#issuecomment-4875904008.
 
 ## Phase 3: Config Parity Before Removing Old Config Services
 
