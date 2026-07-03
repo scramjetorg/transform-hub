@@ -15,6 +15,7 @@ import EventEmitter from "events";
 import { ReReadable } from "rereadable-stream";
 import { normalizeRpcForwardPath, stripRpcExposePath } from "./host-api";
 
+/** Retained public v1 instance API compatibility boundary; do not remove while v1 clients are supported. */
 export class InstanceAPI {
     constructor(
         private csi: ICSI,

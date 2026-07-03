@@ -195,25 +195,40 @@
 
 ## Phase 4: API/Client Parity and Retained v1 Compatibility
 
-- [ ] Task: Inventory API/client cleanup candidates
-    - [ ] Identify API/client cleanup tasks from archives and current technical-debt notes.
-    - [ ] Separate actual cleanup from retained compatibility surfaces.
-    - [ ] Confirm public v1 endpoints are not removal targets in this track.
-- [ ] Task: Complete non-breaking API/client parity work required by cleanup
-    - [ ] Finish or document v2 runtime binding gaps that block cleanup.
-    - [ ] Add package-level or BDD coverage proving v2 client paths work where cleanup depends on them.
-    - [ ] Migrate internal code away from legacy client paths only where behavior parity is proven.
-- [ ] Task: Retain and document public compatibility boundaries
-    - [ ] Keep public v1 APIs available.
-    - [ ] Keep legacy sequence APIs available.
-    - [ ] Record later-decision candidates for public v1 APIs, legacy sequence APIs, and `@scramjet/types` without deleting them.
-- [ ] Task: Validate API/client parity cleanup
-    - [ ] Run focused API/client tests for affected packages.
-    - [ ] Run targeted BDD/API smoke only if behavior crosses CLI/API/Hub boundaries.
-    - [ ] Record any skipped broad BDD and reason.
-- [ ] Task: Conductor - Phase Checkpoint 'API/Client Parity and Retained v1 Compatibility' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 4 changes before completing this checkpoint.
-    - [ ] Update the draft PR with the pushed Phase 4 commit and post API/client validation plus retained compatibility notes as a PR comment.
+- [x] Task: Inventory API/client cleanup candidates
+    - [x] Identify API/client cleanup tasks from archives and current technical-debt notes.
+    - [x] Separate actual cleanup from retained compatibility surfaces.
+    - [x] Confirm public v1 endpoints are not removal targets in this track.
+    - Notes:
+      - **No safe deletion candidates found.** v1 Host API, Instance API, `@scramjet/api-client`, `@scramjet/client-utils`, `@scramjet/api-server`, `@scramjet/middleware-api-client`, `@scramjet/multi-manager-api-client`, and the legacy `this.hub`/`this.space` accessors are all retained compatibility boundaries that must remain while v1 clients are supported.
+      - **Phase 4 implementation is annotation/docs-only.** Code comments were added marking retained boundaries in `host-api-v1.ts`, `instance-api.ts`, `runner/src/runner-app-context.ts`, `runner-node/src/runner-app-context.ts`, `sequence-types/src/app-context.ts`, and `runner.ts` (dual-client pattern). Two internal-package READMEs were added for `middleware-api-client` and `multi-manager-api-client`.
+      - Checkpoint bookkeeping remains to be completed.
+- [x] Task: Complete non-breaking API/client parity work required by cleanup
+    - [x] Finish or document v2 runtime binding gaps that block cleanup.
+    - [x] Add package-level or BDD coverage proving v2 client paths work where cleanup depends on them.
+    - [x] Migrate internal code away from legacy client paths only where behavior parity is proven.
+    - Notes:
+      - No internal legacy-client migration was safe in this track: v1 clients remain active compatibility surfaces for CLI, runner, runner-node, BDD, middleware, and MultiManager paths.
+      - Existing v2 proof points were retained and validated rather than adding duplicate tests: `rest-api2`, `api-client` v2 facade, runner, and runner-node package tests all pass.
+- [x] Task: Retain and document public compatibility boundaries
+    - [x] Keep public v1 APIs available.
+    - [x] Keep legacy sequence APIs available.
+    - [x] Record later-decision candidates for public v1 APIs, legacy sequence APIs, and `@scramjet/types` without deleting them.
+    - Notes:
+      - Added source comments to retained v1 Host/Instance APIs, runner dual-client imports, and legacy `this.hub`/`this.space` accessors.
+      - Added READMEs for retained internal `middleware-api-client` and `multi-manager-api-client` packages; regenerated docs/readme outputs.
+- [x] Task: Validate API/client parity cleanup
+    - [x] Run focused API/client tests for affected packages.
+    - [x] Run targeted BDD/API smoke only if behavior crosses CLI/API/Hub boundaries.
+    - [x] Record any skipped broad BDD and reason.
+    - Notes:
+      - Validation passed under memory guard: `npm run docs:generate`; `npm run docs:check`; `packages/api-client` tests (4); `packages/rest-api2` tests (35); `packages/runner` tests (111); `packages/runner-node` tests (89); `npm run build:packages`; `npm run check:runtime-invariants` (8/8).
+      - Broad BDD/API smoke was skipped because Phase 4 changes are comments/docs-only and do not change CLI/API/Hub behavior; package-level v1/v2 parity tests were run instead.
+- [x] Task: Conductor - Phase Checkpoint 'API/Client Parity and Retained v1 Compatibility' (Protocol in workflow.md)
+    - [x] Commit and push Phase 4 changes before completing this checkpoint.
+    - [x] Update the draft PR with the pushed Phase 4 commit and post API/client validation plus retained compatibility notes as a PR comment.
+    - Notes:
+      - Oracle review approved Phase 4 after fixing a stale plan note and middleware README relative link; Phase 4 can checkpoint.
 
 ## Phase 5: Refapps and Legacy BDD Cleanup
 

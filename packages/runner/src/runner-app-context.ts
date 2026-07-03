@@ -51,7 +51,9 @@ implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> 
     initialState?: State;
     exitTimeout: number = 10000;
     logger: IObjectLogger;
+    /** Retained legacy sequence API (`this.hub`); new code should prefer `hubClient()`. */
     hub: HostClient;
+    /** Retained legacy sequence API (`this.space`); new code should prefer `spaceClient()`. */
     space: ManagerClient;
     private v2HubClient: HubClientType;
     private v2SpaceClient: SpaceClientType;

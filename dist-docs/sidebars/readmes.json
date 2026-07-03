@@ -76,7 +76,7 @@
     "output": "packages/manager/README.md"
   },
   {
-    "source": "packages/middleware-api-client/package.json",
+    "source": "docs-source/readmes/packages/middleware-api-client.md",
     "output": "packages/middleware-api-client/README.md"
   },
   {
@@ -96,7 +96,7 @@
     "output": "packages/multi-manager/README.md"
   },
   {
-    "source": "packages/multi-manager-api-client/package.json",
+    "source": "docs-source/readmes/packages/multi-manager-api-client.md",
     "output": "packages/multi-manager-api-client/README.md"
   },
   {
