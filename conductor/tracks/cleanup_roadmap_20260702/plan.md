@@ -372,20 +372,36 @@
 ## Phase 8: Transport / Local-Forwarding Cleanup After Verser2 Parity
 
 - [ ] Task: Prove transport parity before deletion
-    - [ ] Inventory local forwarding, runner socket, and fallback paths that may be obsolete.
-    - [ ] Prove native verser2 redirect/tunnel behavior covers each candidate removal path.
-    - [ ] Identify unsupported or intentionally retained edge cases such as generic CONNECT, `/platform`, `/inout`, trailers, or informational responses.
+    - [x] Inventory local forwarding, runner socket, and fallback paths that may be obsolete.
+      - Phase 8 inventory found one dead type-only field, `ResolverTarget.localForwardPath`, with no reads outside its declaration.
+      - Legacy `createForwardController` remains partially active as the v1 Host API RPC fallback and is not removed in this phase.
+      - Explicit `sth.default.runner.broker` remains warn-only and accepted only when configured; default remains safe `auto`.
+    - [x] Prove native verser2 redirect/tunnel behavior covers each candidate removal path.
+      - Verser2 redirect/tunnel paths are covered by routed-forward, runner transport, manager route classifier/forwarding-policy tests and BDD Manager forwarding scenarios; only the unused type field is deleted.
+    - [x] Identify unsupported or intentionally retained edge cases such as generic CONNECT, `/platform`, `/inout`, trailers, or informational responses.
+      - Retained: generic CONNECT/upgrade rejection, informational response rejection, stripped hop-by-hop/trailer headers, `/platform`, `/inout`, and ignored sequence-to-space tunnel scenario.
 - [ ] Task: Remove transport dead code only after proof and approval
-    - [ ] Pause for explicit approval before deleting broad transport fallback paths.
-    - [ ] Remove legacy runner socket/local-forwarding paths only where no active use remains.
-    - [ ] Keep compatibility/fallback paths that are still active or unsupported by public verser2 APIs.
-    - [ ] Hard-fail explicit legacy `sth.default.runner.broker` config only if migration policy approves it.
-    - [ ] Treat transport deletion or legacy config hard-fail work as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
+    - [x] Pause for explicit approval before deleting broad transport fallback paths.
+      - Approval received to continue Phase 8; broad fallback paths were still retained because inventory did not prove them safe to delete.
+    - [x] Remove legacy runner socket/local-forwarding paths only where no active use remains.
+      - Removed only the unused `ResolverTarget.localForwardPath` type field; no active runner socket/local-forwarding implementation was deleted.
+    - [x] Keep compatibility/fallback paths that are still active or unsupported by public verser2 APIs.
+      - Kept v1 RPC fallback, `/platform`, `/inout`, CONNECT/upgrade rejection, informational-response rejection, and legacy broker warning behavior.
+    - [x] Hard-fail explicit legacy `sth.default.runner.broker` config only if migration policy approves it.
+      - Not changed: migration policy proof for production configs is unavailable, so the existing warning remains.
+    - [x] Treat transport deletion or legacy config hard-fail work as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
+      - Pending commit/push/PR comment for the scoped Phase 8 deletion after validation below.
 - [ ] Task: Validate transport cleanup
-    - [ ] Run runner RPC/control tests for affected paths.
-    - [ ] Run Manager/STH routing tests for affected paths.
-    - [ ] Run targeted BDD only where package tests cannot prove behavior.
-    - [ ] Run `npm run check:runtime-invariants`.
+    - [x] Run runner RPC/control tests for affected paths.
+      - `npm --prefix packages/host test` passed (246 tests, 9 skipped); package includes runner-transport, runner-host config/upstream, and CSI RPC forwarding coverage.
+    - [x] Run Manager/STH routing tests for affected paths.
+      - `npm --prefix packages/api-router test`, `npm --prefix packages/api-server test`, and `npm --prefix packages/manager test` passed; Manager run passed 184 tests including route classifier/forwarding policy and verser2 transport tests.
+    - [x] Run targeted BDD only where package tests cannot prove behavior.
+      - Skipped: deletion is a type-only dead field with zero reads; package tests/build/runtime invariant checks are sufficient.
+    - [x] Run `npm run check:runtime-invariants`.
+      - Passed; Guard 7 still prevents active legacy transport re-imports outside retained standalone packages.
+    - [x] Run build/lint validation for the scoped deletion.
+      - `npm run build:packages` passed; `npm run lint:quick` passed with pre-existing `scripts/docs.js` warnings only.
 - [ ] Task: Conductor - Phase Checkpoint 'Transport / Local-Forwarding Cleanup After Verser2 Parity' (Protocol in workflow.md)
     - [ ] Commit and push Phase 8 changes before completing this checkpoint.
     - [ ] Update the draft PR with the pushed Phase 8 commit and post transport parity/removal validation results as a PR comment.
