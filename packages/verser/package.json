@@ -4,7 +4,6 @@
   "description": "This package is part of Scramjet Transform Hub. The package provides a reverse server functionality used among Scramjet modules.",
   "main": "./src/index.ts",
   "scripts": {
-    "start": "ts-node ./src/bin/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",

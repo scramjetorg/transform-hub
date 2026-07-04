@@ -316,32 +316,49 @@
 ## Phase 7: Redundant Package Cleanup and Retained Legacy Package Proof
 
 - [ ] Task: Inventory redundant package/dependency surfaces
-    - [ ] Identify active runtime, devDependency, script, and docs references to redundant or retained legacy packages.
-    - [ ] Confirm active packages do not import `@scramjet/verser`, `@scramjet/bpmux`, `BPMux`, or `VerserClient` outside retained package directories.
-    - [ ] Preserve runtime invariant Guard 7 or an equivalent guard preventing re-imports.
+    - [x] Identify active runtime, devDependency, script, and docs references to redundant or retained legacy packages.
+      - Inventory found `@scramjet/bpmux` only in retained `packages/verser`; `@scramjet/types` remains a deprecated compatibility package used by active packages and fixtures.
+    - [x] Confirm active packages do not import `@scramjet/verser`, `@scramjet/bpmux`, `BPMux`, or `VerserClient` outside retained package directories.
+      - Guard 7 plus source inventory found no active imports outside `packages/verser` / `packages/bpmux`; only comments/tests mention BPMux in active package tests.
+    - [x] Preserve runtime invariant Guard 7 or an equivalent guard preventing re-imports.
+      - Existing `scripts/check-runtime-wrapper-invariants.sh` Guard 7 remains unchanged and validated.
 - [ ] Task: Prove `packages/verser` retained-package health
-    - [ ] Confirm `packages/verser` still builds in the monorepo.
-    - [ ] Create a standalone proof path outside the monorepo context using `/tmp/opencode` or another safe temp workspace.
-    - [ ] Prove standalone build/typecheck/import behavior using published or explicit dependencies rather than workspace-only resolution.
-    - [ ] Identify root script, root tsconfig, test-only package, or shared-type coupling that blocks standalone proof.
+    - [x] Confirm `packages/verser` still builds in the monorepo.
+      - `npm --prefix packages/verser run build` passed.
+    - [x] Create a standalone proof path outside the monorepo context using `/tmp/opencode` or another safe temp workspace.
+      - Used `/tmp/opencode/phase7-proof/standalone` with tarballs from `/tmp/opencode/phase7-proof/packs`.
+    - [x] Prove standalone build/typecheck/import behavior using published or explicit dependencies rather than workspace-only resolution.
+      - Installed packed `@scramjet/verser`, `@scramjet/bpmux`, `@scramjet/frame-stream`, `@scramjet/utility`, `@scramjet/obj-logger`, and explicit declaration dependencies `@scramjet/runtime-types` / `typed-emitter`; `npx tsc --noEmit -p tsconfig.json && node proof.js` passed.
+    - [x] Identify root script, root tsconfig, test-only package, or shared-type coupling that blocks standalone proof.
+      - Removed dead `start` script pointing to missing `src/bin/index`; standalone proof still needs explicit local dependency packing/install for workspace packages.
 - [ ] Task: Prove `packages/bpmux` retained-package health
-    - [ ] Add or identify a minimal verification surface for `packages/bpmux` if no build/test script exists.
-    - [ ] Prove import/typecheck behavior in the monorepo.
-    - [ ] Prove standalone import/typecheck behavior outside the monorepo context using published or explicit dependencies.
-    - [ ] Remove declaration-only coupling such as `@scramjet/utility` `TypedEmitter` usage if required for standalone proof.
+    - [x] Add or identify a minimal verification surface for `packages/bpmux` if no build/test script exists.
+      - Added package `test` script for existing `test/index.js` smoke proof.
+    - [x] Prove import/typecheck behavior in the monorepo.
+      - `npm --prefix packages/bpmux test` passed after making the existing smoke proof self-cleaning for stale Unix sockets.
+    - [x] Prove standalone import/typecheck behavior outside the monorepo context using published or explicit dependencies.
+      - Same `/tmp/opencode/phase7-proof/standalone` proof typechecked/imported `@scramjet/bpmux` from packed tarball.
+    - [x] Remove declaration-only coupling such as `@scramjet/utility` `TypedEmitter` usage if required for standalone proof.
+      - `index.d.ts` now extends Node `EventEmitter`; removed unused `@scramjet/utility` dev dependency.
 - [ ] Task: Extract old verser-specific types where required
     - [ ] Identify verser-specific types currently coupled to shared package/types surfaces.
     - [ ] Move old verser-specific type needs into verser-local tasks/types or another explicit retained location when required for standalone proof.
     - [ ] Do not remove the deprecated `@scramjet/types` compatibility package/types.
 - [ ] Task: Clean redundant dependency/package references without deleting retained packages
-    - [ ] Move runtime dependencies to devDependencies where usage is test/compat-only and validation proves it safe.
-    - [ ] Remove dead package scripts, stale package references, and non-existent package paths.
-    - [ ] Document why `packages/verser`, `packages/bpmux`, and `@scramjet/types` remain retained.
+    - [x] Move runtime dependencies to devDependencies where usage is test/compat-only and validation proves it safe.
+      - Moved `packages/manager` `@scramjet/types` dependency to devDependencies; current imports are test-only.
+    - [x] Remove dead package scripts, stale package references, and non-existent package paths.
+      - Removed `packages/verser` dead `start` script and added missing `packages/bpmux/codemap.md`.
+    - [x] Document why `packages/verser`, `packages/bpmux`, and `@scramjet/types` remain retained.
+      - Retention remains documented in the track spec/plan; `packages/bpmux/codemap.md` now records standalone retention rationale.
     - [ ] Treat dependency manifest, package script, standalone proof, or type-surface changes as important mutating tasks: create scoped commits, push them, and update/comment on the draft PR before continuing to unrelated work.
 - [ ] Task: Validate redundant package cleanup
-    - [ ] Run `npm run check:typings-split` if type-package boundaries change.
-    - [ ] Run `npm run check:runtime-invariants` to preserve no-reimport guarantees.
-    - [ ] Run affected package builds/tests and standalone proof commands.
+    - [x] Run `npm run check:typings-split` if type-package boundaries change.
+      - Passed; `@scramjet/types` package itself remains retained and unchanged.
+    - [x] Run `npm run check:runtime-invariants` to preserve no-reimport guarantees.
+      - Passed; Guard 7 still blocks active legacy transport re-imports outside retained standalone packages.
+    - [x] Run affected package builds/tests and standalone proof commands.
+      - Passed: `npm --prefix packages/bpmux test`, `npm --prefix packages/verser run build`, `npm --prefix packages/verser test`, `npm --prefix packages/manager test`, `npm run build:packages`, `npm run lint:quick` (pre-existing `scripts/docs.js` warnings only), and standalone tarball type/import proof under `/tmp/opencode/phase7-proof/standalone`.
 - [ ] Task: Conductor - Phase Checkpoint 'Redundant Package Cleanup and Retained Legacy Package Proof' (Protocol in workflow.md)
     - [ ] Commit and push Phase 7 changes before completing this checkpoint.
     - [ ] Update the draft PR with the pushed Phase 7 commit and post standalone proof/runtime-invariant validation results as a PR comment.

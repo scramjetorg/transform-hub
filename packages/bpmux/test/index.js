@@ -2,7 +2,12 @@ const { Readable, Duplex, PassThrough } = require("stream");
 const { BPMux } = require("..");
 const { createServer, connect } = require("net");
 const { join } = require("path");
+const { rmSync } = require("fs");
 const { setTimeout } = require("timers/promises");
+
+const socketPath = join(__dirname, ".test.sock");
+
+rmSync(socketPath, { force: true });
 
 const mkPayload = (id) => {
     let n = 0
@@ -34,13 +39,13 @@ const srv = createServer(socket => {
         if (--peers_left === 0) {
             console.log("all peers closed");
 
-            srv.close();
+            srv.close(() => rmSync(socketPath, { force: true }));
         }
     });
 })
-    .listen(join(__dirname, ".test.sock"))
+    .listen(socketPath)
     .on("listening", () => {
-        const client = connect(join(__dirname, ".test.sock"), async () => {
+        const client = connect(socketPath, async () => {
             const mux = new BPMux(client);
             mux._a = 2;
             mux.on("error", (err) => console.error("cli error", err));
