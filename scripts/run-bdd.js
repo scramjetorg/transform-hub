@@ -146,7 +146,9 @@ const hasLeaks = reportLeakedProcesses();
 
 if (hasLeaks) {
 	console.error("[run-bdd] ⚠  Leaked processes detected after BDD run.");
-	// Report but do not fail the run so test results are preserved.
+	if (process.env.SCRAMJET_BDD_FAIL_ON_LEAK === "1") {
+		process.exit(exitCode || 1);
+	}
 }
 
 process.exit(exitCode);

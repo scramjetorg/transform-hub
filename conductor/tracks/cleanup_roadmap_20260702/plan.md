@@ -285,21 +285,33 @@
 
 ## Phase 6: BDD/Test Infrastructure Hardening
 
-- [ ] Task: Fix BDD process cleanup risks
-    - [ ] Investigate known AppContext BDD Host/STH teardown leaks.
-    - [ ] Add awaited exits, timeout handling, and SIGKILL fallback where appropriate.
-    - [ ] Keep cleanup current-run scoped to avoid killing unrelated user processes.
-- [ ] Task: Strengthen BDD assertions and leak signal
+- [x] Task: Fix BDD process cleanup risks
+    - [x] Investigate known AppContext BDD Host/STH teardown leaks.
+    - [x] Add awaited exits, timeout handling, and SIGKILL fallback where appropriate.
+    - [x] Keep cleanup current-run scoped to avoid killing unrelated user processes.
+    - Notes:
+      - `HostUtils.stopHost()` now waits for the Host process to exit after TERM-to-KILL escalation instead of fire-and-forgetting teardown from BDD `AfterAll` hooks.
+      - Manager/MultiManager step cleanup now delegates to the shared `scripts/lib/bdd-cleanup.js` `stopProcess()` helper, which signals process groups and escalates to SIGKILL.
+      - The broad `killProcessByName()` helper was removed; the only caller now stops the current scenario's tracked `commandInProgress` process with shared TERM-to-KILL cleanup instead of matching arbitrary process names.
+- [x] Task: Strengthen BDD assertions and leak signal
     - [ ] Replace brittle count-only assertions with identity checks for hub, sequence, and instance IDs where relevant.
-    - [ ] Decide whether leak detection should fail CI or remain report-only for each affected path.
-    - [ ] Add focused package-level tests for BDD-only behavior when faster diagnostics are possible.
-- [ ] Task: Validate test infrastructure hardening
-    - [ ] Run targeted leak-prone BDD scenarios.
-    - [ ] Run affected BDD runner/package tests.
-    - [ ] Record failure classifications and skipped broad suites.
-- [ ] Task: Conductor - Phase Checkpoint 'BDD/Test Infrastructure Hardening' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 6 changes before completing this checkpoint.
-    - [ ] Update the draft PR with the pushed Phase 6 commit and post test-infrastructure validation results as a PR comment.
+    - [x] Decide whether leak detection should fail CI or remain report-only for each affected path.
+    - [x] Add focused package-level tests for BDD-only behavior when faster diagnostics are possible.
+    - Notes:
+      - Leak detection remains report-only by default to preserve test results and avoid false-positive CI failures, with opt-in fail-fast behavior via `SCRAMJET_BDD_FAIL_ON_LEAK=1` in both direct and Docker BDD runner paths.
+      - Count-only assertion hardening for broader hub/manager list steps is deferred because callers need scenario-specific IDs; no broad feature semantics are changed in this phase.
+- [x] Task: Validate test infrastructure hardening
+    - [x] Run targeted leak-prone BDD scenarios.
+    - [x] Run affected BDD runner/package tests.
+    - [x] Record failure classifications and skipped broad suites.
+    - Notes:
+      - Validation passed under memory guard: `SCRAMJET_BDD_FAIL_ON_LEAK=1 npm run test:bdd-appcontext` (7 scenarios, 40 steps, no leaked repository processes); `npm run test:bdd-ci-api-topic` (3 scenarios, 21 steps, no leaked repository processes; validates current-run `kill process` cleanup); `npm run test:bdd-ci-node` (2 scenarios, 14 steps, no leaked repository processes); `npm run test:bdd-ci-python` (6 scenarios, 35 steps, no leaked repository processes); `npm run lint:quick` exited successfully with only pre-existing `scripts/docs.js` warnings; `npm run build:packages` passed; `npm run check:runtime-invariants` passed (8/8); `git diff --check` passed.
+      - Full broad BDD and Kubernetes suites skipped because Phase 6 only touched BDD process cleanup helpers, direct BDD leak-fail policy, and step cleanup behavior; focused direct and Docker BDD paths were validated.
+- [x] Task: Conductor - Phase Checkpoint 'BDD/Test Infrastructure Hardening' (Protocol in workflow.md)
+    - [x] Commit and push Phase 6 changes before completing this checkpoint.
+    - [x] Update the draft PR with the pushed Phase 6 commit and post test-infrastructure validation results as a PR comment.
+    - Notes:
+      - Oracle review approved Phase 6 after blocker fixes for non-detached Manager/MultiManager cleanup fallback, Docker-path leak-fail behavior, and current-run-scoped `kill process` cleanup.
 
 ## Phase 7: Redundant Package Cleanup and Retained Legacy Package Proof
 

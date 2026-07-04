@@ -6,7 +6,6 @@ import {
     getStreamsFromSpawn,
     defer,
     waitUntilStreamContains,
-    killProcessByName,
     getSiCommand,
     spawnSiInit,
     isTemplateCreated,
@@ -24,6 +23,7 @@ import { Readable } from "stream";
 
 addLoggerOutput(process.stdout, process.stdout);
 
+const { stopProcess } = require("../../../scripts/lib/bdd-cleanup.js");
 const logger = getLogger("test");
 const si = getSiCommand();
 
@@ -355,7 +355,11 @@ Then("kill process {string}", async function (
     this: CustomWorld,
     processName: string
 ) {
-    await killProcessByName(processName);
+    const commandInProgress = this.cliResources.commandInProgress;
+
+    assert.ok(commandInProgress, `No current-run process to kill for ${processName}`);
+    await stopProcess(commandInProgress, { graceMs: 5000 });
+    this.cliResources.commandInProgress = undefined;
 });
 
 Then("I wait for {string} list to be empty", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
