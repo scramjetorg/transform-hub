@@ -88,7 +88,7 @@ In production, verser2 connectivity requires TLS. mTLS is configurable for addit
 
 The Hub reads JSON/YAML/JSONC configuration through the `@scramjet/config` loader. The generated schema for STH configuration is `schemas/sth-config.schema.json`; sequence startup config is described by `schemas/startup-config.schema.json`.
 
-For the authoritative configuration schema, refer to the generated curated reference for `@scramjet/sth-config` and `@scramjet/types`.
+For the authoritative configuration schema, refer to the generated curated reference for `@scramjet/config` and `@scramjet/types`.
 
 ## Hub identification
 

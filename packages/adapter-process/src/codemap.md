@@ -26,5 +26,5 @@ Source implementation for process-based sequence storage and execution.
 ## Integration Points
 
 - Relies on `@scramjet/runner` entrypoint and `@scramjet/adapters-common` for config/env.
-- Uses `@scramjet/sth-config` for development-mode env passthrough.
+- Uses `@scramjet/config` for development-mode env passthrough.
 - Integrates with host via `IAdapterAugmentation` contract in `index.ts`.

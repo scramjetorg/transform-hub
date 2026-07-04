@@ -9,9 +9,10 @@ import {
     printHelpAndExitIfRequested,
     sthOutboundVerser2ConfigSchema,
     sthOutboundVerser2Options,
-    z
+    z,
+    ConfigService,
+    getRuntimeAdapterOption,
 } from "@scramjet/config";
-import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
 import { DeepPartial, StorageAdapterType } from "@scramjet/runtime-types";
 import { STHCommandOptions, STHConfiguration } from "@scramjet/api-types";
 import { resolve } from "path";

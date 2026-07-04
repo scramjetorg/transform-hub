@@ -6,6 +6,8 @@ import { prettyPrint } from "@scramjet/obj-logger";
 import { StringStream } from "scramjet";
 import { Readable } from "stream";
 
+const { stopProcess: stopProcessWithCleanup } = require("../../../scripts/lib/bdd-cleanup.js");
+
 async function requestGet(apiBase: string, apiEndpoint: string): Promise<{[key: string]: any}> {
     const utils = new ClientUtils(apiBase);
 
@@ -80,46 +82,7 @@ function spawnProcess(
  * @returns             Resolves when the process has exited.
  */
 function stopProcess(childProcess: ChildProcess, graceMs = 10000): Promise<void> {
-    return new Promise((resolve) => {
-        if (!childProcess || childProcess.pid === undefined) {
-            resolve();
-            return;
-        }
-
-        let settled = false;
-
-        const finish = () => {
-            if (settled) return;
-            settled = true;
-            resolve();
-        };
-
-        childProcess.once("exit", () => finish());
-
-        // 1. Send SIGTERM.
-        childProcess.kill("SIGTERM");
-
-        // 2. Wait grace period.
-        const timer = setTimeout(() => {
-            if (settled) return;
-
-            // 3. Escalate to SIGKILL.
-            try {
-                childProcess.kill("SIGKILL");
-            } catch {
-                // May already be gone.
-            }
-
-            // Give the kill a moment to take effect, then resolve.
-            setTimeout(finish, 500);
-        }, graceMs);
-
-        // Cancel escalation if the process exits on its own.
-        childProcess.once("exit", () => {
-            clearTimeout(timer);
-            finish();
-        });
-    });
+    return stopProcessWithCleanup(childProcess, { graceMs }).then(() => undefined);
 }
 
 function parseOptions(options: string): {[key: string]: any} {

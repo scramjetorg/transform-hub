@@ -16,7 +16,6 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 ## System Entry Points
 
 - `packages/sth/src/bin/hub.ts`: CLI bootstrap that parses flags, merges command options into STH configuration, selects the runtime adapter, and starts the host.
-- `packages/sth-config/src/config-service.ts`: Configuration assembly layer that merges defaults, image config, adapter options, Verser2 defaults, trust bootstrap, and public-safe config views.
 - `packages/host/src/lib/host-id.ts`: Stable Host identity derivation used to register runner Verser2 hosts without colliding across MultiManager-controlled hubs.
 - `packages/runner/src/bin/start-runner.ts`: Adapter-launched outer runner entrypoint that validates environment, writes boot config, selects a runtime executor, and connects host channels.
 - `packages/runner/src/executor/select.ts`: Runtime executor strategy selection for Node, Bun, and Python child processes.
@@ -33,7 +32,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 
 | Directory | Responsibility Summary | Detailed Map |
 |-----------|------------------------|--------------|
-| `packages/` | Monorepo workspace directory index for all 42 `@scramjet/*` packages including adapters, runners, API clients, config, types, utilities, manager, and split type packages. | [View Map](packages/codemap.md) |
+| `packages/` | Monorepo workspace directory index for all 40 `@scramjet/*` packages including adapters, runners, API clients, config, types, utilities, manager, and split type packages. | [View Map](packages/codemap.md) |
 | `packages/runtime-types/` | Generic low-level runtime-neutral types: BaseAppContext, logger/storage interfaces, runner configs. Foundation of the typings split. | [View Map](packages/runtime-types/codemap.md) |
 | `packages/sequence-types/` | Sequence-author-facing frozen AppContext API and application/function types. Canonical import for sequence authors. | [View Map](packages/sequence-types/codemap.md) |
 | `packages/api-types/` | API/user-facing type contracts: REST DTOs, APIExpose, client stubs, and StrictAppContext. | [View Map](packages/api-types/codemap.md) |
@@ -45,12 +44,8 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/sth/` | Top-level STH wrapper that owns process-facing lifecycle around a configured host instance. | [View Map](packages/sth/codemap.md) |
 | `packages/sth/src/` | Runtime wrapper code for starting STH from a configuration object. | [View Map](packages/sth/src/codemap.md) |
 | `packages/sth/src/bin/` | CLI bootstrap that parses flags, builds `STHConfiguration`, selects the runtime adapter, and launches the host process. | [View Map](packages/sth/src/bin/codemap.md) |
-| `packages/sth-config/` | STH configuration defaults, image defaults, deep-merge updates, and runtime-adapter selection. | [View Map](packages/sth-config/codemap.md) |
-| `packages/sth-config/src/` | Config defaults, image defaults, merge/update semantics, adapter selection, and public config extraction. | [View Map](packages/sth-config/src/codemap.md) |
 | `packages/config/` | Zod-backed configuration loading, validation, secret masking, CLI option descriptors, and native command model utilities. | [View Map](packages/config/codemap.md) |
 | `packages/config/src/` | Config file/env/CLI merge pipeline, public-safe masking helpers, and descriptor-driven command tree implementation. | [View Map](packages/config/src/codemap.md) |
-| `packages/manager-config/` | Manager default configuration and singleton config service for deep-merge runtime updates. | [View Map](packages/manager-config/codemap.md) |
-| `packages/manager-config/src/` | Manager default config values, `ConfigService` singleton with deep-merge partial updates, and immutable defaults factory. | [View Map](packages/manager-config/src/codemap.md) |
 | `packages/manager/` | Manager control plane for connected STH nodes, cluster API routing, sequence/instance/topic registry, and storage proxying. | [View Map](packages/manager/codemap.md) |
 | `packages/manager/src/` | Manager source entrypoints and library modules for orchestration, STH controllers, service discovery, storage routers, and transport helpers. | [View Map](packages/manager/src/codemap.md) |
 | `packages/manager/src/bin/` | Manager executable entrypoint that starts the Manager process and reports startup failures. | [View Map](packages/manager/src/bin/codemap.md) |
@@ -109,12 +104,12 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/verser/` | Legacy CONNECT/BPMux reverse-server connectivity package targeted for removal from active paths by the verser2 rollout. | [View Map](packages/verser/codemap.md) |
 | `packages/verser/src/` | Source implementation of Verser server, client, and connection modules with BPMux multiplexing. | [View Map](packages/verser/src/codemap.md) |
 | `packages/verser/src/lib/` | Concrete Verser, VerserClient, and VerserConnection class implementations with default config. | [View Map](packages/verser/src/lib/codemap.md) |
-| `template/` | Package template/scaffold with standard AVA, TypeScript, and typedoc configuration for bootstrapping new packages. | [View Map](template/codemap.md) |
+| `template/` | Package template/scaffold with standard AVA and TypeScript configuration for bootstrapping new packages. | [View Map](template/codemap.md) |
 | `bdd/` | Cucumber BDD smoke and end-to-end validation workspace for CLI, hub, Manager, instance API, runtime, and streaming behavior. | [View Map](bdd/codemap.md) |
 
 ## Runtime Wrapper Implementation Flow
 
-1. CLI/config code in `packages/sth` and `packages/sth-config` builds adapter configuration, including runner image names and runtime defaults.
+1. CLI/config code in `packages/sth` builds adapter configuration, including runner image names and runtime defaults.
 2. Host startup derives a stable runner Verser2 host identity from explicit config, hub id, or endpoint metadata before registering with Manager/MultiManager control planes.
 3. Docker/Kubernetes/process adapters inspect stored sequence metadata through `packages/adapters-common`, use `packages/symbols` runtime-kind semantics, and choose a runtime-specific runner image or process executor path.
 4. The selected adapter still launches `packages/runner/src/bin/start-runner.ts` as the outer runner.

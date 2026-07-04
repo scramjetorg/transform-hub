@@ -6,7 +6,6 @@
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
     "test:ava": "node ../../scripts/run-ava.js -T 50000"
@@ -14,17 +13,27 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/api-types": "^1.1.0",
+    "@scramjet/runtime-types": "^1.1.0",
+    "@scramjet/utility": "^1.1.0",
     "cac": "^6.7.14",
     "jsonc-parser": "^3.3.1",
     "yaml": "^2.2.2",
     "zod": "^3.25.67"
   },
+  "peerDependencies": {
+    "@scramjet/adapters": "^1.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@scramjet/adapters": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@scramjet/adapters": "^1.1.0",
     "@types/node": "^22.15.0",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "ava": {

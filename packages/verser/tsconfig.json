@@ -5,20 +5,10 @@
   "extends": "../../tsconfig.base.json",
   "include": [
     "./src/**/*.ts",
-    "./test/**/*.ts", 
+    "./test/**/*.ts",
     "src/types"
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "src/index.ts"
-    ],
-    "out": "../../dist-docs/reference/typescript/verser",
-    "plugin": "typedoc-plugin-markdown",
-    "excludePrivate": "true",
-    "gitRevision": "HEAD",
-    "sort": "alphabetical"
-  }
+  ]
 }

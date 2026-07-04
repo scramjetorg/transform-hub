@@ -9,12 +9,24 @@
     "url": "http://www.davedoesdev.com"
   },
   "assets": [
-    { "src": "index.js", "dest": "index.js" },
-    { "src": "index.d.ts", "dest": "index.d.ts" },
-    { "src": "LICENCE", "dest": "LICENCE" }
+    {
+      "src": "index.js",
+      "dest": "index.js"
+    },
+    {
+      "src": "index.d.ts",
+      "dest": "index.d.ts"
+    },
+    {
+      "src": "LICENCE",
+      "dest": "LICENCE"
+    }
   ],
   "contributors": [
-    { "name": "Scramjet Team", "email": "open-source@scramjet.org" }
+    {
+      "name": "Scramjet Team",
+      "email": "open-source@scramjet.org"
+    }
   ],
   "license": "MIT",
   "main": "index.js",
@@ -38,7 +50,9 @@
     "@scramjet/frame-stream": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.15.0",
-    "@scramjet/utility": "^1.1.0"
+    "@types/node": "^22.15.0"
+  },
+  "scripts": {
+    "test": "node test/index.js"
   }
 }

@@ -124,7 +124,9 @@ async def test_handshake_sends_ping_matching_golden_fixture_bytes() -> None:
     assert isinstance(ping_payload["payload"]["system"]["processPID"], str)
     assert ping_payload["payload"]["system"]["processPID"].isdigit()
 
-    assert normalize_ping_bytes(writer.raw_frames[0]) == normalize_ping_bytes(load_golden_ping_bytes())
+    assert normalize_ping_bytes(writer.raw_frames[0]) == normalize_ping_bytes(
+        load_golden_ping_bytes()
+    )
 
 
 @pytest.mark.asyncio
@@ -132,7 +134,10 @@ async def test_handshake_succeeds_with_lf_terminated_pong() -> None:
     event_log: list[tuple[str, float]] = []
     writer = RecordingMonitoringWriter(event_log)
     control_decoder = ScriptedControlDecoder(
-        [encode_control_line(PONG, {"appConfig": {}, "args": [], "logLevel": "INFO"}) + b"\n"],
+        [
+            encode_control_line(PONG, {"appConfig": {}, "args": [], "logLevel": "INFO"})
+            + b"\n"
+        ],
         event_log,
     )
 
@@ -140,6 +145,26 @@ async def test_handshake_succeeds_with_lf_terminated_pong() -> None:
 
     assert result == HandshakeResult(appConfig={}, args=[], logLevel="INFO")
     assert [code for code, _ in writer.frames] == [PING, MONITORING]
+
+
+@pytest.mark.asyncio
+async def test_handshake_forwards_topic_rename_fields() -> None:
+    writer = RecordingMonitoringWriter([])
+    control_decoder = ScriptedControlDecoder(
+        [encode_control_line(PONG, {"appConfig": {}, "args": [], "logLevel": "INFO"})],
+        [],
+    )
+
+    await perform_handshake(
+        writer,
+        control_decoder,
+        make_boot_config(inputTopic="names-in", outputTopic="names-out"),
+    )
+
+    _code, ping_payload = writer.frames[0]
+
+    assert ping_payload["payload"]["inputTopic"] == "names-in"
+    assert ping_payload["payload"]["outputTopic"] == "names-out"
 
 
 @pytest.mark.asyncio

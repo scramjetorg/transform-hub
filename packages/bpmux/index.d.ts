@@ -1,6 +1,6 @@
 import { ClientHttp2Session, ServerHttp2Session } from "http2"
 import { Duplex, DuplexOptions } from "stream";
-import { TypedEmitter } from "@scramjet/utility";
+import { EventEmitter } from "events";
 
 declare class Http2Sessions
 {
@@ -67,7 +67,7 @@ type Events = {
     keep_alive();
 };
 
-declare class BPMux extends TypedEmitter<Events> {
+declare class BPMux extends EventEmitter {
     constructor(carrier: Duplex | Http2Sessions, options?: BPMuxOptions);
     private _check_buffer(buf: Buffer, size: number): boolean
     private _process_header(buf: Buffer): void

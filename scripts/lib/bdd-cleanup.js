@@ -81,13 +81,7 @@ function killProcessGroup(pid, signal) {
 	try {
 		process.kill(-pid, signal);
 		return true;
-	} catch (error) {
-		const code = error?.code;
-
-		if (code === "ESRCH") {
-			return true; // already gone
-		}
-
+	} catch {
 		try {
 			process.kill(pid, signal);
 			return true;
@@ -143,7 +137,10 @@ function stopProcess(child, options = {}) {
 
 		// 1. Send SIGTERM to the process group.
 		log(`sending SIGTERM to process group -${pid}`);
-		killProcessGroup(pid, "SIGTERM");
+		if (!killProcessGroup(pid, "SIGTERM")) {
+			finish(true);
+			return;
+		}
 
 		// 2. Wait for the grace period.
 		const timer = setTimeout(() => {

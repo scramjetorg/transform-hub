@@ -26,6 +26,7 @@ import {
 
 export { matchesRpcExposePath, normalizeRpcForwardPath, stripRpcExposePath };
 
+/** Retained public v1 API compatibility boundary; do not remove while v1 clients are supported. */
 export class HostAPIV1Handler {
     logger: ObjLogger;
     topicRouter?: TopicRouter;

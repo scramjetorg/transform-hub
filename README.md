@@ -73,6 +73,7 @@ The monorepo contains the following npm packages:
 | [@scramjet/api-client](./packages/api-client/) | The package provides the API Client for use with Scramjet Transform Hub. |
 | [@scramjet/api-router](./packages/api-router/) | Schema-aware API route declaration, manifest, and client contract package for Scramjet Transform Hub. |
 | [@scramjet/api-server](./packages/api-server/) | HTTP API server for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. |
+| [@scramjet/api-types](./packages/api-types/) | API/user-facing type contracts for Scramjet Transform Hub. Owns REST DTOs, APIExpose, client interface stubs, and strict API-specific AppContext aliases built on @scramjet/runtime-types without importing @scramjet/rest-api2 or @scramjet/types. |
 | [@scramjet/bpmux](./packages/bpmux/) | Node stream multiplexing with back-pressure on each stream |
 | [@scramjet/cli](./packages/cli/) | The package provides a CLI interface to communicate with Scramjet Transform Hub. |
 | [@scramjet/client-utils](./packages/client-utils/) | The package provides the API Client Utils for use with Scramjet Transform Hub. |
@@ -82,7 +83,6 @@ The monorepo contains the following npm packages:
 | [@scramjet/load-check](./packages/load-check/) | The package provides health info for STH. |
 | [@scramjet/logger](./packages/logger/) | The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice. |
 | [@scramjet/manager](./packages/manager/) | Scramjet Manager |
-| [@scramjet/manager-config](./packages/manager-config/) | Scramjet CPM Config |
 | [@scramjet/middleware-api-client](./packages/middleware-api-client/) | Scramjet Middleware API Client |
 | [@scramjet/model](./packages/model/) | The package provides the domain model for STH and the CLI. |
 | [@scramjet/module-loader](./packages/module-loader/) | Scramjet Module Loader |
@@ -96,12 +96,13 @@ The monorepo contains the following npm packages:
 | [@scramjet/runner-bun](./packages/runner-bun/) | Bun sequence runtime wrapper for Scramjet Transform Hub runner isolation. |
 | [@scramjet/runner-node](./packages/runner-node/) | Node sequence runtime for Scramjet Transform Hub runner isolation. |
 | [@scramjet/runner-python](./packages/runner-python/) | Python runtime wrapper for packages/runner |
-| [@scramjet/sequence-test](./packages/sequence-test/) | Test harness for Scramjet Transform Sequences using the runner protocol without starting a full Transform Hub. |
+| [@scramjet/runtime-types](./packages/runtime-types/) | Generic low-level runtime-neutral types for Scramjet Transform Hub. Owns BaseAppContext, runtime-neutral utility/logger/storage interfaces, error types, function/stream primitives, and runner config contracts — without API client dependencies. |
+| [@scramjet/sequence-test](./packages/sequence-test/) | Test harness for Scramjet Transform Sequences using the runner protocol without starting a full Transform Hub. Supported for scoped local sequence fixture/harness validation. |
+| [@scramjet/sequence-types](./packages/sequence-types/) | Sequence-author-facing types for Scramjet Transform Hub. Exports the frozen sequence AppContext API backed by BaseAppContext from @scramjet/runtime-types, plus canonical sequence application/function types for sequence authors. |
 | [@scramjet/sth](./packages/sth/) | Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like. |
-| [@scramjet/sth-config](./packages/sth-config/) | STH configuration defaults, image defaults, deep-merge updates, runtime-adapter selection, and public-safe config extraction. |
 | [@scramjet/symbols](./packages/symbols/) | The package holds the symbols and enumerations for STH. |
 | [@scramjet/telemetry](./packages/telemetry/) | The package provides modules for gathering analytics data. |
-| [@scramjet/types](./packages/types/) | The package holds the typescript definitions for all common STH interfaces. |
+| [@scramjet/types](./packages/types/) | [DEPRECATED] This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces. Deprecated in favor of @scramjet/runtime-types, @scramjet/sequence-types, and @scramjet/api-types. Existing imports continue to resolve; new code should import from the split packages. |
 | [@scramjet/utility](./packages/utility/) | The package holds utility functions used in places around Scramjet Transform Hub. |
 | [@scramjet/verser](./packages/verser/) | The package provides a reverse server functionality used among Scramjet modules. |
 

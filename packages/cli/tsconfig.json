@@ -12,15 +12,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "src/index.ts"
-    ],
-    "out": "../../dist-docs/reference/typescript/cli",
-    "plugin": "typedoc-plugin-markdown",
-    "excludePrivate": "true",
-    "gitRevision": "HEAD",
-    "sort": "alphabetical"
-  }
+  ]
 }

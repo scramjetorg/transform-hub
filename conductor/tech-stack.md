@@ -30,8 +30,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 ## Core Product Packages
 
 - `packages/sth`: top-level host wrapper and CLI-facing startup façade.
-- `packages/config`: Zod-backed config loading, validation, masking, option descriptors, native command descriptors, and parser abstraction.
-- `packages/sth-config`: configuration defaults, image defaults, and merge behavior.
+- `packages/config`: Zod-backed config loading, validation, masking, option descriptors, native command descriptors, parser abstraction, STH/Manager configuration defaults, and merge behavior.
 - `packages/host`: host lifecycle, API handling, local storage, and service behavior.
 - `packages/api-router`: schema-aware route declaration, hook pipeline, HTTP/verser2 registration adapters, OpenAPI generation, schema-mode loading, and generic client transport contracts.
 - `packages/rest-api2`: v2 REST API contracts, Zod schemas, handlerless route sets, and common v2 client surface.

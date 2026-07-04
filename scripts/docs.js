@@ -17,7 +17,6 @@ const DESCRIPTION_OVERRIDES = {
     "adapter-kubernetes": "Kubernetes adapter for sequence storage, runner pod execution, CLI/config augmentation, and client initialization.",
     "adapters": "Legacy adapter re-export barrel; prefer individual adapter packages (adapter-docker, adapter-kubernetes, adapter-process) for new usage.",
     "api-server": "HTTP API server for router construction, server setup, REST/stream handlers, middleware, and routed forwarding.",
-    "sth-config": "STH configuration defaults, image defaults, deep-merge updates, runtime-adapter selection, and public-safe config extraction.",
     "obj-logger": "Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation.",
 };
 

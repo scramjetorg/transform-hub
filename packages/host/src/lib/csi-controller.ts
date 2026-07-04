@@ -4,7 +4,7 @@ import {
     InstanceAdapterError,
     MessageUtilities
 } from "@scramjet/model";
-import { development } from "@scramjet/sth-config";
+import { development } from "@scramjet/config";
 
 import {
     AppConfig,

@@ -242,28 +242,6 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
     return response;
 }
 
-/**
- * Kill all processes matching a name pattern via unconditional SIGKILL.
- *
- * WARNING: This helper uses `kill -9` and `pgrep -f` which matches the
- * pattern against the full command line.  It is intentionally broad and
- * SHOULD be replaced with targeted `killProcessGroup` with TERM‑to‑KILL
- * escalation when practical.  It remains here for backward compatibility
- * with existing step definitions.
- *
- * @param processName  Process name or command‑line substring to match.
- */
-export async function killProcessByName(processName: string): Promise<void> {
-    return new Promise((res) => {
-        const killCommand = `kill -9 $(pgrep -f "${processName}")`;
-
-        exec(killCommand, () => {
-            console.log(`${processName} process killed.`);
-            res();
-        });
-    });
-}
-
 export async function getActiveProfile() {
     try {
         const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "ls"]);

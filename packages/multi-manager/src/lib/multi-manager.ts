@@ -14,7 +14,7 @@ import { ManagersStore } from "./manager-store";
 import { Writable } from "stream";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
-import { getDefaultConfig as getManagerDefaultConfig } from "@scramjet/manager-config";
+import { getDefaultManagerConfig as getManagerDefaultConfig } from "@scramjet/config";
 import { createVerserHost, VerserHost, VerserLocalBrokerHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { DataStream } from "scramjet";

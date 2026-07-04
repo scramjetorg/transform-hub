@@ -10,7 +10,7 @@ title: Contributing to Scramjet Transform Hub
 
 Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deployment, execution, and monitoring across process, Docker, and Kubernetes runtime adapters. The repository combines:
 
-- **Host-facing CLI and configuration packages** (`packages/sth`, `packages/sth-config`, `packages/config`)
+- **Host-facing CLI and configuration packages** (`packages/sth`, `packages/config`)
 - **Adapter implementations** for process, Docker, and Kubernetes (`packages/adapter-process`, `packages/adapter-docker`, `packages/adapter-kubernetes`)
 - **Runtime wrapper packages** that execute Node, Bun, and Python sequences behind a common outer runner protocol (`packages/runner`, `packages/runner-node`, `packages/runner-bun`, `packages/runner-python`)
 - **Shared type contracts and symbols** (`packages/types`, `packages/symbols`)
@@ -202,7 +202,6 @@ When running through `scripts/run-ava.js`, the AVA child process automatically u
 | `@scramjet/sequence-test` | `packages/sequence-test/src/index.ts` | Supported scoped local fixture/harness/AppContext validation |
 | `@scramjet/types` | `packages/types/src/` | Shared type contracts |
 | `@scramjet/symbols` | `packages/symbols/src/` | Protocol constants and enums |
-| `@scramjet/sth-config` | `packages/sth-config/src/config-service.ts` | Configuration assembly |
 
 ## Package conventions
 

@@ -35,13 +35,12 @@ import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHea
 import { STHController } from "./sth-controller";
 import { STHInfoRegister } from "./sth-info-register";
 import { SthConnectionStore } from "./sth-connection-store";
-import { getDefaultConfig } from "@scramjet/manager-config";
+import { getDefaultManagerConfig, managerVerser2Options, maskConfig } from "@scramjet/config";
 import { merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
 import { ManagerSthBrokerTransport, type RouteChangeEvent } from "./verser2-transport";
 import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
 import { decideRouteForwardingPolicy, isTrustedSthRouteDomain } from "./route-forwarding-policy";
-import { managerVerser2Options, maskConfig } from "@scramjet/config";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { HealthCheck } from "./health-check";
@@ -108,7 +107,7 @@ export class Manager implements IComponent {
     private s3Middleware!: Awaited<ReturnType<typeof getS3Router>>;
     private sthConnectionStore: ISTHConnectionStore = new SthConnectionStore();
     private serviceDiscovery: ServiceDiscovery = new ServiceDiscovery();
-    private readonly _config: ManagerConfiguration = getDefaultConfig();
+    private readonly _config: ManagerConfiguration = getDefaultManagerConfig();
     private sthBrokerTransport?: ManagerSthBrokerTransport;
     private routeChangeUnsubscribe?: () => void;
     private hubInventoryState = new Map<string, HubInventoryState>();

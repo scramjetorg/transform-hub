@@ -19,7 +19,7 @@ import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { CPMMessageCode } from "@scramjet/symbols";
 
 import { StringStream } from "scramjet";
-import { configService } from "@scramjet/manager-config";
+import { managerConfigService } from "@scramjet/config";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { TypedEmitter, defer } from "@scramjet/utility";
@@ -121,7 +121,7 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         this.id = id;
         this.verser2 = verser2;
 
-        this.config = configService.getConfig();
+        this.config = managerConfigService.getConfig();
 
         this.logger = new ObjLogger(this, { id: this.id });
         this.info.created = new Date();

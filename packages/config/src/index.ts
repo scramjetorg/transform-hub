@@ -4,6 +4,7 @@ import { cac } from "cac";
 import { parse as parseJsonc } from "jsonc-parser";
 import YAML from "yaml";
 import { z, ZodError, ZodIssue, ZodType } from "zod";
+import { maskConfig } from "./mask-config";
 
 export type ConfigPath = string | readonly string[];
 export type CliOptionType = "string" | "number" | "boolean" | "string[]" | "number[]" | "json";
@@ -92,7 +93,7 @@ export function createOptionRegistry(): RuntimeOptionRegistry {
 export function parseCliOptions(input: ParseCliOptionsInput): Record<string, unknown> {
     const cli = cac(input.name || "scramjet");
 
-    input.options.forEach(option => {
+    input.options.forEach((option) => {
         const flags = formatFlags(option);
         const config = optionConfig(option);
 
@@ -102,10 +103,9 @@ export function parseCliOptions(input: ParseCliOptionsInput): Record<string, unk
     const parsed = cli.parse([...input.argv], { run: false });
     const values: Record<string, unknown> = {};
 
-    input.options.forEach(option => {
-        const keys = [option.name, option.flag, ...(option.aliases || []), ...(option.flagAliases || [])]
-            .filter(Boolean) as string[];
-        const key = keys.find(candidate => parsed.options[normalizeOptionKey(candidate)] !== undefined);
+    input.options.forEach((option) => {
+        const keys = [option.name, option.flag, ...(option.aliases || []), ...(option.flagAliases || [])].filter(Boolean) as string[];
+        const key = keys.find((candidate) => parsed.options[normalizeOptionKey(candidate)] !== undefined);
 
         if (!key) return;
 
@@ -142,7 +142,7 @@ export function generateExecutableHelp(descriptor: ExecutableHelpDescriptor): st
 
     if (args.length) {
         lines.push("", "Arguments:");
-        args.forEach(arg => {
+        args.forEach((arg) => {
             const required = arg.required === false ? " (optional)" : "";
 
             lines.push(`  ${arg.name}${required}${arg.description ? `  ${arg.description}` : ""}`);
@@ -153,7 +153,7 @@ export function generateExecutableHelp(descriptor: ExecutableHelpDescriptor): st
 
     if (options.length) {
         lines.push("", "Options:");
-        options.forEach(option => {
+        options.forEach((option) => {
             const details = optionDetails(option);
 
             lines.push(`  ${formatFlags(option)}${details ? `  ${details}` : ""}`);
@@ -210,7 +210,7 @@ export function readConfigFile(path: string): Record<string, unknown> {
 }
 
 export function mergeConfig<T extends Record<string, unknown>>(target: T, source: Record<string, unknown>): T {
-    Object.keys(source).forEach(key => {
+    Object.keys(source).forEach((key) => {
         const value = source[key];
 
         if (value === undefined) return;
@@ -229,22 +229,10 @@ export function mergeConfig<T extends Record<string, unknown>>(target: T, source
     return target;
 }
 
-export function maskConfig(value: unknown, options: readonly ConfigOptionDescriptor[], mask = "********"): unknown {
-    const clone = cloneValue(value);
-
-    options.filter(option => option.secret).forEach(option => {
-        const path = toPath(option.path || option.name);
-
-        if (getPath(clone, path) !== undefined) setPath(clone, path, mask);
-    });
-
-    return clone;
-}
+export { maskConfig } from "./mask-config";
 
 export function formatZodError(error: ZodError): string {
-    return error.issues
-        .map((issue: ZodIssue) => `${issue.path.join(".") || "<root>"}: ${issue.message}`)
-        .join("\n");
+    return error.issues.map((issue: ZodIssue) => `${issue.path.join(".") || "<root>"}: ${issue.message}`).join("\n");
 }
 
 function formatFlags(option: ConfigOptionDescriptor): string {
@@ -252,7 +240,7 @@ function formatFlags(option: ConfigOptionDescriptor): string {
     const typedLongFlag = option.type === "boolean" ? longFlag : `${longFlag} <value>`;
     const flags = option.short ? [`-${option.short}`, typedLongFlag] : [typedLongFlag];
 
-    (option.flagAliases || []).forEach(alias => {
+    (option.flagAliases || []).forEach((alias) => {
         flags.push(option.type === "boolean" ? `--${alias}` : `--${alias} <value>`);
     });
 
@@ -323,30 +311,31 @@ function readPackageJsonSection(packageJsonPath?: string, section?: string): Rec
 function readDotEnvFile(path?: string): Record<string, string> {
     if (!path || !existsSync(path)) return {};
 
-    return readFileSync(path, "utf8").split(/\r?\n/).reduce((env, line) => {
-        const trimmed = line.trim();
+    return readFileSync(path, "utf8")
+        .split(/\r?\n/)
+        .reduce(
+            (env, line) => {
+                const trimmed = line.trim();
 
-        if (!trimmed || trimmed.startsWith("#")) return env;
+                if (!trimmed || trimmed.startsWith("#")) return env;
 
-        const separator = trimmed.indexOf("=");
+                const separator = trimmed.indexOf("=");
 
-        if (separator === -1) return env;
+                if (separator === -1) return env;
 
-        env[trimmed.slice(0, separator)] = trimmed.slice(separator + 1);
-        return env;
-    }, {} as Record<string, string>);
+                env[trimmed.slice(0, separator)] = trimmed.slice(separator + 1);
+                return env;
+            },
+            {} as Record<string, string>
+        );
 }
 
-function envToConfig(input: {
-    env: Record<string, string | undefined>;
-    options: readonly ConfigOptionDescriptor[];
-    includeAliases: boolean;
-}): Record<string, unknown> {
+function envToConfig(input: { env: Record<string, string | undefined>; options: readonly ConfigOptionDescriptor[]; includeAliases: boolean }): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
-    input.options.forEach(option => {
+    input.options.forEach((option) => {
         const keys = [option.env, ...(input.includeAliases ? option.envAliases || [] : [])].filter(Boolean) as string[];
-        const key = keys.find(candidate => input.env[candidate] !== undefined);
+        const key = keys.find((candidate) => input.env[candidate] !== undefined);
 
         if (!key) return;
 
@@ -359,7 +348,7 @@ function envToConfig(input: {
 function cliToConfig(cli: Record<string, unknown>, options: readonly ConfigOptionDescriptor[]): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
-    options.forEach(option => {
+    options.forEach((option) => {
         if (cli[option.name] === undefined) return;
         setPath(result, toPath(option.path || option.name), cli[option.name]);
     });
@@ -368,7 +357,7 @@ function cliToConfig(cli: Record<string, unknown>, options: readonly ConfigOptio
 }
 
 function applyAliases(config: Record<string, unknown>, aliases: Record<string, ConfigPath>): void {
-    Object.keys(aliases).forEach(alias => {
+    Object.keys(aliases).forEach((alias) => {
         const aliasPath = toPath(alias);
         const value = getPath(config, aliasPath);
 
@@ -392,8 +381,8 @@ function coerceEnv(value: string | undefined, type: CliOptionType): unknown {
     if (type === "boolean") return ["1", "true", "yes", "on"].includes(value.toLowerCase());
     if (type === "number") return Number(value);
     if (type === "json") return JSON.parse(value);
-    if (type === "string[]") return value.split(",").map(item => item.trim());
-    if (type === "number[]") return value.split(",").map(item => Number(item.trim()));
+    if (type === "string[]") return value.split(",").map((item) => item.trim());
+    if (type === "number[]") return value.split(",").map((item) => Number(item.trim()));
     return value;
 }
 
@@ -408,7 +397,7 @@ function normalizeOptionKey(name: string): string {
 function setPath(target: unknown, path: readonly string[], value: unknown): void {
     let cursor = target as Record<string, unknown>;
 
-    path.slice(0, -1).forEach(part => {
+    path.slice(0, -1).forEach((part) => {
         if (!isPlainObject(cursor[part])) cursor[part] = {};
         cursor = cursor[part] as Record<string, unknown>;
     });
@@ -417,23 +406,13 @@ function setPath(target: unknown, path: readonly string[], value: unknown): void
 }
 
 function getPath(target: unknown, path: readonly string[]): unknown {
-    return path.reduce((cursor, part) => isPlainObject(cursor) ? cursor[part] : undefined, target);
+    return path.reduce((cursor, part) => (isPlainObject(cursor) ? cursor[part] : undefined), target);
 }
 
 function deletePath(target: unknown, path: readonly string[]): void {
-    const parent = path.slice(0, -1).reduce((cursor, part) => isPlainObject(cursor) ? cursor[part] : undefined, target);
+    const parent = path.slice(0, -1).reduce((cursor, part) => (isPlainObject(cursor) ? cursor[part] : undefined), target);
 
     if (isPlainObject(parent)) delete parent[path[path.length - 1]];
-}
-
-function cloneValue(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(cloneValue);
-    if (!isPlainObject(value)) return value;
-
-    return Object.keys(value).reduce((copy, key) => {
-        copy[key] = cloneValue(value[key]);
-        return copy;
-    }, {} as Record<string, unknown>);
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -445,3 +424,14 @@ export * from "./command-model";
 
 export { z };
 export * from "./verser2-config";
+
+// Canonical replacement exports for deprecated config packages
+export { development } from "./env";
+export { imageConfig } from "./sth/image-config";
+export { ConfigService, defaultConfig as sthDefaultConfig, defaultConfig } from "./sth/config-service";
+export { toPublicSTHConfig } from "./sth/public-config";
+export { getRuntimeAdapterOption } from "./sth/runtime-adapter-option";
+export { applyManagerTrustBootstrap } from "./sth/manager-trust-bootstrap";
+export type { ManagerTrustBootstrapMaterial, ManagerTrustBootstrapOptions } from "./sth/manager-trust-bootstrap";
+export { managerDefaultConfig } from "./manager/default-config";
+export { ManagerConfigService, managerConfigService, getDefaultManagerConfig } from "./manager/config-service";

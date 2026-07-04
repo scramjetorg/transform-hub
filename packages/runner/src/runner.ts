@@ -29,6 +29,8 @@ import {
 import { APIExpose } from "@scramjet/api-types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
+// Dual-client pattern: v1 HostClient is retained for legacy AppContext compatibility;
+// v2 fluent clients are used for new Hub/Space client paths.
 import { HostClient as HostApiClient } from "@scramjet/api-client";
 import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { ApiClientTransport, createHubClient, createSpaceClient, HubClient, SpaceClient } from "@scramjet/rest-api2";

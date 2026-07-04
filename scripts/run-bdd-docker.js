@@ -207,7 +207,12 @@ process.once("exit", () => {
 
 const exitWith = (code) => {
     cleanup();
-    reportLeakedProcesses();
+    const hasLeaks = reportLeakedProcesses();
+
+    if (hasLeaks && process.env.SCRAMJET_BDD_FAIL_ON_LEAK === "1") {
+        process.exit(code || 1);
+    }
+
     process.exit(code);
 };
 

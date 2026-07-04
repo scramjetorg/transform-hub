@@ -39,5 +39,5 @@ title: Documentation source overview
 
 - Use relative links between handwritten source pages.
 - Link to generated reference by stable output path, not by package internals.
-- Avoid linking to `docs/` TypeDoc output from new pages; that tree is being retired.
+- Avoid linking to retired `docs/` TypeDoc output from new pages; generated docs now use `dist-docs/` from the `docs-source/` pipeline.
 - README generation must rebase links for repository root, package, npm, and docs-site contexts.

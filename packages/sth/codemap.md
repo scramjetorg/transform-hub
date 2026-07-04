@@ -16,4 +16,4 @@ Receives `STHConfiguration`, invokes `startHost`, stores the returned host, and 
 
 ## Integration Points
 
-Exports the `STH` class for callers; depends on `@scramjet/types`, `@scramjet/host`, `@scramjet/sth-config`, and `@scramjet/config` for CLI/configured startup.
+Exports the `STH` class for callers; depends on `@scramjet/types`, `@scramjet/host`, and `@scramjet/config` for CLI/configured startup.

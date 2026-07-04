@@ -24,4 +24,4 @@ The package also exposes runtime-kind selection surface by re-exporting `Runtime
 
 ## Integration Points
 
-Consumed by `@scramjet/sth-config`, `@scramjet/sth`, `@scramjet/host`, `@scramjet/manager`, `@scramjet/multi-manager`, adapters, runtime wrapper packages, and API client packages. ~120 source files across 12 subdirectories.
+Consumed by `@scramjet/sth`, `@scramjet/host`, `@scramjet/manager`, `@scramjet/multi-manager`, adapters, runtime wrapper packages, and API client packages. ~120 source files across 12 subdirectories.

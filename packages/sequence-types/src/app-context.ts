@@ -30,9 +30,9 @@ export interface SequenceAppContext<
     /** Minimal HTTP route registration surface for sequence authors. */
     api: SequenceAPISurface;
 
-    /** Opaque legacy hub client accessor. */
+    /** Retained legacy `this.hub` compatibility accessor; prefer typed v2 accessors where available. */
     hub: HubClientType;
 
-    /** Opaque legacy space client accessor. */
+    /** Retained legacy `this.space` compatibility accessor; prefer typed v2 accessors where available. */
     space: SpaceClientType;
 }

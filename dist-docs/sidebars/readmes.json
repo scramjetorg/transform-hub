@@ -36,6 +36,10 @@
     "output": "packages/api-server/README.md"
   },
   {
+    "source": "packages/api-types/package.json",
+    "output": "packages/api-types/README.md"
+  },
+  {
     "source": "packages/bpmux/package.json",
     "output": "packages/bpmux/README.md"
   },
@@ -72,11 +76,7 @@
     "output": "packages/manager/README.md"
   },
   {
-    "source": "packages/manager-config/package.json",
-    "output": "packages/manager-config/README.md"
-  },
-  {
-    "source": "packages/middleware-api-client/package.json",
+    "source": "docs-source/readmes/packages/middleware-api-client.md",
     "output": "packages/middleware-api-client/README.md"
   },
   {
@@ -96,7 +96,7 @@
     "output": "packages/multi-manager/README.md"
   },
   {
-    "source": "packages/multi-manager-api-client/package.json",
+    "source": "docs-source/readmes/packages/multi-manager-api-client.md",
     "output": "packages/multi-manager-api-client/README.md"
   },
   {
@@ -128,16 +128,20 @@
     "output": "packages/runner-python/README.md"
   },
   {
+    "source": "packages/runtime-types/package.json",
+    "output": "packages/runtime-types/README.md"
+  },
+  {
     "source": "docs-source/readmes/packages/sequence-test.md",
     "output": "packages/sequence-test/README.md"
   },
   {
-    "source": "docs-source/readmes/packages/sth.md",
-    "output": "packages/sth/README.md"
+    "source": "packages/sequence-types/package.json",
+    "output": "packages/sequence-types/README.md"
   },
   {
-    "source": "packages/sth-config/package.json",
-    "output": "packages/sth-config/README.md"
+    "source": "docs-source/readmes/packages/sth.md",
+    "output": "packages/sth/README.md"
   },
   {
     "source": "packages/symbols/package.json",

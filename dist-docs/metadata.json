@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:22c4c943d8c35d949b00d98c943a1a27b0c70bbee2da0288d9ee46eae252129e",
+  "sourceIdentifier": "sha256:ff42ebbf43b3653dc118c337c0d54edbde95c73d0b4e019d074850b98fa37303",
   "outputRoot": {
     "value": "dist-docs",
     "resolvedPath": "dist-docs",
@@ -55,6 +55,7 @@
       "packages/api-client/README.md",
       "packages/api-router/README.md",
       "packages/api-server/README.md",
+      "packages/api-types/README.md",
       "packages/bpmux/README.md",
       "packages/cli/README.md",
       "packages/client-utils/README.md",
@@ -64,7 +65,6 @@
       "packages/load-check/README.md",
       "packages/logger/README.md",
       "packages/manager/README.md",
-      "packages/manager-config/README.md",
       "packages/middleware-api-client/README.md",
       "packages/model/README.md",
       "packages/module-loader/README.md",
@@ -78,9 +78,10 @@
       "packages/runner-bun/README.md",
       "packages/runner-node/README.md",
       "packages/runner-python/README.md",
+      "packages/runtime-types/README.md",
       "packages/sequence-test/README.md",
+      "packages/sequence-types/README.md",
       "packages/sth/README.md",
-      "packages/sth-config/README.md",
       "packages/symbols/README.md",
       "packages/telemetry/README.md",
       "packages/types/README.md",
@@ -143,7 +144,7 @@
       "package": "@scramjet/sequence-test",
       "entrypoint": "packages/sequence-test/src/index.ts",
       "outputPath": "reference/typescript/sequence-test/",
-      "stability": "experimental",
+      "stability": "supported-scoped",
       "audience": [
         "implementers",
         "contributors"

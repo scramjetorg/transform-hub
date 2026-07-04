@@ -43,7 +43,7 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
-import { ConfigService, development } from "@scramjet/sth-config";
+import { ConfigService, development } from "@scramjet/config";
 import { isStartSequenceDTO, readJsonFile, defer, FileBuilder, RefCountHandler } from "@scramjet/utility";
 
 import { DataStream } from "scramjet";

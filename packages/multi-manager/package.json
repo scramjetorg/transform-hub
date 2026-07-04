@@ -11,7 +11,6 @@
     "start": "ts-node ./src/bin/start",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docker": "docker build -t ${SCRAMJET_INT_REPO_PATH}scramjetorg/multimanager:$npm_package_version -f Dockerfile ../../..",
-    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
     "test:ava": "node ../../scripts/run-ava.js",
@@ -27,7 +26,6 @@
     "@scramjet/config": "^1.1.0",
     "@scramjet/load-check": "^1.1.0",
     "@scramjet/manager": "^0.35.1",
-    "@scramjet/manager-config": "^0.35.1",
     "@scramjet/model": "^1.1.0",
     "@scramjet/monitoring-server": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
@@ -51,8 +49,6 @@
     "sinon": "^14.0.0",
     "trouter": "^3.2.0",
     "ts-node": "^10.9.1",
-    "typedoc": "^0.22.18",
-    "typedoc-plugin-markdown": "^3.13.4",
     "typescript": "^4.7.4"
   },
   "ava": {

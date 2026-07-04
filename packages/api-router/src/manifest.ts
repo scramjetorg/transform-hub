@@ -82,7 +82,6 @@ export type ResolverTarget = {
     redirect?: ResolverRedirectTarget;
     definitions?: unknown;
     client?: unknown;
-    localForwardPath?: string;
 };
 
 export type ResolverHandler<TSchemas extends RouteSchemas = RouteSchemas> = (

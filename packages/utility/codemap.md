@@ -41,7 +41,7 @@ Provides a collection of shared utility functions used across Scramjet Transform
 - Leaf dependency — no internal STH packages in dependency tree.
 - Consumed by virtually all STH packages for shared utility needs.
 - Types from `@scramjet/types` used in typeguards.
-- `merge` consumed by `@scramjet/config`, `@scramjet/sth-config`, `@scramjet/manager-config`.
+- `merge` consumed by `@scramjet/config`.
 - `defer` used across the system for async control flow.
 - `LogLevelStrings` from `constants/` is the canonical log level ordering.
 - `typed-emitter` used for type-safe event emitters throughout the codebase.

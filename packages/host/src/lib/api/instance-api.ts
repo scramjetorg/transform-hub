@@ -6,7 +6,7 @@ import { ICommunicationHandler, STHRestAPI } from "@scramjet/api-types";
 import { OpResponse } from "../types/from-types";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { ReasonPhrases } from "http-status-codes";
-import { development } from "@scramjet/sth-config";
+import { development } from "@scramjet/config";
 import { ICSI } from "../types";
 import { isSetSequenceEndpointPayloadDTO } from "@scramjet/utility";
 import { IncomingHttpHeaders, ServerResponse } from "http";
@@ -15,6 +15,7 @@ import EventEmitter from "events";
 import { ReReadable } from "rereadable-stream";
 import { normalizeRpcForwardPath, stripRpcExposePath } from "./host-api";
 
+/** Retained public v1 instance API compatibility boundary; do not remove while v1 clients are supported. */
 export class InstanceAPI {
     constructor(
         private csi: ICSI,

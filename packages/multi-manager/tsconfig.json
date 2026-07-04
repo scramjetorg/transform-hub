@@ -9,13 +9,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "./src/lib/multi-manager.ts"
-    ],
-    "out": "../../dist-docs/reference/typescript/multi-manager",
-    "plugin": "typedoc-plugin-markdown",
-    "readme": "none"
-  }
+  ]
 }

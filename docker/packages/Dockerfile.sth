@@ -13,7 +13,6 @@ WORKDIR /dist
 COPY --from=builder /build/dist/sth                 ./sth
 COPY --from=builder /build/dist/host                ./host
 COPY --from=builder /build/dist/obj-logger          ./obj-logger
-COPY --from=builder /build/dist/sth-config          ./sth-config
 COPY --from=builder /build/dist/utility             ./utility
 COPY --from=builder /build/dist/adapters            ./adapters
 COPY --from=builder /build/dist/model               ./model
@@ -35,7 +34,8 @@ COPY --from=builder /build/dist/runner              ./runner
 COPY --from=builder /build/dist/python-runner       ./python-runner
 COPY --from=builder /build/dist/module-loader       ./module-loader
 COPY --from=builder /build/dist/api-client          ./api-client
-COPY --from=builder /build/dist/client-utils        ./client-utils
+COPY --from=builder /build/dist/client-utils    ./client-utils
+COPY --from=builder /build/dist/config          ./config
 
 COPY --from=builder /build/dist/package.json ./package.json
 COPY --from=builder /build/dist/package-lock.json ./package-lock.json

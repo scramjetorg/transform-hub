@@ -1,6 +1,6 @@
 # @scramjet/types
 
-This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces.
+[DEPRECATED] This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces. Deprecated in favor of @scramjet/runtime-types, @scramjet/sequence-types, and @scramjet/api-types. Existing imports continue to resolve; new code should import from the split packages.
 
 ## Install
 

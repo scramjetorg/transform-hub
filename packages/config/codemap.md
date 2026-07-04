@@ -46,7 +46,7 @@ executeCommand → preAction → action(args, options) → postAction
 
 ## Integration Points
 
-- **No internal Scramjet dependencies** — the package is self-contained, depending only on `cac`, `jsonc-parser`, `yaml`, and `zod`.
+- **Internal Scramjet dependencies**: `@scramjet/api-types`, `@scramjet/runtime-types`, `@scramjet/utility` (runtime); `@scramjet/adapters` (optional, dynamically imported for runtime adapter selection). External deps: `cac`, `jsonc-parser`, `yaml`, `zod`.
 - Exports `{ z }` (re-exported Zod) so callers can build schemas without a separate zod import.
 - `ConfigOptionDescriptor` is the shared option metadata type consumed by `packages/sth` (the main `si` CLI) for both option registration and env-var/CLI mapping.
 - The `command-model` module (`cmd`, `CommandBuilder`, `runCommandTree`) is the foundation for the `si` CLI's entire command tree in `packages/sth`. The `CommandDescriptor`/`OptionDescriptor` types form the public API surface for all STH subcommands.

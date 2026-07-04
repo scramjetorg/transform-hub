@@ -57,6 +57,8 @@ class BootConfig:
     logLevel: str = "INFO"
     exposePath: str | None = None
     exposeHost: str | None = None
+    inputTopic: str | None = None
+    outputTopic: str | None = None
     pythonPath: str | None = None
     verser2Runtime: Verser2RuntimeConfig | None = None
 
@@ -139,7 +141,9 @@ def _validate(payload: Any) -> BootConfig:
     if not isinstance(payload, dict):
         raise ValidationError("runner-python: boot config must be a JSON object")
 
-    sequence_path = _require_non_empty_string(payload.get("sequencePath"), "sequencePath")
+    sequence_path = _require_non_empty_string(
+        payload.get("sequencePath"), "sequencePath"
+    )
     instance_id = _require_non_empty_string(payload.get("instanceId"), "instanceId")
     instances_server_port = _require_positive_int(
         payload.get("instancesServerPort"), "instancesServerPort"
@@ -178,6 +182,14 @@ def _validate(payload: Any) -> BootConfig:
     if expose_host is not None:
         expose_host = _require_non_empty_string(expose_host, "exposeHost")
 
+    input_topic = payload.get("inputTopic")
+    if input_topic is not None:
+        input_topic = _require_non_empty_string(input_topic, "inputTopic")
+
+    output_topic = payload.get("outputTopic")
+    if output_topic is not None:
+        output_topic = _require_non_empty_string(output_topic, "outputTopic")
+
     python_path = payload.get("pythonPath")
     if python_path is not None:
         python_path = _require_non_empty_string(python_path, "pythonPath")
@@ -196,6 +208,8 @@ def _validate(payload: Any) -> BootConfig:
         logLevel=log_level,
         exposePath=expose_path,
         exposeHost=expose_host,
+        inputTopic=input_topic,
+        outputTopic=output_topic,
         pythonPath=python_path,
         verser2Runtime=verser2_runtime,
     )

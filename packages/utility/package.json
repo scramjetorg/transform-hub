@@ -8,7 +8,6 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "node -e \"console.log('Package TypeDoc generation retired; run npm run docs:generate from the repository root.')\"",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
     "test": "npm run test:ava",
@@ -36,9 +35,7 @@
     "@scramjet/runtime-types": "^1.1.0",
     "@scramjet/types": "^1.1.0",
     "ava": "^4.3.3",
-    "typed-emitter": "^1.4.0",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6"
+    "typed-emitter": "^1.4.0"
   },
   "dependencies": {
     "normalize-url": "4",

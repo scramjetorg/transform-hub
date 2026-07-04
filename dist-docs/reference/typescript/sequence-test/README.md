@@ -10,12 +10,12 @@ title: "@scramjet/sequence-test reference"
 
 - Package: `@scramjet/sequence-test`
 - Entrypoint: `packages/sequence-test/src/index.ts`
-- Stability: `experimental`
+- Stability: `supported-scoped`
 - Audience: `implementers`, `contributors`
 - Reviewers: `test-tooling-maintainers`
 
-Documented as an experimental sequence testing harness; consumers need explicit stability context.
+Supported for scoped local sequence fixture/hub-harness/AppContext validation. Not a replacement for package tests, BDD, adapter/runtime invariant checks, or full live Hub/process/Docker/Kubernetes parity.
 
-> Generator must preserve the experimental label prominently.
+> Generator must prominently display the scoped support boundary: supported for local fixture/harness/AppContext validation, not full Hub/runner parity.
 
 Curated TypeScript API details will be generated for this entrypoint by the reference generator. This placeholder is emitted to make allowlist drift visible before the TypeScript reference renderer is added.

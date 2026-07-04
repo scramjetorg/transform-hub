@@ -54,10 +54,32 @@ export class HostUtils {
             return;
         }
 
-        // Use TERM-to-KILL escalation with default 10s grace period.
-        if (!this.host || !HostUtils.killProcessGroup(this.host, SIGTERM, 10000)) {
+        if (!this.host) {
             throw new Error("Couldn't stop host");
         }
+
+        if (this.hostProcessStopped) {
+            return;
+        }
+
+        const host = this.host;
+
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Timed out waiting for host to stop"));
+            }, 11000);
+
+            host.once("exit", () => {
+                clearTimeout(timeout);
+                resolve();
+            });
+
+            // Use TERM-to-KILL escalation with default 10s grace period.
+            if (!HostUtils.killProcessGroup(host, SIGTERM, 10000)) {
+                clearTimeout(timeout);
+                reject(new Error("Couldn't stop host"));
+            }
+        });
     }
 
     /**

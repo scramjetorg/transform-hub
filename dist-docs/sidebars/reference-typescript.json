@@ -20,7 +20,7 @@
   {
     "package": "@scramjet/sequence-test",
     "title": "@scramjet/sequence-test reference",
-    "stability": "experimental",
+    "stability": "supported-scoped",
     "outputPath": "reference/typescript/sequence-test/README.md"
   },
   {

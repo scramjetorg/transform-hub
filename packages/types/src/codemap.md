@@ -39,4 +39,4 @@ API client types (`api-client/factory.ts` `ApiClientFactory<TClient, TUtils>`) e
 
 ## Integration Points
 
-Imported by `sth-config`, `sth`, `runner`, `host`, `manager`, `multi-manager`, API/client packages, adapters, and runtime wrappers. Runtime-kind exports are consumed by executor selection logic (`packages/runner/src/executor/select.ts`) and runtime decision helpers (`packages/adapters-common`). Manager types consumed by `@scramjet/manager` and `@scramjet/multi-manager`.
+Imported by `sth`, `runner`, `host`, `manager`, `multi-manager`, API/client packages, adapters, and runtime wrappers. Runtime-kind exports are consumed by executor selection logic (`packages/runner/src/executor/select.ts`) and runtime decision helpers (`packages/adapters-common`). Manager types consumed by `@scramjet/manager` and `@scramjet/multi-manager`.
