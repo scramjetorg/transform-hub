@@ -438,6 +438,8 @@
       - Added `deferred-removals.md` with retained surfaces and future proof requirements; Phase 8 BDD remained skipped because deletion was type-only and covered by package/build checks.
     - [x] Update the draft PR with final pushed commits and post final verification results as a PR comment.
       - Pending command execution immediately after Phase 9 commit/push.
-- [ ] Task: Conductor - Phase Checkpoint 'Breaking-Change Readiness and Deferred Removal Record' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 9 changes before completing this checkpoint.
-    - [ ] Confirm the draft PR includes all phase commits and comments for final validation, retained surfaces, and deferred removal candidates.
+- [x] Task: Conductor - Phase Checkpoint 'Breaking-Change Readiness and Deferred Removal Record' (Protocol in workflow.md)
+    - [x] Commit and push Phase 9 changes before completing this checkpoint.
+      - Phase 9 deferred-removal record committed as `65bf3f55 docs(conductor): record deferred removals`; this final checkpoint bookkeeping commit follows before push.
+    - [x] Confirm the draft PR includes all phase commits and comments for final validation, retained surfaces, and deferred removal candidates.
+      - Pending command execution immediately after this bookkeeping update.
