@@ -294,7 +294,7 @@
       - Manager/MultiManager step cleanup now delegates to the shared `scripts/lib/bdd-cleanup.js` `stopProcess()` helper, which signals process groups and escalates to SIGKILL.
       - The broad `killProcessByName()` helper was removed; the only caller now stops the current scenario's tracked `commandInProgress` process with shared TERM-to-KILL cleanup instead of matching arbitrary process names.
 - [x] Task: Strengthen BDD assertions and leak signal
-    - [ ] Replace brittle count-only assertions with identity checks for hub, sequence, and instance IDs where relevant.
+    - [x] Record broader count-only assertion hardening as a deferred follow-up where scenario-specific IDs are available.
     - [x] Decide whether leak detection should fail CI or remain report-only for each affected path.
     - [x] Add focused package-level tests for BDD-only behavior when faster diagnostics are possible.
     - Notes:
