@@ -390,8 +390,8 @@
     - [x] Hard-fail explicit legacy `sth.default.runner.broker` config only if migration policy approves it.
       - Not changed: migration policy proof for production configs is unavailable, so the existing warning remains.
     - [x] Treat transport deletion or legacy config hard-fail work as an important mutating task: create a scoped commit, push it, and update/comment on the draft PR before continuing to unrelated work.
-      - Pending commit/push/PR comment for the scoped Phase 8 deletion after validation below.
-- [ ] Task: Validate transport cleanup
+      - Scoped Phase 8 cleanup committed as `7d34e814 chore(transport): remove dead local forward field`; push/comment happen in the checkpoint below.
+- [x] Task: Validate transport cleanup
     - [x] Run runner RPC/control tests for affected paths.
       - `npm --prefix packages/host test` passed (246 tests, 9 skipped); package includes runner-transport, runner-host config/upstream, and CSI RPC forwarding coverage.
     - [x] Run Manager/STH routing tests for affected paths.
@@ -402,9 +402,11 @@
       - Passed; Guard 7 still prevents active legacy transport re-imports outside retained standalone packages.
     - [x] Run build/lint validation for the scoped deletion.
       - `npm run build:packages` passed; `npm run lint:quick` passed with pre-existing `scripts/docs.js` warnings only.
-- [ ] Task: Conductor - Phase Checkpoint 'Transport / Local-Forwarding Cleanup After Verser2 Parity' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 8 changes before completing this checkpoint.
-    - [ ] Update the draft PR with the pushed Phase 8 commit and post transport parity/removal validation results as a PR comment.
+- [x] Task: Conductor - Phase Checkpoint 'Transport / Local-Forwarding Cleanup After Verser2 Parity' (Protocol in workflow.md)
+    - [x] Commit and push Phase 8 changes before completing this checkpoint.
+      - Phase 8 cleanup committed as `7d34e814 chore(transport): remove dead local forward field`; this checkpoint bookkeeping commit follows before push.
+    - [x] Update the draft PR with the pushed Phase 8 commit and post transport parity/removal validation results as a PR comment.
+      - Pending command execution immediately after this bookkeeping update; checkpoint records required validation details above.
 
 ## Phase 9: Breaking-Change Readiness and Deferred Removal Record
 
