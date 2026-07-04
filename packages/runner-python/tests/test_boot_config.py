@@ -89,6 +89,8 @@ def test_optional_fields_default_correctly(tmp_path: Path) -> None:
     assert cfg.logLevel == "INFO"
     assert cfg.exposePath is None
     assert cfg.exposeHost is None
+    assert cfg.inputTopic is None
+    assert cfg.outputTopic is None
     assert cfg.pythonPath is None
     assert cfg.verser2Runtime is None
 
@@ -109,6 +111,8 @@ def test_optional_fields_round_trip_when_present(tmp_path: Path) -> None:
         "logLevel": "DEBUG",
         "exposePath": "/expose",
         "exposeHost": "0.0.0.0",
+        "inputTopic": "input-topic",
+        "outputTopic": "output-topic",
     }
     cfg = load_boot_config(["runner_python", _write(tmp_path, payload)])
 
@@ -118,6 +122,8 @@ def test_optional_fields_round_trip_when_present(tmp_path: Path) -> None:
     assert cfg.logLevel == "DEBUG"
     assert cfg.exposePath == "/expose"
     assert cfg.exposeHost == "0.0.0.0"
+    assert cfg.inputTopic == "input-topic"
+    assert cfg.outputTopic == "output-topic"
 
 
 def test_sequence_info_missing_id_raises(tmp_path: Path) -> None:

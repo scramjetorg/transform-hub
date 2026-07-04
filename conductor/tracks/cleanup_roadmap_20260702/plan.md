@@ -239,21 +239,29 @@
     - Notes:
       - Approved safe removals: nine empty, unreferenced BDD feature placeholders; dead dev utilities `scripts/dev/sd.ts` and `scripts/dev/start-seq.ts`; unused Cucumber step and `testPath` pointing at deleted `packages/reference-apps/hello-alice-out/`.
       - Retained/no-delete boundaries: root `refapps/` downloads, `download:refapps`, CI `build-refapps` workflow/artifacts, and active BDD features using `../refapps/*.tar.gz` remain until replacement coverage exists.
-      - Python BDD feature `E2E-014-python.feature` currently matches zero CI scenarios due to `@compatibility`, but it was not removed in this approved cleanup batch; Python current-contract coverage remains a later decision.
+      - Python BDD feature `E2E-014-python.feature` formerly matched zero CI scenarios due to `@compatibility`; it is now retagged to run non-slow Python scenarios against local fixtures.
 - [x] Task: Replace outdated Python BDD/refapp coverage
     - [x] Create or update Python BDD fixtures/refapps using `main(context, input_stream, *args)`.
     - [x] Use the new AppContext API and avoid `scramjet-framework-py` dependencies.
     - [x] Preserve scenario intent while replacing old internals.
     - [x] Add package-level tests where BDD is too broad or fragile.
     - Notes:
-      - No Python BDD/refapp source fixtures live in this repo; the Python BDD feature uses downloaded `refapps/*.tar.gz` artifacts and remains tagged `@compatibility`, so it is not removed in this track batch.
-      - Updated the only local stale Python fixture source, `packages/sequence-test/test/fixtures/python-echo/sequence/main.py`, from legacy `transform(input)` to the current `main(context, input_stream, *args)` contract.
-      - Existing package-level runner-python parity and sequence-test harness coverage remain the proof surface; no `scramjet-framework-py` dependency was added to any BDD fixture.
-      - Validation: `packages/sequence-test` tests passed (120 tests) under memory guard.
-- [ ] Task: Add or update current-contract runtime BDD coverage
-    - [ ] Add Python current-contract BDD coverage where currently missing.
-    - [ ] Add Bun BDD coverage if still required by current runtime parity expectations.
-    - [ ] Keep broader downloaded refapps only while broader CLI/topics/runtime lifecycle/performance/error coverage still depends on them.
+      - Created seven local Python BDD fixture directories under `bdd/data/sequences/python-bdd-*` using current `main(context, input_stream, *args)` contract: `exception`, `chunk-lengths`, `unhealthy`, `logs`, `gen-async`, `topic-producer`, `topic-consumer`.
+      - Added `scripts/pack-python-bdd-fixtures.js` (modelled after `pack-appcontext-fixtures.js`) to pack the fixture directories into tarballs at `bdd/data/sequences/python-bdd-packages/`.
+      - E2E-014 Python scenarios now reference local tarballs (e.g. `python-bdd-exception.tar.gz`) instead of `../refapps/*.tar.gz` paths.
+      - Removed `@compatibility` tag from all Python scenarios so CI tag filter matches them; kept `@slow` on the topic scenario so it remains excluded by standard `test:bdd-ci-python`.
+      - Topic fixtures preserve old compatibility metadata (`provides`/`requires` with `topic-test` and `text/plain`) while Python runner now forwards `inputTopic`/`outputTopic` through the PING payload, so the scenario validates the newer CLI topic rename path instead of only legacy fixture metadata.
+      - Root `package.json`: removed no-op `postbuild:refapps`, `prebuild:refapps:node`, `build:refapps:node` scripts. `build:refapps` now runs `pack:python-bdd-fixtures`. Added `pack:python-bdd-fixtures` script. Updated `test:bdd-ci-python` to pack fixtures and set `PACKAGES_DIR`.
+      - No `scramjet-framework-py` dependency was added to any fixture.
+- [x] Task: Add or update current-contract runtime BDD coverage
+    - [x] Add Python current-contract BDD coverage where currently missing.
+    - [x] Add Bun BDD coverage if still required by current runtime parity expectations.
+    - [x] Keep broader downloaded refapps only while broader CLI/topics/runtime lifecycle/performance/error coverage still depends on them.
+    - Notes:
+      - Python BDD scenarios (E2E-014 TC-003/006/007/010/013/015) are now powered by local `python-bdd-*` fixtures using current `main(context, input_stream, *args)` contract and are unblocked from CI (removed `@compatibility`).
+      - TC-014 (topic producer/consumer) kept `@slow` and remains excluded from standard `test:bdd-ci-python`, but focused validation now passes and `test:bdd-long` packs local Python BDD fixtures before running slow scenarios.
+      - No Bun BDD fixture replacement was required in this cleanup: there were no old Bun refapp BDD scenarios to replace, while Bun runtime coverage remains in `packages/runner-bun` and sequence-test harness tests.
+      - Broader downloaded refapps (`refapps/*.tar.gz`) are still retained for non-Python scenarios that depend on them; not removed in this track.
 - [x] Task: Remove stale BDD/refapp references after replacement proof
     - [x] Remove dead empty feature files and stale script paths after no-active-use checks.
     - [x] Update workflows/scripts/docs that referenced removed BDD/refapp paths.
@@ -262,14 +270,18 @@
       - No workflow/docs updates were required for the removed empty features and dev utilities; static searches found no active references to their names or script paths.
       - The removed `response in every line contains ...` step was not referenced by any feature file; removing it also removed the last active `packages/reference-apps/hello-alice-out/` BDD step-def reference.
       - Cleanup-batch validation passed: static searches found no active references to the removed empty feature names, dev utility paths, or deleted step text; `npm run test:bdd-appcontext` passed (7 scenarios, 40 steps); `npm run check:runtime-invariants` passed (8/8); `git diff --check` passed.
-- [ ] Task: Validate BDD/refapp cleanup
-    - [ ] Run `npm run test:sequence-appcontext` if AppContext fixtures are affected.
-    - [ ] Run `npm run test:bdd-appcontext` if AppContext BDD is affected.
-    - [ ] Run `npm run test:bdd-ci-python` or narrower Python BDD tags if Python BDD is affected.
-    - [ ] Record skipped Docker/Kubernetes BDD with reason.
-- [ ] Task: Conductor - Phase Checkpoint 'Refapps and Legacy BDD Cleanup' (Protocol in workflow.md)
-    - [ ] Commit and push Phase 5 changes before completing this checkpoint.
-    - [ ] Update the draft PR with the pushed Phase 5 commit and post BDD/refapp validation results as a PR comment.
+- [x] Task: Validate BDD/refapp cleanup
+    - [x] Run `npm run test:sequence-appcontext` if AppContext fixtures are affected. — No AppContext fixtures changed; skipped.
+    - [x] Run `npm run test:bdd-appcontext` if AppContext BDD is affected. — No AppContext BDD/step-defs changed; skipped.
+    - [x] Run `npm run test:bdd-ci-python` or narrower Python BDD tags if Python BDD is affected. — Passed after obvious fixes: 6 scenarios, 35 steps. Topic scenario remains `@slow` and excluded from this command.
+    - [x] Record skipped Docker/Kubernetes BDD with reason. — Full Docker/Kubernetes suites skipped: no adapter/Docker/Kubernetes behavior changed; focused Docker BDD validations were run for Python, AppContext, and Node paths.
+    - Notes:
+      - Validation passed under memory guard: `packages/runner-python` focused boot/handshake tests (30); focused slow Python topic BDD (1 scenario, 10 steps); `npm run test:bdd-ci-python` (6 scenarios, 35 steps); `npm run test:bdd-appcontext` (7 scenarios, 40 steps); `npm run test:bdd-ci-node` (2 scenarios, 14 steps); `npm run build:packages`; `npm run check:runtime-invariants` (8/8); `npm run lint:quick` exited successfully with only pre-existing `scripts/docs.js` warnings; `git diff --check` passed.
+- [x] Task: Conductor - Phase Checkpoint 'Refapps and Legacy BDD Cleanup' (Protocol in workflow.md)
+    - [x] Commit and push Phase 5 changes before completing this checkpoint.
+    - [x] Update the draft PR with the pushed Phase 5 commit and post BDD/refapp validation results as a PR comment.
+    - Notes:
+      - Final review approved after fixing Python runner topic rename fields to use the nested PING payload shape expected by Host and matching runner-node.
 
 ## Phase 6: BDD/Test Infrastructure Hardening
 

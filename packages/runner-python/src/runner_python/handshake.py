@@ -38,7 +38,7 @@ def _build_ping_payload(boot_config: Any) -> dict[str, Any]:
     if not isinstance(instance_id, str):
         instance_id = ""
 
-    return {
+    payload = {
         "payload": {
             "system": {
                 "processPID": str(os.getpid()),
@@ -47,6 +47,16 @@ def _build_ping_payload(boot_config: Any) -> dict[str, Any]:
         "sequenceInfo": sequence_info,
         "id": instance_id,
     }
+
+    input_topic = getattr(boot_config, "inputTopic", None)
+    if isinstance(input_topic, str) and len(input_topic) > 0:
+        payload["payload"]["inputTopic"] = input_topic
+
+    output_topic = getattr(boot_config, "outputTopic", None)
+    if isinstance(output_topic, str) and len(output_topic) > 0:
+        payload["payload"]["outputTopic"] = output_topic
+
+    return payload
 
 
 def _normalize_pong_payload(payload: Any) -> HandshakeResult:
