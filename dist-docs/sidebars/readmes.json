@@ -124,7 +124,7 @@
     "output": "packages/runner-node/README.md"
   },
   {
-    "source": "packages/runner-python/package.json",
+    "source": "docs-source/readmes/packages/runner-python.md",
     "output": "packages/runner-python/README.md"
   },
   {
