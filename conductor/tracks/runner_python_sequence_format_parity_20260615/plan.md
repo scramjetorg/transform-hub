@@ -24,7 +24,7 @@
     - [x] Add tests for canonical topic metadata parsing/mapping.
     - [x] Add tests proving old APIs are not required for new-contract refapps (test_utils.py verifies new snake_case metadata independently of legacy paths).
     - [x] Run `npm test -- tests/<focused-runner-python-tests> -v` in `packages/runner-python` or the narrowest equivalent focused command.
-- [ ] Task: Conductor - User Manual Verification 'Entrypoint Contract Definition and Baseline Coverage' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Entrypoint Contract Definition and Baseline Coverage' (Protocol in workflow.md)
 
 ### Implementation notes (Phase 1, 2026-06-21)
 
@@ -83,7 +83,7 @@
 - [x] Task: Cover lifecycle, monitoring, health, logging, and event parity
     - [x] Add tests for `add_monitoring_handler()` health payload composition and terminal monitoring behavior.
     - [x] Add tests for stop handlers, kill handlers, `keep_alive()`, `end()`, and `destroy()`.
-    - [ ] ~~Add tests for logger forwarding at the levels expected by Hub/CLI-visible behavior.~~ (Deferred: existing JsonLogHandler and logger wiring unchanged; parity tested implicitly by handshake/log tests)
+    - [x] ~~Add tests for logger forwarding at the levels expected by Hub/CLI-visible behavior.~~ (Deferred: existing JsonLogHandler and logger wiring unchanged; parity tested implicitly by handshake/log tests)
     - [x] Add tests for event subscription, instance event emission, and space event emission.
     - [x] Add tests for state description/save/initial-state behavior where implemented.
 - [x] Task: Validate AppContext parity
@@ -173,7 +173,7 @@
     - [x] Preserve binary payloads and text encoding boundaries.
     - [x] Emit NDJSON output consistently for `application/x-ndjson` where metadata or content type requests it.
     - [x] Preserve completion, error, stderr, and terminal monitoring semantics for each output shape.
-    - [ ] ~~Introduce a runtime-owned output wrapper such as `runner_python.Output`~~ (Deferred: not clearly needed; existing `as_output_stream`/`forward_output_stream` provide sufficient coverage.)
+    - [x] ~~Introduce a runtime-owned output wrapper such as `runner_python.Output`~~ (Deferred: not clearly needed; existing `as_output_stream`/`forward_output_stream` provide sufficient coverage.)
 - [x] Task: Implement canonical metadata handling
     - [x] Parse snake_case `requires` and `provides` metadata for topic and `content_type` values.
     - [x] Map canonical metadata to existing Hub/CLI-visible topic behavior.
@@ -261,29 +261,29 @@
 
 ## Phase 4: New Python BDD Refapps and Final Runtime Validation
 
-- [~] Task: Replace Python BDD refapps with new-contract examples
-    - [ ] ~~Create or update Python BDD refapps for exception stderr, text input, binary input, NDJSON input/output, health override, logger forwarding, topics, async generator output, stop/keep_alive, kill handler, events, and ASGI API exposure.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
-    - [ ] ~~Ensure new Python BDD refapps use `main(context, input_stream, *args)` and the new AppContext API.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
-    - [ ] ~~Ensure new Python BDD refapps do not depend on `scramjet-framework-py`.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
-    - [ ] ~~Keep BDD scenario intent stable while changing Python refapp internals.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+- [x] Task: Replace Python BDD refapps with new-contract examples
+    - [x] ~~Create or update Python BDD refapps for exception stderr, text input, binary input, NDJSON input/output, health override, logger forwarding, topics, async generator output, stop/keep_alive, kill handler, events, and ASGI API exposure.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] ~~Ensure new Python BDD refapps use `main(context, input_stream, *args)` and the new AppContext API.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] ~~Ensure new Python BDD refapps do not depend on `scramjet-framework-py`.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] ~~Keep BDD scenario intent stable while changing Python refapp internals.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
     - [x] Add a new fixture-format regression reproducing the Phase 4 Python verser2 TLS failure (`tls.ca` inline CA passed to a dependency that accepts only `tls_ca_file`).
     - [x] Fix runner-python verser2 TLS mapping so inline CA bundles are materialized as temporary PEM files and cleaned up on close/failure.
-- [~] Task: Run staged validation gates
+- [x] Task: Run staged validation gates
     - [x] Run full `npm test` in `packages/runner-python`.
     - [x] Run `npm run build` in `packages/runner-python`.
     - [x] Run `npm run build:packages` if package-level changes affect shared build output.
     - [x] Run `npm run check:runtime-invariants`.
-    - [ ] ~~Run targeted BDD paths needed for the changed Python refapps.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
-    - [ ] ~~Run `npm run test:bdd-ci-python` as the final Python runtime smoke gate.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] ~~Run targeted BDD paths needed for the changed Python refapps.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
+    - [x] ~~Run `npm run test:bdd-ci-python` as the final Python runtime smoke gate.~~ (Deferred by user instruction: outdated refapp BDD coverage will be recreated in a later track.)
     - [x] Record any skipped broad Docker/Kubernetes validation and reason.
-- [~] Task: Complete runtime parity review
+- [x] Task: Complete runtime parity review
     - [x] Review Python behavior against Node/Bun platform-visible semantics for logs, health, lifecycle, events, topics, input, output, and ASGI API exposure.
     - [x] Fix non-BDD lifecycle parity blockers found by review: STOP `keep_alive(milliseconds=...)`, sequence-facing stop-handler chainability, and SET log-level propagation to the sequence logger.
     - [x] Add focused non-BDD ASGI API exposure coverage for new-contract `main()` sequences.
     - [x] Expand AppContext/ASGI/lifecycle README docs so docs, tests, and runtime describe the same Python contract.
     - [x] Confirm no new refapp depends on old `scramjet.streams.Stream`, old health/stop APIs, or legacy module-global assumptions. (No refapp changes in this checkpoint; outdated refapp BDD coverage deferred.)
     - [x] Confirm docs, tests, and runtime behavior describe the same Python contract.
-- [ ] Task: Conductor - User Manual Verification 'New Python BDD Refapps and Final Runtime Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'New Python BDD Refapps and Final Runtime Validation' (Protocol in workflow.md)
 
 ### Implementation notes (Phase 4 partial, 2026-06-21)
 
@@ -390,18 +390,18 @@
     - [x] Identify the smallest isolated shim needed for old Python sequences to run best-effort without changing the new primary runtime contract.
     - [x] Keep compatibility out of new AppContext and new refapp implementation paths unless explicitly documented as an alias layer.
     - [x] Define unsupported behavior and failure modes for old `scramjet.streams.Stream`, old health/stop APIs, legacy metadata shapes, and legacy module-global assumptions.
-- [~] Task: Implement isolated compatibility shims last
+- [x] Task: Implement isolated compatibility shims last
     - [x] Add loader or adapter shims for legacy sequences only after all new-contract tests and BDD refapps are complete. (No outdated BDD/refapp changes; isolated helper boundary only.)
     - [x] Keep any aliases such as old health/stop helpers minimal and clearly marked unsupported if added.
     - [x] Add tests proving compatibility shims do not affect new-contract behavior.
     - [x] Add tests for a small representative set of old sequence shapes that should still run best-effort.
-- [~] Task: Validate compatibility isolation
+- [x] Task: Validate compatibility isolation
     - [x] Run focused compatibility and new-contract regression tests.
     - [x] Run full `npm test` in `packages/runner-python`.
     - [x] Run `npm run build` in `packages/runner-python`.
     - [x] Run `npm run test:bdd-ci-python` or document why compatibility-only changes do not require rerunning the full smoke gate.
     - [x] Update documentation to state that legacy compatibility is unsupported and not the primary contract.
-- [ ] Task: Conductor - User Manual Verification 'Isolated Legacy Compatibility Structure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Isolated Legacy Compatibility Structure' (Protocol in workflow.md)
 
 ### Implementation notes (Phase 5, 2026-06-21)
 
@@ -438,3 +438,12 @@
 - `npm run test:bdd-ci-python` was not run because this change only isolates
   package-local unsupported legacy fallbacks and user instructed not to run the
   outdated refapp BDD suite; a later track will recreate full BDD coverage.
+
+**Final manual verification (2026-07-07):**
+
+- Draft PR: https://github.com/0rail/transform-hub/pull/54
+- Validation summary was posted to the PR and approved by the user.
+- Final oracle review reported no blocking findings. Python BDD/refapp smoke
+  remains explicitly deferred to later work by prior user instruction.
+- Documentation source and generated README output were synchronized with
+  `npm run docs:generate`; `npm run docs:check` passed.
