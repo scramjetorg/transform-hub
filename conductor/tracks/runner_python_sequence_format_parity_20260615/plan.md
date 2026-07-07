@@ -47,7 +47,7 @@
   `entrypoint_name_main`, `entrypoint_name_run`.
 - `test_utils.py` (new): 14 focused tests for snake_case metadata parsing,
   legacy compatibility, precedence rules, and edge cases.
-- `README.md`: Full Phase 1 contract documentation covering entrypoint
+- `docs-source/readmes/packages/runner-python.md`: Full Phase 1 contract documentation covering entrypoint
   signatures, precedence table, result shapes, input content-types, canonical
   metadata, and legacy API status.
 
@@ -208,7 +208,7 @@
   `forward_output_stream`'s compact JSON-line encoding for byte-for-byte
   parity with Node `JSON.stringify`.
 
-- `README.md`: Updated input expectations table to document `application/json`
+- `docs-source/readmes/packages/runner-python.md`: Updated input expectations table to document `application/json`
   and `application/x-ndjson`/`text/x-ndjson` support, the runtime header framing
   requirement, and the current output content-type support boundary.
 
@@ -367,7 +367,7 @@
   `tests/test_control_codes.py`: added focused regression coverage for
   chainability, STOP `milliseconds`, sequence logger propagation, and
   new-contract `main()` ASGI app attachment through `context.api`.
-- `README.md`: documented AppContext fields, lifecycle/monitoring, events,
+- `docs-source/readmes/packages/runner-python.md`: documented AppContext fields, lifecycle/monitoring, events,
   ASGI exposure, and current local-only/deferred behavior.
 
 **Validation (runtime parity fixes):**
@@ -425,13 +425,13 @@
 - `test_legacy.py`: verifies the unsupported boundary, snake_case precedence,
   Stream-like result attribute compatibility, and that module-global legacy hooks
   are not interpreted as runtime contract.
-- `README.md`: documents the unsupported best-effort legacy boundary and states
+- `docs-source/readmes/packages/runner-python.md`: documents the unsupported best-effort legacy boundary and states
   that module-global old framework APIs are not recreated.
 
 **Validation:**
 
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test -- tests/test_legacy.py tests/test_utils.py tests/parity/test_golden_replay.py` in `packages/runner-python`: 52 passed.
-- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 277 passed.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm test` in `packages/runner-python`: 278 passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build` in `packages/runner-python`: passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run build:packages` from the repository root: passed.
 - `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run check:runtime-invariants` from the repository root: 8 passed, 0 failed.
