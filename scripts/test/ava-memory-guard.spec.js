@@ -453,6 +453,42 @@ test("wrapper does NOT fail when cleanup frees memory before measurement", async
 	}
 });
 
+test("wrapper fails when a cleanup callback throws", async (t) => {
+	if (!hasGc) {
+		t.pass("skip: --expose-gc not available");
+		return;
+	}
+
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw, { threshold: Number.MAX_SAFE_INTEGER });
+
+		guarded("cleanup-throws-test", async (mockT) => {
+			registerAvaMemoryCleanup(mockT, () => {
+				throw new Error("cleanup exploded");
+			});
+		});
+
+		const { mockT, promise } = mockRaw._results[0];
+
+		if (promise) await promise;
+
+		t.is(mockT._failures.length, 1, "cleanup error should fail the guarded test");
+		t.true(mockT._failures[0].includes("cleanup error"));
+		t.true(mockT._failures[0].includes("cleanup exploded"));
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
 // ---------------------------------------------------------------------------
 // createAvaMemoryGuard – per-test allowance
 // ---------------------------------------------------------------------------

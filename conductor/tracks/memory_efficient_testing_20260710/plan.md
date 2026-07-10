@@ -226,22 +226,26 @@
 
 ## Phase 8: Review, Stabilization, and Finalization
 
-- [ ] Task: Perform implementation review
-    - [ ] Request review for architecture, hook ordering, exception governance, and CI impact.
-    - [ ] Verify no parallel unsupported test entrypoints were introduced.
-    - [ ] Verify no hidden runtime production defaults changed.
-    - [ ] Verify exceptions and env skips are scoped and documented.
+- [x] Task: Perform implementation review
+    - [x] Request review for architecture, hook ordering, exception governance, and CI impact.
+    - [x] Verify no parallel unsupported test entrypoints were introduced.
+    - [x] Verify no hidden runtime production defaults changed.
+    - [x] Verify exceptions and env skips are scoped and documented.
 
-- [ ] Task: Stabilize thresholds and diagnostics
-    - [ ] Review observed guard failures and classify them as cleanup bugs, legitimate exceptions, environment issues, or implementation defects.
-    - [ ] Fix cleanup bugs before raising thresholds.
-    - [ ] Keep higher process/container thresholds scoped and documented.
-    - [ ] Ensure final diagnostics are actionable for future track owners.
+- [x] Task: Stabilize thresholds and diagnostics
+    - [x] Review observed guard failures and classify them as cleanup bugs, legitimate exceptions, environment issues, or implementation defects.
+    - [x] Fix cleanup bugs before raising thresholds.
+    - [x] Keep higher process/container thresholds scoped and documented.
+    - [x] Ensure final diagnostics are actionable for future track owners.
+
+  Notes: Final review found one blocker: `registerAvaMemoryCleanup()` callback failures were collected but only reported when the memory delta also exceeded the threshold. Fixed the AVA guard to fail the guarded test when cleanup callbacks throw even if memory growth remains below threshold, and added a focused regression test. No threshold increases were needed. The final review found no remaining blockers. Unsupported direct AVA/Cucumber entrypoints were not introduced; memory guard mode remains wired through supported repo runners and explicit AVA wrapper adoption. Runtime production behavior changes remain additive observability only.
 
 - [ ] Task: Final branch and PR checkpoint
-    - [ ] Ensure all completed work is committed with scoped task-level commits.
+    - [x] Ensure all completed work is committed with scoped task-level commits.
     - [ ] Push the implementation branch.
     - [ ] Update the draft PR with final validation results as a PR comment.
     - [ ] Mark the PR ready only after final verification is complete.
 
 - [ ] Task: Conductor - Phase Checkpoint 'Review, Stabilization, and Finalization' (Protocol in workflow.md)
+
+  Checkpoint Notes: Phase 8 final validation after the cleanup-error fix: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 107 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js` passed with 12 strict guard tests; `git diff --check` passed. Default parent heap threshold remains 524288 bytes; BDD child RSS and Docker working-set defaults remain 104857600 bytes. No skips were used. Scoped exceptions remain the documented per-test allowance paths only. Known follow-ups remain deferred: run an actual Docker BDD scenario under `SCRAMJET_BDD_MEMORY_GUARD=1` in an environment with required Docker artifacts; revisit full `runner-node` package validation once unrelated guarded-profile WebAssembly/undici spawn-path failures are fixed; broaden AVA wrapper adoption per package as future tracks require.

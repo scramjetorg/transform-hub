@@ -335,6 +335,26 @@ function createWrappedBody(body, threshold, sourceLabel) {
 
                 t.fail(msg);
             }
+
+            if (cleanupErrors.length > 0) {
+                let msg =
+                    `Memory guard: test "${t.title}" had ` +
+                    `${cleanupErrors.length} cleanup error(s) ` +
+                    `after ${cleanupCount} registered cleanup callback(s).\n` +
+                    `  before (total): ${baseline}  ` +
+                    `after (total): ${final}\n` +
+                    `  delta: ${rawDelta} bytes ` +
+                    `(threshold: ${effectiveThreshold} bytes, ` +
+                    `source: ${effectiveSource}).\n`;
+
+                for (const err of cleanupErrors) {
+                    msg += `  cleanup error: ${err instanceof Error ? err.message : String(err)}\n`;
+                }
+
+                msg += "Fix or remove failing registerAvaMemoryCleanup() callbacks.";
+
+                t.fail(msg);
+            }
         } finally {
             // Clear per-test WeakMap entries
             baselineMap.delete(t);
