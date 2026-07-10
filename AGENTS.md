@@ -45,6 +45,130 @@
 - BDD tests often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
+## Memory guard mode
+
+Strict per-test/per-scenario memory-growth guardrails are available for AVA package tests,
+BDD scenarios, and sequence-test harnesses.  The guard measures `heapUsed + external + arrayBuffers`
+after forced GC and fails when growth exceeds a configurable threshold.
+
+### AVA memory guard
+
+Enable via `SCRAMJET_AVA_MEMORY_GUARD=1` or the common fallback `SCRAMJET_MEMORY_GUARD=1`.
+The runner (`scripts/run-ava.js`) injects `--expose-gc` and forces serial execution when
+guard mode is enabled.
+
+**Commands:**
+```bash
+# Run focused AVA guard unit/live tests (the primary guard-validation surface):
+ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" \
+  node scripts/run-ava.js \
+    scripts/test/ava-options.spec.js \
+    scripts/test/ava-memory-guard.spec.js \
+    scripts/test/ava-memory-guard-hook-order.spec.js
+
+# Run the live guard smoke surface under strict guard mode:
+ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" \
+  SCRAMJET_AVA_MEMORY_GUARD=1 \
+  node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js
+```
+
+**Environment variables (AVA):**
+| Variable | Default | Description |
+|---|---|---|
+| `SCRAMJET_MEMORY_GUARD` | — | Set to `1` to enable common memory guard |
+| `SCRAMJET_AVA_MEMORY_GUARD` | — | AVA-specific override (enables/disables) |
+| `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES` | 524288 | Common heap threshold (bytes) |
+| `SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES` | — | AVA-specific threshold override (overrides common) |
+| `SCRAMJET_MEMORY_SKIP` | — | Set to `1` to skip all measurement |
+| `SCRAMJET_MEMORY_SKIP_REASON` | — | Non-empty reason required when `SKIP=1` |
+
+**Per-test exceptions:** Call `allowAvaMemoryGrowth(t, { threshold, reason })` inside a test body
+to raise the threshold for that specific test.  Both a positive numeric threshold and a non-empty
+reason string are required.
+
+**Per-file exceptions:** Pass `{ threshold: <bytes> }` as the second argument to
+`createAvaMemoryGuard(baseTest, options)`.
+
+**`Buffer.concat` rule:** `Buffer.concat` and chunk collection remain allowed for assertions.
+Retained buffers, chunks, captured frames, streams, and large response bodies must be cleared
+before final measurement using `registerAvaMemoryCleanup(t, fn)`.
+
+**Adoption:** Each package test file that wants strict measurement must opt in explicitly:
+```typescript
+const baseTest = require("ava");
+const { createAvaMemoryGuard, registerAvaMemoryCleanup } = require("../../scripts/lib/ava-memory-guard");
+const test = createAvaMemoryGuard(baseTest);
+// Use registerAvaMemoryCleanup(t, () => { /* free refs */ }) for cleanup visible to guard.
+```
+
+### BDD memory guard
+
+Enable via `SCRAMJET_BDD_MEMORY_GUARD=1` or `SCRAMJET_MEMORY_GUARD=1`.  The runner injects
+`--expose-gc` for both direct and Docker modes.  Hooks are loaded automatically by `bdd/cucumber.js`.
+
+**Commands:**
+```bash
+# Focused BDD memory guard unit tests (no real scenarios; no Docker needed):
+ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" \
+  node scripts/run-ava.js \
+    scripts/test/bdd-options.spec.js \
+    scripts/test/bdd-memory-guard.spec.js \
+    scripts/test/run-bdd.spec.js \
+    scripts/test/bdd-memory-registry.spec.js --serial
+
+# Direct-mode BDD scenario run under memory guard (diagnostic/local only):
+SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --mode=direct -- --name="E2E-001 TC-002"
+
+# Docker-mode BDD scenario run under memory guard (supported path):
+SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
+```
+
+**Environment variables (BDD):**
+| Variable | Default | Description |
+|---|---|---|
+| `SCRAMJET_BDD_MEMORY_GUARD` | — | BDD-specific guard enable/disable |
+| `SCRAMJET_MEMORY_GUARD` | — | Common guard fallback |
+| `SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES` | — | Per-scenario heap threshold override |
+| `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES` | 524288 | Common heap threshold (512 KiB) |
+| `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES` | 104857600 | Child process RSS threshold (100 MiB) |
+| `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES` | 104857600 | Docker container working-set threshold (100 MiB) |
+| `SCRAMJET_MEMORY_SKIP` | — | Set to `1` to skip (requires `SKIP_REASON`) |
+| `SCRAMJET_MEMORY_SKIP_REASON` | — | Non-empty reason when `SKIP=1` |
+
+**Threshold semantics:**
+- **Parent heap** (512 KiB default): measures `heapUsed + external + arrayBuffers` in the
+  Cucumber Node process after forced GC and per-scenario cleanup.  Strict — must adopt
+  cleanup patterns and scoped exceptions.
+- **Child process RSS** (100 MiB default): sampled from `/proc/<pid>/status VmRSS` for
+  spawned Hub, Host, Manager, MultiManager, and runner processes.  Higher threshold reflects
+  legitimate child process memory.
+- **Docker container working set** (100 MiB default): computed as `usage - inactive_file`
+  from Docker stats, with raw-usage fallback.  Covers runner containers.
+
+**Skip/exception rules:**
+- Environment skips require `SCRAMJET_MEMORY_SKIP=1` AND a non-empty `SCRAMJET_MEMORY_SKIP_REASON`.
+  Reasonless skips throw during installation.
+- Broad package-wide or feature-wide silent skips are forbidden.
+- Per-scenario exceptions are not currently supported via env; use `SCRAMJET_MEMORY_SKIP` with
+  a reason for emergency overrides.
+
+### Sequence-test memory support
+
+- **`ByteCapture.clear()`**, **`OutputCapture.clear()`**, **`LogCapture.clear()`**,
+  **`MonitoringCapture.clear()`**: release retained chunks, parsed frames, pending waiters,
+  and text so the AVA guard can measure cleanly.
+- **`createSequenceTest().close()`**: clears output, log, and monitoring captures.
+- **`SequenceAssertions.memoryWithinLimit({ threshold })`**: opt-in assertion for
+  runner/process monitoring-frame memory values (`memoryUsage`, `memoryMaxUsage`).
+  Threshold must be a positive finite number.  Diagnostics distinguish these
+  child-process values from parent harness heap measurements.
+
+### Track completion requirement
+
+Every Conductor track final summary **must** list the memory-guarded commands that were run,
+the thresholds used, any skips/exceptions with reasons, and follow-ups for deferred coverage.
+See `conductor/workflow.md` for details.
+
 ## Type split packages
 - `@scramjet/types` is **deprecated** in favor of `@scramjet/runtime-types`, `@scramjet/sequence-types`, and `@scramjet/api-types`. Existing imports continue to resolve through the compatibility barrel.
 - Sequence authors should import `SequenceAppContext` from `@scramjet/sequence-types`. Internal packages use `@scramjet/runtime-types` for runtime-neutral contracts and `@scramjet/api-types` for API DTOs/client stubs.

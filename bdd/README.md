@@ -121,6 +121,29 @@ npm run test:bdd-manager-migration
 
 The Manager migration command covers the current Manager/MultiManager API paths and no longer includes retired forwarding scenarios.
 
+### BDD memory guard
+
+BDD memory guard mode is opt-in and is enabled with `SCRAMJET_BDD_MEMORY_GUARD=1` or the common `SCRAMJET_MEMORY_GUARD=1`. The supported runner paths inject `--expose-gc`; Cucumber hooks then measure parent-process heap growth after each scenario cleanup.
+
+```bash
+# Focused guard unit coverage (no real BDD scenario):
+npm run test:memory-guard-bdd-focused
+
+# Diagnostic direct-mode scenario run:
+SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --mode=direct -- --name="E2E-001 TC-002"
+
+# Supported Docker-mode scenario run:
+SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
+```
+
+Thresholds:
+
+- `SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES` or `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES`: parent Cucumber heap growth, default `524288` bytes.
+- `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES`: child process RSS delta, default `104857600` bytes.
+- `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES`: Docker runner working-set delta, default `104857600` bytes.
+
+Emergency skips require both `SCRAMJET_MEMORY_SKIP=1` and a non-empty `SCRAMJET_MEMORY_SKIP_REASON`. Broad silent skips are treated as configuration errors.
+
 ### Running BDD in a container
 
 The root `npm run test:bdd` command runs through `scripts/run-bdd.js`, which defaults to Docker mode and delegates to `scripts/run-bdd-docker.js`. The Cucumber test runs inside a Docker container, isolating the test from the host and preventing orphaned processes. Post-run leak detection (`reportLeakedProcesses()`) runs automatically on exit, and Docker/temp cleanup is scoped to the current run.

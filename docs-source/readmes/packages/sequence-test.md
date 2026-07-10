@@ -14,3 +14,9 @@ Supported public exports for AppContext fixture validation:
 - **Types**: `HubHarness`, `HubMock`, `HubContext`, `HubCallMatch`, `SequenceFixture`
 
 See the generated package docs for detailed usage and examples.
+
+## Memory-aware capture cleanup
+
+`@scramjet/sequence-test` captures retain output chunks and monitoring frames for assertions. Use `clear()` on output, log, and monitoring captures, or `createSequenceTest().close()`, to release retained references before AVA memory guard measurement. `Buffer.concat` remains fine for assertions as long as retained chunks are cleared before final measurement.
+
+`createSequenceAssertions({ monitoring }).memoryWithinLimit({ threshold })` is an opt-in assertion for runner/process monitoring-frame memory values (`memoryUsage`, `memoryMaxUsage`). These values describe child runner/process memory, not the AVA parent test heap.

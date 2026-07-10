@@ -142,6 +142,18 @@ required, and committing only scoped completed work.
 
 ## Testing Requirements
 
+### Memory-Guarded Completion Evidence
+
+Every final Conductor track summary must list the memory-guarded validation that was run for the changed surface. Include:
+
+1. Exact commands, including `ulimit`, `NODE_OPTIONS`, and `SCRAMJET_*_MEMORY_GUARD` environment variables.
+2. Effective thresholds: parent heap, AVA/BDD overrides, child process RSS, and Docker working-set limits when applicable.
+3. Any skips or exceptions, with non-empty reasons and follow-up owners for deferred coverage.
+4. A note when a memory-guarded check was intentionally not applicable, such as docs-only changes.
+
+Use the supported runners only: `scripts/run-ava.js` for AVA/package tests and `scripts/run-bdd.js`/root BDD npm scripts for Cucumber paths.
+
+
 - Maintain greater than 80% meaningful test coverage for changed behavior.
 - Prefer package-level tests for focused implementation work.
 - Use runtime parity tests for runtime wrapper changes.
