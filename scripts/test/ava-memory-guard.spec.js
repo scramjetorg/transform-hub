@@ -806,6 +806,31 @@ test("guarded .serial with enabled guard wraps body with measurement", async (t)
 	}
 });
 
+test("guarded .serial with (title, opts, body) signature passes options", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw);
+
+		guarded.serial("serial-opts-test", { timeout: 5000 }, (mockT) => {
+			mockT._failures.push("called");
+		});
+
+		t.is(mockRaw._results.length, 1, "should register one test");
+		t.is(mockRaw._results[0].title, "serial-opts-test");
+		t.deepEqual(mockRaw._results[0].opts, { timeout: 5000 }, "should pass options through");
+		t.true(typeof mockRaw._results[0].body === "function", "body should be a function");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
 test("guarded test function has hook pass-through methods", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];

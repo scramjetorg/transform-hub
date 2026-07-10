@@ -105,9 +105,9 @@ const { isMemoryGuardEnabled, memoryHeapThresholdBytes, ENV } = require("./ava-o
  * @returns {number}  Combined memory in bytes.
  */
 function measureMemoryUsage() {
-	const usage = process.memoryUsage();
+    const usage = process.memoryUsage();
 
-	return usage.heapUsed + (usage.external || 0) + (usage.arrayBuffers || 0);
+    return usage.heapUsed + (usage.external || 0) + (usage.arrayBuffers || 0);
 }
 
 /**
@@ -116,16 +116,16 @@ function measureMemoryUsage() {
  * @returns {Promise<void>}
  */
 function drainAndGc() {
-	return new Promise((resolve) => {
-		setImmediate(() => {
-			global.gc();
+    return new Promise((resolve) => {
+        setImmediate(() => {
+            global.gc();
 
-			setImmediate(() => {
-				global.gc();
-				resolve();
-			});
-		});
-	});
+            setImmediate(() => {
+                global.gc();
+                resolve();
+            });
+        });
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -162,17 +162,17 @@ const cleanupMap = new WeakMap();
  *                  is missing, not a string, or empty/whitespace.
  */
 function allowAvaMemoryGrowth(t, opts = {}) {
-	const { threshold, reason } = opts;
+    const { threshold, reason } = opts;
 
-	if (typeof threshold !== "number" || !Number.isFinite(threshold) || threshold <= 0) {
-		throw new Error("allowAvaMemoryGrowth: threshold must be a positive finite number, " + `got ${JSON.stringify(threshold)}.`);
-	}
+    if (typeof threshold !== "number" || !Number.isFinite(threshold) || threshold <= 0) {
+        throw new Error("allowAvaMemoryGrowth: threshold must be a positive finite number, " + `got ${JSON.stringify(threshold)}.`);
+    }
 
-	if (typeof reason !== "string" || reason.trim().length === 0) {
-		throw new Error("allowAvaMemoryGrowth: reason must be a non-empty string, " + `got ${JSON.stringify(reason)}.`);
-	}
+    if (typeof reason !== "string" || reason.trim().length === 0) {
+        throw new Error("allowAvaMemoryGrowth: reason must be a non-empty string, " + `got ${JSON.stringify(reason)}.`);
+    }
 
-	allowanceMap.set(t, { threshold, reason });
+    allowanceMap.set(t, { threshold, reason });
 }
 
 // ---------------------------------------------------------------------------
@@ -195,15 +195,15 @@ function allowAvaMemoryGrowth(t, opts = {}) {
  * @throws {Error}  If fn is not a function.
  */
 function registerAvaMemoryCleanup(t, fn) {
-	if (typeof fn !== "function") {
-		throw new Error("registerAvaMemoryCleanup: fn must be a function, " + `got ${typeof fn}.`);
-	}
+    if (typeof fn !== "function") {
+        throw new Error("registerAvaMemoryCleanup: fn must be a function, " + `got ${typeof fn}.`);
+    }
 
-	if (!cleanupMap.has(t)) {
-		cleanupMap.set(t, []);
-	}
+    if (!cleanupMap.has(t)) {
+        cleanupMap.set(t, []);
+    }
 
-	cleanupMap.get(t).push(fn);
+    cleanupMap.get(t).push(fn);
 }
 
 // ---------------------------------------------------------------------------
@@ -219,11 +219,11 @@ function registerAvaMemoryCleanup(t, fn) {
  * @throws {Error}  If value is not a positive finite number.
  */
 function validateThresholdOption(value, label) {
-	if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
-		throw new Error(`${label}: threshold must be a positive finite number, ` + `got ${JSON.stringify(value)}.`);
-	}
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+        throw new Error(`${label}: threshold must be a positive finite number, ` + `got ${JSON.stringify(value)}.`);
+    }
 
-	return value;
+    return value;
 }
 
 /**
@@ -234,17 +234,17 @@ function validateThresholdOption(value, label) {
  * @returns {string}  Multi-line breakdown.
  */
 function formatComponentBreakdown(before, after) {
-	const lines = [];
+    const lines = [];
 
-	for (const key of ["heapUsed", "external", "arrayBuffers"]) {
-		const b = before[key] || 0;
-		const a = after[key] || 0;
-		const d = a - b;
+    for (const key of ["heapUsed", "external", "arrayBuffers"]) {
+        const b = before[key] || 0;
+        const a = after[key] || 0;
+        const d = a - b;
 
-		lines.push(`  ${key}: ${b} -> ${a} (\u0394 ${d >= 0 ? "+" : ""}${d})`);
-	}
+        lines.push(`  ${key}: ${b} -> ${a} (\u0394 ${d >= 0 ? "+" : ""}${d})`);
+    }
 
-	return lines.join("\n");
+    return lines.join("\n");
 }
 
 /**
@@ -256,97 +256,97 @@ function formatComponentBreakdown(before, after) {
  * @returns {Function}  Wrapped async body.
  */
 function createWrappedBody(body, threshold, sourceLabel) {
-	return async (t) => {
-		// ---- baseline ----
-		const beforeUsage = process.memoryUsage();
+    return async (t) => {
+        // ---- baseline ----
+        const beforeUsage = process.memoryUsage();
 
-		await drainAndGc();
+        await drainAndGc();
 
-		baselineMap.set(t, measureMemoryUsage());
+        baselineMap.set(t, measureMemoryUsage());
 
-		// ---- test body (with error capture) ----
-		let bodyError;
+        // ---- test body (with error capture) ----
+        let bodyError;
 
-		try {
-			await body(t);
-		} catch (err) {
-			bodyError = err;
-		}
+        try {
+            await body(t);
+        } catch (err) {
+            bodyError = err;
+        }
 
-		// ---- cleanup / final measurement (always runs) ----
-		let cleanupErrors = [];
-		let cleanupCount = 0;
+        // ---- cleanup / final measurement (always runs) ----
+        let cleanupErrors = [];
+        let cleanupCount = 0;
 
-		try {
-			// Helper-registered cleanups (LIFO).  Each is individually
-			// caught so one failure does not prevent the remaining
-			// callbacks or final measurement.
-			const cleanups = cleanupMap.get(t) || [];
+        try {
+            // Helper-registered cleanups (LIFO).  Each is individually
+            // caught so one failure does not prevent the remaining
+            // callbacks or final measurement.
+            const cleanups = cleanupMap.get(t) || [];
 
-			cleanupCount = cleanups.length;
+            cleanupCount = cleanups.length;
 
-			for (let i = cleanups.length - 1; i >= 0; i--) {
-				try {
-					await cleanups[i]();
-				} catch (err) {
-					cleanupErrors.push(err);
-				}
-			}
+            for (let i = cleanups.length - 1; i >= 0; i--) {
+                try {
+                    await cleanups[i]();
+                } catch (err) {
+                    cleanupErrors.push(err);
+                }
+            }
 
-			// Final measurement
-			await drainAndGc();
+            // Final measurement
+            await drainAndGc();
 
-			const afterUsage = process.memoryUsage();
-			const final = measureMemoryUsage();
-			const baseline = baselineMap.get(t) ?? 0;
-			const rawDelta = final - baseline;
+            const afterUsage = process.memoryUsage();
+            const final = measureMemoryUsage();
+            const baseline = baselineMap.get(t) ?? 0;
+            const rawDelta = final - baseline;
 
-			const allowance = allowanceMap.get(t);
-			const effectiveThreshold = allowance ? allowance.threshold : threshold;
+            const allowance = allowanceMap.get(t);
+            const effectiveThreshold = allowance ? allowance.threshold : threshold;
 
-			const effectiveSource = allowance ? `per-test allowance (reason: "${allowance.reason}")` : sourceLabel;
+            const effectiveSource = allowance ? `per-test allowance (reason: "${allowance.reason}")` : sourceLabel;
 
-			if (rawDelta > effectiveThreshold) {
-				let msg =
-					`Memory guard: test "${t.title}" ` +
-					`used ${rawDelta} bytes ` +
-					`(threshold: ${effectiveThreshold} bytes, ` +
-					`source: ${effectiveSource}).\n` +
-					`  before (total): ${baseline}  ` +
-					`after (total): ${final}\n` +
-					formatComponentBreakdown(beforeUsage, afterUsage) +
-					"\n";
+            if (rawDelta > effectiveThreshold) {
+                let msg =
+                    `Memory guard: test "${t.title}" ` +
+                    `used ${rawDelta} bytes ` +
+                    `(threshold: ${effectiveThreshold} bytes, ` +
+                    `source: ${effectiveSource}).\n` +
+                    `  before (total): ${baseline}  ` +
+                    `after (total): ${final}\n` +
+                    formatComponentBreakdown(beforeUsage, afterUsage) +
+                    "\n";
 
-				if (allowance) {
-					msg += `Per-test allowance reason: ${allowance.reason}\n`;
-				}
+                if (allowance) {
+                    msg += `Per-test allowance reason: ${allowance.reason}\n`;
+                }
 
-				msg += `  cleanup callbacks: ${cleanupCount}\n`;
+                msg += `  cleanup callbacks: ${cleanupCount}\n`;
 
-				if (cleanupErrors.length > 0) {
-					msg += `  cleanup errors: ${cleanupErrors.length}\n`;
-				}
+                if (cleanupErrors.length > 0) {
+                    msg += `  cleanup errors: ${cleanupErrors.length}\n`;
+                }
 
-				msg +=
-					"Review the test for unreleased references, " +
-					"global state, or large fixture data.  " +
-					"Use registerAvaMemoryCleanup() to free memory " +
-					"before the guard measures.";
+                msg +=
+                    "Review the test for unreleased references, " +
+                    "global state, or large fixture data.  " +
+                    "Use registerAvaMemoryCleanup() to free memory " +
+                    "before the guard measures.";
 
-				t.fail(msg);
-			}
-		} finally {
-			// Clear per-test WeakMap entries
-			baselineMap.delete(t);
-			cleanupMap.delete(t);
-			allowanceMap.delete(t);
-		}
+                t.fail(msg);
+            }
+        } finally {
+            // Clear per-test WeakMap entries
+            baselineMap.delete(t);
+            cleanupMap.delete(t);
+            allowanceMap.delete(t);
+        }
 
-		// Re-throw body error after cleanup and measurement
-		if (bodyError) {
-			throw bodyError;
-		}
-	};
+        // Re-throw body error after cleanup and measurement
+        if (bodyError) {
+            throw bodyError;
+        }
+    };
 }
 
 /**
@@ -356,11 +356,11 @@ function createWrappedBody(body, threshold, sourceLabel) {
  * @returns {{ opts: object|undefined, body: Function }}
  */
 function parseTestArgs(rest) {
-	if (rest.length === 1) {
-		return { opts: undefined, body: rest[0] };
-	}
+    if (rest.length === 1) {
+        return { opts: undefined, body: rest[0] };
+    }
 
-	return { opts: rest[0], body: rest[1] };
+    return { opts: rest[0], body: rest[1] };
 }
 
 /**
@@ -374,15 +374,15 @@ function parseTestArgs(rest) {
  * @returns {*}  Return value from the AVA method.
  */
 function registerGuarded(method, title, rest, threshold, sourceLabel) {
-	const { opts, body } = parseTestArgs(rest);
+    const { opts, body } = parseTestArgs(rest);
 
-	const wrapped = createWrappedBody(body, threshold, sourceLabel);
+    const wrapped = createWrappedBody(body, threshold, sourceLabel);
 
-	if (opts !== undefined) {
-		return method(title, opts, wrapped);
-	}
+    if (opts !== undefined) {
+        return method(title, opts, wrapped);
+    }
 
-	return method(title, wrapped);
+    return method(title, wrapped);
 }
 
 // ---------------------------------------------------------------------------
@@ -407,44 +407,44 @@ function registerGuarded(method, title, rest, threshold, sourceLabel) {
  *                  when SCRAMJET_MEMORY_SKIP=1 without SKIP_REASON.
  */
 function createAvaMemoryGuard(rawTest, options = {}) {
-	// Validate file-level threshold if provided.
-	if (options.threshold !== undefined) {
-		validateThresholdOption(options.threshold, "createAvaMemoryGuard options.threshold");
-	}
+    // Validate file-level threshold if provided.
+    if (options.threshold !== undefined) {
+        validateThresholdOption(options.threshold, "createAvaMemoryGuard options.threshold");
+    }
 
-	// Guard disabled → pass-through wrapper with AVA members preserved.
-	if (!isMemoryGuardEnabled()) {
-		return buildPassThroughGuard(rawTest);
-	}
+    // Guard disabled → pass-through wrapper with AVA members preserved.
+    if (!isMemoryGuardEnabled()) {
+        return buildPassThroughGuard(rawTest);
+    }
 
-	// Environment skip
-	if (process.env[ENV.MEMORY_SKIP] === "1") {
-		const skipReason = process.env[ENV.MEMORY_SKIP_REASON];
+    // Environment skip
+    if (process.env[ENV.MEMORY_SKIP] === "1") {
+        const skipReason = process.env[ENV.MEMORY_SKIP_REASON];
 
-		if (typeof skipReason !== "string" || skipReason.trim().length === 0) {
-			throw new Error(`${ENV.MEMORY_SKIP}=1 requires ${ENV.MEMORY_SKIP_REASON} to be ` + "set to a non-empty reason string.");
-		}
+        if (typeof skipReason !== "string" || skipReason.trim().length === 0) {
+            throw new Error(`${ENV.MEMORY_SKIP}=1 requires ${ENV.MEMORY_SKIP_REASON} to be ` + "set to a non-empty reason string.");
+        }
 
-		console.warn(`[ava-memory-guard] Memory guard skipped: ${skipReason}. ` + `Set ${ENV.MEMORY_SKIP}=0 to re-enable.`);
+        console.warn(`[ava-memory-guard] Memory guard skipped: ${skipReason}. ` + `Set ${ENV.MEMORY_SKIP}=0 to re-enable.`);
 
-		return buildPassThroughGuard(rawTest);
-	}
+        return buildPassThroughGuard(rawTest);
+    }
 
-	// gc check
-	if (typeof global.gc !== "function") {
-		throw new Error(
-			"Memory guard is enabled (SCRAMJET_MEMORY_GUARD or " +
-				"SCRAMJET_AVA_MEMORY_GUARD) but global.gc is not available.\n" +
-				"Run tests through scripts/run-ava.js, which injects " +
-				"--expose-gc when the memory guard is enabled.\n" +
-				"If running manually, add --expose-gc to your Node.js arguments."
-		);
-	}
+    // gc check
+    if (typeof global.gc !== "function") {
+        throw new Error(
+            "Memory guard is enabled (SCRAMJET_MEMORY_GUARD or " +
+                "SCRAMJET_AVA_MEMORY_GUARD) but global.gc is not available.\n" +
+                "Run tests through scripts/run-ava.js, which injects " +
+                "--expose-gc when the memory guard is enabled.\n" +
+                "If running manually, add --expose-gc to your Node.js arguments."
+        );
+    }
 
-	const threshold = options.threshold ?? memoryHeapThresholdBytes();
-	const sourceLabel = options.threshold !== undefined ? "file-level option" : "env default";
+    const threshold = options.threshold ?? memoryHeapThresholdBytes();
+    const sourceLabel = options.threshold !== undefined ? "file-level option" : "env default";
 
-	return buildGuardedTest(rawTest, threshold, sourceLabel);
+    return buildGuardedTest(rawTest, threshold, sourceLabel);
 }
 
 /**
@@ -454,16 +454,16 @@ function createAvaMemoryGuard(rawTest, options = {}) {
  * @returns {Function}  Function that delegates to rawTest.
  */
 function buildPassThroughGuard(rawTest) {
-	function guard(title, ...rest) {
-		return rawTest(title, ...rest);
-	}
+    function guard(title, ...rest) {
+        return rawTest(title, ...rest);
+    }
 
-	// Attach AVA members that wrap test bodies.
-	attachBodyModifiers(guard, rawTest, null);
-	// Attach pass-through members.
-	attachPassthroughMembers(guard, rawTest);
+    // Attach AVA members that wrap test bodies.
+    attachBodyModifiers(guard, rawTest, null);
+    // Attach pass-through members.
+    attachPassthroughMembers(guard, rawTest);
 
-	return guard;
+    return guard;
 }
 
 /**
@@ -475,17 +475,31 @@ function buildPassThroughGuard(rawTest) {
  * @returns {Function}  Guarded test function with AVA members.
  */
 function buildGuardedTest(rawTest, threshold, sourceLabel) {
-	function guard(title, ...rest) {
-		return registerGuarded(rawTest, title, rest, threshold, sourceLabel);
-	}
+    function guard(title, ...rest) {
+        return registerGuarded(rawTest, title, rest, threshold, sourceLabel);
+    }
 
-	// Attach AVA body-modifier members that wrap the body with measurement.
-	attachBodyModifiers(guard, rawTest, (methodTitle, methodRest) => registerGuarded(methodTitle, methodRest[0], methodRest.slice(1), threshold, sourceLabel));
+    // Attach callable AVA modifiers (.serial, .only, .failing) that call
+    // rawTest[mod] directly to preserve method receiver (this).
+    for (const mod of ["serial", "only", "failing"]) {
+        if (typeof rawTest[mod] !== "function") continue;
 
-	// Attach pass-through members.
-	attachPassthroughMembers(guard, rawTest);
+        guard[mod] = (title, ...rest) => {
+            const { opts, body } = parseTestArgs(rest);
+            const wrapped = createWrappedBody(body, threshold, sourceLabel);
 
-	return guard;
+            if (opts !== undefined) {
+                return rawTest[mod](title, opts, wrapped);
+            }
+
+            return rawTest[mod](title, wrapped);
+        };
+    }
+
+    // Attach pass-through members.
+    attachPassthroughMembers(guard, rawTest);
+
+    return guard;
 }
 
 /**
@@ -497,16 +511,15 @@ function buildGuardedTest(rawTest, threshold, sourceLabel) {
  * @param {Function} register  Registration helper (title, rest) => result.
  */
 function attachBodyModifiers(guard, rawTest, guardedRegister, threshold, sourceLabel) {
-	for (const mod of ["serial", "only", "failing"]) {
-		if (typeof rawTest[mod] !== "function") continue;
+    for (const mod of ["serial", "only", "failing"]) {
+        if (typeof rawTest[mod] !== "function") continue;
 
-		if (guardedRegister) {
-			guard[mod] = (title, ...rest) =>
-				guardedRegister(rawTest[mod], title, rest);
-		} else {
-			guard[mod] = (title, ...rest) => rawTest[mod](title, ...rest);
-		}
-	}
+        if (guardedRegister) {
+            guard[mod] = (title, ...rest) => guardedRegister(rawTest[mod], title, rest);
+        } else {
+            guard[mod] = (title, ...rest) => rawTest[mod](title, ...rest);
+        }
+    }
 }
 
 /**
@@ -516,28 +529,28 @@ function attachBodyModifiers(guard, rawTest, guardedRegister, threshold, sourceL
  * @param {object}   rawTest   AVA test object.
  */
 function attachPassthroughMembers(guard, rawTest) {
-	// Non-measured callables
-	for (const key of ["skip", "todo"]) {
-		if (typeof rawTest[key] === "function") {
-			guard[key] = (...args) => rawTest[key](...args);
-		}
-	}
+    // Non-measured callables
+    for (const key of ["skip", "todo"]) {
+        if (typeof rawTest[key] === "function") {
+            guard[key] = (...args) => rawTest[key](...args);
+        }
+    }
 
-	// Hook pass-throughs
-	for (const key of ["before", "after", "beforeEach", "afterEach"]) {
-		if (typeof rawTest[key] === "function") {
-			guard[key] = (...args) => rawTest[key](...args);
-		}
-	}
+    // Hook pass-throughs
+    for (const key of ["before", "after", "beforeEach", "afterEach"]) {
+        if (typeof rawTest[key] === "function") {
+            guard[key] = (...args) => rawTest[key](...args);
+        }
+    }
 
-	// afterEach.always (object property, not a direct function)
-	if (rawTest.afterEach && typeof rawTest.afterEach === "function") {
-		guard.afterEach = rawTest.afterEach;
+    // afterEach.always (object property, not a direct function)
+    if (rawTest.afterEach && typeof rawTest.afterEach === "function") {
+        guard.afterEach = rawTest.afterEach;
 
-		if (rawTest.afterEach.always) {
-			guard.afterEach.always = rawTest.afterEach.always;
-		}
-	}
+        if (rawTest.afterEach.always) {
+            guard.afterEach.always = rawTest.afterEach.always;
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -556,7 +569,7 @@ function attachPassthroughMembers(guard, rawTest) {
  * @returns {Function}       Guarded test function.
  */
 function installAvaMemoryGuard(test, options = {}) {
-	return createAvaMemoryGuard(test, options);
+    return createAvaMemoryGuard(test, options);
 }
 
 // ---------------------------------------------------------------------------
@@ -564,10 +577,10 @@ function installAvaMemoryGuard(test, options = {}) {
 // ---------------------------------------------------------------------------
 
 module.exports = {
-	createAvaMemoryGuard,
-	installAvaMemoryGuard,
-	allowAvaMemoryGrowth,
-	registerAvaMemoryCleanup,
-	measureMemoryUsage,
-	drainAndGc
+    createAvaMemoryGuard,
+    installAvaMemoryGuard,
+    allowAvaMemoryGrowth,
+    registerAvaMemoryCleanup,
+    measureMemoryUsage,
+    drainAndGc
 };
