@@ -16,6 +16,7 @@ const test = require("ava");
 
 const {
 	installAvaMemoryGuard,
+	allowAvaMemoryGrowth,
 	measureMemoryUsage,
 	drainAndGc,
 } = require("../lib/ava-memory-guard");
@@ -408,5 +409,320 @@ test("file-level threshold option overrides env default", async (t) => {
 		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
 		if (savedThreshold !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedThreshold;
 		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// allowAvaMemoryGrowth – input validation
+// ---------------------------------------------------------------------------
+
+test("allowAvaMemoryGrowth stores a valid allowance", (t) => {
+	const mockT = createMockT("allowance-test");
+
+	t.notThrows(() => {
+		allowAvaMemoryGrowth(mockT, {
+			threshold: 1024,
+			reason: "known fixture data",
+		});
+	});
+
+	// Verify it was stored by checking the afterEach logic
+	// (we test the effect in the simulated hook tests below).
+	t.pass();
+});
+
+test("allowAvaMemoryGrowth throws when threshold is missing", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), { reason: "test" });
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("threshold"), "should mention threshold");
+});
+
+test("allowAvaMemoryGrowth throws when threshold is not a number", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: "not-a-number",
+			reason: "test",
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("threshold"), "should mention threshold");
+});
+
+test("allowAvaMemoryGrowth throws when threshold is zero", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: 0,
+			reason: "test",
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("threshold"), "should mention threshold");
+});
+
+test("allowAvaMemoryGrowth throws when threshold is negative", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: -100,
+			reason: "test",
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("threshold"), "should mention threshold");
+});
+
+test("allowAvaMemoryGrowth throws when threshold is Infinity", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: Infinity,
+			reason: "test",
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("threshold"), "should mention threshold");
+});
+
+test("allowAvaMemoryGrowth throws when reason is missing", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), { threshold: 1024 });
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("reason"), "should mention reason");
+});
+
+test("allowAvaMemoryGrowth throws when reason is an empty string", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: 1024,
+			reason: "",
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("reason"), "should mention reason");
+});
+
+test("allowAvaMemoryGrowth throws when reason is whitespace only", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: 1024,
+			reason: "   ",
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("reason"), "should mention reason");
+});
+
+test("allowAvaMemoryGrowth throws when reason is not a string", (t) => {
+	const err = t.throws(() => {
+		allowAvaMemoryGrowth(createMockT(), {
+			threshold: 1024,
+			reason: 42,
+		});
+	}, { instanceOf: Error });
+
+	t.true(err.message.includes("reason"), "should mention reason");
+});
+
+// ---------------------------------------------------------------------------
+// Per-test allowance – simulated hook behaviour
+// ---------------------------------------------------------------------------
+
+test("per-test allowance exempts from failure when delta is below allowance threshold", async (t) => {
+	if (!hasGc) {
+		t.pass("skip: --expose-gc not available");
+		return;
+	}
+
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockTest = createMockTestObject();
+		const strictThreshold = 512; // very tight
+
+		installAvaMemoryGuard(mockTest, { threshold: strictThreshold });
+
+		await mockTest._hooks.beforeEach[0]();
+
+		// Allocate memory that would exceed the strict threshold
+		const retained = [];
+		retained.push(Buffer.alloc(10 * 1024)); // 10 KiB
+
+		// Declare per-test allowance BEFORE the afterEach runs
+		const mockT = createMockT("allowance-pass-test");
+
+		allowAvaMemoryGrowth(mockT, {
+			threshold: 100 * 1024, // 100 KiB – well above 10 KiB
+			reason: "test fixture data",
+		});
+
+		await mockTest._hooks.afterEachAlways[0](mockT);
+
+		// Should NOT fail because the per-test allowance covers the allocation
+		t.is(mockT._failures.length, 0, "should not fail with per-test allowance");
+		t.truthy(retained.length);
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("per-test allowance failure includes reason when threshold still exceeded", async (t) => {
+	if (!hasGc) {
+		t.pass("skip: --expose-gc not available");
+		return;
+	}
+
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockTest = createMockTestObject();
+		const strictThreshold = 512;
+
+		installAvaMemoryGuard(mockTest, { threshold: strictThreshold });
+
+		await mockTest._hooks.beforeEach[0]();
+
+		// Allocate more than the per-test allowance
+		const retained = [];
+		retained.push(Buffer.alloc(50 * 1024)); // 50 KiB
+
+		const mockT = createMockT("allowance-fail-test");
+
+		allowAvaMemoryGrowth(mockT, {
+			threshold: 1024, // only 1 KiB – 50 KiB exceeds this
+			reason: "small fixture",
+		});
+
+		await mockTest._hooks.afterEachAlways[0](mockT);
+
+		// Should fail because 50 KiB > 1 KiB
+		t.true(mockT._failures.length > 0, "should fail when allowance threshold exceeded");
+
+		if (mockT._failures.length > 0) {
+			const msg = mockT._failures[0];
+
+			t.true(msg.includes("Per-test allowance reason"), "message should include allowance label");
+			t.true(msg.includes("small fixture"), "message should include the reason string");
+		}
+
+		t.truthy(retained.length);
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+// ---------------------------------------------------------------------------
+// Environment skip – SCRAMJET_MEMORY_SKIP
+// ---------------------------------------------------------------------------
+
+test("install throws when SCRAMJET_MEMORY_SKIP=1 but no reason", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+	const savedReason = process.env[ENV.MEMORY_SKIP_REASON];
+
+	process.env[ENV.MEMORY_GUARD] = "1"; // guard must be enabled for skip to be relevant
+	process.env[ENV.MEMORY_SKIP] = "1";
+	delete process.env[ENV.MEMORY_SKIP_REASON];
+
+	try {
+		const mockTest = createMockTestObject();
+
+		const err = t.throws(() => installAvaMemoryGuard(mockTest), {
+			instanceOf: Error,
+		});
+
+		t.true(err.message.includes(ENV.MEMORY_SKIP), "should mention SKIP");
+		t.true(err.message.includes(ENV.MEMORY_SKIP_REASON), "should mention SKIP_REASON");
+
+		// No hooks should be registered
+		t.is(mockTest._hooks.beforeEach.length, 0);
+		t.is(mockTest._hooks.afterEachAlways.length, 0);
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
+	}
+});
+
+test("install throws when SCRAMJET_MEMORY_SKIP=1 but reason is whitespace", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+	const savedReason = process.env[ENV.MEMORY_SKIP_REASON];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	process.env[ENV.MEMORY_SKIP] = "1";
+	process.env[ENV.MEMORY_SKIP_REASON] = "   ";
+
+	try {
+		const mockTest = createMockTestObject();
+
+		t.throws(() => installAvaMemoryGuard(mockTest), {
+			instanceOf: Error,
+		});
+
+		t.is(mockTest._hooks.beforeEach.length, 0);
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
+	}
+});
+
+test("install with SKIP=1 and valid reason does not register hooks and prints warning", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+	const savedReason = process.env[ENV.MEMORY_SKIP_REASON];
+	const savedWarn = console.warn;
+	const warnMessages = [];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	process.env[ENV.MEMORY_SKIP] = "1";
+	process.env[ENV.MEMORY_SKIP_REASON] = "emergency override for CI environment";
+
+	console.warn = (msg) => {
+		warnMessages.push(msg);
+	};
+
+	try {
+		const mockTest = createMockTestObject();
+
+		const result = installAvaMemoryGuard(mockTest);
+
+		t.truthy(result, "should return an object");
+		t.true(typeof result.uninstall === "function");
+
+		// No hooks should be registered
+		t.is(mockTest._hooks.beforeEach.length, 0, "no beforeEach in skip mode");
+		t.is(mockTest._hooks.afterEachAlways.length, 0, "no afterEach.always in skip mode");
+
+		// Warning should have been printed
+		t.true(warnMessages.length > 0, "should have printed a warning");
+		t.true(
+			warnMessages.some((m) => m.includes("emergency override")),
+			"warning should contain the reason"
+		);
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
+		console.warn = savedWarn;
 	}
 });

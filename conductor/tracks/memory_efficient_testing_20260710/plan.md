@@ -54,11 +54,13 @@
 
   Implementation Notes: Added `scripts/lib/ava-memory-guard.js` with `installAvaMemoryGuard(test, options)`, `measureMemoryUsage()`, and `drainAndGc()`. The helper is no-op when guard mode is disabled, fails immediately if `global.gc` is unavailable when enabled, stores per-test baselines in a `WeakMap` keyed by the AVA execution context, and measures after `t.teardown()` cleanup via `test.afterEach.always`. Memory guard mode now injects `--serial` as well as `--expose-gc` and `--concurrency 1`. Added `scripts/test/ava-memory-guard.spec.js` and `scripts/test/ava-memory-guard-hook-order.spec.js`, including a real AVA hook-order self-test proving `t.teardown()` runs before `afterEach.always`. Verification: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 81 tests; `git diff --check` passed.
 
-- [ ] Task: Add AVA exception and skip support
-    - [ ] Support near-test documented exceptions with threshold and reason.
-    - [ ] Support environment-based skip only when a reason is supplied and printed.
-    - [ ] Fail or warn clearly for silent, broad, or reasonless skips.
-    - [ ] Include examples for valid exceptions and invalid broad skips.
+- [x] Task: Add AVA exception and skip support
+    - [x] Support near-test documented exceptions with threshold and reason.
+    - [x] Support environment-based skip only when a reason is supplied and printed.
+    - [x] Fail or warn clearly for silent, broad, or reasonless skips.
+    - [x] Include examples for valid exceptions and invalid broad skips.
+
+  Notes: Added `allowAvaMemoryGrowth(t, { threshold, reason })` for scoped per-test allowances with required positive threshold and non-empty reason. The guard uses per-test allowance thresholds when present and includes the allowance reason in diagnostics if exceeded. Added `SCRAMJET_MEMORY_SKIP=1` handling in the AVA helper; `SCRAMJET_MEMORY_SKIP_REASON` is required and printed when broad env skip is used, while reasonless skips fail during installation. Tests cover valid allowances, invalid thresholds/reasons, exceeded allowance diagnostics, and env skip behavior. Verification: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 96 tests; `git diff --check` passed.
 
 - [ ] Task: Validate AVA guard on focused packages
     - [ ] Add or update runner self-tests for option parsing, `--expose-gc`, serial execution, missing GC failure, threshold failure, and documented exception behavior.
