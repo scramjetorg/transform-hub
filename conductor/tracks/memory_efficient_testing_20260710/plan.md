@@ -62,11 +62,13 @@
 
   Notes: Added `allowAvaMemoryGrowth(t, { threshold, reason })` for scoped per-test allowances with required positive threshold and non-empty reason. The guard uses per-test allowance thresholds when present and includes the allowance reason in diagnostics if exceeded. Added `SCRAMJET_MEMORY_SKIP=1` handling in the AVA helper; `SCRAMJET_MEMORY_SKIP_REASON` is required and printed when broad env skip is used, while reasonless skips fail during installation. Tests cover valid allowances, invalid thresholds/reasons, exceeded allowance diagnostics, and env skip behavior. Verification: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 96 tests; `git diff --check` passed.
 
-- [ ] Task: Validate AVA guard on focused packages
-    - [ ] Add or update runner self-tests for option parsing, `--expose-gc`, serial execution, missing GC failure, threshold failure, and documented exception behavior.
-    - [ ] Run the narrowest runner-helper validation command.
-    - [ ] Run at least one deterministic package surface under AVA memory guard mode.
-    - [ ] Commit completed AVA guard work according to task-level commit policy.
+- [x] Task: Validate AVA guard on focused packages
+    - [x] Add or update runner self-tests for option parsing, `--expose-gc`, serial execution, missing GC failure, threshold failure, and documented exception behavior.
+    - [x] Run the narrowest runner-helper validation command.
+    - [x] Run at least one deterministic package surface under AVA memory guard mode.
+    - [x] Commit completed AVA guard work according to task-level commit policy.
+
+  Notes: Added `scripts/test/ava-memory-guard-live.spec.js`, a deterministic live smoke surface that uses the strict `createAvaMemoryGuard(baseTest)` wrapper under the default 512 KiB threshold with no file-level threshold override. The helper now measures inside the guarded test body before AVA afterEach/reporting overhead, uses `registerAvaMemoryCleanup(t, fn)` for cleanup observed by final measurement, and avoids running-min or other dynamic subtraction. Focused validations passed: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 94 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js` passed with 11 tests under memory guard; `git diff --check` passed.
 
 - [ ] Task: Conductor - Phase Checkpoint 'AVA Package-Test Memory Guard' (Protocol in workflow.md)
 

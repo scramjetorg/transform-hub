@@ -1,12 +1,19 @@
 /**
  * @file scripts/test/ava-memory-guard-hook-order.spec.js
  *
- * Self-test verifying that AVA's hook ordering guarantees t.teardown()
- * callbacks run BEFORE test.afterEach.always hooks.
+ * Self-test verifying AVA's hook ordering guarantee:
  *
- * This matters for the memory guard: if a test body registers a teardown
- * that frees memory, the guard's afterEach.always measurement should
- * observe the freed state.
+ *   t.teardown() callbacks run BEFORE test.afterEach.always hooks.
+ *
+ * In the strict guard design (createAvaMemoryGuard), measurement happens
+ * entirely inside the test body wrapper — BEFORE afterEach.always.  The
+ * strict API registerAvaMemoryCleanup() is the preferred cleanup mechanism
+ * because it runs before the guard's final measurement (unlike t.teardown()
+ * which runs after).
+ *
+ * This test proves that t.teardown() (used by AVA-native cleanup) runs
+ * before afterEach.always, which is relevant for understanding the overall
+ * ordering even though the strict guard does not rely on afterEach.always.
  *
  * Execution order (concurrency = 1, --serial):
  *   1. test.beforeEach
@@ -14,17 +21,16 @@
  *   3. t.teardown callbacks  (reverse registration order)
  *   4. test.afterEach.always
  *
- * If this test fails, the hook ordering contract is broken and the memory
- * guard's measurement guidance in ava-memory-guard.js must be updated.
+ * If this test fails, the ordering contract is broken.
+ *
+ * NOTE: AVA 3.15.0 does NOT allow t.teardown() inside beforeEach/afterEach
+ * hooks.
  */
 
 "use strict";
 
 const test = require("ava");
 
-// Per-test execution log populated by hooks and the test body, then
-// verified inside afterEach.always.  Cleared in beforeEach so there
-// is no carry-over between tests.
 const orderLog = [];
 
 test.beforeEach(() => {
@@ -35,33 +41,16 @@ test.beforeEach(() => {
 test.afterEach.always((t) => {
 	orderLog.push("afterEachAlways");
 
-	// Only verify the specific ordering test (others don't register
-	// teardown and would produce a shorter log).
-	if (t.title === "t.teardown runs before afterEach.always") {
-		t.is(
-			orderLog[0], "beforeEach",
-			"step 0 should be beforeEach"
-		);
-		t.is(
-			orderLog[1], "testBody",
-			"step 1 should be testBody"
-		);
-		t.is(
-			orderLog[2], "teardown",
-			"step 2 should be teardown (before afterEachAlways)"
-		);
-		t.is(
-			orderLog[3], "afterEachAlways",
-			"step 3 should be afterEachAlways (after teardown)"
-		);
-		t.is(
-			orderLog.length, 4,
-			"should have exactly 4 steps for the ordering test"
-		);
+	if (t.title === "teardown runs before afterEach.always") {
+		t.is(orderLog[0], "beforeEach", "step 0 should be beforeEach");
+		t.is(orderLog[1], "testBody", "step 1 should be testBody");
+		t.is(orderLog[2], "teardown", "step 2 should be teardown (before afterEachAlways)");
+		t.is(orderLog[3], "afterEachAlways", "step 3 should be afterEachAlways (after teardown)");
+		t.is(orderLog.length, 4, "should have exactly 4 steps for the ordering test");
 	}
 });
 
-test("t.teardown runs before afterEach.always", (t) => {
+test("teardown runs before afterEach.always", (t) => {
 	orderLog.push("testBody");
 
 	t.teardown(() => {
