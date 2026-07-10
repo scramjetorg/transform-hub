@@ -13,6 +13,10 @@ if (!includeLongRunning) tagParts.push(validationExclusions);
 const tags = tagParts.join(" and ");
 
 const common = [
+    // Load support/memory-hooks.ts BEFORE step-definitions so its After hook
+    // runs after step-definition cleanup hooks (Cucumber After hooks run in
+    // reverse definition order).
+    "--require support/memory-hooks.ts",
     "--require step-definitions/**/*.ts",
     "--require-module ts-node/register",
     "--publish-quiet",

@@ -26,12 +26,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const {
-    memoryLimit,
-    cpuLimit,
-    timeoutMs,
-    graceMs,
-} = require("./lib/bdd-options.js");
+const { memoryLimit, cpuLimit, timeoutMs, graceMs, isBddMemoryGuardEnabled, bddNodeOptions } = require("./lib/bdd-options.js");
 
 const { reportLeakedProcesses } = require("./lib/bdd-cleanup.js");
 
@@ -45,9 +40,7 @@ const TIMEOUT_EXIT_CODE = 124;
 const MISSING_DEPENDENCY_EXIT_CODE = 127;
 
 const separatorIndex = process.argv.indexOf("--");
-const passthroughArgs = separatorIndex === -1
-    ? process.argv.slice(2)
-    : process.argv.slice(separatorIndex + 1);
+const passthroughArgs = separatorIndex === -1 ? process.argv.slice(2) : process.argv.slice(separatorIndex + 1);
 
 const failPrereq = (message) => {
     process.stderr.write(`[run-bdd-docker] ${message}\n`);
@@ -80,14 +73,7 @@ const containerName = `bdd-runner-${process.pid}-${crypto.randomBytes(3).toStrin
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
 
-const ENV_ALLOWLIST_EXACT = new Set([
-    "NO_HOST",
-    "TEST_REPORT",
-    "DEVELOPMENT",
-    "PACKAGES_DIR",
-    "SCP_ENV_VALUE",
-    "CI"
-]);
+const ENV_ALLOWLIST_EXACT = new Set(["NO_HOST", "TEST_REPORT", "DEVELOPMENT", "PACKAGES_DIR", "SCP_ENV_VALUE", "CI"]);
 const ENV_ALLOWLIST_PREFIXES = ["SCRAMJET_", "BDD_"];
 
 const collectEnvForwardArgs = () => {
@@ -100,8 +86,7 @@ const collectEnvForwardArgs = () => {
             continue;
         }
 
-        const allowed = ENV_ALLOWLIST_EXACT.has(name)
-            || ENV_ALLOWLIST_PREFIXES.some((prefix) => name.startsWith(prefix));
+        const allowed = ENV_ALLOWLIST_EXACT.has(name) || ENV_ALLOWLIST_PREFIXES.some((prefix) => name.startsWith(prefix));
 
         if (!allowed) {
             continue;
@@ -113,35 +98,48 @@ const collectEnvForwardArgs = () => {
     return out;
 };
 
-const dockerRunArgs = [
-    "run", "--detach", "--rm", "--init",
-    "--name", containerName,
-    "--network", "host",
-    "--memory", BDD_DOCKER_MEMORY, "--memory-swap", BDD_DOCKER_MEMORY
-];
+const dockerRunArgs = ["run", "--detach", "--rm", "--init", "--name", containerName, "--network", "host", "--memory", BDD_DOCKER_MEMORY, "--memory-swap", BDD_DOCKER_MEMORY];
 
 if (BDD_DOCKER_CPUS) {
     dockerRunArgs.push("--cpus", BDD_DOCKER_CPUS);
 }
 
 dockerRunArgs.push(
-    "--user", `${process.getuid()}:${process.getgid()}`,
-    "--group-add", dockerGid,
-    "-v", `${repoRoot}:/work`,
-    "-v", "/var/run/docker.sock:/var/run/docker.sock",
-    "-v", `${tmpDir}:/work-tmp`,
-    "-w", "/work",
-    "-e", "HOME=/work-tmp",
-    "-e", "TMPDIR=/work-tmp",
-    "-e", "COREPACK_ENABLE_DOWNLOAD_PROMPT=0"
+    "--user",
+    `${process.getuid()}:${process.getgid()}`,
+    "--group-add",
+    dockerGid,
+    "-v",
+    `${repoRoot}:/work`,
+    "-v",
+    "/var/run/docker.sock:/var/run/docker.sock",
+    "-v",
+    `${tmpDir}:/work-tmp`,
+    "-w",
+    "/work",
+    "-e",
+    "HOME=/work-tmp",
+    "-e",
+    "TMPDIR=/work-tmp",
+    "-e",
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT=0"
 );
 
 dockerRunArgs.push(...collectEnvForwardArgs());
 
+// Inject NODE_OPTIONS with --expose-gc when BDD memory guard is enabled.
+// bddNodeOptions() picks up BDD_NODE_OPTIONS from the parent env (already
+// forwarded by collectEnvForwardArgs()) and adds --expose-gc when the guard
+// is active.
+if (isBddMemoryGuardEnabled()) {
+    dockerRunArgs.push("-e", `NODE_OPTIONS=${bddNodeOptions()}`);
+}
+
 const escapedPassthrough = passthroughArgs.map(shellEscape).join(" ");
-const innerCommand = escapedPassthrough.length > 0
-    ? `PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
-    : "PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd";
+const innerCommand =
+    escapedPassthrough.length > 0
+        ? `PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
+        : "PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd";
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 

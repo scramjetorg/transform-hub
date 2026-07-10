@@ -82,6 +82,11 @@ export class CustomWorld implements World {
         collectedTopicData?: string;
     } = {};
 
+    /** @internal Memory guard baseline (set by support/memory-hooks.ts). */
+    __memoryBaseline?: number;
+    /** @internal Memory guard before-usage snapshot (set by support/memory-hooks.ts). */
+    __memoryBeforeUsage?: number;
+
     constructor({ attach, log, parameters }: any) {
         // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
         const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };

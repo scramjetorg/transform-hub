@@ -159,3 +159,43 @@ test("run-bdd-docker.js env forwarding includes SCRAMJET_ and BDD_ prefixes", (t
 	t.true(src.includes("BDD_"), "should forward BDD_ env vars");
 	t.true(src.includes("NO_HOST"), "should forward NO_HOST env var");
 });
+
+// ---------------------------------------------------------------------------
+// Memory guard – NODE_OPTIONS injection in Docker mode
+// ---------------------------------------------------------------------------
+
+test("run-bdd-docker.js imports isBddMemoryGuardEnabled and bddNodeOptions", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("isBddMemoryGuardEnabled"),
+		"should import isBddMemoryGuardEnabled from bdd-options"
+	);
+	t.true(
+		src.includes("bddNodeOptions"),
+		"should import bddNodeOptions from bdd-options"
+	);
+});
+
+test("run-bdd-docker.js injects NODE_OPTIONS when memory guard is enabled", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("isBddMemoryGuardEnabled()"),
+		"should check guard before injecting NODE_OPTIONS"
+	);
+	t.true(
+		src.includes("NODE_OPTIONS"),
+		"should reference NODE_OPTIONS in docker run args"
+	);
+	t.true(
+		src.includes("bddNodeOptions()"),
+		"should call bddNodeOptions() for NODE_OPTIONS value"
+	);
+});

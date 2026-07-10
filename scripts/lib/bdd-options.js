@@ -14,17 +14,25 @@
  *
  * Environment variables honoured (all optional):
  *
- *   BDD_DOCKER_MEMORY           – container memory limit (default "1536m")
- *   BDD_DOCKER_CPUS             – container CPU limit (default "2")
- *   BDD_TIMEOUT_MS              – runner‑level timeout in ms (default 600000)
- *   BDD_GRACE_MS                – TERM‑to‑KILL grace period in ms (default 10000)
- *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE – override --max-old-space-size (default 1536)
- *   SCRAMJET_AVA_FETCH          – set to "0"|"false"|"no"|"off" to add
- *                                 --no-experimental-fetch
+ *   BDD_DOCKER_MEMORY                  – container memory limit (default "1536m")
+ *   BDD_DOCKER_CPUS                    – container CPU limit (default "2")
+ *   BDD_TIMEOUT_MS                     – runner‑level timeout in ms (default 600000)
+ *   BDD_GRACE_MS                       – TERM‑to‑KILL grace period in ms (default 10000)
+ *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE    – override --max-old-space-size (default 1536)
+ *   SCRAMJET_AVA_FETCH                 – set to "0"|"false"|"no"|"off" to add
+ *                                        --no-experimental-fetch
+ *
+ *   Memory guard (Phase 5):
+ *     SCRAMJET_MEMORY_GUARD                 – common memory guard enable ("1")
+ *     SCRAMJET_BDD_MEMORY_GUARD             – BDD-specific override (overrides
+ *                                             common, including disabled values)
+ *     SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES   – common heap threshold (default 524288)
+ *     SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES    – BDD-specific threshold override
+ *     SCRAMJET_MEMORY_SKIP                   – set to "1" to skip measurement
+ *     SCRAMJET_MEMORY_SKIP_REASON            – required non-empty reason when SKIP=1
  *
  * All defaults are chosen for stability under a host‑level <2G memory limit.
  */
-
 
 const { appendNodeOption, replaceNodeOption, isDisabled } = require("./ava-options.js");
 
@@ -33,38 +41,52 @@ const { appendNodeOption, replaceNodeOption, isDisabled } = require("./ava-optio
 // ---------------------------------------------------------------------------
 
 const ENV = Object.freeze({
-	MEMORY: "BDD_DOCKER_MEMORY",
-	CPUS: "BDD_DOCKER_CPUS",
-	TIMEOUT_MS: "BDD_TIMEOUT_MS",
-	GRACE_MS: "BDD_GRACE_MS",
-	/** Reuse the same vars as the AVA runner for consistency. */
-	MAX_OLD_SPACE: "SCRAMJET_AVA_MAX_OLD_SPACE_SIZE",
-	FETCH: "SCRAMJET_AVA_FETCH",
-	/** BDD-specific override for NODE_OPTIONS. */
-	BDD_NODE_OPTIONS: "BDD_NODE_OPTIONS",
+    MEMORY: "BDD_DOCKER_MEMORY",
+    CPUS: "BDD_DOCKER_CPUS",
+    TIMEOUT_MS: "BDD_TIMEOUT_MS",
+    GRACE_MS: "BDD_GRACE_MS",
+    /** Reuse the same vars as the AVA runner for consistency. */
+    MAX_OLD_SPACE: "SCRAMJET_AVA_MAX_OLD_SPACE_SIZE",
+    FETCH: "SCRAMJET_AVA_FETCH",
+    /** BDD-specific override for NODE_OPTIONS. */
+    BDD_NODE_OPTIONS: "BDD_NODE_OPTIONS",
+
+    // Memory guard (Phase 5)
+    MEMORY_GUARD: "SCRAMJET_MEMORY_GUARD",
+    BDD_MEMORY_GUARD: "SCRAMJET_BDD_MEMORY_GUARD",
+    MEMORY_HEAP_THRESHOLD: "SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES",
+    BDD_MEMORY_HEAP_THRESHOLD: "SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES",
+    MEMORY_SKIP: "SCRAMJET_MEMORY_SKIP",
+    MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON"
 });
 
 const DEFAULTS = Object.freeze({
-	/**
-	 * Container memory limit.
-	 * 1536m leaves headroom under a 1835008 kB host ulimit.
-	 */
-	MEMORY: "1536m",
-	/**
-	 * Container CPU count.  Conservative for many‑CPU hosts under memory
-	 * pressure.
-	 */
-	CPUS: "2",
-	/**
-	 * Runner‑level timeout in ms.  600000 ms = 10 minutes for BDD runs.
-	 */
-	TIMEOUT_MS: 600000,
-	/**
-	 * Grace period in ms between SIGTERM and SIGKILL escalation.
-	 */
-	GRACE_MS: 10000,
-	/** Default --max-old-space-size for the direct BDD Node process. */
-	MAX_OLD_SPACE_SIZE: 1536,
+    /**
+     * Container memory limit.
+     * 1536m leaves headroom under a 1835008 kB host ulimit.
+     */
+    MEMORY: "1536m",
+    /**
+     * Container CPU count.  Conservative for many‑CPU hosts under memory
+     * pressure.
+     */
+    CPUS: "2",
+    /**
+     * Runner‑level timeout in ms.  600000 ms = 10 minutes for BDD runs.
+     */
+    TIMEOUT_MS: 600000,
+    /**
+     * Grace period in ms between SIGTERM and SIGKILL escalation.
+     */
+    GRACE_MS: 10000,
+    /** Default --max-old-space-size for the direct BDD Node process. */
+    MAX_OLD_SPACE_SIZE: 1536,
+    /**
+     * Default heap threshold in bytes for BDD memory guard mode.
+     * 524288 bytes = 512 KiB.  Override via SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES
+     * or SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES.
+     */
+    MEMORY_HEAP_THRESHOLD_BYTES: 524288
 });
 
 // ---------------------------------------------------------------------------
@@ -79,9 +101,9 @@ const DEFAULTS = Object.freeze({
  * @returns {number}
  */
 function readPositiveInteger(raw, fallback) {
-	const value = Number(raw);
+    const value = Number(raw);
 
-	return Number.isFinite(value) && value > 0 ? value : fallback;
+    return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,7 +116,7 @@ function readPositiveInteger(raw, fallback) {
  * @returns {string}
  */
 function memoryLimit() {
-	return process.env[ENV.MEMORY] || DEFAULTS.MEMORY;
+    return process.env[ENV.MEMORY] || DEFAULTS.MEMORY;
 }
 
 /**
@@ -103,7 +125,7 @@ function memoryLimit() {
  * @returns {string}  CPU count, or "" for no limit.
  */
 function cpuLimit() {
-	return process.env[ENV.CPUS] || DEFAULTS.CPUS;
+    return process.env[ENV.CPUS] || DEFAULTS.CPUS;
 }
 
 /**
@@ -112,7 +134,7 @@ function cpuLimit() {
  * @returns {number}  0 means no timeout.
  */
 function timeoutMs() {
-	return readPositiveInteger(process.env[ENV.TIMEOUT_MS], DEFAULTS.TIMEOUT_MS);
+    return readPositiveInteger(process.env[ENV.TIMEOUT_MS], DEFAULTS.TIMEOUT_MS);
 }
 
 /**
@@ -121,7 +143,7 @@ function timeoutMs() {
  * @returns {number}
  */
 function graceMs() {
-	return readPositiveInteger(process.env[ENV.GRACE_MS], DEFAULTS.GRACE_MS);
+    return readPositiveInteger(process.env[ENV.GRACE_MS], DEFAULTS.GRACE_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -136,12 +158,12 @@ function graceMs() {
  * @returns {number}
  */
 function bddMaxOldSpaceSize() {
-	const env = process.env[ENV.MAX_OLD_SPACE];
+    const env = process.env[ENV.MAX_OLD_SPACE];
 
-	if (env && !Number.isNaN(Number(env))) {
-		return Number(env);
-	}
-	return DEFAULTS.MAX_OLD_SPACE_SIZE;
+    if (env && !Number.isNaN(Number(env))) {
+        return Number(env);
+    }
+    return DEFAULTS.MAX_OLD_SPACE_SIZE;
 }
 
 /**
@@ -164,19 +186,24 @@ function bddMaxOldSpaceSize() {
  * @returns {string}  NODE_OPTIONS string suitable for the child process env.
  */
 function bddNodeOptions() {
-	// Start from BDD_NODE_OPTIONS if set, otherwise empty.
-	const base = process.env[ENV.BDD_NODE_OPTIONS] ?? "";
+    // Start from BDD_NODE_OPTIONS if set, otherwise empty.
+    const base = process.env[ENV.BDD_NODE_OPTIONS] ?? "";
 
-	// 1. Heap limit
-	let opts = replaceNodeOption(base, `--max-old-space-size=${bddMaxOldSpaceSize()}`);
+    // 1. Heap limit
+    let opts = replaceNodeOption(base, `--max-old-space-size=${bddMaxOldSpaceSize()}`);
 
-	// 2. Fetch mode – avoid undici WASM OOM under <2G.
-	//    Default: add --no-experimental-fetch (opt out via SCRAMJET_AVA_FETCH=1).
-	if (!isDisabled(process.env[ENV.FETCH]) && process.env[ENV.FETCH] !== "1") {
-		opts = appendNodeOption(opts, "--no-experimental-fetch");
-	}
+    // 2. Fetch mode – avoid undici WASM OOM under <2G.
+    //    Default: add --no-experimental-fetch (opt out via SCRAMJET_AVA_FETCH=1).
+    if (!isDisabled(process.env[ENV.FETCH]) && process.env[ENV.FETCH] !== "1") {
+        opts = appendNodeOption(opts, "--no-experimental-fetch");
+    }
 
-	return opts;
+    // 3. Memory guard – add --expose-gc when BDD memory guard is enabled.
+    if (isBddMemoryGuardEnabled()) {
+        opts = appendNodeOption(opts, "--expose-gc");
+    }
+
+    return opts;
 }
 
 /**
@@ -190,12 +217,112 @@ function bddNodeOptions() {
  * @returns {string[]}
  */
 function bddNodeArgs() {
-	return [
-		"--wasm-num-compilation-tasks=1",
-		"--wasm-max-mem-pages=4096",
-		"--wasm-max-committed-code-mb=128",
-		"--wasm-max-code-space-size-mb=128",
-	];
+    return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=4096", "--wasm-max-committed-code-mb=128", "--wasm-max-code-space-size-mb=128"];
+}
+
+// ---------------------------------------------------------------------------
+// Memory‑guard helpers (Phase 5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether BDD memory guard mode is enabled.
+ *
+ * Honour BDD-specific SCRAMJET_BDD_MEMORY_GUARD first: when it is explicitly
+ * set, its value is respected (using the standard isDisabled() check so that
+ * "0", "false", "no", "off" all disable the guard even when the common
+ * SCRAMJET_MEMORY_GUARD is enabled).  When the BDD-specific env is unset,
+ * fall back to common SCRAMJET_MEMORY_GUARD (only "1" enables).
+ *
+ * @returns {boolean}
+ */
+function isBddMemoryGuardEnabled() {
+    const bddGuard = process.env[ENV.BDD_MEMORY_GUARD];
+
+    // BDD-specific guard is explicitly set: honour its value (enabled unless
+    // it matches a disabled-style value).
+    if (bddGuard !== undefined) {
+        return !isDisabled(bddGuard);
+    }
+
+    // Fall back to common guard (only exact "1" enables).
+    return process.env[ENV.MEMORY_GUARD] === "1";
+}
+
+/**
+ * Resolve the heap threshold in bytes for BDD memory guard mode.
+ *
+ * BDD-specific SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES takes priority; then
+ * common SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES; then the built-in default
+ * (524288 = 512 KiB).
+ *
+ * When an env var is present but its value is not a positive finite number,
+ * the function throws rather than silently falling back — the operator has
+ * expressed intent but provided an invalid value.
+ *
+ * @returns {number}
+ * @throws {Error}  If an env var is set to a non-numeric, zero, or negative value.
+ */
+function bddMemoryHeapThresholdBytes() {
+    const bddThreshold = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+
+    if (bddThreshold !== undefined) {
+        const n = Number(bddThreshold);
+
+        if (!Number.isFinite(n) || n <= 0) {
+            throw new Error(`${ENV.BDD_MEMORY_HEAP_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(bddThreshold)}.`);
+        }
+
+        return n;
+    }
+
+    const commonThreshold = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+    if (commonThreshold !== undefined) {
+        const n = Number(commonThreshold);
+
+        if (!Number.isFinite(n) || n <= 0) {
+            throw new Error(`${ENV.MEMORY_HEAP_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(commonThreshold)}.`);
+        }
+
+        return n;
+    }
+
+    return DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;
+}
+
+function bddMemoryThresholdSourceLabel() {
+    if (process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] !== undefined) {
+        return ENV.BDD_MEMORY_HEAP_THRESHOLD;
+    }
+
+    if (process.env[ENV.MEMORY_HEAP_THRESHOLD] !== undefined) {
+        return ENV.MEMORY_HEAP_THRESHOLD;
+    }
+
+    return "env default";
+}
+
+/**
+ * Check whether BDD memory measurement is skipped via env var.
+ *
+ * When SCRAMJET_MEMORY_SKIP=1, SCRAMJET_MEMORY_SKIP_REASON must be set to a
+ * non-empty string; otherwise this function throws.
+ *
+ * @returns {{ skip: boolean, reason?: string }}
+ * @throws {Error}  If SKIP=1 without a non-empty SKIP_REASON.
+ */
+function bddMemorySkipCheck() {
+    if (process.env[ENV.MEMORY_SKIP] === "1") {
+        const skipReason = process.env[ENV.MEMORY_SKIP_REASON];
+
+        if (typeof skipReason !== "string" || skipReason.trim().length === 0) {
+            throw new Error(`${ENV.MEMORY_SKIP}=1 requires ${ENV.MEMORY_SKIP_REASON} to be ` + "set to a non-empty reason string.");
+        }
+
+        return { skip: true, reason: skipReason };
+    }
+
+    return { skip: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -203,14 +330,18 @@ function bddNodeArgs() {
 // ---------------------------------------------------------------------------
 
 module.exports = {
-	ENV,
-	DEFAULTS,
-	readPositiveInteger,
-	memoryLimit,
-	cpuLimit,
-	timeoutMs,
-	graceMs,
-	bddMaxOldSpaceSize,
-	bddNodeOptions,
-	bddNodeArgs,
+    ENV,
+    DEFAULTS,
+    readPositiveInteger,
+    memoryLimit,
+    cpuLimit,
+    timeoutMs,
+    graceMs,
+    bddMaxOldSpaceSize,
+    bddNodeOptions,
+    bddNodeArgs,
+    isBddMemoryGuardEnabled,
+    bddMemoryHeapThresholdBytes,
+    bddMemoryThresholdSourceLabel,
+    bddMemorySkipCheck
 };
