@@ -9,13 +9,15 @@
 
   Notes: Captured `feat/manager-oss` as the PR base after user approval because it is non-main and ahead of upstream by one commit. Created implementation branch `conductor/memory_efficient_testing_20260710`. Draft PR creation is deferred until the first required PR visibility/manual verification point.
 
-- [ ] Task: Inventory relevant test and memory infrastructure
-    - [ ] Review package AVA runner files: `scripts/run-ava.js` and `scripts/lib/ava-options.js`.
-    - [ ] Review BDD runner files: `scripts/run-bdd.js`, `scripts/run-bdd-docker.js`, `scripts/lib/bdd-options.js`, and `scripts/lib/bdd-cleanup.js`.
-    - [ ] Review Cucumber support and lifecycle files: `bdd/cucumber.js`, `bdd/step-definitions/world.ts`, `bdd/step-definitions/e2e/host-steps.ts`, and `bdd/lib/host-utils.ts`.
-    - [ ] Review sequence-test capture/fixture files including `packages/sequence-test/src/captures.ts` and fake instance support.
-    - [ ] Review runner/runtime monitoring files including `packages/types/src/messages/monitoring.ts`, `packages/runner-node`, and process/docker adapter stats paths.
-    - [ ] Record existing reusable helpers and any intentional reasons for package-local implementation.
+- [x] Task: Inventory relevant test and memory infrastructure
+    - [x] Review package AVA runner files: `scripts/run-ava.js` and `scripts/lib/ava-options.js`.
+    - [x] Review BDD runner files: `scripts/run-bdd.js`, `scripts/run-bdd-docker.js`, `scripts/lib/bdd-options.js`, and `scripts/lib/bdd-cleanup.js`.
+    - [x] Review Cucumber support and lifecycle files: `bdd/cucumber.js`, `bdd/step-definitions/world.ts`, `bdd/step-definitions/e2e/host-steps.ts`, and `bdd/lib/host-utils.ts`.
+    - [x] Review sequence-test capture/fixture files including `packages/sequence-test/src/captures.ts` and fake instance support.
+    - [x] Review runner/runtime monitoring files including `packages/types/src/messages/monitoring.ts`, `packages/runner-node`, and process/docker adapter stats paths.
+    - [x] Record existing reusable helpers and any intentional reasons for package-local implementation.
+
+  Notes: Inventory confirmed the supported AVA entrypoint is `scripts/run-ava.js`, with reusable env/default option patterns in `scripts/lib/ava-options.js`. BDD memory work should extend `scripts/run-bdd.js`, `scripts/run-bdd-docker.js`, `scripts/lib/bdd-options.js`, and `scripts/lib/bdd-cleanup.js`; Docker mode already forwards `SCRAMJET_*` and `BDD_*` env vars into the container. Cucumber state retention is centered in `CustomWorld` and module-level hooks in `bdd/step-definitions/e2e/host-steps.ts`. Host process tracking belongs near `HostUtils.trackHost()` / `spawnHost()`. Sequence-test captures retain chunks and monitoring frames without clear/dispose APIs. Monitoring memory fields already exist in `packages/types/src/messages/monitoring.ts`; Docker adapter populates them, while process and Kubernetes adapter stats paths still have memory TODOs. Existing path-anchored leak patterns in `bdd-cleanup.js` should be preserved to avoid broad process matching.
 
 - [ ] Task: Define shared memory measurement semantics
     - [ ] Define parent test-process heap metric as `heapUsed + external + arrayBuffers` after forced GC.
