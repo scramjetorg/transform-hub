@@ -19,12 +19,14 @@
 
   Notes: Inventory confirmed the supported AVA entrypoint is `scripts/run-ava.js`, with reusable env/default option patterns in `scripts/lib/ava-options.js`. BDD memory work should extend `scripts/run-bdd.js`, `scripts/run-bdd-docker.js`, `scripts/lib/bdd-options.js`, and `scripts/lib/bdd-cleanup.js`; Docker mode already forwards `SCRAMJET_*` and `BDD_*` env vars into the container. Cucumber state retention is centered in `CustomWorld` and module-level hooks in `bdd/step-definitions/e2e/host-steps.ts`. Host process tracking belongs near `HostUtils.trackHost()` / `spawnHost()`. Sequence-test captures retain chunks and monitoring frames without clear/dispose APIs. Monitoring memory fields already exist in `packages/types/src/messages/monitoring.ts`; Docker adapter populates them, while process and Kubernetes adapter stats paths still have memory TODOs. Existing path-anchored leak patterns in `bdd-cleanup.js` should be preserved to avoid broad process matching.
 
-- [ ] Task: Define shared memory measurement semantics
-    - [ ] Define parent test-process heap metric as `heapUsed + external + arrayBuffers` after forced GC.
-    - [ ] Define test-runner heap target threshold with a planned 512 KiB default and documented env override.
-    - [ ] Define child-process RSS semantics separately from Node heap checks.
-    - [ ] Define Docker runner container working-set semantics separately from raw Docker memory usage.
-    - [ ] Document how higher process/container thresholds such as 100-200 MiB are represented and justified.
+- [x] Task: Define shared memory measurement semantics
+    - [x] Define parent test-process heap metric as `heapUsed + external + arrayBuffers` after forced GC.
+    - [x] Define test-runner heap target threshold with a planned 512 KiB default and documented env override.
+    - [x] Define child-process RSS semantics separately from Node heap checks.
+    - [x] Define Docker runner container working-set semantics separately from raw Docker memory usage.
+    - [x] Document how higher process/container thresholds such as 100-200 MiB are represented and justified.
+
+  Notes: Shared semantics for implementation are: `node.postGc.totalBytes = heapUsed + external + arrayBuffers`, `node.postGc.deltaBytes = after - before`, `process.rssBytes` / `process.rssDeltaBytes` for spawned PIDs or process groups, `docker.workingSetBytes = memory_stats.usage - inactive_file/cache` where available, and `resource.leak.count` for live resources expected to be gone. Planned defaults are `SCRAMJET_MEMORY_GUARD=1`, `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES=524288`, AVA/BDD-specific threshold overrides, `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES=104857600`, and `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES=104857600`. Node heap sampling must drain, GC, drain, GC before baseline and final measurements, after teardown/dispose hooks. RSS/container checks first enforce expected process/container lifecycle; long-lived resources compare deltas. 100 MiB is the default child/container threshold, 100-200 MiB requires a scoped reason, and above 200 MiB should require explicit approval or an issue. Any memory skip must include a reason; reasonless skips fail.
 
 - [ ] Task: Conductor - Phase Checkpoint 'Track Setup and Test Surface Inventory' (Protocol in workflow.md)
 
