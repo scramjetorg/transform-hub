@@ -178,7 +178,7 @@ const ENV = Object.freeze({
 	MEMORY_HEAP_THRESHOLD: "SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES",
 	AVA_MEMORY_HEAP_THRESHOLD: "SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES",
 	MEMORY_SKIP: "SCRAMJET_MEMORY_SKIP",
-	MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON",
+	MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON"
 });
 
 const DEFAULTS = Object.freeze({
@@ -201,7 +201,7 @@ const DEFAULTS = Object.freeze({
 	 * 524288 bytes = 512 KiB. Override via SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES
 	 * or SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES env vars.
 	 */
-	MEMORY_HEAP_THRESHOLD_BYTES: 524288,
+	MEMORY_HEAP_THRESHOLD_BYTES: 524288
 });
 
 // ---------------------------------------------------------------------------
@@ -274,12 +274,7 @@ function avaNodeArgs() {
 		return [];
 	}
 
-	return [
-		"--wasm-num-compilation-tasks=1",
-		"--wasm-max-mem-pages=4096",
-		"--wasm-max-committed-code-mb=128",
-		"--wasm-max-code-space-size-mb=128",
-	];
+	return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=4096", "--wasm-max-committed-code-mb=128", "--wasm-max-code-space-size-mb=128"];
 }
 
 /**
@@ -318,6 +313,11 @@ function buildAvaArgs(cliArgs) {
 	// Memory guard mode: enforce serial execution for deterministic memory
 	// measurement.
 	if (isMemoryGuardEnabled()) {
+		// Inject --serial unless already present in CLI args.
+		if (!cliArgs.includes("--serial")) {
+			args.push("--serial");
+		}
+
 		const cliHasConcurrency = cliArgs.some((a) => a === "--concurrency" || a.startsWith("--concurrency="));
 
 		// Reject explicit --concurrency with a value other than 1.

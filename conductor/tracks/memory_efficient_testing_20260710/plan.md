@@ -43,12 +43,16 @@
 
   Notes: Added AVA/common memory guard env names, 512 KiB heap threshold default, `isMemoryGuardEnabled()`, `memoryHeapThresholdBytes()`, and `buildAvaArgs()` wiring that injects `--expose-gc` and forces `--concurrency 1` when guard mode is enabled. AVA-specific guard env explicitly overrides the common guard, including disabled values. No new runner entrypoint was introduced; `scripts/run-ava.js` continues to consume `buildAvaArgs()`. Verification: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js` passed with 64 tests.
 
-- [ ] Task: Implement AVA per-test memory measurement
-    - [ ] Add guard lifecycle that samples before and after each test.
-    - [ ] Drain the event loop and run GC twice before each measurement.
-    - [ ] Measure `heapUsed + external + arrayBuffers`.
-    - [ ] Fail with actionable diagnostics when growth exceeds threshold.
-    - [ ] Verify measurement happens after test teardown; add a hook-order self-test or fallback guarded helper if global hooks cannot guarantee ordering.
+- [x] Task: Implement AVA per-test memory measurement
+    - [x] Add guard lifecycle that samples before and after each test.
+    - [x] Drain the event loop and run GC twice before each measurement.
+    - [x] Measure `heapUsed + external + arrayBuffers`.
+    - [x] Fail with actionable diagnostics when growth exceeds threshold.
+    - [x] Verify measurement happens after test teardown; add a hook-order self-test or fallback guarded helper if global hooks cannot guarantee ordering.
+
+  Notes: AVA 3.15.0 does not provide a supported global hook mechanism through preload/config `require`; use an explicit per-file guard helper rather than monkey-patching `require('ava')`.
+
+  Implementation Notes: Added `scripts/lib/ava-memory-guard.js` with `installAvaMemoryGuard(test, options)`, `measureMemoryUsage()`, and `drainAndGc()`. The helper is no-op when guard mode is disabled, fails immediately if `global.gc` is unavailable when enabled, stores per-test baselines in a `WeakMap` keyed by the AVA execution context, and measures after `t.teardown()` cleanup via `test.afterEach.always`. Memory guard mode now injects `--serial` as well as `--expose-gc` and `--concurrency 1`. Added `scripts/test/ava-memory-guard.spec.js` and `scripts/test/ava-memory-guard-hook-order.spec.js`, including a real AVA hook-order self-test proving `t.teardown()` runs before `afterEach.always`. Verification: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 81 tests; `git diff --check` passed.
 
 - [ ] Task: Add AVA exception and skip support
     - [ ] Support near-test documented exceptions with threshold and reason.

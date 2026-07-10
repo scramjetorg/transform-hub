@@ -823,6 +823,71 @@ test("buildAvaArgs does not throw when SCRAMJET_AVA_WORKERS is unset in memory g
 });
 
 // ---------------------------------------------------------------------------
+// buildAvaArgs – memory guard mode (--serial injection)
+// ---------------------------------------------------------------------------
+
+test("buildAvaArgs injects --serial in memory guard mode", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+	delete process.env[ENV.WORKERS];
+	try {
+		const args = buildAvaArgs([]);
+		t.true(args.includes("--serial"), "--serial should be present");
+		// --serial should come after ava CLI path
+		const avaIndex = args.findIndex((a) => a.includes("ava") && a.endsWith(".js"));
+		const serialIndex = args.indexOf("--serial");
+		t.true(serialIndex > avaIndex, "--serial should come after ava CLI");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+	}
+});
+
+test("buildAvaArgs does not inject --serial when already in CLI args", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.WORKERS];
+	try {
+		const args = buildAvaArgs(["--serial"]);
+		// There should be exactly one --serial in the result
+		const serialIndices = args.reduce((acc, a, i) => a === "--serial" ? [...acc, i] : acc, []);
+		t.is(serialIndices.length, 1, "should have exactly one --serial");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+	}
+});
+
+test("buildAvaArgs injects --serial alongside --concurrency 1 and --expose-gc", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.WORKERS];
+	try {
+		const args = buildAvaArgs([]);
+		t.true(args.includes("--expose-gc"), "--expose-gc should be present");
+		t.true(args.includes("--serial"), "--serial should be present");
+		t.true(args.includes("--concurrency"), "--concurrency should be present");
+		const concIdx = args.indexOf("--concurrency");
+		t.is(args[concIdx + 1], "1");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+	}
+});
+
+// ---------------------------------------------------------------------------
 // buildAvaArgs – no behavior change when memory guard is disabled
 // ---------------------------------------------------------------------------
 
@@ -857,6 +922,7 @@ test("buildAvaArgs does not inject --expose-gc when memory guard vars are 0", (t
 	try {
 		const args = buildAvaArgs([]);
 		t.false(args.includes("--expose-gc"), "--expose-gc should not be present");
+		t.false(args.includes("--serial"), "--serial should not be present");
 	} finally {
 		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
 		else delete process.env[ENV.MEMORY_GUARD];
