@@ -16,6 +16,29 @@ function tailLog(value: string): string {
     return value.slice(-CRASH_LOG_TAIL_BYTES);
 }
 
+async function readProcessRss(pid: number): Promise<{ memoryUsage: number; memoryMaxUsage: number } | undefined> {
+    try {
+        const status = await readFile(`/proc/${pid}/status`, "utf8");
+        const match = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
+
+        if (!match) return undefined;
+
+        const rssKb = parseInt(match[1], 10);
+
+        if (!Number.isFinite(rssKb) || rssKb <= 0) return undefined;
+
+        const rss = rssKb * 1024;
+
+        return {
+            memoryUsage: rss,
+            // No peak tracking exists for process adapter samples yet.
+            memoryMaxUsage: rss
+        };
+    } catch {
+        return undefined;
+    }
+}
+
 const isTSNode =
     !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) ||
     !!(process as any)[Symbol.for("ts-node.register.instance")];
@@ -36,6 +59,7 @@ class ProcessInstanceAdapter implements
 
     private runnerProcess?: ChildProcess;
     private crashLogStreams?: Promise<string[]>;
+    private memoryMaxUsage?: number;
     private _limits?: InstanceLimits = {};
 
     get limits() { return this._limits || {} as InstanceLimits; }
@@ -54,21 +78,23 @@ class ProcessInstanceAdapter implements
     }
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
-        const { runnerProcess } = this;
+        const pid = this.runnerProcess?.pid ?? (this.processPID > 0 ? this.processPID : undefined);
+        const result: MonitoringMessageData = {
+            ...msg,
+            processId: pid ?? this.processPID
+        };
 
-        if (!runnerProcess) {
-            // Runner process not initialized yet
-            return {
-                ...msg,
-                processId: this.processPID
-            };
+        if (pid) {
+            const memory = await readProcessRss(pid);
+
+            if (memory) {
+                this.memoryMaxUsage = Math.max(this.memoryMaxUsage ?? 0, memory.memoryUsage);
+                result.memoryUsage = memory.memoryUsage;
+                result.memoryMaxUsage = this.memoryMaxUsage;
+            }
         }
 
-        return {
-            // @TODO: Provide stats and limits
-            ...msg,
-            processId: this.runnerProcess?.pid
-        };
+        return result;
     }
 
     getRunnerCmd(config: SequenceConfig) {

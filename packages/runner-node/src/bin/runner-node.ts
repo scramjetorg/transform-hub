@@ -24,6 +24,7 @@ import { runSequence } from "../run-sequence";
 import type { RunSequenceHostClient } from "../run-sequence";
 import type { BootstrapOverrides } from "../types";
 import {
+    getMemoryUsage,
     legacyExitFilePath,
     loadSequenceModule,
     makeOutputDiscard,
@@ -232,7 +233,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             resolveWrite();
         });
 
-        writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { healthy: true }]);
+        writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { healthy: true, ...getMemoryUsage() }]);
     } else {
         const built = buildSequenceContext({
             bootConfig,

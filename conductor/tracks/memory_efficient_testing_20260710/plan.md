@@ -101,21 +101,23 @@
 
 ## Phase 4: Runner and Adapter Memory Observability
 
-- [ ] Task: Populate runner memory monitoring data
-    - [ ] Add current and max memory measurements to runner-node monitoring frames where appropriate.
-    - [ ] Preserve existing monitoring message compatibility.
-    - [ ] Avoid hidden production behavior changes beyond reporting observability data.
+- [x] Task: Populate runner memory monitoring data
+    - [x] Add current and max memory measurements to runner-node monitoring frames where appropriate.
+    - [x] Preserve existing monitoring message compatibility.
+    - [x] Avoid hidden production behavior changes beyond reporting observability data.
 
-- [ ] Task: Improve process and adapter stats where practical
-    - [ ] Review process adapter stats gaps and populate process memory data when observable.
-    - [ ] Review Docker adapter stats behavior and align terminology with container working-set documentation where needed.
-    - [ ] Record Kubernetes limitations or deferrals if pod memory stats are not practical in this track.
+- [x] Task: Improve process and adapter stats where practical
+    - [x] Review process adapter stats gaps and populate process memory data when observable.
+    - [x] Review Docker adapter stats behavior and align terminology with container working-set documentation where needed.
+    - [x] Record Kubernetes limitations or deferrals if pod memory stats are not practical in this track.
 
-- [ ] Task: Add focused runtime monitoring tests
-    - [ ] Add tests proving memory fields are emitted or enriched where implemented.
-    - [ ] Validate sequence-level memory assertions against monitoring frames.
-    - [ ] Run relevant runner/runtime package tests under memory guard where applicable.
-    - [ ] Commit completed runner observability work according to task-level commit policy.
+- [x] Task: Add focused runtime monitoring tests
+    - [x] Add tests proving memory fields are emitted or enriched where implemented.
+    - [x] Validate sequence-level memory assertions against monitoring frames.
+    - [x] Run relevant runner/runtime package tests under memory guard where applicable.
+    - [x] Commit completed runner observability work according to task-level commit policy.
+
+  Notes: Added runner-node RSS memory reporting to the existing one-shot MONITORING frame via `getMemoryUsage()`, preserving the existing payload shape and adding only `memoryUsage` plus a non-decreasing `memoryMaxUsage` peak tracked in-process. Added process adapter RSS enrichment from `/proc/<pid>/status` when a runner PID is observable; sampling failures are best-effort and preserve existing passthrough stats plus `processId`. Docker adapter already populates memory fields and was not changed; Kubernetes adapter remains deferred because pod memory requires metrics API/kubectl integration outside this phase. Focused runtime validation passed: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/monitoring-memory.spec.ts` from `packages/runner-node` passed with 3 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js` from `packages/adapter-process` passed with 6 tests. Full runner-node package validation was attempted and still fails in pre-existing spawn/undici paths with `ReferenceError: WebAssembly is not defined` under the repo's guarded jitless host profile; the new focused tests pass. `git diff --check` passed. Review found no blockers after correcting `memoryMaxUsage` from a current-RSS duplicate to a non-decreasing peak.
 
 - [ ] Task: Conductor - Phase Checkpoint 'Runner and Adapter Memory Observability' (Protocol in workflow.md)
 
