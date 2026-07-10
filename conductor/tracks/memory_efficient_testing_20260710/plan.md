@@ -156,7 +156,9 @@
 
   Notes: Added `scripts/lib/bdd-memory-guard.js` with `ensureGlobalGc`, `checkBddMemorySkip`, `formatComponentBreakdown`, `buildBddMemoryDiagnostics`, and `measureWithGc`, reusing `measureMemoryUsage` and `drainAndGc` from the AVA memory guard. Tests added to `scripts/test/bdd-options.spec.js` (51 tests → 51+24=75 tests), `scripts/test/bdd-memory-guard.spec.js` (17 tests), and `scripts/test/run-bdd.spec.js` (12 tests → 15 tests). All 75 tests pass under `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/bdd-options.spec.js scripts/test/bdd-memory-guard.spec.js scripts/test/run-bdd.spec.js`. Docker mode focused BDD run is deferred to Phase 6 where child-process/Docker container checking provides the integration surface; the guard wiring (NODE_OPTIONS injection) is structurally tested via source-level tests in `run-bdd.spec.js`.
 
-- [ ] Task: Conductor - Phase Checkpoint 'BDD Parent Scenario Memory Guard' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Checkpoint 'BDD Parent Scenario Memory Guard' (Protocol in workflow.md)
+
+  Checkpoint Notes: Phase 5 completed with BDD guard env/threshold parsing, direct and Docker `--expose-gc` runner wiring, per-scenario Cucumber parent heap measurement after cleanup hooks, world cleanup before measurement, focused helper/options/runner tests, and review with no blockers. Validation performed before checkpoint: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/bdd-options.spec.js scripts/test/bdd-memory-guard.spec.js scripts/test/run-bdd.spec.js` passed with 75 tests; `git diff --check` passed. A focused runtime Docker BDD scenario run is intentionally deferred to Phase 6 integration, where child process and Docker container memory checks are implemented alongside the parent guard. Phase 5 commit: `a9f8b6d8`.
 
 ## Phase 6: BDD Child Process and Docker Container Memory Checks
 
