@@ -240,14 +240,10 @@ function avaNodeOptions(options) {
 	const withHeapLimit = replaceNodeOption(base, `--max-old-space-size=${maxOldSpaceSize()}`);
 
 	// 2. Fetch mode
-	const withFetchMode = isDisabled(process.env[ENV.FETCH])
-		? appendNodeOption(withHeapLimit, "--no-experimental-fetch")
-		: withHeapLimit;
+	const withFetchMode = isDisabled(process.env[ENV.FETCH]) ? appendNodeOption(withHeapLimit, "--no-experimental-fetch") : withHeapLimit;
 
 	// 3. JIT / WASM profile
-	const withJit = isDisabled(process.env[ENV.JITLESS])
-		? removeNodeOption(withFetchMode, "--jitless")
-		: appendNodeOption(withFetchMode, "--jitless");
+	const withJit = isDisabled(process.env[ENV.JITLESS]) ? removeNodeOption(withFetchMode, "--jitless") : appendNodeOption(withFetchMode, "--jitless");
 
 	// 4. Bypass‑guard preload (opt‑in via SCRAMJET_AVA_GUARD=1)
 	//    NOTE: this guard is only effective for runner‑spawned AVA processes
@@ -421,17 +417,43 @@ function isMemoryGuardEnabled() {
  *
  * @returns {number}
  */
+/**
+ * Resolve the heap threshold in bytes for memory guard mode.
+ *
+ * AVA-specific SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES takes priority; then
+ * common SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES; then the built-in default
+ * (524288 = 512 KiB).
+ *
+ * When an env var is present but its value is not a positive finite number,
+ * the function throws rather than silently falling back — the operator has
+ * expressed intent but provided an invalid value.
+ *
+ * @returns {number}
+ * @throws {Error}  If an env var is set to a non-numeric, zero, or negative value.
+ */
 function memoryHeapThresholdBytes() {
 	const avaThreshold = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
 
-	if (avaThreshold && !Number.isNaN(Number(avaThreshold)) && Number(avaThreshold) > 0) {
-		return Number(avaThreshold);
+	if (avaThreshold !== undefined) {
+		const n = Number(avaThreshold);
+
+		if (!Number.isFinite(n) || n <= 0) {
+			throw new Error(`${ENV.AVA_MEMORY_HEAP_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(avaThreshold)}.`);
+		}
+
+		return n;
 	}
 
 	const commonThreshold = process.env[ENV.MEMORY_HEAP_THRESHOLD];
 
-	if (commonThreshold && !Number.isNaN(Number(commonThreshold)) && Number(commonThreshold) > 0) {
-		return Number(commonThreshold);
+	if (commonThreshold !== undefined) {
+		const n = Number(commonThreshold);
+
+		if (!Number.isFinite(n) || n <= 0) {
+			throw new Error(`${ENV.MEMORY_HEAP_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(commonThreshold)}.`);
+		}
+
+		return n;
 	}
 
 	return DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;

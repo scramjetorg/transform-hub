@@ -30,6 +30,13 @@ const {
 
 const hasGc = typeof global.gc === "function";
 
+/**
+ * Global sink for deterministic leak tests – prevents V8 from optimising
+ * away retained allocations.  Cleared after each leak-test assertion.
+ * @type {Array<Buffer>}
+ */
+const leakSink = [];
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -59,14 +66,17 @@ function createMockT(title = "mock-test") {
  * calls the underlying AVA test object.
  *
  * The returned function records each invocation and synchronously
- * executes the body with a mockT.
+ * executes the body with a mockT.  Common AVA member methods (.serial,
+ * .only, .failing, .skip, .todo, .before, .after, .beforeEach,
+ * .afterEach) are stubbed so the guard's member-attachment logic works.
  *
  * @returns {Function}  Mock rawTest with ._results[].
  */
 function createMockRawTest() {
 	const results = [];
 
-	function rawTest(title, ...rest) {
+	// Core registration helper
+	function register(title, ...rest) {
 		let body;
 		let opts;
 
@@ -81,14 +91,36 @@ function createMockRawTest() {
 
 		results.push({ title, opts, mockT, body });
 
-		// Execute body synchronously if it's not a thenable
 		const result = body(mockT);
 
 		if (result && typeof result.then === "function") {
-			// async body – store the promise so tests can await it
 			results[results.length - 1].promise = result;
 		}
 	}
+
+	const rawTest = function (title, ...rest) {
+		register(title, ...rest);
+	};
+
+	// Callable modifiers – delegate to register
+	for (const mod of ["serial", "only", "failing"]) {
+		rawTest[mod] = function (title, ...rest) {
+			register(title, ...rest);
+		};
+	}
+
+	// Non-body pass-through stubs
+	rawTest.skip = function () {};
+	rawTest.todo = function () {};
+
+	// Hook stubs
+	for (const key of ["before", "after", "beforeEach", "afterEach"]) {
+		rawTest[key] = function () {};
+	}
+
+	// afterEach.always stub
+	rawTest.afterEach = function () {};
+	rawTest.afterEach.always = function () {};
 
 	rawTest._results = results;
 
@@ -325,7 +357,7 @@ test("createAvaMemoryGuard with enabled guard throws when global.gc is unavailab
 // createAvaMemoryGuard – threshold violation (strict, no dynamic subtraction)
 // ---------------------------------------------------------------------------
 
-test("wrapper detects threshold violation with retained allocation", async (t) => {
+	test("wrapper detects threshold violation with retained allocation", async (t) => {
 	if (!hasGc) {
 		t.pass("skip: --expose-gc not available");
 		return;
@@ -344,18 +376,18 @@ test("wrapper detects threshold violation with retained allocation", async (t) =
 		const guarded = createAvaMemoryGuard(mockRaw, { threshold: guardThreshold });
 
 		guarded("violation-test", async (mockT) => {
-			// Allocate a buffer that exceeds 512 bytes and retain it
-			const retained = Buffer.alloc(50 * 1024); // 50 KiB
-
-			// Register cleanup – but run guard BEFORE cleanup (no cleanup
-			// registered here, so allocation stays alive during measurement)
-			void retained;
+			// Push into global leakSink to ensure V8 does not optimise
+			// the allocation away before the guard measures.
+			leakSink.push(Buffer.alloc(50 * 1024)); // 50 KiB
 		});
 
 		// Wait for the async body to complete
 		const { mockT, promise } = mockRaw._results[0];
 
 		if (promise) await promise;
+
+		// Clear leakSink immediately after reading failures
+		leakSink.length = 0;
 
 		// Should fail because 50 KiB > 512 bytes
 		t.true(mockT._failures.length > 0, "should fail for threshold violation");
@@ -601,6 +633,245 @@ test("installAvaMemoryGuard returns same type as createAvaMemoryGuard", (t) => {
 		t.is(typeof fromInstall, "function", "installAvaMemoryGuard returns function");
 	} finally {
 		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+// ---------------------------------------------------------------------------
+// createAvaMemoryGuard – threshold validation (fail-closed)
+// ---------------------------------------------------------------------------
+
+test("createAvaMemoryGuard throws when options.threshold is not a number", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+
+		t.throws(() => createAvaMemoryGuard(mockRaw, { threshold: "abc" }), {
+			instanceOf: Error,
+			message: /threshold/,
+		});
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("createAvaMemoryGuard throws when options.threshold is zero", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+
+		t.throws(() => createAvaMemoryGuard(mockRaw, { threshold: 0 }), {
+			instanceOf: Error,
+			message: /threshold/,
+		});
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("createAvaMemoryGuard throws when options.threshold is negative", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+
+		t.throws(() => createAvaMemoryGuard(mockRaw, { threshold: -100 }), {
+			instanceOf: Error,
+			message: /threshold/,
+		});
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("createAvaMemoryGuard throws when options.threshold is Infinity", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+
+		t.throws(() => createAvaMemoryGuard(mockRaw, { threshold: Infinity }), {
+			instanceOf: Error,
+			message: /threshold/,
+		});
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+// ---------------------------------------------------------------------------
+// createAvaMemoryGuard – AVA member methods
+// ---------------------------------------------------------------------------
+
+test("guarded test function has .serial, .only, .failing methods", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	// Disabled guard – pass-through, should still expose members
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw);
+
+		t.true(typeof guarded.serial === "function", "should have .serial");
+		t.true(typeof guarded.only === "function", "should have .only");
+		t.true(typeof guarded.failing === "function", "should have .failing");
+		t.true(typeof guarded.skip === "function", "should have .skip");
+		t.true(typeof guarded.todo === "function", "should have .todo");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("guarded .serial passes through to rawTest.serial", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw);
+
+		guarded.serial("serial-test", (mockT) => {
+			mockT._failures.push("called");
+		});
+
+		t.is(mockRaw._results.length, 1, "should register one test");
+		t.is(mockRaw._results[0].title, "serial-test");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("guarded .serial with enabled guard wraps body with measurement", async (t) => {
+	if (!hasGc) {
+		t.pass("skip: --expose-gc not available");
+		return;
+	}
+
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw, { threshold: 512 });
+
+		guarded.serial("leak-serial-test", async (mockT) => {
+			leakSink.push(Buffer.alloc(30 * 1024));
+		});
+
+		const { mockT, promise } = mockRaw._results[0];
+
+		if (promise) await promise;
+
+		leakSink.length = 0;
+
+		t.true(mockT._failures.length > 0,
+			"guarded.serial should detect threshold violation");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+test("guarded test function has hook pass-through methods", (t) => {
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw);
+
+		t.true(typeof guarded.before === "function", "should have .before");
+		t.true(typeof guarded.after === "function", "should have .after");
+		t.true(typeof guarded.beforeEach === "function", "should have .beforeEach");
+		t.true(typeof guarded.afterEach === "function", "should have .afterEach");
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
+	}
+});
+
+// ---------------------------------------------------------------------------
+// Enhanced diagnostics – component breakdown in failure message
+// ---------------------------------------------------------------------------
+
+test("failure message includes component breakdown and threshold source", async (t) => {
+	if (!hasGc) {
+		t.pass("skip: --expose-gc not available");
+		return;
+	}
+
+	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
+	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+
+	try {
+		const mockRaw = createMockRawTest();
+		const guarded = createAvaMemoryGuard(mockRaw, { threshold: 512 });
+
+		guarded("diag-test", async (mockT) => {
+			leakSink.push(Buffer.alloc(30 * 1024));
+		});
+
+		const { mockT, promise } = mockRaw._results[0];
+
+		if (promise) await promise;
+
+		leakSink.length = 0;
+
+		t.true(mockT._failures.length > 0, "should fail");
+
+		if (mockT._failures.length > 0) {
+			const msg = mockT._failures[0];
+
+			t.true(msg.includes("heapUsed"), "message should include heapUsed breakdown");
+			t.true(msg.includes("external"), "message should include external breakdown");
+			t.true(msg.includes("arrayBuffers"), "message should include arrayBuffers breakdown");
+			t.true(msg.includes("before (total)"), "message should include before total");
+			t.true(msg.includes("after (total)"), "message should include after total");
+			t.true(msg.includes("cleanup callbacks"), "message should mention cleanup count");
+		}
+	} finally {
+		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
+		else delete process.env[ENV.MEMORY_GUARD];
 		if (savedAvaMemGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedAvaMemGuard;
 	}
 });

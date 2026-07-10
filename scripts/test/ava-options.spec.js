@@ -633,13 +633,42 @@ test("memoryHeapThresholdBytes prefers SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES over 
 	}
 });
 
-test("memoryHeapThresholdBytes ignores non-numeric env values", (t) => {
+test("memoryHeapThresholdBytes throws on non-numeric env value", (t) => {
 	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
 	const savedAva = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
 	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "not-a-number";
 	delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
 	try {
-		t.is(memoryHeapThresholdBytes(), DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES);
+		const err = t.throws(() => memoryHeapThresholdBytes(), { instanceOf: Error });
+		t.true(err.message.includes(ENV.MEMORY_HEAP_THRESHOLD), "should mention the env var name");
+	} finally {
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+		if (savedAva !== undefined) process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = savedAva;
+	}
+});
+
+test("memoryHeapThresholdBytes throws on zero env value", (t) => {
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	const savedAva = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "0";
+	delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	try {
+		t.throws(() => memoryHeapThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+		if (savedAva !== undefined) process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = savedAva;
+	}
+});
+
+test("memoryHeapThresholdBytes throws on negative env value", (t) => {
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	const savedAva = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "-100";
+	delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	try {
+		t.throws(() => memoryHeapThresholdBytes(), { instanceOf: Error });
 	} finally {
 		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
 		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
