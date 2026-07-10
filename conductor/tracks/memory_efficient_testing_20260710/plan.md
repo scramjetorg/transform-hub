@@ -28,7 +28,9 @@
 
   Notes: Shared semantics for implementation are: `node.postGc.totalBytes = heapUsed + external + arrayBuffers`, `node.postGc.deltaBytes = after - before`, `process.rssBytes` / `process.rssDeltaBytes` for spawned PIDs or process groups, `docker.workingSetBytes = memory_stats.usage - inactive_file/cache` where available, and `resource.leak.count` for live resources expected to be gone. Planned defaults are `SCRAMJET_MEMORY_GUARD=1`, `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES=524288`, AVA/BDD-specific threshold overrides, `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES=104857600`, and `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES=104857600`. Node heap sampling must drain, GC, drain, GC before baseline and final measurements, after teardown/dispose hooks. RSS/container checks first enforce expected process/container lifecycle; long-lived resources compare deltas. 100 MiB is the default child/container threshold, 100-200 MiB requires a scoped reason, and above 200 MiB should require explicit approval or an issue. Any memory skip must include a reason; reasonless skips fail.
 
-- [ ] Task: Conductor - Phase Checkpoint 'Track Setup and Test Surface Inventory' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Checkpoint 'Track Setup and Test Surface Inventory' (Protocol in workflow.md)
+
+  Checkpoint Notes: Phase 1 completed with the implementation branch created, track status marked in progress, local infrastructure inventory recorded, and shared memory semantics defined. Shared-code review found existing reusable option/env parsing patterns in `scripts/lib/ava-options.js` and `scripts/lib/bdd-options.js`; BDD process matching should preserve `bdd-cleanup.js` path-anchored patterns. No product code changed in this phase, so build/test validation was not applicable. Verification performed with `git status --short` confirming a clean worktree before checkpoint update. Phase commits: `737442c3`, `b0ab8a42`, `7a4e0d34`.
 
 ## Phase 2: AVA Package-Test Memory Guard
 
