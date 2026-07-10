@@ -242,10 +242,10 @@
 
 - [ ] Task: Final branch and PR checkpoint
     - [x] Ensure all completed work is committed with scoped task-level commits.
-    - [ ] Push the implementation branch.
-    - [ ] Update the draft PR with final validation results as a PR comment.
-    - [ ] Mark the PR ready only after final verification is complete.
+    - [x] Push the implementation branch.
+    - [x] Update the draft PR with final validation results as a PR comment.
+    - [x] Mark the PR ready only after final verification is complete.
 
-- [ ] Task: Conductor - Phase Checkpoint 'Review, Stabilization, and Finalization' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Checkpoint 'Review, Stabilization, and Finalization' (Protocol in workflow.md)
 
-  Checkpoint Notes: Phase 8 final validation after the cleanup-error fix: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 107 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js` passed with 12 strict guard tests; `git diff --check` passed. Default parent heap threshold remains 524288 bytes; BDD child RSS and Docker working-set defaults remain 104857600 bytes. No skips were used. Scoped exceptions remain the documented per-test allowance paths only. Known follow-ups remain deferred: run an actual Docker BDD scenario under `SCRAMJET_BDD_MEMORY_GUARD=1` in an environment with required Docker artifacts; revisit full `runner-node` package validation once unrelated guarded-profile WebAssembly/undici spawn-path failures are fixed; broaden AVA wrapper adoption per package as future tracks require.
+  Checkpoint Notes: Phase 8 final validation after the cleanup-error fix: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 107 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js` passed with 12 strict guard tests; `git diff --check` passed. Default parent heap threshold remains 524288 bytes; BDD child RSS and Docker working-set defaults remain 104857600 bytes. No skips were used. Scoped exceptions remain the documented per-test allowance paths only. Known follow-ups remain deferred: run an actual Docker BDD scenario under `SCRAMJET_BDD_MEMORY_GUARD=1` in an environment with required Docker artifacts; revisit full `runner-node` package validation once unrelated guarded-profile WebAssembly/undici spawn-path failures are fixed; broaden AVA wrapper adoption per package as future tracks require. Final PR validation comment: https://github.com/0rail/transform-hub/pull/55#issuecomment-4938562945. PR #55 was marked ready for review after final verification.
