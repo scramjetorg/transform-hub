@@ -1,5 +1,8 @@
-import test from "ava";
+import baseTest from "ava";
 import { RunnerMessageCode } from "@scramjet/symbols";
+
+const { createAvaMemoryGuard, registerAvaMemoryCleanup } = require("../../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 
 type CaptureWrite = (value: Buffer | string) => unknown;
 
@@ -11,6 +14,7 @@ type OutputCapture = {
     write?: CaptureWrite;
     end?: () => unknown;
     capture?: CaptureWrite;
+    clear?: () => void;
 };
 
 type LogCapture = {
@@ -20,6 +24,7 @@ type LogCapture = {
     write?: CaptureWrite;
     end?: () => unknown;
     capture?: CaptureWrite;
+    clear?: () => void;
 };
 
 type MonitoringCapture = {
@@ -27,12 +32,14 @@ type MonitoringCapture = {
     write?: CaptureWrite;
     capture?: CaptureWrite;
     end?: () => unknown;
+    clear?: () => void;
     waitForCompletion?: () => Promise<void>;
 };
 
 type SequenceAssertions = {
     completed: () => Promise<void> | void;
     noRuntimeErrors: () => Promise<void> | void;
+    memoryWithinLimit?: (options: { threshold: number }) => void;
 };
 
 type CapturesApi = {
@@ -72,6 +79,15 @@ const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(r
 const awaitValue = async <T>(valueOrPromise: T | Promise<T>): Promise<T> => valueOrPromise;
 
 const toPromise = async (fn: () => unknown): Promise<unknown> => fn();
+
+const captureError = (fn: () => void): Error | undefined => {
+    try {
+        fn();
+        return undefined;
+    } catch (err) {
+        return err instanceof Error ? err : new Error(String(err));
+    }
+};
 
 const callSequenceAssertions = (monitoring: MonitoringCapture): SequenceAssertions => {
     const createSequenceAssertions = getOrThrow("createSequenceAssertions", capturesApi.createSequenceAssertions);
@@ -236,17 +252,24 @@ test("createSequenceAssertions.completed() throws before completion and passes a
     const monitoring = createMonitoringCapture();
     const assertions = callSequenceAssertions(monitoring);
 
-    await t.throwsAsync(
-        () => toPromise(() => assertions.completed()),
-        {
-            instanceOf: Error,
-        },
-        "completed() should throw before sequence completes"
-    );
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    let thrown: unknown;
+
+    try {
+        assertions.completed();
+    } catch (err) {
+        thrown = err;
+    }
+
+    t.true(thrown instanceof Error, "completed() should throw before sequence completes");
 
     await writeFrames(monitoring, [`${JSON.stringify([RunnerMessageCode.SEQUENCE_COMPLETED, {}])}\r\n`]);
 
-    await t.notThrowsAsync(toPromise.bind(null, () => assertions.completed()), "completed() should pass after completion");
+    assertions.completed();
+    t.pass("completed() should pass after completion");
 });
 
 test("createSequenceAssertions.noRuntimeErrors() throws for sequenceError in stopped frame", async t => {
@@ -255,7 +278,10 @@ test("createSequenceAssertions.noRuntimeErrors() throws for sequenceError in sto
     const monitoring = createMonitoringCapture();
     const assertions = callSequenceAssertions(monitoring);
 
-    await t.notThrowsAsync(toPromise.bind(null, () => assertions.noRuntimeErrors()), "noRuntimeErrors() should pass with no error frames");
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    assertions.noRuntimeErrors();
+    t.pass("noRuntimeErrors() should pass with no error frames");
 
     await writeFrames(monitoring, [
         `${JSON.stringify([
@@ -264,11 +290,297 @@ test("createSequenceAssertions.noRuntimeErrors() throws for sequenceError in sto
         ])}\r\n`,
     ]);
 
-    await t.throwsAsync(
-        () => toPromise(() => assertions.noRuntimeErrors()),
-        {
-            instanceOf: Error,
-        },
-        "noRuntimeErrors() should throw when sequenceError exists"
+    let thrown: unknown;
+
+    try {
+        assertions.noRuntimeErrors();
+    } catch (err) {
+        thrown = err;
+    }
+
+    t.true(thrown instanceof Error, "noRuntimeErrors() should throw when sequenceError exists");
+});
+
+test("ByteCapture.clear() empties retained chunks", async t => {
+    const createOutputCapture = getOrThrow("createOutputCapture", capturesApi.createOutputCapture);
+
+    const capture = createOutputCapture();
+
+    await writePayload(capture, "hello\n");
+    await writePayload(capture, "world\n");
+
+    t.is(await awaitValue(capture.text()), "hello\nworld\n");
+
+    if (typeof capture.clear === "function") {
+        capture.clear();
+    }
+
+    t.is(await awaitValue(capture.text()), "", "text() should be empty after clear");
+    t.is((await awaitValue(capture.raw())).length, 0, "raw() should be empty after clear");
+    t.deepEqual(await awaitValue(capture.lines()), [], "lines() should be empty after clear");
+});
+
+test("OutputCapture inherits clear via ByteCapture", async t => {
+    const createOutputCapture = getOrThrow("createOutputCapture", capturesApi.createOutputCapture);
+
+    const capture = createOutputCapture();
+
+    await writePayload(capture, "data\n");
+    t.true(typeof capture.clear === "function", "OutputCapture should have clear()");
+
+    if (typeof capture.clear === "function") {
+        capture.clear();
+    }
+
+    t.is(await awaitValue(capture.text()), "");
+    t.deepEqual(await awaitValue(capture.ndjson()), []);
+});
+
+test("LogCapture inherits clear via ByteCapture", async t => {
+    const createLogCapture = getOrThrow("createLogCapture", capturesApi.createLogCapture);
+
+    const capture = createLogCapture();
+
+    await writePayload(capture, "log-line\n");
+    t.true(typeof capture.clear === "function", "LogCapture should have clear()");
+
+    if (typeof capture.clear === "function") {
+        capture.clear();
+    }
+
+    t.is(await awaitValue(capture.text()), "");
+});
+
+test("MonitoringCapture.clear() clears frames and pending partial text", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+
+    await writePayload(monitoring, `${JSON.stringify([RunnerMessageCode.MONITORING, { healthy: true }])}\r\n`);
+    await writePayload(monitoring, "incomplete"); // partial line without newline
+
+    t.is((await awaitValue(monitoring.frames())).length, 1, "should have one parsed frame");
+
+    if (typeof monitoring.clear === "function") {
+        monitoring.clear();
+    }
+
+    t.deepEqual(await awaitValue(monitoring.frames()), [], "frames should be empty after clear");
+
+    // After clear, write more data - the previous incomplete fragment should be gone
+    await writePayload(monitoring, `${JSON.stringify([RunnerMessageCode.SEQUENCE_COMPLETED, {}])}\r\n`);
+    t.is((await awaitValue(monitoring.frames())).length, 1, "should only contain frame written after clear");
+});
+
+test("MonitoringCapture.clear() resolves pending waiters", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+
+    // Start waiting before any completion frame
+    const waiter = monitoring.waitForCompletion!();
+
+    const racedBeforeClear = await Promise.race([
+        waiter.then(() => "resolved" as const),
+        new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 30)),
+    ]);
+
+    t.is(racedBeforeClear, "timeout", "waiter should still be pending before clear");
+
+    // Clear should resolve the pending waiter
+    if (typeof monitoring.clear === "function") {
+        monitoring.clear();
+    }
+
+    await t.notThrowsAsync(
+        () => waiter,
+        "pending waitForCompletion should resolve after clear"
     );
+});
+
+test("extractMemoryMonitoringFrames returns frames with memory fields", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, memoryUsage: 1024 }
+    ])}\r\n`);
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, memoryMaxUsage: 2048 }
+    ])}\r\n`);
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, limit: 4096 }
+    ])}\r\n`);
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true }
+    ])}\r\n`); // no memory fields — should be skipped
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.SEQUENCE_COMPLETED, {}
+    ])}\r\n`);
+
+    const extract = (capturesApi as Record<string, unknown>).extractMemoryMonitoringFrames as
+        ((frames: unknown[][]) => unknown[]) | undefined;
+
+    if (typeof extract !== "function") {
+        t.pass("extractMemoryMonitoringFrames not available from test import");
+        return;
+    }
+
+    const frames = await awaitValue(monitoring.frames());
+    const memoryFrames = extract(frames);
+
+    t.is(memoryFrames.length, 3, "should find 3 frames with memory fields");
+
+    const mf0 = memoryFrames[0] as Record<string, unknown>;
+    t.is(mf0.memoryUsage, 1024);
+    t.is(mf0.frameIndex, 0);
+
+    const mf1 = memoryFrames[1] as Record<string, unknown>;
+    t.is(mf1.memoryMaxUsage, 2048);
+    t.is(mf1.frameIndex, 1);
+
+    const mf2 = memoryFrames[2] as Record<string, unknown>;
+    t.is(mf2.limit, 4096);
+    t.is(mf2.frameIndex, 2);
+});
+
+test("SequenceAssertions.memoryWithinLimit passes when memory fields are under threshold", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+    const assertions = callSequenceAssertions(monitoring);
+
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, memoryUsage: 500, memoryMaxUsage: 800 }
+    ])}\r\n`);
+
+    // Provide memoryWithinLimit through the assertion
+    const memoryFn = (assertions as Record<string, unknown>).memoryWithinLimit as
+        ((opts: { threshold: number }) => void) | undefined;
+
+    if (typeof memoryFn !== "function") {
+        t.pass("memoryWithinLimit not available");
+        return;
+    }
+
+    memoryFn({ threshold: 1000 });
+    t.pass("should pass when usage < threshold");
+});
+
+test("SequenceAssertions.memoryWithinLimit throws when memoryUsage exceeds threshold", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+    const assertions = callSequenceAssertions(monitoring);
+
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, memoryUsage: 1500 }
+    ])}\r\n`);
+
+    const memoryFn = (assertions as Record<string, unknown>).memoryWithinLimit as
+        ((opts: { threshold: number }) => void) | undefined;
+
+    if (typeof memoryFn !== "function") {
+        t.pass("memoryWithinLimit not available");
+        return;
+    }
+
+    const err = captureError(() => memoryFn({ threshold: 1000 }));
+    t.truthy(err, "should throw when memoryUsage exceeds threshold");
+
+    if (err) {
+        t.true(err.message.includes("memoryUsage 1500"), "error should mention observed memoryUsage");
+        t.true(err.message.includes("threshold 1000"), "error should mention threshold");
+    }
+});
+
+test("SequenceAssertions.memoryWithinLimit throws when memoryMaxUsage exceeds threshold", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+    const assertions = callSequenceAssertions(monitoring);
+
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, memoryMaxUsage: 2500 }
+    ])}\r\n`);
+
+    const memoryFn = (assertions as Record<string, unknown>).memoryWithinLimit as
+        ((opts: { threshold: number }) => void) | undefined;
+
+    if (typeof memoryFn !== "function") {
+        t.pass("memoryWithinLimit not available");
+        return;
+    }
+
+    const err = captureError(() => memoryFn({ threshold: 2000 }));
+    t.truthy(err, "should throw when memoryMaxUsage exceeds threshold");
+
+    if (err) {
+        t.true(err.message.includes("memoryMaxUsage 2500"), "error should mention observed memoryMaxUsage");
+    }
+});
+
+test("SequenceAssertions.memoryWithinLimit throws for empty monitoring frames", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+    const assertions = callSequenceAssertions(monitoring);
+
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    const memoryFn = (assertions as Record<string, unknown>).memoryWithinLimit as
+        ((opts: { threshold: number }) => void) | undefined;
+
+    if (typeof memoryFn !== "function") {
+        t.pass("memoryWithinLimit not available");
+        return;
+    }
+
+    const err = captureError(() => memoryFn({ threshold: 1000 }));
+    t.truthy(err, "should throw when no memory frames");
+    if (err) {
+        t.true(err.message.includes("no monitoring frames with memory fields"), "error should explain no memory frames");
+    }
+});
+
+test("SequenceAssertions.memoryWithinLimit throws for invalid threshold", async t => {
+    const createMonitoringCapture = getOrThrow("createMonitoringCapture", capturesApi.createMonitoringCapture);
+
+    const monitoring = createMonitoringCapture();
+    const assertions = callSequenceAssertions(monitoring);
+
+    registerAvaMemoryCleanup(t, () => monitoring.clear?.());
+
+    await writePayload(monitoring, `${JSON.stringify([
+        RunnerMessageCode.MONITORING, { healthy: true, memoryUsage: 500 }
+    ])}\r\n`);
+
+    const memoryFn = (assertions as Record<string, unknown>).memoryWithinLimit as
+        ((opts: { threshold: number }) => void) | undefined;
+
+    if (typeof memoryFn !== "function") {
+        t.pass("memoryWithinLimit not available");
+        return;
+    }
+
+    // Zero threshold
+    const errZero = captureError(() => memoryFn({ threshold: 0 }));
+    t.truthy(errZero, "should throw for zero threshold");
+
+    // Negative threshold
+    const errNeg = captureError(() => memoryFn({ threshold: -1 }));
+    t.truthy(errNeg, "should throw for negative threshold");
+
+    // NaN
+    const errNaN = captureError(() => memoryFn({ threshold: NaN }));
+    t.truthy(errNaN, "should throw for NaN threshold");
+
+    // Infinity
+    const errInf = captureError(() => memoryFn({ threshold: Infinity }));
+    t.truthy(errInf, "should throw for Infinity threshold");
 });

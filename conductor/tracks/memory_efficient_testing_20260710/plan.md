@@ -76,22 +76,24 @@
 
 ## Phase 3: Sequence-Test Cleanup and Memory Assertions
 
-- [ ] Task: Add deterministic cleanup to sequence-test captures
-    - [ ] Add `clear()` or `dispose()` behavior to byte, output, log, and monitoring captures where retained data exists.
-    - [ ] Ensure captured chunks, concatenated buffers, parsed frames, waiters, and pending text can be released.
-    - [ ] Update sequence-test APIs without breaking existing callers unnecessarily.
+- [x] Task: Add deterministic cleanup to sequence-test captures
+    - [x] Add `clear()` or `dispose()` behavior to byte, output, log, and monitoring captures where retained data exists.
+    - [x] Ensure captured chunks, concatenated buffers, parsed frames, waiters, and pending text can be released.
+    - [x] Update sequence-test APIs without breaking existing callers unnecessarily.
 
-- [ ] Task: Add memory-aware sequence-test assertions or helpers
-    - [ ] Add helper assertions for bounded memory growth where monitoring data is available.
-    - [ ] Keep assertions opt-in for scenarios that exercise runner/runtime memory behavior.
-    - [ ] Ensure helpers distinguish parent harness heap from child runner/process memory.
+- [x] Task: Add memory-aware sequence-test assertions or helpers
+    - [x] Add helper assertions for bounded memory growth where monitoring data is available.
+    - [x] Keep assertions opt-in for scenarios that exercise runner/runtime memory behavior.
+    - [x] Ensure helpers distinguish parent harness heap from child runner/process memory.
 
-- [ ] Task: Update sequence-test consumers and tests
-    - [ ] Update tests to clear retained chunks and captures in teardown.
-    - [ ] Keep `Buffer.concat` allowed for assertions while clearing references after use.
-    - [ ] Add focused tests proving cleanup/disposal releases retained capture state.
-    - [ ] Run sequence-test package validation under the AVA memory guard.
-    - [ ] Commit completed sequence-test work according to task-level commit policy.
+- [x] Task: Update sequence-test consumers and tests
+    - [x] Update tests to clear retained chunks and captures in teardown.
+    - [x] Keep `Buffer.concat` allowed for assertions while clearing references after use.
+    - [x] Add focused tests proving cleanup/disposal releases retained capture state.
+    - [x] Run sequence-test package validation under the AVA memory guard.
+    - [x] Commit completed sequence-test work according to task-level commit policy.
+
+  Notes: Added additive `clear()` APIs to byte/output/log captures and monitoring captures. Byte captures clear retained chunks while preserving existing `raw()`/`text()`/`lines()` behavior; monitoring clear releases parsed frames, pending text, and resolves pending waiters so tests do not hang. `createSequenceTest().close()` now clears output, log, and monitoring captures. Added `extractMemoryMonitoringFrames()` and opt-in `SequenceAssertions.memoryWithinLimit({ threshold })` for runner/process monitoring-frame memory fields, with diagnostics distinguishing these values from parent AVA heap measurements. Focused sequence-test specs now opt into `createAvaMemoryGuard(baseTest)` and use guard cleanup for retained monitoring frames. Validation passed: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node ../../scripts/run-ava.js test/harness/captures.spec.ts test/harness/index.spec.ts` from `packages/sequence-test` passed with 23 tests; the same focused command with `SCRAMJET_AVA_MEMORY_GUARD=1` passed with 23 strict guarded tests; full `node ../../scripts/run-ava.js` passed with 132 tests; full `SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js` passed with 132 tests, with strict measurement active in the focused wrapper-adopted specs. `git diff --check` passed. Oracle review found no blockers; non-blocking follow-up for Phase 4 is to consider failing on non-numeric memory payload fields instead of relying on comparison behavior.
 
 - [ ] Task: Conductor - Phase Checkpoint 'Sequence-Test Cleanup and Memory Assertions' (Protocol in workflow.md)
 
