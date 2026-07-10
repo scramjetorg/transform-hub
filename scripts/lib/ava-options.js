@@ -21,8 +21,23 @@
  *                                      invocation (used by the bypass guard preload)
  *   SCRAMJET_AVA_GUARD               – set to "1" to enable the direct‑invocation
  *                                      guard (preload script warns when RUNNER is unset)
+ *
+ *   Memory guard (Phase 2):
+ *     SCRAMJET_MEMORY_GUARD              – set to "1" to enable common memory guard
+ *     SCRAMJET_AVA_MEMORY_GUARD          – set to "1" to enable AVA‑specific memory
+ *                                          guard (overrides common); set to
+ *                                          "0"|"false"|"no"|"off" to force disable
+ *     SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES – common heap threshold override (default 524288)
+ *     SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES  – AVA‑specific heap threshold override
+ *     SCRAMJET_MEMORY_SKIP               – set to "1" to skip per‑test memory measurement
+ *                                          (future use)
+ *     SCRAMJET_MEMORY_SKIP_REASON        – optional reason string for skip (future use)
+ *
+ *   When memory guard mode is enabled (via SCRAMJET_MEMORY_GUARD or
+ *   SCRAMJET_AVA_MEMORY_GUARD), the AVA child process is launched with
+ *   --expose-gc and serial concurrency (--concurrency 1) to force deterministic
+ *   single‑file execution.
  */
-
 
 const { existsSync, readFileSync } = require("node:fs");
 const { dirname, join, resolve } = require("node:path");
@@ -156,6 +171,14 @@ const ENV = Object.freeze({
 	TIMEOUT: "SCRAMJET_AVA_TIMEOUT",
 	RUNNER: "SCRAMJET_AVA_RUNNER",
 	GUARD: "SCRAMJET_AVA_GUARD",
+
+	// Memory guard (Phase 2)
+	MEMORY_GUARD: "SCRAMJET_MEMORY_GUARD",
+	AVA_MEMORY_GUARD: "SCRAMJET_AVA_MEMORY_GUARD",
+	MEMORY_HEAP_THRESHOLD: "SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES",
+	AVA_MEMORY_HEAP_THRESHOLD: "SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES",
+	MEMORY_SKIP: "SCRAMJET_MEMORY_SKIP",
+	MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON",
 });
 
 const DEFAULTS = Object.freeze({
@@ -173,6 +196,12 @@ const DEFAULTS = Object.freeze({
 	 * Override via SCRAMJET_AVA_WORKERS env var.
 	 */
 	WORKERS: 2,
+	/**
+	 * Default heap usage threshold in bytes for memory guard mode.
+	 * 524288 bytes = 512 KiB. Override via SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES
+	 * or SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES env vars.
+	 */
+	MEMORY_HEAP_THRESHOLD_BYTES: 524288,
 });
 
 // ---------------------------------------------------------------------------
@@ -277,12 +306,56 @@ function avaConcurrency() {
  */
 function buildAvaArgs(cliArgs) {
 	const args = [...avaNodeArgs()];
-
 	const avaCli = resolveAvaCli();
+
+	// Memory guard mode: inject --expose-gc before the ava CLI path.
+	if (isMemoryGuardEnabled()) {
+		args.push("--expose-gc");
+	}
+
 	args.push(avaCli);
 
-	// Inject --concurrency from env if not already present in CLI args
-	// (detects both `--concurrency N` and `--concurrency=N`).
+	// Memory guard mode: enforce serial execution for deterministic memory
+	// measurement.
+	if (isMemoryGuardEnabled()) {
+		const cliHasConcurrency = cliArgs.some((a) => a === "--concurrency" || a.startsWith("--concurrency="));
+
+		// Reject explicit --concurrency with a value other than 1.
+		if (cliHasConcurrency) {
+			const concSpaceIdx = cliArgs.indexOf("--concurrency");
+
+			if (concSpaceIdx >= 0) {
+				const concValue = cliArgs[concSpaceIdx + 1];
+
+				if (concValue !== "1") {
+					throw new Error("Memory guard mode requires --concurrency 1, " + `but got --concurrency ${concValue}. ` + "Remove --concurrency or set it to 1.");
+				}
+			}
+
+			const concEq = cliArgs.find((a) => a.startsWith("--concurrency="));
+
+			if (concEq && concEq !== "--concurrency=1") {
+				throw new Error("Memory guard mode requires --concurrency=1, " + `but got ${concEq}. ` + "Remove --concurrency or set it to 1.");
+			}
+		}
+
+		// Reject SCRAMJET_AVA_WORKERS > 1.
+		const envWorkers = process.env[ENV.WORKERS];
+
+		if (envWorkers && Number(envWorkers) > 1) {
+			throw new Error("Memory guard mode requires --concurrency 1, " + `but SCRAMJET_AVA_WORKERS=${envWorkers}. ` + "Set SCRAMJET_AVA_WORKERS=1 or unset it.");
+		}
+
+		// Inject --concurrency 1 if not already present.
+		if (!cliHasConcurrency) {
+			args.push("--concurrency", "1");
+		}
+
+		args.push(...cliArgs);
+		return args;
+	}
+
+	// Standard (non‑guard) concurrency logic.
 	const concurrency = avaConcurrency();
 
 	if (concurrency !== undefined && !cliArgs.some((a) => a === "--concurrency" || a.startsWith("--concurrency="))) {
@@ -309,6 +382,59 @@ function runnerTimeout() {
 		return Number(raw);
 	}
 	return DEFAULTS.TIMEOUT;
+}
+
+// ---------------------------------------------------------------------------
+// Memory‑guard helpers (Phase 2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether memory guard mode is enabled.
+ *
+ * Honour AVA-specific SCRAMJET_AVA_MEMORY_GUARD first: when it is explicitly
+ * set, its value is respected (using the standard isDisabled() check so that
+ * "0", "false", "no", "off" all disable the guard even when the common
+ * SCRAMJET_MEMORY_GUARD is enabled).  When the AVA-specific env is unset,
+ * fall back to common SCRAMJET_MEMORY_GUARD (only "1" enables).
+ *
+ * @returns {boolean}
+ */
+function isMemoryGuardEnabled() {
+	const avaGuard = process.env[ENV.AVA_MEMORY_GUARD];
+
+	// AVA-specific guard is explicitly set: honour its value (enabled unless
+	// it matches a disabled-style value).
+	if (avaGuard !== undefined) {
+		return !isDisabled(avaGuard);
+	}
+
+	// Fall back to common guard (only exact "1" enables).
+	return process.env[ENV.MEMORY_GUARD] === "1";
+}
+
+/**
+ * Resolve the heap threshold in bytes for memory guard mode.
+ *
+ * AVA-specific SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES takes priority; then
+ * common SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES; then the built-in default
+ * (524288 = 512 KiB).
+ *
+ * @returns {number}
+ */
+function memoryHeapThresholdBytes() {
+	const avaThreshold = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+
+	if (avaThreshold && !Number.isNaN(Number(avaThreshold)) && Number(avaThreshold) > 0) {
+		return Number(avaThreshold);
+	}
+
+	const commonThreshold = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	if (commonThreshold && !Number.isNaN(Number(commonThreshold)) && Number(commonThreshold) > 0) {
+		return Number(commonThreshold);
+	}
+
+	return DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;
 }
 
 // ---------------------------------------------------------------------------
@@ -373,8 +499,12 @@ module.exports = {
 	buildAvaArgs,
 	runnerTimeout,
 
+	// Memory guard
+	isMemoryGuardEnabled,
+	memoryHeapThresholdBytes,
+
 	// Bypass guard
 	runnerInvocationEnv,
 	preloadGuardPath,
-	isDirectAvaInvocation,
+	isDirectAvaInvocation
 };

@@ -34,12 +34,14 @@
 
 ## Phase 2: AVA Package-Test Memory Guard
 
-- [ ] Task: Add AVA memory guard configuration and runner wiring
-    - [ ] Add documented environment variables for enabling AVA memory guard mode and threshold overrides.
-    - [ ] Ensure memory guard mode runs the AVA process with `--expose-gc`.
-    - [ ] Force or validate serial AVA execution in memory guard mode.
-    - [ ] Reject conflicting user-provided concurrency options when deterministic measurement would be invalid.
-    - [ ] Ensure the supported `scripts/run-ava.js` path remains the only AVA entrypoint.
+- [x] Task: Add AVA memory guard configuration and runner wiring
+    - [x] Add documented environment variables for enabling AVA memory guard mode and threshold overrides.
+    - [x] Ensure memory guard mode runs the AVA process with `--expose-gc`.
+    - [x] Force or validate serial AVA execution in memory guard mode.
+    - [x] Reject conflicting user-provided concurrency options when deterministic measurement would be invalid.
+    - [x] Ensure the supported `scripts/run-ava.js` path remains the only AVA entrypoint.
+
+  Notes: Added AVA/common memory guard env names, 512 KiB heap threshold default, `isMemoryGuardEnabled()`, `memoryHeapThresholdBytes()`, and `buildAvaArgs()` wiring that injects `--expose-gc` and forces `--concurrency 1` when guard mode is enabled. AVA-specific guard env explicitly overrides the common guard, including disabled values. No new runner entrypoint was introduced; `scripts/run-ava.js` continues to consume `buildAvaArgs()`. Verification: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js` passed with 64 tests.
 
 - [ ] Task: Implement AVA per-test memory measurement
     - [ ] Add guard lifecycle that samples before and after each test.
