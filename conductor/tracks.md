@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: memory efficient testing**
+- [~] **Track: memory efficient testing**
 *Link: [./tracks/memory_efficient_testing_20260710/](./tracks/memory_efficient_testing_20260710/)*

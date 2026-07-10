@@ -2,10 +2,12 @@
 
 ## Phase 1: Track Setup and Test Surface Inventory
 
-- [ ] Task: Establish implementation branch and review surface
-    - [ ] Capture the current branch as the PR base during implementation.
-    - [ ] Create the implementation branch `conductor/memory_efficient_testing_20260710` from current HEAD.
-    - [ ] Open or update a draft PR using the track specification as the PR body when required for review visibility.
+- [x] Task: Establish implementation branch and review surface
+    - [x] Capture the current branch as the PR base during implementation.
+    - [x] Create the implementation branch `conductor/memory_efficient_testing_20260710` from current HEAD.
+    - [x] Open or update a draft PR using the track specification as the PR body when required for review visibility.
+
+  Notes: Captured `feat/manager-oss` as the PR base after user approval because it is non-main and ahead of upstream by one commit. Created implementation branch `conductor/memory_efficient_testing_20260710`. Draft PR creation is deferred until the first required PR visibility/manual verification point.
 
 - [ ] Task: Inventory relevant test and memory infrastructure
     - [ ] Review package AVA runner files: `scripts/run-ava.js` and `scripts/lib/ava-options.js`.
