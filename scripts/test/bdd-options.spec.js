@@ -23,6 +23,10 @@ const {
 	isBddMemoryGuardEnabled,
 	bddMemoryHeapThresholdBytes,
 	bddMemorySkipCheck,
+	bddProcessRssThresholdBytes,
+	bddDockerWorkingSetThresholdBytes,
+	buildProcessRssDiagnostics,
+	buildDockerWorkingSetDiagnostics,
 } = require("../lib/bdd-options.js");
 
 // ---------------------------------------------------------------------------
@@ -644,4 +648,201 @@ test("bddMemorySkipCheck returns skip true when SKIP=1 with valid reason", (t) =
 		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
 		else delete process.env[ENV.MEMORY_SKIP_REASON];
 	}
+});
+
+// ---------------------------------------------------------------------------
+// bddProcessRssThresholdBytes (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("bddProcessRssThresholdBytes returns default when env unset", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	try {
+		t.is(bddProcessRssThresholdBytes(), DEFAULTS.BDD_PROCESS_RSS_THRESHOLD_BYTES);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+	}
+});
+
+test("bddProcessRssThresholdBytes returns env override when valid", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "209715200";
+	try {
+		t.is(bddProcessRssThresholdBytes(), 209715200);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on non-numeric value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "not-a-number";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on zero value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "0";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on negative value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "-500";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on Infinity value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "Infinity";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// bddDockerWorkingSetThresholdBytes (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("bddDockerWorkingSetThresholdBytes returns default when env unset", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	try {
+		t.is(bddDockerWorkingSetThresholdBytes(), DEFAULTS.BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes returns env override when valid", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "314572800";
+	try {
+		t.is(bddDockerWorkingSetThresholdBytes(), 314572800);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes throws on non-numeric value", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "bad-value";
+	try {
+		t.throws(() => bddDockerWorkingSetThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes throws on zero", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "0";
+	try {
+		t.throws(() => bddDockerWorkingSetThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes throws on negative", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "-1000";
+	try {
+		t.throws(() => bddDockerWorkingSetThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// buildProcessRssDiagnostics (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("buildProcessRssDiagnostics includes label, pid, delta, threshold", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "test-process",
+		pid: 12345,
+		baselineRss: 50000000,
+		finalRss: 150000000,
+		delta: 100000000,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("test-process"), "should include label");
+	t.true(msg.includes("12345"), "should include pid");
+	t.true(msg.includes("100000000"), "should include delta");
+	t.true(msg.includes("104857600"), "should include threshold");
+	t.true(msg.includes("baseline RSS: 50000000"), "should include baseline");
+	t.true(msg.includes("final RSS: 150000000"), "should include final");
+});
+
+test("buildProcessRssDiagnostics shows zero delta message", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "zero",
+		pid: 999,
+		baselineRss: 100000000,
+		finalRss: 100000000,
+		delta: 0,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("delta 0 bytes"), "should show zero delta");
+});
+
+// ---------------------------------------------------------------------------
+// buildDockerWorkingSetDiagnostics (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("buildDockerWorkingSetDiagnostics includes label, containerId, delta, threshold", (t) => {
+	const msg = buildDockerWorkingSetDiagnostics({
+		label: "test-container",
+		containerId: "abc123def456",
+		baselineBytes: 50000000,
+		finalBytes: 150000000,
+		delta: 100000000,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("test-container"), "should include label");
+	t.true(msg.includes("abc123def456"), "should include containerId");
+	t.true(msg.includes("100000000"), "should include delta");
+	t.true(msg.includes("104857600"), "should include threshold");
+	t.true(msg.includes("baseline working set: 50000000"), "should include baseline");
+	t.true(msg.includes("final working set: 150000000"), "should include final");
+});
+
+test("buildDockerWorkingSetDiagnostics shows zero delta", (t) => {
+	const msg = buildDockerWorkingSetDiagnostics({
+		label: "zero-container",
+		containerId: "aaaabbbb",
+		baselineBytes: 100000000,
+		finalBytes: 100000000,
+		delta: 0,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("delta 0 bytes"), "should show zero delta");
 });

@@ -31,6 +31,13 @@
  *     SCRAMJET_MEMORY_SKIP                   – set to "1" to skip measurement
  *     SCRAMJET_MEMORY_SKIP_REASON            – required non-empty reason when SKIP=1
  *
+ *   Child process / Docker memory checks (Phase 6):
+ *     SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES    – child process RSS threshold
+ *                                                   (default 104857600 = 100 MiB)
+ *     SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES – Docker container
+ *                                                   working-set threshold
+ *                                                   (default 104857600 = 100 MiB)
+ *
  * All defaults are chosen for stability under a host‑level <2G memory limit.
  */
 
@@ -57,7 +64,10 @@ const ENV = Object.freeze({
     MEMORY_HEAP_THRESHOLD: "SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES",
     BDD_MEMORY_HEAP_THRESHOLD: "SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES",
     MEMORY_SKIP: "SCRAMJET_MEMORY_SKIP",
-    MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON"
+    MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON",
+    // Child process / Docker memory checks (Phase 6)
+    BDD_PROCESS_RSS_THRESHOLD: "SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES",
+    BDD_DOCKER_WORKING_SET_THRESHOLD: "SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES"
 });
 
 const DEFAULTS = Object.freeze({
@@ -86,7 +96,19 @@ const DEFAULTS = Object.freeze({
      * 524288 bytes = 512 KiB.  Override via SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES
      * or SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES.
      */
-    MEMORY_HEAP_THRESHOLD_BYTES: 524288
+    MEMORY_HEAP_THRESHOLD_BYTES: 524288,
+    /**
+     * Default child process RSS threshold in bytes.
+     * 104857600 bytes = 100 MiB.  Override via
+     * SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES.
+     */
+    BDD_PROCESS_RSS_THRESHOLD_BYTES: 104857600,
+    /**
+     * Default Docker container working-set threshold in bytes.
+     * 104857600 bytes = 100 MiB.  Override via
+     * SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES.
+     */
+    BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES: 104857600
 });
 
 // ---------------------------------------------------------------------------
@@ -326,6 +348,116 @@ function bddMemorySkipCheck() {
 }
 
 // ---------------------------------------------------------------------------
+// Child process / Docker memory threshold helpers (Phase 6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the process RSS threshold in bytes for BDD child process checks.
+ *
+ * Reads SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES; falls back to the built-in
+ * default (104857600 = 100 MiB).
+ *
+ * When the env var is set but its value is not a positive finite number, the
+ * function throws rather than silently falling back — the operator has
+ * expressed intent but provided an invalid value.
+ *
+ * @returns {number}
+ * @throws {Error}  If the env var is set to a non-numeric, zero, or negative value.
+ */
+function bddProcessRssThresholdBytes() {
+    const raw = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+
+    if (raw !== undefined) {
+        const n = Number(raw);
+
+        if (!Number.isFinite(n) || n <= 0) {
+            throw new Error(`${ENV.BDD_PROCESS_RSS_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(raw)}.`);
+        }
+
+        return n;
+    }
+
+    return DEFAULTS.BDD_PROCESS_RSS_THRESHOLD_BYTES;
+}
+
+/**
+ * Resolve the Docker container working-set threshold in bytes for BDD
+ * container memory checks.
+ *
+ * Reads SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES; falls back to the
+ * built-in default (104857600 = 100 MiB).
+ *
+ * When the env var is set but its value is not a positive finite number, the
+ * function throws rather than silently falling back — the operator has
+ * expressed intent but provided an invalid value.
+ *
+ * @returns {number}
+ * @throws {Error}  If the env var is set to a non-numeric, zero, or negative value.
+ */
+function bddDockerWorkingSetThresholdBytes() {
+    const raw = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+
+    if (raw !== undefined) {
+        const n = Number(raw);
+
+        if (!Number.isFinite(n) || n <= 0) {
+            throw new Error(`${ENV.BDD_DOCKER_WORKING_SET_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(raw)}.`);
+        }
+
+        return n;
+    }
+
+    return DEFAULTS.BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES;
+}
+
+/**
+ * Build a diagnostics string for a process RSS threshold failure.
+ *
+ * @param {object} opts
+ * @param {string} opts.label       Human-readable label for the process.
+ * @param {number} opts.pid         Process PID.
+ * @param {number} opts.baselineRss Baseline RSS in bytes (0 if not recorded).
+ * @param {number} opts.finalRss    Final RSS in bytes.
+ * @param {number} opts.delta       finalRss - baselineRss.
+ * @param {number} opts.threshold   Effective threshold in bytes.
+ * @returns {string}  Multi-line diagnostics string.
+ */
+function buildProcessRssDiagnostics({ label, pid, baselineRss, finalRss, delta, threshold }) {
+    const lines = [];
+
+    lines.push(`BDD process RSS check: "${label}" (pid ${pid}) ` + `delta ${delta} bytes (threshold: ${threshold} bytes).`);
+    lines.push(`  baseline RSS: ${baselineRss}  final RSS: ${finalRss}  delta: ${delta}`);
+
+    lines.push("Review the process for excessive memory retention.  " + "Consider tracking lifecycle (expected to exit vs long-lived).");
+
+    return lines.join("\n");
+}
+
+/**
+ * Build a diagnostics string for a Docker container working-set threshold
+ * failure.
+ *
+ * @param {object} opts
+ * @param {string} opts.label             Human-readable label for the container.
+ * @param {string} opts.containerId       Container ID.
+ * @param {number} opts.baselineBytes     Baseline working set in bytes.
+ * @param {number} opts.finalBytes        Final working set in bytes.
+ * @param {number} opts.delta             finalBytes - baselineBytes.
+ * @param {number} opts.threshold         Effective threshold in bytes.
+ * @returns {string}  Multi-line diagnostics string.
+ */
+function buildDockerWorkingSetDiagnostics({ label, containerId, baselineBytes, finalBytes, delta, threshold }) {
+    const lines = [];
+
+    lines.push(`BDD Docker working-set check: "${label}" (container ${containerId}) ` + `delta ${delta} bytes (threshold: ${threshold} bytes).`);
+    lines.push(`  baseline working set: ${baselineBytes}  ` + `final working set: ${finalBytes}  delta: ${delta}`);
+
+    lines.push("Review the container for excessive memory retention.  " + "Consider whether the container should have exited or if working-set " + "growth is expected.");
+
+    return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
@@ -343,5 +475,9 @@ module.exports = {
     isBddMemoryGuardEnabled,
     bddMemoryHeapThresholdBytes,
     bddMemoryThresholdSourceLabel,
-    bddMemorySkipCheck
+    bddMemorySkipCheck,
+    bddProcessRssThresholdBytes,
+    bddDockerWorkingSetThresholdBytes,
+    buildProcessRssDiagnostics,
+    buildDockerWorkingSetDiagnostics
 };

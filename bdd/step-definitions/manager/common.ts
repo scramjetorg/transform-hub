@@ -7,6 +7,7 @@ import { StringStream } from "scramjet";
 import { Readable } from "stream";
 
 const { stopProcess: stopProcessWithCleanup } = require("../../../scripts/lib/bdd-cleanup.js");
+const { memoryRegistry } = require("../../lib/memory-registry");
 
 async function requestGet(apiBase: string, apiEndpoint: string): Promise<{[key: string]: any}> {
     const utils = new ClientUtils(apiBase);
@@ -46,6 +47,10 @@ function spawnProcess(
         }
 
         const cmdProcess = spawn("/usr/bin/env", fullCommand, { detached: false });
+
+        // Track spawned process in memory registry
+        const label = command.length > 0 ? command[command.length - 1] : "spawned";
+        memoryRegistry.trackChildProcess(cmdProcess, `manager:${label}`);
 
         if (stdoutDoneMatch) {
             const onStdout = (data: any) => {

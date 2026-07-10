@@ -36,6 +36,7 @@ import {
     checkBddMemorySkip,
     buildBddMemoryDiagnostics,
 } from "../../scripts/lib/bdd-memory-guard";
+import { memoryRegistry } from "../lib/memory-registry";
 
 // ---------------------------------------------------------------------------
 // Module-level GC readiness check
@@ -127,6 +128,16 @@ After(async function (this: any, scenario: any) {
         });
 
         throw new Error(diagnostics);
+    }
+
+    // ---- Assert child process / container memory (Phase 6) ----
+    const registryErrors = await memoryRegistry.assertAll();
+
+    if (registryErrors.length > 0) {
+        throw new Error(
+            "BDD child process / container memory checks failed:\n" +
+            registryErrors.join("\n---\n")
+        );
     }
 
     // Clean up per-scenario state

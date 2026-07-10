@@ -26,6 +26,7 @@ import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
 import { exec } from "child_process";
+import { memoryRegistry } from "../../lib/memory-registry";
 
 let hostClient: HostClient;
 let actualHealthResponse: any;
@@ -619,6 +620,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
 
                 if (containerId) {
                     console.log("Container is identified.", containerId);
+                    memoryRegistry.trackContainer(containerId, "runner:docker", true);
                 }
                 break;
             case "process":
@@ -629,6 +631,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
                 if (res) {
                     processId = success = res;
                     console.log("Process is identified.", processId);
+                    memoryRegistry.trackProcess(processId, "runner:process", true);
                 }
                 break;
             default:

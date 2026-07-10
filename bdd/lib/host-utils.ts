@@ -3,6 +3,7 @@ import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
+import { memoryRegistry } from "../lib/memory-registry";
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
     ? ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"]
@@ -189,6 +190,7 @@ export class HostUtils {
                 env: { ...process.env, SCP_ENV_VALUE: "GH_CI" }
             });
             HostUtils.trackHost(hub);
+            memoryRegistry.trackChildProcess(hub, "hub");
 
             this.hostProcessStopped = false;
 
