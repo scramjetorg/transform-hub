@@ -300,7 +300,8 @@
     - [ ] Assign every eligible default-suite feature to exactly one named chunk and fail validation for duplicate, missing, deleted, or nonexistent paths.
     - [ ] Keep harness, stress, fixed-port Hub, Manager/MultiManager, and broad Docker-cleanup paths exclusive until ownership isolation is implemented.
     - [ ] Add explicit `--chunk=<name>` selection and preserve `npm run test:bdd` serial behavior.
-    - [ ] Measure each chunk independently and require p95 runtime below 480 seconds, leaving headroom inside the supported 600-second Docker timeout.
+    - [ ] Use feature paths as the initial chunk boundary and enforce a 300-second timeout for every feature run.
+    - [ ] Classify every feature from repeated 300-second runs as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required; no feature may enter the parallel scheduler until it finishes below 300 seconds.
 
 - [ ] Task: Add chunk-scoped ownership and cleanup isolation
     - [ ] Create an immutable BDD run/chunk identifier and propagate it to outer Docker labels, generated configs, temporary artifacts, process/container labels, logs, and metrics.
@@ -312,7 +313,7 @@
     - [ ] Sample Cucumber parent heap baseline/final/peak at chunk lifecycle boundaries, separately from per-scenario guard checks.
     - [ ] Sample readiness-baselined and final/peak RSS for long-lived Hub, Manager, and MultiManager processes, including expected exit state.
     - [ ] Sample outer BDD Docker container working-set baseline/final/peak and record memory limit, exit code, OOM state, and timestamps.
-    - [ ] Report metrics by chunk and component before enforcing new chunk thresholds; retain existing strict per-scenario threshold behavior.
+    - [ ] Report metrics by feature chunk and component, then set and enforce feature/chunk memory-growth limits before parallel execution; retain existing strict per-scenario threshold behavior.
     - [ ] Add focused unit tests for metric collection, missing `/proc`/Docker data, and actionable diagnostics.
 
 - [ ] Task: Rationalize BDD timing through observable readiness polling
@@ -322,16 +323,18 @@
     - [ ] Preserve waits that are themselves asserted behavior: stop handlers, keep-alive, reconnect/backoff, flood/backpressure, delayed fixtures, and watchdog scenarios.
     - [ ] Add focused regression tests and repeated runs for every shortened wait to detect timing flakes.
 
-- [ ] Task: Validate independently runnable BDD chunks and phase completion evidence
+- [ ] Task: Validate independently runnable 300-second BDD feature chunks
     - [ ] Compare the serial union of all chunks with the default eligible scenario set.
-    - [ ] Run every chunk under supported Docker BDD execution within the 600-second container timeout and record median, p95, and maximum runtime.
+    - [ ] Run every feature chunk under supported Docker BDD execution with a 300-second timeout and record median, p95, maximum runtime, memory growth, and classification.
+    - [ ] Remediate, split, or explicitly exclude any feature that exceeds 300 seconds; do not silently allow it into a larger remainder chunk.
     - [ ] Run relevant BDD memory-guard validation and record parent heap, child RSS, Docker working-set thresholds, skips/exceptions, and deferred coverage.
     - [ ] Record external watchdog limitations separately from container OOM or test failures.
 
-- [ ] Task: Experimentally run sensible chunks in parallel in Docker
-    - [ ] Require completed chunk manifest, chunk-scoped ownership, and independent runtime/memory evidence before selecting candidates.
-    - [ ] Run two sensible chunks concurrently in Docker with explicit aggregate memory/CPU budget and exclusive-resource locks; do not use unbounded `Promise.all`.
+- [ ] Task: Run classified BDD feature chunks in parallel in Docker
+    - [ ] Require bounded feature memory growth, completed ownership isolation, and a passing 300-second classification before a feature enters the parallel scheduler.
+    - [ ] Run classified parallel-ready chunks concurrently in Docker with explicit aggregate memory/CPU budget and exclusive-resource locks; do not use unbounded `Promise.all`.
+    - [ ] Keep exclusive, timing-remediation-required, and memory-remediation-required features out of the concurrent pool until their classification changes.
     - [ ] Record aggregate memory/CPU, overlap timeline, cleanup ownership, port collisions, retries, flakes, outer-container OOM states, and per-chunk exit states.
-    - [ ] Keep serial chunk execution as the default unless repeated parallel trials meet the same correctness and memory acceptance criteria.
+    - [ ] Make the parallel Docker chunk run the supported full BDD execution path after all eligible features pass classification.
 
 - [ ] Task: Conductor - Phase Checkpoint 'BDD Chunking, Resource Metrics, and Timing Rationalization' (Protocol in workflow.md)
