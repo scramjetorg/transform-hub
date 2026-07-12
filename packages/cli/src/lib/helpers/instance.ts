@@ -12,11 +12,7 @@ import { defer } from "@scramjet/utility";
  * @param lastInstanceId Id of last used instance in session
  * @returns Promise resolving to kill Instance result.
  */
-export const instanceKill = async (
-    id: string,
-    removeImmediately: boolean = false,
-    lastInstanceId = sessionConfig.lastInstanceId
-): Promise<STHRestAPI.SendKillInstanceResponse> => {
+export const instanceKill = async (id: string, removeImmediately: boolean = false, lastInstanceId = sessionConfig.lastInstanceId): Promise<STHRestAPI.SendKillInstanceResponse> => {
     const instanceId = getInstanceId(id);
     const instanseKillResponse = await getInstance(instanceId).kill({ removeImmediately });
 
@@ -25,9 +21,7 @@ export const instanceKill = async (
     }
     return instanseKillResponse;
 };
-export const instanceRestart = async (
-    instanceId: string
-) => {
+export const instanceRestart = async (instanceId: string) => {
     const instanceInfo = await getInstance(instanceId).getInfo();
     const sequenceId = instanceInfo.sequence.id;
     const sequenceClient = SequenceClient.from(sequenceId, getHostClient());
@@ -35,15 +29,15 @@ export const instanceRestart = async (
     const appConfig = instanceInfo.appConfig || {};
     const killResponse: STHRestAPI.SendKillInstanceResponse = await instanceKill(instanceId, true);
     let seqStartResponse: STHRestAPI.StartSequenceResponse = { id: "" };
-    let ready = false;
+    const startedAt = Date.now();
+    const timeoutMs = 10_000;
 
-    while (!ready) {
+    while (Date.now() - startedAt < timeoutMs) {
         try {
             await getInstance(instanceId).getInfo();
             await defer(100);
-        } catch (e:any) {
-            if (e.status === "404") {
-                ready = true;
+        } catch (e: any) {
+            if (e.status === "404" || e.status === 404 || e.statusCode === 404) {
                 break;
             }
         }

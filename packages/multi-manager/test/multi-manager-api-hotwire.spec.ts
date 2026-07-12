@@ -7,6 +7,8 @@ import { ManagersStore } from "../src/lib/manager-store";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
 function createMultiManagerStub(recorder: RouteRecorder) {
+    const managersStore = new ManagersStore();
+
     return {
         apiServer: recorder.asApiExpose(),
         apiBase: "/api/v1",
@@ -15,7 +17,7 @@ function createMultiManagerStub(recorder: RouteRecorder) {
             server: { apiPort: 20000 },
             verser2: {}
         },
-        managersStore: new ManagersStore(),
+        managersStore,
         healthCheck: { getHealthCheckInfo: () => ({}) },
         logger: new ObjLogger("multi-manager-api-hotwire-test"),
         loadCheck: { getLoadCheck: async () => ({}) },
@@ -26,6 +28,16 @@ function createMultiManagerStub(recorder: RouteRecorder) {
         apiCommonLogsPipe: { getOut: () => new PassThrough() },
         handleListManagersRequest: () => [],
         handleStartManagerRequest: async () => ({ id: "manager-1" }),
+        stopManager: async (id: string) => {
+            const manager = managersStore.getById(id) as any;
+
+            if (!manager) return false;
+
+            await manager.stop?.();
+            managersStore.remove(id);
+
+            return true;
+        },
         cpmMiddleware: async () => undefined,
         commonAuditPipe: async () => new PassThrough()
     };

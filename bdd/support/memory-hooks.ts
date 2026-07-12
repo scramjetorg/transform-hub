@@ -9,7 +9,7 @@
  *
  * Load order (via bdd/cucumber.js):
  *   1. support/memory-hooks.ts  ← this file (loaded FIRST)
- *   2. step-definitions/**/*.ts
+ *   2. step-definitions TypeScript files
  *
  * Cucumber After hooks run in reverse definition order, so this file's After
  * hook runs AFTER all step-definition cleanup hooks – exactly what we need to

@@ -23,4 +23,4 @@ BDD smoke and end-to-end validation workspace for Scramjet Transform Hub. It def
 - Consumed by root scripts: `npm run test:bdd`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, and `npm run test:bdd-ci-api-node`.
 - Depends on workspace clients: `@scramjet/api-client`, `@scramjet/multi-manager-api-client`, and shared `@scramjet/types`.
 - Uses generated/built entrypoints from `dist/` by default, with source execution toggles via `SCRAMJET_SPAWN_JS`, `SCRAMJET_SPAWN_TS`, and runtime adapter flags.
-- Feature domains live under `features/hub/`, `features/e2e/`, `features/manager/`, `features/reference-apps/`, and harness-specific feature folders.
+- Feature domains live under `features/hub/`, `features/e2e/`, `features/manager/`, and harness-specific feature folders.

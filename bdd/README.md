@@ -34,7 +34,7 @@ Before start running any test, please make sure that all the packages are instal
 npm run clean && npm install && npm run build:all
 ```
 
-This command will remove all the 'dist' folders (if there were any), after that it will install dependencies, compile the code in all the packages including 'reference-apps' package, which contains all the Sequences that we use in our BDD tests. After executing the command from above, every Sequence will be also compressed into `.tar.gz` file. Those compressed files are ready-to-use Sequence packages, that we use in BDD tests scenarios.
+This command will remove all the 'dist' folders (if there were any), after that it will install dependencies and compile the code in all the packages. BDD sequence archives are prepared separately by the fixture-packing commands used by the supported BDD scripts.
 
 ### Executing BDD tests :rocket:
 

@@ -5,42 +5,58 @@ import {
     waitUntilStreamEquals,
     waitUntilStreamStartsWith,
     waitUntilStreamContains,
-    removeProfile,
-    createProfile,
-    setProfile,
     createDirectory,
     deleteDirectory,
-    getActiveProfile
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import crypto, { BinaryLike } from "crypto";
 import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
 import findPackage from "find-package-json";
-import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
 import { exec } from "child_process";
 import { memoryRegistry } from "../../lib/memory-registry";
+import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
+const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
+
+function resolveSequencePackage(packageName: string): string {
+    const configuredDirs = (process.env.PACKAGES_DIR || "")
+        .split(":")
+        .map((dir) => dir.trim())
+        .filter(Boolean);
+    const searchDirs = configuredDirs;
+
+    for (const dir of searchDirs) {
+        const candidate = dir.endsWith("/") ? `${dir}${packageName}` : `${dir}/${packageName}`;
+
+        if (existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    assert.fail(
+        `"${packageName}" does not exist in package search dirs: ${searchDirs.join(", ")}. ` +
+            "Set PACKAGES_DIR to a local fixture directory."
+    );
+}
 
 let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
 let actualApiResponse: any;
-let actualLogResponse: any;
 let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
-let activeProfile: any;
+let runnerEnded: Promise<void> = Promise.resolve();
+let signalRunnerEnded: () => void = () => undefined;
 
 const freeport = promisify(require("freeport"));
 
-const profileName = "test_bdd";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const dockerode = new Dockerode();
@@ -50,36 +66,6 @@ const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArg.split(" ")
-    });
-};
-const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
-const streamToString = async (stream: Stream): Promise<string> => {
-    const chunks = [];
-    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
-
-    for await (const chunk of strings) {
-        chunks.push(chunk);
-    }
-
-    return chunks.join("");
-};
-const streamToBinary = async (stream: Readable): Promise<BinaryLike> => {
-    const chunks: Uint8Array[] = [];
-
-    return new Promise((resolve, reject) => {
-        stream.on("data", (chunk: Buffer | Uint8Array) => {
-            chunks.push(chunk instanceof Buffer ? chunk : Uint8Array.from(chunk));
-        });
-
-        stream.on("end", () => {
-            const binaryData = Buffer.concat(chunks);
-
-            resolve(binaryData);
-        });
-
-        stream.on("error", (error: Error) => {
-            reject(error);
-        });
     });
 };
 const waitForContainerToClose = async () => {
@@ -164,8 +150,6 @@ BeforeAll({ timeout: 20e3 }, async () => {
         return;
     }
 
-    activeProfile = await getActiveProfile();
-
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (!apiUrl) {
@@ -180,6 +164,7 @@ BeforeAll({ timeout: 20e3 }, async () => {
         console.error(`Starting host on port: ${apiPort}`);
     }
     hostClient = new HostClient(apiUrl);
+    writeBddConfig({ apiUrl });
 
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
@@ -200,8 +185,6 @@ BeforeAll({ timeout: 20e3 }, async () => {
         });
     }
     await hostUtils.spawnHost([]);
-    await createProfile(profileName);
-    await setProfile(profileName);
 });
 
 AfterAll(async () => {
@@ -212,15 +195,16 @@ AfterAll(async () => {
             throw new Error("Host unexpected closed");
         }
     }
-    await setProfile(activeProfile);
-    await removeProfile(profileName);
+    cleanupBddConfig();
 });
 
 Before(() => {
     actualHealthResponse = "";
     actualStatusResponse = "";
-    actualLogResponse = "";
     streams = {};
+    runnerEnded = new Promise<void>(resolve => {
+        signalRunnerEnded = resolve;
+    });
 });
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
@@ -327,21 +311,19 @@ When("wait for {string} ms", async (timeoutMs: number) => {
 });
 
 When("find and upload sequence {string}", { timeout: 30000 }, async function(this: CustomWorld, packageName: string) {
-    const packagePath = `${process.env.PACKAGES_DIR || "../refapps/"}${packageName}`;
-
-    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
+    const packagePath = resolveSequencePackage(packageName);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} loaded", { timeout: 30000 }, async function(this: CustomWorld, packagePath: string) {
-    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, check the configured local fixture path.`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
-    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, check the configured local fixture path.`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
@@ -350,14 +332,6 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
 });
-
-When(
-    "instance started with url from assets argument {string}",
-    { timeout: 25000 },
-    async function(this: CustomWorld, assetUrl: string) {
-        return startWith.call(this, `${assetsLocation}${assetUrl}`);
-    }
-);
 
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 
@@ -465,103 +439,6 @@ When(
 );
 
 When(
-    "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
-    { timeout: 30000 },
-    async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
-        this.resources.instance = await this.resources.sequence!.start({
-            appConfig: {},
-            args: instanceArg.split(" ")
-        });
-
-        const stream: any = await this.resources.instance?.getStream("stdout");
-        const writeStream = fs.createWriteStream(fileName);
-
-        stream.pipe(writeStream);
-
-        actualHealthResponse = await this.resources.instance?.getHealth();
-
-        await Promise.race([
-            new Promise((res, rej) => {
-                writeStream.on("error", rej);
-                stream.on("end", res);
-            }),
-            new Promise((res) => setTimeout(res, Math.min(1000 * timeout, 30000)))
-        ]);
-    }
-);
-
-When(
-    "get {string} with instanceId and wait for it to finish",
-    { timeout: 30000 },
-    async function(this: CustomWorld, outputStream: InstanceOutputStream) {
-        const out = await this.resources.instance?.getStream(outputStream);
-
-        out!.pipe(process.stdout);
-
-        if (!out) assert.fail("No output!");
-
-        actualLogResponse = await streamToString(out);
-    }
-);
-
-Then("file {string} is generated", async (filename) => {
-    assert.ok(await promisify(fs.exists)(`${filename}`));
-});
-
-When("response data is equal {string}", async (respNumber: any) => {
-    assert.equal(actualLogResponse, respNumber);
-});
-
-Given("file in the location {string} exists on hard drive", async (filename: any) => {
-    assert.ok(await promisify(fs.exists)(filename));
-});
-
-When("compare checksums of content sent from file {string}", async function(this: CustomWorld, filePath: string) {
-    const readStream = fs.createReadStream(filePath);
-    const hex: string = crypto
-        .createHash("md5")
-        .update(await readFile(filePath))
-        .digest("hex");
-
-    await this.resources.instance?.sendStream(
-        "input",
-        readStream,
-        {},
-        {
-            type: "application/octet-stream",
-            end: true
-        }
-    );
-
-    const output = await this.resources.instance?.getStream("output");
-
-    if (!output) assert.fail("No output!");
-
-    const outputString = await streamToString(output);
-
-    assert.equal(outputString, hex);
-
-    await this.resources.instance?.sendInput("null");
-});
-
-When("confirm file checksum match output checksum", async function(this: CustomWorld) {
-    // the random.bin hex is written to instance stdout
-    const stdout = await this.resources.instance!.getStream("stdout");
-    const fileHexFromStdout = await streamToString(stdout);
-    const output = await this.resources.instance?.getStream("output");
-
-    if (!output || !stdout) assert.fail("No output or stdout, or both.");
-
-    const dataFromOutput = await streamToBinary(output);
-    const outputHex: string = crypto
-        .createHash("sha256")
-        .update(dataFromOutput)
-        .digest("hex");
-
-    assert.strictEqual(outputHex, fileHexFromStdout.trim());
-});
-
-When(
     "send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}",
     async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
         const resp = await this.resources.instance?.stop(timeout, canCallKeepalive === "true");
@@ -667,6 +544,11 @@ When("runner has ended execution", { timeout: 20000 }, async () => {
         await waitForContainerToClose();
         console.log("Container is closed.");
     }
+
+    // The runner can exit before the transport closes its stdout stream. Give
+    // retained streams a bounded drain signal instead of waiting for end
+    // indefinitely in the following assertion step.
+    signalRunnerEnded();
 });
 
 When(
@@ -762,7 +644,9 @@ When("keep instance streams {string}", async function(this: CustomWorld, streamN
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!this.resources.instance) assert.fail("Instance not existent");
 
-        streams[streamName] = this.resources.instance.getStream(streamName).then((data) => streamToString(data));
+        streams[streamName] = this.resources.instance
+            .getStream(streamName)
+            .then(data => collectStreamUntilEndOrSignal(data, runnerEnded));
     });
 });
 
@@ -982,6 +866,7 @@ Then("send json data {string} named {string}", async (data: any, topic: string) 
     ps.write(data);
     ps.end();
 
+    await sendData;
     assert.ok(sendData);
 });
 

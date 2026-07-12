@@ -4,6 +4,7 @@ import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 import { getLogger } from "@scramjet/logger";
+const { getBddConfigPath } = require("./bdd-config.js");
 
 const isLogActive = process.env.SCRAMJET_TEST_LOG;
 const lineByLine = require("n-readlines");
@@ -30,7 +31,7 @@ export function getSiCommand() {
         si = ["npx", "tsx", "../packages/cli/src/bin/index.ts"];
     }
 
-    return si;
+    return [...si, "-c", getBddConfigPath()];
 }
 
 const si = getSiCommand();

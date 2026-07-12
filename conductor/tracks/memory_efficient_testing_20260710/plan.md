@@ -249,3 +249,42 @@
 - [x] Task: Conductor - Phase Checkpoint 'Review, Stabilization, and Finalization' (Protocol in workflow.md)
 
   Checkpoint Notes: Phase 8 final validation after the cleanup-error fix: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/ava-options.spec.js scripts/test/ava-memory-guard.spec.js scripts/test/ava-memory-guard-hook-order.spec.js` passed with 107 tests; `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js` passed with 12 strict guard tests; `git diff --check` passed. Default parent heap threshold remains 524288 bytes; BDD child RSS and Docker working-set defaults remain 104857600 bytes. No skips were used. Scoped exceptions remain the documented per-test allowance paths only. Known follow-ups remain deferred: run an actual Docker BDD scenario under `SCRAMJET_BDD_MEMORY_GUARD=1` in an environment with required Docker artifacts; revisit full `runner-node` package validation once unrelated guarded-profile WebAssembly/undici spawn-path failures are fixed; broaden AVA wrapper adoption per package as future tracks require. Final PR validation comment: https://github.com/0rail/transform-hub/pull/55#issuecomment-4938562945. PR #55 was marked ready for review after final verification.
+
+## Phase 9: BDD Fixture Migration and Legacy Test Removal
+
+- [ ] Task: Stabilize the current BDD stop-handler assertion
+    - [ ] Diagnose the `E2E-015 TC-008` retained-stdout timeout without masking a runner lifecycle failure.
+    - [ ] Make stream completion/cleanup observation deterministic and retain actionable diagnostics.
+    - [ ] Add focused regression coverage for the bounded wait behavior.
+
+- [ ] Task: Add local replacement fixtures for legacy refapp coverage
+    - [x] Inventory every active BDD assertion that currently reads a root `refapps/` archive or relies on its fallback resolution.
+    - [ ] Replace retained behavioral coverage with committed local BDD fixture sources and deterministic package generation.
+    - [ ] Preserve meaningful assertions while removing dependencies on externally downloaded archives.
+    - [x] Rewrite mixed feature scenarios to use explicit local fixture directories rather than a root-refapps fallback.
+
+- [ ] Task: Delete legacy refapp and performance-test paths
+    - [ ] Delete legacy-refapp-only BDD scenarios/features after equivalent local-fixture coverage exists.
+    - [ ] Delete performance/load BDD features and their generated-artifact assumptions from this test run.
+    - [x] Remove root `refapps/` fallback resolution and the `download:refapps` / `prebuild:refapps` scripts.
+    - [x] Remove obsolete CI/docs references to downloaded refapps and update supported BDD commands.
+
+- [ ] Task: Isolate CLI configuration for BDD runs
+    - [ ] Add CLI `-c` / `--config` support to select an explicit configuration file.
+    - [ ] Generate a per-run BDD CLI configuration under `/tmp` and pass it to every BDD CLI invocation.
+    - [ ] Remove reliance on shared profiles, shared active-profile mutation, and `~/.si` state in BDD setup/teardown.
+    - [ ] Add focused CLI/config and BDD setup coverage for isolated configuration paths.
+
+- [ ] Task: Prepare safe name-based BDD waves
+    - [ ] Add BDD-runner support for two explicitly named feature-path waves, not tag-based selection.
+    - [ ] Keep fixed-port Hub, Manager/MultiManager, Docker-cleanup, harness, and stress paths serial until their resource ownership is isolated.
+    - [ ] Start with a proven-isolated wave and a serial remainder; require distinct config roots, artifact directories, ports, and cleanup ownership before balancing waves.
+    - [ ] Record wall time, parent RSS, Docker working set, leak detection, and scenario ownership evidence for every parallel trial.
+
+- [ ] Task: Validate fixture-only BDD execution and completion policy
+    - [ ] Run focused BDD fixture, CLI-config, and runner-helper tests under supported runners.
+    - [ ] Run the default BDD suite without root `refapps/` or performance features.
+    - [ ] Run repeated wave smoke tests before enabling any default parallelism.
+    - [ ] Record memory-guard thresholds, skips/exceptions, deleted coverage, and deferred isolation work in the final checkpoint.
+
+- [ ] Task: Conductor - Phase Checkpoint 'BDD Fixture Migration and Legacy Test Removal' (Protocol in workflow.md)

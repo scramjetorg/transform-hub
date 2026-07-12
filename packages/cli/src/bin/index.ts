@@ -7,10 +7,30 @@ import * as dns from "dns";
 import { errorHandler } from "../lib/errorHandler";
 import { commandDescriptors } from "../lib/commands/index";
 import { initConfig, profileManager } from "../lib/config";
+import { parseConfigSelection } from "../lib/config/args";
 import { initPaths } from "../lib/paths";
 import findPackage from "find-package-json";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
+
+function normalizeCommandArgs(args: string[]): string[] {
+    const selection = parseConfigSelection(args);
+
+    if (!selection) return args;
+
+    const configArgs = selection.kind === "readonly-path" ? ["--config-path", selection.value] : ["-c", selection.value];
+    const withoutConfig = [...args];
+
+    if (args.some((arg) => arg === "-c" || arg === "--config" || arg === "--config-path")) {
+        const flagIndex = withoutConfig.findIndex((arg) => arg === "-c" || arg === "--config" || arg === "--config-path");
+        withoutConfig.splice(flagIndex, 2);
+    } else {
+        const inlineIndex = withoutConfig.findIndex((arg) => arg.startsWith("-c=") || arg.startsWith("--config=") || arg.startsWith("--config-path="));
+        withoutConfig.splice(inlineIndex, 1);
+    }
+
+    return [...withoutConfig, ...configArgs];
+}
 
 /**
  * Build the full command tree from descriptors and run it.
@@ -19,17 +39,18 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
     // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
     const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };
 
-    if (setDefaultResultOrder) { setDefaultResultOrder("ipv4first"); }
+    if (setDefaultResultOrder) {
+        setDefaultResultOrder("ipv4first");
+    }
 
     initPaths();
     initConfig();
 
     // Build root command descriptor
     const rootDescriptor: CommandDescriptor = cmd("si", (b) => {
-        b
-            .desc("This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
+        b.desc("This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
             .usage("[command] [options...]")
-            .option("--config <profile-name>", "Use configuration from profile")
+            .option("-c, --config <path>", "Use configuration from file")
             .option("--config-path <path>", "Use configuration from file")
             .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command");
 
@@ -43,7 +64,7 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
         process.exit(0);
     }
 
-    const commandArgv = process.argv.slice(2);
+    const commandArgv = normalizeCommandArgs(process.argv.slice(2));
     const resolve = resolveCommandPath(commandArgv, rootDescriptor);
     const leaf = resolve.command;
 

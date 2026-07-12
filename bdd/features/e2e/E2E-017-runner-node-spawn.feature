@@ -61,7 +61,7 @@ Feature: Runner-node spawn-isolation regression coverage
     @ci-runner-node @slow
     Scenario: E2E-017 TC-005 STOP with keepAlive matches current behaviour under runner-node spawn isolation
         Given host is running
-        When sequence "../refapps/can-keep-alive.tar.gz" loaded
+        When sequence "data/sequences/bdd-packages/can-keep-alive.tar.gz" loaded
         And instance started with arguments "SEND_KEEPALIVE"
         And wait for instance healthy is "true"
         And get runner PID
