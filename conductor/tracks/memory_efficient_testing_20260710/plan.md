@@ -279,12 +279,16 @@
     - [x] Add BDD-runner support for two explicitly named feature-path waves, not tag-based selection.
     - [x] Keep fixed-port Hub, Manager/MultiManager, Docker-cleanup, harness, and stress paths serial until their resource ownership is isolated.
     - [x] Start with a proven-isolated wave and a serial remainder; require distinct config roots, artifact directories, ports, and cleanup ownership before balancing waves.
-    - [ ] Record wall time, parent RSS, Docker working set, leak detection, and scenario ownership evidence for every parallel trial.
+    - [x] Record wall time, parent RSS, Docker working set, leak detection, and scenario ownership evidence for every parallel trial.
 
-- [ ] Task: Validate fixture-only BDD execution and completion policy
-    - [ ] Run focused BDD fixture, CLI-config, and runner-helper tests under supported runners.
-    - [ ] Run the default BDD suite without root `refapps/` or performance features.
-    - [ ] Run repeated wave smoke tests before enabling any default parallelism.
+  Notes: Added an opt-in feature-path wave runner. An explicit `BDD_WAVE=verser2` run owns only `VERSER2-001-isolated-routing.feature` and passed with 2 scenarios/16 steps in 5.91 seconds, 64372 KiB outer-wrapper max RSS, and no leaked repository processes. The serial remainder intentionally remains a separate Docker invocation because fixed-port Hub, Manager/MultiManager, Docker-cleanup, harness, and stress paths are not yet safe for concurrent execution. Full default and remainder runs were externally terminated at approximately 240 seconds with exit 137; postmortem diagnostics recorded `OOMKilled: false`, so this is an execution-watchdog limitation rather than fixture or container-memory evidence.
+
+- [~] Task: Validate fixture-only BDD execution and completion policy
+    - [x] Run focused BDD fixture, CLI-config, and runner-helper tests under supported runners.
+    - [~] Run the default BDD suite without root `refapps/` or performance features.
+    - [x] Run repeated wave smoke tests before enabling any default parallelism.
     - [ ] Record memory-guard thresholds, skips/exceptions, deleted coverage, and deferred isolation work in the final checkpoint.
+
+  Notes: Focused BDD fixture, CLI config/profile, runner-helper, stream-capture, and wave-runner tests passed. The default fixture-only BDD command was started twice and reached the serial remainder, but the outer environment terminated the Docker run around 240 seconds with exit 137 before Cucumber could emit its final summary. Docker inspect reported `OOMKilled: false`; a complete default-suite result requires an execution environment that permits the repo's supported 600-second BDD timeout. No memory-guard skip was used; full BDD memory-guard validation remains deferred until the longer-running environment is available.
 
 - [ ] Task: Conductor - Phase Checkpoint 'BDD Fixture Migration and Legacy Test Removal' (Protocol in workflow.md)
