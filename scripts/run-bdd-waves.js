@@ -173,6 +173,46 @@ function commandArgs(features, passthrough) {
 }
 
 // ---------------------------------------------------------------------------
+// Time formatting and summary emission
+// ---------------------------------------------------------------------------
+
+/**
+ * Format a duration in nanoseconds to a readable string with seconds.
+ *
+ * @param {number} ns  Wall-clock duration in nanoseconds.
+ * @returns {string}   e.g. "12.34s", "1m 23.45s".
+ */
+function formatDuration(ns) {
+    const totalSec = ns / 1e9;
+
+    if (totalSec < 60) {
+        return `${totalSec.toFixed(2)}s`;
+    }
+
+    const minutes = Math.floor(totalSec / 60);
+    const seconds = totalSec - minutes * 60;
+    return `${minutes}m ${seconds.toFixed(2)}s`;
+}
+
+/**
+ * Default summary emitter — writes a structured, parseable line to stderr.
+ *
+ * Replace `module.exports.emitSummary` in tests to capture summary data.
+ *
+ * @param {string}   chunkName    Chunk identifier.
+ * @param {number}   featureCount Number of feature files in the chunk.
+ * @param {number}   status       Exit status from the child run.
+ * @param {number}   durationNs   Wall-clock duration in nanoseconds.
+ * @param {number}   cumulativeNs Cumulative wall-clock time in nanoseconds.
+ */
+function defaultEmitSummary(chunkName, featureCount, status, durationNs, cumulativeNs) {
+    const fields = [`chunk=${chunkName}`, `features=${featureCount}`, `status=${status}`, `duration=${formatDuration(durationNs)}`, `elapsed=${formatDuration(cumulativeNs)}`];
+    process.stderr.write(`[run-bdd-waves] ${fields.join(" ")}\n`);
+}
+
+module.exports.emitSummary = defaultEmitSummary;
+
+// ---------------------------------------------------------------------------
 // Child process runner (replaceable for testing)
 // ---------------------------------------------------------------------------
 
@@ -201,9 +241,26 @@ module.exports.runChild = defaultRunChild;
 
 function runWaves({ chunkName, passthrough }) {
     const runChild = module.exports.runChild;
+    const emitSummary = module.exports.emitSummary;
 
     // Inline validation before any spawn.
     validateManifest();
+
+    let cumulativeNs = 0;
+    let completed = 0;
+
+    function runOne(name, features) {
+        const count = features.length;
+        const start = process.hrtime.bigint();
+        const status = runChild(name, features, passthrough);
+        const delta = Number(process.hrtime.bigint() - start);
+
+        cumulativeNs += delta;
+        completed++;
+        emitSummary(name, count, status, delta, cumulativeNs);
+
+        return status;
+    }
 
     if (chunkName) {
         const features = CHUNKS[chunkName];
@@ -212,21 +269,17 @@ function runWaves({ chunkName, passthrough }) {
             throw new Error(`Unknown BDD chunk "${chunkName}". Available chunks: ${Object.keys(CHUNKS).join(", ")}`);
         }
 
-        const status = runChild(chunkName, features, passthrough);
-        process.stderr.write(`[run-bdd-waves] owner=${chunkName} status=${status}\n`);
-        return status;
+        return runOne(chunkName, features);
     }
 
     // No explicit selection: run all default chunks serially.
     for (let i = 0; i < DEFAULT_CHUNKS.length; i++) {
         const name = DEFAULT_CHUNKS[i];
         const features = CHUNKS[name];
-        const status = runChild(name, features, passthrough);
-
-        process.stderr.write(`[run-bdd-waves] owner=${name} status=${status}\n`);
+        const status = runOne(name, features);
 
         if (status !== 0) {
-            process.stderr.write(`[run-bdd-waves] chunk "${name}" failed status=${status}; remaining chunks not started\n`);
+            process.stderr.write(`[run-bdd-waves] chunk "${name}" failed status=${status}; ${DEFAULT_CHUNKS.length - completed} remaining chunk(s) not started\n`);
             return status;
         }
     }
@@ -251,6 +304,8 @@ module.exports = {
     CHUNKS,
     DEFAULT_CHUNKS,
     commandArgs,
+    emitSummary: defaultEmitSummary,
+    formatDuration,
     onDiskFeatures,
     parseArgs,
     runChild: defaultRunChild,

@@ -347,3 +347,216 @@ test("runChild is reachable via module.exports for testing", t => {
     t.is(runner.runChild(), 42);
     runner.runChild = original;
 });
+
+// ---------------------------------------------------------------------------
+// formatDuration
+// ---------------------------------------------------------------------------
+
+test("formatDuration formats sub-second duration", t => {
+    // 500ms = 0.5s
+    t.is(runner.formatDuration(500_000_000), "0.50s");
+});
+
+test("formatDuration formats seconds-only duration", t => {
+    // 12.34s
+    t.is(runner.formatDuration(12_340_000_000), "12.34s");
+});
+
+test("formatDuration formats 59.999s without rolling over", t => {
+    t.is(runner.formatDuration(59_999_000_000), "60.00s");
+});
+
+test("formatDuration formats one-minute-plus duration", t => {
+    // 1m 23.45s
+    t.is(runner.formatDuration(83_450_000_000), "1m 23.45s");
+});
+
+test("formatDuration formats multi-minute duration", t => {
+    // 12m 34.56s
+    t.is(runner.formatDuration(754_560_000_000), "12m 34.56s");
+});
+
+// ---------------------------------------------------------------------------
+// emitSummary — replaceable
+// ---------------------------------------------------------------------------
+
+test("emitSummary export is a function", t => {
+    t.is(typeof runner.emitSummary, "function");
+});
+
+test("emitSummary is replaceable and runWaves uses the replaced function", t => {
+    const captured = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => captured.push(args);
+    runner.runChild = () => 0;
+
+    try {
+        captured.length = 0;
+        runner.runWaves({ chunkName: "verser2", passthrough: ["--dry-run"] });
+
+        t.is(captured.length, 1, "emitSummary must be called once for explicit chunk");
+        const [chunkName, featureCount, status, durationNs, cumulativeNs] = captured[0];
+        t.is(chunkName, "verser2");
+        t.is(featureCount, runner.CHUNKS.verser2.length);
+        t.is(status, 0);
+        t.true(typeof durationNs === "number" && durationNs >= 0, "durationNs must be non-negative number");
+        t.true(typeof cumulativeNs === "number" && cumulativeNs >= 0, "cumulativeNs must be non-negative number");
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Timing instrumentation — explicit chunk
+// ---------------------------------------------------------------------------
+
+test("runWaves timing summary reports correct feature count and status for successful chunk", t => {
+    const summaries = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => summaries.push(args);
+    runner.runChild = () => 0;
+
+    try {
+        runner.runWaves({ chunkName: "verser2", passthrough: ["--dry-run"] });
+
+        t.is(summaries.length, 1);
+        t.is(summaries[0][0], "verser2");       // chunkName
+        t.is(summaries[0][1], 1);                 // featureCount
+        t.is(summaries[0][2], 0);                 // status
+        t.true(summaries[0][3] >= 0);             // durationNs
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});
+
+test("runWaves timing summary reports failed status for failing chunk", t => {
+    const summaries = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => summaries.push(args);
+    runner.runChild = () => 1;
+
+    try {
+        runner.runWaves({ chunkName: "verser2", passthrough: ["--dry-run"] });
+
+        t.is(summaries.length, 1);
+        t.is(summaries[0][2], 1, "status must be 1 for failed child run");
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});
+
+test("runWaves timing summary includes non-zero duration for delayed mock", t => {
+    const summaries = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => summaries.push(args);
+
+    // Simulate a chunk that takes ~5ms wall time.
+    runner.runChild = () => {
+        const target = Date.now() + 5;
+        while (Date.now() < target) { /* spin */ }
+        return 0;
+    };
+
+    try {
+        runner.runWaves({ chunkName: "verser2", passthrough: ["--dry-run"] });
+
+        t.is(summaries.length, 1);
+        const deltaMs = summaries[0][3] / 1e6; // ns -> ms
+        t.true(deltaMs >= 4, `duration must be >= ~4ms (was ${deltaMs.toFixed(1)}ms)`);
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Timing instrumentation — default full run
+// ---------------------------------------------------------------------------
+
+test("runWaves timing summary accumulates across default chunks", t => {
+    const summaries = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => summaries.push(args);
+    runner.runChild = () => 0;
+
+    try {
+        runner.runWaves({ chunkName: null, passthrough: ["--dry-run"] });
+
+        t.is(summaries.length, runner.DEFAULT_CHUNKS.length,
+            `must emit summary for each of ${runner.DEFAULT_CHUNKS.length} chunks`);
+
+        // Verify cumulative time is monotonic and non-decreasing.
+        for (let i = 0; i < summaries.length; i++) {
+            const [name, count, status, delta, cumulative] = summaries[i];
+            t.is(name, runner.DEFAULT_CHUNKS[i], `chunk ${i} name mismatch`);
+            t.true(count > 0, `chunk ${name} must have features`);
+            t.is(status, 0);
+            t.true(delta >= 0, `chunk ${i} duration must be non-negative`);
+            t.true(cumulative >= 0, `chunk ${i} cumulative must be non-negative`);
+
+            if (i > 0) {
+                t.true(cumulative >= summaries[i - 1][4],
+                    `cumulative time must be non-decreasing at chunk ${i}`);
+            }
+        }
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});
+
+test("runWaves timing summary includes failed chunk before halting", t => {
+    const summaries = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => summaries.push(args);
+
+    let callIndex = 0;
+    runner.runChild = () => {
+        callIndex++;
+        return callIndex >= 2 ? 1 : 0; // fail on second chunk
+    };
+
+    try {
+        runner.runWaves({ chunkName: null, passthrough: ["--dry-run"] });
+
+        t.is(summaries.length, 2, "must emit summary for failed chunk before halting");
+        t.is(summaries[0][2], 0, "first chunk succeeds");
+        t.is(summaries[1][2], 1, "second chunk fails");
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Timing instrumentation — harness chunk (non-default)
+// ---------------------------------------------------------------------------
+
+test("runWaves timing summary for explicit harness chunk", t => {
+    const summaries = [];
+    const origEmit = runner.emitSummary;
+    const origChild = runner.runChild;
+    runner.emitSummary = (...args) => summaries.push(args);
+    runner.runChild = () => 0;
+
+    try {
+        runner.runWaves({ chunkName: "harness", passthrough: ["--dry-run"] });
+
+        t.is(summaries.length, 1);
+        t.is(summaries[0][0], "harness");
+        t.is(summaries[0][1], runner.CHUNKS.harness.length);
+        t.is(summaries[0][2], 0);
+    } finally {
+        runner.emitSummary = origEmit;
+        runner.runChild = origChild;
+    }
+});

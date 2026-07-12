@@ -317,7 +317,8 @@
     - [ ] Add focused unit tests for metric collection, missing `/proc`/Docker data, and actionable diagnostics.
 
 - [ ] Task: Rationalize BDD timing through observable readiness polling
-    - [ ] Instrument chunk setup, scenario, slowest-step, cleanup, and teardown timing to establish a baseline.
+    - [x] Instrument chunk wall-clock setup and teardown timing to establish a baseline.
+    - [ ] Instrument scenario, slowest-step, and cleanup timing before changing waits.
     - [ ] Replace only unnecessary fixed sleeps with observable-condition polling at approximately 50-100 ms intervals and domain-specific deadlines.
     - [ ] Bound unbounded health/readiness loops and include last observed state in timeout diagnostics.
     - [ ] Preserve waits that are themselves asserted behavior: stop handlers, keep-alive, reconnect/backoff, flood/backpressure, delayed fixtures, and watchdog scenarios.
