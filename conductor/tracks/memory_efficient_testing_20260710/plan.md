@@ -292,3 +292,48 @@
   Notes: Focused BDD fixture, CLI config/profile, runner-helper, stream-capture, and wave-runner tests passed. The default fixture-only BDD command was started twice and reached the serial remainder, but the outer environment terminated the Docker run around 240 seconds with exit 137 before Cucumber could emit its final summary. Docker inspect reported `OOMKilled: false`; a complete default-suite result requires an execution environment that permits the repo's supported 600-second BDD timeout. No memory-guard skip was used; full BDD memory-guard validation remains deferred until the longer-running environment is available.
 
 - [ ] Task: Conductor - Phase Checkpoint 'BDD Fixture Migration and Legacy Test Removal' (Protocol in workflow.md)
+
+## Phase 10: BDD Chunking, Resource Metrics, and Timing Rationalization
+
+- [ ] Task: Define and validate an explicit BDD chunk manifest
+    - [ ] Replace dynamic remainder ownership with a static, feature-path-based manifest; do not use tags as chunk ownership.
+    - [ ] Assign every eligible default-suite feature to exactly one named chunk and fail validation for duplicate, missing, deleted, or nonexistent paths.
+    - [ ] Keep harness, stress, fixed-port Hub, Manager/MultiManager, and broad Docker-cleanup paths exclusive until ownership isolation is implemented.
+    - [ ] Add explicit `--chunk=<name>` selection and preserve `npm run test:bdd` serial behavior.
+    - [ ] Measure each chunk serially and require p95 runtime below 480 seconds before a chunk is eligible for later parallel execution.
+
+- [ ] Task: Add chunk-scoped ownership and cleanup isolation
+    - [ ] Create an immutable BDD run/chunk identifier and propagate it to outer Docker labels, generated configs, temporary artifacts, process/container labels, logs, and metrics.
+    - [ ] Replace broad Docker/process cleanup in parallel-safe chunks with ownership-scoped cleanup.
+    - [ ] Reserve or coordinate host-port allocation and make generated filesystem paths chunk-specific.
+    - [ ] Keep manager stacks, fixed ports, nested Docker cleanup, and stress scenarios serial until repeated chunk-isolation validation passes.
+
+- [ ] Task: Measure chunk-level parent, process, and container memory growth
+    - [ ] Sample Cucumber parent heap baseline/final/peak at chunk lifecycle boundaries, separately from per-scenario guard checks.
+    - [ ] Sample readiness-baselined and final/peak RSS for long-lived Hub, Manager, and MultiManager processes, including expected exit state.
+    - [ ] Sample outer BDD Docker container working-set baseline/final/peak and record memory limit, exit code, OOM state, and timestamps.
+    - [ ] Report metrics by chunk and component before enforcing new chunk thresholds; retain existing strict per-scenario threshold behavior.
+    - [ ] Add focused unit tests for metric collection, missing `/proc`/Docker data, and actionable diagnostics.
+
+- [ ] Task: Rationalize BDD timing through observable readiness polling
+    - [ ] Instrument chunk setup, scenario, slowest-step, cleanup, and teardown timing to establish a baseline.
+    - [ ] Replace only unnecessary fixed sleeps with observable-condition polling at approximately 50-100 ms intervals and domain-specific deadlines.
+    - [ ] Bound unbounded health/readiness loops and include last observed state in timeout diagnostics.
+    - [ ] Preserve waits that are themselves asserted behavior: stop handlers, keep-alive, reconnect/backoff, flood/backpressure, delayed fixtures, and watchdog scenarios.
+    - [ ] Add focused regression tests and repeated runs for every shortened wait to detect timing flakes.
+
+- [ ] Task: Add an opt-in resource-aware parallel chunk scheduler
+    - [ ] Require completed manifest, ownership isolation, and serial metric evidence before enabling parallel execution.
+    - [ ] Enforce maximum concurrent chunks, aggregate memory/CPU budget, and exclusive-resource locks instead of unbounded `Promise.all`.
+    - [ ] Start with two low-memory isolated chunks behind an explicit experimental command or `BDD_PARALLEL=1`; keep serial default unchanged.
+    - [ ] Record aggregate memory/CPU, overlap timeline, cleanup ownership, port collisions, retries, and flakes for every parallel trial.
+    - [ ] Promote no parallel default until repeated evidence confirms resource and correctness acceptance criteria.
+
+- [ ] Task: Validate chunked BDD execution and phase completion evidence
+    - [ ] Compare the serial union of all chunks with the default eligible scenario set.
+    - [ ] Run every chunk under supported Docker BDD execution within the 600-second container timeout and record median, p95, and maximum runtime.
+    - [ ] Run repeated two-chunk experimental trials only after isolation gates pass.
+    - [ ] Run relevant BDD memory-guard validation and record parent heap, child RSS, Docker working-set thresholds, skips/exceptions, and deferred coverage.
+    - [ ] Record external watchdog limitations separately from container OOM or test failures.
+
+- [ ] Task: Conductor - Phase Checkpoint 'BDD Chunking, Resource Metrics, and Timing Rationalization' (Protocol in workflow.md)
