@@ -154,6 +154,28 @@ let timeoutGraceTimer = null;
 let logsChild = null;
 let waitChild = null;
 
+// ---------------------------------------------------------------------------
+// Outer-container working-set memory tracking
+// ---------------------------------------------------------------------------
+
+/** @type {number|null} Baseline working-set sample in bytes (captured after container start). */
+let workingSetBaseline = null;
+
+/** @type {number|null} Highest recorded working-set sample in bytes. */
+let workingSetPeak = null;
+
+/** @type {number|null} Final working-set sample in bytes (captured before cleanup). */
+let workingSetFinal = null;
+
+/** Number of periodic working-set samples taken during the container's lifetime. */
+let workingSetSampleCount = 0;
+
+/** @type {NodeJS.Timeout|null} Interval handle for periodic peak sampling. */
+let workingSetTimer = null;
+
+/** Periodic sampling interval in ms. */
+const WORKING_SET_SAMPLE_INTERVAL_MS = 30000;
+
 const cleanup = () => {
     if (cleaned) {
         return;
@@ -174,6 +196,11 @@ const cleanup = () => {
     if (timeoutGraceTimer) {
         clearTimeout(timeoutGraceTimer);
         timeoutGraceTimer = null;
+    }
+
+    if (workingSetTimer) {
+        clearInterval(workingSetTimer);
+        workingSetTimer = null;
     }
 
     if (containerId) {
@@ -251,6 +278,153 @@ const printContainerDiagnostics = (containerId) => {
     }
 };
 
+// ---------------------------------------------------------------------------
+// Outer-container working-set sampling helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Sample a Docker container's current working-set memory via the stats API.
+ *
+ * Computes working set = `memory_stats.usage - inactive_file` (matching the
+ * existing logic in bdd/lib/memory-registry.ts).  Uses `docker stats`
+ * with a custom Go template to obtain the full stats JSON.
+ *
+ * Returns bytes, or @c null if Docker is unavailable or the container has
+ * already exited.
+ *
+ * @param {string} cid  Container ID.
+ * @returns {number|null}
+ */
+const sampleContainerWorkingSet = (cid) => {
+    const result = spawnSync("docker", ["stats", "--no-stream", "--no-trunc", "--format", "{{json .}}", cid], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"]
+    });
+
+    if (result.error || typeof result.status !== "number" || result.status !== 0 || !result.stdout) {
+        return null;
+    }
+
+    try {
+        const stats = JSON.parse(result.stdout);
+
+        if (!stats.memory_stats || typeof stats.memory_stats.usage !== "number") {
+            return null;
+        }
+
+        const usage = stats.memory_stats.usage;
+        const statsBlock = stats.memory_stats.stats;
+        const inactiveFile = statsBlock
+            ? (typeof statsBlock.inactive_file === "number" ? statsBlock.inactive_file : 0) ||
+              (typeof statsBlock.total_inactive_file === "number" ? statsBlock.total_inactive_file : 0)
+            : 0;
+
+        return Math.max(0, usage - inactiveFile);
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Take one working-set sample and, if successful, update peak tracking.
+ *
+ * @param {string} cid  Container ID.
+ * @returns {number|null}  Sampled bytes or null.
+ */
+const recordWorkingSetSample = (cid) => {
+    const bytes = sampleContainerWorkingSet(cid);
+
+    if (bytes === null) {
+        return null;
+    }
+
+    workingSetSampleCount++;
+
+    if (workingSetPeak === null || bytes > workingSetPeak) {
+        workingSetPeak = bytes;
+    }
+
+    return bytes;
+};
+
+// ---------------------------------------------------------------------------
+// Combined container summary (state + working-set metrics)
+// ---------------------------------------------------------------------------
+
+/**
+ * Print a structured summary of the outer BDD Docker container: working-set
+ * baseline / peak / final / limit / delta, plus exit code, OOM state, and
+ * timestamps.
+ *
+ * Safe to call after the container has exited – falls back to the last
+ * periodic sample or baseline when a live stats sample is unavailable.
+ *
+ * Called once in the `docker wait` close handler, before scoped cleanup
+ * removes the container.
+ *
+ * @param {string} cid       Container ID.
+ * @param {number} exitCode  Exit code from `docker wait`.
+ */
+const printContainerSummary = (cid, exitCode) => {
+    // Attempt a live working-set sample (may fail if the container already exited).
+    const finalSample = sampleContainerWorkingSet(cid);
+
+    if (finalSample !== null) {
+        workingSetFinal = finalSample;
+
+        if (workingSetPeak === null || finalSample > workingSetPeak) {
+            workingSetPeak = finalSample;
+        }
+
+        workingSetSampleCount++;
+    } else if (workingSetFinal === null) {
+        // Container already exited – use peak or baseline as the best final value.
+        workingSetFinal = workingSetPeak !== null ? workingSetPeak : workingSetBaseline;
+    }
+
+    // Obtain OOMKilled + timestamps from Docker inspect.
+    const inspectResult = spawnSync("docker", ["inspect", "--format={{json .State}}", cid], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"]
+    });
+
+    let oomKilled = "unknown";
+    let startedAt = "unknown";
+    let finishedAt = "unknown";
+
+    if (!inspectResult.error && typeof inspectResult.status === "number" && inspectResult.status === 0 && inspectResult.stdout) {
+        try {
+            const state = JSON.parse(inspectResult.stdout);
+            oomKilled = String(state.OOMKilled);
+            startedAt = state.StartedAt || "unknown";
+            finishedAt = state.FinishedAt || "unknown";
+        } catch {
+            // fall through
+        }
+    }
+
+    // Format helpers.
+    const fmt = (v) => (v !== null && v !== undefined ? `${v} bytes` : "unavailable");
+    const baselineStr = fmt(workingSetBaseline);
+    const peakStr = fmt(workingSetPeak);
+    const finalStr = fmt(workingSetFinal);
+    const delta = workingSetBaseline !== null && workingSetFinal !== null ? workingSetFinal - workingSetBaseline : null;
+    const deltaStr = delta !== null ? `${delta} bytes` : "unavailable";
+
+    process.stderr.write(`[run-bdd-docker] container working-set summary:\n`);
+    process.stderr.write(`  Container:   ${cid}\n`);
+    process.stderr.write(`  ExitCode:    ${exitCode}\n`);
+    process.stderr.write(`  OOMKilled:   ${oomKilled}\n`);
+    process.stderr.write(`  Limit:       ${BDD_DOCKER_MEMORY}\n`);
+    process.stderr.write(`  Baseline:    ${baselineStr}\n`);
+    process.stderr.write(`  Final:       ${finalStr}\n`);
+    process.stderr.write(`  Peak:        ${peakStr}\n`);
+    process.stderr.write(`  Delta:       ${deltaStr}\n`);
+    process.stderr.write(`  Samples:     ${workingSetSampleCount}\n`);
+    process.stderr.write(`  StartedAt:   ${startedAt}\n`);
+    process.stderr.write(`  FinishedAt:  ${finishedAt}\n`);
+};
+
 const runResult = spawnSync("docker", dockerRunArgs, { encoding: "utf8" });
 
 if (runResult.error) {
@@ -275,6 +449,18 @@ if (!containerId) {
 }
 
 process.stderr.write(`[run-bdd-docker] container id=${containerId}\n`);
+
+// Capture initial working-set baseline while the container is running.
+workingSetBaseline = sampleContainerWorkingSet(containerId);
+
+if (workingSetBaseline !== null) {
+    process.stderr.write(`[run-bdd-docker] baseline working set: ${workingSetBaseline} bytes\n`);
+}
+
+// Start periodic peak tracking (30s interval).
+workingSetTimer = setInterval(() => {
+    recordWorkingSetSample(containerId);
+}, WORKING_SET_SAMPLE_INTERVAL_MS);
 
 logsChild = spawn("docker", ["logs", "-f", containerId], { stdio: ["ignore", "inherit", "inherit"] });
 
@@ -337,6 +523,8 @@ waitChild.once("close", () => {
 
     if (timedOut) {
         printContainerDiagnostics(containerId);
+        printContainerSummary(containerId, TIMEOUT_EXIT_CODE);
+
         exitWith(TIMEOUT_EXIT_CODE);
         return;
     }
@@ -346,10 +534,12 @@ waitChild.once("close", () => {
             printContainerDiagnostics(containerId);
         }
 
+        printContainerSummary(containerId, parsed);
         exitWith(parsed);
         return;
     }
 
     printContainerDiagnostics(containerId);
+    printContainerSummary(containerId, 1);
     exitWith(1);
 });

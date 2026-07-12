@@ -264,7 +264,192 @@ test("run-bdd-docker.js calls printContainerDiagnostics for unparseable exit cod
 	);
 
 	t.true(
-		src.includes("printContainerDiagnostics(containerId);\n    exitWith(1);"),
-		"should call diagnostics before fallback exitWith(1)"
+		src.includes("printContainerDiagnostics(containerId);\n    printContainerSummary(containerId, 1);"),
+		"should call diagnostics and summary before fallback exitWith(1)"
+	);
+});
+
+// ---------------------------------------------------------------------------
+// Outer-container working-set memory tracking (Phase 10)
+// ---------------------------------------------------------------------------
+
+test("run-bdd-docker.js defines sampleContainerWorkingSet", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const sampleContainerWorkingSet"),
+		"should define sampleContainerWorkingSet function"
+	);
+});
+
+test("run-bdd-docker.js defines recordWorkingSetSample", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const recordWorkingSetSample"),
+		"should define recordWorkingSetSample function"
+	);
+});
+
+test("run-bdd-docker.js defines printContainerSummary", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const printContainerSummary"),
+		"should define printContainerSummary function"
+	);
+});
+
+test("run-bdd-docker.js defines WORKING_SET_SAMPLE_INTERVAL_MS = 30000", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("WORKING_SET_SAMPLE_INTERVAL_MS = 30000"),
+		"should define 30s sampling interval"
+	);
+});
+
+test("run-bdd-docker.js tracks working-set module-level variables", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes("let workingSetBaseline"), "should declare workingSetBaseline");
+	t.true(src.includes("let workingSetPeak"), "should declare workingSetPeak");
+	t.true(src.includes("let workingSetFinal"), "should declare workingSetFinal");
+	t.true(src.includes("let workingSetSampleCount"), "should declare workingSetSampleCount");
+	t.true(src.includes("let workingSetTimer"), "should declare workingSetTimer");
+});
+
+test("run-bdd-docker.js captures working-set baseline after container starts", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("workingSetBaseline = sampleContainerWorkingSet(containerId)"),
+		"should capture baseline after container ID is known"
+	);
+});
+
+test("run-bdd-docker.js starts periodic sampling interval after baseline", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("workingSetTimer = setInterval(()"),
+		"should start setInterval for periodic peak tracking"
+	);
+	t.true(
+		src.includes("WORKING_SET_SAMPLE_INTERVAL_MS"),
+		"should use WORKING_SET_SAMPLE_INTERVAL_MS constant"
+	);
+});
+
+test("run-bdd-docker.js clears working-set timer in cleanup", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("if (workingSetTimer) {\n        clearInterval(workingSetTimer);"),
+		"should clearInterval in cleanup"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerSummary for timed-out containers", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("if (timedOut) {\n        printContainerDiagnostics(containerId);\n        printContainerSummary(containerId, TIMEOUT_EXIT_CODE);"),
+		"should call summary on timeout branch"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerSummary for non-zero and zero exit codes", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("printContainerSummary(containerId, parsed);"),
+		"should call summary for all exit codes (zero and non-zero)"
+	);
+});
+
+test("run-bdd-docker.js working-set docker stats format matches existing memory-registry.ts logic", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('"stats", "--no-stream", "--no-trunc", "--format", "{{json .}}"'),
+		"should use --no-stream --no-trunc --format {{json .}} for full stats"
+	);
+	t.true(
+		src.includes("memory_stats.usage"),
+		"should read memory_stats.usage"
+	);
+	t.true(
+		src.includes("inactive_file"),
+		"should subtract inactive_file for working-set computation"
+	);
+	t.true(
+		src.includes("total_inactive_file"),
+		"should fall back to total_inactive_file"
+	);
+});
+
+test("run-bdd-docker.js printContainerSummary includes all required fields", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes("working-set summary"), "summary header");
+	t.true(src.includes("Container:"), "Container field");
+	t.true(src.includes("ExitCode:"), "ExitCode field");
+	t.true(src.includes("OOMKilled:"), "OOMKilled field");
+	t.true(src.includes("Limit:"), "Limit field");
+	t.true(src.includes("Baseline:"), "Baseline field");
+	t.true(src.includes("Final:"), "Final field");
+	t.true(src.includes("Peak:"), "Peak field");
+	t.true(src.includes("Delta:"), "Delta field");
+	t.true(src.includes("Samples:"), "Samples field");
+	t.true(src.includes("StartedAt:"), "StartedAt timestamp field");
+	t.true(src.includes("FinishedAt:"), "FinishedAt timestamp field");
+});
+
+test("run-bdd-docker.js working-set sampling does not fail on unavailable Docker stats", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("return null;"),
+		"should return null on failure (multiple paths)"
 	);
 });
