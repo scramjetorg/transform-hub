@@ -422,10 +422,11 @@ function bddDockerWorkingSetThresholdBytes() {
  * @param {number} opts.threshold   Effective threshold in bytes.
  * @returns {string}  Multi-line diagnostics string.
  */
-function buildProcessRssDiagnostics({ label, pid, baselineRss, finalRss, delta, threshold }) {
+function buildProcessRssDiagnostics({ label, pid, baselineRss, finalRss, delta, threshold, baselineSource }) {
     const lines = [];
 
-    lines.push(`BDD process RSS check: "${label}" (pid ${pid}) ` + `delta ${delta} bytes (threshold: ${threshold} bytes).`);
+    const source = baselineSource ? ` (baseline source: ${baselineSource})` : "";
+    lines.push(`BDD process RSS check: "${label}" (pid ${pid}) ` + `delta ${delta} bytes (threshold: ${threshold} bytes).${source}`);
     lines.push(`  baseline RSS: ${baselineRss}  final RSS: ${finalRss}  delta: ${delta}`);
 
     lines.push("Review the process for excessive memory retention.  " + "Consider tracking lifecycle (expected to exit vs long-lived).");

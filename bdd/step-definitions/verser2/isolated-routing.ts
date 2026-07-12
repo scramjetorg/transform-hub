@@ -180,21 +180,48 @@ After(async function(this: CustomWorld) {
 
     if (!current) return;
 
-    await current.broker?.close("bdd-cleanup").catch(() => undefined);
+    // Attempt every close and collect all errors — never short-circuit.
+    const closeErrors: Error[] = [];
+
+    const capture = (p: Promise<void>) => p.catch((err: unknown) => {
+        closeErrors.push(err instanceof Error ? err : new Error(String(err)));
+    });
+
+    await capture(current.broker?.close("bdd-cleanup") ?? Promise.resolve());
 
     for (const upstream of current.upstreams.reverse()) {
-        await upstream.close("bdd-cleanup").catch(() => undefined);
+        await capture(upstream.close("bdd-cleanup"));
     }
 
     for (const guest of current.guests.reverse()) {
-        await guest.close("bdd-cleanup").catch(() => undefined);
+        await capture(guest.close("bdd-cleanup"));
     }
 
     for (const host of Array.from(current.hosts.values()).reverse()) {
-        await host.close("bdd-cleanup").catch(() => undefined);
+        await capture(host.close("bdd-cleanup"));
     }
 
+    // Clear inner references after close to break Verser2 closure chains
+    // and allow GC to reclaim TLS / HTTP2 session structures.
+    current.broker = undefined;
+    current.hosts.clear();
+    current.guests.length = 0;
+    current.upstreams.length = 0;
+    current.routes.clear();
+    current.response = undefined;
+    current.responseBody = undefined;
+    current.host = undefined;
+
     delete this.resources.isolatedVerser2;
+
+    // If any close failed, surface all errors so the scenario is marked
+    // failed and operators can diagnose incomplete cleanup.
+    if (closeErrors.length > 0) {
+        const combined = closeErrors.map((e) => `  - ${e.message}`).join("\n");
+        throw new Error(
+            `verser2 isolated-routing cleanup: ${closeErrors.length} close error(s):\n${combined}`
+        );
+    }
 });
 
 Given("an isolated verser2 host", async function(this: CustomWorld) {

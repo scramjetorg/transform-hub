@@ -86,6 +86,8 @@ export interface MemoryRegistryOptions {
         finalRss: number;
         delta: number;
         threshold: number;
+        /** Human-readable label for the RSS baseline source ("ready" or "spawn"). */
+        baselineSource?: string;
     }) => string;
     buildDockerWorkingSetDiagnostics: (opts: {
         label: string;
@@ -691,13 +693,29 @@ class MemoryRegistry {
                 tracked.peakRss = finalRss;
             }
 
-            // Record baseline if not already set.
-            if (tracked.baselineRss === null) {
+            // Pick the best available baseline for RSS comparison.
+            // Prefer the readiness-aware baseline (set by recordProcessReady)
+            // over the spawn-time baseline.  The spawn baseline (~176 KiB for
+            // hub) is captured before the process initialises; comparing
+            // against it would produce a misleadingly large delta that nearly
+            // always exceeds the threshold even under normal operation.
+            let effectiveBaseline: number | null;
+            let baselineSource: string;
+
+            if (tracked.readyBaselineRss !== null) {
+                effectiveBaseline = tracked.readyBaselineRss;
+                baselineSource = "ready";
+            } else if (tracked.baselineRss !== null) {
+                effectiveBaseline = tracked.baselineRss;
+                baselineSource = "spawn";
+            } else {
+                // No baseline of any kind – record the first observable RSS
+                // as the spawn baseline and defer the comparison.
                 tracked.baselineRss = finalRss;
-                continue; // First measurement — no delta to compare.
+                continue;
             }
 
-            const delta = finalRss - tracked.baselineRss;
+            const delta = finalRss - effectiveBaseline;
             const threshold = this.options.processRssThresholdBytes();
 
             if (delta > threshold) {
@@ -705,10 +723,11 @@ class MemoryRegistry {
                     this.options.buildProcessRssDiagnostics({
                         label: tracked.label,
                         pid,
-                        baselineRss: tracked.baselineRss,
+                        baselineRss: effectiveBaseline,
                         finalRss,
                         delta,
                         threshold,
+                        baselineSource,
                     })
                 );
             }

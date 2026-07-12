@@ -812,6 +812,33 @@ test("buildProcessRssDiagnostics shows zero delta message", (t) => {
 	t.true(msg.includes("delta 0 bytes"), "should show zero delta");
 });
 
+test("buildProcessRssDiagnostics includes baselineSource when provided", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "hub",
+		pid: 12345,
+		baselineRss: 100000000,
+		finalRss: 150000000,
+		delta: 50000000,
+		threshold: 104857600,
+		baselineSource: "ready",
+	});
+
+	t.true(msg.includes("baseline source: ready"), "should include baseline source");
+});
+
+test("buildProcessRssDiagnostics omits baselineSource line when not provided", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "test",
+		pid: 1,
+		baselineRss: 1000,
+		finalRss: 2000,
+		delta: 1000,
+		threshold: 500,
+	});
+
+	t.false(msg.includes("baseline source:"), "should not mention baseline source when absent");
+});
+
 // ---------------------------------------------------------------------------
 // buildDockerWorkingSetDiagnostics (Phase 6)
 // ---------------------------------------------------------------------------

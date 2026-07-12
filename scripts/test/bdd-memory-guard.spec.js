@@ -304,3 +304,226 @@ test("bddMemoryHeapThresholdBytes returns BDD-specific override", (t) => {
         else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
     }
 });
+
+// ---------------------------------------------------------------------------
+// Scenario exception matching – production helpers
+// ---------------------------------------------------------------------------
+
+const {
+    matchScenarioException,
+    cleanupWorldResources,
+} = require("../lib/bdd-memory-hooks-lib.js");
+
+test("exception matching matches by exact URI, name, and line", (t) => {
+    const exceptions = [{
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Broker follows a native 308 redirect to an advertised route",
+        allowanceBytes: 1000,
+        reason: "test",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "/work/bdd/features/verser2/VERSER2-001-isolated-routing.feature",
+        7,
+        "Broker follows a native 308 redirect to an advertised route",
+    );
+
+    t.truthy(match);
+    t.is(match.allowanceBytes, 1000);
+});
+
+test("exception matching uses endsWith for feature URI", (t) => {
+    const exceptions = [{
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Test",
+        allowanceBytes: 2000,
+        reason: "endsWith test",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "/some/prefix/verser2/VERSER2-001-isolated-routing.feature",
+        7,
+        "Test",
+    );
+
+    t.truthy(match, "should match via endsWith");
+    t.is(match.allowanceBytes, 2000);
+});
+
+test("exception matching does not match wrong URI", (t) => {
+    const exceptions = [{
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Test",
+        allowanceBytes: 1000,
+        reason: "test",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "features/e2e/E2E-001-samples.feature",
+        7,
+        "Test",
+    );
+
+    t.falsy(match, "should not match different URI");
+});
+
+test("exception matching does not match wrong scenario name", (t) => {
+    const exceptions = [{
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Exact scenario name",
+        allowanceBytes: 1000,
+        reason: "test",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "verser2/VERSER2-001-isolated-routing.feature",
+        7,
+        "Different scenario name",
+    );
+
+    t.falsy(match, "should not match different name");
+});
+
+test("exception matching ignores line when scenarioLine is 0", (t) => {
+    const exceptions = [{
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Test",
+        allowanceBytes: 1000,
+        reason: "line-ignored test",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "verser2/VERSER2-001-isolated-routing.feature",
+        0,
+        "Test",
+    );
+
+    t.truthy(match, "should match when scenario line is unknown");
+    t.is(match.allowanceBytes, 1000);
+});
+
+test("exception matching returns first match when multiple candidates exist", (t) => {
+    const exceptions = [
+        {
+            featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+            line: 7,
+            scenarioName: "Shared Name",
+            allowanceBytes: 1000,
+            reason: "first",
+        },
+        {
+            featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+            line: 17,
+            scenarioName: "Shared Name",
+            allowanceBytes: 2000,
+            reason: "second",
+        },
+    ];
+
+    const match = matchScenarioException(
+        exceptions,
+        "verser2/VERSER2-001-isolated-routing.feature",
+        7,
+        "Shared Name",
+    );
+
+    t.truthy(match);
+    t.is(match.allowanceBytes, 1000, "should match first entry");
+    t.is(match.reason, "first");
+});
+
+// ---------------------------------------------------------------------------
+// Cleanup failure propagation (mimics isolated-routing.ts After hook logic)
+// ---------------------------------------------------------------------------
+
+test("cleanup collects all close errors and surfaces aggregated failure", (t) => {
+    const closeErrors = [];
+
+    const capture = (p) =>
+        p.catch((err) => {
+            closeErrors.push(err instanceof Error ? err : new Error(String(err)));
+        });
+
+    const results = [
+        Promise.resolve(),
+        Promise.reject(new Error("upstream close failed")),
+        Promise.reject(new Error("guest close failed")),
+        Promise.resolve(),
+    ];
+
+    return Promise.all(results.map(capture)).then(() => {
+        t.is(closeErrors.length, 2, "should collect 2 errors");
+        t.true(closeErrors[0].message.includes("upstream"), "first error message");
+        t.true(closeErrors[1].message.includes("guest"), "second error message");
+
+        if (closeErrors.length > 0) {
+            const combined = closeErrors.map((e) => "  - " + e.message).join("\n");
+            const errMsg = "cleanup: " + closeErrors.length + " error(s):\n" + combined;
+
+            t.true(errMsg.includes("2 error(s)"), "should report error count");
+            t.true(errMsg.includes("upstream close failed"), "should include upstream error");
+            t.true(errMsg.includes("guest close failed"), "should include guest error");
+        }
+    });
+});
+
+test("cleanup does not throw when all closes succeed", (t) => {
+    const closeErrors = [];
+
+    const capture = (p) =>
+        p.catch((err) => {
+            closeErrors.push(err instanceof Error ? err : new Error(String(err)));
+        });
+
+    const results = [
+        Promise.resolve(),
+        Promise.resolve(),
+    ];
+
+    return Promise.all(results.map(capture)).then(() => {
+        t.is(closeErrors.length, 0, "should have no errors");
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CleanupWorldResources – production helper
+// ---------------------------------------------------------------------------
+
+test("cleanupWorldResources clears every field on world.resources", (t) => {
+    const world = {
+        resources: {
+            isolatedVerser2: { hosts: new Map(), guests: [] },
+            outStream: { readable: true },
+            instance: { id: "i1" },
+            extraField: "keep-me",
+            instanceList: {},
+            multiHosts: {},
+        },
+        cliResources: {
+            collectedTopicData: "some-data",
+            stdio: ["out", "err", 0],
+            commandInProgress: { pid: 1234 },
+        },
+        response: { statusCode: 200 },
+    };
+
+    cleanupWorldResources(world);
+
+    for (const key of Object.keys(world.resources)) {
+        t.is(world.resources[key], undefined, "resources." + key + " should be undefined");
+    }
+    for (const key of Object.keys(world.cliResources)) {
+        t.is(world.cliResources[key], undefined, "cliResources." + key + " should be undefined");
+    }
+    t.is(world.response, undefined, "world.response should be undefined");
+});

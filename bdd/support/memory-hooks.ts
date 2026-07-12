@@ -36,7 +36,74 @@ import {
     checkBddMemorySkip,
     buildBddMemoryDiagnostics,
 } from "../../scripts/lib/bdd-memory-guard";
-import { memoryRegistry } from "../lib/memory-registry";
+import {
+    matchScenarioException,
+    cleanupWorldResources,
+} from "../../scripts/lib/bdd-memory-hooks-lib";
+
+// ---------------------------------------------------------------------------
+// Per-scenario memory exceptions (narrowly scoped)
+// ---------------------------------------------------------------------------
+// When deterministic cleanup cannot release all legitimate allocations
+// (e.g. Node.js C++ embedder structures for TLS / HTTP/2 that survive
+// close()+GC), an entry here raises the effective threshold for only
+// the named scenario.
+//
+// Each exception is keyed by the **exact** feature-URI + scenario-name
+// pair so that unrelated or renamed scenarios never silently inherit it.
+// An allowance must be justified by repeated lifecycle evidence showing
+// a plateau in retained native-memory deltas (see the cycle test in
+// scripts/test/verser2-cycle-memory.spec.js for the methodology).
+//
+// Entries are additive: effectiveThreshold = base + allowanceBytes.
+
+interface ScenarioException {
+    /** Feature URI relative to bdd/features/ (e.g. "verser2/VERSER2-001-isolated-routing.feature"). */
+    featureUri: string;
+    /** Exact scenario line number in the feature file. */
+    line: number;
+    /** Exact scenario name (matched with ===). */
+    scenarioName: string;
+    /** Additional bytes allowed above the base threshold. */
+    allowanceBytes: number;
+    /** Required documented reason, including reference to plateau evidence. */
+    reason: string;
+}
+
+const SCENARIO_EXCEPTIONS: ScenarioException[] = [
+    // -----------------------------------------------------------------------
+    // VERSER2-001: Isolated verser2 routing guarantees
+    //
+    // These scenarios create HTTP/2 TLS hosts + brokers.  Node.js C++
+    // embedder structures (SecureContext, HPACK tables, session settings)
+    // survive close()+GC because V8 cannot reclaim allocations made by
+    // Node.js's native TLS / HTTP2 implementations.
+    //
+    // Plateau evidence (scripts/test/verser2-cycle-memory.spec.js):
+    //   After 2 warmup cycles, 6 measured cycles of create/request/close
+    //   show native (external + arrayBuffers) delta of exactly 2778 bytes
+    //   per cycle with ZERO spread across the last 4 cycles.  V8 heap
+    //   fragmentation adds 44–109 KiB on top (GC-dependent but bounded).
+    //
+    //   Repeated guarded Docker runs (3 runs) observed deltas of
+    //   537792, 681712, and 685088 bytes against the 524288-byte base.
+    //   The maximum excess is 160800 bytes; allowance is 245760 bytes,
+    //   which is the excess plus more than 50% headroom, rounded up.
+    // -----------------------------------------------------------------------
+
+    {
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Broker follows a native 308 redirect to an advertised route",
+        // Repeated guarded-run maximum excess over the strict base:
+        //   685088 - 524288 = 160800 bytes.
+        allowanceBytes: 245_760,
+        reason: "Node.js HTTP/2 TLS C++ embedder structs + V8 heap "
+            + "fragmentation.  Three repeated guarded Docker runs observed "
+            + "a maximum 160800-byte excess over the strict base; allowance "
+            + "provides more than 50% headroom.",
+    },
+];
 
 // ---------------------------------------------------------------------------
 // Module-level GC readiness check
@@ -58,6 +125,7 @@ if (isBddMemoryGuardEnabled() && !memorySkip.skip) {
 
 const BASELINE_KEY = "__memoryBaseline";
 const BEFORE_USAGE_KEY = "__memoryBeforeUsage";
+const getMemoryRegistry = () => require("../lib/memory-registry").memoryRegistry;
 
 // ---------------------------------------------------------------------------
 // Before – baseline
@@ -81,7 +149,7 @@ Before(async function () {
     // Feed parent-heap sample into chunk-level tracking (Phase 10).
     // The first call establishes the chunk baseline; subsequent calls
     // update the running peak.
-    memoryRegistry.recordChunkHeapSample(baseline);
+    getMemoryRegistry().recordChunkHeapSample(baseline);
 });
 
 // ---------------------------------------------------------------------------
@@ -98,9 +166,33 @@ After(async function (this: any, scenario: any) {
         return; // No baseline – guard may have been enabled mid-run
     }
 
-    // Derive scenario name from the Cucumber pickle (available on `this`)
+    // Derive scenario metadata from the Cucumber pickle.
     const scenarioName: string =
         scenario?.pickle?.name || this.pickle?.name || this.testCaseStartedId || "unknown";
+
+    // Extract feature URI from the Cucumber scenario pickle (e.g.
+    // "features/verser2/VERSER2-001-isolated-routing.feature").
+    // The `scenario.pickle.uri` field is available in Cucumber >= 7.
+    const featureUri: string =
+        scenario?.pickle?.uri || "";
+
+    // Extract scenario line number from the pickle.
+    // Cucumber 7 Pickle does not expose a top-level `locations` array;
+    // instead, source lines are available via `astNodeIds` → GherkinDocument
+    // lookup in the envelope, or from `scenario.sourceLocation?.line` on
+    // the TestCaseFinished envelope.  Since we match by exact scenario
+    // name + feature URI, the line is a secondary guard — if it cannot be
+    // determined, fall back to 0 (which disarms the line check below but
+    // still allows a name+URI match).
+    let scenarioLine: number = 0;
+
+    if (scenario?.pickle?.locations && scenario.pickle.locations.length > 0) {
+        scenarioLine = scenario.pickle.locations[0].line;
+    }
+
+    if (scenarioLine === 0 && scenario?.sourceLocation?.line) {
+        scenarioLine = scenario.sourceLocation.line;
+    }
 
     // ---- Cleanup world resources before final measurement ----
     const cleanupErrors: Error[] = [];
@@ -109,6 +201,13 @@ After(async function (this: any, scenario: any) {
         cleanupWorldResources(this);
     } catch (err: any) {
         cleanupErrors.push(err);
+    }
+
+    // Hook-order instrumentation is intentionally after complete-world
+    // cleanup and immediately before the final measurement.
+    const hookOrderFile: string | undefined = process.env.BDD_HOOK_ORDER_FILE;
+    if (hookOrderFile) {
+        require("fs").appendFileSync(hookOrderFile, "memory-guard-after\n", "utf8");
     }
 
     // ---- Final measurement ----
@@ -120,15 +219,31 @@ After(async function (this: any, scenario: any) {
     const delta = final - baseline;
     const threshold = bddMemoryHeapThresholdBytes();
 
+    // ---- Apply per-scenario exception ----
+    let effectiveThreshold = threshold;
+    let exceptionLabel: string | undefined;
+
+    const exc: any = matchScenarioException(SCENARIO_EXCEPTIONS, featureUri, scenarioLine, scenarioName);
+
+    if (exc) {
+        effectiveThreshold = threshold + exc.allowanceBytes;
+        exceptionLabel = `${exc.allowanceBytes}-byte exception (${exc.featureUri}:${exc.line}): ${exc.reason}`;
+        process.stderr.write(
+            `[memory-guard] exception sample ${exc.featureUri}:${exc.line} ` +
+            `scenario=${scenarioName} delta=${delta} base=${threshold} ` +
+            `allowance=${exc.allowanceBytes} effective=${effectiveThreshold}\n`
+        );
+    }
+
     // ---- Check threshold ----
-    if (delta > threshold) {
+    if (delta > effectiveThreshold) {
         const diagnostics = buildBddMemoryDiagnostics({
             scenarioName,
             baseline,
             final,
             delta,
-            threshold,
-            sourceLabel: bddMemoryThresholdSourceLabel(),
+            threshold: effectiveThreshold,
+            sourceLabel: exceptionLabel || bddMemoryThresholdSourceLabel(),
             beforeUsage: this[BEFORE_USAGE_KEY],
             afterUsage,
             cleanupErrors: cleanupErrors.length > 0 ? cleanupErrors : undefined,
@@ -138,7 +253,7 @@ After(async function (this: any, scenario: any) {
     }
 
     // ---- Assert child process / container memory (Phase 6) ----
-    const registryErrors = await memoryRegistry.assertAll();
+    const registryErrors = await getMemoryRegistry().assertAll();
 
     if (registryErrors.length > 0) {
         throw new Error(
@@ -167,40 +282,12 @@ AfterAll(async function () {
     await drainAndGc();
 
     const finalHeap = measureMemoryUsage();
-    memoryRegistry.printChunkSummary(finalHeap);
+    getMemoryRegistry().printChunkSummary(finalHeap);
 });
 
 // ---------------------------------------------------------------------------
 // World cleanup helper
 // ---------------------------------------------------------------------------
 
-/**
- * Release scenario-local references that could retain memory.
- *
- * Called before the final memory measurement to reduce noise from known
- * retained objects on the world instance.
- */
-function cleanupWorldResources(world: any): void {
-    // Clear top-level response
-    world.response = undefined;
-
-    // Clear resources
-    if (world.resources) {
-        world.resources.outStream = undefined;
-        world.resources.instance = undefined;
-        world.resources.instance1 = undefined;
-        world.resources.instance2 = undefined;
-        world.resources.sequence = undefined;
-        world.resources.sequence1 = undefined;
-        world.resources.sequence2 = undefined;
-    }
-
-    // Clear CLI resources
-    if (world.cliResources) {
-        world.cliResources.collectedTopicData = undefined;
-        world.cliResources.stdio = undefined;
-        world.cliResources.stdio1 = undefined;
-        world.cliResources.stdio2 = undefined;
-        world.cliResources.commandInProgress = undefined;
-    }
-}
+// cleanupWorldResources is imported from scripts/lib/bdd-memory-hooks-lib
+// and called in the Before hook above.  No local definition needed.

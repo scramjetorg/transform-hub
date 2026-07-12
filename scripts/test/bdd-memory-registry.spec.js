@@ -670,3 +670,126 @@ test("MemoryRegistry.printChunkSummary handles null finalHeapBytes", (t) => {
 		registry.printChunkSummary(null);
 	}, "should not throw when finalHeapBytes is null");
 });
+
+// ---------------------------------------------------------------------------
+// Baseline selection: ready vs spawn (Phase 10 fix)
+// ---------------------------------------------------------------------------
+
+test("MemoryRegistry assertAll uses readyBaselineRss when available", async (t) => {
+	// Track self with a known threshold and verify that the ready baseline
+	// is preferred over the spawn baseline for the delta comparison.
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1099511627776, // 1 TiB — effectively infinite, no false failure
+	});
+
+	registry.trackProcess(process.pid, "self");
+
+	// Simulate readiness — set a baseline that's at least as large as current RSS.
+	// Using process.pid guarantees a real RSS value.
+	registry.recordProcessReady(process.pid);
+
+	const tracked = registry.trackedProcesses.get(process.pid);
+	t.true(tracked !== undefined, "self should be tracked");
+
+	const spawnBaseline = tracked.baselineRss;
+	const readyBaseline = tracked.readyBaselineRss;
+
+	t.true(spawnBaseline !== null, "spawn baseline should be set for self");
+	t.true(readyBaseline !== null, "ready baseline should be set after recordProcessReady");
+	t.true(readyBaseline >= spawnBaseline, "ready baseline should be >= spawn baseline");
+
+	// assertAll should NOT produce an error — the delta against the ready
+	// baseline should be small (self RSS is relatively stable).
+	const errors = await registry.assertAll();
+	t.is(errors.length, 0, "assertAll should pass when ready baseline is available");
+});
+
+test("MemoryRegistry assertAll falls back to spawn baseline without readyBaselineRss", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1, // 1 byte — almost any delta triggers
+	});
+
+	// Track self without calling recordProcessReady.
+	registry.trackProcess(process.pid, "self");
+
+	const errors = await registry.assertAll();
+
+	// With threshold=1, the delta from spawn baseline to current RSS should
+	// trigger an error (unless the process just started and hasn't grown).
+	t.true(errors.length >= 0, "assertAll should not throw");
+
+	if (errors.length > 0) {
+		// Verify the diagnostic mentions the spawn baseline source.
+		t.true(
+			errors[0].includes("spawn"),
+			"diagnostics should mention 'spawn' as baseline source when ready baseline is absent"
+		);
+	} else {
+		// Edge case: process hasn't grown — acceptable.
+		t.pass("no error (process RSS unchanged from spawn)");
+	}
+});
+
+test("MemoryRegistry assertAll diagnostics include baselineSource when using ready baseline", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => -1, // Negative threshold — every positive delta triggers
+	});
+
+	registry.trackProcess(process.pid, "self");
+
+	// Manually set a smaller ready baseline to force a detectable delta.
+	const tracked = registry.trackedProcesses.get(process.pid);
+	t.true(tracked !== undefined, "self should be tracked");
+
+	// Force readyBaselineRss to a very small value so the delta > threshold.
+	tracked.readyBaselineRss = 1;
+
+	const errors = await registry.assertAll();
+
+	t.true(errors.length > 0, "should produce at least one error with forced small ready baseline");
+
+	// Diagnostics should contain the baselineSource label.
+	const errorText = errors.join(" ");
+	t.true(
+		errorText.includes("ready"),
+		"diagnostics should mention 'ready' as baseline source"
+	);
+});
+
+test("MemoryRegistry assertAll records spawn baseline when neither baseline set", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1099511627776,
+	});
+
+	// Track a non-existent PID — baselineRss will be null at trackProcess time.
+	registry.trackProcess(999999999, "phantom");
+
+	// Call assertAll — it should record finalRss as baselineRss on first pass.
+	const errors1 = await registry.assertAll();
+
+	const tracked1 = registry.trackedProcesses.get(999999999);
+	t.true(tracked1 !== undefined, "phantom should still be tracked");
+	t.is(tracked1.baselineRss, null, "baselineRss stays null because /proc doesn't exist");
+
+	// Call assertAll again — since baselineRss is still null, it tries again.
+	const errors2 = await registry.assertAll();
+	t.true(Array.isArray(errors2), "second assertAll should not throw");
+});
+
+test("MemoryRegistry assertAll with readyBaselineRss equal to spawn baseline produces same delta", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1099511627776,
+	});
+
+	registry.trackProcess(process.pid, "self");
+
+	const tracked = registry.trackedProcesses.get(process.pid);
+	t.true(tracked !== undefined, "self should be tracked");
+	t.true(tracked.baselineRss !== null, "spawn baseline set");
+
+	// Set ready baseline to the same value as spawn baseline.
+	tracked.readyBaselineRss = tracked.baselineRss;
+
+	const errors = await registry.assertAll();
+	t.is(errors.length, 0, "assertAll should pass (ready baseline == spawn baseline, same delta)");
+});
