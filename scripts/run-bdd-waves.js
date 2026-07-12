@@ -29,7 +29,7 @@ function featureFiles(directory) {
 }
 
 function parseArgs(args) {
-    let waveName = process.env.BDD_WAVE || "verser2";
+    let waveName = process.env.BDD_WAVE || null;
     const passthrough = [];
 
     for (const arg of args) {
@@ -48,7 +48,7 @@ function commandArgs(features, passthrough) {
     return [dockerRunner, "--", ...options, ...features];
 }
 
-function runChild(owner, features, passthrough) {
+function defaultRunChild(owner, features, passthrough) {
     const args = commandArgs(features, passthrough);
     process.stderr.write(`[run-bdd-waves] owner=${owner} features=${features.length}\n`);
     process.stderr.write(`[run-bdd-waves] command=${process.execPath} ${args.join(" ")}\n`);
@@ -62,19 +62,29 @@ function runChild(owner, features, passthrough) {
     return result.status === null ? 1 : result.status;
 }
 
+module.exports.runChild = defaultRunChild;
+
 function runWaves({ waveName, passthrough }) {
-    const wave = waves[waveName];
+    const runChild = module.exports.runChild;
+    const targetWave = waveName || "verser2";
+    const wave = waves[targetWave];
 
     if (!wave) {
-        throw new Error(`Unknown BDD wave "${waveName}". Available waves: ${Object.keys(waves).join(", ")}`);
+        throw new Error(`Unknown BDD wave "${targetWave}". Available waves: ${Object.keys(waves).join(", ")}`);
+    }
+
+    if (waveName) {
+        const status = runChild(waveName, [wave], passthrough);
+        process.stderr.write(`[run-bdd-waves] owner=${waveName} status=${status}\n`);
+        return status;
     }
 
     const allFeatures = featureFiles(path.join(bddRoot, "features"));
     const remainder = allFeatures.filter((feature) => feature !== wave);
 
-    const waveStatus = runChild(waveName, [wave], passthrough);
+    const waveStatus = runChild(targetWave, [wave], passthrough);
     if (waveStatus !== 0) {
-        process.stderr.write(`[run-bdd-waves] owner=${waveName} failed status=${waveStatus}; serial remainder not started\n`);
+        process.stderr.write(`[run-bdd-waves] owner=${targetWave} failed status=${waveStatus}; serial remainder not started\n`);
         return waveStatus;
     }
 
@@ -92,4 +102,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { commandArgs, featureFiles, parseArgs, runWaves, waves };
+module.exports = { commandArgs, featureFiles, parseArgs, runChild: defaultRunChild, runWaves, waves };
