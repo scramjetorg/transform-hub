@@ -295,11 +295,11 @@
 
 ## Phase 10: BDD Test Chunking, Resource Metrics, and Timing Rationalization
 
-- [ ] Task: Define and validate an explicit BDD chunk manifest
-    - [ ] Replace dynamic remainder ownership with a static, feature-path-based manifest; do not use tags as chunk ownership.
-    - [ ] Assign every eligible default-suite feature to exactly one named chunk and fail validation for duplicate, missing, deleted, or nonexistent paths.
-    - [ ] Keep harness, stress, fixed-port Hub, Manager/MultiManager, and broad Docker-cleanup paths exclusive until ownership isolation is implemented.
-    - [ ] Add explicit `--chunk=<name>` selection and preserve `npm run test:bdd` serial behavior.
+- [~] Task: Define and validate an explicit BDD chunk manifest
+    - [x] Replace dynamic remainder ownership with a static, feature-path-based manifest; do not use tags as chunk ownership.
+    - [x] Assign every eligible default-suite feature to exactly one named chunk and fail validation for duplicate, missing, deleted, or nonexistent paths.
+    - [x] Keep harness, stress, fixed-port Hub, Manager/MultiManager, and broad Docker-cleanup paths exclusive until ownership isolation is implemented.
+    - [x] Add explicit `--chunk=<name>` selection and preserve `npm run test:bdd` serial behavior.
     - [ ] Use feature paths as the initial chunk boundary and enforce a 300-second timeout for every feature run.
     - [ ] Classify every feature from repeated 300-second runs as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required; no feature may enter the parallel scheduler until it finishes below 300 seconds.
 
