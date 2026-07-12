@@ -310,8 +310,8 @@
     - [ ] Keep manager stacks, fixed ports, nested Docker cleanup, and stress scenarios in separate exclusive chunks until repeated isolation validation passes.
 
 - [~] Task: Measure chunk-level parent, process, and container memory growth
-    - [ ] Sample Cucumber parent heap baseline/final/peak at chunk lifecycle boundaries, separately from per-scenario guard checks.
-    - [ ] Sample readiness-baselined and final/peak RSS for long-lived Hub, Manager, and MultiManager processes, including expected exit state.
+    - [x] Sample Cucumber parent heap baseline/final/peak at chunk lifecycle boundaries, separately from per-scenario guard checks.
+    - [x] Sample readiness-baselined and final/peak RSS for long-lived Hub, Manager, and MultiManager processes, including expected exit state.
     - [x] Sample outer BDD Docker container working-set baseline/final/peak and record memory limit, exit code, OOM state, and timestamps.
     - [ ] Report metrics by feature chunk and component, then set and enforce feature/chunk memory-growth limits before parallel execution; retain existing strict per-scenario threshold behavior.
     - [ ] Add focused unit tests for metric collection, missing `/proc`/Docker data, and actionable diagnostics.

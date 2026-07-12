@@ -212,6 +212,12 @@ export class HostUtils {
 
                 if (decodedData.includes("Host running!")) {
                     hub.stdout?.off("data", listener);
+
+                    // Record readiness-aware RSS baseline for chunk summary (Phase 10).
+                    if (hub.pid) {
+                        memoryRegistry.recordProcessReady(hub.pid);
+                    }
+
                     resolve(decodedData);
                 }
             };

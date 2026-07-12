@@ -455,6 +455,218 @@ test("buildProcessRssDiagnostics is a function", (t) => {
 });
 
 test("buildDockerWorkingSetDiagnostics is a function", (t) => {
-    const { buildDockerWorkingSetDiagnostics } = require("../../scripts/lib/bdd-options");
-    t.true(typeof buildDockerWorkingSetDiagnostics === "function");
+	const { buildDockerWorkingSetDiagnostics } = require("../../scripts/lib/bdd-options");
+	t.true(typeof buildDockerWorkingSetDiagnostics === "function");
+});
+
+// ---------------------------------------------------------------------------
+// Chunk-level metrics (Phase 10)
+// ---------------------------------------------------------------------------
+
+test("MemoryRegistry.recordChunkHeapSample sets baseline on first call", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(1000000);
+
+	const summary = registry.computeChunkSummary();
+	t.is(summary.parentHeap.baselineBytes, 1000000, "baseline should be set from first sample");
+	t.is(summary.parentHeap.peakBytes, 1000000, "peak should equal baseline after one sample");
+	t.is(summary.parentHeap.sampleCount, 1, "one sample recorded");
+});
+
+test("MemoryRegistry.recordChunkHeapSample tracks peak and count", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(1000000); // baseline
+	registry.recordChunkHeapSample(2000000); // higher
+	registry.recordChunkHeapSample(1500000); // between, not new peak
+
+	const summary = registry.computeChunkSummary();
+	t.is(summary.parentHeap.baselineBytes, 1000000, "baseline unchanged");
+	t.is(summary.parentHeap.peakBytes, 2000000, "peak is highest sample");
+	t.is(summary.parentHeap.sampleCount, 3, "three samples recorded");
+});
+
+test("MemoryRegistry.recordChunkHeapSample does not override baseline on subsequent calls", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(500000); // baseline
+	registry.recordChunkHeapSample(300000); // lower, should NOT change baseline
+
+	const summary = registry.computeChunkSummary();
+	t.is(summary.parentHeap.baselineBytes, 500000, "baseline must remain the first sample");
+	t.is(summary.parentHeap.peakBytes, 500000, "peak equals first sample when later samples are lower");
+});
+
+test("MemoryRegistry.recordProcessReady no-throws for untracked PID", (t) => {
+	const registry = new MemoryRegistry();
+
+	t.notThrows(() => {
+		registry.recordProcessReady(999999999);
+	}, "should not throw for untracked PID");
+});
+
+test("MemoryRegistry.recordProcessReady sets readyBaselineRss for tracked PID", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.trackProcess(process.pid, "self");
+	registry.recordProcessReady(process.pid);
+
+	const processes = registry.trackedProcesses;
+	const tracked = processes.get(process.pid);
+
+	t.true(tracked !== undefined, "should still be tracked");
+	t.true(tracked !== undefined && typeof tracked.readyBaselineRss === "number", "readyBaselineRss should be a number");
+	t.true(tracked !== undefined && tracked.readyBaselineRss !== null && tracked.readyBaselineRss > 0, "readyBaselineRss should be positive for running process");
+});
+
+test("MemoryRegistry.computeChunkSummary returns expected structure", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(100000);
+	registry.recordChunkHeapSample(200000);
+	registry.trackProcess(process.pid, "self");
+	registry.recordProcessReady(process.pid);
+
+	const summary = registry.computeChunkSummary();
+
+	t.true(typeof summary === "object", "summary should be an object");
+	t.true(typeof summary.parentHeap === "object", "parentHeap should be present");
+	t.true(typeof summary.parentHeap.baselineBytes === "number", "baselineBytes number");
+	t.true(typeof summary.parentHeap.peakBytes === "number", "peakBytes number");
+	t.is(summary.parentHeap.finalBytes, null, "finalBytes defaults to null");
+	t.is(summary.parentHeap.delta, null, "delta defaults to null");
+	t.is(summary.parentHeap.sampleCount, 2, "sampleCount matches");
+
+	t.true(Array.isArray(summary.processes), "processes should be an array");
+	t.is(summary.processes.length, 1, "one process tracked");
+	t.is(summary.processes[0].label, "self", "process label");
+	t.is(summary.processes[0].pid, process.pid, "process pid");
+	t.true(summary.processes[0].finalRss !== null, "finalRss should be present for self");
+	t.true(summary.processes[0].baselineRss !== null, "baselineRss should be set");
+	t.true(summary.processes[0].readyBaselineRss !== null, "readyBaselineRss should be set");
+	t.true(typeof summary.processes[0].peakRss === "number", "peakRss should be a number");
+	t.false(summary.processes[0].expectExit, "default expectExit is false");
+});
+
+test("MemoryRegistry.computeChunkSummary handles missing /proc data gracefully", (t) => {
+	const registry = new MemoryRegistry();
+
+	// Track a PID that is extremely unlikely to exist.
+	registry.trackProcess(2147483647, "nonexistent");
+
+	t.notThrows(() => {
+		const summary = registry.computeChunkSummary();
+		t.true(Array.isArray(summary.processes), "processes array is present");
+		t.is(summary.processes.length, 1, "one process (the phantom)");
+
+		const entry = summary.processes[0];
+		t.is(entry.label, "nonexistent");
+		t.is(entry.baselineRss, null, "baselineRss is null for non-existent PID (spawn-time null)");
+		t.is(entry.finalRss, null, "finalRss is null for non-existent PID");
+		t.is(entry.peakRss, null, "peakRss is null");
+		t.is(entry.deltaFromBaseline, null, "delta is null");
+	}, "should not throw when /proc/<pid> does not exist");
+});
+
+test("MemoryRegistry.computeChunkSummary reports delta for changed RSS", (t) => {
+	const registry = new MemoryRegistry();
+
+	// Track self — finalRss should be >= baseline.
+	registry.trackProcess(process.pid, "self");
+
+	const summary = registry.computeChunkSummary();
+
+	const entry = summary.processes.find((p) => p.pid === process.pid);
+
+	t.truthy(entry, "self process should be in summary");
+
+	if (entry) {
+		t.true(entry.finalRss !== null, "finalRss for self not null");
+
+		if (entry.baselineRss !== null && entry.finalRss !== null) {
+			t.true(
+				typeof entry.deltaFromBaseline === "number",
+				"deltaFromBaseline is a number when both baseline and final are available"
+			);
+		}
+	}
+});
+
+test("MemoryRegistry.printChunkSummary produces expected output format", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(100000);
+	registry.recordChunkHeapSample(200000);
+	registry.trackProcess(process.pid, "self");
+	registry.recordProcessReady(process.pid);
+
+	// Capture stderr output.
+	const chunks = [];
+	const origWrite = process.stderr.write.bind(process.stderr);
+
+	process.stderr.write = (chunk) => {
+		const str = typeof chunk === "string" ? chunk : chunk.toString();
+		chunks.push(str);
+		return true;
+	};
+
+	try {
+		t.notThrows(() => {
+			registry.printChunkSummary(150000);
+		}, "printChunkSummary should not throw");
+
+		const output = chunks.join("");
+		t.true(output.includes("chunk memory summary"), "should have summary header");
+		t.true(output.includes("Parent Cucumber heap:"), "should have parent heap section");
+		t.true(output.includes("100000"), "should contain baseline bytes");
+		t.true(output.includes("200000"), "should contain peak bytes");
+		t.true(output.includes("150000"), "should contain final bytes");
+		t.true(output.includes("self"), "should contain process label");
+		t.true(output.includes("Baseline:"), "should contain baseline label");
+		t.true(output.includes("Peak:"), "should contain peak label");
+		t.true(output.includes("Final:"), "should contain final label");
+		t.true(output.includes("Delta:"), "should contain delta label");
+		t.true(output.includes("Samples:"), "should contain sample count");
+		t.true(output.includes("Ready baseline:"), "should contain ready baseline");
+		t.true(output.includes("Delta (ready):"), "should contain ready delta");
+	} finally {
+		process.stderr.write = origWrite;
+	}
+});
+
+test("MemoryRegistry.printChunkSummary handles no tracked processes", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(100000);
+
+	const chunks = [];
+	const origWrite = process.stderr.write.bind(process.stderr);
+
+	process.stderr.write = (chunk) => {
+		const str = typeof chunk === "string" ? chunk : chunk.toString();
+		chunks.push(str);
+		return true;
+	};
+
+	try {
+		t.notThrows(() => {
+			registry.printChunkSummary(150000);
+		}, "should not throw when no processes tracked");
+
+		const output = chunks.join("");
+		t.true(output.includes("(none)"), "should indicate no tracked processes");
+	} finally {
+		process.stderr.write = origWrite;
+	}
+});
+
+test("MemoryRegistry.printChunkSummary handles null finalHeapBytes", (t) => {
+	const registry = new MemoryRegistry();
+
+	registry.recordChunkHeapSample(100000);
+
+	t.notThrows(() => {
+		registry.printChunkSummary(null);
+	}, "should not throw when finalHeapBytes is null");
 });

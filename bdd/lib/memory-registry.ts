@@ -58,6 +58,13 @@ export interface TrackedProcess {
     baselineRss: number | null;
     /** Whether this process is expected to exit (short-lived) */
     expectExit: boolean;
+    /** Peak RSS in bytes observed during tracking (initialised to baseline). */
+    peakRss: number | null;
+    /**
+     * RSS baseline captured when the process signals it is ready
+     * (e.g. "Host running!" for the hub).  Set via `recordProcessReady()`.
+     */
+    readyBaselineRss: number | null;
 }
 
 export interface TrackedContainer {
@@ -383,6 +390,55 @@ async function pollUntilGone<T>(
 }
 
 // ---------------------------------------------------------------------------
+// Chunk-level metric types (Phase 10)
+// ---------------------------------------------------------------------------
+
+/**
+ * Per-process entry in the chunk memory summary.
+ * Derived from the currently tracked processes at chunk completion.
+ */
+export interface ChunkProcessEntry {
+    label: string;
+    pid: number;
+    /** RSS at initial trackProcess() call. */
+    baselineRss: number | null;
+    /** RSS when the process signalled readiness (may be null if never set). */
+    readyBaselineRss: number | null;
+    /** Highest RSS observed. */
+    peakRss: number | null;
+    /** RSS at chunk summary time (may be null if process already exited). */
+    finalRss: number | null;
+    /** Delta = finalRss − baselineRss (null if either unavailable). */
+    deltaFromBaseline: number | null;
+    /** Delta = finalRss − readyBaselineRss (null if either unavailable). */
+    deltaFromReady: number | null;
+    expectExit: boolean;
+}
+
+/**
+ * Structured chunk-level memory metrics.
+ *
+ * Printed by MemoryRegistry.printChunkSummary() at the end of a chunk run
+ * (Cucumber AfterAll hook).  Does NOT drive threshold enforcement – that
+ * remains the domain of assertAll().
+ */
+export interface ChunkMetrics {
+    parentHeap: {
+        /** heapUsed + external + arrayBuffers after GC, first scenario Before. */
+        baselineBytes: number | null;
+        /** Highest per-scenario post-GC measurement. */
+        peakBytes: number | null;
+        /** Measurement taken at AfterAll (after final GC drain). */
+        finalBytes: number | null;
+        /** finalBytes − baselineBytes (null if either unavailable). */
+        delta: number | null;
+        /** Number of per-scenario samples taken. */
+        sampleCount: number;
+    };
+    processes: ChunkProcessEntry[];
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -390,6 +446,17 @@ class MemoryRegistry {
     private processes = new Map<number, TrackedProcess>();
     private containers = new Map<string, TrackedContainer>();
     private options: MemoryRegistryOptions;
+
+    // ---- Chunk-level metrics (Phase 10) ----
+
+    /** First per-scenario post-GC parent-heap measurement (set by first Before hook). */
+    private chunkHeapBaseline: number | null = null;
+
+    /** Highest per-scenario post-GC parent-heap measurement. */
+    private chunkHeapPeak: number | null = null;
+
+    /** Number of per-scenario heap samples recorded. */
+    private chunkHeapSampleCount: number = 0;
 
     constructor(options?: Partial<MemoryRegistryOptions>) {
         // Lazy-require bdd-options to avoid circular deps at import time.
@@ -430,6 +497,8 @@ class MemoryRegistry {
             pid,
             label,
             baselineRss,
+            peakRss: baselineRss, // Initialised to the same value as baseline
+            readyBaselineRss: null,
             expectExit,
         });
     }
@@ -505,6 +574,54 @@ class MemoryRegistry {
     }
 
     // -----------------------------------------------------------------------
+    // Chunk-level metrics (Phase 10)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Record a parent-Cucumber-process heap sample for chunk-level tracking.
+     *
+     * Called from memory-hooks.ts Before/After hooks on each scenario.
+     * The first call establishes the baseline; subsequent calls update the
+     * running peak.
+     *
+     * @param bytes  `heapUsed + external + arrayBuffers` after GC (units match
+     *               `measureMemoryUsage()`).
+     */
+    recordChunkHeapSample(bytes: number): void {
+        this.chunkHeapSampleCount++;
+
+        if (this.chunkHeapBaseline === null) {
+            this.chunkHeapBaseline = bytes;
+        }
+
+        if (this.chunkHeapPeak === null || bytes > this.chunkHeapPeak) {
+            this.chunkHeapPeak = bytes;
+        }
+    }
+
+    /**
+     * Readiness-aware baseline for a tracked process.
+     *
+     * Call this when a tracked ChildProcess signals readiness (e.g. the hub
+     * prints "Host running!").  The current RSS is captured as the "ready"
+     * baseline, giving the chunk summary a more meaningful reference point
+     * than the initial spawn-time baseline.
+     *
+     * No-op if the PID is not tracked.
+     *
+     * @param pid  Process ID to record readiness for.
+     */
+    recordProcessReady(pid: number): void {
+        const tracked = this.processes.get(pid);
+
+        if (!tracked) {
+            return;
+        }
+
+        tracked.readyBaselineRss = getProcessRssBytesSync(pid);
+    }
+
+    // -----------------------------------------------------------------------
     // Assertion
     // -----------------------------------------------------------------------
 
@@ -538,6 +655,11 @@ class MemoryRegistry {
                 );
 
                 if (finalRss !== null) {
+                    // Update peak with the last observable RSS before error.
+                    if (tracked.peakRss === null || finalRss > tracked.peakRss) {
+                        tracked.peakRss = finalRss;
+                    }
+
                     // Still alive — it should have exited.
                     errors.push(
                         `Tracked process "${tracked.label}" (pid ${pid}) ` +
@@ -562,6 +684,11 @@ class MemoryRegistry {
                     `is no longer accessible but was not expected to exit.`
                 );
                 continue;
+            }
+
+            // Update peak RSS.
+            if (tracked.peakRss === null || finalRss > tracked.peakRss) {
+                tracked.peakRss = finalRss;
             }
 
             // Record baseline if not already set.
@@ -652,6 +779,141 @@ class MemoryRegistry {
     clear(): void {
         this.processes.clear();
         this.containers.clear();
+    }
+
+    // -----------------------------------------------------------------------
+    // Chunk summary (Phase 10)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Build a `ChunkMetrics` snapshot from the current tracking state.
+     *
+     * Reads the final RSS of each still-tracked process (sync) and assembles
+     * the structured summary.  The caller should set `parentHeap.finalBytes`
+     * afterwards from a fresh post-GC measurement.
+     *
+     * @returns  Populated ChunkMetrics object.
+     */
+    computeChunkSummary(): ChunkMetrics {
+        const processes: ChunkProcessEntry[] = [];
+
+        for (const [, tracked] of this.processes) {
+            const finalRss = getProcessRssBytesSync(tracked.pid);
+
+            // Update peak if the final sample is higher.
+            const effectivePeak = tracked.peakRss;
+
+            if (finalRss !== null) {
+                if (effectivePeak === null || finalRss > effectivePeak) {
+                    tracked.peakRss = finalRss;
+                }
+            }
+
+            const finalForEntry = finalRss;
+            const peakForEntry = tracked.peakRss;
+
+            const deltaFromBaseline =
+                tracked.baselineRss !== null && finalForEntry !== null
+                    ? finalForEntry - tracked.baselineRss
+                    : null;
+
+            const deltaFromReady =
+                tracked.readyBaselineRss !== null && finalForEntry !== null
+                    ? finalForEntry - tracked.readyBaselineRss
+                    : null;
+
+            processes.push({
+                label: tracked.label,
+                pid: tracked.pid,
+                baselineRss: tracked.baselineRss,
+                readyBaselineRss: tracked.readyBaselineRss,
+                peakRss: peakForEntry,
+                finalRss: finalForEntry,
+                deltaFromBaseline,
+                deltaFromReady,
+                expectExit: tracked.expectExit,
+            });
+        }
+
+        return {
+            parentHeap: {
+                baselineBytes: this.chunkHeapBaseline,
+                peakBytes: this.chunkHeapPeak,
+                finalBytes: null, // caller fills this in
+                delta: null,
+                sampleCount: this.chunkHeapSampleCount,
+            },
+            processes,
+        };
+    }
+
+    /**
+     * Print an actionable chunk-level memory summary to stderr.
+     *
+     * Calls `computeChunkSummary()` internally, injects the final parent-heap
+     * measurement, and writes the formatted report.  This is purely
+     * informational – no threshold enforcement.
+     *
+     * @param finalHeapBytes  Final post-GC parent-heap measurement from the
+     *                        AfterAll hook (or null if unavailable).
+     */
+    printChunkSummary(finalHeapBytes: number | null): void {
+        const metrics = this.computeChunkSummary();
+
+        metrics.parentHeap.finalBytes = finalHeapBytes;
+
+        if (metrics.parentHeap.baselineBytes !== null && finalHeapBytes !== null) {
+            metrics.parentHeap.delta = finalHeapBytes - metrics.parentHeap.baselineBytes;
+        }
+
+        const fmt = (v: number | null | undefined): string =>
+            v !== null && v !== undefined ? `${v} bytes` : "unavailable";
+
+        const lines: string[] = [];
+        lines.push("[memory-registry] chunk memory summary:");
+
+        // ---- Parent heap ----
+        lines.push("  Parent Cucumber heap:");
+        lines.push(`    Baseline:   ${fmt(metrics.parentHeap.baselineBytes)}`);
+        lines.push(`    Peak:       ${fmt(metrics.parentHeap.peakBytes)}`);
+        lines.push(`    Final:      ${fmt(metrics.parentHeap.finalBytes)}`);
+        lines.push(`    Delta:      ${metrics.parentHeap.delta !== null ? `${metrics.parentHeap.delta >= 0 ? "+" : ""}${metrics.parentHeap.delta} bytes` : "unavailable"}`);
+        lines.push(`    Samples:    ${metrics.parentHeap.sampleCount}`);
+
+        // ---- Processes ----
+        if (metrics.processes.length > 0) {
+            lines.push("  Tracked processes:");
+
+            for (const p of metrics.processes) {
+                const status = p.expectExit ? "expected-exit" : "long-lived";
+                lines.push(`    ${p.label} (pid ${p.pid}):`);
+                lines.push(`      Status:          ${status}`);
+                lines.push(`      Baseline RSS:    ${fmt(p.baselineRss)}`);
+
+                if (p.readyBaselineRss !== null) {
+                    lines.push(`      Ready baseline:  ${fmt(p.readyBaselineRss)}`);
+                }
+
+                lines.push(`      Peak RSS:        ${fmt(p.peakRss)}`);
+                lines.push(`      Final RSS:       ${fmt(p.finalRss)}`);
+
+                if (p.deltaFromBaseline !== null) {
+                    const sign = p.deltaFromBaseline >= 0 ? "+" : "";
+                    lines.push(`      Delta (init):    ${sign}${p.deltaFromBaseline} bytes`);
+                }
+
+                if (p.deltaFromReady !== null) {
+                    const sign = p.deltaFromReady >= 0 ? "+" : "";
+                    lines.push(`      Delta (ready):   ${sign}${p.deltaFromReady} bytes`);
+                }
+            }
+        } else {
+            lines.push("  Tracked processes: (none)");
+        }
+
+        // Re-use stderr — the same channel as run-bdd-docker.js outer-container
+        // diagnostics and the existing per-scenario guard output.
+        process.stderr.write(lines.join("\n") + "\n");
     }
 
     /**

@@ -57,6 +57,11 @@ function spawnProcess(
                 if (data.toString().includes(stdoutDoneMatch)) {
                     cmdProcess.stdout.off("data", onStdout);
 
+                    // Record readiness-aware RSS baseline for chunk summary (Phase 10).
+                    if (cmdProcess.pid) {
+                        memoryRegistry.recordProcessReady(cmdProcess.pid);
+                    }
+
                     setTimeout(() => {
                         resolve(cmdProcess);
                     }, waitMS);

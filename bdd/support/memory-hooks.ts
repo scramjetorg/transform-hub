@@ -24,7 +24,7 @@
  *   SCRAMJET_MEMORY_SKIP_REASON – non-empty reason when SKIP=1
  */
 
-import { Before, After } from "@cucumber/cucumber";
+import { Before, After, AfterAll } from "@cucumber/cucumber";
 
 import {
     measureMemoryUsage,
@@ -73,8 +73,15 @@ Before(async function () {
 
     await drainAndGc();
 
-    this[BASELINE_KEY] = measureMemoryUsage();
+    const baseline = measureMemoryUsage();
+
+    this[BASELINE_KEY] = baseline;
     this[BEFORE_USAGE_KEY] = beforeUsage;
+
+    // Feed parent-heap sample into chunk-level tracking (Phase 10).
+    // The first call establishes the chunk baseline; subsequent calls
+    // update the running peak.
+    memoryRegistry.recordChunkHeapSample(baseline);
 });
 
 // ---------------------------------------------------------------------------
@@ -143,6 +150,24 @@ After(async function (this: any, scenario: any) {
     // Clean up per-scenario state
     delete this[BASELINE_KEY];
     delete this[BEFORE_USAGE_KEY];
+});
+
+// ---------------------------------------------------------------------------
+// AfterAll – chunk-level summary (Phase 10)
+// ---------------------------------------------------------------------------
+// Runs once after ALL scenarios in this Cucumber process finish.
+// Prints an informational parent-heap + process-RSS summary to stderr.
+// No new threshold enforcement – purely observational.
+
+AfterAll(async function () {
+    if (!isBddMemoryGuardEnabled() || memorySkip.skip) {
+        return;
+    }
+
+    await drainAndGc();
+
+    const finalHeap = measureMemoryUsage();
+    memoryRegistry.printChunkSummary(finalHeap);
 });
 
 // ---------------------------------------------------------------------------
