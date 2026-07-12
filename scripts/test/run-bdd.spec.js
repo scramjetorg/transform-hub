@@ -199,3 +199,72 @@ test("run-bdd-docker.js injects NODE_OPTIONS when memory guard is enabled", (t) 
 		"should call bddNodeOptions() for NODE_OPTIONS value"
 	);
 });
+
+// ---------------------------------------------------------------------------
+// Postmortem diagnostics for terminated / non-zero containers
+// ---------------------------------------------------------------------------
+
+test("run-bdd-docker.js defines printContainerDiagnostics", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const printContainerDiagnostics"),
+		"should define printContainerDiagnostics function"
+	);
+});
+
+test("run-bdd-docker.js inspects container State with ExitCode, OOMKilled, Error, and timestamps", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('"docker", ["inspect", "--format={{json .State}}"'),
+		"should use docker inspect with json .State format"
+	);
+	t.true(src.includes("ExitCode"), "should read ExitCode field");
+	t.true(src.includes("OOMKilled"), "should read OOMKilled field");
+	t.true(src.includes("Error"), "should read Error field");
+	t.true(src.includes("StartedAt"), "should read StartedAt timestamp");
+	t.true(src.includes("FinishedAt"), "should read FinishedAt timestamp");
+});
+
+test("run-bdd-docker.js calls printContainerDiagnostics for non-zero exit codes", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('if (parsed !== 0) {\n            printContainerDiagnostics(containerId);'),
+		"should call diagnostics when exit code is non-zero"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerDiagnostics on timeout", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("if (timedOut) {\n        printContainerDiagnostics(containerId);"),
+		"should call diagnostics on timeout"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerDiagnostics for unparseable exit code", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("printContainerDiagnostics(containerId);\n    exitWith(1);"),
+		"should call diagnostics before fallback exitWith(1)"
+	);
+});

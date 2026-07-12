@@ -218,6 +218,39 @@ process.on("exit", () => {
     cleanup();
 });
 
+// ---------------------------------------------------------------------------
+// Postmortem diagnostics for terminated / non-zero containers
+// ---------------------------------------------------------------------------
+
+/**
+ * Inspect a finished container and print its State fields for diagnostics.
+ * Called for non-zero exit codes and timed-out containers before cleanup
+ * removes the container, so the inspect still succeeds.
+ */
+const printContainerDiagnostics = (containerId) => {
+    const result = spawnSync("docker", ["inspect", "--format={{json .State}}", containerId], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"]
+    });
+
+    if (result.error || typeof result.status !== "number" || result.status !== 0) {
+        process.stderr.write(`[run-bdd-docker] warning: unable to inspect container ${containerId} – ` + `${result.error ? result.error.message : `exit code ${result.status}`}\n`);
+        return;
+    }
+
+    try {
+        const state = JSON.parse(result.stdout);
+        process.stderr.write(`[run-bdd-docker] container ${containerId} state:\n`);
+        process.stderr.write(`  ExitCode:   ${state.ExitCode}\n`);
+        process.stderr.write(`  OOMKilled:  ${state.OOMKilled}\n`);
+        process.stderr.write(`  Error:      ${state.Error}\n`);
+        process.stderr.write(`  StartedAt:  ${state.StartedAt}\n`);
+        process.stderr.write(`  FinishedAt: ${state.FinishedAt}\n`);
+    } catch (e) {
+        process.stderr.write(`[run-bdd-docker] warning: failed to parse container state – ${e.message}\n`);
+    }
+};
+
 const runResult = spawnSync("docker", dockerRunArgs, { encoding: "utf8" });
 
 if (runResult.error) {
@@ -303,14 +336,20 @@ waitChild.once("close", () => {
     const parsed = Number.parseInt(firstLine, 10);
 
     if (timedOut) {
+        printContainerDiagnostics(containerId);
         exitWith(TIMEOUT_EXIT_CODE);
         return;
     }
 
     if (Number.isFinite(parsed)) {
+        if (parsed !== 0) {
+            printContainerDiagnostics(containerId);
+        }
+
         exitWith(parsed);
         return;
     }
 
+    printContainerDiagnostics(containerId);
     exitWith(1);
 });
