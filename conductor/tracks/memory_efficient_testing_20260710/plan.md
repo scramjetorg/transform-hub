@@ -252,33 +252,33 @@
 
 ## Phase 9: BDD Fixture Migration and Legacy Test Removal
 
-- [ ] Task: Stabilize the current BDD stop-handler assertion
-    - [ ] Diagnose the `E2E-015 TC-008` retained-stdout timeout without masking a runner lifecycle failure.
-    - [ ] Make stream completion/cleanup observation deterministic and retain actionable diagnostics.
-    - [ ] Add focused regression coverage for the bounded wait behavior.
+- [x] Task: Stabilize the current BDD stop-handler assertion
+    - [x] Diagnose the `E2E-015 TC-008` retained-stdout timeout without masking a runner lifecycle failure.
+    - [x] Make stream completion/cleanup observation deterministic and retain actionable diagnostics.
+    - [x] Add focused regression coverage for the bounded wait behavior.
 
-- [ ] Task: Add local replacement fixtures for legacy refapp coverage
+- [x] Task: Add local replacement fixtures for legacy refapp coverage
     - [x] Inventory every active BDD assertion that currently reads a root `refapps/` archive or relies on its fallback resolution.
-    - [ ] Replace retained behavioral coverage with committed local BDD fixture sources and deterministic package generation.
-    - [ ] Preserve meaningful assertions while removing dependencies on externally downloaded archives.
+    - [x] Replace retained behavioral coverage with committed local BDD fixture sources and deterministic package generation.
+    - [x] Preserve meaningful assertions while removing dependencies on externally downloaded archives.
     - [x] Rewrite mixed feature scenarios to use explicit local fixture directories rather than a root-refapps fallback.
 
-- [ ] Task: Delete legacy refapp and performance-test paths
-    - [ ] Delete legacy-refapp-only BDD scenarios/features after equivalent local-fixture coverage exists.
-    - [ ] Delete performance/load BDD features and their generated-artifact assumptions from this test run.
+- [x] Task: Delete legacy refapp and performance-test paths
+    - [x] Delete legacy-refapp-only BDD scenarios/features after equivalent local-fixture coverage exists.
+    - [x] Delete performance/load BDD features and their generated-artifact assumptions from this test run.
     - [x] Remove root `refapps/` fallback resolution and the `download:refapps` / `prebuild:refapps` scripts.
     - [x] Remove obsolete CI/docs references to downloaded refapps and update supported BDD commands.
 
-- [ ] Task: Isolate CLI configuration for BDD runs
-    - [ ] Add CLI `-c` / `--config` support to select an explicit configuration file.
-    - [ ] Generate a per-run BDD CLI configuration under `/tmp` and pass it to every BDD CLI invocation.
-    - [ ] Remove reliance on shared profiles, shared active-profile mutation, and `~/.si` state in BDD setup/teardown.
-    - [ ] Add focused CLI/config and BDD setup coverage for isolated configuration paths.
+- [x] Task: Isolate CLI configuration for BDD runs
+    - [x] Add CLI `-c` / `--config` support to select an explicit configuration file.
+    - [x] Generate a per-run BDD CLI configuration under `/tmp` and pass it to every BDD CLI invocation.
+    - [x] Remove reliance on shared profiles, shared active-profile mutation, and `~/.si` state in BDD setup/teardown.
+    - [x] Add focused CLI/config and BDD setup coverage for isolated configuration paths.
 
-- [ ] Task: Prepare safe name-based BDD waves
-    - [ ] Add BDD-runner support for two explicitly named feature-path waves, not tag-based selection.
-    - [ ] Keep fixed-port Hub, Manager/MultiManager, Docker-cleanup, harness, and stress paths serial until their resource ownership is isolated.
-    - [ ] Start with a proven-isolated wave and a serial remainder; require distinct config roots, artifact directories, ports, and cleanup ownership before balancing waves.
+- [x] Task: Prepare safe name-based BDD waves
+    - [x] Add BDD-runner support for two explicitly named feature-path waves, not tag-based selection.
+    - [x] Keep fixed-port Hub, Manager/MultiManager, Docker-cleanup, harness, and stress paths serial until their resource ownership is isolated.
+    - [x] Start with a proven-isolated wave and a serial remainder; require distinct config roots, artifact directories, ports, and cleanup ownership before balancing waves.
     - [ ] Record wall time, parent RSS, Docker working set, leak detection, and scenario ownership evidence for every parallel trial.
 
 - [ ] Task: Validate fixture-only BDD execution and completion policy
