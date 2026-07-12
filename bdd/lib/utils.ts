@@ -16,7 +16,7 @@ const logger = getLogger("test");
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
 
-export function getSiCommand() {
+export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
     if (process.env.SCRAMJET_SPAWN_JS && process.env.SCRAMJET_SPAWN_TS) {
         throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
     }
@@ -29,6 +29,10 @@ export function getSiCommand() {
 
     if (process.env.SCRAMJET_SPAWN_TS) {
         si = ["npx", "tsx", "../packages/cli/src/bin/index.ts"];
+    }
+
+    if (options.useBddConfig === false) {
+        return si;
     }
 
     return [...si, "-c", getBddConfigPath()];

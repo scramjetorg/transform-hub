@@ -1,5 +1,5 @@
 
-import { AfterAll, Given, Then, When } from "@cucumber/cucumber";
+import { AfterAll, Before, Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import os from "os";
@@ -27,6 +27,8 @@ addLoggerOutput(process.stdout, process.stdout);
 const { stopProcess } = require("../../../scripts/lib/bdd-cleanup.js");
 const logger = getLogger("test");
 const si = getSiCommand();
+const profileSi = getSiCommand({ useBddConfig: false });
+let useProfileConfigForScenario = false;
 const bddTempDir = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-bdd-cli-"));
 const bddTempPaths: Record<string, string> = {
     __BDD_TMP_SIMPLE_STDIO__: path.join(bddTempDir, "simple-stdio.tar.gz"),
@@ -38,6 +40,12 @@ const resolveBddTempPaths = (args: string): string[] =>
 AfterAll(() => {
     fs.rmSync(bddTempDir, { recursive: true, force: true });
 });
+
+Before((scenario) => {
+    useProfileConfigForScenario = scenario.pickle.tags.some((tag) => tag.name === "@profile-config");
+});
+
+const siForScenario = () => useProfileConfigForScenario ? profileSi : si;
 
 Given("I set config for local Hub", { timeout: 30000 }, async function (
     this: CustomWorld
@@ -88,7 +96,7 @@ When("I execute CLI with {string}", { timeout: 60000 }, async function (
     const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
+        ...siForScenario(),
         ...resolveBddTempPaths(args),
     ]);
 
@@ -438,7 +446,7 @@ Then("I confirm apiUrl has changed to {string}", async function (
     const res = this.cliResources!;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
+        ...siForScenario(),
         "config",
         "print",
     ]);
@@ -479,7 +487,7 @@ Then("I confirm I switched to {string} profile", async function (
     const res = this.cliResources!;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
+        ...siForScenario(),
         "config",
         "profile",
         "ls",
