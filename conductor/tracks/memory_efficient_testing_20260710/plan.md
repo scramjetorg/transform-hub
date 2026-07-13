@@ -240,7 +240,7 @@
 
   Notes: Final review found one blocker: `registerAvaMemoryCleanup()` callback failures were collected but only reported when the memory delta also exceeded the threshold. Fixed the AVA guard to fail the guarded test when cleanup callbacks throw even if memory growth remains below threshold, and added a focused regression test. No threshold increases were needed. The final review found no remaining blockers. Unsupported direct AVA/Cucumber entrypoints were not introduced; memory guard mode remains wired through supported repo runners and explicit AVA wrapper adoption. Runtime production behavior changes remain additive observability only.
 
-- [ ] Task: Final branch and PR checkpoint
+- [x] Task: Final branch and PR checkpoint
     - [x] Ensure all completed work is committed with scoped task-level commits.
     - [x] Push the implementation branch.
     - [x] Update the draft PR with final validation results as a PR comment.
