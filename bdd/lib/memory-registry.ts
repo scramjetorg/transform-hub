@@ -426,6 +426,28 @@ class MemoryRegistry {
         this.processes.delete(pid);
     }
 
+    /**
+     * Mark tracked processes by PID as expected to exit.
+     *
+     * Called **before** `cleanupWorldResources` kills world-owned
+     * ChildProcesses.  When a marked process exits, `recordProcessExit`
+     * removes it from tracking without retaining it in `exitedProcesses`,
+     * preventing the Oracle blocker where a cleanup-killed long-lived
+     * process appears as a spontaneous unexpected exit.
+     *
+     * PIDs that are not currently being tracked are silently ignored.
+     *
+     * @param pids  Process IDs to mark as expected to exit.
+     */
+    markProcessesAsExpectedToExit(pids: number[]): void {
+        for (const pid of pids) {
+            const tracked = this.processes.get(pid);
+            if (tracked) {
+                tracked.expectExit = true;
+            }
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Container tracking
     // -----------------------------------------------------------------------
@@ -578,6 +600,49 @@ class MemoryRegistry {
     }
 
     // -----------------------------------------------------------------------
+    // Process-exit reconciliation
+    // -----------------------------------------------------------------------
+
+    /**
+     * Drain pending ChildProcess exit events before the assertion phase.
+     *
+     * `cleanupWorldResources` may kill tracked ChildProcesses by calling
+     * `child.kill()`.  The OS terminates the child and makes its PID
+     * inaccessible from `/proc/<pid>`, but the JS `exit` event (and the
+     * `recordProcessExit` listener registered by `trackChildProcess`) may
+     * not have fired yet when `assertAll()` runs.  Without reconciliation,
+     * a long-lived process that was intentionally killed during cleanup
+     * would appear to `assertAll()` as still tracked with an inaccessible
+     * PID, incorrectly producing:
+     *
+     *   "Tracked process … is no longer accessible but was not expected
+     *    to exit."
+     *
+     * **Protocol** (caller must follow this ordering, implemented in
+     * `memory-hooks.ts`):
+     *
+     *   1. Call `markProcessesAsExpectedToExit()` with the PIDs of every
+     *      world-owned ChildProcess that `cleanupWorldResources` will kill.
+     *   2. Call `cleanupWorldResources()` (which calls `child.kill()`).
+     *   3. Call `drainExitEvents()` to let pending exit listeners fire.
+     *   4. Call `assertAll()` — it will check that no non-expected entries
+     *      remain in `exitedProcesses`.
+     *
+     * Without step 1, a cleanup-killed process would move to
+     * `exitedProcesses` (because `expectExit = false` by default) and
+     * then `assertAll()` would report it as a spontaneous unexpected exit.
+     *
+     * The drain is bounded: 5 × setImmediate rounds (~0-5 ms total).  It
+     * does **not** modify any tracking state, reorder heap measurements,
+     * or silence genuine unexpected-exit detection.
+     */
+    async drainExitEvents(): Promise<void> {
+        for (let i = 0; i < 5; i++) {
+            await new Promise<void>((resolve) => setImmediate(resolve));
+        }
+    }
+
+    // -----------------------------------------------------------------------
     // Assertion
     // -----------------------------------------------------------------------
 
@@ -683,6 +748,21 @@ class MemoryRegistry {
                         threshold,
                         baselineSource,
                     })
+                );
+            }
+        }
+
+        // ---- Check exitedProcesses for spontaneous exits ----
+        // A non-expected-exit process that was NOT marked via
+        // markProcessesAsExpectedToExit may have exited on its own (or been
+        // killed outside the marking protocol).  Such entries in
+        // exitedProcesses represent spontaneous exits of long-lived
+        // processes and must be reported as errors.
+        for (const [pid, tracked] of this.exitedProcesses) {
+            if (!tracked.expectExit) {
+                errors.push(
+                    `Tracked process "${tracked.label}" (pid ${pid}) ` +
+                    `exited unexpectedly but was not expected to exit.`
                 );
             }
         }

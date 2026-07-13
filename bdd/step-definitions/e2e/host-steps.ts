@@ -253,6 +253,16 @@ After({}, async function (this: any) {
         insts.map((i: any) => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
     );
 
+    // Destroy lingering topic outStream to prevent ECONNRESET on cleanup.
+    if (this.resources.outStream) {
+        this.resources.outStream.destroy();
+        this.resources.outStream = undefined;
+    }
+    if (this.resources.floodStream) {
+        this.resources.floodStream.destroy();
+        this.resources.floodStream = undefined;
+    }
+
     // Module state is outside CustomWorld and must be released explicitly.
     streams = {};
     actualHealthResponse = undefined;
@@ -912,7 +922,7 @@ Then(
         ps.write(data);
         ps.end();
 
-        assert.ok(sendData);
+        await sendData;
     }
 );
 
@@ -952,11 +962,8 @@ Then("confirm data defined as {string} will be received", async function(this: C
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
     const readStream = fs.createReadStream(path);
-    const sendData = hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
 
-    readStream.push(null);
-
-    assert.ok(sendData);
+    await hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
 });
 
 Then("get output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {

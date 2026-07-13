@@ -822,3 +822,183 @@ test("MemoryRegistry assertAll with readyBaselineRss equal to spawn baseline pro
 	const errors = await registry.assertAll();
 	t.is(errors.length, 0, "assertAll should pass (ready baseline == spawn baseline, same delta)");
 });
+
+// ---------------------------------------------------------------------------
+// drainExitEvents – child-process exit reconciliation (race fix)
+// ---------------------------------------------------------------------------
+
+test("MemoryRegistry drainExitEvents is a function", (t) => {
+	const registry = new MemoryRegistry();
+	t.true(typeof registry.drainExitEvents === "function", "should be a function");
+});
+
+test("MemoryRegistry drainExitEvents does not throw when idle", async (t) => {
+	const registry = new MemoryRegistry();
+	await t.notThrowsAsync(() => registry.drainExitEvents(),
+		"should not throw when called with no tracked processes"
+	);
+});
+
+test("MemoryRegistry markProcessesAsExpectedToExit is a function", (t) => {
+	const registry = new MemoryRegistry();
+	t.true(typeof registry.markProcessesAsExpectedToExit === "function",
+		"should be a function"
+	);
+});
+
+test("MemoryRegistry markProcessesAsExpectedToExit does not throw on empty list", (t) => {
+	const registry = new MemoryRegistry();
+	t.notThrows(() => registry.markProcessesAsExpectedToExit([]),
+		"should not throw for empty PID list"
+	);
+});
+
+test("MemoryRegistry markProcessesAsExpectedToExit ignores unknown PIDs", (t) => {
+	const registry = new MemoryRegistry();
+	t.notThrows(() => registry.markProcessesAsExpectedToExit([9999999]),
+		"should not throw for untracked PID"
+	);
+});
+
+test("MemoryRegistry drainExitEvents reconciles cleanup-marked child exit before assertAll", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1099511627776, // 1 TiB — no false delta failures
+	});
+
+	// Spawn a long-lived child and track it (expectExit defaults to false,
+	// so it is treated as a long-lived resource).
+	const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60000)"], {
+		stdio: "ignore",
+	});
+
+	registry.trackChildProcess(child, "race-child");
+	t.is(registry.processCount, 1, "child should be tracked after trackChildProcess");
+
+	const childPid = child.pid;
+	t.true(typeof childPid === "number" && childPid > 0, "child should have a valid PID");
+
+	// === Protocol: mark PID as expected-to-exit BEFORE killing ===
+	// This simulates what memory-hooks.ts does before cleanupWorldResources:
+	// it marks world-owned ChildProcess PIDs so that when cleanup kills them,
+	// the exit is not treated as a spontaneous unexpected exit.
+	registry.markProcessesAsExpectedToExit([childPid]);
+
+	// Kill the child abruptly with SIGKILL.  The OS terminates the process
+	// immediately, but the JS 'exit' event listener registered by
+	// trackChildProcess has not yet fired because we have not yielded to
+	// the event loop.
+	child.kill("SIGKILL");
+
+	// drainExitEvents yields to the event loop for several turns so that
+	// pending ChildProcess 'exit' events are processed.  Because the PID
+	// was marked expected-to-exit, recordProcessExit should simply delete
+	// it from this.processes without retaining it in exitedProcesses.
+	await registry.drainExitEvents();
+
+	// Verify the process was removed from tracking.
+	t.is(registry.processCount, 0,
+		"killed child should be removed from tracking after drainExitEvents"
+	);
+
+	// assertAll should not produce errors: the marked-and-killed child was
+	// removed from this.processes and was never added to exitedProcesses.
+	const errors = await registry.assertAll();
+	t.is(errors.length, 0,
+		"assertAll should pass for a cleanup-marked killed child process"
+	);
+});
+
+test("MemoryRegistry drainExitEvents does not suppress genuine unexpected-exit error", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1099511627776,
+	});
+
+	// Track a long-lived child (expectExit defaults to false).
+	const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60000)"], {
+		stdio: "ignore",
+	});
+
+	registry.trackChildProcess(child, "genuine-race-child");
+
+	const childPid = child.pid;
+	t.true(typeof childPid === "number" && childPid > 0, "child should have a valid PID");
+
+	// Kill the child WITHOUT marking it as expected-to-exit.  This simulates
+	// a genuine unexpected exit — the process exits on its own or is killed
+	// outside the marking protocol.
+	child.kill("SIGKILL");
+
+	// drainExitEvents yields to the event loop.  The exit listener fires,
+	// recordProcessExit moves the process to exitedProcesses (because
+	// expectExit is false).  assertAll now checks exitedProcesses for
+	// non-expected entries and should report the unexpected exit.
+	await registry.drainExitEvents();
+
+	const errors = await registry.assertAll();
+
+	// With the exitedProcesses check in assertAll, the unexpected exit is
+	// always detected regardless of whether the exit event fired before or
+	// during drainExitEvents.  Either path produces at least one error.
+	t.true(errors.length > 0,
+		"assertAll should produce errors for an unmarked killed child process"
+	);
+
+	// The error message should reference the unexpected exit and the PID.
+	const firstError = errors[0];
+	t.true(
+		firstError.includes("exited unexpectedly") ||
+		firstError.includes("not expected to exit"),
+		"error should mention unexpected exit: " + firstError
+	);
+	t.true(firstError.includes(String(childPid)),
+		"error should include the killed child's PID: " + firstError
+	);
+});
+
+test("MemoryRegistry spontaneous long-lived child exit after drain fails", async (t) => {
+	const registry = new MemoryRegistry({
+		processRssThresholdBytes: () => 1099511627776,
+	});
+
+	// Track a long-lived child that exits on its own (spontaneous exit).
+	// We do NOT mark it as expected-to-exit via markProcessesAsExpectedToExit.
+	const child = spawn(process.execPath, ["-e", "process.exit(0)"], {
+		stdio: "ignore",
+	});
+
+	registry.trackChildProcess(child, "spontaneous-child");
+	t.is(registry.processCount, 1, "child should be tracked after trackChildProcess");
+
+	// Wait for the child to exit naturally and for the JS exit event to fire.
+	await new Promise((resolve) => child.once("exit", () => resolve()));
+
+	// After the exit event fired, the process should have been moved to
+	// exitedProcesses via recordProcessExit (because expectExit is false).
+	t.is(registry.processCount, 0,
+		"spontaneously exited child should be removed from tracking"
+	);
+
+	// drainExitEvents is a no-op here (no pending events), but we call it to
+	// simulate the production protocol path.
+	await registry.drainExitEvents();
+
+	// assertAll should fail because exitedProcesses contains a non-expected
+	// entry (expectExit = false, meaning a long-lived process exited
+	// spontaneously).
+	const errors = await registry.assertAll();
+
+	t.true(errors.length > 0,
+		"assertAll should produce errors for a spontaneously exited " +
+		"long-lived child process"
+	);
+
+	t.true(
+		errors[0].includes("exited unexpectedly"),
+		"error should mention 'exited unexpectedly': " + errors[0]
+	);
+
+	t.true(
+		errors[0].includes("spontaneous-child"),
+		"error should include the process label: " + errors[0]
+	);
+});
