@@ -339,3 +339,35 @@
     - [ ] Make the parallel Docker chunk run the supported full BDD execution path after all eligible features pass classification.
 
 - [ ] Task: Conductor - Phase Checkpoint 'BDD Chunking, Resource Metrics, and Timing Rationalization' (Protocol in workflow.md)
+
+## Phase 11: BDD Failure Resolution, RSS Budgeting, and Parallel Readiness
+
+- [ ] Task: Resolve all remaining classified BDD failures before scheduling
+    - [ ] Reproduce and fix every remaining functional, lifecycle, fixture, cleanup, and telemetry failure in an individually selected chunk.
+    - [ ] Keep strict per-scenario heap guard behavior and exact documented exceptions; do not mask failures with broad skips.
+    - [ ] Reclassify every feature chunk under the supported Docker runner and 300-second timeout after each remediation batch.
+
+- [ ] Task: Define and enforce practical aggregate RSS limits
+    - [ ] Preserve per-scenario leak checks and lifecycle assertions, while treating expected BDD workload RSS growth as a bounded integration-test cost rather than a failure by default.
+    - [ ] Set a committed aggregate parallel-stack RSS budget of at most 4 GiB, including outer Docker/container and owned child-process reservations.
+    - [ ] Derive evidence-backed per-chunk reservations and exclusive classifications from repeated cold runs; reject a parallel schedule whose aggregate reservation exceeds 4 GiB.
+    - [ ] Keep explicit diagnostics for actual container OOM, unexpected process/container exits, missing telemetry, and budget breaches.
+
+- [ ] Task: Inventory and review long-running test coverage
+    - [ ] Produce a timing inventory from scenario, step, cleanup, setup, and teardown reports, highlighting every contributor above 10 seconds.
+    - [ ] Review each long-running feature for redundant coverage multiplication, repeated topology setup, and assertions that can be simplified without reducing distinct behavioral coverage.
+    - [ ] Record retained intentional waits (watchdog, keep-alive, backpressure, reconnect, and stop-handler behavior) separately from removable test overhead.
+
+- [ ] Task: Reduce validated test latency and race-driven waits
+    - [ ] Simplify redundant test paths and remove duplicated coverage after focused regression review.
+    - [ ] Replace removable waits with observable readiness or completion conditions, using bounded polling and actionable last-state diagnostics.
+    - [ ] Use logs and stream-listener/lifecycle audits to resolve races, dangling listeners, unawaited work, and delayed cleanup rather than increasing generic timeouts.
+    - [ ] Repeat affected tests after each timing change to prove reduced duration without flakes or lost coverage.
+
+- [ ] Task: Validate full parallel Docker BDD execution
+    - [ ] Reclassify chunks as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required only after their functional, telemetry, and timing evidence is current.
+    - [ ] Run the supported Docker BDD path with bounded concurrency, ownership locks, and aggregate reserved RSS at or below 4 GiB.
+    - [ ] Record per-chunk and aggregate RSS, timing overlap, cleanup results, retries, port collisions, OOM state, and final classifications.
+    - [ ] Run a serial comparison and full parallel validation before marking the phase complete.
+
+- [ ] Task: Conductor - Phase Checkpoint 'BDD Failure Resolution, RSS Budgeting, and Parallel Readiness' (Protocol in workflow.md)
