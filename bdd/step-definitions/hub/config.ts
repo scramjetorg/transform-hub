@@ -518,24 +518,20 @@ Then("hub logs should contain {string} exactly {int} times", function(this: Cust
 });
 
 Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {
-    let success: string | undefined;
+    const instanceId = this.resources.instance!.id;
+    let inspect: Dockerode.ContainerInspectInfo | undefined;
 
-    while (!success) {
-        const instance = this.resources.instance as InstanceClient;
-        const resp = await instance.getHealth();
-        const containerId = success = resp.containerId;
+    while (!inspect) {
+        const containers = await new Dockerode().listContainers({
+            filters: { label: [`scramjet.instance.id=${instanceId}`] }
+        });
 
-        if (containerId) {
-            const [stats, info, inspect] = await Promise.all([
-                new Dockerode().getContainer(containerId!).stats({ stream: false }),
-                new Dockerode().listContainers().then(
-                    containers => containers.find(container => container.Id === containerId)),
-                new Dockerode().getContainer(containerId!).inspect(),
-            ]);
+        if (containers.length > 0) {
+            const containerId = containers[0].Id;
+            inspect = await new Dockerode().getContainer(containerId).inspect();
 
-            this.resources.containerStats = stats;
-            this.resources.containerInfo = info;
             this.resources.containerInspect = inspect;
+            this.resources.containerInfo = { Image: inspect.Config.Image };
         } else {
             await defer(AWAITING_POLL_DEFER_TIME);
         }

@@ -413,6 +413,40 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
     }
 
+    /**
+     * Handles incoming MONITORING message from the runner: acknowledges it,
+     * enriches via the instance adapter (e.g. Docker stats), updates
+     * heartbeat and _lastStats.  Enrichment failures are caught and
+     * recovered with the original runner-provided data so downstream
+     * handlers (notably v1 GET /health) always receive a payload and
+     * the monitoring pipeline stays healthy for future frames.
+     */
+    private async handleMonitoringMessage(message: any): Promise<any> {
+        await this.controlDataStream?.whenWrote(
+            MessageUtilities.serializeMessage<RunnerMessageCode.MONITORING_REPLY>({ msgCode: RunnerMessageCode.MONITORING_REPLY })
+        );
+
+        let stats: any;
+
+        try {
+            stats = await this.instanceAdapter.stats(message[1]);
+        } catch (err: any) {
+            this.logger.error("Instance enrichment failed, using raw monitoring data", err?.stack || err);
+            // Keep the original runner-provided data so downstream handlers
+            // (e.g. v1 GET /health) still receive a meaningful payload and
+            // future monitoring frames remain healthy.
+            stats = message[1];
+        }
+
+        this._lastStats = stats;
+
+        this.heartBeatTick();
+
+        message[1] = stats;
+
+        return message;
+    }
+
     async cleanup() {
         await this.instanceAdapter.cleanup();
 
@@ -547,21 +581,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             });
         });
 
-        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
-            await this.controlDataStream?.whenWrote(
-                MessageUtilities.serializeMessage<RunnerMessageCode.MONITORING_REPLY>({ msgCode: RunnerMessageCode.MONITORING_REPLY })
-            );
-
-            const stats = await this.instanceAdapter.stats(message[1]);
-
-            this._lastStats = stats;
-
-            this.heartBeatTick();
-
-            message[1] = stats;
-
-            return message;
-        }, true);
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => this.handleMonitoringMessage(message), true);
 
         this.communicationHandler.addMonitoringHandler(
             RunnerMessageCode.ALIVE,

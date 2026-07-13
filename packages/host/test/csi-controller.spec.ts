@@ -1,6 +1,35 @@
 import test from "ava";
 import { CSIController } from "../src/lib/csi-controller";
+import { CommunicationHandler } from "@scramjet/model";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+import { DataStream } from "scramjet";
+import { PassThrough } from "stream";
+import { ReadableStream, WritableStream } from "@scramjet/runtime-types";
+import { EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage } from "@scramjet/api-types";
+
+function getCommunicationHandler() {
+    const comm = new CommunicationHandler();
+    const monitoringDown = new DataStream();
+    const monitoringUp = new DataStream();
+
+    comm.hookDownstreamStreams([
+        new PassThrough(), new PassThrough(), new PassThrough(),
+        new DataStream() as WritableStream<EncodedSerializedControlMessage>,
+        monitoringDown as unknown as ReadableStream<EncodedSerializedMonitoringMessage>,
+        new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough()
+    ]);
+
+    comm.hookUpstreamStreams([
+        new PassThrough(), new PassThrough(), new PassThrough(),
+        new DataStream() as unknown as ReadableStream<EncodedSerializedControlMessage>,
+        monitoringUp as unknown as WritableStream<EncodedSerializedMonitoringMessage>,
+        new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough()
+    ]);
+
+    comm.pipeMessageStreams();
+
+    return { comm, monitoringDown, monitoringUp };
+}
 
 function createController(overrides: Record<string, unknown> = {}): any {
     const controller = Object.create(CSIController.prototype);
@@ -157,4 +186,70 @@ test("non-exiting runner falls back to adapter removal after timeout", async t =
     await new Promise(resolve => setTimeout(resolve, 5100));
 
     t.is(removals, 1);
+});
+
+test("MONITORING handler recovers from enrichment failure — _lastStats, heartbeat, health frame recover", async t => {
+    const { comm, monitoringDown, monitoringUp } = getCommunicationHandler();
+    monitoringUp.resume();
+    monitoringDown.resume();
+
+    let heartbeats = 0;
+    let statsCalls = 0;
+
+    // CSI controller mock with real CommunicationHandler, real
+    // handleMonitoringMessage method, and a mocked instanceAdapter
+    // that rejects on the first call then succeeds.
+    const controller = Object.create(CSIController.prototype);
+    Object.assign(controller, {
+        communicationHandler: comm,
+        controlDataStream: { whenWrote: async () => undefined },
+        _instanceAdapter: {
+            stats: async (msg: any) => {
+                statsCalls++;
+                if (statsCalls === 1) throw new Error("Docker enrichment failed");
+                return { ...msg, enriched: true, load: 0.5 };
+            }
+        },
+        _lastStats: undefined,
+        heartBeatTick: () => { heartbeats++; },
+        logger: { error: (..._args: any[]) => undefined },
+        id: "test-instance"
+    });
+
+    // Register a non-blocking handler first (production order: InstanceAPI
+    // attaches getMonitoring via router.get("/health", ...) before CSI
+    // hookupStreams registers the blocking handler).
+    let lastItem: any = null;
+    comm.addMonitoringHandler(RunnerMessageCode.MONITORING, (data: any) => {
+        lastItem = data[1];
+        return data;
+    });
+
+    // Register the real production CSI MONITORING handler (blocking).
+    comm.addMonitoringHandler(
+        RunnerMessageCode.MONITORING,
+        (message) => (controller as any).handleMonitoringMessage(message),
+        true
+    );
+
+    // ── First monitoring frame ── enrichment fails, handler catches ──
+    // Without the try-catch fix the handler would reject, the monitoring
+    // pipeline would error, and no future frames would be delivered.
+    monitoringDown.write(JSON.stringify([RunnerMessageCode.MONITORING, { status: "degraded" }]) + "\n");
+    await new Promise(r => setImmediate(r));
+
+    t.is(statsCalls, 1, "stats called once on first frame");
+    t.is(heartbeats, 1, "heartbeat ticked after first frame");
+    t.deepEqual(controller._lastStats, { status: "degraded" }, "_lastStats falls back to raw data");
+    t.deepEqual(lastItem, { status: "degraded" }, "health handler received fallback data");
+
+    // ── Second monitoring frame ── enrichment succeeds ──
+    // Proves the pipeline was not permanently blocked by the first failure.
+    monitoringDown.write(JSON.stringify([RunnerMessageCode.MONITORING, { status: "healthy" }]) + "\n");
+    await new Promise(r => setImmediate(r));
+
+    t.is(statsCalls, 2, "stats called again on second frame");
+    t.is(heartbeats, 2, "heartbeat ticked after second frame");
+    t.deepEqual(controller._lastStats, { status: "healthy", enriched: true, load: 0.5 }, "_lastStats has enriched data");
+    t.deepEqual(lastItem, { status: "healthy" }, "health handler received latest raw data");
 });

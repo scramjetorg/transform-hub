@@ -342,7 +342,7 @@
 
 ## Phase 11: BDD Failure Resolution, RSS Budgeting, and Parallel Readiness
 
-- [ ] Task: Resolve all remaining classified BDD failures before scheduling
+- [~] Task: Resolve all remaining classified BDD failures before scheduling
     - [ ] Reproduce and fix every remaining functional, lifecycle, fixture, cleanup, and telemetry failure in an individually selected chunk.
     - [ ] Keep strict per-scenario heap guard behavior and exact documented exceptions; do not mask failures with broad skips.
     - [ ] Reclassify every feature chunk under the supported Docker runner and 300-second timeout after each remediation batch.

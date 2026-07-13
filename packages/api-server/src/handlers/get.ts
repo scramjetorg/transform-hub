@@ -73,26 +73,31 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      * @param {MonitoringMessageCode} op Message code.
      * @param {ICommunicationHandler} conn Communication handler to use monitoring stream from.
      */
-    const getMonitoring = <T extends MonitoringMessageCode>(
-        path: string | RegExp, op: T, conn: ICommunicationHandler
-    ): void => {
+    const getMonitoring = <T extends MonitoringMessageCode>(path: string | RegExp, op: T, conn: ICommunicationHandler): void => {
         let lastItem: MessageDataType<T> | null = null;
-        let monitoringMessageResolve: Function;
+        let resolveFirst: Function;
 
-        const monitoringMessagePromise = new Promise((res) => {
-            monitoringMessageResolve = res;
+        const firstArrived = new Promise<void>((res) => {
+            resolveFirst = res;
         });
 
         conn.addMonitoringHandler(op, (data) => {
             lastItem = data[1];
-            monitoringMessageResolve();
+
+            if (resolveFirst) {
+                resolveFirst();
+                resolveFirst = undefined!;
+            }
 
             return data;
         });
 
         router.get(path, async (req, res, next) => {
             try {
-                await monitoringMessagePromise;
+                if (lastItem === null) {
+                    await firstArrived;
+                }
+
                 check(req);
 
                 return output(lastItem as object, res, next);
@@ -119,9 +124,7 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
         });
     };
 
-    return <T extends MonitoringMessageCode>(
-        path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler
-    ) => {
+    return <T extends MonitoringMessageCode>(path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler) => {
         if (typeof msg === "function") {
             return getResolver(path, msg);
         }

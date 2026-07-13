@@ -166,6 +166,50 @@ test("op handler parses data, raw bodies, control messages and errors", async t 
     t.true(result.nextError instanceof CeroError);
 });
 
+test("get monitoring handler recovers after first message — always returns latest data", async t => {
+    const router = createRouter();
+    const get = createGetterHandler(router);
+    const { comm, monitoringDown, monitoringUp } = getCommunicationHandler();
+    const code = RunnerMessageCode.MONITORING as any;
+
+    // Ensure the upstream monitoring stream is flowing so the internal
+    // monitoring pipeline activates and dispatches messages to handlers.
+    monitoringUp.resume();
+    monitoringDown.resume();
+
+    get("/health", code, comm);
+    const handler = router.handlers.get("get:/health")!;
+
+    // First monitoring message — simulates initial/stale state reachable
+    // when the monitoring stream delivers the first message before the
+    // blocking enrichment handler (Docker stats) has completed or failed.
+    // JSONParse internally calls .lines() which splits on newline, so each
+    // message must carry a trailing \n.
+    monitoringDown.write(JSON.stringify([3001, { status: "degraded", error: "Docker enrichment failed" }]) + "\n");
+    await new Promise(r => setImmediate(r));
+
+    let res = createResponse();
+    await run(handler, createRequest(), res);
+    t.is(res.statusCode, 200);
+    t.is(await res.body, JSON.stringify({ status: "degraded", error: "Docker enrichment failed" }));
+
+    // Second monitoring message — a subsequent successful monitoring frame
+    // must overwrite the stale state so health returns fresh data.
+    monitoringDown.write(JSON.stringify([3001, { status: "running", load: 0.5 }]) + "\n");
+    await new Promise(r => setImmediate(r));
+
+    res = createResponse();
+    await run(handler, createRequest(), res);
+    t.is(res.statusCode, 200);
+    t.is(await res.body, JSON.stringify({ status: "running", load: 0.5 }));
+
+    // Verify the handler returns the latest data repeatedly
+    res = createResponse();
+    await run(handler, createRequest(), res);
+    t.is(res.statusCode, 200);
+    t.is(await res.body, JSON.stringify({ status: "running", load: 0.5 }));
+});
+
 test("stream handlers execute upstream, downstream and duplex paths", async t => {
     const router = createRouter();
     const { upstream, downstream, duplex } = createStreamHandlers(router);
