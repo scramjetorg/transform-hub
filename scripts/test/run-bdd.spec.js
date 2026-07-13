@@ -463,5 +463,7 @@ test("run-bdd-docker.js mounts separate timing report and suppresses memory summ
 		"utf8"
 	);
 	t.true(src.includes("BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json"));
+	t.true(src.includes("BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl"));
+	t.true(src.includes("SCRAMJET_BDD_CHUNK_TIMING=1"));
 	t.true(src.includes('if (CHUNK_MEMORY_POLICY === "off") return "PASS"'));
 });

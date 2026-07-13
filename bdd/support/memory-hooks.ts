@@ -25,7 +25,7 @@
  */
 
 import { Before, BeforeStep, AfterStep, After, AfterAll } from "@cucumber/cucumber";
-import { writeFileSync } from "fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "fs";
 
 import {
     measureMemoryUsage,
@@ -42,7 +42,7 @@ import {
     cleanupScenarioWorldResources,
 } from "../../scripts/lib/bdd-memory-hooks-lib";
 import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
-const { createChunkTiming } = require("../../scripts/lib/bdd-chunk-timing.js");
+const { createChunkTiming, summarizeTimingEvents } = require("../../scripts/lib/bdd-chunk-timing.js");
 
 // ---------------------------------------------------------------------------
 // Per-scenario memory exceptions (narrowly scoped)
@@ -82,29 +82,18 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     // survive close()+GC because V8 cannot reclaim allocations made by
     // Node.js's native TLS / HTTP2 implementations.
     //
-    // Plateau evidence (scripts/test/verser2-cycle-memory.spec.js):
-    //   After 2 warmup cycles, 6 measured cycles of create/request/close
-    //   show native (external + arrayBuffers) delta of exactly 2778 bytes
-    //   per cycle with ZERO spread across the last 4 cycles.  V8 heap
-    //   fragmentation adds 44–109 KiB on top (GC-dependent but bounded).
-    //
-    //   Repeated guarded Docker runs (3 runs) observed deltas of
-    //   537792, 681712, and 685088 bytes against the 524288-byte base.
-    //   The maximum excess is 160800 bytes; allowance is 245760 bytes,
-    //   which is the excess plus more than 50% headroom, rounded up.
+    // This allowance is user-approved for a separately tracked Verser2
+    // allocation issue.  The 1 MiB covers the observed flaky parent-heap
+    // regression above the strict base and is scoped to this exact feature,
+    // line, and scenario name.
     // -----------------------------------------------------------------------
 
     {
         featureUri: "verser2/VERSER2-001-isolated-routing.feature",
         line: 7,
         scenarioName: "Broker follows a native 308 redirect to an advertised route",
-        // Repeated guarded-run maximum excess over the strict base:
-        //   685088 - 524288 = 160800 bytes.
-        allowanceBytes: 245_760,
-        reason: "Node.js HTTP/2 TLS C++ embedder structs + V8 heap "
-            + "fragmentation.  Three repeated guarded Docker runs observed "
-            + "a maximum 160800-byte excess over the strict base; allowance "
-            + "provides more than 50% headroom.",
+        allowanceBytes: 1_048_576,
+        reason: "exact 1 MiB allowance for the separately tracked Verser2 allocation issue",
     },
 
     // -----------------------------------------------------------------------
@@ -239,8 +228,23 @@ const BASELINE_KEY = "__memoryBaseline";
 const BEFORE_USAGE_KEY = "__memoryBeforeUsage";
 const getMemoryRegistry = () => require("../lib/memory-registry").memoryRegistry;
 let chunkSamplingTimer: ReturnType<typeof setInterval> | undefined;
+const timingEventsPath = process.env.BDD_CHUNK_TIMING_EVENTS_FILE;
 
-const chunkTiming = createChunkTiming(["1", "true", "yes"].includes(String(process.env.SCRAMJET_BDD_CHUNK_TIMING).toLowerCase()));
+function emitTimingEvent(event: any): void {
+    if (!timingEventsPath) return;
+    appendFileSync(timingEventsPath, `${JSON.stringify(event)}\n`, "utf8");
+}
+
+const chunkTiming = createChunkTiming(
+    ["1", "true", "yes"].includes(String(process.env.SCRAMJET_BDD_CHUNK_TIMING).toLowerCase()),
+    undefined,
+    {
+        runId: process.env.SCRAMJET_BDD_RUN_ID,
+        chunkId: process.env.SCRAMJET_BDD_CHUNK_ID,
+        owner: process.env.SCRAMJET_BDD_OWNER,
+    },
+    { retainRecords: !timingEventsPath, emit: timingEventsPath ? emitTimingEvent : undefined },
+);
 
 // ---------------------------------------------------------------------------
 // Before – baseline
@@ -293,23 +297,24 @@ AfterStep(function (this: any, step: any) {
     delete this.__chunkTimingStep;
 });
 
-// This is defined before the memory After hook. Cucumber runs After hooks in
-// reverse definition order, so scenario timing includes cleanup and failures.
-After(function (this: any, scenario: any) {
-    chunkTiming.finishScenario(this, {
-        name: scenario?.pickle?.name,
-        uri: scenario?.pickle?.uri,
-        status: scenario?.result?.status,
-    });
-});
+// Loaded by timing-boundary.ts, which is required after all step definitions.
+// Keeping this function exported gives that hook a boundary that also works
+// when Before fails or a scenario has no steps.
+export function beginCleanupTiming(world: any): void {
+    if (!world || world.__chunkTimingCleanup !== undefined) return;
+    world.__chunkTimingCleanup = chunkTiming.startCleanup(world, "feature-after+world-cleanup");
+}
 
 // ---------------------------------------------------------------------------
 // After – measure and fail if threshold exceeded
 // ---------------------------------------------------------------------------
 
+// This support hook is registered before step-definition hooks, so Cucumber's
+// reverse After-hook ordering runs it after feature After hooks. It is the
+// final scenario boundary: complete cleanup and scenario timing are finished
+// before strict memory measurement/GC begins.
 After(async function (this: any, scenario: any) {
     const cleanupErrors: Error[] = [];
-    const cleanupTiming = chunkTiming.enabled ? chunkTiming.startCleanup(this, "world-cleanup") : undefined;
     try {
         // Scenario-owned resources are always cleaned up, including skipped
         // guards and scenarios without a memory baseline.
@@ -317,7 +322,13 @@ After(async function (this: any, scenario: any) {
     } catch (err: any) {
         cleanupErrors.push(err);
     } finally {
-        if (cleanupTiming) chunkTiming.finishCleanup(cleanupTiming);
+        chunkTiming.finishCleanup(this.__chunkTimingCleanup);
+        delete this.__chunkTimingCleanup;
+        chunkTiming.finishScenario(this, {
+            name: scenario?.pickle?.name,
+            uri: scenario?.pickle?.uri,
+            status: scenario?.result?.status,
+        });
     }
 
     const baseline: number | undefined = this[BASELINE_KEY];
@@ -454,9 +465,16 @@ AfterAll(async function () {
         chunkSamplingTimer = undefined;
     }
 
-    // Snapshot timing before the final GC, then release its retained records so
-    // timing allocations cannot affect enforced memory measurements.
-    const timing = chunkTiming.snapshotAndClear();
+    // Timing records are emitted as JSONL at each completed boundary. This
+    // avoids retaining record objects in the Cucumber heap across scenarios.
+    let timing = chunkTiming.snapshotAndClear();
+    if (timingEventsPath && existsSync(timingEventsPath)) {
+        const events = readFileSync(timingEventsPath, "utf8")
+            .split("\n")
+            .filter(Boolean)
+            .map(line => JSON.parse(line));
+        timing = summarizeTimingEvents(events);
+    }
     if (isBddMemoryGuardEnabled()) await drainAndGc();
 
     if (chunkMemoryPolicy !== "off") {

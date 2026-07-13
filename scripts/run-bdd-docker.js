@@ -162,6 +162,8 @@ dockerRunArgs.push(...collectEnvForwardArgs());
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json");
+dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl");
+dockerRunArgs.push("-e", "SCRAMJET_BDD_CHUNK_TIMING=1");
 
 // Inject NODE_OPTIONS with --expose-gc when BDD memory guard is enabled.
 // bddNodeOptions() picks up BDD_NODE_OPTIONS from the parent env (already
@@ -454,8 +456,16 @@ const printContainerSummary = async (cid, exitCode) => {
 
     const timing = timingMetrics;
     if (timing?.enabled) {
-        const top = (entries) => (entries?.[0] ? `${entries[0].name || entries[0].phase}=${entries[0].durationMs.toFixed(1)}ms` : "none");
-        process.stderr.write(`[run-bdd-docker] timing top scenario=${top(timing.top?.scenarios)} step=${top(timing.top?.steps)} cleanup=${top(timing.top?.cleanup)}\n`);
+        const top = (entry, label) => {
+            if (!entry) return `${label}=none`;
+            const subject = entry.name || entry.phase || "unknown";
+            const feature = entry.feature || entry.uri || "unknown";
+            return `${label}=${subject} duration=${entry.durationMs.toFixed(1)}ms feature=${feature} scenario=${entry.scenario || entry.name || "unknown"} owner=${entry.owner || "unknown"}`;
+        };
+        process.stderr.write(
+            `[run-bdd-docker] timing owner=${timing.top?.scenarios?.[0]?.owner || "unknown"} chunk=${timing.top?.scenarios?.[0]?.chunkId || "unknown"} ` +
+                `${top(timing.top?.scenarios?.[0], "scenario")} ${top(timing.top?.slowestStep || timing.top?.steps?.[0], "slowest-step")} ${top(timing.top?.slowestCleanup || timing.top?.cleanup?.[0], "cleanup")}\n`
+        );
     }
 
     // Timing-only runs must not emit memory diagnostics or summaries.

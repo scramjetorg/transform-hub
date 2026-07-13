@@ -21,6 +21,7 @@ const common = [
     // reverse definition order).
     "--require support/memory-hooks.ts",
     "--require step-definitions/**/*.ts",
+    "--require support/timing-boundary.ts",
     "--require-module ts-node/register",
     "--publish-quiet",
     "--exit",

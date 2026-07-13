@@ -59,6 +59,7 @@ async function runHookOrderScenario() {
         'Given("hook order test setup", function() { /* no-op */ });',
         'After(async function() {',
         '  if (ORDER_FILE) fs.appendFileSync(ORDER_FILE, "step-def-after\\n", "utf8");',
+        '  await new Promise(resolve => setTimeout(resolve, 15));',
         "});",
     ].join("\n"), "utf8");
 
@@ -142,4 +143,52 @@ test("Cucumber After hook ordering: step-def After runs before memory-hooks Afte
         `hook order violation: step-def After (${stepDefIdx}) ` +
         `must run before memory-hooks After (${memoryGuardIdx})`
     );
+    t.true(result.stderr.includes("slowest-step="), "supported chunk output must report the slowest step");
+    t.true(result.stderr.includes("cleanup=feature-after+world-cleanup"), "cleanup timing must include feature After hooks");
+    t.true(result.stderr.includes("scenario="), "timing output must identify the scenario");
+});
+
+test("timing boundary is initialized for no-step and failing-Before scenarios", async t => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-timing-boundary-"));
+    const bddRoot = path.resolve(__dirname, "../../bdd");
+    const featureDir = path.join(bddRoot, ".tmp-timing-boundary-features");
+    const stepDir = path.join(bddRoot, ".tmp-timing-boundary-steps");
+    fs.mkdirSync(featureDir, { recursive: true });
+    fs.mkdirSync(stepDir, { recursive: true });
+    fs.writeFileSync(path.join(featureDir, "timing-boundary.feature"), [
+        "@timing-boundary-test",
+        "Feature: Timing boundary failure paths",
+        "",
+        "  Scenario: no-step scenario",
+        "",
+        "  Scenario: failing-Before scenario",
+        "    Given boundary setup",
+    ].join("\n"), "utf8");
+    fs.writeFileSync(path.join(stepDir, "steps.js"), [
+        'const { Given, Before, After } = require("@cucumber/cucumber");',
+        'Given("boundary setup", function() {});',
+        'Before(function(testCase) { if (testCase.pickle.name === "failing-Before scenario") throw new Error("intentional boundary failure"); });',
+        'After(function() {});',
+    ].join("\n"), "utf8");
+
+    const { spawnSync } = require("node:child_process");
+    const result = spawnSync(process.execPath, [
+        path.resolve(__dirname, "../run-bdd-docker.js"), "--",
+        "--require", ".tmp-timing-boundary-steps/steps.js",
+        "--tags", "@timing-boundary-test", "--format", "progress", "--exit",
+        ".tmp-timing-boundary-features/timing-boundary.feature",
+    ], {
+        cwd: path.resolve(__dirname, "../.."),
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 30000,
+        env: { ...process.env, SCRAMJET_BDD_MEMORY_GUARD: "1", NO_HOST: "true", NODE_OPTIONS: "--max-old-space-size=1024" },
+    });
+    const stderr = result.stderr.toString();
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(featureDir, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(stepDir, { recursive: true, force: true }); } catch {}
+
+    t.not(result.status, 0, "the intentional Before failure must remain visible");
+    t.true(stderr.includes("cleanup=feature-after+world-cleanup"), "cleanup output must exist despite Before failure");
+    t.true(stderr.includes("scenario="), "failure-path timing must retain scenario attribution");
 });

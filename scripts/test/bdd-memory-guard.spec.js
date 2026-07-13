@@ -319,8 +319,8 @@ test("exception matching matches by exact URI, name, and line", (t) => {
         featureUri: "verser2/VERSER2-001-isolated-routing.feature",
         line: 7,
         scenarioName: "Broker follows a native 308 redirect to an advertised route",
-        allowanceBytes: 1000,
-        reason: "test",
+        allowanceBytes: 1_048_576,
+        reason: "exact 1 MiB allowance for the separately tracked Verser2 allocation issue",
     }];
 
     const match = matchScenarioException(
@@ -331,7 +331,7 @@ test("exception matching matches by exact URI, name, and line", (t) => {
     );
 
     t.truthy(match);
-    t.is(match.allowanceBytes, 1000);
+    t.is(match.allowanceBytes, 1_048_576);
 });
 
 test("exception matching uses endsWith for feature URI", (t) => {
