@@ -21,14 +21,16 @@ import { resolve } from "path";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
-import { tmpdir } from "os";
 import { promisify } from "util";
 import { CustomWorld } from "../world";
 import { ClientUtils } from "@scramjet/client-utils";
 import { HostClient } from "@scramjet/api-client";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
+const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
 
 const freeport = promisify(require("freeport"));
+const ownership = getOwnership(process.env);
+ensureOwnershipPaths(ownership);
 
 const FIXTURE_ROOT = "bdd/fixtures/manager-aggregation";
 
@@ -132,7 +134,13 @@ function spawnProcess(
         const fullCmd = [...cmd, ...options];
         const proc = spawn("/usr/bin/env", fullCmd, {
             detached: true,
-            env: { ...process.env, ...env },
+            env: {
+                ...process.env,
+                SCRAMJET_BDD_RUN_ID: ownership.runId,
+                SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                SCRAMJET_BDD_OWNER: ownership.owner,
+                ...env,
+            },
             stdio: ["ignore", "pipe", "pipe"]
         });
         lifecycle?.ownChild(proc, `aggregation:${cmd[cmd.length - 1]}`, { group: true });
@@ -423,7 +431,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     const verser2Port = await freeport();
     const id = `mm-agg-${runId}`;
     const managerId = `mgr-agg-${runId}`;
-    const tempDir = mkdtempSync(resolve(tmpdir(), "scramjet-manager-aggregation-"));
+    const tempDir = mkdtempSync(resolve(ownership.tempPath, "manager-aggregation-"));
 
     const mmOptions = [
         `--id=${id}`,

@@ -66,28 +66,47 @@ function log(...args) {
 
 /**
  * Attempt to send a signal to a process group.  Falls back to killing the
- * single process on ESRCH (no such process) or when the process group kill
- * fails.
+ * single process when the process group kill fails.
+ *
+ * Signal states:
+ *   - Group kill succeeds         -> true  (sent to group)
+ *   - Group kill ESRCH, PID kill succeeds -> true  (sent to individual PID)
+ *   - Group kill ESRCH, PID kill ESRCH   -> true  (confirmed absent)
+ *   - Group kill other error, PID succeeds -> true (sent to individual PID)
+ *   - Any other combination       -> false (signalling failed)
+ *
+ * Confirmed-absent is only declared when BOTH the group and the individual
+ * PID return ESRCH.  A non-ESRCH group error followed by PID ESRCH means
+ * the caller could not signal what it needed to and absence is not reliably
+ * established.
  *
  * @param {number} pid        Process ID.
  * @param {string} signal     Signal name (e.g. "SIGTERM", "SIGKILL").
- * @returns {boolean}         True if the process (group) was signalled or
- *                            already gone.
+ * @returns {boolean}         True if the process was signalled or
+ *                            confirmed absent.
  */
 function killProcessGroup(pid, signal) {
 	if (!pid || !Number.isFinite(pid)) {
 		return false;
 	}
+
+	let groupErrorCode = null;
+
 	try {
 		process.kill(-pid, signal);
 		return true;
-	} catch {
-		try {
-			process.kill(pid, signal);
-			return true;
-		} catch {
-			return false;
-		}
+	} catch (groupError) {
+		groupErrorCode = groupError?.code;
+		// Group kill failed — try the individual PID.
+	}
+
+	try {
+		process.kill(pid, signal);
+		return true;
+	} catch (fallbackError) {
+		// Confirmed absent only when BOTH group and PID return ESRCH.
+		if (groupErrorCode === "ESRCH" && fallbackError?.code === "ESRCH") return true;
+		return false;
 	}
 }
 
@@ -113,13 +132,14 @@ function stopProcess(child, options = {}) {
 		return Promise.resolve(true);
 	}
 
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		let settled = false;
 
 		const finish = (result) => {
 			if (settled) return;
 			settled = true;
-			resolve(result);
+			if (result instanceof Error) reject(result);
+			else resolve(result);
 		};
 
 		// If the child has an event emitter, listen for exit and error.
@@ -138,8 +158,18 @@ function stopProcess(child, options = {}) {
 		// 1. Send SIGTERM to the process group.
 		log(`sending SIGTERM to process group -${pid}`);
 		if (!killProcessGroup(pid, "SIGTERM")) {
-			finish(true);
+			finish(new Error(`Failed to signal process group ${pid} with SIGTERM`));
 			return;
+		}
+
+		// Confirm absence immediately after a successful signal-state result.
+		try {
+			process.kill(pid, 0);
+		} catch (probeError) {
+			if (probeError?.code === "ESRCH") {
+				finish(true);
+				return;
+			}
 		}
 
 		// 2. Wait for the grace period.
@@ -148,7 +178,19 @@ function stopProcess(child, options = {}) {
 
 			// 3. Process still alive → escalate to SIGKILL.
 			log(`process ${pid} did not exit within ${grace}ms, sending SIGKILL`);
-			killProcessGroup(pid, "SIGKILL");
+			if (!killProcessGroup(pid, "SIGKILL")) {
+				finish(new Error(`Failed to signal process group ${pid} with SIGKILL`));
+				return;
+			}
+
+			try {
+				process.kill(pid, 0);
+			} catch (probeError) {
+				if (probeError?.code === "ESRCH") {
+					finish(true);
+					return;
+				}
+			}
 
 			// Give the kill a moment to take effect, then resolve.
 			setTimeout(() => {
@@ -257,7 +299,21 @@ function reportLeakedProcesses() {
  * @param {string} baseDir    Base directory (e.g. /tmp).
  * @param {string} prefix     Directory name prefix (e.g. "bdd-runner.").
  */
-function cleanupTempDirs(baseDir = "/tmp", prefix = "bdd-runner.") {
+function cleanupTempDirs(baseDir = "/tmp", prefix = "bdd-runner.", ownership) {
+	if (ownership) {
+		const { encodePart } = require("../../bdd/lib/ownership.js");
+		const ownerDir = join(baseDir, "scramjet-bdd-runs", encodePart(String(ownership.runId)), "chunks", encodePart(String(ownership.chunkId)));
+		try {
+			if (existsSync(ownerDir)) {
+				rmSync(ownerDir, { recursive: true, force: true });
+				log(`removed ownership temp dir ${ownerDir}`);
+			}
+		} catch (error) {
+			console.error(`[bdd-cleanup] failed to remove ${ownerDir}: ${error.message}`);
+		}
+		return;
+	}
+
 	if (!existsSync(baseDir)) {
 		return;
 	}
@@ -295,12 +351,18 @@ function cleanupTempDirs(baseDir = "/tmp", prefix = "bdd-runner.") {
  *
  * @param {string} prefix   Container name prefix (e.g. "bdd-runner-").
  */
-function cleanupDockerContainers(prefix = "bdd-runner-") {
+function cleanupDockerContainers(prefixOrOptions = "bdd-runner-") {
+	const options = typeof prefixOrOptions === "string" ? { prefix: prefixOrOptions } : prefixOrOptions || {};
+	const prefix = options.prefix || "bdd-runner-";
+
+	// Build a docker ps command with optional ownership-label filters.
+	let dockerCmd = `docker ps -a --filter "name=${prefix}"`;
+	if (options.runId) dockerCmd += ` --filter "label=scramjet.bdd.run-id=${options.runId}"`;
+	if (options.chunkId) dockerCmd += ` --filter "label=scramjet.bdd.chunk-id=${options.chunkId}"`;
+	dockerCmd += ' --format "{{.ID}}"';
+
 	try {
-		const stdout = execSync(
-			`docker ps -a --filter "name=${prefix}" --format "{{.ID}}"`,
-			{ encoding: "utf8", timeout: 10000, stdio: ["ignore", "pipe", "ignore"] }
-		);
+		const stdout = execSync(dockerCmd, { encoding: "utf8", timeout: 10000, stdio: ["ignore", "pipe", "ignore"] });
 
 		for (const id of stdout.split("\n").filter(Boolean)) {
 			try {

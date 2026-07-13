@@ -4,7 +4,10 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 const { spawnSync } = require("node:child_process");
+const { createOwnership, getOwnership } = require("../bdd/lib/ownership.js");
+const { cleanupTempDirs, cleanupDockerContainers } = require("./lib/bdd-cleanup.js");
 
 const repoRoot = path.resolve(__dirname, "..");
 const bddRoot = path.join(repoRoot, "bdd");
@@ -63,6 +66,11 @@ const CHUNKS = Object.freeze({
  * Every feature path declared here must appear in exactly one of these chunks.
  */
 const DEFAULT_CHUNKS = Object.freeze(["verser2", "cli", "topics-cli", "topics-api", "python", "appcontext", "node", "hub", "manager", "errors", "stream"]);
+
+// Resource-owning paths remain explicit scheduler exclusions. This metadata
+// is intentionally advisory: this runner remains serial and does not enable
+// broad parallel scheduling.
+const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub", "manager", "stream"]);
 
 // ---------------------------------------------------------------------------
 // Manifest validation
@@ -226,15 +234,30 @@ function defaultRunChild(owner, features, passthrough) {
     process.stderr.write(`[run-bdd-waves] command=${process.execPath} ${args.join(" ")}\n`);
 
     // Every spawned Docker BDD run receives a 300-second timeout override.
-    const childEnv = { ...process.env, BDD_TIMEOUT_MS: "300000" };
+    const ownership = createOwnership(process.env, { chunkId: owner });
+    const childEnv = {
+        ...process.env,
+        BDD_TIMEOUT_MS: "300000",
+        SCRAMJET_BDD_RUN_ID: ownership.runId,
+        SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+        SCRAMJET_BDD_OWNER: ownership.owner
+    };
 
-    const result = spawnSync(process.execPath, args, {
-        cwd: repoRoot,
-        env: childEnv,
-        stdio: "inherit"
-    });
+    try {
+        const result = spawnSync(process.execPath, args, {
+            cwd: repoRoot,
+            env: childEnv,
+            stdio: "inherit"
+        });
 
-    return result.status === null ? 1 : result.status;
+        return result.status === null ? 1 : result.status;
+    } finally {
+        // The Docker child normally performs this cleanup itself. The wave
+        // lifecycle repeats it idempotently for interrupted/failed children,
+        // still scoped to the exact current run/chunk ownership.
+        cleanupDockerContainers({ prefix: "bdd-runner-", runId: ownership.runId, chunkId: ownership.chunkId });
+        cleanupTempDirs(os.tmpdir(), "", ownership);
+    }
 }
 
 module.exports.runChild = defaultRunChild;
@@ -246,6 +269,11 @@ module.exports.runChild = defaultRunChild;
 function runWaves({ chunkName, passthrough }) {
     const runChild = module.exports.runChild;
     const emitSummary = module.exports.emitSummary;
+
+    // One immutable run ID spans all serial chunks in this invocation; each
+    // child receives a distinct chunk ID while retaining the run ownership.
+    const runOwnership = getOwnership(process.env);
+    process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
 
     // Inline validation before any spawn.
     validateManifest();
@@ -307,6 +335,7 @@ if (require.main === module) {
 module.exports = {
     CHUNKS,
     DEFAULT_CHUNKS,
+    EXCLUSIVE_CHUNKS,
     commandArgs,
     emitSummary: defaultEmitSummary,
     formatDuration,

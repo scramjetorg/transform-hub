@@ -4,6 +4,7 @@ import { ChildProcess, spawn } from "child_process";
 import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
+const { getOwnership } = require("./ownership.js");
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
     ? ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"]
@@ -22,6 +23,7 @@ const configuredMaxOutputBytes = Number(process.env.SCRAMJET_TEST_OUTPUT_MAX_BYT
 const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configuredMaxOutputBytes > 0
     ? configuredMaxOutputBytes
     : 1024 * 1024;
+const ownership = getOwnership(process.env);
 
 export class HostUtils {
     private static cleanupHandlersInstalled = false;
@@ -205,10 +207,16 @@ export class HostUtils {
 
             const hub = this.host = spawn("/usr/bin/env", command, {
                 detached: true,
-                env: { ...process.env, SCP_ENV_VALUE: "GH_CI" }
+                env: {
+                    ...process.env,
+                    SCP_ENV_VALUE: "GH_CI",
+                    SCRAMJET_BDD_RUN_ID: ownership.runId,
+                    SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                    SCRAMJET_BDD_OWNER: ownership.owner,
+                }
             });
             HostUtils.trackHost(hub);
-            memoryRegistry.trackChildProcess(hub, "hub");
+            memoryRegistry.trackChildProcess(hub, `hub:${ownership.owner}`);
 
             this.hostProcessStopped = false;
 

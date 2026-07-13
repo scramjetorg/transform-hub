@@ -8,6 +8,8 @@ import { Readable } from "stream";
 
 const { stopProcess: stopProcessWithCleanup } = require("../../../scripts/lib/bdd-cleanup.js");
 const { memoryRegistry } = require("../../lib/memory-registry");
+const { getOwnership } = require("../../lib/ownership.js");
+const ownership = getOwnership(process.env);
 
 async function requestGet(apiBase: string, apiEndpoint: string): Promise<{[key: string]: any}> {
     const utils = new ClientUtils(apiBase);
@@ -47,11 +49,19 @@ function spawnProcess(
             fullCommand.push(name, value);
         }
 
-        const cmdProcess = spawn("/usr/bin/env", fullCommand, { detached: spawnOptions.detached === true });
+        const cmdProcess = spawn("/usr/bin/env", fullCommand, {
+            detached: spawnOptions.detached === true,
+            env: {
+                ...process.env,
+                SCRAMJET_BDD_RUN_ID: ownership.runId,
+                SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                SCRAMJET_BDD_OWNER: ownership.owner,
+            },
+        });
 
         // Track spawned process in memory registry
         const label = command.length > 0 ? command[command.length - 1] : "spawned";
-        memoryRegistry.trackChildProcess(cmdProcess, `manager:${label}`);
+        memoryRegistry.trackChildProcess(cmdProcess, `manager:${ownership.owner}:${label}`);
 
         if (stdoutDoneMatch) {
             const onStdout = (data: any) => {

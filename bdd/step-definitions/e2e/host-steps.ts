@@ -13,7 +13,6 @@ import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
@@ -25,6 +24,7 @@ import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
 import { restoreSavedHostEnv } from "../hub/config";
 import { memoryRegistry } from "../../lib/memory-registry";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
+const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -57,11 +57,10 @@ let streams: { [key: string]: Promise<string | undefined> } = {};
 let runnerEnded: Promise<void> = Promise.resolve();
 let signalRunnerEnded: () => void = () => undefined;
 
-const freeport = promisify(require("freeport"));
-
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const dockerode = new Dockerode();
+const ownership = getOwnership(process.env);
 const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
@@ -130,14 +129,27 @@ const waitForProcessToEnd = async (pid: number) => {
 
 const killAllRunners = async () => {
     if (process.env.RUNTIME_ADAPTER === "process") {
-        exec("killall runner");
+        if (processId) {
+            try {
+                process.kill(processId, "SIGTERM");
+                await waitForProcessToEnd(processId);
+            } catch (error: any) {
+                let alreadyGone = false;
+                try {
+                    process.kill(processId, 0);
+                } catch (probeError: any) {
+                    alreadyGone = probeError?.code === "ESRCH";
+                }
+                if (!alreadyGone) throw error;
+            }
+        }
     }
 
     if (process.env.RUNTIME_ADAPTER === "docker") {
         await Promise.all(
             (await dockerode.listContainers())
                 .map(async container => {
-                    if (container.Labels["scramjet.instance.id"]) {
+                    if (container.Labels["scramjet.bdd.run-id"] === ownership.runId && container.Labels["scramjet.bdd.chunk-id"] === ownership.chunkId) {
                         return dockerode.getContainer(container.Id).kill();
                     }
 
@@ -153,10 +165,14 @@ BeforeAll({ timeout: 20e3 }, async () => {
     }
 
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+    let apiReservation: any;
+    let instancesReservation: any;
 
     if (!apiUrl) {
-        const apiPort = await freeport();
-        const instancesServerPort = await freeport();
+        apiReservation = await allocateOwnedPort(ownership);
+        instancesReservation = await allocateOwnedPort(ownership);
+        const apiPort = apiReservation.port;
+        const instancesServerPort = instancesReservation.port;
 
         process.env.LOCAL_HOST_PORT = apiPort.toString();
         apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
@@ -196,13 +212,17 @@ BeforeAll({ timeout: 20e3 }, async () => {
     const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
     const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
     process.env[runnerHostEnabledEnv] = "true";
-    const runnerHostPort = await freeport();
+    const runnerHostReservation = await allocateOwnedPort(ownership);
+    const runnerHostPort = runnerHostReservation.port;
     process.env[runnerHostPortEnv] = String(runnerHostPort);
     process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${runnerHostPort}`;
 
     try {
         await hostUtils.spawnHost([]);
     } finally {
+        await runnerHostReservation.release();
+        await apiReservation?.release();
+        await instancesReservation?.release();
         if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
         else process.env[runnerHostPortEnv] = savedRunnerHostPort;
         if (savedRunnerHostEnabled === undefined) delete process.env[runnerHostEnabledEnv];
@@ -282,10 +302,14 @@ After({ tags: "@test-si-init" }, function() {
 
 const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+    let apiReservation: any;
+    let instancesReservation: any;
 
     if (!apiUrl) {
-        const apiPort = await freeport();
-        const instancesServerPort = await freeport();
+        apiReservation = await allocateOwnedPort(ownership);
+        instancesReservation = await allocateOwnedPort(ownership);
+        const apiPort = apiReservation.port;
+        const instancesServerPort = instancesReservation.port;
 
         process.env.LOCAL_HOST_PORT = apiPort.toString();
         apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
@@ -314,7 +338,12 @@ const startHost = async () => {
             }
         });
     }
-    await hostUtils.spawnHost([]);
+    try {
+        await hostUtils.spawnHost([]);
+    } finally {
+        await apiReservation?.release();
+        await instancesReservation?.release();
+    }
 };
 
 Given("start host", () => startHost());

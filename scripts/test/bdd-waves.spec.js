@@ -2,6 +2,10 @@
 
 const test = require("ava");
 const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
+const { spawnSync } = require("node:child_process");
+const { encodePart } = require("../../bdd/lib/ownership.js");
 
 const runner = require("../run-bdd-waves.js");
 
@@ -72,6 +76,11 @@ test("every default chunk is defined in CHUNKS", t => {
 
 test("harness chunk is NOT in default chunks", t => {
     t.false(runner.DEFAULT_CHUNKS.includes("harness"));
+});
+
+test("resource-owning chunks remain explicitly exclusive", t => {
+    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub", "manager", "stream"]);
+    t.true(runner.EXCLUSIVE_CHUNKS.every(name => runner.CHUNKS[name]));
 });
 
 // ---------------------------------------------------------------------------
@@ -356,6 +365,41 @@ test("runChild is reachable via module.exports for testing", t => {
     runner.runChild = () => 42;
     t.is(runner.runChild(), 42);
     runner.runChild = original;
+});
+
+test.serial("runChild integration propagates chunk ownership through the supported Docker runner", t => {
+    const result = spawnSync(process.execPath, [
+        path.resolve(__dirname, "../run-bdd-waves.js"),
+        "--chunk=verser2",
+        "--",
+        "--dry-run",
+    ], { encoding: "utf8", timeout: 120000, env: { ...process.env, SCRAMJET_BDD_RUN_ID: "waves-integration" } });
+    t.is(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    t.regex(`${result.stdout}\n${result.stderr}`, /chunk=verser2/);
+    t.regex(`${result.stdout}\n${result.stderr}`, /ownership.*waves-integration|run=waves-integration/);
+});
+
+test.serial("runChild production cleanup removes owned temp paths and preserves foreign paths", t => {
+    const runId = "waves-cleanup-integration";
+    const chunkId = "verser2";
+    const root = path.join(os.tmpdir(), "scramjet-bdd-runs");
+    const owned = path.join(root, encodePart(runId), "chunks", encodePart(chunkId), "runner-owned");
+    const foreign = path.join(root, encodePart(runId), "chunks", encodePart("other-chunk"), "runner-foreign");
+    fs.mkdirSync(owned, { recursive: true });
+    fs.mkdirSync(foreign, { recursive: true });
+    try {
+        const result = spawnSync(process.execPath, [
+            path.resolve(__dirname, "../run-bdd-waves.js"),
+            "--chunk=verser2",
+            "--",
+            "--dry-run",
+        ], { encoding: "utf8", timeout: 120000, env: { ...process.env, SCRAMJET_BDD_RUN_ID: runId } });
+        t.is(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        t.false(fs.existsSync(owned), "production cleanup must remove owned path");
+        t.true(fs.existsSync(foreign), "production cleanup must preserve foreign path");
+    } finally {
+        fs.rmSync(path.join(root, encodePart(runId)), { recursive: true, force: true });
+    }
 });
 
 // ---------------------------------------------------------------------------

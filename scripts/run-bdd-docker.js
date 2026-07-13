@@ -32,7 +32,8 @@ const { parseChunkMemoryPolicy, validateEnforcePrerequisites } = require("./lib/
 const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnostics } = require("./lib/bdd-chunk-memory-policy.js");
 const { requestDockerStats } = require("./lib/docker-memory.js");
 
-const { reportLeakedProcesses } = require("./lib/bdd-cleanup.js");
+const { reportLeakedProcesses, cleanupTempDirs, cleanupDockerContainers } = require("./lib/bdd-cleanup.js");
+const { createOwnership, ownershipEnv, encodePart } = require("../bdd/lib/ownership.js");
 
 const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || "node:22";
 const BDD_DOCKER_MEMORY = memoryLimit();
@@ -79,8 +80,11 @@ if (!dockerGid) {
 }
 
 const repoRoot = path.resolve(__dirname, "..");
-const tmpDir = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "bdd-runner."));
-const containerName = `bdd-runner-${process.pid}-${crypto.randomBytes(3).toString("hex")}`;
+const ownership = createOwnership(process.env, { artifactRoot: "/work-tmp" });
+const hostOwnershipRoot = path.join(require("node:os").tmpdir(), "scramjet-bdd-runs", encodePart(ownership.runId), "chunks", encodePart(ownership.chunkId));
+fs.mkdirSync(hostOwnershipRoot, { recursive: true });
+const tmpDir = fs.mkdtempSync(path.join(hostOwnershipRoot, "runner-"));
+const containerName = `bdd-runner-${ownership.runId}-${ownership.chunkId}-${crypto.randomBytes(3).toString("hex")}`;
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
 
@@ -109,7 +113,11 @@ const collectEnvForwardArgs = () => {
     return out;
 };
 
-const dockerRunArgs = ["run", "--detach", "--rm", "--init", "--name", containerName, "--network", "host", "--memory", BDD_DOCKER_MEMORY, "--memory-swap", BDD_DOCKER_MEMORY];
+const dockerRunArgs = ["run", "--detach", "--rm", "--init", "--name", containerName];
+
+for (const [key, value] of Object.entries(ownership.labels)) dockerRunArgs.push("--label", `${key}=${value}`);
+
+dockerRunArgs.push("--network", "host", "--memory", BDD_DOCKER_MEMORY, "--memory-swap", BDD_DOCKER_MEMORY);
 
 if (BDD_DOCKER_CPUS) {
     dockerRunArgs.push("--cpus", BDD_DOCKER_CPUS);
@@ -136,6 +144,19 @@ dockerRunArgs.push(
     "COREPACK_ENABLE_DOWNLOAD_PROMPT=0"
 );
 
+dockerRunArgs.push(
+    ...Object.entries(ownershipEnv(ownership))
+        .filter(
+            ([name]) =>
+                name === "SCRAMJET_BDD_RUN_ID" ||
+                name === "SCRAMJET_BDD_CHUNK_ID" ||
+                name === "SCRAMJET_BDD_OWNER" ||
+                name === "SCRAMJET_BDD_ARTIFACT_ROOT" ||
+                name === "SCRAMJET_BDD_CONFIG_PATH"
+        )
+        .map(([name, value]) => ["-e", `${name}=${value}`])
+        .flat()
+);
 dockerRunArgs.push(...collectEnvForwardArgs());
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");
@@ -158,6 +179,7 @@ const innerCommand =
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 
 process.stderr.write(`[run-bdd-docker] container name=${containerName}\n`);
+process.stderr.write(`[run-bdd-docker] ownership run=${ownership.runId} chunk=${ownership.chunkId} owner=${ownership.owner}\n`);
 
 let containerId = "";
 let timedOut = false;
@@ -244,19 +266,11 @@ const cleanup = () => {
         readinessPollTimer = null;
     }
 
-    if (containerId) {
-        // best-effort: docker rm -f <container>
-        spawnSync("docker", ["rm", "-f", containerId], { stdio: "ignore" });
-    } else {
-        // best-effort: docker rm -f <name>
-        spawnSync("docker", ["rm", "-f", containerName], { stdio: "ignore" });
-    }
-
-    try {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch (error) {
-        process.stderr.write(`[run-bdd-docker] failed to remove temp dir ${tmpDir}: ${error.message}\n`);
-    }
+    // Always clean only this run/chunk's owned resources. The helper applies
+    // exact Docker labels and structured encoded temp paths; no broad fallback
+    // is used for parallel-safe chunks.
+    cleanupDockerContainers({ prefix: "bdd-runner-", runId: ownership.runId, chunkId: ownership.chunkId });
+    cleanupTempDirs(require("node:os").tmpdir(), "", ownership);
 };
 
 // Scope cleanup to current run resources only.

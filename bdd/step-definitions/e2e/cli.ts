@@ -2,7 +2,6 @@
 import { After, AfterAll, Before, Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
-import os from "os";
 import path from "path";
 import {
     getStreamsFromSpawn,
@@ -25,11 +24,14 @@ import { Readable } from "stream";
 addLoggerOutput(process.stdout, process.stdout);
 
 const { stopProcess } = require("../../../scripts/lib/bdd-cleanup.js");
+const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
 const logger = getLogger("test");
 const si = getSiCommand();
 const profileSi = getSiCommand({ useBddConfig: false });
 let useProfileConfigForScenario = false;
-const bddTempDir = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-bdd-cli-"));
+const ownership = getOwnership(process.env);
+ensureOwnershipPaths(ownership);
+const bddTempDir = fs.mkdtempSync(path.join(ownership.tempPath, "cli-"));
 const bddTempPaths: Record<string, string> = {
     __BDD_TMP_SIMPLE_STDIO__: path.join(bddTempDir, "simple-stdio.tar.gz"),
 };

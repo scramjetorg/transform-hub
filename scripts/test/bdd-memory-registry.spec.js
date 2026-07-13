@@ -552,6 +552,25 @@ test("MemoryRegistry.computeChunkSummary returns expected structure", (t) => {
 	t.false(summary.processes[0].expectExit, "default expectExit is false");
 });
 
+test("MemoryRegistry attributes chunk metrics to exact ownership", (t) => {
+    const previous = {
+        run: process.env.SCRAMJET_BDD_RUN_ID,
+        chunk: process.env.SCRAMJET_BDD_CHUNK_ID,
+        owner: process.env.SCRAMJET_BDD_OWNER,
+    };
+    process.env.SCRAMJET_BDD_RUN_ID = "run-metrics";
+    process.env.SCRAMJET_BDD_CHUNK_ID = "chunk-metrics";
+    process.env.SCRAMJET_BDD_OWNER = "run-metrics/chunk-metrics";
+    const summary = new MemoryRegistry().computeChunkSummary();
+    t.deepEqual(summary.ownership, { runId: "run-metrics", chunkId: "chunk-metrics", owner: "run-metrics/chunk-metrics" });
+    if (previous.run === undefined) delete process.env.SCRAMJET_BDD_RUN_ID;
+    else process.env.SCRAMJET_BDD_RUN_ID = previous.run;
+    if (previous.chunk === undefined) delete process.env.SCRAMJET_BDD_CHUNK_ID;
+    else process.env.SCRAMJET_BDD_CHUNK_ID = previous.chunk;
+    if (previous.owner === undefined) delete process.env.SCRAMJET_BDD_OWNER;
+    else process.env.SCRAMJET_BDD_OWNER = previous.owner;
+});
+
 test("MemoryRegistry emits readiness marker after parent baseline and process readiness", (t) => {
     const reportPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "chunk-ready.")), "ready.json");
     const previous = process.env.BDD_CHUNK_MEMORY_READY_FILE;

@@ -81,6 +81,33 @@ test("killProcessGroup handles non-existent pid gracefully", (t) => {
 	t.true(result);
 });
 
+test("killProcessGroup returns false for non-ESRCH group error + PID ESRCH", (t) => {
+	// Regression: if the group kill fails with a real error (e.g. EPERM)
+	// and the individual PID returns ESRCH, the helper must NOT declare
+	// confirmed-absent — return false (signalling failed).
+	const originalKill = process.kill;
+	let callCount = 0;
+
+	process.kill = (_pid, _signal) => {
+		callCount++;
+		const error = new Error("mock error");
+		if (callCount === 1) {
+			error.code = "EPERM";   // non-ESRCH group error
+		} else {
+			error.code = "ESRCH";    // PID gone
+		}
+		throw error;
+	};
+
+	try {
+		const result = killProcessGroup(12345, "SIGTERM");
+		t.false(result, "should return false when group error is not ESRCH");
+		t.is(callCount, 2, "should attempt both group and PID kill");
+	} finally {
+		process.kill = originalKill;
+	}
+});
+
 // ---------------------------------------------------------------------------
 // cleanupTempDirs – path construction (should not throw)
 // ---------------------------------------------------------------------------

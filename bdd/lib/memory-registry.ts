@@ -264,6 +264,11 @@ export interface ChunkProcessEntry {
  * remains the domain of assertAll().
  */
 export interface ChunkMetrics {
+    ownership?: {
+        runId: string;
+        chunkId: string;
+        owner: string;
+    };
     parentHeap: {
         /** heapUsed + external + arrayBuffers after GC, first scenario Before. */
         baselineBytes: number | null;
@@ -858,6 +863,8 @@ class MemoryRegistry {
      * @returns  Populated ChunkMetrics object.
      */
     computeChunkSummary(): ChunkMetrics {
+        const runId = process.env.SCRAMJET_BDD_RUN_ID;
+        const chunkId = process.env.SCRAMJET_BDD_CHUNK_ID;
         const processes: ChunkProcessEntry[] = [];
 
         for (const tracked of [...this.processes.values(), ...this.exitedProcesses.values()]) {
@@ -919,6 +926,7 @@ class MemoryRegistry {
         }));
 
         return {
+            ...(runId && chunkId ? { ownership: { runId, chunkId, owner: process.env.SCRAMJET_BDD_OWNER || `${runId}/${chunkId}` } } : {}),
             parentHeap: {
                 baselineBytes: this.chunkHeapBaseline,
                 peakBytes: this.chunkHeapPeak,
@@ -962,6 +970,7 @@ class MemoryRegistry {
             v !== null && v !== undefined ? `${v} bytes` : "unavailable";
 
         const lines: string[] = [];
+        if (metrics.ownership) lines.push(`  Ownership:    ${metrics.ownership.owner} (run=${metrics.ownership.runId} chunk=${metrics.ownership.chunkId})`);
         lines.push("[memory-registry] chunk memory summary:");
 
         // ---- Parent heap ----
