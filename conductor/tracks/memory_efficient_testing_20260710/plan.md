@@ -305,11 +305,13 @@
     - [x] Use feature paths as the initial chunk boundary and enforce a 300-second timeout for every feature run.
     - [x] Classify every feature from repeated 300-second runs as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required; no feature may enter the parallel scheduler until it finishes below 300 seconds.
 
-- [ ] Task: Add chunk-scoped ownership and cleanup isolation
-    - [ ] Create an immutable BDD run/chunk identifier and propagate it to outer Docker labels, generated configs, temporary artifacts, process/container labels, logs, and metrics.
-    - [ ] Replace broad Docker/process cleanup in parallel-safe chunks with ownership-scoped cleanup.
-    - [ ] Reserve or coordinate host-port allocation and make generated filesystem paths chunk-specific.
-    - [ ] Keep manager stacks, fixed ports, nested Docker cleanup, and stress scenarios in separate exclusive chunks until repeated isolation validation passes.
+- [x] Task: Add chunk-scoped ownership and cleanup isolation
+    - [x] Create an immutable BDD run/chunk identifier and propagate it to outer Docker labels, generated configs, temporary artifacts, process/container labels, logs, and metrics.
+    - [x] Replace broad Docker/process cleanup in parallel-safe chunks with ownership-scoped cleanup.
+    - [x] Reserve or coordinate host-port allocation and make generated filesystem paths chunk-specific.
+    - [x] Keep manager stacks, fixed ports, nested Docker cleanup, and stress scenarios in separate exclusive chunks until repeated isolation validation passes.
+
+  Notes: Ownership is represented by immutable run/chunk IDs, exact Docker labels, structured encoded temporary paths, and owner-attributed metrics. Cleanup is exact-owner scoped in Docker and wave lifecycles; it preserves foreign run/chunk paths. Port reservations use live-PID locks with owner tokens, and exclusive harness, Hub, Manager, and stream paths remain serial. Guarded ownership/cleanup/wave tests and two concurrent VERSER2 Docker runs passed with distinct ownership IDs and no leftover BDD containers.
 
 - [~] Task: Measure chunk-level parent, process, and container memory growth
     - [x] Sample Cucumber parent heap baseline/final/peak at chunk lifecycle boundaries, separately from per-scenario guard checks.
