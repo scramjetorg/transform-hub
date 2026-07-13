@@ -1,12 +1,11 @@
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { createWriteStream, lstatSync } from "fs";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
+import { HostClient } from "@scramjet/api-client";
 import { getHostClient } from "../common";
 import { getSequenceId, profileManager, sessionConfig } from "../config";
 
 import { PassThrough, Writable } from "stream";
-
-import { isDevelopment } from "../../utils/envs";
 
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
@@ -17,6 +16,55 @@ import { SequenceDeployArgs } from "../../types/params";
 
 function validateStartupConfig(config: DeepPartial<SequenceDeployArgs>) {
     return isStartSequenceEndpointPayloadDTO(config);
+}
+
+/**
+ * Handles the `seq prune` action.
+ *
+ * Clears session state (lastSequenceId, lastInstanceId) only after confirming
+ * the sequence list is empty — never before a failed deletion/re-list.
+ *
+ * @param options - Command options (force flag).
+ * @param hostClient - Host client for API calls (injectable for testing).
+ */
+export async function handlePruneAction(options: Record<string, unknown>, hostClient: HostClient): Promise<void> {
+    const force = options.force as boolean;
+
+    let seqs = await hostClient.listSequences();
+
+    if (!seqs.length) {
+        // Early-already-empty: clear stale session state.
+        sessionConfig.setLastSequenceId("");
+        sessionConfig.setLastInstanceId("");
+        displayMessage("Sequence list is empty, nothing to delete.");
+        return;
+    }
+
+    let fullSuccess = true;
+
+    await Promise.all(seqs.map(async (seq: { id: string }) => hostClient.deleteSequence(seq.id, { force }))).catch((error: any) => {
+        fullSuccess = false;
+
+        if (process.env.NODE_ENV === "development") {
+            displayMessage("error stack", error?.stack);
+        }
+    });
+
+    if (!fullSuccess) {
+        throw new Error("Some Sequences may have not been deleted.");
+    }
+
+    seqs = await hostClient.listSequences();
+
+    if (seqs.length) {
+        throw new Error("Some Sequences may have not been deleted.");
+    }
+
+    // Only clear session state after confirmed empty re-list.
+    sessionConfig.setLastSequenceId("");
+    sessionConfig.setLastInstanceId("");
+
+    displayMessage("Sequences removed successfully.");
 }
 
 /**
@@ -276,40 +324,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                     .option("-f, --force", "Removes also active Sequences (with its running Instances)")
                     .desc("Remove all Sequences from the Hub (use with caution)")
                     .action(async (options: Record<string, unknown>) => {
-                        const force = options.force as boolean;
-
-                        let seqs = await getHostClient().listSequences();
-                        const { lastSequenceId } = sessionConfig.get();
-
-                        if (!seqs.length) {
-                            displayMessage("Sequence list is empty, nothing to delete.");
-                            return;
-                        }
-
-                        let fullSuccess = true;
-
-                        await Promise.all(
-                            seqs.map(async (seq: any) => sequenceDelete(seq.id, { force }, lastSequenceId))
-                        ).catch(error => {
-                            fullSuccess = false;
-
-                            if (isDevelopment()) {
-                                displayMessage("error stack", error?.stack);
-                            }
-                        });
-
-                        if (!fullSuccess) {
-                            throw new Error("Some Sequences may have not been deleted.");
-                        }
-
-                        seqs = await getHostClient().listSequences();
-                        sessionConfig.setLastInstanceId("");
-
-                        if (seqs.length) {
-                            throw new Error("Some Sequences may have not been deleted.");
-                        }
-
-                        displayMessage("Sequences removed successfully.");
+                        await handlePruneAction(options, getHostClient());
                     });
             })
         );

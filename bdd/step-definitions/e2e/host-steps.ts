@@ -23,6 +23,7 @@ import { expectedResponses } from "./expectedResponses";
 import { exec } from "child_process";
 import { memoryRegistry } from "../../lib/memory-registry";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
+import { restoreSavedHostEnv } from "../hub/config";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 
 function resolveSequencePackage(packageName: string): string {
@@ -232,7 +233,12 @@ Before(() => {
 });
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
-After({}, async () => {
+After({}, async function (this: any) {
+    // Restore host env vars (LOCAL_HOST_*, SCRAMJET_HOST_*) that may have been
+    // overridden by a @starts-host scenario.  If the scenario did not touch
+    // these vars, the call is a no-op.
+    restoreSavedHostEnv(this.resources);
+
     let insts: any[] = [];
 
     try {

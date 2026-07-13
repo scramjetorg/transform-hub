@@ -146,7 +146,7 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[], 
     resources.startOutput = out;
 }
 
-function saveHostEnv(): Record<string, string | undefined> {
+export function saveHostEnv(): Record<string, string | undefined> {
     return {
         LOCAL_HOST_PORT: process.env.LOCAL_HOST_PORT,
         LOCAL_HOST_INSTANCES_SERVER_PORT: process.env.LOCAL_HOST_INSTANCES_SERVER_PORT,
@@ -156,7 +156,7 @@ function saveHostEnv(): Record<string, string | undefined> {
     };
 }
 
-function restoreHostEnv(saved: Record<string, string | undefined>) {
+export function restoreHostEnv(saved: Record<string, string | undefined>) {
     for (const [key, value] of Object.entries(saved)) {
         if (value === undefined) {
             delete process.env[key];
@@ -166,7 +166,7 @@ function restoreHostEnv(saved: Record<string, string | undefined>) {
     }
 }
 
-function restoreSavedHostEnv(resources: CustomWorld["resources"]) {
+export function restoreSavedHostEnv(resources: CustomWorld["resources"]) {
     const savedHostEnv = resources.savedHostEnv as Record<string, string | undefined> | undefined;
 
     if (!savedHostEnv) return;

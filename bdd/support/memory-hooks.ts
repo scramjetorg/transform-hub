@@ -166,6 +166,26 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     },
 
     // -----------------------------------------------------------------------
+    // E2E-012 TC-001: stdin flood with event responsiveness
+    //
+    // Stress-tagged scenarios were explicitly included for these runs. Three
+    // valid serial strict guarded Docker runs measured 1265509, 1251605, and
+    // 1256661 bytes, a bounded 13904-byte spread. The allowance is the maximum
+    // 741221-byte excess over the 524288-byte base, rounded to 741376 bytes
+    // (the next 4KiB boundary), and is scoped to this exact scenario.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "e2e/E2E-012-stream-flooding-test.feature",
+        line: 4,
+        scenarioName: "E2E-012 TC-001 Flood stdin of Instance, do not consume it and check if Instance responds to event sent.",
+        allowanceBytes: 741_376,
+        reason: "Three valid serial strict guarded Docker runs measured 1265509, 1251605, and 1256661 "
+            + "bytes (bounded 13904-byte spread). Allowance is the maximum 741221-byte excess over "
+            + "the 524288-byte base rounded to the next 4KiB boundary, scoped to this exact feature, "
+            + "line, and scenario name.",
+    },
+
+    // -----------------------------------------------------------------------
     // E2E-014 TC-003: Exceptions thrown in python sequences appear in stderr
     //
     // Scenario creates a Python child-process runner and verifies stderr

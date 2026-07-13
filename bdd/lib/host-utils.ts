@@ -245,8 +245,8 @@ export class HostUtils {
         });
     }
 
-    private setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
-        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
+    setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
+        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !extraArgs.includes("--port") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
         if (!noDefault.includes("instances-server-port") && !extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
             command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
