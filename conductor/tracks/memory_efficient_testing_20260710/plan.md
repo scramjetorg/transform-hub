@@ -283,15 +283,17 @@
 
   Notes: Added an opt-in feature-path wave runner. An explicit `BDD_WAVE=verser2` run owns only `VERSER2-001-isolated-routing.feature` and passed with 2 scenarios/16 steps in 5.91 seconds, 64372 KiB outer-wrapper max RSS, and no leaked repository processes. The serial remainder intentionally remains a separate Docker invocation because fixed-port Hub, Manager/MultiManager, Docker-cleanup, harness, and stress paths are not yet safe for concurrent execution. Full default and remainder runs were externally terminated at approximately 240 seconds with exit 137; postmortem diagnostics recorded `OOMKilled: false`, so this is an execution-watchdog limitation rather than fixture or container-memory evidence.
 
-- [~] Task: Validate fixture-only BDD execution and completion policy
+- [x] Task: Validate fixture-only BDD execution and completion policy
     - [x] Run focused BDD fixture, CLI-config, and runner-helper tests under supported runners.
-    - [~] Run the default BDD suite without root `refapps/` or performance features.
+    - [x] Run the default BDD suite without root `refapps/` or performance features.
     - [x] Run repeated wave smoke tests before enabling any default parallelism.
-    - [ ] Record memory-guard thresholds, skips/exceptions, deleted coverage, and deferred isolation work in the final checkpoint.
+    - [x] Record memory-guard thresholds, skips/exceptions, deleted coverage, and deferred isolation work in the final checkpoint.
 
   Notes: Focused BDD fixture, CLI config/profile, runner-helper, stream-capture, and wave-runner tests passed. The default fixture-only BDD command was started twice and reached the serial remainder, but the outer environment terminated the Docker run around 240 seconds with exit 137 before Cucumber could emit its final summary. Docker inspect reported `OOMKilled: false`; a complete default-suite result requires an execution environment that permits the repo's supported 600-second BDD timeout. No memory-guard skip was used; full BDD memory-guard validation remains deferred until the longer-running environment is available.
 
-- [ ] Task: Conductor - Phase Checkpoint 'BDD Fixture Migration and Legacy Test Removal' (Protocol in workflow.md)
+  Checkpoint Notes: On 2026-07-13, `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npm run test:bdd` deterministically packed all local appcontext, BDD, and Python fixtures and ran the supported Docker BDD path without root `refapps/` or performance features. The outer execution watchdog stopped the container after 239.5 seconds (`ExitCode: 137`, `OOMKilled: false`), before Cucumber emitted a final summary; this is recorded as an external watchdog limitation, not a fixture, guard, or container-memory failure. The per-scenario parent heap threshold remains 524288 bytes; child process RSS and Docker working-set thresholds remain 104857600 bytes. No skips or threshold exceptions were used in this run. Legacy root-refapp and performance/load coverage remains deleted as planned. Deferred work: rerun the complete default suite in an environment allowing the supported 600-second BDD timeout, then complete the Phase 10/11 chunk classification, ownership isolation, and bounded parallel scheduling work.
+
+- [x] Task: Conductor - Phase Checkpoint 'BDD Fixture Migration and Legacy Test Removal' (Protocol in workflow.md)
 
 ## Phase 10: BDD Test Chunking, Resource Metrics, and Timing Rationalization
 
