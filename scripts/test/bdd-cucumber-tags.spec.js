@@ -120,3 +120,104 @@ test("explicit user --tags can override and select @needs-fix scenarios", (t) =>
 	t.true(tagExpression.startsWith("not @"), "expression is standard Cucumber exclusion");
 	t.is((profile.match(/--tags/g) || []).length, 1, "exactly one --tags argument — cleanly overridable");
 });
+
+// ---------------------------------------------------------------------------
+// Root package.json script semantics — must not override cucumber.js defaults
+// in a way that accidentally includes @needs-fix scenarios.
+// ---------------------------------------------------------------------------
+
+test("root package.json test:bdd does not pass --tags or -t (relies on cucumber.js defaults)", (t) => {
+	// The test:bdd script must NOT pass --tags or -t so that the cucumber.js
+	// default profile (which excludes @needs-fix, @slow, etc.) applies.
+	const rootPkg = require("../../package.json");
+	const script = rootPkg.scripts["test:bdd"];
+
+	t.truthy(script, "test:bdd script must exist");
+
+	// Extract the portion after run-bdd-docker.js --  which becomes the
+	// passthrough args to cucumber-js.
+	const passthroughMatch = script.match(/run-bdd-docker\.js\s+--\s*(.*)$/);
+	t.truthy(passthroughMatch, "script must delegate to run-bdd-docker.js with -- separator");
+
+	const passthrough = passthroughMatch[1];
+	t.false(/\s--tags\s/.test(passthrough), "must not pass --tags (overrides cucumber.js)");
+	t.false(/\s-t\s/.test(passthrough), "must not pass -t (overrides cucumber.js)");
+	t.true(passthrough.includes("--fail-fast"), "must keep --fail-fast for intended fail-fast behavior");
+});
+
+test("root package.json test:bdd-long preserves long tag union without hard-coded @needs-fix exclusion", (t) => {
+	// The test:bdd-long script passes -t with the long-running tag union for
+	// positive selection.  It must NOT hard-code @needs-fix exclusion — that
+	// responsibility belongs to the cucumber.js env-aware default (which
+	// excludes @needs-fix by default unless BDD_INCLUDE_NEEDS_FIX=1 is set).
+	// The -t overrides cucumber.js defaults, so the long union is kept for
+	// selectivity; @needs-fix exclusion is the caller's concern when
+	// overriding defaults via -t.
+	const rootPkg = require("../../package.json");
+	const script = rootPkg.scripts["test:bdd-long"];
+
+	t.truthy(script, "test:bdd-long script must exist");
+
+	// Extract the -t argument value (the tag expression).
+	const tagMatch = script.match(/ -t "([^"]+)"/);
+	t.truthy(tagMatch, "script must pass a -t tag expression");
+
+	const tagExpr = tagMatch[1];
+	t.false(tagExpr.includes("not @needs-fix"), "must NOT hard-code @needs-fix exclusion (cucumber.js default handles it)");
+
+	// Verify the long-running union tags are preserved.
+	t.true(tagExpr.includes("@slow"), "tag expression must include @slow");
+	t.true(tagExpr.includes("@stress"), "tag expression must include @stress");
+	t.true(tagExpr.includes("@perf"), "tag expression must include @perf");
+	t.true(tagExpr.includes("@load"), "tag expression must include @load");
+	t.true(tagExpr.includes("@external-dependency"), "tag expression must include @external-dependency");
+	t.true(tagExpr.includes("@compatibility"), "tag expression must include @compatibility");
+	t.true(tagExpr.includes("@manager-migration"), "tag expression must include @manager-migration");
+	t.true(tagExpr.includes("@requires-docker"), "tag expression must include @requires-docker");
+	t.true(tagExpr.includes("@docker-specific"), "tag expression must include @docker-specific");
+
+	// Verify it's a plain union (no parenthesised negation appended).
+	t.false(tagExpr.startsWith("("), "tag expression must not parenthesise (no appended negation)");
+	t.true(tagExpr.includes(" or "), "tag expression uses 'or' for the union");
+});
+
+// ---------------------------------------------------------------------------
+// Cucumber.js env-aware default: BDD_INCLUDE_LONG_RUNNING without
+// BDD_INCLUDE_NEEDS_FIX must still exclude @needs-fix scenarios.
+// ---------------------------------------------------------------------------
+
+test("BDD_INCLUDE_LONG_RUNNING=1 alone still excludes @needs-fix via cucumber.js", (t) => {
+	// When only BDD_INCLUDE_LONG_RUNNING=1 is set, cucumber.js removes the
+	// long-running tag exclusions but still excludes @needs-fix.  This is the
+	// env-aware default that test:bdd-long relies on when callers want to run
+	// long-running scenarios without @needs-fix.
+	const config = loadWithEnv({ BDD_INCLUDE_LONG_RUNNING: "1" });
+	const profile = config.default;
+
+	t.true(profile.includes("not @needs-fix"), "BDD_INCLUDE_LONG_RUNNING=1 must still exclude @needs-fix");
+	t.true(profile.includes("not @ignore"), "must still exclude @ignore");
+	t.true(profile.includes("not @harness-selftest"), "must still exclude @harness-selftest");
+
+	// Long-running tags are no longer excluded.
+	t.false(profile.includes("not @slow"), "BDD_INCLUDE_LONG_RUNNING=1 removes @slow exclusion");
+	t.false(profile.includes("not @docker-specific"), "BDD_INCLUDE_LONG_RUNNING=1 removes @docker-specific exclusion");
+});
+
+test("BDD_INCLUDE_LONG_RUNNING=1 BDD_INCLUDE_NEEDS_FIX=1 permits @needs-fix via cucumber.js", (t) => {
+	// When both env vars are set, cucumber.js permits @needs-fix alongside
+	// the long-running tags.  Combined with explicit CLI --tags "@needs-fix",
+	// this is the opt-in path for running the deferred scenarios.
+	const config = loadWithEnv({
+		BDD_INCLUDE_LONG_RUNNING: "1",
+		BDD_INCLUDE_NEEDS_FIX: "1",
+	});
+	const profile = config.default;
+
+	t.false(profile.includes("not @needs-fix"), "both env vars must NOT exclude @needs-fix");
+	t.false(profile.includes("not @slow"), "both env vars must NOT exclude @slow");
+	t.false(profile.includes("not @docker-specific"), "both env vars must NOT exclude @docker-specific");
+	t.true(profile.includes("not @ignore"), "must still exclude @ignore");
+
+	// Verify only one --tags tag — cleanly cli-overridable.
+	t.is((profile.match(/--tags/g) || []).length, 1, "exactly one --tags argument");
+});
