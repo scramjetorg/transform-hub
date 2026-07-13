@@ -131,12 +131,14 @@ test.serial("handlePruneAction failed delete retains session state", async (t) =
     sessionConfig.setLastSequenceId("seq-keep");
     sessionConfig.setLastInstanceId("inst-keep");
 
+    const deleteAttempts: string[] = [];
     const deleteError = new Error("API failure");
     const mockHostClient = {
         async listSequences() {
             return [{ id: "seq-keep", instances: [], config: { name: "test" } }];
         },
-        async deleteSequence(_id: string, _opts?: { force: boolean }) {
+        async deleteSequence(id: string, _opts?: { force: boolean }) {
+            deleteAttempts.push(id);
             throw deleteError;
         },
     } as any;
@@ -153,6 +155,9 @@ test.serial("handlePruneAction failed delete retains session state", async (t) =
     t.regex(err!.message, /seq-keep/);
     t.regex(err!.message, /API failure/);
     t.regex(err!.message, /Attempted 1/);
+    // Proves the single deletion was attempted (sequential: one call, one attempt).
+    t.is(deleteAttempts.length, 1, "deleteSequence must be called exactly once");
+    t.is(deleteAttempts[0], "seq-keep", "deleteSequence must be called with the correct ID");
     t.is(sessionConfig.lastSequenceId, "seq-keep", "lastSequenceId must survive failed prune");
     t.is(sessionConfig.lastInstanceId, "inst-keep", "lastInstanceId must survive failed prune");
 });
@@ -167,13 +172,15 @@ test.serial("handlePruneAction non-empty relist retains session state", async (t
     sessionConfig.setLastInstanceId("inst-keep");
 
     let callCount = 0;
+    const deleteAttempts: string[] = [];
     const mockHostClient = {
         async listSequences() {
             callCount++;
             // First call returns 1 sequence, second call (re-list) also returns 1
             return [{ id: "seq-keep", instances: [], config: { name: "test" } }];
         },
-        async deleteSequence(_id: string, _opts?: { force: boolean }) {
+        async deleteSequence(id: string, _opts?: { force: boolean }) {
+            deleteAttempts.push(id);
             return {};
         },
     } as any;
@@ -191,6 +198,9 @@ test.serial("handlePruneAction non-empty relist retains session state", async (t
     t.regex(err!.message, /Attempted 1/);
     t.false(err!.message.includes("Failed:"), "no failures listed when all deletions succeeded");
     t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
+    // Proves the single deletion was attempted sequentially before re-list.
+    t.is(deleteAttempts.length, 1, "deleteSequence must be called exactly once");
+    t.is(deleteAttempts[0], "seq-keep", "deleteSequence must be called with the correct ID");
     t.is(sessionConfig.lastSequenceId, "seq-keep", "lastSequenceId must survive non-empty relist");
     t.is(sessionConfig.lastInstanceId, "inst-keep", "lastInstanceId must survive non-empty relist");
 });
@@ -205,6 +215,7 @@ test.serial("handlePruneAction successful prune clears session state", async (t)
     sessionConfig.setLastInstanceId("inst-clear");
 
     let callCount = 0;
+    const deleteAttempts: string[] = [];
     const mockHostClient = {
         async listSequences() {
             callCount++;
@@ -213,7 +224,8 @@ test.serial("handlePruneAction successful prune clears session state", async (t)
             }
             return []; // Second call (re-list) returns empty
         },
-        async deleteSequence(_id: string, _opts?: { force: boolean }) {
+        async deleteSequence(id: string, _opts?: { force: boolean }) {
+            deleteAttempts.push(id);
             return {};
         },
     } as any;
@@ -223,8 +235,10 @@ test.serial("handlePruneAction successful prune clears session state", async (t)
         handlePruneAction({ force: false }, mockHostClient as any)
     );
 
-    // Assert: session cleared, listSequences called twice
+    // Assert: session cleared, listSequences called twice, delete called in order
     t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
+    t.is(deleteAttempts.length, 1, "deleteSequence must be called exactly once");
+    t.is(deleteAttempts[0], "seq-clear", "deleteSequence must be called with the correct ID");
     t.is(sessionConfig.lastSequenceId, "", "lastSequenceId must be cleared after successful prune");
     t.is(sessionConfig.lastInstanceId, "", "lastInstanceId must be cleared after successful prune");
 });
@@ -243,6 +257,7 @@ test.serial("handlePruneAction transient delete errors tolerated when relist emp
     sessionConfig.setLastInstanceId("inst-transient");
 
     let callCount = 0;
+    const deleteAttempts: string[] = [];
     const mockHostClient = {
         async listSequences() {
             callCount++;
@@ -251,7 +266,8 @@ test.serial("handlePruneAction transient delete errors tolerated when relist emp
             }
             return []; // Re-list returns empty — all deletions actually succeeded
         },
-        async deleteSequence(_id: string, _opts?: { force: boolean }) {
+        async deleteSequence(id: string, _opts?: { force: boolean }) {
+            deleteAttempts.push(id);
             // Simulate a transient error that still allows the sequence to be deleted
             throw new Error("transient API error");
         },
@@ -264,22 +280,35 @@ test.serial("handlePruneAction transient delete errors tolerated when relist emp
 
     // Assert: session cleared despite transient delete errors
     t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
+    // Proves the deletion was attempted despite throwing (sequential try/catch catches and continues).
+    t.is(deleteAttempts.length, 1, "deleteSequence must be called exactly once");
+    t.is(deleteAttempts[0], "seq-transient", "deleteSequence must be called with the correct ID");
     t.is(sessionConfig.lastSequenceId, "", "lastSequenceId must be cleared after transient errors with empty relist");
     t.is(sessionConfig.lastInstanceId, "", "lastInstanceId must be cleared after transient errors with empty relist");
 });
 
 /**
  * Tests that handlePruneAction diagnostics include per-sequence failure
- * IDs and reasons, and prove all deletions were attempted even when some
- * deletions failed early.
+ * IDs and reasons, and prove:
+ *   - all deletions are attempted (no fail-fast)
+ *   - max concurrent deleteSequence calls is exactly 1 (sequential execution)
+ *   - call order matches list order
+ *   - re-list gate and session-preservation work
+ *
+ * Uses an async yield point (setTimeout 0) in the mock plus an in-flight
+ * counter to actively prove serialization.  With concurrent execution all
+ * N calls would enter the mock before any yield resolves, driving maxInFlight
+ * to N; a sequential executor never lets more than one call be in-flight.
  */
-test.serial("handlePruneAction diagnostics show per-sequence failures and attempt count", async (t) => {
+test.serial("handlePruneAction max concurrent deleteSequence is 1 with per-ID diagnostics", async (t) => {
     // Arrange: session has known IDs
     sessionConfig.setLastSequenceId("seq-diag");
     sessionConfig.setLastInstanceId("inst-diag");
 
     let callCount = 0;
     const deleteAttempts: string[] = [];
+    let currentInFlight = 0;
+    let maxInFlight = 0;
     const mockHostClient = {
         async listSequences() {
             callCount++;
@@ -298,6 +327,12 @@ test.serial("handlePruneAction diagnostics show per-sequence failures and attemp
         },
         async deleteSequence(id: string, _opts?: { force: boolean }) {
             deleteAttempts.push(id);
+            currentInFlight++;
+            maxInFlight = Math.max(maxInFlight, currentInFlight);
+            // Yield to event loop — concurrent callers would stack up here
+            // before any yield resolves, driving maxInFlight > 1.
+            await new Promise<void>((resolve) => setTimeout(resolve, 0));
+            currentInFlight--;
             // seq-a succeeds, seq-b fails, seq-c fails
             if (id === "seq-b") throw new Error("permission denied");
             if (id === "seq-c") throw new Error("conflict: instance running");
@@ -314,9 +349,12 @@ test.serial("handlePruneAction diagnostics show per-sequence failures and attemp
     t.truthy(err);
     t.regex(err!.message, /not been deleted/i);
     t.regex(err!.message, /Attempted 3/);
-    // All three deletion attempts recorded (prove no fail-fast).
-    t.is(deleteAttempts.length, 3, "all 3 deletion attempts must be recorded (no fail-fast)");
-    t.deepEqual(deleteAttempts, ["seq-a", "seq-b", "seq-c"], "all sequence IDs received delete calls");
+    // Max concurrent in-flight calls proves sequential execution.
+    t.is(maxInFlight, 1, "max concurrent deleteSequence calls must be 1 (sequential execution)");
+    // All three deletion attempts recorded (prove no fail-fast, no skipped attempts).
+    t.is(deleteAttempts.length, 3, "all 3 deletion attempts must be recorded (no fail-fast, no skipped attempts)");
+    // Call order matches list order (proves sequential execution order).
+    t.deepEqual(deleteAttempts, ["seq-a", "seq-b", "seq-c"], "deleteSequence must be called in list order (sequential execution)");
     // Failure IDs and reasons in the message.
     t.regex(err!.message, /seq-b/);
     t.regex(err!.message, /permission denied/);

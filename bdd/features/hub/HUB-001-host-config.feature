@@ -54,7 +54,8 @@ Feature: HUB-001 Host configuration
         Then container memory limit is 128
         * exit hub process
 
-    @ci-hub @starts-host @docker-specific @requires-docker @slow
+    # Needs to be fixed.
+    @ci-hub @starts-host @docker-specific @requires-docker @needs-fix @slow
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with random ports and parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers

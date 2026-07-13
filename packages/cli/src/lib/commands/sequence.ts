@@ -40,8 +40,18 @@ export async function handlePruneAction(options: Record<string, unknown>, hostCl
         return;
     }
 
-    // Wait for all deletions to settle (no fail-fast).
-    const deletionResults = await Promise.allSettled(seqs.map(async (seq: { id: string }) => hostClient.deleteSequence(seq.id, { force })));
+    // Attempt deletions sequentially (no fail-fast) to prevent adapter/shared-package cleanup races.
+    // Every sequence is attempted regardless of prior failures; per-ID/reason diagnostics are retained.
+    const deletionResults: PromiseSettledResult<void>[] = [];
+
+    for (const seq of seqs) {
+        try {
+            await hostClient.deleteSequence(seq.id, { force });
+            deletionResults.push({ status: "fulfilled", value: undefined });
+        } catch (reason) {
+            deletionResults.push({ status: "rejected", reason });
+        }
+    }
 
     // Extract rejection diagnostics for actionable error reporting.
     const failures: { id: string; reason: unknown }[] = [];
@@ -63,9 +73,7 @@ export async function handlePruneAction(options: Record<string, unknown>, hostCl
         let message = `Some Sequences may have not been deleted. Attempted ${attempted} deletion(s).`;
 
         if (failures.length > 0) {
-            message += ` Failed: [${failures.map(
-                (f) => `${f.id} (${f.reason instanceof Error ? f.reason.message : String(f.reason)})`
-            ).join("; ")}].`;
+            message += ` Failed: [${failures.map((f) => `${f.id} (${f.reason instanceof Error ? f.reason.message : String(f.reason)})`).join("; ")}].`;
         }
 
         message += ` Remaining: [${remainingIds}].`;
@@ -94,14 +102,12 @@ export async function handlePruneAction(options: Record<string, unknown>, hostCl
  * Builds the `sequence` command descriptor tree.
  */
 export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
-    b
-        .alias("seq")
+    b.alias("seq")
         .usage("[command] [options...]")
         .desc("Operations on a Sequence package, consisting of one or more functions executed one after another")
         .children(
             cmd("list", (c) => {
-                c
-                    .alias("ls")
+                c.alias("ls")
                     .desc("List all Sequences available on Hub")
                     .option("-n, --name <sequence-name>", "list id's of sequences with a given name")
                     .action(async (options: Record<string, unknown>) => {
@@ -113,8 +119,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                     });
             }),
             cmd("use", (c) => {
-                c
-                    .alias("select")
+                c.alias("select")
                     .desc("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
                     .argument("<id>", "Sequence id")
                     .action(async (id: string) => {
@@ -131,15 +136,12 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                     });
             }),
             cmd("info", (c) => {
-                c
-                    .argument("<id>", "Sequence id to start or '-' for the last uploaded")
+                c.argument("<id>", "Sequence id to start or '-' for the last uploaded")
                     .desc("Display a basic information about the Sequence")
-                    .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
-                        profileManager.getProfileConfig().format));
+                    .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)), profileManager.getProfileConfig().format));
             }),
             cmd("pack", (c) => {
-                c
-                    .argument("<path>")
+                c.argument("<path>")
                     .option("-c, --stdout", "Output to stdout (ignores -o)")
                     .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
                     .desc("Create archived file (package) with the Sequence for later use")
@@ -150,43 +152,35 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         const outputPath: string = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
                         const output: Writable = stdout ? process.stdout : createWriteStream(outputPath);
 
-                        if (!stdout)
-                            sessionConfig.setLastPackagePath(outputPath);
+                        if (!stdout) sessionConfig.setLastPackagePath(outputPath);
 
                         return sequencePack(path, { output });
                     });
             }),
             cmd("send", (c) => {
-                c
-                    .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
+                c.argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and sent.")
                     .desc("Send the Sequence package to the Hub")
                     .completer({ package: "filenames" })
-                    .action(
-                        async (sequencePackage: string) => {
-                            const sequenceClient = await sequenceSendPackage(sequencePackage, {}, false, { progress: undefined });
-                            // Note: --progress is a global option on root command
+                    .action(async (sequencePackage: string) => {
+                        const sequenceClient = await sequenceSendPackage(sequencePackage, {}, false, { progress: undefined });
+                        // Note: --progress is a global option on root command
 
-                            displayObject(sequenceClient, profileManager.getProfileConfig().format);
-                        }
-                    );
+                        displayObject(sequenceClient, profileManager.getProfileConfig().format);
+                    });
             }),
             cmd("update", (c) => {
-                c
-                    .argument("<query>", "Sequence id to be overwritten")
+                c.argument("<query>", "Sequence id to be overwritten")
                     .argument("<package>", "The file to upload")
                     .desc("Update Sequence with given name")
                     .completer({ package: "filenames" })
-                    .action(
-                        async (query: string, sequencePackage: string) => {
-                            const sequenceClient = await sequenceSendPackage(sequencePackage, { id: query }, true);
+                    .action(async (query: string, sequencePackage: string) => {
+                        const sequenceClient = await sequenceSendPackage(sequencePackage, { id: query }, true);
 
-                            displayObject(sequenceClient, profileManager.getProfileConfig().format);
-                        }
-                    );
+                        displayObject(sequenceClient, profileManager.getProfileConfig().format);
+                    });
             }),
             cmd("start", (c) => {
-                c
-                    .argument("<id>", "Sequence id to start or '-' for the last uploaded")
+                c.argument("<id>", "Sequence id to start or '-' for the last uploaded")
                     .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON or YAML format to be passed to the Instance context")
                     .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
                     .option("--inst-id <string>", "Start Sequence with a custom Instance Id. Should consist of 36 characters")
@@ -240,8 +234,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                     });
             }),
             cmd("deploy", (c) => {
-                c
-                    .alias("run")
+                c.alias("run")
                     .argument("<path>")
                     .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
                     .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON or YAML format to be passed to the Instance context")
@@ -296,9 +289,11 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         const format = profileManager.getProfileConfig().format;
 
                         if (lstatSync(path).isDirectory()) {
-                            const sendSeqPromise = getHostClient().sendSequence(compressedPackageStream).then(seq => {
-                                sessionConfig.setLastSequenceId(seq.id);
-                            });
+                            const sendSeqPromise = getHostClient()
+                                .sendSequence(compressedPackageStream)
+                                .then((seq) => {
+                                    sessionConfig.setLastSequenceId(seq.id);
+                                });
 
                             await sequencePack(path, { output: compressedPackageStream });
                             await sendSeqPromise;
@@ -324,8 +319,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                     });
             }),
             cmd("delete", (c) => {
-                c
-                    .alias("rm")
+                c.alias("rm")
                     .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
                     .option("-f, --force", "Forcefully removes The Sequence by killing its Instances")
                     .desc("Removes the Sequence from the Hub")
@@ -333,18 +327,17 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                         const force = options.force as boolean;
 
                         await sequenceDelete(id, { force }).then(
-                            res => { displayObject(res, profileManager.getProfileConfig().format); },
-                            error => {
-                                displayError(
-                                    JSON.parse(error?.body || { body: "Unknown error" })
-                                );
+                            (res) => {
+                                displayObject(res, profileManager.getProfileConfig().format);
+                            },
+                            (error) => {
+                                displayError(JSON.parse(error?.body || { body: "Unknown error" }));
                             }
                         );
                     });
             }),
             cmd("prune", (c) => {
-                c
-                    .option("-f, --force", "Removes also active Sequences (with its running Instances)")
+                c.option("-f, --force", "Removes also active Sequences (with its running Instances)")
                     .desc("Remove all Sequences from the Hub (use with caution)")
                     .action(async (options: Record<string, unknown>) => {
                         await handlePruneAction(options, getHostClient());
