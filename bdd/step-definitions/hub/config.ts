@@ -99,7 +99,8 @@ When("the occupied port is released", async function(this: CustomWorld) {
     delete this.resources.portOccupiedByUs;
 });
 
-async function startHubWithParams({ resources }: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
+async function startHubWithParams(world: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
+    const { resources } = world;
     const hostUtils = new HostUtils();
     const expectedHubExitCode = resources.expectedHubExitCode as number | undefined;
     const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
@@ -123,7 +124,13 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[], 
     hostUtils.expectedExitCode = expectedHubExitCode;
     let out: string;
     try {
-        out = await hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
+        const spawnPromise = hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
+        if (!hostUtils.host) throw new Error("Missing host from utils.");
+        // Register before awaiting readiness so startup-failure exits remain owned.
+        resources.hub = hostUtils.host;
+        world.scenarioLifecycle.ownChild(hostUtils.host, "hub", { group: true });
+        if (expectedHubExitCode !== undefined) world.scenarioLifecycle.expect(hostUtils.host);
+        out = await spawnPromise;
     } finally {
         if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
         else process.env[runnerHostPortEnv] = savedRunnerHostPort;
@@ -141,7 +148,6 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[], 
         spawned.delete(hostUtils.host!);
     });
 
-    resources.hub = hostUtils.host;
     resources.hostUtils = hostUtils;
     resources.startOutput = out;
 }
@@ -441,10 +447,7 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 Then("exit hub process", async function(this: CustomWorld) {
     const hub = this.resources.hub as ChildProcess;
 
-    await new Promise<void>((resolve) => {
-        hub.on("exit", resolve);
-        HostUtils.killProcessGroup(hub, SIGTERM, 10000);
-    });
+    await this.scenarioLifecycle.stop(hub);
 
     spawned.delete(hub);
     restoreSavedHostEnv(this.resources);
@@ -463,6 +466,10 @@ Then("hub process exits on its own with code {int} within {int} ms", async funct
         assert.strictEqual(existingCode, expectedCode);
         return;
     }
+
+    // The exit is asserted as natural/expected; mark before waiting so the
+    // registry cannot classify the expected exit as spontaneous.
+    this.scenarioLifecycle.expect(hub);
 
     const exitResult = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
         const timer = setTimeout(() => {

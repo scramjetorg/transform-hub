@@ -1,24 +1,18 @@
 import { ChildProcess } from "child_process";
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { getExecutableCmd, spawnProcess, stopProcess, parseOptions, requestGet, requestPost, assertResponseData } from "./common";
+import { getExecutableCmd, spawnProcess, parseOptions, requestGet, requestPost, assertResponseData } from "./common";
 import { CustomWorld } from "../world";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { defer } from "@scramjet/utility";
 
 async function startMultiManager(options: {[key: string]: any}): Promise<ChildProcess> {
-    return spawnProcess(getExecutableCmd("multi-manager"), options, 500, "Server started");
-}
-
-async function stopMultiManager(multiManagerProcess: ChildProcess) {
-    if (multiManagerProcess) {
-        await stopProcess(multiManagerProcess);
-    }
+    return spawnProcess(getExecutableCmd("multi-manager"), options, 500, "Server started", { detached: true });
 }
 
 After({ tags: "@cleanupmm" }, async function(this: CustomWorld) {
     for (const [, instance] of Object.entries(this.resources.multiManagers)) {
-        await stopMultiManager(instance.process!);
+        await this.scenarioLifecycle.stop(instance.process!);
     }
 });
 
@@ -37,6 +31,7 @@ Given("MultiManager with options {string} is started", async function(
     );
 
     Object.assign(manager, { process });
+    this.scenarioLifecycle.ownChild(process, `multi-manager:${id}`, { group: true });
 
     this.resources.multiManagers[id] = manager;
 });
@@ -48,7 +43,7 @@ When("stopped MultiManager with id {string}", async function(
     const multiManagerInstance = this.resources.multiManagers[id];
 
     if (multiManagerInstance) {
-        await stopMultiManager(multiManagerInstance.process!);
+        await this.scenarioLifecycle.stop(multiManagerInstance.process!);
     }
 });
 

@@ -70,13 +70,6 @@ function cleanupWorldResources(world) {
                 errors.push(new Error(`Failed to destroy resource "${key}": ${e.message}`));
             }
         }
-        if (value.pid && value.exitCode === null && typeof value.kill === "function") {
-            try {
-                value.kill();
-            } catch (_) {
-                /* already exited */
-            }
-        }
     };
 
     if (world.resources) {
@@ -104,7 +97,27 @@ function cleanupWorldResources(world) {
     }
 }
 
+async function cleanupScenarioWorldResources(world, lifecycle) {
+    const errors = [];
+    try {
+        await lifecycle.cleanup();
+    } catch (e) {
+        errors.push(...(e.cleanupErrors || [e]));
+    }
+    try {
+        cleanupWorldResources(world);
+    } catch (e) {
+        errors.push(...(e.cleanupErrors || [e]));
+    }
+    if (errors.length > 0) {
+        const aggregate = new Error(`Cleanup failed for ${errors.length} resource(s): ${errors.map((e) => e.message).join("; ")}`);
+        aggregate.cleanupErrors = errors;
+        throw aggregate;
+    }
+}
+
 module.exports = {
     matchScenarioException,
-    cleanupWorldResources
+    cleanupWorldResources,
+    cleanupScenarioWorldResources
 };

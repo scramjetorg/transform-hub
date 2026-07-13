@@ -15,7 +15,7 @@
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { ChildProcess, spawn, spawnSync } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { PassThrough } from "stream";
 import { resolve } from "path";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
@@ -40,40 +40,6 @@ function aggregationProcesses(world: CustomWorld): ChildProcess[] {
     return world.resources.aggProcesses;
 }
 
-async function terminateProcess(proc: ChildProcess): Promise<void> {
-    if (!proc.pid || proc.exitCode !== null || proc.signalCode !== null) return;
-
-    await new Promise<void>((resolve) => {
-        let settled = false;
-        let sigkillTimer: NodeJS.Timeout;
-        let giveUpTimer: NodeJS.Timeout;
-
-        const finish = () => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(sigkillTimer);
-            clearTimeout(giveUpTimer);
-            resolve();
-        };
-
-        proc.once("exit", finish);
-
-        sigkillTimer = setTimeout(() => {
-            try {
-                proc.kill("SIGKILL");
-            } catch { /* ignore */ }
-        }, 5000);
-
-        giveUpTimer = setTimeout(finish, 8000);
-
-        try {
-            proc.kill("SIGTERM");
-        } catch {
-            finish();
-        }
-    });
-}
-
 async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 10_000): Promise<void> {
     const client = new ClientUtils(baseUrl);
     const deadline = Date.now() + timeoutMs;
@@ -91,29 +57,13 @@ async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 
     throw new Error(`Timed out waiting for ${baseUrl}/${endpoint} to stop responding`);
 }
 
-async function killProcessesMatching(pattern: string): Promise<void> {
-    spawnSync("pkill", ["-f", "--", pattern], { stdio: "ignore" });
-    await sleep(500);
-}
-
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
-    const waitForExit: Promise<void>[] = [];
-
     for (const proc of aggregationProcesses(this)) {
-        waitForExit.push(terminateProcess(proc));
+        await this.scenarioLifecycle.stop(proc);
     }
     if (this.resources.aggMMProcess) {
-        waitForExit.push(terminateProcess(this.resources.aggMMProcess));
+        await this.scenarioLifecycle.stop(this.resources.aggMMProcess);
         delete this.resources.aggMMProcess;
-    }
-
-    await Promise.all(waitForExit);
-
-    if (this.resources.aggMMId) {
-        await killProcessesMatching(`--id=${this.resources.aggMMId}`);
-    }
-    if (this.resources.aggTempDir) {
-        await killProcessesMatching(this.resources.aggTempDir);
     }
 
     if (this.resources.aggTempDir) {
@@ -153,23 +103,34 @@ function spawnProcess(
     options: string[],
     readyMatch?: string,
     timeout = 15000,
-    env: Record<string, string> = {}
+    env: Record<string, string> = {},
+    lifecycle?: CustomWorld["scenarioLifecycle"]
 ): Promise<ChildProcess> {
     return new Promise((resolve, reject) => {
         const fullCmd = [...cmd, ...options];
         const proc = spawn("/usr/bin/env", fullCmd, {
-            detached: false,
+            detached: true,
             env: { ...process.env, ...env },
             stdio: ["ignore", "pipe", "pipe"]
         });
+        lifecycle?.ownChild(proc, `aggregation:${cmd[cmd.length - 1]}`, { group: true });
 
         const timer = setTimeout(() => {
-            if (proc.pid) {
+            void (async () => {
+                let teardownError: any;
                 try {
-                    proc.kill("SIGTERM");
-                } catch { /* ignore */ }
-            }
-            reject(new Error(`Timeout waiting for process to be ready (${readyMatch || "no pattern"})`));
+                    if (lifecycle) await lifecycle.stop(proc);
+                } catch (error) {
+                    teardownError = error;
+                }
+                const timeoutError: any = new Error(`Timeout waiting for process to be ready (${readyMatch || "no pattern"})`);
+                if (teardownError) {
+                    timeoutError.cleanupErrors = [teardownError];
+                    timeoutError.cause = teardownError;
+                    timeoutError.message += `; teardown failed: ${teardownError.message}`;
+                }
+                reject(timeoutError);
+            })();
         }, timeout);
 
         proc.stderr?.on("data", (data: Buffer) => {
@@ -464,7 +425,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     };
     const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, {
         ...mmEnv
-    });
+    }, this.scenarioLifecycle);
 
     this.resources.aggMMProcess = proc;
     this.resources.aggMMCommand = cmd;
@@ -605,7 +566,7 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
     }
 
     try {
-        const proc = await spawnProcess(cmd, hubOpts, undefined, 20_000, hubEnv);
+        const proc = await spawnProcess(cmd, hubOpts, undefined, 20_000, hubEnv, this.scenarioLifecycle);
         const apiBase = `http://127.0.0.1:${apiPort}/api/v1`;
 
         aggregationProcesses(this).push(proc);
@@ -990,11 +951,10 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
     assert.ok(mmOptions, "Expected aggregation MultiManager options to be stored");
     assert.ok(mmEnv, "Expected aggregation MultiManager environment to be stored");
 
-    await terminateProcess(oldProcess);
-    await killProcessesMatching(`--id=${this.resources.aggMMId}`);
+    await this.scenarioLifecycle.stop(oldProcess);
     await waitForGetFailure(mmApiBase, "version", 10_000);
 
-    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv);
+    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv, this.scenarioLifecycle);
 
     this.resources.aggMMProcess = proc;
     this.resources.aggMMClient = new MultiManagerClient(mmApiBase);

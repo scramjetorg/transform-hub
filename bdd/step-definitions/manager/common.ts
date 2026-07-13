@@ -37,7 +37,8 @@ function spawnProcess(
     command: string[],
     options: {[key: string]: any},
     waitMS = 0,
-    stdoutDoneMatch?: string
+    stdoutDoneMatch?: string,
+    spawnOptions: { detached?: boolean } = {}
 ): Promise<ChildProcess> {
     return new Promise((resolve) => {
         const fullCommand = [...command];
@@ -46,7 +47,7 @@ function spawnProcess(
             fullCommand.push(name, value);
         }
 
-        const cmdProcess = spawn("/usr/bin/env", fullCommand, { detached: false });
+        const cmdProcess = spawn("/usr/bin/env", fullCommand, { detached: spawnOptions.detached === true });
 
         // Track spawned process in memory registry
         const label = command.length > 0 ? command[command.length - 1] : "spawned";

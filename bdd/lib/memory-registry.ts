@@ -448,6 +448,14 @@ class MemoryRegistry {
         }
     }
 
+    /** Mark explicitly scenario-owned containers immediately before stopping them. */
+    markContainersAsExpectedToExit(containerIds: string[]): void {
+        for (const containerId of containerIds) {
+            const tracked = this.containers.get(containerId);
+            if (tracked) tracked.expectExit = true;
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Container tracking
     // -----------------------------------------------------------------------
@@ -606,8 +614,8 @@ class MemoryRegistry {
     /**
      * Drain pending ChildProcess exit events before the assertion phase.
      *
-     * `cleanupWorldResources` may kill tracked ChildProcesses by calling
-     * `child.kill()`.  The OS terminates the child and makes its PID
+     * ScenarioLifecycle may kill tracked ChildProcesses.  The OS terminates
+     * the child and makes its PID
      * inaccessible from `/proc/<pid>`, but the JS `exit` event (and the
      * `recordProcessExit` listener registered by `trackChildProcess`) may
      * not have fired yet when `assertAll()` runs.  Without reconciliation,
@@ -623,7 +631,8 @@ class MemoryRegistry {
      *
      *   1. Call `markProcessesAsExpectedToExit()` with the PIDs of every
      *      world-owned ChildProcess that `cleanupWorldResources` will kill.
-     *   2. Call `cleanupWorldResources()` (which calls `child.kill()`).
+     *   2. Call the scenario lifecycle cleanup (which marks immediately
+     *      before signalling).
      *   3. Call `drainExitEvents()` to let pending exit listeners fire.
      *   4. Call `assertAll()` — it will check that no non-expected entries
      *      remain in `exitedProcesses`.

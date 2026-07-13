@@ -21,7 +21,6 @@ import findPackage from "find-package-json";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
 import { exec } from "child_process";
-import { memoryRegistry } from "../../lib/memory-registry";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
 import { restoreSavedHostEnv } from "../hub/config";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
@@ -570,7 +569,14 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
 
                 if (containerId) {
                     console.log("Container is identified.", containerId);
-                    memoryRegistry.trackContainer(containerId, "runner:docker", true);
+                    this.scenarioLifecycle.ownContainer(containerId, "runner:docker", async () => {
+                        const container = dockerode.getContainer(containerId);
+                        try {
+                            await container.stop({ t: 10 });
+                        } catch {
+                            await container.kill();
+                        }
+                    });
                 }
                 break;
             case "process":
@@ -581,7 +587,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
                 if (res) {
                     processId = success = res;
                     console.log("Process is identified.", processId);
-                    memoryRegistry.trackProcess(processId, "runner:process", true);
+                    this.scenarioLifecycle.ownProcess(processId, "runner:process");
                 }
                 break;
             default:

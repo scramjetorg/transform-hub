@@ -39,7 +39,7 @@ import {
 } from "../../scripts/lib/bdd-memory-guard";
 import {
     matchScenarioException,
-    cleanupWorldResources,
+    cleanupScenarioWorldResources,
 } from "../../scripts/lib/bdd-memory-hooks-lib";
 import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
 const { createChunkTiming } = require("../../scripts/lib/bdd-chunk-timing.js");
@@ -240,42 +240,6 @@ const BEFORE_USAGE_KEY = "__memoryBeforeUsage";
 const getMemoryRegistry = () => require("../lib/memory-registry").memoryRegistry;
 let chunkSamplingTimer: ReturnType<typeof setInterval> | undefined;
 
-/**
- * Collect ChildProcess PIDs from world resource containers and mark them as
- * expected-to-exit in the MemoryRegistry before cleanup kills them.
- *
- * This prevents the Oracle blocker where a long-lived process killed during
- * `cleanupWorldResources` would otherwise be moved to `exitedProcesses` (via
- * `recordProcessExit`) and then reported by `assertAll()` as a spontaneous
- * unexpected exit.
- *
- * Uses the same detection logic as `cleanupWorldResources`:
- *   obj.pid is truthy AND obj.exitCode === null AND typeof obj.kill === "function"
- *
- * @param world  Cucumber World instance (any type).
- */
-function markWorldChildProcesses(world: any): void {
-    const pids: number[] = [];
-    const collect = (obj: any) => {
-        if (!obj || typeof obj !== "object") return;
-        if (obj.pid && obj.exitCode === null && typeof obj.kill === "function") {
-            pids.push(obj.pid);
-        }
-    };
-    if (world.resources) {
-        for (const key of Object.keys(world.resources)) {
-            collect(world.resources[key]);
-        }
-    }
-    if (world.cliResources) {
-        for (const key of Object.keys(world.cliResources)) {
-            collect(world.cliResources[key]);
-        }
-    }
-    if (pids.length > 0) {
-        getMemoryRegistry().markProcessesAsExpectedToExit(pids);
-    }
-}
 const chunkTiming = createChunkTiming(["1", "true", "yes"].includes(String(process.env.SCRAMJET_BDD_CHUNK_TIMING).toLowerCase()));
 
 // ---------------------------------------------------------------------------
@@ -344,22 +308,19 @@ After(function (this: any, scenario: any) {
 // ---------------------------------------------------------------------------
 
 After(async function (this: any, scenario: any) {
-    if (!isBddMemoryGuardEnabled() || memorySkip.skip) {
-        if (chunkTiming.enabled && !memorySkip.skip) {
-            const cleanupTiming = chunkTiming.startCleanup(this, "world-cleanup");
-            try {
-                cleanupWorldResources(this);
-            } finally {
-                chunkTiming.finishCleanup(cleanupTiming);
-            }
-        }
-        return;
+    const cleanupErrors: Error[] = [];
+    const cleanupTiming = chunkTiming.enabled ? chunkTiming.startCleanup(this, "world-cleanup") : undefined;
+    try {
+        // Scenario-owned resources are always cleaned up, including skipped
+        // guards and scenarios without a memory baseline.
+        await cleanupScenarioWorldResources(this, this.scenarioLifecycle);
+    } catch (err: any) {
+        cleanupErrors.push(err);
+    } finally {
+        if (cleanupTiming) chunkTiming.finishCleanup(cleanupTiming);
     }
 
     const baseline: number | undefined = this[BASELINE_KEY];
-    if (baseline === undefined) {
-        return; // No baseline – guard may have been enabled mid-run
-    }
 
     // Derive scenario metadata from the Cucumber pickle.
     const scenarioName: string =
@@ -389,21 +350,11 @@ After(async function (this: any, scenario: any) {
         scenarioLine = scenario.sourceLocation.line;
     }
 
-    // ---- Cleanup world resources before final measurement ----
-    // Mark world-owned ChildProcess PIDs as expected-to-exit so that when
-    // cleanupWorldResources kills them, the MemoryRegistry does not treat
-    // their exit as a spontaneous unexpected exit (Oracle blocker).
-    markWorldChildProcesses(this);
-
-    const cleanupErrors: Error[] = [];
-    const cleanupTiming = chunkTiming.startCleanup(this, "world-cleanup");
-
-    try {
-        cleanupWorldResources(this);
-    } catch (err: any) {
-        cleanupErrors.push(err);
-    } finally {
-        chunkTiming.finishCleanup(cleanupTiming);
+    if (!isBddMemoryGuardEnabled() || memorySkip.skip || baseline === undefined) {
+        if (cleanupErrors.length > 0) {
+            throw new Error(`BDD world cleanup failed: ${cleanupErrors.map(e => e.message).join("; ")}`);
+        }
+        return;
     }
 
     // Hook-order instrumentation is intentionally after complete-world
@@ -456,7 +407,7 @@ After(async function (this: any, scenario: any) {
     }
 
     // ---- Reconcile pending ChildProcess exits before asserting ----
-    // cleanupWorldResources may have killed tracked ChildProcesses before
+    // ScenarioLifecycle may have killed tracked ChildProcesses before
     // their JS 'exit' events had a chance to fire.  Drain the event loop
     // so that any pending exit listeners are processed; otherwise assertAll
     // may see a long-lived process that was intentionally killed as still

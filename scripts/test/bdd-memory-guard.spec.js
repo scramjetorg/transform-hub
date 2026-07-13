@@ -535,15 +535,15 @@ test("cleanupWorldResources clears every field on world.resources", (t) => {
     t.is(world.responseText, undefined, "world.responseText should be undefined");
 });
 
-test("cleanupWorldResources destroys scenario-owned streams and processes", (t) => {
+test("cleanupWorldResources destroys streams without inferring process ownership", (t) => {
     const stream = new (require("stream").PassThrough)();
     const child = { pid: 42, exitCode: null, killed: false, kill() { this.killed = true; } };
     cleanupWorldResources({ resources: { stream, child }, cliResources: {} });
     t.true(stream.destroyed);
-    t.true(child.killed);
+    t.false(child.killed, "generic world cleanup must not infer process ownership");
 });
 
-test("cleanupWorldResources continues when one resource destroy throws, aggregate errors", (t) => {
+test("cleanupWorldResources continues after a stream destroy throws", (t) => {
     const throwing = {
         readable: true,
         destroyed: false,
@@ -560,7 +560,7 @@ test("cleanupWorldResources continues when one resource destroy throws, aggregat
     const err = t.throws(() => cleanupWorldResources(world));
     t.true(throwing.destroyed, "throwing resource destroy was called");
     t.true(good.destroyed, "good stream was still destroyed after throw");
-    t.true(child.killed, "child process was still killed after throw");
+    t.false(child.killed, "generic cleanup must not infer child ownership after throw");
     t.is(world.resources.throwing, undefined, "throwing resource field is nulled");
     t.is(world.resources.good, undefined, "good resource field is nulled");
     t.is(world.resources.child, undefined, "child field is nulled");

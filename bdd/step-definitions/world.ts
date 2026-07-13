@@ -6,6 +6,8 @@ import { STHRestAPI } from "@scramjet/api-types";
 import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
 import * as dns from "dns";
+const { ScenarioLifecycle } = require("../../scripts/lib/bdd-scenario-lifecycle.js");
+const { memoryRegistry } = require("../lib/memory-registry");
 
 const glob: (pattern: string, callback: (err: Error | null, matches: string[]) => void) => void = require("glob");
 
@@ -83,6 +85,9 @@ export class CustomWorld implements World {
         commandInProgress?: ChildProcessWithoutNullStreams;
         collectedTopicData?: string;
     } = {};
+
+    /** Explicit owner for Hub, Manager, and runner resources created by this scenario. */
+    readonly scenarioLifecycle = new ScenarioLifecycle(memoryRegistry);
 
     /** @internal Memory guard baseline (set by support/memory-hooks.ts). */
     __memoryBaseline?: number;
