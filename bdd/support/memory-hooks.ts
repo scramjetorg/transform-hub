@@ -25,6 +25,7 @@
  */
 
 import { Before, After, AfterAll } from "@cucumber/cucumber";
+import { writeFileSync } from "fs";
 
 import {
     measureMemoryUsage,
@@ -40,6 +41,7 @@ import {
     matchScenarioException,
     cleanupWorldResources,
 } from "../../scripts/lib/bdd-memory-hooks-lib";
+import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
 
 // ---------------------------------------------------------------------------
 // Per-scenario memory exceptions (narrowly scoped)
@@ -111,9 +113,15 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
 // We check synchronously at import time so the user sees a clear error
 // immediately rather than on the first scenario.
 
-const memorySkip = isBddMemoryGuardEnabled()
+const chunkMemoryPolicy = parseChunkMemoryPolicy();
+const memorySkip = (isBddMemoryGuardEnabled() || chunkMemoryPolicy === "enforce")
     ? checkBddMemorySkip()
     : { skip: false };
+validateEnforcePrerequisites({
+    policy: chunkMemoryPolicy,
+    strictGuardEnabled: isBddMemoryGuardEnabled(),
+    memorySkipped: memorySkip.skip,
+});
 
 if (isBddMemoryGuardEnabled() && !memorySkip.skip) {
     ensureGlobalGc();
@@ -126,30 +134,40 @@ if (isBddMemoryGuardEnabled() && !memorySkip.skip) {
 const BASELINE_KEY = "__memoryBaseline";
 const BEFORE_USAGE_KEY = "__memoryBeforeUsage";
 const getMemoryRegistry = () => require("../lib/memory-registry").memoryRegistry;
+let chunkSamplingTimer: ReturnType<typeof setInterval> | undefined;
 
 // ---------------------------------------------------------------------------
 // Before – baseline
 // ---------------------------------------------------------------------------
 
 Before(async function () {
-    if (!isBddMemoryGuardEnabled() || memorySkip.skip) {
+    const chunkMetricsEnabled = chunkMemoryPolicy !== "off" && !memorySkip.skip;
+    if ((!isBddMemoryGuardEnabled() && !chunkMetricsEnabled) || memorySkip.skip) {
         return;
     }
 
     // Capture raw snapshot before drain+GC for component breakdown.
     const beforeUsage = process.memoryUsage();
 
-    await drainAndGc();
+    if (isBddMemoryGuardEnabled()) await drainAndGc();
 
     const baseline = measureMemoryUsage();
 
     this[BASELINE_KEY] = baseline;
     this[BEFORE_USAGE_KEY] = beforeUsage;
 
-    // Feed parent-heap sample into chunk-level tracking (Phase 10).
-    // The first call establishes the chunk baseline; subsequent calls
-    // update the running peak.
+    // Feed parent-heap sample into chunk-level tracking. The first scenario's
+    // post-GC sample is the parent baseline; the readiness marker is emitted
+    // later by the long-lived process readiness path.
     getMemoryRegistry().recordChunkHeapSample(baseline);
+
+    if (chunkMemoryPolicy !== "off" && !chunkSamplingTimer) {
+        const interval = process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 500 : 1000;
+        chunkSamplingTimer = setInterval(() => {
+            getMemoryRegistry().sampleAll().catch(() => undefined);
+        }, interval);
+        chunkSamplingTimer.unref?.();
+    }
 });
 
 // ---------------------------------------------------------------------------
@@ -275,13 +293,30 @@ After(async function (this: any, scenario: any) {
 // No new threshold enforcement – purely observational.
 
 AfterAll(async function () {
-    if (!isBddMemoryGuardEnabled() || memorySkip.skip) {
+    if ((!isBddMemoryGuardEnabled() && chunkMemoryPolicy === "off") || memorySkip.skip) {
         return;
     }
 
-    await drainAndGc();
+    if (chunkSamplingTimer) {
+        clearInterval(chunkSamplingTimer);
+        chunkSamplingTimer = undefined;
+    }
+
+    if (isBddMemoryGuardEnabled()) await drainAndGc();
+
+    if (chunkMemoryPolicy !== "off") {
+        await getMemoryRegistry().sampleAll();
+    }
 
     const finalHeap = measureMemoryUsage();
+    const metrics = getMemoryRegistry().computeChunkSummary();
+    metrics.parentHeap.finalBytes = finalHeap;
+    metrics.parentHeap.finalGrowthBytes = metrics.parentHeap.baselineBytes === null ? null : finalHeap - metrics.parentHeap.baselineBytes;
+    metrics.parentHeap.peakGrowthBytes = metrics.parentHeap.baselineBytes === null || metrics.parentHeap.peakBytes === null ? null : metrics.parentHeap.peakBytes - metrics.parentHeap.baselineBytes;
+    const reportPath = process.env.BDD_CHUNK_MEMORY_REPORT_FILE;
+    if (reportPath && chunkMemoryPolicy !== "off") {
+        writeFileSync(reportPath, JSON.stringify(metrics, null, 2));
+    }
     getMemoryRegistry().printChunkSummary(finalHeap);
 });
 

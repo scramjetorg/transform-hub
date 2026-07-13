@@ -6,7 +6,7 @@
  *
  * Provides:
  *   - getProcessRssBytes(pid)          – safe RSS sampling via /proc/<pid>/status
- *   - getDockerContainerWorkingSetBytes(containerId) – Dockerode or docker stats
+ *   - getDockerContainerWorkingSetBytes(containerId) – Docker Engine stats API
  *   - MemoryRegistry singleton          – track PIDs, ChildProcesses, and
  *                                         containerIds; record baselines;
  *                                         assert deltas against thresholds
@@ -33,9 +33,11 @@
  */
 
 import { readFile } from "fs/promises";
-import { execSync } from "child_process";
-import * as http from "http";
+import { writeFileSync } from "fs";
 import type { ChildProcess } from "child_process";
+
+const { requestDockerStats } = require("../../scripts/lib/docker-memory.js");
+const { readCgroupWorkingSetBytes } = require("../../scripts/lib/cgroup-memory.js");
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -60,11 +62,16 @@ export interface TrackedProcess {
     expectExit: boolean;
     /** Peak RSS in bytes observed during tracking (initialised to baseline). */
     peakRss: number | null;
+    /** Most recent live RSS sample. */
+    finalRss: number | null;
     /**
      * RSS baseline captured when the process signals it is ready
      * (e.g. "Host running!" for the hub).  Set via `recordProcessReady()`.
      */
     readyBaselineRss: number | null;
+    exitedAt?: string;
+    exitCode?: number | null;
+    exitSignal?: NodeJS.Signals | null;
 }
 
 export interface TrackedContainer {
@@ -74,6 +81,9 @@ export interface TrackedContainer {
     baselineBytes: number | null;
     /** Whether this container is expected to exit (short-lived) */
     expectExit: boolean;
+    peakBytes: number | null;
+    finalBytes: number | null;
+    sampleCount: number;
 }
 
 export interface MemoryRegistryOptions {
@@ -162,11 +172,11 @@ export function getProcessRssBytesSync(pid: number): number | null {
 
 /**
  * Read the working-set memory of a Docker container using the Docker Engine
- * socket (preferred) or falling back to `docker stats --no-stream`.
+ * stats API over the Unix socket.
  *
  * Working set = `memory_stats.usage - memory_stats.stats.inactive_file`
  * (or `total_inactive_file` if `inactive_file` is not present).
- * When cache fields are unavailable, falls back to raw usage with a note.
+ * When cache fields are unavailable, raw usage is used.
  *
  * Returns bytes, or null when Docker is unavailable or the container is missing.
  *
@@ -176,185 +186,8 @@ export function getProcessRssBytesSync(pid: number): number | null {
 export async function getDockerContainerWorkingSetBytes(
     containerId: string
 ): Promise<number | null> {
-    if (!containerId) {
-        return null;
-    }
-
-    const rawStats = await getDockerContainerStatsViaSocket(containerId);
-
-    if (rawStats?.memory_stats) {
-        const workingSet = dockerWorkingSetFromStats(rawStats.memory_stats);
-
-        if (workingSet !== null) {
-            return workingSet;
-        }
-    }
-
-    // Fallback: use docker stats CLI.
-    return getDockerContainerWorkingSetBytesSyncCli(containerId);
-}
-
-function getDockerContainerStatsViaSocket(containerId: string): Promise<Record<string, any> | null> {
-    return new Promise(resolve => {
-        const req = http.request({
-            socketPath: "/var/run/docker.sock",
-            path: `/containers/${encodeURIComponent(containerId)}/stats?stream=false`,
-            method: "GET",
-            timeout: 10000
-        }, res => {
-            let body = "";
-
-            res.setEncoding("utf8");
-            res.on("data", chunk => {
-                body += chunk;
-            });
-            res.on("end", () => {
-                if ((res.statusCode ?? 500) >= 400 || !body) {
-                    resolve(null);
-                    return;
-                }
-
-                try {
-                    resolve(JSON.parse(body));
-                } catch {
-                    resolve(null);
-                }
-            });
-        });
-
-        req.on("timeout", () => {
-            req.destroy();
-            resolve(null);
-        });
-        req.on("error", () => resolve(null));
-        req.end();
-    });
-}
-
-function dockerWorkingSetFromStats(memoryStats: Record<string, any>): number | null {
-    const usage = memoryStats.usage;
-
-    if (typeof usage !== "number") {
-        return null;
-    }
-
-    const statsBlock = memoryStats.stats as Record<string, unknown> | undefined;
-    const inactiveFile = statsBlock
-        ? (typeof statsBlock.inactive_file === "number" ? statsBlock.inactive_file : 0)
-            || (typeof statsBlock.total_inactive_file === "number" ? statsBlock.total_inactive_file : 0)
-        : 0;
-
-    return Math.max(0, usage - inactiveFile);
-}
-
-/**
- * Fallback working-set helper using `docker stats --no-stream --format json`.
- *
- * Returns the raw memory usage (not working set) because the default CLI stats
- * format does not expose cache/inactive_file breakdown.  The caller should
- * consider raising the threshold to account for page cache.
- *
- * @param containerId  Docker container ID or name.
- * @returns            Raw memory usage in bytes, or null on failure.
- */
-function getDockerContainerWorkingSetBytesSyncCli(containerId: string): number | null {
-    try {
-        const stdout = execSync(
-            `docker stats --no-stream --format json "${containerId}"`,
-            { encoding: "utf8", timeout: 10000, stdio: ["ignore", "pipe", "pipe"] }
-        ).trim();
-
-        if (!stdout) {
-            return null;
-        }
-
-        const stats = JSON.parse(stdout) as Record<string, unknown>;
-
-        // --format json gives human-readable fields; try to extract raw bytes.
-        let usageBytes: number | null = null;
-
-        // Try numeric usage field (when formatted via custom Go template).
-        if (typeof stats.usage === "number") {
-            usageBytes = stats.usage as number;
-        } else if (typeof stats.usage === "string") {
-            usageBytes = parseDockerMemoryString(stats.usage as string);
-        }
-
-        // Fall back to MemUsage field ("11.55MiB / 1GiB").
-        if (usageBytes === null && typeof stats.MemUsage === "string") {
-            const memParts = (stats.MemUsage as string).split("/");
-            if (memParts.length >= 1) {
-                usageBytes = parseDockerMemoryString(memParts[0].trim());
-            }
-        }
-
-        // Fall back to MemTotal / MemPerc calculation.
-        if (usageBytes === null && typeof stats.MemTotal === "number") {
-            const memTotal = stats.MemTotal as number;
-            const memPercStr = stats.MemPerc as string | undefined;
-
-            if (memPercStr && memTotal > 0) {
-                const memPerc = parseFloat(memPercStr.replace("%", ""));
-                if (Number.isFinite(memPerc)) {
-                    usageBytes = Math.round((memPerc / 100) * memTotal);
-                }
-            }
-        }
-
-        // NOTE: This is RAW USAGE, not working set, because the Docker CLI
-        // stats JSON does not expose inactive_file/total_inactive_file.
-        // The threshold (SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES)
-        // should be adjusted if this fallback path is taken.
-        return usageBytes;
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Parse a Docker memory string like "11.55MiB" or "1.234GiB" to bytes.
- *
- * @param str  Memory string (e.g. "11.55MiB", "1GiB", "123.4KiB").
- * @returns    Bytes, or null if unparseable.
- */
-function parseDockerMemoryString(str: string): number | null {
-    const trimmed = str.trim().replace(/\s/g, "");
-    const match = trimmed.match(/^([\d.]+)([kKMGT]i?B?|B)?$/);
-
-    if (!match) {
-        return null;
-    }
-
-    const value = parseFloat(match[1]);
-
-    if (!Number.isFinite(value)) {
-        return null;
-    }
-
-    const suffix = (match[2] || "B").toUpperCase();
-
-    switch (suffix) {
-        case "B":
-            return value;
-        case "KIB":
-        case "KB":
-        case "K":
-            return value * 1024;
-        case "MIB":
-        case "MB":
-        case "M":
-            return value * 1024 * 1024;
-        case "GIB":
-        case "GB":
-        case "G":
-            return value * 1024 * 1024 * 1024;
-        case "TIB":
-        case "TB":
-        case "T":
-            return value * 1024 * 1024 * 1024 * 1024;
-        default:
-            return value;
-    }
+    if (!containerId) return null;
+    return requestDockerStats(containerId);
 }
 
 // ---------------------------------------------------------------------------
@@ -414,7 +247,13 @@ export interface ChunkProcessEntry {
     deltaFromBaseline: number | null;
     /** Delta = finalRss − readyBaselineRss (null if either unavailable). */
     deltaFromReady: number | null;
+    finalGrowthBytes: number | null;
+    peakGrowthBytes: number | null;
     expectExit: boolean;
+    lifecycle: "running" | "exited";
+    exitedAt?: string;
+    exitCode?: number | null;
+    exitSignal?: NodeJS.Signals | null;
 }
 
 /**
@@ -434,10 +273,30 @@ export interface ChunkMetrics {
         finalBytes: number | null;
         /** finalBytes − baselineBytes (null if either unavailable). */
         delta: number | null;
+        finalGrowthBytes?: number | null;
+        peakGrowthBytes?: number | null;
         /** Number of per-scenario samples taken. */
         sampleCount: number;
     };
     processes: ChunkProcessEntry[];
+    containers: Array<{
+        label: string;
+        containerId: string;
+        baselineBytes: number | null;
+        peakBytes: number | null;
+        finalBytes: number | null;
+        finalGrowthBytes: number | null;
+        peakGrowthBytes: number | null;
+        sampleCount: number;
+    }>;
+    chunkContainer: {
+        readyBytes: number | null;
+        finalBytes: number | null;
+        peakBytes: number | null;
+        readySource: string;
+        finalSource: string;
+        sampleCount: number;
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -446,6 +305,7 @@ export interface ChunkMetrics {
 
 class MemoryRegistry {
     private processes = new Map<number, TrackedProcess>();
+    private exitedProcesses = new Map<number, TrackedProcess>();
     private containers = new Map<string, TrackedContainer>();
     private options: MemoryRegistryOptions;
 
@@ -459,6 +319,13 @@ class MemoryRegistry {
 
     /** Number of per-scenario heap samples recorded. */
     private chunkHeapSampleCount: number = 0;
+    private chunkReady = false;
+    private chunkCgroupReadyBytes: number | null = null;
+    private chunkCgroupFinalBytes: number | null = null;
+    private chunkCgroupPeakBytes: number | null = null;
+    private chunkCgroupReadySource = "unavailable";
+    private chunkCgroupFinalSource = "unavailable";
+    private chunkCgroupSampleCount = 0;
 
     constructor(options?: Partial<MemoryRegistryOptions>) {
         // Lazy-require bdd-options to avoid circular deps at import time.
@@ -500,6 +367,7 @@ class MemoryRegistry {
             label,
             baselineRss,
             peakRss: baselineRss, // Initialised to the same value as baseline
+            finalRss: null,
             readyBaselineRss: null,
             expectExit,
         });
@@ -524,9 +392,29 @@ class MemoryRegistry {
 
         this.trackProcess(child.pid, label, expectExit);
 
-        child.once("exit", () => {
-            this.untrackProcess(child.pid!);
+        child.once("exit", (code, signal) => {
+            this.recordProcessExit(child.pid!, code, signal);
         });
+    }
+
+    private recordProcessExit(pid: number, code: number | null, signal: NodeJS.Signals | null): void {
+        const tracked = this.processes.get(pid);
+        if (!tracked) return;
+        tracked.exitedAt = new Date().toISOString();
+        tracked.exitCode = code;
+        tracked.exitSignal = signal;
+        const finalRss = getProcessRssBytesSync(pid);
+        if (finalRss !== null) {
+            tracked.finalRss = finalRss;
+            tracked.peakRss = tracked.peakRss === null ? finalRss : Math.max(tracked.peakRss, finalRss);
+        } else if (tracked.finalRss === null) {
+            // The process has disappeared from /proc. Preserve the last
+            // observed RSS as the lifecycle final snapshot rather than
+            // discarding the only usable evidence at exit.
+            tracked.finalRss = tracked.peakRss;
+        }
+        if (!tracked.expectExit) this.exitedProcesses.set(pid, { ...tracked });
+        this.processes.delete(pid);
     }
 
     /**
@@ -563,6 +451,9 @@ class MemoryRegistry {
             label,
             baselineBytes: null, // Recorded lazily on first assertAll() call
             expectExit,
+            peakBytes: null,
+            finalBytes: null,
+            sampleCount: 0,
         });
     }
 
@@ -599,6 +490,38 @@ class MemoryRegistry {
         if (this.chunkHeapPeak === null || bytes > this.chunkHeapPeak) {
             this.chunkHeapPeak = bytes;
         }
+
+        // BeforeAll may start the Hub before the memory hook's first Before
+        // runs. Retry readiness here so the parent baseline and process
+        // readiness are both established before emitting the marker.
+        if ([...this.processes.values()].some(process => !process.expectExit && process.readyBaselineRss !== null)) {
+            this.markChunkReady("parent-baseline-and-process-ready");
+        }
+        if (!this.chunkReady) this.markChunkReady("parent-baseline");
+    }
+
+    markChunkReady(source = "long-lived-process-ready"): boolean {
+        if (this.chunkHeapBaseline === null || this.chunkReady) return this.chunkReady;
+        this.chunkReady = true;
+        const cgroup = readCgroupWorkingSetBytes();
+        this.chunkCgroupReadyBytes = cgroup.bytes;
+        this.chunkCgroupPeakBytes = cgroup.bytes;
+        this.chunkCgroupReadySource = cgroup.source;
+        if (cgroup.bytes !== null) this.chunkCgroupSampleCount = 1;
+        const reportPath = process.env.BDD_CHUNK_MEMORY_READY_FILE;
+        if (reportPath) {
+            const temporaryPath = `${reportPath}.${process.pid}.tmp`;
+            writeFileSync(temporaryPath, JSON.stringify({
+                ready: true,
+                source,
+                parentBaselineBytes: this.chunkHeapBaseline,
+                containerReadyBytes: cgroup.bytes,
+                containerReadySource: cgroup.source,
+                at: new Date().toISOString(),
+            }));
+            require("fs").renameSync(temporaryPath, reportPath);
+        }
+        return true;
     }
 
     /**
@@ -621,6 +544,37 @@ class MemoryRegistry {
         }
 
         tracked.readyBaselineRss = getProcessRssBytesSync(pid);
+        if (!tracked.expectExit) this.markChunkReady(`process-ready:${tracked.label}`);
+    }
+
+    /** Capture one live sample for every tracked process and container. */
+    async sampleAll(): Promise<void> {
+        if (this.chunkReady) {
+            const cgroup = readCgroupWorkingSetBytes();
+            if (cgroup.bytes !== null) {
+                this.chunkCgroupFinalBytes = cgroup.bytes;
+                this.chunkCgroupPeakBytes = this.chunkCgroupPeakBytes === null ? cgroup.bytes : Math.max(this.chunkCgroupPeakBytes, cgroup.bytes);
+                this.chunkCgroupFinalSource = cgroup.source;
+                this.chunkCgroupSampleCount++;
+            }
+        }
+        for (const tracked of this.processes.values()) {
+            const rss = await getProcessRssBytes(tracked.pid);
+            if (rss !== null) {
+                tracked.peakRss = tracked.peakRss === null ? rss : Math.max(tracked.peakRss, rss);
+                tracked.finalRss = rss;
+            }
+        }
+
+        for (const tracked of this.containers.values()) {
+            const bytes = await getDockerContainerWorkingSetBytes(tracked.containerId);
+            if (bytes !== null) {
+                if (tracked.baselineBytes === null) tracked.baselineBytes = bytes;
+                tracked.finalBytes = bytes;
+                tracked.peakBytes = tracked.peakBytes === null ? bytes : Math.max(tracked.peakBytes, bytes);
+                tracked.sampleCount++;
+            }
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -672,8 +626,8 @@ class MemoryRegistry {
                     continue;
                 }
 
-                // Successfully gone — remove from tracking.
-                this.untrackProcess(pid);
+                // The ChildProcess exit listener normally retained the snapshot.
+                if (this.processes.has(pid)) this.recordProcessExit(pid, null, null);
                 continue;
             }
 
@@ -797,6 +751,7 @@ class MemoryRegistry {
      */
     clear(): void {
         this.processes.clear();
+        this.exitedProcesses.clear();
         this.containers.clear();
     }
 
@@ -816,8 +771,8 @@ class MemoryRegistry {
     computeChunkSummary(): ChunkMetrics {
         const processes: ChunkProcessEntry[] = [];
 
-        for (const [, tracked] of this.processes) {
-            const finalRss = getProcessRssBytesSync(tracked.pid);
+        for (const tracked of [...this.processes.values(), ...this.exitedProcesses.values()]) {
+            const finalRss = tracked.finalRss ?? getProcessRssBytesSync(tracked.pid);
 
             // Update peak if the final sample is higher.
             const effectivePeak = tracked.peakRss;
@@ -840,6 +795,9 @@ class MemoryRegistry {
                 tracked.readyBaselineRss !== null && finalForEntry !== null
                     ? finalForEntry - tracked.readyBaselineRss
                     : null;
+            const effectiveBaseline = tracked.readyBaselineRss ?? tracked.baselineRss;
+            const finalGrowthBytes = effectiveBaseline !== null && finalForEntry !== null ? finalForEntry - effectiveBaseline : null;
+            const peakGrowthBytes = effectiveBaseline !== null && peakForEntry !== null ? peakForEntry - effectiveBaseline : null;
 
             processes.push({
                 label: tracked.label,
@@ -850,9 +808,26 @@ class MemoryRegistry {
                 finalRss: finalForEntry,
                 deltaFromBaseline,
                 deltaFromReady,
+                finalGrowthBytes,
+                peakGrowthBytes,
                 expectExit: tracked.expectExit,
+                lifecycle: tracked.exitedAt ? "exited" : "running",
+                exitedAt: tracked.exitedAt,
+                exitCode: tracked.exitCode,
+                exitSignal: tracked.exitSignal,
             });
         }
+
+        const containers = Array.from(this.containers.values()).map(tracked => ({
+            label: tracked.label,
+            containerId: tracked.containerId,
+            baselineBytes: tracked.baselineBytes,
+            peakBytes: tracked.peakBytes,
+            finalBytes: tracked.finalBytes,
+            finalGrowthBytes: tracked.baselineBytes !== null && tracked.finalBytes !== null ? tracked.finalBytes - tracked.baselineBytes : null,
+            peakGrowthBytes: tracked.baselineBytes !== null && tracked.peakBytes !== null ? tracked.peakBytes - tracked.baselineBytes : null,
+            sampleCount: tracked.sampleCount,
+        }));
 
         return {
             parentHeap: {
@@ -863,6 +838,15 @@ class MemoryRegistry {
                 sampleCount: this.chunkHeapSampleCount,
             },
             processes,
+            containers,
+            chunkContainer: {
+                readyBytes: this.chunkCgroupReadyBytes,
+                finalBytes: this.chunkCgroupFinalBytes,
+                peakBytes: this.chunkCgroupPeakBytes,
+                readySource: this.chunkCgroupReadySource,
+                finalSource: this.chunkCgroupFinalSource,
+                sampleCount: this.chunkCgroupSampleCount,
+            },
         };
     }
 
@@ -906,7 +890,7 @@ class MemoryRegistry {
             for (const p of metrics.processes) {
                 const status = p.expectExit ? "expected-exit" : "long-lived";
                 lines.push(`    ${p.label} (pid ${p.pid}):`);
-                lines.push(`      Status:          ${status}`);
+                lines.push(`      Status:          ${status}, ${p.lifecycle}`);
                 lines.push(`      Baseline RSS:    ${fmt(p.baselineRss)}`);
 
                 if (p.readyBaselineRss !== null) {

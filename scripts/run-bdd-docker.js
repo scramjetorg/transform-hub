@@ -27,6 +27,10 @@ const fs = require("fs");
 const path = require("path");
 
 const { memoryLimit, cpuLimit, timeoutMs, graceMs, isBddMemoryGuardEnabled, bddNodeOptions } = require("./lib/bdd-options.js");
+const { checkBddMemorySkip } = require("./lib/bdd-memory-guard.js");
+const { parseChunkMemoryPolicy, validateEnforcePrerequisites } = require("./lib/bdd-chunk-memory-policy.js");
+const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnostics } = require("./lib/bdd-chunk-memory-policy.js");
+const { requestDockerStats } = require("./lib/docker-memory.js");
 
 const { reportLeakedProcesses } = require("./lib/bdd-cleanup.js");
 
@@ -35,6 +39,13 @@ const BDD_DOCKER_MEMORY = memoryLimit();
 const BDD_DOCKER_CPUS = cpuLimit();
 const BDD_TIMEOUT_MS = timeoutMs();
 const BDD_GRACE_MS = graceMs();
+const CHUNK_MEMORY_POLICY = parseChunkMemoryPolicy();
+
+validateEnforcePrerequisites({
+    policy: CHUNK_MEMORY_POLICY,
+    strictGuardEnabled: isBddMemoryGuardEnabled(),
+    memorySkipped: CHUNK_MEMORY_POLICY === "enforce" ? checkBddMemorySkip().skip : false
+});
 
 const TIMEOUT_EXIT_CODE = 124;
 const MISSING_DEPENDENCY_EXIT_CODE = 127;
@@ -126,6 +137,8 @@ dockerRunArgs.push(
 );
 
 dockerRunArgs.push(...collectEnvForwardArgs());
+dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
+dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");
 
 // Inject NODE_OPTIONS with --expose-gc when BDD memory guard is enabled.
 // bddNodeOptions() picks up BDD_NODE_OPTIONS from the parent env (already
@@ -160,6 +173,10 @@ let waitChild = null;
 
 /** @type {number|null} Baseline working-set sample in bytes (captured after container start). */
 let workingSetBaseline = null;
+let workingSetReady = false;
+let chunkReadySignal = null;
+let readinessPollTimer = null;
+let readinessSampleInFlight = false;
 
 /** @type {number|null} Highest recorded working-set sample in bytes. */
 let workingSetPeak = null;
@@ -175,6 +192,24 @@ let workingSetTimer = null;
 
 /** Periodic sampling interval in ms. */
 const WORKING_SET_SAMPLE_INTERVAL_MS = 30000;
+const READINESS_POLL_INTERVAL_MS = 50;
+const READINESS_SAMPLE_INTERVAL_MS = 250;
+
+const consumeChunkReadySignal = () => {
+    if (workingSetReady) return true;
+    try {
+        const signal = JSON.parse(fs.readFileSync(path.join(tmpDir, "chunk-ready.json"), "utf8"));
+        if (signal.ready === true) {
+            workingSetReady = true;
+            chunkReadySignal = signal;
+            if (typeof signal.containerReadyBytes === "number") workingSetBaseline = signal.containerReadyBytes;
+            process.stderr.write(`[run-bdd-docker] chunk readiness signal consumed (${signal.source || "unknown"})\n`);
+        }
+    } catch {
+        // Support code has not reached long-lived process readiness yet.
+    }
+    return workingSetReady;
+};
 
 const cleanup = () => {
     if (cleaned) {
@@ -201,6 +236,11 @@ const cleanup = () => {
     if (workingSetTimer) {
         clearInterval(workingSetTimer);
         workingSetTimer = null;
+    }
+
+    if (readinessPollTimer) {
+        clearInterval(readinessPollTimer);
+        readinessPollTimer = null;
     }
 
     if (containerId) {
@@ -285,9 +325,8 @@ const printContainerDiagnostics = (containerId) => {
 /**
  * Sample a Docker container's current working-set memory via the stats API.
  *
- * Computes working set = `memory_stats.usage - inactive_file` (matching the
- * existing logic in bdd/lib/memory-registry.ts).  Uses `docker stats`
- * with a custom Go template to obtain the full stats JSON.
+ * Computes working set = `memory_stats.usage - inactive_file` via the Docker
+ * Engine `/containers/{id}/stats?stream=false` API.
  *
  * Returns bytes, or @c null if Docker is unavailable or the container has
  * already exited.
@@ -295,35 +334,8 @@ const printContainerDiagnostics = (containerId) => {
  * @param {string} cid  Container ID.
  * @returns {number|null}
  */
-const sampleContainerWorkingSet = (cid) => {
-    const result = spawnSync("docker", ["stats", "--no-stream", "--no-trunc", "--format", "{{json .}}", cid], {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"]
-    });
-
-    if (result.error || typeof result.status !== "number" || result.status !== 0 || !result.stdout) {
-        return null;
-    }
-
-    try {
-        const stats = JSON.parse(result.stdout);
-
-        if (!stats.memory_stats || typeof stats.memory_stats.usage !== "number") {
-            return null;
-        }
-
-        const usage = stats.memory_stats.usage;
-        const statsBlock = stats.memory_stats.stats;
-        const inactiveFile = statsBlock
-            ? (typeof statsBlock.inactive_file === "number" ? statsBlock.inactive_file : 0) ||
-              (typeof statsBlock.total_inactive_file === "number" ? statsBlock.total_inactive_file : 0)
-            : 0;
-
-        return Math.max(0, usage - inactiveFile);
-    } catch {
-        return null;
-    }
-};
+// Keep a stuck Engine request from preventing the next readiness poll/sample.
+const sampleContainerWorkingSet = (cid) => requestDockerStats(cid, "/var/run/docker.sock", 2000);
 
 /**
  * Take one working-set sample and, if successful, update peak tracking.
@@ -331,13 +343,29 @@ const sampleContainerWorkingSet = (cid) => {
  * @param {string} cid  Container ID.
  * @returns {number|null}  Sampled bytes or null.
  */
-const recordWorkingSetSample = (cid) => {
-    const bytes = sampleContainerWorkingSet(cid);
+const recordWorkingSetSample = async (cid) => {
+    if (readinessSampleInFlight) return null;
+    readinessSampleInFlight = true;
+    let bytes;
+    try {
+        consumeChunkReadySignal();
+        bytes = await sampleContainerWorkingSet(cid);
+    } finally {
+        readinessSampleInFlight = false;
+    }
 
     if (bytes === null) {
         return null;
     }
 
+    if (!workingSetReady || workingSetBaseline === null) {
+        return bytes;
+    }
+
+    if (workingSetBaseline === null) {
+        workingSetBaseline = bytes;
+        process.stderr.write(`[run-bdd-docker] readiness working-set baseline: ${workingSetBaseline} bytes\n`);
+    }
     workingSetSampleCount++;
 
     if (workingSetPeak === null || bytes > workingSetPeak) {
@@ -365,23 +393,7 @@ const recordWorkingSetSample = (cid) => {
  * @param {string} cid       Container ID.
  * @param {number} exitCode  Exit code from `docker wait`.
  */
-const printContainerSummary = (cid, exitCode) => {
-    // Attempt a live working-set sample (may fail if the container already exited).
-    const finalSample = sampleContainerWorkingSet(cid);
-
-    if (finalSample !== null) {
-        workingSetFinal = finalSample;
-
-        if (workingSetPeak === null || finalSample > workingSetPeak) {
-            workingSetPeak = finalSample;
-        }
-
-        workingSetSampleCount++;
-    } else if (workingSetFinal === null) {
-        // Container already exited – use peak or baseline as the best final value.
-        workingSetFinal = workingSetPeak !== null ? workingSetPeak : workingSetBaseline;
-    }
-
+const printContainerSummary = async (cid, exitCode) => {
     // Obtain OOMKilled + timestamps from Docker inspect.
     const inspectResult = spawnSync("docker", ["inspect", "--format={{json .State}}", cid], {
         encoding: "utf8",
@@ -403,6 +415,21 @@ const printContainerSummary = (cid, exitCode) => {
         }
     }
 
+    let childMetrics = null;
+    try {
+        childMetrics = JSON.parse(fs.readFileSync(path.join(tmpDir, "chunk-memory.json"), "utf8"));
+    } catch {
+        childMetrics = null;
+    }
+    const childContainer = childMetrics?.chunkContainer;
+    if (childContainer) {
+        workingSetBaseline = childContainer.readyBytes;
+        workingSetFinal = childContainer.finalBytes;
+        if (typeof childContainer.peakBytes === "number") {
+            workingSetPeak = workingSetPeak === null ? childContainer.peakBytes : Math.max(workingSetPeak, childContainer.peakBytes);
+        }
+    }
+
     // Format helpers.
     const fmt = (v) => (v !== null && v !== undefined ? `${v} bytes` : "unavailable");
     const baselineStr = fmt(workingSetBaseline);
@@ -416,13 +443,37 @@ const printContainerSummary = (cid, exitCode) => {
     process.stderr.write(`  ExitCode:    ${exitCode}\n`);
     process.stderr.write(`  OOMKilled:   ${oomKilled}\n`);
     process.stderr.write(`  Limit:       ${BDD_DOCKER_MEMORY}\n`);
-    process.stderr.write(`  Baseline:    ${baselineStr}\n`);
-    process.stderr.write(`  Final:       ${finalStr}\n`);
-    process.stderr.write(`  Peak:        ${peakStr}\n`);
+    process.stderr.write(`  Readiness:   ${baselineStr} (${childContainer?.readySource || "unavailable"})\n`);
+    process.stderr.write(`  Final:       ${finalStr} (${childContainer?.finalSource || "unavailable"})\n`);
+    process.stderr.write(`  Peak:        ${peakStr} (cgroup + Engine periodic)\n`);
     process.stderr.write(`  Delta:       ${deltaStr}\n`);
-    process.stderr.write(`  Samples:     ${workingSetSampleCount}\n`);
+    process.stderr.write(`  Engine samples: ${workingSetSampleCount}\n`);
+    process.stderr.write(`  Cgroup samples: ${childContainer?.sampleCount || 0}\n`);
     process.stderr.write(`  StartedAt:   ${startedAt}\n`);
     process.stderr.write(`  FinishedAt:  ${finishedAt}\n`);
+
+    if (CHUNK_MEMORY_POLICY !== "off") {
+        const containerLimitBytes = parseMemoryLimit(BDD_DOCKER_MEMORY);
+        const container = {
+            sampleCount: workingSetSampleCount,
+            baselineBytes: workingSetBaseline,
+            finalBytes: workingSetFinal,
+            peakBytes: workingSetPeak,
+            finalGrowthBytes: workingSetBaseline !== null && workingSetFinal !== null ? workingSetFinal - workingSetBaseline : null,
+            peakGrowthBytes: workingSetBaseline !== null && workingSetPeak !== null ? workingSetPeak - workingSetBaseline : null,
+            absolutePeakBytes: workingSetPeak,
+            containerLimitBytes,
+            enginePeakSampleCount: workingSetSampleCount
+        };
+        const evaluationMetrics = childMetrics
+            ? { ...childMetrics, container, chunkContainer: { ...childMetrics.chunkContainer, enginePeakSampleCount: workingSetSampleCount } }
+            : { container };
+        const evaluation = evaluateChunkMemoryMetrics(evaluationMetrics, { policy: CHUNK_MEMORY_POLICY });
+        process.stderr.write(`[run-bdd-docker] ${formatChunkMemoryDiagnostics(evaluation)}\n`);
+        return evaluation.status;
+    }
+
+    return "PASS";
 };
 
 const runResult = spawnSync("docker", dockerRunArgs, { encoding: "utf8" });
@@ -450,17 +501,24 @@ if (!containerId) {
 
 process.stderr.write(`[run-bdd-docker] container id=${containerId}\n`);
 
-// Capture initial working-set baseline while the container is running.
-workingSetBaseline = sampleContainerWorkingSet(containerId);
-
-if (workingSetBaseline !== null) {
-    process.stderr.write(`[run-bdd-docker] baseline working set: ${workingSetBaseline} bytes\n`);
-}
-
-// Start periodic peak tracking (30s interval).
-workingSetTimer = setInterval(() => {
-    recordWorkingSetSample(containerId);
-}, WORKING_SET_SAMPLE_INTERVAL_MS);
+// Capture initial working-set baseline and start periodic Engine API sampling.
+const initializeWorkingSetSampling = async () => {
+    readinessPollTimer = setInterval(() => {
+        if (!workingSetReady && consumeChunkReadySignal()) {
+            recordWorkingSetSample(containerId).catch(() => undefined);
+        }
+    }, READINESS_POLL_INTERVAL_MS);
+    workingSetTimer = setInterval(
+        () => {
+            recordWorkingSetSample(containerId).catch(() => undefined);
+        },
+        CHUNK_MEMORY_POLICY === "off" ? WORKING_SET_SAMPLE_INTERVAL_MS : process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 250 : 1000
+    );
+    // Do not block installation of the readiness poll on the first Engine
+    // stats request; stats may take a moment while the container starts.
+    await recordWorkingSetSample(containerId);
+};
+initializeWorkingSetSampling().catch(() => undefined);
 
 logsChild = spawn("docker", ["logs", "-f", containerId], { stdio: ["ignore", "inherit", "inherit"] });
 
@@ -523,9 +581,7 @@ waitChild.once("close", () => {
 
     if (timedOut) {
         printContainerDiagnostics(containerId);
-        printContainerSummary(containerId, TIMEOUT_EXIT_CODE);
-
-        exitWith(TIMEOUT_EXIT_CODE);
+        printContainerSummary(containerId, TIMEOUT_EXIT_CODE).then(() => exitWith(TIMEOUT_EXIT_CODE));
         return;
     }
 
@@ -534,12 +590,10 @@ waitChild.once("close", () => {
             printContainerDiagnostics(containerId);
         }
 
-        printContainerSummary(containerId, parsed);
-        exitWith(parsed);
+        printContainerSummary(containerId, parsed).then((status) => exitWith(parsed !== 0 ? parsed : CHUNK_MEMORY_POLICY === "enforce" && status !== "PASS" ? 1 : parsed));
         return;
     }
 
     printContainerDiagnostics(containerId);
-    printContainerSummary(containerId, 1);
-    exitWith(1);
+    printContainerSummary(containerId, 1).then(() => exitWith(1));
 });

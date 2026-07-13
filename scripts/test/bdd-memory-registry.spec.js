@@ -33,6 +33,9 @@ const {
 } = require("../../bdd/lib/memory-registry");
 
 const { execSync, spawn } = require("child_process");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -547,6 +550,32 @@ test("MemoryRegistry.computeChunkSummary returns expected structure", (t) => {
 	t.true(summary.processes[0].readyBaselineRss !== null, "readyBaselineRss should be set");
 	t.true(typeof summary.processes[0].peakRss === "number", "peakRss should be a number");
 	t.false(summary.processes[0].expectExit, "default expectExit is false");
+});
+
+test("MemoryRegistry emits readiness marker after parent baseline and process readiness", (t) => {
+    const reportPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "chunk-ready.")), "ready.json");
+    const previous = process.env.BDD_CHUNK_MEMORY_READY_FILE;
+    process.env.BDD_CHUNK_MEMORY_READY_FILE = reportPath;
+    const registry = new MemoryRegistry();
+    registry.recordChunkHeapSample(100000);
+    registry.trackProcess(process.pid, "hub");
+    registry.recordProcessReady(process.pid);
+    const signal = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    t.is(signal.ready, true);
+    t.is(signal.parentBaselineBytes, 100000);
+    if (previous === undefined) delete process.env.BDD_CHUNK_MEMORY_READY_FILE;
+    else process.env.BDD_CHUNK_MEMORY_READY_FILE = previous;
+});
+
+test("MemoryRegistry retains exited long-lived process lifecycle in chunk summary", async (t) => {
+    const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 10)"]);
+    const registry = new MemoryRegistry();
+    registry.trackChildProcess(child, "hub");
+    await new Promise(resolve => child.once("exit", resolve));
+    const entry = registry.computeChunkSummary().processes.find(processEntry => processEntry.label === "hub");
+    t.truthy(entry);
+    t.is(entry.lifecycle, "exited");
+    t.is(entry.expectExit, false);
 });
 
 test("MemoryRegistry.computeChunkSummary handles missing /proc data gracefully", (t) => {

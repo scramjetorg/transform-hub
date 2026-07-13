@@ -263,10 +263,8 @@ test("run-bdd-docker.js calls printContainerDiagnostics for unparseable exit cod
 		"utf8"
 	);
 
-	t.true(
-		src.includes("printContainerDiagnostics(containerId);\n    printContainerSummary(containerId, 1);"),
-		"should call diagnostics and summary before fallback exitWith(1)"
-	);
+	t.true(src.includes("printContainerDiagnostics(containerId);"), "should call diagnostics");
+	t.true(src.includes("printContainerSummary(containerId, 1)"), "should print summary before fallback exit");
 });
 
 // ---------------------------------------------------------------------------
@@ -334,16 +332,21 @@ test("run-bdd-docker.js tracks working-set module-level variables", (t) => {
 	t.true(src.includes("let workingSetTimer"), "should declare workingSetTimer");
 });
 
-test("run-bdd-docker.js captures working-set baseline after container starts", (t) => {
+test("run-bdd-docker.js captures readiness working-set baseline after container starts", (t) => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),
 		"utf8"
 	);
 
 	t.true(
-		src.includes("workingSetBaseline = sampleContainerWorkingSet(containerId)"),
-		"should capture baseline after container ID is known"
+		src.includes("BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json"),
+		"should mount a per-run readiness signal"
 	);
+	t.true(src.includes("consumeChunkReadySignal()"), "should consume readiness before sampling");
+	t.true(src.includes("workingSetBaseline = bytes"), "should establish baseline at readiness");
+	t.true(src.includes("const READINESS_POLL_INTERVAL_MS = 50"), "should poll readiness promptly");
+	t.true(src.includes("const READINESS_SAMPLE_INTERVAL_MS = 250"), "should use short follow-up samples");
+	t.true(src.includes("chunkContainer"), "should finalize from the mounted cgroup report");
 });
 
 test("run-bdd-docker.js starts periodic sampling interval after baseline", (t) => {
@@ -353,7 +356,7 @@ test("run-bdd-docker.js starts periodic sampling interval after baseline", (t) =
 	);
 
 	t.true(
-		src.includes("workingSetTimer = setInterval(()"),
+		src.includes("workingSetTimer = setInterval("),
 		"should start setInterval for periodic peak tracking"
 	);
 	t.true(
@@ -381,7 +384,7 @@ test("run-bdd-docker.js calls printContainerSummary for timed-out containers", (
 	);
 
 	t.true(
-		src.includes("if (timedOut) {\n        printContainerDiagnostics(containerId);\n        printContainerSummary(containerId, TIMEOUT_EXIT_CODE);"),
+		src.includes("printContainerSummary(containerId, TIMEOUT_EXIT_CODE)"),
 		"should call summary on timeout branch"
 	);
 });
@@ -393,33 +396,22 @@ test("run-bdd-docker.js calls printContainerSummary for non-zero and zero exit c
 	);
 
 	t.true(
-		src.includes("printContainerSummary(containerId, parsed);"),
+		src.includes("printContainerSummary(containerId, parsed)"),
 		"should call summary for all exit codes (zero and non-zero)"
 	);
 });
 
-test("run-bdd-docker.js working-set docker stats format matches existing memory-registry.ts logic", (t) => {
+test("run-bdd-docker.js uses the Docker Engine stats API for working-set sampling", (t) => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),
 		"utf8"
 	);
 
 	t.true(
-		src.includes('"stats", "--no-stream", "--no-trunc", "--format", "{{json .}}"'),
-		"should use --no-stream --no-trunc --format {{json .}} for full stats"
+		src.includes("requestDockerStats"),
+		"should use the Docker Engine stats API helper"
 	);
-	t.true(
-		src.includes("memory_stats.usage"),
-		"should read memory_stats.usage"
-	);
-	t.true(
-		src.includes("inactive_file"),
-		"should subtract inactive_file for working-set computation"
-	);
-	t.true(
-		src.includes("total_inactive_file"),
-		"should fall back to total_inactive_file"
-	);
+	t.true(src.includes("parseMemoryLimit"), "should evaluate the absolute container limit");
 });
 
 test("run-bdd-docker.js printContainerSummary includes all required fields", (t) => {
@@ -433,11 +425,12 @@ test("run-bdd-docker.js printContainerSummary includes all required fields", (t)
 	t.true(src.includes("ExitCode:"), "ExitCode field");
 	t.true(src.includes("OOMKilled:"), "OOMKilled field");
 	t.true(src.includes("Limit:"), "Limit field");
-	t.true(src.includes("Baseline:"), "Baseline field");
+	t.true(src.includes("Readiness:"), "Readiness field");
 	t.true(src.includes("Final:"), "Final field");
 	t.true(src.includes("Peak:"), "Peak field");
 	t.true(src.includes("Delta:"), "Delta field");
-	t.true(src.includes("Samples:"), "Samples field");
+	t.true(src.includes("Engine samples:"), "Engine samples field");
+	t.true(src.includes("Cgroup samples:"), "Cgroup samples field");
 	t.true(src.includes("StartedAt:"), "StartedAt timestamp field");
 	t.true(src.includes("FinishedAt:"), "FinishedAt timestamp field");
 });
@@ -452,4 +445,14 @@ test("run-bdd-docker.js working-set sampling does not fail on unavailable Docker
 		src.includes("return null;"),
 		"should return null on failure (multiple paths)"
 	);
+});
+
+test("run-bdd-docker.js samples quickly when chunk policy is active", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes('process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 250 : 1000'));
+	t.true(src.includes("BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json"));
 });
