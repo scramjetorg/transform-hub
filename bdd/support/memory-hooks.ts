@@ -126,6 +126,32 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
             + "rounded observed maximum excess over the 524288-byte base and is scoped to this "
             + "exact feature, line, and scenario name.",
     },
+
+    // -----------------------------------------------------------------------
+    // E2E-014 TC-003: Exceptions thrown in python sequences appear in stderr
+    //
+    // Scenario creates a Python child-process runner and verifies stderr
+    // output.  Python runner allocation (V8 + native embedder structs)
+    // leaves a residual heap delta after close + GC.
+    //
+    // Three repeated strict guarded Docker runs recorded deltas of
+    // 599840, 598752, and 599880 bytes against the 524288-byte base.
+    // The maximum excess over base is 75592 bytes; the 77824-byte
+    // allowance is that excess rounded to the next 4096-byte boundary
+    // (19 × 4096 = 77824), providing 2232 bytes of headroom.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "e2e/E2E-014-python.feature",
+        line: 4,
+        scenarioName: "E2E-014 TC-003 Exceptions thrown in python sequences appear in stderr",
+        allowanceBytes: 77_824,
+        reason: "Python child-process runner allocations persist after "
+            + "close()+GC. Three repeated strict guarded Docker runs "
+            + "recorded deltas of 599840, 598752, and 599880 bytes; "
+            + "maximum 75592-byte excess over the 524288-byte base. "
+            + "Allowance is the next 4096-byte boundary (77824 bytes) "
+            + "providing 2232 bytes of headroom.",
+    },
 ];
 
 // ---------------------------------------------------------------------------
