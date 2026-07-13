@@ -4,8 +4,11 @@ const report = process.env.TEST_REPORT
     : [ "--format progress" ];
 const includeHarnessSelftest = ["1", "true"].includes(String(process.env.BDD_INCLUDE_HARNESS_SELFTEST).toLowerCase());
 const includeLongRunning = ["1", "true"].includes(String(process.env.BDD_INCLUDE_LONG_RUNNING).toLowerCase());
+const includeNeedsFix = ["1", "true"].includes(String(process.env.BDD_INCLUDE_NEEDS_FIX).toLowerCase());
 const validationExclusions = "not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility and not @manager-migration and not @requires-docker and not @docker-specific";
 const tagParts = ["not @ignore"];
+
+if (!includeNeedsFix) tagParts.push("not @needs-fix");
 
 if (!includeHarnessSelftest) tagParts.push("not @harness-selftest");
 if (!includeLongRunning) tagParts.push(validationExclusions);

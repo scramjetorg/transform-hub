@@ -347,6 +347,12 @@
     - [ ] Keep strict per-scenario heap guard behavior and exact documented exceptions; do not mask failures with broad skips.
     - [ ] Reclassify every feature chunk under the supported Docker runner and 300-second timeout after each remediation batch.
 
+  Deferred runner-image coverage: HUB-001 TC-009 through TC-011 remain tagged `@needs-fix` and are excluded from default BDD selection. They depend on repository-built Docker runner images and short-lived auto-removed container metadata; a subsequent track must audit the runner-image build workflow, repair it, and restore durable image/config assertions before re-enabling them. This is a scoped deferment, not a memory-guard skip.  To run the deferred scenarios during repair work, opt in with the env var and select the tag:
+
+  ```bash
+  BDD_INCLUDE_LONG_RUNNING=1 BDD_INCLUDE_NEEDS_FIX=1 npx cucumber-js ... --tags "@needs-fix"
+  ```
+
 - [ ] Task: Define and enforce practical aggregate RSS limits
     - [ ] Preserve per-scenario leak checks and lifecycle assertions, while treating expected BDD workload RSS growth as a bounded integration-test cost rather than a failure by default.
     - [ ] Set a committed aggregate parallel-stack RSS budget of at most 4 GiB, including outer Docker/container and owned child-process reservations.
