@@ -515,6 +515,11 @@ test("cleanupWorldResources clears every field on world.resources", (t) => {
             commandInProgress: { pid: 1234 },
         },
         response: { statusCode: 200 },
+        responseChunks: [
+            { text: "chunk-1", bytes: 7, at: 10 },
+            { text: "chunk-2", bytes: 7, at: 25 },
+        ],
+        responseText: "chunk-1chunk-2",
     };
 
     cleanupWorldResources(world);
@@ -526,6 +531,8 @@ test("cleanupWorldResources clears every field on world.resources", (t) => {
         t.is(world.cliResources[key], undefined, "cliResources." + key + " should be undefined");
     }
     t.is(world.response, undefined, "world.response should be undefined");
+    t.is(world.responseChunks, undefined, "world.responseChunks should be undefined");
+    t.is(world.responseText, undefined, "world.responseText should be undefined");
 });
 
 test("cleanupWorldResources destroys scenario-owned streams and processes", (t) => {

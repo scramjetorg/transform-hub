@@ -94,6 +94,8 @@ function cleanupWorldResources(world) {
     }
 
     world.response = undefined;
+    world.responseChunks = undefined;
+    world.responseText = undefined;
 
     if (errors.length > 0) {
         const aggregate = new Error(`Cleanup failed for ${errors.length} resource(s): ${errors.map((e) => e.message).join("; ")}`);
