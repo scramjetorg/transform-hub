@@ -313,12 +313,14 @@
 
   Notes: Ownership is represented by immutable run/chunk IDs, exact Docker labels, structured encoded temporary paths, and owner-attributed metrics. Cleanup is exact-owner scoped in Docker and wave lifecycles; it preserves foreign run/chunk paths. Port reservations use live-PID locks with owner tokens, and exclusive harness, Hub, Manager, and stream paths remain serial. Guarded ownership/cleanup/wave tests and two concurrent VERSER2 Docker runs passed with distinct ownership IDs and no leftover BDD containers.
 
-- [~] Task: Measure chunk-level parent, process, and container memory growth
+- [x] Task: Measure chunk-level parent, process, and container memory growth
     - [x] Sample Cucumber parent heap baseline/final/peak at chunk lifecycle boundaries, separately from per-scenario guard checks.
     - [x] Sample readiness-baselined and final/peak RSS for long-lived Hub, Manager, and MultiManager processes, including expected exit state.
     - [x] Sample outer BDD Docker container working-set baseline/final/peak and record memory limit, exit code, OOM state, and timestamps.
-    - [ ] Report metrics by feature chunk and component, then set and enforce feature/chunk memory-growth limits before parallel execution; retain existing strict per-scenario threshold behavior.
-    - [ ] Add focused unit tests for metric collection, missing `/proc`/Docker data, and actionable diagnostics.
+    - [x] Report metrics by feature chunk and component, then set and enforce feature/chunk memory-growth limits before parallel execution; retain existing strict per-scenario threshold behavior.
+    - [x] Add focused unit tests for metric collection, missing `/proc`/Docker data, and actionable diagnostics.
+
+  Notes: The outer runner’s component contract is authoritative and is compared with the child metrics payload. Enforce mode rejects absent, downgraded, conflicting, empty, negative, or non-finite parent, expected-process, container, cgroup, and readiness telemetry. Completed expected-exit Hub/Manager measurements are retained for chunk admission while scenario lifecycle checks retain their independent semantics. Production-path tests cover enforced breach, insufficient telemetry, contract conflict, required process present, and required process absent; strict per-scenario guard thresholds are unchanged and the parallel scheduler remains disabled.
 
 - [ ] Task: Rationalize BDD timing through observable readiness polling
     - [x] Instrument chunk wall-clock setup and teardown timing to establish a baseline.
