@@ -302,8 +302,8 @@
     - [x] Assign every eligible default-suite feature to exactly one named chunk and fail validation for duplicate, missing, deleted, or nonexistent paths.
     - [x] Keep harness, stress, fixed-port Hub, Manager/MultiManager, and broad Docker-cleanup paths exclusive until ownership isolation is implemented.
     - [x] Add explicit `--chunk=<name>` selection and preserve `npm run test:bdd` serial behavior.
-    - [ ] Use feature paths as the initial chunk boundary and enforce a 300-second timeout for every feature run.
-    - [ ] Classify every feature from repeated 300-second runs as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required; no feature may enter the parallel scheduler until it finishes below 300 seconds.
+    - [x] Use feature paths as the initial chunk boundary and enforce a 300-second timeout for every feature run.
+    - [x] Classify every feature from repeated 300-second runs as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required; no feature may enter the parallel scheduler until it finishes below 300 seconds.
 
 - [ ] Task: Add chunk-scoped ownership and cleanup isolation
     - [ ] Create an immutable BDD run/chunk identifier and propagate it to outer Docker labels, generated configs, temporary artifacts, process/container labels, logs, and metrics.
@@ -327,11 +327,13 @@
     - [ ] Add focused regression tests and repeated runs for every shortened wait to detect timing flakes.
 
 - [ ] Task: Validate independently runnable 300-second BDD feature chunks
-    - [ ] Compare the serial union of all chunks with the default eligible scenario set.
-    - [ ] Run every feature chunk under supported Docker BDD execution with a 300-second timeout and record median, p95, maximum runtime, memory growth, and classification.
+    - [x] Compare the serial union of all chunks with the default eligible scenario set.
+    - [x] Run every feature chunk under supported Docker BDD execution with a 300-second timeout and record median, p95, maximum runtime, memory growth, and classification.
     - [ ] Remediate, split, or explicitly exclude any feature that exceeds 300 seconds; do not silently allow it into a larger remainder chunk.
-    - [ ] Run relevant BDD memory-guard validation and record parent heap, child RSS, Docker working-set thresholds, skips/exceptions, and deferred coverage.
-    - [ ] Record external watchdog limitations separately from container OOM or test failures.
+    - [x] Run relevant BDD memory-guard validation and record parent heap, child RSS, Docker working-set thresholds, skips/exceptions, and deferred coverage.
+    - [x] Record external watchdog limitations separately from container OOM or test failures.
+
+  Classification Notes: On 2026-07-13, all 24 eligible static manifest feature paths were exercised individually through the supported Docker runner with a 300-second timeout, strict 524288-byte parent heap guard, 104857600-byte child RSS/Docker working-set thresholds, and no skips. The manifest union matched the eligible feature set exactly with no duplicate or missing paths. Only `VERSER2-001` was parallel-ready across three repeats (6.51–7.34 seconds). Stop-handler, stream/stress, Hub, Manager, and resource-owning paths remain exclusive. `E2E-001`, `E2E-010`, `E2E-011`, `E2E-012-cli-config`, `E2E-014`, `E2E-016`, `E2E-007`, and `MANAGER-003/004` require memory remediation; `E2E-003`, `E2E-008`, `HUB-002/003/004`, and `MANAGER-002` have functional blockers. `E2E-010-cli` ended with Docker exit 137 and `OOMKilled=true` at approximately 1.49 GiB. No external watchdog termination occurred in these individual feature runs. Scheduler admission remains blocked pending functional/memory remediation and ownership isolation.
 
 - [ ] Task: Run classified BDD feature chunks in parallel in Docker
     - [ ] Require bounded feature memory growth, completed ownership isolation, and a passing 300-second classification before a feature enters the parallel scheduler.
