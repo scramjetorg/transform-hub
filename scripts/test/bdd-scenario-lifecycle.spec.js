@@ -147,3 +147,44 @@ test("group-owned explicit stop terminates a MultiManager-like descendant", asyn
     t.false(isAlive(descendantPid), "descendant should be terminated with the process group");
     t.is(registry.processCount, 0);
 });
+
+// -- PID-only ownership (ownProcess) lifecycle-residual tests --
+
+test("ownProcess PID marked expected after confirmed exit is not reported", async t => {
+    // Simulates the "runner has ended execution" step: after confirming the
+    // process has exited, the step explicitly marks the PID expected.
+    const registry = new MemoryRegistry();
+    const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 1000)"], { stdio: "ignore" });
+    const lifecycle = new ScenarioLifecycle(registry);
+
+    lifecycle.ownProcess(child.pid, "runner-pid");
+    child.kill();
+    await new Promise(resolve => child.once("exit", resolve));
+
+    // Simulate step calling lifecycle.expect() after confirming exit.
+    lifecycle.expect(child.pid);
+    await lifecycle.cleanup();
+    await registry.drainExitEvents();
+
+    t.is((await registry.assertAll()).length, 0);
+});
+
+test("unconfirmed dead ownProcess PID remains an assertAll error", async t => {
+    // Oracle blocker: an ownProcess PID whose exit is NOT explicitly
+    // confirmed before cleanup must remain visible as an unexpected exit.
+    // Only the "runner has ended execution" step may mark it expected.
+    const registry = new MemoryRegistry();
+    const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 1000)"], { stdio: "ignore" });
+    const lifecycle = new ScenarioLifecycle(registry);
+
+    lifecycle.ownProcess(child.pid, "runner-pid");
+    child.kill();
+    await new Promise(resolve => child.once("exit", resolve));
+
+    // No explicit expect() call — cleanup must NOT mark it.
+    await lifecycle.cleanup();
+    await registry.drainExitEvents();
+
+    const errors = await registry.assertAll();
+    t.true(errors.some(error => error.includes("runner-pid")), "unconfirmed dead ownProcess PID must be reported as unexpected");
+});

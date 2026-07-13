@@ -23,6 +23,7 @@ import { expectedResponses } from "./expectedResponses";
 import { exec } from "child_process";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
 import { restoreSavedHostEnv } from "../hub/config";
+import { memoryRegistry } from "../../lib/memory-registry";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 
 function resolveSequencePackage(packageName: string): string {
@@ -616,11 +617,13 @@ When("runner has ended execution", { timeout: 20000 }, async () => {
         if (!processId) assert.fail("There is no process ID");
 
         await waitForProcessToEnd(processId);
+        memoryRegistry.markProcessesAsExpectedToExit([processId]);
         console.log("Process has ended.");
     } else {
         if (!containerId) assert.fail("There is no container ID");
 
         await waitForContainerToClose();
+        memoryRegistry.markContainersAsExpectedToExit([containerId]);
         console.log("Container is closed.");
     }
 
