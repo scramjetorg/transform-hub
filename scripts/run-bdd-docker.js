@@ -28,7 +28,7 @@ const path = require("path");
 
 const { memoryLimit, cpuLimit, timeoutMs, graceMs, isBddMemoryGuardEnabled, bddNodeOptions } = require("./lib/bdd-options.js");
 const { checkBddMemorySkip } = require("./lib/bdd-memory-guard.js");
-const { parseChunkMemoryPolicy, validateEnforcePrerequisites } = require("./lib/bdd-chunk-memory-policy.js");
+const { parseChunkMemoryPolicy, parseExpectedComponents, validateEnforcePrerequisites } = require("./lib/bdd-chunk-memory-policy.js");
 const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnostics } = require("./lib/bdd-chunk-memory-policy.js");
 const { requestDockerStats } = require("./lib/docker-memory.js");
 
@@ -150,6 +150,7 @@ dockerRunArgs.push(
             ([name]) =>
                 name === "SCRAMJET_BDD_RUN_ID" ||
                 name === "SCRAMJET_BDD_CHUNK_ID" ||
+                name === "SCRAMJET_BDD_FEATURE_PATHS" ||
                 name === "SCRAMJET_BDD_OWNER" ||
                 name === "SCRAMJET_BDD_ARTIFACT_ROOT" ||
                 name === "SCRAMJET_BDD_CONFIG_PATH"
@@ -484,21 +485,28 @@ const printContainerSummary = async (cid, exitCode) => {
 
     if (CHUNK_MEMORY_POLICY !== "off") {
         const containerLimitBytes = parseMemoryLimit(BDD_DOCKER_MEMORY);
+        const boundary = childMetrics?.chunkContainer;
+        const effectiveBaseline = workingSetBaseline ?? boundary?.readyBytes ?? null;
+        const effectiveFinal = workingSetFinal ?? boundary?.finalBytes ?? null;
+        const effectivePeak = workingSetPeak ?? boundary?.peakBytes ?? null;
         const container = {
-            sampleCount: workingSetSampleCount,
-            baselineBytes: workingSetBaseline,
-            finalBytes: workingSetFinal,
-            peakBytes: workingSetPeak,
-            finalGrowthBytes: workingSetBaseline !== null && workingSetFinal !== null ? workingSetFinal - workingSetBaseline : null,
-            peakGrowthBytes: workingSetBaseline !== null && workingSetPeak !== null ? workingSetPeak - workingSetBaseline : null,
-            absolutePeakBytes: workingSetPeak,
+            sampleCount: workingSetSampleCount || boundary?.sampleCount || 0,
+            baselineBytes: effectiveBaseline,
+            finalBytes: effectiveFinal,
+            peakBytes: effectivePeak,
+            finalGrowthBytes: effectiveBaseline !== null && effectiveFinal !== null ? effectiveFinal - effectiveBaseline : null,
+            peakGrowthBytes: effectiveBaseline !== null && effectivePeak !== null ? effectivePeak - effectiveBaseline : null,
+            absolutePeakBytes: effectivePeak,
             containerLimitBytes,
             enginePeakSampleCount: workingSetSampleCount
         };
         const evaluationMetrics = childMetrics
             ? { ...childMetrics, container, chunkContainer: { ...childMetrics.chunkContainer, enginePeakSampleCount: workingSetSampleCount } }
             : { container };
-        const evaluation = evaluateChunkMemoryMetrics(evaluationMetrics, { policy: CHUNK_MEMORY_POLICY });
+        const evaluation = evaluateChunkMemoryMetrics(evaluationMetrics, {
+            policy: CHUNK_MEMORY_POLICY,
+            authoritativeComponentExpectations: parseExpectedComponents(process.env.SCRAMJET_BDD_EXPECTED_COMPONENTS)
+        });
         process.stderr.write(`[run-bdd-docker] ${formatChunkMemoryDiagnostics(evaluation)}\n`);
         return evaluation.status;
     }

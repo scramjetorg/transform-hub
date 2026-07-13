@@ -27,34 +27,92 @@ test("enforce requires strict guard and rejects memory skip", t => {
 
 function metrics(overrides = {}) {
     return {
-        parentHeap: { finalGrowthBytes: 1000 },
-        processes: [{ label: "hub", readyBaselineRss: 100, finalGrowthBytes: 1000, peakGrowthBytes: 2000 }],
+        parentHeap: { baselineBytes: 1000, peakBytes: 3000, finalBytes: 2000, finalGrowthBytes: 1000, peakGrowthBytes: 2000, sampleCount: 1 },
+        processes: [{ label: "hub", baselineRss: 100, readyBaselineRss: 100, peakRss: 200, finalRss: 150, finalGrowthBytes: 1000, peakGrowthBytes: 2000 }],
         container: {
             sampleCount: 3,
+            baselineBytes: 1000,
+            finalBytes: 2000,
+            peakBytes: 3000,
             finalGrowthBytes: 1000,
             peakGrowthBytes: 2000,
             absolutePeakBytes: 1000,
             containerLimitBytes: 2 * 1024 * 1024,
         },
+        componentExpectations: { container: true, processes: ["hub"] },
         ...overrides,
     };
 }
 
 test("chunk policy evaluates PASS, WOULD_FAIL, and missing telemetry", t => {
-    t.is(evaluateChunkMemoryMetrics(metrics(), { policy: "enforce" }).status, "PASS");
-    const breach = evaluateChunkMemoryMetrics(metrics({ parentHeap: { finalGrowthBytes: DEFAULTS.parentFinalGrowthBytes + 1 } }), { policy: "report" });
+    t.is(evaluateChunkMemoryMetrics(metrics(), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } }).status, "PASS");
+    const breach = evaluateChunkMemoryMetrics(metrics({ parentHeap: { baselineBytes: 1000, peakBytes: 3000, finalBytes: 2000, finalGrowthBytes: DEFAULTS.parentFinalGrowthBytes + 1, peakGrowthBytes: 2000, sampleCount: 1 } }), { policy: "report" });
     t.is(breach.status, "WOULD_FAIL");
     t.true(breach.failures[0].includes("parent final growth"));
-    const missing = evaluateChunkMemoryMetrics({ parentHeap: { finalGrowthBytes: 1 } }, { policy: "enforce" });
+    const missing = evaluateChunkMemoryMetrics({ parentHeap: { finalGrowthBytes: 1 } }, { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
     t.is(missing.status, "INSUFFICIENT_TELEMETRY");
     t.true(formatChunkMemoryDiagnostics(missing).includes("INSUFFICIENT_TELEMETRY"));
+});
+
+test("chunk admission rejects parent peak growth and reports ownership", t => {
+    const result = evaluateChunkMemoryMetrics(metrics({
+        ownership: { owner: "run-a/chunk-a", chunkId: "chunk-a" },
+        parentHeap: { baselineBytes: 1000, peakBytes: 3000, finalBytes: 2000, finalGrowthBytes: 1, peakGrowthBytes: DEFAULTS.parentPeakGrowthBytes + 1, sampleCount: 1 },
+    }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
+    t.is(result.status, "WOULD_FAIL");
+    t.false(result.admitted);
+    t.true(result.failures.some(failure => failure.includes("parent peak growth")));
+    t.true(formatChunkMemoryDiagnostics(result).includes("run-a/chunk-a"));
+});
+
+test("missing readiness and Docker telemetry is actionable", t => {
+    const result = evaluateChunkMemoryMetrics({
+        ownership: { owner: "run-a/chunk-a", chunkId: "chunk-a" },
+        parentHeap: { finalGrowthBytes: 1, peakGrowthBytes: 1 },
+        processes: [{ label: "hub", readyBaselineRss: null, finalGrowthBytes: null, peakGrowthBytes: null }],
+        componentExpectations: { container: true, processes: ["hub"] },
+    }, { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
+    const diagnostic = formatChunkMemoryDiagnostics(result);
+    t.is(result.status, "INSUFFICIENT_TELEMETRY");
+    t.true(diagnostic.includes("/proc RSS at readiness"));
+    t.true(diagnostic.includes("Docker stats unavailable"));
+    t.true(diagnostic.includes("admission blocked"));
+});
+
+test("enforce requires an explicit component contract and honors explicit no-components", t => {
+    const base = {
+        parentHeap: { baselineBytes: 1, peakBytes: 1, finalBytes: 1, finalGrowthBytes: 0, peakGrowthBytes: 0, sampleCount: 1 },
+        processes: [],
+    };
+    const undeclared = evaluateChunkMemoryMetrics(base, { policy: "enforce" });
+    t.is(undeclared.status, "INSUFFICIENT_TELEMETRY");
+    t.true(undeclared.missing.some(item => item.includes("component expectations declaration")));
+
+    const explicitNone = evaluateChunkMemoryMetrics({
+        ...base,
+        componentExpectations: { noComponents: true, container: false, processes: [] },
+    }, { policy: "enforce", componentExpectations: { noComponents: true, container: false, processes: [] } });
+    t.is(explicitNone.status, "PASS");
+});
+
+test("enforce rejects a missing metrics contract even when the outer contract exists", t => {
+    const result = evaluateChunkMemoryMetrics({
+        parentHeap: { baselineBytes: 1, peakBytes: 1, finalBytes: 1, finalGrowthBytes: 0, peakGrowthBytes: 0, sampleCount: 1 },
+        processes: [],
+        chunkContainer: { readyBytes: 1, finalBytes: 1, peakBytes: 1, sampleCount: 1, enginePeakSampleCount: 1 },
+    }, {
+        policy: "enforce",
+        authoritativeComponentExpectations: { container: true, processes: [] },
+    });
+    t.is(result.status, "INSUFFICIENT_TELEMETRY");
+    t.true(result.missing.includes("metrics component expectations payload"));
 });
 
 test("chunk policy evaluates retained long-lived snapshots and ignores expected-exit processes", t => {
     const result = evaluateChunkMemoryMetrics(metrics({
         processes: [
             { label: "runner", expectExit: true, finalGrowthBytes: null, peakGrowthBytes: null },
-            { label: "hub", expectExit: false, readyBaselineRss: 100, finalGrowthBytes: 10, peakGrowthBytes: 20 },
+            { label: "hub", expectExit: false, baselineRss: 100, readyBaselineRss: 100, peakRss: 120, finalRss: 110, finalGrowthBytes: 10, peakGrowthBytes: 20 },
         ],
     }), { policy: "report" });
     t.is(result.status, "PASS");
@@ -62,7 +120,7 @@ test("chunk policy evaluates retained long-lived snapshots and ignores expected-
 
 test("cgroup boundary telemetry is sufficient below the legacy sample count", t => {
     const result = evaluateChunkMemoryMetrics(metrics({
-        container: { sampleCount: 2, finalGrowthBytes: 1, peakGrowthBytes: 1, absolutePeakBytes: 100, containerLimitBytes: 1000 },
+        container: { sampleCount: 2, baselineBytes: 100, finalBytes: 101, peakBytes: 102, finalGrowthBytes: 1, peakGrowthBytes: 1, absolutePeakBytes: 100, containerLimitBytes: 1000 },
         chunkContainer: { readyBytes: 500, finalBytes: 450, peakBytes: 550, sampleCount: 2, enginePeakSampleCount: 1 },
     }), { policy: "report" });
     t.is(result.status, "PASS");
@@ -71,7 +129,7 @@ test("cgroup boundary telemetry is sufficient below the legacy sample count", t 
 
 test("cgroup boundary telemetry remains insufficient when a boundary is invalid", t => {
     const result = evaluateChunkMemoryMetrics(metrics({
-        container: { sampleCount: 2, finalGrowthBytes: 1, peakGrowthBytes: 1, absolutePeakBytes: 100, containerLimitBytes: 1000 },
+        container: { sampleCount: 2, baselineBytes: 100, finalBytes: 101, peakBytes: 102, finalGrowthBytes: 1, peakGrowthBytes: 1, absolutePeakBytes: 100, containerLimitBytes: 1000 },
         chunkContainer: { readyBytes: 500, finalBytes: 450, peakBytes: 490, sampleCount: 2, enginePeakSampleCount: 1 },
     }), { policy: "report" });
     t.is(result.status, "INSUFFICIENT_TELEMETRY");
@@ -79,20 +137,25 @@ test("cgroup boundary telemetry remains insufficient when a boundary is invalid"
 });
 
 test("no-host chunks do not require process telemetry", t => {
-    const result = evaluateChunkMemoryMetrics(metrics({ processes: [], chunkContainer: {
-        readyBytes: 500, finalBytes: 450, peakBytes: 550, sampleCount: 3, enginePeakSampleCount: 0,
-    } }), { policy: "report" });
+    const result = evaluateChunkMemoryMetrics(metrics({
+        processes: [],
+        chunkContainer: { readyBytes: 500, finalBytes: 450, peakBytes: 550, sampleCount: 3, enginePeakSampleCount: 0 },
+        componentExpectations: { container: true, processes: [] },
+    }), { policy: "report" });
     t.is(result.status, "PASS");
 });
 
 test("absolute container peak is limited to 75 percent of Docker limit", t => {
     const result = evaluateChunkMemoryMetrics(metrics({ container: {
         sampleCount: 3,
+        baselineBytes: 100,
+        finalBytes: 101,
+        peakBytes: 102,
         finalGrowthBytes: 1,
         peakGrowthBytes: 1,
         absolutePeakBytes: 80,
         containerLimitBytes: 100,
-    } }), { policy: "enforce" });
+    } }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
     t.is(result.status, "WOULD_FAIL");
     t.true(result.failures.some(failure => failure.includes("absolute peak")));
 });
@@ -129,12 +192,18 @@ test("Engine-only fallback requires finite container telemetry", t => {
             chunkContainer: undefined,
             container: {
                 sampleCount: 3,
+                baselineBytes: 100,
+                finalBytes: 101,
+                peakBytes: 102,
+                baselineBytes: 100,
+                finalBytes: 101,
+                peakBytes: 102,
                 finalGrowthBytes: NaN,
                 peakGrowthBytes: 2000,
                 absolutePeakBytes: 1000,
                 containerLimitBytes: 2 * 1024 * 1024,
             },
-        }), { policy: "enforce" });
+        }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
         t.is(result.status, "INSUFFICIENT_TELEMETRY");
         t.true(result.missing.some(m => m.includes("finalGrowthBytes") && m.includes("Engine-only")));
     }
@@ -145,12 +214,15 @@ test("Engine-only fallback requires finite container telemetry", t => {
             chunkContainer: undefined,
             container: {
                 sampleCount: 3,
+                baselineBytes: 100,
+                finalBytes: 101,
+                peakBytes: 102,
                 finalGrowthBytes: 1000,
                 peakGrowthBytes: Infinity,
                 absolutePeakBytes: 1000,
                 containerLimitBytes: 2 * 1024 * 1024,
             },
-        }), { policy: "enforce" });
+        }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
         t.is(result.status, "INSUFFICIENT_TELEMETRY");
         t.true(result.missing.some(m => m.includes("peakGrowthBytes") && m.includes("Engine-only")));
     }
@@ -161,11 +233,14 @@ test("Engine-only fallback requires finite container telemetry", t => {
             chunkContainer: undefined,
             container: {
                 sampleCount: 3,
+                baselineBytes: 100,
+                finalBytes: 101,
+                peakBytes: 102,
                 finalGrowthBytes: 1000,
                 peakGrowthBytes: 2000,
                 containerLimitBytes: 2 * 1024 * 1024,
             },
-        }), { policy: "enforce" });
+        }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
         t.is(result.status, "INSUFFICIENT_TELEMETRY");
         t.true(result.missing.some(m => m.includes("absolutePeakBytes") && m.includes("Engine-only")));
     }
@@ -176,11 +251,14 @@ test("Engine-only fallback requires finite container telemetry", t => {
             chunkContainer: undefined,
             container: {
                 sampleCount: 3,
+                baselineBytes: 100,
+                finalBytes: 101,
+                peakBytes: 102,
                 finalGrowthBytes: 1000,
                 peakGrowthBytes: 2000,
                 absolutePeakBytes: 1000,
             },
-        }), { policy: "enforce" });
+        }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
         t.is(result.status, "INSUFFICIENT_TELEMETRY");
         t.true(result.missing.some(m => m.includes("containerLimitBytes") && m.includes("Engine-only")));
     }
@@ -191,12 +269,15 @@ test("Engine-only fallback requires finite container telemetry", t => {
         const result = evaluateChunkMemoryMetrics(metrics({
             container: {
                 sampleCount: 3,
+                baselineBytes: 100,
+                finalBytes: 101,
+                peakBytes: 102,
                 finalGrowthBytes: 1000,
                 peakGrowthBytes: 2000,
                 absolutePeakBytes: 1000,
                 containerLimitBytes: 2 * 1024 * 1024,
             },
-        }), { policy: "enforce" });
+        }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
         t.is(result.status, "PASS");
         t.false(result.missing.some(m => m.includes("Engine-only")));
     }

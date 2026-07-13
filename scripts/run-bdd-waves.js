@@ -72,6 +72,24 @@ const DEFAULT_CHUNKS = Object.freeze(["verser2", "cli", "topics-cli", "topics-ap
 // broad parallel scheduling.
 const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub", "manager", "stream"]);
 
+// Explicit telemetry contracts. Exclusive chunks remain serial-only metadata;
+// they do not bypass admission. Chunks without long-lived Hub/Manager
+// processes explicitly declare an empty process set.
+const CHUNK_COMPONENTS = Object.freeze({
+    cli: Object.freeze({ container: true, processes: [] }),
+    "topics-cli": Object.freeze({ container: true, processes: [] }),
+    "topics-api": Object.freeze({ container: true, processes: [] }),
+    python: Object.freeze({ container: true, processes: [] }),
+    appcontext: Object.freeze({ container: true, processes: [] }),
+    node: Object.freeze({ container: true, processes: [] }),
+    hub: Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
+    manager: Object.freeze({ container: true, processes: ["manager:"], exclusive: true }),
+    verser2: Object.freeze({ container: true, processes: [] }),
+    errors: Object.freeze({ container: true, processes: [] }),
+    stream: Object.freeze({ container: true, processes: [], exclusive: true }),
+    harness: Object.freeze({ container: true, processes: [], exclusive: true })
+});
+
 // ---------------------------------------------------------------------------
 // Manifest validation
 // ---------------------------------------------------------------------------
@@ -240,7 +258,9 @@ function defaultRunChild(owner, features, passthrough) {
         BDD_TIMEOUT_MS: "300000",
         SCRAMJET_BDD_RUN_ID: ownership.runId,
         SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
-        SCRAMJET_BDD_OWNER: ownership.owner
+        SCRAMJET_BDD_OWNER: ownership.owner,
+        SCRAMJET_BDD_FEATURE_PATHS: JSON.stringify(features),
+        SCRAMJET_BDD_EXPECTED_COMPONENTS: JSON.stringify(CHUNK_COMPONENTS[owner] || { container: true, processes: [] })
     };
 
     try {
@@ -336,6 +356,7 @@ module.exports = {
     CHUNKS,
     DEFAULT_CHUNKS,
     EXCLUSIVE_CHUNKS,
+    CHUNK_COMPONENTS,
     commandArgs,
     emitSummary: defaultEmitSummary,
     formatDuration,

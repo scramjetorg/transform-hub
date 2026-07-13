@@ -557,18 +557,23 @@ test("MemoryRegistry attributes chunk metrics to exact ownership", (t) => {
         run: process.env.SCRAMJET_BDD_RUN_ID,
         chunk: process.env.SCRAMJET_BDD_CHUNK_ID,
         owner: process.env.SCRAMJET_BDD_OWNER,
+        features: process.env.SCRAMJET_BDD_FEATURE_PATHS,
     };
     process.env.SCRAMJET_BDD_RUN_ID = "run-metrics";
     process.env.SCRAMJET_BDD_CHUNK_ID = "chunk-metrics";
     process.env.SCRAMJET_BDD_OWNER = "run-metrics/chunk-metrics";
+    process.env.SCRAMJET_BDD_FEATURE_PATHS = JSON.stringify(["features/e2e/E2E-001-samples.feature"]);
     const summary = new MemoryRegistry().computeChunkSummary();
     t.deepEqual(summary.ownership, { runId: "run-metrics", chunkId: "chunk-metrics", owner: "run-metrics/chunk-metrics" });
+    t.deepEqual(summary.featurePaths, ["features/e2e/E2E-001-samples.feature"]);
     if (previous.run === undefined) delete process.env.SCRAMJET_BDD_RUN_ID;
     else process.env.SCRAMJET_BDD_RUN_ID = previous.run;
     if (previous.chunk === undefined) delete process.env.SCRAMJET_BDD_CHUNK_ID;
     else process.env.SCRAMJET_BDD_CHUNK_ID = previous.chunk;
     if (previous.owner === undefined) delete process.env.SCRAMJET_BDD_OWNER;
     else process.env.SCRAMJET_BDD_OWNER = previous.owner;
+    if (previous.features === undefined) delete process.env.SCRAMJET_BDD_FEATURE_PATHS;
+    else process.env.SCRAMJET_BDD_FEATURE_PATHS = previous.features;
 });
 
 test("MemoryRegistry emits readiness marker after parent baseline and process readiness", (t) => {
@@ -595,6 +600,18 @@ test("MemoryRegistry retains exited long-lived process lifecycle in chunk summar
     t.truthy(entry);
     t.is(entry.lifecycle, "exited");
     t.is(entry.expectExit, false);
+});
+
+test("MemoryRegistry retains completed expected-exit telemetry for component admission", async (t) => {
+    const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 10)"]);
+    const registry = new MemoryRegistry();
+    registry.trackChildProcess(child, "hub:completed", true);
+    await new Promise(resolve => child.once("exit", resolve));
+    const entry = registry.computeChunkSummary().processes.find(processEntry => processEntry.label === "hub:completed");
+    t.truthy(entry);
+    t.is(entry?.expectExit, true);
+    t.is(entry?.lifecycle, "exited");
+    t.true(entry?.baselineRss !== null);
 });
 
 test("MemoryRegistry.computeChunkSummary handles missing /proc data gracefully", (t) => {

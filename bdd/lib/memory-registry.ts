@@ -39,6 +39,16 @@ import type { ChildProcess } from "child_process";
 const { requestDockerStats } = require("../../scripts/lib/docker-memory.js");
 const { readCgroupWorkingSetBytes } = require("../../scripts/lib/cgroup-memory.js");
 
+function parseJsonEnv<T>(name: string, fallback: T): T {
+    const raw = process.env[name];
+    if (!raw) return fallback;
+    try {
+        return JSON.parse(raw) as T;
+    } catch {
+        return fallback;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -264,6 +274,10 @@ export interface ChunkProcessEntry {
  * remains the domain of assertAll().
  */
 export interface ChunkMetrics {
+    /** Explicit feature paths associated with this owned chunk. */
+    featurePaths?: string[];
+    /** Explicit component telemetry contract for scheduler admission. */
+    componentExpectations?: Record<string, unknown>;
     ownership?: {
         runId: string;
         chunkId: string;
@@ -311,6 +325,8 @@ export interface ChunkMetrics {
 class MemoryRegistry {
     private processes = new Map<number, TrackedProcess>();
     private exitedProcesses = new Map<number, TrackedProcess>();
+    /** Completed lifecycle telemetry retained for chunk admission reporting. */
+    private completedProcesses = new Map<number, TrackedProcess>();
     private containers = new Map<string, TrackedContainer>();
     private options: MemoryRegistryOptions;
 
@@ -419,6 +435,7 @@ class MemoryRegistry {
             tracked.finalRss = tracked.peakRss;
         }
         if (!tracked.expectExit) this.exitedProcesses.set(pid, { ...tracked });
+        this.completedProcesses.set(pid, { ...tracked });
         this.processes.delete(pid);
     }
 
@@ -846,6 +863,7 @@ class MemoryRegistry {
     clear(): void {
         this.processes.clear();
         this.exitedProcesses.clear();
+        this.completedProcesses.clear();
         this.containers.clear();
     }
 
@@ -867,7 +885,11 @@ class MemoryRegistry {
         const chunkId = process.env.SCRAMJET_BDD_CHUNK_ID;
         const processes: ChunkProcessEntry[] = [];
 
-        for (const tracked of [...this.processes.values(), ...this.exitedProcesses.values()]) {
+        const processEntries = new Map<number, TrackedProcess>();
+        for (const tracked of [...this.processes.values(), ...this.exitedProcesses.values(), ...this.completedProcesses.values()]) {
+            processEntries.set(tracked.pid, tracked);
+        }
+        for (const tracked of processEntries.values()) {
             const finalRss = tracked.finalRss ?? getProcessRssBytesSync(tracked.pid);
 
             // Update peak if the final sample is higher.
@@ -926,6 +948,8 @@ class MemoryRegistry {
         }));
 
         return {
+            featurePaths: parseJsonEnv<string[]>("SCRAMJET_BDD_FEATURE_PATHS", []),
+            componentExpectations: parseJsonEnv<Record<string, unknown> | undefined>("SCRAMJET_BDD_EXPECTED_COMPONENTS", undefined),
             ...(runId && chunkId ? { ownership: { runId, chunkId, owner: process.env.SCRAMJET_BDD_OWNER || `${runId}/${chunkId}` } } : {}),
             parentHeap: {
                 baselineBytes: this.chunkHeapBaseline,
@@ -970,6 +994,7 @@ class MemoryRegistry {
             v !== null && v !== undefined ? `${v} bytes` : "unavailable";
 
         const lines: string[] = [];
+        if (metrics.featurePaths?.length) lines.push(`  Features:     ${metrics.featurePaths.join(", ")}`);
         if (metrics.ownership) lines.push(`  Ownership:    ${metrics.ownership.owner} (run=${metrics.ownership.runId} chunk=${metrics.ownership.chunkId})`);
         lines.push("[memory-registry] chunk memory summary:");
 
