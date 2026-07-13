@@ -21,6 +21,14 @@ class RecordingWriter:
         self.frames.append((code, payload, time.monotonic()))
 
 
+class ClosedWriter:
+    def __init__(self, error: type[OSError]) -> None:
+        self.error = error
+
+    def write_frame(self, _code: int, _payload: object) -> None:
+        raise self.error("monitoring carrier closed")
+
+
 @pytest.mark.asyncio
 async def test_first_heartbeat_emitted_after_interval():
     writer = RecordingWriter()
@@ -104,6 +112,17 @@ async def test_cancellation_stops_loop_within_200ms():
     assert elapsed < 0.2, f"cancellation took {elapsed:.3f}s, expected <200ms"
     # No frame should have been emitted within the first 50ms.
     assert writer.frames == []
+
+
+@pytest.mark.parametrize("error", [BrokenPipeError, ConnectionResetError])
+@pytest.mark.asyncio
+async def test_closed_monitoring_carrier_stops_heartbeat_cleanly(error):
+    task = asyncio.create_task(
+        run_heartbeat(ClosedWriter(error), AppContext(), interval=0)
+    )
+
+    await asyncio.wait_for(task, timeout=0.2)
+    assert task.exception() is None
 
 
 @pytest.mark.asyncio

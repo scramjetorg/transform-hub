@@ -29,6 +29,14 @@ class RecordingMonitoringWriter:
             self.timeline.append(("monitoring", code, payload))
 
 
+class ResetMonitoringWriter:
+    def __init__(self, error: type[OSError]) -> None:
+        self.error = error
+
+    def write_frame(self, _code: int, _payload: Any) -> None:
+        raise self.error("monitoring carrier closed")
+
+
 class RecordingTextStream:
     def __init__(self, label: str, timeline: list[tuple[Any, ...]]) -> None:
         self.label = label
@@ -73,6 +81,14 @@ async def test_perform_shutdown_delivers_stop_payload_to_handler_unchanged() -> 
 
     assert seen == [{"timeout": 5000, "canCallKeepalive": True}]
     assert writer.frames[-1] == (SEQUENCE_STOPPED, {})
+
+
+@pytest.mark.parametrize("error", [BrokenPipeError, ConnectionResetError])
+@pytest.mark.asyncio
+async def test_perform_shutdown_tolerates_closed_monitoring_carrier(error) -> None:
+    await perform_shutdown(
+        AppContext(), ResetMonitoringWriter(error), {"timeout": 0}
+    )
 
 
 @pytest.mark.asyncio

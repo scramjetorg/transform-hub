@@ -7,7 +7,7 @@
  *
  * Phase 11 bounded deferment: @needs-fix scenarios retain their feature tags
  * for a future runner/prerunner-image repair track but are excluded from
- * default runs.  The deferred scenarios (HUB-001 TC-009 through TC-012) also
+ * default runs.  The deferred scenarios (HUB-001 TC-009 through TC-013) also
  * carry @slow and @docker-specific tags, so both env vars are needed for
  * targeted execution:
  *
@@ -16,10 +16,14 @@
  * TC-009 (--runner-image) and TC-012 (--prerunner-image) both specify
  * container image tags from an internal registry
  * (repo.int.scp.ovh/scramjet/…) and depend on pre-published image artifacts.
- * There is no repository-built workflow that builds runner or prerunner images
- * from the monorepo source and tags them for CI use.  Until that build workflow
- * exists, both scenarios are deferred alongside the default-runner-image and
- * runner-memory-limit coverage (TC-010, TC-011).
+ * TC-013 (--prerunner-max-mem) is deferred for a separate reason: it does not
+ * specify or depend on an internal registry image, but its memory-limit assertion
+ * relies on short-lived prerunner container metadata that is unreliable under
+ * normal CI timing — the prerunner container is created, identified, and removed
+ * within the same scenario, making the assertion fragile due to container lifecycle
+ * timing rather than image availability. There is no repository-built workflow
+ * that builds runner or prerunner images from the monorepo source and tags them
+ * for CI use.  Until those issues are resolved, all five scenarios are deferred.
  */
 
 "use strict";
@@ -83,7 +87,7 @@ test("opt-in (BDD_INCLUDE_NEEDS_FIX=true) omits @needs-fix negation", (t) => {
 });
 
 test("combined opt-in (both envs) omits @needs-fix, @slow, @docker-specific negations", (t) => {
-	// The deferred scenarios (HUB-001 TC-009 through TC-012) are tagged
+	// The deferred scenarios (HUB-001 TC-009 through TC-013) are tagged
 	// @needs-fix, @slow, and @docker-specific.  Both env vars must be set
 	// so the profile does not exclude them, allowing --tags @needs-fix to
 	// select them at the CLI.

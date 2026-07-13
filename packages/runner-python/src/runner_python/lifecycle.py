@@ -171,4 +171,10 @@ async def perform_shutdown(
         else:
             delattr(app_context, "keep_alive")
 
-    monitoring_writer.write_frame(SEQUENCE_STOPPED, {})
+    try:
+        monitoring_writer.write_frame(SEQUENCE_STOPPED, {})
+    except (BrokenPipeError, ConnectionResetError):
+        # The host may have already closed the monitoring carrier while the
+        # stop handlers were unwinding. Preserve shutdown completion while
+        # allowing unrelated writer errors to propagate.
+        return

@@ -12,7 +12,7 @@ import {
     DockerCreateNetworkConfig, DockerNetwork
 } from "./types";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { isAlreadyGoneContainerError } from "./docker-removal";
+import { isAlreadyGoneContainerError, isAlreadyGoneVolumeError } from "./docker-removal";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -304,7 +304,11 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @returns Promise which resolves when volume has been removed.
      */
     async removeVolume(volumeName: DockerVolume): Promise<void> {
-        return this.dockerode.getVolume(volumeName).remove();
+        return this.dockerode.getVolume(volumeName).remove().catch((error: any) => {
+            if (isAlreadyGoneVolumeError(error)) return;
+
+            throw error;
+        });
     }
 
     async listVolumes() {

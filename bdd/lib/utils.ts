@@ -416,6 +416,56 @@ export function isConnectionError(err: any): boolean {
     return false;
 }
 
+/**
+ * Calls `loadCheckFn` with bounded retry for transient connection errors,
+ * supporting the "host is running" and "host is still running" BDD steps.
+ *
+ * Retries when {@link isConnectionError} returns true, within a configurable
+ * window (default 5 seconds) with configurable backoff (default 200ms).
+ * Non-connection errors (e.g. SERVER_ERROR) are thrown immediately.
+ * On deadline exhaustion, throws `lastError` preserving the final diagnostic
+ * error, or a new Error with `exhaustedMsg`.
+ *
+ * The `deadlineMs` and `backoffMs` parameters are exposed for testing;
+ * production callers use the defaults.
+ *
+ * @param loadCheckFn - async function performing the load check call
+ * @param exhaustedMsg - error message when the deadline is exhausted
+ * @param deadlineMs - retry window in milliseconds (default 5000)
+ * @param backoffMs - pause between retries in milliseconds (default 200)
+ */
+export async function retryLoadCheck(
+    loadCheckFn: () => Promise<any>,
+    exhaustedMsg: string,
+    deadlineMs: number = 5_000,
+    backoffMs: number = 200
+): Promise<void> {
+    const deadline = Date.now() + deadlineMs;
+    let lastError: any;
+
+    do {
+        try {
+            const result = await loadCheckFn();
+            assert.ok(result);
+            return;
+        } catch (err: any) {
+            lastError = err;
+
+            if (!isConnectionError(err)) {
+                // Non-connection error — fail immediately so diagnostics
+                // from the host are not swallowed.
+                throw err;
+            }
+
+            if (Date.now() >= deadline) break;
+            await defer(backoffMs);
+        }
+    } while (Date.now() < deadline);
+
+    // Exhausted deadline — preserve the final diagnostic error.
+    throw lastError || new Error(exhaustedMsg);
+}
+
 export function isTemplateCreated(templateType: string, workingDirectory: string) {
     return new Promise<boolean>((resolve, reject) => {
         fs.readdir(workingDirectory, (err, files) => {

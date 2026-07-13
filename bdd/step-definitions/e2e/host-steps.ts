@@ -2,7 +2,7 @@ import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber
 import { strict as assert } from "assert";
 import {
     defer,
-    isConnectionError,
+    retryLoadCheck,
     waitUntilStreamEquals,
     waitUntilStreamStartsWith,
     waitUntilStreamContains,
@@ -351,32 +351,23 @@ Given("host is running", async function(this: CustomWorld) {
 
     // Bounded retry with backoff to handle ECONNREFUSED race between
     // host process printing "Host running!" and HTTP server binding.
-    // Also recognizes ClientError wrappers (code === "CANNOT_CONNECT") and
-    // nested reason.code from QueryError (e.g. err.reason.code === "ECONNREFUSED").
-    const deadline = Date.now() + 5_000;
-    let lastError: Error | undefined;
-
-    do {
-        try {
-            const result = await hostClient.getLoadCheck();
-            assert.ok(result);
-            return;
-        } catch (err: any) {
-            lastError = err;
-            if (!isConnectionError(err)) {
-                throw err;
-            }
-            if (Date.now() >= deadline) break;
-            await defer(200);
-        }
-    } while (Date.now() < deadline);
-
-    // Exhausted deadline — preserve the final diagnostic error.
-    throw lastError || new Error("Host did not become ready");
+    // Delegates to the shared retryLoadCheck helper for consistent
+    // transient-connection retry semantics across all host steps.
+    await retryLoadCheck(
+        () => hostClient.getLoadCheck(),
+        "Host did not become ready"
+    );
 });
 
 Then("host is still running", async function(this: CustomWorld) {
-    assert.ok(await getHostClient(this).getLoadCheck());
+    // Bounded retry with backoff to handle transient connection errors
+    // between host keep-alive checks (same semantics as "host is running").
+    // Delegates to the shared retryLoadCheck helper for consistent
+    // transient-connection retry semantics across all host steps.
+    await retryLoadCheck(
+        () => getHostClient(this).getLoadCheck(),
+        "Host is no longer running"
+    );
 });
 
 When("wait for {string} ms", async (timeoutMs: number) => {

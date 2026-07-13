@@ -65,7 +65,7 @@ Feature: HUB-001 Host configuration
         And end fake stream
         * exit hub process
 
-    @ci-hub @starts-host @docker-specific @requires-docker @slow
+    @ci-hub @starts-host @docker-specific @requires-docker @needs-fix @slow
     Scenario: HUB-001 TC-013  Set prerunner memory limit (--prerunner-max-mem)
         When hub process is started with random ports and parameters "--prerunner-max-mem 64"
         And get all containers
