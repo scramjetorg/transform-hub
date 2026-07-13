@@ -383,6 +383,39 @@ export async function waitUntilStreamStartsWith(stream: Readable, expected: stri
     return response;
 }
 
+/**
+ * Checks whether an error represents a transient connection failure that should
+ * be retried.  Recognises bare Node.js system error codes (ECONNREFUSED, etc.),
+ * ClientError wrapper code CANNOT_CONNECT, and nested reason.code from the
+ * underlying QueryError.
+ *
+ * The nested reason is only consulted when the top-level .code is absent,
+ * ensuring HTTP/server errors (e.g. SERVER_ERROR, NOT_FOUND) are never
+ * misidentified as connection errors through a coincidental reason.code match.
+ *
+ * @param err - caught error object (any shape with optional .code / .reason)
+ * @returns true when the error is a retryable connection error
+ */
+export function isConnectionError(err: any): boolean {
+    if (!err) return false;
+
+    const connectionErrors = new Set([
+        "ECONNREFUSED", "ECONNRESET", "ECONNABORTED", "ETIMEDOUT", "ENOTFOUND",
+        "CANNOT_CONNECT"
+    ]);
+
+    // Direct match on top-level code (handles bare Node.js system errors
+    // and ClientError codes including CANNOT_CONNECT).
+    if (err.code && connectionErrors.has(err.code)) return true;
+
+    // Defense-in-depth: check nested reason.code when the top-level code
+    // is absent — covers edge cases where a wrapper error lacks .code but
+    // the underlying reason carries the system error code.
+    if (!err.code && err.reason?.code && connectionErrors.has(err.reason.code)) return true;
+
+    return false;
+}
+
 export function isTemplateCreated(templateType: string, workingDirectory: string) {
     return new Promise<boolean>((resolve, reject) => {
         fs.readdir(workingDirectory, (err, files) => {

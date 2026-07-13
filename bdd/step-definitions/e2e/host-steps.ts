@@ -2,6 +2,7 @@ import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber
 import { strict as assert } from "assert";
 import {
     defer,
+    isConnectionError,
     waitUntilStreamEquals,
     waitUntilStreamStartsWith,
     waitUntilStreamContains,
@@ -332,7 +333,30 @@ Given("host is running", async function(this: CustomWorld) {
         hostClient = this.resources.hostClient = new HostClient(apiUrl);
     }
 
-    assert.ok(await hostClient.getLoadCheck());
+    // Bounded retry with backoff to handle ECONNREFUSED race between
+    // host process printing "Host running!" and HTTP server binding.
+    // Also recognizes ClientError wrappers (code === "CANNOT_CONNECT") and
+    // nested reason.code from QueryError (e.g. err.reason.code === "ECONNREFUSED").
+    const deadline = Date.now() + 5_000;
+    let lastError: Error | undefined;
+
+    do {
+        try {
+            const result = await hostClient.getLoadCheck();
+            assert.ok(result);
+            return;
+        } catch (err: any) {
+            lastError = err;
+            if (!isConnectionError(err)) {
+                throw err;
+            }
+            if (Date.now() >= deadline) break;
+            await defer(200);
+        }
+    } while (Date.now() < deadline);
+
+    // Exhausted deadline — preserve the final diagnostic error.
+    throw lastError || new Error("Host did not become ready");
 });
 
 Then("host is still running", async function(this: CustomWorld) {

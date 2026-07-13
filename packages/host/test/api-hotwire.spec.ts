@@ -491,10 +491,15 @@ test("InstanceAPI input and kill unit handlers return v1 errors", async t => {
 test("InstanceAPI delegates immediate cleanup to CSI kill for terminal idempotence", async t => {
     const recorder = new RouteRecorder();
     const calls: unknown[] = [];
+    let infoCalls = 0;
     const csi = {
         ...createCsiStub(),
         status: InstanceStatus.COMPLETED,
-        getInfo: () => ({ id: "inst-1" }),
+        getInfo: () => {
+            infoCalls++;
+            if (infoCalls > 1) throw new Error("instance finalized");
+            return { id: "inst-1" };
+        },
         kill: async (options: unknown) => calls.push(options)
     };
 
@@ -503,6 +508,7 @@ test("InstanceAPI delegates immediate cleanup to CSI kill for terminal idempoten
     const killHandler = recorder.require("op", "/_kill", "post").handler as Function;
     t.deepEqual(await killHandler({ body: { removeImmediately: true } }), { opStatus: "Accepted", id: "inst-1" });
     t.deepEqual(calls, [{ removeImmediately: true }]);
+    t.is(infoCalls, 1);
 });
 
 test("InstanceAPI unit handlers cover events input event and duplex behavior", async t => {

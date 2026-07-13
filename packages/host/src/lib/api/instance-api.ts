@@ -236,6 +236,9 @@ export class InstanceAPI {
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Instance not running" };
         }
 
+        const terminalImmediate = removeImmediately && [InstanceStatus.COMPLETED, InstanceStatus.ERRORED, InstanceStatus.GONE].includes(this.csi.status);
+        const terminalInfo = terminalImmediate ? this.csi.getInfo() : undefined;
+
         try {
             await this.csi.kill({ removeImmediately });
         } catch (e: any) {
@@ -245,7 +248,7 @@ export class InstanceAPI {
 
         return {
             opStatus: ReasonPhrases.ACCEPTED,
-            ...this.csi.getInfo()
+            ...(terminalImmediate ? terminalInfo : this.csi.getInfo())
         };
     }
 }

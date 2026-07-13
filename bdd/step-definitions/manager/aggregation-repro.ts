@@ -684,10 +684,12 @@ When("I send a {string} request through the aggregation Manager proxy to {string
     endpoint: string,
     headersJson: string
 ) {
-    this.response = await fetch(aggregationManagerProxyUrl(this, endpoint), {
+    this.response = await rawHttpRequest(
         method,
-        headers: JSON.parse(headersJson) as Record<string, string>
-    });
+        aggregationManagerProxyUrl(this, endpoint),
+        undefined,
+        JSON.parse(headersJson) as Record<string, string>
+    );
 });
 
 When("I send a {string} request through the aggregation Manager proxy to {string} with body {string} and headers {string}", async function (
@@ -736,11 +738,12 @@ When("I send a {string} request through the aggregation MultiManager root to {st
     body: string,
     headersJson: string
 ) {
-    this.response = await fetch(aggregationRootUrl(this, endpoint), {
+    this.response = await rawHttpRequest(
         method,
+        aggregationRootUrl(this, endpoint),
         body,
-        headers: JSON.parse(headersJson) as Record<string, string>
-    });
+        JSON.parse(headersJson) as Record<string, string>
+    );
 });
 
 When("I send a {string} request to aggregation hub {string} at {string} with headers {string}", async function (
@@ -750,11 +753,12 @@ When("I send a {string} request to aggregation hub {string} at {string} with hea
     endpoint: string,
     headersJson: string
 ) {
-    this.response = await fetch(aggregationHubUrl(this, hubName, endpoint), {
+    this.response = await rawHttpRequest(
         method,
-        headers: JSON.parse(headersJson) as Record<string, string>,
-        redirect: "manual"
-    });
+        aggregationHubUrl(this, hubName, endpoint),
+        undefined,
+        JSON.parse(headersJson) as Record<string, string>
+    );
 });
 
 When("source sequence {string} calls target sequence {string} through the aggregation Manager", async function (
@@ -768,11 +772,12 @@ When("source sequence {string} calls target sequence {string} through the aggreg
     const targetHub = encodeURIComponent(targetHubName);
     const targetInstance = encodeURIComponent(targetInstanceName);
 
-    this.response = await fetch(aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`), {
-        method: "POST",
-        body: "sequence-to-sequence",
-        headers: { "Content-Type": "text/plain" }
-    });
+    this.response = await rawHttpRequest(
+        "POST",
+        aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`),
+        "sequence-to-sequence",
+        { "Content-Type": "text/plain" }
+    );
 });
 
 When("I query hub {string} for its sequences", async function (

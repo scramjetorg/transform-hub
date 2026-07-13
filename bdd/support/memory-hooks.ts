@@ -147,6 +147,25 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     },
 
     // -----------------------------------------------------------------------
+    // E2E-001 TC-002: completed-sequence stdio
+    //
+    // Three valid serial strict runs measured 833792, 688720, and 832952
+    // bytes. The bounded range is 145072 bytes; allowance is the maximum
+    // 309504-byte excess over the 524288-byte base, rounded to 311296 bytes
+    // (the next 4KiB boundary), scoped to this exact scenario.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "e2e/E2E-001-samples.feature",
+        line: 4,
+        scenarioName: "E2E-001 TC-002 Test stdio available after the sequence is completed",
+        allowanceBytes: 311_296,
+        reason: "Three valid serial strict guarded Docker runs measured 833792, 688720, and 832952 "
+            + "bytes (bounded 145072-byte range). Allowance is the maximum 309504-byte excess over "
+            + "the 524288-byte base rounded to the next 4KiB boundary, scoped to this exact feature, "
+            + "line, and scenario name.",
+    },
+
+    // -----------------------------------------------------------------------
     // E2E-014 TC-003: Exceptions thrown in python sequences appear in stderr
     //
     // Scenario creates a Python child-process runner and verifies stderr
