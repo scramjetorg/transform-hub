@@ -1,7 +1,7 @@
 import test from "ava";
 import { CSIController } from "../src/lib/csi-controller";
 import { CommunicationHandler } from "@scramjet/model";
-import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
 import { ReadableStream, WritableStream } from "@scramjet/runtime-types";
@@ -69,6 +69,28 @@ test("CSI immediate kill sends KILL and cancels lifetime extension", async t => 
     t.is(controller.status, InstanceStatus.KILLING);
     t.is(controller.instanceLifetimeExtensionDelay, 0);
     t.deepEqual(calls, [[RunnerMessageCode.KILL, {}]]);
+});
+
+test("CSI finalization destroys the bound API stdin and input request bodies", async t => {
+    const controller = createController({ instanceLifetimeExtensionDelay: 0 });
+    const upstreams = Array.from({ length: 9 }, () => new PassThrough());
+    const downstreams = Array.from({ length: 9 }, () => new PassThrough());
+
+    Object.assign(controller, {
+        upStreams: upstreams,
+        downStreams: downstreams,
+        logger: { info: () => undefined, end: () => undefined }
+    });
+
+    const input = await controller.getInput("application/octet-stream");
+
+    await controller.finalize();
+
+    t.is(input, downstreams[CC.IN]);
+    t.true(upstreams[CC.STDIN].destroyed);
+    t.true(downstreams[CC.IN].destroyed);
+    t.true(upstreams[1].writableEnded);
+    t.true(upstreams[6].writableEnded);
 });
 
 test("CSI immediate kill is idempotent after completion", async t => {

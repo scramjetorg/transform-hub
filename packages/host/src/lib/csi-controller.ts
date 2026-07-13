@@ -457,7 +457,12 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     async finalize(immediate: boolean = false) {
         this.upStreams![CC.STDIN].unpipe();
-        this.upStreams![CC.IN].unpipe();
+        this.downStreams![CC.IN].unpipe();
+
+        // These streams are request bodies for the runner routes. Unpiping alone
+        // leaves an active HTTP upload waiting for EOF after runner termination.
+        this.upStreams![CC.STDIN].destroy();
+        this.downStreams![CC.IN].destroy();
 
         if (immediate) {
             await defer(runnerExitDelay);
