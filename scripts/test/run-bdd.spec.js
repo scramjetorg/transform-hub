@@ -456,3 +456,12 @@ test("run-bdd-docker.js samples quickly when chunk policy is active", (t) => {
 	t.true(src.includes('process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 250 : 1000'));
 	t.true(src.includes("BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json"));
 });
+
+test("run-bdd-docker.js mounts separate timing report and suppresses memory summary in timing-only mode", t => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+	t.true(src.includes("BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json"));
+	t.true(src.includes('if (CHUNK_MEMORY_POLICY === "off") return "PASS"'));
+});

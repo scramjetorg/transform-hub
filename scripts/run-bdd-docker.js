@@ -139,6 +139,7 @@ dockerRunArgs.push(
 dockerRunArgs.push(...collectEnvForwardArgs());
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");
+dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json");
 
 // Inject NODE_OPTIONS with --expose-gc when BDD memory guard is enabled.
 // bddNodeOptions() picks up BDD_NODE_OPTIONS from the parent env (already
@@ -421,6 +422,12 @@ const printContainerSummary = async (cid, exitCode) => {
     } catch {
         childMetrics = null;
     }
+    let timingMetrics = null;
+    try {
+        timingMetrics = JSON.parse(fs.readFileSync(path.join(tmpDir, "chunk-timing.json"), "utf8"));
+    } catch {
+        timingMetrics = null;
+    }
     const childContainer = childMetrics?.chunkContainer;
     if (childContainer) {
         workingSetBaseline = childContainer.readyBytes;
@@ -429,6 +436,15 @@ const printContainerSummary = async (cid, exitCode) => {
             workingSetPeak = workingSetPeak === null ? childContainer.peakBytes : Math.max(workingSetPeak, childContainer.peakBytes);
         }
     }
+
+    const timing = timingMetrics;
+    if (timing?.enabled) {
+        const top = (entries) => (entries?.[0] ? `${entries[0].name || entries[0].phase}=${entries[0].durationMs.toFixed(1)}ms` : "none");
+        process.stderr.write(`[run-bdd-docker] timing top scenario=${top(timing.top?.scenarios)} step=${top(timing.top?.steps)} cleanup=${top(timing.top?.cleanup)}\n`);
+    }
+
+    // Timing-only runs must not emit memory diagnostics or summaries.
+    if (CHUNK_MEMORY_POLICY === "off") return "PASS";
 
     // Format helpers.
     const fmt = (v) => (v !== null && v !== undefined ? `${v} bytes` : "unavailable");

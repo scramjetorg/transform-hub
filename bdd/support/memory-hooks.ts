@@ -24,7 +24,7 @@
  *   SCRAMJET_MEMORY_SKIP_REASON – non-empty reason when SKIP=1
  */
 
-import { Before, After, AfterAll } from "@cucumber/cucumber";
+import { Before, BeforeStep, AfterStep, After, AfterAll } from "@cucumber/cucumber";
 import { writeFileSync } from "fs";
 
 import {
@@ -42,6 +42,7 @@ import {
     cleanupWorldResources,
 } from "../../scripts/lib/bdd-memory-hooks-lib";
 import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
+const { createChunkTiming } = require("../../scripts/lib/bdd-chunk-timing.js");
 
 // ---------------------------------------------------------------------------
 // Per-scenario memory exceptions (narrowly scoped)
@@ -135,12 +136,16 @@ const BASELINE_KEY = "__memoryBaseline";
 const BEFORE_USAGE_KEY = "__memoryBeforeUsage";
 const getMemoryRegistry = () => require("../lib/memory-registry").memoryRegistry;
 let chunkSamplingTimer: ReturnType<typeof setInterval> | undefined;
+const chunkTiming = createChunkTiming(["1", "true", "yes"].includes(String(process.env.SCRAMJET_BDD_CHUNK_TIMING).toLowerCase()));
 
 // ---------------------------------------------------------------------------
 // Before – baseline
 // ---------------------------------------------------------------------------
 
-Before(async function () {
+Before(async function (scenario: any) {
+    const pickle = scenario?.pickle || this.pickle;
+    chunkTiming.startScenario(this, { name: pickle?.name, uri: pickle?.uri });
+    this.__chunkTimingStepIndex = 0;
     const chunkMetricsEnabled = chunkMemoryPolicy !== "off" && !memorySkip.skip;
     if ((!isBddMemoryGuardEnabled() && !chunkMetricsEnabled) || memorySkip.skip) {
         return;
@@ -170,12 +175,44 @@ Before(async function () {
     }
 });
 
+BeforeStep(function (this: any, step: any) {
+    const pickle = step?.pickle || this.pickle;
+    const pickleStep = pickle?.steps?.[this.__chunkTimingStepIndex++] || step?.pickleStep || step;
+    this.__chunkTimingStep = chunkTiming.startStep(this, {
+        name: pickleStep?.text || pickleStep?.name || step?.text || step?.name,
+        uri: pickleStep?.uri || step?.pickleStep?.uri || step?.uri,
+    });
+});
+
+AfterStep(function (this: any, step: any) {
+    chunkTiming.finishStep(this.__chunkTimingStep, step?.result);
+    delete this.__chunkTimingStep;
+});
+
+// This is defined before the memory After hook. Cucumber runs After hooks in
+// reverse definition order, so scenario timing includes cleanup and failures.
+After(function (this: any, scenario: any) {
+    chunkTiming.finishScenario(this, {
+        name: scenario?.pickle?.name,
+        uri: scenario?.pickle?.uri,
+        status: scenario?.result?.status,
+    });
+});
+
 // ---------------------------------------------------------------------------
 // After – measure and fail if threshold exceeded
 // ---------------------------------------------------------------------------
 
 After(async function (this: any, scenario: any) {
     if (!isBddMemoryGuardEnabled() || memorySkip.skip) {
+        if (chunkTiming.enabled && !memorySkip.skip) {
+            const cleanupTiming = chunkTiming.startCleanup(this, "world-cleanup");
+            try {
+                cleanupWorldResources(this);
+            } finally {
+                chunkTiming.finishCleanup(cleanupTiming);
+            }
+        }
         return;
     }
 
@@ -214,11 +251,14 @@ After(async function (this: any, scenario: any) {
 
     // ---- Cleanup world resources before final measurement ----
     const cleanupErrors: Error[] = [];
+    const cleanupTiming = chunkTiming.startCleanup(this, "world-cleanup");
 
     try {
         cleanupWorldResources(this);
     } catch (err: any) {
         cleanupErrors.push(err);
+    } finally {
+        chunkTiming.finishCleanup(cleanupTiming);
     }
 
     // Hook-order instrumentation is intentionally after complete-world
@@ -293,7 +333,7 @@ After(async function (this: any, scenario: any) {
 // No new threshold enforcement – purely observational.
 
 AfterAll(async function () {
-    if ((!isBddMemoryGuardEnabled() && chunkMemoryPolicy === "off") || memorySkip.skip) {
+    if ((!isBddMemoryGuardEnabled() && chunkMemoryPolicy === "off" && !chunkTiming.enabled) || memorySkip.skip) {
         return;
     }
 
@@ -302,22 +342,27 @@ AfterAll(async function () {
         chunkSamplingTimer = undefined;
     }
 
+    // Snapshot timing before the final GC, then release its retained records so
+    // timing allocations cannot affect enforced memory measurements.
+    const timing = chunkTiming.snapshotAndClear();
     if (isBddMemoryGuardEnabled()) await drainAndGc();
 
     if (chunkMemoryPolicy !== "off") {
         await getMemoryRegistry().sampleAll();
     }
-
-    const finalHeap = measureMemoryUsage();
-    const metrics = getMemoryRegistry().computeChunkSummary();
-    metrics.parentHeap.finalBytes = finalHeap;
-    metrics.parentHeap.finalGrowthBytes = metrics.parentHeap.baselineBytes === null ? null : finalHeap - metrics.parentHeap.baselineBytes;
-    metrics.parentHeap.peakGrowthBytes = metrics.parentHeap.baselineBytes === null || metrics.parentHeap.peakBytes === null ? null : metrics.parentHeap.peakBytes - metrics.parentHeap.baselineBytes;
-    const reportPath = process.env.BDD_CHUNK_MEMORY_REPORT_FILE;
-    if (reportPath && chunkMemoryPolicy !== "off") {
-        writeFileSync(reportPath, JSON.stringify(metrics, null, 2));
+    const memoryMetricsEnabled = isBddMemoryGuardEnabled() || chunkMemoryPolicy !== "off";
+    if (memoryMetricsEnabled) {
+        const finalHeap = measureMemoryUsage();
+        const metrics = getMemoryRegistry().computeChunkSummary();
+        metrics.parentHeap.finalBytes = finalHeap;
+        metrics.parentHeap.finalGrowthBytes = metrics.parentHeap.baselineBytes === null ? null : finalHeap - metrics.parentHeap.baselineBytes;
+        metrics.parentHeap.peakGrowthBytes = metrics.parentHeap.baselineBytes === null || metrics.parentHeap.peakBytes === null ? null : metrics.parentHeap.peakBytes - metrics.parentHeap.baselineBytes;
+        const reportPath = process.env.BDD_CHUNK_MEMORY_REPORT_FILE;
+        if (reportPath && chunkMemoryPolicy !== "off") writeFileSync(reportPath, JSON.stringify(metrics, null, 2));
+        getMemoryRegistry().printChunkSummary(finalHeap);
     }
-    getMemoryRegistry().printChunkSummary(finalHeap);
+    const timingReportPath = process.env.BDD_CHUNK_TIMING_REPORT_FILE;
+    if (timing && timingReportPath) writeFileSync(timingReportPath, JSON.stringify(timing, null, 2));
 });
 
 // ---------------------------------------------------------------------------
