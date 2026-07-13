@@ -37,7 +37,7 @@ The tests check topic functionalities, where we send and receive data from /topi
     @ci-api
     Scenario: E2E-013 TC-005 Send data from file to STH SD API and get it from STH SD API
         Given host is running
-        Then send data from file "../dist/avengers-names-output/avengers.json" named "marvel"
+        Then send data from file "data/avengers.json" named "marvel"
         And get data named "marvel" without waiting for the end
         And host is still running
 

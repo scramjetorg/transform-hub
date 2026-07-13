@@ -970,6 +970,7 @@ Then("confirm data defined as {string} will be received", async function(this: C
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
+    await fs.promises.access(path);
     const readStream = fs.createReadStream(path);
 
     await hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
