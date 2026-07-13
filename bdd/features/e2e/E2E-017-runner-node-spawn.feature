@@ -58,9 +58,10 @@ Feature: Runner-node spawn-isolation regression coverage
         And the response body reports at least 2 request body chunks
         And host is still running
 
-    @ci-runner-node @slow
+    @ci-runner-node @starts-host @slow
     Scenario: E2E-017 TC-005 STOP with keepAlive matches current behaviour under runner-node spawn isolation
-        Given host is running
+        When hub process is started with random ports and parameters "--instance-lifetime-extension-delay 100 -K --sequences-root data/sequences/ --identify-existing --runtime-adapter=process"
+        Then host is running
         When sequence "data/sequences/bdd-packages/can-keep-alive.tar.gz" loaded
         And instance started with arguments "SEND_KEEPALIVE"
         And wait for instance healthy is "true"

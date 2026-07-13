@@ -149,6 +149,10 @@ test.serial("handlePruneAction failed delete retains session state", async (t) =
     // Assert: error thrown AND session state preserved
     t.truthy(err);
     t.regex(err!.message, /not been deleted/i);
+    // Enhanced diagnostics: failure ID and reason must appear in the message.
+    t.regex(err!.message, /seq-keep/);
+    t.regex(err!.message, /API failure/);
+    t.regex(err!.message, /Attempted 1/);
     t.is(sessionConfig.lastSequenceId, "seq-keep", "lastSequenceId must survive failed prune");
     t.is(sessionConfig.lastInstanceId, "inst-keep", "lastInstanceId must survive failed prune");
 });
@@ -182,6 +186,10 @@ test.serial("handlePruneAction non-empty relist retains session state", async (t
     // Assert: error thrown, session state preserved, listSequences called twice
     t.truthy(err);
     t.regex(err!.message, /not been deleted/i);
+    // Enhanced diagnostics: remaining IDs appear, no failures listed, attempt count present.
+    t.regex(err!.message, /seq-keep/);
+    t.regex(err!.message, /Attempted 1/);
+    t.false(err!.message.includes("Failed:"), "no failures listed when all deletions succeeded");
     t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
     t.is(sessionConfig.lastSequenceId, "seq-keep", "lastSequenceId must survive non-empty relist");
     t.is(sessionConfig.lastInstanceId, "inst-keep", "lastInstanceId must survive non-empty relist");
@@ -219,4 +227,107 @@ test.serial("handlePruneAction successful prune clears session state", async (t)
     t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
     t.is(sessionConfig.lastSequenceId, "", "lastSequenceId must be cleared after successful prune");
     t.is(sessionConfig.lastInstanceId, "", "lastInstanceId must be cleared after successful prune");
+});
+
+/**
+ * Tests that handlePruneAction succeeds even when individual delete calls
+ * throw transient errors, as long as the re-list confirms the list is empty.
+ *
+ * This is the key behavioral difference from the previous Promise.all-fail-fast
+ * approach: all-settled waits for every deletion, and the outcome is determined
+ * by the re-list, not by individual per-sequence errors.
+ */
+test.serial("handlePruneAction transient delete errors tolerated when relist empty", async (t) => {
+    // Arrange: session has known IDs
+    sessionConfig.setLastSequenceId("seq-transient");
+    sessionConfig.setLastInstanceId("inst-transient");
+
+    let callCount = 0;
+    const mockHostClient = {
+        async listSequences() {
+            callCount++;
+            if (callCount === 1) {
+                return [{ id: "seq-transient", instances: [], config: { name: "test" } }];
+            }
+            return []; // Re-list returns empty — all deletions actually succeeded
+        },
+        async deleteSequence(_id: string, _opts?: { force: boolean }) {
+            // Simulate a transient error that still allows the sequence to be deleted
+            throw new Error("transient API error");
+        },
+    } as any;
+
+    // Act — should NOT throw because re-list is empty
+    await t.notThrowsAsync(() =>
+        handlePruneAction({ force: false }, mockHostClient as any)
+    );
+
+    // Assert: session cleared despite transient delete errors
+    t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
+    t.is(sessionConfig.lastSequenceId, "", "lastSequenceId must be cleared after transient errors with empty relist");
+    t.is(sessionConfig.lastInstanceId, "", "lastInstanceId must be cleared after transient errors with empty relist");
+});
+
+/**
+ * Tests that handlePruneAction diagnostics include per-sequence failure
+ * IDs and reasons, and prove all deletions were attempted even when some
+ * deletions failed early.
+ */
+test.serial("handlePruneAction diagnostics show per-sequence failures and attempt count", async (t) => {
+    // Arrange: session has known IDs
+    sessionConfig.setLastSequenceId("seq-diag");
+    sessionConfig.setLastInstanceId("inst-diag");
+
+    let callCount = 0;
+    const deleteAttempts: string[] = [];
+    const mockHostClient = {
+        async listSequences() {
+            callCount++;
+            // First list: three sequences; re-list returns two (one was deleted)
+            if (callCount === 1) {
+                return [
+                    { id: "seq-a", instances: [], config: { name: "a" } },
+                    { id: "seq-b", instances: [], config: { name: "b" } },
+                    { id: "seq-c", instances: [], config: { name: "c" } },
+                ];
+            }
+            return [
+                { id: "seq-a", instances: [], config: { name: "a" } },
+                { id: "seq-c", instances: [], config: { name: "c" } },
+            ];
+        },
+        async deleteSequence(id: string, _opts?: { force: boolean }) {
+            deleteAttempts.push(id);
+            // seq-a succeeds, seq-b fails, seq-c fails
+            if (id === "seq-b") throw new Error("permission denied");
+            if (id === "seq-c") throw new Error("conflict: instance running");
+            return {};
+        },
+    } as any;
+
+    // Act
+    const err = await t.throwsAsync(() =>
+        handlePruneAction({ force: false }, mockHostClient as any)
+    );
+
+    // Assert: error thrown, diagnostics include all failure details
+    t.truthy(err);
+    t.regex(err!.message, /not been deleted/i);
+    t.regex(err!.message, /Attempted 3/);
+    // All three deletion attempts recorded (prove no fail-fast).
+    t.is(deleteAttempts.length, 3, "all 3 deletion attempts must be recorded (no fail-fast)");
+    t.deepEqual(deleteAttempts, ["seq-a", "seq-b", "seq-c"], "all sequence IDs received delete calls");
+    // Failure IDs and reasons in the message.
+    t.regex(err!.message, /seq-b/);
+    t.regex(err!.message, /permission denied/);
+    t.regex(err!.message, /seq-c/);
+    t.regex(err!.message, /conflict: instance running/);
+    // Remaining IDs in the message.
+    t.regex(err!.message, /Remaining: \[seq-a, seq-c\]/);
+    // seq-a not in failure list (it succeeded).
+    t.regex(err!.message, /Failed: \[seq-b/);
+    // Session state preserved.
+    t.is(sessionConfig.lastSequenceId, "seq-diag", "lastSequenceId must survive failed prune");
+    t.is(sessionConfig.lastInstanceId, "inst-diag", "lastInstanceId must survive failed prune");
+    t.is(callCount, 2, "listSequences must be called twice (initial + relist)");
 });

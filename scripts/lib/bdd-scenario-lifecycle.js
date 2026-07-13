@@ -11,14 +11,26 @@ class ScenarioLifecycle {
     ownChild(child, label, options = {}) {
         if (!child || !child.pid) return child;
         this.registry.trackChildProcess(child, label);
-        this.resources.add({ kind: "child", child, label, group: options.group === true });
+        this.resources.add({
+            kind: "child",
+            child,
+            label,
+            group: options.group === true,
+            onStop: typeof options.onStop === "function" ? options.onStop : null
+        });
         return child;
     }
 
     ownProcess(pid, label, options = {}) {
         if (!pid) return pid;
         this.registry.trackProcess(pid, label);
-        this.resources.add({ kind: "pid", pid, label, group: options.group === true });
+        this.resources.add({
+            kind: "pid",
+            pid,
+            label,
+            group: options.group === true,
+            onStop: typeof options.onStop === "function" ? options.onStop : null
+        });
         return pid;
     }
 
@@ -70,6 +82,8 @@ class ScenarioLifecycle {
 
     async cleanupResource(resource) {
         if (resource.kind === "container") {
+            // Fire the pre-stop callback before the user-provided stop operation.
+            if (typeof resource.onStop === "function") resource.onStop();
             // Mark immediately before invoking the owner-provided stop operation.
             this.registry.markContainersAsExpectedToExit([resource.containerId]);
             if (resource.stop) await resource.stop();
@@ -81,6 +95,12 @@ class ScenarioLifecycle {
         if (!pid || (child && child.exitCode !== null)) return;
         // A process which exits before this point remains visible as spontaneous.
         if (!isAlive(pid)) return;
+        // Fire the resource-scoped pre-stop callback only now, after verifying
+        // the process is still alive.  A process that crashed before cleanup
+        // must NOT have onStop invoked: the exit-time assertion must still fire
+        // for genuine startup failures.  Deliberate stops, on the other hand,
+        // need onStop to suppress that assertion before the signal is sent.
+        if (typeof resource.onStop === "function") resource.onStop();
         this.registry.markProcessesAsExpectedToExit([pid]);
         await stopProcess(resource, this.graceMs);
     }

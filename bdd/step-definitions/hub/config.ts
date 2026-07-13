@@ -128,8 +128,16 @@ async function startHubWithParams(world: CustomWorld, params: string[], noDefaul
         if (!hostUtils.host) throw new Error("Missing host from utils.");
         // Register before awaiting readiness so startup-failure exits remain owned.
         resources.hub = hostUtils.host;
-        world.scenarioLifecycle.ownChild(hostUtils.host, "hub", { group: true });
+        world.scenarioLifecycle.ownChild(hostUtils.host, "hub", {
+            group: true,
+            // Pre-stop callback: notify HostUtils that this Hub is being
+            // deliberately stopped so the startup-exit assertion is suppressed.
+            // Fires immediately before stop in both cleanup() and stop() paths,
+            // scoped to this resource only (no early marking of others).
+            onStop: () => hostUtils.markStopExpected(),
+        });
         if (expectedHubExitCode !== undefined) world.scenarioLifecycle.expect(hostUtils.host);
+
         out = await spawnPromise;
     } finally {
         if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];

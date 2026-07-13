@@ -32,10 +32,26 @@ export class HostUtils {
     expectedExitCode?: number;
     output = "";
 
+    /**
+     * When true, the Hub is being deliberately stopped (via stopHost or
+     * scenario-lifecycle cleanup) so the startup-exit assertion must not fire.
+     * Set via markStopExpected().
+     */
+    expectedStop = false;
+
     hostUrl: string;
 
     constructor() {
         this.hostUrl = process.env.SCRAMJET_HOST_URL || "";
+    }
+
+    /**
+     * Mark the Hub stop as expected, so the startup-exit assertion in the
+     * 'exit' handler does not fire.  Call before any deliberate stop
+     * (stopHost or scenario-lifecycle cleanup).
+     */
+    markStopExpected() {
+        this.expectedStop = true;
     }
 
     async check() {
@@ -62,6 +78,8 @@ export class HostUtils {
         if (this.hostProcessStopped) {
             return;
         }
+
+        this.markStopExpected();
 
         const host = this.host;
 
@@ -230,7 +248,11 @@ export class HostUtils {
                 console.log("host process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
 
-                if (code === 1 && this.expectedExitCode !== 1) {
+                // Skip startup-failure assertion when the Hub is being
+                // deliberately stopped (stopHost or scenario-lifecycle
+                // cleanup).  The expectedStop flag is set by markStopExpected()
+                // before any intentional termination.
+                if (code === 1 && this.expectedExitCode !== 1 && !this.expectedStop) {
                     assert.fail();
                 }
 

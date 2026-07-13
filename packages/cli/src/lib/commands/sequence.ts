@@ -40,24 +40,47 @@ export async function handlePruneAction(options: Record<string, unknown>, hostCl
         return;
     }
 
-    let fullSuccess = true;
+    // Wait for all deletions to settle (no fail-fast).
+    const deletionResults = await Promise.allSettled(seqs.map(async (seq: { id: string }) => hostClient.deleteSequence(seq.id, { force })));
 
-    await Promise.all(seqs.map(async (seq: { id: string }) => hostClient.deleteSequence(seq.id, { force }))).catch((error: any) => {
-        fullSuccess = false;
+    // Extract rejection diagnostics for actionable error reporting.
+    const failures: { id: string; reason: unknown }[] = [];
 
-        if (process.env.NODE_ENV === "development") {
-            displayMessage("error stack", error?.stack);
+    for (let i = 0; i < deletionResults.length; i++) {
+        if (deletionResults[i].status === "rejected") {
+            failures.push({ id: seqs[i].id, reason: (deletionResults[i] as PromiseRejectedResult).reason });
         }
-    });
-
-    if (!fullSuccess) {
-        throw new Error("Some Sequences may have not been deleted.");
     }
 
+    // Re-list after all deletions complete.
     seqs = await hostClient.listSequences();
 
     if (seqs.length) {
-        throw new Error("Some Sequences may have not been deleted.");
+        // Sequences remain — preserve the failure with full diagnostics.
+        const remainingIds = seqs.map((s) => s.id).join(", ");
+        const attempted = deletionResults.length;
+
+        let message = `Some Sequences may have not been deleted. Attempted ${attempted} deletion(s).`;
+
+        if (failures.length > 0) {
+            message += ` Failed: [${failures.map(
+                (f) => `${f.id} (${f.reason instanceof Error ? f.reason.message : String(f.reason)})`
+            ).join("; ")}].`;
+        }
+
+        message += ` Remaining: [${remainingIds}].`;
+
+        if (process.env.NODE_ENV === "development") {
+            for (const f of failures) {
+                if (f.reason instanceof Error && f.reason.stack) {
+                    displayMessage(`Deletion error for ${f.id}:`, f.reason.stack);
+                } else {
+                    displayMessage(`Deletion error for ${f.id}:`, String(f.reason));
+                }
+            }
+        }
+
+        throw new Error(message);
     }
 
     // Only clear session state after confirmed empty re-list.

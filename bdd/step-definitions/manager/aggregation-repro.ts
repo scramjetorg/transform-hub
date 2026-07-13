@@ -58,11 +58,24 @@ async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 
 }
 
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
-    for (const proc of aggregationProcesses(this)) {
-        await this.scenarioLifecycle.stop(proc);
+    const errors: Error[] = [];
+
+    // Stop owned aggregation processes concurrently with safe error aggregation.
+    const results = await Promise.allSettled(
+        aggregationProcesses(this).map(proc => this.scenarioLifecycle.stop(proc))
+    );
+    for (const result of results) {
+        if (result.status === "rejected") {
+            errors.push(result.reason instanceof Error ? result.reason : new Error(String(result.reason)));
+        }
     }
+
     if (this.resources.aggMMProcess) {
-        await this.scenarioLifecycle.stop(this.resources.aggMMProcess);
+        try {
+            await this.scenarioLifecycle.stop(this.resources.aggMMProcess);
+        } catch (error) {
+            errors.push(error instanceof Error ? error : new Error(String(error)));
+        }
         delete this.resources.aggMMProcess;
     }
 
@@ -74,6 +87,15 @@ After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld)
     delete this.resources.aggProcesses;
     delete this.resources.aggHubs;
     this.resources.aggReproCleanup = true;
+
+    if (errors.length > 0) {
+        const aggregate = new Error(
+            `Aggregation repro cleanup: ${errors.length} process(es) failed to stop: ${errors.map(e => e.message).join("; ")}`
+        );
+
+        (aggregate as any).cleanupErrors = errors;
+        throw aggregate;
+    }
 });
 
 /**
