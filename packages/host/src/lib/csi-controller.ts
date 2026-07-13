@@ -166,6 +166,8 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     logger: IObjectLogger;
 
     private _instanceAdapter?: ILifeCycleAdapterRun;
+    private removalPromise?: Promise<void>;
+    private removalCompleted = false;
     finalizingPromise?: CancellablePromise;
 
     get instanceAdapter(): ILifeCycleAdapterRun {
@@ -841,7 +843,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         if (this.status === InstanceStatus.KILLING) {
-            await this.instanceAdapter.remove();
+            await this.removeInstance();
 
             return;
         }
@@ -853,13 +855,33 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         } catch (error) {
             if (!removeImmediately) throw error;
 
-            await this.instanceAdapter.remove();
+            await this.removeInstance();
             return;
         }
 
         // This will be resolved after HTTP response. It's not awaited on purpose
         promiseTimeout(this.endOfSequence, runnerExitDelay)
-            .catch(() => this.instanceAdapter.remove());
+            .catch((error) => this.removeInstance().catch((removalError) => {
+                this.logger.error("Failed to remove instance after runner exit timeout", removalError, error);
+            }));
+
+        /** Share lifecycle removal requests and allow failed removal to be retried. */
+    }
+
+    private removeInstance(): Promise<void> {
+        if (this.removalCompleted) return Promise.resolve();
+        if (this.removalPromise) return this.removalPromise;
+
+        this.removalPromise = this.instanceAdapter.remove()
+            .then(() => {
+                this.removalCompleted = true;
+            })
+            .catch((error) => {
+                this.removalPromise = undefined;
+                throw error;
+            });
+
+        return this.removalPromise;
     }
 
     getStdio(): [WritableStream<any>, ReadableStream<any>, ReadableStream<any>] {
@@ -897,7 +919,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
             this.logger.trace("Sequence terminated itself");
         } catch {
-            await this.instanceAdapter.remove();
+            await this.removeInstance();
 
             this.logger.trace("Sequence didn't terminate itself in expected time", runnerExitDelay);
             process.exitCode = 252;
@@ -942,7 +964,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             } catch {
                 this.logger.error("Sequence unresponsive, killing");
 
-                await this.instanceAdapter.remove();
+                await this.removeInstance();
             }
         }
 

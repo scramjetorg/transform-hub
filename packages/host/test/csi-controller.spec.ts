@@ -161,6 +161,74 @@ test("repeated KILLING uses adapter removal and propagates adapter errors", asyn
     await t.throwsAsync(failing.kill({ removeImmediately: true }), { is: error });
 });
 
+test("concurrent lifecycle removal is single-flight and successful removal is memoized", async t => {
+    let removals = 0;
+    let release!: () => void;
+    const removal = new Promise<void>(resolve => { release = resolve; });
+    const controller = createController({
+        status: InstanceStatus.KILLING,
+        _instanceAdapter: {
+            remove: async () => {
+                removals++;
+                await removal;
+            }
+        }
+    });
+
+    const first = controller.kill({ removeImmediately: true });
+    const second = controller.kill({ removeImmediately: true });
+    t.is(removals, 1);
+    release();
+    await Promise.all([first, second]);
+    await controller.kill({ removeImmediately: true });
+
+    t.is(removals, 1);
+});
+
+test("failed lifecycle removal clears the single-flight promise for retry", async t => {
+    const firstError = new Error("first removal failed");
+    let removals = 0;
+    const controller = createController({
+        status: InstanceStatus.KILLING,
+        _instanceAdapter: {
+            remove: async () => {
+                removals++;
+                if (removals === 1) throw firstError;
+            }
+        }
+    });
+
+    await t.throwsAsync(controller.kill({ removeImmediately: true }), { is: firstError });
+    await controller.kill({ removeImmediately: true });
+    t.is(removals, 2);
+});
+
+test("detached timeout removal logs rejection and can be retried", async t => {
+    const removalError = new Error("timeout removal failed");
+    const logs: unknown[][] = [];
+    let removals = 0;
+    const controller = createController({
+        logger: { error: (...args: unknown[]) => logs.push(args) },
+        _endOfSequence: Promise.reject(new Error("runner did not exit")),
+        _instanceAdapter: {
+            remove: async () => {
+                removals++;
+                if (removals === 1) throw removalError;
+            }
+        }
+    });
+
+    await controller.kill();
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.is(removals, 1);
+    t.is(logs.length, 1);
+    t.is(logs[0]![0], "Failed to remove instance after runner exit timeout");
+
+    await controller.kill({ removeImmediately: true });
+    t.is(removals, 2);
+});
+
 test("control failure propagates without masking the operational error", async t => {
     const error = new Error("control failed");
     let removals = 0;
