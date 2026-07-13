@@ -128,6 +128,25 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     },
 
     // -----------------------------------------------------------------------
+    // APPCONTEXT-001 TC-001: config and instanceId
+    //
+    // Three serial strict guarded Docker runs measured 609760, 609080, and
+    // 609224 bytes after deterministic cleanup, with a 680-byte spread. The
+    // 86016-byte allowance is the maximum 85472-byte excess over the strict
+    // base, rounded up once to a 4KiB boundary; it is exact-pickle scoped.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "appcontext/APPCONTEXT-001-full-sequence.feature",
+        line: 12,
+        scenarioName: "APPCONTEXT-001 TC-001 Sequence reads config and instanceId from AppContext",
+        allowanceBytes: 86_016,
+        reason: "Three serial strict guarded Docker runs plateaued at 609760, 609080, and 609224 bytes "
+            + "after deterministic cleanup (680-byte spread). The 86016-byte allowance is the "
+            + "maximum observed 85472-byte excess over the 524288-byte base, rounded to a 4KiB "
+            + "boundary and scoped to this exact feature, line, and scenario name.",
+    },
+
+    // -----------------------------------------------------------------------
     // E2E-014 TC-003: Exceptions thrown in python sequences appear in stderr
     //
     // Scenario creates a Python child-process runner and verifies stderr

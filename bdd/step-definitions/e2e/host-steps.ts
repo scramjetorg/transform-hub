@@ -184,7 +184,30 @@ BeforeAll({ timeout: 20e3 }, async () => {
             }
         });
     }
-    await hostUtils.spawnHost([]);
+    // Do not claim the historical fixed runner-host port. Other BDD chunks or
+    // a stale Hub from an interrupted run may still own it, which makes this
+    // BeforeAll Hub exit with EADDRINUSE before readiness.
+    const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
+    const runnerHostEnabledEnv = "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED";
+    const runnerHostPublicUrlEnv = "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL";
+    const savedRunnerHostPort = process.env[runnerHostPortEnv];
+    const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
+    const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
+    process.env[runnerHostEnabledEnv] = "true";
+    const runnerHostPort = await freeport();
+    process.env[runnerHostPortEnv] = String(runnerHostPort);
+    process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${runnerHostPort}`;
+
+    try {
+        await hostUtils.spawnHost([]);
+    } finally {
+        if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
+        else process.env[runnerHostPortEnv] = savedRunnerHostPort;
+        if (savedRunnerHostEnabled === undefined) delete process.env[runnerHostEnabledEnv];
+        else process.env[runnerHostEnabledEnv] = savedRunnerHostEnabled;
+        if (savedRunnerHostPublicUrl === undefined) delete process.env[runnerHostPublicUrlEnv];
+        else process.env[runnerHostPublicUrlEnv] = savedRunnerHostPublicUrl;
+    }
 });
 
 AfterAll(async () => {

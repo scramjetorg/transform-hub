@@ -227,14 +227,14 @@ export class InstanceAPI {
     }
 
     private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
-        if (![InstanceStatus.STARTING, InstanceStatus.RUNNING].includes(this.csi.status)) {
-            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Instance not running" };
-        }
-
         const { body: { removeImmediately = false } = { removeImmediately: false } } = req;
 
         if (typeof removeImmediately !== "boolean")
             return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid removeImmediately format" };
+
+        if (![InstanceStatus.STARTING, InstanceStatus.RUNNING].includes(this.csi.status) && !removeImmediately) {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Instance not running" };
+        }
 
         try {
             await this.csi.kill({ removeImmediately });

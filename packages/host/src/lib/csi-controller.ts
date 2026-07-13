@@ -803,6 +803,18 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     async kill({ removeImmediately } = { removeImmediately: false }) {
+        if (removeImmediately) {
+            this.instanceLifetimeExtensionDelay = 0;
+
+            if (this.finalizingPromise) {
+                this.finalizingPromise.cancel();
+            }
+        }
+
+        if ([InstanceStatus.COMPLETED, InstanceStatus.ERRORED, InstanceStatus.GONE].includes(this.status)) {
+            if (removeImmediately) return;
+        }
+
         if (this.status === InstanceStatus.KILLING) {
             await this.instanceAdapter.remove();
 
@@ -811,19 +823,18 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         this.status = InstanceStatus.KILLING;
 
-        await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+        try {
+            await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+        } catch (error) {
+            if (!removeImmediately) throw error;
+
+            await this.instanceAdapter.remove();
+            return;
+        }
 
         // This will be resolved after HTTP response. It's not awaited on purpose
         promiseTimeout(this.endOfSequence, runnerExitDelay)
             .catch(() => this.instanceAdapter.remove());
-
-        if (removeImmediately) {
-            this.instanceLifetimeExtensionDelay = 0;
-
-            if (this.finalizingPromise) {
-                this.finalizingPromise.cancel();
-            }
-        }
     }
 
     getStdio(): [WritableStream<any>, ReadableStream<any>, ReadableStream<any>] {

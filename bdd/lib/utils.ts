@@ -226,23 +226,28 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
 
 export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
+    const piped = stream.pipe(new PassThrough({ encoding: "utf-8" }));
 
-    await Promise.race([
-        (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
-                response += chunk;
+    try {
+        await Promise.race([
+            (async () => {
+                for await (const chunk of piped) {
+                    response += chunk;
 
-                console.log(response, chunk);
+                    console.log(response, chunk);
 
-                if (response === expected) return expected;
-                if (response.length >= expected.length) {
-                    return assert.equal(response, expected);
+                    if (response === expected) return expected;
+                    if (response.length >= expected.length) {
+                        return assert.equal(response, expected);
+                    }
                 }
-            }
-            throw new Error("End of stream reached");
-        })(),
-        defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
-    ]);
+                throw new Error("End of stream reached");
+            })(),
+            defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
+        ]);
+    } finally {
+        piped.destroy();
+    }
 
     return response;
 }
