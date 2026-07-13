@@ -85,3 +85,20 @@ Feature: HUB-001 Host configuration
         When hub process is started with port changing parameters "--config data/test-data/sth-config.json"
         Then API is available on port 9079
         * exit hub process
+
+    @ci-hub @starts-host
+    Scenario: HUB-001 TC-016 Scenario Hub runner port collision is handled
+        # Occupy the default runner verser2 port 2444 to simulate the suite
+        # host's runner listener. The Hub harness must dynamically allocate a
+        # free runner host port (not inherit 2444) to survive.
+        When port 2444 is occupied
+        When hub process is started with random ports and parameters ""
+        Then host is running
+        * exit hub process
+
+        # Release the occupied port and verify a clean start under dynamic
+        # runner port allocation.
+        When the occupied port is released
+        When hub process is started with random ports and parameters ""
+        Then host is running
+        * exit hub process

@@ -527,3 +527,85 @@ test("cleanupWorldResources clears every field on world.resources", (t) => {
     }
     t.is(world.response, undefined, "world.response should be undefined");
 });
+
+test("cleanupWorldResources destroys scenario-owned streams and processes", (t) => {
+    const stream = new (require("stream").PassThrough)();
+    const child = { pid: 42, exitCode: null, killed: false, kill() { this.killed = true; } };
+    cleanupWorldResources({ resources: { stream, child }, cliResources: {} });
+    t.true(stream.destroyed);
+    t.true(child.killed);
+});
+
+test("cleanupWorldResources continues when one resource destroy throws, aggregate errors", (t) => {
+    const throwing = {
+        readable: true,
+        destroyed: false,
+        destroy() {
+            this.destroyed = true;
+            throw new Error("stream exploded");
+        },
+    };
+    const good = new (require("stream").PassThrough)();
+    const child = { pid: 99, exitCode: null, killed: false, kill() { this.killed = true; } };
+
+    const world = { resources: { throwing, good, child }, cliResources: {} };
+
+    const err = t.throws(() => cleanupWorldResources(world));
+    t.true(throwing.destroyed, "throwing resource destroy was called");
+    t.true(good.destroyed, "good stream was still destroyed after throw");
+    t.true(child.killed, "child process was still killed after throw");
+    t.is(world.resources.throwing, undefined, "throwing resource field is nulled");
+    t.is(world.resources.good, undefined, "good resource field is nulled");
+    t.is(world.resources.child, undefined, "child field is nulled");
+    t.true(err.message.includes("Cleanup failed for"), "error message indicates aggregate failure");
+    t.truthy(err.cleanupErrors, "error carries .cleanupErrors array");
+    t.is(err.cleanupErrors.length, 1, "one cleanup error collected");
+    t.true(err.cleanupErrors[0].message.includes("stream exploded"), "error message preserved");
+});
+
+test("cleanupWorldResources aggregates multiple destroy failures", (t) => {
+    const first = {
+        readable: true,
+        destroyed: false,
+        destroy() { this.destroyed = true; throw new Error("first boom"); },
+    };
+    const second = {
+        readable: true,
+        destroyed: false,
+        destroy() { this.destroyed = true; throw new Error("second boom"); },
+    };
+
+    const world = { resources: { first, second }, cliResources: {} };
+
+    const err = t.throws(() => cleanupWorldResources(world));
+    t.true(first.destroyed, "first resource destroy was called");
+    t.true(second.destroyed, "second resource destroy was called");
+    t.is(err.cleanupErrors.length, 2, "both errors collected");
+    t.true(err.cleanupErrors[0].message.includes("first boom"), "first error preserved");
+    t.true(err.cleanupErrors[1].message.includes("second boom"), "second error preserved");
+});
+
+test("cleanupWorldResources continues and aggregates errors from both resources and cliResources", (t) => {
+    const badResource = {
+        readable: true,
+        destroyed: false,
+        destroy() { this.destroyed = true; throw new Error("resource fail"); },
+    };
+    const badCli = {
+        readable: true,
+        destroyed: false,
+        destroy() { this.destroyed = true; throw new Error("cliResource fail"); },
+    };
+    const goodStream = new (require("stream").PassThrough)();
+
+    const world = {
+        resources: { badResource, goodStream },
+        cliResources: { badCli },
+    };
+
+    const err = t.throws(() => cleanupWorldResources(world));
+    t.true(badResource.destroyed, "bad resource destroy called");
+    t.true(goodStream.destroyed, "good stream destroyed despite errors");
+    t.true(badCli.destroyed, "bad cliResource destroy called");
+    t.is(err.cleanupErrors.length, 2, "both resource and cliResource errors collected");
+});

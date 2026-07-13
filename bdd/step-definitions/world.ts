@@ -40,6 +40,8 @@ export class CustomWorld implements World {
         sequence1?: SequenceClient;
         sequence2?: SequenceClient;
         outStream?: Readable;
+        floodStream?: Readable;
+        floodSendPromise?: Promise<unknown>;
     } = {
             instanceList: {},
             multiHosts: {},

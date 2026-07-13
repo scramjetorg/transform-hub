@@ -13,7 +13,7 @@ test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
         "appcontext", "cli", "errors", "harness", "hub",
-        "manager", "node", "python", "stream", "topics", "verser2",
+        "manager", "node", "python", "stream", "topics-api", "topics-cli", "verser2",
     ]);
 });
 
@@ -42,6 +42,15 @@ test("verser2 chunk contains the expected single feature", t => {
     ]);
 });
 
+test("topic chunks isolate CLI and API topic feature paths", t => {
+    t.deepEqual(runner.CHUNKS["topics-cli"], [
+        "features/e2e/E2E-011-cli-topic.feature",
+    ]);
+    t.deepEqual(runner.CHUNKS["topics-api"], [
+        "features/e2e/E2E-013-topic.feature",
+    ]);
+});
+
 // ---------------------------------------------------------------------------
 // Default chunks
 // ---------------------------------------------------------------------------
@@ -50,8 +59,9 @@ test("default chunks list is ordered and contains expected entries", t => {
     t.true(Array.isArray(runner.DEFAULT_CHUNKS));
     t.true(runner.DEFAULT_CHUNKS.length > 0);
 
-    // First chunk is verser2 (matches Phase 9 ordering)
+    // First chunk is verser2 (matches Phase 9 ordering).
     t.is(runner.DEFAULT_CHUNKS[0], "verser2");
+    t.deepEqual(runner.DEFAULT_CHUNKS.slice(2, 4), ["topics-cli", "topics-api"]);
 });
 
 test("every default chunk is defined in CHUNKS", t => {

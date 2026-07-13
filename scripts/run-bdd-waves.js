@@ -29,7 +29,11 @@ const CHUNKS = Object.freeze({
         "features/e2e/E2E-010-cli.feature",
         "features/e2e/E2E-012-cli-config.feature"
     ]),
-    topics: Object.freeze(["features/e2e/E2E-011-cli-topic.feature", "features/e2e/E2E-013-topic.feature"]),
+    // Keep the CLI and API topic suites in separate Docker invocations. Each
+    // remains an explicitly selected, single-feature chunk so its resource
+    // peak is isolated without introducing tag-based or shared ownership.
+    "topics-cli": Object.freeze(["features/e2e/E2E-011-cli-topic.feature"]),
+    "topics-api": Object.freeze(["features/e2e/E2E-013-topic.feature"]),
     python: Object.freeze(["features/e2e/E2E-014-python.feature", "features/e2e/E2E-015-unified.feature"]),
     appcontext: Object.freeze(["features/appcontext/APPCONTEXT-001-full-sequence.feature"]),
     node: Object.freeze(["features/e2e/E2E-017-runner-node-spawn.feature"]),
@@ -58,7 +62,7 @@ const CHUNKS = Object.freeze({
  * Ordered list of chunk names that form the default full run.
  * Every feature path declared here must appear in exactly one of these chunks.
  */
-const DEFAULT_CHUNKS = Object.freeze(["verser2", "cli", "topics", "python", "appcontext", "node", "hub", "manager", "errors", "stream"]);
+const DEFAULT_CHUNKS = Object.freeze(["verser2", "cli", "topics-cli", "topics-api", "python", "appcontext", "node", "hub", "manager", "errors", "stream"]);
 
 // ---------------------------------------------------------------------------
 // Manifest validation

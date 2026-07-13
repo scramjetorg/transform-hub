@@ -59,19 +59,47 @@ function matchScenarioException(exceptions, featureUri, scenarioLine, scenarioNa
  * @param {object} world  Cucumber World instance (any type).
  */
 function cleanupWorldResources(world) {
+    const errors = [];
+
+    const release = (value, key) => {
+        if (!value || typeof value !== "object") return;
+        if (typeof value.destroy === "function" && (value.readable || value.writable || value._readableState)) {
+            try {
+                value.destroy();
+            } catch (e) {
+                errors.push(new Error(`Failed to destroy resource "${key}": ${e.message}`));
+            }
+        }
+        if (value.pid && value.exitCode === null && typeof value.kill === "function") {
+            try {
+                value.kill();
+            } catch (_) {
+                /* already exited */
+            }
+        }
+    };
+
     if (world.resources) {
         for (const key of Object.keys(world.resources)) {
+            release(world.resources[key], key);
             world.resources[key] = undefined;
         }
     }
 
     if (world.cliResources) {
         for (const key of Object.keys(world.cliResources)) {
+            release(world.cliResources[key], key);
             world.cliResources[key] = undefined;
         }
     }
 
     world.response = undefined;
+
+    if (errors.length > 0) {
+        const aggregate = new Error(`Cleanup failed for ${errors.length} resource(s): ${errors.map((e) => e.message).join("; ")}`);
+        aggregate.cleanupErrors = errors;
+        throw aggregate;
+    }
 }
 
 module.exports = {

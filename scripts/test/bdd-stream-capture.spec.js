@@ -24,4 +24,19 @@ test("collectStreamUntilEndOrSignal resolves normally on stream end", async t =>
 	stream.end("complete\n");
 
 	t.is(await captured, "complete\n");
+	t.true(stream.destroyed);
+});
+
+test("collectStreamUntilEndOrSignal releases the stream after a signal", async t => {
+	const stream = new PassThrough();
+	let complete;
+	const captured = collectStreamUntilEndOrSignal(stream, new Promise(resolve => { complete = resolve; }), 1);
+	stream.write(Buffer.alloc(1024, 1));
+	complete();
+
+	t.is((await captured).length, 1024);
+	t.true(stream.destroyed);
+	t.is(stream.listenerCount("data"), 0);
+	t.is(stream.listenerCount("end"), 0);
+	t.is(stream.listenerCount("error"), 0);
 });

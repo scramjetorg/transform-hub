@@ -233,6 +233,14 @@ export class HostUtils {
                 if (code === 1 && this.expectedExitCode !== 1) {
                     assert.fail();
                 }
+
+                // Resolve with partial output when the host exits with an expected
+                // non-zero code before "Host running!" — required for scenarios that
+                // reproduce startup failures (e.g. runner port collision).
+                if (this.expectedExitCode !== undefined && code !== null &&
+                    code !== 0 && code === this.expectedExitCode) {
+                    resolve(decodedData);
+                }
             });
         });
     }

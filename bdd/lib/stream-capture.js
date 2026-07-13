@@ -26,7 +26,11 @@ function collectStreamUntilEndOrSignal(stream, completion, drainGraceMs = DEFAUL
             if (settled) return;
             settled = true;
             cleanup();
-            resolve(Buffer.concat(chunks).toString("utf8"));
+            const result = Buffer.concat(chunks).toString("utf8");
+            chunks.length = 0;
+            stream.pause?.();
+            if (!stream.destroyed) stream.destroy?.();
+            resolve(result);
         };
 
         const onData = chunk => {
@@ -37,6 +41,9 @@ function collectStreamUntilEndOrSignal(stream, completion, drainGraceMs = DEFAUL
             if (settled) return;
             settled = true;
             cleanup();
+            chunks.length = 0;
+            stream.pause?.();
+            if (!stream.destroyed) stream.destroy?.();
             reject(error);
         };
 

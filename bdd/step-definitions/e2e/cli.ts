@@ -1,5 +1,5 @@
 
-import { AfterAll, Before, Given, Then, When } from "@cucumber/cucumber";
+import { After, AfterAll, Before, Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import os from "os";
@@ -39,6 +39,15 @@ const resolveBddTempPaths = (args: string): string[] =>
 
 AfterAll(() => {
     fs.rmSync(bddTempDir, { recursive: true, force: true });
+});
+
+After(async function(this: CustomWorld) {
+    const command = this.cliResources.commandInProgress;
+    if (command && command.exitCode === null) {
+        await stopProcess(command, { graceMs: 1000 }).catch(() => undefined);
+    }
+    this.cliResources.commandInProgress = undefined;
+    this.cliResources.collectedTopicData = undefined;
 });
 
 Before((scenario) => {

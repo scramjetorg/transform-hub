@@ -1,4 +1,4 @@
-import { Then, When } from "@cucumber/cucumber";
+import { After, Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { HostClient, InstanceClient } from "@scramjet/api-client";
@@ -10,6 +10,7 @@ import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
+import * as net from "net";
 import { defer, waitUntilStreamEquals } from "../../lib/utils";
 import { promisify } from "util";
 import { readFile } from "fs/promises";
@@ -32,12 +33,105 @@ process.on("exit", () => {
     });
 });
 
+const occupiedServers: net.Server[] = [];
+
+process.on("exit", () => {
+    occupiedServers.forEach(server => server.close());
+});
+
+// Scenario-scoped teardown: if a "port {int} is occupied" step created a
+// server but the scenario failed or ended before an explicit release step,
+// close the server here.  This prevents resource leaks that would block
+// subsequent scenarios or leave dangling listeners on the port.
+After(async function (this: CustomWorld) {
+    const server = this.resources.portOccupier as net.Server | undefined;
+    const occupiedByUs = this.resources.portOccupiedByUs as boolean | undefined;
+
+    if (server && occupiedByUs) {
+        const idx = occupiedServers.indexOf(server);
+
+        if (idx >= 0) occupiedServers.splice(idx, 1);
+        await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+
+    delete this.resources.portOccupier;
+    delete this.resources.portOccupiedByUs;
+});
+
+When("port {int} is occupied", async function(this: CustomWorld, port: number) {
+    const server = net.createServer();
+    try {
+        await new Promise<void>((resolve, reject) => {
+            server.once("error", reject);
+            server.listen(port, "127.0.0.1", () => {
+                occupiedServers.push(server);
+                this.resources.portOccupier = server;
+                this.resources.portOccupiedByUs = true;
+                resolve();
+            });
+        });
+    } catch (err: any) {
+        // Port may already be occupied by the suite host (NO_HOST=false).
+        // That is fine — the port is still occupied, just not by us.
+        if (err.code === "EADDRINUSE") {
+            console.error(`Port ${port} already occupied (suite host?) — using existing occupancy.`);
+            this.resources.portOccupier = undefined;
+            this.resources.portOccupiedByUs = false;
+            return;
+        }
+        throw err;
+    }
+});
+
+When("the occupied port is released", async function(this: CustomWorld) {
+    const server = this.resources.portOccupier as net.Server | undefined;
+    const occupiedByUs = this.resources.portOccupiedByUs as boolean | undefined;
+    if (!server || !occupiedByUs) {
+        // If we did not occupy the port ourselves, there is nothing to close.
+        delete this.resources.portOccupier;
+        delete this.resources.portOccupiedByUs;
+        return;
+    }
+    const idx = occupiedServers.indexOf(server);
+    if (idx >= 0) occupiedServers.splice(idx, 1);
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    delete this.resources.portOccupier;
+    delete this.resources.portOccupiedByUs;
+});
+
 async function startHubWithParams({ resources }: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
     const hostUtils = new HostUtils();
     const expectedHubExitCode = resources.expectedHubExitCode as number | undefined;
+    const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
+    const runnerHostEnabledEnv = "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED";
+    const runnerHostPublicUrlEnv = "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL";
+    const savedRunnerHostPort = process.env[runnerHostPortEnv];
+    const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
+    const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
+
+    // The suite's BeforeAll host owns the default runner verser2 port (2444).
+    // Scenario hubs must not inherit that fixed port, otherwise the second
+    // scenario-spawned Hub exits before "Host running!" with EADDRINUSE.
+    if (!params.some(param => param.startsWith("--verser2-runner-host-bind-port"))) {
+        process.env[runnerHostEnabledEnv] = "true";
+        const allocatedPort = String(await freeport());
+
+        process.env[runnerHostPortEnv] = allocatedPort;
+        process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${allocatedPort}`;
+    }
 
     hostUtils.expectedExitCode = expectedHubExitCode;
-    const out = await hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
+    let out: string;
+    try {
+        out = await hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
+    } finally {
+        if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
+        else process.env[runnerHostPortEnv] = savedRunnerHostPort;
+        if (savedRunnerHostEnabled === undefined) delete process.env[runnerHostEnabledEnv];
+        else process.env[runnerHostEnabledEnv] = savedRunnerHostEnabled;
+        if (savedRunnerHostPublicUrl === undefined) delete process.env[runnerHostPublicUrlEnv];
+        else process.env[runnerHostPublicUrlEnv] = savedRunnerHostPublicUrl;
+    }
 
     if (!hostUtils.host) throw new Error("Missing host from utils.");
 
@@ -57,7 +151,8 @@ function saveHostEnv(): Record<string, string | undefined> {
         LOCAL_HOST_PORT: process.env.LOCAL_HOST_PORT,
         LOCAL_HOST_INSTANCES_SERVER_PORT: process.env.LOCAL_HOST_INSTANCES_SERVER_PORT,
         LOCAL_HOST_BASE_URL: process.env.LOCAL_HOST_BASE_URL,
-        SCRAMJET_HOST_BASE_URL: process.env.SCRAMJET_HOST_BASE_URL
+        SCRAMJET_HOST_BASE_URL: process.env.SCRAMJET_HOST_BASE_URL,
+        SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: process.env.SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL,
     };
 }
 

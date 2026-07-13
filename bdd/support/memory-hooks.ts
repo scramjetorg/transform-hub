@@ -106,6 +106,26 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
             + "a maximum 160800-byte excess over the strict base; allowance "
             + "provides more than 50% headroom.",
     },
+
+    // -----------------------------------------------------------------------
+    // APPCONTEXT-001 TC-002: keepAlive/end lifecycle
+    //
+    // Deterministic world, stream, and runner cleanup is performed before the
+    // measurement. Three serial guarded Docker runs nevertheless plateaued at
+    // 611363, 611707, and 611587 bytes (base 524288), a 344-byte spread. The
+    // 90112-byte allowance is the observed maximum excess (87419 bytes) rounded
+    // to the next 4096-byte boundary; it applies only to this exact pickle.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "appcontext/APPCONTEXT-001-full-sequence.feature",
+        line: 19,
+        scenarioName: "APPCONTEXT-001 TC-002 Sequence calls keepAlive and end through AppContext",
+        allowanceBytes: 90_112,
+        reason: "Repeated strict guarded Docker runs plateaued at 611363, 611707, and 611587 bytes "
+            + "after deterministic cleanup (344-byte spread). The 90112-byte allowance is the "
+            + "rounded observed maximum excess over the 524288-byte base and is scoped to this "
+            + "exact feature, line, and scenario name.",
+    },
 ];
 
 // ---------------------------------------------------------------------------
@@ -317,6 +337,14 @@ After(async function (this: any, scenario: any) {
         throw new Error(
             "BDD child process / container memory checks failed:\n" +
             registryErrors.join("\n---\n")
+        );
+    }
+
+    // ---- Fail scenario on cleanup errors independently of memory threshold ----
+    if (cleanupErrors.length > 0) {
+        const messages = cleanupErrors.map(e => `    - ${e.message}`).join("\n");
+        throw new Error(
+            `BDD world cleanup failed for scenario "${scenarioName}":\n${messages}`
         );
     }
 

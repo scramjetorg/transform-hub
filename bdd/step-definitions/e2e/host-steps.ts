@@ -209,17 +209,27 @@ Before(() => {
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
 After({}, async () => {
-    let insts = [];
+    let insts: any[] = [];
 
     try {
         insts = await hostClient.listInstances();
     } catch (_e) {
-        return;
+        // Host teardown can race the scenario hook; still release all local
+        // module state below even when the cleanup query is unavailable.
+        insts = [];
     }
 
     await Promise.all(
         insts.map((i: any) => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
     );
+
+    // Module state is outside CustomWorld and must be released explicitly.
+    streams = {};
+    actualHealthResponse = undefined;
+    actualStatusResponse = undefined;
+    actualApiResponse = undefined;
+    containerId = undefined as unknown as string;
+    processId = undefined as unknown as number;
 });
 
 Before({ tags: "@test-si-init" }, function() {
@@ -626,17 +636,18 @@ When("flood the stdin stream with {int} kilobytes", async function(this: CustomW
             }
         });
 
-        this.resources.instance?.sendStream("stdin", stream).catch(() => 0); // ignore the outcome.
+        this.resources.floodStream = stream;
+        this.resources.floodSendPromise = this.resources.instance?.sendStream("stdin", stream).catch(() => 0);
 
+        const onEnd = () => rej(new Error(`Flood stream ended after ${i}kb`));
+        const onPause = () => {
+            stream.removeListener("end", onEnd);
+            console.log(`Stream paused, sent ${i}kb`);
+            res();
+        };
         stream
-            .once("pause", () => {
-                console.log(`Stream paused, sent ${i}kb`);
-                res();
-            })
-            .on("pause", () => {
-                console.log(`=== Stream paused, sent ${i}kb`);
-            })
-            .once("end", rej);
+            .once("pause", onPause)
+            .once("end", onEnd);
     });
 });
 
