@@ -149,9 +149,11 @@ Emergency skips require both `SCRAMJET_MEMORY_SKIP=1` and a non-empty `SCRAMJET_
 The root `npm run test:bdd` command runs the bounded **base mode** through
 `scripts/run-bdd-modes.js`, which invokes the supported Docker runner serially.
 The base mode covers `verser2` (core routing), `topics-api` (API/topic
-forwarding), `appcontext` (AppContext), and `node` (Node runner behavior).
-This excludes the currently slow, exclusive, memory-remediation, and
-functionally blocked groups identified by Phase 10 classification.
+forwarding), `appcontext` (AppContext), `node` (Node runner behavior), and
+`hub` (Hub behavior). This excludes the currently slow, memory-remediation,
+and other functionally blocked groups identified by Phase 10 classification.
+The Hub chunk is an exception: it is user-promoted on the strength of a passing
+unguarded Docker-mode run; the guarded HUB-003 fetch-profile issue remains open.
 The npm modes set `BDD_INCLUDE_LONG_RUNNING=1` so the selected Node feature's
 explicit `@slow` regression scenarios are included; path selection still keeps
 unrelated long-running features out of base mode.
@@ -164,8 +166,8 @@ npm run test:bdd       # bounded base mode
 npm run test:bdd-extra # remaining chunks, serially
 ```
 
-`test:bdd-extra` owns `cli`, `topics-cli`, `python`, `hub`, `manager`,
-`errors`, and `stream`. The internal `harness` chunk remains explicitly
+`test:bdd-extra` owns `cli`, `topics-cli`, `python`, `manager`, `errors`, and
+`stream`. The internal `harness` chunk remains explicitly
 selectable with `node scripts/run-bdd-waves.js --chunk=harness` and is not part
 of either default-mode partition.
 
