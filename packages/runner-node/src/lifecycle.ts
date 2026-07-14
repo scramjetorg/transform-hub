@@ -12,6 +12,8 @@ import { MessageUtils } from "./message-utils";
 export interface LifecycleContext {
     stopHandler(timeout: number, canCallKeepalive: boolean): Promise<void>;
     killHandler(): void;
+    /** Delay used by the completion path to keep the control channel open. */
+    exitTimeout?: number;
 }
 
 /**

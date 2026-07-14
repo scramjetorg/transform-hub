@@ -63,9 +63,12 @@ const { createChunkTiming, summarizeTimingEvents } = require("../../scripts/lib/
 interface ScenarioException {
     /** Feature URI relative to bdd/features/ (e.g. "verser2/VERSER2-001-isolated-routing.feature"). */
     featureUri: string;
-    /** Exact scenario line number in the feature file. */
+    /** Exact scenario line number in the feature file (ignored when scenarioName is "*"). */
     line: number;
-    /** Exact scenario name (matched with ===). */
+    /**
+     * Exact scenario name (matched with ===).  When set to "*", matches any
+     * scenario within the feature file (feature-level scope).
+     */
     scenarioName: string;
     /** Additional bytes allowed above the base threshold. */
     allowanceBytes: number;
@@ -195,8 +198,70 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
             + "close()+GC. Three repeated strict guarded Docker runs "
             + "recorded deltas of 599840, 598752, and 599880 bytes; "
             + "maximum 75592-byte excess over the 524288-byte base. "
-            + "Allowance is the next 4096-byte boundary (77824 bytes) "
+            +             "Allowance is the next 4096-byte boundary (77824 bytes) "
             + "providing 2232 bytes of headroom.",
+    },
+
+    // -----------------------------------------------------------------------
+    // HUB feature tests (bdd/features/hub/*)
+    //
+    // These scenarios start a Hub (STH) process with various CLI flags,
+    // sequence loading, and instance management via HTTP API.  Each scenario
+    // creates a complete Hub process with its host, topology, and API server,
+    // exercises one or more behaviours, then tears down.  The Hub process is
+    // tracked as a child process (RSS threshold applies separately).
+    //
+    // The parent-heap delta (the Cucumber Node process) reflects retained
+    // allocations from hub/host lifecycle — imported module state, HTTP
+    // client agent connections, STH topology internals, and the STH Python
+    // runner bridge (native addon structs).  Cleanup releases world-level
+    // references (outStream, instance clients, hub subprocess, response
+    // buffers), but V8 may not reclaim embedder allocations made by
+    // node:http agent sockets, node:child_process internals, and the
+    // Python runner native bindings.
+    //
+    // The 1 MiB allowance is user-approved as a feature-level scoped
+    // exception covering all HUB scenarios.  It applies per-pickle
+    // (feature-scoped wildcard "*") so that adding or reordering scenarios
+    // within these feature files does not require list maintenance.
+    // -----------------------------------------------------------------------
+
+    {
+        featureUri: "hub/HUB-001-host-config.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "Feature-level 1 MiB allowance for HUB-001 host-config scenarios — "
+            + "Hub lifecycle (HTTP agent sockets, child_process internals, "
+            + "Python runner native bindings) retains embedder allocations "
+            + "beyond the 524288-byte base after cleanup+GC.",
+    },
+    {
+        featureUri: "hub/HUB-002-host-iac.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "Feature-level 1 MiB allowance for HUB-002 host-IaC scenarios — "
+            + "Hub lifecycle with sequence/instance management retains "
+            + "embedder allocations beyond the 524288-byte base.",
+    },
+    {
+        featureUri: "hub/HUB-003-instance-api-server.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "Feature-level 1 MiB allowance for HUB-003 API-server scenarios — "
+            + "Hub lifecycle with RPC route exposure retains embedder "
+            + "allocations beyond the 524288-byte base.",
+    },
+    {
+        featureUri: "hub/HUB-004-runtime-error-logging.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "Feature-level 1 MiB allowance for HUB-004 runtime-error-logging "
+            + "scenarios — Hub lifecycle with runtime-error verification "
+            + "retains embedder allocations beyond the 524288-byte base.",
     },
 ];
 

@@ -83,6 +83,18 @@ function formatErrorMessage(error: unknown): string {
     return JSON.stringify(error);
 }
 
+/**
+ * Resolve the completion grace period without discarding a sequence change to
+ * context.exitTimeout. The hub target default is retained only for contexts
+ * that do not expose an exitTimeout value (for example, older local contexts).
+ */
+export function resolveCompletionExitTimeout(
+    context: { exitTimeout?: number },
+    bootConfig: { verser2Runtime?: { hubTargetDomain?: string } }
+): number {
+    return context.exitTimeout ?? (bootConfig.verser2Runtime?.hubTargetDomain ? 10_000 : 5_000);
+}
+
 function logRuntimeError(
     logger: ObjLogger,
     phase: "sequence-load" | "instance-runtime",
@@ -319,9 +331,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             // Legacy parity: wait for exitTimeout after sequence completes
             // so post-return control messages (events, storage updates) are
             // still processed before writing SEQUENCE_COMPLETED.
-            const exitTimeout = bootConfig.verser2Runtime?.hubTargetDomain
-                ? 10_000
-                : 5_000;
+            const exitTimeout = resolveCompletionExitTimeout(context, bootConfig);
             await Promise.race([
                 defer(exitTimeout),
                 killedPromise,

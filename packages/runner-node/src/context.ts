@@ -143,6 +143,9 @@ export function buildSequenceContext(deps: BuildContextDeps): BuildSequenceConte
         emitter,
         localStorage,
         monitorStream,
+        // Preserve the local runner's historical completion delay while still
+        // allowing a sequence to replace it through context.exitTimeout.
+        exitTimeout: 5_000,
         keepAlive(milliseconds?: number) {
             onKeepAliveIssued();
             const data: KeepAliveMessageData = { keepAlive: milliseconds || 0 };

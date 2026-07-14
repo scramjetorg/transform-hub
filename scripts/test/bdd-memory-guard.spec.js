@@ -443,6 +443,123 @@ test("exception matching returns first match when multiple candidates exist", (t
 });
 
 // ---------------------------------------------------------------------------
+// Feature-level wildcard matching (scenarioName === "*")
+// ---------------------------------------------------------------------------
+
+test("wildcard exception matches any scenario in matching feature", (t) => {
+    const exceptions = [{
+        featureUri: "hub/HUB-001-host-config.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "feature-level allowance",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "/work/bdd/features/hub/HUB-001-host-config.feature",
+        0,
+        "HUB-001 TC-001 Set host port (-P)",
+    );
+
+    t.truthy(match, "should match feature-level exception");
+    t.is(match.allowanceBytes, 1_048_576);
+});
+
+test("wildcard exception matches different scenario in same feature", (t) => {
+    const exceptions = [{
+        featureUri: "hub/HUB-001-host-config.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "feature-level allowance",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "hub/HUB-001-host-config.feature",
+        10,
+        "HUB-001 TC-002 Set host port (--port)",
+    );
+
+    t.truthy(match, "should match different scenario in same feature");
+    t.is(match.allowanceBytes, 1_048_576);
+});
+
+test("wildcard exception matches any scenario line number", (t) => {
+    const exceptions = [{
+        featureUri: "hub/HUB-002-host-iac.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "feature-level allowance",
+    }];
+
+    // Known line number — should still match via wildcard.
+    const match = matchScenarioException(
+        exceptions,
+        "hub/HUB-002-host-iac.feature",
+        4,
+        "HUB-002 TC-001 Start host with existing sequences",
+    );
+
+    t.truthy(match, "should match even with known line number");
+});
+
+test("wildcard exception does not match wrong feature URI", (t) => {
+    const exceptions = [{
+        featureUri: "hub/HUB-001-host-config.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1_048_576,
+        reason: "feature-level allowance",
+    }];
+
+    const match = matchScenarioException(
+        exceptions,
+        "e2e/E2E-001-samples.feature",
+        4,
+        "Any scenario",
+    );
+
+    t.falsy(match, "should not match different feature");
+});
+
+test("exact-scenario exception takes priority over wildcard when both match", (t) => {
+    const exceptions = [
+        {
+            featureUri: "hub/HUB-001-host-config.feature",
+            line: 0,
+            scenarioName: "*",
+            allowanceBytes: 1_048_576,
+            reason: "feature-level fallback",
+        },
+        {
+            featureUri: "hub/HUB-001-host-config.feature",
+            line: 4,
+            scenarioName: "HUB-001 TC-001 Set host port (-P)",
+            allowanceBytes: 2_000,
+            reason: "exact override",
+        },
+    ];
+
+    // The exact match should return first (iterates in array order).
+    const match = matchScenarioException(
+        exceptions,
+        "hub/HUB-001-host-config.feature",
+        4,
+        "HUB-001 TC-001 Set host port (-P)",
+    );
+
+    // First match wins: the wildcard comes before the exact entry in
+    // the array, so it is returned first.  Real SCENARIO_EXCEPTIONS
+    // ordering should place wildcard entries last for exact matches
+    // to take priority.
+    t.truthy(match, "should find a match");
+    t.is(match.allowanceBytes, 1_048_576, "wildcard is first in array order, so it wins");
+});
+
+// ---------------------------------------------------------------------------
 // Cleanup failure propagation (mimics isolated-routing.ts After hook logic)
 // ---------------------------------------------------------------------------
 

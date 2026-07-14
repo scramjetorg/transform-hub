@@ -18,7 +18,11 @@
  *
  * Each exception is keyed by feature URI (matched via endsWith so that
  * absolute Docker paths like `/work/bdd/features/...` resolve), scenario
- * line (optional secondary guard), and exact scenario name (===).
+ * line (optional secondary guard), and scenario name.
+ *
+ * When `exc.scenarioName === "*"`, the exception matches **any** scenario
+ * within the matching feature file (feature-level scope).  When it is an
+ * exact string, it matches only that exact scenario name (===).
  *
  * @param {Array}     exceptions   Array of ScenarioException objects.
  * @param {string}    featureUri   Cucumber pickle URI (may be absolute).
@@ -29,11 +33,21 @@
 function matchScenarioException(exceptions, featureUri, scenarioLine, scenarioName) {
     for (const exc of exceptions) {
         const uriMatch = featureUri.endsWith(exc.featureUri) || featureUri === exc.featureUri;
+
+        if (!uriMatch) continue;
+
+        // When scenarioName is "*", the exception is feature-scoped and
+        // matches any scenario in the feature (no line/name check).
+        if (exc.scenarioName === "*") {
+            return exc;
+        }
+
+        // Exact per-scenario matching:
         // Line is a secondary guard: skip enforcement when we don't have
         // a reliable line or the exception doesn't specify one.
         const lineMatch = exc.line === 0 || scenarioLine === 0 || scenarioLine === exc.line;
 
-        if (uriMatch && lineMatch && scenarioName === exc.scenarioName) {
+        if (lineMatch && scenarioName === exc.scenarioName) {
             return exc;
         }
     }
