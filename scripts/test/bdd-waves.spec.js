@@ -221,6 +221,43 @@ test("commandArgs does not duplicate fail-fast when already present", t => {
     t.is(failCount, 1, "--fail-fast must appear exactly once");
 });
 
+test("commandArgs --no-fail-fast suppresses forced fail-fast and is not forwarded", t => {
+    const features = runner.CHUNKS.verser2;
+    const args = runner.commandArgs(features, ["--no-fail-fast"]);
+
+    t.false(args.includes("--fail-fast"), "--fail-fast must not appear when --no-fail-fast is given");
+    t.false(args.includes("--no-fail-fast"), "--no-fail-fast must not be forwarded to Cucumber");
+});
+
+test("commandArgs --no-fail-fast preserves other passthrough flags", t => {
+    const features = runner.CHUNKS.verser2;
+    const args = runner.commandArgs(features, ["--no-fail-fast", "--name=foo", "--tags=@smoke"]);
+
+    t.false(args.includes("--fail-fast"), "--fail-fast must not appear");
+    t.false(args.includes("--no-fail-fast"), "--no-fail-fast must not be forwarded");
+    t.true(args.includes("--name=foo"), "other flags must be preserved");
+    t.true(args.includes("--tags=@smoke"), "other flags must be preserved");
+});
+
+test("commandArgs explicit --fail-fast overrides --no-fail-fast", t => {
+    const features = runner.CHUNKS.verser2;
+    const args = runner.commandArgs(features, ["--no-fail-fast", "--fail-fast"]);
+
+    // Explicit --fail-fast is honored; --no-fail-fast is stripped.
+    t.true(args.includes("--fail-fast"), "explicit --fail-fast must appear when given alongside --no-fail-fast");
+    t.false(args.includes("--no-fail-fast"), "--no-fail-fast must still be filtered out");
+    const failCount = args.filter((a) => a === "--fail-fast").length;
+    t.is(failCount, 1, "--fail-fast must appear exactly once");
+});
+
+test("commandArgs default behavior remains fail-fast when no --no-fail-fast is given", t => {
+    const features = runner.CHUNKS.verser2;
+    const args = runner.commandArgs(features, ["--dry-run"]);
+
+    t.true(args.includes("--fail-fast"), "default must include --fail-fast");
+    t.false(args.includes("--no-fail-fast"), "--no-fail-fast must not appear by default");
+});
+
 // ---------------------------------------------------------------------------
 // validateManifest
 // ---------------------------------------------------------------------------

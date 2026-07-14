@@ -196,7 +196,16 @@ function parseArgs(args) {
 // ---------------------------------------------------------------------------
 
 function commandArgs(features, passthrough) {
-    const options = passthrough.includes("--fail-fast") ? passthrough : ["--fail-fast", ...passthrough];
+    const noFailFast = passthrough.includes("--no-fail-fast");
+    const filtered = passthrough.filter((a) => a !== "--no-fail-fast");
+
+    if (noFailFast) {
+        // --no-fail-fast suppresses the forced --fail-fast and is not forwarded
+        // to Cucumber (it is not a valid Cucumber flag).
+        return [dockerRunner, "--", ...filtered, ...features];
+    }
+
+    const options = filtered.includes("--fail-fast") ? filtered : ["--fail-fast", ...filtered];
     return [dockerRunner, "--", ...options, ...features];
 }
 

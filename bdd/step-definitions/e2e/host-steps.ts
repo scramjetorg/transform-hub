@@ -25,7 +25,12 @@ import { exec } from "child_process";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
 import { restoreSavedHostEnv } from "../hub/config";
 import { memoryRegistry } from "../../lib/memory-registry";
-import { externalClientForUrl, selectScenarioClient } from "../../lib/client-ownership";
+import {
+    disposeScenarioClient,
+    externalClientForUrl,
+    selectScenarioClient,
+    withSelectedClient
+} from "../../lib/client-ownership";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
 
@@ -277,43 +282,53 @@ Before(() => {
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
 After({}, async function (this: any) {
-    // Restore host env vars (LOCAL_HOST_*, SCRAMJET_HOST_*) that may have been
-    // overridden by a @starts-host scenario.  If the scenario did not touch
-    // these vars, the call is a no-op.
-    restoreSavedHostEnv(this.resources);
-
-    let insts: any[] = [];
-
     try {
-        insts = await hostClient.listInstances();
-    } catch (_e) {
-        // Host teardown can race the scenario hook; still release all local
-        // module state below even when the cleanup query is unavailable.
-        insts = [];
-    }
+        // Restore host env vars (LOCAL_HOST_*, SCRAMJET_HOST_*) that may have been
+        // overridden by a @starts-host scenario.  If the scenario did not touch
+        // these vars, the call is a no-op.
+        restoreSavedHostEnv(this.resources);
 
-    await Promise.all(
-        insts.map((i: any) => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
-    );
+        let insts: any[] = [];
 
-    // Destroy lingering topic outStream to prevent ECONNRESET on cleanup.
-    if (this.resources.outStream) {
-        this.resources.outStream.destroy();
-        this.resources.outStream = undefined;
-    }
-    if (this.resources.floodStream) {
-        this.resources.floodStream.destroy();
-        this.resources.floodStream = undefined;
-    }
+        try {
+            insts = await withSelectedClient(this.resources.hostClient, hostClient, client => client.listInstances());
+        } catch (_e) {
+            // Host teardown can race the scenario hook; still release all local
+            // module state below even when the cleanup query is unavailable.
+            insts = [];
+        }
 
-    // Module state is outside CustomWorld and must be released explicitly.
-    streams = {};
-    actualHealthResponse = undefined;
-    actualStatusResponse = undefined;
-    actualApiResponse = undefined;
-    containerId = undefined as unknown as string;
-    processId = undefined as unknown as number;
-    hostUtils.output = "";
+        await Promise.all(
+            insts.map((i: any) =>
+                withSelectedClient(this.resources.hostClient, hostClient, client =>
+                    client.getInstanceClient(i.id).kill({ removeImmediately: true }).catch((_e: unknown) => {})
+                )
+            )
+        );
+
+        // Destroy lingering topic outStream to prevent ECONNRESET on cleanup.
+        if (this.resources.outStream) {
+            this.resources.outStream.destroy();
+            this.resources.outStream = undefined;
+        }
+        if (this.resources.floodStream) {
+            this.resources.floodStream.destroy();
+            this.resources.floodStream = undefined;
+        }
+
+        // Module state is outside CustomWorld and must be released explicitly.
+        streams = {};
+        actualHealthResponse = undefined;
+        actualStatusResponse = undefined;
+        actualApiResponse = undefined;
+        containerId = undefined as unknown as string;
+        processId = undefined as unknown as number;
+        hostUtils.output = "";
+    } finally {
+        // Scenario-owned clients are disposed only after all scenario cleanup
+        // operations. The module-level suite client remains shared and usable.
+        disposeScenarioClient(this.resources);
+    }
 });
 
 Before({ tags: "@test-si-init" }, function() {
@@ -467,7 +482,7 @@ Then("instance is ready for stdin", async function(this: CustomWorld) {
 });
 
 When("start Instance by name {string}", async function(this: CustomWorld, name: string) {
-    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {}
     });
@@ -478,7 +493,7 @@ When("start Instance by name {string} with JSON arguments {string}", async funct
 
     if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
 
-    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArgs
@@ -486,7 +501,7 @@ When("start Instance by name {string} with JSON arguments {string}", async funct
 });
 
 When("starting Instance by name {string} fails", async function(this: CustomWorld, name: string) {
-    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
 
     try {
         this.resources.instance = await this.resources.sequence!.start({
@@ -506,7 +521,7 @@ When("starting Instance by name {string} with JSON arguments {string} fails", as
 
     if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
 
-    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
 
     try {
         this.resources.instance = await this.resources.sequence!.start({
@@ -578,8 +593,8 @@ When(
     }
 );
 
-When("send kill message to instances of sequence {string}", async function(id) {
-    const seqClient = hostClient.getSequenceClient(id);
+When("send kill message to instances of sequence {string}", async function(this: CustomWorld, id: string) {
+    const seqClient = getHostClient(this).getSequenceClient(id);
     const instances = await seqClient.listInstances();
 
     for (const instanceId of instances) {
@@ -589,8 +604,8 @@ When("send kill message to instances of sequence {string}", async function(id) {
     }
 });
 
-Then("instances of sequence {string} are available", { timeout: 10000 }, async function(id: string) {
-    const seqClient = hostClient.getSequenceClient(id);
+Then("instances of sequence {string} are available", { timeout: 10000 }, async function(this: CustomWorld, id: string) {
+    const seqClient = getHostClient(this).getSequenceClient(id);
     const startedAt = Date.now();
     let instanceIds = await seqClient.listInstances();
 
@@ -869,7 +884,7 @@ When(
 When("delete sequence and volumes", async function(this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
-    await hostClient.deleteSequence(sequenceId);
+    await getHostClient(this).deleteSequence(sequenceId);
 });
 
 When("confirm that sequence and volumes are removed", async function(this: CustomWorld) {
@@ -877,7 +892,7 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
 
     if (!sequenceId) assert.fail();
 
-    const sequences = await hostClient.listSequences() || [];
+    const sequences = await getHostClient(this).listSequences() || [];
     const sequenceExist = !!sequences.find((sequenceInfo: any) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
