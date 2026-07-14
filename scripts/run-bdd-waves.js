@@ -65,6 +65,14 @@ const CHUNKS = Object.freeze({
  */
 const DEFAULT_CHUNKS = Object.freeze(["verser2", "cli", "topics-cli", "topics-api", "python", "appcontext", "node", "hub", "manager", "errors", "stream"]);
 
+// A feature can only be outside the default suite when that exclusion is
+// named here.  In particular, do not let a feature become an accidental
+// "remainder" merely by putting it in a non-default chunk.  The harness is
+// an internal self-test, not an eligible default-suite feature.
+const EXCLUDED_FEATURES = Object.freeze({
+    "features/_harness/harness-timeout.feature": "internal harness self-test; select --chunk=harness explicitly"
+});
+
 // Resource-owning paths remain explicit scheduler exclusions. This metadata
 // is intentionally advisory: this runner remains serial and does not enable
 // broad parallel scheduling.
@@ -151,15 +159,39 @@ function validateManifest() {
         }
     }
 
-    // Every on-disk feature in the default-eligible area (exclude _harness/)
-    // must be claimed by exactly one chunk.
-    const orphanFilter = (fp) => !fp.startsWith("features/_harness/");
+    const defaultSeen = new Set(DEFAULT_CHUNKS.flatMap((chunkName) => CHUNKS[chunkName] || []));
+    for (const [fp, reason] of Object.entries(EXCLUDED_FEATURES)) {
+        if (!seen.has(fp)) {
+            throw new Error(`Explicitly excluded feature is not declared in CHUNKS: ${fp}`);
+        }
+        if (defaultSeen.has(fp)) {
+            throw new Error(`Explicitly excluded feature is admitted to the default suite: ${fp}`);
+        }
+        if (typeof reason !== "string" || reason.trim() === "") {
+            throw new Error(`Explicit exclusion for feature has no reason: ${fp}`);
+        }
+    }
+
+    // Every on-disk feature must be in exactly one default chunk unless its
+    // explicit exclusion (and reason) is recorded above.  Checking the
+    // default union, rather than all CHUNKS, prevents silent remainder
+    // ownership in future non-default chunks.
+    const eligibleFilter = (fp) => !Object.hasOwn(EXCLUDED_FEATURES, fp);
     const orphans = onDiskFeatures()
-        .filter(orphanFilter)
-        .filter((fp) => !seen.has(fp));
+        .filter(eligibleFilter)
+        .filter((fp) => !defaultSeen.has(fp));
 
     if (orphans.length > 0) {
-        throw new Error(`Feature files on disk not claimed by any chunk: ${orphans.join(", ")}`);
+        throw new Error(`Feature files on disk not claimed by any default chunk: ${orphans.join(", ")}`);
+    }
+
+    const duplicateDefaultPaths = [...defaultSeen].filter((fp) => {
+        let count = 0;
+        for (const chunkName of DEFAULT_CHUNKS) count += CHUNKS[chunkName]?.includes(fp) ? 1 : 0;
+        return count !== 1;
+    });
+    if (duplicateDefaultPaths.length > 0) {
+        throw new Error(`Default feature paths must have exactly one owner: ${duplicateDefaultPaths.join(", ")}`);
     }
 
     // Every default chunk's features must all be present (no partial / missing chunks).
@@ -363,6 +395,7 @@ module.exports = {
     CHUNKS,
     DEFAULT_CHUNKS,
     EXCLUSIVE_CHUNKS,
+    EXCLUDED_FEATURES,
     CHUNK_COMPONENTS,
     commandArgs,
     emitSummary: defaultEmitSummary,

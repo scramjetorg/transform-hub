@@ -297,7 +297,7 @@
 
 ## Phase 10: BDD Test Chunking, Resource Metrics, and Timing Rationalization
 
-- [~] Task: Define and validate an explicit BDD chunk manifest
+- [x] Task: Define and validate an explicit BDD chunk manifest
     - [x] Replace dynamic remainder ownership with a static, feature-path-based manifest; do not use tags as chunk ownership.
     - [x] Assign every eligible default-suite feature to exactly one named chunk and fail validation for duplicate, missing, deleted, or nonexistent paths.
     - [x] Keep harness, stress, fixed-port Hub, Manager/MultiManager, and broad Docker-cleanup paths exclusive until ownership isolation is implemented.
@@ -338,16 +338,18 @@
 
   ClientUtils agent lifecycle remediation (2026-07-14): `ClientUtils` now owns one stable keep-alive HTTP agent and one stable HTTPS agent per instance, exposes idempotent `dispose()`, and `ClientUtilsCustomAgent` treats injected agents as borrowed unless explicitly constructed as owner. HostClient/ManagerClient dispose owned v1/v2 and child transports safely. BDD world cleanup disposes scenario-owned resources only; the shared external host client is reused across `SCRAMJET_HOST_BASE_URL` scenarios and disposed in AfterAll. Client-utils regressions pass 4/4; API-client disposal regressions pass 6/6. Ten fresh guarded canonical runs passed with deltas `679911, 826031, 682487, 827847, 828071, 825888, 828056, 825407, 680519, 683479` against base 524288/effective 856064; the post-agent maximum is 828071 and the unchanged 331776 allowance remains transport-lifecycle-only.
 
-- [ ] Task: Validate independently runnable 300-second BDD feature chunks
+- [x] Task: Validate independently runnable 300-second BDD feature chunks
     - [x] Compare the serial union of all chunks with the default eligible scenario set.
     - [x] Run every feature chunk under supported Docker BDD execution with a 300-second timeout and record median, p95, maximum runtime, memory growth, and classification.
-    - [ ] Remediate, split, or explicitly exclude any feature that exceeds 300 seconds; do not silently allow it into a larger remainder chunk.
+    - [x] Remediate, split, or explicitly exclude any feature that exceeds 300 seconds; do not silently allow it into a larger remainder chunk.
     - [x] Run relevant BDD memory-guard validation and record parent heap, child RSS, Docker working-set thresholds, skips/exceptions, and deferred coverage.
     - [x] Record external watchdog limitations separately from container OOM or test failures.
 
   Classification Notes: On 2026-07-13, all 24 eligible static manifest feature paths were exercised individually through the supported Docker runner with a 300-second timeout, strict 524288-byte parent heap guard, 104857600-byte child RSS/Docker working-set thresholds, and no skips. The manifest union matched the eligible feature set exactly with no duplicate or missing paths. Only `VERSER2-001` was parallel-ready across three repeats (6.51–7.34 seconds). Stop-handler, stream/stress, Hub, Manager, and resource-owning paths remain exclusive. `E2E-001`, `E2E-010`, `E2E-011`, `E2E-012-cli-config`, `E2E-014`, `E2E-016`, `E2E-007`, and `MANAGER-003/004` require memory remediation; `E2E-003`, `E2E-008`, `HUB-002/003/004`, and `MANAGER-002` have functional blockers. `E2E-010-cli` ended with Docker exit 137 and `OOMKilled=true` at approximately 1.49 GiB.    No external watchdog termination occurred in these individual feature runs. Scheduler admission remains blocked pending functional/memory remediation and ownership isolation.
 
   VERSER2-001 Exception: On 2026-07-13, the VERSER2-001 parent memory-growth allowance was raised from 245760 to 1048576 bytes (exactly 1 MiB), user-approved for a separately tracked Verser2 allocation issue. The 1 MiB allowance covers the observed flaky parent-heap regression above the strict 524288-byte base threshold and is scoped to this exact feature, line, and scenario name. Reason: "exact 1 MiB allowance for the separately tracked Verser2 allocation issue"
+
+  Manifest reconciliation (2026-07-14): `validateManifest` now checks the union of default chunks, not merely all declared chunks, against on-disk eligible features. Any feature outside the default suite must be listed in `EXCLUDED_FEATURES` with a non-empty reason; the only current exclusion is the explicitly selectable internal harness feature. This prevents a future >300-second or otherwise deferred feature from being silently placed in a non-default remainder. Guarded manifest, serial-mode, readiness, and timing regressions pass; no timeout remediation or new memory exception was introduced.
 
   Execution-mode Notes: `npm run test:bdd` selects the bounded serial base partition `verser2`, `topics-api`, `appcontext`, and `node`, covering core routing, API/topic forwarding, AppContext, and Node runner behavior. `npm run test:bdd-extra` serially runs the remaining eligible chunks `cli`, `topics-cli`, `python`, `hub`, `manager`, `errors`, and `stream`. The explicit/automatic `all` mode runs all eligible `DEFAULT_CHUNKS` serially and is selected for `--name`/`--tags` arguments so targeted repository selection cannot silently miss extra chunks. The partition is complete over `DEFAULT_CHUNKS` with no overlap; `harness` remains explicitly selectable but outside all modes. Both modes preserve supported Docker ownership/cleanup and strict guards, add configurable 1000 ms default ramp-up/ramp-down lifecycle steps, and do not enable parallel scheduling. Base/extra are operational PR/release guidance, not current workflow integration claims.
 

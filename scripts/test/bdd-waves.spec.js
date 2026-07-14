@@ -78,6 +78,17 @@ test("harness chunk is NOT in default chunks", t => {
     t.false(runner.DEFAULT_CHUNKS.includes("harness"));
 });
 
+test("default manifest covers every eligible feature and records exclusions explicitly", t => {
+    const defaultPaths = runner.DEFAULT_CHUNKS.flatMap((name) => runner.CHUNKS[name]);
+    const excludedPaths = Object.keys(runner.EXCLUDED_FEATURES);
+    const eligiblePaths = runner.onDiskFeatures().filter((featurePath) => !excludedPaths.includes(featurePath));
+
+    t.deepEqual([...new Set(defaultPaths)].sort(), eligiblePaths.sort());
+    t.deepEqual(excludedPaths, ["features/_harness/harness-timeout.feature"]);
+    t.truthy(runner.EXCLUDED_FEATURES[excludedPaths[0]]);
+    t.false(defaultPaths.includes(excludedPaths[0]));
+});
+
 test("resource-owning chunks remain explicitly exclusive", t => {
     t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub", "manager", "stream"]);
     t.true(runner.EXCLUSIVE_CHUNKS.every(name => runner.CHUNKS[name]));
