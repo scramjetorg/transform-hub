@@ -11,15 +11,13 @@ import { SIGTERM } from "constants";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
 import * as net from "net";
-import { defer, waitUntilStreamEquals } from "../../lib/utils";
+import { defer, waitForCondition, waitUntilStreamEquals } from "../../lib/utils";
 import { promisify } from "util";
 import { readFile } from "fs/promises";
 import { HostUtils } from "../../lib/host-utils";
 
 const freeport = promisify(require("freeport"));
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const AWAITING_POLL_DEFER_TIME = 250;
 
 const spawned: Set<ChildProcess> = new Set();
 
@@ -288,9 +286,11 @@ When('I send a {string} direct request to {string} on port {int}', async functio
     const url = originalUrl.toString();
     const options: RequestInit = { method };
 
-    // Send the request and store the response for later steps
-    await sleep(1000);
-    const response = await fetch(url, options);
+    const response = await waitForCondition(
+        () => fetch(url, options),
+        (candidate) => candidate.ok,
+        { timeoutMs: 10000, description: `Direct ${method} ${url}` }
+    );
 
     this.response = response;
 
@@ -529,7 +529,7 @@ Then("get runner container information", { timeout: 20000 }, async function(this
     const instanceId = this.resources.instance!.id;
     let inspect: Dockerode.ContainerInspectInfo | undefined;
 
-    while (!inspect) {
+    await waitForCondition(async () => {
         const containers = await new Dockerode().listContainers({
             filters: { label: [`scramjet.instance.id=${instanceId}`] }
         });
@@ -539,11 +539,10 @@ Then("get runner container information", { timeout: 20000 }, async function(this
             inspect = await new Dockerode().getContainer(containerId).inspect();
 
             this.resources.containerInspect = inspect;
-            this.resources.containerInfo = { Image: inspect.Config.Image };
-        } else {
-            await defer(AWAITING_POLL_DEFER_TIME);
+            return inspect;
         }
-    }
+        return undefined;
+    }, Boolean, { timeoutMs: 10000, intervalMs: 50, description: `Container for instance ${instanceId}` });
 });
 
 Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
@@ -565,19 +564,16 @@ Then("get all containers", async function(this: CustomWorld) {
 });
 
 Then("get last container info", async function(this: CustomWorld) {
-    let success: any;
-
-    while (!success) {
+    await waitForCondition(async () => {
         const containers = await new Dockerode().listContainers();
         const lastContainer = containers.filter(container =>
             !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id));
 
         if (lastContainer.length) {
-            this.resources.lastContainer = success = lastContainer[0];
-        } else {
-            await defer(AWAITING_POLL_DEFER_TIME);
+            return this.resources.lastContainer = lastContainer[0];
         }
-    }
+        return undefined;
+    }, Boolean, { timeoutMs: 10000, intervalMs: 50, description: "new runner container" });
 });
 
 When("last container uses {string} image", async function(this: CustomWorld, image: string) {

@@ -543,6 +543,21 @@ test("cleanupWorldResources destroys streams without inferring process ownership
     t.false(child.killed, "generic world cleanup must not infer process ownership");
 });
 
+test("cleanupWorldResources disposes explicitly owned client resources", t => {
+    let owned = 0;
+    let borrowed = 0;
+    const world = {
+        resources: {
+            ownedClient: { dispose: () => owned++ },
+            borrowedClient: { dispose: () => borrowed++ }
+        },
+        cliResources: {}
+    };
+    cleanupWorldResources(world);
+    t.is(owned, 1);
+    t.is(borrowed, 1, "world cleanup invokes each owned resource contract once");
+});
+
 test("cleanupWorldResources continues after a stream destroy throws", (t) => {
     const throwing = {
         readable: true,

@@ -34,7 +34,7 @@ Before start running any test, please make sure that all the packages are instal
 npm run clean && npm install && npm run build:all
 ```
 
-This command will remove all the 'dist' folders (if there were any), after that it will install dependencies and compile the code in all the packages. BDD sequence archives are prepared separately by the fixture-packing commands used by the supported BDD scripts.
+This command will remove all the 'dist' folders (if there were any), after that it will install dependencies and compile the code in all the packages. BDD sequence archives are prepared inside the immutable owner/chunk temporary directory by the supported Docker runner. Each set has an exact source-to-entry SHA-256 manifest; stale archives and repository-tree archive resolution are rejected. The canonical live Hub smoke is `E2E-001 TC-002` (`simple-stdio` pack, manifest validation, upload, start, stdin/stdout, and health). The CLI `-` session chain remains in `E2E-010 TC-005`.
 
 ### Executing BDD tests :rocket:
 

@@ -174,10 +174,17 @@ if (isBddMemoryGuardEnabled()) {
 }
 
 const escapedPassthrough = passthroughArgs.map(shellEscape).join(" ");
+const fixturePacking = [
+    "node scripts/prepare-bdd-simple-stdio.js /work-tmp",
+    "OUT_DIR=/work-tmp/appcontext-packages node scripts/pack-appcontext-fixtures.js",
+    "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js",
+    "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
+].join(" && ");
+const packageDirs = "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
 const innerCommand =
     escapedPassthrough.length > 0
-        ? `PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
-        : "PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd";
+        ? `${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
+        : `${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 
@@ -200,7 +207,6 @@ let waitChild = null;
 /** @type {number|null} Baseline working-set sample in bytes (captured after container start). */
 let workingSetBaseline = null;
 let workingSetReady = false;
-let chunkReadySignal = null;
 let readinessPollTimer = null;
 let readinessSampleInFlight = false;
 
@@ -220,6 +226,7 @@ let workingSetTimer = null;
 const WORKING_SET_SAMPLE_INTERVAL_MS = 30000;
 const READINESS_POLL_INTERVAL_MS = 50;
 const READINESS_SAMPLE_INTERVAL_MS = 250;
+void READINESS_SAMPLE_INTERVAL_MS;
 
 const consumeChunkReadySignal = () => {
     if (workingSetReady) return true;
@@ -227,7 +234,6 @@ const consumeChunkReadySignal = () => {
         const signal = JSON.parse(fs.readFileSync(path.join(tmpDir, "chunk-ready.json"), "utf8"));
         if (signal.ready === true) {
             workingSetReady = true;
-            chunkReadySignal = signal;
             if (typeof signal.containerReadyBytes === "number") workingSetBaseline = signal.containerReadyBytes;
             process.stderr.write(`[run-bdd-docker] chunk readiness signal consumed (${signal.source || "unknown"})\n`);
         }

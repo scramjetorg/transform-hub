@@ -1,6 +1,7 @@
 import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
+import { once } from "events";
 import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
@@ -57,15 +58,21 @@ export class HostUtils {
     }
 
     async check() {
-        assert.equal(
-            (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad,
-            200,
-            "Remote host doesn't respond"
-        );
+        const client = new HostClient(this.hostUrl);
+        try {
+            assert.equal((await client.getLoadCheck()).currentLoad, 200, "Remote host doesn't respond");
+        } finally {
+            client.dispose();
+        }
     }
 
     async getHostStatus() {
-        return (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad;
+        const client = new HostClient(this.hostUrl);
+        try {
+            return (await client.getLoadCheck()).currentLoad;
+        } finally {
+            client.dispose();
+        }
     }
 
     async stopHost() {
@@ -101,6 +108,8 @@ export class HostUtils {
                 reject(new Error("Couldn't stop host"));
             }
         });
+        await HostUtils.disposeChildIO(host);
+        this.output = "";
     }
 
     /**
@@ -166,6 +175,19 @@ export class HostUtils {
         }
     }
 
+    private static async disposeChildIO(child: ChildProcess): Promise<void> {
+        const streams = [child.stdout, child.stderr].filter(Boolean) as NodeJS.ReadableStream[];
+        for (const stream of streams) stream.removeAllListeners();
+        child.removeAllListeners("error");
+        for (const stream of streams) {
+            const closed = (stream as any).destroyed
+                ? Promise.resolve()
+                : once(stream as any, "close").then(() => undefined);
+            (stream as any).destroy?.();
+            await closed;
+        }
+    }
+
     private static installCleanupHandlers() {
         if (HostUtils.cleanupHandlersInstalled) {
             return;
@@ -185,7 +207,10 @@ export class HostUtils {
     private static trackHost(host: ChildProcess) {
         HostUtils.installCleanupHandlers();
         HostUtils.hosts.add(host);
-        host.once("exit", () => HostUtils.hosts.delete(host));
+        host.once("exit", () => {
+            HostUtils.hosts.delete(host);
+            void HostUtils.disposeChildIO(host);
+        });
     }
 
     async spawnHost(ommit: NoDefault, ...extraArgs: any[]): Promise<string> {

@@ -203,3 +203,19 @@ logs: `/tmp/phase10-verser2.log`, `/tmp/phase10-cli.log`,
 `/tmp/phase10-e2e010.log`, `/tmp/phase10-manager002.log`,
 `/tmp/phase10-e2e015.log`, `/tmp/phase10-stream.log`, and
 `/tmp/phase10-hub.log`.
+
+## Consolidation replacement matrix (2026-07-14)
+
+| Removed/changed surface | Canonical replacement | Preserved contract |
+|---|---|---|
+| E2E-001 repository-tree `simple-stdio-2.tar.gz` and 3 s slack | E2E-001 TC-002 owner-scoped pack/manifest preparation/upload smoke plus observable stream cleanup | live Hub, upload, start, stdin/stdout, health |
+| E2E-010 TC-003 pack-only scenario | E2E-001 TC-002 pack assertion | packaging remains covered live |
+| `PACKAGES_DIR` repository-tree archive fallback | owner temp manifest directories created before Cucumber | stale-safe exact source-to-output integrity |
+| fixed direct-request/setup readiness delay | 50 ms observable polling with 10 s bound | request result and timeout diagnostics |
+| unbounded Docker discovery / health loops | 50 ms polling with 10 s bounds and last observation | container/health assertions |
+| manager/multi-manager 2 s sleeps and aggregation no-marker 1 s sleep | API/log observation or immediate spawn followed by bounded API readiness | manager/aggregation coverage |
+| appcontext lifecycle, node-completes, BDD hello/logs/unhealthy, API-server fixture delays | 50 ms bounded scheduling/readiness paths | fixture assertions; keep-alive, flood, watchdog, and delayed-event contracts retained |
+
+Not removed: E2E-010 TC-005's CLI `-` session chain. Asserted flood,
+watchdog, keep-alive, delayed-fixture, stop, and backpressure timing remains
+unchanged.

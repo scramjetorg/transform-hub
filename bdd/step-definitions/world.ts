@@ -9,8 +9,6 @@ import * as dns from "dns";
 const { ScenarioLifecycle } = require("../../scripts/lib/bdd-scenario-lifecycle.js");
 const { memoryRegistry } = require("../lib/memory-registry");
 
-const glob: (pattern: string, callback: (err: Error | null, matches: string[]) => void) => void = require("glob");
-
 const DEFAULT_TIMEOUT = 20000;
 const MAX_TIMEOUT = 30000;
 const configuredTimeout = Number(process.env.BDD_STEP_TIMEOUT_MS);
@@ -53,22 +51,6 @@ export class CustomWorld implements World {
             sequences: {},
             instancesClients: {}
         };
-
-    async findSequencePackage(sequenceName: string) {
-        return new Promise<string>((resolve) => {
-            glob("../**/" + sequenceName + ".tar.gz", (err, matches) => {
-                if (err) {
-                    throw err;
-                }
-
-                if (matches.length === 0) {
-                    throw new Error(`No sequence package found for ${sequenceName}`);
-                }
-
-                resolve(matches[0]);
-            });
-        });
-    }
 
     cliResources: {
         stdio?: [stdout: string, stderr: string, statusCode: any];

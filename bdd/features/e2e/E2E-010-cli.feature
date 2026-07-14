@@ -15,11 +15,6 @@ Feature: CLI tests
         When I execute CLI with "hub version"
 
     @ci-api @cli
-    Scenario: E2E-010 TC-003 Test Sequence 'pack' option
-        When I execute CLI with "seq pack data/sequences/simple-stdio -o __BDD_TMP_SIMPLE_STDIO__"
-        Then I get location "__BDD_TMP_SIMPLE_STDIO__" of compressed directory
-
-    @ci-api @cli
     Scenario: E2E-010 TC-004 Test Sequence options
         When I execute CLI with "seq --help"
         When I execute CLI with "seq send data/sequences/bdd-packages/args-to-output.tar.gz"

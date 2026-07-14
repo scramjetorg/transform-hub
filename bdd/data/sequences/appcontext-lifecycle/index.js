@@ -19,9 +19,6 @@ module.exports = async function appcontextLifecycleSequence(_input) {
         }) + "\n"
     );
 
-    // Wait briefly so BDD can observe keepAlive before end.
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
     this.end();
 
     process.stdout.write(

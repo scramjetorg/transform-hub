@@ -138,20 +138,20 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     // -----------------------------------------------------------------------
     // E2E-001 TC-002: completed-sequence stdio (CLI-heavy scenario)
     //
-    // Five complete guarded runs observed maxima of 848816 bytes.
-    // The smallest 4KiB allowance covering this is 327680 bytes, with
-    // one additional 4KiB safety boundary (81 × 4096 = 331776).
+    // Ten post-agent-fix strict guarded runs form two reproducible socket
+    // lifecycle bands: 679911–683479 bytes and 825407–828071 bytes. The
+    // higher band is the keep-alive socket retained until deterministic client
+    // disposal; this allowance is not attributed to archive preparation.
     // -----------------------------------------------------------------------
     {
         featureUri: "e2e/E2E-001-samples.feature",
         line: 4,
         scenarioName: "E2E-001 TC-002 Test stdio available after the sequence is completed",
         allowanceBytes: 331_776,
-        reason: "Five complete guarded runs observed a maximum delta of 848816 bytes. "
-            + "Allowance is the smallest 4096-byte step (327680 bytes) covering the "
-            + "maximum excess over the 524288-byte base, plus one additional 4096-byte "
-            + "safety boundary (81 × 4096 = 331776), scoped to this exact feature, line, "
-            + "and scenario name.",
+        reason: "Ten post-agent-fix strict guarded Docker runs produced two stable socket-lifecycle "
+            + "bands (679911–683479 and 825407–828071 bytes). The unchanged 331776-byte exact-pickle "
+            + "allowance covers the higher keep-alive socket band above the 524288-byte base; the "
+            + "rationale is transport lifecycle variance and does not attribute memory to archives.",
     },
 
     // -----------------------------------------------------------------------

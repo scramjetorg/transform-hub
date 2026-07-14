@@ -39,6 +39,21 @@ const bddTempPaths: Record<string, string> = {
 const resolveBddTempPaths = (args: string): string[] =>
     args.split(" ").map((arg) => bddTempPaths[arg] || arg);
 
+Then("the packed simple-stdio archive is valid", function(this: CustomWorld) {
+    const archive = bddTempPaths.__BDD_TMP_SIMPLE_STDIO__;
+    assert.ok(archive && fs.existsSync(archive), "owner-scoped simple-stdio archive is missing");
+    // The pack command's collected stdio is no longer asserted after the
+    // archive check. Release it now, before the scenario's live Hub work and
+    // strict post-cleanup measurement.
+    this.cliResources.stdio = undefined;
+});
+
+When("I pack the simple-stdio archive", async function(this: CustomWorld) {
+    const archive = process.env.SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE;
+    assert.ok(archive && fs.existsSync(archive), "owner-scoped simple-stdio archive was not prepared");
+    bddTempPaths.__BDD_TMP_SIMPLE_STDIO__ = archive;
+});
+
 AfterAll(() => {
     fs.rmSync(bddTempDir, { recursive: true, force: true });
 });
@@ -115,6 +130,7 @@ When("I execute CLI with {string}", { timeout: 60000 }, async function (
         logger.debug(res.stdio);
     }
     assert.equal(res.stdio[2], 0);
+    if (args.startsWith("seq pack ")) res.stdio = undefined;
 });
 
 When(

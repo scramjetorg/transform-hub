@@ -15,6 +15,9 @@ const timeoutLongMs = 300;
 const logger = getLogger("test");
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
+export const { waitForCondition } = require("./readiness.js") as {
+    waitForCondition: <T>(check: () => Promise<T> | T, isReady: (value: T) => boolean, options?: { timeoutMs?: number; intervalMs?: number; description?: string }) => Promise<T>;
+};
 
 export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
     if (process.env.SCRAMJET_SPAWN_JS && process.env.SCRAMJET_SPAWN_TS) {
@@ -209,19 +212,24 @@ export function removeBoundaryQuotes(str: string) {
 
 export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 30000): Promise<boolean> {
     let response = "";
+    const piped = stream.pipe(new PassThrough({ encoding: undefined }));
+    try {
+        return await Promise.race([
+            (async () => {
+                for await (const chunk of piped) {
+                    response = `${response}${chunk.toString()}`;
 
-    return Promise.race([
-        (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
-                response = `${response}${chunk.toString()}`;
-
-                console.log("\nData received: ", response);
-                if (response.includes(expected)) return true;
-            }
-            throw new Error("End of stream reached");
-        })(),
-        defer(timeout).then(() => { throw new Error(`Stream did not contain ${JSON.stringify(expected)} before timeout`); })
-    ]);
+                    console.log("\nData received: ", response);
+                    if (response.includes(expected)) return true;
+                }
+                throw new Error("End of stream reached");
+            })(),
+            defer(timeout).then(() => { throw new Error(`Stream did not contain ${JSON.stringify(expected)} before timeout`); })
+        ]);
+    } finally {
+        piped.destroy();
+        stream.destroy();
+    }
 }
 
 export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
@@ -247,6 +255,7 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
         ]);
     } finally {
         piped.destroy();
+        stream.destroy();
     }
 
     return response;

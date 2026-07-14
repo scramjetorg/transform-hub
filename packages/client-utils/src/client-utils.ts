@@ -12,6 +12,8 @@ export abstract class ClientUtilsBase implements HttpClient {
 
     static headers: Headers = {};
     public agent: HTTPAgent | HTTPSAgent = new HTTPAgent();
+    private disposed = false;
+    protected ownsAgent = true;
 
     constructor(
         public apiBase: string,
@@ -19,6 +21,15 @@ export abstract class ClientUtilsBase implements HttpClient {
         normalizeUrlFn?: (url: string) => string
     ) {
         this.normalizeUrlFn = normalizeUrlFn || ((url: string) => url);
+    }
+
+    /** Release keep-alive sockets owned by this client. Safe to call repeatedly. */
+    public dispose(): void {
+        if (this.disposed) return;
+        this.disposed = true;
+        if (!this.ownsAgent) return;
+        if (this.fetch?.dispose) this.fetch.dispose();
+        else (this.agent as any)?.destroy?.();
     }
 
     /**

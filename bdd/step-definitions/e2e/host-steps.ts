@@ -6,10 +6,12 @@ import {
     waitUntilStreamEquals,
     waitUntilStreamStartsWith,
     waitUntilStreamContains,
+    waitForCondition,
     createDirectory,
     deleteDirectory,
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
+import path from "path";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
@@ -23,6 +25,7 @@ import { exec } from "child_process";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
 import { restoreSavedHostEnv } from "../hub/config";
 import { memoryRegistry } from "../../lib/memory-registry";
+import { externalClientForUrl, selectScenarioClient } from "../../lib/client-ownership";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
 
@@ -47,6 +50,16 @@ function resolveSequencePackage(packageName: string): string {
     );
 }
 
+function resolveOwnedArchive(packagePath: string): string {
+    if (packagePath === "__BDD_TMP_SIMPLE_STDIO__") {
+        if (process.env.SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE) return process.env.SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE;
+        const tempPath = getOwnership(process.env).tempPath;
+        const cliDir = fs.readdirSync(tempPath).find((entry) => entry.startsWith("cli-") && fs.statSync(path.join(tempPath, entry)).isDirectory());
+        if (cliDir) return path.join(tempPath, cliDir, "simple-stdio.tar.gz");
+    }
+    return packagePath;
+}
+
 let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
@@ -61,13 +74,16 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const dockerode = new Dockerode();
 const ownership = getOwnership(process.env);
-const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
+let externalHostBaseUrl: string | undefined;
+const getHostClient = ({ resources }: CustomWorld): HostClient =>
+    selectScenarioClient(resources.hostClient, hostClient)!;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArg.split(" ")
     });
+    this.resources.sequence = undefined;
 };
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
@@ -181,7 +197,9 @@ BeforeAll({ timeout: 20e3 }, async () => {
 
         console.error(`Starting host on port: ${apiPort}`);
     }
+    hostClient?.dispose();
     hostClient = new HostClient(apiUrl);
+    externalHostBaseUrl = apiUrl;
     writeBddConfig({ apiUrl });
 
     if (process.env.SCRAMJET_TEST_LOG) {
@@ -233,12 +251,17 @@ BeforeAll({ timeout: 20e3 }, async () => {
 });
 
 AfterAll(async () => {
-    if (!process.env.NO_HOST) {
-        try {
-            await hostUtils.stopHost();
-        } catch {
-            throw new Error("Host unexpected closed");
+    try {
+        if (!process.env.NO_HOST) {
+            try {
+                await hostUtils.stopHost();
+            } catch {
+                throw new Error("Host unexpected closed");
+            }
         }
+    } finally {
+        hostClient?.dispose();
+        hostClient = undefined as unknown as HostClient;
     }
     cleanupBddConfig();
 });
@@ -290,6 +313,7 @@ After({}, async function (this: any) {
     actualApiResponse = undefined;
     containerId = undefined as unknown as string;
     processId = undefined as unknown as number;
+    hostUtils.output = "";
 });
 
 Before({ tags: "@test-si-init" }, function() {
@@ -373,9 +397,12 @@ Then("end fake stream", async function(this: CustomWorld): Promise<void> {
 
 Given("host is running", async function(this: CustomWorld) {
     const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+    const scenarioClient = this.resources.hostClient;
 
-    if (apiUrl) {
-        hostClient = this.resources.hostClient = new HostClient(apiUrl);
+    if (apiUrl && !scenarioClient) {
+        const selected = externalClientForUrl(hostClient, externalHostBaseUrl, apiUrl, () => new HostClient(apiUrl));
+        hostClient = selected.client;
+        externalHostBaseUrl = selected.url;
     }
 
     // Bounded retry with backoff to handle ECONNREFUSED race between
@@ -383,7 +410,7 @@ Given("host is running", async function(this: CustomWorld) {
     // Delegates to the shared retryLoadCheck helper for consistent
     // transient-connection retry semantics across all host steps.
     await retryLoadCheck(
-        () => hostClient.getLoadCheck(),
+        () => getHostClient(this).getLoadCheck(),
         "Host did not become ready"
     );
 });
@@ -410,12 +437,14 @@ When("find and upload sequence {string}", { timeout: 30000 }, async function(thi
 });
 
 When("sequence {string} loaded", { timeout: 30000 }, async function(this: CustomWorld, packagePath: string) {
+    packagePath = resolveOwnedArchive(packagePath);
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, check the configured local fixture path.`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
+    packagePath = resolveOwnedArchive(packagePath);
     if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, check the configured local fixture path.`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
@@ -424,9 +453,18 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
+    this.resources.sequence = undefined;
 });
 
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
+
+Then("instance is ready for stdin", async function(this: CustomWorld) {
+    await waitForCondition(
+        () => this.resources.instance!.getHealth(),
+        (health: any) => health?.healthy === true || health?.healthy === "true",
+        { timeoutMs: 10000, intervalMs: 50, description: "instance stdin readiness" }
+    );
+});
 
 When("start Instance by name {string}", async function(this: CustomWorld, name: string) {
     this.resources.sequence = hostClient.getSequenceClient(name);
@@ -618,7 +656,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
         tries++;
 
         if (!success) {
-            await defer(1000);
+            await defer(50);
         }
     }
 
@@ -678,28 +716,37 @@ When("wait for instance healthy is {string}", async function(this: CustomWorld, 
     if (resp === "false") {
         console.log(`Response body is ${healthy}`);
     } else {
-        do {
-            actualHealthResponse = await this.resources.instance?.getHealth();
-            healthy = actualResponse().healthy.toString();
-
-            if (typeof actualResponse() === "undefined") {
-                console.log("actualResponse is undefined");
-            } else {
-                console.log(`Response body is ${healthy}`);
-            }
-
-            await defer(100);
-        } while (!healthy);
+        await waitForCondition(
+            async () => {
+                actualHealthResponse = await this.resources.instance?.getHealth();
+                healthy = actualResponse()?.healthy?.toString() || "false";
+                return healthy;
+            },
+            (value) => value === resp,
+            { timeoutMs: 10000, intervalMs: 50, description: "instance health" }
+        );
     }
 
     assert.equal(healthy, resp);
 });
 
 Then("get instance info", async function(this: CustomWorld) {
-    const info = this.resources.instance?.getInfo();
+    const info = await this.resources.instance?.getInfo();
 
     assert.ok(info, "No response on info");
 });
+
+Then("release canonical smoke buffers", async function(this: CustomWorld) {
+    this.resources.instance = undefined;
+    this.resources.sequence = undefined;
+    this.resources.outStream?.destroy();
+    this.resources.outStream = undefined;
+    this.cliResources.stdio = undefined;
+    this.cliResources.stdio1 = undefined;
+    this.cliResources.stdio2 = undefined;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+});
+
 
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse());

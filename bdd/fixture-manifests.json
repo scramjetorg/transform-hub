@@ -1,0 +1,38 @@
+{
+  "bdd": [
+    "bdd-args-to-output",
+    "bdd-avengers-names-output",
+    "bdd-can-keep-alive",
+    "bdd-checksum",
+    "bdd-csv-transform",
+    "bdd-endless-names-output",
+    "bdd-event-sequence-v2",
+    "bdd-flood-stdout-sequence",
+    "bdd-hello-output",
+    "bdd-js-hostclient-basic",
+    "bdd-js-inert-function",
+    "bdd-process-not-responding"
+  ],
+  "python-bdd": [
+    "python-bdd-chunk-lengths",
+    "python-bdd-exception",
+    "python-bdd-gen-async",
+    "python-bdd-logs",
+    "python-bdd-topic-consumer",
+    "python-bdd-topic-producer",
+    "python-bdd-unhealthy",
+    "python-bdd-unified-events",
+    "python-bdd-unified-forever",
+    "python-bdd-unified-simple",
+    "python-bdd-unified-stop-handler"
+  ],
+  "appcontext": [
+    "appcontext-config",
+    "appcontext-events",
+    "appcontext-exposed-api",
+    "appcontext-legacy-clients",
+    "appcontext-lifecycle",
+    "appcontext-storage",
+    "appcontext-v2-clients"
+  ]
+}

@@ -26,6 +26,7 @@ export class HostClient implements ClientProvider {
 
     #_client: ClientUtils;
     #_v2Client: ClientUtils;
+    #disposed = false;
 
     get client(): ClientUtils {
         return this.#_client;
@@ -36,6 +37,14 @@ export class HostClient implements ClientProvider {
 
         this.#_client = utils;
         this.#_v2Client = v2Utils || createV2Client(this.apiBase, this.client);
+    }
+
+    /** Dispose both API transports; borrowed agents remain owned by their parent client. */
+    dispose(): void {
+        if (this.#disposed) return;
+        this.#disposed = true;
+        this.#_v2Client.dispose();
+        this.#_client.dispose();
     }
 
     /**

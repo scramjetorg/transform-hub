@@ -4,7 +4,7 @@ import { strict as assert } from "assert";
 import { getExecutableCmd, spawnProcess, parseOptions, requestGet, requestPost, assertResponseData } from "./common";
 import { CustomWorld } from "../world";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
-import { defer } from "@scramjet/utility";
+import { waitForCondition } from "../../lib/utils";
 
 async function startMultiManager(options: {[key: string]: any}): Promise<ChildProcess> {
     return spawnProcess(getExecutableCmd("multi-manager"), options, 500, "Server started", { detached: true });
@@ -152,7 +152,6 @@ Then("Manager {string} exposes Host {string} logs", { timeout: 10000 }, async fu
     managerId: string,
     hostId: string,
 ){
-    await defer(2000);
     const manager = this.resources.managers[managerId];
     const logStream = await manager.getHostClient(hostId).getLogStream();
 
@@ -169,11 +168,12 @@ Then("MultiManager with id {string} lists {int} running hosts on Manager id {str
     itemsLength: number,
     managerId: string
 ){
-    await defer(2000);
     const multiManager = this.resources.multiManagers[multiManagerId];
-    const response = await requestGet(
-        multiManager.apiBase,
-        `cpm/${ managerId }/api/v1/list`);
+    const response = await waitForCondition(
+        () => requestGet(multiManager.apiBase, `cpm/${ managerId }/api/v1/list`),
+        (candidate: any) => Array.isArray(candidate) && candidate.length === itemsLength,
+        { timeoutMs: 10000, intervalMs: 50, description: `MultiManager hosts for ${managerId}` }
+    );
 
     this.resources.multiManagerResponse = response;
 

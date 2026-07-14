@@ -9,8 +9,6 @@
  * helpers directly (no copied logic).
  */
 
-"use strict";
-
 // ---------------------------------------------------------------------------
 // Scenario exception matching
 // ---------------------------------------------------------------------------
@@ -63,6 +61,12 @@ function cleanupWorldResources(world) {
 
     const release = (value, key) => {
         if (!value || typeof value !== "object") return;
+        try {
+            value.dispose?.();
+            value.client?.dispose?.();
+        } catch (e) {
+            errors.push(new Error(`Failed to dispose resource "${key}": ${e.message}`));
+        }
         if (typeof value.destroy === "function" && (value.readable || value.writable || value._readableState)) {
             try {
                 value.destroy();

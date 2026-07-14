@@ -185,11 +185,10 @@ function spawnProcess(
                 }
             });
         } else {
-            // Resolve after a short delay
-            setTimeout(() => {
-                clearTimeout(timer);
-                resolve(proc);
-            }, 1000);
+            // The caller owns the observable API readiness check. Do not add
+            // an unobservable startup sleep here.
+            clearTimeout(timer);
+            resolve(proc);
         }
 
         if (!readyMatch && process.env.SCRAMJET_TEST_LOG) {

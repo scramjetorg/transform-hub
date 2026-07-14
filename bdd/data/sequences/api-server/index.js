@@ -41,7 +41,15 @@ module.exports = async function(_stream) {
         }
     });
 
-    await new Promise(res => setTimeout(res, 1000));
+    if (!this.api.server.listening) {
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error("API server did not become ready within 10000ms")), 10_000);
+            this.api.server.once("listening", () => {
+                clearTimeout(timer);
+                resolve();
+            });
+        });
+    }
 
     return new Promise((resolve, reject) => {
         if (!this.api.server.listening) {

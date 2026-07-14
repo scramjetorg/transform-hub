@@ -17,8 +17,6 @@ module.exports = async function(_input, inputEvent = "in", outputEvent = "out") 
             console.log("event", JSON.stringify(ev));
             this.emit(outputEvent, JSON.stringify({ test: ev.test + 1 }));
 
-            await new Promise(res2 => setTimeout(res2, 100));
-
             res();
         });
     });
