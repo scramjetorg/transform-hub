@@ -324,11 +324,13 @@
 
 - [ ] Task: Rationalize BDD timing through observable readiness polling
     - [x] Instrument chunk wall-clock setup and teardown timing to establish a baseline.
-    - [ ] Instrument scenario, slowest-step, and cleanup timing before changing waits.
+    - [x] Instrument scenario, slowest-step, and cleanup timing before changing waits.
     - [ ] Replace only unnecessary fixed sleeps with observable-condition polling at approximately 50-100 ms intervals and domain-specific deadlines.
     - [ ] Bound unbounded health/readiness loops and include last observed state in timeout diagnostics.
     - [ ] Preserve waits that are themselves asserted behavior: stop handlers, keep-alive, reconnect/backoff, flood/backpressure, delayed fixtures, and watchdog scenarios.
     - [ ] Add focused regression tests and repeated runs for every shortened wait to detect timing flakes.
+
+  Notes: Supported Docker BDD runs now emit ownership-attributed JSONL timing records and report the slowest scenario, step, and complete cleanup interval. Timing records are externalized before strict per-scenario GC; no global guard threshold changed. The exact VERSER2-001 exception is 1048576 bytes (1 MiB), user-approved for a separately tracked Verser2 allocation issue and scoped to the feature, line, and scenario name.
 
 - [ ] Task: Validate independently runnable 300-second BDD feature chunks
     - [x] Compare the serial union of all chunks with the default eligible scenario set.
@@ -340,6 +342,8 @@
   Classification Notes: On 2026-07-13, all 24 eligible static manifest feature paths were exercised individually through the supported Docker runner with a 300-second timeout, strict 524288-byte parent heap guard, 104857600-byte child RSS/Docker working-set thresholds, and no skips. The manifest union matched the eligible feature set exactly with no duplicate or missing paths. Only `VERSER2-001` was parallel-ready across three repeats (6.51–7.34 seconds). Stop-handler, stream/stress, Hub, Manager, and resource-owning paths remain exclusive. `E2E-001`, `E2E-010`, `E2E-011`, `E2E-012-cli-config`, `E2E-014`, `E2E-016`, `E2E-007`, and `MANAGER-003/004` require memory remediation; `E2E-003`, `E2E-008`, `HUB-002/003/004`, and `MANAGER-002` have functional blockers. `E2E-010-cli` ended with Docker exit 137 and `OOMKilled=true` at approximately 1.49 GiB.    No external watchdog termination occurred in these individual feature runs. Scheduler admission remains blocked pending functional/memory remediation and ownership isolation.
 
   VERSER2-001 Exception: On 2026-07-13, the VERSER2-001 parent memory-growth allowance was raised from 245760 to 1048576 bytes (exactly 1 MiB), user-approved for a separately tracked Verser2 allocation issue. The 1 MiB allowance covers the observed flaky parent-heap regression above the strict 524288-byte base threshold and is scoped to this exact feature, line, and scenario name. Reason: "exact 1 MiB allowance for the separately tracked Verser2 allocation issue"
+
+  Execution-mode Notes: `npm run test:bdd` selects the bounded serial base partition `verser2`, `topics-api`, `appcontext`, and `node`, covering core routing, API/topic forwarding, AppContext, and Node runner behavior. `npm run test:bdd-extra` serially runs the remaining eligible chunks `cli`, `topics-cli`, `python`, `hub`, `manager`, `errors`, and `stream`. The explicit/automatic `all` mode runs all eligible `DEFAULT_CHUNKS` serially and is selected for `--name`/`--tags` arguments so targeted repository selection cannot silently miss extra chunks. The partition is complete over `DEFAULT_CHUNKS` with no overlap; `harness` remains explicitly selectable but outside all modes. Both modes preserve supported Docker ownership/cleanup and strict guards, add configurable 1000 ms default ramp-up/ramp-down lifecycle steps, and do not enable parallel scheduling. Base/extra are operational PR/release guidance, not current workflow integration claims.
 
 - [ ] Task: Run classified BDD feature chunks in parallel in Docker
     - [ ] Require bounded feature memory growth, completed ownership isolation, and a passing 300-second classification before a feature enters the parallel scheduler.

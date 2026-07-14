@@ -130,18 +130,18 @@ test("explicit user --tags can override and select @needs-fix scenarios", (t) =>
 // in a way that accidentally includes @needs-fix scenarios.
 // ---------------------------------------------------------------------------
 
-test("root package.json test:bdd does not pass --tags or -t (relies on cucumber.js defaults)", (t) => {
-	// The test:bdd script must NOT pass --tags or -t so that the cucumber.js
-	// default profile (which excludes @needs-fix, @slow, etc.) applies.
+test("root package.json test:bdd selects the bounded base mode without tags", (t) => {
+	// Base/extra ownership is feature-path based. The mode runner must not pass
+	// tags or -t, so cucumber.js still applies its safety exclusions.
 	const rootPkg = require("../../package.json");
 	const script = rootPkg.scripts["test:bdd"];
 
 	t.truthy(script, "test:bdd script must exist");
 
-	// Extract the portion after run-bdd-docker.js --  which becomes the
-	// passthrough args to cucumber-js.
-	const passthroughMatch = script.match(/run-bdd-docker\.js\s+--\s*(.*)$/);
-	t.truthy(passthroughMatch, "script must delegate to run-bdd-docker.js with -- separator");
+	t.true(script.includes("run-bdd-modes.js --mode=base"), "test:bdd must use bounded base mode");
+	t.true(script.includes("BDD_INCLUDE_LONG_RUNNING=1"), "base mode must include the Node runner feature's explicit @slow coverage");
+	const passthroughMatch = script.match(/run-bdd-modes\.js\s+--mode=base\s+--\s*(.*)$/);
+	t.truthy(passthroughMatch, "script must delegate to run-bdd-modes.js with -- separator");
 
 	const passthrough = passthroughMatch[1];
 	t.false(/\s--tags\s/.test(passthrough), "must not pass --tags (overrides cucumber.js)");

@@ -144,9 +144,70 @@ Thresholds:
 
 Emergency skips require both `SCRAMJET_MEMORY_SKIP=1` and a non-empty `SCRAMJET_MEMORY_SKIP_REASON`. Broad silent skips are treated as configuration errors.
 
-### Running BDD in a container
+### Operational BDD execution guidance
 
-The root `npm run test:bdd` command runs through `scripts/run-bdd.js`, which defaults to Docker mode and delegates to `scripts/run-bdd-docker.js`. The Cucumber test runs inside a Docker container, isolating the test from the host and preventing orphaned processes. Post-run leak detection (`reportLeakedProcesses()`) runs automatically on exit, and Docker/temp cleanup is scoped to the current run.
+The root `npm run test:bdd` command runs the bounded **base mode** through
+`scripts/run-bdd-modes.js`, which invokes the supported Docker runner serially.
+The base mode covers `verser2` (core routing), `topics-api` (API/topic
+forwarding), `appcontext` (AppContext), and `node` (Node runner behavior).
+This excludes the currently slow, exclusive, memory-remediation, and
+functionally blocked groups identified by Phase 10 classification.
+The npm modes set `BDD_INCLUDE_LONG_RUNNING=1` so the selected Node feature's
+explicit `@slow` regression scenarios are included; path selection still keeps
+unrelated long-running features out of base mode.
+
+The explicit extra mode runs the remaining eligible default-manifest chunks
+serially:
+
+```bash
+npm run test:bdd       # bounded base mode
+npm run test:bdd-extra # remaining chunks, serially
+```
+
+`test:bdd-extra` owns `cli`, `topics-cli`, `python`, `hub`, `manager`,
+`errors`, and `stream`. The internal `harness` chunk remains explicitly
+selectable with `node scripts/run-bdd-waves.js --chunk=harness` and is not part
+of either default-mode partition.
+
+Between Docker invocations the mode runner performs explicit ramp-down and
+ramp-up lifecycle steps. Defaults are 1000 ms each and are configurable:
+
+```bash
+BDD_RAMP_UP_MS=2000 BDD_RAMP_DOWN_MS=2000 npm run test:bdd-extra
+```
+
+Each child invocation retains exact run/chunk ownership, fail-fast behavior,
+leak detection, and scoped Docker/temp cleanup. A failed chunk stops the
+serial mode and performs exact-owner cleanup for every started chunk. No
+parallel scheduling or guard/threshold relaxation is enabled.
+
+Targeted selectors are always routed through the complete eligible manifest in
+serial order, rather than only the bounded base partition. For example:
+
+```bash
+npm run test:bdd -- --name="E2E-001 TC-002"
+npm run test:bdd -- --tags="@ci"
+```
+
+The mode runner reports this as `mode=all`; `--mode=all` is also available for
+an explicit full serial run. This preserves repository-wide `--name`/`--tags`
+selection and prevents a valid selector from silently producing zero scenarios
+because its feature belongs to an extra chunk. The internal `harness` chunk is
+still excluded from `all` and remains explicitly selectable.
+
+The supported Docker runner runs Cucumber inside a container, isolating the
+test from the host and preventing orphaned processes. Post-run leak detection
+(`reportLeakedProcesses()`) runs automatically on exit, and Docker/temp cleanup
+is scoped to the current run.
+
+### PR/release operational guidance
+
+The base/extra split is intended operational guidance for maintainers planning
+PR and release validation. It is not a claim about current CI or release
+workflow integration: invoke the desired command explicitly in the applicable
+workflow or local validation plan. The base mode is the bounded representative
+set; the extra mode provides the remaining serial coverage before broader
+release confidence is declared. Neither mode enables parallel scheduling.
 
 **Prerequisites**
 
