@@ -46,6 +46,20 @@ test("production start-host path probes readiness after spawn", (t) => {
     t.true(probeOffset < source.indexOf("finally", spawnOffset), "owned ports must remain reserved until readiness");
 });
 
+test("scenario-owned E2E-003 client is prepared before wave/chunk scenarios", (t) => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const selectorOffset = source.indexOf("let scenarioHostClient");
+    const clientOffset = source.indexOf("scenarioHostClient = new HostClient(apiUrl)", selectorOffset);
+    const beforeOffset = source.indexOf("BeforeAll", selectorOffset);
+
+    t.true(selectorOffset >= 0);
+    t.true(clientOffset > selectorOffset, "wave-selected E2E-003 must prepare the owned client");
+    t.true(clientOffset > beforeOffset, "scenario-owned client must be prepared from suite startup");
+});
+
 test("start-host callback forwards AbortSignal to getLoadCheck", async (t) => {
     let capturedSignal;
     let signalNotAbortedAtCallTime = false;

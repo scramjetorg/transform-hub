@@ -14,6 +14,7 @@ test("BDD config is generated under the process temp directory and cleaned up", 
     t.true(configPath.startsWith(os.tmpdir()));
     t.is(config.configVersion, 1);
     t.is(config.apiUrl, "http://127.0.0.1:8000/api/v1");
+    t.false(Object.prototype.hasOwnProperty.call(config, "timings"));
     t.true(fs.existsSync(configPath));
 
     bddConfig.cleanupBddConfig();

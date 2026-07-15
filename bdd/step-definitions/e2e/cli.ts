@@ -20,6 +20,7 @@ import {
     extractKillResponseFromSiInstRestart,
 } from "../../lib/json.parser";
 import { Readable } from "stream";
+const { getLastTerminalStopDiagnostics } = require("../../lib/e2e-module-state.js");
 
 addLoggerOutput(process.stdout, process.stdout);
 
@@ -109,6 +110,15 @@ When("I execute CLI with {string}", { timeout: 60000 }, async function (
 
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);
+    }
+    if (args === "seq prune" && res.stdio[2] !== 0) {
+        const terminalStop = getLastTerminalStopDiagnostics();
+        assert.equal(
+            res.stdio[2],
+            0,
+            `seq prune failed; stdout=${JSON.stringify(res.stdio[0])} stderr=${JSON.stringify(res.stdio[1])} ` +
+            `terminalStopIds=${JSON.stringify(terminalStop || {})}`
+        );
     }
     assert.equal(res.stdio[2], 0);
     if (args.startsWith("seq pack ")) res.stdio = undefined;

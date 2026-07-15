@@ -32,7 +32,7 @@ const { parseChunkMemoryPolicy, parseExpectedComponents, validateEnforcePrerequi
 const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnostics } = require("./lib/bdd-chunk-memory-policy.js");
 const { requestDockerStats } = require("./lib/docker-memory.js");
 
-const { reportLeakedProcesses, cleanupTempDirs, cleanupDockerContainers } = require("./lib/bdd-cleanup.js");
+const { reportLeakedProcesses, cleanupTempDirs } = require("./lib/bdd-cleanup.js");
 const { createOwnership, ownershipEnv, encodePart } = require("../bdd/lib/ownership.js");
 
 const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || "node:22";
@@ -180,7 +180,8 @@ const fixturePacking = [
     "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js",
     "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
 ].join(" && ");
-const packageDirs = "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
+const packageDirs =
+    "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
 const innerCommand =
     escapedPassthrough.length > 0
         ? `${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
@@ -197,8 +198,10 @@ let cleaned = false;
 let signalKillTimer = null;
 let timeoutTimer = null;
 let timeoutGraceTimer = null;
+let timeoutFinalizeTimer = null;
 let logsChild = null;
 let waitChild = null;
+let finalized = false;
 
 // ---------------------------------------------------------------------------
 // Outer-container working-set memory tracking
@@ -265,6 +268,11 @@ const cleanup = () => {
         timeoutGraceTimer = null;
     }
 
+    if (timeoutFinalizeTimer) {
+        clearTimeout(timeoutFinalizeTimer);
+        timeoutFinalizeTimer = null;
+    }
+
     if (workingSetTimer) {
         clearInterval(workingSetTimer);
         workingSetTimer = null;
@@ -275,10 +283,26 @@ const cleanup = () => {
         readinessPollTimer = null;
     }
 
-    // Always clean only this run/chunk's owned resources. The helper applies
-    // exact Docker labels and structured encoded temp paths; no broad fallback
-    // is used for parallel-safe chunks.
-    cleanupDockerContainers({ prefix: "bdd-runner-", runId: ownership.runId, chunkId: ownership.chunkId });
+    for (const child of [logsChild, waitChild]) {
+        if (child && child.exitCode === null && !child.killed) {
+            try {
+                child.kill("SIGTERM");
+            } catch {
+                // best effort; process exit must not depend on Docker CLI EOF
+            }
+        }
+    }
+
+    // Always clean only this run/chunk's owned resources. The container ID is
+    // from this invocation and the temp path is derived from its ownership;
+    // no broad fallback is used for parallel-safe chunks.
+    // The container ID came directly from this invocation's `docker run`, so
+    // removing it is both faster and safer than a label scan during process
+    // shutdown.  In particular, never let an unrelated/stale container make
+    // the timeout path wait for the cleanup helper's 10s Docker timeout.
+    if (containerId) {
+        spawnSync("docker", ["rm", "-f", containerId], { stdio: "ignore", timeout: 2000 });
+    }
     cleanupTempDirs(require("node:os").tmpdir(), "", ownership);
 };
 
@@ -295,6 +319,8 @@ process.once("exit", () => {
 });
 
 const exitWith = (code) => {
+    if (finalized) return;
+    finalized = true;
     cleanup();
     const hasLeaks = reportLeakedProcesses();
 
@@ -417,7 +443,7 @@ const recordWorkingSetSample = async (cid) => {
  * @param {string} cid       Container ID.
  * @param {number} exitCode  Exit code from `docker wait`.
  */
-const printContainerSummary = async (cid, exitCode) => {
+const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {}) => {
     // Obtain OOMKilled + timestamps from Docker inspect.
     const inspectResult = spawnSync("docker", ["inspect", "--format={{json .State}}", cid], {
         encoding: "utf8",
@@ -474,8 +500,11 @@ const printContainerSummary = async (cid, exitCode) => {
         );
     }
 
-    // Timing-only runs must not emit memory diagnostics or summaries.
-    if (CHUNK_MEMORY_POLICY === "off") return "PASS";
+    // Timing-only runs must not emit memory diagnostics or summaries during a
+    // normal run. Timeout postmortems explicitly force the state summary so
+    // that the conventional timeout result is observable even when memory
+    // accounting is disabled.
+    if (CHUNK_MEMORY_POLICY === "off" && !forceSummary) return "PASS";
 
     // Format helpers.
     const fmt = (v) => (v !== null && v !== undefined ? `${v} bytes` : "unavailable");
@@ -528,6 +557,35 @@ const printContainerSummary = async (cid, exitCode) => {
     }
 
     return "PASS";
+};
+
+/** Stop a streaming Docker CLI child without waiting for Docker daemon EOF. */
+const stopDockerChild = (child, label) => {
+    if (!child || child.exitCode !== null || child.killed) return;
+    try {
+        child.kill("SIGTERM");
+    } catch (error) {
+        process.stderr.write(`[run-bdd-docker] warning: failed to stop docker ${label}: ${error.message}\n`);
+    }
+};
+
+/**
+ * Complete the run independently of `docker wait`.
+ *
+ * `docker logs -f` can retain the daemon connection after the container has
+ * received TERM/KILL.  Waiting for that connection (or for a second `docker
+ * wait`) made timed-out runs miss their exit path indefinitely.  Timeout owns
+ * the result, so diagnostics are emitted after the grace escalation and the
+ * parent exits with 124 even if either helper CLI is wedged.
+ */
+const finishTimedOutRun = () => {
+    if (finalized) return;
+    stopDockerChild(logsChild, "logs");
+    stopDockerChild(waitChild, "wait");
+    printContainerDiagnostics(containerId);
+    Promise.resolve(printContainerSummary(containerId, TIMEOUT_EXIT_CODE, { forceSummary: true }))
+        .catch((error) => process.stderr.write(`[run-bdd-docker] warning: failed to print timeout summary: ${error.message}\n`))
+        .then(() => exitWith(TIMEOUT_EXIT_CODE));
 };
 
 const runResult = spawnSync("docker", dockerRunArgs, { encoding: "utf8" });
@@ -617,9 +675,17 @@ if (BDD_TIMEOUT_MS > 0) {
     timeoutTimer = setTimeout(() => {
         timedOut = true;
         process.stderr.write(`[run-bdd-docker] BDD run exceeded ${BDD_TIMEOUT_MS}ms; sending TERM to container ${containerId}\n`);
-        spawnSync("docker", ["kill", "--signal=TERM", containerId], { stdio: "ignore" });
+        // Stop the follow-mode logs stream first.  It is a separate Docker
+        // client connection and may otherwise keep `docker wait` open after
+        // the container has exited (especially with --rm).
+        stopDockerChild(logsChild, "logs");
+        spawnSync("docker", ["kill", "--signal=TERM", containerId], { stdio: "ignore", timeout: 2000 });
         timeoutGraceTimer = setTimeout(() => {
-            spawnSync("docker", ["kill", "--signal=KILL", containerId], { stdio: "ignore" });
+            spawnSync("docker", ["kill", "--signal=KILL", containerId], { stdio: "ignore", timeout: 2000 });
+            // Do not make the parent depend on Docker's wait/logs EOF after
+            // escalation.  A short settling window lets inspect observe the
+            // final State while still giving a hard upper bound.
+            timeoutFinalizeTimer = setTimeout(finishTimedOutRun, 250);
         }, BDD_GRACE_MS);
     }, BDD_TIMEOUT_MS);
 }
@@ -630,12 +696,12 @@ waitChild.once("error", (error) => {
 });
 
 waitChild.once("close", () => {
+    if (finalized) return;
     const firstLine = waitStdout.split("\n")[0].trim();
     const parsed = Number.parseInt(firstLine, 10);
 
     if (timedOut) {
-        printContainerDiagnostics(containerId);
-        printContainerSummary(containerId, TIMEOUT_EXIT_CODE).then(() => exitWith(TIMEOUT_EXIT_CODE));
+        finishTimedOutRun();
         return;
     }
 
@@ -644,10 +710,16 @@ waitChild.once("close", () => {
             printContainerDiagnostics(containerId);
         }
 
-        printContainerSummary(containerId, parsed).then((status) => exitWith(parsed !== 0 ? parsed : CHUNK_MEMORY_POLICY === "enforce" && status !== "PASS" ? 1 : parsed));
+        stopDockerChild(logsChild, "logs");
+        Promise.resolve(printContainerSummary(containerId, parsed))
+            .catch((error) => process.stderr.write(`[run-bdd-docker] warning: failed to print container summary: ${error.message}\n`))
+            .then((status) => exitWith(parsed !== 0 ? parsed : CHUNK_MEMORY_POLICY === "enforce" && status !== "PASS" ? 1 : parsed));
         return;
     }
 
     printContainerDiagnostics(containerId);
-    printContainerSummary(containerId, 1).then(() => exitWith(1));
+    stopDockerChild(logsChild, "logs");
+    Promise.resolve(printContainerSummary(containerId, 1))
+        .catch((error) => process.stderr.write(`[run-bdd-docker] warning: failed to print container summary: ${error.message}\n`))
+        .then(() => exitWith(1));
 });

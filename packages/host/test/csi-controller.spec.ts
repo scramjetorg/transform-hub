@@ -35,7 +35,9 @@ function createController(overrides: Record<string, unknown> = {}): any {
     const controller = Object.create(CSIController.prototype);
     Object.assign(controller, {
         status: InstanceStatus.RUNNING,
+        info: { created: new Date() },
         instanceLifetimeExtensionDelay: 1000,
+        logger: { trace: () => undefined, error: () => undefined },
         communicationHandler: {
             sendControlMessage: async () => undefined
         },
@@ -56,12 +58,21 @@ function createFinalizingPromise() {
     };
 }
 
+async function waitFor(check: () => boolean, timeout = 6000): Promise<void> {
+    const deadline = Date.now() + timeout;
+    while (!check() && Date.now() < deadline) {
+        await new Promise<void>(resolve => setTimeout(resolve, 25));
+    }
+    if (!check()) throw new Error(`condition did not settle within ${timeout}ms`);
+}
+
 test("CSI immediate kill sends KILL and cancels lifetime extension", async t => {
     const calls: unknown[][] = [];
     const controller = createController({
         communicationHandler: {
             sendControlMessage: async (...args: unknown[]) => calls.push(args)
-        }
+        },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined }
     });
 
     await controller.kill({ removeImmediately: true });
@@ -69,6 +80,192 @@ test("CSI immediate kill sends KILL and cancels lifetime extension", async t => 
     t.is(controller.status, InstanceStatus.KILLING);
     t.is(controller.instanceLifetimeExtensionDelay, 0);
     t.deepEqual(calls, [[RunnerMessageCode.KILL, {}]]);
+});
+
+test("stop timeout racing with terminal completion does not send a late KILL", async t => {
+    const calls: unknown[][] = [];
+    const controller = createController({
+        communicationHandler: {
+            sendControlMessage: async (...args: unknown[]) => {
+                calls.push(args);
+                if (args[0] === RunnerMessageCode.STOP) {
+                    controller.terminalTransition = Promise.resolve();
+                    controller.endEmitted = true;
+                }
+            }
+        },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined }
+    });
+
+    await controller.stop({ timeout: 10, canCallKeepalive: true } as any);
+
+    t.deepEqual(calls, [[RunnerMessageCode.STOP, { timeout: 10, canCallKeepalive: true }]]);
+    t.true(controller.endEmitted);
+});
+
+test("STOP with canCallKeepalive=true still uses bounded kill fallback when no keepalive was issued", async t => {
+    const calls: unknown[][] = [];
+    const controller = createController({
+        communicationHandler: {
+            sendControlMessage: async (...args: unknown[]) => calls.push(args)
+        },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined }
+    });
+
+    await controller.stop({ timeout: 0, canCallKeepalive: true } as any);
+
+    t.deepEqual(calls, [
+        [RunnerMessageCode.STOP, { timeout: 0, canCallKeepalive: true }],
+        [RunnerMessageCode.KILL, {}]
+    ]);
+});
+
+test("STOP with canCallKeepalive=true leaves the runner alive when keepalive is issued", async t => {
+    const calls: unknown[][] = [];
+    const controller = createController({
+        communicationHandler: {
+            sendControlMessage: async (...args: unknown[]) => {
+                calls.push(args);
+                if (args[0] === RunnerMessageCode.STOP) {
+                    setImmediate(() => controller.handleKeepAliveCommand([RunnerMessageCode.ALIVE, {}] as any));
+                }
+            }
+        },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined }
+    });
+
+    await controller.stop({ timeout: 0, canCallKeepalive: true } as any);
+
+    t.deepEqual(calls, [[RunnerMessageCode.STOP, { timeout: 0, canCallKeepalive: true }]]);
+});
+
+test("pending STOP resolves from runner completion through one terminal transition", async t => {
+    let resolveRunner!: (exitcode: number) => void;
+    let removals = 0;
+    let endEvents = 0;
+    const runner = new Promise<number>(resolve => { resolveRunner = resolve; });
+    const controller = createController({
+        _endOfSequence: runner,
+        instancePromise: runner.then(exitcode => ({ message: "completed", exitcode, status: InstanceStatus.COMPLETED })),
+        _instanceAdapter: { remove: async () => { removals++; } },
+        finalize: async () => undefined,
+        emit: (event: string) => { if (event === "end") endEvents++; },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined, end: () => undefined }
+    });
+    const calls: unknown[][] = [];
+    controller.communicationHandler = {
+        sendControlMessage: async (...args: unknown[]) => {
+            calls.push(args);
+            await new Promise<void>(() => undefined);
+        }
+    };
+
+    const stop = controller.stop({ timeout: 3000, canCallKeepalive: true });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    resolveRunner(0);
+    await stop;
+
+    t.deepEqual(calls, [[RunnerMessageCode.STOP, { timeout: 3000, canCallKeepalive: true }]]);
+    t.is(removals, 1);
+    t.is(endEvents, 1);
+});
+
+test("STOP rejection is suppressed only when terminal completion wins", async t => {
+    let ended = 0;
+    const controller = createController({
+        instancePromise: Promise.resolve({ message: "completed", exitcode: 0, status: InstanceStatus.COMPLETED }),
+        _instanceAdapter: { remove: async () => undefined },
+        finalize: async () => undefined,
+        emit: (event: string) => { if (event === "end") ended++; },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined, end: () => undefined },
+        communicationHandler: { sendControlMessage: async () => { throw new Error("STOP transport closed"); } }
+    });
+
+    await controller.stop({ timeout: 0, canCallKeepalive: true });
+
+    t.is(controller.terminated?.exitcode, 0);
+    t.is(ended, 1);
+});
+
+test("STOP rejection propagates without terminal completion", async t => {
+    const error = new Error("STOP transport closed");
+    const controller = createController({
+        communicationHandler: { sendControlMessage: async () => { throw error; } }
+    });
+
+    await t.throwsAsync(controller.stop({ timeout: 0, canCallKeepalive: true }), { is: error });
+});
+
+test("STOP preserves KILL rejection when STOP succeeds but runner has no terminal result", async t => {
+    const killError = new Error("KILL transport closed");
+    let controls = 0;
+    const rejectedInstance = Promise.reject(new Error("runner control closed"));
+    rejectedInstance.catch(() => undefined);
+    const controller = createController({
+        instancePromise: rejectedInstance,
+        communicationHandler: {
+            sendControlMessage: async (code: RunnerMessageCode) => {
+                controls++;
+                if (code === RunnerMessageCode.KILL) throw killError;
+            }
+        },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined, end: () => undefined }
+    });
+
+    await t.throwsAsync(controller.stop({ timeout: 0, canCallKeepalive: false } as any), { is: killError });
+    t.is(controls, 2);
+    t.not(controller.endEmitted, true);
+});
+
+test("CSI terminal kill removes the instance after runner exit resolves", async t => {
+    let removed = false;
+    let ended = false;
+    const controller = createController({
+        _endOfSequence: Promise.resolve(0),
+        _instanceAdapter: { remove: async () => { removed = true; } },
+        finalize: async () => undefined,
+        emit: (event: string) => { if (event === "end") ended = true; }
+    });
+
+    await controller.kill();
+    await waitFor(() => removed && ended);
+
+    t.true(removed, "runner terminal completion must detach the CSI from the sequence store");
+    t.true(ended, "runner terminal completion must emit the store detachment event");
+});
+
+test("CSI terminal transition retains ownership after adapter removal failure and retries observably", async t => {
+    const removalError = new Error("container still owned");
+    let removals = 0;
+    let finalized = 0;
+    let ended = 0;
+    const controller = createController({
+        id: "owned-instance",
+        sequence: { id: "owned-sequence" },
+        instancePromise: Promise.resolve({ message: "stopped", exitcode: 0, status: InstanceStatus.COMPLETED }),
+        _instanceAdapter: {
+            remove: async () => {
+                removals++;
+                if (removals === 1) throw removalError;
+            }
+        },
+        finalize: async () => { finalized++; },
+        emit: (event: string) => { if (event === "end") ended++; },
+        logger: { trace: () => undefined, error: () => undefined }
+    });
+
+    await (controller as any).transitionToTerminal(0, InstanceStatus.COMPLETED, "stopped");
+
+    t.is(removals, 1);
+    t.is(finalized, 0);
+    t.is(ended, 0);
+    t.not(controller.endEmitted, true);
+
+    await (controller as any).transitionToTerminal(0, InstanceStatus.COMPLETED, "stopped");
+
+    t.is(removals, 2);
+    t.is(finalized, 1);
+    t.is(ended, 1);
 });
 
 test("CSI finalization destroys the bound API stdin and input request bodies", async t => {
@@ -207,9 +404,13 @@ test("detached timeout removal logs rejection and can be retried", async t => {
     const removalError = new Error("timeout removal failed");
     const logs: unknown[][] = [];
     let removals = 0;
+    // Keep the runner open so the bounded timeout path rejects the lifecycle
+    // race; this avoids creating an independently rejected fixture promise
+    // that AVA reports before the race consumes it.
+    const rejectedEnd = new Promise<number>(() => undefined);
     const controller = createController({
-        logger: { error: (...args: unknown[]) => logs.push(args) },
-        _endOfSequence: Promise.reject(new Error("runner did not exit")),
+        logger: { trace: () => undefined, error: (...args: unknown[]) => logs.push(args) },
+        _endOfSequence: rejectedEnd,
         _instanceAdapter: {
             remove: async () => {
                 removals++;
@@ -219,9 +420,9 @@ test("detached timeout removal logs rejection and can be retried", async t => {
     });
 
     await controller.kill();
-    await new Promise<void>(resolve => setImmediate(resolve));
+    await waitFor(() => removals === 2, 6000);
 
-    t.is(removals, 1);
+    t.is(removals, 2);
     t.is(logs.length, 1);
     t.is(logs[0]![0], "Failed to remove instance after runner exit timeout");
 
@@ -229,22 +430,27 @@ test("detached timeout removal logs rejection and can be retried", async t => {
     t.is(removals, 2);
 });
 
-test("control failure propagates without masking the operational error", async t => {
+test("immediate control failure completes canonical force removal", async t => {
     const error = new Error("control failed");
     let removals = 0;
+    let ends = 0;
     const controller = createController({
-        communicationHandler: {
-            sendControlMessage: async () => { throw error; }
-        },
+        communicationHandler: { sendControlMessage: async () => { throw error; } },
         _instanceAdapter: {
             remove: async () => {
                 removals++;
             }
-        }
+        },
+        finalize: async () => undefined,
+        emit: (event: string) => { if (event === "end") ends++; },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined, end: () => undefined }
     });
 
     await controller.kill({ removeImmediately: true });
     t.is(removals, 1);
+    t.is(controller.status, InstanceStatus.ERRORED);
+    t.true(controller.endEmitted);
+    t.is(ends, 1);
 });
 
 test("control failure propagates fallback adapter removal failure", async t => {
@@ -273,7 +479,7 @@ test("non-exiting runner falls back to adapter removal after timeout", async t =
     });
 
     await controller.kill({ removeImmediately: true });
-    await new Promise(resolve => setTimeout(resolve, 5100));
+    await waitFor(() => removals === 1, 6000);
 
     t.is(removals, 1);
 });

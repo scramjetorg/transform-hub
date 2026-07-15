@@ -8,6 +8,7 @@ const { EventEmitter } = require("events");
 const http = require("http");
 const { spawnOwnedProcess } = require("../../bdd/lib/spawn-owned-process.js");
 const { clearE2eScenarioState } = require("../../bdd/lib/e2e-module-state.js");
+const { waitForInstanceDetachment } = require("../../bdd/lib/instance-detachment.js");
 const { teardownFloodSource } = require("../../bdd/lib/flood-teardown.js");
 tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
 const { waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
@@ -89,6 +90,59 @@ test("E2E scenario cleanup releases the module client before disposing and clear
     t.is(state.scenarioHostClient, undefined);
     t.true(state.runnerEnded instanceof Promise);
     t.is(state.signalRunnerEnded(), undefined);
+});
+
+test("E2E scenario cleanup preserves a pre-baseline client until its tagged scenario uses it", t => {
+    const client = { dispose() { t.fail("unused scenario client must not be disposed"); } };
+    const state = {
+        scenarioHostClient: client,
+        runnerEnded: Promise.resolve(),
+        signalRunnerEnded: () => "stale",
+    };
+
+    clearE2eScenarioState({ hostClient: { dispose() {} } }, state);
+
+    t.is(state.scenarioHostClient, client);
+});
+
+test("instance detachment waits for runner exit to reach both host and sequence views", async t => {
+    let polls = 0;
+    await t.notThrowsAsync(() => waitForInstanceDetachment({
+        instanceId: "instance-1",
+        sequenceId: "sequence-1",
+        listInstanceIds: async () => (++polls < 2 ? ["instance-1"] : []),
+        listSequenceInstanceIds: async () => (polls < 3 ? ["instance-1"] : []),
+        timeoutMs: 500,
+        intervalMs: 5,
+    }));
+    t.true(polls >= 3);
+});
+
+test("instance detachment fails loudly when sequence association never converges", async t => {
+    const error = await t.throwsAsync(() => waitForInstanceDetachment({
+        instanceId: "instance-1",
+        sequenceId: "sequence-1",
+        listInstanceIds: async () => [],
+        listSequenceInstanceIds: async () => ["instance-1"],
+        timeoutMs: 20,
+        intervalMs: 5,
+    }));
+    t.regex(error.message, /did not detach.*sequence-1/);
+});
+
+test("E2E-002 terminal stop detachment regression waits on both views before release", async t => {
+    let hostPolls = 0;
+    let sequencePolls = 0;
+    await t.notThrowsAsync(() => waitForInstanceDetachment({
+        instanceId: "e2e-002-instance",
+        sequenceId: "e2e-002-sequence",
+        listInstanceIds: async () => (++hostPolls < 2 ? ["e2e-002-instance"] : []),
+        listSequenceInstanceIds: async () => (++sequencePolls < 3 ? ["e2e-002-instance"] : []),
+        timeoutMs: 500,
+        intervalMs: 5,
+    }));
+    t.true(hostPolls >= 2);
+    t.true(sequencePolls >= 3);
 });
 
 test("flood teardown destroys the source before awaiting expected abort settlement", async t => {

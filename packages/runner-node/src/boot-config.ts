@@ -31,6 +31,8 @@ export interface RunnerNodeBootConfig {
     appConfig?: AppConfig;
     sequenceInfo?: SequenceInfo;
     instanceName?: string;
+    /** Completion grace period resolved by the owning runner. */
+    exitTimeout?: number;
     /** Initial logger log level (mirrors legacy `RunnerConnectInfo.logLevel`). */
     logLevel?: LogLevel;
     /** Optional path prefix under which `context.api.use(...)` handlers are exposed. */
@@ -68,9 +70,7 @@ export function parseBootConfigPathFromArgv(argv: readonly string[]): string {
     const candidate = argv[2];
 
     if (!candidate || typeof candidate !== "string") {
-        throw new Error(
-            "runner-node: missing boot config path argument (expected argv[2])"
-        );
+        throw new Error("runner-node: missing boot config path argument (expected argv[2])");
     }
 
     return isAbsolute(candidate) ? candidate : resolve(candidate);
@@ -85,8 +85,24 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
         throw new Error("runner-node: boot config must be a JSON object");
     }
 
-    const { sequencePath, sequenceArgs, instanceId, instancesServerPort, instancesServerHost,
-        appConfig, sequenceInfo, instanceName, logLevel, exposePath, inputTopic, outputTopic, exposeHost, requestsUnsupported, verser2Runtime } = value;
+    const {
+        sequencePath,
+        sequenceArgs,
+        instanceId,
+        instancesServerPort,
+        instancesServerHost,
+        appConfig,
+        sequenceInfo,
+        instanceName,
+        logLevel,
+        exposePath,
+        inputTopic,
+        outputTopic,
+        exposeHost,
+        requestsUnsupported,
+        verser2Runtime,
+        exitTimeout
+    } = value;
 
     if (typeof sequencePath !== "string" || sequencePath.length === 0) {
         throw new Error("runner-node: boot config field 'sequencePath' must be a non-empty string");
@@ -94,6 +110,10 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
 
     if (sequenceArgs !== undefined && !Array.isArray(sequenceArgs)) {
         throw new Error("runner-node: boot config field 'sequenceArgs' must be an array when provided");
+    }
+
+    if (exitTimeout !== undefined && (typeof exitTimeout !== "number" || !Number.isFinite(exitTimeout) || exitTimeout <= 0)) {
+        throw new Error("runner-node: boot config field 'exitTimeout' must be a positive finite number when provided");
     }
 
     if (typeof instanceId !== "string" || instanceId.length === 0) {
@@ -191,6 +211,7 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
     if (exposeHost !== undefined) result.exposeHost = exposeHost as string;
     if (requestsUnsupported !== undefined) result.requestsUnsupported = requestsUnsupported as string;
     if (verser2Runtime !== undefined) result.verser2Runtime = verser2Runtime as RunnerNodeBootConfig["verser2Runtime"];
+    if (exitTimeout !== undefined) result.exitTimeout = exitTimeout;
 
     return result;
 }

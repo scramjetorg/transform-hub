@@ -168,8 +168,10 @@ npm run test:bdd       # bounded base mode
 npm run test:bdd-extra # remaining chunks, serially
 ```
 
-`test:bdd-extra` owns `cli`, `topics-cli`, `python`, `errors`, and
-`stream`. The internal `harness` chunk remains explicitly
+`test:bdd-extra` owns `cli-lifecycle`, `cli`, `cli-config`, `topics-cli`,
+`python`, `errors`, and `stream`. The CLI coverage is split so the repeated
+one-shot CLI process lifecycle in E2E-010 does not share the 300-second budget
+with the lifecycle and config feature paths. The internal `harness` chunk remains explicitly
 selectable with `node scripts/run-bdd-waves.js --chunk=harness` and is not part
 of either default-mode partition.
 

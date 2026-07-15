@@ -15,6 +15,9 @@
 
 const test = require("ava");
 const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
+const { spawnSync } = require("node:child_process");
 
 // ---------------------------------------------------------------------------
 // Structural checks
@@ -252,9 +255,56 @@ test("run-bdd-docker.js calls printContainerDiagnostics on timeout", (t) => {
 	);
 
 	t.true(
-		src.includes("if (timedOut) {\n        printContainerDiagnostics(containerId);"),
+		src.includes("if (timedOut) {\n        finishTimedOutRun();"),
 		"should call diagnostics on timeout"
 	);
+});
+
+test("run-bdd-docker.js timeout finalizes when docker logs and wait do not close", (t) => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-docker-mock-"));
+	const dockerScript = path.join(binDir, "docker");
+	const getentScript = path.join(binDir, "getent");
+
+	// Model the Docker CLI failure mode: logs -f and wait remain attached even
+	// after TERM/KILL. The runner must own the timeout result instead of waiting
+	// for either child to produce EOF.
+	fs.writeFileSync(
+		dockerScript,
+		`#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  run) printf 'mock-container\\n' ;;
+  logs|wait) trap 'exit 143' TERM INT; while :; do :; done ;;
+  inspect) printf '{"ExitCode":143,"OOMKilled":false,"Error":"","StartedAt":"start","FinishedAt":"finish"}\\n' ;;
+  kill|rm|ps) exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+		{ mode: 0o755 }
+	);
+	fs.writeFileSync(getentScript, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+
+	const result = spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd-docker.js"), "--"], {
+		env: {
+			...process.env,
+			PATH: `${binDir}:${process.env.PATH}`,
+			BDD_TIMEOUT_MS: "40",
+			BDD_GRACE_MS: "20",
+			SCRAMJET_BDD_MEMORY_GUARD: "0",
+			SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off"
+		},
+		encoding: "utf8",
+		timeout: 5000
+	});
+
+	try {
+		t.is(result.status, 124, "a timeout must use the conventional timeout exit code");
+		t.falsy(result.error, "the parent runner must not hit the outer test timeout");
+		t.true(result.stderr.includes("container mock-container state:"), "timeout emits container diagnostics");
+		t.true(result.stderr.includes("container working-set summary:"), "timeout emits the container summary");
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
 });
 
 test("run-bdd-docker.js calls printContainerDiagnostics for unparseable exit code", (t) => {
@@ -384,7 +434,7 @@ test("run-bdd-docker.js calls printContainerSummary for timed-out containers", (
 	);
 
 	t.true(
-		src.includes("printContainerSummary(containerId, TIMEOUT_EXIT_CODE)"),
+		src.includes("printContainerSummary(containerId, TIMEOUT_EXIT_CODE, { forceSummary: true })"),
 		"should call summary on timeout branch"
 	);
 });
@@ -465,5 +515,5 @@ test("run-bdd-docker.js mounts separate timing report and suppresses memory summ
 	t.true(src.includes("BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json"));
 	t.true(src.includes("BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl"));
 	t.true(src.includes("SCRAMJET_BDD_CHUNK_TIMING=1"));
-	t.true(src.includes('if (CHUNK_MEMORY_POLICY === "off") return "PASS"'));
+	t.true(src.includes('if (CHUNK_MEMORY_POLICY === "off" && !forceSummary) return "PASS"'));
 });

@@ -16,7 +16,7 @@ const runner = require("../run-bdd-waves.js");
 test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
-        "appcontext", "cli", "errors", "harness", "hub",
+        "appcontext", "cli", "cli-config", "cli-lifecycle", "errors", "harness", "hub",
         "manager", "node", "python", "stream", "topics-api", "topics-cli", "verser2",
     ]);
 });
@@ -55,6 +55,16 @@ test("topic chunks isolate CLI and API topic feature paths", t => {
     ]);
 });
 
+test("CLI feature paths are split into independently timed coverage chunks", t => {
+    t.deepEqual(runner.CHUNKS["cli-lifecycle"], [
+        "features/e2e/E2E-001-samples.feature",
+        "features/e2e/E2E-002-stop.feature",
+        "features/e2e/E2E-003-kill.feature",
+    ]);
+    t.deepEqual(runner.CHUNKS.cli, ["features/e2e/E2E-010-cli.feature"]);
+    t.deepEqual(runner.CHUNKS["cli-config"], ["features/e2e/E2E-012-cli-config.feature"]);
+});
+
 // ---------------------------------------------------------------------------
 // Default chunks
 // ---------------------------------------------------------------------------
@@ -65,7 +75,7 @@ test("default chunks list is ordered and contains expected entries", t => {
 
     // First chunk is verser2 (matches Phase 9 ordering).
     t.is(runner.DEFAULT_CHUNKS[0], "verser2");
-    t.deepEqual(runner.DEFAULT_CHUNKS.slice(2, 4), ["topics-cli", "topics-api"]);
+    t.deepEqual(runner.DEFAULT_CHUNKS.slice(4, 6), ["topics-cli", "topics-api"]);
 });
 
 test("every default chunk is defined in CHUNKS", t => {

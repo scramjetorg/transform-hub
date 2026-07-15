@@ -69,11 +69,9 @@ Feature: CLI tests
         When I execute CLI with "seq start -"
         When I execute CLI with "inst ls"
         When I execute CLI with "inst stop - 3000"
-        # The current API retains stopped instances until host cleanup; the
-        # stop command's successful exit is the supported CLI assertion.
-
-    # Deleted: the current instance API keeps the health route available after
-    # completion, so the legacy 404 assertion is no longer supported behavior.
+        # The CLI step asserts exit code zero. The instance API does not expose
+        # terminal completion or detachment for this CLI flow, and stopped
+        # instances may remain listed until host cleanup.
 
     @ci-api @cli @slow
     Scenario: E2E-010 TC-010 Test Instance 'log' option

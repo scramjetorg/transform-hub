@@ -32,8 +32,9 @@ import {
 } from "../../lib/client-ownership";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
-const { clearE2eScenarioState } = require("../../lib/e2e-module-state.js");
+const { clearE2eScenarioState, setLastTerminalStopDiagnostics } = require("../../lib/e2e-module-state.js");
 const { teardownFloodSource } = require("../../lib/flood-teardown.js");
+const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -82,7 +83,6 @@ const dockerode = new Dockerode();
 const ownership = getOwnership(process.env);
 let externalHostBaseUrl: string | undefined;
 let scenarioHostClient: HostClient | undefined;
-const scenarioOwnedHostClientRequested = process.argv.some(argument => argument.endsWith("E2E-003-kill.feature"));
 const getHostClient = ({ resources }: CustomWorld): HostClient =>
     selectScenarioClient(resources.hostClient, hostClient)!;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
@@ -213,7 +213,10 @@ BeforeAll({ timeout: 20e3 }, async () => {
     }
     hostClient?.dispose();
     hostClient = new HostClient(apiUrl);
-    if (scenarioOwnedHostClientRequested) scenarioHostClient = new HostClient(apiUrl);
+    // Prepare before Cucumber's memory baseline.  Wave/chunk Docker execution
+    // may not expose the selected feature path in the inner process argv/env;
+    // the tagged E2E-003 hook still needs its client before the baseline.
+    scenarioHostClient = new HostClient(apiUrl);
     externalHostBaseUrl = apiUrl;
     writeBddConfig({ apiUrl });
 
@@ -281,6 +284,8 @@ AfterAll(async () => {
     } finally {
         hostClient?.dispose();
         hostClient = undefined as unknown as HostClient;
+        scenarioHostClient?.dispose();
+        scenarioHostClient = undefined;
     }
     cleanupBddConfig();
 });
@@ -619,7 +624,17 @@ When(
 When(
     "send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}",
     async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
-        const resp = await this.resources.instance?.stop(timeout, canCallKeepalive === "true");
+        const instance = this.resources.instance;
+        assert.ok(instance, "No active instance to stop");
+        if (timeout === 0 && canCallKeepalive === "false") {
+            const info = await instance.getInfo();
+            const sequenceId = (info as any).sequenceId || info.sequence?.id;
+            assert.ok(sequenceId, `Terminally stopped instance ${instance.id} has no sequence association`);
+            this.resources.terminalStopDetachment = { instanceId: instance.id, sequenceId };
+            setLastTerminalStopDiagnostics({ instanceId: instance.id, sequenceId });
+        }
+
+        const resp = await instance.stop(timeout, canCallKeepalive === "true");
 
         assert.ok(resp);
     }
@@ -650,9 +665,26 @@ Then("instances of sequence {string} are available", { timeout: 10000 }, async f
 });
 
 When("send kill message to instance", async function(this: CustomWorld) {
-    const resp = await this.resources.instance?.kill();
+    const instance = this.resources.instance;
+    assert.ok(instance, "No active instance to kill");
+    const instanceId = instance.id;
+    const instanceInfo = await instance.getInfo();
+    const sequenceId = (instanceInfo as any).sequenceId || instanceInfo.sequence?.id;
+    assert.ok(sequenceId, `Killed instance ${instanceId} has no sequence association`);
+
+    const resp = await instance.kill();
 
     assert.ok(resp);
+    const client = getHostClient(this);
+    const sequenceClient = client.getSequenceClient(sequenceId);
+    await waitForInstanceDetachment({
+        instanceId,
+        sequenceId,
+        listInstanceIds: async () => (await client.listInstances()).map((candidate: any) => candidate.id),
+        listSequenceInstanceIds: async () => await sequenceClient.listInstances(),
+        timeoutMs: 10000,
+        intervalMs: 50,
+    });
     // The kill response is the terminal assertion for this client. Release the
     // scenario-local proxy before the runner-exit and host-readiness checks so
     // its request/response state cannot survive the strict guard boundary.
@@ -716,7 +748,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     }
 });
 
-When("runner has ended execution", { timeout: 20000 }, async () => {
+When("runner has ended execution", { timeout: 7000 }, async function(this: CustomWorld) {
     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
         // @TODO
         return;
@@ -734,6 +766,31 @@ When("runner has ended execution", { timeout: 20000 }, async () => {
         await waitForContainerToClose();
         memoryRegistry.markContainersAsExpectedToExit([containerId]);
         console.log("Container is closed.");
+    }
+
+    const terminalStop = this.resources.terminalStopDetachment;
+    if (terminalStop) {
+        const processEndedAt = Date.now();
+        const client = getHostClient(this);
+        const sequenceClient = client.getSequenceClient(terminalStop.sequenceId);
+        await waitForInstanceDetachment({
+            instanceId: terminalStop.instanceId,
+            sequenceId: terminalStop.sequenceId,
+            listInstanceIds: async () => (await client.listInstances()).map((candidate: any) => candidate.id),
+            listSequenceInstanceIds: async () => await sequenceClient.listInstances(),
+            // CSI finalization has a configured lifetime-extension window;
+            // observe that bounded lifecycle rather than inserting a sleep.
+            // BDD-generated Host configuration bounds finalization to 1s;
+            // retain only a small diagnostic margin without sleeping or
+            // bypassing the production finalization path.
+            timeoutMs: 5000,
+            intervalMs: 50,
+        });
+        console.log(`Oracle detachment timestamps instance=${terminalStop.instanceId} sequence=${terminalStop.sequenceId} processEndedAt=${processEndedAt} detachedAt=${Date.now()} hostDetachmentDiagnosticBoundMs=5000 runnerExitTimeoutMs=1000`);
+        // Release the instance/sequence-facing clients before the strict
+        // scenario measurement; no generic delay or prune is used.
+        this.resources.instance = undefined;
+        this.resources.terminalStopDetachment = undefined;
     }
 
     // The runner can exit before the transport closes its stdout stream. Give

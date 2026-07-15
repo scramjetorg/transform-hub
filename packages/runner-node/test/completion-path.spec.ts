@@ -25,3 +25,7 @@ test("hubTargetDomain does not override an explicit context.exitTimeout", t => {
         500
     );
 });
+
+test("BDD-owned boot config resolves the runner context exitTimeout to exactly 1000ms", t => {
+    t.is(resolveCompletionExitTimeout({ exitTimeout: 1000 }, {}), 1000);
+});

@@ -368,6 +368,19 @@ export class HostUtils {
 
             this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                 console.log("host process exited with code: ", code, " and signal: ", signal);
+                if (code !== 0 || signal) {
+                    console.error("Host startup/lifecycle diagnostics", {
+                        command,
+                        cwd: process.cwd(),
+                        config: process.env.SCRAMJET_CONFIG || process.env.SCRAMJET_CONFIG_PATH || process.env.SCRAMJET_CONFIG_FILE,
+                        bddRunId: ownership.runId,
+                        bddChunkId: ownership.chunkId,
+                        startedAt: this.exitStartedAt,
+                        finishedAt: Date.now(),
+                        stdout: this.stdoutTail.slice(-16384),
+                        stderr: this.stderrTail.slice(-16384)
+                    });
+                }
                 this.hostProcessStopped = true;
                 this.exitCode = code;
                 this.exitSignal = signal;
@@ -404,8 +417,12 @@ export class HostUtils {
             command.push("-C", process.env.CPM_URL);
         if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
-        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && process.env.RUNTIME_ADAPTER)
-            command.push("--instance-lifetime-extension-delay=100");
+        // Only an explicitly owned BDD run may receive the shortened lifecycle
+        // window. A config path is also used by non-BDD callers and must not
+        // change production stop behavior.
+        const bddRun = process.env.SCRAMJET_BDD_RUN_ID;
+        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && (process.env.RUNTIME_ADAPTER || bddRun))
+            command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
 
         if (process.env.RUNNER_IMGS_TAG) {

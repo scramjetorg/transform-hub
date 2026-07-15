@@ -23,13 +23,14 @@ const dockerRunner = path.join(repoRoot, "scripts", "run-bdd-docker.js");
  * `validateManifest` stays clean.
  */
 const CHUNKS = Object.freeze({
-    cli: Object.freeze([
-        "features/e2e/E2E-001-samples.feature",
-        "features/e2e/E2E-002-stop.feature",
-        "features/e2e/E2E-003-kill.feature",
-        "features/e2e/E2E-010-cli.feature",
-        "features/e2e/E2E-012-cli-config.feature"
-    ]),
+    // Keep the short E2E lifecycle scenarios separate from the CLI command
+    // matrix.  The latter intentionally starts one CLI process per command;
+    // sharing a 300-second feature budget with the lifecycle and config
+    // features makes the budget depend on chunk ordering rather than on a
+    // distinct coverage surface.
+    "cli-lifecycle": Object.freeze(["features/e2e/E2E-001-samples.feature", "features/e2e/E2E-002-stop.feature", "features/e2e/E2E-003-kill.feature"]),
+    cli: Object.freeze(["features/e2e/E2E-010-cli.feature"]),
+    "cli-config": Object.freeze(["features/e2e/E2E-012-cli-config.feature"]),
     // Keep the CLI and API topic suites in separate Docker invocations. Each
     // remains an explicitly selected, single-feature chunk so its resource
     // peak is isolated without introducing tag-based or shared ownership.
@@ -63,7 +64,21 @@ const CHUNKS = Object.freeze({
  * Ordered list of chunk names that form the default full run.
  * Every feature path declared here must appear in exactly one of these chunks.
  */
-const DEFAULT_CHUNKS = Object.freeze(["verser2", "cli", "topics-cli", "topics-api", "python", "appcontext", "node", "hub", "manager", "errors", "stream"]);
+const DEFAULT_CHUNKS = Object.freeze([
+    "verser2",
+    "cli-lifecycle",
+    "cli",
+    "cli-config",
+    "topics-cli",
+    "topics-api",
+    "python",
+    "appcontext",
+    "node",
+    "hub",
+    "manager",
+    "errors",
+    "stream"
+]);
 
 // A feature can only be outside the default suite when that exclusion is
 // named here.  In particular, do not let a feature become an accidental
@@ -82,7 +97,9 @@ const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub", "manager", "stream"]);
 // they do not bypass admission. Chunks without long-lived Hub/Manager
 // processes explicitly declare an empty process set.
 const CHUNK_COMPONENTS = Object.freeze({
+    "cli-lifecycle": Object.freeze({ container: true, processes: [] }),
     cli: Object.freeze({ container: true, processes: [] }),
+    "cli-config": Object.freeze({ container: true, processes: [] }),
     "topics-cli": Object.freeze({ container: true, processes: [] }),
     "topics-api": Object.freeze({ container: true, processes: [] }),
     python: Object.freeze({ container: true, processes: [] }),

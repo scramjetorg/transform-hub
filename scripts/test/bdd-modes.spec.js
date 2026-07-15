@@ -13,7 +13,7 @@ test("base and extra partitions are complete and have no overlap", (t) => {
     const partition = modes.partition();
     t.deepEqual([...new Set([...partition.base, ...partition.extra])].sort(), [...new Set(partition.all)].sort());
     t.is(partition.base.filter((name) => partition.extra.includes(name)).length, 0);
-    t.deepEqual(partition.extra, ["cli", "topics-cli", "python", "errors", "stream"]);
+    t.deepEqual(partition.extra, ["cli-lifecycle", "cli", "cli-config", "topics-cli", "python", "errors", "stream"]);
     t.false(partition.extra.includes("harness"));
     t.true(partition.all.every((name) => waves.CHUNKS[name]));
 });
@@ -114,8 +114,8 @@ test("runMode stops on failure and still cleans every started owner", async (t) 
     });
 
     t.is(status, 17);
-    t.deepEqual(calls, ["cli", "topics-cli"]);
-    t.deepEqual(cleanup.map(({ chunk }) => chunk), ["cli", "topics-cli"]);
+    t.deepEqual(calls, ["cli-lifecycle", "cli", "cli-config", "topics-cli"]);
+    t.deepEqual(cleanup.map(({ chunk }) => chunk), ["cli-lifecycle", "cli", "cli-config", "topics-cli"]);
 });
 
 test("runMode ramps down a failed chunk before exact-owner cleanup", async (t) => {

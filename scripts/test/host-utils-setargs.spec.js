@@ -110,6 +110,38 @@ test("setArgs does not inject default -P when LOCAL_HOST_PORT is unset", (t) => 
 	t.false(command.includes("-P"), "-P must not appear when env port is unset");
 });
 
+test("setArgs applies the 1s lifetime extension only for BDD-generated configuration", t => {
+    const savedRun = process.env.SCRAMJET_BDD_RUN_ID;
+    const savedAdapter = process.env.RUNTIME_ADAPTER;
+    process.env.SCRAMJET_BDD_RUN_ID = "bdd-run";
+    delete process.env.RUNTIME_ADAPTER;
+    try {
+        const command = makeSetArgs([], []);
+        t.true(command.includes("--instance-lifetime-extension-delay=1000"));
+    } finally {
+        if (savedRun === undefined) delete process.env.SCRAMJET_BDD_RUN_ID;
+        else process.env.SCRAMJET_BDD_RUN_ID = savedRun;
+        if (savedAdapter === undefined) delete process.env.RUNTIME_ADAPTER;
+        else process.env.RUNTIME_ADAPTER = savedAdapter;
+    }
+});
+
+test("setArgs preserves the production 100ms runner default outside BDD", t => {
+    const savedRun = process.env.SCRAMJET_BDD_RUN_ID;
+    const savedAdapter = process.env.RUNTIME_ADAPTER;
+    delete process.env.SCRAMJET_BDD_RUN_ID;
+    process.env.RUNTIME_ADAPTER = "process";
+    try {
+        const command = makeSetArgs([], []);
+        t.true(command.includes("--instance-lifetime-extension-delay=100"));
+    } finally {
+        if (savedRun === undefined) delete process.env.SCRAMJET_BDD_RUN_ID;
+        else process.env.SCRAMJET_BDD_RUN_ID = savedRun;
+        if (savedAdapter === undefined) delete process.env.RUNTIME_ADAPTER;
+        else process.env.RUNTIME_ADAPTER = savedAdapter;
+    }
+});
+
 // ---------------------------------------------------------------------------
 // Expected-stop state / startup exit assertion suppression (Phase 11)
 // ---------------------------------------------------------------------------
