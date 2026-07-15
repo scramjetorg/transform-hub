@@ -385,12 +385,7 @@
 
   Final evidence (2026-07-14): Manager BDD readiness now uses bounded 50ms observable polling with last-state diagnostics; Manager is promoted serially to `test:bdd`. Final validation: 63 multi-manager package tests passed; strict guarded Manager chunk passed 16/16 scenarios and 132/132 steps in 1m22.9s; parent base threshold 524288 bytes; approved feature-scoped 2097152-byte allowance for MANAGER-002/003/004; child RSS/Docker working-set thresholds 104857600 bytes; no skips.
 
-- [ ] Task: Run classified BDD feature chunks in parallel in Docker
-    - [ ] Require bounded feature memory growth, completed ownership isolation, and a passing 300-second classification before a feature enters the parallel scheduler.
-    - [ ] Run classified parallel-ready chunks concurrently in Docker with explicit aggregate memory/CPU budget and exclusive-resource locks; do not use unbounded `Promise.all`.
-    - [ ] Keep exclusive, timing-remediation-required, and memory-remediation-required features out of the concurrent pool until their classification changes.
-    - [ ] Record aggregate memory/CPU, overlap timeline, cleanup ownership, port collisions, retries, flakes, outer-container OOM states, and per-chunk exit states.
-    - [ ] Make the parallel Docker chunk run the supported full BDD execution path after all eligible features pass classification.
+  Deferral note (2026-07-14): User approved deferral of parallel scheduling from Phase 10; eligible chunks remain unclassified or red, so scheduling work continues in Phase 11's existing `Validate full parallel Docker BDD execution` task.
 
 - [ ] Task: Conductor - Phase Checkpoint 'BDD Chunking, Resource Metrics, and Timing Rationalization' (Protocol in workflow.md)
 
