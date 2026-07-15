@@ -387,7 +387,9 @@
 
   Deferral note (2026-07-14): User approved deferral of parallel scheduling from Phase 10; eligible chunks remain unclassified or red, so scheduling work continues in Phase 11's existing `Validate full parallel Docker BDD execution` task.
 
-- [ ] Task: Conductor - Phase Checkpoint 'BDD Chunking, Resource Metrics, and Timing Rationalization' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Checkpoint 'BDD Chunking, Resource Metrics, and Timing Rationalization' (Protocol in workflow.md)
+
+  Checkpoint Notes: Hub and Manager are serial base chunks. Manager full guarded validation passed 16/16 scenarios / 132/132 steps in 1m22.9s; MultiManager package 63 tests passed. Parent threshold 524288 bytes, user-approved MANAGER-002/003/004 per-feature allowance 2097152 bytes; child RSS/Docker working-set thresholds 104857600 bytes; no skips. Scheduler work deferred by user to Phase 11 due to remaining red/unclassified chunks.
 
 ## Phase 11: BDD Failure Resolution, RSS Budgeting, and Parallel Readiness
 
