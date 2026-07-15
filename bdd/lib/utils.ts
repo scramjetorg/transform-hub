@@ -13,6 +13,15 @@ const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
 const logger = getLogger("test");
+const { spawnOwnedProcess } = require("./spawn-owned-process.js") as {
+    spawnOwnedProcess: (command: string, args: string[], options?: {
+        env?: NodeJS.ProcessEnv;
+        timeoutMs?: number;
+        successMarker?: string;
+        onStdout?: (output: string, write: (value: string) => void) => void;
+    }) => Promise<void>;
+};
+export { spawnOwnedProcess };
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
 export const { waitForCondition } = require("./readiness.js") as {
@@ -330,44 +339,35 @@ export function spawnSiInit(
     workingDirectory: string,
     env: NodeJS.ProcessEnv = process.env
 ) {
-    return new Promise<void>((resolve, reject) => {
-        const args = () => {
-            return [...si, "init", "seq", templateType, "-p", workingDirectory];
-        };
-
-        if (isLogActive) {
-            logger.debug("Spawning command: /usr/bin/env", ...args());
-        }
-
-        const childProcess = spawn(command, args(), {
-            env
-        });
-
-        childProcess.stdout.on("data", (data) => {
-            if (isLogActive) {
-                logger.debug(data.toString());
+    const args = [...si, "init", "seq", templateType, "-p", workingDirectory];
+    const bddEnv = {
+        ...env,
+        npm_config_audit: "false",
+        npm_config_fund: "false",
+        npm_config_update_notifier: "false",
+        npm_config_maxsockets: "1",
+        NODE_OPTIONS: `${env.NODE_OPTIONS || ""} --max-old-space-size=512`.trim(),
+    };
+    if (isLogActive) logger.debug("Spawning command: /usr/bin/env", ...args);
+    let promptsAnswered = 0;
+    let confirmationAnswered = false;
+    return spawnOwnedProcess(command, args, {
+        env: bddEnv,
+        successMarker: "Sequence template succesfully created",
+        timeoutMs: 30_000,
+        onStdout: (output, write) => {
+            if (output.includes("Sequence template succesfully created")) return;
+            const promptCount = (output.match(/(?:package name|version|description|entry point|test command|git repository|keywords|author|license):/gi) || []).length;
+            if (promptCount > promptsAnswered) {
+                const unanswered = promptCount - promptsAnswered;
+                promptsAnswered = promptCount;
+                write("\n".repeat(unanswered));
             }
-            if (data.includes("Sequence template succesfully created")) {
-                resolve();
-            } else {
-                childProcess.stdin.write("\n");
+            if (!confirmationAnswered && /Is this OK\?/i.test(output)) {
+                write("yes\n");
+                confirmationAnswered = true;
             }
-        });
-        childProcess.stderr.on("data", (data) => {
-            const stderrString = data.toString();
-
-            logger.warn(`Stderr: ${stderrString}`);
-        });
-        childProcess.on("error", (err) => {
-            logger.error(err);
-            reject();
-        });
-        childProcess.on("exit", (code) => {
-            if (isLogActive) {
-                logger.debug(`Exit code: ${code}`);
-            }
-            resolve();
-        });
+        },
     });
 }
 

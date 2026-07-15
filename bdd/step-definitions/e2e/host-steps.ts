@@ -21,18 +21,17 @@ import { CustomWorld } from "../world";
 import findPackage from "find-package-json";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
-import { exec } from "child_process";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
 import { restoreSavedHostEnv } from "../hub/config";
 import { memoryRegistry } from "../../lib/memory-registry";
 import {
-    disposeScenarioClient,
     externalClientForUrl,
     selectScenarioClient,
     withSelectedClient
 } from "../../lib/client-ownership";
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
+const { clearE2eScenarioState } = require("../../lib/e2e-module-state.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -80,6 +79,8 @@ const hostUtils = new HostUtils();
 const dockerode = new Dockerode();
 const ownership = getOwnership(process.env);
 let externalHostBaseUrl: string | undefined;
+let scenarioHostClient: HostClient | undefined;
+const scenarioOwnedHostClientRequested = process.argv.some(argument => argument.endsWith("E2E-003-kill.feature"));
 const getHostClient = ({ resources }: CustomWorld): HostClient =>
     selectScenarioClient(resources.hostClient, hostClient)!;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
@@ -115,11 +116,17 @@ const waitForProcessToEnd = async (pid: number) => {
     const startedAt = Date.now();
 
     while (Date.now() - startedAt < 30000) {
-        const proc = exec(`ps -p ${pid}`);
+        let running = false;
+        try {
+            process.kill(pid, 0);
+            const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+            const stateStart = stat.lastIndexOf(") ") + 2;
+            running = stat[stateStart] !== "Z";
+        } catch {
+            running = false;
+        }
 
-        const exitCode = await new Promise<number>((res) => proc.on("exit", res));
-
-        if (exitCode > 0) {
+        if (!running) {
             return;
         }
         await defer(500);
@@ -204,6 +211,7 @@ BeforeAll({ timeout: 20e3 }, async () => {
     }
     hostClient?.dispose();
     hostClient = new HostClient(apiUrl);
+    if (scenarioOwnedHostClientRequested) scenarioHostClient = new HostClient(apiUrl);
     externalHostBaseUrl = apiUrl;
     writeBddConfig({ apiUrl });
 
@@ -280,6 +288,11 @@ Before(() => {
     });
 });
 
+Before({ tags: "@scenario-host-client" }, function(this: CustomWorld) {
+    assert.ok(scenarioHostClient, "Scenario-owned HostClient was not prepared before the memory baseline");
+    this.resources.hostClient = scenarioHostClient;
+});
+
 After({ tags: "@runner-cleanup" }, killAllRunners);
 After({}, async function (this: any) {
     try {
@@ -327,7 +340,14 @@ After({}, async function (this: any) {
     } finally {
         // Scenario-owned clients are disposed only after all scenario cleanup
         // operations. The module-level suite client remains shared and usable.
-        disposeScenarioClient(this.resources);
+        const state = clearE2eScenarioState(this.resources, {
+            scenarioHostClient,
+            runnerEnded,
+            signalRunnerEnded,
+        });
+        scenarioHostClient = state.scenarioHostClient;
+        runnerEnded = state.runnerEnded;
+        signalRunnerEnded = state.signalRunnerEnded;
     }
 });
 
@@ -621,6 +641,10 @@ When("send kill message to instance", async function(this: CustomWorld) {
     const resp = await this.resources.instance?.kill();
 
     assert.ok(resp);
+    // The kill response is the terminal assertion for this client. Release the
+    // scenario-local proxy before the runner-exit and host-readiness checks so
+    // its request/response state cannot survive the strict guard boundary.
+    this.resources.instance = undefined;
 });
 
 When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {

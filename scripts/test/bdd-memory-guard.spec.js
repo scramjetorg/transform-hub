@@ -318,6 +318,35 @@ const {
     MANAGER_APPROVAL_REASON,
     MANAGER_SCENARIO_EXCEPTIONS,
 } = require("../lib/bdd-manager-exceptions.js");
+const { E2E003_KILL_EXCEPTION } = require("../lib/bdd-cli-exceptions.js");
+
+test("E2E-003 allowance matches only the exact approved URI, line, and scenario", (t) => {
+    t.is(E2E003_KILL_EXCEPTION.allowanceBytes, 225280);
+    t.is(matchScenarioException(
+        [E2E003_KILL_EXCEPTION],
+        "features/e2e/E2E-003-kill.feature",
+        4,
+        E2E003_KILL_EXCEPTION.scenarioName,
+    ), E2E003_KILL_EXCEPTION);
+    t.falsy(matchScenarioException(
+        [E2E003_KILL_EXCEPTION],
+        "features/e2e/E2E-002-other.feature",
+        4,
+        E2E003_KILL_EXCEPTION.scenarioName,
+    ));
+    t.falsy(matchScenarioException(
+        [E2E003_KILL_EXCEPTION],
+        "features/e2e/E2E-003-kill.feature",
+        5,
+        E2E003_KILL_EXCEPTION.scenarioName,
+    ));
+    t.falsy(matchScenarioException(
+        [E2E003_KILL_EXCEPTION],
+        "features/e2e/E2E-003-kill.feature",
+        4,
+        "wrong scenario",
+    ));
+});
 
 test("Manager allowance matches only the approved Manager feature scopes", (t) => {
     t.is(MANAGER_SCENARIO_EXCEPTIONS.length, 3);

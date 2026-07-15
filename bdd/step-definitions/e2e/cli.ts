@@ -82,31 +82,12 @@ Given("I set config for local Hub", { timeout: 30000 }, async function (
         ...si,
         "config",
         "set",
-        "log",
-        "--debug",
-        "true",
-    ]);
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        "config",
-        "set",
-        "log",
-        "--format",
         "json",
-    ]);
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        "config",
-        "set",
-        "apiUrl",
-        `${process.env.LOCAL_HOST_BASE_URL}`,
-    ]);
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        "config",
-        "set",
-        "env",
-        "development",
+        JSON.stringify({
+            log: { debug: true, format: "json" },
+            apiUrl: `${process.env.LOCAL_HOST_BASE_URL}`,
+            env: "development",
+        }),
     ]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
@@ -260,7 +241,7 @@ Then("I get Instance id after deployment", function () {
 });
 
 const BDD_MAX_STEP_TIMEOUT_MS = 30000;
-const CLI_POLL_INTERVAL_MS = 1000;
+const CLI_POLL_INTERVAL_MS = 100;
 
 Then("I send input data {string} with options {string}", async function (
     data: string,

@@ -44,6 +44,7 @@ import {
 import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
 const { createChunkTiming, summarizeTimingEvents } = require("../../scripts/lib/bdd-chunk-timing.js");
 const { MANAGER_SCENARIO_EXCEPTIONS } = require("../../scripts/lib/bdd-manager-exceptions.js");
+const { E2E003_KILL_EXCEPTION } = require("../../scripts/lib/bdd-cli-exceptions.js");
 
 // ---------------------------------------------------------------------------
 // Per-scenario memory exceptions (narrowly scoped)
@@ -99,6 +100,8 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         allowanceBytes: 1_048_576,
         reason: "exact 1 MiB allowance for the separately tracked Verser2 allocation issue",
     },
+
+    E2E003_KILL_EXCEPTION,
 
     // -----------------------------------------------------------------------
     // APPCONTEXT-001 TC-002: keepAlive/end lifecycle
@@ -426,6 +429,25 @@ After(async function (this: any, scenario: any) {
 
     if (scenarioLine === 0 && scenario?.sourceLocation?.line) {
         scenarioLine = scenario.sourceLocation.line;
+    }
+    if (scenarioLine === 0 && featureUri && scenarioName) {
+        const featureCandidates = [
+            featureUri,
+            `bdd/${featureUri}`,
+            `/work/bdd/${featureUri}`,
+        ];
+        for (const featurePath of featureCandidates) {
+            if (!existsSync(featurePath)) continue;
+            const sourceLines = readFileSync(featurePath, "utf8").split(/\r?\n/);
+            const matchedLine = sourceLines.findIndex(line =>
+                /^\s*Scenario(?: Outline)?:\s*/.test(line) &&
+                line.replace(/^\s*Scenario(?: Outline)?:\s*/, "").trim() === scenarioName
+            );
+            if (matchedLine >= 0) {
+                scenarioLine = matchedLine + 1;
+                break;
+            }
+        }
     }
 
     if (!isBddMemoryGuardEnabled() || memorySkip.skip || baseline === undefined) {
