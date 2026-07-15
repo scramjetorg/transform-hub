@@ -16,7 +16,7 @@ const runner = require("../run-bdd-waves.js");
 test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
-        "appcontext", "cli", "cli-config", "cli-lifecycle", "errors", "harness", "hub",
+        "appcontext", "cli", "cli-config", "cli-lifecycle", "cli-prune-diagnostic", "errors", "harness", "hub",
         "manager", "node", "python", "stream", "topics-api", "topics-cli", "verser2",
     ]);
 });
@@ -63,6 +63,9 @@ test("CLI feature paths are split into independently timed coverage chunks", t =
     ]);
     t.deepEqual(runner.CHUNKS.cli, ["features/e2e/E2E-010-cli.feature"]);
     t.deepEqual(runner.CHUNKS["cli-config"], ["features/e2e/E2E-012-cli-config.feature"]);
+    t.deepEqual(runner.CHUNKS["cli-prune-diagnostic"], [
+        "features/e2e/E2E-010-cli-prune-diagnostic.feature",
+    ]);
 });
 
 // ---------------------------------------------------------------------------
@@ -94,9 +97,14 @@ test("default manifest covers every eligible feature and records exclusions expl
     const eligiblePaths = runner.onDiskFeatures().filter((featurePath) => !excludedPaths.includes(featurePath));
 
     t.deepEqual([...new Set(defaultPaths)].sort(), eligiblePaths.sort());
-    t.deepEqual(excludedPaths, ["features/_harness/harness-timeout.feature"]);
-    t.truthy(runner.EXCLUDED_FEATURES[excludedPaths[0]]);
-    t.false(defaultPaths.includes(excludedPaths[0]));
+    t.deepEqual(excludedPaths.sort(), [
+        "features/_harness/harness-timeout.feature",
+        "features/e2e/E2E-010-cli-prune-diagnostic.feature",
+    ]);
+    for (const excludedPath of excludedPaths) {
+        t.truthy(runner.EXCLUDED_FEATURES[excludedPath]);
+        t.false(defaultPaths.includes(excludedPath));
+    }
 });
 
 test("resource-owning chunks remain explicitly exclusive", t => {

@@ -496,6 +496,8 @@
 
   CommandIterator safety repair (2026-07-15): removed the dormant infinite `root()` loop left by the Commander.js-to-flat-`CommandDescriptor` migration. The iterator now retains its root descriptor and restores it while resetting parent/index state. Added five focused AVA regressions covering root after child traversal, iteration, idempotence, and leaf behavior. Independent package validation passed 29/29 CLI tests through the supported AVA runner; `git diff --check` passed. This completion-only safety repair is not claimed as the E2E-010 prune fix.
 
+  Isolated prune diagnostic (2026-07-15): added explicitly selectable, default-excluded `E2E-010-cli-prune-diagnostic.feature` and `cli-prune-diagnostic` manifest chunk. It uses the normal BDD-owned Host, sends `args-to-output` twice plus `hello-output`, runs `seq prune`, and asserts an empty sequence list. Strict guarded direct Docker validation passed 1/1 scenario and 6/6 steps in 17.76s under a 30-second timeout; the explicit chunk passed in 23.44s. Logs confirm the initial GET, three uploads, prune GET, three DELETEs, and final GET all returned 200; no skips/exceptions were used. This does not reproduce the broader E2E-010 timeout, so the issue is intermittent or depends on broader feature state. Independent manifest validation passed 48 tests and `git diff --check` passed.
+
 - [ ] Task: Validate full parallel Docker BDD execution
     - [ ] Reclassify chunks as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required only after their functional, telemetry, and timing evidence is current.
     - [ ] Run the supported Docker BDD path with bounded concurrency, ownership locks, and aggregate reserved RSS at or below 4 GiB.

@@ -56,6 +56,7 @@ const CHUNKS = Object.freeze({
     verser2: Object.freeze(["features/verser2/VERSER2-001-isolated-routing.feature"]),
     errors: Object.freeze(["features/e2e/E2E-016-errors.feature"]),
     stream: Object.freeze(["features/e2e/E2E-012-stream-flooding-test.feature"]),
+    "cli-prune-diagnostic": Object.freeze(["features/e2e/E2E-010-cli-prune-diagnostic.feature"]),
     /** Internal harness self-tests — excluded from default run. */
     harness: Object.freeze(["features/_harness/harness-timeout.feature"])
 });
@@ -85,7 +86,8 @@ const DEFAULT_CHUNKS = Object.freeze([
 // "remainder" merely by putting it in a non-default chunk.  The harness is
 // an internal self-test, not an eligible default-suite feature.
 const EXCLUDED_FEATURES = Object.freeze({
-    "features/_harness/harness-timeout.feature": "internal harness self-test; select --chunk=harness explicitly"
+    "features/_harness/harness-timeout.feature": "internal harness self-test; select --chunk=harness explicitly",
+    "features/e2e/E2E-010-cli-prune-diagnostic.feature": "isolated CLI prune diagnostic; select --chunk=cli-prune-diagnostic explicitly"
 });
 
 // Resource-owning paths remain explicit scheduler exclusions. This metadata
@@ -110,7 +112,8 @@ const CHUNK_COMPONENTS = Object.freeze({
     verser2: Object.freeze({ container: true, processes: [] }),
     errors: Object.freeze({ container: true, processes: [] }),
     stream: Object.freeze({ container: true, processes: [], exclusive: true }),
-    harness: Object.freeze({ container: true, processes: [], exclusive: true })
+    harness: Object.freeze({ container: true, processes: [], exclusive: true }),
+    "cli-prune-diagnostic": Object.freeze({ container: true, processes: [] })
 });
 
 // ---------------------------------------------------------------------------
