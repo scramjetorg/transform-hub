@@ -494,6 +494,8 @@
 
   E2E-010 first-scenario isolation (2026-07-15): no deterministic first-step stall reproduced. A strict guarded supported Docker selection of `E2E-010 TC-001` passed 1/1 scenario and 3/3 steps in approximately 9.3s (scenario timing 8.36s; `I set config for local Hub` 2.76s; cleanup approximately 4ms). Bounded individual CLI `--help`, `--version`, and `config set` subprocess probes all exited 0. The 30-second full-feature silence therefore occurs during cumulative CLI subprocess startup/exit collection before Cucumber emits progress dots, not after completed tests; no repair was made. Continue by capturing timing/process diagnostics on a repeated full-feature stall.
 
+  CommandIterator safety repair (2026-07-15): removed the dormant infinite `root()` loop left by the Commander.js-to-flat-`CommandDescriptor` migration. The iterator now retains its root descriptor and restores it while resetting parent/index state. Added five focused AVA regressions covering root after child traversal, iteration, idempotence, and leaf behavior. Independent package validation passed 29/29 CLI tests through the supported AVA runner; `git diff --check` passed. This completion-only safety repair is not claimed as the E2E-010 prune fix.
+
 - [ ] Task: Validate full parallel Docker BDD execution
     - [ ] Reclassify chunks as parallel-ready, exclusive, timing-remediation-required, or memory-remediation-required only after their functional, telemetry, and timing evidence is current.
     - [ ] Run the supported Docker BDD path with bounded concurrency, ownership locks, and aggregate reserved RSS at or below 4 GiB.

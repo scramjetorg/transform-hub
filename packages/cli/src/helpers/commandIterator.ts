@@ -4,17 +4,16 @@ export class CommandIterator {
     command: CommandDescriptor;
     private commandParent: CommandDescriptor | null;
     private index: number;
+    private rootCommand: CommandDescriptor;
 
     constructor(command: CommandDescriptor) {
         this.command = command;
+        this.rootCommand = command;
         this.commandParent = null;
         this.index = 0;
     }
     root() {
-        while (this.commandParent) {
-            // Walk up - in our flat model we just track the initial root
-            if (!this.commandParent) break;
-        }
+        this.command = this.rootCommand;
         this.commandParent = null;
         this.index = 0;
 
