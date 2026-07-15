@@ -5,7 +5,7 @@ const modes = require("../run-bdd-modes.js");
 const waves = require("../run-bdd-waves.js");
 
 test("base mode is bounded representative coverage", (t) => {
-    t.deepEqual(modes.BASE_CHUNKS, ["verser2", "topics-api", "appcontext", "node", "hub"]);
+    t.deepEqual(modes.BASE_CHUNKS, ["verser2", "topics-api", "appcontext", "node", "hub", "manager"]);
     t.deepEqual(modes.selectedChunks("base"), modes.BASE_CHUNKS);
 });
 
@@ -13,7 +13,7 @@ test("base and extra partitions are complete and have no overlap", (t) => {
     const partition = modes.partition();
     t.deepEqual([...new Set([...partition.base, ...partition.extra])].sort(), [...new Set(partition.all)].sort());
     t.is(partition.base.filter((name) => partition.extra.includes(name)).length, 0);
-    t.deepEqual(partition.extra, ["cli", "topics-cli", "python", "manager", "errors", "stream"]);
+    t.deepEqual(partition.extra, ["cli", "topics-cli", "python", "errors", "stream"]);
     t.false(partition.extra.includes("harness"));
     t.true(partition.all.every((name) => waves.CHUNKS[name]));
 });
@@ -81,7 +81,7 @@ test("runMode invokes chunks serially with ramp-down then ramp-up ordering", asy
 
     t.is(status, 0);
     t.deepEqual(calls, modes.BASE_CHUNKS);
-    t.deepEqual(events.filter((event) => event.includes("ramp")), [
+    t.deepEqual(events.filter((event) => event.startsWith("ramp-")), [
         "ramp-up:none->verser2",
         "ramp-down:verser2->topics-api",
         "ramp-up:verser2->topics-api",
@@ -91,7 +91,9 @@ test("runMode invokes chunks serially with ramp-down then ramp-up ordering", asy
         "ramp-up:appcontext->node",
         "ramp-down:node->hub",
         "ramp-up:node->hub",
-        "ramp-down:hub->none",
+        "ramp-down:hub->manager",
+        "ramp-up:hub->manager",
+        "ramp-down:manager->none",
     ]);
     t.deepEqual(cleanup.map(({ chunk }) => chunk), modes.BASE_CHUNKS);
 });

@@ -161,8 +161,8 @@ default base set is:
 
 | Mode | Chunks | Coverage rationale |
 |---|---|---|
-| `base` (`npm run test:bdd`) | `verser2`, `topics-api`, `appcontext`, `node` | Core routing, API/topic forwarding, AppContext, and Node runner behavior |
-| `extra` (`npm run test:bdd-extra`) | `cli`, `topics-cli`, `python`, `hub`, `manager`, `errors`, `stream` | Remaining eligible default-manifest coverage, retained serial because of timing, resource ownership, memory, or functional classifications |
+| `base` (`npm run test:bdd`) | `verser2`, `topics-api`, `appcontext`, `node`, `hub`, `manager` | Core routing, API/topic forwarding, AppContext, Node runner, Hub, and promoted Manager aggregation/Verser2 behavior |
+| `extra` (`npm run test:bdd-extra`) | `cli`, `topics-cli`, `python`, `errors`, `stream` | Remaining eligible default-manifest coverage, retained serial because of timing, resource ownership, memory, or functional classifications |
 | `all` (explicit or automatic for `--name`/`--tags`) | All `DEFAULT_CHUNKS` serially | Full eligible repository selection; prevents targeted selectors from silently missing extra chunks |
 
 The partition is feature-path based, complete over `DEFAULT_CHUNKS`, and has no

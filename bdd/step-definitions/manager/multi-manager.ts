@@ -1,18 +1,24 @@
 import { ChildProcess } from "child_process";
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { getExecutableCmd, spawnProcess, parseOptions, requestGet, requestPost, assertResponseData } from "./common";
+import { getExecutableCmd, spawnProcess, parseOptions, requestGet, requestPost, assertResponseData, disposeClient } from "./common";
 import { CustomWorld } from "../world";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { waitForCondition } from "../../lib/utils";
 
-async function startMultiManager(options: {[key: string]: any}): Promise<ChildProcess> {
-    return spawnProcess(getExecutableCmd("multi-manager"), options, 500, "Server started", { detached: true });
+async function startMultiManager(options: {[key: string]: any}, lifecycle: CustomWorld["scenarioLifecycle"]): Promise<ChildProcess> {
+    // The startup log is the observable readiness signal; no fixed grace
+    // sleep is needed after it.
+    return spawnProcess(getExecutableCmd("multi-manager"), options, 0, "Server started", { detached: true }, lifecycle);
 }
 
 After({ tags: "@cleanupmm" }, async function(this: CustomWorld) {
     for (const [, instance] of Object.entries(this.resources.multiManagers)) {
-        await this.scenarioLifecycle.stop(instance.process!);
+        try {
+            await this.scenarioLifecycle.stop(instance.process!);
+        } finally {
+            disposeClient(instance);
+        }
     }
 });
 
@@ -24,15 +30,13 @@ Given("MultiManager with options {string} is started", async function(
 
     const id = parsedOptions["--id"];
 
-    const process = await startMultiManager(parsedOptions);
+    const process = await startMultiManager(parsedOptions, this.scenarioLifecycle);
 
     const manager = new MultiManagerClient(
         `http://0.0.0.0:${parsedOptions["--server-api-port"]}/api/v1`
     );
 
     Object.assign(manager, { process });
-    this.scenarioLifecycle.ownChild(process, `multi-manager:${id}`, { group: true });
-
     this.resources.multiManagers[id] = manager;
 });
 
@@ -43,7 +47,11 @@ When("stopped MultiManager with id {string}", async function(
     const multiManagerInstance = this.resources.multiManagers[id];
 
     if (multiManagerInstance) {
-        await this.scenarioLifecycle.stop(multiManagerInstance.process!);
+        try {
+            await this.scenarioLifecycle.stop(multiManagerInstance.process!);
+        } finally {
+            disposeClient(multiManagerInstance);
+        }
     }
 });
 
@@ -100,7 +108,10 @@ When("Manager started on MultiManager {string} with config {string}", async func
 ){
     const parsedConfig = JSON.parse(config);
 
-    this.resources.managers[parsedConfig.id] = await this.resources.multiManagers[mmId].startManager(parsedConfig);
+    const previous = this.resources.managers[parsedConfig.id];
+    const next = await this.resources.multiManagers[mmId].startManager(parsedConfig);
+    disposeClient(previous);
+    this.resources.managers[parsedConfig.id] = next;
 });
 
 Then("it responds with {string}", async function(

@@ -11,7 +11,7 @@ const waves = require("./run-bdd-waves.js");
 // Docker run; the guarded HUB-003 fetch-profile issue remains open) without
 // admitting the known slow, memory-remediation, or other functionally blocked
 // groups into the ordinary command.
-const BASE_CHUNKS = Object.freeze(["verser2", "topics-api", "appcontext", "node", "hub"]);
+const BASE_CHUNKS = Object.freeze(["verser2", "topics-api", "appcontext", "node", "hub", "manager"]);
 const EXTRA_CHUNKS = Object.freeze(waves.DEFAULT_CHUNKS.filter((name) => !BASE_CHUNKS.includes(name)));
 const ALL_CHUNKS = Object.freeze([...waves.DEFAULT_CHUNKS]);
 const DEFAULT_RAMP_UP_MS = 1000;

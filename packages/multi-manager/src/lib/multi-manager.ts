@@ -1,29 +1,26 @@
-import findPackage from "find-package-json";
-
-import { APIExpose, NextCallback, ParsedMessage } from "@scramjet/api-types";
-import { ManagerConfiguration, MMRestAPI, MonitoringServerConfig } from "@scramjet/api-types";
-
-import { FreePortsFinder, merge, promiseTimeout, readJsonFile } from "@scramjet/utility";
-
-import { AddressInfo } from "net";
-import { IDProvider } from "@scramjet/model";
-import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
-import { RestAPI2 } from "@scramjet/rest-api2";
-import { Manager, CommonLogsPipe, HealthCheck, createManagerSthLocalBrokerTransport } from "@scramjet/manager";
-import { ManagersStore } from "./manager-store";
-import { Writable } from "stream";
-import { ReasonPhrases } from "http-status-codes";
-import { IncomingMessage, ServerResponse } from "http";
+import { APIExpose, ManagerConfiguration, MMRestAPI, MonitoringServerConfig, NextCallback, ParsedMessage } from "@scramjet/api-types";
 import { getDefaultManagerConfig as getManagerDefaultConfig } from "@scramjet/config";
-import { createVerserHost, VerserHost, VerserLocalBrokerHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
-import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { DataStream } from "scramjet";
-import { MultiManagerAuditor } from "./mulit-manager-auditor";
-import { MultiManagerConfig } from "../config/multi-manager-configuration";
+import { createDefaultHealthComponents, LoadCheck, LoadCheckConfig, summarizeHealth } from "@scramjet/load-check";
+import { CommonLogsPipe, createManagerSthLocalBrokerTransport, HealthCheck, Manager } from "@scramjet/manager";
+import { IDProvider } from "@scramjet/model";
 import { MonitoringServer } from "@scramjet/monitoring-server";
+import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
+import { RestAPI2 } from "@scramjet/rest-api2";
+import { FreePortsFinder, merge, promiseTimeout, readJsonFile } from "@scramjet/utility";
+import { createVerserHost, VerserHost, VerserLocalBrokerHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
+import findPackage from "find-package-json";
+import { IncomingMessage, ServerResponse } from "http";
+import { ReasonPhrases } from "http-status-codes";
+import { AddressInfo } from "net";
+import { DataStream } from "scramjet";
+import { Writable } from "stream";
+import { MultiManagerConfig } from "../config/multi-manager-configuration";
+import { MultiManagerAPIHandler } from "./api/multi-manager-api";
+import { ManagersStore } from "./manager-store";
+import { MultiManagerAuditor } from "./mulit-manager-auditor";
 import { createVerser2HostOptions } from "./verser2-host-config";
 import { resolveManagerVerser2HostConfig } from "./verser2-host-identity";
-import { MultiManagerAPIHandler } from "./api/multi-manager-api";
+import { attachVerser2ServerStreamBoundary, handleVerser2RequestBoundary } from "./verser2-request-boundary";
 
 const MANAGER_START_TIMEOUT = 30000;
 
@@ -67,7 +64,9 @@ export class MultiManager {
         return name;
     }
 
-    public get apiVersion(): string { return this.config.server.version; }
+    public get apiVersion(): string {
+        return this.config.server.version;
+    }
 
     public get version(): string {
         return version;
@@ -131,20 +130,24 @@ export class MultiManager {
 
         this.setRouting();
 
-        this.verser2Host?.onLifecycle(event => this.logger.debug("verser2 Host lifecycle", event));
+        this.verser2Host?.onLifecycle((event) => this.logger.debug("verser2 Host lifecycle", event));
 
         if (this.verser2Host) {
             await this.verser2Host.start();
+            attachVerser2ServerStreamBoundary((this.verser2Host as any).server, this.logger);
             this.logger.info("verser2 Host started", this.verser2Host.address);
         }
 
         if (this.config.monitoringServer?.port) {
             this.logger.debug(`starting monitoring server on port ${this.config.monitoringServer?.port}`);
-            await this.startMonitoringServer(this.config.monitoringServer).then((res) => {
-                this.logger.info("MonitoringServer started", res);
-            }, (e) => {
-                throw new Error(e);
-            });
+            await this.startMonitoringServer(this.config.monitoringServer).then(
+                (res) => {
+                    this.logger.info("MonitoringServer started", res);
+                },
+                (e) => {
+                    throw new Error(e);
+                }
+            );
         }
 
         this.apiServer.server.listen(this.config.server.apiPort, this.config.server.apiHost, () => {
@@ -162,7 +165,7 @@ export class MultiManager {
 
         const monitoringServer = new MonitoringServer({
             ...config,
-            check: async () => !!await this.loadCheck.getLoadCheck()
+            check: async () => !!(await this.loadCheck.getLoadCheck())
         });
 
         return monitoringServer.start();
@@ -186,44 +189,51 @@ export class MultiManager {
             managerConfigs.push({ ...defaultConfig, ...this.config.manager, logColors: this.config.getEntry("logColors") });
         }
 
-        await Promise.all(managerConfigs.map(
-            (managerConfig, index) => new Promise<void>((resolve, reject) => {
-                (async () => {
-                    if (!managerConfig.id.trim()) {
-                        throw new Error("Invalid Manager id");
-                    }
+        await Promise.all(
+            managerConfigs.map(
+                (managerConfig, index) =>
+                    new Promise<void>((resolve, reject) => {
+                        (async () => {
+                            if (!managerConfig.id.trim()) {
+                                throw new Error("Invalid Manager id");
+                            }
 
-                    if (this.managersStore.getById(managerConfig.id)) {
-                        throw new Error(`Duplicated Manager ${managerConfig.id}`);
-                    }
+                            if (this.managersStore.getById(managerConfig.id)) {
+                                throw new Error(`Duplicated Manager ${managerConfig.id}`);
+                            }
 
-                    this.logger.trace(`Starting ${index + 1}/${managerConfigs.length} default manager`, managerConfig.id);
+                            this.logger.trace(`Starting ${index + 1}/${managerConfigs.length} default manager`, managerConfig.id);
 
-                    const manager = new Manager({ ...managerConfig, s3: this.config.s3 });
+                            const manager = new Manager({ ...managerConfig, s3: this.config.s3 });
 
-                    manager.logger.pipe(this.logger);
+                            manager.logger.pipe(this.logger);
 
-                    try {
-                        const managerMain = manager.main();
+                            try {
+                                const managerMain = manager.main();
 
-                        await this.attachManagerVerser2Peers(manager);
+                                await this.attachManagerVerser2Peers(manager);
 
-                        manager.setupHealthEndpoint(this.healthCheck);
+                                manager.setupHealthEndpoint(this.healthCheck);
 
-                        this.auditor.attach(manager.auditor);
-                        this.managersStore.add(managerConfig.id, manager);
+                                this.auditor.attach(manager.auditor);
+                                this.managersStore.add(managerConfig.id, manager);
 
-                        await managerMain;
-                    } catch (e) {
-                        this.logger.error(`Manager ${this.config.manager} failed`, e);
+                                await managerMain;
+                            } catch (e) {
+                                this.logger.error(`Manager ${this.config.manager} failed`, e);
 
-                        this.managersStore.remove(managerConfig.id);
-                        throw e;
-                    }
-                })().then(resolve, reject);
-            })));
+                                this.managersStore.remove(managerConfig.id);
+                                throw e;
+                            }
+                        })().then(resolve, reject);
+                    })
+            )
+        );
 
-        this.logger.info("Managers started", this.managersStore.list().map(manager => manager.id));
+        this.logger.info(
+            "Managers started",
+            this.managersStore.list().map((manager) => manager.id)
+        );
     }
 
     setRouting() {
@@ -264,10 +274,17 @@ export class MultiManager {
         const guest = await this.verser2Host.attachLocalGuest({
             guestId: manager.config.verser2.localGuest.peerId,
             routedDomains: [manager.config.verser2.localGuest.routeDomain],
-            listener: (req, res) => manager.router.lookup(req as ParsedMessage, res as ServerResponse, () => {
-                res.statusCode = 404;
-                res.end();
-            })
+            listener: (req, res) =>
+                handleVerser2RequestBoundary(
+                    req,
+                    res,
+                    () =>
+                        manager.router.lookup(req as ParsedMessage, res as ServerResponse, () => {
+                            res.statusCode = 404;
+                            res.end();
+                        }),
+                    this.logger
+                )
         });
 
         this.managerVerser2Handles.set(manager.config.id, { broker, guest });
@@ -281,10 +298,7 @@ export class MultiManager {
         }
 
         this.managerVerser2Handles.delete(managerId);
-        await Promise.allSettled([
-            handles.broker?.close("manager-stop"),
-            handles.guest?.close("manager-stop")
-        ]);
+        await Promise.allSettled([handles.broker?.close("manager-stop"), handles.guest?.close("manager-stop")]);
     }
 
     async cpmMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
@@ -292,10 +306,7 @@ export class MultiManager {
 
         if (manager) {
             try {
-                await promiseTimeout(
-                    manager.startedPromise,
-                    MANAGER_START_TIMEOUT
-                );
+                await promiseTimeout(manager.startedPromise, MANAGER_START_TIMEOUT);
             } catch (_e) {
                 res.statusCode = 408;
                 res.end();
@@ -320,16 +331,14 @@ export class MultiManager {
         return next();
     }
 
-    async handleStartManagerRequest(
-        req: ParsedMessage
-    ): Promise<MMRestAPI.OpResponse<MMRestAPI.SendStartManagerResponse>> {
+    async handleStartManagerRequest(req: ParsedMessage): Promise<MMRestAPI.OpResponse<MMRestAPI.SendStartManagerResponse>> {
         const requestPayload = req.body || {};
 
         this.logger.trace("Received start manager request", requestPayload);
 
         if (await this.loadCheck.overloaded()) {
             return {
-                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
+                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE
             };
         }
 
@@ -343,7 +352,7 @@ export class MultiManager {
         if (this.managersStore.getById(managerConfig.id)) {
             return {
                 error: `Manager with id ${managerConfig.id} already exists.`,
-                opStatus: ReasonPhrases.CONFLICT,
+                opStatus: ReasonPhrases.CONFLICT
             };
         }
 
@@ -369,7 +378,7 @@ export class MultiManager {
 
     handleListManagersRequest(): MMRestAPI.GetManagersResponse {
         return this.managersStore.list().map((manager: Manager) => ({
-            id: manager.config.id,
+            id: manager.config.id
         }));
     }
 }

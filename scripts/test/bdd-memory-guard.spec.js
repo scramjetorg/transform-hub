@@ -313,6 +313,56 @@ const {
     matchScenarioException,
     cleanupWorldResources,
 } = require("../lib/bdd-memory-hooks-lib.js");
+const {
+    MANAGER_PARENT_ALLOWANCE_BYTES,
+    MANAGER_APPROVAL_REASON,
+    MANAGER_SCENARIO_EXCEPTIONS,
+} = require("../lib/bdd-manager-exceptions.js");
+
+test("Manager allowance matches only the approved Manager feature scopes", (t) => {
+    t.is(MANAGER_SCENARIO_EXCEPTIONS.length, 3);
+    for (const exception of MANAGER_SCENARIO_EXCEPTIONS) {
+        t.is(exception.allowanceBytes, 2 * 1024 * 1024);
+        t.true(exception.reason.includes("User-approved"));
+        t.true(exception.reason.includes("multi-process Manager/MultiManager/Hub topology"));
+        t.is(exception.line, 0);
+        t.is(exception.scenarioName, "*");
+        t.is(matchScenarioException(MANAGER_SCENARIO_EXCEPTIONS, `/work/bdd/features/${exception.featureUri}`, 0, "any scenario"), exception);
+    }
+    t.is(MANAGER_PARENT_ALLOWANCE_BYTES, 2 * 1024 * 1024);
+    t.true(MANAGER_APPROVAL_REASON.includes("User-approved"));
+});
+
+test("Manager allowance covers all scenarios only within approved features", (t) => {
+    const [aggregation] = MANAGER_SCENARIO_EXCEPTIONS;
+    t.is(
+        matchScenarioException(
+            MANAGER_SCENARIO_EXCEPTIONS,
+            `/work/bdd/features/${aggregation.featureUri}`,
+            0,
+            "any scenario",
+        ),
+        aggregation,
+    );
+    t.is(
+        matchScenarioException(
+            MANAGER_SCENARIO_EXCEPTIONS,
+            "/work/bdd/features/manager/MANAGER-001-multimanager-api.feature",
+            12,
+            "API-001 TC-001 MultiManager API /version endpoint",
+        ),
+        undefined,
+    );
+    t.is(
+        matchScenarioException(
+            MANAGER_SCENARIO_EXCEPTIONS,
+            "/work/bdd/features/manager/MANAGER-001-multimanager-api.feature",
+            0,
+            "any scenario",
+        ),
+        undefined,
+    );
+});
 
 test("exception matching matches by exact URI, name, and line", (t) => {
     const exceptions = [{
@@ -392,7 +442,7 @@ test("exception matching does not match wrong scenario name", (t) => {
     t.falsy(match, "should not match different name");
 });
 
-test("exception matching ignores line when scenarioLine is 0", (t) => {
+test("line-specific exception fails closed when scenarioLine is 0", (t) => {
     const exceptions = [{
         featureUri: "verser2/VERSER2-001-isolated-routing.feature",
         line: 7,
@@ -408,8 +458,22 @@ test("exception matching ignores line when scenarioLine is 0", (t) => {
         "Test",
     );
 
-    t.truthy(match, "should match when scenario line is unknown");
-    t.is(match.allowanceBytes, 1000);
+    t.falsy(match, "line-specific allowance must not match when line is unknown");
+});
+
+test("line-agnostic wildcard still matches when scenarioLine is 0", (t) => {
+    const exception = {
+        featureUri: "hub/HUB-001-host-config.feature",
+        line: 0,
+        scenarioName: "*",
+        allowanceBytes: 1000,
+        reason: "generic feature fallback",
+    };
+
+    t.is(
+        matchScenarioException([exception], "features/hub/HUB-001-host-config.feature", 0, "any scenario"),
+        exception,
+    );
 });
 
 test("exception matching returns first match when multiple candidates exist", (t) => {

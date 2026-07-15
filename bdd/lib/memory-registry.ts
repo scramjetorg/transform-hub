@@ -82,6 +82,7 @@ export interface TrackedProcess {
     exitedAt?: string;
     exitCode?: number | null;
     exitSignal?: NodeJS.Signals | null;
+    stderrTail?: string;
 }
 
 export interface TrackedContainer {
@@ -413,6 +414,12 @@ class MemoryRegistry {
 
         this.trackProcess(child.pid, label, expectExit);
 
+        child.stderr?.on("data", (chunk: Buffer | string) => {
+            const tracked = this.processes.get(child.pid!);
+            if (!tracked) return;
+            tracked.stderrTail = `${tracked.stderrTail || ""}${chunk.toString()}`.slice(-64 * 1024);
+        });
+
         child.once("exit", (code, signal) => {
             this.recordProcessExit(child.pid!, code, signal);
         });
@@ -663,12 +670,12 @@ class MemoryRegistry {
      * `exitedProcesses` (because `expectExit = false` by default) and
      * then `assertAll()` would report it as a spontaneous unexpected exit.
      *
-     * The drain is bounded: 5 × setImmediate rounds (~0-5 ms total).  It
+     * The drain is bounded: 20 × setImmediate rounds.  It
      * does **not** modify any tracking state, reorder heap measurements,
      * or silence genuine unexpected-exit detection.
      */
     async drainExitEvents(): Promise<void> {
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 20; i++) {
             await new Promise<void>((resolve) => setImmediate(resolve));
         }
     }
@@ -733,7 +740,8 @@ class MemoryRegistry {
             if (finalRss === null) {
                 errors.push(
                     `Tracked process "${tracked.label}" (pid ${pid}) ` +
-                    `is no longer accessible but was not expected to exit.`
+                    `is no longer accessible but was not expected to exit ` +
+                    `(code=null, signal=null, exitedAt=unknown).`
                 );
                 continue;
             }
@@ -793,10 +801,19 @@ class MemoryRegistry {
             if (!tracked.expectExit) {
                 errors.push(
                     `Tracked process "${tracked.label}" (pid ${pid}) ` +
-                    `exited unexpectedly but was not expected to exit.`
+                    `exited unexpectedly but was not expected to exit ` +
+                    `(code=${tracked.exitCode}, signal=${tracked.exitSignal}, ` +
+                    `exitedAt=${tracked.exitedAt || "unknown"}, ` +
+                    `stderr=${JSON.stringify(tracked.stderrTail || "")}).`
                 );
             }
         }
+
+        // Exit evidence is scenario-scoped: assertAll reports every genuine
+        // unexpected exit observed for this scenario, then consumes it. The
+        // completed-process map retains the same telemetry for the chunk
+        // summary, while a first failure cannot cascade into later scenarios.
+        this.exitedProcesses.clear();
 
         // ---- Check containers ----
         for (const [containerId, tracked] of this.containers) {
@@ -865,6 +882,16 @@ class MemoryRegistry {
         this.exitedProcesses.clear();
         this.completedProcesses.clear();
         this.containers.clear();
+    }
+
+    getUnexpectedExitRecords(): Array<Pick<TrackedProcess, "pid" | "label" | "exitCode" | "exitSignal" | "exitedAt">> {
+        return [...this.exitedProcesses.values()].map(({ pid, label, exitCode, exitSignal, exitedAt }) => ({
+            pid,
+            label,
+            exitCode,
+            exitSignal,
+            exitedAt,
+        }));
     }
 
     // -----------------------------------------------------------------------

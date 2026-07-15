@@ -43,9 +43,10 @@ function matchScenarioException(exceptions, featureUri, scenarioLine, scenarioNa
         }
 
         // Exact per-scenario matching:
-        // Line is a secondary guard: skip enforcement when we don't have
-        // a reliable line or the exception doesn't specify one.
-        const lineMatch = exc.line === 0 || scenarioLine === 0 || scenarioLine === exc.line;
+        // Line-specific matching fails closed when line extraction is
+        // unavailable. Only an explicitly line-agnostic exception (line 0)
+        // may match without a scenario line.
+        const lineMatch = exc.line === 0 || (scenarioLine > 0 && scenarioLine === exc.line);
 
         if (lineMatch && scenarioName === exc.scenarioName) {
             return exc;

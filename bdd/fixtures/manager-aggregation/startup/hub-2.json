@@ -12,7 +12,9 @@
       "sequenceName": "api-server",
       "instanceName": "hub-2-api-main",
       "args": [],
-      "keepAlive": true
+      "keepAlive": true,
+      "required": true,
+      "restartLimit": 1
     }
   ]
 }

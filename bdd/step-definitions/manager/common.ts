@@ -7,14 +7,16 @@ import { StringStream } from "scramjet";
 import { Readable } from "stream";
 
 const { stopProcess: stopProcessWithCleanup } = require("../../../scripts/lib/bdd-cleanup.js");
-const { memoryRegistry } = require("../../lib/memory-registry");
 const { getOwnership } = require("../../lib/ownership.js");
 const ownership = getOwnership(process.env);
 
 async function requestGet(apiBase: string, apiEndpoint: string): Promise<{[key: string]: any}> {
     const utils = new ClientUtils(apiBase);
-
-    return await utils.get<any>(apiEndpoint);
+    try {
+        return await utils.get<any>(apiEndpoint);
+    } finally {
+        utils.dispose();
+    }
 }
 
 async function requestPost(
@@ -23,7 +25,20 @@ async function requestPost(
     const utils = new ClientUtils(apiBase);
     const parsedBody = body.length > 0 ? JSON.parse(body as string) : body;
 
-    return await utils.post<any>(apiEndpoint, parsedBody, {}, { json: true, parse: "json" });
+    try {
+        return await utils.post<any>(apiEndpoint, parsedBody, {}, { json: true, parse: "json" });
+    } finally {
+        utils.dispose();
+    }
+}
+
+function disposeClient(client: any): void {
+    if (!client) return;
+    if (typeof client.dispose === "function") {
+        client.dispose();
+        return;
+    }
+    client.client?.dispose?.();
 }
 
 function getExecutableCmd(packageName: string): string[] {
@@ -40,9 +55,13 @@ function spawnProcess(
     options: {[key: string]: any},
     waitMS = 0,
     stdoutDoneMatch?: string,
-    spawnOptions: { detached?: boolean } = {}
+    spawnOptions: { detached?: boolean } = {},
+    lifecycle?: {
+        ownChild: (child: ChildProcess, label: string, options?: { group?: boolean }) => void;
+        ready?: (child: ChildProcess) => void;
+    }
 ): Promise<ChildProcess> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const fullCommand = [...command];
 
         for (const [name, value] of Object.entries(options)) {
@@ -59,32 +78,71 @@ function spawnProcess(
             },
         });
 
-        // Track spawned process in memory registry
         const label = command.length > 0 ? command[command.length - 1] : "spawned";
-        memoryRegistry.trackChildProcess(cmdProcess, `manager:${ownership.owner}:${label}`);
+        // ScenarioLifecycle is the sole owner/tracking path for manager
+        // children. Tracking here as well duplicates exit listeners and can
+        // leak unexpected-exit evidence into later scenarios.
+        lifecycle?.ownChild(cmdProcess, `manager:${label}`, { group: true });
+
+        const MAX_STDOUT_BUFFER = 64 * 1024;
+        let stdoutBuffer = "";
+        let settled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
+        const finishFailure = async (reason: string) => {
+            if (settled) return;
+            settled = true;
+            if (timer) clearTimeout(timer);
+            cmdProcess.stdout?.off("data", onStdout);
+            cmdProcess.off("error", onError);
+            cmdProcess.off("exit", onExit);
+            if (cmdProcess.exitCode === null && cmdProcess.signalCode === null) {
+                try {
+                    await stopProcessWithCleanup(cmdProcess, { graceMs: 1000 });
+                } catch (error) {
+                    reason += `; cleanup failed: ${(error as Error).message}`;
+                }
+            }
+            reject(new Error(`${reason}; stdout tail: ${JSON.stringify(stdoutBuffer)}`));
+        };
+
+        const onStdout = (data: any) => {
+            stdoutBuffer = `${stdoutBuffer}${data.toString()}`.slice(-MAX_STDOUT_BUFFER);
+            if (stdoutDoneMatch && stdoutBuffer.includes(stdoutDoneMatch) && !settled) {
+                settled = true;
+                if (timer) clearTimeout(timer);
+                cmdProcess.stdout?.off("data", onStdout);
+
+                lifecycle?.ready?.(cmdProcess);
+                setTimeout(() => resolve(cmdProcess), waitMS);
+            }
+        };
+        const onError = (error: Error) => {
+            void finishFailure(`Child process error before readiness: ${error.message}`);
+        };
+        const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
+            if (!settled) void finishFailure(`Child process exited before readiness (code=${code}, signal=${signal})`);
+        };
 
         if (stdoutDoneMatch) {
-            const onStdout = (data: any) => {
-                if (data.toString().includes(stdoutDoneMatch)) {
-                    cmdProcess.stdout.off("data", onStdout);
-
-                    // Record readiness-aware RSS baseline for chunk summary (Phase 10).
-                    if (cmdProcess.pid) {
-                        memoryRegistry.recordProcessReady(cmdProcess.pid);
-                    }
-
-                    setTimeout(() => {
-                        resolve(cmdProcess);
-                    }, waitMS);
-                }
-            };
-
             cmdProcess.stdout.on("data", onStdout);
         } else {
-            setTimeout(() => {
-                resolve(cmdProcess);
+            timer = setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    resolve(cmdProcess);
+                }
             }, waitMS);
         }
+
+        if (stdoutDoneMatch) {
+            timer = setTimeout(() => {
+                void finishFailure(`Timed out waiting for readiness marker ${JSON.stringify(stdoutDoneMatch)}`);
+            }, 15000);
+        }
+
+        cmdProcess.once("error", onError);
+        cmdProcess.once("exit", onExit);
 
         cmdProcess.stdout?.pipe(process.stdout);
         cmdProcess.stderr?.pipe(process.stderr);
@@ -187,5 +245,6 @@ export {
     stopProcess,
     parseOptions,
     sleep,
-    assertResponseData
+    assertResponseData,
+    disposeClient
 };

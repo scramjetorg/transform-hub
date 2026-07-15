@@ -1,5 +1,3 @@
-"use strict";
-
 /** Explicit owner for resources created by one BDD scenario. */
 class ScenarioLifecycle {
     constructor(registry, options = {}) {
@@ -57,6 +55,18 @@ class ScenarioLifecycle {
             if (pid) this.registry.markProcessesAsExpectedToExit([pid]);
         }
         return true;
+    }
+
+    ready(target) {
+        const resource = [...this.resources].find((candidate) => candidate.child === target || candidate.pid === target);
+        const pid = resource?.pid || resource?.child?.pid;
+        if (pid) this.registry.recordProcessReady(pid);
+        return target;
+    }
+
+    unexpectedExitRecords() {
+        const pids = new Set([...this.resources].map((resource) => resource.pid || resource.child?.pid).filter(Boolean));
+        return typeof this.registry.getUnexpectedExitRecords === "function" ? this.registry.getUnexpectedExitRecords().filter((record) => pids.has(record.pid)) : [];
     }
 
     async cleanup() {

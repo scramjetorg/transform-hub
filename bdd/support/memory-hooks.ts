@@ -43,6 +43,7 @@ import {
 } from "../../scripts/lib/bdd-memory-hooks-lib";
 import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
 const { createChunkTiming, summarizeTimingEvents } = require("../../scripts/lib/bdd-chunk-timing.js");
+const { MANAGER_SCENARIO_EXCEPTIONS } = require("../../scripts/lib/bdd-manager-exceptions.js");
 
 // ---------------------------------------------------------------------------
 // Per-scenario memory exceptions (narrowly scoped)
@@ -263,6 +264,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
             + "scenarios — Hub lifecycle with runtime-error verification "
             + "retains embedder allocations beyond the 524288-byte base.",
     },
+    ...MANAGER_SCENARIO_EXCEPTIONS,
 ];
 
 // ---------------------------------------------------------------------------
@@ -465,6 +467,8 @@ After(async function (this: any, scenario: any) {
         );
     }
 
+    const failures: Error[] = [...cleanupErrors];
+
     // ---- Check threshold ----
     if (delta > effectiveThreshold) {
         const diagnostics = buildBddMemoryDiagnostics({
@@ -479,7 +483,7 @@ After(async function (this: any, scenario: any) {
             cleanupErrors: cleanupErrors.length > 0 ? cleanupErrors : undefined,
         });
 
-        throw new Error(diagnostics);
+        failures.push(new Error(diagnostics));
     }
 
     // ---- Reconcile pending ChildProcess exits before asserting ----
@@ -494,17 +498,16 @@ After(async function (this: any, scenario: any) {
     const registryErrors = await getMemoryRegistry().assertAll();
 
     if (registryErrors.length > 0) {
-        throw new Error(
+        failures.push(new Error(
             "BDD child process / container memory checks failed:\n" +
             registryErrors.join("\n---\n")
-        );
+        ));
     }
 
-    // ---- Fail scenario on cleanup errors independently of memory threshold ----
-    if (cleanupErrors.length > 0) {
-        const messages = cleanupErrors.map(e => `    - ${e.message}`).join("\n");
+    if (failures.length > 0) {
         throw new Error(
-            `BDD world cleanup failed for scenario "${scenarioName}":\n${messages}`
+            `BDD scenario "${scenarioName}" collected ${failures.length} failure(s):\n` +
+            failures.map((failure, index) => `--- failure ${index + 1} ---\n${failure.message}`).join("\n")
         );
     }
 

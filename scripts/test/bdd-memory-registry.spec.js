@@ -989,6 +989,13 @@ test("MemoryRegistry drainExitEvents does not suppress genuine unexpected-exit e
 	t.true(firstError.includes(String(childPid)),
 		"error should include the killed child's PID: " + firstError
 	);
+	t.regex(firstError, /code=-?\d+|code=null/);
+	t.regex(firstError, /signal=SIGKILL|signal=null/);
+
+	// The first unexpected exit is reported once, then consumed so it cannot
+	// cascade into every later scenario while completed telemetry is retained.
+	const laterErrors = await registry.assertAll();
+	t.is(laterErrors.length, 0, "unexpected-exit evidence must be scenario-scoped");
 });
 
 test("MemoryRegistry spontaneous long-lived child exit after drain fails", async (t) => {
