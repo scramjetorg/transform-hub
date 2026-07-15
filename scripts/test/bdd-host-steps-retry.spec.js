@@ -2,14 +2,19 @@
  * @file scripts/test/bdd-host-steps-retry.spec.js
  *
  * Tests for the bounded transient connection retry semantics used by the
- * "host is running" and "host is still running" BDD steps in
+ * "host is running", "host is still running", and "start host" BDD steps in
  * bdd/step-definitions/e2e/host-steps.ts.
  *
- * Both steps now delegate to the shared {@link retryLoadCheck} helper in
+ * These steps delegate to the shared {@link retryLoadCheck} helper in
  * bdd/lib/utils.ts.  These tests exercise the real helper directly, ensuring
  * the retry-loop behavior — configurable deadline/backoff (default 5s/200ms),
  * transient connection errors retried via isConnectionError, and non-connection
  * errors (e.g. SERVER_ERROR) thrown immediately.
+ *
+ * The "start host" production path is covered by source-ordering assertion
+ * (spawnHost → retryLoadCheck → owned-port release) and by behavioral tests
+ * proving the retryLoadCheck callback forwards the AbortSignal to
+ * getLoadCheck({ signal }), including deadline abort propagation.
  *
  * Runs via ts-node/register to load the TypeScript source directly.
  *
@@ -19,12 +24,66 @@
 "use strict";
 
 const test = require("ava");
+const fs = require("fs");
+const path = require("path");
 
 // Register ts-node to load the BDD TypeScript source directly.
 require("ts-node/register");
 
 // Import the real helper from the BDD source.
 const { retryLoadCheck } = require("../../bdd/lib/utils");
+
+test("production start-host path probes readiness after spawn", (t) => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const spawnOffset = source.indexOf("await hostUtils.spawnHost([]);", source.indexOf("const startHost"));
+    const probeOffset = source.indexOf("await retryLoadCheck(", spawnOffset);
+
+    t.true(spawnOffset >= 0, "start-host production path must spawn the host");
+    t.true(probeOffset > spawnOffset, "start-host production path must probe after spawn");
+    t.true(probeOffset < source.indexOf("finally", spawnOffset), "owned ports must remain reserved until readiness");
+});
+
+test("start-host callback forwards AbortSignal to getLoadCheck", async (t) => {
+    let capturedSignal;
+    let signalNotAbortedAtCallTime = false;
+    const mockGetLoadCheck = (opts) => {
+        capturedSignal = opts?.signal;
+        signalNotAbortedAtCallTime = capturedSignal && !capturedSignal.aborted;
+        return Promise.resolve({ avgLoad: 0.5 });
+    };
+
+    await t.notThrowsAsync(() => retryLoadCheck(
+        (signal) => mockGetLoadCheck({ signal }),
+        "exhausted"
+    ));
+
+    t.truthy(capturedSignal, "startHost callback must forward AbortSignal to getLoadCheck");
+    t.true(capturedSignal instanceof AbortSignal, "captured value must be an AbortSignal instance");
+    t.true(signalNotAbortedAtCallTime, "signal must not be aborted at call time (retryLoadCheck finally aborts after success)");
+});
+
+test("start-host callback receives aborted signal when deadline expires", async (t) => {
+    let capturedSignal;
+    const mockGetLoadCheck = (opts) => {
+        capturedSignal = opts?.signal;
+        // Never resolve — forces deadline abort through retryLoadCheck.
+        return new Promise(() => {});
+    };
+
+    const err = await t.throwsAsync(() => retryLoadCheck(
+        (signal) => mockGetLoadCheck({ signal }),
+        "exhausted",
+        80, 10
+    ));
+
+    t.truthy(capturedSignal, "startHost callback must forward AbortSignal to getLoadCheck");
+    t.true(capturedSignal instanceof AbortSignal, "captured value must be an AbortSignal instance");
+    t.true(capturedSignal.aborted, "signal must be aborted when deadline expires");
+    t.is(err.code, "ETIMEDOUT");
+});
 
 // ---------------------------------------------------------------------------
 // Success cases
@@ -46,6 +105,39 @@ test("retryLoadCheck resolves after transient connection errors", async (t) => {
     }, "exhausted", 1000, 10));
 
     t.is(calls, 3);
+});
+
+test("retryLoadCheck treats a startup ECONNREFUSED burst as bounded readiness", async (t) => {
+    let calls = 0;
+    const started = Date.now();
+
+    await t.notThrowsAsync(() => retryLoadCheck(async () => {
+        calls++;
+        if (calls <= 3) {
+            throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1"), {
+                code: "ECONNREFUSED"
+            });
+        }
+        return { status: 200 };
+    }, "host startup exhausted", 1000, 10));
+
+    t.is(calls, 4);
+    t.true(Date.now() - started < 500, "startup readiness retry should remain bounded and prompt");
+});
+
+test("retryLoadCheck aborts a never-settling probe at the remaining deadline", async (t) => {
+    let aborted = false;
+    const started = Date.now();
+    const err = await t.throwsAsync(() => retryLoadCheck((signal) => new Promise((resolve, reject) => {
+        signal.addEventListener("abort", () => {
+            aborted = true;
+            reject(Object.assign(new Error("aborted load-check"), { code: "ETIMEDOUT" }));
+        }, { once: true });
+    }), "host startup exhausted", 80, 10));
+
+    t.is(err.code, "ETIMEDOUT");
+    t.true(aborted);
+    t.true(Date.now() - started < 500, "never-settling readiness must be deadline-bounded");
 });
 
 test("retryLoadCheck resolves after nested CANNOT_CONNECT errors", async (t) => {

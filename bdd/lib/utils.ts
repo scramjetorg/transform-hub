@@ -448,7 +448,7 @@ export function isConnectionError(err: any): boolean {
  * @param backoffMs - pause between retries in milliseconds (default 200)
  */
 export async function retryLoadCheck(
-    loadCheckFn: () => Promise<any>,
+    loadCheckFn: (signal?: AbortSignal) => Promise<any>,
     exhaustedMsg: string,
     deadlineMs: number = 5_000,
     backoffMs: number = 200
@@ -457,8 +457,21 @@ export async function retryLoadCheck(
     let lastError: any;
 
     do {
+        const controller = new AbortController();
+        const remaining = Math.max(1, deadline - Date.now());
+        let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
-            const result = await loadCheckFn();
+            const result = await Promise.race([
+                loadCheckFn(controller.signal),
+                new Promise<never>((_, reject) => {
+                    timeout = setTimeout(() => {
+                        controller.abort();
+                        const error: any = new Error(`load-check exceeded remaining deadline (${remaining}ms)`);
+                        error.code = "ETIMEDOUT";
+                        reject(error);
+                    }, remaining);
+                })
+            ]);
             assert.ok(result);
             return;
         } catch (err: any) {
@@ -472,6 +485,9 @@ export async function retryLoadCheck(
 
             if (Date.now() >= deadline) break;
             await defer(backoffMs);
+        } finally {
+            if (timeout) clearTimeout(timeout);
+            controller.abort();
         }
     } while (Date.now() < deadline);
 

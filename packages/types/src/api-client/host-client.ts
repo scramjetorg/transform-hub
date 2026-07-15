@@ -65,7 +65,7 @@ export declare class HostClient implements ClientProvider {
     deleteSequence(sequenceId: string, opts?: { force: boolean }): Promise<STHRestAPI.DeleteSequenceResponse>;
     /** Accepts an instance ID or a stable instance name. */
     getInstanceInfo(instanceId: string): Promise<STHRestAPI.GetInstanceResponse>;
-    getLoadCheck(): Promise<LoadCheckStat>;
+    getLoadCheck(requestInit?: RequestInit): Promise<LoadCheckStat>;
     getVersion(): Promise<STHRestAPI.GetVersionResponse>;
     getStatus(): Promise<STHRestAPI.GetStatusResponse>;
     getConfig(): Promise<PublicSTHConfiguration>;

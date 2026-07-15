@@ -253,7 +253,7 @@ BeforeAll({ timeout: 20e3 }, async () => {
     try {
         await hostUtils.spawnHost([]);
         await retryLoadCheck(
-            () => hostClient.getLoadCheck(),
+            (signal) => hostClient.getLoadCheck({ signal }),
             "Shared HostClient transport did not become ready before the scenario baseline"
         );
     } finally {
@@ -404,6 +404,13 @@ const startHost = async () => {
     }
     try {
         await hostUtils.spawnHost([]);
+        // Do not release the owned API port until the HTTP server is
+        // observable.  spawnHost's process marker can precede socket bind,
+        // which otherwise lets the next step race into ECONNREFUSED.
+        await retryLoadCheck(
+            (signal) => hostClient.getLoadCheck({ signal }),
+            "Started host did not become ready"
+        );
     } finally {
         await apiReservation?.release();
         await instancesReservation?.release();
@@ -450,7 +457,7 @@ Given("host is running", async function(this: CustomWorld) {
     // Delegates to the shared retryLoadCheck helper for consistent
     // transient-connection retry semantics across all host steps.
     await retryLoadCheck(
-        () => getHostClient(this).getLoadCheck(),
+        (signal) => getHostClient(this).getLoadCheck({ signal }),
         "Host did not become ready"
     );
 });
@@ -461,7 +468,7 @@ Then("host is still running", async function(this: CustomWorld) {
     // Delegates to the shared retryLoadCheck helper for consistent
     // transient-connection retry semantics across all host steps.
     await retryLoadCheck(
-        () => getHostClient(this).getLoadCheck(),
+        (signal) => getHostClient(this).getLoadCheck({ signal }),
         "Host is no longer running"
     );
 });
