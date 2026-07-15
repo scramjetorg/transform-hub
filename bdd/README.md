@@ -153,8 +153,9 @@ forwarding), `appcontext` (AppContext), `node` (Node runner behavior),
 `hub` (Hub behavior), and `manager` (Manager aggregation and Verser2
 forwarding). This excludes the currently slow, memory-remediation,
 and other functionally blocked groups identified by Phase 10 classification.
-The Hub chunk is an exception: it is user-promoted on the strength of a passing
-unguarded Docker-mode run; the guarded HUB-003 fetch-profile issue remains open.
+The Hub chunk is user-promoted on the strength of a passing unguarded
+Docker-mode run; the guarded no-fetch-compatible transport for HUB-003 is now
+green and has been verified under strict parent-heap guard.
 The npm modes set `BDD_INCLUDE_LONG_RUNNING=1` so the selected Node feature's
 explicit `@slow` regression scenarios are included; path selection still keeps
 unrelated long-running features out of base mode.

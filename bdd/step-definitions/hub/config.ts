@@ -100,6 +100,10 @@ When("the occupied port is released", async function(this: CustomWorld) {
 async function startHubWithParams(world: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
     const { resources } = world;
     const hostUtils = new HostUtils();
+    // @starts-host scenarios must launch their requested Hub even when the
+    // suite host URL is present in the environment.  HostUtils otherwise
+    // treats that URL as an external-host shortcut and never owns a child.
+    hostUtils.hostUrl = "";
     const expectedHubExitCode = resources.expectedHubExitCode as number | undefined;
     const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
     const runnerHostEnabledEnv = "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED";
@@ -193,8 +197,8 @@ function getHostClient() {
     return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
 }
 
-async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
-    return new Promise<{ status: number; text: () => Promise<string> }>((resolve, reject) => {
+async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string> = {}) {
+    return new Promise<{ status: number; ok: boolean; text: () => Promise<string> }>((resolve, reject) => {
         const target = new URL(url);
         const request = (target.protocol === "https:" ? httpsRequest : httpRequest)({
             method,
@@ -211,11 +215,13 @@ async function rawHttpRequest(method: string, url: string, body: string | undefi
             response.on("end", () => {
                 const text = Buffer.concat(chunks).toString("utf8");
 
-                resolve({ status: response.statusCode || 0, text: async () => text });
+                const status = response.statusCode || 0;
+                resolve({ status, ok: status >= 200 && status < 300, text: async () => text });
             });
         });
 
         request.on("error", reject);
+        request.setTimeout(10000, () => request.destroy(new Error(`HTTP ${method} ${url} timed out`)));
         if (body !== undefined) {
             request.write(body);
         }
@@ -232,14 +238,7 @@ function hostRootUrl(path: string): string {
 
 When("I send a {string} request to {string} with body {string}", async function(method, path, body) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
-    const options: RequestInit = {
-        method,
-        body,
-        headers: { "Content-Type": "application/json" }
-    };
-
-    // Send the request and store the response for later steps
-    const response = await fetch(url, options);
+    const response = await rawHttpRequest(method, url, body, { "Content-Type": "application/json" });
 
     this.response = response;
 });
@@ -266,10 +265,7 @@ When("I send a {string} root API request to {string} with body {string} and head
 
 When("I send a {string} request to {string}", async function(method, path) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
-    const options: RequestInit = { method };
-
-    // Send the request and store the response for later steps
-    const response = await fetch(url, options);
+    const response = await rawHttpRequest(method, url, undefined);
 
     this.response = response;
 
@@ -284,10 +280,8 @@ When('I send a {string} direct request to {string} on port {int}', async functio
     originalUrl.pathname = path;
 
     const url = originalUrl.toString();
-    const options: RequestInit = { method };
-
     const response = await waitForCondition(
-        () => fetch(url, options),
+        () => rawHttpRequest(method, url, undefined),
         (candidate) => candidate.ok,
         { timeoutMs: 10000, description: `Direct ${method} ${url}` }
     );

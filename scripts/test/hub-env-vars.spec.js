@@ -14,6 +14,22 @@
 "use strict";
 
 const test = require("ava");
+const fs = require("fs");
+const path = require("path");
+
+test("@starts-host production path clears the suite-host shortcut", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/hub/config.ts"),
+        "utf8"
+    );
+    const startOffset = source.indexOf("async function startHubWithParams");
+    const constructorOffset = source.indexOf("const hostUtils = new HostUtils();", startOffset);
+    const clearOffset = source.indexOf('hostUtils.hostUrl = "";', constructorOffset);
+
+    t.true(startOffset >= 0);
+    t.true(clearOffset > constructorOffset);
+    t.true(clearOffset < source.indexOf("const expectedHubExitCode", constructorOffset));
+});
 
 /**
  * Simulate the env-var save / set / restore pattern from startHubWithParams.

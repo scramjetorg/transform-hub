@@ -8,9 +8,9 @@ const waves = require("./run-bdd-waves.js");
 // The base is deliberately small and representative rather than a second
 // default suite. It covers routing, API/topic forwarding, AppContext, and the
 // Node runner and the Hub chunk (user-promoted based on a passing unguarded
-// Docker run; the guarded HUB-003 fetch-profile issue remains open) without
-// admitting the known slow, memory-remediation, or other functionally blocked
-// groups into the ordinary command.
+// Docker run; the guarded no-fetch-compatible transport for HUB-003 is now
+// green) without admitting the known slow, memory-remediation, or other
+// functionally blocked groups into the ordinary command.
 const BASE_CHUNKS = Object.freeze(["verser2", "topics-api", "appcontext", "node", "hub", "manager"]);
 const EXTRA_CHUNKS = Object.freeze(waves.DEFAULT_CHUNKS.filter((name) => !BASE_CHUNKS.includes(name)));
 const ALL_CHUNKS = Object.freeze([...waves.DEFAULT_CHUNKS]);
