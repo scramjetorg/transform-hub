@@ -2,11 +2,15 @@ const test = require("ava");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { PassThrough } = require("stream");
+const tsNode = require("ts-node");
 const { EventEmitter } = require("events");
 const http = require("http");
 const { spawnOwnedProcess } = require("../../bdd/lib/spawn-owned-process.js");
 const { clearE2eScenarioState } = require("../../bdd/lib/e2e-module-state.js");
 const { teardownFloodSource } = require("../../bdd/lib/flood-teardown.js");
+tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
+const { waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
 const { ClientUtilsBase } = require("../../packages/client-utils/dist/client-utils.js");
 const fetch = require("node-fetch");
 
@@ -159,4 +163,18 @@ test("flood teardown waits for the ClientUtils wrapped upload abort and server o
     t.true(teardownResolved);
     client.dispose();
     server.close();
+});
+
+test("finite response assertion drains and destroys the streamed response", async t => {
+    const stream = new PassThrough();
+    let destroyed = false;
+    const originalDestroy = stream.destroy.bind(stream);
+    stream.destroy = (...args) => {
+        destroyed = true;
+        return originalDestroy(...args);
+    };
+    const result = waitUntilStreamEquals(stream, "finite output");
+    stream.end("finite output");
+    t.is(await result, "finite output");
+    t.true(destroyed);
 });

@@ -181,6 +181,25 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     },
 
     // -----------------------------------------------------------------------
+    // E2E-015 TC-001: finite Python output
+    //
+    // Five fresh strict guarded feature-path runs formed a stable post-cleanup
+    // plateau.  The finite assertion matches the expected output and destroys
+    // the response stream; it does not assert EOF/trailing-data exhaustion.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "e2e/E2E-015-unified.feature",
+        line: 4,
+        scenarioName: "E2E-015 TC-001 Run simple sequence with input and output",
+        allowanceBytes: 90_112,
+        reason: "Post-cleanup samples were 591113/602197/607408/596596/602340 bytes; finite output "
+            + "cleanup matched the expected body, destroyed the response stream, and released instance, "
+            + "sequence, output, and response references. This additive 90112-byte allowance produces "
+            + "the 614400-byte effective threshold over the 524288-byte base and is scoped to this exact "
+            + "feature URI, line, and scenario name.",
+    },
+
+    // -----------------------------------------------------------------------
     // E2E-014 TC-003: Exceptions thrown in python sequences appear in stderr
     //
     // Scenario creates a Python child-process runner and verifies stderr

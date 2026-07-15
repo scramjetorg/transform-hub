@@ -52,3 +52,41 @@
   - `bdd/step-definitions/world.ts:50`: `floodCorrelationId?: string` — typed as optional string on the world, retained via `resources`.
 - **Current disposition**: **Deferred**
 - **Rationale**: `floodCorrelationId` holds a short UUID string (~36 bytes) that is scenario-scoped and negligible for parent-heap measurement. Adding `resources.floodCorrelationId = undefined` to `teardownFloodSource()` would be a one-line consistency fix, but the retained string is dwarfed by the flood-stream and abort-controller objects that are already cleared. The cleanup gap is a consistency issue, not a measurable memory leak. Defer to the next maintenance pass over `bdd/lib/flood-teardown.js` when other cleanup gaps are addressed.
+
+## P2-005: Test E2E-015 production exception entry directly rather than by reconstructed object
+
+- **Severity**: P2
+- **Phase**: Phase 5 (BDD Parent Scenario Memory Guard)
+- **Scope**: `scripts/test/bdd-memory-guard.spec.js`
+- **Evidence**:
+  - `scripts/test/bdd-memory-guard.spec.js:474-485`: test `"E2E-015 allowance matches only exact URI, line, and scenario"` constructs a hardcoded inline object `{ featureUri: "e2e/E2E-015-unified.feature", line: 4, allowanceBytes: 90112, reason: "approved plateau cleanup" }` with an abbreviated reason string and diverging `allowanceBytes` from the production value.
+  - `bdd/support/memory-hooks.ts:190-199`: the production `SCENARIO_EXCEPTIONS` entry for E2E-015 uses `allowanceBytes: 90_112` and a multi-sentence documented reason derived from observed plateau samples.
+  - `scripts/lib/bdd-memory-hooks-lib.js:8-9`: the library comment states these helpers exist so "memory-guard infrastructure tests can test the production helpers directly (no copied logic)" — but the E2E-015 test does not follow this pattern; it reconstructs the exception object instead of importing and verifying the production entry.
+- **Current disposition**: **Deferred**
+- **Rationale**: The reconstructed object happens to share the same numeric `allowanceBytes` value (90112) as the production entry, so the test correctly covers the `matchScenarioException` matching logic. However, it does not verify that the production entry's reason or allowance bytes are correct. The production entry's reason is significantly longer (multi-sentence plateau evidence) and could drift from the test without detection. Fixing this would require either exporting the individual E2E-015 exception from `memory-hooks.ts` or having the test import `SCENARIO_EXCEPTIONS` and index-verify the correct entry. Defer because the matching logic is correct and no drift has occurred; add to a follow-up test-hygiene track.
+
+## P2-006: Rename finite-response test to accurately say matches-and-destroys and test without EOF
+
+- **Severity**: P2
+- **Phase**: Phase 10 (BDD Timing Rationalization)
+- **Scope**: `scripts/test/bdd-utils.spec.js`
+- **Evidence**:
+  - `scripts/test/bdd-utils.spec.js:168`: test name is `"finite response assertion drains and destroys the streamed response"`.
+  - `scripts/test/bdd-utils.spec.js:168-180`: test body creates a `PassThrough` stream, ends it with `"finite output"` (no trailing EOF/data), and asserts `waitUntilStreamEquals` returns the content and has destroyed the stream.
+  - `bdd/support/memory-hooks.ts:187-188`: the production E2E-015 comment explicitly describes `"The finite assertion matches the expected output and destroys the response stream; it does not assert EOF/trailing-data exhaustion."`
+  - The name omits the key behavioral fact: `waitUntilStreamEquals` **matches-and-destroys** (not merely "drains") and the test verifies the assertion works **without EOF** (the stream ends with the matched content, not an explicit end-of-stream/EOF marker).
+- **Current disposition**: **Deferred**
+- **Rationale**: The current name is technically accurate (draining is a form of matching-and-destroying) but omits two distinguishing characteristics: (1) the function destroys the stream after match, and (2) it succeeds without an EOF/trailing-data signal. A more precise name would say `"waitUntilStreamEquals matches finite content, destroys the stream, and succeeds without EOF"` or similar. Test renames in this file are safe one-line changes but should be done alongside other bdd-utils test hygiene improvements to avoid churn on a stable test file. Defer to a follow-up test-maintenance pass.
+
+## P2-007: Correct the `line=0` exact-exception comment in `bdd/support/memory-hooks.ts`
+
+- **Severity**: P2
+- **Phase**: Phase 5 (BDD Parent Scenario Memory Guard)
+- **Scope**: `bdd/support/memory-hooks.ts` — `ScenarioException.line` field JSDoc
+- **Evidence**:
+  - `bdd/support/memory-hooks.ts:68-69`: `/** Exact scenario line number in the feature file (ignored when scenarioName is "*"). */` — this comment is incomplete.
+  - `scripts/lib/bdd-memory-hooks-lib.js:45-49`: the `matchScenarioException` matching logic tests `exc.line === 0 || (scenarioLine > 0 && scenarioLine === exc.line)`. When `exc.line === 0`, the line check is disarmed for per-scenario exceptions as well, not just for `scenarioName === "*"`.
+  - `bdd/support/memory-hooks.ts:233-267`: the HUB feature-level exceptions use `line: 0` redundantly with `scenarioName: "*"` — the `"*"` short-circuit already bypasses the line check, making `line: 0` superfluous in those entries.
+  - `scripts/lib/bdd-memory-hooks-lib.js:46-48`: doc comment within the function correctly explains that `"line=0"` is an "explicitly line-agnostic exception" — but the interface-level JSDoc at `memory-hooks.ts:68` does not reflect this.
+- **Current disposition**: **Deferred**
+- **Rationale**: The interface-level comment is not wrong, but it is incomplete: it says line is ignored only for `scenarioName === "*"`, when in fact `line=0` also disarms the line check for per-scenario (non-wildcard) exceptions, as the matching logic at `bdd-memory-hooks-lib.js:49` explicitly handles. The HUB `line: 0` + `scenarioName: "*"` pattern is technically redundant but harmless. Fixing the comment is a one-line documentation change that should be done alongside the broader URI matching hardening (P2-002) in a follow-up maintenance track, since the comment and matching-function doc should remain consistent.

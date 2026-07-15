@@ -1036,6 +1036,12 @@ Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
 
 Then("release completed finite output resources", async function(this: CustomWorld) {
     this.resources.instance = undefined;
+    this.resources.sequence = undefined;
+    this.resources.outStream?.destroy();
+    this.resources.outStream = undefined;
+    actualStatusResponse = undefined;
+    actualHealthResponse = undefined;
+    actualApiResponse = undefined;
     await new Promise<void>(resolve => setImmediate(resolve));
 });
 

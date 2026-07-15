@@ -471,6 +471,20 @@ test("exception matching does not match wrong scenario name", (t) => {
     t.falsy(match, "should not match different name");
 });
 
+test("E2E-015 allowance matches only exact URI, line, and scenario", (t) => {
+    const exception = {
+        featureUri: "e2e/E2E-015-unified.feature",
+        line: 4,
+        scenarioName: "E2E-015 TC-001 Run simple sequence with input and output",
+        allowanceBytes: 90112,
+        reason: "approved plateau cleanup",
+    };
+    t.is(matchScenarioException([exception], "features/e2e/E2E-015-unified.feature", 4, exception.scenarioName), exception);
+    t.falsy(matchScenarioException([exception], "features/e2e/E2E-014-python.feature", 4, exception.scenarioName));
+    t.falsy(matchScenarioException([exception], "features/e2e/E2E-015-unified.feature", 0, exception.scenarioName));
+    t.falsy(matchScenarioException([exception], "features/e2e/E2E-015-unified.feature", 4, "different scenario"));
+});
+
 test("line-specific exception fails closed when scenarioLine is 0", (t) => {
     const exceptions = [{
         featureUri: "verser2/VERSER2-001-isolated-routing.feature",
