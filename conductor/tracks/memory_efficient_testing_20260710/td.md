@@ -40,3 +40,15 @@
   - Phase 10 classification: E2E-010 features classified as "memory-remediation-required" (not timing-remediation-required), meaning the OOM is the harder blocker.
 - **Current disposition**: **Deferred**
 - **Rationale**: The Docker OOM at 1.49 GiB is reproducible with `bdd/features/e2e/E2E-010-cli.feature` under the 300-second feature timeout (`plan.md:348`). Root cause is not timing (it completes within 2 minutes) but cumulative memory growth in the Docker container — likely from repeated CLI subprocess invocations or retained Hub/Manager state across the feature's 16+ scenarios. Full remediation requires either chunk-splitting E2E-010-cli into smaller memory-bounded chunks, reducing per-scenario retained allocations in the CLI setup/teardown path, or raising the Docker memory limit with documented justification. Defer to a follow-up track dedicated to E2E-010 stabilization and chunk memory budgeting because the fix requires CLI/host integration work outside this track's scope.
+
+## P2-004: Clear `resources.floodCorrelationId` in flood-teardown cleanup
+
+- **Severity**: P2
+- **Phase**: Phase 10 (BDD Timing Rationalization)
+- **Scope**: `bdd/lib/flood-teardown.js`, `bdd/step-definitions/e2e/host-steps.ts`
+- **Evidence**:
+  - `bdd/step-definitions/e2e/host-steps.ts:828`: `this.resources.floodCorrelationId = correlationId;` — the UUID is written to `resources` alongside `floodStream`, `floodAbortController`, etc.
+  - `bdd/lib/flood-teardown.js:17-22`: `teardownFloodSource()` clears `floodStream`, `floodSendPromise`, `floodResponseClosedPromise`, `floodHubRequestLifecycleWaiter`, `floodSourceClosedPromise`, and `floodAbortController` — but never clears `floodCorrelationId`.
+  - `bdd/step-definitions/world.ts:50`: `floodCorrelationId?: string` — typed as optional string on the world, retained via `resources`.
+- **Current disposition**: **Deferred**
+- **Rationale**: `floodCorrelationId` holds a short UUID string (~36 bytes) that is scenario-scoped and negligible for parent-heap measurement. Adding `resources.floodCorrelationId = undefined` to `teardownFloodSource()` would be a one-line consistency fix, but the retained string is dwarfed by the flood-stream and abort-controller objects that are already cleared. The cleanup gap is a consistency issue, not a measurable memory leak. Defer to the next maintenance pass over `bdd/lib/flood-teardown.js` when other cleanup gaps are addressed.

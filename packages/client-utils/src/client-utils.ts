@@ -101,7 +101,9 @@ export abstract class ClientUtilsBase implements HttpClient {
                     if (error instanceof QueryError) {
                         throw error;
                     }
-                    throw new QueryError(input.toString(), error.code);
+                    const queryError = new QueryError(input.toString(), error.code);
+                    (queryError as Error & { cause?: unknown }).cause = error;
+                    throw queryError;
                 });
 
             if (options.parse === "json") {

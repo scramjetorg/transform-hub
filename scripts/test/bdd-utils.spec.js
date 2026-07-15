@@ -3,8 +3,12 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { EventEmitter } = require("events");
+const http = require("http");
 const { spawnOwnedProcess } = require("../../bdd/lib/spawn-owned-process.js");
 const { clearE2eScenarioState } = require("../../bdd/lib/e2e-module-state.js");
+const { teardownFloodSource } = require("../../bdd/lib/flood-teardown.js");
+const { ClientUtilsBase } = require("../../packages/client-utils/dist/client-utils.js");
+const fetch = require("node-fetch");
 
 const node = process.execPath;
 
@@ -81,4 +85,78 @@ test("E2E scenario cleanup releases the module client before disposing and clear
     t.is(state.scenarioHostClient, undefined);
     t.true(state.runnerEnded instanceof Promise);
     t.is(state.signalRunnerEnded(), undefined);
+});
+
+test("flood teardown destroys the source before awaiting expected abort settlement", async t => {
+    let destroyed = false;
+    let bodyDestroyed = false;
+    let resolveSend;
+    const body = { resume() {}, destroy() { bodyDestroyed = true; } };
+    const resources = {
+        floodStream: { destroy() { destroyed = true; resolveSend?.(); } },
+        floodSendPromise: new Promise(resolve => { resolveSend = () => resolve(body); }),
+        floodSourceClosedPromise: new Promise(resolve => setImmediate(resolve)),
+        floodAbortController: new AbortController(),
+    };
+    await t.notThrowsAsync(teardownFloodSource(resources, 100));
+    t.true(destroyed);
+    t.true(bodyDestroyed);
+    t.is(resources.floodStream, undefined);
+    t.is(resources.floodSendPromise, undefined);
+});
+
+test("flood teardown reports an unsettled or unexpected send failure", async t => {
+    const timeoutError = await t.throwsAsync(teardownFloodSource({
+        floodStream: { destroy() {} },
+        floodSendPromise: new Promise(() => {}),
+    }, 10));
+    t.regex(timeoutError.message, /did not settle/);
+
+    const sendError = await t.throwsAsync(teardownFloodSource({
+        floodStream: { destroy() {} },
+        floodSendPromise: Promise.reject(new Error("unexpected")),
+    }, 100));
+    t.regex(sendError.message, /unexpected/);
+});
+
+test("flood teardown waits for the ClientUtils wrapped upload abort and server observation", async t => {
+    let serverObservedAbort = false;
+    let resolveServerObserved;
+    const serverObserved = new Promise(resolve => { resolveServerObserved = resolve; });
+    let resolveServerRequest;
+    const serverRequestStarted = new Promise(resolve => { resolveServerRequest = resolve; });
+    const server = http.createServer((request, response) => {
+        resolveServerRequest();
+        request.once("aborted", () => {
+            serverObservedAbort = true;
+            resolveServerObserved();
+        });
+        request.once("close", () => {
+            serverObservedAbort = true;
+            resolveServerObserved();
+        });
+        // Keep headers pending: a resolved response alone must not settle upload teardown.
+        request.once("close", () => response.destroy());
+    });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+
+    const abortController = new AbortController();
+    const source = new (require("stream").PassThrough)();
+    const requestClosed = new Promise(resolve => source.once("close", resolve));
+    const client = new ClientUtilsBase(`http://127.0.0.1:${server.address().port}`, fetch);
+    const sendPromise = client.sendStream("/flood", source, { signal: abortController.signal }, { parseResponse: "response" });
+    source.write(Buffer.alloc(1024));
+    await serverRequestStarted;
+    let teardownResolved = false;
+    await teardownFloodSource({
+        floodStream: source,
+        floodSendPromise: sendPromise,
+        floodSourceClosedPromise: Promise.all([requestClosed, serverObserved]),
+        floodAbortController: abortController,
+    }, 1000).then(() => { teardownResolved = true; });
+
+    t.true(serverObservedAbort);
+    t.true(teardownResolved);
+    client.dispose();
+    server.close();
 });

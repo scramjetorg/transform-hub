@@ -7,6 +7,7 @@ Feature: Test our shiny new Python runner
         And instance started
         And send "python runner" to input
         Then "output" is "Hello python runner!"
+        And release completed finite output resources
         And host is still running
 
     @ci-unified

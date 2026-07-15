@@ -42,6 +42,12 @@ export class CustomWorld implements World {
         outStream?: Readable;
         floodStream?: Readable;
         floodSendPromise?: Promise<unknown>;
+        floodResponseClosedPromise?: Promise<unknown>;
+        floodHubRequestLifecycleWaiter?: { promise: Promise<void>; cancel: (error?: Error) => void };
+        markFloodRunnerExpected?: () => void;
+        floodSourceClosedPromise?: Promise<unknown>;
+        floodAbortController?: AbortController;
+        floodCorrelationId?: string;
     } = {
             instanceList: {},
             multiHosts: {},

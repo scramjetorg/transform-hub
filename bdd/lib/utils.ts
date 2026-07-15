@@ -244,6 +244,7 @@ export async function waitUntilStreamContains(stream: Readable, expected: string
 export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
     const piped = stream.pipe(new PassThrough({ encoding: "utf-8" }));
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
     try {
         await Promise.race([
@@ -260,9 +261,12 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
                 }
                 throw new Error("End of stream reached");
             })(),
-            defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
+            new Promise<void>((_, reject) => {
+                timeoutHandle = setTimeout(() => reject(new Error(`Stream did not equal ${JSON.stringify(expected)} before timeout`)), timeout);
+            })
         ]);
     } finally {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
         piped.destroy();
         stream.destroy();
     }

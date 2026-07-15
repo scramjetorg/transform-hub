@@ -2,6 +2,7 @@ import test from "ava";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 import { EventEmitter } from "events";
+import { createVerserHost } from "@signicode/verser2-host";
 
 import { MultiManagerAPIHandler } from "../src/lib/api/multi-manager-api";
 import { attachVerser2ServerStreamBoundary, handleVerser2RequestBoundary, isExpectedVerser2DisconnectError } from "../src/lib/verser2-request-boundary";
@@ -345,6 +346,84 @@ test("open response ECONNRESET remains fatal when only response body is destroye
     );
 });
 
+test("destroyed response alone remains fatal with open request and body", async t => {
+    const request = new EventEmitter();
+    const bodyStream = new EventEmitter();
+    const response = Object.assign(new EventEmitter(), { bodyStream, destroyed: true, headersSent: true });
+    const error = Object.assign(new Error("destroyed response reset"), { code: "ECONNRESET" });
+    t.false(isExpectedVerser2DisconnectError(error, request, response, response, response));
+    await t.throwsAsync(
+        () => handleVerser2RequestBoundary(request, response, () => Promise.reject(error), { error() {} }, () => {}) as Promise<unknown>,
+        { is: error },
+    );
+});
+
+test("closed request ties response body and synchronous response reset to one contained cascade", async t => {
+    const request = Object.assign(new EventEmitter(), { destroyed: true });
+    const bodyStream = Object.assign(new EventEmitter(), { destroyed: true });
+    const response = Object.assign(new EventEmitter(), { bodyStream, destroyed: false, headersSent: true });
+    const fatal: unknown[] = [];
+
+    handleVerser2RequestBoundary(request, response, () => undefined, { error() {} }, error => fatal.push(error));
+    bodyStream.emit("error", Object.assign(new Error("body reset"), { code: "ECONNRESET" }));
+    response.emit("error", Object.assign(new Error("response reset"), { code: "ECONNRESET" }));
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(fatal, []);
+    t.is(bodyStream.listenerCount("error"), 0);
+});
+
+test("real LocalServerResponse contains request-close body destroy then synchronous response reset", async t => {
+    const host = createVerserHost();
+    const fatal: unknown[] = [];
+    const error = Object.assign(new Error("local response reset"), { code: "ECONNRESET" });
+    const guest = await host.attachLocalGuest({
+        guestId: "oracle-local-guest",
+        routedDomains: ["oracle.local"],
+        listener: (request: any, response: any) => {
+            handleVerser2RequestBoundary(request, response, () => {
+                response.flushHeaders();
+                request.destroy();
+                response.bodyStream.destroy(error);
+                response.emit("error", error);
+            }, { error() {} }, value => fatal.push(value));
+        }
+    });
+    const broker = await host.attachLocalBroker({ brokerId: "oracle-local-broker" });
+
+    const result = await broker.request({ targetId: "oracle-local-guest", method: "POST", path: "/", headers: {}, body: new PassThrough() });
+    result.body.destroy();
+    await guest.close();
+    await host.close();
+
+    t.deepEqual(fatal, []);
+    t.is(result.statusCode, 200);
+});
+
+test("open request and response remain fatal after body stream reset", t => {
+    const request = new EventEmitter();
+    const bodyStream = Object.assign(new EventEmitter(), { destroyed: true });
+    const response = Object.assign(new EventEmitter(), { bodyStream, destroyed: false, headersSent: true });
+    let fatal: unknown;
+
+    handleVerser2RequestBoundary(request, response, () => undefined, { error() {} }, error => { fatal = error; });
+    const error = Object.assign(new Error("open body reset"), { code: "ECONNRESET" });
+    bodyStream.emit("error", error);
+
+    t.is(fatal, error);
+});
+
+test("ClientUtils nested abort chains unwrap the underlying disconnect code", t => {
+    const request = Object.assign(new EventEmitter(), { destroyed: true });
+    const response = new EventEmitter();
+    const wrapped = {
+        code: "CANNOT_CONNECT",
+        reason: { source: { cause: { code: "ECONNRESET" } } }
+    };
+
+    t.true(isExpectedVerser2DisconnectError(wrapped, request, response, request));
+});
+
 test("destroyed bodyStream error is fatal while response remains open", t => {
     const bodyStream = Object.assign(new EventEmitter(), { destroyed: true });
     const request = new EventEmitter();
@@ -358,7 +437,7 @@ test("destroyed bodyStream error is fatal while response remains open", t => {
     t.is(bodyStream.listenerCount("error"), 0);
 });
 
-test("server-stream cancellation is contained once and listeners are cleaned up", t => {
+test("server-stream cancellation is contained once and listeners are cleaned up", async t => {
     const server = new EventEmitter();
     const stream = Object.assign(new EventEmitter(), {
         destroyed: false,
@@ -371,12 +450,31 @@ test("server-stream cancellation is contained once and listeners are cleaned up"
 
     server.emit("stream", stream);
     stream.emit("error", Object.assign(new Error("cancelled"), { code: "ERR_HTTP2_STREAM_CANCEL" }));
+    await new Promise<void>(resolve => setImmediate(resolve));
     t.is(stream.listenerCount("error"), 0);
     stream.emit("close");
 
     t.true(stream.closed);
     t.is(logs.length, 1);
     t.is(stream.listenerCount("error"), 0);
+});
+
+test("closed runner stream ECONNRESET is contained and following stream still works", async t => {
+    const server = new EventEmitter();
+    const first = Object.assign(new EventEmitter(), { destroyed: false, closed: false, close() { this.closed = true; } });
+    const second = Object.assign(new EventEmitter(), { destroyed: false, closed: false });
+    let fatal: unknown;
+    attachVerser2ServerStreamBoundary(server, { error() {} }, error => { fatal = error; });
+
+    server.emit("stream", first);
+    first.destroyed = true;
+    first.emit("error", Object.assign(new Error("runner reset"), { code: "ECONNRESET" }));
+    await new Promise<void>(resolve => setImmediate(resolve));
+    server.emit("stream", second);
+
+    t.is(fatal, undefined);
+    t.true(first.closed);
+    t.is(second.listenerCount("error"), 1);
 });
 
 test("unexpected server-stream errors clean listeners before fatal propagation", t => {

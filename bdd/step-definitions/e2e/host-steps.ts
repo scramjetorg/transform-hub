@@ -12,6 +12,7 @@ import {
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
@@ -32,6 +33,7 @@ import {
 const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
 const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
 const { clearE2eScenarioState } = require("../../lib/e2e-module-state.js");
+const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -250,6 +252,10 @@ BeforeAll({ timeout: 20e3 }, async () => {
 
     try {
         await hostUtils.spawnHost([]);
+        await retryLoadCheck(
+            () => hostClient.getLoadCheck(),
+            "Shared HostClient transport did not become ready before the scenario baseline"
+        );
     } finally {
         await runnerHostReservation.release();
         await apiReservation?.release();
@@ -301,6 +307,10 @@ After({}, async function (this: any) {
         // these vars, the call is a no-op.
         restoreSavedHostEnv(this.resources);
 
+        // Abort flood input before instance/runner teardown and await its
+        // bounded settlement so stream cleanup cannot race lifecycle checks.
+        await teardownFloodSource(this.resources);
+
         let insts: any[] = [];
 
         try {
@@ -324,11 +334,6 @@ After({}, async function (this: any) {
             this.resources.outStream.destroy();
             this.resources.outStream = undefined;
         }
-        if (this.resources.floodStream) {
-            this.resources.floodStream.destroy();
-            this.resources.floodStream = undefined;
-        }
-
         // Module state is outside CustomWorld and must be released explicitly.
         streams = {};
         actualHealthResponse = undefined;
@@ -804,6 +809,9 @@ When("send stdin to instance with contents of file {string}", async function(thi
 });
 
 When("flood the stdin stream with {int} kilobytes", async function(this: CustomWorld, kbytes: number) {
+    if (!hostUtils.hasLocallyOwnedHubChild()) {
+        throw new Error("E2E-012 flood acknowledgement requires a locally owned Hub child; external Hub and NO_HOST modes are unsupported");
+    }
     let i = 0;
 
     await new Promise<void>((res, rej) => {
@@ -815,7 +823,45 @@ When("flood the stdin stream with {int} kilobytes", async function(this: CustomW
         });
 
         this.resources.floodStream = stream;
-        this.resources.floodSendPromise = this.resources.instance?.sendStream("stdin", stream).catch(() => 0);
+        const abortController = new AbortController();
+        const correlationId = randomUUID();
+        this.resources.floodCorrelationId = correlationId;
+        this.resources.floodAbortController = abortController;
+        this.resources.floodSourceClosedPromise = new Promise<void>((resolve, reject) => {
+            stream.once("close", resolve);
+            stream.once("end", resolve);
+            stream.once("error", reject);
+        });
+        this.resources.floodSendPromise = this.resources.instance?.sendStream("stdin", stream, {
+            signal: abortController.signal,
+            headers: { "x-scramjet-flood-correlation-id": correlationId },
+        });
+        this.resources.floodResponseClosedPromise = this.resources.floodSendPromise?.then((responseStream: any) => new Promise<void>((resolve, reject) => {
+            if (responseStream?.readableEnded || responseStream?.complete) {
+                resolve();
+                return;
+            }
+            let settled = false;
+            const finish = (error?: unknown) => {
+                if (settled) return;
+                settled = true;
+                responseStream?.removeListener?.("close", onClose);
+                responseStream?.removeListener?.("end", onEnd);
+                responseStream?.removeListener?.("error", onError);
+                if (error) reject(error);
+                else resolve();
+            };
+            const onClose = () => finish();
+            const onEnd = () => finish();
+            const onError = (error: unknown) => finish(error);
+            responseStream?.once?.("close", onClose);
+            responseStream?.once?.("end", onEnd);
+            responseStream?.once?.("error", onError);
+        }));
+        this.resources.floodHubRequestLifecycleWaiter = hostUtils.createStructuredOutputWaiter("abort-close", "/stdin", correlationId);
+        this.resources.markFloodRunnerExpected = () => {
+            if (processId) memoryRegistry.markProcessesAsExpectedToExit([processId]);
+        };
 
         const onEnd = () => rej(new Error(`Flood stream ended after ${i}kb`));
         const onPause = () => {
@@ -986,6 +1032,11 @@ Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
 
     if (!result) assert.fail(`No data in ${stream}!`);
     assert.equal(text, response);
+});
+
+Then("release completed finite output resources", async function(this: CustomWorld) {
+    this.resources.instance = undefined;
+    await new Promise<void>(resolve => setImmediate(resolve));
 });
 
 Then("{string} will be data named {string}", async function(this: CustomWorld, streamName, dataName) {

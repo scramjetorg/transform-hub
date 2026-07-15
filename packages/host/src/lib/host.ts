@@ -44,7 +44,7 @@ import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
 import { ConfigService, development } from "@scramjet/config";
-import { isStartSequenceDTO, readJsonFile, defer, FileBuilder, RefCountHandler } from "@scramjet/utility";
+import { isStartSequenceDTO, readJsonFile, defer, FileBuilder, RefCountHandler, attachVerser2ServerStreamBoundary } from "@scramjet/utility";
 
 import { DataStream } from "scramjet";
 import { inspect } from "util";
@@ -821,6 +821,23 @@ export class Host implements IHost, IComponent {
 
         new HostAPIHandler(this.api, this, version, this.build).attach();
 
+        this.api.server.on("request", (request: any) => {
+            if (request.method !== "POST" || !request.url?.endsWith("/stdin")) return;
+            const correlationId = request.headers?.["x-scramjet-flood-correlation-id"];
+            let aborted = false;
+            request.once("aborted", () => {
+                aborted = true;
+                this.logger.info("Flood request aborted", { url: request.url });
+            });
+            request.once("close", () => {
+                this.logger.info("Flood request closed", { url: request.url });
+                if (aborted) {
+                    this.logger.info("Flood request abort-close acknowledged", { url: request.url });
+                    process.stdout.write(`SCRAMJET_FLOOD_INGRESS_ACK ${JSON.stringify({ event: "abort-close", url: request.url, id: correlationId })}\n`);
+                }
+            });
+        });
+
         await this.startListening();
         await this.startRunnerVerser2Host();
 
@@ -963,6 +980,7 @@ export class Host implements IHost, IComponent {
 
         if (this.runnerVerser2Host) {
             await this.runnerVerser2Host.start();
+            attachVerser2ServerStreamBoundary((this.runnerVerser2Host as any).server, this.logger);
             const peers = await attachSthLocalRunnerVerser2Peers(
                 this.runnerVerser2Host,
                 runnerHostConfig,

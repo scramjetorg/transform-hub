@@ -34,6 +34,7 @@ export class HostUtils {
     host?: ChildProcess;
     expectedExitCode?: number;
     output = "";
+    private outputWaiters = new Set<(data: string) => void>();
 
     /**
      * When true, the Hub is being deliberately stopped (via stopHost or
@@ -41,11 +42,21 @@ export class HostUtils {
      * Set via markStopExpected().
      */
     expectedStop = false;
+    stdoutTail = "";
+    stderrTail = "";
+    exitCode: number | null | undefined;
+    exitSignal: NodeJS.Signals | null | undefined;
+    exitStartedAt?: number;
+    exitFinishedAt?: number;
 
     hostUrl: string;
 
     constructor() {
-        this.hostUrl = process.env.SCRAMJET_HOST_URL || "";
+        this.hostUrl = process.env.SCRAMJET_HOST_URL || process.env.SCRAMJET_HOST_BASE_URL || "";
+    }
+
+    hasLocallyOwnedHubChild() {
+        return !this.hostUrl && !["1", "true"].includes((process.env.NO_HOST || "").toLowerCase()) && Boolean(this.host) && !this.hostProcessStopped;
     }
 
     /**
@@ -64,6 +75,70 @@ export class HostUtils {
         } finally {
             client.dispose();
         }
+    }
+
+    waitForOutput(markers: string[], timeoutMs = 60000): Promise<void> {
+        const waiter = this.createOutputWaiter(markers);
+        const timeout = setTimeout(() => waiter.cancel(new Error(`Timed out waiting for Hub output: ${markers.join(", ")}`)), timeoutMs);
+        return waiter.promise.finally(() => clearTimeout(timeout));
+    }
+
+    waitForStructuredOutput(event: string, url: string, id: string, timeoutMs = 60000): Promise<void> {
+        const waiter = this.createStructuredOutputWaiter(event, url, id);
+        const timeout = setTimeout(() => waiter.cancel(new Error(`Timed out waiting for Hub marker event=${event} url=${url}`)), timeoutMs);
+        return waiter.promise.finally(() => clearTimeout(timeout));
+    }
+
+    createStructuredOutputWaiter(event: string, url: string, id: string): { promise: Promise<void>; cancel: (error?: Error) => void } {
+        return this.createOutputWaiter([], observed => observed.split("\n").some(line => {
+            const prefix = "SCRAMJET_FLOOD_INGRESS_ACK ";
+            if (!line.startsWith(prefix)) return false;
+            try {
+                const marker = JSON.parse(line.slice(prefix.length));
+                return marker.event === event && marker.url === url && marker.id === id;
+            } catch {
+                return false;
+            }
+        }));
+    }
+
+    createOutputWaiter(markers: string[], matcher?: (observed: string) => boolean): { promise: Promise<void>; cancel: (error?: Error) => void } {
+        const required = Array.isArray(markers) ? markers : [markers];
+        let resolvePromise!: () => void;
+        let rejectPromise!: (error: Error) => void;
+        let active = true;
+        let removeWaiter = () => {};
+        const promise = new Promise<void>((resolve, reject) => {
+            resolvePromise = resolve;
+            rejectPromise = reject;
+            let observed = "";
+            const check = (data = "") => {
+                if (!active) return;
+                observed = (observed + data).slice(-MAX_OUTPUT_BYTES);
+                if (matcher ? matcher(observed) : required.every(marker => observed.includes(marker))) {
+                    cleanup();
+                    resolve();
+                }
+            };
+            const cleanup = () => {
+                this.outputWaiters.delete(check);
+            };
+            removeWaiter = cleanup;
+            this.outputWaiters.add(check);
+        });
+        const cancel = (error?: Error) => {
+            if (!active) return;
+            active = false;
+            removeWaiter();
+            if (error) rejectPromise(error);
+            else resolvePromise();
+        };
+        return { promise, cancel };
+    }
+
+    captureOutput(data: string) {
+        this.output = (this.output + data).slice(-MAX_OUTPUT_BYTES);
+        for (const waiter of this.outputWaiters) waiter(data);
     }
 
     async getHostStatus() {
@@ -244,6 +319,12 @@ export class HostUtils {
             memoryRegistry.trackChildProcess(hub, `hub:${ownership.owner}`);
 
             this.hostProcessStopped = false;
+            this.exitCode = undefined;
+            this.exitSignal = undefined;
+            this.exitStartedAt = Date.now();
+            this.exitFinishedAt = undefined;
+            this.stdoutTail = "";
+            this.stderrTail = "";
 
             if (process.env.SCRAMJET_TEST_LOG) {
                 hub.stdout?.pipe(process.stdout);
@@ -252,7 +333,13 @@ export class HostUtils {
 
             const decoder = new StringDecoder();
             const outputListener = (data: Buffer) => {
-                this.output = (this.output + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                this.captureOutput(data.toString());
+            };
+            const stdoutListener = (data: Buffer) => {
+                this.stdoutTail = (this.stdoutTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+            };
+            const stderrListener = (data: Buffer) => {
+                this.stderrTail = (this.stderrTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
             };
 
             let decodedData = "";
@@ -275,18 +362,26 @@ export class HostUtils {
 
             hub.stdout?.on("data", outputListener);
             hub.stderr?.on("data", outputListener);
+            hub.stdout?.on("data", stdoutListener);
+            hub.stderr?.on("data", stderrListener);
             hub.stdout?.on("data", listener);
 
             this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                 console.log("host process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
+                this.exitCode = code;
+                this.exitSignal = signal;
+                this.exitFinishedAt = Date.now();
 
                 // Skip startup-failure assertion when the Hub is being
                 // deliberately stopped (stopHost or scenario-lifecycle
                 // cleanup).  The expectedStop flag is set by markStopExpected()
                 // before any intentional termination.
                 if (code === 1 && this.expectedExitCode !== 1 && !this.expectedStop) {
-                    assert.fail();
+                    assert.fail(
+                        `Host exited with code 1 after ${this.exitFinishedAt - (this.exitStartedAt || this.exitFinishedAt)}ms; ` +
+                        `stdout=${JSON.stringify(this.stdoutTail.slice(-4096))}; stderr=${JSON.stringify(this.stderrTail.slice(-4096))}`
+                    );
                 }
 
                 // Resolve with partial output when the host exits with an expected
