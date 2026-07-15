@@ -24,7 +24,7 @@ If you use Visual Studio Code as your IDE, please install the [Cucumber (Gherkin
 
 The following instructions apply to the state of the repository from `release/0.22`.
 
-BDD tests are located in a `bdd` folder, to execute them simply follow the steps below.
+BDD tests are located in a `bdd` folder, to execute them simply follow the steps below. The default BDD CLI subprocess uses the built artifact (`node ../dist/cli/bin`), so build the relevant packages before running CLI scenarios. Set `SCRAMJET_SPAWN_TS=1` only when source-level CLI execution is explicitly required; that mode remains unchanged.
 
 ### Preparation :books:
 

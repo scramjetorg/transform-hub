@@ -33,7 +33,10 @@ export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
         throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
     }
 
-    let si = ["si"];
+    // Use the built CLI by default so each BDD subprocess avoids the
+    // TypeScript launcher and its per-process transpilation cost. Keep the
+    // explicit source-mode switch for development and source-level coverage.
+    let si = ["node", "../dist/cli/bin"];
 
     if (process.env.SCRAMJET_SPAWN_JS) {
         si = ["node", "../dist/cli/bin"];

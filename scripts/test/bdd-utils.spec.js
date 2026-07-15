@@ -11,11 +11,30 @@ const { clearE2eScenarioState } = require("../../bdd/lib/e2e-module-state.js");
 const { waitForInstanceDetachment } = require("../../bdd/lib/instance-detachment.js");
 const { teardownFloodSource } = require("../../bdd/lib/flood-teardown.js");
 tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
-const { waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
+const { getSiCommand, waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
 const { ClientUtilsBase } = require("../../packages/client-utils/dist/client-utils.js");
 const fetch = require("node-fetch");
 
 const node = process.execPath;
+
+test("BDD CLI defaults to the built artifact and preserves explicit source mode", t => {
+    const previousJs = process.env.SCRAMJET_SPAWN_JS;
+    const previousTs = process.env.SCRAMJET_SPAWN_TS;
+
+    try {
+        delete process.env.SCRAMJET_SPAWN_JS;
+        delete process.env.SCRAMJET_SPAWN_TS;
+        t.deepEqual(getSiCommand({ useBddConfig: false }), ["node", "../dist/cli/bin"]);
+
+        process.env.SCRAMJET_SPAWN_TS = "1";
+        t.deepEqual(getSiCommand({ useBddConfig: false }), ["npx", "tsx", "../packages/cli/src/bin/index.ts"]);
+    } finally {
+        if (previousJs === undefined) delete process.env.SCRAMJET_SPAWN_JS;
+        else process.env.SCRAMJET_SPAWN_JS = previousJs;
+        if (previousTs === undefined) delete process.env.SCRAMJET_SPAWN_TS;
+        else process.env.SCRAMJET_SPAWN_TS = previousTs;
+    }
+});
 
 test("spawnOwnedProcess waits for successful close after the marker", async t => {
     await t.notThrowsAsync(spawnOwnedProcess(node, ["-e", "console.log('READY'); setTimeout(() => process.exit(0), 20)"], {
