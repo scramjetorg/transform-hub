@@ -5,14 +5,25 @@ delegation:
   mode: omo-slim # manual | full-omo | omo-slim
   strategy: specialists
   agents:
-    implementation: fixer
+    implementation: engineer
+    fixes: fixer
+    cleanup: cleaner
     research: explorer
     review: oracle
     documentation: librarian
     design: designer
 
 workflow:
-  supervision: semi-automatic # manual | semi-automatic | automatic
+  supervision: automatic # manual | semi-automatic | automatic
+  commitFrequency: phase # task | phase
 
 branching:
   mode: branched # mainline | branched
+review:
+  advisoryPolicy: deferred # deferred | immediate | ignore
+lifecycle:
+  # Safe text-only boundary guidance; no shell/tool execution is allowed.
+  trackStart: { mode: automatic, instruction: "Resolve the exact track before starting." }
+  phaseStart: { mode: automatic, instruction: "Reconcile Todos for the active phase only." }
+  phaseComplete: { mode: automatic, instruction: "Verify and checkpoint the phase boundary." }
+  trackComplete: { mode: automatic, instruction: "Verify the complete track before finalizing." }
