@@ -13,10 +13,94 @@ import { request as httpsRequest } from "https";
 import * as net from "net";
 import { defer, waitForCondition, waitUntilStreamEquals } from "../../lib/utils";
 import { promisify } from "util";
-import { readFile } from "fs/promises";
+import { readFile, unlink, writeFile } from "fs/promises";
+import { readFileSync } from "fs";
 import { HostUtils } from "../../lib/host-utils";
 
 const freeport = promisify(require("freeport"));
+const procClockTicksPerSecond = 100;
+
+type HubMetrics = {
+    label: string;
+    durationMs: number;
+    cpuTimeMs: number;
+    rssBytes: number;
+    peakRssBytes: number;
+};
+
+function readHubMetrics(pid: number): { cpuTimeMs: number; rssBytes: number; peakRssBytes: number } | undefined {
+    try {
+        // Read only while the process is alive.  A disappearing /proc entry is
+        // deliberately treated as an unavailable sample, never as an exit sample.
+        process.kill(pid, 0);
+        const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+        const status = readFileSync(`/proc/${pid}/status`, "utf8");
+        const statEnd = stat.lastIndexOf(")");
+        const fields = stat.slice(statEnd + 2).trim().split(/\s+/);
+        const userTicks = Number(fields[11]);
+        const systemTicks = Number(fields[12]);
+        const rssMatch = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
+        const peakMatch = status.match(/^VmHWM:\s+(\d+)\s+kB$/m);
+        if (!Number.isFinite(userTicks) || !Number.isFinite(systemTicks) || !rssMatch || !peakMatch) return undefined;
+        return {
+            cpuTimeMs: (userTicks + systemTicks) * 1000 / procClockTicksPerSecond,
+            rssBytes: Number(rssMatch[1]) * 1024,
+            peakRssBytes: Number(peakMatch[1]) * 1024
+        };
+    } catch {
+        return undefined;
+    }
+}
+
+async function captureHubMetrics(world: CustomWorld, label: string): Promise<void> {
+    const hub = world.resources.hub as ChildProcess | undefined;
+    if (!hub?.pid) assert.fail("Hub process not found");
+
+    const startedAt = Date.now();
+    let first: ReturnType<typeof readHubMetrics>;
+    let last: ReturnType<typeof readHubMetrics>;
+    let peakRssBytes = 0;
+    const sample = () => {
+        const metrics = readHubMetrics(hub.pid!);
+        if (!metrics) return;
+        first ??= metrics;
+        last = metrics;
+        peakRssBytes = Math.max(peakRssBytes, metrics.rssBytes, metrics.peakRssBytes);
+    };
+    sample();
+    assert.strictEqual(hub.exitCode, null, `${label} Hub exited before metrics capture began`);
+    // Mark the deliberate auto-exit as expected before waiting, so the
+    // scenario-lifecycle After hook does not flag it as a spontaneous exit.
+    world.scenarioLifecycle.expect(hub);
+    await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+        const timer = setInterval(sample, 50);
+        const timeout = setTimeout(() => {
+            clearInterval(timer);
+            reject(new Error(`Hub did not auto-exit during ${label} metrics capture`));
+        }, 30000);
+        hub.once("exit", (code, signal) => {
+            clearInterval(timer);
+            clearTimeout(timeout);
+            resolve({ code, signal });
+        });
+    });
+    const exit = world.resources.hubExit as { code: number | null } | undefined;
+    const final = last ?? first;
+    assert.ok(first && final, `No /proc metrics sampled while Hub was alive for ${label} run`);
+    assert.strictEqual(exit?.code, 0, `${label} Hub exited unexpectedly`);
+    const metrics: HubMetrics = {
+        label,
+        durationMs: Date.now() - startedAt,
+        cpuTimeMs: final.cpuTimeMs,
+        rssBytes: final.rssBytes,
+        peakRssBytes
+    };
+    world.resources.hubMetrics ??= {};
+    world.resources.hubMetrics[label] = metrics;
+    console.log(`HUB_IAC_METRICS ${JSON.stringify(metrics)}`);
+    spawned.delete(hub);
+    restoreSavedHostEnv(world.resources);
+}
 
 
 const spawned: Set<ChildProcess> = new Set();
@@ -317,6 +401,31 @@ When("hub process is started with random ports and parameters {string}",
         return startHubWithParams(this, params.split(" "));
     });
 
+When("hub process is started with random ports and startup sequence timeout {int} ms and parameters {string}",
+    { timeout: 30000 }, async function(this: CustomWorld, sequenceTimeoutMs: number, params: string) {
+        assert.ok(sequenceTimeoutMs > 0, "Startup sequence timeout must be positive");
+        const savedHostEnv = saveHostEnv();
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+        process.env.SCRAMJET_HOST_BASE_URL = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
+        this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        this.resources.savedHostEnv = savedHostEnv;
+        const template = JSON.parse(await readFile("data/sample-config-exit.json", "utf8"));
+        template.sequences = template.sequences.map((sequence: { appConfig?: Record<string, unknown> }) => ({
+            ...sequence,
+            appConfig: { ...sequence.appConfig, exitTimeout: sequenceTimeoutMs }
+        }));
+        const configPath = `data/.hub-iac-exit-${process.pid}-${Date.now()}.json`;
+        await writeFile(configPath, JSON.stringify(template));
+        try {
+            await startHubWithParams(this, params.replace("data/sample-config-exit.json", configPath).split(" "));
+        } finally {
+            await unlink(configPath).catch(() => undefined);
+        }
+    });
+
 When("hub process is started with random ports expecting exit code {int} and parameters {string}",
     async function(this: CustomWorld, expectedExitCode: number, params: string) {
         this.resources.expectedHubExitCode = expectedExitCode;
@@ -489,6 +598,35 @@ Then("hub process exits on its own with code {int} within {int} ms", async funct
 
     this.resources.hubExit = exitResult;
     assert.strictEqual(exitResult.code, expectedCode);
+});
+
+Then("I capture Hub CPU and memory until it exits as {string}", { timeout: 35000 }, async function(this: CustomWorld, label: string) {
+    await captureHubMetrics(this, label);
+});
+
+Then("10-second baseline-normalized idle CPU rate is at most {int} percent per second", function(this: CustomWorld, maxRatePercentPerSecond: number) {
+    const metrics = this.resources.hubMetrics as Record<string, HubMetrics> | undefined;
+    const baseline = metrics?.["2-second"];
+    const longRun = metrics?.["10-second"];
+    assert.ok(baseline && longRun, "Both Hub metric runs are required");
+    assert.ok(baseline.cpuTimeMs > 0, "Baseline CPU time must be positive");
+    const cpuDeltaMs = longRun.cpuTimeMs - baseline.cpuTimeMs;
+    const durationDeltaMs = longRun.durationMs - baseline.durationMs;
+    assert.ok(durationDeltaMs > 0, "Duration delta must be positive");
+    const cpuRatePercentPerSecond = (cpuDeltaMs / baseline.cpuTimeMs) / (durationDeltaMs / 1000) * 100;
+    assert.ok(cpuRatePercentPerSecond <= maxRatePercentPerSecond,
+        `Baseline-normalized idle CPU rate ${cpuRatePercentPerSecond.toFixed(3)}%/s exceeds max ${maxRatePercentPerSecond}%/s`);
+    console.log(`HUB_IAC_IDLE_CPU_RATE {"baselineCpuMs":${baseline.cpuTimeMs},"longRunCpuMs":${longRun.cpuTimeMs},"cpuDeltaMs":${cpuDeltaMs},"durationDeltaMs":${durationDeltaMs},"cpuRatePercentPerSecond":${cpuRatePercentPerSecond.toFixed(3)}}`);
+    this.resources.hubIdleCpuRatePercentPerSecond = cpuRatePercentPerSecond;
+});
+
+Then("10-second Hub peak RSS is at most 5 percent above the 2-second baseline", function(this: CustomWorld) {
+    const metrics = this.resources.hubMetrics as Record<string, HubMetrics> | undefined;
+    const baseline = metrics?.["2-second"];
+    const longRun = metrics?.["10-second"];
+    assert.ok(baseline && longRun, "Both Hub metric runs are required");
+    assert.ok(longRun.peakRssBytes <= baseline.peakRssBytes * 1.05,
+        `10-second peak RSS ${longRun.peakRssBytes} exceeds 2-second baseline ${baseline.peakRssBytes} by more than 5%`);
 });
 
 Then("hub logs should contain {string} within {int} ms", async function(this: CustomWorld, expectedText: string, timeoutMs: number) {

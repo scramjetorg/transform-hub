@@ -17,7 +17,7 @@ test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
         "appcontext", "cli-basics", "cli-matrix", "cli-prune-diagnostic", "errors", "harness",
-        "hub-configuration", "hub-runtime", "manager", "node-spawn-core", "node-streaming-stop", "python", "stream", "topics-api", "verser2",
+        "hub-configuration", "hub-idle-resource", "hub-runtime", "manager", "node-spawn-core", "node-streaming-stop", "python", "stream", "topics-api", "verser2",
     ]);
 });
 
@@ -83,6 +83,7 @@ test("Node and Hub feature paths use balanced exclusive chunks", t => {
         "features/hub/HUB-004-runtime-error-logging.feature",
         "features/e2e/E2E-007-host-client.feature",
     ]);
+    t.deepEqual(runner.CHUNKS["hub-idle-resource"], ["features/hub/HUB-005-idle-resource.feature"]);
 });
 
 // ---------------------------------------------------------------------------
@@ -125,7 +126,7 @@ test("default manifest covers every eligible feature and records exclusions expl
 });
 
 test("resource-owning chunks remain explicitly exclusive", t => {
-    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub-configuration", "hub-runtime", "manager", "stream"]);
+    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub-configuration", "hub-runtime", "hub-idle-resource", "manager", "stream"]);
     t.true(runner.EXCLUSIVE_CHUNKS.every(name => runner.CHUNKS[name]));
 });
 
@@ -139,6 +140,7 @@ test("parseArgs returns null chunkName when no selector is given", t => {
 
     t.deepEqual(runner.parseArgs(["--dry-run"]), {
         chunkName: null,
+        chunkNames: null,
         schedule: "serial",
         passthrough: ["--dry-run"],
     });
@@ -156,6 +158,7 @@ test("parseArgs recognizes BDD_WAVE environment variable", t => {
 
     t.deepEqual(runner.parseArgs(["--dry-run"]), {
         chunkName: "verser2",
+        chunkNames: null,
         schedule: "serial",
         passthrough: ["--dry-run"],
     });
@@ -173,6 +176,7 @@ test("parseArgs recognizes explicit --chunk= argument", t => {
 
     t.deepEqual(runner.parseArgs(["--chunk=cli", "--name=foo"]), {
         chunkName: "cli",
+        chunkNames: null,
         schedule: "serial",
         passthrough: ["--name=foo"],
     });
@@ -190,6 +194,7 @@ test("parseArgs recognizes explicit --wave= argument (backward compat)", t => {
 
     t.deepEqual(runner.parseArgs(["--wave=verser2", "--name=foo"]), {
         chunkName: "verser2",
+        chunkNames: null,
         schedule: "serial",
         passthrough: ["--name=foo"],
     });
@@ -207,6 +212,7 @@ test("parseArgs --chunk= takes priority over BDD_WAVE", t => {
 
     t.deepEqual(runner.parseArgs(["--chunk=verser2"]), {
         chunkName: "verser2",
+        chunkNames: null,
         schedule: "serial",
         passthrough: [],
     });
@@ -224,6 +230,7 @@ test("parseArgs --wave= takes priority over BDD_WAVE", t => {
 
     t.deepEqual(runner.parseArgs(["--wave=verser2"]), {
         chunkName: "verser2",
+        chunkNames: null,
         schedule: "serial",
         passthrough: [],
     });
@@ -241,6 +248,7 @@ test("parseArgs last --chunk= wins when both --wave= and --chunk= given", t => {
 
     t.deepEqual(runner.parseArgs(["--wave=verser2", "--chunk=cli"]), {
         chunkName: "cli",
+        chunkNames: null,
         schedule: "serial",
         passthrough: [],
     });
@@ -252,13 +260,20 @@ test("parseArgs last --chunk= wins when both --wave= and --chunk= given", t => {
     }
 });
 
-test("parseArgs recognizes opt-in parallel scheduling without changing serial defaults", t => {
+test("parseArgs recognizes parallel scheduling and explicit selected chunk lists", t => {
     t.deepEqual(runner.parseArgs(["--schedule=parallel", "--chunk=verser2"]), {
         chunkName: "verser2",
+        chunkNames: null,
         schedule: "parallel",
         passthrough: [],
     });
     t.throws(() => runner.parseArgs(["--schedule=unbounded"]), { message: /Unknown BDD schedule/ });
+    t.deepEqual(runner.parseArgs(["--chunks=verser2,hub-runtime", "--schedule=parallel"]), {
+        chunkName: null,
+        chunkNames: ["verser2", "hub-runtime"],
+        schedule: "parallel",
+        passthrough: [],
+    });
 });
 
 test("parallel cleanup treats unavailable container telemetry as incomplete without dereferencing null", t => {
@@ -353,6 +368,18 @@ test("runWaves with explicit chunk runs only that chunk", t => {
         t.is(calls.length, 1, "must call runChild exactly once");
         t.is(calls[0].owner, "verser2");
         t.deepEqual(calls[0].features, runner.CHUNKS.verser2);
+    } finally {
+        runner.runChild = original;
+    }
+});
+
+test("runWaves with an explicit chunk list runs only that list", t => {
+    const calls = [];
+    const original = runner.runChild;
+    runner.runChild = (owner) => { calls.push(owner); return 0; };
+    try {
+        t.is(runner.runWaves({ chunkNames: ["verser2", "hub-idle-resource"], passthrough: ["--dry-run"] }), 0);
+        t.deepEqual(calls, ["verser2", "hub-idle-resource"]);
     } finally {
         runner.runChild = original;
     }

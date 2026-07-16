@@ -46,6 +46,7 @@ const CHUNKS = Object.freeze({
         "features/hub/HUB-004-runtime-error-logging.feature",
         "features/e2e/E2E-007-host-client.feature"
     ]),
+    "hub-idle-resource": Object.freeze(["features/hub/HUB-005-idle-resource.feature"]),
     manager: Object.freeze([
         "features/manager/MANAGER-001-multimanager-api.feature",
         "features/manager/MANAGER-002-aggregation-repro.feature",
@@ -75,6 +76,7 @@ const DEFAULT_CHUNKS = Object.freeze([
     "node-streaming-stop",
     "hub-configuration",
     "hub-runtime",
+    "hub-idle-resource",
     "manager",
     "errors",
     "stream"
@@ -89,13 +91,13 @@ const EXCLUDED_FEATURES = Object.freeze({
     "features/e2e/E2E-010-cli-prune-diagnostic.feature": "isolated CLI prune diagnostic; select --chunk=cli-prune-diagnostic explicitly"
 });
 
-// Resource-owning paths remain explicit scheduler exclusions. This metadata
-// is intentionally advisory: this runner remains serial and does not enable
-// broad parallel scheduling.
-const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub-configuration", "hub-runtime", "manager", "stream"]);
+// Resource-owning paths remain explicit scheduler exclusions. Exclusive
+// chunks are admitted as single-worker barriers by the capped scheduler.
+const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub-configuration", "hub-runtime", "hub-idle-resource", "manager", "stream"]);
 
-// Explicit telemetry contracts. Exclusive chunks remain serial-only metadata;
-// they do not bypass admission. Chunks without long-lived Hub/Manager
+// Explicit telemetry contracts. Exclusive chunks do not bypass admission;
+// they are admitted through the same telemetry checks as other chunks.
+// Chunks without long-lived Hub/Manager
 // processes explicitly declare an empty process set.
 const CHUNK_COMPONENTS = Object.freeze({
     "cli-basics": Object.freeze({ container: true, processes: [] }),
@@ -107,6 +109,7 @@ const CHUNK_COMPONENTS = Object.freeze({
     "node-streaming-stop": Object.freeze({ container: true, processes: [] }),
     "hub-configuration": Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
     "hub-runtime": Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
+    "hub-idle-resource": Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
     manager: Object.freeze({ container: true, processes: ["manager:"], exclusive: true }),
     verser2: Object.freeze({ container: true, processes: [] }),
     errors: Object.freeze({ container: true, processes: [] }),
@@ -227,7 +230,8 @@ function validateManifest() {
 
 function parseArgs(args) {
     let chunkName = process.env.BDD_WAVE || null;
-    let schedule = "serial";
+    let schedule = process.env.BDD_SCHEDULE || "serial";
+    let chunkNames = null;
     const passthrough = [];
 
     for (const arg of args) {
@@ -237,6 +241,12 @@ function parseArgs(args) {
             chunkName = arg.slice("--wave=".length);
         } else if (arg.startsWith("--schedule=")) {
             schedule = arg.slice("--schedule=".length);
+        } else if (arg.startsWith("--chunks=")) {
+            chunkNames = arg
+                .slice("--chunks=".length)
+                .split(",")
+                .map((name) => name.trim())
+                .filter(Boolean);
         } else {
             passthrough.push(arg);
         }
@@ -246,7 +256,8 @@ function parseArgs(args) {
         throw new Error(`Unknown BDD schedule "${schedule}". Available schedules: serial, parallel.`);
     }
 
-    return { chunkName, schedule, passthrough };
+    if (chunkName && chunkNames) throw new Error("Use either --chunk/--wave or --chunks, not both.");
+    return { chunkName, chunkNames, schedule, passthrough };
 }
 
 // ---------------------------------------------------------------------------
@@ -351,7 +362,19 @@ module.exports.runChild = defaultRunChild;
 // Orchestration
 // ---------------------------------------------------------------------------
 
-function runWaves({ chunkName, passthrough }) {
+function normalizeChunks({ chunkName, chunkNames }) {
+    if (chunkName && chunkNames) throw new Error("Use either chunkName or chunkNames, not both.");
+    const names = chunkNames || (chunkName ? [chunkName] : DEFAULT_CHUNKS);
+    if (!Array.isArray(names) || names.length === 0) throw new Error("At least one BDD chunk must be selected.");
+    const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
+    if (duplicates.length) throw new Error(`BDD chunk selection contains duplicates: ${[...new Set(duplicates)].join(", ")}`);
+    for (const name of names) {
+        if (!CHUNKS[name]) throw new Error(`Unknown BDD chunk "${name}". Available chunks: ${Object.keys(CHUNKS).join(", ")}`);
+    }
+    return names;
+}
+
+function runWaves({ chunkName, chunkNames, passthrough }) {
     const runChild = module.exports.runChild;
     const emitSummary = module.exports.emitSummary;
 
@@ -382,24 +405,14 @@ function runWaves({ chunkName, passthrough }) {
             return status;
         }
 
-        if (chunkName) {
-            const features = CHUNKS[chunkName];
-
-            if (!features) {
-                throw new Error(`Unknown BDD chunk "${chunkName}". Available chunks: ${Object.keys(CHUNKS).join(", ")}`);
-            }
-
-            return runOne(chunkName, features);
-        }
-
-        // No explicit selection: run all default chunks serially.
-        for (let i = 0; i < DEFAULT_CHUNKS.length; i++) {
-            const name = DEFAULT_CHUNKS[i];
+        const selected = normalizeChunks({ chunkName, chunkNames });
+        for (let i = 0; i < selected.length; i++) {
+            const name = selected[i];
             const features = CHUNKS[name];
             const status = runOne(name, features);
 
             if (status !== 0) {
-                process.stderr.write(`[run-bdd-waves] chunk "${name}" failed status=${status}; ${DEFAULT_CHUNKS.length - completed} remaining chunk(s) not started\n`);
+                process.stderr.write(`[run-bdd-waves] chunk "${name}" failed status=${status}; ${selected.length - completed} remaining chunk(s) not started\n`);
                 return status;
             }
         }
@@ -409,9 +422,10 @@ function runWaves({ chunkName, passthrough }) {
         let cleanupVerificationError;
         if (runChild === defaultRunChild) {
             const remaining = findLiveBddContainers(runOwnership.runId);
-            const tempRoot = chunkName
-                ? path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId), "chunks", encodePart(chunkName))
-                : path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId));
+            const tempRoot =
+                chunkName && !chunkNames
+                    ? path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId), "chunks", encodePart(chunkName))
+                    : path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId));
             if ((remaining !== null && remaining.some((container) => container.runId === runOwnership.runId)) || fs.existsSync(tempRoot)) {
                 cleanupVerificationError = new Error("serial BDD cleanup could not verify absence of owned processes, containers, or temp paths");
             }
@@ -422,9 +436,8 @@ function runWaves({ chunkName, passthrough }) {
     }
 }
 
-function parallelChunks(chunkName) {
-    if (chunkName) return [{ name: chunkName, features: CHUNKS[chunkName] }];
-    return DEFAULT_CHUNKS.map((name) => ({ name, features: CHUNKS[name] }));
+function parallelChunks(selection) {
+    return normalizeChunks(selection).map((name) => ({ name, features: CHUNKS[name] }));
 }
 
 function isCleanupComplete(remainingContainers, runRootExists, activeChildCount = 0) {
@@ -436,9 +449,9 @@ function writeParallelReport(report) {
     if (reportPath) fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 }
 
-async function runParallelWaves({ chunkName, passthrough }) {
+async function runParallelWaves({ chunkName, chunkNames, passthrough }) {
     validateManifest();
-    const chunks = parallelChunks(chunkName);
+    const chunks = parallelChunks({ chunkName, chunkNames });
     const runOwnership = getOwnership(process.env);
     process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
     const telemetryPids = new Set();
@@ -741,6 +754,7 @@ module.exports = {
     formatDuration,
     onDiskFeatures,
     parseArgs,
+    normalizeChunks,
     runChild: defaultRunChild,
     runParallelWaves,
     isCleanupComplete,

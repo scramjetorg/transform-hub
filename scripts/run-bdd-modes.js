@@ -28,6 +28,7 @@ function readDuration(value, fallback, name) {
 
 function parseArgs(args) {
     let mode = process.env.BDD_MODE || "base";
+    let schedule = process.env.BDD_SCHEDULE || "parallel";
     let rampUpMs = readDuration(process.env.BDD_RAMP_UP_MS, DEFAULT_RAMP_UP_MS, "BDD_RAMP_UP_MS");
     let rampDownMs = readDuration(process.env.BDD_RAMP_DOWN_MS, DEFAULT_RAMP_DOWN_MS, "BDD_RAMP_DOWN_MS");
     const passthrough = [];
@@ -39,14 +40,16 @@ function parseArgs(args) {
         } else if (!afterSeparator && arg.startsWith("--mode=")) mode = arg.slice("--mode=".length);
         else if (!afterSeparator && arg.startsWith("--ramp-up-ms=")) rampUpMs = readDuration(arg.slice("--ramp-up-ms=".length), 0, "--ramp-up-ms");
         else if (!afterSeparator && arg.startsWith("--ramp-down-ms=")) rampDownMs = readDuration(arg.slice("--ramp-down-ms=".length), 0, "--ramp-down-ms");
+        else if (arg.startsWith("--schedule=")) schedule = arg.slice("--schedule=".length);
         else passthrough.push(arg);
     }
 
     if (mode !== "base" && mode !== "extra" && mode !== "all") {
         throw new Error(`Unknown BDD mode "${mode}". Available modes: base, extra, all.`);
     }
+    if (schedule !== "serial" && schedule !== "parallel") throw new Error(`Unknown BDD schedule "${schedule}". Available schedules: serial, parallel.`);
 
-    return { mode, rampUpMs, rampDownMs, passthrough };
+    return { mode, schedule, rampUpMs, rampDownMs, passthrough };
 }
 
 function partition() {
@@ -106,13 +109,20 @@ async function runMode({
     passthrough = [],
     rampUpMs = DEFAULT_RAMP_UP_MS,
     rampDownMs = DEFAULT_RAMP_DOWN_MS,
+    schedule = "parallel",
     runChunk = (name, args) => waves.runWaves({ chunkName: name, passthrough: args }),
+    runParallel = (names, args) => waves.runParallelWaves({ chunkNames: names, passthrough: args }),
     lifecycle = lifecycleStep,
     cleanupOwned = cleanupChunk,
     emit
 } = {}) {
     const effectiveMode = resolveMode(mode, passthrough, emit);
     const chunks = selectedChunks(effectiveMode);
+    // Selectors are intentionally kept on the historical complete-manifest
+    // serial path: a selector may match scenarios in any feature, so splitting
+    // it across partition workers would make ownership and fail-fast behavior
+    // surprising.
+    if (schedule === "parallel" && !hasTargetSelector(passthrough)) return runParallel(chunks, passthrough);
     const runOwnership = getOwnership(process.env);
     process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
     const started = [];

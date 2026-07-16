@@ -16,7 +16,7 @@ test("base and extra partitions are complete and have no overlap", (t) => {
     const partition = modes.partition();
     t.deepEqual([...new Set([...partition.base, ...partition.extra])].sort(), [...new Set(partition.all)].sort());
     t.is(partition.base.filter((name) => partition.extra.includes(name)).length, 0);
-    t.deepEqual(partition.extra, ["cli-basics", "cli-matrix", "python", "errors", "stream"]);
+    t.deepEqual(partition.extra, ["cli-basics", "cli-matrix", "python", "hub-idle-resource", "errors", "stream"]);
     t.false(partition.extra.includes("harness"));
     t.true(partition.all.every((name) => waves.CHUNKS[name]));
 });
@@ -24,6 +24,7 @@ test("base and extra partitions are complete and have no overlap", (t) => {
 test("parseArgs selects modes and configurable ramp durations without forwarding wrapper flags", (t) => {
     t.deepEqual(modes.parseArgs(["--mode=extra", "--ramp-up-ms=25", "--ramp-down-ms=35", "--", "--fail-fast"]), {
         mode: "extra",
+        schedule: "parallel",
         rampUpMs: 25,
         rampDownMs: 35,
         passthrough: ["--fail-fast"],
@@ -31,10 +32,29 @@ test("parseArgs selects modes and configurable ramp durations without forwarding
     t.throws(() => modes.parseArgs(["--ramp-up-ms=-1"]), { message: /non-negative integer/ });
     t.deepEqual(modes.parseArgs(["--mode=all"]), {
         mode: "all",
+        schedule: "parallel",
         rampUpMs: modes.DEFAULT_RAMP_UP_MS,
         rampDownMs: modes.DEFAULT_RAMP_DOWN_MS,
         passthrough: [],
     });
+});
+
+test("parallel mode can be explicitly overridden with serial scheduling", (t) => {
+    t.is(modes.parseArgs(["--schedule=serial"]).schedule, "serial");
+    t.is(modes.parseArgs(["--", "--fail-fast", "--schedule=serial"]).schedule, "serial");
+    t.is(modes.parseArgs([]).schedule, "parallel");
+});
+
+test("parallel mode passes only the selected partition to the capped scheduler", async (t) => {
+    let selection;
+    const status = await modes.runMode({
+        mode: "extra",
+        schedule: "parallel",
+        runParallel: async (chunks) => { selection = chunks; return 0; },
+        emit: () => undefined,
+    });
+    t.is(status, 0);
+    t.deepEqual(selection, modes.EXTRA_CHUNKS);
 });
 
 test("targeted selectors route to the complete serial manifest", (t) => {
@@ -49,6 +69,7 @@ test("E2E-001 targeted selection is not silently limited to the base partition",
     const calls = [];
     const status = await modes.runMode({
         mode: "base",
+        schedule: "serial",
         passthrough: ["--name=E2E-001"],
         rampUpMs: 0,
         rampDownMs: 0,
@@ -71,6 +92,7 @@ test("runMode invokes chunks serially with ramp-down then ramp-up ordering", asy
     const cleanup = [];
     const status = await modes.runMode({
         mode: "base",
+        schedule: "serial",
         rampUpMs: 0,
         rampDownMs: 0,
         emit: (line) => events.push(line),
@@ -110,6 +132,7 @@ test("runMode stops on failure and still cleans every started owner", async (t) 
     const cleanup = [];
     const status = await modes.runMode({
         mode: "extra",
+        schedule: "serial",
         rampUpMs: 0,
         rampDownMs: 0,
         lifecycle: async () => undefined,
@@ -129,6 +152,7 @@ test("runMode ramps down a failed chunk before exact-owner cleanup", async (t) =
     const events = [];
     const status = await modes.runMode({
         mode: "base",
+        schedule: "serial",
         rampUpMs: 0,
         rampDownMs: 0,
         lifecycle: async (kind, previous, next) => events.push(`${kind}:${previous || "none"}->${next || "none"}`),
@@ -145,6 +169,7 @@ test("runMode ramps down a throwing chunk before exact-owner cleanup", async (t)
     const error = new Error("chunk exploded");
     await t.throwsAsync(() => modes.runMode({
         mode: "base",
+        schedule: "serial",
         rampUpMs: 0,
         rampDownMs: 0,
         lifecycle: async (kind, previous, next) => events.push(`${kind}:${previous || "none"}->${next || "none"}`),
@@ -160,6 +185,7 @@ test("runMode holds the fixed host lock across lifecycle gaps and releases it af
     const observed = [];
     const status = await modes.runMode({
         mode: "base",
+        schedule: "serial",
         rampUpMs: 0,
         rampDownMs: 0,
         lifecycle: async () => observed.push(fs.existsSync(lockPath)),

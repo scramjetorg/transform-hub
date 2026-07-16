@@ -41,6 +41,7 @@ const SCHEDULER_POLICY = Object.freeze({
     "node-streaming-stop": Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
     "hub-configuration": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
     "hub-runtime": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    "hub-idle-resource": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
     manager: Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
     verser2: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
     errors: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
