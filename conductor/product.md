@@ -2,7 +2,7 @@
 
 ## Product Summary
 
-Scramjet Transform Hub is an open-source runtime supervisor for deploying, executing, monitoring, and controlling Transform Sequences across local process, Docker, and Kubernetes environments. It gives application developers, platform engineers, and contributors a consistent way to run long-lived data-processing programs through compatible v1 APIs and a schema-aware v2 API surface while preserving operational visibility and runtime portability.
+Scramjet Platform is an open-source system for connecting distributed workflow execution across local process, Docker, and Kubernetes environments. Transform Hubs deploy, execute, and monitor Transform Sequences near the systems they serve, while Scramjet Manager provides the connected control plane, API routing, and configured TLS/mTLS transport between participating Hubs.
 
 ## Product Vision
 
