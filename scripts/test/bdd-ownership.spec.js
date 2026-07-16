@@ -4,7 +4,7 @@ const test = require("ava");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, allocateOwnedPort, encodePart } = require("../../bdd/lib/ownership.js");
+const { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, allocateOwnedPort, acquireRunLock, assertNoForeignBddContainers, encodePart } = require("../../bdd/lib/ownership.js");
 const { cleanupTempDirs } = require("../lib/bdd-cleanup.js");
 
 test("ownership is immutable and produces chunk-specific paths and labels", t => {
@@ -138,4 +138,30 @@ test("structured ownership cleanup never cross-deletes ambiguous run/chunk combo
     t.false(fs.existsSync(aPath), "run-a-b/chunk-c must be removed");
     t.true(fs.existsSync(bPath), "run-a/chunk-b-c must NOT be removed");
     fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("run ownership lock rejects live owners and reclaims stale PIDs", t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-run-lock-"));
+    const ownership = createOwnership({}, { runId: "locked-run", chunkId: "a", artifactRoot: root });
+    const first = acquireRunLock(ownership);
+    t.throws(() => acquireRunLock(ownership), { message: /already owned/ });
+    first.release();
+    const lockPath = process.env.SCRAMJET_BDD_PARALLEL_LOCK || path.join(os.tmpdir(), "scramjet-bdd-parallel.lock");
+    fs.mkdirSync(path.dirname(lockPath), { recursive: true });
+    fs.writeFileSync(lockPath, JSON.stringify({ pid: 999999999, runId: ownership.runId }));
+    const reclaimed = acquireRunLock(ownership);
+    t.true(fs.existsSync(reclaimed.path));
+    reclaimed.release();
+    t.false(fs.existsSync(lockPath));
+    fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("foreign live BDD containers block preflight without depending on artifact root", t => {
+    const result = () => assertNoForeignBddContainers("run-a", {
+        execFileSync: (_command, args) => {
+            t.deepEqual(args.slice(0, 3), ["ps", "--filter", "label=scramjet.bdd.run-id"]);
+            return "foreign-container\trun-foreign\n";
+        }
+    });
+    t.throws(result, { message: /live foreign BDD container/ });
 });

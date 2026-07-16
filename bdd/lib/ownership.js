@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const net = require("node:net");
+const { execFileSync } = require("node:child_process");
 
 const SAFE = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$/;
 
@@ -139,4 +140,62 @@ function isProcessAlive(pid) {
     }
 }
 
-module.exports = { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, ownershipTempPrefix, allocateOwnedPort, safePart, encodePart, isProcessAlive };
+function acquireRunLock(ownership, options = {}) {
+    // Parallel scheduling reserves host-wide resources, not run-id resources.
+    // Never accept a caller-provided environment path: that would permit a
+    // second BDD invocation to bypass the host-wide exclusion.
+    const lockPath = path.join(os.tmpdir(), "scramjet-bdd-parallel.lock");
+    fs.mkdirSync(path.dirname(lockPath), { recursive: true });
+    const token = crypto.randomBytes(16).toString("hex");
+    const write = () => {
+        const fd = fs.openSync(lockPath, "wx");
+        fs.writeFileSync(fd, JSON.stringify({ pid: process.pid, runId: ownership.runId, token, createdAt: Date.now() }));
+        fs.closeSync(fd);
+    };
+    try {
+        write();
+    } catch (error) {
+        if (error.code !== "EEXIST") throw error;
+        let stale = true;
+        try {
+            const current = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+            stale = !current.pid || !isProcessAlive(current.pid);
+        } catch {
+            stale = true;
+        }
+        if (!stale) throw new Error(`BDD parallel scheduler is already owned by a live process.`);
+        fs.rmSync(lockPath, { force: true });
+        write();
+    }
+    return {
+        path: lockPath,
+        release: () => {
+            try {
+                const current = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+                if (current.token === token && current.pid === process.pid) fs.rmSync(lockPath, { force: true });
+            } catch { /* already released */ }
+        }
+    };
+}
+
+function findLiveBddContainers(runId, options = {}) {
+    const exec = options.execFileSync || execFileSync;
+    try {
+        const output = exec("docker", ["ps", "--filter", "label=scramjet.bdd.run-id", "--format", "{{.ID}}\t{{.Label \"scramjet.bdd.run-id\"}}\t{{.Label \"scramjet.bdd.chunk-id\"}}"], { encoding: "utf8", timeout: 2000 });
+        return String(output).split(/\r?\n/).filter(Boolean).map((line) => {
+            const [id, owner, chunkId] = line.split("\t");
+            return { id, runId: owner || null, chunkId: chunkId || null, foreign: owner !== runId };
+        }).filter((container) => !options.chunkId || container.chunkId === options.chunkId);
+    } catch {
+        return null;
+    }
+}
+
+function assertNoForeignBddContainers(runId, options = {}) {
+    const containers = findLiveBddContainers(runId, options);
+    const foreign = containers?.filter((container) => container.foreign) || [];
+    if (foreign.length) throw new Error(`live foreign BDD container(s) block scheduler: ${foreign.map((container) => container.id).join(", ")}`);
+    return { checked: containers !== null, containers: containers || [], foreign };
+}
+
+module.exports = { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, ownershipTempPrefix, allocateOwnedPort, acquireRunLock, assertNoForeignBddContainers, findLiveBddContainers, safePart, encodePart, isProcessAlive };

@@ -63,6 +63,10 @@ The feature must enforce memory limits as a quality gate, not merely report them
 
 6. Avoid hidden operational default changes to runtime adapters or production behavior; memory checks are test and observability features.
 
+7. BDD parallel scheduling admission is based on current acceptable serial timing and memory evidence, not on expected timing targets. Timing data is recorded telemetry and observability, not a test-selection gate. Balanced logical chunks, manual timing and memory validation, and a maximum of four concurrent parallel runs compose the permitted execution plan after evidence confirms admission.
+
+8. Strict memory guardrails (AVA/BDD parent heap, child process RSS, Docker working-set thresholds), serial-exclusive and resource-owning feature paths, and the explicit scheduler/reservation policy remain unchanged by the parallel admission policy.
+
 ## Acceptance Criteria
 
 1. AVA memory guard mode can run package tests with `--expose-gc`, serial execution, deterministic post-GC measurement, and enforced heap-growth threshold.

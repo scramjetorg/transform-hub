@@ -302,6 +302,10 @@ esac
 		t.falsy(result.error, "the parent runner must not hit the outer test timeout");
 		t.true(result.stderr.includes("container mock-container state:"), "timeout emits container diagnostics");
 		t.true(result.stderr.includes("container working-set summary:"), "timeout emits the container summary");
+		t.true(result.stderr.includes("forensic diagnostics"), "timeout emits bounded forensic diagnostics");
+		t.true(result.stderr.includes('"timeout-handler"'), "forensics records timeout handler activation");
+		t.true(result.stderr.includes('"action":"TERM"'), "forensics records TERM invocation");
+		t.true(result.stderr.includes('"action":"KILL"'), "forensics records KILL invocation");
 	} finally {
 		fs.rmSync(binDir, { recursive: true, force: true });
 	}
@@ -516,4 +520,127 @@ test("run-bdd-docker.js mounts separate timing report and suppresses memory summ
 	t.true(src.includes("BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl"));
 	t.true(src.includes("SCRAMJET_BDD_CHUNK_TIMING=1"));
 	t.true(src.includes('if (CHUNK_MEMORY_POLICY === "off" && !forceSummary) return "PASS"'));
+});
+
+test("forensic wait parsing retains bounded raw output and status", t => {
+
+	const { parseWaitResult } = require("../lib/bdd-docker-forensics.js");
+	const parsed = parseWaitResult("143\nextra output\n");
+	t.is(parsed.parsedStatus, 143);
+	t.is(parsed.rawStdout, "143\nextra output\n");
+});
+
+test("run-bdd-docker.js keeps --rm by default and supports opt-in forensic retention", t => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes('...(forensicEnabled ? [] : ["--rm"])'));
+	t.true(src.includes("cleanup-skipped-owner-mismatch"));
+	t.true(src.includes("cleanup-rm-failed"));
+	t.true(src.includes("cleanup-rm-ok"));
+	t.true(src.includes("forensicCleanupOutcome"));
+	t.true(src.includes('"docker-wait-close"'));
+	t.true(src.includes('"timeout-handler"'));
+	t.true(src.includes('"timeout-grace-handler"'));
+	t.true(src.includes('"default scoped cleanup"'));
+});
+
+test("forensic mode surfaces cleanup failure when docker rm fails", (t) => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-forensic-fail-"));
+	const dockerScript = path.join(binDir, "docker");
+	const getentScript = path.join(binDir, "getent");
+
+	// Mock Docker that succeeds for run/wait/inspect but fails rm for forensic.
+	// The wait returns exit 1 so emitForensicDiagnostics is triggered on the
+	// non-zero path, and the cleanup failure is surfaced in exitWith.
+	fs.writeFileSync(
+		dockerScript,
+		`#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  run) printf 'forensic-container\\n' ;;
+  wait) printf '1\\n' ;;
+  ps) shift; printf 'forensic-container\\n' ;;
+  inspect) printf 'manual-forensic-fail/errors\\n' ;;
+  rm) exit 1 ;;
+  kill) exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+		{ mode: 0o755 }
+	);
+	fs.writeFileSync(getentScript, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+
+	const result = spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd-docker.js"), "--forensic", "--"], {
+		env: {
+			...process.env,
+			PATH: `${binDir}:${process.env.PATH}`,
+			BDD_TIMEOUT_MS: "0",
+			SCRAMJET_BDD_MEMORY_GUARD: "0",
+			SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off",
+			SCRAMJET_BDD_RUN_ID: "manual-forensic-fail",
+			SCRAMJET_BDD_CHUNK_ID: "errors",
+			SCRAMJET_BDD_OWNER: "manual-forensic-fail/errors"
+		},
+		encoding: "utf8",
+		timeout: 5000
+	});
+
+	try {
+		t.true(result.status !== 0, "forensic cleanup failure should produce non-zero exit");
+		t.true(result.stderr.includes("forensic owner-scoped container cleanup did not complete"),
+			"should report forensic cleanup failure message");
+		t.true(result.stderr.includes("forensic diagnostics"),
+			"should emit forensic diagnostics on cleanup failure");
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
+});
+
+test("forensic mode succeeds when docker rm succeeds", (t) => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-forensic-pass-"));
+	const dockerScript = path.join(binDir, "docker");
+	const getentScript = path.join(binDir, "getent");
+
+	// Mock Docker that succeeds for all forensic operations.
+	// wait returns 0 and rm succeeds, so cleanup verifies and the runner
+	// exits 0 without reporting a cleanup failure.
+	fs.writeFileSync(
+		dockerScript,
+		`#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  run) printf 'forensic-container-pass\\n' ;;
+  wait) printf '0\\n' ;;
+  ps) shift; printf 'forensic-container-pass\\n' ;;
+  inspect) printf 'manual-forensic-pass/errors\\n' ;;
+  rm) exit 0 ;;
+  kill) exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+		{ mode: 0o755 }
+	);
+	fs.writeFileSync(getentScript, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+
+	const result = spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd-docker.js"), "--forensic", "--"], {
+		env: {
+			...process.env,
+			PATH: `${binDir}:${process.env.PATH}`,
+			BDD_TIMEOUT_MS: "0",
+			SCRAMJET_BDD_MEMORY_GUARD: "0",
+			SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off",
+			SCRAMJET_BDD_RUN_ID: "manual-forensic-pass",
+			SCRAMJET_BDD_CHUNK_ID: "errors",
+			SCRAMJET_BDD_OWNER: "manual-forensic-pass/errors"
+		},
+		encoding: "utf8",
+		timeout: 5000
+	});
+
+	try {
+		t.is(result.status, 0, "forensic cleanup success should produce zero exit");
+		t.falsy(result.stderr.includes("forensic owner-scoped container cleanup did not complete"),
+			"should not report cleanup failure when rm succeeds");
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
 });

@@ -4,8 +4,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
 const { spawnSync } = require("node:child_process");
-const { createOwnership, getOwnership } = require("../bdd/lib/ownership.js");
+const { createOwnership, getOwnership, acquireRunLock, assertNoForeignBddContainers, findLiveBddContainers, encodePart } = require("../bdd/lib/ownership.js");
 const { cleanupTempDirs, cleanupDockerContainers } = require("./lib/bdd-cleanup.js");
+const { measureHostTotalMemoryAsync } = require("./lib/bdd-host-memory.js");
+const { PARALLEL_CONCURRENCY_CAP, SCHEDULER_POLICY } = require("./lib/bdd-scheduler-policy.js");
+const { runParallelChunks, spawnOwnedChild } = require("./lib/bdd-parallel-scheduler.js");
 
 const repoRoot = path.resolve(__dirname, "..");
 const bddRoot = path.join(repoRoot, "bdd");
@@ -228,6 +231,7 @@ function validateManifest() {
 
 function parseArgs(args) {
     let chunkName = process.env.BDD_WAVE || null;
+    let schedule = "serial";
     const passthrough = [];
 
     for (const arg of args) {
@@ -235,12 +239,18 @@ function parseArgs(args) {
             chunkName = arg.slice("--chunk=".length);
         } else if (arg.startsWith("--wave=")) {
             chunkName = arg.slice("--wave=".length);
+        } else if (arg.startsWith("--schedule=")) {
+            schedule = arg.slice("--schedule=".length);
         } else {
             passthrough.push(arg);
         }
     }
 
-    return { chunkName, passthrough };
+    if (schedule !== "serial" && schedule !== "parallel") {
+        throw new Error(`Unknown BDD schedule "${schedule}". Available schedules: serial, parallel.`);
+    }
+
+    return { chunkName, schedule, passthrough };
 }
 
 // ---------------------------------------------------------------------------
@@ -354,48 +364,284 @@ function runWaves({ chunkName, passthrough }) {
     const runOwnership = getOwnership(process.env);
     process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
 
-    // Inline validation before any spawn.
+    // Inline validation before any spawn. Serial BDD consumes the same
+    // host-wide lock as parallel BDD, so neither mode can launch concurrently.
     validateManifest();
+    const runLock = process.env.SCRAMJET_BDD_RUN_LOCK_HELD === "1" ? null : acquireRunLock(runOwnership);
+    try {
+        let cumulativeNs = 0;
+        let completed = 0;
+        assertNoForeignBddContainers(getOwnership(process.env).runId);
 
-    let cumulativeNs = 0;
-    let completed = 0;
+        function runOne(name, features) {
+            const count = features.length;
+            const start = process.hrtime.bigint();
+            const status = runChild(name, features, passthrough);
+            const delta = Number(process.hrtime.bigint() - start);
 
-    function runOne(name, features) {
-        const count = features.length;
-        const start = process.hrtime.bigint();
-        const status = runChild(name, features, passthrough);
-        const delta = Number(process.hrtime.bigint() - start);
+            cumulativeNs += delta;
+            completed++;
+            emitSummary(name, count, status, delta, cumulativeNs);
 
-        cumulativeNs += delta;
-        completed++;
-        emitSummary(name, count, status, delta, cumulativeNs);
-
-        return status;
-    }
-
-    if (chunkName) {
-        const features = CHUNKS[chunkName];
-
-        if (!features) {
-            throw new Error(`Unknown BDD chunk "${chunkName}". Available chunks: ${Object.keys(CHUNKS).join(", ")}`);
-        }
-
-        return runOne(chunkName, features);
-    }
-
-    // No explicit selection: run all default chunks serially.
-    for (let i = 0; i < DEFAULT_CHUNKS.length; i++) {
-        const name = DEFAULT_CHUNKS[i];
-        const features = CHUNKS[name];
-        const status = runOne(name, features);
-
-        if (status !== 0) {
-            process.stderr.write(`[run-bdd-waves] chunk "${name}" failed status=${status}; ${DEFAULT_CHUNKS.length - completed} remaining chunk(s) not started\n`);
             return status;
         }
-    }
 
-    return 0;
+        if (chunkName) {
+            const features = CHUNKS[chunkName];
+
+            if (!features) {
+                throw new Error(`Unknown BDD chunk "${chunkName}". Available chunks: ${Object.keys(CHUNKS).join(", ")}`);
+            }
+
+            return runOne(chunkName, features);
+        }
+
+        // No explicit selection: run all default chunks serially.
+        for (let i = 0; i < DEFAULT_CHUNKS.length; i++) {
+            const name = DEFAULT_CHUNKS[i];
+            const features = CHUNKS[name];
+            const status = runOne(name, features);
+
+            if (status !== 0) {
+                process.stderr.write(`[run-bdd-waves] chunk "${name}" failed status=${status}; ${DEFAULT_CHUNKS.length - completed} remaining chunk(s) not started\n`);
+                return status;
+            }
+        }
+
+        return 0;
+    } finally {
+        let cleanupVerificationError;
+        if (runChild === defaultRunChild) {
+            const remaining = findLiveBddContainers(runOwnership.runId);
+            const tempRoot = chunkName
+                ? path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId), "chunks", encodePart(chunkName))
+                : path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId));
+            if ((remaining !== null && remaining.some((container) => container.runId === runOwnership.runId)) || fs.existsSync(tempRoot)) {
+                cleanupVerificationError = new Error("serial BDD cleanup could not verify absence of owned processes, containers, or temp paths");
+            }
+        }
+        runLock?.release();
+        // biome-ignore lint/correctness/noUnsafeFinally: lock release must precede cleanup verification failure
+        if (cleanupVerificationError) throw cleanupVerificationError;
+    }
+}
+
+function parallelChunks(chunkName) {
+    if (chunkName) return [{ name: chunkName, features: CHUNKS[chunkName] }];
+    return DEFAULT_CHUNKS.map((name) => ({ name, features: CHUNKS[name] }));
+}
+
+function isCleanupComplete(remainingContainers, runRootExists, activeChildCount = 0) {
+    return Array.isArray(remainingContainers) && remainingContainers.length === 0 && !runRootExists && activeChildCount === 0;
+}
+
+function writeParallelReport(report) {
+    const reportPath = process.env.BDD_PARALLEL_SCHEDULER_REPORT_FILE;
+    if (reportPath) fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+}
+
+async function runParallelWaves({ chunkName, passthrough }) {
+    validateManifest();
+    const chunks = parallelChunks(chunkName);
+    const runOwnership = getOwnership(process.env);
+    process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
+    const activeChildPids = new Set();
+    const runTempRoot = path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId));
+    const hostMemory = await measureHostTotalMemoryAsync({ runId: runOwnership.runId, activeChildPids });
+    const report = {
+        schedule: "parallel",
+        runId: runOwnership.runId,
+        ownership: runOwnership.owner,
+        concurrencyCap: PARALLEL_CONCURRENCY_CAP,
+        hostMemory,
+        admission: null,
+        chunks: chunks.map((chunk) => chunk.name),
+        results: [],
+        overlap: { peakWorkers: 0, batches: [] },
+        peaks: { hostFootprintBytes: hostMemory.totalBytes },
+        telemetry: { samples: [], missing: hostMemory.missing },
+        cancellation: null,
+        cleanup: { attempted: false, completed: false },
+        outcomes: { oom: false, timeout: false, cancelled: false, failed: false }
+    };
+    let runLock;
+    const verifyOwnedTermination = async (child, deadline, chunkId) => {
+        const end = deadline > Date.now() ? deadline : Date.now() + 2000;
+        while (Date.now() <= end) {
+            let groupGone = true;
+            if (child.pid) {
+                try {
+                    process.kill(-child.pid, 0);
+                    groupGone = false;
+                } catch (error) {
+                    groupGone = error.code === "EPERM" ? false : true;
+                }
+            }
+            const containers = findLiveBddContainers(runOwnership.runId, { chunkId });
+            if (groupGone && containers !== null && containers.length === 0) return true;
+            await new Promise((resolve) => setTimeout(resolve, Math.min(25, Math.max(1, end - Date.now()))));
+        }
+        return false;
+    };
+    try {
+        assertNoForeignBddContainers(runOwnership.runId);
+        runLock = acquireRunLock(runOwnership);
+        const runChunk = (chunk, signal) => {
+            const ownership = createOwnership(process.env, { runId: runOwnership.runId, chunkId: chunk.name });
+            const childEnv = {
+                ...process.env,
+                BDD_TIMEOUT_MS: "300000",
+                SCRAMJET_BDD_SCHEDULER_CHILD: "1",
+                SCRAMJET_BDD_RUN_ID: runOwnership.runId,
+                SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                SCRAMJET_BDD_OWNER: ownership.owner,
+                SCRAMJET_BDD_FEATURE_PATHS: JSON.stringify(chunk.features),
+                SCRAMJET_BDD_EXPECTED_COMPONENTS: JSON.stringify(CHUNK_COMPONENTS[chunk.name] || { container: true, processes: [] })
+            };
+            const startedAt = Date.now();
+            return spawnOwnedChild({
+                command: process.execPath,
+                args: commandArgs(chunk.features, passthrough),
+                cwd: repoRoot,
+                env: childEnv,
+                spawnImpl: require("node:child_process").spawn,
+                signal,
+                onSpawn: (child) => {
+                    if (child.pid) activeChildPids.add(child.pid);
+                },
+                onSettled: (child) => {
+                    if (child.pid) activeChildPids.delete(child.pid);
+                },
+                verifyTermination: (child, deadline) => verifyOwnedTermination(child, deadline, ownership.chunkId),
+                resultDetails: () => {
+                    try {
+                        const hostRoot = path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId), "chunks", encodePart(ownership.chunkId));
+                        const runner = fs.readdirSync(hostRoot).find((entry) => entry.startsWith("runner-"));
+                        return runner ? JSON.parse(fs.readFileSync(path.join(hostRoot, runner, "chunk-diagnostics.json"), "utf8")) : {};
+                    } catch {
+                        return {};
+                    }
+                },
+                cleanup: () => {
+                    cleanupDockerContainers({ prefix: "bdd-runner-", runId: runOwnership.runId, chunkId: ownership.chunkId });
+                    cleanupTempDirs(os.tmpdir(), "", ownership);
+                }
+            }).then((result) => ({
+                code: result.code,
+                signal: result.signal,
+                diagnostic: result.diagnostic,
+                cancelled: result.cancelled,
+                terminationVerified: result.terminationVerified,
+                cancellationFailure: result.cancellationFailure,
+                durationMs: Date.now() - startedAt,
+                timedOut: result.timedOut,
+                oomKilled: result.oomKilled
+            }));
+        };
+        const execution = await runParallelChunks({
+            chunks,
+            concurrency: PARALLEL_CONCURRENCY_CAP,
+            runChunk,
+            policyMap: SCHEDULER_POLICY,
+            hostMemoryBytes: hostMemory.totalBytes,
+            hostMemoryLimitBytes: 4 * 1024 * 1024 * 1024,
+            admitBatch: async (batch) => {
+                const fresh = await measureHostTotalMemoryAsync({ runId: runOwnership.runId, activeChildPids });
+                report.telemetry.admissionSamples = report.telemetry.admissionSamples || [];
+                report.telemetry.admissionSamples.push(fresh);
+                return require("./lib/bdd-scheduler-policy.js").admitParallelChunks(
+                    batch.map((item) => item.name),
+                    {
+                        concurrency: Math.min(PARALLEL_CONCURRENCY_CAP, batch.length),
+                        hostMemoryBytes: fresh.totalBytes,
+                        policyMap: SCHEDULER_POLICY
+                    }
+                );
+            },
+            measureFootprint: () =>
+                measureHostTotalMemoryAsync({
+                    runId: runOwnership.runId,
+                    activeChildPids: [...activeChildPids]
+                }),
+            onFootprintFailure: (reason) => {
+                report.cancellation = { reason };
+            }
+        });
+        report.results = execution.results;
+        report.admission = execution.admissions[0]?.diagnostics || null;
+        report.admissions = execution.admissions.map((item) => item.diagnostics || item);
+        report.telemetry.samples = [...(report.telemetry.admissionSamples || []), ...execution.footprint];
+        report.telemetry.missing = [...new Set(report.telemetry.samples.flatMap((sample) => sample?.missing || []))];
+        report.telemetry.complete = report.telemetry.missing.length === 0;
+        report.overlap.peakWorkers = execution.peakWorkers;
+        report.overlap.batches = execution.admissions.map((item) => ({
+            chunks: item.chunkNames,
+            startedAt: item.startedAt,
+            finishedAt: item.finishedAt,
+            durationMs: item.durationMs
+        }));
+        report.overlap.overlapMs = execution.admissions.reduce((sum, item) => sum + Math.max(0, (item.durationMs || 0) * (execution.peakWorkers - 1)), 0);
+        report.peaks.hostFootprintBytes = Math.max(hostMemory.totalBytes || 0, ...execution.footprint.map((sample) => sample.totalBytes || 0));
+        if (execution.footprintFailure) report.cancellation = { reason: execution.footprintFailure };
+        report.outcomes.failed = execution.failed;
+        report.outcomes.cancelled = Boolean(execution.footprintFailure);
+        report.outcomes.oom = execution.results.some((result) => result.oomKilled === true || result.oom === true);
+        report.outcomes.timeout = execution.results.some((result) => result.timedOut === true || result.timeout === true);
+        // Preserve unknown/missing child Docker outcome telemetry rather than
+        // coercing null/undefined to false.  When the chunk-diagnostics.json
+        // is unavailable or Docker inspect failed, oomKilled/timedOut are
+        // null — flag that as unknown rather than silently assuming negation.
+        if (execution.results.some((result) => (result.oomKilled === null || result.oomKilled === undefined) && (result.timedOut === null || result.timedOut === undefined))) {
+            report.outcomes.unknownOutcome = true;
+        }
+        report.outcomes.cancelled = report.outcomes.cancelled || execution.results.some((result) => result.cancelled === true);
+        report.outcomes.failed = report.outcomes.failed || execution.results.some((result) => result.cancellationFailure);
+        report.children = execution.results.map((result) => ({
+            owner: result.chunk,
+            code: result.code,
+            signal: result.signal,
+            oomKilled: result.oomKilled ?? null,
+            timedOut: result.timedOut ?? null,
+            terminationVerified: result.terminationVerified ?? null,
+            diagnostic: result.diagnostic ?? null,
+            cancellationFailure: result.cancellationFailure ?? null,
+            durationMs: result.durationMs ?? null
+        }));
+        report.ownerPeaks = {};
+        for (const sample of execution.footprint) {
+            for (const container of sample.activeOwnedContainers || []) {
+                const owner = container.owner || container.id;
+                if (Number.isFinite(container.bytes)) report.ownerPeaks[owner] = Math.max(report.ownerPeaks[owner] || 0, container.bytes);
+            }
+        }
+        return execution.results.every((result) => result.code === 0) && !execution.footprintFailure ? 0 : 1;
+    } catch (error) {
+        report.outcomes.failed = true;
+        report.error = { name: error.name, message: error.message };
+        if (error.admission) report.admission = error.admission.diagnostics || error.admission;
+        return 1;
+    } finally {
+        report.cleanup.attempted = true;
+        try {
+            cleanupDockerContainers({ prefix: "bdd-runner-", runId: runOwnership.runId });
+            cleanupTempDirs(os.tmpdir(), "", runOwnership);
+            const remaining = findLiveBddContainers(runOwnership.runId);
+            report.cleanup.dockerChecked = remaining !== null;
+            report.cleanup.remainingContainers = remaining?.filter((container) => container.runId === runOwnership.runId).map((container) => container.id) || null;
+            report.cleanup.tempPathsRemaining = fs.existsSync(runTempRoot);
+            report.cleanup.completed = isCleanupComplete(report.cleanup.remainingContainers, report.cleanup.tempPathsRemaining, activeChildPids.size);
+            if (activeChildPids.size) {
+                report.cleanup.completed = false;
+                report.cleanup.error = report.cleanup.error || "owned scheduler child process groups remain";
+            }
+            if (!report.cleanup.completed && !report.cleanup.error) report.cleanup.error = "cleanup completion could not be verified";
+        } catch (error) {
+            report.cleanup.error = error.message;
+        }
+        writeParallelReport(report);
+        process.stderr.write(`[run-bdd-parallel] ${JSON.stringify(report)}\n`);
+        if (report.cleanup.completed) runLock?.release();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -403,12 +649,16 @@ function runWaves({ chunkName, passthrough }) {
 // ---------------------------------------------------------------------------
 
 if (require.main === module) {
-    try {
-        process.exit(runWaves(parseArgs(process.argv.slice(2))));
-    } catch (error) {
-        process.stderr.write(`[run-bdd-waves] ${error.message}\n`);
-        process.exit(1);
-    }
+    Promise.resolve()
+        .then(() => {
+            const options = parseArgs(process.argv.slice(2));
+            return options.schedule === "parallel" ? runParallelWaves(options) : runWaves(options);
+        })
+        .then((status) => process.exit(status))
+        .catch((error) => {
+            process.stderr.write(`[run-bdd-waves] ${error.message}\n`);
+            process.exit(1);
+        });
 }
 
 module.exports = {
@@ -423,6 +673,8 @@ module.exports = {
     onDiskFeatures,
     parseArgs,
     runChild: defaultRunChild,
+    runParallelWaves,
+    isCleanupComplete,
     runWaves,
     validateManifest
 };

@@ -308,6 +308,11 @@ function cleanupTempDirs(baseDir = "/tmp", prefix = "bdd-runner.", ownership) {
 				rmSync(ownerDir, { recursive: true, force: true });
 				log(`removed ownership temp dir ${ownerDir}`);
 			}
+			// These parents are owned exclusively by this run. Prune them on a
+			// best-effort basis; empty parents must not block lock release.
+			for (const parent of [join(ownerDir, ".."), join(ownerDir, "..", "..")]) {
+				try { require("node:fs").rmdirSync(parent); } catch { /* non-empty or already gone */ }
+			}
 		} catch (error) {
 			console.error(`[bdd-cleanup] failed to remove ${ownerDir}: ${error.message}`);
 		}

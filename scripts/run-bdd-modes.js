@@ -2,7 +2,7 @@
 
 const os = require("node:os");
 const { cleanupDockerContainers, cleanupTempDirs } = require("./lib/bdd-cleanup.js");
-const { createOwnership, getOwnership } = require("../bdd/lib/ownership.js");
+const { createOwnership, getOwnership, acquireRunLock } = require("../bdd/lib/ownership.js");
 const waves = require("./run-bdd-waves.js");
 
 // The base is deliberately small and representative rather than a second
@@ -116,6 +116,9 @@ async function runMode({
     const runOwnership = getOwnership(process.env);
     process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
     const started = [];
+    const runLock = acquireRunLock(runOwnership);
+    const previousLockMarker = process.env.SCRAMJET_BDD_RUN_LOCK_HELD;
+    process.env.SCRAMJET_BDD_RUN_LOCK_HELD = "1";
     let previous;
     let activeChunk;
     let finalRampDownDone = false;
@@ -139,33 +142,43 @@ async function runMode({
         }
     } catch (error) {
         thrown = error;
-    }
-
-    // A failed/throwing chunk must be ramped down before exact-owner cleanup.
-    // Keep this separate from cleanup so cleanup still runs if the lifecycle
-    // hook itself fails.
-    let rampDownError;
-    if (!finalRampDownDone) {
-        try {
-            await lifecycle("ramp-down", activeChunk || previous, null, rampDownMs, emit);
-            finalRampDownDone = true;
-        } catch (error) {
-            rampDownError = error;
+    } finally {
+        // A failed/throwing chunk must be ramped down before exact-owner
+        // cleanup. Keep cleanup and lock release in the outer finally path.
+        let rampDownError;
+        if (!finalRampDownDone) {
+            try {
+                await lifecycle("ramp-down", activeChunk || previous, null, rampDownMs, emit);
+                finalRampDownDone = true;
+            } catch (error) {
+                rampDownError = error;
+            }
         }
-    }
 
-    let cleanupError;
-    for (const chunk of started) {
-        try {
-            cleanupOwned(runOwnership.runId, chunk);
-        } catch (error) {
-            cleanupError ||= error;
+        let cleanupError;
+        for (const chunk of started) {
+            try {
+                cleanupOwned(runOwnership.runId, chunk);
+            } catch (error) {
+                cleanupError ||= error;
+            }
         }
-    }
 
-    if (thrown) throw thrown;
-    if (rampDownError) throw rampDownError;
-    if (cleanupError) throw cleanupError;
+        if (previousLockMarker === undefined) delete process.env.SCRAMJET_BDD_RUN_LOCK_HELD;
+        else process.env.SCRAMJET_BDD_RUN_LOCK_HELD = previousLockMarker;
+        // Empty parent directories are harmless cleanup residue. Never let
+        // them block release of the fixed host-wide lock.
+        runLock.release();
+
+        // The lock is released immediately above; preserve the original
+        // lifecycle/cleanup error after that release.
+        // biome-ignore lint/correctness/noUnsafeFinally: cleanup must release the host lock before reporting errors
+        if (thrown) throw thrown;
+        // biome-ignore lint/correctness/noUnsafeFinally: cleanup must release the host lock before reporting errors
+        if (rampDownError) throw rampDownError;
+        // biome-ignore lint/correctness/noUnsafeFinally: cleanup must release the host lock before reporting errors
+        if (cleanupError) throw cleanupError;
+    }
     return result;
 }
 

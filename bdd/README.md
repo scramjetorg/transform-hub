@@ -95,6 +95,12 @@ In the situation like this above, when you want to execute tests with `@ci` tag 
 npm run test:bdd -- --tags="@ci" --tags="not @starts-host"
 ```
 
+The default scheduler remains serial. An opt-in `--schedule=parallel` path is
+bounded to two workers and fails closed unless every selected chunk has a fresh,
+measured reservation and host-total memory telemetry. No parallel reservations
+are committed until measured peak collection is completed; use the existing
+serial commands for normal runs.
+
 ### Docker-required HUB scenarios
 
 The default STH HUB BDD command excludes scenarios tagged `@requires-docker`:

@@ -33,6 +33,8 @@ const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnosti
 const { requestDockerStats } = require("./lib/docker-memory.js");
 
 const { reportLeakedProcesses, cleanupTempDirs } = require("./lib/bdd-cleanup.js");
+const { dockerOutcomeDiagnostics } = require("./lib/bdd-outcome-diagnostics.js");
+const { createForensicRecorder, parseWaitResult } = require("./lib/bdd-docker-forensics.js");
 const { createOwnership, ownershipEnv, encodePart } = require("../bdd/lib/ownership.js");
 
 const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || "node:22";
@@ -52,7 +54,9 @@ const TIMEOUT_EXIT_CODE = 124;
 const MISSING_DEPENDENCY_EXIT_CODE = 127;
 
 const separatorIndex = process.argv.indexOf("--");
-const passthroughArgs = separatorIndex === -1 ? process.argv.slice(2) : process.argv.slice(separatorIndex + 1);
+const runnerArgs = separatorIndex === -1 ? process.argv.slice(2) : process.argv.slice(2, separatorIndex);
+const forensicEnabled = process.env.SCRAMJET_BDD_FORENSIC === "1" || runnerArgs.includes("--forensic");
+const passthroughArgs = separatorIndex === -1 ? process.argv.slice(2).filter((arg) => arg !== "--forensic") : process.argv.slice(separatorIndex + 1);
 
 const failPrereq = (message) => {
     process.stderr.write(`[run-bdd-docker] ${message}\n`);
@@ -113,7 +117,7 @@ const collectEnvForwardArgs = () => {
     return out;
 };
 
-const dockerRunArgs = ["run", "--detach", "--rm", "--init", "--name", containerName];
+const dockerRunArgs = ["run", "--detach", ...(forensicEnabled ? [] : ["--rm"]), "--init", "--name", containerName];
 
 for (const [key, value] of Object.entries(ownership.labels)) dockerRunArgs.push("--label", `${key}=${value}`);
 
@@ -202,6 +206,24 @@ let timeoutFinalizeTimer = null;
 let logsChild = null;
 let waitChild = null;
 let finalized = false;
+// Collection is always enabled and bounded; --forensic only changes whether
+// the container is retained past the run for owner-verified cleanup.
+const forensic = createForensicRecorder({ enabled: true });
+let waitClose = null;
+let finalInspect = null;
+/**
+ * Forensic-mode container cleanup outcome:
+ *   undefined – no container required cleanup (normal path or no container)
+ *   true      – owner-scoped cleanup verified successful
+ *   false     – owner-scoped cleanup failed or could not verify
+ */
+let forensicCleanupOutcome = undefined;
+
+const dockerControl = (args, reason) => {
+    const action = args[0] === "rm" ? "rm" : args[0] === "kill" ? (args[1]?.includes("KILL") ? "KILL" : "TERM") : null;
+    if (action) forensic.record("docker-control", { action, reason, args: args.slice() });
+    return spawnSync("docker", args, { stdio: "ignore", timeout: 2000 });
+};
 
 // ---------------------------------------------------------------------------
 // Outer-container working-set memory tracking
@@ -300,21 +322,62 @@ const cleanup = () => {
     // removing it is both faster and safer than a label scan during process
     // shutdown.  In particular, never let an unrelated/stale container make
     // the timeout path wait for the cleanup helper's 10s Docker timeout.
-    if (containerId) {
-        spawnSync("docker", ["rm", "-f", containerId], { stdio: "ignore", timeout: 2000 });
+    if (containerId && forensicEnabled) {
+        // In forensic mode --rm is deliberately omitted. Verify both labels
+        // before removing, so recovery cannot cross an owner's boundary.
+        const candidates = [containerId];
+        const recovery = spawnSync("docker", ["ps", "-aq", "--filter", `label=scramjet.bdd.owner=${ownership.owner}`], {
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+            timeout: 2000
+        });
+        if (recovery.status === 0)
+            candidates.push(
+                ...(recovery.stdout || "")
+                    .split(/\r?\n/)
+                    .map((id) => id.trim())
+                    .filter(Boolean)
+            );
+        const uniqueCandidates = [...new Set(candidates)];
+        let anyFailed = false;
+        for (const candidate of uniqueCandidates) {
+            const owned = spawnSync("docker", ["inspect", '--format={{index .Config.Labels "scramjet.bdd.owner"}}', candidate], {
+                encoding: "utf8",
+                stdio: ["ignore", "pipe", "ignore"],
+                timeout: 2000
+            });
+            if (owned.status === 0 && (owned.stdout || "").trim() === ownership.owner) {
+                const rmResult = dockerControl(["rm", "-f", candidate], "forensic owner-scoped label recovery");
+                if (rmResult.error || typeof rmResult.status !== "number" || rmResult.status !== 0) {
+                    forensic.record("cleanup-rm-failed", { candidate, error: rmResult.error?.message || `exit code ${rmResult.status}` });
+                    anyFailed = true;
+                } else {
+                    forensic.record("cleanup-rm-ok", { candidate });
+                }
+            } else {
+                forensic.record("cleanup-skipped-owner-mismatch", { candidate });
+                anyFailed = true;
+            }
+        }
+        forensicCleanupOutcome = !anyFailed && uniqueCandidates.length > 0;
+        if (anyFailed) {
+            process.stderr.write(`[run-bdd-docker] warning: forensic owner-scoped container cleanup encountered issues; check forensic diagnostics for details\n`);
+        }
+    } else if (containerId) {
+        dockerControl(["rm", "-f", containerId], "default scoped cleanup");
     }
-    cleanupTempDirs(require("node:os").tmpdir(), "", ownership);
+    if (process.env.SCRAMJET_BDD_SCHEDULER_CHILD !== "1") cleanupTempDirs(require("node:os").tmpdir(), "", ownership);
 };
 
 // Scope cleanup to current run resources only.
 process.once("exit", () => {
     // Remove only this run's temp dir.
-    try {
-        if (tmpDir && require("fs").existsSync(tmpDir)) {
-            require("fs").rmSync(tmpDir, { recursive: true, force: true });
+    if (process.env.SCRAMJET_BDD_SCHEDULER_CHILD !== "1") {
+        try {
+            if (tmpDir && require("fs").existsSync(tmpDir)) require("fs").rmSync(tmpDir, { recursive: true, force: true });
+        } catch {
+            // best effort
         }
-    } catch {
-        // best effort
     }
 });
 
@@ -323,6 +386,16 @@ const exitWith = (code) => {
     finalized = true;
     cleanup();
     const hasLeaks = reportLeakedProcesses();
+
+    // In forensic mode, fail when owner-scoped container cleanup could not
+    // be verified.  This prevents silently leaking retained containers even
+    // when the BDD tests themselves passed.
+    // `forensicCleanupOutcome === false` means a container was present and
+    // cleanup was attempted but failed or could not be verified.
+    if (forensicEnabled && forensicCleanupOutcome === false) {
+        process.stderr.write(`[run-bdd-docker] error: forensic owner-scoped container cleanup did not complete; retained container(s) may exist\n`);
+        process.exit(code || 1);
+    }
 
     if (hasLeaks && process.env.SCRAMJET_BDD_FAIL_ON_LEAK === "1") {
         process.exit(code || 1);
@@ -349,6 +422,7 @@ const printContainerDiagnostics = (containerId) => {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"]
     });
+    finalInspect = result;
 
     if (result.error || typeof result.status !== "number" || result.status !== 0) {
         process.stderr.write(`[run-bdd-docker] warning: unable to inspect container ${containerId} – ` + `${result.error ? result.error.message : `exit code ${result.status}`}\n`);
@@ -366,6 +440,22 @@ const printContainerDiagnostics = (containerId) => {
     } catch (e) {
         process.stderr.write(`[run-bdd-docker] warning: failed to parse container state – ${e.message}\n`);
     }
+};
+
+const emitForensicDiagnostics = () => {
+    process.stderr.write(
+        `[run-bdd-docker] forensic diagnostics ${JSON.stringify({
+            waitClose,
+            forensicCleanupOutcome,
+            finalInspect: finalInspect && {
+                status: finalInspect.status,
+                signal: finalInspect.signal,
+                stdout: forensic.bounded(finalInspect.stdout),
+                stderr: forensic.bounded(finalInspect.stderr)
+            },
+            ...forensic.snapshot()
+        })}\n`
+    );
 };
 
 // ---------------------------------------------------------------------------
@@ -449,20 +539,31 @@ const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"]
     });
+    finalInspect = inspectResult;
 
-    let oomKilled = "unknown";
-    let startedAt = "unknown";
-    let finishedAt = "unknown";
+    const outcome = dockerOutcomeDiagnostics(inspectResult, timedOut);
+    const { oomKilled, startedAt, finishedAt } = outcome;
 
-    if (!inspectResult.error && typeof inspectResult.status === "number" && inspectResult.status === 0 && inspectResult.stdout) {
-        try {
-            const state = JSON.parse(inspectResult.stdout);
-            oomKilled = String(state.OOMKilled);
-            startedAt = state.StartedAt || "unknown";
-            finishedAt = state.FinishedAt || "unknown";
-        } catch {
-            // fall through
-        }
+    // Leave machine-readable state for the owning scheduler. The scheduler
+    // performs the exact-owner cleanup after it has consumed this diagnostic.
+    try {
+        fs.writeFileSync(
+            path.join(tmpDir, "chunk-diagnostics.json"),
+            JSON.stringify({
+                owner: ownership.owner,
+                runId: ownership.runId,
+                chunkId: ownership.chunkId,
+                exitCode,
+                oomKilled,
+                timedOut: outcome.timedOut,
+                outcomeTelemetry: outcome.outcomeTelemetry,
+                telemetryFailure: outcome.telemetryFailure,
+                startedAt,
+                finishedAt
+            })
+        );
+    } catch {
+        // Reporting remains best effort; the parent still records exit state.
     }
 
     let childMetrics = null;
@@ -585,7 +686,10 @@ const finishTimedOutRun = () => {
     printContainerDiagnostics(containerId);
     Promise.resolve(printContainerSummary(containerId, TIMEOUT_EXIT_CODE, { forceSummary: true }))
         .catch((error) => process.stderr.write(`[run-bdd-docker] warning: failed to print timeout summary: ${error.message}\n`))
-        .then(() => exitWith(TIMEOUT_EXIT_CODE));
+        .then(() => {
+            emitForensicDiagnostics();
+            exitWith(TIMEOUT_EXIT_CODE);
+        });
 };
 
 const runResult = spawnSync("docker", dockerRunArgs, { encoding: "utf8" });
@@ -657,12 +761,14 @@ const installSignalForwarding = () => {
             }
 
             // forward signal: docker kill --signal=<sig> <container>
-            spawnSync("docker", ["kill", "--signal=" + sig, containerId], { stdio: "ignore" });
+            forensic.record("parent-signal", { signal: sig });
+            dockerControl(["kill", "--signal=" + sig, containerId], `parent ${sig} handler`);
 
             if (!signalKillTimer) {
                 signalKillTimer = setTimeout(() => {
                     // grace expired: docker kill --signal=KILL <container>
-                    spawnSync("docker", ["kill", "--signal=KILL", containerId], { stdio: "ignore" });
+                    forensic.record("parent-signal-escalation", { signal: "SIGKILL" });
+                    dockerControl(["kill", "--signal=KILL", containerId], `parent ${sig} grace escalation`);
                 }, BDD_GRACE_MS);
             }
         });
@@ -674,14 +780,16 @@ installSignalForwarding();
 if (BDD_TIMEOUT_MS > 0) {
     timeoutTimer = setTimeout(() => {
         timedOut = true;
+        forensic.record("timeout-handler", { timeoutMs: BDD_TIMEOUT_MS });
         process.stderr.write(`[run-bdd-docker] BDD run exceeded ${BDD_TIMEOUT_MS}ms; sending TERM to container ${containerId}\n`);
         // Stop the follow-mode logs stream first.  It is a separate Docker
         // client connection and may otherwise keep `docker wait` open after
         // the container has exited (especially with --rm).
         stopDockerChild(logsChild, "logs");
-        spawnSync("docker", ["kill", "--signal=TERM", containerId], { stdio: "ignore", timeout: 2000 });
+        dockerControl(["kill", "--signal=TERM", containerId], "BDD timeout");
         timeoutGraceTimer = setTimeout(() => {
-            spawnSync("docker", ["kill", "--signal=KILL", containerId], { stdio: "ignore", timeout: 2000 });
+            forensic.record("timeout-grace-handler", { graceMs: BDD_GRACE_MS });
+            dockerControl(["kill", "--signal=KILL", containerId], "BDD timeout grace expired");
             // Do not make the parent depend on Docker's wait/logs EOF after
             // escalation.  A short settling window lets inspect observe the
             // final State while still giving a hard upper bound.
@@ -691,14 +799,18 @@ if (BDD_TIMEOUT_MS > 0) {
 }
 
 waitChild.once("error", (error) => {
+    forensic.record("docker-wait-error", { message: error.message });
     process.stderr.write(`[run-bdd-docker] docker wait failed: ${error.message}\n`);
+    emitForensicDiagnostics();
     exitWith(1);
 });
 
-waitChild.once("close", () => {
+waitChild.once("close", (code, signal) => {
     if (finalized) return;
-    const firstLine = waitStdout.split("\n")[0].trim();
-    const parsed = Number.parseInt(firstLine, 10);
+    const parsedWait = parseWaitResult(waitStdout);
+    const parsed = parsedWait.parsedStatus;
+    waitClose = { code, signal, rawStdout: parsedWait.rawStdout, parsedStatus: parsed };
+    forensic.record("docker-wait-close", waitClose);
 
     if (timedOut) {
         finishTimedOutRun();
@@ -713,7 +825,10 @@ waitChild.once("close", () => {
         stopDockerChild(logsChild, "logs");
         Promise.resolve(printContainerSummary(containerId, parsed))
             .catch((error) => process.stderr.write(`[run-bdd-docker] warning: failed to print container summary: ${error.message}\n`))
-            .then((status) => exitWith(parsed !== 0 ? parsed : CHUNK_MEMORY_POLICY === "enforce" && status !== "PASS" ? 1 : parsed));
+            .then((status) => {
+                if (parsed !== 0) emitForensicDiagnostics();
+                exitWith(parsed !== 0 ? parsed : CHUNK_MEMORY_POLICY === "enforce" && status !== "PASS" ? 1 : parsed);
+            });
         return;
     }
 
@@ -721,5 +836,8 @@ waitChild.once("close", () => {
     stopDockerChild(logsChild, "logs");
     Promise.resolve(printContainerSummary(containerId, 1))
         .catch((error) => process.stderr.write(`[run-bdd-docker] warning: failed to print container summary: ${error.message}\n`))
-        .then(() => exitWith(1));
+        .then(() => {
+            emitForensicDiagnostics();
+            exitWith(1);
+        });
 });

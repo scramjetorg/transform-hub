@@ -11,6 +11,9 @@
 "use strict";
 
 const test = require("ava");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const {
 	KNOWN_PROCESS_PATTERNS,
@@ -120,6 +123,19 @@ test("cleanupTempDirs with default args does not throw", (t) => {
 	t.notThrows(() => cleanupTempDirs("/tmp", "bdd-runner-dont-exist-"));
 });
 
+test("owned cleanup removes the chunk and empty run parents", (t) => {
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-owned-cleanup-"));
+	const ownership = { runId: "cleanup-run", chunkId: "cleanup-chunk" };
+	const { encodePart } = require("../../bdd/lib/ownership.js");
+	const chunkRoot = path.join(root, "scramjet-bdd-runs", encodePart(ownership.runId), "chunks", encodePart(ownership.chunkId));
+	fs.mkdirSync(chunkRoot, { recursive: true });
+	fs.writeFileSync(path.join(chunkRoot, "marker"), "owned");
+	cleanupTempDirs(root, "", ownership);
+	t.false(fs.existsSync(chunkRoot));
+	t.false(fs.existsSync(path.join(root, "scramjet-bdd-runs", encodePart(ownership.runId))));
+	fs.rmSync(root, { recursive: true, force: true });
+});
+
 // ---------------------------------------------------------------------------
 // cleanupDockerContainers – graceful no-docker scenario
 // ---------------------------------------------------------------------------
@@ -186,5 +202,4 @@ test("stopProcess resolves eventually for child with unreachable pid", async (t)
 
 	await t.notThrowsAsync(stopProcess(child, { graceMs: 100 }));
 });
-
 

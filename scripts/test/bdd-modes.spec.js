@@ -3,6 +3,9 @@
 const test = require("ava");
 const modes = require("../run-bdd-modes.js");
 const waves = require("../run-bdd-waves.js");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 test("base mode is bounded representative coverage", (t) => {
     t.deepEqual(modes.BASE_CHUNKS, ["verser2", "topics-api", "appcontext", "node", "hub", "manager"]);
@@ -146,4 +149,24 @@ test("runMode ramps down a throwing chunk before exact-owner cleanup", async (t)
     }), { is: error });
 
     t.deepEqual(events, ["ramp-up:none->verser2", "ramp-down:verser2->none", "cleanup:verser2"]);
+});
+
+test("runMode holds the fixed host lock across lifecycle gaps and releases it after cleanup", async (t) => {
+    const lockPath = path.join(os.tmpdir(), "scramjet-bdd-parallel.lock");
+    const observed = [];
+    const status = await modes.runMode({
+        mode: "base",
+        rampUpMs: 0,
+        rampDownMs: 0,
+        lifecycle: async () => observed.push(fs.existsSync(lockPath)),
+        runChunk: async () => {
+            observed.push(fs.existsSync(lockPath));
+            return 0;
+        },
+        cleanupOwned: () => observed.push(fs.existsSync(lockPath)),
+        emit: () => undefined,
+    });
+    t.is(status, 0);
+    t.true(observed.every(Boolean));
+    t.false(fs.existsSync(lockPath));
 });
