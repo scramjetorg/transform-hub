@@ -23,7 +23,7 @@ See the [Manager documentation](../manager/overview.md) for details.
 
 ## MultiManager
 
-**MultiManager** is a high-availability configuration in which multiple Manager instances coordinate to provide failover and load-balanced control-plane access. If the primary Manager becomes unavailable, a standby takes over with minimal disruption to ongoing Sequence execution.
+**MultiManager** coordinates multiple Manager processes, their API surface, and sub-Manager lifecycle. It is not documented here as an HA, failover, load-balancing, persistence, or automatic Hub-redirection mechanism.
 
 ## Sequence
 
@@ -47,11 +47,11 @@ A **Runner** is the child process (or container) that executes a Sequence's code
 
 ## Topics
 
-**Topics** are named data channels within a Hub that enable decoupled communication between Sequences. A Sequence can publish data to a Topic, and other Sequences subscribed to that Topic receive the data automatically. Topics allow you to build multi-stage pipelines without hard-coding Sequence-to-Sequence connections.
+**Topics** are named data channels used for live service discovery and stream delivery between connected Hub components. The Manager can broker a topic stream between an owning Hub and a remote Hub through its topic multiplexer, but topic data is not persisted or replayable. Topics do not create direct Sequence-to-Sequence network connections.
 
 ## Streams
 
-**Streams** are the core data-flow abstraction in Transform Hub. Sequences operate on streams of data — each Sequence receives an input stream and can produce one or more output streams. The Hub manages stream backpressure, buffering, and delivery between connected Sequences.
+**Streams** are the core data-flow abstraction in Transform Hub. Sequences operate on streams of data — each Sequence receives an input stream and can produce one or more output streams. The Hub manages transient stream backpressure and delivery; it is not a persistence or replay layer.
 
 ## APIs
 

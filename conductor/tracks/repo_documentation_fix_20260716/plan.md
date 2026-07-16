@@ -32,27 +32,30 @@
 
 ## Phase 2: Write evidence-backed product, Manager, and package documentation
 
-- [ ] Task: Build a documentation claim matrix before editing user-facing copy.
-    - [ ] Verify each Manager, MultiManager, STH, and Sequence author claim against public APIs, configuration, source behavior, or focused tests.
-    - [ ] Remove or correct unsupported claims about HA/failover, automatic Hub redirection, persistence, direct cross-network Sequence transport, and package names.
-    - [ ] Confirm canonical sequence-author API guidance and retain the explicit limited scope of `@scramjet/sequence-test`.
-- [ ] Task: Rewrite the directly maintained root `README.md`.
-    - [ ] Open with one unlabeled, compound sentence that contains, in order, the product purpose for developers and platform operators, the portable hub-and-runner approach that serves it, and verified capabilities; follow with getting-started links and primary documentation navigation.
-    - [ ] Link the root README to Manager documentation, security/trust guidance, STH, MultiManager, and Sequence author documentation.
-- [ ] Task: Add or revise Manager documentation and the cross-network communication explainer.
-    - [ ] Document Manager's connected-Hub control-plane role, lifecycle/API routing, and live topic/service discovery.
-    - [ ] Add a GitHub-compatible Mermaid diagram of `Sequence → owning Hub → TLS/verser2 → Manager topic multiplexer → TLS/verser2 → remote Hub → Sequence`.
-    - [ ] Label control/API and live topic-stream paths separately and state that topic streams are brokered without persistence.
-- [ ] Task: Improve the selected user-facing package and author documentation.
-    - [ ] Update STH documentation with its host/CLI startup role and supported execution contexts.
-    - [ ] Update MultiManager documentation with source-backed sub-Manager lifecycle, routing, aggregation, and boundary language.
-    - [ ] Add Sequence author/API documentation, mentioning the scoped sequence-test harness without treating it as a broad test replacement.
-- [ ] Task: User Manual Verification - Product wording and package choices.
-    - [ ] Present the proposed root README narrative, Manager diagram/copy, and selected package/author documentation scope for approval before finalizing wording.
-- [ ] Task: Validate documentation content and generated mirrors.
-    - [ ] Regenerate/check documentation and validate Mermaid/link syntax using the repository's available focused checks.
-    - [ ] Review source/output diffs for claim-matrix alignment, generated markers, canonical sequence guidance, and absence of unsupported capability claims.
-- [ ] Task: Conductor - Phase Checkpoint 'Write evidence-backed product, Manager, and package documentation' (Protocol in workflow.md)
+- [x] Task: Build a documentation claim matrix before editing user-facing copy.
+    - [x] Verify each Manager, MultiManager, STH, and Sequence author claim against public APIs, configuration, source behavior, or focused tests.
+    - [x] Remove or correct unsupported claims about HA/failover, automatic Hub redirection, persistence, direct cross-network Sequence transport, and package names.
+    - [x] Confirm canonical sequence-author API guidance and retain the explicit limited scope of `@scramjet/sequence-test`.
+    - Evidence: source-backed matrix recorded from `ses_093e5e000ffegt8kGGAvvzXkY8` (2026-07-16). Manager routes lifecycle/API and live topic streams through verser2 but does not provide durable state, HA/failover, automatic Hub redirection, or direct Sequence networking; MultiManager manages in-process sub-Managers and aggregation, not HA. Canonical author surface is `@scramjet/sequence-types`; `@scramjet/sequence-test` is a scoped local harness only.
+- [x] Task: Rewrite the directly maintained root `README.md`.
+    - [x] Open with one unlabeled, compound sentence that contains, in order, the product purpose for developers and platform operators, the portable hub-and-runner approach that serves it, and verified capabilities; follow with getting-started links and primary documentation navigation.
+    - [x] Link the root README to Manager documentation, security/trust guidance, STH, MultiManager, and Sequence author documentation.
+- [x] Task: Add or revise Manager documentation and the cross-network communication explainer.
+    - [x] Document Manager's connected-Hub control-plane role, lifecycle/API routing, and live topic/service discovery.
+    - [x] Add a GitHub-compatible Mermaid diagram of `Sequence → owning Hub → TLS/verser2 → Manager topic multiplexer → TLS/verser2 → remote Hub → Sequence`.
+    - [x] Label control/API and live topic-stream paths separately and state that topic streams are brokered without persistence.
+- [x] Task: Improve the selected user-facing package and author documentation.
+    - [x] Update STH documentation with its host/CLI startup role and supported execution contexts.
+    - [x] Update MultiManager documentation with source-backed sub-Manager lifecycle, routing, aggregation, and boundary language.
+    - [x] Add Sequence author/API documentation, mentioning the scoped sequence-test harness without treating it as a broad test replacement.
+- [x] Task: User Manual Verification - Product wording and package choices.
+    - [x] Present the proposed root README narrative, Manager diagram/copy, and selected package/author documentation scope for approval before finalizing wording.
+    - Approval: user approved the `Scramjet Platform` title and final two-sentence README opening on 2026-07-16, including configured TLS encryption and client-authentication wording for Manager-coordinated internet connections.
+- [x] Task: Validate documentation content and generated mirrors.
+    - [x] Regenerate/check documentation and validate Mermaid/link syntax using the repository's available focused checks.
+    - [x] Review source/output diffs for claim-matrix alignment, generated markers, canonical sequence guidance, and absence of unsupported capability claims.
+    - Evidence: `npm run docs:generate` and `npm run docs:check` passed with `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`; generated-link validation passed. Mermaid is GitHub-compatible fenced `mermaid` flowchart syntax and source/output docs reflect the reviewed claim matrix.
+- [x] Task: Conductor - Phase Checkpoint 'Write evidence-backed product, Manager, and package documentation' (Protocol in workflow.md)
 
 ## Phase 3: Define and implement the Manager local trusted-CA helper
 

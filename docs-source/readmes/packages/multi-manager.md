@@ -1,8 +1,8 @@
-The MultiManager is a cloud-platform orchestration component that manages a fleet of STH Hubs across multiple spaces and environments. It provides a unified control plane for deploying, monitoring, and managing Sequences across distributed infrastructure.
+MultiManager is an orchestration component around multiple Manager processes and their managed Hubs. It provides API routing, sub-Manager lifecycle orchestration, and aggregation boundaries for health, audit, and related control-plane data; it does not execute Sequences itself.
 
 ## When to use
 
-Use `@scramjet/multi-manager` when you need to coordinate multiple Hubs across different spaces (organizational or functional groupings). It is the recommended control plane for Scramjet Cloud Platform deployments where topology spans multiple locations or tenants.
+Use `@scramjet/multi-manager` when a deployment needs to coordinate multiple Manager instances and their Hub groups across spaces or environments.
 
 For single-Manager deployments or smaller topologies, see [@scramjet/manager](../../docs-source/manager/overview.md).
 
@@ -33,7 +33,9 @@ In this repository workspace, run the source entrypoint with:
 npm run start -w @scramjet/multi-manager
 ```
 
-Use the executable help output as the source of truth for current flags. MultiManager owns server/API startup and sub-Manager lifecycle orchestration for multi-space deployments.
+Use the executable help output as the source of truth for current flags. MultiManager owns server/API startup, request routing, and sub-Manager lifecycle orchestration. Its aggregation boundary covers control-plane health, audit, and related Manager data; it is not a Sequence runner or a persistence layer.
+
+MultiManager documentation makes no HA, failover, leader-election, or automatic Hub-redirection claim. Those behaviors must not be inferred from the package name or from running multiple Manager processes.
 
 ## Stability
 

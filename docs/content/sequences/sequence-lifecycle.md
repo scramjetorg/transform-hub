@@ -117,13 +117,15 @@ Content type can be specified in the sequence metadata or via the `AppContext` c
 When a sequence exports an array of functions, each function's return value becomes the next function's input:
 
 ```typescript
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+
 export default [
   // parse input
-  async function (this: AppContext, input: Readable) {
+  async function (this: SequenceAppContext, input: Readable) {
     return input.pipe(through2.obj((chunk, _, cb) => cb(null, JSON.parse(chunk.toString()))));
   },
   // transform
-  async function (this: AppContext, input: Readable) {
+  async function (this: SequenceAppContext, input: Readable) {
     const results = [];
     for await (const obj of input) results.push(transform(obj));
     return results;

@@ -10,7 +10,7 @@ title: Testing sequences with @scramjet/sequence-test
 
 ## Overview
 
-`@scramjet/sequence-test` provides utilities for testing sequence behavior in isolation, without requiring a running Transform Hub instance. It includes:
+`@scramjet/sequence-test` provides scoped local fixture and hub-harness utilities for testing sequence behavior and AppContext interactions without requiring a running Transform Hub instance. It includes:
 
 Where route paths appear in examples, they use legacy v1-compatible Hub mock routes from the current harness.
 

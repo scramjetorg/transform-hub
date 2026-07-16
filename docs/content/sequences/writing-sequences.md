@@ -9,11 +9,13 @@ title: Writing sequences for Transform Hub
 
 # Writing sequences for Transform Hub
 
-A **sequence** is a deployable unit of work that Scramjet Transform Hub supervises. Sequences can be written in JavaScript (Node.js), TypeScript (Node.js), Bun, or Python. This guide covers how to write sequences in each supported language and what contracts they must satisfy.
+A **sequence** is a deployable unit of work that Scramjet Transform Hub supervises. Sequences can be written in JavaScript (Node.js), TypeScript (Node.js), Bun, or Python. This guide covers the supported application shapes, the canonical `@scramjet/sequence-types` author API, and the contracts required by each runtime.
 
 ## Sequence basics
 
-A sequence is an exported function (or array of functions) from a module. Each function receives the **AppContext** as `this`, an **input stream**, and optional **arguments** from the caller. The return value of each function feeds into the next, forming a processing pipeline.
+A sequence is an exported function (or array of functions) from a module. The canonical `@scramjet/sequence-types` package exposes the sequence-facing `SequenceAppContext` and application types for readable, writable, transforming, and inert applications. Each application receives the **SequenceAppContext** as `this`, an **input stream** when applicable, and optional **arguments** from the caller.
+
+The named author-facing types are `SequenceApplication`, `SequenceApplicationFunction`, `SequenceReadableApp`, `SequenceWritableApp`, `SequenceTransformApp`, and `SequenceInertApp`. There is no `@scramjet/sequence` package; use `@scramjet/sequence-types` for these contracts.
 
 ```
 Input → function1 → function2 → … → functionN → Output
@@ -36,7 +38,9 @@ Node.js sequences are the most common. Export a function (or an array of functio
 **Minimal Node.js sequence:**
 
 ```typescript
-export default async function (this: AppContext, input: Readable) {
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+
+export default async function (this: SequenceAppContext, input: Readable) {
   let count = 0;
   for await (const chunk of input) {
     this.logger.info("received", chunk.toString());
@@ -49,12 +53,14 @@ export default async function (this: AppContext, input: Readable) {
 **Pipeline (multi-function sequence):**
 
 ```typescript
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+
 export default [
-  async function (this: AppContext, input: Readable) {
+  async function (this: SequenceAppContext, input: Readable) {
     // Transform input, return a stream or value
     return input.pipe(new Transform({ objectMode: true, transform(chunk, _, cb) { cb(null, chunk.toString().toUpperCase()); } }));
   },
-  async function (this: AppContext, input: Readable) {
+  async function (this: SequenceAppContext, input: Readable) {
     const lines = [];
     for await (const line of input) lines.push(line);
     return lines;
@@ -64,13 +70,15 @@ export default [
 
 ### Bun sequences
 
-Bun sequences use the same `@scramjet/types` `AppContext` interface. When host channels are required (IN, OUT, LOG), `runner-bun` delegates to the Node runtime. In headless mode (no `instancesServerPort` configured), Bun runs the sequence directly.
+Bun sequences use the canonical `SequenceAppContext` surface from `@scramjet/sequence-types`. When host channels are required (IN, OUT, LOG), `runner-bun` delegates to the Node runtime. In headless mode (no `instancesServerPort` configured), Bun runs the sequence directly.
 
 **Bun sequence:**
 
 ```typescript
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+
 // bun-sequence.ts
-export default async function (this: AppContext, input: Readable) {
+export default async function (this: SequenceAppContext, input: Readable) {
   for await (const chunk of input) {
     // direct Bun API available here
   }
@@ -108,9 +116,9 @@ def main(context, input_stream):
 
 Package the sequence with `"engines": { "python3": ">=3.9" }` in `package.json` and set `"main"` to the Python file path.
 
-## AppContext API
+## SequenceAppContext API
 
-The `AppContext` interface (defined in `@scramjet/types`) is the primary interaction surface for sequences:
+The `SequenceAppContext` interface (defined in `@scramjet/sequence-types`) is the primary interaction surface for sequence authors:
 
 | Method / Property | Purpose |
 |-------------------|---------|
@@ -137,10 +145,10 @@ The `AppContext` interface (defined in `@scramjet/types`) is the primary interac
 Existing sequences can keep using `this.hub` and `this.space`; those properties remain legacy v1-compatible clients for backwards compatibility. New sequence code should prefer `this.hubClient()` and `this.spaceClient()`, which return v2 fluent clients backed by `@scramjet/rest-api2`.
 
 ```typescript
-import type { AppConfig, AppContext } from "@scramjet/types";
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
 import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
 
-type V2Context = AppContext<AppConfig, unknown, HubClient, SpaceClient>;
+type V2Context = SequenceAppContext<AppConfig, unknown, HubClient, SpaceClient>;
 
 export default async function (this: V2Context) {
   const hubHealth = await this.hubClient().health.get();

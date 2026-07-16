@@ -1,12 +1,12 @@
 # @scramjet/sth
 
-Scramjet Transform Hub (STH) is the core runtime process that deploys, executes, and monitors Transform Sequences on a host. It is the primary server component of the Scramjet Transform Hub platform.
+Scramjet Transform Hub (STH) is the host-side runtime and CLI entrypoint that starts the Hub API, deploys Sequences, launches and supervises Runners, and reports lifecycle and monitoring state. It is the primary server component of the Transform Hub platform.
 
 ## When to use
 
-Install and run `@scramjet/sth` on any machine where you want to execute Sequences — a development workstation, a production server, an edge device, or a cloud VM. The Hub manages Sequence lifecycle, inter-process communication via Topics, health monitoring, and adapter-based runner execution (process, Docker, or Kubernetes).
+Install and run `@scramjet/sth` in either standalone mode for a single Hub or in Manager-connected mode for a connected-Hub control plane. The Hub manages Sequence lifecycle, host communication, health monitoring, and adapter-based Runner execution through the process, Docker, or Kubernetes adapters.
 
-For multi-host orchestration, connect STH instances to a [Manager](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/overview.md) or [MultiManager](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/connecting-hubs.md).
+For multi-Hub orchestration, connect STH instances to a [Manager](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/manager/overview.md) or configure them for a [MultiManager](https://github.com/scramjetorg/transform-hub/blob/HEAD/docs-source/readmes/packages/multi-manager.md) deployment. The Manager routes control/API operations; STH remains responsible for execution on its host.
 
 ## Quick start
 
@@ -16,7 +16,7 @@ Install globally:
 npm install -g @scramjet/sth
 ```
 
-Start the Hub (defaults to port 8000 with automatic adapter detection):
+Start the Hub (default port 8000 with adapter selection):
 
 ```bash
 scramjet-transform-hub

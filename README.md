@@ -1,4 +1,4 @@
-<h1 align="center"><strong>Scramjet Transform Hub</strong></h1>
+<h1 align="center"><strong>Scramjet Platform</strong></h1>
 <p align="center">
     <a href="https://github.com/scramjetorg/transform-hub/blob/HEAD/LICENSE"><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
     <a href="https://npmjs.org/package/@scramjet/sth"><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
@@ -14,21 +14,23 @@
     <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
 </p>
 
-# The Idea
+# Scramjet Platform
 
-Scramjet Transform Hub is an open-source runtime supervisor for packaging, deploying, running, and monitoring stream-oriented programs called Transform Sequences.
+Because distributed integrations should not require rebuilding networking and operations for every workflow, by combining runtime execution, APIs, RPC, and configured tunnels we created the Scramjet Platform.
 
-The Hub is the heart of Scramjet Cloud Platform, a serverless data processing system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to processes, Docker containers or Kubernetes clusters just as easily.
+Now you can deploy contained Python, Bun, and Node.js Sequences wherever work needs to happen; Transform Hubs run them locally, and Scramjet Manager coordinates connected Hubs over the internet using configured TLS encryption and client authentication.
 
-It currently supports **Node.js**, **Bun**, and **Python** based sequences.
+## Start here
 
-[Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
+- [Manager operations](./docs/content/manager/overview.md)
+- [STH runtime and package reference](./docs/readmes/packages/sth/README.md)
+- [MultiManager reference](./docs/readmes/packages/multi-manager/README.md)
+- [Sequence author guide](./docs/content/sequences/writing-sequences.md)
+- [Sequence lifecycle](./docs/content/sequences/sequence-lifecycle.md)
+- [Hub configuration and TLS trust](./docs/content/transform-hub/configuration.md)
+- [Connecting Hubs](./docs/content/manager/connecting-hubs.md)
 
-If you don't have a server ready or want to run something from the cloud itself, do check out our website and try the hosted version of [Scramjet Cloud Platform](https://scramjet.org/).
-
----
-
-# Quick Start
+## Quick start
 
 Install the Hub and CLI packages:
 
@@ -55,63 +57,11 @@ Requirements:
 - **Python >= 3.9** for Python sequences
 - **Docker** for Docker adapter deployments
 
-See [docs-source/transform-hub/overview.md](./docs-source/transform-hub/overview.md) for detailed setup and [docs-source/transform-hub/build-run.md](./docs-source/transform-hub/build-run.md) for build and run workflows.
+See [Hub setup and concepts](./docs/content/transform-hub/overview.md) for detailed setup and [build and run workflows](./docs/content/transform-hub/build-run.md) for local development.
 
----
+## Documentation
 
-# Packages
-
-The monorepo contains the following npm packages:
-
-| Package | Description |
-|---------|-------------|
-| [@scramjet/adapter-docker](./packages/adapter-docker/) | This module holds the docker adapters utilized by Scramjet Transform Hub |
-| [@scramjet/adapter-kubernetes](./packages/adapter-kubernetes/) | Kubernetes adapter for sequence storage, runner pod execution, CLI/config augmentation, and client initialization. |
-| [@scramjet/adapter-process](./packages/adapter-process/) | This module holds the process adapters utilized by Scramjet Transform Hub |
-| [@scramjet/adapters](./packages/adapters/) | Legacy adapter re-export barrel; prefer individual adapter packages (adapter-docker, adapter-kubernetes, adapter-process) for new usage. |
-| [@scramjet/adapters-common](./packages/adapters-common/) | This module holds the common items held by adapters utilized by Scramjet Transform Hub |
-| [@scramjet/api-client](./packages/api-client/) | The package provides the API Client for use with Scramjet Transform Hub. |
-| [@scramjet/api-router](./packages/api-router/) | Schema-aware API route declaration, manifest, and client contract package for Scramjet Transform Hub. |
-| [@scramjet/api-server](./packages/api-server/) | HTTP API server for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. |
-| [@scramjet/api-types](./packages/api-types/) | API/user-facing type contracts for Scramjet Transform Hub. Owns REST DTOs, APIExpose, client interface stubs, and strict API-specific AppContext aliases built on @scramjet/runtime-types without importing @scramjet/rest-api2 or @scramjet/types. |
-| [@scramjet/bpmux](./packages/bpmux/) | Node stream multiplexing with back-pressure on each stream |
-| [@scramjet/cli](./packages/cli/) | The package provides a CLI interface to communicate with Scramjet Transform Hub. |
-| [@scramjet/client-utils](./packages/client-utils/) | The package provides the API Client Utils for use with Scramjet Transform Hub. |
-| [@scramjet/config](./packages/config/) | The package provides Zod-backed configuration loading, validation, masking, and CLI option metadata. |
-| [@scramjet/frame-stream](./packages/frame-stream/) | Length-prefixed message framing for Node.js streams. |
-| [@scramjet/host](./packages/host/) | The package provides the main host subsystem of STH - starts API Servers, creates adapters etc. |
-| [@scramjet/load-check](./packages/load-check/) | The package provides health info for STH. |
-| [@scramjet/logger](./packages/logger/) | The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice. |
-| [@scramjet/manager](./packages/manager/) | Scramjet Manager |
-| [@scramjet/middleware-api-client](./packages/middleware-api-client/) | Scramjet Middleware API Client |
-| [@scramjet/model](./packages/model/) | The package provides the domain model for STH and the CLI. |
-| [@scramjet/module-loader](./packages/module-loader/) | Scramjet Module Loader |
-| [@scramjet/monitoring-server](./packages/monitoring-server/) | Scramjet Monitoring Server |
-| [@scramjet/multi-manager](./packages/multi-manager/) | This package is part of Scramjet Cloud Platform. |
-| [@scramjet/multi-manager-api-client](./packages/multi-manager-api-client/) | Scramjet MultiManager API Client |
-| [@scramjet/obj-logger](./packages/obj-logger/) | Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation. |
-| [@scramjet/pre-runner](./packages/pre-runner/) | The package identifies the sequences and returns the information to back STH. |
-| [@scramjet/rest-api2](./packages/rest-api2/) | Scramjet Transform Hub v2 REST API contracts and common client. |
-| [@scramjet/runner](./packages/runner/) | The package executes the remote runners and provides communication with them through abstraction layer provided by adapters. |
-| [@scramjet/runner-bun](./packages/runner-bun/) | Bun sequence runtime wrapper for Scramjet Transform Hub runner isolation. |
-| [@scramjet/runner-node](./packages/runner-node/) | Node sequence runtime for Scramjet Transform Hub runner isolation. |
-| [@scramjet/runner-python](./packages/runner-python/) | Python runtime wrapper for packages/runner |
-| [@scramjet/runtime-types](./packages/runtime-types/) | Generic low-level runtime-neutral types for Scramjet Transform Hub. Owns BaseAppContext, runtime-neutral utility/logger/storage interfaces, error types, function/stream primitives, and runner config contracts — without API client dependencies. |
-| [@scramjet/sequence-test](./packages/sequence-test/) | Test harness for Scramjet Transform Sequences using the runner protocol without starting a full Transform Hub. Supported for scoped local sequence fixture/harness validation. |
-| [@scramjet/sequence-types](./packages/sequence-types/) | Sequence-author-facing types for Scramjet Transform Hub. Exports the frozen sequence AppContext API backed by BaseAppContext from @scramjet/runtime-types, plus canonical sequence application/function types for sequence authors. |
-| [@scramjet/sth](./packages/sth/) | Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like. |
-| [@scramjet/symbols](./packages/symbols/) | The package holds the symbols and enumerations for STH. |
-| [@scramjet/telemetry](./packages/telemetry/) | The package provides modules for gathering analytics data. |
-| [@scramjet/types](./packages/types/) | [DEPRECATED] This package is part of Scramjet Transform Hub. The package holds the typescript definitions for all common STH interfaces. Deprecated in favor of @scramjet/runtime-types, @scramjet/sequence-types, and @scramjet/api-types. Existing imports continue to resolve; new code should import from the split packages. |
-| [@scramjet/utility](./packages/utility/) | The package holds utility functions used in places around Scramjet Transform Hub. |
-| [@scramjet/verser](./packages/verser/) | The package provides a reverse server functionality used among Scramjet modules. |
-
-
-# Documentation
-
-Generated documentation is published to [docs/](./docs/), including content pages, curated TypeScript reference, README mirrors, and metadata for Docusaurus consumption.
-
-Handwritten documentation source lives in [docs-source/](./docs-source/). See [docs-source/README.md](./docs-source/README.md) for authoring conventions.
+Generated documentation is published to [docs/](./docs/), while handwritten source is maintained in [docs-source/](./docs-source/).
 
 # Contributing
 

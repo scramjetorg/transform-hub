@@ -48,11 +48,13 @@ File and CLI configuration loading is available through the newer `@scramjet/con
 
 ## MultiManager
 
-For production deployments with high-availability requirements, use the **MultiManager** package (`@scramjet/multi-manager`), which provides:
+The **MultiManager** package (`@scramjet/multi-manager`) coordinates multiple Manager processes and provides:
 
 - CLI flags for port, host, log level, and configuration file
 - API server integration
 - Sub-Manager lifecycle management
+
+MultiManager is a control-plane composition layer. HA, failover, persistence, and automatic Hub redirection are not implied by using the package and must not be assumed without deployment-specific verification.
 
 ```bash
 npx multi-manager --server-api-port 8200

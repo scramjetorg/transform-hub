@@ -48,7 +48,7 @@ The host can change the monitoring interval by sending a `MONITORING_RATE` frame
 
 ## Logging
 
-Sequences use `this.logger`, which implements `IObjectLogger` from `@scramjet/types`. The logger writes structured JSON objects to the LOG channel.
+Sequences use `this.logger`, which implements `IObjectLogger` from `@scramjet/sequence-types`. The logger writes structured JSON objects to the LOG channel.
 
 ### Log methods
 

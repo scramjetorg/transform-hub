@@ -8,17 +8,27 @@ title: Connecting Hubs to a Manager
 
 > **⚠️ Needs review**: This page documents the v1-era CPM/HTTP registration flow. TLS/mTLS configuration and verser2 enrollment details are incomplete. For production deployments, consult the Manager configuration schema and generated reference for the authoritative up-to-date connection parameters.
 
-A Hub connects to a Manager so the Manager can route commands, aggregate status, and provide a unified view of all running Sequences. This page covers Hub registration and connection management.
+A Hub connects to a Manager so the Manager can route lifecycle/API commands, aggregate status, and broker live topic/service-discovery streams. This page covers Hub registration and connection management.
 
 ## Connection topology
 
 The Hub-to-Manager connection uses the **verser2** transport protocol. The communication path is:
 
-```
-Runner → STH-local verser2 Host → STH → Manager
+```mermaid
+flowchart LR
+    S1[Sequence] --> H1[owning Hub]
+    H1 -->|control/API| C1[TLS/verser2]
+    C1 -->|control/API| R[Manager API/router]
+    R -->|control/API| C2[TLS/verser2]
+    C2 --> H2[remote Hub]
+    H2 --> S2[Sequence]
+    H1 -->|live topic-stream| T1[TLS/verser2]
+    T1 -->|live topic-stream| M[Manager topic multiplexer]
+    M -->|live topic-stream| T2[TLS/verser2]
+    T2 --> H2
 ```
 
-There is no direct connection between a Runner process and the Manager. All communication flows through the local verser2 host running inside the STH (Hub) process.
+The Hub's local verser2 host carries the Manager connection; a Runner does not connect directly to the Manager. The Manager API/router control path is separate from the Manager topic multiplexer live-stream path shown above. Topic streams are not persisted or replayable, and the Manager does not establish direct Sequence-to-Sequence network connections.
 
 In production, verser2 connectivity requires TLS. mTLS is configurable for mutual authentication. See the [Transform Hub configuration](../transform-hub/configuration.md) for verser2-related settings and the generated curated reference for exact type definitions.
 
@@ -80,7 +90,7 @@ If no Hub ID is provided, the Hub generates a random one. Using explicit IDs mak
 
 ## MultiManager considerations
 
-In a [MultiManager](overview.md#multimanager) setup, Hubs should be configured with the current Manager/MultiManager connection endpoint and TLS policy:
+In a [MultiManager](overview.md#multimanager) setup, Hubs should be configured with the Manager/MultiManager connection endpoint and TLS policy:
 
 ```bash
 sth --cpm-id production-node-1 \
@@ -88,7 +98,7 @@ sth --cpm-id production-node-1 \
   --verser2-host-url https://manager-a:2443
 ```
 
-Exact failover and enrollment behavior depends on the deployed Manager/MultiManager configuration and should be reviewed with the generated config schema and verser2 settings.
+Enrollment and lifecycle behavior depends on the deployed Manager/MultiManager configuration and should be reviewed with the generated config schema and verser2 settings. This documentation makes no automatic Hub-redirection, HA, or failover claim.
 
 ## Next steps
 
