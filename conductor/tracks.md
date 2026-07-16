@@ -11,3 +11,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: memory efficient testing**
 *Link: [./tracks/memory_efficient_testing_20260710/](./tracks/memory_efficient_testing_20260710/)*
+
+---
+
+- [ ] **Track: repo documentation fix**
+*Link: [./tracks/repo_documentation_fix_20260716/](./tracks/repo_documentation_fix_20260716/)*
