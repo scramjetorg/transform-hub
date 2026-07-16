@@ -70,6 +70,7 @@ export class CustomWorld implements World {
         instance2Id?: string;
         sequences?: STHRestAPI.GetSequencesResponse;
         instances?: STHRestAPI.GetInstancesResponse;
+        templateDirectory?: string;
         commandInProgress?: ChildProcessWithoutNullStreams;
         collectedTopicData?: string;
     } = {};

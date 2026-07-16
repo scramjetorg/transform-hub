@@ -109,10 +109,153 @@ function spawnOwnedChild(options) {
     });
 }
 
+function validateParallelCompletion(chunks, launchedNames, results) {
+    const plannedNames = chunks.map((chunk) => chunk.name);
+    const completedNames = results.map((result) => result.chunk);
+    const countNames = (names) => names.reduce((counts, name) => counts.set(name, (counts.get(name) || 0) + 1), new Map());
+    const planned = countNames(plannedNames);
+    const launched = countNames(launchedNames);
+    const completed = countNames(completedNames);
+    const missingLaunches = plannedNames.filter((name) => launched.get(name) !== 1);
+    const missingResults = plannedNames.filter((name) => completed.get(name) !== 1);
+    const unexpectedResults = completedNames.filter((name) => !planned.has(name));
+    const duplicateLaunches = [...launched].filter(([name, count]) => count > 1).map(([name]) => name);
+    const duplicateResults = [...completed].filter(([name, count]) => count > 1).map(([name]) => name);
+    const problems = [];
+    if (missingLaunches.length) problems.push(`planned chunks not launched exactly once: ${[...new Set(missingLaunches)].join(", ")}`);
+    if (missingResults.length) problems.push(`planned chunks missing results: ${[...new Set(missingResults)].join(", ")}`);
+    if (unexpectedResults.length) problems.push(`unexpected chunk results: ${[...new Set(unexpectedResults)].join(", ")}`);
+    if (duplicateLaunches.length) problems.push(`chunks launched more than once: ${duplicateLaunches.join(", ")}`);
+    if (duplicateResults.length) problems.push(`chunks returned results more than once: ${duplicateResults.join(", ")}`);
+    return {
+        complete: problems.length === 0,
+        planned: plannedNames,
+        launched: launchedNames,
+        completed: completedNames,
+        missingLaunches: [...new Set(missingLaunches)],
+        missingResults: [...new Set(missingResults)],
+        unexpectedResults: [...new Set(unexpectedResults)],
+        duplicateLaunches,
+        duplicateResults,
+        problems
+    };
+}
+
+function sameWorkerGeneration(left, right) {
+    if (!left || !right || left.chunkId !== right.chunkId) return false;
+    if (left.generation != null || right.generation != null) return left.generation === right.generation && left.wrapperPid === right.wrapperPid;
+    return left.wrapperPid === right.wrapperPid;
+}
+
+function isWorkerProcessAlive(wrapperPid) {
+    try {
+        process.kill(wrapperPid, 0);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function isChunkWorkerSettled(chunkId, workerSnapshot, active, getSettledWorkersSnapshot, getLatestSettledGeneration) {
+    const observed = workerSnapshot.find((w) => w.chunkId === chunkId);
+    if (!observed) {
+        // The worker may have been fully removed from active records before a
+        // delayed container-missing sample resolves.  Look up the persistent
+        // latest-settled-generation map: if the chunk has a settled generation
+        // it was genuinely completed; otherwise it was never tracked and the
+        // missing telemetry stays current.
+        if (typeof getLatestSettledGeneration === "function") {
+            const latestGen = getLatestSettledGeneration().get(chunkId);
+            return latestGen != null;
+        }
+        return true;
+    }
+    // Explicit settled-worker registry (updated synchronously in onChunkResult)
+    // takes priority over handle/OS checks because the ChildProcess exitCode may
+    // still be null when the delayed telemetry sample resolves.
+    if (typeof getSettledWorkersSnapshot === "function") {
+        if (getSettledWorkersSnapshot().has(`${chunkId}:${observed.generation}`)) return true;
+    }
+    if (!active.some((w) => w.chunkId === chunkId && w.wrapperPid === observed.wrapperPid && w.generation === observed.generation)) return true;
+    if (observed.child && (observed.child.exitCode !== null || observed.child.signalCode !== null)) return true;
+    if (!isWorkerProcessAlive(observed.wrapperPid)) return true;
+    return false;
+}
+
+/** Extract chunk IDs referenced in an "owned container telemetry: …" entry. */
+function containerMissingChunks(item) {
+    const str = String(item);
+    if (!str.startsWith("owned container telemetry:")) return [];
+    const rest = str.slice("owned container telemetry:".length).trim();
+    const chunks = [];
+    for (const entry of rest
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)) {
+        // entry = "run-id/chunk-name" or bare "chunk-name"
+        const idx = entry.lastIndexOf("/");
+        chunks.push(idx >= 0 ? entry.slice(idx + 1) : entry);
+    }
+    return chunks;
+}
+
+function filterStaleTelemetrySample(sample, getTelemetrySnapshot, getSettledWorkersSnapshot, getLatestSettledGeneration) {
+    if (!sample || !sample.workerSnapshot || typeof getTelemetrySnapshot !== "function") return sample;
+    const active = getTelemetrySnapshot() || [];
+
+    // Staleness predicate shared by telemetry-failure and container-missing checks.
+    function isFailureStale(chunkId) {
+        return isChunkWorkerSettled(chunkId, sample.workerSnapshot, active, getSettledWorkersSnapshot, getLatestSettledGeneration);
+    }
+
+    // Filter stale telemetry failures (existing logic, now using shared helper).
+    const currentFailures = (sample.telemetryFailures || []).filter((failure) => !isFailureStale(failure.chunkId));
+
+    const staleFailureCount = (sample.telemetryFailures || []).length - currentFailures.length;
+
+    // Filter stale container-missing entries.
+    const missing = [];
+    let staleContainerCount = 0;
+
+    for (const item of sample.missing || []) {
+        const str = String(item);
+        if (str.startsWith("owned container telemetry:")) {
+            const chunks = containerMissingChunks(item);
+            // If all referenced chunks have settled workers the entry is stale.
+            if (chunks.length > 0 && chunks.every((c) => isFailureStale(c))) {
+                staleContainerCount++;
+                continue;
+            }
+        }
+        if (!str.startsWith("worker telemetry:")) missing.push(item);
+    }
+
+    if (currentFailures.length) missing.push(`worker telemetry: ${currentFailures.map((item) => `${item.chunkId}: ${item.reason}`).join(", ")}`);
+
+    const staleCount = staleFailureCount + staleContainerCount;
+    // stale-only when every missing/failure item originated from a settled worker
+    // and there is no other unaccounted missing telemetry.
+    const staleTelemetryOnly = staleCount > 0 && currentFailures.length === 0 && missing.length === 0 && sample.totalBytes === null;
+
+    if (staleTelemetryOnly) {
+        // The only reason totalBytes was null were stale items (worker failures
+        // and/or container-missing entries for settled chunks).  Recompute from
+        // the available non-stale components.
+        const recomputedTotal =
+            (Number.isFinite(sample.schedulerBytes) ? sample.schedulerBytes : 0) +
+            (Number.isFinite(sample.dockerDaemonBytes) ? sample.dockerDaemonBytes : 0) +
+            (Number.isFinite(sample.activeOwnedContainerBytes) ? sample.activeOwnedContainerBytes : 0) +
+            (Number.isFinite(sample.activeOwnedProcessBytes) ? sample.activeOwnedProcessBytes : 0);
+        return { ...sample, telemetryFailures: currentFailures, missing, staleTelemetryOnly, totalBytes: recomputedTotal };
+    }
+    return { ...sample, telemetryFailures: currentFailures, missing, staleTelemetryOnly };
+}
+
 async function runParallelChunks(options) {
     const chunks = options.chunks || [];
     const concurrency = options.concurrency ?? PARALLEL_CONCURRENCY_CAP;
     const results = [];
+    const launchedNames = [];
     let cursor = 0;
     const admissions = [];
     let failed = false;
@@ -121,24 +264,53 @@ async function runParallelChunks(options) {
     const activeControllers = new Set();
     const footprint = [];
     let footprintFailure = null;
+    let monitoringFailure = null;
+    let monitoringSamplePromise = null;
+
+    function recordMonitoringFailure(reason, sample) {
+        if (monitoringFailure) return;
+        monitoringFailure = reason;
+        footprintFailure = reason;
+        options.onFootprintFailure?.(reason, sample);
+        activeControllers.forEach((controller) => controller.abort());
+    }
+
+    async function collectFootprint({ fresh = false, enforce = false } = {}) {
+        if (!options.measureFootprint) return null;
+        // An interval sample is diagnostic only. A launch must await its own
+        // fresh sample rather than inheriting a sample captured before the
+        // preceding worker settled.
+        if (monitoringSamplePromise) {
+            if (!fresh) return monitoringSamplePromise;
+            await monitoringSamplePromise;
+        }
+        const samplePromise = Promise.resolve()
+            .then(() => options.measureFootprint())
+            .then((rawSample) => {
+                const sample = filterStaleTelemetrySample(rawSample, options.getTelemetrySnapshot, options.getSettledWorkersSnapshot, options.getLatestSettledGeneration);
+                footprint.push(sample);
+                if (enforce) {
+                    if (sample?.totalBytes === null && !sample.staleTelemetryOnly) recordMonitoringFailure("missing required host telemetry", sample);
+                    else if (sample?.totalBytes > options.hostMemoryLimitBytes) recordMonitoringFailure("host footprint exceeded limit", sample);
+                }
+                return sample;
+            })
+            .catch((error) => {
+                const sample = { error };
+                footprint.push(sample);
+                if (enforce) recordMonitoringFailure(error.message, sample);
+                return null;
+            })
+            .finally(() => {
+                if (monitoringSamplePromise === samplePromise) monitoringSamplePromise = null;
+            });
+        monitoringSamplePromise = samplePromise;
+        return samplePromise;
+    }
+
     const monitor = options.measureFootprint
         ? setInterval(() => {
-              Promise.resolve(options.measureFootprint())
-                  .then((sample) => {
-                      footprint.push(sample);
-                      if (sample?.totalBytes === null || sample?.totalBytes > options.hostMemoryLimitBytes) {
-                          footprintFailure = sample?.totalBytes === null ? "missing required host telemetry" : "host footprint exceeded limit";
-                          options.onFootprintFailure?.(footprintFailure, sample);
-                          failed = true;
-                          activeControllers.forEach((controller) => controller.abort());
-                      }
-                  })
-                  .catch((error) => {
-                      footprintFailure = error.message;
-                      options.onFootprintFailure?.(footprintFailure);
-                      failed = true;
-                      activeControllers.forEach((controller) => controller.abort());
-                  });
+              void collectFootprint();
           }, options.measureIntervalMs || 1000)
         : null;
     monitor?.unref?.();
@@ -152,9 +324,14 @@ async function runParallelChunks(options) {
             activeWorkers++;
             peakWorkers = Math.max(peakWorkers, activeWorkers);
             try {
+                launchedNames.push(chunk.name);
                 const result = await options.runChunk(chunk, controller.signal);
-                results.push({ chunk: chunk.name, ...result });
-                if (result.code !== 0) {
+                const recordedResult = { ...result, chunk: chunk.name };
+                results.push(recordedResult);
+                // Reconcile ownership synchronously with result recording so
+                // post-batch telemetry cannot observe a completed child PID.
+                options.onChunkResult?.(chunk, recordedResult);
+                if (result.code !== 0 || result.terminationVerified === false || result.cancellationFailure) {
                     failed = true;
                     cancelAll();
                 }
@@ -167,7 +344,13 @@ async function runParallelChunks(options) {
                 controllers.delete(controller);
             }
         };
-        await Promise.all(batch.map(worker));
+        const freshSample = await collectFootprint({ fresh: true, enforce: true });
+        if (monitoringFailure || options.signal?.aborted || (freshSample?.totalBytes === null && !freshSample.staleTelemetryOnly)) {
+            failed = true;
+            cancelAll();
+        } else {
+            await Promise.all(batch.map(worker));
+        }
         options.signal?.removeEventListener("abort", cancelAll);
         cancelAll();
     }
@@ -176,10 +359,21 @@ async function runParallelChunks(options) {
         while (cursor < chunks.length) {
             const remaining = chunks.slice(cursor);
             const currentPolicy = options.policyMap?.[remaining[0]?.name];
-            const batch =
-                currentPolicy?.classification === "exclusive"
-                    ? remaining.slice(0, 1)
-                    : remaining.slice(0, Math.min(concurrency, PARALLEL_CONCURRENCY_CAP)).filter((chunk) => options.policyMap?.[chunk.name]?.classification !== "exclusive");
+            let batch;
+            if (currentPolicy?.classification === "exclusive") {
+                batch = remaining.slice(0, 1);
+            } else {
+                const candidateLimit = Math.min(concurrency, PARALLEL_CONCURRENCY_CAP);
+                const candidateChunks = remaining.slice(0, candidateLimit);
+                const exclusiveIndex = candidateChunks.findIndex((chunk) => options.policyMap?.[chunk.name]?.classification === "exclusive");
+                // Do not skip an exclusive chunk while forming a batch: it is
+                // an ordering barrier and must run alone before later chunks.
+                batch = exclusiveIndex >= 0 ? candidateChunks.slice(0, exclusiveIndex) : candidateChunks;
+            }
+            if (batch.length === 0) {
+                failed = true;
+                break;
+            }
             const admission = options.admitBatch
                 ? await options.admitBatch(batch)
                 : !options.policyMap && cursor === 0 && options.admission
@@ -202,6 +396,7 @@ async function runParallelChunks(options) {
             }
             const batchStartedAt = Date.now();
             await runBatch(batch); // drain barrier: no later admissions until this batch is fully settled
+            await collectFootprint();
             admission.startedAt = batchStartedAt;
             admission.finishedAt = Date.now();
             admission.durationMs = admission.finishedAt - batchStartedAt;
@@ -210,8 +405,12 @@ async function runParallelChunks(options) {
         }
     } finally {
         if (monitor) clearInterval(monitor);
+        if (monitoringSamplePromise) await monitoringSamplePromise;
     }
-    return { admission: admissions[0], admissions, results, failed, peakWorkers, footprint, footprintFailure };
+    if (monitoringFailure) failed = true;
+    const completion = validateParallelCompletion(chunks, launchedNames, results);
+    if (!completion.complete) failed = true;
+    return { admission: admissions[0], admissions, results, failed, peakWorkers, footprint, footprintFailure, monitoringFailure, completion };
 }
 
-module.exports = { killProcessTree, runParallelChunks, spawnOwnedChild };
+module.exports = { killProcessTree, runParallelChunks, spawnOwnedChild, validateParallelCompletion, filterStaleTelemetrySample };

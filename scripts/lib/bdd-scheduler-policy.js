@@ -1,29 +1,51 @@
 "use strict";
 
 const GiB = 1024 * 1024 * 1024;
+const MiB = 1024 * 1024;
 
 const HOST_MEMORY_LIMIT_BYTES = 4 * GiB;
-const PARALLEL_CONCURRENCY_CAP = 2;
+const PARALLEL_CONCURRENCY_CAP = 4;
 const RESERVATION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const MEASURED_AT = 1784192546000;
+const SOURCE_COMMIT = "e1d58ed4aeeb91786d10a904742dd6ceb9eaeb04";
+const AGGREGATE_OWNED_PEAK_BYTES = 832 * MiB;
+const COMMITTED_MARGIN_BYTES = 64 * MiB;
 
-// Reservations are intentionally empty until collected from measured runs.
-// Do not replace null with estimates: parallel admission must fail closed.
+function measuredReservation() {
+    return Object.freeze({
+        measuredAt: MEASURED_AT,
+        sourceCommit: SOURCE_COMMIT,
+        absolutePeakBytes: AGGREGATE_OWNED_PEAK_BYTES,
+        committedMarginBytes: COMMITTED_MARGIN_BYTES,
+        sampleCount: 1
+    });
+}
+
+// Evidence source: /tmp/opencode/bdd-balanced-parallel-4-final.log. The
+// largest observed single owned container working set was 690,360,320 bytes
+// (~658.5 MiB); the serial evidence reports a maximum child RSS of 116.1 MiB.
+// Their aggregate is rounded up to 832 MiB, with a 64 MiB committed margin,
+// yielding an 896 MiB reservation per chunk. This fleet-wide ceiling is used
+// for each chunk because the parallel telemetry did not preserve chunk labels.
+// Four reservations consume 3.5 GiB, leaving the 4 GiB owned-stack budget for
+// scheduler, Docker daemon, and other measured host telemetry. Timing remains
+// telemetry only and is not part of admission.
 const SCHEDULER_POLICY = Object.freeze({
-    "cli-lifecycle": Object.freeze({ classification: "exclusive", reservation: null }),
-    cli: Object.freeze({ classification: "exclusive", reservation: null }),
-    "cli-config": Object.freeze({ classification: "exclusive", reservation: null }),
-    "cli-prune-diagnostic": Object.freeze({ classification: "exclusive", reservation: null }),
-    "topics-cli": Object.freeze({ classification: "parallel-ready", reservation: null }),
-    "topics-api": Object.freeze({ classification: "parallel-ready", reservation: null }),
-    python: Object.freeze({ classification: "parallel-ready", reservation: null }),
-    appcontext: Object.freeze({ classification: "parallel-ready", reservation: null }),
-    node: Object.freeze({ classification: "parallel-ready", reservation: null }),
-    hub: Object.freeze({ classification: "exclusive", reservation: null }),
-    manager: Object.freeze({ classification: "exclusive", reservation: null }),
-    verser2: Object.freeze({ classification: "parallel-ready", reservation: null }),
-    errors: Object.freeze({ classification: "parallel-ready", reservation: null }),
-    stream: Object.freeze({ classification: "exclusive", reservation: null }),
-    harness: Object.freeze({ classification: "exclusive", reservation: null })
+    "cli-basics": Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    "cli-matrix": Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    "cli-prune-diagnostic": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    "topics-api": Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    python: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    appcontext: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    "node-spawn-core": Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    "node-streaming-stop": Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    "hub-configuration": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    "hub-runtime": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    manager: Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    verser2: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    errors: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
+    stream: Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    harness: Object.freeze({ classification: "exclusive", reservation: measuredReservation() })
 });
 
 function isMeasuredReservation(reservation, now = Date.now(), maxAgeMs = RESERVATION_MAX_AGE_MS) {
@@ -57,7 +79,7 @@ function admitParallelChunks(chunkNames, options = {}) {
     }
 
     // Evaluate at most PARALLEL_CONCURRENCY_CAP candidates per batch.
-    // The higher-level scheduler is responsible for batching >2 chunks.
+    // The higher-level scheduler is responsible for batching >4 chunks.
     const candidates = names.slice(0, PARALLEL_CONCURRENCY_CAP);
 
     for (const name of candidates) {

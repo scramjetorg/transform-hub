@@ -89,7 +89,9 @@ Feature: CLI tests
     Scenario: E2E-010 TC-012 Test Instance 'input --end' option and confirm output received
         Given I set config for local Hub
         When I execute CLI with "seq deploy data/sequences/bdd-packages/checksum.tar.gz"
+        When I capture the deployed instance identity
         When I execute CLI with "inst output -" without waiting for the end
+        When I wait for the instance to be running before sending input
         When I execute CLI with "inst input - data/test-data/checksum.json --end"
         Then I confirm data named "checksum" will be received
 

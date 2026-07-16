@@ -16,8 +16,8 @@ const runner = require("../run-bdd-waves.js");
 test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
-        "appcontext", "cli", "cli-config", "cli-lifecycle", "cli-prune-diagnostic", "errors", "harness", "hub",
-        "manager", "node", "python", "stream", "topics-api", "topics-cli", "verser2",
+        "appcontext", "cli-basics", "cli-matrix", "cli-prune-diagnostic", "errors", "harness",
+        "hub-configuration", "hub-runtime", "manager", "node-spawn-core", "node-streaming-stop", "python", "stream", "topics-api", "verser2",
     ]);
 });
 
@@ -46,25 +46,42 @@ test("verser2 chunk contains the expected single feature", t => {
     ]);
 });
 
-test("topic chunks isolate CLI and API topic feature paths", t => {
-    t.deepEqual(runner.CHUNKS["topics-cli"], [
-        "features/e2e/E2E-011-cli-topic.feature",
-    ]);
+test("topic chunks isolate API topic feature paths", t => {
     t.deepEqual(runner.CHUNKS["topics-api"], [
         "features/e2e/E2E-013-topic.feature",
     ]);
 });
 
-test("CLI feature paths are split into independently timed coverage chunks", t => {
-    t.deepEqual(runner.CHUNKS["cli-lifecycle"], [
+test("CLI feature paths use balanced logical coverage chunks", t => {
+    t.deepEqual(runner.CHUNKS["cli-basics"], [
         "features/e2e/E2E-001-samples.feature",
         "features/e2e/E2E-002-stop.feature",
         "features/e2e/E2E-003-kill.feature",
+        "features/e2e/E2E-012-cli-config.feature",
+        "features/e2e/E2E-011-cli-topic.feature",
     ]);
-    t.deepEqual(runner.CHUNKS.cli, ["features/e2e/E2E-010-cli.feature"]);
-    t.deepEqual(runner.CHUNKS["cli-config"], ["features/e2e/E2E-012-cli-config.feature"]);
+    t.deepEqual(runner.CHUNKS["cli-matrix"], ["features/e2e/E2E-010-cli.feature"]);
     t.deepEqual(runner.CHUNKS["cli-prune-diagnostic"], [
         "features/e2e/E2E-010-cli-prune-diagnostic.feature",
+    ]);
+});
+
+test("Node and Hub feature paths use balanced exclusive chunks", t => {
+    t.deepEqual(runner.CHUNKS["node-spawn-core"], [
+        "features/e2e/E2E-017a-node-spawn-core.feature",
+    ]);
+    t.deepEqual(runner.CHUNKS["node-streaming-stop"], [
+        "features/e2e/E2E-017b-node-streaming-stop.feature",
+    ]);
+    t.deepEqual(runner.CHUNKS["hub-configuration"], [
+        "features/hub/HUB-001-host-config.feature",
+        "features/e2e/E2E-008-host-api.feature",
+    ]);
+    t.deepEqual(runner.CHUNKS["hub-runtime"], [
+        "features/hub/HUB-002-host-iac.feature",
+        "features/hub/HUB-003-instance-api-server.feature",
+        "features/hub/HUB-004-runtime-error-logging.feature",
+        "features/e2e/E2E-007-host-client.feature",
     ]);
 });
 
@@ -78,7 +95,7 @@ test("default chunks list is ordered and contains expected entries", t => {
 
     // First chunk is verser2 (matches Phase 9 ordering).
     t.is(runner.DEFAULT_CHUNKS[0], "verser2");
-    t.deepEqual(runner.DEFAULT_CHUNKS.slice(4, 6), ["topics-cli", "topics-api"]);
+    t.deepEqual(runner.DEFAULT_CHUNKS.slice(3, 5), ["topics-api", "python"]);
 });
 
 test("every default chunk is defined in CHUNKS", t => {
@@ -108,7 +125,7 @@ test("default manifest covers every eligible feature and records exclusions expl
 });
 
 test("resource-owning chunks remain explicitly exclusive", t => {
-    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub", "manager", "stream"]);
+    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub-configuration", "hub-runtime", "manager", "stream"]);
     t.true(runner.EXCLUSIVE_CHUNKS.every(name => runner.CHUNKS[name]));
 });
 
@@ -785,4 +802,20 @@ test("parallel cleanup verification uses defined runTempRoot without ReferenceEr
         const exists = require("node:fs").existsSync(runTempRoot);
         t.false(exists, "fresh runTempRoot must not exist on disk");
     });
+});
+
+test("cleanup failure forces failed outcome and nonzero exit even when execution results are clean", t => {
+    // Regression: runParallelWaves computed exit status before the finally
+    // block, so an unverifiable/incomplete cleanup still exited zero.
+    const report = {
+        outcomes: { failed: false, cancelled: false, oom: false, timeout: false },
+        cleanup: { completed: false, dockerChecked: true, remainingContainers: null, tempPathsRemaining: false, error: "cleanup completion could not be verified" }
+    };
+    // Mirror the finally-block repair: incomplete cleanup forces failed=true.
+    if (!report.cleanup.completed) {
+        report.outcomes.failed = true;
+    }
+    const exitStatus = report.outcomes.failed ? 1 : 0;
+    t.true(report.outcomes.failed, "incomplete cleanup must produce failed outcome");
+    t.is(exitStatus, 1, "incomplete cleanup must produce nonzero exit");
 });

@@ -6,6 +6,7 @@ import path from "path";
 import {
     getStreamsFromSpawn,
     defer,
+    waitForCondition,
     waitUntilStreamContains,
     getSiCommand,
     spawnSiInit,
@@ -16,6 +17,7 @@ import { CustomWorld } from "../world";
 import { spawn } from "child_process";
 import { once } from "events";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { HostClient } from "@scramjet/api-client";
 import {
     extractKillResponseFromSiInstRestart,
 } from "../../lib/json.parser";
@@ -66,6 +68,14 @@ After(async function(this: CustomWorld) {
     }
     this.cliResources.commandInProgress = undefined;
     this.cliResources.collectedTopicData = undefined;
+    this.cliResources.stdio = undefined;
+    this.cliResources.stdio1 = undefined;
+    this.cliResources.stdio2 = undefined;
+    this.cliResources.instanceId = undefined;
+    if (this.cliResources.templateDirectory) {
+        fs.rmSync(this.cliResources.templateDirectory, { recursive: true, force: true });
+        this.cliResources.templateDirectory = undefined;
+    }
 });
 
 Before((scenario) => {
@@ -250,8 +260,49 @@ Then("I get Instance id after deployment", function () {
     assert.equal(typeof json._id !== "undefined", true);
 });
 
+When("I capture the deployed instance identity", function (this: CustomWorld) {
+    const stdout = this.cliResources.stdio?.[0];
+    assert.ok(stdout, "The deployment did not return an instance identity");
+
+    const responses = stdout
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+    const instance = responses.find((response) => typeof response.instanceURL === "string");
+
+    assert.equal(typeof instance?._id, "string", "The deployment response did not contain an instance id");
+    this.cliResources.instanceId = instance._id;
+});
+
 const BDD_MAX_STEP_TIMEOUT_MS = 30000;
 const CLI_POLL_INTERVAL_MS = 100;
+
+When("I wait for the instance to be running before sending input", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
+    this: CustomWorld
+) {
+    const command = this.cliResources.commandInProgress;
+    assert.ok(command, "The instance output command was not started");
+    const instanceId = this.cliResources.instanceId;
+    assert.ok(instanceId, "The deployed instance identity was not captured");
+
+    const hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL!);
+    try {
+        await waitForCondition(
+            async () => {
+                assert.equal(command.exitCode, null, "The instance output command exited before the instance became ready");
+                return hostClient.listInstances();
+            },
+            (instances: any[]) => instances.some((instance: any) => instance.id === instanceId && instance.status === "running"),
+            {
+                timeoutMs: BDD_MAX_STEP_TIMEOUT_MS,
+                intervalMs: CLI_POLL_INTERVAL_MS,
+                description: `deployed instance ${instanceId} to reach running state`
+            }
+        );
+    } finally {
+        hostClient.dispose();
+    }
+});
 
 Then("I send input data {string} with options {string}", async function (
     data: string,
@@ -552,17 +603,22 @@ Then(/^I confirm instance id is: (.*)$/, async function (
 When(
     /^I execute CLI command si init (.*)$/,
     { timeout: 30000 },
-    async function (templateType: string) {
-        const workingDirectory = "data/template_seq";
+    async function (this: CustomWorld, templateType: string) {
+        // `si init` refuses to reuse its target directory. Keep each Scenario
+        // Outline example isolated from other examples and concurrent runs.
+        const workingDirectory = fs.mkdtempSync(path.join(bddTempDir, "template-seq-"));
+        this.cliResources.templateDirectory = workingDirectory;
 
         await spawnSiInit("/usr/bin/env", templateType, workingDirectory);
     }
 );
 
 Then(/^I confirm template (.*) is created$/, async function (
+    this: CustomWorld,
     templateType: string
 ) {
-    const workingDirectory = "data/template_seq";
+    const workingDirectory = this.cliResources.templateDirectory;
+    assert.ok(workingDirectory, "The template directory was not recorded for this scenario");
 
     assert.equal(await isTemplateCreated(templateType, workingDirectory), true);
 });

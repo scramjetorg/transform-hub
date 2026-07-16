@@ -8,7 +8,7 @@ const os = require("node:os");
 const path = require("node:path");
 
 test("base mode is bounded representative coverage", (t) => {
-    t.deepEqual(modes.BASE_CHUNKS, ["verser2", "topics-api", "appcontext", "node", "hub", "manager"]);
+    t.deepEqual(modes.BASE_CHUNKS, ["verser2", "topics-api", "appcontext", "node-spawn-core", "node-streaming-stop", "hub-configuration", "hub-runtime", "manager"]);
     t.deepEqual(modes.selectedChunks("base"), modes.BASE_CHUNKS);
 });
 
@@ -16,7 +16,7 @@ test("base and extra partitions are complete and have no overlap", (t) => {
     const partition = modes.partition();
     t.deepEqual([...new Set([...partition.base, ...partition.extra])].sort(), [...new Set(partition.all)].sort());
     t.is(partition.base.filter((name) => partition.extra.includes(name)).length, 0);
-    t.deepEqual(partition.extra, ["cli-lifecycle", "cli", "cli-config", "topics-cli", "python", "errors", "stream"]);
+    t.deepEqual(partition.extra, ["cli-basics", "cli-matrix", "python", "errors", "stream"]);
     t.false(partition.extra.includes("harness"));
     t.true(partition.all.every((name) => waves.CHUNKS[name]));
 });
@@ -90,12 +90,16 @@ test("runMode invokes chunks serially with ramp-down then ramp-up ordering", asy
         "ramp-up:verser2->topics-api",
         "ramp-down:topics-api->appcontext",
         "ramp-up:topics-api->appcontext",
-        "ramp-down:appcontext->node",
-        "ramp-up:appcontext->node",
-        "ramp-down:node->hub",
-        "ramp-up:node->hub",
-        "ramp-down:hub->manager",
-        "ramp-up:hub->manager",
+        "ramp-down:appcontext->node-spawn-core",
+        "ramp-up:appcontext->node-spawn-core",
+        "ramp-down:node-spawn-core->node-streaming-stop",
+        "ramp-up:node-spawn-core->node-streaming-stop",
+        "ramp-down:node-streaming-stop->hub-configuration",
+        "ramp-up:node-streaming-stop->hub-configuration",
+        "ramp-down:hub-configuration->hub-runtime",
+        "ramp-up:hub-configuration->hub-runtime",
+        "ramp-down:hub-runtime->manager",
+        "ramp-up:hub-runtime->manager",
         "ramp-down:manager->none",
     ]);
     t.deepEqual(cleanup.map(({ chunk }) => chunk), modes.BASE_CHUNKS);
@@ -111,14 +115,14 @@ test("runMode stops on failure and still cleans every started owner", async (t) 
         lifecycle: async () => undefined,
         runChunk: async (name) => {
             calls.push(name);
-            return name === "topics-cli" ? 17 : 0;
+            return name === "cli-matrix" ? 17 : 0;
         },
         cleanupOwned: (runId, chunk) => cleanup.push({ runId, chunk }),
     });
 
     t.is(status, 17);
-    t.deepEqual(calls, ["cli-lifecycle", "cli", "cli-config", "topics-cli"]);
-    t.deepEqual(cleanup.map(({ chunk }) => chunk), ["cli-lifecycle", "cli", "cli-config", "topics-cli"]);
+    t.deepEqual(calls, ["cli-basics", "cli-matrix"]);
+    t.deepEqual(cleanup.map(({ chunk }) => chunk), ["cli-basics", "cli-matrix"]);
 });
 
 test("runMode ramps down a failed chunk before exact-owner cleanup", async (t) => {

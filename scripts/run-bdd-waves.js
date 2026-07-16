@@ -6,9 +6,9 @@ const os = require("node:os");
 const { spawnSync } = require("node:child_process");
 const { createOwnership, getOwnership, acquireRunLock, assertNoForeignBddContainers, findLiveBddContainers, encodePart } = require("../bdd/lib/ownership.js");
 const { cleanupTempDirs, cleanupDockerContainers } = require("./lib/bdd-cleanup.js");
-const { measureHostTotalMemoryAsync } = require("./lib/bdd-host-memory.js");
+const { measureHostTotalMemoryAsync, reconcileActiveChildPids } = require("./lib/bdd-host-memory.js");
 const { PARALLEL_CONCURRENCY_CAP, SCHEDULER_POLICY } = require("./lib/bdd-scheduler-policy.js");
-const { runParallelChunks, spawnOwnedChild } = require("./lib/bdd-parallel-scheduler.js");
+const { runParallelChunks, spawnOwnedChild, filterStaleTelemetrySample } = require("./lib/bdd-parallel-scheduler.js");
 
 const repoRoot = path.resolve(__dirname, "..");
 const bddRoot = path.join(repoRoot, "bdd");
@@ -26,29 +26,25 @@ const dockerRunner = path.join(repoRoot, "scripts", "run-bdd-docker.js");
  * `validateManifest` stays clean.
  */
 const CHUNKS = Object.freeze({
-    // Keep the short E2E lifecycle scenarios separate from the CLI command
-    // matrix.  The latter intentionally starts one CLI process per command;
-    // sharing a 300-second feature budget with the lifecycle and config
-    // features makes the budget depend on chunk ordering rather than on a
-    // distinct coverage surface.
-    "cli-lifecycle": Object.freeze(["features/e2e/E2E-001-samples.feature", "features/e2e/E2E-002-stop.feature", "features/e2e/E2E-003-kill.feature"]),
-    cli: Object.freeze(["features/e2e/E2E-010-cli.feature"]),
-    "cli-config": Object.freeze(["features/e2e/E2E-012-cli-config.feature"]),
-    // Keep the CLI and API topic suites in separate Docker invocations. Each
-    // remains an explicitly selected, single-feature chunk so its resource
-    // peak is isolated without introducing tag-based or shared ownership.
-    "topics-cli": Object.freeze(["features/e2e/E2E-011-cli-topic.feature"]),
+    "cli-basics": Object.freeze([
+        "features/e2e/E2E-001-samples.feature",
+        "features/e2e/E2E-002-stop.feature",
+        "features/e2e/E2E-003-kill.feature",
+        "features/e2e/E2E-012-cli-config.feature",
+        "features/e2e/E2E-011-cli-topic.feature"
+    ]),
+    "cli-matrix": Object.freeze(["features/e2e/E2E-010-cli.feature"]),
     "topics-api": Object.freeze(["features/e2e/E2E-013-topic.feature"]),
     python: Object.freeze(["features/e2e/E2E-014-python.feature", "features/e2e/E2E-015-unified.feature"]),
     appcontext: Object.freeze(["features/appcontext/APPCONTEXT-001-full-sequence.feature"]),
-    node: Object.freeze(["features/e2e/E2E-017-runner-node-spawn.feature"]),
-    hub: Object.freeze([
-        "features/e2e/E2E-007-host-client.feature",
-        "features/e2e/E2E-008-host-api.feature",
-        "features/hub/HUB-001-host-config.feature",
+    "node-spawn-core": Object.freeze(["features/e2e/E2E-017a-node-spawn-core.feature"]),
+    "node-streaming-stop": Object.freeze(["features/e2e/E2E-017b-node-streaming-stop.feature"]),
+    "hub-configuration": Object.freeze(["features/hub/HUB-001-host-config.feature", "features/e2e/E2E-008-host-api.feature"]),
+    "hub-runtime": Object.freeze([
         "features/hub/HUB-002-host-iac.feature",
         "features/hub/HUB-003-instance-api-server.feature",
-        "features/hub/HUB-004-runtime-error-logging.feature"
+        "features/hub/HUB-004-runtime-error-logging.feature",
+        "features/e2e/E2E-007-host-client.feature"
     ]),
     manager: Object.freeze([
         "features/manager/MANAGER-001-multimanager-api.feature",
@@ -70,15 +66,15 @@ const CHUNKS = Object.freeze({
  */
 const DEFAULT_CHUNKS = Object.freeze([
     "verser2",
-    "cli-lifecycle",
-    "cli",
-    "cli-config",
-    "topics-cli",
+    "cli-basics",
+    "cli-matrix",
     "topics-api",
     "python",
     "appcontext",
-    "node",
-    "hub",
+    "node-spawn-core",
+    "node-streaming-stop",
+    "hub-configuration",
+    "hub-runtime",
     "manager",
     "errors",
     "stream"
@@ -96,21 +92,21 @@ const EXCLUDED_FEATURES = Object.freeze({
 // Resource-owning paths remain explicit scheduler exclusions. This metadata
 // is intentionally advisory: this runner remains serial and does not enable
 // broad parallel scheduling.
-const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub", "manager", "stream"]);
+const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub-configuration", "hub-runtime", "manager", "stream"]);
 
 // Explicit telemetry contracts. Exclusive chunks remain serial-only metadata;
 // they do not bypass admission. Chunks without long-lived Hub/Manager
 // processes explicitly declare an empty process set.
 const CHUNK_COMPONENTS = Object.freeze({
-    "cli-lifecycle": Object.freeze({ container: true, processes: [] }),
-    cli: Object.freeze({ container: true, processes: [] }),
-    "cli-config": Object.freeze({ container: true, processes: [] }),
-    "topics-cli": Object.freeze({ container: true, processes: [] }),
+    "cli-basics": Object.freeze({ container: true, processes: [] }),
+    "cli-matrix": Object.freeze({ container: true, processes: [] }),
     "topics-api": Object.freeze({ container: true, processes: [] }),
     python: Object.freeze({ container: true, processes: [] }),
     appcontext: Object.freeze({ container: true, processes: [] }),
-    node: Object.freeze({ container: true, processes: [] }),
-    hub: Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
+    "node-spawn-core": Object.freeze({ container: true, processes: [] }),
+    "node-streaming-stop": Object.freeze({ container: true, processes: [] }),
+    "hub-configuration": Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
+    "hub-runtime": Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
     manager: Object.freeze({ container: true, processes: ["manager:"], exclusive: true }),
     verser2: Object.freeze({ container: true, processes: [] }),
     errors: Object.freeze({ container: true, processes: [] }),
@@ -445,9 +441,32 @@ async function runParallelWaves({ chunkName, passthrough }) {
     const chunks = parallelChunks(chunkName);
     const runOwnership = getOwnership(process.env);
     process.env.SCRAMJET_BDD_RUN_ID = runOwnership.runId;
-    const activeChildPids = new Set();
+    const telemetryPids = new Set();
+    const activeWorkers = new Map();
+    const telemetryWorkers = new Map();
+    const workerGenerations = new Map();
+    /** Explicit set of "{chunkId}:{generation}" marked settled synchronously
+     *  in onChunkResult when termination is verified.  More reliable than
+     *  ChildProcess.handle.exitCode which may still be null at filter time. */
+    const settledWorkers = new Set();
+    /** Persistent map keyed by chunk name: stores the latest generation that
+     *  has settled, independent of active worker records.  Used by the stale
+     *  telemetry filter even when the worker no longer appears in snapshots. */
+    const latestSettledGenerations = new Map();
+    const getSettledWorkersSnapshot = () => settledWorkers;
+    const getLatestSettledGeneration = () => latestSettledGenerations;
+    const telemetryChildPids = () => {
+        reconcileActiveChildPids(telemetryPids);
+        return [...telemetryPids];
+    };
     const runTempRoot = path.join(os.tmpdir(), "scramjet-bdd-runs", encodePart(runOwnership.runId));
-    const hostMemory = await measureHostTotalMemoryAsync({ runId: runOwnership.runId, activeChildPids });
+    const getTelemetrySnapshot = () => [...telemetryWorkers.values()];
+    const measureTelemetry = async () => {
+        const workerSnapshot = getTelemetrySnapshot();
+        const sample = await measureHostTotalMemoryAsync({ runId: runOwnership.runId, activeChildPids: telemetryChildPids(), activeOwnedWorkers: workerSnapshot });
+        return filterStaleTelemetrySample({ ...sample, workerSnapshot }, getTelemetrySnapshot, getSettledWorkersSnapshot, getLatestSettledGeneration);
+    };
+    const hostMemory = await measureTelemetry();
     const report = {
         schedule: "parallel",
         runId: runOwnership.runId,
@@ -483,6 +502,7 @@ async function runParallelWaves({ chunkName, passthrough }) {
         }
         return false;
     };
+    let exitStatus = 1;
     try {
         assertNoForeignBddContainers(runOwnership.runId);
         runLock = acquireRunLock(runOwnership);
@@ -507,10 +527,19 @@ async function runParallelWaves({ chunkName, passthrough }) {
                 spawnImpl: require("node:child_process").spawn,
                 signal,
                 onSpawn: (child) => {
-                    if (child.pid) activeChildPids.add(child.pid);
+                    if (child.pid) {
+                        const generation = (workerGenerations.get(chunk.name) || 0) + 1;
+                        workerGenerations.set(chunk.name, generation);
+                        const record = Object.freeze({ chunkId: chunk.name, wrapperPid: child.pid, generation, child });
+                        activeWorkers.set(chunk.name, record);
+                        telemetryWorkers.set(chunk.name, record);
+                        telemetryPids.add(child.pid);
+                    }
                 },
                 onSettled: (child) => {
-                    if (child.pid) activeChildPids.delete(child.pid);
+                    if (child.pid) telemetryPids.delete(child.pid);
+                    activeWorkers.delete(chunk.name);
+                    telemetryWorkers.delete(chunk.name);
                 },
                 verifyTermination: (child, deadline) => verifyOwnedTermination(child, deadline, ownership.chunkId),
                 resultDetails: () => {
@@ -542,37 +571,63 @@ async function runParallelWaves({ chunkName, passthrough }) {
             chunks,
             concurrency: PARALLEL_CONCURRENCY_CAP,
             runChunk,
+            getTelemetrySnapshot,
+            getSettledWorkersSnapshot,
+            getLatestSettledGeneration,
+            onChunkResult: (chunk, result) => {
+                // This is the scheduler's synchronous result-recording
+                // callback (not spawnOwnedChild options). A successful code-0
+                // result is settled even if ChildProcess state is not updated.
+                if (result.terminationVerified === true || result.code === 0) {
+                    const worker = telemetryWorkers.get(chunk.name);
+                    if (worker) telemetryPids.delete(worker.wrapperPid);
+                    const generation = worker?.generation ?? workerGenerations.get(chunk.name);
+                    if (generation != null) {
+                        settledWorkers.add(`${chunk.name}:${generation}`);
+                        latestSettledGenerations.set(chunk.name, generation);
+                    }
+                    telemetryWorkers.delete(chunk.name);
+                }
+            },
             policyMap: SCHEDULER_POLICY,
             hostMemoryBytes: hostMemory.totalBytes,
             hostMemoryLimitBytes: 4 * 1024 * 1024 * 1024,
             admitBatch: async (batch) => {
-                const fresh = await measureHostTotalMemoryAsync({ runId: runOwnership.runId, activeChildPids });
+                const fresh = await measureTelemetry();
                 report.telemetry.admissionSamples = report.telemetry.admissionSamples || [];
                 report.telemetry.admissionSamples.push(fresh);
                 return require("./lib/bdd-scheduler-policy.js").admitParallelChunks(
                     batch.map((item) => item.name),
                     {
                         concurrency: Math.min(PARALLEL_CONCURRENCY_CAP, batch.length),
-                        hostMemoryBytes: fresh.totalBytes,
+                        hostMemoryBytes: fresh.totalBytes === null && fresh.staleTelemetryOnly ? hostMemory.totalBytes : fresh.totalBytes,
                         policyMap: SCHEDULER_POLICY
                     }
                 );
             },
-            measureFootprint: () =>
-                measureHostTotalMemoryAsync({
-                    runId: runOwnership.runId,
-                    activeChildPids: [...activeChildPids]
-                }),
+            measureFootprint: measureTelemetry,
             onFootprintFailure: (reason) => {
                 report.cancellation = { reason };
             }
         });
         report.results = execution.results;
+        report.completion = execution.completion;
+        // Interval samples may resolve after a worker settles. Reconcile all
+        // stored diagnostics against final settled-generation state before
+        // deriving report telemetry and peaks.
+        const reconcileFinalTelemetry = (sample) => filterStaleTelemetrySample(sample, getTelemetrySnapshot, getSettledWorkersSnapshot, getLatestSettledGeneration);
+        execution.footprint = execution.footprint.map(reconcileFinalTelemetry);
+        if (!execution.completion.complete) {
+            report.error = { name: "ParallelCompletionError", message: execution.completion.problems.join("; ") };
+        }
         report.admission = execution.admissions[0]?.diagnostics || null;
         report.admissions = execution.admissions.map((item) => item.diagnostics || item);
-        report.telemetry.samples = [...(report.telemetry.admissionSamples || []), ...execution.footprint];
+        report.telemetry.admissionSamples = (report.telemetry.admissionSamples || []).map(reconcileFinalTelemetry);
+        report.telemetry.samples = [...report.telemetry.admissionSamples, ...execution.footprint];
         report.telemetry.missing = [...new Set(report.telemetry.samples.flatMap((sample) => sample?.missing || []))];
-        report.telemetry.complete = report.telemetry.missing.length === 0;
+        report.telemetry.wrapperHandoffs = report.telemetry.samples.flatMap((sample) => sample?.wrapperHandoffs || []);
+        report.telemetry.failures = report.telemetry.samples.flatMap((sample) => sample?.telemetryFailures || []);
+        report.telemetry.complete = report.telemetry.missing.length === 0 && report.telemetry.failures.length === 0;
         report.overlap.peakWorkers = execution.peakWorkers;
         report.overlap.batches = execution.admissions.map((item) => ({
             chunks: item.chunkNames,
@@ -583,7 +638,7 @@ async function runParallelWaves({ chunkName, passthrough }) {
         report.overlap.overlapMs = execution.admissions.reduce((sum, item) => sum + Math.max(0, (item.durationMs || 0) * (execution.peakWorkers - 1)), 0);
         report.peaks.hostFootprintBytes = Math.max(hostMemory.totalBytes || 0, ...execution.footprint.map((sample) => sample.totalBytes || 0));
         if (execution.footprintFailure) report.cancellation = { reason: execution.footprintFailure };
-        report.outcomes.failed = execution.failed;
+        report.outcomes.failed = execution.failed || execution.results.some((result) => result.code !== 0 || result.terminationVerified === false || result.cancellationFailure);
         report.outcomes.cancelled = Boolean(execution.footprintFailure);
         report.outcomes.oom = execution.results.some((result) => result.oomKilled === true || result.oom === true);
         report.outcomes.timeout = execution.results.some((result) => result.timedOut === true || result.timeout === true);
@@ -614,12 +669,20 @@ async function runParallelWaves({ chunkName, passthrough }) {
                 if (Number.isFinite(container.bytes)) report.ownerPeaks[owner] = Math.max(report.ownerPeaks[owner] || 0, container.bytes);
             }
         }
-        return execution.results.every((result) => result.code === 0) && !execution.footprintFailure ? 0 : 1;
+        // Compute tentative exit status from execution state.  Cleanup below
+        // may override to 1 if verification fails.
+        exitStatus =
+            !execution.failed &&
+            execution.completion.complete &&
+            execution.results.every((result) => result.code === 0 && result.terminationVerified !== false && !result.cancellationFailure) &&
+            !execution.footprintFailure
+                ? 0
+                : 1;
     } catch (error) {
         report.outcomes.failed = true;
         report.error = { name: error.name, message: error.message };
         if (error.admission) report.admission = error.admission.diagnostics || error.admission;
-        return 1;
+        exitStatus = 1;
     } finally {
         report.cleanup.attempted = true;
         try {
@@ -629,8 +692,8 @@ async function runParallelWaves({ chunkName, passthrough }) {
             report.cleanup.dockerChecked = remaining !== null;
             report.cleanup.remainingContainers = remaining?.filter((container) => container.runId === runOwnership.runId).map((container) => container.id) || null;
             report.cleanup.tempPathsRemaining = fs.existsSync(runTempRoot);
-            report.cleanup.completed = isCleanupComplete(report.cleanup.remainingContainers, report.cleanup.tempPathsRemaining, activeChildPids.size);
-            if (activeChildPids.size) {
+            report.cleanup.completed = isCleanupComplete(report.cleanup.remainingContainers, report.cleanup.tempPathsRemaining, activeWorkers.size);
+            if (activeWorkers.size) {
                 report.cleanup.completed = false;
                 report.cleanup.error = report.cleanup.error || "owned scheduler child process groups remain";
             }
@@ -638,10 +701,16 @@ async function runParallelWaves({ chunkName, passthrough }) {
         } catch (error) {
             report.cleanup.error = error.message;
         }
+        // Unverifiable or incomplete cleanup contributes to final failed outcome and nonzero exit.
+        if (!report.cleanup.completed) {
+            report.outcomes.failed = true;
+            exitStatus = 1;
+        }
         writeParallelReport(report);
         process.stderr.write(`[run-bdd-parallel] ${JSON.stringify(report)}\n`);
         if (report.cleanup.completed) runLock?.release();
     }
+    return exitStatus;
 }
 
 // ---------------------------------------------------------------------------

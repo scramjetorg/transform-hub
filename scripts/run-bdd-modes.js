@@ -11,7 +11,7 @@ const waves = require("./run-bdd-waves.js");
 // Docker run; the guarded no-fetch-compatible transport for HUB-003 is now
 // green) without admitting the known slow, memory-remediation, or other
 // functionally blocked groups into the ordinary command.
-const BASE_CHUNKS = Object.freeze(["verser2", "topics-api", "appcontext", "node", "hub", "manager"]);
+const BASE_CHUNKS = Object.freeze(["verser2", "topics-api", "appcontext", "node-spawn-core", "node-streaming-stop", "hub-configuration", "hub-runtime", "manager"]);
 const EXTRA_CHUNKS = Object.freeze(waves.DEFAULT_CHUNKS.filter((name) => !BASE_CHUNKS.includes(name)));
 const ALL_CHUNKS = Object.freeze([...waves.DEFAULT_CHUNKS]);
 const DEFAULT_RAMP_UP_MS = 1000;
