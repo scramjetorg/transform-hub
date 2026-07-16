@@ -59,24 +59,29 @@
 
 ## Phase 3: Define and implement the Manager local trusted-CA helper
 
-- [ ] Task: Investigate public Manager trust/configuration boundaries and existing certificate code.
-    - [ ] Read Manager, MultiManager, host, config, REST route, and certificate/trust-export implementations plus focused tests and package codemaps.
-    - [ ] Distinguish public trust endpoints/configuration from internal trust-export utilities, self-signed development identities, and test-only certificate assets.
-    - [ ] Identify shared certificate/key utilities before adding a Manager-specific helper; record why any package-local implementation is necessary.
-- [ ] Task: Propose the public Manager CA-helper contract and threat boundaries.
-    - [ ] Define API/CLI/config shape, explicit opt-in, CA/server/client material lifecycle, storage location and restrictive permissions, secret redaction, trust-bundle distribution, supported deployment scope, rotation/revocation limits, and failure behavior.
-    - [ ] Define tests and documentation that prevent positioning the helper as production PKI or automatic client enrollment.
-- [ ] Task: User Manual Verification - Public CA-helper design.
-    - [ ] Present the proposed public API, issuance model, persistence behavior, key/certificate security defaults, and operational limits for approval before implementation.
-- [ ] Task: Implement the approved public Manager helper and focused tests.
-    - [ ] Add the approved public API/configuration and reuse existing verified primitives where safe.
-    - [ ] Add focused tests for explicit opt-in, generated identity/trust output, permissions, private-material redaction, invalid configuration, trust/authorization separation, and rotation/revocation boundary behavior.
-    - [ ] Update public documentation for use, trust distribution, mTLS authorization, certificate/key handling, and production PKI limitations.
-- [ ] Task: Validate the security surface.
-    - [ ] Run affected package tests through `scripts/run-ava.js` under `ulimit -v 1835008` and the repository-supported memory settings.
-    - [ ] Run focused build/type/lint validation for affected packages and review public exports/configuration for accidental exposure.
-    - [ ] Record memory-guard command, thresholds, any per-test exception/skip, and rationale in the phase validation notes.
-- [ ] Task: Conductor - Phase Checkpoint 'Define and implement the Manager local trusted-CA helper' (Protocol in workflow.md)
+- [x] Task: Investigate public Manager trust/configuration boundaries and existing certificate code.
+    - [x] Read Manager, MultiManager, host, config, REST route, and certificate/trust-export implementations plus focused tests and package codemaps.
+    - [x] Distinguish public trust endpoints/configuration from internal trust-export utilities, self-signed development identities, and test-only certificate assets.
+    - [x] Identify shared certificate/key utilities before adding a Manager-specific helper; record why any package-local implementation is necessary.
+    - Evidence: public v1/v2 Manager and MultiManager trust exports expose only CA certificates, fingerprint, expiry, host URL, and route domains; existing self-signed identity creation is internal to host/MultiManager and safely persists keys with restrictive modes. `@scramjet/config` provides public masking/config schemas and trust bootstrap, but no shared public CA issuance primitive. A helper must retain CA private material locally and never expose it through trust exports.
+- [x] Task: Propose the public Manager CA-helper contract and threat boundaries.
+    - [x] Define API/CLI/config shape, explicit opt-in, CA/server/client material lifecycle, storage location and restrictive permissions, secret redaction, trust-bundle distribution, supported deployment scope, rotation/revocation limits, and failure behavior.
+    - [x] Define tests and documentation that prevent positioning the helper as production PKI or automatic client enrollment.
+    - Revised proposed contract: `@scramjet/runtime-types` supplies versioned enrollment wire contracts; Hub-side commands generate keys and PKCS#10 CSRs locally, then redeem a CSR-bound, one-time Manager grant through a narrowly scoped direct-HTTPS endpoint. Manager approval creates local CA/server material and validates CSR signatures, exact Hub URI SANs, and explicit extra SANs before issuing client-auth-only certificates. Private keys never leave the Hub; grants store token hashes only; trust exports remain CA-only. Enrollment is explicit and disabled by default, with mTLS plus fingerprint authorization, no automatic enrollment/rotation, CRL/OCSP, HA, proxy TLS termination, or production-PKI claim.
+- [x] Task: User Manual Verification - Public CA-helper design.
+    - [x] Present the proposed public API, issuance model, persistence behavior, key/certificate security defaults, and operational limits for approval before implementation.
+    - Approval: user approved the Hub-local key generation and CSR enrollment design on 2026-07-16, with `@scramjet/runtime-types` as the sole shared contract package; `@scramjet/types` remains deprecated and must not be used.
+- [x] Task: Implement the approved public Manager helper and focused tests.
+    - [x] Add the approved public API/configuration and reuse existing verified primitives where safe.
+    - [x] Add focused tests for explicit opt-in, generated identity/trust output, permissions, private-material redaction, invalid configuration, trust/authorization separation, and rotation/revocation boundary behavior.
+    - [x] Update public documentation for use, trust distribution, mTLS authorization, certificate/key handling, and production PKI limitations.
+    - Evidence: CSR enrollment now uses runtime-neutral contracts from `@scramjet/runtime-types`, Hub-local private keys/CSRs, pinned HTTPS certificate installation, explicit Manager approval, masked disabled-by-default config, atomic grants, structural CSR/CA validation, issuance-bound fingerprint authorization, and Hub-SAN identity binding. Critical Oracle review findings were repaired and reverified; the P2 cross-Hub regression now runs before revocation.
+- [x] Task: Validate the security surface.
+    - [x] Run affected package tests through `scripts/run-ava.js` under `ulimit -v 1835008` and the repository-supported memory settings.
+    - [x] Run focused build/type/lint validation for affected packages and review public exports/configuration for accidental exposure.
+    - [x] Record memory-guard command, thresholds, any per-test exception/skip, and rationale in the phase validation notes.
+    - Evidence: under `ulimit -v 1835008`, `NODE_OPTIONS="--max-old-space-size=1024"`, and `SCRAMJET_AVA_MEMORY_GUARD=1`, Manager (188), Host (279; 9 pre-existing CouchDB skips), and Config (51) package tests passed. Manager now has `pretest:ava` typechecking before transpile-only AVA. Focused runtime-types, Host, Manager, and Config TypeScript builds passed during implementation. Memory threshold was the repository default 524288 bytes; no exceptions/skips were added for CSR tests. Oracle re-reviewed all Critical/High CSR issues through final Hub identity-binding remediation.
+- [x] Task: Conductor - Phase Checkpoint 'Define and implement the Manager local trusted-CA helper' (Protocol in workflow.md)
 
 ## Phase 4: Final integration, regeneration, and delivery review
 

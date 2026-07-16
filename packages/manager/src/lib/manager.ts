@@ -35,7 +35,7 @@ import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHea
 import { STHController } from "./sth-controller";
 import { STHInfoRegister } from "./sth-info-register";
 import { SthConnectionStore } from "./sth-connection-store";
-import { getDefaultManagerConfig, managerVerser2Options, maskConfig } from "@scramjet/config";
+import { csrEnrollmentOptions, getDefaultManagerConfig, managerVerser2Options, maskConfig } from "@scramjet/config";
 import { merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
 import { ManagerSthBrokerTransport, type RouteChangeEvent } from "./verser2-transport";
@@ -51,6 +51,7 @@ import { Client as MinioClient } from "minio";
 import * as fs from "fs/promises";
 import { homedir } from "os";
 import { ManagerAPIHandler } from "./api/manager-api";
+import { CsrEnrollmentAuthority } from "./csr-enrollment";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -88,6 +89,18 @@ export type SthRegistrationPayload = {
 
 export const normalizeForwardedHeaders = normalizeApiForwardedHeaders;
 
+export function assertAuthorizedRegistrationPeer(
+    authority: CsrEnrollmentAuthority,
+    claimedHubId: string,
+    peerFingerprint256: string | undefined,
+    peerHubId: string | undefined,
+    suppliedFingerprint256?: unknown
+): void {
+    if (suppliedFingerprint256 !== undefined) throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+    if (!peerFingerprint256 || !peerHubId || peerHubId !== claimedHubId || !authority.isClientFingerprintAuthorizedForHub(peerFingerprint256, claimedHubId))
+        throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+}
+
 export function maskManagerConfig(config: ManagerConfiguration): ManagerConfiguration {
     const safe = {} as ManagerConfiguration;
 
@@ -98,7 +111,7 @@ export function maskManagerConfig(config: ManagerConfiguration): ManagerConfigur
         if (safe.s3.secretKey) safe.s3.secretKey = "********";
     }
 
-    return maskConfig(safe, managerVerser2Options) as ManagerConfiguration;
+    return maskConfig(safe, [...managerVerser2Options, ...csrEnrollmentOptions]) as ManagerConfiguration;
 }
 
 export class Manager implements IComponent {
@@ -111,6 +124,7 @@ export class Manager implements IComponent {
     private sthBrokerTransport?: ManagerSthBrokerTransport;
     private routeChangeUnsubscribe?: () => void;
     private hubInventoryState = new Map<string, HubInventoryState>();
+    private csrEnrollmentAuthority?: CsrEnrollmentAuthority;
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
@@ -153,6 +167,10 @@ export class Manager implements IComponent {
 
     public get apiLoadCheck(): LoadCheck {
         return this.loadCheck;
+    }
+
+    public get csrEnrollment(): CsrEnrollmentAuthority | undefined {
+        return this.csrEnrollmentAuthority;
     }
 
     public get apiHealthCheck(): HealthCheck | undefined {
@@ -248,6 +266,11 @@ export class Manager implements IComponent {
         this._apiRouter = getRouter();
 
         merge(this._config, _config || {});
+
+        const enrollment = (this._config as ManagerConfiguration & { csrEnrollment?: any }).csrEnrollment;
+        if (enrollment?.enabled === true) {
+            this.csrEnrollmentAuthority = new CsrEnrollmentAuthority(enrollment);
+        }
 
         this.id = this._config.id;
         this.logger = new ObjLogger(this, { id: this.id });
@@ -456,7 +479,7 @@ export class Manager implements IComponent {
         return ps;
     }
 
-    async handleSthRegistration(payload: SthRegistrationPayload): Promise<string> {
+    async handleSthRegistration(payload: SthRegistrationPayload, peerCertificateFingerprint256?: string, peerCertificateHubId?: string): Promise<string> {
         this.logger.info("STH Api. Incoming verser2 registration.");
 
         if (!this.sthBrokerTransport) {
@@ -467,6 +490,15 @@ export class Manager implements IComponent {
         const offeredRouteDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length ? payload.routeDomain.trim() : undefined;
         const routeDomain = offeredRouteDomain && isTrustedSthRouteDomain(id, offeredRouteDomain) ? offeredRouteDomain : this.getSthRouteDomain(id);
         const registrationToken = this.config.verser2.registration.token;
+
+        if (this.csrEnrollmentAuthority)
+            assertAuthorizedRegistrationPeer(
+                this.csrEnrollmentAuthority,
+                id,
+                peerCertificateFingerprint256,
+                peerCertificateHubId,
+                (payload as SthRegistrationPayload & { clientCertificateFingerprint256?: unknown }).clientCertificateFingerprint256
+            );
 
         if (offeredRouteDomain && offeredRouteDomain !== routeDomain) {
             this.logger.warn("Ignoring untrusted STH route domain", id, offeredRouteDomain, routeDomain);

@@ -5,6 +5,7 @@ import { parse as parseJsonc } from "jsonc-parser";
 import YAML from "yaml";
 import { z, ZodError, ZodIssue, ZodType } from "zod";
 import { maskConfig } from "./mask-config";
+export * from "./csr-enrollment-config";
 
 export type ConfigPath = string | readonly string[];
 export type CliOptionType = "string" | "number" | "boolean" | "string[]" | "number[]" | "json";

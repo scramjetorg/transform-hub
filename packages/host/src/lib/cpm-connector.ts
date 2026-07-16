@@ -3,30 +3,13 @@ import { Readable } from "stream";
 import * as http from "http";
 
 import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import {
-    EncodedControlMessage,
-    Instance,
-    IObjectLogger,
-    STHTopicEventData,
-} from "@scramjet/runtime-types";
+import { EncodedControlMessage, Instance, IObjectLogger, STHTopicEventData } from "@scramjet/runtime-types";
 import { STHRestAPI } from "@scramjet/api-types";
-import {
-    CPMConnectorOptions,
-    LoadCheckStatMessage,
-    NetworkInfo,
-    STHIDMessageData,
-    AddSTHTopicEventData,
-    SpaceEventMessageData
-} from "./types/from-types";
+import { CPMConnectorOptions, LoadCheckStatMessage, NetworkInfo, STHIDMessageData, AddSTHTopicEventData, SpaceEventMessageData } from "./types/from-types";
 
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
-import {
-    createVerserBroker,
-    createVerserNodeGuest,
-    VerserBroker,
-    VerserNodeGuest
-} from "@signicode/verser2-guest-node";
+import { createVerserBroker, createVerserNodeGuest, VerserBroker, VerserNodeGuest } from "@signicode/verser2-guest-node";
 import { TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
@@ -38,21 +21,17 @@ import { getManagerGuestMinWaitingStreams } from "./cpm-connector-leases";
 
 type STHInformation = {
     id?: string;
-}
+};
 
 type Events = {
-    connect: () => void,
-    communicationReady: () => void,
+    connect: () => void;
+    communicationReady: () => void;
     id: (id: string) => void;
     event: (event: SpaceEventMessageData) => void;
     disconnect: (statusCode: number, given_up: boolean) => void;
-}
+};
 
-const dropMessageCodes = [
-    CPMMessageCode.KEY_REVOKED,
-    CPMMessageCode.LIMIT_EXCEEDED,
-    CPMMessageCode.ID_DROP
-];
+const dropMessageCodes = [CPMMessageCode.KEY_REVOKED, CPMMessageCode.LIMIT_EXCEEDED, CPMMessageCode.ID_DROP];
 
 export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig) {
     const trust = tls.ca ? { ca: tls.ca } : { caFile: tls.caFile };
@@ -210,10 +189,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             hostUrl: this.config.verser2.hostUrl,
             guestId: this.config.verser2.guest.peerId,
             routedDomains: [this.config.verser2.guest.routeDomain],
-            minWaitingStreams: getManagerGuestMinWaitingStreams(
-                this.config.verser2.leases.minimumWaitingLeases,
-                this.config.verser2.leases.minimumUpstreamWaitingStreams
-            ),
+            minWaitingStreams: getManagerGuestMinWaitingStreams(this.config.verser2.leases.minimumWaitingLeases, this.config.verser2.leases.minimumUpstreamWaitingStreams),
             leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
             tls
         }).attach(server, this.config.verser2.guest.routeDomain);
@@ -242,8 +218,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Initializes connector.
      */
-    init() {
-    }
+    init() {}
 
     async disconnect() {
         this.logger.info("Disconnecting from Manager");
@@ -310,10 +285,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
                     this.logger.trace("Received id", this.info.id);
 
-                    fs.writeFileSync(
-                        this.config.infoFilePath,
-                        JSON.stringify(this.info)
-                    );
+                    fs.writeFileSync(this.config.infoFilePath, JSON.stringify(this.info));
 
                     this.emit("id", this.info.id ?? "");
                     this.logger.updateBaseLog({ id: this.info.id });
@@ -355,9 +327,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.logger.warn("Communication stream paused");
         });
 
-        await this.communicationStream.whenWrote(
-            [CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]
-        );
+        await this.communicationStream.whenWrote([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]);
 
         this.emit("communicationReady");
 
@@ -371,26 +341,32 @@ export class CPMConnector extends TypedEmitter<Events> {
                 handler();
             };
 
-            duplex.on("end", () => settleRequest(() => {
-                this.logger.debug("Platform request close");
+            duplex.on("end", () =>
+                settleRequest(() => {
+                    this.logger.debug("Platform request close");
 
-                void this.handleConnectionClose(1000);
-                resolve({});
-            }));
+                    void this.handleConnectionClose(1000);
+                    resolve({});
+                })
+            );
 
-            duplex.on("close", () => settleRequest(() => {
-                this.logger.debug("Platform request closed");
+            duplex.on("close", () =>
+                settleRequest(() => {
+                    this.logger.debug("Platform request closed");
 
-                void this.handleConnectionClose(1006);
-                resolve({});
-            }));
+                    void this.handleConnectionClose(1006);
+                    resolve({});
+                })
+            );
 
-            duplex.on("error", () => settleRequest(() => {
-                this.logger.error("Platform request error");
+            duplex.on("error", () =>
+                settleRequest(() => {
+                    this.logger.error("Platform request error");
 
-                void this.handleConnectionClose(1006);
-                reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
-            }));
+                    void this.handleConnectionClose(1006);
+                    reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
+                })
+            );
         });
     }
 
@@ -425,7 +401,7 @@ export class CPMConnector extends TypedEmitter<Events> {
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
          * and made requests to it).
          * @TODO: Provide detailed communication status.
-        */
+         */
 
         this.connected = true;
         this.connectionAttempts = 0;
@@ -446,7 +422,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             req.on("response", (res: http.IncomingMessage) => {
                 const chunks: Buffer[] = [];
 
-                res.on("data", chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+                res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
                 res.on("end", () => {
                     if ((res.statusCode || 500) >= 400) {
                         reject(new Error(`Manager STH registration failed: ${res.statusCode} ${res.statusMessage || ""}`.trim()));
@@ -580,17 +556,13 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     async sendEvent(event: SpaceEventMessageData): Promise<void> {
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.EVENT, event]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.EVENT, event]);
         this.logger.debug("Sent event", event);
     }
 
     async sendLoad() {
         try {
-            await this.communicationStream?.whenWrote(
-                [CPMMessageCode.LOAD, await this.getLoad()]
-            );
+            await this.communicationStream?.whenWrote([CPMMessageCode.LOAD, await this.getLoad()]);
         } catch {
             this.logger.error("Error sending loadcheck");
         }
@@ -633,9 +605,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async sendSequencesInfo(sequences: STHRestAPI.GetSequencesResponse): Promise<void> {
         this.logger.trace("Sending sequences information, total sequences", sequences.length);
 
-        await this.communicationStream!.whenWrote(
-            [CPMMessageCode.SEQUENCES, { sequences }]
-        );
+        await this.communicationStream!.whenWrote([CPMMessageCode.SEQUENCES, { sequences }]);
 
         this.logger.trace("Sequences information sent");
     }
@@ -648,9 +618,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async sendInstancesInfo(instances: Instance[]): Promise<void> {
         this.logger.trace("Sending instances information");
 
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.INSTANCES, { instances }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.INSTANCES, { instances }]);
 
         this.logger.trace("Instances information sent");
     }
@@ -661,12 +629,10 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {string} sequenceId Sequence id.
      * @param {SequenceMessageCode} seqStatus Sequence status.
      */
-    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse) : Promise<void> {
+    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse): Promise<void> {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]);
 
         this.logger.trace("Sequence status update sent", sequenceId, seqStatus);
     }
@@ -680,9 +646,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async sendInstanceInfo(instance: Instance): Promise<void> {
         this.logger.trace("Send instance status update", instance.status);
 
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.INSTANCE, { instance }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.INSTANCE, { instance }]);
     }
 
     /**
@@ -692,9 +656,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param data Topic information.
      */
     async sendTopicInfo(data: STHTopicEventData) {
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.TOPIC, { ...data }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.TOPIC, { ...data }]);
     }
 
     async sendTopicsInfo(topics: Omit<STHTopicEventData, "status">[]) {
@@ -708,11 +670,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Topics information sent");
     }
 
-    public makeHttpRequestToCpm(
-        method: string,
-        reqPath: string,
-        headers: http.OutgoingHttpHeaders | Record<string, string> = {}
-    ): http.ClientRequest {
+    public makeHttpRequestToCpm(method: string, reqPath: string, headers: http.OutgoingHttpHeaders | Record<string, string> = {}): http.ClientRequest {
         //@TODO: Disconnecting/error handling
         const path = reqPath.replace(/^\/+/, "");
         const versionedPath = /^api\/v[12](?:\/|$)/.test(path) ? path : `api/v1/${path}`;
@@ -720,10 +678,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.logger.debug("make HTTP Req to CPM", url);
 
-        return http.request(
-            url,
-            { method, agent: this.getHttpAgent(), headers }
-        );
+        return http.request(url, { method, agent: this.getHttpAgent(), headers });
     }
 
     public getCpmRouteMetadata(reqPath: string) {
@@ -747,9 +702,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.makeHttpRequestToCpm("GET", `topic/${topic}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
-                }).on("error", (err: Error) => {
+                })
+                .on("error", (err: Error) => {
                     this.logger.error("Topic request error:", err);
-                }).end();
+                })
+                .end();
         });
     }
 
@@ -758,9 +715,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.makeHttpRequestToCpm("GET", `sequence-store/${id}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
-                }).on("error", (err: Error) => {
+                })
+                .on("error", (err: Error) => {
                     this.logger.error("Sequence request error:", err);
-                }).end();
+                })
+                .end();
         });
     }
 }

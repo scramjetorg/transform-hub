@@ -1,9 +1,24 @@
 import test from "ava";
+import { execFileSync } from "child_process";
+import { X509Certificate } from "crypto";
+import { mkdtempSync, readFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 
 import { ManagerAPIHandler } from "../src/lib/api/manager-api";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
+
+function createMockSocket(hubId: string): { getPeerCertificate: (detailed?: boolean) => { raw: Buffer } } {
+    const dir = mkdtempSync(join(tmpdir(), "api-hotwire-"));
+    const keyFile = join(dir, "key.pem");
+    const certFile = join(dir, "cert.pem");
+    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-subj", `/CN=${hubId}`, "-days", "1", "-addext", `subjectAltName=DNS:${hubId}`, "-keyout", keyFile, "-out", certFile], { stdio: "ignore" });
+    const certPem = readFileSync(certFile);
+    const cert = new X509Certificate(certPem);
+    return { getPeerCertificate: () => ({ raw: cert.raw }) };
+}
 
 function createManagerStub(recorder: RouteRecorder) {
     return {
@@ -211,7 +226,8 @@ test("ManagerAPIHandler unit handlers cover registration disconnect and S3 mount
 
     await new ManagerAPIHandler(manager as any).attach();
 
-    t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth" } }), { id: "sth-registered", opStatus: "Accepted" });
+    const sthSocket = createMockSocket("sth");
+    t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth" }, socket: sthSocket }), { id: "sth-registered", opStatus: "Accepted" });
     t.true(recorder.has("use", "/api/v1/s3/"));
     t.deepEqual(await (recorder.require("op", "/api/v1/disconnect", "post").handler as Function)({ body: { limit: 0 } }), {
         opStatus: "Accepted",

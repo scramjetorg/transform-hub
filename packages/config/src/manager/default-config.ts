@@ -7,6 +7,10 @@ export const managerDefaultConfig: ManagerConfiguration = {
     logLevel: "info",
     apiBase: "/api/v1",
     id: "cpm-manager",
+    csrEnrollment: {
+        enabled: false,
+        redemptionPath: "/api/v2/enrollment/redeem"
+    },
     sthController: {
         unhealthyTimeoutMs: 61_000
     },

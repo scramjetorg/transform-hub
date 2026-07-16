@@ -210,7 +210,7 @@ test.serial("Manager aggregation readiness considers active hubs beyond the firs
     t.is(readiness.hubs, 101);
     t.is(readiness.activeHubs, 101);
     t.false(readiness.ready);
-    t.like(readiness.byHub.find(hub => hub.id === "hub-101"), {
+    t.like(readiness.byHub.find((hub: any) => hub.id === "hub-101"), {
         active: true,
         inventoryConsumed: false
     });
@@ -333,7 +333,7 @@ test("STHController emits raw bulk instance payloads from legacy inventory messa
     const instance = makeInstance("raw-bulk-inst-1", "seq-1");
     const emitted: unknown[] = [];
 
-    controller.on("instance", (message) => emitted.push(message));
+    controller.on("instance", (message: Instance) => emitted.push(message));
 
     await controller.hostMessageHandler([CPMMessageCode.INSTANCES, { instances: [instance] }] as any);
 

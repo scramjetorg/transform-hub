@@ -38,3 +38,4 @@ export * from "./sequence-adapter";
 export * from "./host-proxy";
 export * from "./messages";
 export * from "./sequence-package-json";
+export * from "./csr-enrollment";

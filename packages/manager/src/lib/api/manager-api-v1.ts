@@ -5,6 +5,7 @@ import { MRestAPI } from "@scramjet/api-types";
 import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
 import { z } from "zod";
+import { X509Certificate } from "crypto";
 
 import { getS3Router } from "../s3-router";
 import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "../utils";
@@ -38,7 +39,16 @@ export class ManagerAPIV1Handler {
         registerHttpRoutes(router, this.createV1CompatibilityRouter());
         router.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
             const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
-            const id = await manager.handleSthRegistration(payload);
+            const peer = (req.socket as IncomingMessage["socket"] & { getPeerCertificate?: (detailed?: boolean) => { raw?: Buffer } }).getPeerCertificate?.(true);
+            const peerCertificate = peer?.raw ? new X509Certificate(peer.raw) : undefined;
+            const fingerprint = peerCertificate?.fingerprint256;
+            const dnsSans =
+                peerCertificate?.subjectAltName
+                    ?.split(", ")
+                    .filter((value) => value.startsWith("DNS:"))
+                    .map((value) => value.slice(4)) || [];
+            const peerHubId = dnsSans.length === 1 ? dnsSans[0] : undefined;
+            const id = await manager.handleSthRegistration(payload, fingerprint, peerHubId);
 
             return { id, opStatus: ReasonPhrases.ACCEPTED };
         });
@@ -126,7 +136,7 @@ export class ManagerAPIV1Handler {
                 return translateDeleteError(e);
             }
             return {
-                opStatus: ReasonPhrases.ACCEPTED,
+                opStatus: ReasonPhrases.ACCEPTED
             };
         });
         router.use(`${apiBase}/sth/:id`, (req: ParsedMessage, res: ServerResponse) => manager.handleRequestToSTH(req, res));
@@ -159,7 +169,7 @@ export class ManagerAPIV1Handler {
             }
             const dropList = prepareDisconnectDroplist(payload, manager.apiSthConnectionStore);
 
-            dropList.forEach(drop => {
+            dropList.forEach((drop) => {
                 manager.logger.info("dropping", drop.sthController.id, drop.reason);
                 drop.sthController.disconnect(drop.reason).catch((err: Error) => {
                     manager.logger.error("STH disconnect error", err.message);
@@ -169,7 +179,7 @@ export class ManagerAPIV1Handler {
             return {
                 opStatus: ReasonPhrases.ACCEPTED,
                 managerId: manager.id,
-                disconnected: dropList.map(elem => ({
+                disconnected: dropList.map((elem) => ({
                     sthId: elem.sthController.id,
                     reason: elem.reason
                 }))
@@ -184,37 +194,45 @@ export class ManagerAPIV1Handler {
         const objectResponse = z.object({}).passthrough();
 
         return Router.create({ basePath })
-            .route(Router.get("/version", {
-                id: `manager.${apiVersion}.version`,
-                schemas: {
-                    response: z.object({
-                        service: z.string(),
-                        apiVersion: z.literal(apiVersion),
-                        version: z.string(),
-                        build: z.string()
+            .route(
+                Router.get("/version", {
+                    id: `manager.${apiVersion}.version`,
+                    schemas: {
+                        response: z.object({
+                            service: z.string(),
+                            apiVersion: z.literal(apiVersion),
+                            version: z.string(),
+                            build: z.string()
+                        })
+                    },
+                    handler: (): MRestAPI.GetVersionResponse => ({
+                        service: manager.service,
+                        apiVersion,
+                        version: manager.version,
+                        build: manager.build
                     })
-                },
-                handler: (): MRestAPI.GetVersionResponse => ({
-                    service: manager.service,
-                    apiVersion,
-                    version: manager.version,
-                    build: manager.build,
                 })
-            }))
-            .route(Router.get("/config", {
-                id: `manager.${apiVersion}.config`,
-                schemas: { response: z.object({ config: objectResponse }) },
-                handler: (): MRestAPI.GetConfigResponse => ({ config: manager.publicConfig })
-            }))
-            .route(Router.get("/verser2/trust", {
-                id: `manager.${apiVersion}.verser2.trust`,
-                schemas: { response: objectResponse },
-                handler: () => getManagerVerser2TrustExport(manager.config)
-            }))
-            .route(Router.get("/load", {
-                id: `manager.${apiVersion}.load`,
-                schemas: { response: z.unknown() },
-                handler: (): Promise<MRestAPI.GetLoadResponse> => manager.apiLoadCheck.getLoadCheck()
-            }));
+            )
+            .route(
+                Router.get("/config", {
+                    id: `manager.${apiVersion}.config`,
+                    schemas: { response: z.object({ config: objectResponse }) },
+                    handler: (): MRestAPI.GetConfigResponse => ({ config: manager.publicConfig })
+                })
+            )
+            .route(
+                Router.get("/verser2/trust", {
+                    id: `manager.${apiVersion}.verser2.trust`,
+                    schemas: { response: objectResponse },
+                    handler: () => getManagerVerser2TrustExport(manager.config)
+                })
+            )
+            .route(
+                Router.get("/load", {
+                    id: `manager.${apiVersion}.load`,
+                    schemas: { response: z.unknown() },
+                    handler: (): Promise<MRestAPI.GetLoadResponse> => manager.apiLoadCheck.getLoadCheck()
+                })
+            );
     }
 }

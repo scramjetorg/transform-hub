@@ -55,8 +55,23 @@ function fullConfig(): ManagerConfiguration {
                 minimumWaitingLeases: 1,
             },
         },
+        csrEnrollment: {
+            enabled: true,
+            operatorApproval: "operator-secret",
+            storageDir: "/private/grants",
+            caKeyFile: "/private/ca.key",
+            caCertFile: "/private/ca.cert"
+        }
     };
 }
+
+test("maskManagerConfig redacts CSR enrollment approval and private paths", t => {
+    const masked = maskManagerConfig(fullConfig()) as any;
+    t.is(masked.csrEnrollment.operatorApproval, "********");
+    t.is(masked.csrEnrollment.storageDir, "********");
+    t.is(masked.csrEnrollment.caKeyFile, "********");
+    t.is(masked.csrEnrollment.caCertFile, "********");
+});
 
 test("maskManagerConfig redacts S3 accessKey", t => {
     const masked = maskManagerConfig(fullConfig());
