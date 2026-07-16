@@ -16,9 +16,10 @@
 /**
  * Match a running scenario against the SCENARIO_EXCEPTIONS list.
  *
- * Each exception is keyed by feature URI (matched via endsWith so that
- * absolute Docker paths like `/work/bdd/features/...` resolve), scenario
- * line (optional secondary guard), and scenario name.
+ * Each exception is keyed by feature URI. URIs are normalized to the exact
+ * relative path below `features/`; the normalizer also accepts absolute
+ * Docker paths containing `/bdd/features/`. Scenario line is an optional
+ * secondary guard, and scenario name is the final match criterion.
  *
  * When `exc.scenarioName === "*"`, the exception matches **any** scenario
  * within the matching feature file (feature-level scope).  When it is an
@@ -30,9 +31,27 @@
  * @param {string}    scenarioName Exact scenario name.
  * @returns {object|undefined}     Matching exception, or undefined.
  */
+function normalizeFeatureUri(featureUri) {
+    if (typeof featureUri !== "string" || featureUri.length === 0) return undefined;
+
+    const uri = featureUri.replaceAll("\\", "/");
+    const dockerFeaturesPrefix = "/bdd/features/";
+    const dockerPrefixIndex = uri.indexOf(dockerFeaturesPrefix);
+
+    if (dockerPrefixIndex >= 0) {
+        return uri.slice(dockerPrefixIndex + dockerFeaturesPrefix.length);
+    }
+    if (uri.startsWith("features/")) return uri.slice("features/".length);
+    if (uri.startsWith("/")) return undefined;
+
+    return uri;
+}
+
 function matchScenarioException(exceptions, featureUri, scenarioLine, scenarioName) {
+    const normalizedFeatureUri = normalizeFeatureUri(featureUri);
+
     for (const exc of exceptions) {
-        const uriMatch = featureUri.endsWith(exc.featureUri) || featureUri === exc.featureUri;
+        const uriMatch = normalizedFeatureUri !== undefined && normalizedFeatureUri === normalizeFeatureUri(exc.featureUri);
 
         if (!uriMatch) continue;
 
@@ -136,6 +155,7 @@ async function cleanupScenarioWorldResources(world, lifecycle) {
 }
 
 module.exports = {
+    normalizeFeatureUri,
     matchScenarioException,
     cleanupWorldResources,
     cleanupScenarioWorldResources

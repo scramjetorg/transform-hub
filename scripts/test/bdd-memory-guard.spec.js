@@ -413,7 +413,7 @@ test("exception matching matches by exact URI, name, and line", (t) => {
     t.is(match.allowanceBytes, 1_048_576);
 });
 
-test("exception matching uses endsWith for feature URI", (t) => {
+test("exception matching accepts an absolute Docker feature URI", (t) => {
     const exceptions = [{
         featureUri: "verser2/VERSER2-001-isolated-routing.feature",
         line: 7,
@@ -424,13 +424,30 @@ test("exception matching uses endsWith for feature URI", (t) => {
 
     const match = matchScenarioException(
         exceptions,
-        "/some/prefix/verser2/VERSER2-001-isolated-routing.feature",
+        "/work/bdd/features/verser2/VERSER2-001-isolated-routing.feature",
         7,
         "Test",
     );
 
-    t.truthy(match, "should match via endsWith");
+    t.truthy(match, "should match the normalized Docker feature path");
     t.is(match.allowanceBytes, 2000);
+});
+
+test("exception matching rejects suffix collisions outside recognized feature prefixes", (t) => {
+    const exceptions = [{
+        featureUri: "verser2/VERSER2-001-isolated-routing.feature",
+        line: 7,
+        scenarioName: "Test",
+        allowanceBytes: 2000,
+        reason: "suffix collision test",
+    }];
+
+    t.falsy(matchScenarioException(
+        exceptions,
+        "/some/prefix/verser2/VERSER2-001-isolated-routing.feature",
+        7,
+        "Test",
+    ));
 });
 
 test("exception matching does not match wrong URI", (t) => {
@@ -664,6 +681,42 @@ test("exact-scenario exception takes priority over wildcard when both match", (t
     // to take priority.
     t.truthy(match, "should find a match");
     t.is(match.allowanceBytes, 1_048_576, "wildcard is first in array order, so it wins");
+});
+
+test("line-agnostic non-wildcard exception matches scenario line 0 and positive line, rejects wrong name", (t) => {
+    const exception = {
+        featureUri: "hub/HUB-003-feature-config.feature",
+        line: 0,
+        scenarioName: "HUB-003 TC-001 Set feature config",
+        allowanceBytes: 512_000,
+        reason: "line-agnostic exact-scenario test",
+    };
+
+    // Match when incoming scenarioLine is 0 (line extraction unavailable).
+    t.is(
+        matchScenarioException([exception], "features/hub/HUB-003-feature-config.feature", 0, "HUB-003 TC-001 Set feature config"),
+        exception,
+        "should match when scenarioLine is 0 and name matches exactly",
+    );
+
+    // Match when incoming scenarioLine is a positive number.
+    t.is(
+        matchScenarioException([exception], "features/hub/HUB-003-feature-config.feature", 12, "HUB-003 TC-001 Set feature config"),
+        exception,
+        "should match when scenarioLine is positive and name matches exactly",
+    );
+
+    // Reject when scenario name differs (even though line: 0 is agnostic).
+    t.falsy(
+        matchScenarioException([exception], "features/hub/HUB-003-feature-config.feature", 0, "HUB-003 TC-002 Start host with params"),
+        "should reject different scenario name",
+    );
+
+    // Reject when scenario name differs with a positive line number.
+    t.falsy(
+        matchScenarioException([exception], "features/hub/HUB-003-feature-config.feature", 12, "HUB-003 TC-002 Start host with params"),
+        "should reject different scenario name even when line is positive",
+    );
 });
 
 // ---------------------------------------------------------------------------

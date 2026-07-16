@@ -454,3 +454,19 @@ Results:
 - [x] Task: Conductor - Phase Checkpoint 'BDD Parallel Admission and Scheduling Policy' (Protocol in workflow.md)
 
   Checkpoint Notes: Phase 11 delivered and validated. The scheduler implementation supports parallel scheduling with a maximum of four concurrent chunk runs, temporary uniform 896 MiB reservations with 64 MiB margin, fresh awaited admission telemetry (diagnostic-only interval samples), exact run/chunk container identity, full worker-tree accounting, and settled-generation handling. Strict memory guards and serial-exclusive/resource-owning paths are preserved. Timing remains recorded telemetry, not a test-selection gate. Final validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" BDD_INCLUDE_LONG_RUNNING=1 SCRAMJET_BDD_MEMORY_GUARD=1 BDD_PARALLEL_SCHEDULER_REPORT_FILE=/tmp/opencode/bdd-balanced-parallel-4-oracle-report.json node scripts/run-bdd-waves.js --schedule=parallel --no-fail-fast` — 13/13 chunks completed (verser2, cli-basics, cli-matrix, topics-api, python, appcontext, node-spawn-core, node-streaming-stop, hub-configuration, hub-runtime, manager, errors, stream), cap 4, peakWorkers 4, owned-stack peak 3,486,777,344 bytes (3325.3 MiB) under 4 GiB, zero handoffs/telemetry failures, no OOM, verified termination and cleanup.
+
+## Phase 12: Deferred Memory-Exception Matching Reconciliation
+
+- [x] Task: Normalize BDD memory-exception feature paths before matching
+    - [x] Accept only recognized `features/` and `/bdd/features/` prefixes and compare the resulting relative feature path exactly.
+    - [x] Reject suffix collisions between distinct feature files.
+    - [x] Preserve supported absolute Docker feature paths.
+
+- [x] Task: Align memory-exception documentation and regression coverage
+    - [x] Correct the `line: 0` JSDoc to describe its line-agnostic matching behavior.
+    - [x] Add focused regression coverage for absolute Docker paths, suffix-collision rejection, and non-wildcard line-agnostic matching.
+    - [x] Run the focused BDD memory-hook test surface under the repository memory guard: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/bdd-memory-guard.spec.js --serial` — 43 tests passed. The test harness reported its existing `SCRAMJET_MEMORY_SKIP=1` manual-testing cleanup exception; this focused helper suite does not measure a live BDD scenario.
+
+- [x] Task: Conductor - Phase Checkpoint 'Deferred Memory-Exception Matching Reconciliation' (Protocol in workflow.md)
+
+  Checkpoint Notes: Replaced unrestricted suffix matching with exact normalized feature-relative path comparison. Recognized relative `features/` and absolute Docker `/bdd/features/` inputs remain supported; unrelated suffix collisions are rejected. Corrected the `line: 0` contract to document line-agnostic matching and added focused Docker-path, suffix-collision, and non-wildcard line-zero regressions. Validation: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/bdd-memory-guard.spec.js --serial` — 43 tests passed; the helper-only cleanup test retained its existing documented `SCRAMJET_MEMORY_SKIP=1` manual-testing exception. Oracle re-review passed with no blockers.

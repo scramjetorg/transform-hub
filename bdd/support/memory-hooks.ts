@@ -65,7 +65,7 @@ const { E2E003_KILL_EXCEPTION } = require("../../scripts/lib/bdd-cli-exceptions.
 interface ScenarioException {
     /** Feature URI relative to bdd/features/ (e.g. "verser2/VERSER2-001-isolated-routing.feature"). */
     featureUri: string;
-    /** Exact scenario line number in the feature file (ignored when scenarioName is "*"). */
+    /** Exact scenario line number; 0 makes the exception line-agnostic. */
     line: number;
     /**
      * Exact scenario name (matched with ===).  When set to "*", matches any
@@ -438,8 +438,8 @@ After(async function (this: any, scenario: any) {
     // lookup in the envelope, or from `scenario.sourceLocation?.line` on
     // the TestCaseFinished envelope.  Since we match by exact scenario
     // name + feature URI, the line is a secondary guard — if it cannot be
-    // determined, fall back to 0 (which disarms the line check below but
-    // still allows a name+URI match).
+    // determined, fall back to 0. Line-specific exceptions then fail closed;
+    // only line-agnostic exceptions (line 0) can match without a line.
     let scenarioLine: number = 0;
 
     if (scenario?.pickle?.locations && scenario.pickle.locations.length > 0) {
