@@ -1,6 +1,16 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { IComponent, IObjectLogger } from "@scramjet/runtime-types";
-import { ExitCode, ILifeCycleAdapterMain, ILifeCycleAdapterRun, InstanceConfig, InstanceLimits, MonitoringMessageData, SequenceConfig, SequenceInfo, RunnerConnectInfo } from "@scramjet/runtime-types";
+import {
+    ExitCode,
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterRun,
+    InstanceConfig,
+    InstanceLimits,
+    MonitoringMessageData,
+    SequenceConfig,
+    SequenceInfo,
+    RunnerConnectInfo
+} from "@scramjet/runtime-types";
 import { STHConfiguration } from "@scramjet/api-types";
 import { development, streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
@@ -39,17 +49,12 @@ async function readProcessRss(pid: number): Promise<{ memoryUsage: number; memor
     }
 }
 
-const isTSNode =
-    !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) ||
-    !!(process as any)[Symbol.for("ts-node.register.instance")];
+const isTSNode = !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) || !!(process as any)[Symbol.for("ts-node.register.instance")];
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
  */
-class ProcessInstanceAdapter implements
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterRun,
-    IComponent {
+class ProcessInstanceAdapter implements ILifeCycleAdapterMain, ILifeCycleAdapterRun, IComponent {
     logger: IObjectLogger;
     sthConfig: STHConfiguration;
 
@@ -62,7 +67,9 @@ class ProcessInstanceAdapter implements
     private memoryMaxUsage?: number;
     private _limits?: InstanceLimits = {};
 
-    get limits() { return this._limits || {} as InstanceLimits; }
+    get limits() {
+        return this._limits || ({} as InstanceLimits);
+    }
     private set limits(value: InstanceLimits) {
         this._limits = value;
         this.logger.warn("Limits are not yet supported in process runner");
@@ -102,20 +109,14 @@ class ProcessInstanceAdapter implements
         let debugFlags: string[] = [];
 
         if (engines.length > 1) {
-            throw new Error("Incorrect config passed to SequenceConfig," +
-                "'engines' field can't contain more than one element");
+            throw new Error("Incorrect config passed to SequenceConfig," + "'engines' field can't contain more than one element");
         }
 
         this.logger.trace("Detected sequence engines", engines);
 
-        if (this.sthConfig.debug)
-            debugFlags = ["--inspect-brk=9229"];
+        if (this.sthConfig.debug) debugFlags = ["--inspect-brk=9229"];
 
-        return [
-            isTSNode ? "tsx" : process.execPath,
-            ...debugFlags,
-            path.resolve(__dirname, require.resolve("@scramjet/runner"))
-        ];
+        return [isTSNode ? "tsx" : process.execPath, ...debugFlags, path.resolve(__dirname, require.resolve("@scramjet/runner"))];
     }
 
     setRunner(system: Record<string, string>): void {
@@ -138,36 +139,32 @@ class ProcessInstanceAdapter implements
         this.logger.trace("Starting Runner", config.id);
 
         const runnerCommand = this.getRunnerCmd(config);
-        const sequencePath = path.join(
-            config.sequenceDir,
-            config.entrypointPath
-        );
+        const sequencePath = path.join(config.sequenceDir, config.entrypointPath);
 
         const extraEnvs = development() ? process.env : {};
 
-        const env = getRunnerEnvVariables({
-            sequencePath,
-            instancesServerHost: "127.0.0.1",
-            instancesServerPort,
-            instanceId,
-            pipesPath: "",
-            sequenceInfo,
-            payload
-        }, {
-            EXPOSE_HOST: "127.0.0.1",
-            ...this.sthConfig.runnerEnvs,
-            ...getRunnerTransportEnv(this.sthConfig, instanceId),
-            ...extraEnvs
-        });
+        const env = getRunnerEnvVariables(
+            {
+                sequencePath,
+                instancesServerHost: "127.0.0.1",
+                instancesServerPort,
+                instanceId,
+                pipesPath: "",
+                sequenceInfo,
+                payload
+            },
+            {
+                EXPOSE_HOST: "127.0.0.1",
+                ...this.sthConfig.runnerEnvs,
+                ...getRunnerTransportEnv(this.sthConfig, instanceId),
+                ...extraEnvs
+            }
+        );
 
         this.logger.debug("Spawning Runner process with command", runnerCommand);
         this.logger.trace("Runner process environment", env);
 
-        const runnerProcess = spawn(
-            runnerCommand[0],
-            runnerCommand.slice(1),
-            { env, detached: payload.reconnect }
-        );
+        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env, detached: payload.reconnect });
 
         runnerProcess.unref();
 
@@ -193,15 +190,13 @@ class ProcessInstanceAdapter implements
 
     async waitUntilExit(_config: InstanceConfig, _instanceId: string, _sequenceInfo: SequenceInfo): Promise<ExitCode> {
         if (this.runnerProcess) {
-            const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
-                (res) => {
-                    if (this.exitCode > -1) {
-                        res([this.exitCode, null]);
-                    }
-
-                    this.runnerProcess?.on("exit", (code, sig) => res([code, sig]));
+            const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>((res) => {
+                if (this.exitCode > -1) {
+                    res([this.exitCode, null]);
                 }
-            );
+
+                this.runnerProcess?.on("exit", (code, sig) => res([code, sig]));
+            });
 
             this.logger.trace("Runner process exited", this.runnerProcess?.pid);
 
@@ -240,11 +235,14 @@ class ProcessInstanceAdapter implements
 
                     this.logger.debug("exitCode saved to file by runner:", data, filePath);
 
-                    rm(filePath).then(() => {
-                        this.logger.debug("File removed");
-                    }, (err: any) => {
-                        this.logger.error("Can't remove exitcode file", err);
-                    });
+                    rm(filePath).then(
+                        () => {
+                            this.logger.debug("File removed");
+                        },
+                        (err: any) => {
+                            this.logger.error("Can't remove exitcode file", err);
+                        }
+                    );
 
                     res(parseInt(data!, 10));
                 } catch {
@@ -283,8 +281,10 @@ class ProcessInstanceAdapter implements
     async remove() {
         if (this.runnerProcess) {
             this.runnerProcess.kill();
-        } else {
+        } else if (this.processPID > 0 && Number.isFinite(this.processPID)) {
             spawn("kill", ["-9", this.processPID.toString()]);
+        } else {
+            this.logger.warn("remove called with invalid PID, skipping kill", this.processPID);
         }
     }
 

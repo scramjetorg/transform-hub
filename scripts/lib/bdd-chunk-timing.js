@@ -10,6 +10,31 @@ function topRecords(records) {
     return records.sort((a, b) => b.durationMs - a.durationMs).slice(0, TOP_LIMIT);
 }
 
+/**
+ * Parse a JSONL (JSON Lines) string into an array of parsed event objects.
+ *
+ * Lines that are not valid JSON are silently skipped with a diagnostic
+ * warning written to stderr.  This is safe for informational summary
+ * consumers (e.g. AfterAll in memory-hooks.ts) where a corrupt or
+ * truncated line from a previous run should not crash the process.
+ *
+ * @param {string} raw - UTF-8 content of a JSONL file (one JSON object per line).
+ * @returns {object[]} Parsed event objects from valid lines.
+ */
+function parseTimingEventLines(raw) {
+    const events = [];
+    const lines = String(raw).split("\n").filter(Boolean);
+    for (const line of lines) {
+        try {
+            events.push(JSON.parse(line));
+        } catch (parseErr) {
+            const snippet = line.length > 120 ? line.slice(0, 117) + "..." : line;
+            process.stderr.write(`[bdd-chunk-timing] warning: skipping malformed JSON line: ${snippet}\n`);
+        }
+    }
+    return events;
+}
+
 function summarizeTimingEvents(events) {
     const records = { scenario: [], step: [], cleanup: [] };
     const counts = { scenarios: 0, steps: 0, cleanup: 0 };
@@ -186,4 +211,4 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
     };
 }
 
-module.exports = { createChunkTiming, monotonicMs, summarizeTimingEvents };
+module.exports = { createChunkTiming, monotonicMs, summarizeTimingEvents, parseTimingEventLines };

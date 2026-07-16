@@ -137,6 +137,33 @@ const waitForProcessToEnd = async (pid: number) => {
     assert.fail(`Process ${pid} did not end before the BDD timeout`);
 };
 
+const getOwnedLiveRunnerPid = async (): Promise<number | undefined> => {
+    // Let ChildProcess exit listeners reconcile runners that finished naturally
+    // before cleanup.  Only a still-tracked, live process owned by this
+    // scenario may be classified as an expected cleanup exit.
+    await memoryRegistry.drainExitEvents();
+    if (!processId) return undefined;
+
+    const tracked = memoryRegistry.trackedProcesses.get(processId);
+    if (!tracked || tracked.label !== "runner:process") return undefined;
+
+    try {
+        process.kill(processId, 0);
+        const stat = fs.readFileSync(`/proc/${processId}/stat`, "utf8");
+        const stateStart = stat.lastIndexOf(") ") + 2;
+        if (stat[stateStart] === "Z") {
+            await memoryRegistry.drainExitEvents();
+            return undefined;
+        }
+        return processId;
+    } catch {
+        // The PID is already gone; give its pending ChildProcess exit event a
+        // final chance to reconcile before cleanup proceeds.
+        await memoryRegistry.drainExitEvents();
+        return undefined;
+    }
+};
+
 // const killRunner = async () => {
 //     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
 //         // @TODO
@@ -326,6 +353,17 @@ After({}, async function (this: any) {
             insts = [];
         }
 
+        const runnerPidToClean = await getOwnedLiveRunnerPid();
+        if (runnerPidToClean) {
+            // Instance kill is the lifecycle operation under test.  Mark the
+            // runner before issuing it so the subsequent, intentional exit
+            // (SIGTERM is reported by the process adapter as 138) is not
+            // mistaken for a leaked/unexpected runner.  Waiting here is
+            // important: AfterAll must not stop the Hub while its adapter is
+            // still processing the runner's exit event.
+            memoryRegistry.markProcessesAsExpectedToExit([runnerPidToClean]);
+        }
+
         await Promise.all(
             insts.map((i: any) =>
                 withSelectedClient(this.resources.hostClient, hostClient, client =>
@@ -333,6 +371,10 @@ After({}, async function (this: any) {
                 )
             )
         );
+
+        if (runnerPidToClean) {
+            await waitForProcessToEnd(runnerPidToClean);
+        }
 
         // Destroy lingering topic outStream to prevent ECONNRESET on cleanup.
         if (this.resources.outStream) {
@@ -748,7 +790,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     }
 });
 
-When("runner has ended execution", { timeout: 7000 }, async function(this: CustomWorld) {
+When("runner has ended execution", { timeout: 30000 }, async function(this: CustomWorld) {
     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
         // @TODO
         return;
@@ -821,19 +863,15 @@ Then("get event {string} from instance", { timeout: 10000 }, async function(this
 When("wait for instance healthy is {string}", async function(this: CustomWorld, resp: string) {
     let healthy = "false";
 
-    if (resp === "false") {
-        console.log(`Response body is ${healthy}`);
-    } else {
-        await waitForCondition(
-            async () => {
-                actualHealthResponse = await this.resources.instance?.getHealth();
-                healthy = actualResponse()?.healthy?.toString() || "false";
-                return healthy;
-            },
-            (value) => value === resp,
-            { timeoutMs: 10000, intervalMs: 50, description: "instance health" }
-        );
-    }
+    await waitForCondition(
+        async () => {
+            actualHealthResponse = await this.resources.instance?.getHealth();
+            healthy = actualResponse()?.healthy?.toString() || "false";
+            return healthy;
+        },
+        (value) => value === resp,
+        { timeoutMs: 10000, intervalMs: 50, description: "instance health" }
+    );
 
     assert.equal(healthy, resp);
 });

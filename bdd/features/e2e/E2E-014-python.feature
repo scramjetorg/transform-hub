@@ -33,8 +33,7 @@ Feature: Test our shiny new Python runner
         Given host is running
         When find and upload sequence "python-bdd-unhealthy.tar.gz"
         And instance started
-        And wait for "1500" ms
-        Then instance health is "false"
+        And wait for instance healthy is "false"
         And host is still running
 
     @ci-instance-python

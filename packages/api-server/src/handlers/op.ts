@@ -1,19 +1,10 @@
-import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import {
-    APIRoute,
-    ControlMessageCode,
-    ICommunicationHandler,
-    MessageDataType,
-    Middleware,
-    OpOptions,
-    OpResolver,
-    ParsedMessage,
-} from "@scramjet/api-types";
+import { APIRoute, ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpOptions, OpResolver, ParsedMessage } from "@scramjet/api-types";
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage, ServerResponse } from "http";
-import { mimeAccepts } from "../lib/mime";
-import { StringDecoder } from "string_decoder";
 import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
+import { StringDecoder } from "string_decoder";
+import { CeroError, SequentialCeroRouter } from "../lib/definitions";
+import { mimeAccepts } from "../lib/mime";
 
 /**
  * Creates and returns a method to set up a POST/DELETE handlers for the given path.
@@ -22,6 +13,12 @@ import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
  * @returns Operation handler.
  */
 export function createOperationHandler(router: SequentialCeroRouter): APIRoute["op"] {
+    const responseIsClosed = (res: ServerResponse): boolean => {
+        const bodyStream = (res as ServerResponse & { bodyStream?: { writableEnded?: boolean } }).bodyStream;
+
+        return res.writableEnded || res.destroyed || Boolean(bodyStream?.writableEnded);
+    };
+
     /**
      * Checking content-type and getting encoding from request
      * @param {IncomingMessage} req Request object.
@@ -92,15 +89,14 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {OpOptions} options Handler options.
      * @returns void
      */
-    const opDataHandler = async (
-        req: ParsedMessage,
-        res: ServerResponse,
-        resolver: OpResolver,
-        { rawBody }: OpOptions = {}
-    ) => {
+    const opDataHandler = async (req: ParsedMessage, res: ServerResponse, resolver: OpResolver, { rawBody }: OpOptions = {}) => {
         req.body = await getData(req, { rawBody });
 
         const result = await resolver(req, res);
+
+        if (responseIsClosed(res)) {
+            return;
+        }
 
         let response = "{}";
 
@@ -115,15 +111,23 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             }
             delete result.opStatus;
 
+            if (responseIsClosed(res)) {
+                return;
+            }
+
             res.writeHead(statusCode, reason, { "content-type": "application/json" });
 
             if (Object.keys(result).length) {
                 response = JSON.stringify(result);
             }
-        } else {
+        } else if (!responseIsClosed(res)) {
             res.writeHead(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND, {
-                "content-type": "application/json",
+                "content-type": "application/json"
             });
+        }
+
+        if (responseIsClosed(res)) {
+            return;
         }
 
         return res.end(response);
@@ -137,15 +141,14 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {ICommunicationHandler} comm Communication handler.
      * @returns void
      */
-    const opControlMessageHandler = async <T extends ControlMessageCode>(
-        req: ParsedMessage,
-        res: ServerResponse,
-        message: T,
-        comm: ICommunicationHandler
-    ) => {
+    const opControlMessageHandler = async <T extends ControlMessageCode>(req: ParsedMessage, res: ServerResponse, message: T, comm: ICommunicationHandler) => {
         const obj = ((await getData(req)) as Array<any>)[1] as MessageDataType<T>;
 
         await comm.sendControlMessage(message, checkMessage(message as any, obj));
+
+        if (responseIsClosed(res)) {
+            return;
+        }
 
         res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
         return res.end(JSON.stringify({ accepted: true }));
@@ -168,15 +171,9 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {ICommunicationHandler} comm Communication handler.
      * @param {boolean} rawBody Flag if the body will be parsed.
      */
-    const op = <T extends ControlMessageCode>(
-        method: string = "post",
-        path: string | RegExp,
-        message: T | OpResolver,
-        comm?: ICommunicationHandler,
-        rawBody?: boolean
-    ): void => {
+    const op = <T extends ControlMessageCode>(method: string = "post", path: string | RegExp, message: T | OpResolver, comm?: ICommunicationHandler, rawBody?: boolean): void => {
         const handler: Middleware = async (req, res, next) => {
-            if (req.headers.expect === "100-continue") {
+            if (req.headers.expect === "100-continue" && !responseIsClosed(res)) {
                 res.writeContinue();
             }
 
@@ -188,7 +185,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
                     return await opControlMessageHandler(req, res, message, comm);
                 }
                 throw new Error("ERR_UNSUPPORTED_HANDLER_CONFIGURATION");
-        } catch (e: any) {
+            } catch (e: any) {
                 return next(e);
             }
         };

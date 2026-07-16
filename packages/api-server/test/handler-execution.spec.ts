@@ -166,6 +166,44 @@ test("op handler parses data, raw bodies, control messages and errors", async t 
     t.true(result.nextError instanceof CeroError);
 });
 
+test("op handler does not write a response after the resolver has ended it", async t => {
+    const router = createRouter();
+    const op = createOperationHandler(router);
+    const req = createRequest("{}");
+    const response = createResponse();
+    req.headers["content-type"] = "application/json";
+
+    op("post", "/ended", (_req, res) => {
+        res!.end();
+        return { opStatus: "OK" };
+    });
+
+    const result = await run(router.handlers.get("post:/ended")!, req, response);
+
+    t.is(result.nextError, undefined);
+    t.is(response.statusCode, 0);
+    t.is(await response.body, "");
+});
+
+test("op handler propagates errors when a response body is destroyed but the response remains open", async t => {
+    const router = createRouter();
+    const op = createOperationHandler(router);
+    const req = createRequest("{}");
+    const response = createResponse();
+    const bodyError = new Error("body destroyed");
+    req.headers["content-type"] = "application/json";
+    response.bodyStream = { destroyed: true };
+    response.end = () => {
+        throw bodyError;
+    };
+
+    op("post", "/destroyed-body", () => ({ opStatus: "OK" }));
+
+    const result = await run(router.handlers.get("post:/destroyed-body")!, req, response);
+
+    t.is(result.nextError, bodyError);
+});
+
 test("get monitoring handler recovers after first message — always returns latest data", async t => {
     const router = createRouter();
     const get = createGetterHandler(router);

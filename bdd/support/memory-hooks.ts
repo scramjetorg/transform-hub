@@ -42,7 +42,7 @@ import {
     cleanupScenarioWorldResources,
 } from "../../scripts/lib/bdd-memory-hooks-lib";
 import { parseChunkMemoryPolicy, validateEnforcePrerequisites } from "../../scripts/lib/bdd-chunk-memory-policy.js";
-const { createChunkTiming, summarizeTimingEvents } = require("../../scripts/lib/bdd-chunk-timing.js");
+const { createChunkTiming, summarizeTimingEvents, parseTimingEventLines } = require("../../scripts/lib/bdd-chunk-timing.js");
 const { MANAGER_SCENARIO_EXCEPTIONS } = require("../../scripts/lib/bdd-manager-exceptions.js");
 const { E2E003_KILL_EXCEPTION } = require("../../scripts/lib/bdd-cli-exceptions.js");
 
@@ -578,11 +578,8 @@ AfterAll(async function () {
     // avoids retaining record objects in the Cucumber heap across scenarios.
     let timing = chunkTiming.snapshotAndClear();
     if (timingEventsPath && existsSync(timingEventsPath)) {
-        const events = readFileSync(timingEventsPath, "utf8")
-            .split("\n")
-            .filter(Boolean)
-            .map(line => JSON.parse(line));
-        timing = summarizeTimingEvents(events);
+        const raw = readFileSync(timingEventsPath, "utf8");
+        timing = summarizeTimingEvents(parseTimingEventLines(raw));
     }
     if (isBddMemoryGuardEnabled()) await drainAndGc();
 

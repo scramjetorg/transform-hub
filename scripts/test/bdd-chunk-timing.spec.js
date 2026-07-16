@@ -1,7 +1,7 @@
 "use strict";
 
 const test = require("ava");
-const { createChunkTiming, summarizeTimingEvents } = require("../lib/bdd-chunk-timing.js");
+const { createChunkTiming, summarizeTimingEvents, parseTimingEventLines } = require("../lib/bdd-chunk-timing.js");
 
 test("chunk timing records scenarios, steps, cleanup, and top contributors", t => {
     let clock = 0;
@@ -109,4 +109,62 @@ test("chunk timing retains only bounded top records while aggregating all events
     const cleared = timing.snapshotAndClear();
     t.is(cleared.counts.steps, 12);
     t.is(timing.summary().counts.steps, 0);
+});
+
+// ---------------------------------------------------------------------------
+// parseTimingEventLines – regression coverage for malformed JSONL input
+// ---------------------------------------------------------------------------
+
+test("parseTimingEventLines parses all-valid JSONL", t => {
+    const raw = [
+        '{"kind":"scenario","name":"s1","durationMs":100}',
+        '{"kind":"step","name":"step-a","durationMs":25}',
+    ].join("\n");
+    const events = parseTimingEventLines(raw);
+    t.is(events.length, 2);
+    t.is(events[0].name, "s1");
+    t.is(events[1].name, "step-a");
+});
+
+test("parseTimingEventLines skips malformed JSON lines with a warning", t => {
+    // Stub process.stderr.write to capture warnings
+    const stderrChunks = [];
+    const origWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = (chunk) => { stderrChunks.push(String(chunk)); return true; };
+
+    try {
+        const raw = [
+            '{"kind":"scenario","name":"s1","durationMs":100}',
+            '{"kind":"step","name":"truncated-line',   // unterminated string
+            '{"kind":"step","name":"step-b","durationMs":25}',
+            'not-json-at-all',                           // not valid JSON
+        ].join("\n");
+        const events = parseTimingEventLines(raw);
+        t.is(events.length, 2, "valid lines must be parsed, malformed lines skipped");
+        t.is(events[0].name, "s1");
+        t.is(events[1].name, "step-b");
+        t.true(stderrChunks.length >= 2, "must write a warning for each malformed line");
+        t.true(stderrChunks.some(c => c.includes("malformed JSON")), "warning must mention malformed JSON");
+    } finally {
+        process.stderr.write = origWrite;
+    }
+});
+
+test("parseTimingEventLines handles empty input", t => {
+    t.deepEqual(parseTimingEventLines(""), []);
+    t.deepEqual(parseTimingEventLines("\n\n"), []);
+});
+
+test("parseTimingEventLines with all-malformed input returns empty array", t => {
+    const stderrChunks = [];
+    const origWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = (chunk) => { stderrChunks.push(String(chunk)); return true; };
+
+    try {
+        const events = parseTimingEventLines("corrupt\nbroken\n");
+        t.is(events.length, 0);
+        t.true(stderrChunks.length >= 2, "must warn on each corrupt line");
+    } finally {
+        process.stderr.write = origWrite;
+    }
 });
