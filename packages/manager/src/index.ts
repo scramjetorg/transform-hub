@@ -9,3 +9,4 @@ export * from "./lib/manager-auditor";
 export * from "./lib/verser2-transport";
 export * from "./lib/route-classifier";
 export * from "./lib/csr-enrollment";
+export * from "./lib/csr-enrollment-cli";

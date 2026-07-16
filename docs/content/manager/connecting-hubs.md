@@ -35,6 +35,14 @@ The Hub's local verser2 host carries the Manager connection; a Runner does not c
 
 In production, verser2 connectivity requires TLS. mTLS is configurable for mutual authentication. See the [Transform Hub configuration](../transform-hub/configuration.md) for verser2-related settings and the generated curated reference for exact type definitions.
 
+## Controlled CSR enrollment
+
+CSR enrollment is disabled by default. Enable it only for a controlled deployment with a private CA key, a private grant directory, and a non-default local operator approval. The Manager validates the CA/key pair and refuses Hub registration unless the presented client-certificate fingerprint is persisted as authorized. Revoking that fingerprint blocks subsequent registrations.
+
+Bearer grants are sent only in the HTTPS `Authorization: Bearer ...` header; never put a grant in the JSON request body or logs. The Hub must pin the Manager CA fingerprint and verify the complete certificate constraints before atomically installing the certificate. Protect the local operator approval and CA key as secrets, and disable enrollment after issuing the required identities.
+
+See [Controlled CSR enrollment](csr-enrollment.md) for the complete API, configuration, trust, recovery, rotation, and limitation details.
+
 ## Legacy automatic registration
 
 The v1-era CPM registration flow requires both a CPM identifier and the CPM/Manager URL:

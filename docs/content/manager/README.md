@@ -7,6 +7,7 @@
 ## Contents
 
 - [connecting-hubs.md](connecting-hubs.md)
+- [csr-enrollment.md](csr-enrollment.md)
 - [overview.md](overview.md)
 - [running.md](running.md)
 

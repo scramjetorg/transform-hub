@@ -3,6 +3,9 @@
   "version": "0.35.1",
   "description": "Scramjet Manager",
   "main": "src/index.ts",
+  "bin": {
+    "manager-csr-enrollment": "src/bin/csr-enrollment.ts"
+  },
   "scripts": {
     "start": "ts-node ./src/bin/start",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",

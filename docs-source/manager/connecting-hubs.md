@@ -38,6 +38,8 @@ CSR enrollment is disabled by default. Enable it only for a controlled deploymen
 
 Bearer grants are sent only in the HTTPS `Authorization: Bearer ...` header; never put a grant in the JSON request body or logs. The Hub must pin the Manager CA fingerprint and verify the complete certificate constraints before atomically installing the certificate. Protect the local operator approval and CA key as secrets, and disable enrollment after issuing the required identities.
 
+See [Controlled CSR enrollment](csr-enrollment.md) for the complete API, configuration, trust, recovery, rotation, and limitation details.
+
 ## Legacy automatic registration
 
 The v1-era CPM registration flow requires both a CPM identifier and the CPM/Manager URL:

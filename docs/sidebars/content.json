@@ -49,6 +49,13 @@
     "output": "manager/connecting-hubs.md"
   },
   {
+    "id": "manager-csr-enrollment",
+    "title": "Controlled CSR enrollment",
+    "slug": "/manager/csr-enrollment",
+    "source": "docs-source/manager/csr-enrollment.md",
+    "output": "manager/csr-enrollment.md"
+  },
+  {
     "id": "manager-overview",
     "title": "Manager overview",
     "slug": "/manager/overview",

@@ -11,6 +11,18 @@
 
 export type CompleterParams = string[] | "filenames" | "dirnames";
 
+export class CommandUsageError extends Error {
+    readonly code = "COMMAND_USAGE_ERROR";
+    constructor(message: string) {
+        super(message);
+        this.name = "CommandUsageError";
+    }
+}
+
+function usageError(message: string): never {
+    throw new CommandUsageError(message);
+}
+
 export interface OptionDescriptor {
     name: string;
     flag?: string;
@@ -90,16 +102,13 @@ export interface ResolveResult {
  * Walk argv left-to-right matching command names/aliases to build a path.
  * Stops at the first token that is not a known command or alias.
  */
-export function resolveCommandPath(
-    argv: readonly string[],
-    root: CommandDescriptor
-): ResolveResult {
+export function resolveCommandPath(argv: readonly string[], root: CommandDescriptor): ResolveResult {
     const consumed: string[] = [];
     const path: CommandDescriptor[] = [];
     let current = root;
 
     // Skip binary name (argv[0] is "si", argv[1] may be the first command)
-    const tokens = argv[0] === "si" ? argv.slice(1) : [...argv];
+    const tokens = argv[0] === "si" || argv[0] === root.name ? argv.slice(1) : [...argv];
     consumed.push(root.name);
 
     path.push(current);
@@ -107,11 +116,12 @@ export function resolveCommandPath(
     for (const token of tokens) {
         if (!current.children) break;
 
-        const child = current.children.find(
-            (c) => c.name === token || c.alias === token
-        );
+        const child = current.children.find((c) => c.name === token || c.alias === token);
 
-        if (!child) break;
+        if (!child) {
+            if (token === "--help" || token === "-h" || token.startsWith("-")) break;
+            usageError(`Unknown subcommand for command "${current.name}"`);
+        }
 
         consumed.push(token);
         path.push(child);
@@ -131,14 +141,8 @@ export function resolveCommandPath(
  * Parse remaining tokens as options + positional args for a resolved command.
  * Returns a context ready for action execution.
  */
-export function parseCommandContext(
-    resolve: ResolveResult,
-    globalOptions?: OptionDescriptor[]
-): CommandContext {
-    const allOptions = [
-        ...(globalOptions || []),
-        ...(resolve.command.options || [])
-    ];
+export function parseCommandContext(resolve: ResolveResult, globalOptions?: OptionDescriptor[]): CommandContext {
+    const allOptions = [...(globalOptions || []), ...(resolve.command.options || [])];
 
     const options: Record<string, unknown> = {};
     allOptions.forEach((opt) => {
@@ -146,18 +150,33 @@ export function parseCommandContext(
     });
 
     const optionValueIndexes = new Set<number>();
+    const seenScalarOptions = new Set<string>();
     const positionalTokens: string[] = [];
+    let endOfOptions = false;
 
     resolve.remainder.forEach((token, index) => {
         if (optionValueIndexes.has(index)) return;
 
+        if (endOfOptions) {
+            positionalTokens.push(token);
+            return;
+        }
+        if (token === "--") {
+            endOfOptions = true;
+            return;
+        }
         const [optionName, inlineValue] = token.split("=", 2);
-        const option = allOptions.find(candidate => optionTokens(candidate).includes(optionName));
+        const option = allOptions.find((candidate) => optionTokens(candidate).includes(optionName));
 
         if (!option) {
             if (token === "-" || !token.startsWith("-")) positionalTokens.push(token);
+            else usageError(`Unknown option for command "${resolve.command.name}"`);
             return;
         }
+
+        const isArray = option.type === "string[]" || option.type === "number[]";
+        if (!isArray && seenScalarOptions.has(option.name)) usageError(`Duplicate option "--${option.flag || option.name}"`);
+        if (!isArray) seenScalarOptions.add(option.name);
 
         if (optionName.startsWith("--no-") && option.type === "boolean") {
             options[option.name] = false;
@@ -171,15 +190,16 @@ export function parseCommandContext(
 
         const rawValue = inlineValue !== undefined ? inlineValue : resolve.remainder[index + 1];
 
-        if (rawValue === undefined) {
-            throw new Error(`Missing value for option ${optionName}`);
+        if (rawValue === undefined || (inlineValue === undefined && rawValue.startsWith("-") && option.type !== "number")) {
+            usageError(`Missing value for option "--${option.flag || option.name}"`);
         }
 
         if (inlineValue === undefined) {
             optionValueIndexes.add(index + 1);
         }
 
-        options[option.name] = coerceOptionValue(rawValue, option);
+        const coerced = coerceOptionValue(rawValue, option);
+        options[option.name] = isArray && Array.isArray(options[option.name]) ? [...(options[option.name] as unknown[]), ...(coerced as unknown[])] : coerced;
     });
 
     // Map positional tokens to argument descriptors
@@ -191,23 +211,29 @@ export function parseCommandContext(
         const value = positionalTokens[i];
 
         if (value !== undefined) {
-            const coerced = argDef.parse
-                ? argDef.parse(value)
-                : coerceArgValue(value, argDef);
-            const validated =
-                argDef.choices && typeof coerced === "string"
-                    ? validateChoice(coerced, argDef.choices)
-                    : coerced;
+            let coerced: unknown;
+            try {
+                coerced = argDef.parse ? argDef.parse(value) : coerceArgValue(value, argDef);
+            } catch {
+                usageError(`Invalid value for argument "${argDef.name}"`);
+            }
+            const validated = argDef.choices && typeof coerced === "string" ? validateChoice(coerced, argDef.choices) : coerced;
             args.push(validated);
         } else if (argDef.default !== undefined) {
             args.push(argDef.default);
         } else if (!argDef.required) {
             args.push(undefined);
         } else {
-            throw new Error(
-                `Missing required argument "${argDef.name}" for command "${resolve.command.name}"`
-            );
+            usageError(`Missing required argument "${argDef.name}" for command "${resolve.command.name}"`);
         }
+    }
+
+    if (positionalTokens.length > argDefs.length) {
+        usageError(`Unexpected positional argument for command "${resolve.command.name}"`);
+    }
+
+    for (const option of allOptions) {
+        if (option.required && options[option.name] === undefined) usageError(`Missing required option "--${option.flag || option.name}" for command "${resolve.command.name}"`);
     }
 
     return {
@@ -224,9 +250,7 @@ function coerceArgValue(value: string, _arg: ArgumentDescriptor): string {
 
 function validateChoice(value: string, choices: readonly string[]): string {
     if (!choices.includes(value)) {
-        throw new Error(
-            `Invalid value "${value}". Allowed: ${choices.join(", ")}`
-        );
+        usageError(`Invalid choice for argument; allowed values: ${choices.join(", ")}`);
     }
     return value;
 }
@@ -238,9 +262,7 @@ function validateChoice(value: string, choices: readonly string[]): string {
 /**
  * Execute a command: run preAction hook, then action, then postAction hook.
  */
-export async function executeCommand(
-    ctx: CommandContext
-): Promise<void> {
+export async function executeCommand(ctx: CommandContext): Promise<void> {
     const hooks = ctx.command.hooks;
 
     if (hooks?.preAction) {
@@ -263,19 +285,12 @@ export async function executeCommand(
 /**
  * Generate help text for a command from its descriptor.
  */
-export function generateHelp(
-    descriptor: CommandDescriptor,
-    _programName = "si"
-): string {
+export function generateHelp(descriptor: CommandDescriptor, programName = descriptor.name): string {
     const lines: string[] = [];
 
     // Usage
-    const usage =
-        descriptor.usage ||
-        (descriptor.children && descriptor.children.length > 0
-            ? "[command] [options...]"
-            : "[options...]");
-    lines.push(`Usage: ${descriptor.name} ${usage}\n`);
+    const usage = descriptor.usage || (descriptor.children && descriptor.children.length > 0 ? "[command] [options...]" : "[options...]");
+    lines.push(`Usage: ${programName} ${usage}\n`);
 
     // Description
     if (descriptor.description) {
@@ -288,10 +303,7 @@ export function generateHelp(
         lines.push("Arguments:\n");
         args.forEach((a) => {
             const optional = a.required ? "" : " (optional)";
-            const choices =
-                a.choices && a.choices.length > 0
-                    ? ` [${a.choices.join("|")}]`
-                    : "";
+            const choices = a.choices && a.choices.length > 0 ? ` [${a.choices.join("|")}]` : "";
             lines.push(`  ${a.name}${choices}${optional}`);
             if (a.description) lines.push(`    ${a.description}`);
             lines.push("");
@@ -304,13 +316,8 @@ export function generateHelp(
         lines.push("Options:\n");
         opts.forEach((o) => {
             const short = o.short ? `-${o.short}, ` : "    ";
-            const negatable =
-                o.negatable !== false && o.type === "boolean"
-                    ? `, --no-${o.name}`
-                    : "";
-            lines.push(
-                `  ${short}--${o.name}${negatable}  ${o.description || ""}`
-            );
+            const negatable = o.negatable !== false && o.type === "boolean" ? `, --no-${o.name}` : "";
+            lines.push(`  ${short}--${o.name}${negatable}  ${o.description || ""}`);
         });
         lines.push("");
     }
@@ -338,22 +345,15 @@ export function generateHelp(
  * Parse argv, resolve command path, and execute the matched command.
  * This is the main entry point for running a CLI built from descriptors.
  */
-export async function runCommandTree(
-    root: CommandDescriptor,
-    argv: readonly string[],
-    globalOptions?: OptionDescriptor[]
-): Promise<void> {
+export async function runCommandTree(root: CommandDescriptor, argv: readonly string[], globalOptions?: OptionDescriptor[]): Promise<void> {
     const resolve = resolveCommandPath(argv, root);
 
     // Handle --help and --version built into the root command
-    const hasHelp =
-        argv.includes("--help") || argv.includes("-h");
-    const hasVersion =
-        argv.includes("--version") || argv.includes("-v");
+    const hasHelp = argv.includes("--help") || argv.includes("-h");
+    const hasVersion = argv.includes("--version") || argv.includes("-v");
 
-    if (hasHelp && !resolve.command.children?.length) {
-        // Show help for the resolved command
-        console.log(generateHelp(resolve.command));
+    if (hasHelp || (Boolean(resolve.command.children?.length) && resolve.remainder.length === 0)) {
+        console.log(generateHelp(resolve.command, resolve.path.map((command) => command.name).join(" ")));
         return;
     }
 
@@ -391,10 +391,7 @@ export async function runCommandTree(
  *     );
  *   });
  */
-export function cmd(
-    name: string,
-    build?: (b: CommandBuilder) => void
-): CommandDescriptor {
+export function cmd(name: string, build?: (b: CommandBuilder) => void): CommandDescriptor {
     const descriptor: CommandDescriptor = { name };
     const builder = new CommandBuilder(descriptor);
 
@@ -430,15 +427,8 @@ export class CommandBuilder {
     option(opt: OptionDescriptor): this;
     /** Shorthand: name + description */
     option(name: string, description?: string, type?: OptionDescriptor["type"]): this;
-    option(
-        nameOrOpt: string | OptionDescriptor,
-        description?: string,
-        type?: OptionDescriptor["type"]
-    ): this {
-        const opt: OptionDescriptor =
-            typeof nameOrOpt === "string"
-                ? parseOptionDescriptor(nameOrOpt, description, type)
-                : nameOrOpt;
+    option(nameOrOpt: string | OptionDescriptor, description?: string, type?: OptionDescriptor["type"]): this {
+        const opt: OptionDescriptor = typeof nameOrOpt === "string" ? parseOptionDescriptor(nameOrOpt, description, type) : nameOrOpt;
 
         if (!this.target.options) this.target.options = [];
         this.target.options.push(opt);
@@ -449,15 +439,8 @@ export class CommandBuilder {
     argument(arg: ArgumentDescriptor): this;
     /** Shorthand: name + description */
     argument(name: string, description?: string, required?: boolean): this;
-    argument(
-        nameOrArg: string | ArgumentDescriptor,
-        description?: string,
-        required?: boolean
-    ): this {
-        const arg: ArgumentDescriptor =
-            typeof nameOrArg === "string"
-                ? parseArgumentDescriptor(nameOrArg, description, required)
-                : nameOrArg;
+    argument(nameOrArg: string | ArgumentDescriptor, description?: string, required?: boolean): this {
+        const arg: ArgumentDescriptor = typeof nameOrArg === "string" ? parseArgumentDescriptor(nameOrArg, description, required) : nameOrArg;
 
         if (!this.target.arguments) this.target.arguments = [];
         this.target.arguments.push(arg);
@@ -532,20 +515,12 @@ export class CommandBuilder {
 }
 
 /** Shorthand for creating a single option descriptor */
-export function opt(
-    name: string,
-    description?: string,
-    type?: OptionDescriptor["type"]
-): OptionDescriptor {
+export function opt(name: string, description?: string, type?: OptionDescriptor["type"]): OptionDescriptor {
     return parseOptionDescriptor(name, description, type);
 }
 
 /** Shorthand for creating a single argument descriptor */
-export function arg(
-    name: string,
-    description?: string,
-    required?: boolean
-): ArgumentDescriptor {
+export function arg(name: string, description?: string, required?: boolean): ArgumentDescriptor {
     return parseArgumentDescriptor(name, description, required);
 }
 
@@ -553,34 +528,53 @@ function optionTokens(option: OptionDescriptor): string[] {
     return [
         `--${option.flag || option.name}`,
         ...(option.type === "boolean" && option.negatable ? [`--no-${option.flag || option.name}`] : []),
-        ...(option.aliases || []).map(alias => `--${alias}`),
+        ...(option.aliases || []).map((alias) => `--${alias}`),
         ...(option.short ? [`-${option.short}`] : [])
     ];
 }
 
 function coerceOptionValue(value: string, option: OptionDescriptor): unknown {
-    const parsed = option.parse ? option.parse(value) : value;
-
-    if (option.choices && typeof parsed === "string" && !option.choices.includes(parsed)) {
-        throw new Error(`Invalid value "${parsed}" for option "${option.name}". Allowed: ${option.choices.join(", ")}`);
+    let parsed: unknown;
+    try {
+        parsed = option.parse ? option.parse(value) : value;
+    } catch {
+        usageError(`Invalid value for option "--${option.flag || option.name}"`);
     }
 
-    if (option.type === "number") return Number(parsed);
-    if (option.type === "json" && typeof parsed === "string") return JSON.parse(parsed);
+    if (option.choices && typeof parsed === "string" && !option.choices.includes(parsed)) {
+        usageError(`Invalid choice for option "--${option.flag || option.name}"; allowed values: ${option.choices.join(", ")}`);
+    }
+
+    if (option.type === "number") {
+        const number = Number(parsed);
+        if (!Number.isFinite(number)) usageError(`Invalid number for option "--${option.flag || option.name}"`);
+        return number;
+    }
+    if (option.type === "json" && typeof parsed === "string") {
+        try {
+            return JSON.parse(parsed);
+        } catch {
+            usageError(`Invalid JSON for option "--${option.flag || option.name}"`);
+        }
+    }
     if (option.type === "string[]") return typeof parsed === "string" ? [parsed] : parsed;
-    if (option.type === "number[]") return typeof parsed === "string" ? [Number(parsed)] : parsed;
+    if (option.type === "number[]") {
+        const numbers = typeof parsed === "string" ? [Number(parsed)] : Array.isArray(parsed) ? parsed : [parsed];
+
+        for (const n of numbers) {
+            if (!Number.isFinite(n)) usageError(`Invalid number for option "--${option.flag || option.name}"`);
+        }
+
+        return numbers;
+    }
 
     return parsed;
 }
 
-function parseOptionDescriptor(
-    usage: string,
-    description?: string,
-    type?: OptionDescriptor["type"]
-): OptionDescriptor {
-    const parts = usage.split(",").map(part => part.trim());
-    const longPart = parts.find(part => part.startsWith("--")) || parts[0];
-    const shortPart = parts.find(part => /^-[^-]/.test(part));
+function parseOptionDescriptor(usage: string, description?: string, type?: OptionDescriptor["type"]): OptionDescriptor {
+    const parts = usage.split(",").map((part) => part.trim());
+    const longPart = parts.find((part) => part.startsWith("--")) || parts[0];
+    const shortPart = parts.find((part) => /^-[^-]/.test(part));
     const longNameMatch = /--(?:no-)?([^\s<[]+)/.exec(longPart);
     const flag = longNameMatch ? longNameMatch[1] : usage.replace(/^[<-]+|[>\]]+$/g, "");
     const name = toCamelCase(flag);
@@ -592,19 +586,13 @@ function parseOptionDescriptor(
         flag,
         description,
         short: shortPart ? shortPart.replace(/^-/, "").split(/\s+/)[0] : undefined,
-        aliases: parts
-            .filter(part => part.startsWith("--") && part !== longPart)
-            .map(part => toCamelCase(part.replace(/^--(?:no-)?/, "").split(/\s+/)[0])),
+        aliases: parts.filter((part) => part.startsWith("--") && part !== longPart).map((part) => toCamelCase(part.replace(/^--(?:no-)?/, "").split(/\s+/)[0])),
         type: type || (explicitValue ? "string" : "boolean"),
         negatable: negatable || undefined
     };
 }
 
-function parseArgumentDescriptor(
-    usage: string,
-    description?: string,
-    required?: boolean
-): ArgumentDescriptor {
+function parseArgumentDescriptor(usage: string, description?: string, required?: boolean): ArgumentDescriptor {
     const requiredBySyntax = usage.startsWith("<");
     const name = usage.replace(/^[<[]|[>\]]$/g, "");
 

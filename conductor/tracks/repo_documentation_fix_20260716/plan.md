@@ -85,14 +85,22 @@
 
 ## Phase 4: Final integration, regeneration, and delivery review
 
-- [ ] Task: Perform final regeneration and repository consistency review.
-    - [ ] Run `npm run docs:generate`, `npm run docs:check`, affected package tests, and narrow lint/build checks under the required memory safeguards.
-    - [ ] Confirm only `docs/` is the generated documentation root; root/package README ownership is preserved; every documentation directory has an index or documented collision result; and no stale `dist-docs/` references remain.
-    - [ ] Verify root README, Manager explanation/diagram, STH/MultiManager/Sequence documentation, and mTLS/CA-helper documentation all match verified behavior.
-- [ ] Task: Review maintainability and deferred documentation debt.
-    - [ ] Request Oracle review of generated-output migration safety, public CA-helper security boundary, documentation claims, index collision policy, and remaining placeholder reference warnings.
-    - [ ] Reconcile accepted or rejected advisory candidates with rationale; repair and revalidate all in-scope findings.
-- [ ] Task: Prepare final delivery evidence.
-    - [ ] Document commands run, generated-output checks, focused test/build/lint results, memory-guard thresholds, skips/exceptions, and deferred follow-ups.
-    - [ ] Commit completed phase work on the configured mainline only after each phase checkpoint, keeping unrelated work excluded.
-- [ ] Task: Conductor - Phase Checkpoint 'Final integration, regeneration, and delivery review' (Protocol in workflow.md)
+- [x] Task: Add usable Hub and Manager CSR enrollment CLI workflows.
+    - [x] Provide documented commands for Hub CSR/key generation, local Manager approval/grant creation, and direct HTTPS redemption/installation.
+    - [x] Preserve explicit opt-in, approval gating, pinned CA validation, and secret-redaction boundaries.
+    - [x] Add focused CLI coverage and update the public enrollment guide with runnable examples for developer and homelab use.
+    - Evidence: `sth-csr-enrollment generate|redeem` owns Hub operations and `manager-csr-enrollment approve` owns local Manager approval. Both use the hardened `@scramjet/config` command model; shared parsing now rejects unsafe input with sanitized diagnostics, array values accumulate deterministically, and no Manager runtime dependency remains in STH. Oracle re-reviewed security/usability through JSON and numeric coercion diagnostics.
+- [x] Task: Perform final regeneration and repository consistency review.
+    - [x] Run `npm run docs:generate`, `npm run docs:check`, affected package tests, and narrow lint/build checks under the required memory safeguards.
+    - [x] Confirm only `docs/` is the generated documentation root; root/package README ownership is preserved; every documentation directory has an index or documented collision result; and no stale `dist-docs/` references remain.
+    - [x] Verify root README, Manager explanation/diagram, STH/MultiManager/Sequence documentation, and mTLS/CA-helper documentation all match verified behavior.
+    - Evidence: regenerated/checked `docs/` successfully and confirmed its marker exists with no `dist-docs/` directory. The final stale-link scan found generated package READMEs still pointing at `dist-docs`; `npm run docs:sync:readmes` updated all 40 owned package READMEs, after which the scan and `docs:check` passed.
+- [x] Task: Review maintainability and deferred documentation debt.
+    - [x] Request Oracle review of generated-output migration safety, public CA-helper security boundary, documentation claims, index collision policy, and remaining placeholder reference warnings.
+    - [x] Reconcile accepted or rejected advisory candidates with rationale; repair and revalidate all in-scope findings.
+    - Oracle: all in-scope findings are repaired. `td.md` has one accepted, explicitly out-of-scope production-PKI debt candidate; the public documentation now exposes its limitations.
+- [x] Task: Prepare final delivery evidence.
+    - [x] Document commands run, generated-output checks, focused test/build/lint results, memory-guard thresholds, skips/exceptions, and deferred follow-ups.
+    - [x] Commit completed phase work on the configured mainline only after each phase checkpoint, keeping unrelated work excluded.
+    - Validation summary: docs generate/check and package README synchronization passed; docs generator focused suite passed 19 tests; Manager 188, Host 279 (9 pre-existing CouchDB skips), and Config 51 tests passed under `ulimit -v 1835008`, `NODE_OPTIONS="--max-old-space-size=1024"`, and `SCRAMJET_AVA_MEMORY_GUARD=1`. The Manager pretest typecheck passed before transpile-only AVA. Final CLI command-model validation passed 8 tests under the same guard; docs regenerate/check passed after the CLI guide update. No CSR memory exceptions or skips were used; deferred coverage is limited to the accepted production-PKI scope in `td.md`.
+- [x] Task: Conductor - Phase Checkpoint 'Final integration, regeneration, and delivery review' (Protocol in workflow.md)

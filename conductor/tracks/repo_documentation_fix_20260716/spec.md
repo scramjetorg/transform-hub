@@ -4,7 +4,7 @@
 
 Make the repository documentation a usable, reproducible product surface. Migrate the generated documentation output from `dist-docs/` to `docs/`, correct generated-output and package-README ownership, and bring the product narrative, Manager documentation, user-facing package descriptions, security guidance, and navigational indexes into alignment with verified repository behavior.
 
-The opening sentence of the main product copy must be one unlabeled, compound sentence that states the user purpose, then the portable hub-and-runner approach that serves it, then the verified capabilities it provides.
+The opening product copy must be two unlabeled sentences: the first states the user purpose and portable hub-and-runner approach; the second states verified capabilities and introduces the Hub and Manager nomenclature. This wording was explicitly approved during implementation.
 
 ## Requirements
 
@@ -17,7 +17,7 @@ The opening sentence of the main product copy must be one unlabeled, compound se
 
 ### Product and Manager documentation
 
-- Rewrite the repository-root `README.md` as a directly maintained, non-generated entry point. Its opening sentence must be one unlabeled, compound sentence containing, in order, user and operator purpose, the portable hub-and-runner approach, and verified capabilities. The remainder must provide primary navigation and link to the Manager, security, and user-facing package documentation.
+- Rewrite the repository-root `README.md` as a directly maintained, non-generated entry point. Its opening two unlabeled sentences must cover, in order, user and operator purpose, the portable hub-and-runner approach, verified capabilities, and the Hub and Manager nomenclature. The remainder must provide primary navigation and link to the Manager, security, and user-facing package documentation.
 - Remove the root README from normal documentation-generator ownership and update the generator/source contract so `npm run docs:generate` and `npm run docs:check` preserve the directly maintained root `README.md`.
 - Update supporting source documentation copy to align with the root README: begin with the user and operator purpose, explain the portable hub-and-runner operating approach, and then describe verified capabilities. Avoid unsupported claims.
 - Add or improve main-repository Manager documentation that explains its control-plane role, connected Hub lifecycle/API routing, topic/service discovery, and operational boundaries.
@@ -46,9 +46,9 @@ The opening sentence of the main product copy must be one unlabeled, compound se
 ## Acceptance Criteria
 
 - `npm run docs:generate` produces a single marked `docs/` output tree, and `npm run docs:check` verifies it without writes to repository package READMEs.
-- The root `README.md` is directly maintained rather than generated, opens with one unlabeled compound sentence covering user/operator purpose, the portable hub-and-runner approach, and verified capabilities in that order, and is preserved by documentation generation/checking.
+- The root `README.md` is directly maintained rather than generated, opens with the approved two-sentence purpose/approach and capabilities/nomenclature composition, and is preserved by documentation generation/checking.
 - Documentation generation has focused regression coverage for output-root precedence, legacy-root removal/redirect behavior, protected output roots, explicit README-write behavior, deterministic index generation, collision handling, and link integrity.
-- The root README opening sentence uses the required purpose, approach, and capabilities composition; supporting source narrative remains aligned; important wording and package choices receive manual review before release.
+- The root README opening copy uses the approved purpose/approach and capabilities/nomenclature composition; supporting source narrative remains aligned; important wording and package choices receive manual review before release.
 - Manager documentation and Mermaid rendering describe only verified routing behavior and clearly state live-stream/non-persistent boundaries.
 - STH, MultiManager, and Sequence author documentation are descriptive, accurate, and free of unsupported capability claims; sequence-test is presented with its supported scope.
 - The security documentation distinguishes public configuration/endpoints from internal helpers and includes the approved public CA-helper contract, tests, threat boundaries, and operations guidance.
