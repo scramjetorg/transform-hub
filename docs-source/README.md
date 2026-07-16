@@ -11,8 +11,8 @@ title: Documentation source overview
 ## Source and generated boundaries
 
 - Handwritten source lives in `docs-source/`.
-- Generated documentation export lives in `dist-docs/`.
-- Generated READMEs are written to repository README locations and mirrored under `dist-docs/readmes/` when the generator is implemented.
+- Generated documentation export lives in `docs/`.
+- Generated README mirrors live under `docs/readmes/`; the root `README.md` is directly maintained, and package README updates require the explicit `docs:sync:readmes` command.
 - Curated TypeScript/API/CLI reference is generated only from allowlisted entrypoints in `docs-source/reference/curated-reference-allowlist.json`.
 - Broad per-package source documentation is not part of the new documentation model.
 
@@ -39,5 +39,5 @@ title: Documentation source overview
 
 - Use relative links between handwritten source pages.
 - Link to generated reference by stable output path, not by package internals.
-- Avoid linking to retired `docs/` TypeDoc output from new pages; generated docs now use `dist-docs/` from the `docs-source/` pipeline.
+- Generated docs now use the `docs/` output from the `docs-source/` pipeline; do not link to retired TypeDoc output.
 - README generation must rebase links for repository root, package, npm, and docs-site contexts.

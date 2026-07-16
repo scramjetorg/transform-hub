@@ -67,7 +67,7 @@ The monorepo contains the following npm packages:
 
 # Documentation
 
-Generated documentation is published to [dist-docs/](./dist-docs/), including content pages, curated TypeScript reference, README mirrors, and metadata for Docusaurus consumption.
+Generated documentation is published to [docs/](./docs/), including content pages, curated TypeScript reference, README mirrors, and metadata for Docusaurus consumption.
 
 Handwritten documentation source lives in [docs-source/](./docs-source/). See [docs-source/README.md](./docs-source/README.md) for authoring conventions.
 

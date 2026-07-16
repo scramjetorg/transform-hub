@@ -2,28 +2,33 @@
 
 ## Phase 1: Establish safe documentation ownership and migrate generated output
 
-- [ ] Task: Inventory the documentation generator and source/output contract.
-    - [ ] Read `scripts/docs.js`, `package.json`, `docs-source/reference/export-contract.md`, current root `README.md`, and relevant docs-generator tests before changing behavior.
-    - [ ] Record a source-backed claim and ownership matrix for root README, package READMEs, handwritten source content, generated output, sidebars, metadata, legacy documentation, and placeholder references.
-    - [ ] Confirm generator output precedence (`SCRAMJET_DOCS_OUTPUT_DIR`, package configuration, default) and every existing `dist-docs` reference/link-rewrite context.
-- [ ] Task: Add focused regression coverage for safe output and write modes.
-    - [ ] Cover the `docs/` default, environment/config precedence, protected-root behavior, sentinel/cleanup behavior, deterministic output, and legacy `dist-docs/` absence or redirect policy.
-    - [ ] Cover that ordinary generation and check mode cannot modify root or package READMEs.
-    - [ ] Cover a separately explicit package-README synchronization command, generated ownership marker, and refusal to overwrite unowned/manual files.
-- [ ] Task: Migrate the generator from `dist-docs/` to `docs/`.
-    - [ ] Update output configuration, protected-root validation, metadata, source contract, link rewriting, scripts, and diagnostics.
-    - [ ] Make the repository-root `README.md` directly maintained and exclude it from generator ownership.
-    - [ ] Provide an explicit package-README synchronization command rather than coupling writes to general generation.
-    - [ ] Remove or intentionally redirect legacy generated output only after verifying the new generated tree and references.
-- [ ] Task: Generate deterministic README indexes for every directory in the `docs/` tree.
-    - [ ] Define generation markers, titles, stable ordering, parent/child navigation, relative-link rules, and missing/empty-directory behavior.
-    - [ ] Define collision handling that preserves authoritative hand-authored `README.md` content and safely augments or records generated/reference collisions.
-    - [ ] Include reference, API, CLI, sidebars, readme mirrors, partials, and legacy folders; preserve placeholder warnings.
-- [ ] Task: Validate the documentation migration and generated index behavior.
-    - [ ] Run focused generator tests under the repository memory guard.
-    - [ ] Run `npm run docs:generate` and `npm run docs:check`; inspect the changed-file set, sentinel, legacy-output disposition, README ownership, navigation links, and placeholder notices.
-    - [ ] Record that memory-guarded runtime tests are not applicable to documentation-only generator validation unless the public CA helper phase introduces testable runtime behavior.
-- [ ] Task: Conductor - Phase Checkpoint 'Establish safe documentation ownership and migrate generated output' (Protocol in workflow.md)
+- [x] Task: Inventory the documentation generator and source/output contract.
+    - [x] Read `scripts/docs.js`, `package.json`, `docs-source/reference/export-contract.md`, current root `README.md`, and relevant docs-generator tests before changing behavior.
+    - [x] Record a source-backed claim and ownership matrix for root README, package READMEs, handwritten source content, generated output, sidebars, metadata, legacy documentation, and placeholder references.
+    - [x] Confirm generator output precedence (`SCRAMJET_DOCS_OUTPUT_DIR`, package configuration, default) and every existing `dist-docs` reference/link-rewrite context.
+    - Evidence: `scripts/docs.js` currently owns and writes the root and package READMEs, while `docs-source/` and `docs-source/legacy-docs/` are handwritten inputs; `dist-docs/` contains generated content, references, sidebars, metadata, and placeholder reference pages. Output precedence is `SCRAMJET_DOCS_OUTPUT_DIR`, then `package.json#scramjet.docs.outputDir`, then `dist-docs`. No dedicated generator tests currently cover these safety boundaries; `docs:check` is the existing integration-level drift check. Full ownership and legacy/link-rewrite inventory: specialist finding `ses_093e5e000ffegt8kGGAvvzXkY8` (2026-07-16).
+- [x] Task: Add focused regression coverage for safe output and write modes.
+    - [x] Cover the `docs/` default, environment/config precedence, protected-root behavior, sentinel/cleanup behavior, deterministic output, and legacy `dist-docs/` absence or redirect policy.
+    - [x] Cover that ordinary generation and check mode cannot modify root or package READMEs.
+    - [x] Cover a separately explicit package-README synchronization command, generated ownership marker, and refusal to overwrite unowned/manual files.
+    - Evidence: added `scripts/test/docs-generator.spec.js` and testability-only exports from `scripts/docs.js`. The focused AVA command has six expected failures for the immediately following generator-migration task (output root, README write isolation/sync ownership, and legacy disposition); they must pass before this phase checkpoint.
+- [x] Task: Migrate the generator from `dist-docs/` to `docs/`.
+    - [x] Update output configuration, protected-root validation, metadata, source contract, link rewriting, scripts, and diagnostics.
+    - [x] Make the repository-root `README.md` directly maintained and exclude it from generator ownership.
+    - [x] Provide an explicit package-README synchronization command rather than coupling writes to general generation.
+    - [x] Remove or intentionally redirect legacy generated output only after verifying the new generated tree and references.
+    - Evidence: focused AVA coverage passes (13 tests), `npm run docs:generate` and `npm run docs:check` pass under the memory guard. Oracle High findings were repaired: the technical-debt register is now canonical routed source at `docs-source/development/technical-debt.md`; generation rejects unmarked `docs/` roots rather than deleting them; normal check no longer owns or compares root/package READMEs. `dist-docs/` was removed after successful `docs/` generation.
+- [x] Task: Generate deterministic README indexes for every directory in the `docs/` tree.
+    - [x] Define generation markers, titles, stable ordering, parent/child navigation, relative-link rules, and missing/empty-directory behavior.
+    - [x] Define collision handling that preserves authoritative hand-authored `README.md` content and safely augments or records generated/reference collisions.
+    - [x] Include reference, API, CLI, sidebars, readme mirrors, partials, and legacy folders; preserve placeholder warnings.
+    - Evidence: 15 focused generator tests pass, including deterministic index, collision-preservation, and navigability coverage. Generated/rewrite-owned READMEs receive a marked navigation block; unowned collisions retain their content and use `README.index.md` as the navigation target.
+- [x] Task: Validate the documentation migration and generated index behavior.
+    - [x] Run focused generator tests under the repository memory guard.
+    - [x] Run `npm run docs:generate` and `npm run docs:check`; inspect the changed-file set, sentinel, legacy-output disposition, README ownership, navigation links, and placeholder notices.
+    - [x] Record that memory-guarded runtime tests are not applicable to documentation-only generator validation unless the public CA helper phase introduces testable runtime behavior.
+    - Evidence: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/docs-generator.spec.js --serial` passed 19 tests. With the same memory guard, `npm run docs:generate` and `npm run docs:check` passed. `docs/.scramjet-docs-output.json` exists, `dist-docs/` is absent, no package README changes are present, generated indexes and placeholder notices were inspected, and documentation-only validation has no runtime memory-guard surface in this phase. Final Oracle review passed after remediation: exact marker ownership, legacy preflight safety, generated link validation, and metadata ownership wording are covered.
+- [x] Task: Conductor - Phase Checkpoint 'Establish safe documentation ownership and migrate generated output' (Protocol in workflow.md)
 
 ## Phase 2: Write evidence-backed product, Manager, and package documentation
 

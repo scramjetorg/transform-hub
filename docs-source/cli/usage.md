@@ -105,7 +105,7 @@ The commands above cover common workflows. For the current listing of commands, 
 
 - Run `si --help` for inline usage information.
 - Run `si <resource> --help` before scripting a specific command.
-- Use the [generated CLI reference](../../dist-docs/reference/cli/index.md) for the exported command, argument, and option listing.
+- Use the [generated CLI reference](../../docs/reference/cli/index.md) for the exported command, argument, and option listing.
 - Use this prose guide when you need conceptual understanding of which commands to use for each workflow.
 
 ## See also

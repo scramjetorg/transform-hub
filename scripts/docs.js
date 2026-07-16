@@ -48,12 +48,13 @@ function packageDocsConfig() {
 function outputRoot() {
     const envOutput = process.env.SCRAMJET_DOCS_OUTPUT_DIR;
     const configuredOutput = packageDocsConfig().outputDir;
-    const selected = envOutput || configuredOutput || "dist-docs";
+    const selected = envOutput || configuredOutput || "docs";
 
     return {
         path: path.resolve(root, selected),
         source: envOutput ? "env" : configuredOutput ? "package" : "fallback",
-        value: selected
+        value: selected,
+        writeRepoReadmes: false
     };
 }
 
@@ -97,23 +98,43 @@ function markerPath(dir) {
     return path.join(dir, ".scramjet-docs-output.json");
 }
 
+const EXPECTED_OUTPUT_MARKER = Object.freeze({ generatedBy: "scripts/docs.js" });
+
+function validateOutputMarker(dir) {
+    const file = markerPath(dir);
+    if (!fs.existsSync(file)) throw new Error(`Refusing to use unmarked docs output root: ${path.resolve(dir)}`);
+
+    let marker;
+    try {
+        marker = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch (error) {
+        throw new Error(`Refusing to use invalid docs output marker: ${file}`);
+    }
+
+    const keys = marker && typeof marker === "object" && !Array.isArray(marker) ? Object.keys(marker) : [];
+    if (keys.length !== 1 || keys[0] !== "generatedBy" || marker.generatedBy !== EXPECTED_OUTPUT_MARKER.generatedBy) {
+        throw new Error(`Refusing to use foreign docs output marker: ${file}`);
+    }
+}
+
 function validateOutputRoot(dir, options = {}) {
     const resolved = path.resolve(dir);
     const relative = path.relative(root, resolved);
-    const protectedRoots = ["", ".", "docs", "docs-source", "conductor", "packages", "scripts", "src"];
+    const protectedRoots = ["", ".", "docs-source", "conductor", "packages", "scripts", "src"];
     const isOutsideRoot = relative.startsWith("..");
 
     if (!isOutsideRoot && protectedRoots.some((protectedRoot) => relative === protectedRoot || relative.startsWith(`${protectedRoot}/`))) {
         throw new Error(`Refusing to use protected docs output root: ${resolved}`);
     }
 
-    if (fs.existsSync(resolved) && !fs.existsSync(markerPath(resolved)) && !options.allowUnmarkedExisting) {
-        throw new Error(`Refusing to use existing unmarked docs output root: ${resolved}`);
+    if (fs.existsSync(resolved)) {
+        if (fs.existsSync(markerPath(resolved))) validateOutputMarker(resolved);
+        else if (!options.allowUnmarkedExisting || options.requireMarker) {
+            throw new Error(`Refusing to use unmarked docs output root: ${resolved}`);
+        }
     }
 
-    if (options.requireMarker && fs.existsSync(resolved) && !fs.existsSync(markerPath(resolved))) {
-        throw new Error(`Refusing to clean unmarked docs output root: ${resolved}`);
-    }
+    if (options.requireMarker && fs.existsSync(resolved)) validateOutputMarker(resolved);
 
     if (resolved === sourceRoot || resolved.startsWith(`${sourceRoot}${path.sep}`)) {
         throw new Error("Docs output root must not be inside docs-source/");
@@ -121,7 +142,7 @@ function validateOutputRoot(dir, options = {}) {
 }
 
 function writeMarker(dir) {
-    writeFile(markerPath(dir), `${JSON.stringify({ generatedBy: "scripts/docs.js" }, null, 2)}\n`);
+    writeFile(markerPath(dir), `${JSON.stringify(EXPECTED_OUTPUT_MARKER, null, 2)}\n`);
 }
 
 function cleanOutput(dir) {
@@ -204,8 +225,8 @@ function validateLinks(file, content) {
 
         if (!target || target.startsWith("/")) continue;
 
-        // Skip links to generated dist-docs/ paths — they are created by docs:generate
-        if (target.startsWith("../../dist-docs/") || target.startsWith("../dist-docs/") || target.startsWith("dist-docs/")) continue;
+        // Skip links to generated docs/ paths — they are created by docs:generate
+        if (target.startsWith("../../docs/") || target.startsWith("../docs/") || target.startsWith("docs/")) continue;
 
         const resolved = path.resolve(path.dirname(file), target);
 
@@ -280,18 +301,18 @@ function docsLink(context, pkgDir, refEntries) {
     if (refEntries && refEntries.length > 0) {
         const slug = refEntries[0].outputPath.replace(/\/$/, "");
 
-        if (context === "dist-docs") {
+        if (context === "docs") {
             return `../../../${slug}/README.md`;
         }
         if (context === "npm") {
-            return `${GITHUB_BLOB_ROOT}/dist-docs/${slug}/README.md`;
+            return `${GITHUB_BLOB_ROOT}/docs/${slug}/README.md`;
         }
         // repo context (packages/<pkg>/README.md)
-        return `../../dist-docs/${slug}/README.md`;
+        return `../../docs/${slug}/README.md`;
     }
 
     // No reference entry
-    if (context === "dist-docs") {
+    if (context === "docs") {
         return `${GITHUB_TREE_ROOT}/packages/${pkgDir}`;
     }
     if (context === "npm") {
@@ -350,13 +371,14 @@ function generateContent(out, pages) {
         const target = path.join(contentOut, relative);
         let content = fs.readFileSync(page.file, "utf8");
 
-        // Rewrite relative dist-docs links for the output context.
-        // Source files may use ../../dist-docs/... links (which work on GitHub),
-        // but in the dist-docs/content/ output these need to drop the dist-docs/ segment
-        // to resolve correctly within the dist-docs tree.
-        content = content.replace(/\[([^\]]+)\]\(\.\.\/\.\.\/dist-docs\//g, "[$1](../../");
-        content = content.replace(/\[([^\]]+)\]\(\.\.\/dist-docs\//g, "[$1](../");
-        content = content.replace(/\[([^\]]+)\]\(dist-docs\//g, "[$1](");
+        // Rewrite relative docs links for the output context.
+        // Source files may use ../../docs/... links (which work on GitHub),
+        // but in the docs/content/ output these need to drop the docs/ segment
+        // to resolve correctly within the docs tree.
+        content = content.replace(/\[([^\]]+)\]\(\.\.\/\.\.\/docs\//g, "[$1](../../");
+        content = content.replace(/\[([^\]]+)\]\(\.\.\/docs\//g, "[$1](../");
+        content = content.replace(/\[([^\]]+)\]\(docs\//g, "[$1](");
+        content = content.replace(/\]\(\.\.\/\.\.\/conductor\//g, "](../../../conductor/");
 
         writeFile(target, withGeneratedMarkerAfterFrontmatter(page.file, content, `docs-source/${relative}`));
         sidebar.push({
@@ -779,7 +801,7 @@ function readmeSourcePath(file) {
 }
 
 function packageRowLink(context, pkgDir) {
-    if (context === "dist-docs") {
+    if (context === "docs") {
         return `${GITHUB_TREE_ROOT}/packages/${pkgDir}/`;
     }
     return `./packages/${pkgDir}/`;
@@ -836,7 +858,7 @@ function generateRootReadme(out, repoReadmesOutputDir) {
     return { content, relPath: "README.md", sourcePath: "docs-source/readmes/root.md" };
 }
 
-function generateRootReadmeDistDocs(out) {
+function generateRootReadmeDocs(out) {
     const sourceFile = path.join(readmesSourceDir, "root.md");
 
     if (!fs.existsSync(sourceFile)) {
@@ -847,12 +869,12 @@ function generateRootReadmeDistDocs(out) {
     let content = fs.readFileSync(sourceFile, "utf8");
     const pkgs = listPackages();
 
-    // Build package list table with absolute GitHub URLs for dist-docs context
+    // Build package list table with absolute GitHub URLs for docs context
     const rows = pkgs.map((pkgDir) => {
         const pkg = readPackageJson(pkgDir);
         const name = pkg.name || `@scramjet/${pkgDir}`;
         const desc = getDescription(pkgDir);
-        return `| [${name}](${packageRowLink("dist-docs", pkgDir)}) | ${desc} |`;
+        return `| [${name}](${packageRowLink("docs", pkgDir)}) | ${desc} |`;
     });
 
     const packageTable = [
@@ -866,7 +888,7 @@ function generateRootReadmeDistDocs(out) {
     content = content
         .replaceAll("(./docs-source/", `(${GITHUB_BLOB_ROOT}/docs-source/`)
         .replaceAll("(./packages/", `(${GITHUB_TREE_ROOT}/packages/`)
-        .replaceAll("(./dist-docs/", "(../");
+        .replaceAll("(./docs/", "(../");
     content = content.replace(`(${GITHUB_BLOB_ROOT}/docs-source/)`, `(${GITHUB_TREE_ROOT}/docs-source/)`);
 
     const marker = generatedMarker(`docs-source/readmes/root.md`).trimEnd();
@@ -895,9 +917,10 @@ function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMa
         // Use overlay content for the body
         let overlayContent = fs.readFileSync(overlayFile, "utf8").trim();
 
-        if (context === "dist-docs") {
+        if (context === "docs") {
             overlayContent = overlayContent.replaceAll("(../../docs-source/", `(${GITHUB_BLOB_ROOT}/docs-source/`);
-            overlayContent = overlayContent.replaceAll("(../../dist-docs/", `(${GITHUB_BLOB_ROOT}/dist-docs/`);
+            overlayContent = overlayContent.replaceAll("(../../docs/content/", "(../../../content/");
+            overlayContent = overlayContent.replaceAll("(../../docs/", `(${GITHUB_BLOB_ROOT}/docs/`);
         }
 
         lines.push(overlayContent);
@@ -970,8 +993,8 @@ function generateReadmes(out, repoReadmesOutputDir) {
     // Root README — repo context
     const rootResult = generateRootReadme(out, repoReadmesOutputDir);
     if (rootResult) {
-        // Root README — dist-docs context (absolute GitHub URLs)
-        const rootDistDocs = generateRootReadmeDistDocs(out);
+        // Root README — docs context (absolute GitHub URLs)
+        const rootDistDocs = generateRootReadmeDocs(out);
         writeFile(path.join(readmesOut, rootResult.relPath), rootDistDocs.content);
         generated.push(rootResult.relPath);
         sidebar.push({
@@ -989,8 +1012,8 @@ function generateReadmes(out, repoReadmesOutputDir) {
             output: pkgResult.relPath
         });
 
-        // Package READMEs — dist-docs context
-        const pkgDistDocs = generatePackageReadmeFor("dist-docs", out, pkgDir, experimental.has(pkgDir), refEntryMap);
+        // Package READMEs — docs context
+        const pkgDistDocs = generatePackageReadmeFor("docs", out, pkgDir, experimental.has(pkgDir), refEntryMap);
         writeFile(path.join(readmesOut, "packages", pkgDir, "README.md"), pkgDistDocs.content);
     }
 
@@ -998,6 +1021,122 @@ function generateReadmes(out, repoReadmesOutputDir) {
     writeFile(path.join(out.path, "sidebars", "readmes.json"), `${JSON.stringify(sidebar, null, 2)}\n`);
 
     return generated;
+}
+
+
+const DIRECTORY_INDEX_START = "<!-- docs-directory-index:start -->";
+const DIRECTORY_INDEX_END = "<!-- docs-directory-index:end -->";
+const DIRECTORY_INDEX_MARKER = "<!-- Generated by scripts/docs.js: directory index. Do not edit this file directly. -->";
+
+function directoryTitle(relative) {
+    if (!relative) return "Documentation";
+    const name = path.basename(relative);
+    const special = { api: "API", cli: "CLI", readmes: "README Mirrors" };
+    if (special[name]) return special[name];
+    const words = name.split(/[-_]+/).filter(Boolean).map(word => word.charAt(0).toUpperCase() + word.slice(1));
+    return words.join(" ") || "Documentation";
+}
+
+function directoryIndexBody(relative, entries, collision) {
+    const title = directoryTitle(relative);
+    const lines = [DIRECTORY_INDEX_MARKER, "", `# ${title}`, ""];
+
+    if (relative) lines.push("[Parent directory](../README.md)", "");
+    lines.push("## Contents", "");
+
+    if (collision) {
+        lines.push("This directory contains a preserved hand-authored `README.md`. The generated navigation index is available at [`README.index.md`](README.index.md).", "");
+    }
+
+    if (entries.length === 0) {
+        lines.push("_This directory is empty._", "");
+    } else {
+        for (const entry of entries) lines.push(`- [${entry.title}](${entry.href})`);
+        lines.push("");
+    }
+
+    return lines.join("\n");
+}
+
+
+function generatePartials(out) {
+    const source = path.join(sourceRoot, "_partials");
+    const target = path.join(out.path, "partials");
+    if (!fs.existsSync(source)) return;
+
+    removeDir(target);
+    const copy = (from, to) => {
+        for (const entry of fs.readdirSync(from, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
+            const sourceFile = path.join(from, entry.name);
+            const targetFile = path.join(to, entry.name);
+            if (entry.isDirectory()) copy(sourceFile, targetFile);
+            else if (entry.isFile()) writeFile(targetFile, fs.readFileSync(sourceFile));
+        }
+    };
+    copy(source, target);
+}
+
+function generateDirectoryIndexes(out) {
+    const directories = [];
+    const visit = (dir, relative = "") => {
+        directories.push({ dir, relative });
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
+            if (entry.isDirectory()) visit(path.join(dir, entry.name), relative ? `${relative}/${entry.name}` : entry.name);
+        }
+    };
+    visit(out.path);
+
+    const collisions = new Set(directories
+        .filter(({ dir }) => fs.existsSync(path.join(dir, "README.md")))
+        .filter(({ dir }) => !fs.readFileSync(path.join(dir, "README.md"), "utf8").includes("Generated by scripts/docs.js"))
+        .map(({ relative }) => relative));
+
+    for (const { dir, relative } of directories.sort((left, right) => left.relative.localeCompare(right.relative))) {
+        const entries = fs.readdirSync(dir, { withFileTypes: true })
+            .filter(entry => entry.name !== ".scramjet-docs-output.json" && entry.name !== "README.md" && entry.name !== "README.index.md")
+            .sort((left, right) => {
+                if (left.isDirectory() !== right.isDirectory()) return left.isDirectory() ? -1 : 1;
+                return left.name.localeCompare(right.name);
+            })
+            .map(entry => {
+                const childRelative = relative ? `${relative}/${entry.name}` : entry.name;
+                const href = entry.isDirectory()
+                    ? `${entry.name}/${collisions.has(childRelative) ? "README.index.md" : "README.md"}`
+                    : entry.name;
+                return { title: entry.isDirectory() ? directoryTitle(childRelative) : entry.name, href };
+            });
+        const target = path.join(dir, "README.md");
+        const collision = collisions.has(relative);
+        const index = directoryIndexBody(relative, entries, collision);
+
+        if (collision) {
+            writeFile(path.join(dir, "README.index.md"), `${index}\n`);
+            continue;
+        }
+
+        if (fs.existsSync(target)) {
+            const original = fs.readFileSync(target, "utf8");
+            const withoutIndex = original.replace(new RegExp(`\\n?${DIRECTORY_INDEX_START}[\\s\\S]*?${DIRECTORY_INDEX_END}\\n?`, "g"), "").trimEnd();
+            writeFile(target, `${withoutIndex}\n\n${DIRECTORY_INDEX_START}\n${index}\n${DIRECTORY_INDEX_END}\n`);
+        } else {
+            writeFile(target, `${index}\n`);
+        }
+    }
+}
+
+
+function validateGeneratedLinks(dir) {
+    for (const file of listFiles(dir).filter(file => file.endsWith(".md"))) {
+        const content = fs.readFileSync(file, "utf8");
+        const links = /\[[^\]]+\]\(([^)]+)\)/g;
+        let match;
+        while ((match = links.exec(content))) {
+            const target = match[1].split("#")[0];
+            if (!target || /^(?:https?:|mailto:|data:|\/)/.test(target)) continue;
+            const resolved = path.resolve(path.dirname(file), target);
+            if (!fs.existsSync(resolved)) throw new Error(`${relativeToRoot(file)} links to missing generated target ${target}`);
+        }
+    }
 }
 
 function generateMetadata(out, groups) {
@@ -1032,7 +1171,7 @@ function generateMetadata(out, groups) {
             "API v2 documentation is generated from packages/rest-api2/src/routes.ts RestAPI2RouteTree definitions.",
             "Legacy v1 API documentation mirrors docs-source/api/legacy/v1-api-client.md under reference/api/legacy/v1/.",
             "CLI reference documentation is generated from packages/cli/src/lib/commands/*.ts command descriptors.",
-            "README generation is active: root README.md and package READMEs are generated from docs-source/readmes/.",
+            "README mirror generation is active; root README.md is directly maintained and package README updates require docs:sync:readmes.",
             "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
         ]
     };
@@ -1693,7 +1832,7 @@ function generateLegacyV1(out) {
 
     // Rewrite body content relative links to work from the output location.
     // Source is at docs-source/api/legacy/v1-api-client.md (depth 3 from sourceRoot).
-    // Output is at dist-docs/reference/api/legacy/v1/index.md (depth 4 from dist-docs root).
+    // Output is at docs/reference/api/legacy/v1/index.md (depth 4 from docs root).
     // We resolve each link against the source file dir and re-emit relative to the output file dir.
     // Use a stepwise approach: find all relative markdown links, resolve, rebase.
     bodyContent = bodyContent.replace(
@@ -1707,8 +1846,8 @@ function generateLegacyV1(out) {
             const resolvedSource = path.resolve(path.dirname(sourceFile), targetPart);
             // Find the path relative to sourceRoot
             const relToSourceRoot = path.relative(sourceRoot, resolvedSource).split(path.sep).join("/");
-            // The content mirror lives at dist-docs/content/<relToSourceRoot>
-            // Output is at dist-docs/reference/api/legacy/v1/index.md
+            // The content mirror lives at docs/content/<relToSourceRoot>
+            // Output is at docs/reference/api/legacy/v1/index.md
             const contentMirrorPath = path.join("content", relToSourceRoot);
             // Compute relative path from output file to content mirror
             const outputDir = path.dirname(apiV1IndexFile);
@@ -1792,7 +1931,7 @@ function mergeSidebars(groups, sidebars) {
     return [...new Set([...(groups.sidebars || []), ...sidebars])];
 }
 
-function generate(customOut, scope = "all") {
+function generateInto(customOut, scope = "all") {
     const out = customOut || outputRoot();
     const pages = validateSource();
 
@@ -1838,9 +1977,63 @@ function generate(customOut, scope = "all") {
         groups.sidebars = mergeSidebars(groups, ["sidebars/reference-api-v2.json", "sidebars/reference-api-legacy-v1.json"]);
     }
 
+    generatePartials(out);
     generateMetadata(out, groups);
+    generateDirectoryIndexes(out);
 
     console.log(`Generated docs export in ${path.relative(root, out.path) || "."}`);
+}
+
+
+function syncPackageReadmes() {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-docs-readme-sync-"));
+    const repoReadmesOutputDir = path.join(tempRoot, "repo");
+    const out = {
+        path: path.join(tempRoot, "docs"),
+        source: "sync",
+        value: "docs",
+        allowUnmarkedExisting: true,
+        writeRepoReadmes: true,
+        repoReadmesOutputDir
+    };
+
+    try {
+        generateReadmes(out, repoReadmesOutputDir);
+        const updates = [];
+
+        for (const pkgDir of listPackages()) {
+            const target = path.join(packagesDir, pkgDir, "README.md");
+            const generated = path.join(repoReadmesOutputDir, "packages", pkgDir, "README.md");
+
+            if (!fs.existsSync(target) || !fs.readFileSync(target, "utf8").includes("Generated by scripts/docs.js")) {
+                throw new Error(`Refusing to overwrite unowned package README: ${relativeToRoot(target)}`);
+            }
+
+            updates.push({ target, content: fs.readFileSync(generated, "utf8") });
+        }
+
+        for (const update of updates) writeFile(update.target, update.content);
+        console.log(`Synchronized ${updates.length} package READMEs.`);
+    } finally {
+        removeDir(tempRoot);
+    }
+}
+
+function generate(customOut, scope = "all") {
+    const out = customOut || outputRoot();
+    const docsRoot = path.join(root, "docs");
+    const legacyRoot = path.join(root, "dist-docs");
+    const isDocsRoot = path.resolve(out.path) === docsRoot;
+
+    if (isDocsRoot && fs.existsSync(legacyRoot)) validateOutputRoot(legacyRoot, { requireMarker: true });
+
+    if (isDocsRoot && fs.existsSync(out.path) && !fs.existsSync(markerPath(out.path))) {
+        throw new Error(`Refusing to replace unmarked docs output root: ${out.path}. Preserve or migrate its content explicitly before generating.`);
+    }
+
+    const result = generateInto(out, scope);
+    if (isDocsRoot && fs.existsSync(legacyRoot)) removeDir(legacyRoot);
+    return result;
 }
 
 function check() {
@@ -1866,6 +2059,7 @@ function check() {
             if (drift.length > 0) {
                 throw new Error(`Docs output drift detected:\n${drift.map((line) => `- ${line}`).join("\n")}`);
             }
+            validateGeneratedLinks(out.path);
         } finally {
             removeDir(tempRoot);
         }
@@ -1873,56 +2067,6 @@ function check() {
 
     if (!fs.existsSync(out.path)) {
         throw new Error(`Docs output root does not exist: ${out.path}. Run npm run docs:generate first.`);
-    }
-
-    // Validate repo README drift (README.md and packages/*/README.md)
-    const repoDrift = [];
-    const tempRepo = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-docs-repo-check-"));
-
-    try {
-        const repoOut = {
-            path: path.join(tempRepo, "dist-docs"),
-            source: out.source,
-            value: out.value,
-            resolvedPath: path.relative(root, tempRepo).split(path.sep).join("/"),
-            allowUnmarkedExisting: true,
-            writeRepoReadmes: false
-        };
-
-        // Generate only readmes to temp with repo override path
-        generateReadmes(repoOut, path.join(tempRepo, "repo"));
-
-        // Compare generated root README against actual
-        const genRoot = path.join(tempRepo, "repo", "README.md");
-        const actRoot = path.join(root, "README.md");
-
-        if (fs.existsSync(genRoot) && fs.existsSync(actRoot)) {
-            if (fs.readFileSync(genRoot, "utf8") !== fs.readFileSync(actRoot, "utf8")) {
-                repoDrift.push("changed README.md");
-            }
-        } else if (!fs.existsSync(actRoot)) {
-            repoDrift.push("missing README.md");
-        }
-
-        // Compare generated package READMEs against actual
-        for (const pkgDir of listPackages()) {
-            const genPkg = path.join(tempRepo, "repo", "packages", pkgDir, "README.md");
-            const actPkg = path.join(packagesDir, pkgDir, "README.md");
-
-            if (fs.existsSync(genPkg) && fs.existsSync(actPkg)) {
-                if (fs.readFileSync(genPkg, "utf8") !== fs.readFileSync(actPkg, "utf8")) {
-                    repoDrift.push(`changed packages/${pkgDir}/README.md`);
-                }
-            } else if (fs.existsSync(genPkg) && !fs.existsSync(actPkg)) {
-                repoDrift.push(`missing packages/${pkgDir}/README.md`);
-            }
-        }
-    } finally {
-        removeDir(tempRepo);
-    }
-
-    if (repoDrift.length > 0) {
-        throw new Error(`Repo README drift detected — run npm run docs:generate:readmes to regenerate:\n${repoDrift.map((line) => `- ${line}`).join("\n")}`);
     }
 
     console.log("Docs source validation passed.");
@@ -1957,6 +2101,11 @@ function main() {
         return;
     }
 
+    if (command === "sync:readmes") {
+        syncPackageReadmes();
+        return;
+    }
+
     if (command === "generate:api") {
         generate(undefined, "api");
         return;
@@ -1970,9 +2119,24 @@ function main() {
     throw new Error(`Unknown docs command: ${command}`);
 }
 
-try {
-    main();
-} catch (error) {
-    console.error(error.stack || error.message);
-    process.exit(1);
+if (require.main === module) {
+    try {
+        main();
+    } catch (error) {
+        console.error(error.stack || error.message);
+        process.exit(1);
+    }
 }
+
+module.exports = {
+    cleanOutput,
+    compareDirs,
+    generate,
+    generateDirectoryIndexes,
+    markerPath,
+    validateGeneratedLinks,
+    validateOutputMarker,
+    outputRoot,
+    syncPackageReadmes,
+    validateOutputRoot,
+};

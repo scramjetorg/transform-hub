@@ -147,7 +147,7 @@ The legacy boundary is unsupported and intentionally narrow. Sequences relying o
 
 ## See also
 
-- [Writing sequences](../../sequences/writing-sequences.md) for language-agnostic sequence development guide.
-- [Sequence lifecycle](../../sequences/sequence-lifecycle.md) for stream and content-type details.
-- [Sequence monitoring](../../sequences/sequence-monitoring.md) for heartbeat and health check protocol.
-- [Sequence topics](../../sequences/sequence-topics.md) for topic metadata conventions.
+- [Writing sequences](../../docs/content/sequences/writing-sequences.md) for language-agnostic sequence development guide.
+- [Sequence lifecycle](../../docs/content/sequences/sequence-lifecycle.md) for stream and content-type details.
+- [Sequence monitoring](../../docs/content/sequences/sequence-monitoring.md) for heartbeat and health check protocol.
+- [Sequence topics](../../docs/content/sequences/sequence-topics.md) for topic metadata conventions.

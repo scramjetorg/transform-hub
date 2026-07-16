@@ -1,0 +1,198 @@
+{
+  "generatedBy": "scripts/docs.js",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "sourceIdentifier": "sha256:56373bf933e3295ef740cbc3d4aaa0747f9740e2c2027059c86111c67dce63b6",
+  "outputRoot": {
+    "value": "docs",
+    "resolvedPath": "docs",
+    "source": "package",
+    "envVar": "SCRAMJET_DOCS_OUTPUT_DIR",
+    "packageConfig": "scramjet.docs.outputDir"
+  },
+  "groups": {
+    "content": [
+      "intro/overview.md",
+      "transform-hub/build-run.md",
+      "transform-hub/configuration.md",
+      "transform-hub/core-concepts.md",
+      "transform-hub/getting-started.md",
+      "transform-hub/overview.md",
+      "manager/connecting-hubs.md",
+      "manager/overview.md",
+      "manager/running.md",
+      "sequences/packaging-deploying.md",
+      "sequences/sequence-lifecycle.md",
+      "sequences/sequence-monitoring.md",
+      "sequences/sequence-topics.md",
+      "sequences/writing-sequences.md",
+      "testing/testing-sequences.md",
+      "cli/usage.md",
+      "api/client-usage.md",
+      "api/legacy/v1-api-client.md",
+      "deployment/docker-adapter.md",
+      "deployment/kubernetes-adapter.md",
+      "deployment/process-adapter.md",
+      "development/contributing.md",
+      "development/technical-debt.md",
+      "examples/python-log-processor.md",
+      "examples/simple-transform.md"
+    ],
+    "reference": [
+      "reference/typescript/sth/",
+      "reference/typescript/types-app-context/",
+      "reference/typescript/types-runtime-executor/",
+      "reference/typescript/sequence-test/",
+      "reference/typescript/rest-api2/",
+      "reference/typescript/api-client/",
+      "reference/cli/"
+    ],
+    "readmes": [
+      "README.md",
+      "packages/adapter-docker/README.md",
+      "packages/adapter-kubernetes/README.md",
+      "packages/adapter-process/README.md",
+      "packages/adapters/README.md",
+      "packages/adapters-common/README.md",
+      "packages/api-client/README.md",
+      "packages/api-router/README.md",
+      "packages/api-server/README.md",
+      "packages/api-types/README.md",
+      "packages/bpmux/README.md",
+      "packages/cli/README.md",
+      "packages/client-utils/README.md",
+      "packages/config/README.md",
+      "packages/frame-stream/README.md",
+      "packages/host/README.md",
+      "packages/load-check/README.md",
+      "packages/logger/README.md",
+      "packages/manager/README.md",
+      "packages/middleware-api-client/README.md",
+      "packages/model/README.md",
+      "packages/module-loader/README.md",
+      "packages/monitoring-server/README.md",
+      "packages/multi-manager/README.md",
+      "packages/multi-manager-api-client/README.md",
+      "packages/obj-logger/README.md",
+      "packages/pre-runner/README.md",
+      "packages/rest-api2/README.md",
+      "packages/runner/README.md",
+      "packages/runner-bun/README.md",
+      "packages/runner-node/README.md",
+      "packages/runner-python/README.md",
+      "packages/runtime-types/README.md",
+      "packages/sequence-test/README.md",
+      "packages/sequence-types/README.md",
+      "packages/sth/README.md",
+      "packages/symbols/README.md",
+      "packages/telemetry/README.md",
+      "packages/types/README.md",
+      "packages/utility/README.md",
+      "packages/verser/README.md"
+    ],
+    "sidebars": [
+      "sidebars/content.json",
+      "sidebars/reference-typescript.json",
+      "sidebars/reference-cli.json",
+      "sidebars/readmes.json",
+      "sidebars/reference-api-v2.json",
+      "sidebars/reference-api-legacy-v1.json"
+    ],
+    "api": [
+      "reference/api/v2/",
+      "reference/api/legacy/v1/"
+    ]
+  },
+  "curatedReferences": [
+    {
+      "package": "@scramjet/sth",
+      "entrypoint": "packages/sth/src/index.ts",
+      "outputPath": "reference/typescript/sth/",
+      "stability": "stable",
+      "audience": [
+        "users",
+        "operators",
+        "implementers"
+      ],
+      "reviewers": [
+        "runtime-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/types",
+      "entrypoint": "packages/types/src/app-context.ts",
+      "outputPath": "reference/typescript/types-app-context/",
+      "stability": "stable",
+      "audience": [
+        "implementers"
+      ],
+      "reviewers": [
+        "runtime-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/types",
+      "entrypoint": "packages/types/src/runtime-executor.ts",
+      "outputPath": "reference/typescript/types-runtime-executor/",
+      "stability": "internal-but-useful",
+      "audience": [
+        "implementers"
+      ],
+      "reviewers": [
+        "runtime-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/sequence-test",
+      "entrypoint": "packages/sequence-test/src/index.ts",
+      "outputPath": "reference/typescript/sequence-test/",
+      "stability": "supported-scoped",
+      "audience": [
+        "implementers",
+        "contributors"
+      ],
+      "reviewers": [
+        "test-tooling-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/rest-api2",
+      "entrypoint": "packages/rest-api2/src/index.ts",
+      "outputPath": "reference/typescript/rest-api2/",
+      "stability": "experimental",
+      "audience": [
+        "implementers",
+        "api-client-users"
+      ],
+      "reviewers": [
+        "api-maintainers"
+      ]
+    },
+    {
+      "package": "@scramjet/api-client",
+      "entrypoint": "packages/api-client/src/index.ts",
+      "outputPath": "reference/typescript/api-client/",
+      "stability": "stable",
+      "audience": [
+        "users",
+        "operators",
+        "api-client-users"
+      ],
+      "reviewers": [
+        "api-maintainers"
+      ]
+    }
+  ],
+  "docusaurusHandoff": {
+    "content": "content/",
+    "reference": "reference/",
+    "readmes": "readmes/",
+    "sidebars": "sidebars/"
+  },
+  "warnings": [
+    "API v2 documentation is generated from packages/rest-api2/src/routes.ts RestAPI2RouteTree definitions.",
+    "Legacy v1 API documentation mirrors docs-source/api/legacy/v1-api-client.md under reference/api/legacy/v1/.",
+    "CLI reference documentation is generated from packages/cli/src/lib/commands/*.ts command descriptors.",
+    "README mirror generation is active; root README.md is directly maintained and package README updates require docs:sync:readmes.",
+    "Curated TypeScript reference pages are placeholder outputs until the TypeScript reference renderer is added."
+  ]
+}

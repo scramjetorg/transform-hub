@@ -87,7 +87,7 @@ npm run docs:check
 npm run docs:clean
 ```
 
-Generated documentation goes to `dist-docs/` by default (configurable via `SCRAMJET_DOCS_OUTPUT_DIR` env var or `scramjet.docs.outputDir` in root `package.json`).
+Generated documentation goes to `docs/` by default (configurable via `SCRAMJET_DOCS_OUTPUT_DIR` env var or `scramjet.docs.outputDir` in root `package.json`).
 
 ## Test commands
 

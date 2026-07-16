@@ -119,9 +119,9 @@ The v1 API (`@scramjet/api-client`, `/api/v1` route tree) remains supported for 
 
 ## Generated API reference
 
-The API v2 route tree is documented in the [generated API v2 reference](../../dist-docs/reference/api/v2/index.md), which is produced from the canonical route definitions in `packages/rest-api2/src/routes.ts`. It covers all route nodes (root, space, hub, sequence, instance), operations, schemas, route kinds, and resolver relationships.
+The API v2 route tree is documented in the [generated API v2 reference](../../docs/reference/api/v2/index.md), which is produced from the canonical route definitions in `packages/rest-api2/src/routes.ts`. It covers all route nodes (root, space, hub, sequence, instance), operations, schemas, route kinds, and resolver relationships.
 
-For the legacy v1 API (backwards-compatible), see the [generated legacy v1 API reference](../../dist-docs/reference/api/legacy/v1/index.md), which mirrors the legacy client documentation.
+For the legacy v1 API (backwards-compatible), see the [generated legacy v1 API reference](../../docs/reference/api/legacy/v1/index.md), which mirrors the legacy client documentation.
 
 ## Next steps
 
