@@ -21,7 +21,13 @@ export const initCommand: CommandDescriptor = cmd("init", (b) => {
                         const typ = type || "transformer";
                         const args = `init scramjetorg/sequence ${lang}-${typ}`;
 
-                        spawnSync("npm", args.split(" "), { stdio: "inherit", cwd: path });
+                        const result = spawnSync("npm", args.split(" "), { stdio: "inherit", cwd: path });
+                        if (result.error) throw result.error;
+                        if (result.signal || result.status !== 0) {
+                            throw new Error(
+                                `npm init exited unsuccessfully (status=${result.status ?? "null"}, signal=${result.signal ?? "null"})`
+                            );
+                        }
                     });
             })
         );

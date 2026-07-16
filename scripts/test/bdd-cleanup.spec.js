@@ -11,6 +11,9 @@
 "use strict";
 
 const test = require("ava");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const {
 	KNOWN_PROCESS_PATTERNS,
@@ -81,6 +84,33 @@ test("killProcessGroup handles non-existent pid gracefully", (t) => {
 	t.true(result);
 });
 
+test("killProcessGroup returns false for non-ESRCH group error + PID ESRCH", (t) => {
+	// Regression: if the group kill fails with a real error (e.g. EPERM)
+	// and the individual PID returns ESRCH, the helper must NOT declare
+	// confirmed-absent — return false (signalling failed).
+	const originalKill = process.kill;
+	let callCount = 0;
+
+	process.kill = (_pid, _signal) => {
+		callCount++;
+		const error = new Error("mock error");
+		if (callCount === 1) {
+			error.code = "EPERM";   // non-ESRCH group error
+		} else {
+			error.code = "ESRCH";    // PID gone
+		}
+		throw error;
+	};
+
+	try {
+		const result = killProcessGroup(12345, "SIGTERM");
+		t.false(result, "should return false when group error is not ESRCH");
+		t.is(callCount, 2, "should attempt both group and PID kill");
+	} finally {
+		process.kill = originalKill;
+	}
+});
+
 // ---------------------------------------------------------------------------
 // cleanupTempDirs – path construction (should not throw)
 // ---------------------------------------------------------------------------
@@ -91,6 +121,19 @@ test("cleanupTempDirs handles non-existent base dir gracefully", (t) => {
 
 test("cleanupTempDirs with default args does not throw", (t) => {
 	t.notThrows(() => cleanupTempDirs("/tmp", "bdd-runner-dont-exist-"));
+});
+
+test("owned cleanup removes the chunk and empty run parents", (t) => {
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-owned-cleanup-"));
+	const ownership = { runId: "cleanup-run", chunkId: "cleanup-chunk" };
+	const { encodePart } = require("../../bdd/lib/ownership.js");
+	const chunkRoot = path.join(root, "scramjet-bdd-runs", encodePart(ownership.runId), "chunks", encodePart(ownership.chunkId));
+	fs.mkdirSync(chunkRoot, { recursive: true });
+	fs.writeFileSync(path.join(chunkRoot, "marker"), "owned");
+	cleanupTempDirs(root, "", ownership);
+	t.false(fs.existsSync(chunkRoot));
+	t.false(fs.existsSync(path.join(root, "scramjet-bdd-runs", encodePart(ownership.runId))));
+	fs.rmSync(root, { recursive: true, force: true });
 });
 
 // ---------------------------------------------------------------------------
@@ -159,5 +202,4 @@ test("stopProcess resolves eventually for child with unreachable pid", async (t)
 
 	await t.notThrowsAsync(stopProcess(child, { graceMs: 100 }));
 });
-
 

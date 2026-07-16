@@ -32,6 +32,23 @@ class CountingStream(io.BytesIO):
         super().flush()
 
 
+class FailingStream:
+    def __init__(self, error: BaseException, fail_on: str = "write") -> None:
+        self.error = error
+        self.fail_on = fail_on
+        self.calls = 0
+
+    def write(self, _data: bytes) -> None:
+        self.calls += 1
+        if self.fail_on == "write":
+            raise self.error
+
+    def flush(self) -> None:
+        self.calls += 1
+        if self.fail_on == "flush":
+            raise self.error
+
+
 def test_encode_single_frame_format():
     assert encode_monitoring_frame(PING, {"id": "x"}) == b'[3000,{"id":"x"}]\r\n'
 
@@ -70,6 +87,29 @@ def test_writer_flushes_after_each_write_no_aggregation():
     # Each flush observed an incrementing buffer length (no aggregation/delay).
     assert stream.flushed_lengths == sorted(stream.flushed_lengths)
     assert len(set(stream.flushed_lengths)) == 3
+
+
+@pytest.mark.parametrize("error", [BrokenPipeError(), ConnectionResetError()])
+@pytest.mark.parametrize("fail_on", ["write", "flush"])
+def test_writer_preserves_closed_carrier_errors(error, fail_on):
+    stream = FailingStream(error, fail_on)
+    writer = MonitoringWriter(stream)
+
+    with pytest.raises(type(error)):
+        writer.write_frame(MONITORING, {"healthy": True})
+    with pytest.raises(type(error)):
+        writer.write_frame(MONITORING, {"healthy": True})
+
+    # Codec writes remain strict; shutdown callers own the narrow suppression.
+    assert stream.calls == (2 if fail_on == "write" else 4)
+
+
+def test_writer_does_not_mask_unrelated_errors():
+    stream = FailingStream(ValueError("bad monitoring payload"))
+    writer = MonitoringWriter(stream)
+
+    with pytest.raises(ValueError, match="bad monitoring payload"):
+        writer.write_frame(MONITORING, {})
 
 
 def test_writer_preserves_order_of_rapid_sequential_writes():

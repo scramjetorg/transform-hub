@@ -4,6 +4,7 @@ import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 import { getLogger } from "@scramjet/logger";
+const { getBddConfigPath } = require("./bdd-config.js");
 
 const isLogActive = process.env.SCRAMJET_TEST_LOG;
 const lineByLine = require("n-readlines");
@@ -12,15 +13,30 @@ const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
 const logger = getLogger("test");
+const { spawnOwnedProcess } = require("./spawn-owned-process.js") as {
+    spawnOwnedProcess: (command: string, args: string[], options?: {
+        env?: NodeJS.ProcessEnv;
+        timeoutMs?: number;
+        successMarker?: string;
+        onStdout?: (output: string, write: (value: string) => void) => void;
+    }) => Promise<void>;
+};
+export { spawnOwnedProcess };
 
 export const defer = (timeout: number): Promise<void> => new Promise((res) => setTimeout(res, timeout));
+export const { waitForCondition } = require("./readiness.js") as {
+    waitForCondition: <T>(check: () => Promise<T> | T, isReady: (value: T) => boolean, options?: { timeoutMs?: number; intervalMs?: number; description?: string }) => Promise<T>;
+};
 
-export function getSiCommand() {
+export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
     if (process.env.SCRAMJET_SPAWN_JS && process.env.SCRAMJET_SPAWN_TS) {
         throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
     }
 
-    let si = ["si"];
+    // Use the built CLI by default so each BDD subprocess avoids the
+    // TypeScript launcher and its per-process transpilation cost. Keep the
+    // explicit source-mode switch for development and source-level coverage.
+    let si = ["node", "../dist/cli/bin"];
 
     if (process.env.SCRAMJET_SPAWN_JS) {
         si = ["node", "../dist/cli/bin"];
@@ -30,7 +46,11 @@ export function getSiCommand() {
         si = ["npx", "tsx", "../packages/cli/src/bin/index.ts"];
     }
 
-    return si;
+    if (options.useBddConfig === false) {
+        return si;
+    }
+
+    return [...si, "-c", getBddConfigPath()];
 }
 
 const si = getSiCommand();
@@ -204,40 +224,55 @@ export function removeBoundaryQuotes(str: string) {
 
 export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 30000): Promise<boolean> {
     let response = "";
+    const piped = stream.pipe(new PassThrough({ encoding: undefined }));
+    try {
+        return await Promise.race([
+            (async () => {
+                for await (const chunk of piped) {
+                    response = `${response}${chunk.toString()}`;
 
-    return Promise.race([
-        (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: undefined }))) {
-                response = `${response}${chunk.toString()}`;
-
-                console.log("\nData received: ", response);
-                if (response.includes(expected)) return true;
-            }
-            throw new Error("End of stream reached");
-        })(),
-        defer(timeout).then(() => { throw new Error(`Stream did not contain ${JSON.stringify(expected)} before timeout`); })
-    ]);
+                    console.log("\nData received: ", response);
+                    if (response.includes(expected)) return true;
+                }
+                throw new Error("End of stream reached");
+            })(),
+            defer(timeout).then(() => { throw new Error(`Stream did not contain ${JSON.stringify(expected)} before timeout`); })
+        ]);
+    } finally {
+        piped.destroy();
+        stream.destroy();
+    }
 }
 
 export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
+    const piped = stream.pipe(new PassThrough({ encoding: "utf-8" }));
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
-    await Promise.race([
-        (async () => {
-            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
-                response += chunk;
+    try {
+        await Promise.race([
+            (async () => {
+                for await (const chunk of piped) {
+                    response += chunk;
 
-                console.log(response, chunk);
+                    console.log(response, chunk);
 
-                if (response === expected) return expected;
-                if (response.length >= expected.length) {
-                    return assert.equal(response, expected);
+                    if (response === expected) return expected;
+                    if (response.length >= expected.length) {
+                        return assert.equal(response, expected);
+                    }
                 }
-            }
-            throw new Error("End of stream reached");
-        })(),
-        defer(timeout).then(() => { assert.equal(response, expected, "timeout"); })
-    ]);
+                throw new Error("End of stream reached");
+            })(),
+            new Promise<void>((_, reject) => {
+                timeoutHandle = setTimeout(() => reject(new Error(`Stream did not equal ${JSON.stringify(expected)} before timeout`)), timeout);
+            })
+        ]);
+    } finally {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        piped.destroy();
+        stream.destroy();
+    }
 
     return response;
 }
@@ -311,44 +346,35 @@ export function spawnSiInit(
     workingDirectory: string,
     env: NodeJS.ProcessEnv = process.env
 ) {
-    return new Promise<void>((resolve, reject) => {
-        const args = () => {
-            return [...si, "init", "seq", templateType, "-p", workingDirectory];
-        };
-
-        if (isLogActive) {
-            logger.debug("Spawning command: /usr/bin/env", ...args());
-        }
-
-        const childProcess = spawn(command, args(), {
-            env
-        });
-
-        childProcess.stdout.on("data", (data) => {
-            if (isLogActive) {
-                logger.debug(data.toString());
+    const args = [...si, "init", "seq", templateType, "-p", workingDirectory];
+    const bddEnv = {
+        ...env,
+        npm_config_audit: "false",
+        npm_config_fund: "false",
+        npm_config_update_notifier: "false",
+        npm_config_maxsockets: "1",
+        NODE_OPTIONS: `${env.NODE_OPTIONS || ""} --max-old-space-size=512`.trim(),
+    };
+    if (isLogActive) logger.debug("Spawning command: /usr/bin/env", ...args);
+    let promptsAnswered = 0;
+    let confirmationAnswered = false;
+    return spawnOwnedProcess(command, args, {
+        env: bddEnv,
+        successMarker: "Sequence template succesfully created",
+        timeoutMs: 30_000,
+        onStdout: (output, write) => {
+            if (output.includes("Sequence template succesfully created")) return;
+            const promptCount = (output.match(/(?:package name|version|description|entry point|test command|git repository|keywords|author|license):/gi) || []).length;
+            if (promptCount > promptsAnswered) {
+                const unanswered = promptCount - promptsAnswered;
+                promptsAnswered = promptCount;
+                write("\n".repeat(unanswered));
             }
-            if (data.includes("Sequence template succesfully created")) {
-                resolve();
-            } else {
-                childProcess.stdin.write("\n");
+            if (!confirmationAnswered && /Is this OK\?/i.test(output)) {
+                write("yes\n");
+                confirmationAnswered = true;
             }
-        });
-        childProcess.stderr.on("data", (data) => {
-            const stderrString = data.toString();
-
-            logger.warn(`Stderr: ${stderrString}`);
-        });
-        childProcess.on("error", (err) => {
-            logger.error(err);
-            reject();
-        });
-        childProcess.on("exit", (code) => {
-            if (isLogActive) {
-                logger.debug(`Exit code: ${code}`);
-            }
-            resolve();
-        });
+        },
     });
 }
 
@@ -371,6 +397,105 @@ export async function waitUntilStreamStartsWith(stream: Readable, expected: stri
     ]);
 
     return response;
+}
+
+/**
+ * Checks whether an error represents a transient connection failure that should
+ * be retried.  Recognises bare Node.js system error codes (ECONNREFUSED, etc.),
+ * ClientError wrapper code CANNOT_CONNECT, and nested reason.code from the
+ * underlying QueryError.
+ *
+ * The nested reason is only consulted when the top-level .code is absent,
+ * ensuring HTTP/server errors (e.g. SERVER_ERROR, NOT_FOUND) are never
+ * misidentified as connection errors through a coincidental reason.code match.
+ *
+ * @param err - caught error object (any shape with optional .code / .reason)
+ * @returns true when the error is a retryable connection error
+ */
+export function isConnectionError(err: any): boolean {
+    if (!err) return false;
+
+    const connectionErrors = new Set([
+        "ECONNREFUSED", "ECONNRESET", "ECONNABORTED", "ETIMEDOUT", "ENOTFOUND",
+        "CANNOT_CONNECT"
+    ]);
+
+    // Direct match on top-level code (handles bare Node.js system errors
+    // and ClientError codes including CANNOT_CONNECT).
+    if (err.code && connectionErrors.has(err.code)) return true;
+
+    // Defense-in-depth: check nested reason.code when the top-level code
+    // is absent — covers edge cases where a wrapper error lacks .code but
+    // the underlying reason carries the system error code.
+    if (!err.code && err.reason?.code && connectionErrors.has(err.reason.code)) return true;
+
+    return false;
+}
+
+/**
+ * Calls `loadCheckFn` with bounded retry for transient connection errors,
+ * supporting the "host is running" and "host is still running" BDD steps.
+ *
+ * Retries when {@link isConnectionError} returns true, within a configurable
+ * window (default 5 seconds) with configurable backoff (default 200ms).
+ * Non-connection errors (e.g. SERVER_ERROR) are thrown immediately.
+ * On deadline exhaustion, throws `lastError` preserving the final diagnostic
+ * error, or a new Error with `exhaustedMsg`.
+ *
+ * The `deadlineMs` and `backoffMs` parameters are exposed for testing;
+ * production callers use the defaults.
+ *
+ * @param loadCheckFn - async function performing the load check call
+ * @param exhaustedMsg - error message when the deadline is exhausted
+ * @param deadlineMs - retry window in milliseconds (default 5000)
+ * @param backoffMs - pause between retries in milliseconds (default 200)
+ */
+export async function retryLoadCheck(
+    loadCheckFn: (signal?: AbortSignal) => Promise<any>,
+    exhaustedMsg: string,
+    deadlineMs: number = 5_000,
+    backoffMs: number = 200
+): Promise<void> {
+    const deadline = Date.now() + deadlineMs;
+    let lastError: any;
+
+    do {
+        const controller = new AbortController();
+        const remaining = Math.max(1, deadline - Date.now());
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+            const result = await Promise.race([
+                loadCheckFn(controller.signal),
+                new Promise<never>((_, reject) => {
+                    timeout = setTimeout(() => {
+                        controller.abort();
+                        const error: any = new Error(`load-check exceeded remaining deadline (${remaining}ms)`);
+                        error.code = "ETIMEDOUT";
+                        reject(error);
+                    }, remaining);
+                })
+            ]);
+            assert.ok(result);
+            return;
+        } catch (err: any) {
+            lastError = err;
+
+            if (!isConnectionError(err)) {
+                // Non-connection error — fail immediately so diagnostics
+                // from the host are not swallowed.
+                throw err;
+            }
+
+            if (Date.now() >= deadline) break;
+            await defer(backoffMs);
+        } finally {
+            if (timeout) clearTimeout(timeout);
+            controller.abort();
+        }
+    } while (Date.now() < deadline);
+
+    // Exhausted deadline — preserve the final diagnostic error.
+    throw lastError || new Error(exhaustedMsg);
 }
 
 export function isTemplateCreated(templateType: string, workingDirectory: string) {

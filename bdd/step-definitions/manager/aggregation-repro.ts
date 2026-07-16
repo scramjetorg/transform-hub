@@ -15,20 +15,24 @@
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { ChildProcess, spawn, spawnSync } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { PassThrough } from "stream";
 import { resolve } from "path";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
-import { tmpdir } from "os";
 import { promisify } from "util";
 import { CustomWorld } from "../world";
 import { ClientUtils } from "@scramjet/client-utils";
 import { HostClient } from "@scramjet/api-client";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
+import { disposeClient } from "./common";
+import { isSuccessfulReadinessResponse, isTransientReadinessStatus } from "../../lib/readiness-contract";
+const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
 
 const freeport = promisify(require("freeport"));
+const ownership = getOwnership(process.env);
+ensureOwnershipPaths(ownership);
 
 const FIXTURE_ROOT = "bdd/fixtures/manager-aggregation";
 
@@ -40,81 +44,59 @@ function aggregationProcesses(world: CustomWorld): ChildProcess[] {
     return world.resources.aggProcesses;
 }
 
-async function terminateProcess(proc: ChildProcess): Promise<void> {
-    if (!proc.pid || proc.exitCode !== null || proc.signalCode !== null) return;
-
-    await new Promise<void>((resolve) => {
-        let settled = false;
-        let sigkillTimer: NodeJS.Timeout;
-        let giveUpTimer: NodeJS.Timeout;
-
-        const finish = () => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(sigkillTimer);
-            clearTimeout(giveUpTimer);
-            resolve();
-        };
-
-        proc.once("exit", finish);
-
-        sigkillTimer = setTimeout(() => {
-            try {
-                proc.kill("SIGKILL");
-            } catch { /* ignore */ }
-        }, 5000);
-
-        giveUpTimer = setTimeout(finish, 8000);
-
-        try {
-            proc.kill("SIGTERM");
-        } catch {
-            finish();
-        }
-    });
-}
-
 async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 10_000): Promise<void> {
     const client = new ClientUtils(baseUrl);
     const deadline = Date.now() + timeoutMs;
+    let lastResponse: unknown;
+    let lastError: Error | undefined;
 
-    while (Date.now() < deadline) {
-        try {
-            await client.get(endpoint);
-        } catch {
-            return;
+    try {
+        while (Date.now() < deadline) {
+            try {
+                lastResponse = await client.get(endpoint);
+            } catch (error) {
+                lastError = error as Error;
+                return;
+            }
+
+            await sleep(50);
         }
 
-        await sleep(250);
+        throw new Error(
+            `Timed out waiting for ${baseUrl}/${endpoint} to stop responding; ` +
+            `last response: ${JSON.stringify(lastResponse)}; last error: ${lastError?.message || "none"}`
+        );
+    } finally {
+        client.dispose();
     }
-
-    throw new Error(`Timed out waiting for ${baseUrl}/${endpoint} to stop responding`);
-}
-
-async function killProcessesMatching(pattern: string): Promise<void> {
-    spawnSync("pkill", ["-f", "--", pattern], { stdio: "ignore" });
-    await sleep(500);
 }
 
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
-    const waitForExit: Promise<void>[] = [];
+    const errors: Error[] = [];
 
-    for (const proc of aggregationProcesses(this)) {
-        waitForExit.push(terminateProcess(proc));
+    // Stop owned aggregation processes concurrently with safe error aggregation.
+    const results = await Promise.allSettled(
+        aggregationProcesses(this).map(proc => this.scenarioLifecycle.stop(proc))
+    );
+    for (const result of results) {
+        if (result.status === "rejected") {
+            errors.push(result.reason instanceof Error ? result.reason : new Error(String(result.reason)));
+        }
     }
+
     if (this.resources.aggMMProcess) {
-        waitForExit.push(terminateProcess(this.resources.aggMMProcess));
+        try {
+            await this.scenarioLifecycle.stop(this.resources.aggMMProcess);
+        } catch (error) {
+            errors.push(error instanceof Error ? error : new Error(String(error)));
+        }
         delete this.resources.aggMMProcess;
     }
 
-    await Promise.all(waitForExit);
-
-    if (this.resources.aggMMId) {
-        await killProcessesMatching(`--id=${this.resources.aggMMId}`);
-    }
-    if (this.resources.aggTempDir) {
-        await killProcessesMatching(this.resources.aggTempDir);
-    }
+    const hubs = this.resources.aggHubs as Record<string, { client?: HostClient }> | undefined;
+    for (const hub of Object.values(hubs || {})) disposeClient(hub.client);
+    disposeClient(this.resources.aggManagerClient);
+    disposeClient(this.resources.aggMMClient);
 
     if (this.resources.aggTempDir) {
         rmSync(this.resources.aggTempDir, { recursive: true, force: true });
@@ -124,6 +106,15 @@ After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld)
     delete this.resources.aggProcesses;
     delete this.resources.aggHubs;
     this.resources.aggReproCleanup = true;
+
+    if (errors.length > 0) {
+        const aggregate = new Error(
+            `Aggregation repro cleanup: ${errors.length} process(es) failed to stop: ${errors.map(e => e.message).join("; ")}`
+        );
+
+        (aggregate as any).cleanupErrors = errors;
+        throw aggregate;
+    }
 });
 
 /**
@@ -153,23 +144,49 @@ function spawnProcess(
     options: string[],
     readyMatch?: string,
     timeout = 15000,
-    env: Record<string, string> = {}
+    env: Record<string, string> = {},
+    lifecycle?: CustomWorld["scenarioLifecycle"]
 ): Promise<ChildProcess> {
     return new Promise((resolve, reject) => {
         const fullCmd = [...cmd, ...options];
         const proc = spawn("/usr/bin/env", fullCmd, {
-            detached: false,
-            env: { ...process.env, ...env },
+            detached: true,
+            env: {
+                ...process.env,
+                SCRAMJET_BDD_RUN_ID: ownership.runId,
+                SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                SCRAMJET_BDD_OWNER: ownership.owner,
+                ...env,
+            },
             stdio: ["ignore", "pipe", "pipe"]
         });
+        lifecycle?.ownChild(proc, `aggregation:${cmd[cmd.length - 1]}`, { group: true });
+
+        const diagnosticProcess = proc as ChildProcess & { __bddStdoutTail?: string; __bddStderrTail?: string };
+        diagnosticProcess.__bddStdoutTail = "";
+        diagnosticProcess.__bddStderrTail = "";
+        const appendTail = (key: "__bddStdoutTail" | "__bddStderrTail", data: Buffer) => {
+            diagnosticProcess[key] = `${diagnosticProcess[key] || ""}${data.toString()}`.slice(-8_192);
+        };
+        proc.stdout?.on("data", data => appendTail("__bddStdoutTail", Buffer.from(data)));
+        proc.stderr?.on("data", data => appendTail("__bddStderrTail", Buffer.from(data)));
 
         const timer = setTimeout(() => {
-            if (proc.pid) {
+            void (async () => {
+                let teardownError: any;
                 try {
-                    proc.kill("SIGTERM");
-                } catch { /* ignore */ }
-            }
-            reject(new Error(`Timeout waiting for process to be ready (${readyMatch || "no pattern"})`));
+                    if (lifecycle) await lifecycle.stop(proc);
+                } catch (error) {
+                    teardownError = error;
+                }
+                const timeoutError: any = new Error(`Timeout waiting for process to be ready (${readyMatch || "no pattern"})`);
+                if (teardownError) {
+                    timeoutError.cleanupErrors = [teardownError];
+                    timeoutError.cause = teardownError;
+                    timeoutError.message += `; teardown failed: ${teardownError.message}`;
+                }
+                reject(timeoutError);
+            })();
         }, timeout);
 
         proc.stderr?.on("data", (data: Buffer) => {
@@ -194,11 +211,10 @@ function spawnProcess(
                 }
             });
         } else {
-            // Resolve after a short delay
-            setTimeout(() => {
-                clearTimeout(timer);
-                resolve(proc);
-            }, 1000);
+            // The caller owns the observable API readiness check. Do not add
+            // an unobservable startup sleep here.
+            clearTimeout(timer);
+            resolve(proc);
         }
 
         if (!readyMatch && process.env.SCRAMJET_TEST_LOG) {
@@ -210,6 +226,83 @@ function spawnProcess(
             reject(err);
         });
     });
+}
+
+function processDiagnostics(proc: ChildProcess): string {
+    const diagnosticProcess = proc as ChildProcess & { __bddStdoutTail?: string; __bddStderrTail?: string };
+    return `exitCode=${proc.exitCode ?? "running"}; stdoutTail=${JSON.stringify(diagnosticProcess.__bddStdoutTail || "")}; ` +
+        `stderrTail=${JSON.stringify(diagnosticProcess.__bddStderrTail || "")}`;
+}
+
+async function waitForRequiredHubInstances(
+    apiBase: string,
+    requiredNames: string[],
+    proc: ChildProcess,
+    managerApiBase?: string,
+    managerId?: string,
+    lifecycle?: any,
+    timeoutMs = 20_000,
+): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    let lastStatus: number | undefined;
+    let lastBody = "";
+    let lastError: Error | undefined;
+
+    while (Date.now() < deadline) {
+        if (proc.exitCode !== null) {
+            throw new Error(`Hub exited before required instances became ready; ${processDiagnostics(proc)}`);
+        }
+        try {
+            const response = await rawHttpRequest("GET", `${apiBase}/instances`, undefined, {});
+            lastStatus = response.status;
+            lastBody = await response.text();
+            if (response.status === 200) {
+                const payload = JSON.parse(lastBody);
+                const instances = Array.isArray(payload) ? payload : payload?.instances;
+                const names = new Set((Array.isArray(instances) ? instances : []).map((item: any) => item.instanceName || item.id));
+                if (requiredNames.every(name => names.has(name))) {
+                    for (const name of requiredNames) {
+                        const probe = await rawHttpRequest(
+                            "GET",
+                            `${apiBase}/instance/${encodeURIComponent(name)}/rpc/test/abc`,
+                            undefined,
+                            {},
+                        );
+                        const probeBody = await probe.text();
+                        if (probe.status !== 200 || probeBody !== "GET /abc") {
+                            const error = new Error(`Local RPC readiness for ${name} returned ${probe.status}/${JSON.stringify(probeBody)}`) as Error & { status?: number };
+                            error.status = probe.status;
+                            throw error;
+                        }
+                    }
+                    return;
+                }
+            } else if (response.status !== 404 && response.status !== 503) {
+                throw new Error(`Hub instance readiness returned permanent HTTP ${response.status}: ${lastBody}`);
+            }
+        } catch (error) {
+            lastError = error as Error;
+            if (!isExpectedReadinessError(error)) throw error;
+        }
+        await sleep(50);
+    }
+
+    let managerInstances = "unavailable";
+    if (managerApiBase && managerId) {
+        try {
+            const response = await rawHttpRequest("GET", `${managerApiBase}/cpm/${managerId}/api/v1/instances`, undefined, {});
+            managerInstances = `${response.status}/${JSON.stringify(await response.text())}`;
+        } catch (error) {
+            managerInstances = `error=${(error as Error).message}`;
+        }
+    }
+    const unexpected = lifecycle?.unexpectedExitRecords?.() || [];
+    throw new Error(
+        `Timed out waiting for exact Hub instances ${JSON.stringify(requiredNames)}; ` +
+        `last status=${lastStatus ?? "none"}; body=${JSON.stringify(lastBody)}; ` +
+        `error=${lastError?.message || "none"}; managerInstances=${managerInstances}; ` +
+        `unexpectedExitRecords=${JSON.stringify(unexpected)}; ${processDiagnostics(proc)}`
+    );
 }
 
 /**
@@ -269,18 +362,39 @@ async function waitForGet(baseUrl: string, endpoint: string, timeoutMs = 20_000)
     const client = new ClientUtils(baseUrl);
     const deadline = Date.now() + timeoutMs;
     let lastError: Error | undefined;
+    let lastStatus: unknown;
 
-    while (Date.now() < deadline) {
-        try {
-            await client.get(endpoint);
-            return;
-        } catch (error) {
-            lastError = error as Error;
-            await sleep(500);
+    try {
+        while (Date.now() < deadline) {
+            try {
+                await client.get(endpoint);
+                return;
+            } catch (error) {
+                lastError = error as Error;
+                lastStatus = (error as any)?.status ?? (error as any)?.response?.status;
+                if (!isExpectedReadinessError(error)) throw error;
+                await sleep(50);
+            }
         }
-    }
 
-    throw new Error(`Timed out waiting for ${baseUrl}/${endpoint}: ${lastError?.message || "no response"}`);
+        throw new Error(
+            `Timed out waiting for ${baseUrl}/${endpoint}; last status: ${lastStatus ?? "none"}; ` +
+            `last error: ${lastError?.message || "no response"}`
+        );
+    } finally {
+        client.dispose();
+    }
+}
+
+function isExpectedReadinessError(error: unknown): boolean {
+    const candidate = error as any;
+    const status = Number(candidate?.status ?? candidate?.response?.status);
+    if (status === 404 || status === 503) return true;
+
+    const code = String(candidate?.code || candidate?.cause?.code || candidate?.reason?.code || "");
+    const message = String(candidate?.message || candidate?.reason?.message || "");
+    return ["CANNOT_CONNECT", "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "EPIPE"].includes(code) ||
+        /ECONNREFUSED|ECONNRESET|ETIMEDOUT|socket hang up|fetch failed/i.test(message);
 }
 
 async function waitForManagerTopicActor(
@@ -295,30 +409,34 @@ async function waitForManagerTopicActor(
     const deadline = Date.now() + timeoutMs;
     let lastTopics: unknown;
 
-    while (Date.now() < deadline) {
-        lastTopics = await client.get<any>(`cpm/${managerId}/api/v1/topics`);
+    try {
+        while (Date.now() < deadline) {
+            lastTopics = await client.get<any>(`cpm/${managerId}/api/v1/topics`);
 
-        const topics = Array.isArray(lastTopics) ? lastTopics : [];
-        const topic = topics.find((item: any) => item.name === topicName || item.topicName === topicName);
-        const actors = Array.isArray(topic?.actors) ? topic.actors : [];
-        const matchingActor = actors.find((actor: any) =>
-            actor.hostId === hubName &&
-            actor.type === "host" &&
-            actor.role === role &&
-            actor.retired !== true
-        );
+            const topics = Array.isArray(lastTopics) ? lastTopics : [];
+            const topic = topics.find((item: any) => item.name === topicName || item.topicName === topicName);
+            const actors = Array.isArray(topic?.actors) ? topic.actors : [];
+            const matchingActor = actors.find((actor: any) =>
+                actor.hostId === hubName &&
+                actor.type === "host" &&
+                actor.role === role &&
+                actor.retired !== true
+            );
 
-        if (matchingActor) {
-            return;
+            if (matchingActor) {
+                return;
+            }
+
+            await sleep(50);
         }
 
-        await sleep(500);
+        assert.fail(
+            `Expected Manager topic ${topicName} to include ${role} actor for ${hubName}, ` +
+            `last topics: ${JSON.stringify(lastTopics)}`
+        );
+    } finally {
+        client.dispose();
     }
-
-    assert.fail(
-        `Expected Manager topic ${topicName} to include ${role} actor for ${hubName}, ` +
-        `last topics: ${JSON.stringify(lastTopics)}`
-    );
 }
 
 async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
@@ -371,6 +489,8 @@ async function queryManagerProxy(world: CustomWorld, endpoint: string): Promise<
         world.resources.aggProxyResponse = null;
         world.resources.aggProxyError = e;
         world.resources.aggProxyEndpoint = endpoint;
+    } finally {
+        clientUtils.dispose();
     }
 }
 
@@ -440,7 +560,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     const verser2Port = await freeport();
     const id = `mm-agg-${runId}`;
     const managerId = `mgr-agg-${runId}`;
-    const tempDir = mkdtempSync(resolve(tmpdir(), "scramjet-manager-aggregation-"));
+    const tempDir = mkdtempSync(resolve(ownership.tempPath, "manager-aggregation-"));
 
     const mmOptions = [
         `--id=${id}`,
@@ -464,7 +584,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     };
     const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, {
         ...mmEnv
-    });
+    }, this.scenarioLifecycle);
 
     this.resources.aggMMProcess = proc;
     this.resources.aggMMCommand = cmd;
@@ -507,10 +627,12 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     } catch (e) {
         // Manager might not expose trust endpoint yet; the scenario will fail later if trust is required.
         console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
+    } finally {
+        client.dispose();
     }
 
     this.resources.aggManagerConfig = managerConfig;
-    this.resources.aggManagerClient = mmClient.getManagerClient(managerId);
+    this.resources.aggManagerClient = response;
     if (trustMaterial?.ca) {
         this.resources.aggVerser2CA = trustMaterial.ca;
     }
@@ -605,12 +727,25 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
     }
 
     try {
-        const proc = await spawnProcess(cmd, hubOpts, undefined, 20_000, hubEnv);
+        const proc = await spawnProcess(cmd, hubOpts, undefined, 20_000, hubEnv, this.scenarioLifecycle);
         const apiBase = `http://127.0.0.1:${apiPort}/api/v1`;
 
         aggregationProcesses(this).push(proc);
 
         await waitForGet(apiBase, "version", 30_000);
+        const startupConfig = JSON.parse(readFileSync(startupConfigAbsolute, "utf8"));
+        const requiredInstanceNames = (startupConfig.sequences || [])
+            .filter((sequence: any) => sequence.required === true)
+            .map((sequence: any) => sequence.instanceName)
+            .filter((name: unknown): name is string => typeof name === "string" && name.length > 0);
+        await waitForRequiredHubInstances(
+            apiBase,
+            requiredInstanceNames,
+            proc,
+            this.resources.aggMMApiBase,
+            this.resources.aggManagerId,
+            this.scenarioLifecycle,
+        );
 
         if (!this.resources.aggHubs) {
             this.resources.aggHubs = {};
@@ -635,36 +770,57 @@ Given("I wait for hubs to register with the Manager", { timeout: 15000 }, async 
     const expectedHubCount = this.resources.aggHubCount || 0;
     const deadline = Date.now() + 12_000;
     let lastResponse: unknown;
+    let lastSequences: unknown;
+    let lastInstances: unknown;
 
-    while (Date.now() < deadline) {
-        lastResponse = await client.get<any>(`cpm/${managerId}/api/v1/list`);
-
-        const hubs = Array.isArray(lastResponse) ? lastResponse : [];
-
-        if (hubs.length >= expectedHubCount) {
-            // Verify each hub has an active Verser2 route before proceeding.
-            // isConnectionActive reflects STHController.isConnectionActive which
-            // calls brokerTransport.isRouteReady(routeDomain) — true only after
-            // the Verser2 route subscription handshake completes.
-            const allActive = hubs.every((h: any) => h.isConnectionActive === true);
-
-            if (allActive) {
-                return;
+    try {
+        while (Date.now() < deadline) {
+            try {
+                lastResponse = await client.get<any>(`cpm/${managerId}/api/v1/list`);
+            } catch (error) {
+                if (!isExpectedReadinessError(error)) throw error;
+                await sleep(50);
+                continue;
             }
+
+            const hubs = Array.isArray(lastResponse) ? lastResponse : [];
+
+            if (hubs.length >= expectedHubCount) {
+                // Verify each hub has an active Verser2 route before proceeding.
+                // isConnectionActive reflects STHController.isConnectionActive which
+                // calls brokerTransport.isRouteReady(routeDomain) — true only after
+                // the Verser2 route subscription handshake completes.
+                const allActive = hubs.every((h: any) => h.isConnectionActive === true);
+
+                if (allActive) {
+                    try {
+                        lastSequences = await client.get<any>(`cpm/${managerId}/api/v1/all_sequences`);
+                        lastInstances = await client.get<any>(`cpm/${managerId}/api/v1/instances`);
+                        const sequences = Array.isArray(lastSequences) ? lastSequences : [];
+                        const instances = Array.isArray(lastInstances) ? lastInstances : [];
+                        if (sequences.length >= expectedHubCount && instances.length >= expectedHubCount) return;
+                    } catch (error) {
+                        if (!isExpectedReadinessError(error)) throw error;
+                    }
+                }
+            }
+
+            await sleep(50);
         }
 
-        await sleep(500);
+        const activeInfo = (Array.isArray(lastResponse) ? lastResponse : [])
+            .map((h: any) => `${h.id}:isConnectionActive=${h.isConnectionActive}`)
+            .join("; ");
+
+        assert.fail(
+            `Expected ${expectedHubCount} hubs to register with active routes, ` +
+            `last response: ${JSON.stringify(lastResponse)}. ` +
+            `Active states: ${activeInfo}; last sequences: ${JSON.stringify(lastSequences)}; ` +
+            `last instances: ${JSON.stringify(lastInstances)}`
+        );
+    } finally {
+        client.dispose();
     }
-
-    const activeInfo = (Array.isArray(lastResponse) ? lastResponse : [])
-        .map((h: any) => `${h.id}:isConnectionActive=${h.isConnectionActive}`)
-        .join("; ");
-
-    assert.fail(
-        `Expected ${expectedHubCount} hubs to register with active routes, ` +
-        `last response: ${JSON.stringify(lastResponse)}. ` +
-        `Active states: ${activeInfo}`
-    );
 });
 
 // =========================================================================
@@ -684,10 +840,12 @@ When("I send a {string} request through the aggregation Manager proxy to {string
     endpoint: string,
     headersJson: string
 ) {
-    this.response = await fetch(aggregationManagerProxyUrl(this, endpoint), {
+    this.response = await rawHttpRequest(
         method,
-        headers: JSON.parse(headersJson) as Record<string, string>
-    });
+        aggregationManagerProxyUrl(this, endpoint),
+        undefined,
+        JSON.parse(headersJson) as Record<string, string>
+    );
 });
 
 When("I send a {string} request through the aggregation Manager proxy to {string} with body {string} and headers {string}", async function (
@@ -709,24 +867,27 @@ When("I eventually send a {string} request through the aggregation Manager proxy
 ) {
     const deadline = Date.now() + 15_000;
     let lastError: Error | undefined;
+    let lastStatus: number | undefined;
 
     while (Date.now() < deadline) {
         try {
             await sendAggregationManagerProxyRequest(this, method, endpoint, body, headersJson);
+            lastStatus = this.response?.status;
 
-            if (this.response?.status === 200) {
+            if (lastStatus === 200) {
                 return;
             }
         } catch (error) {
             lastError = error as Error;
         }
 
-        await sleep(500);
+        await sleep(50);
     }
 
-    if (lastError) {
-        throw lastError;
-    }
+    throw new Error(
+        `Timed out waiting for ${method} ${endpoint} to return 200; ` +
+        `last status: ${lastStatus ?? "none"}; last error: ${lastError?.message || "none"}`
+    );
 });
 
 When("I send a {string} request through the aggregation MultiManager root to {string} with body {string} and headers {string}", async function (
@@ -736,11 +897,12 @@ When("I send a {string} request through the aggregation MultiManager root to {st
     body: string,
     headersJson: string
 ) {
-    this.response = await fetch(aggregationRootUrl(this, endpoint), {
+    this.response = await rawHttpRequest(
         method,
+        aggregationRootUrl(this, endpoint),
         body,
-        headers: JSON.parse(headersJson) as Record<string, string>
-    });
+        JSON.parse(headersJson) as Record<string, string>
+    );
 });
 
 When("I send a {string} request to aggregation hub {string} at {string} with headers {string}", async function (
@@ -750,11 +912,12 @@ When("I send a {string} request to aggregation hub {string} at {string} with hea
     endpoint: string,
     headersJson: string
 ) {
-    this.response = await fetch(aggregationHubUrl(this, hubName, endpoint), {
+    this.response = await rawHttpRequest(
         method,
-        headers: JSON.parse(headersJson) as Record<string, string>,
-        redirect: "manual"
-    });
+        aggregationHubUrl(this, hubName, endpoint),
+        undefined,
+        JSON.parse(headersJson) as Record<string, string>
+    );
 });
 
 When("source sequence {string} calls target sequence {string} through the aggregation Manager", async function (
@@ -768,12 +931,60 @@ When("source sequence {string} calls target sequence {string} through the aggreg
     const targetHub = encodeURIComponent(targetHubName);
     const targetInstance = encodeURIComponent(targetInstanceName);
 
-    this.response = await fetch(aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`), {
-        method: "POST",
-        body: "sequence-to-sequence",
-        headers: { "Content-Type": "text/plain" }
-    });
+    await waitForSourceTargetReadiness(
+        this,
+        sourceHubName,
+        sourceInstanceName,
+        targetHub,
+        targetInstance,
+    );
+
+    this.response = await rawHttpRequest(
+        "POST",
+        aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`),
+        "sequence-to-sequence",
+        { "Content-Type": "text/plain" }
+    );
 });
+
+async function waitForSourceTargetReadiness(
+    world: CustomWorld,
+    sourceHub: string,
+    sourceInstance: string,
+    targetHub: string,
+    targetInstance: string,
+    timeoutMs = 15_000,
+): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    let lastStatus: number | undefined;
+    let lastBody = "";
+    let lastError: Error | undefined;
+    const endpoint = `/sth/${sourceHub}/instance/${sourceInstance}/rpc/test/call-target-ready?targetHub=${targetHub}&targetInstance=${targetInstance}`;
+
+    while (Date.now() < deadline) {
+        try {
+            const response = await rawHttpRequest("GET", aggregationManagerProxyUrl(world, endpoint), undefined, {});
+            lastStatus = response.status;
+            lastBody = await response.text();
+            if (isSuccessfulReadinessResponse(response.status, lastBody)) return;
+            if (!isTransientReadinessStatus(response.status)) {
+                throw new Error(
+                    `Readiness probe returned unexpected response status/body ${response.status}/${JSON.stringify(lastBody)}`
+                );
+            }
+        } catch (error) {
+            lastError = error as Error;
+            if (!isExpectedReadinessError(error)) throw error;
+        }
+        await sleep(50);
+    }
+
+    throw new Error(
+        `Timed out waiting for source sequence ${sourceInstance} to reach target ${targetInstance}; ` +
+        `last status: ${lastStatus ?? "none"}; last body: ${JSON.stringify(lastBody)}; ` +
+        `last error: ${lastError?.message || "none"}`
+    );
+}
 
 When("I query hub {string} for its sequences", async function (
     this: CustomWorld,
@@ -901,6 +1112,7 @@ When("the aggregation Manager is restarted", { timeout: 30000 }, async function 
     const mmClient = this.resources.aggMMClient as MultiManagerClient;
     const client = new ClientUtils(mmClient.apiBase);
     const managerId = this.resources.aggManagerId as string;
+    const oldManagerClient = this.resources.aggManagerClient;
 
     // Stop the Manager via MultiManager API.
     await client.post(
@@ -921,7 +1133,7 @@ When("the aggregation Manager is restarted", { timeout: 30000 }, async function 
             break;
         }
 
-        await sleep(500);
+        await sleep(50);
     }
 
     assert.ok(stopped, `Expected Manager ${managerId} to stop before restart`);
@@ -941,21 +1153,21 @@ When("the aggregation Manager is restarted", { timeout: 30000 }, async function 
         },
     };
 
-    const response = await mmClient.startManager(managerConfig as any);
-
-    assert.ok(response, "Expected Manager to be restarted");
-
-    this.resources.aggManagerClient = response;
-
-    // Re-fetch verser2 trust material (the new Manager may have different credentials).
     try {
-        const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
+        const response = await mmClient.startManager(managerConfig as any);
+        assert.ok(response, "Expected Manager to be restarted");
+        disposeClient(oldManagerClient);
+        this.resources.aggManagerClient = response;
 
-        if (trustMaterial?.ca) {
-            this.resources.aggVerser2CA = trustMaterial.ca;
+        // Re-fetch verser2 trust material (the new Manager may have different credentials).
+        try {
+            const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
+            if (trustMaterial?.ca) this.resources.aggVerser2CA = trustMaterial.ca;
+        } catch (e) {
+            console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
         }
-    } catch (e) {
-        console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
+    } finally {
+        client.dispose();
     }
 });
 
@@ -966,6 +1178,7 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
     const mmEnv = this.resources.aggMMEnv as Record<string, string> | undefined;
     const mmApiBase = this.resources.aggMMApiBase as string;
     const managerId = this.resources.aggManagerId as string;
+    const oldManagerClient = this.resources.aggManagerClient;
     const managerConfig = this.resources.aggManagerConfig || {
         id: managerId,
         verser2: {
@@ -985,11 +1198,12 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
     assert.ok(mmOptions, "Expected aggregation MultiManager options to be stored");
     assert.ok(mmEnv, "Expected aggregation MultiManager environment to be stored");
 
-    await terminateProcess(oldProcess);
-    await killProcessesMatching(`--id=${this.resources.aggMMId}`);
+    await this.scenarioLifecycle.stop(oldProcess);
     await waitForGetFailure(mmApiBase, "version", 10_000);
 
-    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv);
+    disposeClient(this.resources.aggMMClient);
+
+    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv, this.scenarioLifecycle);
 
     this.resources.aggMMProcess = proc;
     this.resources.aggMMClient = new MultiManagerClient(mmApiBase);
@@ -1001,10 +1215,11 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
 
     assert.ok(response, "Expected Manager to be started after MultiManager restart");
 
+    disposeClient(oldManagerClient);
     this.resources.aggManagerClient = response;
 
+    const client = new ClientUtils(mmApiBase);
     try {
-        const client = new ClientUtils(mmApiBase);
         const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
 
         if (trustMaterial?.ca) {
@@ -1012,6 +1227,8 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
         }
     } catch {
         // Keep the previous trust material; reconnect assertions below prove whether it is still usable.
+    } finally {
+        client.dispose();
     }
 });
 
@@ -1040,7 +1257,7 @@ Then("the Manager proxy response should contain at least {int} items", { timeout
             break;
         }
 
-        await sleep(500);
+        await sleep(50);
         await queryManagerProxy(this, endpoint);
     }
 

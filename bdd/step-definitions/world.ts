@@ -6,8 +6,8 @@ import { STHRestAPI } from "@scramjet/api-types";
 import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
 import * as dns from "dns";
-
-const glob: (pattern: string, callback: (err: Error | null, matches: string[]) => void) => void = require("glob");
+const { ScenarioLifecycle } = require("../../scripts/lib/bdd-scenario-lifecycle.js");
+const { memoryRegistry } = require("../lib/memory-registry");
 
 const DEFAULT_TIMEOUT = 20000;
 const MAX_TIMEOUT = 30000;
@@ -40,6 +40,14 @@ export class CustomWorld implements World {
         sequence1?: SequenceClient;
         sequence2?: SequenceClient;
         outStream?: Readable;
+        floodStream?: Readable;
+        floodSendPromise?: Promise<unknown>;
+        floodResponseClosedPromise?: Promise<unknown>;
+        floodHubRequestLifecycleWaiter?: { promise: Promise<void>; cancel: (error?: Error) => void };
+        markFloodRunnerExpected?: () => void;
+        floodSourceClosedPromise?: Promise<unknown>;
+        floodAbortController?: AbortController;
+        floodCorrelationId?: string;
     } = {
             instanceList: {},
             multiHosts: {},
@@ -49,22 +57,6 @@ export class CustomWorld implements World {
             sequences: {},
             instancesClients: {}
         };
-
-    async findSequencePackage(sequenceName: string) {
-        return new Promise<string>((resolve) => {
-            glob("../**/" + sequenceName + ".tar.gz", (err, matches) => {
-                if (err) {
-                    throw err;
-                }
-
-                if (matches.length === 0) {
-                    throw new Error(`No sequence package found for ${sequenceName}`);
-                }
-
-                resolve(matches[0]);
-            });
-        });
-    }
 
     cliResources: {
         stdio?: [stdout: string, stderr: string, statusCode: any];
@@ -78,9 +70,18 @@ export class CustomWorld implements World {
         instance2Id?: string;
         sequences?: STHRestAPI.GetSequencesResponse;
         instances?: STHRestAPI.GetInstancesResponse;
+        templateDirectory?: string;
         commandInProgress?: ChildProcessWithoutNullStreams;
         collectedTopicData?: string;
     } = {};
+
+    /** Explicit owner for Hub, Manager, and runner resources created by this scenario. */
+    readonly scenarioLifecycle = new ScenarioLifecycle(memoryRegistry);
+
+    /** @internal Memory guard baseline (set by support/memory-hooks.ts). */
+    __memoryBaseline?: number;
+    /** @internal Memory guard before-usage snapshot (set by support/memory-hooks.ts). */
+    __memoryBeforeUsage?: number;
 
     constructor({ attach, log, parameters }: any) {
         // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder

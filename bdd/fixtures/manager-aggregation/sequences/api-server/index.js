@@ -79,7 +79,48 @@ module.exports = async function(_stream) {
         }
     });
 
-    await new Promise(res => setTimeout(res, 1000));
+    // Side-effect-free route used only to prove source-sequence -> Manager ->
+    // target-Hub readiness before an asserted POST call-target request.
+    this.api.use("/call-target-ready", async (req, res) => {
+        try {
+            const url = new URL(req.url, "http://sequence.local");
+            const targetHub = url.searchParams.get("targetHub");
+            const targetInstance = url.searchParams.get("targetInstance");
+            if (!targetHub || !targetInstance) {
+                res.writeHead(400).end("Missing targetHub or targetInstance");
+                return;
+            }
+
+            const rpc = this.space
+                .getHostClient(targetHub)
+                .getInstanceClient(targetInstance)
+                .getRPCClient();
+            const targetResponse = await rpc.request("GET", "test/abc");
+            const targetBody = await targetResponse.text();
+            if (targetResponse.status === 200 && targetBody === "GET /abc") {
+                res.writeHead(200).end(targetBody);
+            } else if (targetResponse.status === 404 || targetResponse.status === 503) {
+                res.writeHead(targetResponse.status).end(targetBody);
+            } else {
+                res.writeHead(targetResponse.status || 500).end(targetBody || "Target readiness probe failed");
+            }
+        } catch (e) {
+            console.error(e);
+            const code = e?.code;
+            const status = code === "ECONNREFUSED" || code === "ECONNRESET" || code === "ETIMEDOUT" ? 503 : 500;
+            res.writeHead(status).end(`${e.message || e}`);
+        }
+    });
+
+    if (!this.api.server.listening) {
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error("Aggregation API server did not become ready within 10000ms")), 10_000);
+            this.api.server.once("listening", () => {
+                clearTimeout(timer);
+                resolve();
+            });
+        });
+    }
 
     return new Promise((resolve, reject) => {
         if (!this.api.server.listening) {

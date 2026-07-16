@@ -27,6 +27,7 @@ export interface SequenceLocalContext {
     emitter: EventEmitter;
     localStorage: LocalStorageAgent;
     monitorStream: Writable;
+    exitTimeout: number;
     keepAlive(milliseconds?: number): SequenceLocalContext;
     end(): SequenceLocalContext;
     destroy(error?: AppError | Error): SequenceLocalContext;

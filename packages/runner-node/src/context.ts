@@ -12,13 +12,7 @@ import type { LocalStorageAgentHost } from "./local-storage-agent";
 import type { LifecycleContext } from "./lifecycle";
 import { RunnerAppContext } from "./runner-app-context";
 import type { RunnerProxy } from "./runner-app-context";
-import type {
-    BuildAppContextDeps,
-    BuildAppContextResult,
-    BuildContextDeps,
-    BuildSequenceContextResult,
-    SequenceLocalContext,
-} from "./types";
+import type { BuildAppContextDeps, BuildAppContextResult, BuildContextDeps, BuildSequenceContextResult, SequenceLocalContext } from "./types";
 import { writeMonitoring } from "./utils";
 
 function materializePath(path: string, params: unknown): string {
@@ -26,10 +20,7 @@ function materializePath(path: string, params: unknown): string {
         return path;
     }
 
-    return Object.entries(params as Record<string, string>).reduce(
-        (current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))),
-        path
-    );
+    return Object.entries(params as Record<string, string>).reduce((current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))), path);
 }
 
 function appendQuery(path: string, query: unknown): string {
@@ -74,9 +65,9 @@ function normalizeRestApiResponseError(original: unknown, routePath: string, sta
         const code = status !== undefined ? ` status=${status}` : "";
         return new Error(
             `RestAPI2 response parse error for ${routePath}${code}: ${original.message}. ` +
-            `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
-            `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
-            `routing, or handle route-aware responses explicitly.`
+                `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
+                `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
+                `routing, or handle route-aware responses explicitly.`
         );
     }
 
@@ -128,7 +119,7 @@ export function buildSequenceContext(deps: BuildContextDeps): BuildSequenceConte
     const localCache: Record<string, string | null> = {};
     const storageHost: LocalStorageAgentHost = {
         writeMonitoringMessage: (msg) => writeMonitoring(monitorStream, msg),
-        localCache,
+        localCache
     };
     const localStorage = new LocalStorageAgent(storageHost);
 
@@ -143,6 +134,9 @@ export function buildSequenceContext(deps: BuildContextDeps): BuildSequenceConte
         emitter,
         localStorage,
         monitorStream,
+        // Preserve the local runner's historical completion delay while still
+        // allowing a sequence to replace it through context.exitTimeout.
+        exitTimeout: bootConfig.exitTimeout ?? 5_000,
         keepAlive(milliseconds?: number) {
             onKeepAliveIssued();
             const data: KeepAliveMessageData = { keepAlive: milliseconds || 0 };
@@ -151,17 +145,11 @@ export function buildSequenceContext(deps: BuildContextDeps): BuildSequenceConte
             return ctx;
         },
         end() {
-            writeMonitoring(monitorStream, [
-                RunnerMessageCode.SEQUENCE_STOPPED,
-                { sequenceError: undefined },
-            ]);
+            writeMonitoring(monitorStream, [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: undefined }]);
             return ctx;
         },
         destroy(error) {
-            writeMonitoring(monitorStream, [
-                RunnerMessageCode.SEQUENCE_STOPPED,
-                { sequenceError: error },
-            ]);
+            writeMonitoring(monitorStream, [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: error }]);
             return ctx;
         },
         on(eventName, handler) {
@@ -187,7 +175,7 @@ export function buildSequenceContext(deps: BuildContextDeps): BuildSequenceConte
         },
         killHandler() {
             for (const handler of killHandlers) handler();
-        },
+        }
     };
 
     return { context: ctx, localStorage };
@@ -201,13 +189,13 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
             logger.debug("API unhandled request", req.url);
             res.writeHead(404);
             res.end("Not Found");
-        },
+        }
     });
 
     const localCache: Record<string, string | null> = {};
     const storageHost: LocalStorageAgentHost = {
         writeMonitoringMessage: (msg) => writeMonitoring(monitorStream, msg),
-        localCache,
+        localCache
     };
     const localStorage = new LocalStorageAgent(storageHost);
 
@@ -226,18 +214,16 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     const spaceTargetDomain = bootConfig.verser2Runtime?.spaceTargetDomain;
     const v2Space = spaceTargetDomain
         ? createSpaceClient({
-            transport: createRestApi2Transport(
-                new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, hostClient.getAgent())
-            ),
-            basePath: "/api/v2",
-        })
+              transport: createRestApi2Transport(new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, hostClient.getAgent())),
+              basePath: "/api/v2"
+          })
         : createSpaceClient({ transport: restApi2Transport, basePath: "/api/v2" });
 
     const proxy: RunnerProxy = {
         keepAliveIssued: () => onKeepAliveIssued(),
         sendKeepAlive: (data) => writeMonitoring(monitorStream, [RunnerMessageCode.ALIVE, data]),
         sendStop: (err) => writeMonitoring(monitorStream, [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: err }]),
-        sendEvent: (ev) => writeMonitoring(monitorStream, [RunnerMessageCode.EVENT, ev]),
+        sendEvent: (ev) => writeMonitoring(monitorStream, [RunnerMessageCode.EVENT, ev])
     };
 
     const logLevel: LogLevel = bootConfig.logLevel ?? "DEBUG";
@@ -258,6 +244,7 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
         api,
         localStorage
     ) as BuildAppContextResult["context"];
+    context.exitTimeout = bootConfig.exitTimeout ?? 10_000;
 
     emitter.on("error", (e) => logger.error("Sequence emitted an error event", e));
 

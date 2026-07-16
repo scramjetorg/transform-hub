@@ -76,6 +76,31 @@ test.serial("buildAppContext: spaceClient uses Hub-local v2 fallback without spa
     }
 });
 
+test.serial("buildAppContext: preserves BDD boot exitTimeout and production fallback", t => {
+    const agent = makeBlockingAgent();
+    const hostClient = {
+        getApiBase: () => "http://hub.internal/api/v1",
+        getV2ApiBase: () => "http://hub.internal/api/v2",
+        getAgent: () => agent
+    };
+
+    const build = (exitTimeout?: number) => buildAppContext({
+        bootConfig: { sequencePath: "/x", instanceId: "i-1", ...(exitTimeout === undefined ? {} : { exitTimeout }) },
+        monitorStream: new PassThrough(),
+        emitter: new EventEmitter(),
+        logger: new ObjLogger("test"),
+        hostClient: hostClient as any,
+        onKeepAliveIssued: () => undefined
+    }).context;
+
+    try {
+        t.is(build(1000).exitTimeout, 1000);
+        t.is(build().exitTimeout, 10_000);
+    } finally {
+        agent.destroy();
+    }
+});
+
 test.serial("RestAPI2 transport wraps request-layer SyntaxError with clear error message", async t => {
     const agent = makeBlockingAgent();
     const original = ClientUtilsCustomAgent.prototype.request;

@@ -5,9 +5,9 @@ import * as http from "http";
 /**
  * Streaming HTTP steps for runner-node spawn-isolation regression coverage.
  *
- * These steps drive the host's exposed-API forwarder using the global
- * fetch implementation shipped with Node 18. They are intentionally narrow
- * and additive; the broader request/response semantics still live in
+ * These steps use Node's built-in http module instead of the global fetch
+ * API (disabled under --no-experimental-fetch). They are intentionally
+ * narrow and additive; the broader request/response semantics still live in
  * bdd/step-definitions/hub/config.ts.
  *
  * Two new behaviours are required by the plan:
@@ -34,45 +34,60 @@ When(
 
         assert.ok(baseUrl, "LOCAL_HOST_BASE_URL is not set");
 
-        const url = `${baseUrl}${path}`;
-        const response = await fetch(url, { method });
+        const target = new URL(`${baseUrl}${path}`);
 
-        this.response = response;
+        const { status, chunks, text } = await new Promise<{
+            status: number;
+            chunks: StreamingChunk[];
+            text: string;
+        }>((resolve, reject) => {
+            const req = http.request({
+                method,
+                hostname: target.hostname,
+                port: target.port,
+                path: `${target.pathname}${target.search}`
+            }, (res) => {
+                const decoder = new TextDecoder();
+                const start = Date.now();
+                const chunks: StreamingChunk[] = [];
+                const parts: Buffer[] = [];
 
-        const body = response.body;
+                res.on("data", (chunk: Buffer) => {
+                    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
 
-        if (!body) {
-            this.responseChunks = [] as StreamingChunk[];
-            this.responseText = await response.text();
-            return;
-        }
-
-        const reader = body.getReader();
-        const decoder = new TextDecoder();
-        const chunks: StreamingChunk[] = [];
-        const start = Date.now();
-
-        while (true) {
-            const { value, done } = await reader.read();
-
-            if (done) break;
-            if (value) {
-                chunks.push({
-                    text: decoder.decode(value, { stream: true }),
-                    bytes: value.byteLength,
-                    at: Date.now() - start
+                    parts.push(buf);
+                    chunks.push({
+                        text: decoder.decode(buf, { stream: true }),
+                        bytes: buf.byteLength,
+                        at: Date.now() - start
+                    });
                 });
-            }
-        }
 
-        const tail = decoder.decode();
+                res.on("error", reject);
 
-        if (tail) {
-            chunks.push({ text: tail, bytes: 0, at: Date.now() - start });
-        }
+                res.on("end", () => {
+                    const tail = decoder.decode();
 
+                    if (tail) {
+                        chunks.push({ text: tail, bytes: 0, at: Date.now() - start });
+                    }
+
+                    resolve({
+                        status: res.statusCode ?? 0,
+                        chunks,
+                        text: Buffer.concat(parts).toString("utf8")
+                    });
+                });
+            });
+
+            req.on("error", reject);
+            req.setTimeout(25000, () => { req.destroy(new Error("Request timed out")); });
+            req.end();
+        });
+
+        this.response = { status };
         this.responseChunks = chunks;
-        this.responseText = chunks.map((c: StreamingChunk) => c.text).join("");
+        this.responseText = text;
     }
 );
 

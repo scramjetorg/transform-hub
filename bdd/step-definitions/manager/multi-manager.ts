@@ -1,24 +1,24 @@
 import { ChildProcess } from "child_process";
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { getExecutableCmd, spawnProcess, stopProcess, parseOptions, requestGet, requestPost, assertResponseData } from "./common";
+import { getExecutableCmd, spawnProcess, parseOptions, requestGet, requestPost, assertResponseData, disposeClient } from "./common";
 import { CustomWorld } from "../world";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
-import { defer } from "@scramjet/utility";
+import { waitForCondition } from "../../lib/utils";
 
-async function startMultiManager(options: {[key: string]: any}): Promise<ChildProcess> {
-    return spawnProcess(getExecutableCmd("multi-manager"), options, 500, "Server started");
-}
-
-async function stopMultiManager(multiManagerProcess: ChildProcess) {
-    if (multiManagerProcess) {
-        await stopProcess(multiManagerProcess);
-    }
+async function startMultiManager(options: {[key: string]: any}, lifecycle: CustomWorld["scenarioLifecycle"]): Promise<ChildProcess> {
+    // The startup log is the observable readiness signal; no fixed grace
+    // sleep is needed after it.
+    return spawnProcess(getExecutableCmd("multi-manager"), options, 0, "Server started", { detached: true }, lifecycle);
 }
 
 After({ tags: "@cleanupmm" }, async function(this: CustomWorld) {
     for (const [, instance] of Object.entries(this.resources.multiManagers)) {
-        await stopMultiManager(instance.process!);
+        try {
+            await this.scenarioLifecycle.stop(instance.process!);
+        } finally {
+            disposeClient(instance);
+        }
     }
 });
 
@@ -30,14 +30,13 @@ Given("MultiManager with options {string} is started", async function(
 
     const id = parsedOptions["--id"];
 
-    const process = await startMultiManager(parsedOptions);
+    const process = await startMultiManager(parsedOptions, this.scenarioLifecycle);
 
     const manager = new MultiManagerClient(
         `http://0.0.0.0:${parsedOptions["--server-api-port"]}/api/v1`
     );
 
     Object.assign(manager, { process });
-
     this.resources.multiManagers[id] = manager;
 });
 
@@ -48,7 +47,11 @@ When("stopped MultiManager with id {string}", async function(
     const multiManagerInstance = this.resources.multiManagers[id];
 
     if (multiManagerInstance) {
-        await stopMultiManager(multiManagerInstance.process!);
+        try {
+            await this.scenarioLifecycle.stop(multiManagerInstance.process!);
+        } finally {
+            disposeClient(multiManagerInstance);
+        }
     }
 });
 
@@ -105,7 +108,10 @@ When("Manager started on MultiManager {string} with config {string}", async func
 ){
     const parsedConfig = JSON.parse(config);
 
-    this.resources.managers[parsedConfig.id] = await this.resources.multiManagers[mmId].startManager(parsedConfig);
+    const previous = this.resources.managers[parsedConfig.id];
+    const next = await this.resources.multiManagers[mmId].startManager(parsedConfig);
+    disposeClient(previous);
+    this.resources.managers[parsedConfig.id] = next;
 });
 
 Then("it responds with {string}", async function(
@@ -157,7 +163,6 @@ Then("Manager {string} exposes Host {string} logs", { timeout: 10000 }, async fu
     managerId: string,
     hostId: string,
 ){
-    await defer(2000);
     const manager = this.resources.managers[managerId];
     const logStream = await manager.getHostClient(hostId).getLogStream();
 
@@ -174,11 +179,12 @@ Then("MultiManager with id {string} lists {int} running hosts on Manager id {str
     itemsLength: number,
     managerId: string
 ){
-    await defer(2000);
     const multiManager = this.resources.multiManagers[multiManagerId];
-    const response = await requestGet(
-        multiManager.apiBase,
-        `cpm/${ managerId }/api/v1/list`);
+    const response = await waitForCondition(
+        () => requestGet(multiManager.apiBase, `cpm/${ managerId }/api/v1/list`),
+        (candidate: any) => Array.isArray(candidate) && candidate.length === itemsLength,
+        { timeoutMs: 10000, intervalMs: 50, description: `MultiManager hosts for ${managerId}` }
+    );
 
     this.resources.multiManagerResponse = response;
 

@@ -1,5 +1,6 @@
 import test from "ava";
 import { PassThrough } from "stream";
+import { EventEmitter } from "events";
 import { createServer } from "http";
 import { STHConfiguration, STHRunnerVerser2HostConfig } from "@scramjet/types";
 import { attachSthLocalRunnerVerser2Peers } from "../src/lib/runner-verser2-host-peers";
@@ -114,4 +115,45 @@ test("attachSthLocalRunnerVerser2Peers uses native local guest flushHeaders", as
     t.is(flushCalls, 1);
     t.is(res.statusCode, 200);
     t.deepEqual(res.headers, { "content-type": "text/plain" });
+});
+
+test("local guest contains a closed ECONNRESET and accepts the following request", async t => {
+    const guestOptions: any[] = [];
+    const apiServer = new EventEmitter() as any;
+    let requests = 0;
+    apiServer.on("request", (_req: any, res: any) => {
+        requests++;
+        res.statusCode = 204;
+        res.end();
+    });
+    const host = {
+        attachLocalBroker: async () => ({
+            close: async () => undefined,
+            getRoutes: () => [],
+            request: async () => ({ requestId: "req-1", statusCode: 200, headers: {}, body: new PassThrough() })
+        }),
+        attachLocalGuest: async (options: unknown) => {
+            guestOptions.push(options);
+            return { close: async () => undefined };
+        }
+    };
+
+    await attachSthLocalRunnerVerser2Peers(host as any, runnerHostConfig, verser2Config, apiServer as any);
+
+    const abortedRequest = new EventEmitter() as any;
+    const abortedResponse = new EventEmitter() as any;
+    abortedRequest.destroyed = true;
+    abortedResponse.headersSent = false;
+    abortedResponse.end = () => { abortedResponse.ended = true; };
+    guestOptions[0].listener(abortedRequest, abortedResponse);
+    abortedRequest.emit("error", Object.assign(new Error("closed guest"), { code: "ECONNRESET" }));
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    const healthyRequest = new EventEmitter() as any;
+    const healthyResponse = new EventEmitter() as any;
+    healthyResponse.headersSent = false;
+    healthyResponse.end = () => { healthyResponse.ended = true; };
+    guestOptions[0].listener(healthyRequest, healthyResponse);
+    t.is(requests, 2);
+    t.true(abortedResponse.ended);
 });

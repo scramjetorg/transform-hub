@@ -8,7 +8,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
-    "test:ava": "node ../../scripts/run-ava.js -T 50000"
+    "test:ava": "node ../../scripts/run-ava.js -T 50000 --serial"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -44,7 +44,7 @@
       "**/*.spec.ts"
     ],
     "require": [
-      "ts-node/register"
+      "ts-node/register/transpile-only"
     ]
   },
   "repository": {

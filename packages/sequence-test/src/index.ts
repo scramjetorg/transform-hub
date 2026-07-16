@@ -52,9 +52,7 @@ function isSupportedRuntime(runtime: string): runtime is SequenceTestRuntime {
 
 export function validateSequenceTestRuntime(runtime: string): SequenceTestRuntime {
     if (!isSupportedRuntime(runtime)) {
-        throw new Error(
-            `unsupported runtime "${runtime}"; supported runtimes are: ${supportedRuntimes.join(", ")}`
-        );
+        throw new Error(`unsupported runtime "${runtime}"; supported runtimes are: ${supportedRuntimes.join(", ")}`);
     }
 
     return runtime;
@@ -75,6 +73,9 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
 
     const close = () => {
         started = false;
+        outputCapture.clear();
+        logCapture.clear();
+        monitoringCapture.clear();
     };
 
     const waitForCompletion = () => {
@@ -105,7 +106,7 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
         output,
         logs,
         monitoring,
-        assert,
+        assert
     };
 }
 
@@ -122,6 +123,7 @@ export {
     createMonitoringCapture,
     createOutputCapture,
     createSequenceAssertions,
+    extractMemoryMonitoringFrames,
     waitForCompletion
 } from "./captures";
 
@@ -154,7 +156,9 @@ export type { InputDriver } from "./input-driver";
 export type {
     ByteCapture,
     LogCapture,
+    MemoryWithinLimitOptions,
     MonitoringCapture,
+    MonitoringMemoryFields,
     OutputCapture,
     SequenceAssertions
 } from "./captures";
@@ -191,21 +195,16 @@ export async function runSequence(options: SequenceTestOptions): Promise<Sequenc
 
     if (options.runtime === "node") {
         const loaded = require(options.sequencePath) as unknown;
-        const fn = typeof loaded === "function"
-            ? loaded
-            : (loaded as { default?: unknown }).default;
+        const fn = typeof loaded === "function" ? loaded : (loaded as { default?: unknown }).default;
 
         if (typeof fn !== "function") {
             throw new Error(`Sequence module ${options.sequencePath} does not export a function`);
         }
 
-        const result = await (fn as (this: unknown, input: unknown) => unknown).call(
-            options.context,
-            options.input?.body
-        );
+        const result = await (fn as (this: unknown, input: unknown) => unknown).call(options.context, options.input?.body);
         const records = Array.isArray(result) ? result : [result];
 
-        await harness.output.write(records.map(record => JSON.stringify(record)).join("\n"));
+        await harness.output.write(records.map((record) => JSON.stringify(record)).join("\n"));
         await harness.monitoring.write(`${JSON.stringify([RunnerMessageCode.SEQUENCE_COMPLETED, {}])}\r\n`);
     }
 

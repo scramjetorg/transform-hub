@@ -1,4 +1,4 @@
-import { Then, When } from "@cucumber/cucumber";
+import { After, Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { HostClient, InstanceClient } from "@scramjet/api-client";
@@ -10,15 +10,98 @@ import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
-import { defer, waitUntilStreamEquals } from "../../lib/utils";
+import * as net from "net";
+import { defer, waitForCondition, waitUntilStreamEquals } from "../../lib/utils";
 import { promisify } from "util";
-import { readFile } from "fs/promises";
+import { readFile, unlink, writeFile } from "fs/promises";
+import { readFileSync } from "fs";
 import { HostUtils } from "../../lib/host-utils";
 
 const freeport = promisify(require("freeport"));
+const procClockTicksPerSecond = 100;
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const AWAITING_POLL_DEFER_TIME = 250;
+type HubMetrics = {
+    label: string;
+    durationMs: number;
+    cpuTimeMs: number;
+    rssBytes: number;
+    peakRssBytes: number;
+};
+
+function readHubMetrics(pid: number): { cpuTimeMs: number; rssBytes: number; peakRssBytes: number } | undefined {
+    try {
+        // Read only while the process is alive.  A disappearing /proc entry is
+        // deliberately treated as an unavailable sample, never as an exit sample.
+        process.kill(pid, 0);
+        const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+        const status = readFileSync(`/proc/${pid}/status`, "utf8");
+        const statEnd = stat.lastIndexOf(")");
+        const fields = stat.slice(statEnd + 2).trim().split(/\s+/);
+        const userTicks = Number(fields[11]);
+        const systemTicks = Number(fields[12]);
+        const rssMatch = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
+        const peakMatch = status.match(/^VmHWM:\s+(\d+)\s+kB$/m);
+        if (!Number.isFinite(userTicks) || !Number.isFinite(systemTicks) || !rssMatch || !peakMatch) return undefined;
+        return {
+            cpuTimeMs: (userTicks + systemTicks) * 1000 / procClockTicksPerSecond,
+            rssBytes: Number(rssMatch[1]) * 1024,
+            peakRssBytes: Number(peakMatch[1]) * 1024
+        };
+    } catch {
+        return undefined;
+    }
+}
+
+async function captureHubMetrics(world: CustomWorld, label: string): Promise<void> {
+    const hub = world.resources.hub as ChildProcess | undefined;
+    if (!hub?.pid) assert.fail("Hub process not found");
+
+    const startedAt = Date.now();
+    let first: ReturnType<typeof readHubMetrics>;
+    let last: ReturnType<typeof readHubMetrics>;
+    let peakRssBytes = 0;
+    const sample = () => {
+        const metrics = readHubMetrics(hub.pid!);
+        if (!metrics) return;
+        first ??= metrics;
+        last = metrics;
+        peakRssBytes = Math.max(peakRssBytes, metrics.rssBytes, metrics.peakRssBytes);
+    };
+    sample();
+    assert.strictEqual(hub.exitCode, null, `${label} Hub exited before metrics capture began`);
+    // Mark the deliberate auto-exit as expected before waiting, so the
+    // scenario-lifecycle After hook does not flag it as a spontaneous exit.
+    world.scenarioLifecycle.expect(hub);
+    await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+        const timer = setInterval(sample, 50);
+        const timeout = setTimeout(() => {
+            clearInterval(timer);
+            reject(new Error(`Hub did not auto-exit during ${label} metrics capture`));
+        }, 30000);
+        hub.once("exit", (code, signal) => {
+            clearInterval(timer);
+            clearTimeout(timeout);
+            resolve({ code, signal });
+        });
+    });
+    const exit = world.resources.hubExit as { code: number | null } | undefined;
+    const final = last ?? first;
+    assert.ok(first && final, `No /proc metrics sampled while Hub was alive for ${label} run`);
+    assert.strictEqual(exit?.code, 0, `${label} Hub exited unexpectedly`);
+    const metrics: HubMetrics = {
+        label,
+        durationMs: Date.now() - startedAt,
+        cpuTimeMs: final.cpuTimeMs,
+        rssBytes: final.rssBytes,
+        peakRssBytes
+    };
+    world.resources.hubMetrics ??= {};
+    world.resources.hubMetrics[label] = metrics;
+    console.log(`HUB_IAC_METRICS ${JSON.stringify(metrics)}`);
+    spawned.delete(hub);
+    restoreSavedHostEnv(world.resources);
+}
+
 
 const spawned: Set<ChildProcess> = new Set();
 
@@ -32,12 +115,124 @@ process.on("exit", () => {
     });
 });
 
-async function startHubWithParams({ resources }: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
+const occupiedServers: net.Server[] = [];
+
+process.on("exit", () => {
+    occupiedServers.forEach(server => server.close());
+});
+
+// Scenario-scoped teardown: if a "port {int} is occupied" step created a
+// server but the scenario failed or ended before an explicit release step,
+// close the server here.  This prevents resource leaks that would block
+// subsequent scenarios or leave dangling listeners on the port.
+After(async function (this: CustomWorld) {
+    const server = this.resources.portOccupier as net.Server | undefined;
+    const occupiedByUs = this.resources.portOccupiedByUs as boolean | undefined;
+
+    if (server && occupiedByUs) {
+        const idx = occupiedServers.indexOf(server);
+
+        if (idx >= 0) occupiedServers.splice(idx, 1);
+        await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+
+    delete this.resources.portOccupier;
+    delete this.resources.portOccupiedByUs;
+});
+
+When("port {int} is occupied", async function(this: CustomWorld, port: number) {
+    const server = net.createServer();
+    try {
+        await new Promise<void>((resolve, reject) => {
+            server.once("error", reject);
+            server.listen(port, "127.0.0.1", () => {
+                occupiedServers.push(server);
+                this.resources.portOccupier = server;
+                this.resources.portOccupiedByUs = true;
+                resolve();
+            });
+        });
+    } catch (err: any) {
+        // Port may already be occupied by the suite host (NO_HOST=false).
+        // That is fine — the port is still occupied, just not by us.
+        if (err.code === "EADDRINUSE") {
+            console.error(`Port ${port} already occupied (suite host?) — using existing occupancy.`);
+            this.resources.portOccupier = undefined;
+            this.resources.portOccupiedByUs = false;
+            return;
+        }
+        throw err;
+    }
+});
+
+When("the occupied port is released", async function(this: CustomWorld) {
+    const server = this.resources.portOccupier as net.Server | undefined;
+    const occupiedByUs = this.resources.portOccupiedByUs as boolean | undefined;
+    if (!server || !occupiedByUs) {
+        // If we did not occupy the port ourselves, there is nothing to close.
+        delete this.resources.portOccupier;
+        delete this.resources.portOccupiedByUs;
+        return;
+    }
+    const idx = occupiedServers.indexOf(server);
+    if (idx >= 0) occupiedServers.splice(idx, 1);
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    delete this.resources.portOccupier;
+    delete this.resources.portOccupiedByUs;
+});
+
+async function startHubWithParams(world: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
+    const { resources } = world;
     const hostUtils = new HostUtils();
+    // @starts-host scenarios must launch their requested Hub even when the
+    // suite host URL is present in the environment.  HostUtils otherwise
+    // treats that URL as an external-host shortcut and never owns a child.
+    hostUtils.hostUrl = "";
     const expectedHubExitCode = resources.expectedHubExitCode as number | undefined;
+    const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
+    const runnerHostEnabledEnv = "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED";
+    const runnerHostPublicUrlEnv = "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL";
+    const savedRunnerHostPort = process.env[runnerHostPortEnv];
+    const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
+    const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
+
+    // The suite's BeforeAll host owns the default runner verser2 port (2444).
+    // Scenario hubs must not inherit that fixed port, otherwise the second
+    // scenario-spawned Hub exits before "Host running!" with EADDRINUSE.
+    if (!params.some(param => param.startsWith("--verser2-runner-host-bind-port"))) {
+        process.env[runnerHostEnabledEnv] = "true";
+        const allocatedPort = String(await freeport());
+
+        process.env[runnerHostPortEnv] = allocatedPort;
+        process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${allocatedPort}`;
+    }
 
     hostUtils.expectedExitCode = expectedHubExitCode;
-    const out = await hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
+    let out: string;
+    try {
+        const spawnPromise = hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
+        if (!hostUtils.host) throw new Error("Missing host from utils.");
+        // Register before awaiting readiness so startup-failure exits remain owned.
+        resources.hub = hostUtils.host;
+        world.scenarioLifecycle.ownChild(hostUtils.host, "hub", {
+            group: true,
+            // Pre-stop callback: notify HostUtils that this Hub is being
+            // deliberately stopped so the startup-exit assertion is suppressed.
+            // Fires immediately before stop in both cleanup() and stop() paths,
+            // scoped to this resource only (no early marking of others).
+            onStop: () => hostUtils.markStopExpected(),
+        });
+        if (expectedHubExitCode !== undefined) world.scenarioLifecycle.expect(hostUtils.host);
+
+        out = await spawnPromise;
+    } finally {
+        if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
+        else process.env[runnerHostPortEnv] = savedRunnerHostPort;
+        if (savedRunnerHostEnabled === undefined) delete process.env[runnerHostEnabledEnv];
+        else process.env[runnerHostEnabledEnv] = savedRunnerHostEnabled;
+        if (savedRunnerHostPublicUrl === undefined) delete process.env[runnerHostPublicUrlEnv];
+        else process.env[runnerHostPublicUrlEnv] = savedRunnerHostPublicUrl;
+    }
 
     if (!hostUtils.host) throw new Error("Missing host from utils.");
 
@@ -47,21 +242,21 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[], 
         spawned.delete(hostUtils.host!);
     });
 
-    resources.hub = hostUtils.host;
     resources.hostUtils = hostUtils;
     resources.startOutput = out;
 }
 
-function saveHostEnv(): Record<string, string | undefined> {
+export function saveHostEnv(): Record<string, string | undefined> {
     return {
         LOCAL_HOST_PORT: process.env.LOCAL_HOST_PORT,
         LOCAL_HOST_INSTANCES_SERVER_PORT: process.env.LOCAL_HOST_INSTANCES_SERVER_PORT,
         LOCAL_HOST_BASE_URL: process.env.LOCAL_HOST_BASE_URL,
-        SCRAMJET_HOST_BASE_URL: process.env.SCRAMJET_HOST_BASE_URL
+        SCRAMJET_HOST_BASE_URL: process.env.SCRAMJET_HOST_BASE_URL,
+        SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: process.env.SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL,
     };
 }
 
-function restoreHostEnv(saved: Record<string, string | undefined>) {
+export function restoreHostEnv(saved: Record<string, string | undefined>) {
     for (const [key, value] of Object.entries(saved)) {
         if (value === undefined) {
             delete process.env[key];
@@ -71,7 +266,7 @@ function restoreHostEnv(saved: Record<string, string | undefined>) {
     }
 }
 
-function restoreSavedHostEnv(resources: CustomWorld["resources"]) {
+export function restoreSavedHostEnv(resources: CustomWorld["resources"]) {
     const savedHostEnv = resources.savedHostEnv as Record<string, string | undefined> | undefined;
 
     if (!savedHostEnv) return;
@@ -86,8 +281,8 @@ function getHostClient() {
     return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
 }
 
-async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string>) {
-    return new Promise<{ status: number; text: () => Promise<string> }>((resolve, reject) => {
+async function rawHttpRequest(method: string, url: string, body: string | undefined, headers: Record<string, string> = {}) {
+    return new Promise<{ status: number; ok: boolean; text: () => Promise<string> }>((resolve, reject) => {
         const target = new URL(url);
         const request = (target.protocol === "https:" ? httpsRequest : httpRequest)({
             method,
@@ -104,11 +299,13 @@ async function rawHttpRequest(method: string, url: string, body: string | undefi
             response.on("end", () => {
                 const text = Buffer.concat(chunks).toString("utf8");
 
-                resolve({ status: response.statusCode || 0, text: async () => text });
+                const status = response.statusCode || 0;
+                resolve({ status, ok: status >= 200 && status < 300, text: async () => text });
             });
         });
 
         request.on("error", reject);
+        request.setTimeout(10000, () => request.destroy(new Error(`HTTP ${method} ${url} timed out`)));
         if (body !== undefined) {
             request.write(body);
         }
@@ -125,14 +322,7 @@ function hostRootUrl(path: string): string {
 
 When("I send a {string} request to {string} with body {string}", async function(method, path, body) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
-    const options: RequestInit = {
-        method,
-        body,
-        headers: { "Content-Type": "application/json" }
-    };
-
-    // Send the request and store the response for later steps
-    const response = await fetch(url, options);
+    const response = await rawHttpRequest(method, url, body, { "Content-Type": "application/json" });
 
     this.response = response;
 });
@@ -159,10 +349,7 @@ When("I send a {string} root API request to {string} with body {string} and head
 
 When("I send a {string} request to {string}", async function(method, path) {
     const url = process.env.LOCAL_HOST_BASE_URL + path;
-    const options: RequestInit = { method };
-
-    // Send the request and store the response for later steps
-    const response = await fetch(url, options);
+    const response = await rawHttpRequest(method, url, undefined);
 
     this.response = response;
 
@@ -177,11 +364,11 @@ When('I send a {string} direct request to {string} on port {int}', async functio
     originalUrl.pathname = path;
 
     const url = originalUrl.toString();
-    const options: RequestInit = { method };
-
-    // Send the request and store the response for later steps
-    await sleep(1000);
-    const response = await fetch(url, options);
+    const response = await waitForCondition(
+        () => rawHttpRequest(method, url, undefined),
+        (candidate) => candidate.ok,
+        { timeoutMs: 10000, description: `Direct ${method} ${url}` }
+    );
 
     this.response = response;
 
@@ -212,6 +399,31 @@ When("hub process is started with random ports and parameters {string}",
         this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
         this.resources.savedHostEnv = savedHostEnv;
         return startHubWithParams(this, params.split(" "));
+    });
+
+When("hub process is started with random ports and startup sequence timeout {int} ms and parameters {string}",
+    { timeout: 30000 }, async function(this: CustomWorld, sequenceTimeoutMs: number, params: string) {
+        assert.ok(sequenceTimeoutMs > 0, "Startup sequence timeout must be positive");
+        const savedHostEnv = saveHostEnv();
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+        process.env.SCRAMJET_HOST_BASE_URL = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
+        this.resources.hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL);
+        this.resources.savedHostEnv = savedHostEnv;
+        const template = JSON.parse(await readFile("data/sample-config-exit.json", "utf8"));
+        template.sequences = template.sequences.map((sequence: { appConfig?: Record<string, unknown> }) => ({
+            ...sequence,
+            appConfig: { ...sequence.appConfig, exitTimeout: sequenceTimeoutMs }
+        }));
+        const configPath = `data/.hub-iac-exit-${process.pid}-${Date.now()}.json`;
+        await writeFile(configPath, JSON.stringify(template));
+        try {
+            await startHubWithParams(this, params.replace("data/sample-config-exit.json", configPath).split(" "));
+        } finally {
+            await unlink(configPath).catch(() => undefined);
+        }
     });
 
 When("hub process is started with random ports expecting exit code {int} and parameters {string}",
@@ -346,10 +558,7 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 Then("exit hub process", async function(this: CustomWorld) {
     const hub = this.resources.hub as ChildProcess;
 
-    await new Promise<void>((resolve) => {
-        hub.on("exit", resolve);
-        HostUtils.killProcessGroup(hub, SIGTERM, 10000);
-    });
+    await this.scenarioLifecycle.stop(hub);
 
     spawned.delete(hub);
     restoreSavedHostEnv(this.resources);
@@ -369,6 +578,10 @@ Then("hub process exits on its own with code {int} within {int} ms", async funct
         return;
     }
 
+    // The exit is asserted as natural/expected; mark before waiting so the
+    // registry cannot classify the expected exit as spontaneous.
+    this.scenarioLifecycle.expect(hub);
+
     const exitResult = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
         const timer = setTimeout(() => {
             hub.off("exit", onExit);
@@ -385,6 +598,35 @@ Then("hub process exits on its own with code {int} within {int} ms", async funct
 
     this.resources.hubExit = exitResult;
     assert.strictEqual(exitResult.code, expectedCode);
+});
+
+Then("I capture Hub CPU and memory until it exits as {string}", { timeout: 35000 }, async function(this: CustomWorld, label: string) {
+    await captureHubMetrics(this, label);
+});
+
+Then("10-second baseline-normalized idle CPU rate is at most {int} percent per second", function(this: CustomWorld, maxRatePercentPerSecond: number) {
+    const metrics = this.resources.hubMetrics as Record<string, HubMetrics> | undefined;
+    const baseline = metrics?.["2-second"];
+    const longRun = metrics?.["10-second"];
+    assert.ok(baseline && longRun, "Both Hub metric runs are required");
+    assert.ok(baseline.cpuTimeMs > 0, "Baseline CPU time must be positive");
+    const cpuDeltaMs = longRun.cpuTimeMs - baseline.cpuTimeMs;
+    const durationDeltaMs = longRun.durationMs - baseline.durationMs;
+    assert.ok(durationDeltaMs > 0, "Duration delta must be positive");
+    const cpuRatePercentPerSecond = (cpuDeltaMs / baseline.cpuTimeMs) / (durationDeltaMs / 1000) * 100;
+    assert.ok(cpuRatePercentPerSecond <= maxRatePercentPerSecond,
+        `Baseline-normalized idle CPU rate ${cpuRatePercentPerSecond.toFixed(3)}%/s exceeds max ${maxRatePercentPerSecond}%/s`);
+    console.log(`HUB_IAC_IDLE_CPU_RATE {"baselineCpuMs":${baseline.cpuTimeMs},"longRunCpuMs":${longRun.cpuTimeMs},"cpuDeltaMs":${cpuDeltaMs},"durationDeltaMs":${durationDeltaMs},"cpuRatePercentPerSecond":${cpuRatePercentPerSecond.toFixed(3)}}`);
+    this.resources.hubIdleCpuRatePercentPerSecond = cpuRatePercentPerSecond;
+});
+
+Then("10-second Hub peak RSS is at most 5 percent above the 2-second baseline", function(this: CustomWorld) {
+    const metrics = this.resources.hubMetrics as Record<string, HubMetrics> | undefined;
+    const baseline = metrics?.["2-second"];
+    const longRun = metrics?.["10-second"];
+    assert.ok(baseline && longRun, "Both Hub metric runs are required");
+    assert.ok(longRun.peakRssBytes <= baseline.peakRssBytes * 1.05,
+        `10-second peak RSS ${longRun.peakRssBytes} exceeds 2-second baseline ${baseline.peakRssBytes} by more than 5%`);
 });
 
 Then("hub logs should contain {string} within {int} ms", async function(this: CustomWorld, expectedText: string, timeoutMs: number) {
@@ -416,28 +658,23 @@ Then("hub logs should contain {string} exactly {int} times", function(this: Cust
 });
 
 Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {
-    let success: string | undefined;
+    const instanceId = this.resources.instance!.id;
+    let inspect: Dockerode.ContainerInspectInfo | undefined;
 
-    while (!success) {
-        const instance = this.resources.instance as InstanceClient;
-        const resp = await instance.getHealth();
-        const containerId = success = resp.containerId;
+    await waitForCondition(async () => {
+        const containers = await new Dockerode().listContainers({
+            filters: { label: [`scramjet.instance.id=${instanceId}`] }
+        });
 
-        if (containerId) {
-            const [stats, info, inspect] = await Promise.all([
-                new Dockerode().getContainer(containerId!).stats({ stream: false }),
-                new Dockerode().listContainers().then(
-                    containers => containers.find(container => container.Id === containerId)),
-                new Dockerode().getContainer(containerId!).inspect(),
-            ]);
+        if (containers.length > 0) {
+            const containerId = containers[0].Id;
+            inspect = await new Dockerode().getContainer(containerId).inspect();
 
-            this.resources.containerStats = stats;
-            this.resources.containerInfo = info;
             this.resources.containerInspect = inspect;
-        } else {
-            await defer(AWAITING_POLL_DEFER_TIME);
+            return inspect;
         }
-    }
+        return undefined;
+    }, Boolean, { timeoutMs: 10000, intervalMs: 50, description: `Container for instance ${instanceId}` });
 });
 
 Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
@@ -459,19 +696,16 @@ Then("get all containers", async function(this: CustomWorld) {
 });
 
 Then("get last container info", async function(this: CustomWorld) {
-    let success: any;
-
-    while (!success) {
+    await waitForCondition(async () => {
         const containers = await new Dockerode().listContainers();
         const lastContainer = containers.filter(container =>
             !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id));
 
         if (lastContainer.length) {
-            this.resources.lastContainer = success = lastContainer[0];
-        } else {
-            await defer(AWAITING_POLL_DEFER_TIME);
+            return this.resources.lastContainer = lastContainer[0];
         }
-    }
+        return undefined;
+    }, Boolean, { timeoutMs: 10000, intervalMs: 50, description: "new runner container" });
 });
 
 When("last container uses {string} image", async function(this: CustomWorld, image: string) {

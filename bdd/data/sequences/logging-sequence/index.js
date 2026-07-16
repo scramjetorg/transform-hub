@@ -18,7 +18,6 @@ module.exports = async function loggingSequence(input, label = "logging-sequence
     process.stdout.write(`[${label}] process.stdout.write\n`);
     process.stderr.write(`[${label}] process.stderr.write\n`);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
 
     this.logger.info("sequence logger finishing", { label });
 

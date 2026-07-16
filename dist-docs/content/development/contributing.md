@@ -60,7 +60,7 @@ npm run build:packages
 # Build a specific package
 npm run build:packages -- -d @scramjet/runner-node
 
-# Full build (packages + refapps + Docker images)
+# Full build (packages + Docker images)
 npm run build
 ```
 

@@ -20,6 +20,13 @@ const {
 	bddMaxOldSpaceSize,
 	bddNodeOptions,
 	bddNodeArgs,
+	isBddMemoryGuardEnabled,
+	bddMemoryHeapThresholdBytes,
+	bddMemorySkipCheck,
+	bddProcessRssThresholdBytes,
+	bddDockerWorkingSetThresholdBytes,
+	buildProcessRssDiagnostics,
+	buildDockerWorkingSetDiagnostics,
 } = require("../lib/bdd-options.js");
 
 // ---------------------------------------------------------------------------
@@ -277,4 +284,592 @@ test("bddNodeArgs returns WASM limit flags (JIT is on)", (t) => {
 	t.true(args.every((a) => a.startsWith("--wasm-")), "every flag should start with --wasm-");
 	t.true(args.includes("--wasm-num-compilation-tasks=1"));
 	t.true(args.includes("--wasm-max-mem-pages=4096"));
+});
+
+// ---------------------------------------------------------------------------
+// isBddMemoryGuardEnabled
+// ---------------------------------------------------------------------------
+
+test("isBddMemoryGuardEnabled returns false when no guard env set", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	delete process.env[ENV.BDD_MEMORY_GUARD];
+	delete process.env[ENV.MEMORY_GUARD];
+
+	try {
+		t.false(isBddMemoryGuardEnabled());
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("isBddMemoryGuardEnabled returns true when common guard is 1", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	delete process.env[ENV.BDD_MEMORY_GUARD];
+	process.env[ENV.MEMORY_GUARD] = "1";
+
+	try {
+		t.true(isBddMemoryGuardEnabled());
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("isBddMemoryGuardEnabled returns true when BDD guard is 1", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	process.env[ENV.BDD_MEMORY_GUARD] = "1";
+	delete process.env[ENV.MEMORY_GUARD];
+
+	try {
+		t.true(isBddMemoryGuardEnabled());
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("isBddMemoryGuardEnabled BDD guard can disable when common is 1", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	process.env[ENV.BDD_MEMORY_GUARD] = "0";
+	process.env[ENV.MEMORY_GUARD] = "1";
+
+	try {
+		t.false(isBddMemoryGuardEnabled(), "BDD-specific 0 should override common 1");
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("isBddMemoryGuardEnabled BDD guard disabled values (false, no, off)", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	for (const val of ["false", "no", "off"]) {
+		process.env[ENV.BDD_MEMORY_GUARD] = val;
+		delete process.env[ENV.MEMORY_GUARD];
+
+		try {
+			t.false(isBddMemoryGuardEnabled(), `BDD guard should be disabled for "${val}"`);
+		} finally {
+			if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+			else delete process.env[ENV.BDD_MEMORY_GUARD];
+			if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+			else delete process.env[ENV.MEMORY_GUARD];
+		}
+	}
+});
+
+// ---------------------------------------------------------------------------
+// bddMemoryHeapThresholdBytes
+// ---------------------------------------------------------------------------
+
+test("bddMemoryHeapThresholdBytes returns default when no threshold env set", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	try {
+		t.is(bddMemoryHeapThresholdBytes(), DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES);
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+	}
+});
+
+test("bddMemoryHeapThresholdBytes returns common override", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "1048576";
+
+	try {
+		t.is(bddMemoryHeapThresholdBytes(), 1048576);
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+test("bddMemoryHeapThresholdBytes BDD-specific overrides common", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = "2097152";
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "1048576";
+
+	try {
+		t.is(bddMemoryHeapThresholdBytes(), 2097152);
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+test("bddMemoryHeapThresholdBytes throws on invalid BDD threshold", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = "not-a-number";
+	delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	try {
+		const err = t.throws(() => bddMemoryHeapThresholdBytes(), { instanceOf: Error });
+		t.true(err.message.includes(ENV.BDD_MEMORY_HEAP_THRESHOLD), "should mention BDD threshold env name");
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+	}
+});
+
+test("bddMemoryHeapThresholdBytes throws on negative BDD threshold", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+
+	process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = "-100";
+
+	try {
+		t.throws(() => bddMemoryHeapThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+test("bddMemoryHeapThresholdBytes throws on zero BDD threshold", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+
+	process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = "0";
+
+	try {
+		t.throws(() => bddMemoryHeapThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+test("bddMemoryHeapThresholdBytes throws on Infinity BDD threshold", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+
+	process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = "Infinity";
+
+	try {
+		t.throws(() => bddMemoryHeapThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+test("bddMemoryHeapThresholdBytes throws on invalid common threshold", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+
+	delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "not-valid";
+
+	try {
+		t.throws(() => bddMemoryHeapThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// bddNodeOptions – --expose-gc when guard enabled
+// ---------------------------------------------------------------------------
+
+test("bddNodeOptions does not add --expose-gc when guard disabled", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	delete process.env[ENV.BDD_MEMORY_GUARD];
+	delete process.env[ENV.MEMORY_GUARD];
+
+	try {
+		const opts = bddNodeOptions();
+		t.false(opts.includes("--expose-gc"), "should not include --expose-gc when guard off");
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("bddNodeOptions adds --expose-gc when BDD guard is enabled", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	process.env[ENV.BDD_MEMORY_GUARD] = "1";
+	delete process.env[ENV.MEMORY_GUARD];
+
+	try {
+		const opts = bddNodeOptions();
+		t.true(opts.includes("--expose-gc"), "should include --expose-gc when BDD guard enabled");
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("bddNodeOptions adds --expose-gc when common guard is enabled", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	delete process.env[ENV.BDD_MEMORY_GUARD];
+	process.env[ENV.MEMORY_GUARD] = "1";
+
+	try {
+		const opts = bddNodeOptions();
+		t.true(opts.includes("--expose-gc"), "should include --expose-gc when common guard enabled");
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+test("bddNodeOptions preserves other flags when adding --expose-gc", (t) => {
+	const savedBdd = process.env[ENV.BDD_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+
+	process.env[ENV.BDD_MEMORY_GUARD] = "1";
+	delete process.env[ENV.MEMORY_GUARD];
+
+	try {
+		const opts = bddNodeOptions();
+		t.true(opts.includes("--max-old-space-size"), "should preserve heap limit");
+		t.true(opts.includes("--expose-gc"), "should include expose-gc");
+	} finally {
+		if (savedBdd !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedBdd;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// bddMemorySkipCheck
+// ---------------------------------------------------------------------------
+
+test("bddMemorySkipCheck returns skip false when SKIP is not 1", (t) => {
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+
+	delete process.env[ENV.MEMORY_SKIP];
+
+	try {
+		const result = bddMemorySkipCheck();
+		t.false(result.skip);
+	} finally {
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+	}
+});
+
+test("bddMemorySkipCheck throws when SKIP=1 without SKIP_REASON", (t) => {
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+	const savedReason = process.env[ENV.MEMORY_SKIP_REASON];
+
+	process.env[ENV.MEMORY_SKIP] = "1";
+	delete process.env[ENV.MEMORY_SKIP_REASON];
+
+	try {
+		t.throws(() => bddMemorySkipCheck(), { instanceOf: Error });
+	} finally {
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
+		else delete process.env[ENV.MEMORY_SKIP_REASON];
+	}
+});
+
+test("bddMemorySkipCheck throws when SKIP=1 with empty SKIP_REASON", (t) => {
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+	const savedReason = process.env[ENV.MEMORY_SKIP_REASON];
+
+	process.env[ENV.MEMORY_SKIP] = "1";
+	process.env[ENV.MEMORY_SKIP_REASON] = "";
+
+	try {
+		t.throws(() => bddMemorySkipCheck(), { instanceOf: Error });
+	} finally {
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
+		else delete process.env[ENV.MEMORY_SKIP_REASON];
+	}
+});
+
+test("bddMemorySkipCheck returns skip true when SKIP=1 with valid reason", (t) => {
+	const savedSkip = process.env[ENV.MEMORY_SKIP];
+	const savedReason = process.env[ENV.MEMORY_SKIP_REASON];
+
+	process.env[ENV.MEMORY_SKIP] = "1";
+	process.env[ENV.MEMORY_SKIP_REASON] = "manual testing";
+
+	try {
+		const result = bddMemorySkipCheck();
+		t.true(result.skip);
+		t.is(result.reason, "manual testing");
+	} finally {
+		if (savedSkip !== undefined) process.env[ENV.MEMORY_SKIP] = savedSkip;
+		else delete process.env[ENV.MEMORY_SKIP];
+		if (savedReason !== undefined) process.env[ENV.MEMORY_SKIP_REASON] = savedReason;
+		else delete process.env[ENV.MEMORY_SKIP_REASON];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// bddProcessRssThresholdBytes (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("bddProcessRssThresholdBytes returns default when env unset", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	try {
+		t.is(bddProcessRssThresholdBytes(), DEFAULTS.BDD_PROCESS_RSS_THRESHOLD_BYTES);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+	}
+});
+
+test("bddProcessRssThresholdBytes returns env override when valid", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "209715200";
+	try {
+		t.is(bddProcessRssThresholdBytes(), 209715200);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on non-numeric value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "not-a-number";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on zero value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "0";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on negative value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "-500";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+test("bddProcessRssThresholdBytes throws on Infinity value", (t) => {
+	const saved = process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = "Infinity";
+	try {
+		t.throws(() => bddProcessRssThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_PROCESS_RSS_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_PROCESS_RSS_THRESHOLD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// bddDockerWorkingSetThresholdBytes (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("bddDockerWorkingSetThresholdBytes returns default when env unset", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	try {
+		t.is(bddDockerWorkingSetThresholdBytes(), DEFAULTS.BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes returns env override when valid", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "314572800";
+	try {
+		t.is(bddDockerWorkingSetThresholdBytes(), 314572800);
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes throws on non-numeric value", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "bad-value";
+	try {
+		t.throws(() => bddDockerWorkingSetThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes throws on zero", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "0";
+	try {
+		t.throws(() => bddDockerWorkingSetThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+test("bddDockerWorkingSetThresholdBytes throws on negative", (t) => {
+	const saved = process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = "-1000";
+	try {
+		t.throws(() => bddDockerWorkingSetThresholdBytes(), { instanceOf: Error });
+	} finally {
+		if (saved !== undefined) process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD] = saved;
+		else delete process.env[ENV.BDD_DOCKER_WORKING_SET_THRESHOLD];
+	}
+});
+
+// ---------------------------------------------------------------------------
+// buildProcessRssDiagnostics (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("buildProcessRssDiagnostics includes label, pid, delta, threshold", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "test-process",
+		pid: 12345,
+		baselineRss: 50000000,
+		finalRss: 150000000,
+		delta: 100000000,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("test-process"), "should include label");
+	t.true(msg.includes("12345"), "should include pid");
+	t.true(msg.includes("100000000"), "should include delta");
+	t.true(msg.includes("104857600"), "should include threshold");
+	t.true(msg.includes("baseline RSS: 50000000"), "should include baseline");
+	t.true(msg.includes("final RSS: 150000000"), "should include final");
+});
+
+test("buildProcessRssDiagnostics shows zero delta message", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "zero",
+		pid: 999,
+		baselineRss: 100000000,
+		finalRss: 100000000,
+		delta: 0,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("delta 0 bytes"), "should show zero delta");
+});
+
+test("buildProcessRssDiagnostics includes baselineSource when provided", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "hub",
+		pid: 12345,
+		baselineRss: 100000000,
+		finalRss: 150000000,
+		delta: 50000000,
+		threshold: 104857600,
+		baselineSource: "ready",
+	});
+
+	t.true(msg.includes("baseline source: ready"), "should include baseline source");
+});
+
+test("buildProcessRssDiagnostics omits baselineSource line when not provided", (t) => {
+	const msg = buildProcessRssDiagnostics({
+		label: "test",
+		pid: 1,
+		baselineRss: 1000,
+		finalRss: 2000,
+		delta: 1000,
+		threshold: 500,
+	});
+
+	t.false(msg.includes("baseline source:"), "should not mention baseline source when absent");
+});
+
+// ---------------------------------------------------------------------------
+// buildDockerWorkingSetDiagnostics (Phase 6)
+// ---------------------------------------------------------------------------
+
+test("buildDockerWorkingSetDiagnostics includes label, containerId, delta, threshold", (t) => {
+	const msg = buildDockerWorkingSetDiagnostics({
+		label: "test-container",
+		containerId: "abc123def456",
+		baselineBytes: 50000000,
+		finalBytes: 150000000,
+		delta: 100000000,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("test-container"), "should include label");
+	t.true(msg.includes("abc123def456"), "should include containerId");
+	t.true(msg.includes("100000000"), "should include delta");
+	t.true(msg.includes("104857600"), "should include threshold");
+	t.true(msg.includes("baseline working set: 50000000"), "should include baseline");
+	t.true(msg.includes("final working set: 150000000"), "should include final");
+});
+
+test("buildDockerWorkingSetDiagnostics shows zero delta", (t) => {
+	const msg = buildDockerWorkingSetDiagnostics({
+		label: "zero-container",
+		containerId: "aaaabbbb",
+		baselineBytes: 100000000,
+		finalBytes: 100000000,
+		delta: 0,
+		threshold: 104857600,
+	});
+
+	t.true(msg.includes("delta 0 bytes"), "should show zero delta");
 });

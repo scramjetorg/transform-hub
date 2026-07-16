@@ -4,6 +4,7 @@ import { STHRunnerVerser2HostConfig, STHOutboundVerser2Config } from "@scramjet/
 import { VerserHost } from "@signicode/verser2-host";
 import { createVerser2ClientTlsOptions } from "./cpm-connector";
 import { createVerser2RunnerBrokerTransport, Verser2RunnerBroker } from "./runner-transport";
+import { handleVerser2RequestBoundary } from "@scramjet/utility";
 
 type Closeable = { close?: () => Promise<void> };
 
@@ -45,7 +46,12 @@ export async function attachSthLocalRunnerVerser2Peers(
     const guest = await host.attachLocalGuest({
         guestId: verser2Config.guest.peerId,
         routedDomains: [verser2Config.guest.routeDomain],
-        listener: (req, res) => apiServer.emit("request", req as ParsedMessage, res)
+        listener: (req, res) => handleVerser2RequestBoundary(
+            req,
+            res,
+            () => apiServer.emit("request", req as ParsedMessage, res),
+            console
+        )
     });
 
     return { broker, guest };

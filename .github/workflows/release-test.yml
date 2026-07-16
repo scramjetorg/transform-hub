@@ -27,9 +27,6 @@ jobs:
       - name: Build packages
         run: yarn build:packages
 
-      - name: Build refapps
-        run: yarn build:refapps
-
       - name: build runner Docker image
         run: docker build -q -t scramjetorg/runner:$(git rev-parse HEAD) -f Dockerfile ../../
         working-directory: packages/runner

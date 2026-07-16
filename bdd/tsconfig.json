@@ -6,7 +6,8 @@
   "extends": "../tsconfig.base.json",
   "include": [
     "./step-definitions",
-    "./lib"
+    "./lib",
+    "./support"
   ],
   "exclude": [
     "../node_modules"

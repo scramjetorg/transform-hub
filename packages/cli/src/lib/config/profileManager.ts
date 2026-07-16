@@ -9,7 +9,7 @@ const enum ProfileSource {
     EnvProfile,
     EnvProfilePath,
     FlagProfile,
-    FlagProfilePath,
+    FlagProfilePath
 }
 
 export const isProfileConfig = (profile: ProfileConfig | ReadOnlyProfileConfig): profile is ProfileConfig => {
@@ -52,7 +52,9 @@ export class ProfileManager {
     listProfiles(): string[] {
         return listDirFileNames(profilesDir);
     }
-    profileExists(name: string) { return profileExists(name); }
+    profileExists(name: string) {
+        return profileExists(name);
+    }
     profileIsValid(name: string) {
         return new ProfileConfig(profileNameToPath(name)).isValid();
     }
@@ -61,8 +63,7 @@ export class ProfileManager {
         return this.source === ProfileSource.EnvProfilePath || this.source === ProfileSource.FlagProfilePath;
     }
     getProfileName(): string {
-        if (this.isPathSource())
-            return "user configuration file";
+        if (this.isPathSource()) return "user configuration file";
         return SiConfig.getInstance().profile;
     }
     setFlagProfilePathSource() {
@@ -99,6 +100,10 @@ export class ProfileManager {
         if (!this.validSourcePrecedence(ProfileSource.FlagProfilePath)) return;
         if (this.setProfileFromFile(path)) this.source = ProfileSource.FlagProfilePath;
     }
+    setFlagConfigPath(path: string) {
+        if (!this.validSourcePrecedence(ProfileSource.FlagProfilePath)) return;
+        if (this.setMutableProfileFromFile(path)) this.source = ProfileSource.FlagProfilePath;
+    }
 
     protected validSourcePrecedence(incomingSource: ProfileSource) {
         return incomingSource >= this.source;
@@ -117,5 +122,12 @@ export class ProfileManager {
         this.profileConfig = userProfileConfigFile;
         return true;
     }
-}
 
+    protected setMutableProfileFromFile(path: string): boolean {
+        const userProfileConfigFile = new ProfileConfig(path);
+
+        if (!userProfileConfigFile.isValid()) throw Error("Invalid config file");
+        this.profileConfig = userProfileConfigFile;
+        return true;
+    }
+}

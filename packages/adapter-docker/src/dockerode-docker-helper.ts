@@ -12,6 +12,7 @@ import {
     DockerCreateNetworkConfig, DockerNetwork
 } from "./types";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { isAlreadyGoneContainerError, isAlreadyGoneVolumeError } from "./docker-removal";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -188,7 +189,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stop().catch((error: any) => {
             this.logger.warn("Failed to stop container");
 
-            if (error.statusCode === 304) {
+            if (isAlreadyGoneContainerError(error)) {
                 this.logger.warn("Container is already stopped");
                 return;
             }
@@ -204,7 +205,11 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @returns Promise which resolves when container has been removed.
      */
     removeContainer(containerId: DockerContainer): Promise<void> {
-        return this.dockerode.getContainer(containerId).remove();
+        return this.dockerode.getContainer(containerId).remove().catch((error: any) => {
+            if (isAlreadyGoneContainerError(error)) return;
+
+            throw error;
+        });
     }
 
     /**
@@ -299,7 +304,11 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @returns Promise which resolves when volume has been removed.
      */
     async removeVolume(volumeName: DockerVolume): Promise<void> {
-        return this.dockerode.getVolume(volumeName).remove();
+        return this.dockerode.getVolume(volumeName).remove().catch((error: any) => {
+            if (isAlreadyGoneVolumeError(error)) return;
+
+            throw error;
+        });
     }
 
     async listVolumes() {

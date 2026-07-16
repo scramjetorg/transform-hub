@@ -14,8 +14,7 @@ module.exports = function(_stream, ...args) {
     out.end();
 
     if (this.config.exit) {
-        this.exitTimeout = 500;
+        this.exitTimeout = Number.isFinite(this.config.exitTimeout) ? this.config.exitTimeout : 500;
     }
     return out;
 };
-

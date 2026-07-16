@@ -39,12 +39,13 @@ When("I send GET request to instance endpoint {string}", { timeout: 10000 }, asy
     const exposeUrl = `${apiBase.replace(/\/+$/, "")}/instance/${instId}/rpc${endpointPath.startsWith("/") ? "" : "/"}${endpointPath}`;
 
     this.resources.appcontextExposeResponse = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = http.get(exposeUrl, (res) => {
+        const req = http.get(exposeUrl, { agent: false }, (res) => {
             let body = "";
 
             res.on("data", (chunk: Buffer) => { body += chunk.toString("utf8"); });
             res.on("end", () => {
-                resolve({ status: res.statusCode ?? 0, body });
+                const response = { status: res.statusCode ?? 0, body };
+                resolve(response);
             });
             res.on("error", reject);
         });

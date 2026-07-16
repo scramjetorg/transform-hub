@@ -91,6 +91,19 @@ export function loadSequenceModule(sequencePath: string): SequenceFunction[] {
     return resolveSequenceFunctions(loaded);
 }
 
+let memoryMaxUsage = 0;
+
+export function getMemoryUsage(): { memoryUsage: number; memoryMaxUsage: number } {
+    const rss = process.memoryUsage().rss;
+
+    memoryMaxUsage = Math.max(memoryMaxUsage, rss);
+
+    return {
+        memoryUsage: rss,
+        memoryMaxUsage
+    };
+}
+
 export function writeMonitoring(monitor: Writable, msg: EncodedMonitoringMessage): void {
     MessageUtils.writeMessageOnStream(msg, monitor);
 }

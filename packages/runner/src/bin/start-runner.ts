@@ -12,15 +12,13 @@ import { RunnerConnectInfo, RuntimeProcessHandles, SequenceInfo } from "@scramje
 
 import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
-import {
-    translateChildClose,
-    writeTerminalLifecycleFrame
-} from "../executor/exit-translation";
+import { translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
 import { parseRunnerTransportConfig, RunnerTransportConfigResult } from "../transport/runner-transport-config";
 import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
+import { bddBootExitTimeout } from "./bdd-boot-timeout";
 
 const STDERR_TAIL_BYTES = 4096;
 const CR = 0x0d;
@@ -94,6 +92,7 @@ interface RunnerNodeBootConfigShape {
     appConfig?: AppConfig;
     sequenceInfo: SequenceInfo;
     instanceName?: string;
+    exitTimeout?: number;
     logLevel?: LogLevel;
     exposePath?: string;
     inputTopic?: string;
@@ -131,6 +130,8 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
 
     if (parsedRunnerConnectInfo.appConfig) payload.appConfig = parsedRunnerConnectInfo.appConfig;
     if (parsedRunnerConnectInfo.instanceName) payload.instanceName = parsedRunnerConnectInfo.instanceName;
+    const bddExitTimeout = bddBootExitTimeout();
+    if (bddExitTimeout !== undefined) payload.exitTimeout = bddExitTimeout;
     if (parsedRunnerConnectInfo.logLevel) payload.logLevel = parsedRunnerConnectInfo.logLevel;
     if (parsedRunnerConnectInfo.exposePath) payload.exposePath = parsedRunnerConnectInfo.exposePath;
     if (parsedRunnerConnectInfo.inputTopic) payload.inputTopic = parsedRunnerConnectInfo.inputTopic;
@@ -174,7 +175,9 @@ function tryRemove(file: string): void {
 // ---------------------------------------------------------------------------
 
 function pipeRaw(src: Readable, dst: Writable): void {
-    src.on("error", () => { /* swallow - host stream errors are non-fatal here */ });
+    src.on("error", () => {
+        /* swallow - host stream errors are non-fatal here */
+    });
     src.pipe(dst, { end: false });
 }
 
@@ -224,17 +227,12 @@ async function main(): Promise<void> {
     const resolvedInstancesServerHost = hostClient.localChannelHost;
     const resolvedInstancesServerPort = hostClient.localChannelPort;
 
-    const bootConfigPath = writeBootConfig(
-        resolvedInstancesServerHost,
-        resolvedInstancesServerPort
-    );
+    const bootConfigPath = writeBootConfig(resolvedInstancesServerHost, resolvedInstancesServerPort);
 
     let handles: RuntimeProcessHandles;
 
     try {
-        const engines = connectInfo.config?.engines ||
-            (parsedRunnerConnectInfo.appConfig?.engines as Record<string, string> | undefined) ||
-            {};
+        const engines = connectInfo.config?.engines || (parsedRunnerConnectInfo.appConfig?.engines as Record<string, string> | undefined) || {};
         const executor = selectExecutor({ engines });
         const childEnv: NodeJS.ProcessEnv = {};
 
@@ -320,16 +318,19 @@ async function main(): Promise<void> {
         const translated = translateChildClose(code, signal);
 
         if (translated.exitCode !== RunnerExitCode.SUCCESS) {
-            console.error(`STH runtime error phase=runner-runtime adapter=${process.env.RUNTIME_ADAPTER || "unknown"} runtime=node instanceId=${instanceId} exitCode=${translated.exitCode}`, {
-                phase: "runner-runtime",
-                adapter: process.env.RUNTIME_ADAPTER || "unknown",
-                runtime: "node",
-                instanceId,
-                exitCode: translated.exitCode,
-                childExitCode: code,
-                signal,
-                stderrTail: childStderrTail
-            });
+            console.error(
+                `STH runtime error phase=runner-runtime adapter=${process.env.RUNTIME_ADAPTER || "unknown"} runtime=node instanceId=${instanceId} exitCode=${translated.exitCode}`,
+                {
+                    phase: "runner-runtime",
+                    adapter: process.env.RUNTIME_ADAPTER || "unknown",
+                    runtime: "node",
+                    instanceId,
+                    exitCode: translated.exitCode,
+                    childExitCode: code,
+                    signal,
+                    stderrTail: childStderrTail
+                }
+            );
         }
 
         if (!lifecycle.observed()) {
@@ -342,7 +343,8 @@ async function main(): Promise<void> {
 
         tryRemove(bootConfigPath);
 
-        hostClient.disconnect(translated.exitCode !== RunnerExitCode.SUCCESS)
+        hostClient
+            .disconnect(translated.exitCode !== RunnerExitCode.SUCCESS)
             .catch(() => undefined)
             .finally(() => {
                 process.exitCode = translated.exitCode;
@@ -351,8 +353,8 @@ async function main(): Promise<void> {
     });
 }
 
-main().catch(err => {
-    console.error("start-runner failed:", err instanceof Error ? err.stack ?? err.message : err);
+main().catch((err) => {
+    console.error("start-runner failed:", err instanceof Error ? (err.stack ?? err.message) : err);
     process.exitCode = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
     process.exit();
 });

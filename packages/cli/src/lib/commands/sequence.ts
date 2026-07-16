@@ -1,12 +1,11 @@
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { createWriteStream, lstatSync } from "fs";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
+import { HostClient } from "@scramjet/api-client";
 import { getHostClient } from "../common";
 import { getSequenceId, profileManager, sessionConfig } from "../config";
 
 import { PassThrough, Writable } from "stream";
-
-import { isDevelopment } from "../../utils/envs";
 
 import { resolve } from "path";
 import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceParseConfig, sequenceSendPackage, sequenceStart } from "../helpers/sequence";
@@ -17,6 +16,88 @@ import { SequenceDeployArgs } from "../../types/params";
 
 function validateStartupConfig(config: DeepPartial<SequenceDeployArgs>) {
     return isStartSequenceEndpointPayloadDTO(config);
+}
+
+/**
+ * Handles the `seq prune` action.
+ *
+ * Clears session state (lastSequenceId, lastInstanceId) only after confirming
+ * the sequence list is empty — never before a failed deletion/re-list.
+ *
+ * @param options - Command options (force flag).
+ * @param hostClient - Host client for API calls (injectable for testing).
+ */
+export async function handlePruneAction(options: Record<string, unknown>, hostClient: HostClient): Promise<void> {
+    const force = options.force as boolean;
+
+    let seqs = await hostClient.listSequences();
+
+    if (!seqs.length) {
+        // Early-already-empty: clear stale session state.
+        sessionConfig.setLastSequenceId("");
+        sessionConfig.setLastInstanceId("");
+        displayMessage("Sequence list is empty, nothing to delete.");
+        return;
+    }
+
+    // Attempt deletions sequentially (no fail-fast) to prevent adapter/shared-package cleanup races.
+    // Every sequence is attempted regardless of prior failures; per-ID/reason diagnostics are retained.
+    const deletionResults: PromiseSettledResult<void>[] = [];
+
+    for (const seq of seqs) {
+        try {
+            await hostClient.deleteSequence(seq.id, { force });
+            deletionResults.push({ status: "fulfilled", value: undefined });
+        } catch (reason) {
+            deletionResults.push({ status: "rejected", reason });
+        }
+    }
+
+    // Extract rejection diagnostics for actionable error reporting.
+    const failures: { id: string; reason: unknown }[] = [];
+
+    for (let i = 0; i < deletionResults.length; i++) {
+        if (deletionResults[i].status === "rejected") {
+            failures.push({ id: seqs[i].id, reason: (deletionResults[i] as PromiseRejectedResult).reason });
+        }
+    }
+
+    // Re-list after all deletions complete.
+    seqs = await hostClient.listSequences();
+
+    if (seqs.length) {
+        // Sequences remain — preserve the failure with full diagnostics.
+        const remainingIds = seqs.map((s) => s.id).join(", ");
+        const attempted = deletionResults.length;
+
+        let message = `Some Sequences may have not been deleted. Attempted ${attempted} deletion(s).`;
+
+        if (failures.length > 0) {
+            message += ` Failed: [${failures.map(
+                (f) => `${f.id} (${f.reason instanceof Error ? f.reason.message : String(f.reason)})`
+            ).join("; ")}].`;
+        }
+
+        message += ` Remaining: [${remainingIds}].`;
+
+        if (process.env.NODE_ENV === "development") {
+            for (const f of failures) {
+                if (f.reason instanceof Error && f.reason.stack) {
+                    displayMessage(`Deletion error for ${f.id}:`, f.reason.stack);
+                } else {
+                    displayMessage(`Deletion error for ${f.id}:`, String(f.reason));
+                }
+            }
+        }
+
+        throw new Error(message);
+    }
+
+    // Only clear session state after confirmed empty re-list.
+    sessionConfig.setLastSequenceId("");
+    sessionConfig.setLastInstanceId("");
+
+    displayMessage("Sequences removed successfully.");
 }
 
 /**
@@ -276,40 +357,7 @@ export const sequenceCommand: CommandDescriptor = cmd("sequence", (b) => {
                     .option("-f, --force", "Removes also active Sequences (with its running Instances)")
                     .desc("Remove all Sequences from the Hub (use with caution)")
                     .action(async (options: Record<string, unknown>) => {
-                        const force = options.force as boolean;
-
-                        let seqs = await getHostClient().listSequences();
-                        const { lastSequenceId } = sessionConfig.get();
-
-                        if (!seqs.length) {
-                            displayMessage("Sequence list is empty, nothing to delete.");
-                            return;
-                        }
-
-                        let fullSuccess = true;
-
-                        await Promise.all(
-                            seqs.map(async (seq: any) => sequenceDelete(seq.id, { force }, lastSequenceId))
-                        ).catch(error => {
-                            fullSuccess = false;
-
-                            if (isDevelopment()) {
-                                displayMessage("error stack", error?.stack);
-                            }
-                        });
-
-                        if (!fullSuccess) {
-                            throw new Error("Some Sequences may have not been deleted.");
-                        }
-
-                        seqs = await getHostClient().listSequences();
-                        sessionConfig.setLastInstanceId("");
-
-                        if (seqs.length) {
-                            throw new Error("Some Sequences may have not been deleted.");
-                        }
-
-                        displayMessage("Sequences removed successfully.");
+                        await handlePruneAction(options, getHostClient());
                     });
             })
         );

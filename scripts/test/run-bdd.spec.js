@@ -15,6 +15,9 @@
 
 const test = require("ava");
 const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
+const { spawnSync } = require("node:child_process");
 
 // ---------------------------------------------------------------------------
 // Structural checks
@@ -158,4 +161,486 @@ test("run-bdd-docker.js env forwarding includes SCRAMJET_ and BDD_ prefixes", (t
 	t.true(src.includes("SCRAMJET_"), "should forward SCRAMJET_ env vars");
 	t.true(src.includes("BDD_"), "should forward BDD_ env vars");
 	t.true(src.includes("NO_HOST"), "should forward NO_HOST env var");
+});
+
+// ---------------------------------------------------------------------------
+// Memory guard – NODE_OPTIONS injection in Docker mode
+// ---------------------------------------------------------------------------
+
+test("run-bdd-docker.js imports isBddMemoryGuardEnabled and bddNodeOptions", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("isBddMemoryGuardEnabled"),
+		"should import isBddMemoryGuardEnabled from bdd-options"
+	);
+	t.true(
+		src.includes("bddNodeOptions"),
+		"should import bddNodeOptions from bdd-options"
+	);
+});
+
+test("run-bdd-docker.js injects NODE_OPTIONS when memory guard is enabled", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("isBddMemoryGuardEnabled()"),
+		"should check guard before injecting NODE_OPTIONS"
+	);
+	t.true(
+		src.includes("NODE_OPTIONS"),
+		"should reference NODE_OPTIONS in docker run args"
+	);
+	t.true(
+		src.includes("bddNodeOptions()"),
+		"should call bddNodeOptions() for NODE_OPTIONS value"
+	);
+});
+
+// ---------------------------------------------------------------------------
+// Postmortem diagnostics for terminated / non-zero containers
+// ---------------------------------------------------------------------------
+
+test("run-bdd-docker.js defines printContainerDiagnostics", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const printContainerDiagnostics"),
+		"should define printContainerDiagnostics function"
+	);
+});
+
+test("run-bdd-docker.js inspects container State with ExitCode, OOMKilled, Error, and timestamps", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('"docker", ["inspect", "--format={{json .State}}"'),
+		"should use docker inspect with json .State format"
+	);
+	t.true(src.includes("ExitCode"), "should read ExitCode field");
+	t.true(src.includes("OOMKilled"), "should read OOMKilled field");
+	t.true(src.includes("Error"), "should read Error field");
+	t.true(src.includes("StartedAt"), "should read StartedAt timestamp");
+	t.true(src.includes("FinishedAt"), "should read FinishedAt timestamp");
+});
+
+test("run-bdd-docker.js calls printContainerDiagnostics for non-zero exit codes", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('if (parsed !== 0) {\n            printContainerDiagnostics(containerId);'),
+		"should call diagnostics when exit code is non-zero"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerDiagnostics on timeout", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("if (timedOut) {\n        finishTimedOutRun();"),
+		"should call diagnostics on timeout"
+	);
+});
+
+test("run-bdd-docker.js timeout finalizes when docker logs and wait do not close", (t) => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-docker-mock-"));
+	const dockerScript = path.join(binDir, "docker");
+	const getentScript = path.join(binDir, "getent");
+
+	// Model the Docker CLI failure mode: logs -f and wait remain attached even
+	// after TERM/KILL. The runner must own the timeout result instead of waiting
+	// for either child to produce EOF.
+	fs.writeFileSync(
+		dockerScript,
+		`#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  run) printf 'mock-container\\n' ;;
+  logs|wait) trap 'exit 143' TERM INT; while :; do :; done ;;
+  inspect) printf '{"ExitCode":143,"OOMKilled":false,"Error":"","StartedAt":"start","FinishedAt":"finish"}\\n' ;;
+  kill|rm|ps) exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+		{ mode: 0o755 }
+	);
+	fs.writeFileSync(getentScript, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+
+	const result = spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd-docker.js"), "--"], {
+		env: {
+			...process.env,
+			PATH: `${binDir}:${process.env.PATH}`,
+			BDD_TIMEOUT_MS: "40",
+			BDD_GRACE_MS: "20",
+			SCRAMJET_BDD_MEMORY_GUARD: "0",
+			SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off"
+		},
+		encoding: "utf8",
+		timeout: 5000
+	});
+
+	try {
+		t.is(result.status, 124, "a timeout must use the conventional timeout exit code");
+		t.falsy(result.error, "the parent runner must not hit the outer test timeout");
+		t.true(result.stderr.includes("container mock-container state:"), "timeout emits container diagnostics");
+		t.true(result.stderr.includes("container working-set summary:"), "timeout emits the container summary");
+		t.true(result.stderr.includes("forensic diagnostics"), "timeout emits bounded forensic diagnostics");
+		t.true(result.stderr.includes('"timeout-handler"'), "forensics records timeout handler activation");
+		t.true(result.stderr.includes('"action":"TERM"'), "forensics records TERM invocation");
+		t.true(result.stderr.includes('"action":"KILL"'), "forensics records KILL invocation");
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
+});
+
+test("run-bdd-docker.js calls printContainerDiagnostics for unparseable exit code", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes("printContainerDiagnostics(containerId);"), "should call diagnostics");
+	t.true(src.includes("printContainerSummary(containerId, 1)"), "should print summary before fallback exit");
+});
+
+// ---------------------------------------------------------------------------
+// Outer-container working-set memory tracking (Phase 10)
+// ---------------------------------------------------------------------------
+
+test("run-bdd-docker.js defines sampleContainerWorkingSet", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const sampleContainerWorkingSet"),
+		"should define sampleContainerWorkingSet function"
+	);
+});
+
+test("run-bdd-docker.js defines recordWorkingSetSample", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const recordWorkingSetSample"),
+		"should define recordWorkingSetSample function"
+	);
+});
+
+test("run-bdd-docker.js defines printContainerSummary", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("const printContainerSummary"),
+		"should define printContainerSummary function"
+	);
+});
+
+test("run-bdd-docker.js defines WORKING_SET_SAMPLE_INTERVAL_MS = 30000", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("WORKING_SET_SAMPLE_INTERVAL_MS = 30000"),
+		"should define 30s sampling interval"
+	);
+});
+
+test("run-bdd-docker.js tracks working-set module-level variables", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes("let workingSetBaseline"), "should declare workingSetBaseline");
+	t.true(src.includes("let workingSetPeak"), "should declare workingSetPeak");
+	t.true(src.includes("let workingSetFinal"), "should declare workingSetFinal");
+	t.true(src.includes("let workingSetSampleCount"), "should declare workingSetSampleCount");
+	t.true(src.includes("let workingSetTimer"), "should declare workingSetTimer");
+});
+
+test("run-bdd-docker.js captures readiness working-set baseline after container starts", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json"),
+		"should mount a per-run readiness signal"
+	);
+	t.true(src.includes("consumeChunkReadySignal()"), "should consume readiness before sampling");
+	t.true(src.includes("workingSetBaseline = bytes"), "should establish baseline at readiness");
+	t.true(src.includes("const READINESS_POLL_INTERVAL_MS = 50"), "should poll readiness promptly");
+	t.true(src.includes("const READINESS_SAMPLE_INTERVAL_MS = 250"), "should use short follow-up samples");
+	t.true(src.includes("chunkContainer"), "should finalize from the mounted cgroup report");
+});
+
+test("run-bdd-docker.js starts periodic sampling interval after baseline", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("workingSetTimer = setInterval("),
+		"should start setInterval for periodic peak tracking"
+	);
+	t.true(
+		src.includes("WORKING_SET_SAMPLE_INTERVAL_MS"),
+		"should use WORKING_SET_SAMPLE_INTERVAL_MS constant"
+	);
+});
+
+test("run-bdd-docker.js clears working-set timer in cleanup", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("if (workingSetTimer) {\n        clearInterval(workingSetTimer);"),
+		"should clearInterval in cleanup"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerSummary for timed-out containers", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("printContainerSummary(containerId, TIMEOUT_EXIT_CODE, { forceSummary: true })"),
+		"should call summary on timeout branch"
+	);
+});
+
+test("run-bdd-docker.js calls printContainerSummary for non-zero and zero exit codes", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("printContainerSummary(containerId, parsed)"),
+		"should call summary for all exit codes (zero and non-zero)"
+	);
+});
+
+test("run-bdd-docker.js uses the Docker Engine stats API for working-set sampling", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("requestDockerStats"),
+		"should use the Docker Engine stats API helper"
+	);
+	t.true(src.includes("parseMemoryLimit"), "should evaluate the absolute container limit");
+});
+
+test("run-bdd-docker.js printContainerSummary includes all required fields", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes("working-set summary"), "summary header");
+	t.true(src.includes("Container:"), "Container field");
+	t.true(src.includes("ExitCode:"), "ExitCode field");
+	t.true(src.includes("OOMKilled:"), "OOMKilled field");
+	t.true(src.includes("Limit:"), "Limit field");
+	t.true(src.includes("Readiness:"), "Readiness field");
+	t.true(src.includes("Final:"), "Final field");
+	t.true(src.includes("Peak:"), "Peak field");
+	t.true(src.includes("Delta:"), "Delta field");
+	t.true(src.includes("Engine samples:"), "Engine samples field");
+	t.true(src.includes("Cgroup samples:"), "Cgroup samples field");
+	t.true(src.includes("StartedAt:"), "StartedAt timestamp field");
+	t.true(src.includes("FinishedAt:"), "FinishedAt timestamp field");
+});
+
+test("run-bdd-docker.js working-set sampling does not fail on unavailable Docker stats", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes("return null;"),
+		"should return null on failure (multiple paths)"
+	);
+});
+
+test("run-bdd-docker.js samples quickly when chunk policy is active", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(src.includes('process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 250 : 1000'));
+	t.true(src.includes("BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json"));
+});
+
+test("run-bdd-docker.js mounts separate timing report and suppresses memory summary in timing-only mode", t => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+	t.true(src.includes("BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json"));
+	t.true(src.includes("BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl"));
+	t.true(src.includes("SCRAMJET_BDD_CHUNK_TIMING=1"));
+	t.true(src.includes('if (CHUNK_MEMORY_POLICY === "off" && !forceSummary) return "PASS"'));
+});
+
+test("forensic wait parsing retains bounded raw output and status", t => {
+
+	const { parseWaitResult } = require("../lib/bdd-docker-forensics.js");
+	const parsed = parseWaitResult("143\nextra output\n");
+	t.is(parsed.parsedStatus, 143);
+	t.is(parsed.rawStdout, "143\nextra output\n");
+});
+
+test("run-bdd-docker.js keeps --rm by default and supports opt-in forensic retention", t => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes('...(forensicEnabled ? [] : ["--rm"])'));
+	t.true(src.includes("cleanup-skipped-owner-mismatch"));
+	t.true(src.includes("cleanup-rm-failed"));
+	t.true(src.includes("cleanup-rm-ok"));
+	t.true(src.includes("forensicCleanupOutcome"));
+	t.true(src.includes('"docker-wait-close"'));
+	t.true(src.includes('"timeout-handler"'));
+	t.true(src.includes('"timeout-grace-handler"'));
+	t.true(src.includes('"default scoped cleanup"'));
+});
+
+test("forensic mode surfaces cleanup failure when docker rm fails", (t) => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-forensic-fail-"));
+	const dockerScript = path.join(binDir, "docker");
+	const getentScript = path.join(binDir, "getent");
+
+	// Mock Docker that succeeds for run/wait/inspect but fails rm for forensic.
+	// The wait returns exit 1 so emitForensicDiagnostics is triggered on the
+	// non-zero path, and the cleanup failure is surfaced in exitWith.
+	fs.writeFileSync(
+		dockerScript,
+		`#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  run) printf 'forensic-container\\n' ;;
+  wait) printf '1\\n' ;;
+  ps) shift; printf 'forensic-container\\n' ;;
+  inspect) printf 'manual-forensic-fail/errors\\n' ;;
+  rm) exit 1 ;;
+  kill) exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+		{ mode: 0o755 }
+	);
+	fs.writeFileSync(getentScript, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+
+	const result = spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd-docker.js"), "--forensic", "--"], {
+		env: {
+			...process.env,
+			PATH: `${binDir}:${process.env.PATH}`,
+			BDD_TIMEOUT_MS: "0",
+			SCRAMJET_BDD_MEMORY_GUARD: "0",
+			SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off",
+			SCRAMJET_BDD_RUN_ID: "manual-forensic-fail",
+			SCRAMJET_BDD_CHUNK_ID: "errors",
+			SCRAMJET_BDD_OWNER: "manual-forensic-fail/errors"
+		},
+		encoding: "utf8",
+		timeout: 5000
+	});
+
+	try {
+		t.true(result.status !== 0, "forensic cleanup failure should produce non-zero exit");
+		t.true(result.stderr.includes("forensic owner-scoped container cleanup did not complete"),
+			"should report forensic cleanup failure message");
+		t.true(result.stderr.includes("forensic diagnostics"),
+			"should emit forensic diagnostics on cleanup failure");
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
+});
+
+test("forensic mode succeeds when docker rm succeeds", (t) => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-forensic-pass-"));
+	const dockerScript = path.join(binDir, "docker");
+	const getentScript = path.join(binDir, "getent");
+
+	// Mock Docker that succeeds for all forensic operations.
+	// wait returns 0 and rm succeeds, so cleanup verifies and the runner
+	// exits 0 without reporting a cleanup failure.
+	fs.writeFileSync(
+		dockerScript,
+		`#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  run) printf 'forensic-container-pass\\n' ;;
+  wait) printf '0\\n' ;;
+  ps) shift; printf 'forensic-container-pass\\n' ;;
+  inspect) printf 'manual-forensic-pass/errors\\n' ;;
+  rm) exit 0 ;;
+  kill) exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+		{ mode: 0o755 }
+	);
+	fs.writeFileSync(getentScript, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+
+	const result = spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd-docker.js"), "--forensic", "--"], {
+		env: {
+			...process.env,
+			PATH: `${binDir}:${process.env.PATH}`,
+			BDD_TIMEOUT_MS: "0",
+			SCRAMJET_BDD_MEMORY_GUARD: "0",
+			SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off",
+			SCRAMJET_BDD_RUN_ID: "manual-forensic-pass",
+			SCRAMJET_BDD_CHUNK_ID: "errors",
+			SCRAMJET_BDD_OWNER: "manual-forensic-pass/errors"
+		},
+		encoding: "utf8",
+		timeout: 5000
+	});
+
+	try {
+		t.is(result.status, 0, "forensic cleanup success should produce zero exit");
+		t.falsy(result.stderr.includes("forensic owner-scoped container cleanup did not complete"),
+			"should not report cleanup failure when rm succeeds");
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
 });

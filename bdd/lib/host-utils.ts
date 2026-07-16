@@ -1,8 +1,11 @@
 import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
+import { once } from "events";
 import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
+import { memoryRegistry } from "../lib/memory-registry";
+const { getOwnership } = require("./ownership.js");
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
     ? ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"]
@@ -21,6 +24,7 @@ const configuredMaxOutputBytes = Number(process.env.SCRAMJET_TEST_OUTPUT_MAX_BYT
 const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configuredMaxOutputBytes > 0
     ? configuredMaxOutputBytes
     : 1024 * 1024;
+const ownership = getOwnership(process.env);
 
 export class HostUtils {
     private static cleanupHandlersInstalled = false;
@@ -30,23 +34,120 @@ export class HostUtils {
     host?: ChildProcess;
     expectedExitCode?: number;
     output = "";
+    private outputWaiters = new Set<(data: string) => void>();
+
+    /**
+     * When true, the Hub is being deliberately stopped (via stopHost or
+     * scenario-lifecycle cleanup) so the startup-exit assertion must not fire.
+     * Set via markStopExpected().
+     */
+    expectedStop = false;
+    stdoutTail = "";
+    stderrTail = "";
+    exitCode: number | null | undefined;
+    exitSignal: NodeJS.Signals | null | undefined;
+    exitStartedAt?: number;
+    exitFinishedAt?: number;
 
     hostUrl: string;
 
     constructor() {
-        this.hostUrl = process.env.SCRAMJET_HOST_URL || "";
+        this.hostUrl = process.env.SCRAMJET_HOST_URL || process.env.SCRAMJET_HOST_BASE_URL || "";
+    }
+
+    hasLocallyOwnedHubChild() {
+        return !this.hostUrl && !["1", "true"].includes((process.env.NO_HOST || "").toLowerCase()) && Boolean(this.host) && !this.hostProcessStopped;
+    }
+
+    /**
+     * Mark the Hub stop as expected, so the startup-exit assertion in the
+     * 'exit' handler does not fire.  Call before any deliberate stop
+     * (stopHost or scenario-lifecycle cleanup).
+     */
+    markStopExpected() {
+        this.expectedStop = true;
     }
 
     async check() {
-        assert.equal(
-            (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad,
-            200,
-            "Remote host doesn't respond"
-        );
+        const client = new HostClient(this.hostUrl);
+        try {
+            assert.equal((await client.getLoadCheck()).currentLoad, 200, "Remote host doesn't respond");
+        } finally {
+            client.dispose();
+        }
+    }
+
+    waitForOutput(markers: string[], timeoutMs = 60000): Promise<void> {
+        const waiter = this.createOutputWaiter(markers);
+        const timeout = setTimeout(() => waiter.cancel(new Error(`Timed out waiting for Hub output: ${markers.join(", ")}`)), timeoutMs);
+        return waiter.promise.finally(() => clearTimeout(timeout));
+    }
+
+    waitForStructuredOutput(event: string, url: string, id: string, timeoutMs = 60000): Promise<void> {
+        const waiter = this.createStructuredOutputWaiter(event, url, id);
+        const timeout = setTimeout(() => waiter.cancel(new Error(`Timed out waiting for Hub marker event=${event} url=${url}`)), timeoutMs);
+        return waiter.promise.finally(() => clearTimeout(timeout));
+    }
+
+    createStructuredOutputWaiter(event: string, url: string, id: string): { promise: Promise<void>; cancel: (error?: Error) => void } {
+        return this.createOutputWaiter([], observed => observed.split("\n").some(line => {
+            const prefix = "SCRAMJET_FLOOD_INGRESS_ACK ";
+            if (!line.startsWith(prefix)) return false;
+            try {
+                const marker = JSON.parse(line.slice(prefix.length));
+                return marker.event === event && marker.url === url && marker.id === id;
+            } catch {
+                return false;
+            }
+        }));
+    }
+
+    createOutputWaiter(markers: string[], matcher?: (observed: string) => boolean): { promise: Promise<void>; cancel: (error?: Error) => void } {
+        const required = Array.isArray(markers) ? markers : [markers];
+        let resolvePromise!: () => void;
+        let rejectPromise!: (error: Error) => void;
+        let active = true;
+        let removeWaiter = () => {};
+        const promise = new Promise<void>((resolve, reject) => {
+            resolvePromise = resolve;
+            rejectPromise = reject;
+            let observed = "";
+            const check = (data = "") => {
+                if (!active) return;
+                observed = (observed + data).slice(-MAX_OUTPUT_BYTES);
+                if (matcher ? matcher(observed) : required.every(marker => observed.includes(marker))) {
+                    cleanup();
+                    resolve();
+                }
+            };
+            const cleanup = () => {
+                this.outputWaiters.delete(check);
+            };
+            removeWaiter = cleanup;
+            this.outputWaiters.add(check);
+        });
+        const cancel = (error?: Error) => {
+            if (!active) return;
+            active = false;
+            removeWaiter();
+            if (error) rejectPromise(error);
+            else resolvePromise();
+        };
+        return { promise, cancel };
+    }
+
+    captureOutput(data: string) {
+        this.output = (this.output + data).slice(-MAX_OUTPUT_BYTES);
+        for (const waiter of this.outputWaiters) waiter(data);
     }
 
     async getHostStatus() {
-        return (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad;
+        const client = new HostClient(this.hostUrl);
+        try {
+            return (await client.getLoadCheck()).currentLoad;
+        } finally {
+            client.dispose();
+        }
     }
 
     async stopHost() {
@@ -61,6 +162,8 @@ export class HostUtils {
         if (this.hostProcessStopped) {
             return;
         }
+
+        this.markStopExpected();
 
         const host = this.host;
 
@@ -80,6 +183,8 @@ export class HostUtils {
                 reject(new Error("Couldn't stop host"));
             }
         });
+        await HostUtils.disposeChildIO(host);
+        this.output = "";
     }
 
     /**
@@ -145,6 +250,19 @@ export class HostUtils {
         }
     }
 
+    private static async disposeChildIO(child: ChildProcess): Promise<void> {
+        const streams = [child.stdout, child.stderr].filter(Boolean) as NodeJS.ReadableStream[];
+        for (const stream of streams) stream.removeAllListeners();
+        child.removeAllListeners("error");
+        for (const stream of streams) {
+            const closed = (stream as any).destroyed
+                ? Promise.resolve()
+                : once(stream as any, "close").then(() => undefined);
+            (stream as any).destroy?.();
+            await closed;
+        }
+    }
+
     private static installCleanupHandlers() {
         if (HostUtils.cleanupHandlersInstalled) {
             return;
@@ -164,7 +282,10 @@ export class HostUtils {
     private static trackHost(host: ChildProcess) {
         HostUtils.installCleanupHandlers();
         HostUtils.hosts.add(host);
-        host.once("exit", () => HostUtils.hosts.delete(host));
+        host.once("exit", () => {
+            HostUtils.hosts.delete(host);
+            void HostUtils.disposeChildIO(host);
+        });
     }
 
     async spawnHost(ommit: NoDefault, ...extraArgs: any[]): Promise<string> {
@@ -186,11 +307,24 @@ export class HostUtils {
 
             const hub = this.host = spawn("/usr/bin/env", command, {
                 detached: true,
-                env: { ...process.env, SCP_ENV_VALUE: "GH_CI" }
+                env: {
+                    ...process.env,
+                    SCP_ENV_VALUE: "GH_CI",
+                    SCRAMJET_BDD_RUN_ID: ownership.runId,
+                    SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                    SCRAMJET_BDD_OWNER: ownership.owner,
+                }
             });
             HostUtils.trackHost(hub);
+            memoryRegistry.trackChildProcess(hub, `hub:${ownership.owner}`);
 
             this.hostProcessStopped = false;
+            this.exitCode = undefined;
+            this.exitSignal = undefined;
+            this.exitStartedAt = Date.now();
+            this.exitFinishedAt = undefined;
+            this.stdoutTail = "";
+            this.stderrTail = "";
 
             if (process.env.SCRAMJET_TEST_LOG) {
                 hub.stdout?.pipe(process.stdout);
@@ -199,7 +333,13 @@ export class HostUtils {
 
             const decoder = new StringDecoder();
             const outputListener = (data: Buffer) => {
-                this.output = (this.output + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                this.captureOutput(data.toString());
+            };
+            const stdoutListener = (data: Buffer) => {
+                this.stdoutTail = (this.stdoutTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+            };
+            const stderrListener = (data: Buffer) => {
+                this.stderrTail = (this.stderrTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
             };
 
             let decodedData = "";
@@ -210,27 +350,66 @@ export class HostUtils {
 
                 if (decodedData.includes("Host running!")) {
                     hub.stdout?.off("data", listener);
+
+                    // Record readiness-aware RSS baseline for chunk summary (Phase 10).
+                    if (hub.pid) {
+                        memoryRegistry.recordProcessReady(hub.pid);
+                    }
+
                     resolve(decodedData);
                 }
             };
 
             hub.stdout?.on("data", outputListener);
             hub.stderr?.on("data", outputListener);
+            hub.stdout?.on("data", stdoutListener);
+            hub.stderr?.on("data", stderrListener);
             hub.stdout?.on("data", listener);
 
             this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                 console.log("host process exited with code: ", code, " and signal: ", signal);
+                if (code !== 0 || signal) {
+                    console.error("Host startup/lifecycle diagnostics", {
+                        command,
+                        cwd: process.cwd(),
+                        config: process.env.SCRAMJET_CONFIG || process.env.SCRAMJET_CONFIG_PATH || process.env.SCRAMJET_CONFIG_FILE,
+                        bddRunId: ownership.runId,
+                        bddChunkId: ownership.chunkId,
+                        startedAt: this.exitStartedAt,
+                        finishedAt: Date.now(),
+                        stdout: this.stdoutTail.slice(-16384),
+                        stderr: this.stderrTail.slice(-16384)
+                    });
+                }
                 this.hostProcessStopped = true;
+                this.exitCode = code;
+                this.exitSignal = signal;
+                this.exitFinishedAt = Date.now();
 
-                if (code === 1 && this.expectedExitCode !== 1) {
-                    assert.fail();
+                // Skip startup-failure assertion when the Hub is being
+                // deliberately stopped (stopHost or scenario-lifecycle
+                // cleanup).  The expectedStop flag is set by markStopExpected()
+                // before any intentional termination.
+                if (code === 1 && this.expectedExitCode !== 1 && !this.expectedStop) {
+                    assert.fail(
+                        `Host exited with code 1 after ${this.exitFinishedAt - (this.exitStartedAt || this.exitFinishedAt)}ms; ` +
+                        `stdout=${JSON.stringify(this.stdoutTail.slice(-4096))}; stderr=${JSON.stringify(this.stderrTail.slice(-4096))}`
+                    );
+                }
+
+                // Resolve with partial output when the host exits with an expected
+                // non-zero code before "Host running!" — required for scenarios that
+                // reproduce startup failures (e.g. runner port collision).
+                if (this.expectedExitCode !== undefined && code !== null &&
+                    code !== 0 && code === this.expectedExitCode) {
+                    resolve(decodedData);
                 }
             });
         });
     }
 
-    private setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
-        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
+    setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
+        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !extraArgs.includes("--port") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
         if (!noDefault.includes("instances-server-port") && !extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
             command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
@@ -238,8 +417,12 @@ export class HostUtils {
             command.push("-C", process.env.CPM_URL);
         if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
-        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && process.env.RUNTIME_ADAPTER)
-            command.push("--instance-lifetime-extension-delay=100");
+        // Only an explicitly owned BDD run may receive the shortened lifecycle
+        // window. A config path is also used by non-BDD callers and must not
+        // change production stop behavior.
+        const bddRun = process.env.SCRAMJET_BDD_RUN_ID;
+        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && (process.env.RUNTIME_ADAPTER || bddRun))
+            command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
 
         if (process.env.RUNNER_IMGS_TAG) {

@@ -5,19 +5,35 @@ import * as nodefetch from "node-fetch";
 import http from "http";
 import https from "https";
 
-const nodeFetchWithHttps = (ca?: string | Buffer) =>
-    (req: nodefetch.RequestInfo, init?: nodefetch.RequestInit): Promise<nodefetch.Response> => {
+type AgentFetch = ((req: nodefetch.RequestInfo, init?: nodefetch.RequestInit) => Promise<nodefetch.Response>) & {
+    httpAgent: http.Agent;
+    httpsAgent: https.Agent;
+    dispose: () => void;
+};
+
+const nodeFetchWithHttps = (ca?: string | Buffer): AgentFetch => {
+    const httpAgent = new http.Agent({ keepAlive: true });
+    const httpsAgent = new https.Agent({ keepAlive: true, ca });
+    const fetcher = ((req: nodefetch.RequestInfo, init?: nodefetch.RequestInit): Promise<nodefetch.Response> => {
         if (typeof req === "string") {
             return nodefetch.default(req, {
                 ...init,
                 agent: (url) => url.protocol === "http:"
-                    ? new http.Agent({ keepAlive: true })
-                    : new https.Agent({ keepAlive: true, ca })
+                    ? httpAgent
+                    : httpsAgent
             });
         }
 
         throw new Error("not implemented");
+    }) as AgentFetch;
+    fetcher.httpAgent = httpAgent;
+    fetcher.httpsAgent = httpsAgent;
+    fetcher.dispose = () => {
+        httpAgent.destroy();
+        httpsAgent.destroy();
     };
+    return fetcher;
+};
 
 /**
  * Provides HTTP communication methods.
@@ -31,14 +47,17 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
         apiBase: string,
         ca?: string | Buffer
     ) {
-        super(apiBase, nodeFetchWithHttps(ca), normalizeUrl);
+        const fetcher = nodeFetchWithHttps(ca);
+        super(apiBase, fetcher, normalizeUrl);
+        this.agent = fetcher.httpAgent;
     }
 }
 
 export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClient {
     constructor(
         apiBase: string,
-        agent: http.Agent | https.Agent
+        agent: http.Agent | https.Agent,
+        ownsAgent = false
     ) {
         super(
             apiBase,
@@ -52,6 +71,7 @@ export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClien
         );
 
         this.agent = agent;
+        this.ownsAgent = ownsAgent;
     }
 }
 

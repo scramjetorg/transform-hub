@@ -19,12 +19,14 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
 
     #_client: ClientUtils;
     #_v2Client: ClientUtils;
+    #disposed = false;
 
     get client(): ClientUtils {
         return this.#_client;
     }
 
     #hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>;
+    #hostClients = new Set<{ dispose?: () => void }>();
 
     constructor(apiBase: string, utils = new ClientUtils(apiBase), hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>, v2Utils?: ClientUtils) {
         this.apiBase = apiBase.replace(/\/$/, "");
@@ -34,13 +36,25 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
         this.#hostClientFactory = hostClientFactory;
     }
 
+    /** Dispose v1/v2 transports and any child host clients created by this manager. */
+    dispose(): void {
+        if (this.#disposed) return;
+        this.#disposed = true;
+        for (const hostClient of this.#hostClients) hostClient.dispose?.();
+        this.#hostClients.clear();
+        this.#_v2Client.dispose();
+        this.#_client.dispose();
+    }
+
     getHostClient(id: string, hostApiBase = "/api/v1"): THostClient {
         const apiBase = `${this.apiBase}/sth/${id}${hostApiBase}`;
         const utils = new ClientUtilsCustomAgent(apiBase, this.client.agent);
 
         if (!this.#hostClientFactory) throw new Error("Host client factory is not configured");
 
-        return this.#hostClientFactory(apiBase, utils);
+        const hostClient = this.#hostClientFactory(apiBase, utils);
+        this.#hostClients.add(hostClient as unknown as { dispose?: () => void });
+        return hostClient;
     }
 
     async getHosts() {

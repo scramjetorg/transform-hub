@@ -77,13 +77,6 @@ Set to `1` or `true` to include scenarios tagged `@harness-selftest`. These scen
 Should host not be spawned
 
 ---
-`SCRAMJET_ASSETS_LOCATION: string`
-
----
-`CSI_COREDUMP_VOLUME: string`
-Required in some performance tests. Path to a file.
-
----
 `RUNTIME_ADAPTER: string`
 Runs host with specific --runtime-adapter
 

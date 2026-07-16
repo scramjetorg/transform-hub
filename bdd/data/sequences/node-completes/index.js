@@ -15,9 +15,9 @@ module.exports = async function(_input) {
     process.stdout.write("NODE_COMPLETES_OK\n");
     this.logger.info("node-completes sequence ran");
 
-    // Small delay so the BDD harness has time to bind the instance client
-    // and resolve the runner PID before the sequence terminates.
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Keep the runner observable through the lifecycle contract instead of a
+    // fixed sleep; BDD observes the forwarded marker and runner state.
+    this.keepAlive(250);
 
     return "done";
 };

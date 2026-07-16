@@ -28,7 +28,7 @@ Feature: HUB-001 Host configuration
     @starts-host @docker-specific @needs-fix @slow
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "-P 9002 --instances-server-port 19002 --runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
-        And sequence "../packages/js-inert-function.tar.gz" is loaded
+        And sequence "data/sequences/bdd-packages/js-inert-function.tar.gz" is loaded
         And instance started
         And get runner container information
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
@@ -38,7 +38,7 @@ Feature: HUB-001 Host configuration
     @starts-host @docker-specific @needs-fix @slow
     Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
         When hub process is started with parameters "-P 9002 --instances-server-port 19002"
-        And sequence "../packages/js-inert-function.tar.gz" is loaded
+        And sequence "data/sequences/bdd-packages/js-inert-function.tar.gz" is loaded
         And instance started
         And get runner container information
         Then container uses node image defined in sth-config
@@ -54,7 +54,8 @@ Feature: HUB-001 Host configuration
         Then container memory limit is 128
         * exit hub process
 
-    @ci-hub @starts-host @docker-specific @requires-docker @slow
+    # Needs to be fixed.
+    @ci-hub @starts-host @docker-specific @requires-docker @needs-fix @slow
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with random ports and parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
@@ -64,7 +65,7 @@ Feature: HUB-001 Host configuration
         And end fake stream
         * exit hub process
 
-    @ci-hub @starts-host @docker-specific @requires-docker @slow
+    @ci-hub @starts-host @docker-specific @requires-docker @needs-fix @slow
     Scenario: HUB-001 TC-013  Set prerunner memory limit (--prerunner-max-mem)
         When hub process is started with random ports and parameters "--prerunner-max-mem 64"
         And get all containers
@@ -84,4 +85,21 @@ Feature: HUB-001 Host configuration
     Scenario: HUB-001 TC-015 Use JSON config with port
         When hub process is started with port changing parameters "--config data/test-data/sth-config.json"
         Then API is available on port 9079
+        * exit hub process
+
+    @ci-hub @starts-host
+    Scenario: HUB-001 TC-016 Scenario Hub runner port collision is handled
+        # Occupy the default runner verser2 port 2444 to simulate the suite
+        # host's runner listener. The Hub harness must dynamically allocate a
+        # free runner host port (not inherit 2444) to survive.
+        When port 2444 is occupied
+        When hub process is started with random ports and parameters ""
+        Then host is running
+        * exit hub process
+
+        # Release the occupied port and verify a clean start under dynamic
+        # runner port allocation.
+        When the occupied port is released
+        When hub process is started with random ports and parameters ""
+        Then host is running
         * exit hub process

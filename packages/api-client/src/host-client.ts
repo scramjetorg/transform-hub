@@ -12,9 +12,7 @@ export const createHostClient: ApiClientFactory<HostClient, ClientUtils> = (apiB
 function createV2Client(apiBase: string, utils: ClientUtils): ClientUtils {
     const v2ApiBase = apiBase.replace(/\/api\/v1\/?$/, "/api/v2");
 
-    return utils instanceof ClientUtilsCustomAgent
-        ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent)
-        : new ClientUtils(v2ApiBase);
+    return utils instanceof ClientUtilsCustomAgent ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent) : new ClientUtils(v2ApiBase);
 }
 
 /**
@@ -26,6 +24,7 @@ export class HostClient implements ClientProvider {
 
     #_client: ClientUtils;
     #_v2Client: ClientUtils;
+    #disposed = false;
 
     get client(): ClientUtils {
         return this.#_client;
@@ -36,6 +35,14 @@ export class HostClient implements ClientProvider {
 
         this.#_client = utils;
         this.#_v2Client = v2Utils || createV2Client(this.apiBase, this.client);
+    }
+
+    /** Dispose both API transports; borrowed agents remain owned by their parent client. */
+    dispose(): void {
+        if (this.#disposed) return;
+        this.#disposed = true;
+        this.#_v2Client.dispose();
+        this.#_client.dispose();
     }
 
     /**
@@ -54,13 +61,12 @@ export class HostClient implements ClientProvider {
      * @param {string} filter filtering tag.
      * @returns {Promise<STHRestAPI.GetSequencesResponse>} Promise resolving to list of Sequences.
      */
-    async listSequencesWithFilter(sequenceUrl: string, hostTag: string, filter? : string) {
-        if (filter)
-            return this.client.get<STHRestAPI.GetSequencesResponse>(`${sequenceUrl}/${hostTag}/sequences/${filter}`);
+    async listSequencesWithFilter(sequenceUrl: string, hostTag: string, filter?: string) {
+        if (filter) return this.client.get<STHRestAPI.GetSequencesResponse>(`${sequenceUrl}/${hostTag}/sequences/${filter}`);
         return this.client.get<STHRestAPI.GetSequencesResponse>(`${sequenceUrl}/${hostTag}/sequences`);
     }
 
-    async getSequenceId(sequenceName: string) : Promise<string[]> {
+    async getSequenceId(sequenceName: string): Promise<string[]> {
         const sequenceList = await this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
         const result = sequenceList.filter((sequence: any) => sequence.config.name === sequenceName);
 
@@ -127,10 +133,7 @@ export class HostClient implements ClientProvider {
      * @param {boolean} update Send request with post or put method.
      * @returns {SequenceClient} Sequence client.
      */
-    async sendSequence(
-        sequencePackage: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit,
-    ): Promise<SequenceClient> {
+    async sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
             parseResponse: "json"
         });
@@ -179,8 +182,8 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<STHRestAPI.GetLoadCheckResponse>} Promise resolving to Host load check data.
      */
-    async getLoadCheck() {
-        return this.client.get<STHRestAPI.GetLoadCheckResponse>("load-check");
+    async getLoadCheck(requestInit?: RequestInit) {
+        return this.client.get<STHRestAPI.GetLoadCheckResponse>("load-check", requestInit);
     }
 
     /**
@@ -198,9 +201,7 @@ export class HostClient implements ClientProvider {
     async getStatus(): Promise<STHRestAPI.GetStatusResponse> {
         const response = await this.#_v2Client.get<{ details?: STHRestAPI.GetStatusResponse } | STHRestAPI.GetStatusResponse>("status");
 
-        return response && typeof response === "object" && "details" in response
-            ? response.details as STHRestAPI.GetStatusResponse
-            : response as STHRestAPI.GetStatusResponse;
+        return response && typeof response === "object" && "details" in response ? (response.details as STHRestAPI.GetStatusResponse) : (response as STHRestAPI.GetStatusResponse);
     }
 
     /**
@@ -211,9 +212,7 @@ export class HostClient implements ClientProvider {
     async getConfig(): Promise<PublicSTHConfiguration> {
         const response = await this.#_v2Client.get<{ config?: PublicSTHConfiguration } | PublicSTHConfiguration>("config");
 
-        return response && typeof response === "object" && "config" in response
-            ? response.config as PublicSTHConfiguration
-            : response as PublicSTHConfiguration;
+        return response && typeof response === "object" && "config" in response ? (response.config as PublicSTHConfiguration) : (response as PublicSTHConfiguration);
     }
 
     /**
@@ -236,13 +235,7 @@ export class HostClient implements ClientProvider {
      * @param {boolean} end Indicates if "end" event from stream should be passed to topic.
      * @returns TODO: comment.
      */
-    async sendTopic<T>(
-        topic: string,
-        stream: Parameters<HttpClient["sendStream"]>[1],
-        requestInit: RequestInit = {},
-        contentType: string = "application/x-ndjson",
-        end?: boolean
-    ) {
+    async sendTopic<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit: RequestInit = {}, contentType: string = "application/x-ndjson", end?: boolean) {
         requestInit.headers ||= {} as Headers;
         (requestInit.headers as Headers).expect = "100-continue";
 

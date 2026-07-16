@@ -1,18 +1,12 @@
 #!/usr/bin/env node
 
-
-
-const {
-    getPackagesInWorkspace,
-    findClosestPackageJSONLocation
-} = require("./lib/build-utils");
+const { getPackagesInWorkspace, findClosestPackageJSONLocation } = require("./lib/build-utils");
 const minimist = require("minimist");
 
 const { DataStream } = require("scramjet");
 const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
-const { cpus } = require("os");
 
 const runScript = require("@npmcli/run-script");
 const { relative, resolve, join } = require("path");
@@ -30,7 +24,7 @@ const opts = minimist(process.argv.slice(2), {
         workspace: "w",
         dependencies: "d",
         root: "r",
-        exec: "e",
+        exec: "e"
     },
     default: {
         root: env.WORKSPACE_ROOT || cwd(),
@@ -42,12 +36,12 @@ const opts = minimist(process.argv.slice(2), {
         "link-packages": env.LOCAL_PACKAGES,
         "local-copy": env.LOCAL_COPY,
         "flat-packages": env.FLAT_PACKAGES,
-        "make-public": env.MAKE_PUBLIC,
+        "make-public": env.MAKE_PUBLIC
     },
     boolean: ["list", "lax", "verbose", "help", "exec"]
 });
 
-if (opts.help || !opts._.length && !opts.list) {
+if (opts.help || (!opts._.length && !opts.list)) {
     const pName = relative(cwd(), process.argv[1]);
     const spaces = " ".repeat(pName.length);
 
@@ -59,7 +53,7 @@ if (opts.help || !opts._.length && !opts.list) {
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
     console.error(`       ${spaces} -l,--list - prints list of dirs and exits`);
-    console.error(`       ${spaces} -j,--jobs - how many jobs in parallel (default: cpu count)`);
+    console.error(`       ${spaces} -j,--jobs - how many jobs in parallel (default: 16)`);
     console.error(`       ${spaces} -r,--root <root> - main directory (default is cwd, env: WORKSPACE_ROOT)`);
     console.error(`       ${spaces} -e,--exec - treat <script> as a full command to exec, not a yarn script. `);
 
@@ -67,6 +61,7 @@ if (opts.help || !opts._.length && !opts.list) {
 }
 
 const BUILD_NAME = "run-script";
+const DEFAULT_MAX_PARALLEL = 16;
 
 console.time(BUILD_NAME);
 
@@ -77,7 +72,7 @@ function execCommand(path, command, verbose) {
 
     return new Promise((res, reject) => {
         exec(command, { cwd: path, maxBuffer: 1 << 20 }, async (exception, stdout, stderr) => {
-            const code = exception && exception.code || 0;
+            const code = (exception && exception.code) || 0;
 
             if (code) {
                 const err = new Error(`Command exited with code ${code}`);
@@ -95,9 +90,12 @@ function execCommand(path, command, verbose) {
     });
 }
 
-(async function() {
+(async function () {
     const pkg = findClosestPackageJSONLocation(opts.root);
-    const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));
+    const allPackages = getPackagesInWorkspace(
+        pkg,
+        [opts.workspace].flat().filter((x) => x)
+    );
     let packages = allPackages;
 
     if (opts.scope) {
@@ -130,10 +128,9 @@ function execCommand(path, command, verbose) {
     }
 
     await DataStream.from(packages)
-        .setOptions({ maxParallel: +opts.threads || cpus().length })
-        .flatMap(async path => {
-            if (!opts.lax && error)
-                return Promise.reject(new Error("Fail fast..."));
+        .setOptions({ maxParallel: +opts.threads || DEFAULT_MAX_PARALLEL })
+        .flatMap(async (path) => {
+            if (!opts.lax && error) return Promise.reject(new Error("Fail fast..."));
 
             const runconfig = {
                 stdioString: true,
@@ -141,16 +138,13 @@ function execCommand(path, command, verbose) {
             };
 
             if (opts.exec) {
-                if (opts._.slice(1).length)
-                    console.error("Did you forget to quote the command? Got extra", opts._.slice(1));
+                if (opts._.slice(1).length) console.error("Did you forget to quote the command? Got extra", opts._.slice(1));
 
                 const command = opts._[0];
 
                 const endPromise = execCommand(path, command, opts.verbose);
 
-                return [
-                    [Date.now(), await endPromise]
-                ];
+                return [[Date.now(), await endPromise]];
             }
             if (opts.verbose) runconfig.stdio = "inherit";
 
@@ -166,10 +160,9 @@ function execCommand(path, command, verbose) {
         .do(([ts, out]) => {
             const { path, event } = out;
 
-            if (event)
-                console.timeLog(BUILD_NAME, `${path}: script ${event} executed in ${Date.now() - ts}ms.`);
+            if (event) console.timeLog(BUILD_NAME, `${path}: script ${event} executed in ${Date.now() - ts}ms.`);
         })
-        .catch(e => {
+        .catch((e) => {
             if (!e.cause) return;
 
             const { code, stdout, stderr, path, event, script } = e.cause;
@@ -185,8 +178,7 @@ function execCommand(path, command, verbose) {
 
             error = true;
         })
-        .run()
-    ;
+        .run();
 })()
     .then(() => {
         if (!opts.lax && error) {
@@ -194,7 +186,7 @@ function execCommand(path, command, verbose) {
             process.exitCode = 11;
         }
     })
-    .catch(e => {
+    .catch((e) => {
         console.timeLog(BUILD_NAME, "Error occured.");
         console.error(e.stack);
         process.exitCode = e.exitCode || 10;

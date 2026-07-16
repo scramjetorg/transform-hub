@@ -17,3 +17,4 @@ export * from "./typed-emitter";
 export * from "./typeguards";
 export * from "./validators";
 export * from "./refcount";
+export * from "./verser2-request-boundary";

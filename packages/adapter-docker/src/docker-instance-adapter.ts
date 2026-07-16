@@ -202,6 +202,18 @@ IComponent {
             ...getRunnerTransportEnv(this.sthConfig, instanceId)
         }).map(([k, v]) => `${k}=${v}`);
 
+        // BDD ownership is opt-in and additive: production adapters retain
+        // their existing labels, while parallel-safe BDD chunks can identify
+        // and clean only their own runner containers.
+        const ownershipLabels = Object.fromEntries(
+            ["SCRAMJET_BDD_RUN_ID", "SCRAMJET_BDD_CHUNK_ID", "SCRAMJET_BDD_OWNER"]
+                .filter(name => process.env[name])
+                .map(name => [`scramjet.bdd.${name.slice("SCRAMJET_BDD_".length).toLowerCase().replace("_", "-")}`, process.env[name]!])
+        );
+        for (const name of ["SCRAMJET_BDD_RUN_ID", "SCRAMJET_BDD_CHUNK_ID", "SCRAMJET_BDD_OWNER"]) {
+            if (process.env[name]) envs.push(`${name}=${process.env[name]}`);
+        }
+
         this.logger.debug("Runner will start with envs", envs);
 
         const { containerId, streams } = await this.dockerHelper.run({
@@ -212,7 +224,8 @@ IComponent {
             ],
             labels: {
                 "scramjet.sequence.name": config.name,
-                "scramjet.instance.id": instanceId
+                "scramjet.instance.id": instanceId,
+                ...ownershipLabels
             },
             ports: this.resources.ports,
             publishAllPorts: true,

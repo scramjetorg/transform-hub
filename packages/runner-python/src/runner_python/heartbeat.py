@@ -69,6 +69,11 @@ async def run_heartbeat(
         while True:
             await asyncio.sleep(interval)
             payload = await _resolve_health(app_context)
-            monitoring_writer.write_frame(MONITORING, payload)
+            try:
+                monitoring_writer.write_frame(MONITORING, payload)
+            except (BrokenPipeError, ConnectionResetError):
+                # Shutdown may close the monitoring carrier before this task
+                # is cancelled. There is nothing useful left to emit.
+                return
     except asyncio.CancelledError:
         raise

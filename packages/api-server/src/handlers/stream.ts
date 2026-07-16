@@ -140,20 +140,64 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     res.flushHeaders();
 
                     await new Promise<void>((resolve, reject) => {
+                        let requestEnded = false;
+                        let writableFinalized = false;
+                        let settled = false;
+                        const cleanup = () => {
+                            req.unpipe(data as Writable);
+                            req.off("error", onRequestError);
+                            req.off("end", onRequestEnd);
+                            (data as Writable).off("error", onWritableError);
+                            (data as Writable).off("close", onWritableClose);
+                            (data as Writable).off("finish", onWritableFinish);
+                        };
+                        const finish = (error?: Error) => {
+                            if (settled) return;
+                            settled = true;
+                            cleanup();
+                            if (error) reject(error);
+                            else resolve();
+                        };
+                        const onRequestError = () => {
+                            logger.error("Downstream request error.");
+                            finish(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
+                        };
+                        const onRequestEnd = () => {
+                            requestEnded = true;
+                            logger.debug("Downstream request end.");
+                            if (!end || writableFinalized) finish();
+                        };
+                        const abortDownstream = () => {
+                            req.destroy();
+                            // Let the router's error path own the response. Ending it
+                            // here causes a second response when next() handles the error.
+                            finish(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
+                        };
+                        const onWritableError = () => {
+                            if (!writableFinalized) abortDownstream();
+                        };
+                        const onWritableClose = () => {
+                            if (!writableFinalized) abortDownstream();
+                        };
+                        const onWritableFinish = () => {
+                            writableFinalized = true;
+                            if (requestEnded) finish();
+                        };
+
                         if (encoding) {
                             req.setEncoding(encoding);
                             (data as Writable).setDefaultEncoding(encoding);
                         }
 
                         req
-                            .on("error", () => {
-                                logger.error("Downstream request error.");
-                                reject(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
-                            })
-                            .on("end", () => {
-                                logger.debug("Downstream request end.");
-                                resolve();
-                            })
+                            .once("error", onRequestError)
+                            .once("end", onRequestEnd);
+                        (data as Writable)
+                            .once("error", onWritableError)
+                            .once("close", onWritableClose)
+                            .once("finish", onWritableFinish);
+
+                        req
                             .pipe(data as Writable, { end });
 
                         logger.debug("Request data piped");

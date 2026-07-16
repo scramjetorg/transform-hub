@@ -1,7 +1,7 @@
 
 import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { profileManager, siConfig, sessionConfig, isProfileConfig, ProfileConfig } from "../config";
+import { profileManager, siConfig, sessionConfig, isProfileConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
 
 /**
@@ -9,6 +9,16 @@ import { displayMessage, displayObject } from "../output";
  */
 export const configCommand: CommandDescriptor = cmd("config", (b) => {
     const profileConfig = profileManager.getProfileConfig();
+    const currentProfileConfig = () => profileManager.getProfileConfig();
+    const mutableProfileConfig = () => {
+        const current = currentProfileConfig();
+
+        if (!isProfileConfig(current)) {
+            throw new Error("The selected configuration path is read-only");
+        }
+
+        return current;
+    };
     const defaultConfig = profileConfig.getDefault();
 
     const {
@@ -32,10 +42,10 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                     .alias("p")
                     .desc("Print out the current profile configuration")
                     .action(() => {
-                        const configuration = profileManager.getProfileConfig().get();
+                        const configuration = currentProfileConfig().get();
 
                         if (profileManager.isPathSource())
-                            displayMessage(`Current configuration: ${profileConfig.path}\n`);
+                            displayMessage(`Current configuration: ${currentProfileConfig().path}\n`);
                         else
                             displayMessage(`Current profile: ${profileManager.getProfileName()}\n`);
                         displayObject(configuration, configuration.log.format);
@@ -46,7 +56,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                     .alias("s")
                     .desc("Print out the current session configuration")
                     .action(() => {
-                        const configuration = profileConfig.get();
+                        const configuration = currentProfileConfig().get();
 
                         displayObject(sessionConfig.get(), configuration.log.format);
                     });
@@ -69,7 +79,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                             } catch (_) {
                                                 throw new Error("Parsing error: Invalid JSON format");
                                             }
-                                            if (!(profileConfig as ProfileConfig).set(jsonConfig)) {
+                                            if (!mutableProfileConfig().set(jsonConfig)) {
                                                 throw new Error("Invalid configuration in json object");
                                             }
                                         });
@@ -79,7 +89,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                         .argument("<url>")
                                         .desc("Specify the Hub API Url")
                                         .action((url: string) => {
-                                            if (!(profileConfig as ProfileConfig).setApiUrl(url)) {
+                                            if (!mutableProfileConfig().setApiUrl(url)) {
                                                 throw new Error("Invalid url");
                                             }
                                         });
@@ -99,11 +109,11 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                                 if (typeof debugVal === "undefined") {
                                                     throw new Error("Invalid debug value");
                                                 }
-                                                if (!(profileConfig as ProfileConfig).setDebug(debugVal as boolean)) {
+                                                if (!mutableProfileConfig().setDebug(debugVal as boolean)) {
                                                     throw new Error("Unable to set debug value");
                                                 }
                                             }
-                                            if (newFormat && !(profileConfig as ProfileConfig).setFormat(newFormat)) {
+                                            if (newFormat && !mutableProfileConfig().setFormat(newFormat)) {
                                                 throw new Error("Unable to set format value");
                                             }
                                         });
@@ -113,7 +123,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                         .argument("<url>")
                                         .desc("Specify middleware API url")
                                         .action((url: string) => {
-                                            if (!(profileConfig as ProfileConfig).setMiddlewareApiUrl(url)) {
+                                            if (!mutableProfileConfig().setMiddlewareApiUrl(url)) {
                                                 throw new Error("Invalid url");
                                             }
                                         });
@@ -123,7 +133,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                         .argument("<name>")
                                         .desc("Specify default scope that should be used when session start")
                                         .action((scope: string) => {
-                                            if (!(profileConfig as ProfileConfig).setScope(scope)) {
+                                            if (!mutableProfileConfig().setScope(scope)) {
                                                 throw new Error(`Invalid name: ${scope}`);
                                             }
                                         });
@@ -133,7 +143,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                         .argument("<jwt>")
                                         .desc("Specify platform authorization token")
                                         .action((token: string) => {
-                                            if (!(profileConfig as ProfileConfig).setToken(token)) {
+                                            if (!mutableProfileConfig().setToken(token)) {
                                                 throw new Error("Invalid token");
                                             }
                                         });
@@ -146,7 +156,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                             if (!["production", "development"].includes(env)) {
                                                 throw new Error("Invalid environment: must be 'production' or 'development'");
                                             }
-                                            if (!(profileConfig as ProfileConfig).setEnv(env as any)) {
+                                            if (!mutableProfileConfig().setEnv(env as any)) {
                                                 throw new Error("Invalid environment");
                                             }
                                         });
@@ -166,36 +176,36 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                 cmd("apiUrl", (c) => {
                                     c
                                         .desc("Reset apiUrl")
-                                        .action(() => resetValue(defaultApiUrl, v => (profileConfig as ProfileConfig).setApiUrl(v)));
+                                        .action(() => resetValue(defaultApiUrl, v => mutableProfileConfig().setApiUrl(v)));
                                 }),
                                 cmd("log", (c) => {
                                     c
                                         .desc("Reset logger")
                                         .action(() => resetValue({ defaultFormat, defaultDebug },
                                             ({ defaultFormat: f, defaultDebug: d }) =>
-                                                (profileConfig as ProfileConfig).setFormat(f) && (profileConfig as ProfileConfig).setDebug(d)));
+                                                mutableProfileConfig().setFormat(f) && mutableProfileConfig().setDebug(d)));
                                 }),
                                 cmd("middlewareApiUrl", (c) => {
                                     c
                                         .desc("Reset middlewareApiUrl")
                                         .action(() => resetValue(defaulMiddlewareApiUrl, v =>
-                                            (profileConfig as ProfileConfig).setMiddlewareApiUrl(v)));
+                                            mutableProfileConfig().setMiddlewareApiUrl(v)));
                                 }),
                                 cmd("token", (c) => {
                                     c
                                         .desc("Reset token")
-                                        .action(() => resetValue(defaultToken, v => (profileConfig as ProfileConfig).setToken(v)));
+                                        .action(() => resetValue(defaultToken, v => mutableProfileConfig().setToken(v)));
                                 }),
                                 cmd("env", (c) => {
                                     c
                                         .desc("Reset env")
-                                        .action(() => resetValue(defaultEnv, v => (profileConfig as ProfileConfig).setEnv(v)));
+                                        .action(() => resetValue(defaultEnv, v => mutableProfileConfig().setEnv(v)));
                                 }),
                                 cmd("all", (c) => {
                                     c
                                         .desc("Reset all configuration")
                                         .action(() => {
-                                            (profileConfig as ProfileConfig).restoreDefault();
+                                            mutableProfileConfig().restoreDefault();
                                             sessionConfig.restoreDefault();
                                         });
                                 })
