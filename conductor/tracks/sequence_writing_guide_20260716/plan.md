@@ -178,7 +178,7 @@
     client and CLI scope coverage. Full package builds remain blocked by known
     pre-existing `packages/runner/src/runner.ts` TypeScript errors.
   - Phase checkpoint commit: `132f1034`; draft PR verification comment updated.
-- [ ] Task: Conductor - Phase Completion 'Hub and Space topic contracts' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Hub and Space topic contracts' (Protocol in workflow.md)
 
 ## Phase 5: AppContext runtime conformance
 
